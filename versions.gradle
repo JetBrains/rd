@@ -1,0 +1,19 @@
+ext.kotlin_version='1.1.51'
+ext.kotlinx_html_version='bootstrap-1.1.50-dev-1182-69'
+ext.kotlin_jackson_version='2.8.9'
+ext.rxkotlin_version='0.55.0'
+ext.dokka_version='0.9.13'
+
+ext.mocha_version='0.0.3-kotlin-1.1.50-eap-18'
+ext.react_version='0.0.3-kotlin-1.1.50-eap-18'
+ext.react_dom_version='0.0.5-kotlin-1.1.50-eap-18'
+
+ext.jackson_version='2.8.2'
+ext.sl4j_version='1.7.12'
+ext.junit_version='3.8.1'
+
+ext.scala_version = '2.11'
+ext.akka_version = '2.5.0'
+ext.akka_http_version = '10.0.5'
+
+ext.ktorVersion='0.4.0'
