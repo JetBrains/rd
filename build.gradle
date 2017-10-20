@@ -69,10 +69,6 @@ allprojects {
             compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
             compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
             compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-            compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
-            compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-            compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
-            compile "com.fasterxml.jackson.module:jackson-module-kotlin:$kotlin_jackson_version"
 
             testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
             testCompile group: 'junit', name: 'junit', version: junit_version
@@ -131,9 +127,6 @@ allprojects {
             force "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
             force "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
             force "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-            force "com.fasterxml.jackson.core:jackson-core:$jackson_version"
-            force "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-            force "com.fasterxml.jackson.module:jackson-module-kotlin:$kotlin_jackson_version"
         }
     }
 

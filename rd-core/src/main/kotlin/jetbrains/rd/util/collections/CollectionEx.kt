@@ -3,12 +3,11 @@ package com.jetbrains.rider.util
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.ifAlive
 import com.jetbrains.rider.util.lifetime.plusAssign
-import java.util.*
 
 fun <T> MutableCollection<T>.addIfNotExists(value : T) : Boolean {
-    if (contains(value)) return false;
-    add(value);
-    return true;
+    if (contains(value)) return false
+    add(value)
+    return true
 }
 
 

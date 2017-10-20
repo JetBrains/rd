@@ -1,0 +1,5 @@
+applyKotlinJS()
+
+dependencies {
+    implement project(":rd-core")
+}

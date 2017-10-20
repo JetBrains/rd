@@ -1,0 +1,5 @@
+applyKotlinJVM()
+
+dependencies {
+    implement project(":rd-core")
+}

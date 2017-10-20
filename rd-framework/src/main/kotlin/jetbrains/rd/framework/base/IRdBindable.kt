@@ -11,7 +11,7 @@ interface IRdBindable : IRdDynamic, IPrintable {
 }
 
 interface IPrintable {
-    fun print(printer: PrettyPrinter) = printer.print(javaClass.simpleName)
+    fun print(printer: PrettyPrinter) = printer.print(this::class.simpleName ?: "IPrintable")
 }
 
 
