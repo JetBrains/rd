@@ -6,6 +6,7 @@ import com.jetbrains.rider.util.lifetime.assertIsAlive
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.onFalse
 import com.jetbrains.rider.util.reactive.IScheduler
+import jetbrains.rd.util.logger.assert
 import jetbrains.rd.util.logger.error
 import jetbrains.rd.util.logger.logger
 

@@ -1,6 +1,7 @@
 package com.jetbrains.rider.framework.impl
 
 import com.jetbrains.rider.framework.IInternRoot
+import jetbrains.rd.util.logger.assert
 
 class InternRoot(val isMaster: Boolean): IInternRoot {
     private val myItemsList = ArrayList<Any>()

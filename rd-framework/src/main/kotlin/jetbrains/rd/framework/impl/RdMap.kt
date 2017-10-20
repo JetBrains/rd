@@ -20,6 +20,7 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
     companion object {
         private enum class Op {Add, Update, Remove, Ack}
 
+
 //        override val _type : Class<*> get() = throw IllegalStateException("Mustn't be used for polymorphic marshalling")
         fun<K:Any, V:Any> read(ctx: SerializationCtx, stream: InputStream, keySzr: ISerializer<K>, valSzr: ISerializer<V>): RdMap<K, V> = RdMap(keySzr, valSzr).withId(RdId.read(stream))
         fun write(ctx: SerializationCtx, stream: OutputStream, value: RdMap<*, *>) = value.id.write(stream)

@@ -2,7 +2,7 @@ package com.jetbrains.rider.framework
 
 import com.jetbrains.rider.util.Maybe
 import com.jetbrains.rider.util.reactive.IScheduler
-import org.apache.commons.logging.LogFactory
+import jetbrains.rd.util.logger.logger
 
 class Protocol(
         override val serializers: ISerializers,
@@ -13,7 +13,7 @@ class Protocol(
 
     companion object {
         val logCategory = "protocol"
-        fun sublogger(subcategory : String) = Maybe.Just(LogFactory.getLog("$logCategory.$subcategory")!!)
+        fun sublogger(subcategory : String) = Maybe.Just(logger("$logCategory.$subcategory"))
         val initializationLogger = sublogger("INIT")
     }
 

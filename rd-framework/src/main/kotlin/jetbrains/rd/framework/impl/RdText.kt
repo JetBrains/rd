@@ -7,6 +7,7 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.AddRemove
 import com.jetbrains.rider.util.reactive.Signal
 import com.jetbrains.rider.util.reactive.ViewableList
+import jetbrains.rd.util.logger.logger
 import org.apache.commons.logging.LogFactory
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,7 +33,7 @@ class RdTextBuffer(var initialText: String? = null,
 
     companion object : IMarshaller<RdTextBuffer> {
 
-        private val logger = LogFactory.getLog(RdTextBuffer::class.java)
+        private val logger = logger<RdTextBuffer>()
 
         override val _type: Class<*> get() = throw IllegalStateException("Mustn't be used for polymorphic marshalling")
 

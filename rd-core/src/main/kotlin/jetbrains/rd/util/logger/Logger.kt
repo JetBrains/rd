@@ -13,6 +13,7 @@ enum class LogLevel {
 }
 
 inline fun <reified T> logger() = Logger.logger(T::class.qualifiedName ?: "<name>")
+fun logger(name: String) = Logger.logger(name)
 
 abstract class Logger {
 
@@ -29,3 +30,8 @@ fun Logger.debug(message: String) = log(LogLevel.Debug, message)
 
 fun Logger.error(message: String, throwable: Throwable? = null) = log(LogLevel.Error, message, throwable)
 fun Logger.warn(message: String, throwable: Throwable? = null) = log(LogLevel.Warn, message, throwable)
+
+inline fun assert(cond: Boolean, lazyMessage: () -> Any) {
+    if (!cond)
+        error(lazyMessage())
+}

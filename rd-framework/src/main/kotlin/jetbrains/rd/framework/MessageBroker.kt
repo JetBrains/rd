@@ -15,7 +15,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) {
         val log = Protocol.sublogger("MQ")
     }
 
-    private val lock = Object()
+    private val lock = Any()
 
     private val subscriptions = hashMapOf<RdId, Subscription>()
     private val broker = hashMapOf<RdId, Mq>()
