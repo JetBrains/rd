@@ -4,7 +4,7 @@ package com.jetbrains.rider.util.string
  * An object that can be converted to a structured text representation for debugging purposes.
  */
 interface IPrintable {
-    fun print(printer: PrettyPrinter) = printer.print(javaClass.simpleName)
+    fun print(printer: PrettyPrinter) = printer.print(this::class.simpleName ?: this.toString())
 }
 
 fun Any?.print(printer: PrettyPrinter) {
