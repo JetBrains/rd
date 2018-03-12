@@ -1,0 +1,8 @@
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.OpStubGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.RandomTextGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.ComposeTestDataGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.OpFrameGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.TransformTestDataGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.ThreeOperationTestDataGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.AlphabetStringGen
+com.jetbrains.rider.util.test.cases.ot.testDataGenerators.RandomExecutionPathTestDataGen
