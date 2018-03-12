@@ -3,7 +3,6 @@ package com.jetbrains.rider.util
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.ifAlive
 import com.jetbrains.rider.util.lifetime.plusAssign
-import java.util.*
 
 fun <T> MutableCollection<T>.addUnique(lifetime : Lifetime, value : T) {
     lifetime.ifAlive {
