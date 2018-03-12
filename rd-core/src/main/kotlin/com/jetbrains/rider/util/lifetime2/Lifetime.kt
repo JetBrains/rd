@@ -103,7 +103,7 @@ class RLifetimeDef : RLifetime() {
             //todo or use helper from executing threads
         }
 
-        assert (!isAlive) {status}
+        require (!isAlive) {status}
         //resources are not guarded by lock because nobody can add anything into them if sta
         for (i in resources.lastIndex downTo 0) {
             val resource = resources[i]
@@ -138,7 +138,7 @@ class RLifetimeDef : RLifetime() {
     }
 
     private fun markTerminatingRecursively() : Boolean {
-        assert(this !== RLifetime.Eternal) { "Trying to terminate eternal lifetime" }
+        require(this !== RLifetime.Eternal) { "Trying to terminate eternal lifetime" }
 
         if (status > Alive) return false //double checked locking
 
