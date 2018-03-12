@@ -3,7 +3,6 @@ package com.jetbrains.rider.util.ot
 import com.jetbrains.rider.util.collections.ImmutableStack
 import com.jetbrains.rider.util.collections.tail
 import com.jetbrains.rider.util.collections.toImmutableStack
-import java.util.*
 
 private fun <T> MutableList<T>.append(el: T): MutableList<T> = this.apply { add(el) }
 
@@ -12,9 +11,9 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
 
     val after = o1.documentLengthAfter()
     val before = o2.documentLengthBefore()
-    assert(o1.isIdentity() || o2.isIdentity() || after == before,
+    require(o1.isIdentity() || o2.isIdentity() || after == before,
             { "length after o1($after) != length before o2($before)" })
-    assert(o1.role == o2.role)
+    require(o1.role == o2.role)
 
     tailrec fun compose0(acc: MutableList<OtChange>, ops1: ImmutableStack<OtChange>, ops2: ImmutableStack<OtChange>) {
         val op1 = ops1.peek()
@@ -44,15 +43,15 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
                 val text2 = op2.text
                 when {
                     text1.length > text2.length -> {
-                        assert(text1.startsWith(text2))
+                        require(text1.startsWith(text2))
                         compose0(acc, tail1.push(InsertText(text1.substring(text2.length))), tail2)
                     }
                     text1.length == text2.length -> {
-                        assert(text1 == text2)
+                        require(text1 == text2)
                         compose0(acc, tail1, tail2)
                     }
                     text1.length < text2.length -> {
-                        assert(text2.startsWith(text1))
+                        require(text2.startsWith(text1))
                         compose0(acc, tail1, tail2.push(DeleteText(text2.substring(text1.length))))
                     }
                     else -> throw IllegalArgumentException("op1 is InsertText && op2 is DeleteText")
@@ -97,9 +96,9 @@ data class OtTransformResult(val newLocalDiff: OtOperation, val localizedApplyTo
 // Ressel’s transformation function
 fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTransformResult {
 
-    assert(localDiff.isIdentity() || remoteApplyToDocument.isIdentity()
+    require(localDiff.isIdentity() || remoteApplyToDocument.isIdentity()
             || localDiff.documentLengthBefore() == remoteApplyToDocument.documentLengthBefore())
-    assert(localDiff.role != remoteApplyToDocument.role)
+    require(localDiff.role != remoteApplyToDocument.role)
 
     tailrec fun transform0(resOp1: MutableList<OtChange>, resOp2: MutableList<OtChange>, ops1: ImmutableStack<OtChange>, ops2: ImmutableStack<OtChange>) {
         val op1: OtChange? = ops1.peek()
@@ -148,7 +147,7 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
                 when {
                     text1.length > text2.length -> transform0(resOp1, resOp2, tail1.push(DeleteText(text1.substring(text2.length))), tail2)
                     text1.length == text2.length -> {
-                        assert(text1 == text2)
+                        require(text1 == text2)
                         transform0(resOp1, resOp2, tail1, tail2)
                     }
                     text1.length < text2.length -> transform0(resOp1, resOp2, tail1, tail2.push(DeleteText(text2.substring(text1.length))))

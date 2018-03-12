@@ -12,6 +12,6 @@ fun TextChange.toOperation(role: OtRole): OtOperation {
     }
     val operation = OtOperation(changes, role)
 
-    assert(operation.documentLengthAfter() == fullDocumentLength)
+    require(operation.documentLengthAfter() == fullDocumentLength)
     return operation
 }

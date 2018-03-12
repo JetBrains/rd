@@ -8,7 +8,7 @@ sealed class OtChange() {
 }
 
 data class Retain(val offset: Int) : OtChange() {
-    init { assert(offset >= 0) }
+    init { require(offset >= 0) }
     override fun isId() = offset == 0
     override fun unaryMinus() = this
     override fun getTextLengthBefore(): Int = offset
