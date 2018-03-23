@@ -1,12 +1,9 @@
 package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.TlsBoxed
-import com.jetbrains.rider.util.catch
-import com.jetbrains.rider.util.insert
+import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reflection.incrementCookie
-import com.jetbrains.rider.util.remove
-import java.util.concurrent.atomic.AtomicReference
 
 class Signal<T> : ISignal<T> {
     companion object {

@@ -1,6 +1,7 @@
 package com.jetbrains.rider.util.reactive
 
-import java.util.concurrent.CountDownLatch
+import com.jetbrains.rider.util.currentThreadName
+import com.jetbrains.rider.util.reflection.threadLocal
 
 /**
  * Allows to queue the execution of actions on a different thread.
@@ -13,7 +14,7 @@ interface IScheduler {
     val isActive: Boolean
     fun assertThread() {
         if (!isActive) {
-            throw IllegalStateException("Illegal scheduler for current action, must be: $this, current thread: ${Thread.currentThread().name}")
+            throw IllegalStateException("Illegal scheduler for current action, must be: $this, current thread: ${currentThreadName()}")
         }
     }
 
@@ -25,11 +26,6 @@ interface IScheduler {
         if (isActive) action()
         else queue(action)
     }
-}
 
-fun IScheduler.flushScheduler() {
-    val finishSignal = CountDownLatch(1)
-    queue({ finishSignal.countDown() })
-
-    finishSignal.await()
+    fun flush()
 }

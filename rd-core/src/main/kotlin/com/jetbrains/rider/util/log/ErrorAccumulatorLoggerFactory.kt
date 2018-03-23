@@ -1,18 +1,19 @@
 package com.jetbrains.rider.util.log
 
 import com.jetbrains.rider.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 
 object ErrorAccumulatorLoggerFactory : ILoggerFactory {
     var warnAsErrors = false
 
-    val errors = ConcurrentLinkedQueue<String>()
+    val errors = mutableListOf<String>()
 
     override fun getLogger(category: String): Logger = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
             if (isEnabled(level)) {
                 val renderMessage = "$level | $message | "+ throwable?.getThrowableText()
-                errors.add(renderMessage)
+                synchronized(this) {
+                    errors.add(renderMessage)
+                }
             }
         }
 

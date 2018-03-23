@@ -2,9 +2,6 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class Property<T>(defaultValue: T) : IProperty<T> {
     override fun set(newValue: T) {
@@ -55,29 +52,29 @@ class Trigger<T : Any>() : OptProperty<T>(), IMutableTrigger<T> {
         super.set(newValue)
     }
 
-    override fun wait(cancellationToken: Lifetime, timeout: Duration, pump: Pump?): Boolean {
-        //short circuit
-        if (cancellationToken.isTerminated) return false
-        if (hasValue) return true
-
-        val lock = CountDownLatch(1)
-        cancellationToken += {lock.countDown()}
-
-        adviseOnce(cancellationToken) { lock.countDown() }
-        if (cancellationToken.isTerminated) return false
-
-        if (pump == null)
-            return lock.await(timeout.toNanos(), TimeUnit.NANOSECONDS) && hasValue
-
-        val stopTime = System.nanoTime() + timeout.toNanos()
-
-        while (System.nanoTime() < stopTime && !cancellationToken.isTerminated) {
-            pump.pumpAction()
-
-            val awaitTimeNanos = minOf(stopTime - System.nanoTime(), pump.pumpPause.toNanos())
-            if (lock.await(maxOf(awaitTimeNanos, 0), TimeUnit.NANOSECONDS) && hasValue)
-                return true
-        }
-        return false
-    }
+//    override fun wait(cancellationToken: Lifetime, timeoutMs: Long, pump: Pump?): Boolean {
+//        //short circuit
+//        if (cancellationToken.isTerminated) return false
+//        if (hasValue) return true
+//
+//        val lock = CountDownLatch(1)
+//        cancellationToken += {lock.countDown()}
+//
+//        adviseOnce(cancellationToken) { lock.countDown() }
+//        if (cancellationToken.isTerminated) return false
+//
+//        if (pump == null)
+//            return lock.await(timeout.toNanos(), TimeUnit.NANOSECONDS) && hasValue
+//
+//        val stopTime = System.nanoTime() + timeout.toNanos()
+//
+//        while (System.nanoTime() < stopTime && !cancellationToken.isTerminated) {
+//            pump.pumpAction()
+//
+//            val awaitTimeNanos = minOf(stopTime - System.nanoTime(), pump.pumpPause.toNanos())
+//            if (lock.await(maxOf(awaitTimeNanos, 0), TimeUnit.NANOSECONDS) && hasValue)
+//                return true
+//        }
+//        return false
+//    }
 }

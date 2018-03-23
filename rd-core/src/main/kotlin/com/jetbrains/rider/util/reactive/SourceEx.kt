@@ -2,10 +2,6 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
-import java.time.Duration
-import java.util.*
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.concurrent.schedule
 
 /**
  * Adds an event subscription that never gets removed.
@@ -90,28 +86,4 @@ fun<T, R> ISource<T>.map(f: (T) -> R) = object : ISource<R> {
     }
 }
 
-private val timer by lazy { Timer("rd throttler", true) }
 
-fun <T : Any> ISource<T>.throttleLast(timeout: Duration, scheduler: IScheduler) = object : ISource<T> {
-
-    override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
-        var currentTask: TimerTask? = null
-        val lastValue = AtomicReference<T?>(null)
-
-        if (lifetime.isTerminated) return
-        lifetime += { currentTask?.cancel() }
-
-        this@throttleLast.advise(lifetime) { v ->
-            if (lastValue.getAndSet(v) == null) {
-                currentTask = timer.schedule(timeout.toMillis()) {
-                    val toSchedule = lastValue.getAndSet(null)?: return@schedule
-                    scheduler.invokeOrQueue {
-                        if (!lifetime.isTerminated)
-                            handler(toSchedule)
-                    }
-                }
-            }
-        }
-
-    }
-}

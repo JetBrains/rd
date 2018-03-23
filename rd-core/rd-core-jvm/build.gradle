@@ -1,5 +1,5 @@
 applyKotlinJVM()
 
 dependencies {
-    implement project(":rd-core")
+    expectedBy project(":rd-core")
 }

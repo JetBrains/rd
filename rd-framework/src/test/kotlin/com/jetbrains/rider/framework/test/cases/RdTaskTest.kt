@@ -8,7 +8,6 @@ import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdTask
 import com.jetbrains.rider.util.reactive.hasValue
 import com.jetbrains.rider.util.reactive.valueOrThrow
-import com.jetbrains.rider.util.threading.Linearization
 import org.testng.annotations.Test
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals

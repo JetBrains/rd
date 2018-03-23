@@ -7,7 +7,6 @@ import com.jetbrains.rider.util.reactive.IOptPropertyView
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.reactive.RdFault
 import com.jetbrains.rider.util.reactive.hasValue
-import com.jetbrains.rider.util.threading.SpinWait
 import java.util.concurrent.CancellationException
 
 /**

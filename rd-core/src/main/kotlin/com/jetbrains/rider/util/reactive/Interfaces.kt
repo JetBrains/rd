@@ -3,7 +3,6 @@ package com.jetbrains.rider.util.reactive
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
 import com.jetbrains.rider.util.time.InfiniteDuration
-import java.time.Duration
 
 /**
  * An object that allows to subscribe to events of type [T].
@@ -188,14 +187,14 @@ fun <T> IProperty<T?>.setValue(lifetime: Lifetime, value: T?) {
  */
 interface IOptProperty<T : Any> : IOptPropertyView<T>, IMutablePropertyBase<T>
 
-class Pump(val pumpAction: (() -> Unit), val pumpPause: Duration)
+class Pump(val pumpAction: (() -> Unit), val pumpPauseMs: Long)
 
-interface ITrigger<T : Any> : IOptPropertyView<T> {
-    fun wait(cancellationToken : Lifetime, timeout: Duration, pump: Pump? = null) : Boolean
-}
+//interface ITrigger<T : Any> : IOptPropertyView<T> {
+//    fun wait(cancellationToken : Lifetime, timeout: Long, pump: Pump? = null) : Boolean
+//}
 
-fun<T : Any> ITrigger<T>.wait() : Boolean = wait(Lifetime.Eternal, InfiniteDuration)
-fun<T : Any> ITrigger<T>.wait(timeout: Duration) : Boolean = wait(Lifetime.Eternal, timeout)
-fun <T : Any> ITrigger<T>.waitAndPump(pumpAction: () -> Unit): Boolean = wait(Lifetime.Eternal, InfiniteDuration, Pump(pumpAction, Duration.ofMillis(50)))
+//fun<T : Any> ITrigger<T>.wait() : Boolean = wait(Lifetime.Eternal, InfiniteDuration)
+//fun<T : Any> ITrigger<T>.wait(timeout: Long) : Boolean = wait(Lifetime.Eternal, timeout)
+//fun <T : Any> ITrigger<T>.waitAndPump(pumpAction: () -> Unit): Boolean = wait(Lifetime.Eternal, InfiniteDuration, Pump(pumpAction, 50))
 
-interface IMutableTrigger<T : Any> : IOptProperty<T>, ITrigger<T>
+//interface IMutableTrigger<T : Any> : IOptProperty<T>, ITrigger<T>

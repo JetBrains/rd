@@ -1,10 +1,13 @@
 package com.jetbrains.rider.util.string
 
+import com.jetbrains.rider.util.lineSeparator
+import kotlin.math.max
+
 enum class Eol(val value: String) {
     asIs (""),
     linux ("\n"),
     windows ("\r\n"),
-    osSpecified (System.lineSeparator())
+    osSpecified (lineSeparator())
 }
 
 class PrettyPrinter() {
@@ -45,16 +48,16 @@ class PrettyPrinter() {
 
 
     fun pad(size: Int) {
-        val padCount = Math.max(size - lastLine.length, 0)
+        val padCount = max(size - lastLine.length, 0)
         p("".padEnd(padCount))
     }
 
     fun println() {
-        print(System.lineSeparator())
+        print(lineSeparator())
     }
     fun println(str: String) {
         print(str)
-        print(System.lineSeparator())
+        print(lineSeparator())
     }
 
     operator fun String.unaryPlus() {

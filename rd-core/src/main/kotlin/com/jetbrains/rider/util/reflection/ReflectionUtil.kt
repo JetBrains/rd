@@ -1,13 +1,15 @@
 package com.jetbrains.rider.util.reflection
 
 
+import com.jetbrains.rider.util.ThreadLocal
+import com.jetbrains.rider.util.threadLocalWithInitial
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
 
 
 inline fun <T,R> T.usingTrueFlag(flag: KMutableProperty1<T, Boolean>, action: () -> R) : R {
-    assert(!flag.get(this))
+    require(!flag.get(this))
 
     try {
         flag.set(this, true)
@@ -31,7 +33,7 @@ inline fun <T,R> incrementCookie(obj : T, property: KMutableProperty1<T, Int>, a
 
 fun <T> threadLocal(initialValue: () -> T): ReadWriteProperty<Any?, T> {
     return object : ReadWriteProperty<Any?, T> {
-        val storage = ThreadLocal.withInitial ( initialValue  )
+        val storage = threadLocalWithInitial ( initialValue  )
         override fun getValue(thisRef: Any?, property: KProperty<*>): T {
             return storage.get()
         }

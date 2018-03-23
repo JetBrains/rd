@@ -6,7 +6,6 @@ import com.jetbrains.rider.util.getLogger
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IScheduler
-import com.jetbrains.rider.util.reactive.flushScheduler
 import com.jetbrains.rider.util.reflection.threadLocal
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
@@ -49,6 +48,10 @@ abstract class SingleThreadSchedulerBase(val name: String) : IScheduler {
     private var active : Int by threadLocal {0}
 
     override val isActive: Boolean get() = active > 0
+
+    override fun flush() {
+        SpinWait.spinUntil { executor.activeCount > 0 }
+    }
 }
 
 class SingleThreadScheduler(val lifetime: Lifetime, name : String) : SingleThreadSchedulerBase(name) {
@@ -80,7 +83,7 @@ class TestSingleThreadScheduler(name : String) : SingleThreadSchedulerBase(name)
     }
 
     fun assertNoExceptions() {
-        flushScheduler()
+        flush()
         val exceptions = ArrayList(thrownExceptions)
         thrownExceptions.clear()
         CompoundThrowable.throwIfNotEmpty(exceptions)

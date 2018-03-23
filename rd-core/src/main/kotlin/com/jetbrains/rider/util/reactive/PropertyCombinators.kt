@@ -75,7 +75,7 @@ fun <TSource, TResult : Any> List<IPropertyView<TSource>>.foldRight(lifetime: Li
     return property
 }
 
-@JvmName("foldRightOpt")
+//@JvmName("foldRightOpt")
 fun <TSource : Any, TResult : Any> List<IOptPropertyView<TSource>>.foldRight(lifetime: Lifetime, initial: TResult, func: (TSource, TResult) -> TResult): OptProperty<TResult> {
     val property = OptProperty<TResult>()
     for (p in this) {
@@ -98,7 +98,7 @@ fun <TSource, TResult : Any> Iterable<IPropertyView<TSource>>.fold(lifetime: Lif
     return property
 }
 
-@JvmName("foldOpt")
+//@JvmName("foldOpt")
 fun <TSource : Any, TResult : Any> Iterable<IOptPropertyView<TSource>>.fold(lifetime: Lifetime, initial: TResult, func: (TResult, TSource) -> TResult): OptProperty<TResult> {
     val property = OptProperty<TResult>()
     for (p in this) {

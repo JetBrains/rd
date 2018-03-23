@@ -6,7 +6,6 @@ import com.jetbrains.rider.util.Logger
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.string.printToString
-import com.jetbrains.rider.util.threading.Sync
 import com.jetbrains.rider.util.trace
 import java.util.*
 

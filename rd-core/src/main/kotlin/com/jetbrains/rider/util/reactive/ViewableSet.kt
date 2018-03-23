@@ -2,7 +2,6 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.catch
 import com.jetbrains.rider.util.lifetime.Lifetime
-import java.util.*
 
 class ViewableSet<T:Any> : IMutableViewableSet<T> {
     override fun add(element: T): Boolean {

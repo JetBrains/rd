@@ -5,7 +5,7 @@ import com.jetbrains.rider.util.reactive.Property
 import org.testng.annotations.Test
 
 class AdviseVsViewTest {
-    @Test
+    @kotlin.Test
     fun adviseBehavior1() {
         val lifetimeDef = Lifetime.create(Lifetime.Eternal)
         val property = Property(false)
