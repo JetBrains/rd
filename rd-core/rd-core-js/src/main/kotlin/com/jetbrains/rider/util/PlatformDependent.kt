@@ -1,6 +1,7 @@
 package com.jetbrains.rider.util
 
 import kotlin.Exception
+import kotlin.reflect.KClass
 
 actual open class ExecutionException actual constructor (message: String, cause: Throwable?) : Exception(message, cause)
 
@@ -26,7 +27,7 @@ actual class ThreadLocal<T>(private var value: T) {
 
 actual fun <T> threadLocalWithInitial(initial: () -> T)= ThreadLocal(initial())
 
-actual fun lineSeparator() : String = "\n"
+actual val eol : String = "\n"
 
 actual object Sync {
     actual inline fun <R: Any?> lock(obj: Any, acton: () -> R) = acton()
@@ -49,5 +50,7 @@ actual inline fun <T : Closeable?, R> T.use(block:(T) -> R) : R {
     }
 }
 
+actual fun Throwable.getThrowableText(): String = toString()
 
+actual fun qualifiedName(kclass: KClass<*>) : String = kclass.simpleName?:"<anonymous>"
 

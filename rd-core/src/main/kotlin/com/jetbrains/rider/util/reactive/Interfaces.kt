@@ -2,7 +2,6 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
-import com.jetbrains.rider.util.time.InfiniteDuration
 
 /**
  * An object that allows to subscribe to events of type [T].

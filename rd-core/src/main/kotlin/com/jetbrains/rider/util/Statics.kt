@@ -12,17 +12,19 @@ class Statics<T: Any> private constructor(val kclass: KClass<T>){
     companion object {
         private val map = mutableMapOf<KClass<*>, Statics<*>>()
 
-//        @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         fun <T:Any> of(kclass: KClass<T>) : Statics<T> {
             synchronized(map) {
                 return map.getOrCreate(kclass) { Statics<T>(kclass) } as Statics<T>
             }
         }
-        inline fun <reified T:Any> of() = of(T::class)
+        inline operator fun <reified T:Any> invoke() = of(T::class)
     }
 
     private val _stack = ViewableList<T>()
     val stack : IViewableList<T> get() = _stack
+
+    fun get() : T? = _stack.lastOrNull()
 
     fun push(value: T) : Closeable {
         _stack.add(value)

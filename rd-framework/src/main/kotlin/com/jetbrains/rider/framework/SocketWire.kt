@@ -49,7 +49,7 @@ class SocketWire {
 
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
 
-        protected val logger: Logger = getCurrentClassLogger()
+        protected val logger: Logger = getLogger(this::class)
         protected val socketProvider = Trigger<Socket>()
 
         private lateinit var output : OutputStream

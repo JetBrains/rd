@@ -1,19 +1,19 @@
 package com.jetbrains.rider.util.string
 
-import com.jetbrains.rider.util.lineSeparator
+import com.jetbrains.rider.util.eol
 import kotlin.math.max
 
 enum class Eol(val value: String) {
     asIs (""),
     linux ("\n"),
     windows ("\r\n"),
-    osSpecified (lineSeparator())
+    osSpecified (eol)
 }
 
 class PrettyPrinter() {
     var step = 2
 
-    var eol = Eol.asIs
+    var eolKind = Eol.asIs
     private val builder = StringBuilder()
     private var needIndent = true
     var indent: Int = 0
@@ -53,11 +53,11 @@ class PrettyPrinter() {
     }
 
     fun println() {
-        print(lineSeparator())
+        print(eol)
     }
     fun println(str: String) {
         print(str)
-        print(lineSeparator())
+        print(eol)
     }
 
     operator fun String.unaryPlus() {
@@ -99,16 +99,16 @@ class PrettyPrinter() {
     }
 
     override fun toString(): String {
-        if (eol == Eol.asIs) return builder.toString()
+        if (eolKind == Eol.asIs) return builder.toString()
         val res = StringBuilder(builder.length)
 
         var i = 0
         while (i < builder.length) {
             if (builder[i] == '\r' && i+1 < builder.length && builder[i+1] == '\n') {
-                res.append(eol.value)
+                res.append(eolKind.value)
                 i++
             } else if (builder[i] == '\r' || builder[i] == '\n') {
-                res.append(eol.value)
+                res.append(eolKind.value)
             } else {
                 res.append(builder[i])
             }

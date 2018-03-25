@@ -43,7 +43,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
         private const val DefaultShrinkIntervalMs = 30000
     }
 
-    private val log = getCurrentClassLogger()
+    private val log = getLogger(this::class)
     private val lock = Object()
     private var lastShrinkOrGrowTimeMs = System.currentTimeMillis()
     private lateinit var asyncProcessingThread: Thread

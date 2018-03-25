@@ -1,5 +1,6 @@
 package com.jetbrains.rider.util
 
+import kotlin.reflect.KClass
 
 expect open class ExecutionException(message: String, cause: Throwable?) : Exception
 expect fun currentThreadName() : String
@@ -18,7 +19,7 @@ expect class ThreadLocal<T> {
 
 expect fun <T> threadLocalWithInitial(initial: () -> T) : ThreadLocal<T>
 
-expect fun lineSeparator() : String
+expect val eol : String
 
 expect object Sync {
     fun <R: Any?> lock(obj: Any, acton: () -> R) : R
@@ -34,3 +35,7 @@ expect interface Closeable {
 }
 
 expect inline fun <T : Closeable?, R> T.use(block:(T) -> R) : R
+
+expect fun Throwable.getThrowableText(): String
+
+expect fun qualifiedName(kclass: KClass<*>) : String

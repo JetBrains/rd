@@ -10,7 +10,6 @@ import kotlin.test.assertEquals
 class ViewableMapTest {
     @Test
     fun testAdvise() {
-        var acc = 0
 
         val map : IMutableViewableMap<Int, Int> = ViewableMap()
         map[0] = 1

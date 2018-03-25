@@ -23,6 +23,11 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
     }
 
     fun throwAndClear() {
-        //todo
+        if (errors.isEmpty()) return
+
+        val text = "There are ${errors.size} exceptions:$eol" +
+                errors.joinToString("$eol$eol --------------------------- $eol$eol")
+        errors.clear()
+        throw IllegalStateException(text)
     }
 }

@@ -4,7 +4,7 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 
 fun <T : Any> IViewableSet<T>.createIsEmpty(lifetime: Lifetime): IPropertyView<Boolean> {
     val property = Property(this.isEmpty())
-    this.advise(lifetime) { e -> property.set(this.isEmpty()) }
+    this.advise(lifetime) { _ -> property.set(this.isEmpty()) }
     return property
 }
 

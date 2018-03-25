@@ -11,7 +11,7 @@ class Session<T : Any>(val property: IProperty<T?>) {
         private set
 
     init {
-        property.viewNotNull (Lifetime.Eternal) { lt, v ->
+        property.viewNotNull (Lifetime.Eternal) { lt, _ ->
             currentLifetime = lt
         }
     }

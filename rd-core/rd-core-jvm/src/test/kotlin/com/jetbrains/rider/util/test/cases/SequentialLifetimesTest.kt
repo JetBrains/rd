@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 
 class SequentialLifetimesTest{
     @Test
-    fun testContract() : Unit {
+    fun testContract() {
         val seq = SequentialLifetimes(Lifetime.Eternal)
 
         assert(seq.isTerminated)
@@ -24,8 +24,8 @@ class SequentialLifetimesTest{
     }
 
     @Test
-    fun testEternal() : Unit {
-        val seq = SequentialLifetimes(Lifetime.Eternal);
+    fun testEternal() {
+        val seq = SequentialLifetimes(Lifetime.Eternal)
 
         var acc = 0
         val lf = seq.next()
@@ -44,10 +44,10 @@ class SequentialLifetimesTest{
     }
 
     @Test
-    fun testNonEternal() : Unit {
+    fun testNonEternal() {
         val def = Lifetime.create(Lifetime.Eternal)
 
-        val seq = SequentialLifetimes(def.lifetime);
+        val seq = SequentialLifetimes(def.lifetime)
 
         var acc = 0
         val lf = seq.next()
@@ -55,7 +55,7 @@ class SequentialLifetimesTest{
         lf += {acc++}
         assertEquals(0, acc)
 
-        LifetimeDefinition.Eternal.terminate(); //bullshit
+        LifetimeDefinition.Eternal.terminate() //bullshit
         assertEquals(0, acc)
 
         seq.next() += {acc++}

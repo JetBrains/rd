@@ -1,5 +1,7 @@
 package com.jetbrains.rider.util.string
 
+import com.jetbrains.rider.util.getThrowableText
+
 /**
  * An object that can be converted to a structured text representation for debugging purposes.
  */
@@ -12,6 +14,7 @@ fun Any?.print(printer: PrettyPrinter) {
         is IPrintable -> this.print(printer)
         null -> printer.print("<null>")
         is String -> printer.print("\"$this\"")
+        is Throwable -> printer.print(getThrowableText())
         is List<*> -> {
             val maxPrint = 3
             printer.print("[")

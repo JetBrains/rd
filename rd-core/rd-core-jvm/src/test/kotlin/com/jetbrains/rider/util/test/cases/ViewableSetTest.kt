@@ -4,7 +4,6 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.AddRemove
 import com.jetbrains.rider.util.reactive.ViewableSet
-import org.testng.Assert
 import org.testng.annotations.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

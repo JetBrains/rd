@@ -39,18 +39,18 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
         get() = _value
 }
 
-class Trigger<T : Any>() : OptProperty<T>(), IMutableTrigger<T> {
-    constructor(v: T) : this() {
-        set(v)
-    }
-
-    override fun set(newValue: T) {
-        if (_value != null && _value != newValue) {
-            throw IllegalStateException("Trigger already set with `$_value`, but you try to rewrite it to `$newValue`")
-        }
-
-        super.set(newValue)
-    }
+//class Trigger<T : Any>() : OptProperty<T>(), IMutableTrigger<T> {
+//    constructor(v: T) : this() {
+//        set(v)
+//    }
+//
+//    override fun set(newValue: T) {
+//        if (_value != null && _value != newValue) {
+//            throw IllegalStateException("Trigger already set with `$_value`, but you try to rewrite it to `$newValue`")
+//        }
+//
+//        super.set(newValue)
+//    }
 
 //    override fun wait(cancellationToken: Lifetime, timeoutMs: Long, pump: Pump?): Boolean {
 //        //short circuit
@@ -77,4 +77,4 @@ class Trigger<T : Any>() : OptProperty<T>(), IMutableTrigger<T> {
 //        }
 //        return false
 //    }
-}
+//}

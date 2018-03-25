@@ -1,10 +1,13 @@
 package com.jetbrains.rider.util
 
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.use
+import kotlin.reflect.KClass
 
 actual typealias ExecutionException = ExecutionException
 
@@ -23,7 +26,7 @@ actual typealias ThreadLocal<T> = java.lang.ThreadLocal<T>
 
 actual fun <T> threadLocalWithInitial(initial: () -> T) : ThreadLocal<T> = ThreadLocal.withInitial(initial)
 
-actual fun lineSeparator() : String = System.lineSeparator()
+actual val eol : String = System.lineSeparator()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 actual object Sync {
@@ -38,3 +41,6 @@ actual fun<K,V> concurrentMapOf() : MutableMap<K,V> = ConcurrentHashMap()
 actual typealias Closeable = java.io.Closeable
 actual inline fun <T : Closeable?, R> T.use(block:(T) -> R) : R = use(block)
 
+actual fun Throwable.getThrowableText(): String = StringWriter().apply { printStackTrace(PrintWriter(this)) }.toString()
+
+actual fun qualifiedName(kclass: KClass<*>) : String = kclass.qualifiedName?:"<anonymous>"

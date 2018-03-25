@@ -1,5 +1,7 @@
 package com.jetbrains.rider.util
 
+import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
 enum class LogLevel {
@@ -20,39 +22,42 @@ interface ILoggerFactory {
     fun getLogger(category: String): Logger
 }
 
-//jvm impl backed by commons-logging
-internal object DefaultLoggerFactory : ILoggerFactory {
-    override fun getLogger(category: String): Logger = object : Logger {
-        private val internalLogger = org.apache.commons.logging.LogFactory.getLog(category)
 
+class SwitchLogger(category: String) : Logger {
+    private lateinit var realLogger: Logger
+
+    init {
+        Statics<ILoggerFactory>().stack.viewableTail().advise(Lifetime.Eternal) { factory ->
+            realLogger = (factory?:ConsoleLoggerFactory).getLogger(category)
+        }
+    }
+
+    override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
+        realLogger.log(level, message, throwable)
+    }
+
+    override fun isEnabled(level: LogLevel): Boolean = realLogger.isEnabled(level)
+
+}
+
+
+object ConsoleLoggerFactory : ILoggerFactory {
+    var level : LogLevel = LogLevel.Trace
+    override fun getLogger(category: String) = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
-            when (level) {
-                LogLevel.Trace  -> internalLogger.trace(message, throwable)
-                LogLevel.Debug  -> internalLogger.debug(message, throwable)
-                LogLevel.Info   -> internalLogger.info(message, throwable)
-                LogLevel.Warn   -> internalLogger.warn(message, throwable)
-                LogLevel.Error  -> internalLogger.error(message, throwable)
-                LogLevel.Fatal  -> internalLogger.fatal(message, throwable)
-            }
+            if (!isEnabled(level)) return
+            println("$level | $category | ${message?.toString()} ${throwable?.getThrowableText()}")
         }
 
-        override fun isEnabled(level: LogLevel) : Boolean =  when (level) {
-            LogLevel.Trace  -> internalLogger.isTraceEnabled
-            LogLevel.Debug  -> internalLogger.isDebugEnabled
-            LogLevel.Info   -> internalLogger.isInfoEnabled
-            LogLevel.Warn   -> internalLogger.isWarnEnabled
-            LogLevel.Error  -> internalLogger.isErrorEnabled
-            LogLevel.Fatal  -> internalLogger.isFatalEnabled
-        }
+        override fun isEnabled(level: LogLevel): Boolean = level >= this@ConsoleLoggerFactory.level
+
     }
 }
 
 
-
-fun getLogger(category: String) = (Static.peek(ILoggerFactory::class) ?: DefaultLoggerFactory).getLogger(category)
-fun getLogger(categoryKlass: KClass<*>): Logger = getLogger(categoryKlass.qualifiedName ?: "Undefined-Logger")
+fun getLogger(category: String) = SwitchLogger(category)
+fun getLogger(categoryKclass: KClass<*>): Logger = getLogger(qualifiedName(categoryKclass))
 inline fun <reified T> getLogger() = getLogger(T::class)
-fun Any.getCurrentClassLogger() = getLogger(this::class)
 
 
 inline fun Logger.log(level: LogLevel, msg: () -> Any?) {

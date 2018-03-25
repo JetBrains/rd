@@ -1,4 +1,4 @@
-package com.jetbrains.rider.util
+package com.jetbrains.rider.util.threading
 
 import java.io.PrintStream
 import java.io.PrintWriter

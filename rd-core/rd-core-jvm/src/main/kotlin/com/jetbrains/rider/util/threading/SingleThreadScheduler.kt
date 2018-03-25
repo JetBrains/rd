@@ -1,6 +1,5 @@
 package com.jetbrains.rider.util.threading
 
-import com.jetbrains.rider.util.CompoundThrowable
 import com.jetbrains.rider.util.error
 import com.jetbrains.rider.util.getLogger
 import com.jetbrains.rider.util.lifetime.Lifetime
@@ -12,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class SingleThreadSchedulerBase(val name: String) : IScheduler {
     abstract fun onException(ex: Throwable)
@@ -31,14 +31,17 @@ abstract class SingleThreadSchedulerBase(val name: String) : IScheduler {
             onException(t)
         }
     }
+    val tasksInQueue = AtomicInteger(0)
 
     override fun queue(action: () -> Unit) {
+        tasksInQueue.incrementAndGet()
         executor.execute {
             active++
             try {
                 action()
             } finally {
                 active --
+                tasksInQueue.decrementAndGet()
             }
         }
     }
@@ -50,7 +53,9 @@ abstract class SingleThreadSchedulerBase(val name: String) : IScheduler {
     override val isActive: Boolean get() = active > 0
 
     override fun flush() {
-        SpinWait.spinUntil { executor.activeCount > 0 }
+        require(!isActive) {"Can't flush this scheduler in a reentrant way: we are inside queued item's execution"}
+
+        SpinWait.spinUntil { tasksInQueue.get() == 0 }
     }
 }
 
@@ -89,3 +94,4 @@ class TestSingleThreadScheduler(name : String) : SingleThreadSchedulerBase(name)
         CompoundThrowable.throwIfNotEmpty(exceptions)
     }
 }
+
