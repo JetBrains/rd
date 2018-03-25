@@ -161,6 +161,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
 
 
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.intfSimpleName : String get () {
         val async = this.freeThreaded.condstr { "Async" }
         return when (this) {
@@ -197,6 +198,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         }
     }
 
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName : String get () = when (this) {
         is Member.Reactive.Task -> when (actualFlow) {
             Sink -> "RdEndpoint"
@@ -270,7 +272,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         toplevels.sortedBy { it.name }.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
-                    eol = Eol.linux
+                    eolKind = Eol.linux
                     step = 2
 
                     //actual generation

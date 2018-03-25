@@ -78,8 +78,8 @@ object ExampleModelNova : Ext(ExampleRootNova) {
             },
             classdef("TextControl") {
                 property("selection", selection).readonly
-                voidSink("vsink")
-                voidSource("vsource")  //hi vsauce, Michael here
+                sink("vsink", void)
+                source("vsource", void)  //hi vsauce, Michael here
                 call ("there1", int, string)
             }
         )

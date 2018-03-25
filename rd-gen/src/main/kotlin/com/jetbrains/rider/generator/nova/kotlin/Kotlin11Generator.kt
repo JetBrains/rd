@@ -63,6 +63,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     //members
     val Member.Reactive.actualFlow : FlowKind get() = flowTransform.transform(flow)
 
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.intfSimpleName : String get () {
         val async = this.freeThreaded.condstr { "Async" }
         return when (this) {
@@ -98,6 +99,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         }
     }
 
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName : String get () = when (this) {
         is Member.Reactive.Task -> when (actualFlow) {
             Sink -> "RdEndpoint"
@@ -190,7 +192,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         toplevels.sortedBy { it.name }.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
-                    eol = Eol.linux
+                    eolKind = Eol.linux
                     step = 4
 
                     //actual generation
@@ -686,7 +688,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
 
         val own = decl.ownMembers.map {
-            val attrs = it.getSetting(Kotlin11Generator.Attributes)?.fold("") { acc,attr -> "$acc@$attr${eol.value}" }
+            val attrs = it.getSetting(Kotlin11Generator.Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
             (attrs?:"") + "${ctorParamAccessModifier(it)}val ${it.ctorParam(decl)}"
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }

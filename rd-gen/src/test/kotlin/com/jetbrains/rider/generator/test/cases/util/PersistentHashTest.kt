@@ -1,10 +1,9 @@
 package com.jetbrains.rider.generator.test.cases.util
 
 import com.jetbrains.rider.util.hash.PersistentHash
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.testng.annotations.AfterTest
+import org.testng.annotations.BeforeTest
+import org.testng.annotations.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,12 +15,12 @@ class PersistentHashTest {
 
     var file : Path = Paths.get("fake")
 
-    @Before
+    @BeforeTest
     fun setUp() {
         file  = Files.createTempFile("PersistentHash", ".txt")
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         file.toFile().delete()
     }
@@ -101,7 +100,7 @@ class PersistentHashTest {
         hash.store(file)
         val loaded = PersistentHash.load(file)
 
-        Assert.assertEquals(hash, loaded)
+        assertEquals(hash, loaded)
     }
 
     @Test
