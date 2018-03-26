@@ -6,7 +6,7 @@ import com.jetbrains.rider.util.trace
 
 interface ISerializersOwner {
     fun register(serializers : ISerializers) {
-        val key = javaClass
+        val key = this::class
         if (!serializers.toplevels.add(key)) return
 
         Protocol.initializationLogger.trace { "REGISTER serializers for ${key.simpleName}" }

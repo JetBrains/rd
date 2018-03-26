@@ -1,8 +1,8 @@
 package com.jetbrains.rider.framework
 
 
-import com.jetbrains.rider.framework.base.AbstractBuffer
-import java.util.concurrent.atomic.AtomicInteger
+import com.jetbrains.rider.util.AtomicInteger
+import com.jetbrains.rider.util.string.condstr
 
 enum class IdKind {
     Client,
@@ -21,8 +21,6 @@ internal fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = initi
 data class RdId(val hash: Long) {
 
     companion object {
-        val allIds = HashSet<Long>()
-
         val Null : RdId = RdId( 0)
         const val MAX_STATIC_ID = 1000000
 
@@ -40,7 +38,10 @@ data class RdId(val hash: Long) {
     val isNull: Boolean get() { return equals(Null) }
 
     override fun toString(): String {
-        return java.lang.Long.toUnsignedString(hash)
+        // java.lang.Long.toUnsignedString(hash)
+        val quot = hash.ushr(1) / 5
+        val rem = hash - quot * 10
+        return (quot > 0).condstr { quot.toString() } + rem
     }
 
     fun notNull() : RdId {
@@ -65,7 +66,7 @@ data class RdId(val hash: Long) {
  * on the client and the server side of the protocol.
  */
 class Identities(dynamicKind : IdKind = IdKind.Client) : IIdentities {
-    private val idAcc = AtomicInteger(when(dynamicKind) {
+    private var idAcc = AtomicInteger(when(dynamicKind) {
         IdKind.Client -> BASE_CLIENT_ID
         IdKind.Server -> BASE_SERVER_ID
     })

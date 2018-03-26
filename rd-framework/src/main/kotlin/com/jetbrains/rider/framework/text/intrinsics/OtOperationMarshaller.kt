@@ -1,8 +1,9 @@
 package com.jetbrains.rider.framework.text.intrinsics
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.util.ot.*
+import kotlin.reflect.*
 
 @Suppress("unused")
 object OtOperationMarshaller : IMarshaller<OtOperation> {
@@ -10,8 +11,8 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
     private const val InsertCode: Byte = 2
     private const val DeleteCode: Byte = 3
 
-    override val _type: Class<*>
-        get() = OtOperation::class.java
+    override val _type: KClass<*>
+        get() = OtOperation::class
 
     override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OtOperation {
         val changes = buffer.readList {

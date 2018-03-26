@@ -1,23 +1,22 @@
 package com.jetbrains.rider.framework
 
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.util.AtomicInteger
 import com.jetbrains.rider.util.blockingPutUnique
 import com.jetbrains.rider.util.getOrCreate
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IScheduler
+import com.jetbrains.rider.util.string.IPrintable
+import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
 import com.jetbrains.rider.util.trace
-import java.io.PrintWriter
-import java.io.StringWriter
-import java.util.concurrent.atomic.AtomicInteger
 
-class MessageBroker(private val defaultScheduler: IScheduler) {
+class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
     companion object {
         val log = Protocol.sublogger("MQ")
     }
 
-    private val lock = Object()
+    private val lock = Any()
 
     private val subscriptions = hashMapOf<RdId, Subscription>()
     private val broker = hashMapOf<RdId, Mq>()
@@ -29,7 +28,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) {
         val handler: (AbstractBuffer) -> Unit
     ) {
 
-        val inProcessCount = AtomicInteger()
+        val inProcessCount = AtomicInteger(0)
 
         fun invoke(msg: AbstractBuffer) {
             inProcessCount.incrementAndGet()
@@ -80,7 +79,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) {
                         if (--broker[id]!!.defaultSchedulerMessages == 0) {
                             broker.remove(id)!!.customSchedulerMessages.forEach {
                                 subscription?.apply {
-                                    assert (scheduler != defaultScheduler)
+                                    require (scheduler != defaultScheduler)
                                     subscription.invoke(message)
                                 }
                             }
@@ -95,7 +94,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) {
                 } else {
                     val mq = broker[id]
                     if (mq != null) {
-                        assert(mq.defaultSchedulerMessages > 0)
+                        require(mq.defaultSchedulerMessages > 0)
                         mq.customSchedulerMessages.add(message)
                     } else {
                         s.invoke(message)
@@ -117,37 +116,32 @@ class MessageBroker(private val defaultScheduler: IScheduler) {
         subscriptions.blockingPutUnique(lifetime, lock, id, Subscription(this, id, scheduler, handler))
     }
 
-
-    //Diagnostics
-    fun dump(out: PrintWriter) {
+    override fun print(printer: PrettyPrinter) {
         synchronized(lock) {
-            out.println("MessageBroker Dump")
+            printer.println("MessageBroker Dump")
 
-            out.println()
-            out.println("Messages to unsubscribed: ${broker.size}")
+            printer.println()
+            printer.println("Messages to unsubscribed: ${broker.size}")
             if (broker.size > 0) {
-                out.println()
-                out.println("Id".padEnd(20) + "    " + "#Messages")
-                out.println("".padStart(20, '-') + "----" + "".padStart(9, '-'))
+                printer.println()
+                printer.println("Id".padEnd(20) + "    " + "#Messages")
+                printer.println("".padStart(20, '-') + "----" + "".padStart(9, '-'))
                 for ((key, value) in broker) {
                     val customSize = value.customSchedulerMessages.size
-                    out.println("$key".padEnd(20) + " -> " + value.defaultSchedulerMessages +
-                        (customSize > 0).condstr { " (+$customSize background messages)" })
+                    printer.println("$key".padEnd(20) + " -> " + value.defaultSchedulerMessages +
+                            (customSize > 0).condstr { " (+$customSize background messages)" })
                 }
             }
 
-            out.println()
-            out.println("Subscribers: ${subscriptions.entries.sumBy { it.value.inProcessCount.get() }}")
-            out.println()
-            out.println("SubscriberId".padEnd(20) + "    " + "#MessagesInQueue")
-            out.println("".padStart(20, '-') + "----" + "".padStart(16, '-'))
+            printer.println()
+            printer.println("Subscribers: ${subscriptions.entries.sumBy { it.value.inProcessCount.get() }}")
+            printer.println()
+            printer.println("SubscriberId".padEnd(20) + "    " + "#MessagesInQueue")
+            printer.println("".padStart(20, '-') + "----" + "".padStart(16, '-'))
             for ((key, value) in subscriptions) {
-                out.println("$key".padEnd(20) + " -> " + value.inProcessCount.get())
+                printer.println("$key".padEnd(20) + " -> " + value.inProcessCount.get())
             }
 
         }
     }
-
-    fun dumpToString() = StringWriter().apply { dump(PrintWriter(this, true)) }.toString()
-
 }

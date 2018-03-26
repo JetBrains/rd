@@ -2,8 +2,10 @@ rootProject.name = 'rd'
 
 // Application agnostic common code (aka utils, shared, common, misc)
 
-include 'rd-framework'
-include 'rd-gen'
 include 'rd-core'
 include 'rd-core:rd-core-jvm'
 include 'rd-core:rd-core-js'
+include 'rd-gen'
+include 'rd-framework'
+include 'rd-framework:rd-framework-jvm'
+include 'rd-framework:rd-framework-js'

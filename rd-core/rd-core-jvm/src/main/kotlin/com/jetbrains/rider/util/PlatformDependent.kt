@@ -2,16 +2,19 @@ package com.jetbrains.rider.util
 
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.Date
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.use
 import kotlin.reflect.KClass
 
 actual typealias ExecutionException = ExecutionException
 
-actual fun currentThreadName() = Thread.currentThread().name!!
+actual fun currentThreadName() : String = Thread.currentThread().run { "$id:$name"}
 
 actual class AtomicReference<T> actual constructor(initial: T) {
     private val impl = AtomicReference(initial)
@@ -21,6 +24,7 @@ actual class AtomicReference<T> actual constructor(initial: T) {
 }
 
 actual typealias CancellationException = CancellationException
+actual typealias TimeoutException = TimeoutException
 
 actual typealias ThreadLocal<T> = java.lang.ThreadLocal<T>
 
@@ -44,3 +48,15 @@ actual inline fun <T : Closeable?, R> T.use(block:(T) -> R) : R = use(block)
 actual fun Throwable.getThrowableText(): String = StringWriter().apply { printStackTrace(PrintWriter(this)) }.toString()
 
 actual fun qualifiedName(kclass: KClass<*>) : String = kclass.qualifiedName?:"<anonymous>"
+
+actual fun measureTimeMillis(block: () -> Unit): Long = kotlin.system.measureTimeMillis(block)
+
+//special jvm classes
+actual typealias URI = java.net.URI
+
+actual typealias Date = Date
+
+actual typealias UUID = java.util.UUID
+
+actual typealias AtomicInteger = AtomicInteger
+

@@ -15,7 +15,11 @@ actual class AtomicReference<T> actual constructor(initial: T) {
 
 actual class CancellationException(message: String, cause: Throwable?) : IllegalStateException(message, cause) {
     actual constructor() : this("", null)
+    actual constructor(message: String) : this(message, null)
+
 }
+
+actual class TimeoutException actual constructor(message: String) : Exception(message)
 
 actual class ThreadLocal<T>(private var value: T) {
     actual fun get(): T = value
@@ -54,3 +58,34 @@ actual fun Throwable.getThrowableText(): String = toString()
 
 actual fun qualifiedName(kclass: KClass<*>) : String = kclass.simpleName?:"<anonymous>"
 
+//todo js measure time
+actual fun measureTimeMillis(block: () -> Unit): Long {
+    getLogger("rd").warn {"Method `measureTimeMillis` always returns 0 in kotlin-js"}
+    block()
+    return 0
+}
+
+//special jvm classes
+actual class URI actual constructor(private val uriString: String) {
+    override fun toString(): String = uriString
+}
+
+
+actual class Date actual constructor(private val millisSinceEpoch: Long) {
+    actual fun getTime(): Long = millisSinceEpoch
+}
+
+actual class UUID actual constructor(private val hi: Long, private val lo: Long) {
+    actual fun getMostSignificantBits(): Long = hi
+    actual fun getLeastSignificantBits(): Long = lo
+}
+
+actual class AtomicInteger actual constructor(var v: Int) {
+    actual fun getAndAdd(v: Int) : Int = this.v.also { this.v += v }
+
+    actual fun get(): Int = v
+
+    actual fun incrementAndGet(): Int = ++v
+
+    actual fun decrementAndGet(): Int = --v
+}

@@ -1,9 +1,6 @@
 package com.jetbrains.rider.framework.impl
 
-import com.jetbrains.rider.framework.ISerializer
-import com.jetbrains.rider.framework.Polymorphic
-import com.jetbrains.rider.framework.RdId
-import com.jetbrains.rider.framework.SerializationCtx
+import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.*
 import com.jetbrains.rider.util.error
 import com.jetbrains.rider.util.lifetime.Lifetime
@@ -31,7 +28,9 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
 
     var nextVersion = 0L
     val pendingForAck = mutableMapOf<K, Long>()
-    val master: Boolean get() = !optimizeNested //todo do it correct
+
+    var manualMaster : Boolean? = null
+    val master: Boolean get() = manualMaster?: !optimizeNested //todo do it correct
 
 
     var optimizeNested: Boolean = false

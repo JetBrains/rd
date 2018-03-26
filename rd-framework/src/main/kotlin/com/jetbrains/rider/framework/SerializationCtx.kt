@@ -1,6 +1,5 @@
 package com.jetbrains.rider.framework
 
-import com.jetbrains.rider.framework.base.AbstractBuffer
 import com.jetbrains.rider.framework.impl.InternRoot
 
 class SerializationCtx(val serializers: ISerializers, val internRoot: IInternRoot? = null) {

@@ -2,7 +2,7 @@ package com.jetbrains.rider.framework.text.intrinsics
 
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.text.TextBufferVersion
 import com.jetbrains.rider.framework.text.RdTextChange
 import com.jetbrains.rider.framework.text.RdTextChangeKind
@@ -10,6 +10,7 @@ import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
+import kotlin.reflect.*
 
 enum class RdChangeOrigin {
     Master,
@@ -47,7 +48,7 @@ data class RdTextBufferChange(val version: TextBufferVersion, val origin: RdChan
             buffer.writeInt(change.fullTextLength)
         }
 
-        override val _type: Class<RdTextBufferChange> get() = RdTextBufferChange::class.java
+        override val _type: KClass<RdTextBufferChange> get() = RdTextBufferChange::class
     }
 
     override fun print(printer: PrettyPrinter) {

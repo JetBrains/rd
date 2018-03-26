@@ -3,12 +3,12 @@ package com.jetbrains.rider.framework.base
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.impl.RdPropertyBase
 import com.jetbrains.rider.util.Logger
+import com.jetbrains.rider.util.Sync
+import com.jetbrains.rider.util.collections.QueueImpl
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.util.trace
-import java.util.*
-
 
 abstract class RdExtBase : RdReactiveBase() {
     enum class ExtState {
@@ -55,6 +55,7 @@ abstract class RdExtBase : RdReactiveBase() {
             val remoteState = buffer.readEnum<ExtState>()
             logReceived.traceMe { "remote: $remoteState " }
 
+            @Suppress("REDUNDANT_ELSE_IN_WHEN")
             when (remoteState) {
                 RdExtBase.ExtState.Ready -> {
 
@@ -108,7 +109,11 @@ abstract class RdExtBase : RdReactiveBase() {
 
 //todo make it more efficient
 class ExtScheduler(private val parentScheduler: IScheduler) : IScheduler {
-    private val queue : Queue<Pair<Long, () -> Unit>> = LinkedList<Pair<Long, () -> Unit>>()
+    override fun flush() {
+        parentScheduler.flush()
+    }
+
+    private val queue = QueueImpl<Pair<Long, () -> Unit>>()
     private var nextActionId = 0L
 
     override fun queue(action: () -> Unit) {
@@ -130,7 +135,7 @@ class ExtScheduler(private val parentScheduler: IScheduler) : IScheduler {
                 if (queue.isEmpty())
                     null
                 else {
-                    val (number, action) = queue.peek()
+                    val (number, action) = queue.peek()!!
                     if (number <= id) {
                         queue.poll()
                         action
@@ -150,7 +155,7 @@ class ExtScheduler(private val parentScheduler: IScheduler) : IScheduler {
 class ExtWire : IWire {
 
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
-        connectedWire.value?.send(id, writer)?: sendQ.add(id to UnsafeBuffer(ByteArray(10)).also(writer).getArray()!!)
+        connectedWire.value?.send(id, writer)?: sendQ.add(id to createAbstractBuffer().also(writer).getArray())
     }
 
     override fun advise(lifetime: Lifetime, id: RdId, handler: (AbstractBuffer) -> Unit) {

@@ -28,8 +28,8 @@ class InternRoot(val isMaster: Boolean): IInternRoot {
     private fun isIndexOwned(id: Int) = (id and 1 == 0) xor isMaster
 
     override fun setInternedCorrespondence(id: Int, value: Any) {
-        assert(!isIndexOwned(id), { "Setting interned correspondence for object that we should have written, bug?" })
-        assert(id / 2 == otherItemsList.size, { "Out-of-sequence interned object id" })
+        require(!isIndexOwned(id), { "Setting interned correspondence for object that we should have written, bug?" })
+        require(id / 2 == otherItemsList.size, { "Out-of-sequence interned object id" })
 
         otherItemsList.add(value)
         inverseMap[value] = id

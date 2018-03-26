@@ -1,10 +1,11 @@
 package com.jetbrains.rider.framework.base
 
 import com.jetbrains.rider.framework.*
+import com.jetbrains.rider.util.concurrentMapOf
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.Signal
 import com.jetbrains.rider.util.string.IPrintable
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
 
 
 abstract class RdBindableBase : IRdBindable, IPrintable {
@@ -67,11 +68,11 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
-    private val extensions = ConcurrentHashMap<String, Any>()
+    private val extensions = concurrentMapOf<String, Any>()
 
-    inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class.java, create)
+    inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, create)
 
-    fun <T:Any> getOrCreateExtension(name: String, clazz: Class<T>, create: () -> T) : T {
+    fun <T:Any> getOrCreateExtension(name: String, clazz: KClass<T>, create: () -> T) : T {
         val res = extensions.getOrPut(name) {
             val newExtension = create()
             if (newExtension is IRdBindable) {
@@ -85,7 +86,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
             newExtension
         }
         @Suppress("UNCHECKED_CAST")
-        return res as? T ?: throw error("Wrong class found in extension ${location()}.$name : Expected ${clazz.name} but found ${res.javaClass.name}. Maybe you already set this extension with another type?")
+        return res as? T ?: throw error("Wrong class found in extension ${location()}.$name : Expected ${clazz.simpleName} but found ${res::class.simpleName}. Maybe you already set this extension with another type?")
     }
 
     //need to implement in subclasses

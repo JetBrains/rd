@@ -1,14 +1,10 @@
 package com.jetbrains.rider.framework
 
-import com.jetbrains.rider.framework.base.AbstractBuffer
 import com.jetbrains.rider.framework.base.ISerializersOwner
 import com.jetbrains.rider.framework.impl.RdSecureString
-import com.jetbrains.rider.util.PublicApi
-import com.jetbrains.rider.util.trace
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.*
+import com.jetbrains.rider.util.*
 import kotlin.collections.HashSet
+import kotlin.reflect.*
 
 private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. " +
     "Usually it should be done automagically during 'bind()' invocation but in complex cases you should do it manually."
@@ -16,11 +12,11 @@ private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'regis
 @Suppress("UNCHECKED_CAST")
 class Serializers : ISerializers {
 
-    override val toplevels: MutableSet<Class<ISerializersOwner>> = HashSet()
+    override val toplevels: MutableSet<KClass<out ISerializersOwner>> = HashSet()
 
-    val types = hashMapOf<RdId,Class<*>>()
+    val types = hashMapOf<RdId,KClass<*>>()
     val readers = hashMapOf<RdId, (SerializationCtx, AbstractBuffer) -> Any>()
-    val writers = hashMapOf<Class<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
+    val writers = hashMapOf<KClass<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
 
     init {
         @Suppress("LeakingThis")
@@ -35,13 +31,13 @@ class Serializers : ISerializers {
 
         val existing = types[id]
         if (existing != null ){
-            require (existing == t) { "Can't register ${t.name} with id: $id, already registered: ${existing.name}" }
+            require (existing == t) { "Can't register ${t.simpleName} with id: $id, already registered: ${existing.simpleName}" }
         } else {
             types[id] = t
         }
 
-        readers.put(id, serializer::read)
-        writers.put(t, Pair(id, serializer::write) as Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>)
+        readers[id] = serializer::read
+        writers[t] = Pair(id, serializer::write) as Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>
     }
 
     override fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer): T? {
@@ -66,7 +62,7 @@ class Serializers : ISerializers {
     }
 
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
-        val (id, writer) = writers[value::class.java] ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
+        val (id, writer) = writers[value::class] ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
         id.write(stream)
         writer(ctx, stream, value)
     }
@@ -94,22 +90,26 @@ private fun transformGuidUuid(data : ByteArray) : ByteArray {
 //}
 
 fun AbstractBuffer.readUuid(): UUID {
-    val bb = ByteBuffer.wrap(transformGuidUuid(readByteArray()))
-    return UUID(bb.long, bb.long)
+//    val bb = ByteBuffer.wrap(transformGuidUuid(readByteArray()))
+    val data = transformGuidUuid(readByteArray())
+    require(data.size == 16)
+
+    return UUID(data.parseLong(0), data.parseLong(8))
 }
 
 fun AbstractBuffer.readGuid(): UUID = this.readUuid()
 
 fun AbstractBuffer.readDateTime(): Date {
-    val l = readLong()
-    return Date((l - TICKS_AT_EPOCH) / TICKS_PER_MILLISECOND)
+    val timeInTicks = readLong()
+    val timeInMillisecondsSinceEpoch = (timeInTicks - TICKS_AT_EPOCH) / TICKS_PER_MILLISECOND
+    return Date(timeInMillisecondsSinceEpoch)
 }
 
-fun AbstractBuffer.readUri(): URI = URI.create(readString())
+fun AbstractBuffer.readUri(): URI = URI(readString())
 
 inline fun <reified T : Enum<T>> AbstractBuffer.readEnum(): T {
-    val intValue = readInt()
-    return T::class.java.enumConstants[intValue]
+    val ordinal = readInt()
+    return parseFromOrdinal(ordinal)
 }
 
 fun AbstractBuffer.readRdId(): RdId {
@@ -142,13 +142,19 @@ inline fun <reified T> AbstractBuffer.readList(inner: () -> T): List<T> {
 /*writer*/
 
 fun AbstractBuffer.writeUuid(value: UUID) {
-    writeByteArray(transformGuidUuid(ByteBuffer.allocate(16).putLong(value.mostSignificantBits).putLong(value.leastSignificantBits).array()))
+    val uuidBytes = ByteArray(16)
+    uuidBytes.putLong(value.getMostSignificantBits(), 0)
+    uuidBytes.putLong(value.getLeastSignificantBits(), 8)
+
+    val guidBytes = transformGuidUuid(uuidBytes)
+    writeByteArray(guidBytes)
 }
 
 fun AbstractBuffer.writeGuid(value: UUID) = writeUuid(value)
 
 fun AbstractBuffer.writeDateTime(value: Date) {
-    writeLong(value.time * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH)
+    val timeInTicks = value.getTime() * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH
+    writeLong(timeInTicks)
 }
 
 fun AbstractBuffer.writeUri(value: URI) {

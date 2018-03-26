@@ -2,10 +2,11 @@ package com.jetbrains.rider.framework.text.intrinsics
 
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.print
+import kotlin.reflect.*
 
 data class RdAssertion (
         val masterVersion : Int,
@@ -15,7 +16,7 @@ data class RdAssertion (
     //companion
 
     companion object : IMarshaller<RdAssertion> {
-        override val _type: Class<RdAssertion> = RdAssertion::class.java
+        override val _type: KClass<RdAssertion> = RdAssertion::class
 
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAssertion {
@@ -38,7 +39,7 @@ data class RdAssertion (
     //equals trait
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other?.javaClass != javaClass) return false
+        if (other == null || other::class != this::class) return false
 
         other as RdAssertion
 

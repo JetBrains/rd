@@ -4,13 +4,14 @@ import com.jetbrains.rider.framework.IIdentities
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.RdId
 import com.jetbrains.rider.framework.SerializationCtx
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.impl.RdSignal
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.ot.OtOperation
 import com.jetbrains.rider.util.reactive.ISignal
 import com.jetbrains.rider.util.string.PrettyPrinter
+import kotlin.reflect.*
 
 // auto-generated class
 class RdOtState (
@@ -20,7 +21,7 @@ class RdOtState (
     //companion
 
     companion object : IMarshaller<RdOtState> {
-        override val _type: Class<RdOtState> = RdOtState::class.java
+        override val _type: KClass<RdOtState> = RdOtState::class
 
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdOtState {

@@ -1,15 +1,13 @@
 package com.jetbrains.rider.framework.text.intrinsics
 
-import com.jetbrains.rider.framework.IMarshaller
-import com.jetbrains.rider.framework.RdId
-import com.jetbrains.rider.framework.SerializationCtx
+import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.*
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
-import com.jetbrains.rider.framework.nullable
 import com.jetbrains.rider.util.reactive.IOptProperty
 import com.jetbrains.rider.util.reactive.IProperty
 import com.jetbrains.rider.util.string.PrettyPrinter
+import kotlin.reflect.*
 
 class RdTextBufferState (
         private val _changes : RdProperty<RdTextBufferChange?>,
@@ -19,7 +17,7 @@ class RdTextBufferState (
     //companion
 
     companion object : IMarshaller<RdTextBufferState> {
-        override val _type: Class<RdTextBufferState> = RdTextBufferState::class.java
+        override val _type: KClass<RdTextBufferState> = RdTextBufferState::class
 
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTextBufferState {

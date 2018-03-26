@@ -12,8 +12,8 @@ import com.jetbrains.rider.util.trace
 
 abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReactiveBase(), IMutablePropertyBase<T> {
     companion object {
-        @JvmStatic
-        protected fun<T : Any> write0(ctx: SerializationCtx, buffer: AbstractBuffer, prop: RdPropertyBase<T>, value: T?) {
+//        @JvmStatic
+        fun<T : Any> write0(ctx: SerializationCtx, buffer: AbstractBuffer, prop: RdPropertyBase<T>, value: T?) {
             prop.rdid.notNull().write(buffer)
             if (value != null) {
                 buffer.writeBool(true)

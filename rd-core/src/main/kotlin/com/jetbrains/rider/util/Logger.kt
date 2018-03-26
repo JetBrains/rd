@@ -2,6 +2,7 @@ package com.jetbrains.rider.util
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.viewableTail
+import com.jetbrains.rider.util.string.PrettyPrinter
 import kotlin.reflect.KClass
 
 enum class LogLevel {
@@ -46,7 +47,7 @@ object ConsoleLoggerFactory : ILoggerFactory {
     override fun getLogger(category: String) = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
             if (!isEnabled(level)) return
-            println("$level | $category | ${message?.toString()} ${throwable?.getThrowableText()}")
+            println(defaultLogFormat(category, level, message, throwable))
         }
 
         override fun isEnabled(level: LogLevel): Boolean = level >= this@ConsoleLoggerFactory.level
@@ -54,6 +55,9 @@ object ConsoleLoggerFactory : ILoggerFactory {
     }
 }
 
+fun defaultLogFormat(category: String, level: LogLevel, message: Any?, throwable: Throwable?) : String {
+    return "$level | $category | ${currentThreadName()} | ${message?.toString()?:""} ${throwable?.getThrowableText()?:""}"
+}
 
 fun getLogger(category: String) = SwitchLogger(category)
 fun getLogger(categoryKclass: KClass<*>): Logger = getLogger(qualifiedName(categoryKclass))

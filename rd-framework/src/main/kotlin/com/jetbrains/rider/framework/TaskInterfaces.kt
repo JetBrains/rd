@@ -1,13 +1,12 @@
 package com.jetbrains.rider.framework
 
-import com.jetbrains.rider.framework.base.AbstractBuffer
 import com.jetbrains.rider.framework.impl.RpcTimeouts
+import com.jetbrains.rider.util.CancellationException
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IOptPropertyView
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.reactive.RdFault
 import com.jetbrains.rider.util.reactive.hasValue
-import java.util.concurrent.CancellationException
 
 /**
  * The result of asynchronously executing a task.
@@ -80,11 +79,7 @@ interface IRdTask<out T> {
     val result: IOptPropertyView<RdTaskResult<T>>
 }
 
-inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit = {}) : Boolean {
-    return SpinWait.spinUntil(Lifetime.Eternal, timeoutMs) {
-        result.hasValue.apply { if (!this) pump() }
-    }
-}
+expect inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit) : Boolean
 
 val <T> IRdTask<T>.isSucceeded : Boolean get() = result.valueOrNull is RdTaskResult.Success
 val <T> IRdTask<T>.isCanceled : Boolean get() = result.valueOrNull is RdTaskResult.Cancelled

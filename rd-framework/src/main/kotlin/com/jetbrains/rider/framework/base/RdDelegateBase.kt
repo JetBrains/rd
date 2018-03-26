@@ -5,7 +5,7 @@ import com.jetbrains.rider.util.string.PrettyPrinter
 
 abstract class RdDelegateBase<out T : RdBindableBase>(val delegatedBy: T) : IRdBindable by delegatedBy, IPrintable {
     override fun print(printer: PrettyPrinter) {
-        printer.print("${this.javaClass.simpleName} delegated by ")
+        printer.print("${this::class.simpleName} delegated by ")
         delegatedBy.print(printer)
     }
 }

@@ -1,24 +1,16 @@
 package com.jetbrains.rider.framework.impl
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.framework.base.withId
-import com.jetbrains.rider.util.Result
-import com.jetbrains.rider.util.error
+import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
-import com.jetbrains.rider.util.putUnique
-import com.jetbrains.rider.util.reactive.IScheduler
-import com.jetbrains.rider.util.reactive.Trigger
-import com.jetbrains.rider.util.reactive.hasValue
-import com.jetbrains.rider.util.reactive.valueOrThrow
+import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.string.condstr
 import com.jetbrains.rider.util.threading.SynchronousScheduler
-import com.jetbrains.rider.util.trace
-import java.util.concurrent.TimeoutException
-import kotlin.system.measureTimeMillis
 
 fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(request: TReq, onSuccess: (TRes) -> Unit) {
     startAndAdviseSuccess(Lifetime.Eternal, request, onSuccess)
@@ -37,7 +29,7 @@ class RdTask<T> : IRdTask<T> {
         fun<T> fromResult(value: T) = RdTask<T>().apply { this.set(value) }
     }
 
-    override val result = Trigger<RdTaskResult<T>>()
+    override val result = OptProperty<RdTaskResult<T>>()
     fun set(v : T) = result.set(RdTaskResult.Success(v))
 }
 
@@ -69,7 +61,7 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         var respectSyncCallTimeouts = true
     }
 
-    private val requests = java.util.concurrent.ConcurrentHashMap<RdId, Pair<IScheduler, RdTask<TRes>>>()
+    private val requests = concurrentMapOf<RdId, Pair<IScheduler, RdTask<TRes>>>()
 
     @Volatile
     private var syncTaskId: RdId? = null

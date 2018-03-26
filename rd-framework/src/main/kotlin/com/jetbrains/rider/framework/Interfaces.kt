@@ -1,10 +1,10 @@
 package com.jetbrains.rider.framework
 
-import com.jetbrains.rider.framework.base.AbstractBuffer
 import com.jetbrains.rider.framework.base.ISerializersOwner
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IPropertyView
 import com.jetbrains.rider.util.reactive.IScheduler
+import kotlin.reflect.*
 
 /**
  * A node in a graph of entities that can be synchronized with its remote copy over a network or a similar connection.
@@ -60,7 +60,7 @@ interface ISerializer<T : Any?> {
  * A serializer that can participate in polymorphic serialization.
  */
 interface IMarshaller<T : Any> : ISerializer<T> {
-    val _type: Class<*>
+    val _type: KClass<*>
     val id : RdId
         get() = RdId(_type.simpleName.getPlatformIndependentHash())
 }
@@ -69,7 +69,7 @@ interface IMarshaller<T : Any> : ISerializer<T> {
  * A registry of known serializers.
  */
 interface ISerializers {
-    val toplevels : MutableSet<Class<ISerializersOwner>>
+    val toplevels : MutableSet<KClass<out ISerializersOwner>>
 
     fun <T: Any> register(serializer: IMarshaller<T>)
     fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer): T?

@@ -33,7 +33,7 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
     internal fun <T> localChange(action: () -> T) : T {
         if (isBound && !async) assertThreading()
 
-        assert(!isLocalChange){ "!isLocalChange" }
+        require(!isLocalChange){ "!isLocalChange" }
 
         isLocalChange = true
         try {

@@ -3,7 +3,7 @@ package com.jetbrains.rider.framework.impl
 import com.jetbrains.rider.framework.ISerializer
 import com.jetbrains.rider.framework.Polymorphic
 import com.jetbrains.rider.framework.SerializationCtx
-import com.jetbrains.rider.framework.base.AbstractBuffer
+import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.framework.base.withId
 import com.jetbrains.rider.framework.readRdId
@@ -20,6 +20,10 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     }
 
     private object DEFAULT_SCHEDULER_MARKER : IScheduler {
+        override fun flush() {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
         override fun queue(action: () -> Unit) = throw UnsupportedOperationException()
 
         override val isActive: Boolean
@@ -28,8 +32,8 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
 
     private val signal = Signal<T>()
 
-    private val schedulerHolder = Trigger<IScheduler>()
-    private val lifetimeHolder = Trigger<Lifetime>()
+    private val schedulerHolder = OptProperty<IScheduler>()
+    private val lifetimeHolder = OptProperty<Lifetime>()
     override lateinit var serializationContext : SerializationCtx
 
     init {

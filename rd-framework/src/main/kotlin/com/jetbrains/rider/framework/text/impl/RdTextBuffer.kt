@@ -88,7 +88,7 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
     }
 
     override fun fire(value: RdTextChange) {
-        assert(delegatedBy.isBound || bufferVersion == TextBufferVersion.INIT_VERSION)
+        require(delegatedBy.isBound || bufferVersion == TextBufferVersion.INIT_VERSION)
         if (delegatedBy.isBound) protocol.scheduler.assertThread()
 
         incrementBufferVersion()
@@ -111,7 +111,7 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
     }
 
     override fun advise(lifetime: Lifetime, handler: (RdTextChange) -> Unit) {
-        assert(delegatedBy.isBound)
+        require(delegatedBy.isBound)
         protocol.scheduler.assertThread()
 
         textChanged.advise(lifetime, handler)

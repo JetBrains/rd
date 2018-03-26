@@ -2,18 +2,25 @@ package com.jetbrains.rider.util.log
 
 import com.jetbrains.rider.util.*
 
+///
 object ErrorAccumulatorLoggerFactory : ILoggerFactory {
     var warnAsErrors = false
 
     val errors = mutableListOf<String>()
+    val creationThread = currentThreadName()
+
 
     override fun getLogger(category: String): Logger = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
-            if (isEnabled(level)) {
-                val renderMessage = "$level | $message | "+ throwable?.getThrowableText()
-                synchronized(this) {
-                    errors.add(renderMessage)
-                }
+            if (!isEnabled(level)) return
+
+            if (currentThreadName() == creationThread) {
+                throw IllegalStateException(message?.toString(), throwable)
+            }
+
+            val renderMessage = defaultLogFormat(category, level, message, throwable)
+            synchronized(this) {
+                errors.add(renderMessage)
             }
         }
 
