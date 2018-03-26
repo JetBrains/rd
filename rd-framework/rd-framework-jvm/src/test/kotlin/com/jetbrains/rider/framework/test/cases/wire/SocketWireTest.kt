@@ -7,7 +7,7 @@ import com.jetbrains.rider.framework.SocketWire
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.test.cases.TestScheduler
-import com.jetbrains.rider.util.NetUtils
+import com.jetbrains.rider.framework.test.util.NetUtils
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.reactive.valueOrThrow
