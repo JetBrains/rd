@@ -34,7 +34,7 @@ class ViewableMapTest {
         }
 
         assertEquals(listOf("Add 0:0", "Add 1:1", "Remove 0:0", "Add 0:1", "Add 10:10", "Remove 0:1", "Add 0:0", "Remove 1:1", "End"), logAddRemove)
-        assertEquals(listOf("Add 0:0", "Add 1:1", "Update 0:1", "Add 10:10", "Update 0:0", "Remove 1:null"), logUpdate)
+        assertEquals(listOf("Add 0:0", "Add 1:1", "Update 0:1", "Add 10:10", "Update 0:0", "Remove 1"), logUpdate)
         assertEquals(listOf(0, 1, -0, 0, 10, -1, 0, -1, /*this events are arguable*/0, -10), logView);
 
         //let's clear

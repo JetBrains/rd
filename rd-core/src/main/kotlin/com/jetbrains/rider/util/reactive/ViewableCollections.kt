@@ -61,9 +61,15 @@ interface IViewableMap<K : Any, V:Any> : Map<K, V>, IViewable<Map.Entry<K, V>>, 
      * Represents an addition, update or removal of an element in the map.
      */
     sealed class Event<K, V>(val key: K) {
-        class Add<K,V>   (key: K,                   val newValue : V) : Event<K,V>(key)
-        class Update<K,V>(key: K, val oldValue : V, val newValue : V) : Event<K,V>(key)
-        class Remove<K,V>(key: K, val oldValue : V                  ) : Event<K,V>(key)
+        class Add<K,V>   (key: K,                   val newValue : V) : Event<K,V>(key) {
+            override fun toString() = "Add $key:$newValue"
+        }
+        class Update<K,V>(key: K, val oldValue : V, val newValue : V) : Event<K,V>(key) {
+            override fun toString() = "Update $key:$newValue"
+        }
+        class Remove<K,V>(key: K, val oldValue : V                  ) : Event<K,V>(key) {
+            override fun toString() = "Remove $key"
+        }
 
         /**
          * Returns the new value for add or update events, or null for removal events.
