@@ -30,14 +30,14 @@ class SequentialLifetimesTest{
 
         var acc = 0
         val lf = seq.next()
-        lf += {acc++}
-        lf += {acc++}
+        lf.plusAssign { acc++ }
+        lf.plusAssign { acc++ }
         assertEquals(0, acc)
 
         LifetimeDefinition.Eternal.terminate(); //bullshit
         assertEquals(0, acc)
 
-        seq.next() += {acc++}
+        seq.next().plusAssign { acc++}
         assertEquals(2, acc)
 
         seq.terminateCurrent()
@@ -52,14 +52,14 @@ class SequentialLifetimesTest{
 
         var acc = 0
         val lf = seq.next()
-        lf += {acc++}
-        lf += {acc++}
+        lf.plusAssign { acc++ }
+        lf.plusAssign { acc++ }
         assertEquals(0, acc)
 
         LifetimeDefinition.Eternal.terminate() //bullshit
         assertEquals(0, acc)
 
-        seq.next() += {acc++}
+        seq.next().plusAssign { acc++ }
         assertEquals(2, acc)
 
         def.terminate()
