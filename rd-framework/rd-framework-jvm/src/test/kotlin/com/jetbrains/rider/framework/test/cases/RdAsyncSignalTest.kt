@@ -9,7 +9,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 
-class RdAsyncSignalTest : RdTestBase(true) {
+class RdAsyncSignalTest : RdAsyncTestBase() {
 
     @Test
     fun TestAsyncSignalStatic() {

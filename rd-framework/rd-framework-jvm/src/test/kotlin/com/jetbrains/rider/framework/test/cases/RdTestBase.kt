@@ -15,7 +15,6 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rider.util.reactive.IScheduler
-import com.jetbrains.rider.util.threading.TestSingleThreadScheduler
 import org.testng.annotations.AfterMethod
 import org.testng.annotations.BeforeMethod
 
@@ -25,7 +24,7 @@ object TestScheduler : IScheduler {
     override val isActive: Boolean get() = true
 }
 
-open class RdTestBase(val asyncMode: Boolean = false) {
+open class RdTestBase {
     private val serializers = Serializers()
 
 
@@ -43,12 +42,6 @@ open class RdTestBase(val asyncMode: Boolean = false) {
     protected lateinit var serverLifetimeDef: LifetimeDefinition
         private set
 
-    val clientBgScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ClientBg")
-    val clientUiScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ClientUi")
-    val serverBgScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ServerBg")
-    val serverUiScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ServerUi")
-
-
 
 
     protected val clientWire : TestWire get() = clientProtocol.wire as TestWire
@@ -59,6 +52,9 @@ open class RdTestBase(val asyncMode: Boolean = false) {
 
     private var disposeLoggerFactory : Closeable? = null
 
+    protected open val clientScheduler: IScheduler get() = TestScheduler
+    protected open val serverScheduler: IScheduler get() = TestScheduler
+
     @BeforeMethod
     fun setUp() {
         Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
@@ -66,12 +62,10 @@ open class RdTestBase(val asyncMode: Boolean = false) {
         serverLifetimeDef = Lifetime.create(Lifetime.Eternal)
 
 
-        val clientScheduler = if (asyncMode) clientUiScheduler else TestScheduler
         clientProtocol = Protocol(serializers,
                 Identities(),
             clientScheduler, TestWire(clientScheduler))
 
-        val serverScheduler = if (asyncMode) serverUiScheduler else TestScheduler
         serverProtocol = Protocol(serializers,
                 Identities(),
             serverScheduler, TestWire(serverScheduler))
@@ -89,10 +83,6 @@ open class RdTestBase(val asyncMode: Boolean = false) {
         disposeLoggerFactory = null
 
 
-        clientBgScheduler.assertNoExceptions()
-        serverBgScheduler.assertNoExceptions()
-        clientUiScheduler.assertNoExceptions()
-        serverUiScheduler.assertNoExceptions()
         clientLifetimeDef.terminate()
         serverLifetimeDef.terminate()
 

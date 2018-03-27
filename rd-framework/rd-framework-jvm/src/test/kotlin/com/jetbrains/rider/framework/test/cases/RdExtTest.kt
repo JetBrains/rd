@@ -11,7 +11,7 @@ import org.testng.annotations.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 
-class RdExtTest : RdTestBase(false) {
+class RdExtTest : RdTestBase() {
     @Test(enabled = false) // TODO: RIDER-14180
     fun testExtension() {
         val propertyId = 1
