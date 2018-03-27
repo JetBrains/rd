@@ -68,14 +68,17 @@ private fun <T> URL.process(pkg: String, processFile: (File) -> T, processJar: (
 
 private fun File.scanForClasses(pkg: String, classLoader: ClassLoader): Sequence<Class<*>> {
     val root = this
-    return walkTopDown().filter { it.isFile && it.name.endsWith(classSuffix)
-    }.map {
-        val classFileLocation = it.absolutePath
-        val relativeToRoot = classFileLocation.removePrefix(root.toString()).removePrefix(File.separator)
-        val className = relativeToRoot.removeSuffix(classSuffix).path2pkg()
-        val clazz = classLoader.tryLoadClass(className)
-        clazz
-    }.filterNotNull()
+    return walkTopDown()
+            .filter { it.isFile && it.name.endsWith(classSuffix) }
+            .map {
+                val classFileLocation = it.absolutePath
+                if (!classFileLocation.contains(pkg.pkg2path(true))) return@map null
+
+                val relativeToRoot = classFileLocation.removePrefix(root.toString()).removePrefix(File.separator)
+                val className = relativeToRoot.removeSuffix(classSuffix).path2pkg()
+                val clazz = classLoader.tryLoadClass(className)
+                clazz
+            }.filterNotNull()
 }
 
 private fun JarFile.scanForClasses(prefix: String, classLoader: ClassLoader): Sequence<Class<*>> {
