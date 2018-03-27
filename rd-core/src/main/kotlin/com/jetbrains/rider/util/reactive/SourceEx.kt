@@ -1,5 +1,6 @@
 package com.jetbrains.rider.util.reactive
 
+import com.jetbrains.rider.util.Maybe
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 
@@ -42,6 +43,14 @@ fun <T : Any> ISource<T?>.adviseNotNullOnce(lifetime: Lifetime, handler: (T) -> 
     this.adviseNotNull(lt) {
         def.terminate()
         handler(it)
+    }
+}
+
+fun <T : Any?> ISource<T>.adviseWithPrev(lifetime: Lifetime, handler: (prev: Maybe<T>, cur: T) -> Unit) {
+    var prev : Maybe<T> = Maybe.None
+    advise(lifetime) { cur ->
+        handler(prev, cur)
+        prev = Maybe.Just(cur)
     }
 }
 
