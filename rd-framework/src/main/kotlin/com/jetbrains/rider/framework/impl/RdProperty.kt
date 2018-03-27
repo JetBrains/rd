@@ -187,6 +187,12 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
         value = newValue
     }
 
+    override fun identify(ids: IIdentities, id: RdId) {
+        super.identify(ids, id)
+        if (!optimizeNested)
+            value?.identifyPolymorphic(ids, ids.next(id))
+    }
+
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
         super<RdPropertyBase>.advise(lifetime, handler)
     }
