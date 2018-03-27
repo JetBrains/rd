@@ -19,7 +19,7 @@ import com.jetbrains.rider.util.warn
  * incompatible change
  */
 open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster: Boolean = true) : RdDelegateBase<RdTextBufferState>(delegate), ITextBuffer {
-    private val changesToConfirmOrRollback: MutableList<RdTextChange> = arrayListOf()
+    private val changesToConfirmOrRollback: MutableList<RdTextBufferChange> = arrayListOf()
     private val textChanged: IOptProperty<RdTextChange> = OptProperty()
     private val _historyChanged: ISignal<RdTextChange> = Signal()
     override val historyChanged: ISource<RdTextChange> get() = _historyChanged
@@ -42,15 +42,17 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
         // for asserting documents equality
         delegatedBy.assertedSlaveText.compose(delegatedBy.assertedMasterText, { slave, master -> slave to master}).advise(lf) { (s, m) ->
             if (s.masterVersion == m.masterVersion
-                && s.slaveVersion == m.slaveVersion
-                && s.text != m.text) {
+                    && s.slaveVersion == m.slaveVersion
+                    && s.text != m.text) {
                 throw IllegalStateException("Master and Slave texts are different.\nMaster:\n$m\nSlave:\n$s")
             }
         }
     }
 
     protected open fun receiveChange(textBufferChange: RdTextBufferChange) {
-        val (newVersion, remoteOrigin, change) = textBufferChange
+        val newVersion = textBufferChange.version
+        val remoteOrigin = textBufferChange.origin
+        val change = textBufferChange.change
         require(remoteOrigin != localOrigin)
 
         if (change.kind == RdTextChangeKind.Reset) {
@@ -66,10 +68,13 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
                 if (newVersion.slave != bufferVersion.slave) {
                     // rollback the changes and notify external subscribers
                     for (ch in changesToConfirmOrRollback.reversed()) {
-                        val reversedChange = ch.reverse()
+                        if (ch.version.slave <= newVersion.slave)
+                            break
+                        val reversedChange = ch.change.reverse()
                         _historyChanged.fire(reversedChange)
                         textChanged.set(reversedChange)
                     }
+                    changesToConfirmOrRollback.clear()
                 } else {
                     // confirm the changes queue
                     changesToConfirmOrRollback.clear()
@@ -92,14 +97,15 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
         if (delegatedBy.isBound) protocol.scheduler.assertThread()
 
         incrementBufferVersion()
+        val bufferChange = RdTextBufferChange(bufferVersion, localOrigin, value)
         if (value.kind == RdTextChangeKind.Reset) {
             changesToConfirmOrRollback.clear()
         } else if (!isMaster) {
-            changesToConfirmOrRollback.add(value)
+            changesToConfirmOrRollback.add(bufferChange)
         }
 
         _historyChanged.fire(value)
-        sendChange(RdTextBufferChange(bufferVersion, localOrigin, value))
+        sendChange(bufferChange)
     }
 
     protected open fun sendChange(value: RdTextBufferChange) {

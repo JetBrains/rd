@@ -11,7 +11,7 @@ enum class RdTextChangeKind {
     Reset
 }
 
-data class RdTextChange(val kind: RdTextChangeKind,
+class RdTextChange(val kind: RdTextChangeKind,
                         val startOffset: Int,
                         val old: String,
                         val new: String,

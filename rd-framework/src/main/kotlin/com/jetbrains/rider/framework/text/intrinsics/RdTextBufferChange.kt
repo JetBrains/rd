@@ -10,6 +10,7 @@ import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
+import com.jetbrains.rider.util.string.printToString
 import kotlin.reflect.*
 
 enum class RdChangeOrigin {
@@ -61,4 +62,6 @@ data class RdTextBufferChange(val version: TextBufferVersion, val origin: RdChan
         }
         printer.println(")")
     }
+
+    override fun toString(): String = this.printToString()
 }
