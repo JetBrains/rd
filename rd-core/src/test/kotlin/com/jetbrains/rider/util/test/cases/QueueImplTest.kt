@@ -1,27 +1,22 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.collections.QueueImpl
-import org.testng.Assert
-import org.testng.annotations.BeforeMethod
-import org.testng.annotations.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.*
 
 class QueueImplTest {
 
     private val q = QueueImpl<Int>()
 
-    @BeforeMethod
+    @BeforeTest
     fun setup() {
         q.clear()
     }
 
 
-    @Test(invocationCount = 2)
     fun testEmpty() {
-        assert(q.isEmpty())
+        assertTrue(q.isEmpty())
         q.offer(333)
-        assert(!q.isEmpty())
+        assertTrue(!q.isEmpty())
     }
 
     @Test

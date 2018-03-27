@@ -4,23 +4,24 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
 import com.jetbrains.rider.util.lifetime.plusAssign
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SequentialLifetimesTest{
     @Test
     fun testContract() {
         val seq = SequentialLifetimes(Lifetime.Eternal)
 
-        assert(seq.isTerminated)
+        assertTrue(seq.isTerminated)
 
         val parentDef = Lifetime.create(Lifetime.Eternal)
         val seq2 = SequentialLifetimes(parentDef.lifetime)
         val nextLt = seq2.next()
         parentDef.terminate()
 
-        assert(nextLt.isTerminated)
-        assert(seq2.isTerminated)
+        assertTrue(nextLt.isTerminated)
+        assertTrue(seq2.isTerminated)
     }
 
     @Test

@@ -1,10 +1,9 @@
 package com.jetbrains.rider.util.test.cases
-
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IMutableViewableMap
 import com.jetbrains.rider.util.reactive.ViewableMap
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ViewableMapTest {
@@ -23,7 +22,7 @@ class ViewableMapTest {
         val logView = arrayListOf<Int>()
         Lifetime.using { lifetime ->
             map.adviseAddRemove(lifetime, {kind, key, value -> logAddRemove.add("${kind} ${key}:${value}")} )
-            map.advise(lifetime, {entry -> logUpdate.add("${entry.javaClass.simpleName} ${entry.key}:${entry.newValueOpt}")} )
+            map.advise(lifetime, {entry -> logUpdate.add(entry.toString())} )
             map.view(lifetime, {inner, x -> inner.bracket({ logView.add(x.key) }, { logView.add(-x.value) }) })
 
             lifetime += {logAddRemove.add("End")}

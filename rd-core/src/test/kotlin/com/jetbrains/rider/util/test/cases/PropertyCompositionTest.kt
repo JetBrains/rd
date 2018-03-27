@@ -5,8 +5,9 @@ import com.jetbrains.rider.util.reactive.OptProperty
 import com.jetbrains.rider.util.reactive.Property
 import com.jetbrains.rider.util.reactive.compose
 import com.jetbrains.rider.util.reactive.map
-import org.testng.Assert
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
 
 class PropertyCompositionTest {
     @Test
@@ -28,8 +29,8 @@ class PropertyCompositionTest {
             left.value = 2
             right.value = 2
         }
-        Assert.assertEquals(targetChangeLog, listOf(1, 2), "target.change log ${targetChangeLog.joinToString()}")
-        Assert.assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
+        assertEquals(targetChangeLog, listOf(1, 2), "target.change log ${targetChangeLog.joinToString()}")
+        assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
     }
 
     @Test
@@ -53,8 +54,8 @@ class PropertyCompositionTest {
             left.set(2)
             right.set(2)
         }
-        Assert.assertEquals(targetChangeLog, listOf(0, 1, 2), "target.change log ${targetChangeLog.joinToString()}")
-        Assert.assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
+        assertEquals(targetChangeLog, listOf(0, 1, 2), "target.change log ${targetChangeLog.joinToString()}")
+        assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
     }
 
     @Test
@@ -71,7 +72,7 @@ class PropertyCompositionTest {
             source.value = 3
             source.value = 4
         }
-        Assert.assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
+        assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
     }
 
     @Test
@@ -87,6 +88,6 @@ class PropertyCompositionTest {
                 source.set(i)
             }
         }
-        Assert.assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
+        assertEquals(targetLog, listOf(0, 1, 2), "target log ${targetLog.joinToString()}")
     }
 }

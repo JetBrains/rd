@@ -2,7 +2,7 @@ package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.Property
-import org.testng.annotations.Test
+import kotlin.test.Test
 
 class AdviseVsViewTest {
     @Test
