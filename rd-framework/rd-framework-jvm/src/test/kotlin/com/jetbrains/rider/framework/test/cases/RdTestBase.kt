@@ -16,9 +16,7 @@ import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.threading.TestSingleThreadScheduler
-import org.testng.annotations.AfterClass
 import org.testng.annotations.AfterMethod
-import org.testng.annotations.BeforeClass
 import org.testng.annotations.BeforeMethod
 
 object TestScheduler : IScheduler {

@@ -66,3 +66,9 @@ expect class AtomicInteger constructor(v: Int){
     fun incrementAndGet() : Int
     fun decrementAndGet() : Int
 }
+
+expect class Queue<E>() {
+    fun offer(element: E): Boolean
+    fun isEmpty(): Boolean
+    fun poll(): E?
+}

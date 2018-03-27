@@ -60,3 +60,4 @@ actual typealias UUID = java.util.UUID
 
 actual typealias AtomicInteger = AtomicInteger
 
+actual typealias Queue<E> = java.util.concurrent.LinkedBlockingQueue<E>

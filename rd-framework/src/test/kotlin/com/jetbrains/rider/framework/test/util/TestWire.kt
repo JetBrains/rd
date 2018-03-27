@@ -1,15 +1,16 @@
 package com.jetbrains.rider.framework.test.util
 
 import com.jetbrains.rider.framework.RdId
-import com.jetbrains.rider.framework.UnsafeBuffer
 import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.WireBase
+import com.jetbrains.rider.framework.createAbstractBuffer
+import com.jetbrains.rider.util.Queue
 import com.jetbrains.rider.util.reactive.IScheduler
 
 class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
     lateinit var counterpart : TestWire
 
-    val msgQ = java.util.concurrent.LinkedBlockingQueue<RdMessage>()
+    val msgQ = Queue<RdMessage>()
 
     var bytesWritten: Long = 0
 
@@ -21,14 +22,14 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
         require(!id.isNull)
 
-        val ostream = UnsafeBuffer(10)
+        val ostream = createAbstractBuffer()
         writer(ostream)
 
         bytesWritten += ostream.position
 
         ostream.position = 0
 
-        msgQ.add(RdMessage(id, ostream))
+        msgQ.offer(RdMessage(id, ostream))
         if (autoFlush) processAllMessages()
     }
 
@@ -51,4 +52,4 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
 }
 
 
-class RdMessage (val id : RdId, val istream : UnsafeBuffer)
+class RdMessage (val id : RdId, val istream : AbstractBuffer)
