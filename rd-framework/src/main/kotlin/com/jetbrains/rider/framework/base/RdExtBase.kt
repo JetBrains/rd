@@ -181,6 +181,9 @@ class ExtWire : IWire {
             sendQ.clear()
 
             for ((id, lifetime, scheduler, handler) in subscriptionQ) {
+                if (lifetime.isTerminated)
+                    continue
+
                 if (scheduler == null)
                     wire.advise(lifetime, id, handler)
                 else
