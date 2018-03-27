@@ -13,6 +13,7 @@ class QueueImplTest {
     }
 
 
+    @Test
     fun testEmpty() {
         assertTrue(q.isEmpty())
         q.offer(333)
