@@ -183,11 +183,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
 
     //generation
-    override fun generate(root: Root, clearFolderIfExists: Boolean) {
+    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
         prepareGenerationFolder(folder, clearFolderIfExists)
-
-        val toplevels : MutableList<Toplevel> = (root.singletons + root.extensions).toMutableList()
-        /*if (root.ownMembers.isNotEmpty())*/ toplevels.add(root)
 
         toplevels.sortedBy { it.name }.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->

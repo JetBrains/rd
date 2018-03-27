@@ -50,6 +50,7 @@ sealed class Member(name: String, val referencedTypes: List<IType>) : SettingsHo
 
             abstract class Extension(name : String, val delegatedBy: Class, vararg _delegates: ExtensionDelegate)
                 : Stateful(name) {
+
                 val delegates = _delegates
 
                 fun fqn(generator: IGenerator, flowTransform: FlowTransform) : String {

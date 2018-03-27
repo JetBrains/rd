@@ -139,7 +139,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
 
     val ownMembers : ArrayList<Member> = ArrayList()
         get() {
-            require(lazyInitializer == null) { "Body is not null" }
+            require(lazyInitializer == null) { "$this: declaration hasn't been initialized" }
             return field
         }
     val membersOfBaseClasses: List<Member> get() = base ?.allMembers ?: listOf()
@@ -169,14 +169,12 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
         ownMembers.forEach { it.validate(errors) }
     }
 
-    override fun toString() = "$cl_name `$name`"
+    override fun toString() = "$cl_name `$name`" + (pointcut != null).condstr { " :> $pointcut" }
 }
 
 
 
-abstract class BindableDeclaration(pointcut: BindableDeclaration?) : Declaration(pointcut) {
-    override fun toString() = super.toString() + (pointcut != null).condstr { " :> $pointcut" }
-}
+abstract class BindableDeclaration(pointcut: BindableDeclaration?) : Declaration(pointcut)
 
 abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(pointcut) {
     override val _name : String get() = javaClass.simpleName
@@ -325,13 +323,16 @@ abstract class Root(vararg val generators: IGenerator) : Toplevel(null) {
     override fun initialize() {
         super.initialize()
 
-        for (tl in toplevels) {
-            var initializedCount = 0
+        var initializedToplevelsCount = 0
+        while (initializedToplevelsCount < toplevels.count()) {
+            val tl = toplevels[initializedToplevelsCount++]
+
+            var initializedTypesCount = 0
             if (tl != this) tl.initialize()
 
             //collection could grow during initialization
-            while (initializedCount < tl.declaredTypes.size) {
-                tl.declaredTypes[initializedCount++].initialize()
+            while (initializedTypesCount < tl.declaredTypes.size) {
+                tl.declaredTypes[initializedTypesCount++].initialize()
             }
 
         }

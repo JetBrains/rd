@@ -263,11 +263,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
     //generation
 
-    override fun generate(root: Root, clearFolderIfExists: Boolean) {
+    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
         prepareGenerationFolder(folder, clearFolderIfExists)
-
-        val toplevels : MutableList<Toplevel> = (root.singletons + root.extensions).toMutableList()
-        /*if (root.ownMembers.isNotEmpty()) */toplevels.add(root)
 
         toplevels.sortedBy { it.name }.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->

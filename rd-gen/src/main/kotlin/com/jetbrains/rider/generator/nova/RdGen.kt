@@ -298,7 +298,7 @@ fun generateRdModel(classLoader: ClassLoader, namespacePrefixes: Array<String>
             root.name.compareTo(other.root.name).let { if (it != 0) return it }
             generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
 
-            return 0; //sort is stable so, don't worry much
+            return 0 //sort is stable so, don't worry much
         }
     }
 
@@ -342,7 +342,7 @@ fun generateRdModel(classLoader: ClassLoader, namespacePrefixes: Array<String>
 
         //Here is the real part
         if (verbose) println("Invoke $gen on $root, clearFolder=$shouldClear")
-        gen.generate(root, shouldClear)
+        gen.generate(root, shouldClear, toplevels.filter { it.root == root })
 
         generatedFolders.add(gen.folder)
     }

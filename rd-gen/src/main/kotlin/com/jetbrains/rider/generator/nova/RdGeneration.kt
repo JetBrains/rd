@@ -4,7 +4,7 @@ import java.io.File
 
 interface IGenerator {
     val folder: File
-    fun generate(root: Root, clearFolderIfExists: Boolean = false)
+    fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
 }
 
 class GeneratorException (msg: String) : RuntimeException(msg)
