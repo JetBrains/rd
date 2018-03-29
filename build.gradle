@@ -4,6 +4,7 @@ buildscript {
     apply from: 'versions.gradle'
 
     repositories {
+        mavenLocal()
         maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
         mavenCentral()
         jcenter()
@@ -48,6 +49,8 @@ allprojects {
         kotlin { experimental.coroutines = 'enable' }
     }
 
+
+
     ext.applyKotlinCommon = {
         apply plugin: 'kotlin-platform-common'
 
@@ -59,10 +62,30 @@ allprojects {
         kotlin { experimental.coroutines = 'enable' }
     }
 
+
+
     ext.applyKotlinJVM = {
         apply plugin: 'java'
         apply plugin: 'kotlin-platform-jvm'
         apply plugin: "jacoco"
+        apply plugin: 'maven-publish'
+
+        String mvnId = project.name
+        if (mvnId.endsWith('-jvm'))
+            mvnId = mvnId.substring(0, mvnId.length() - 4)
+
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    groupId 'com.jetbrains'
+                    artifactId mvnId
+                    version '0.1'
+
+                    from components.java
+                }
+            }
+        }
+
 
         test { finalizedBy jacocoTestReport }
 
@@ -77,6 +100,8 @@ allprojects {
         }
 
         kotlin { experimental.coroutines = 'enable' }
+
+
 
         compileKotlin {
             kotlinOptions {
@@ -133,7 +158,7 @@ allprojects {
     }
 
     repositories {
-        //mavenLocal()
+        mavenLocal()
         mavenCentral()
         jcenter()
         maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
