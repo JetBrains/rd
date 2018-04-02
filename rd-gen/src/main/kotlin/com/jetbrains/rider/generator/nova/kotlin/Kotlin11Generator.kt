@@ -454,6 +454,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             else -> fail("Unknown member: $this")
         }
 
+        fun Member.valName() : String = encapsulatedName.let { it + (it == "ctx" || it == "buffer").condstr { "_" } }
 
         + "@Suppress(\"UNCHECKED_CAST\")"
         + "override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} {"
@@ -464,8 +465,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             if (decl is Class || decl is Aggregate) {
                 + "val _id = RdId.read(buffer)"
             }
-            decl.allMembers.println {"val ${it.encapsulatedName} = ${it.reader()}"}
-            p("return ${decl.name}(${decl.allMembers.joinToString(", ") { it.encapsulatedName }})${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
+            decl.allMembers.println {"val ${it.valName()} = ${it.reader()}"}
+            p("return ${decl.name}(${decl.allMembers.joinToString(", ") { it.valName() }})${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
             if (decl is Class || decl is Aggregate) {
                 p(".withId(_id)")
             }
