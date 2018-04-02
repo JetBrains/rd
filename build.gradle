@@ -1,4 +1,4 @@
-group 'com.jetbrains.rd'
+//group 'com.jetbrains.rd'
 
 buildscript {
     apply from: 'versions.gradle'
@@ -70,9 +70,6 @@ allprojects {
         apply plugin: "jacoco"
         apply plugin: 'maven-publish'
 
-        String mvnId = project.name
-        if (mvnId.endsWith('-jvm'))
-            mvnId = mvnId.substring(0, mvnId.length() - 4)
 
         task sourceJar(type: Jar) {
             from sourceSets.main.allSource
@@ -86,10 +83,14 @@ allprojects {
 
         publishing {
             publications {
+                String mvnId = project.name
+                if (mvnId.endsWith('-jvm'))
+                    mvnId = mvnId.substring(0, mvnId.length() - 4)
+
                 maven(MavenPublication) {
                     groupId 'com.jetbrains'
                     artifactId mvnId
-                    version '0.1-SNAPSHOT'
+                    version '2018.1-SNAPSHOT'
 
                     from components.java
 
