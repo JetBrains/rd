@@ -16,7 +16,7 @@ private val classSuffix : String = ".class"
  */
 fun ClassLoader.scanForClasses(vararg pkgs: String): Sequence<Class<*>> {
     return pkgs.asSequence().flatMap { pkg ->
-        getResources(pkg.pkg2path(true))
+        getResources(pkg.pkg2path(false))
         .asSequence()
         .flatMap { url ->
            url.process(pkg,
@@ -30,7 +30,7 @@ fun ClassLoader.scanForClasses(vararg pkgs: String): Sequence<Class<*>> {
 
 fun ClassLoader.scanForResourcesContaining(vararg pkgs: String): Sequence<File> {
     return pkgs.asSequence().flatMap { pkg ->
-        getResources(pkg.pkg2path(true))
+        getResources(pkg.pkg2path(false))
             .asSequence()
             .flatMap { url ->
                 url.process(pkg,
@@ -114,7 +114,7 @@ fun main(args: Array<String>) {
     val classLoader = p.javaClass.classLoader
 
 
-    classLoader.scanForResourcesContaining("org", "com.jetbrains.rider").forEach { println(it) }
+    classLoader.scanForResourcesContaining("com.jetbrains.rider").forEach { println(it) }
 
     println()
 

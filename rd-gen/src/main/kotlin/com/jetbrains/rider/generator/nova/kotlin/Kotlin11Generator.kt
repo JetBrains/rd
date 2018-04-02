@@ -238,6 +238,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "import com.jetbrains.rider.util.reactive.*"
         + "import com.jetbrains.rider.util.string.*"
         + "import com.jetbrains.rider.util.trace"
+        + "import kotlin.reflect.KClass"
 
 //        tl.referencedTypes.plus(tl.declaredTypes.flatMap { it.referencedTypes })
 //            .filterIsInstance(Declaration::class.java)
@@ -323,7 +324,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             println()
             + "companion object : IMarshaller<${decl.name}> {"
             indent {
-                + "override val _type: Class<${decl.name}> = ${decl.name}::class.java"
+                + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
                 println()
                 readerTrait(decl)
                 println()

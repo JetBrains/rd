@@ -46,14 +46,21 @@ sealed class Option<T : Any> constructor(val short: Char?, val long: String?, va
 
     ) : Option<T>(short, long, description, defaultValue) {
 
-        fun parseValue(rawValue: String) : Boolean {
+
+        fun tryParse(rawValue: String) : Boolean {
             return try {
-                _value = deserialize(rawValue)
+                parse(rawValue)
                 true
             } catch (e: Exception) {
                 false
             }
         }
+
+        fun parse(rawValue: String?) {
+            if (rawValue == null) return
+            _value = deserialize(rawValue)
+        }
+
         operator fun unaryPlus() = value
     }
 
@@ -149,7 +156,7 @@ abstract class Kli() {
                             chars.rem
 
                     if (rawValue == null) err("No value provided for option $presentableName")
-                    else if (!option.parseValue(rawValue)) err("Can't parse value '$rawValue' for option $presentableName")
+                    else if (!option.tryParse(rawValue)) err("Can't parse value '$rawValue' for option $presentableName")
                     else StartCmd
                 }
             }

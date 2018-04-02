@@ -74,14 +74,28 @@ allprojects {
         if (mvnId.endsWith('-jvm'))
             mvnId = mvnId.substring(0, mvnId.length() - 4)
 
+        task sourceJar(type: Jar) {
+            from sourceSets.main.allSource
+        }
+
+        compileKotlin {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
+
         publishing {
             publications {
                 maven(MavenPublication) {
                     groupId 'com.jetbrains'
                     artifactId mvnId
-                    version '0.1'
+                    version '0.1-SNAPSHOT'
 
                     from components.java
+
+                    artifact sourceJar {
+                        classifier "sources"
+                    }
                 }
             }
         }

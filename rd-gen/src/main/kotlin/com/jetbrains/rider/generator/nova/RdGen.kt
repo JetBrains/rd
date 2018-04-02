@@ -75,7 +75,7 @@ class RdGen : Kli() {
             v("Rdgen default classpath: '$defaultCp'")
 
             val cp = listOf(userCp, defaultCp).filter { !it.isBlank() }.joinToString ( System.getProperty("path.separator") )
-            v("Resulting kotlinc classpath: $cp")
+            v("Resulting kotlinc classpath: '$cp'")
 
             val args = arrayOf(
                 "-cp", cp,
