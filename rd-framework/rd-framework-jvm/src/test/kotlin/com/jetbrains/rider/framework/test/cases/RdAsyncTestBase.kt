@@ -2,7 +2,7 @@ package com.jetbrains.rider.framework.test.cases
 
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.threading.TestSingleThreadScheduler
-import org.testng.annotations.AfterMethod
+import kotlin.test.AfterTest
 
 open class RdAsyncTestBase : RdTestBase() {
     val clientBgScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ClientBg")
@@ -16,7 +16,8 @@ open class RdAsyncTestBase : RdTestBase() {
     override val serverScheduler: IScheduler
         get() = serverUiScheduler
 
-    @AfterMethod fun tearDownSchedulers() {
+    @AfterTest
+    fun tearDownSchedulers() {
         clientBgScheduler.assertNoExceptions()
         serverBgScheduler.assertNoExceptions()
         clientUiScheduler.assertNoExceptions()

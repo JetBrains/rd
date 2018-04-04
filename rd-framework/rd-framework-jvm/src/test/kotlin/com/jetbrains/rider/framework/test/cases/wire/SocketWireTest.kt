@@ -39,7 +39,8 @@ class SocketWireTest {
 
     private fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
         return Protocol(Serializers(), Identities(), TestScheduler,
-            SocketWire.Client(lifetime, TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient")
+            SocketWire.Client(lifetime,
+                TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient")
         )
     }
 

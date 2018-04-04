@@ -15,8 +15,8 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rider.util.reactive.IScheduler
-import org.testng.annotations.AfterMethod
-import org.testng.annotations.BeforeMethod
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
 object TestScheduler : IScheduler {
     override fun flush() {}
@@ -55,7 +55,7 @@ open class RdTestBase {
     protected open val clientScheduler: IScheduler get() = TestScheduler
     protected open val serverScheduler: IScheduler get() = TestScheduler
 
-    @BeforeMethod
+    @BeforeTest
     fun setUp() {
         Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
         clientLifetimeDef = Lifetime.create(Lifetime.Eternal)
@@ -77,7 +77,7 @@ open class RdTestBase {
 
     }
 
-    @AfterMethod
+    @AfterTest
     fun tearDown() {
         disposeLoggerFactory?.close()
         disposeLoggerFactory = null
@@ -85,8 +85,6 @@ open class RdTestBase {
 
         clientLifetimeDef.terminate()
         serverLifetimeDef.terminate()
-
-
     }
 
     internal fun <T : IRdBindable> IProtocol.bindStatic(x: T, name: String): T {

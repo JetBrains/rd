@@ -4,10 +4,10 @@ import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdSignal
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.fire
-import org.testng.annotations.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
+import kotlin.test.Test
 
 class RdAsyncSignalTest : RdAsyncTestBase() {
 

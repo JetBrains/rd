@@ -1,7 +1,10 @@
 package com.jetbrains.rider.framework.test.cases
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.*
+import com.jetbrains.rider.framework.base.ISerializersOwner
+import com.jetbrains.rider.framework.base.RdBindableBase
+import com.jetbrains.rider.framework.base.RdExtBase
+import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.util.lifetime.Lifetime

@@ -148,9 +148,15 @@ interface IViewableList<out V: Any> : List<V>, IViewable<Pair<Int, V>>, ISource<
      * Represents an addition, update or removal of an element in the list.
      */
     sealed class Event<out V>(val index: Int) {
-        class Add<V>   (index: Int, val newValue : V) : Event<V>(index)
-        class Update<V>(index: Int, val oldValue : V, val newValue : V) : Event<V>(index)
-        class Remove<V>(index: Int, val oldValue : V                  ) : Event<V>(index)
+        class Add<V>   (index: Int, val newValue : V) : Event<V>(index) {
+            override fun toString() = "Add $index:$newValue"
+        }
+        class Update<V>(index: Int, val oldValue : V, val newValue : V) : Event<V>(index) {
+            override fun toString() = "Update $index:$newValue"
+        }
+        class Remove<V>(index: Int, val oldValue : V                  ) : Event<V>(index) {
+            override fun toString() = "Remove $index"
+        }
 
         /**
          * Returns the new value for add or update events, or null for removal events.

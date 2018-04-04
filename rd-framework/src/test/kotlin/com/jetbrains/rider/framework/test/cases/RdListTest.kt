@@ -1,20 +1,19 @@
 package com.jetbrains.rider.framework.test.cases
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdList
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
-import org.testng.Assert
-import org.testng.annotations.Test
 import kotlin.reflect.KClass
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class RdListTest : RdTestBase() {
     @Test
-    fun TestStatic()
+    fun testStatic()
     {
         val id = 1
 
@@ -22,38 +21,38 @@ class RdListTest : RdTestBase() {
         val clientList = RdList<String>().static(id).apply { optimizeNested=true }
 
         val logUpdate = arrayListOf<String>()
-        clientList.advise(Lifetime.Eternal) { entry -> logUpdate.add("${entry.javaClass.simpleName} ${entry.index}:${entry.newValueOpt}")}
+        clientList.advise(Lifetime.Eternal) { entry -> logUpdate.add(entry.toString())}
 
-        Assert.assertTrue(serverList.count() == 0)
-        Assert.assertTrue(clientList.count() == 0)
+        assertEquals(0, serverList.count())
+        assertEquals(0, clientList.count())
 
         serverList.add("Server value 1")
         serverList.addAll(listOf("Server value 2", "Server value 3"))
 
-        Assert.assertEquals(0, clientList.count())
+        assertEquals(0, clientList.count())
         clientProtocol.bindStatic(clientList, "top")
         serverProtocol.bindStatic(serverList, "top")
 
-        Assert.assertEquals(clientList.count(), 3)
-        Assert.assertEquals(clientList[0], "Server value 1")
-        Assert.assertEquals(clientList[1], "Server value 2")
-        Assert.assertEquals(clientList[2], "Server value 3")
+        assertEquals(clientList.count(), 3)
+        assertEquals(clientList[0], "Server value 1")
+        assertEquals(clientList[1], "Server value 2")
+        assertEquals(clientList[2], "Server value 3")
 
         serverList.add("Server value 4")
         clientList[3] = "Client value 4"
 
-        Assert.assertEquals(clientList[3], "Client value 4")
-        Assert.assertEquals(serverList[3], "Client value 4")
+        assertEquals(clientList[3], "Client value 4")
+        assertEquals(serverList[3], "Client value 4")
 
         clientList.add("Client value 5")
         serverList[4] = "Server value 5"
 
 
-        Assert.assertEquals(clientList[4], "Server value 5")
-        Assert.assertEquals(serverList[4], "Server value 5")
+        assertEquals(clientList[4], "Server value 5")
+        assertEquals(serverList[4], "Server value 5")
 
 
-        Assert.assertEquals(logUpdate,
+        assertEquals(logUpdate,
             listOf("Add 0:Server value 1",
             "Add 1:Server value 2",
             "Add 2:Server value 3",
@@ -65,7 +64,7 @@ class RdListTest : RdTestBase() {
     }
 
     @Test
-    fun TestDynamic()
+    fun testDynamic()
     {
         val id = 1
 
@@ -75,8 +74,8 @@ class RdListTest : RdTestBase() {
         DynamicEntity.create(clientProtocol)
         DynamicEntity.create(serverProtocol)
 
-        Assert.assertTrue(serverList.count() == 0)
-        Assert.assertTrue(clientList.count() == 0)
+        assertEquals(0, serverList.count())
+        assertEquals(0, clientList.count())
 
         clientProtocol.bindStatic(clientList, "top")
         serverProtocol.bindStatic(serverList," top")
@@ -99,7 +98,7 @@ class RdListTest : RdTestBase() {
 
         clientList.clear()
 
-        Assert.assertEquals(log, listOf("start 0", "null", "true",
+        assertEquals(log, listOf("start 0", "null", "true",
             "finish 0", "start 0", "true",
             "start 1", "false",
             "finish 1", "start 1", "true",
@@ -113,7 +112,12 @@ class RdListTest : RdTestBase() {
 
         companion object : IMarshaller<DynamicEntity> {
             override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
-                return DynamicEntity(RdProperty.read(ctx, buffer) as RdProperty<Boolean?>)
+                return DynamicEntity(
+                    RdProperty.read(
+                        ctx,
+                        buffer
+                    ) as RdProperty<Boolean?>
+                )
             }
 
             override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DynamicEntity) {
