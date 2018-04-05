@@ -6,6 +6,7 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.Signal
 import com.jetbrains.rider.util.string.IPrintable
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
 
 abstract class RdBindableBase : IRdBindable, IPrintable {
@@ -107,6 +108,17 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     }
 
     fun location() : String = name
+
+
+    //Reflection
+    private fun <T> T.appendToBindableChildren(thisRef: Any?, property: KProperty<*>) : T {
+        val self = thisRef as RdBindableBase
+        self.bindableChildren.add(property.name to this)
+        return this
+    }
+
+    operator fun <T : IRdBindable?> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
+    operator fun <T : List<IRdBindable?>> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
 }
 
 fun <T : RdBindableBase> T.withId(id: RdId) : T {

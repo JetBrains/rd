@@ -123,14 +123,14 @@ inline fun <T : Any> AbstractBuffer.readNullable(inner: () -> T) : T? {
 
 @Suppress("unused")
 @PublicApi
-inline fun <reified T : Any?> AbstractBuffer.readArray(inner: () -> T) : Array<T> {
+inline fun <T : Any?> AbstractBuffer.readArray(inner: () -> T) : Array<T> {
     val len = readInt()
     if (len < 0) throw NullPointerException("Length of array is negative: $len")
 
-    return Array(len) { _ -> inner() }
+    return Array<Any?>(len) { _ -> inner() } as Array<T>
 }
 
-inline fun <reified T> AbstractBuffer.readList(inner: () -> T): List<T> {
+inline fun <T> AbstractBuffer.readList(inner: () -> T): List<T> {
     val len = readInt()
     if (len < 0) throw NullPointerException("Length of array is negative: $len")
 
@@ -176,7 +176,7 @@ fun <T: Any?> AbstractBuffer.writeArray(value : Array<T>, elemWriter:(T) -> Unit
     value.forEach { elemWriter(it) }
 }
 
-inline fun <reified T> AbstractBuffer.writeList(value: List<T>, elemWriter: (T) -> Unit) {
+inline fun <T> AbstractBuffer.writeList(value: List<T>, elemWriter: (T) -> Unit) {
     writeInt(value.size)
     value.forEach { elemWriter(it) }
 }
