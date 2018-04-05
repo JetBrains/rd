@@ -1,30 +1,31 @@
 package com.jetbrains.rider.util.test.cases
-
 import com.jetbrains.rider.util.collections.ImmutableStack
 import com.jetbrains.rider.util.collections.tail
 import com.jetbrains.rider.util.collections.toImmutableStack
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
 
 
 class ImmutableStackTest {
     @Test
     fun testBasic() {
         var s = ImmutableStack<Int>()
-        assert(s.isEmpty)
+        assertTrue(s.isEmpty)
 
         s.push(1)
         //naebalovo
-        assert(s.isEmpty)
+        assertTrue(s.isEmpty)
 
         s = s.push(1)
-        assert(!s.isEmpty)
+        assertTrue(!s.isEmpty)
         assertEquals(1, s.peek())
         assertEquals(1, s.pop()?.second)
         assertEquals(1, s.pop()?.second)
 
         val e = ImmutableStack<Int>()
-        assert(e.isEmpty)
+        assertTrue(e.isEmpty)
 
         s = listOf(1,2).toImmutableStack()
         assertEquals(1, s.peek())

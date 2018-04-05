@@ -1,24 +1,23 @@
 package com.jetbrains.rider.framework.test.cases
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdBindableBase
-import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
 import com.jetbrains.rider.util.reactive.valueOrThrow
-import org.testng.annotations.Test
+import com.jetbrains.rider.util.string.printToString
 import kotlin.reflect.KClass
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 
 class RdPropertyTest : RdTestBase() {
     @Test
-    fun TestStatic() {
+    fun testStatic() {
         val property_id = 1
 
         val client_property = RdProperty(1).static(property_id)
@@ -58,7 +57,7 @@ class RdPropertyTest : RdTestBase() {
 
 
     @Test
-    fun TestDynamic() {
+    fun testDynamic() {
         val property_id = 1
         val client_property = RdOptionalProperty<DynamicEntity>().static(property_id)
         val server_property = RdOptionalProperty<DynamicEntity>().static(property_id).slave()
@@ -147,7 +146,7 @@ class RdPropertyTest : RdTestBase() {
 
     @Suppress("UNCHECKED_CAST")
     @Test
-    fun TestEarlyAdvise() {
+    fun testEarlyAdvise() {
         setWireAutoFlush(false)
 
         val szr = RdOptionalProperty.Companion as ISerializer<RdOptionalProperty<Int>>

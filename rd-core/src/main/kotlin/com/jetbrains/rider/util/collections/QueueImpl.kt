@@ -3,16 +3,17 @@ package com.jetbrains.rider.util.collections
 /**
  * Two stacks based queue
  */
-class QueueImpl<T>() {
-    private var toPush = ArrayList<T?>()
-    private var toPoll = ArrayList<T?>()
+class QueueImpl<E>() {
+    private var toPush = ArrayList<E?>()
+    private var toPoll = ArrayList<E?>()
     var pollIndex = 0
 
-    fun offer(v: T) {
-        toPush.add(v)
+    fun offer(element: E): Boolean {
+        toPush.add(element)
+        return true
     }
 
-    fun poll() : T? {
+    fun poll() : E? {
         if (isEmpty()) return null
 
         if(pollIndex >= toPoll.size)
@@ -23,7 +24,7 @@ class QueueImpl<T>() {
         return res
     }
 
-    fun peek() : T? {
+    fun peek() : E? {
         if (isEmpty()) return null
 
         return toPoll[pollIndex]
@@ -34,7 +35,7 @@ class QueueImpl<T>() {
         if (toPush.isEmpty()) return true
 
         toPoll = toPush
-        toPush = ArrayList<T?>()
+        toPush = ArrayList<E?>()
         pollIndex = 0
 
         return false

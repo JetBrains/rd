@@ -1,5 +1,6 @@
 package com.jetbrains.rider.util
 
+import com.jetbrains.rider.util.collections.QueueImpl
 import kotlin.Exception
 import kotlin.reflect.KClass
 
@@ -89,3 +90,5 @@ actual class AtomicInteger actual constructor(var v: Int) {
 
     actual fun decrementAndGet(): Int = --v
 }
+
+actual typealias Queue<E> = QueueImpl<E>

@@ -55,7 +55,7 @@ class RdGen : Kli() {
 
     private fun compile0(src: Path, dst: Path) : String? {
 
-        v("Searching for kotlin compiler")
+        v("Searching for Kotlin compiler")
         try {
             val compilerClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
             val clazz = compilerClassloader?.let {
@@ -71,7 +71,11 @@ class RdGen : Kli() {
             val userCp = classpath.value?:""
             v("User classpath: '$userCp'")
 
-            val defaultCp = defaultClassloader.scanForResourcesContaining(javaClass.`package`.name).joinToString ( System.getProperty("path.separator") )
+
+            val defaultCp = (
+                    defaultClassloader.scanForResourcesContaining(javaClass.`package`.name) +
+                    defaultClassloader.scanForResourcesContaining("kotlin")
+            ).toSet().joinToString(System.getProperty("path.separator"))
             v("Rdgen default classpath: '$defaultCp'")
 
             val cp = listOf(userCp, defaultCp).filter { !it.isBlank() }.joinToString ( System.getProperty("path.separator") )
@@ -309,7 +313,7 @@ fun generateRdModel(classLoader: ClassLoader, namespacePrefixes: Array<String>
         if (verbose) println("Scanning $root, ${root.generators.size} generators found")
 
         root.generators.forEach { gen ->
-            val shouldGenerate = genfilter.containsMatchIn(gen.javaClass.simpleName)
+            val shouldGenerate = genfilter.containsMatchIn(gen.javaClass.simpleName) && gen.folder.toString().isNotEmpty()
             if (verbose) println("  $gen: "+ if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
             if (shouldGenerate) generatorsToInvoke.add(GenPair(gen, root))
         }

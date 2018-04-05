@@ -1,21 +1,20 @@
 package com.jetbrains.rider.framework.test.cases
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdMap
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
-import org.testng.Assert
-import org.testng.annotations.Test
 import kotlin.reflect.KClass
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RdMapTest : RdTestBase() {
     @Test
-    fun TestStatic()
+    fun testStatic()
     {
         val id = 1
 
@@ -23,36 +22,36 @@ class RdMapTest : RdTestBase() {
         val clientMap = RdMap<Int, String>().static(id).apply { optimizeNested=true }
 
         val logUpdate = arrayListOf<String>()
-        clientMap.advise(Lifetime.Eternal) { entry -> logUpdate.add("${entry.javaClass.simpleName} ${entry.key}:${entry.newValueOpt}")}
+        clientMap.advise(Lifetime.Eternal) { entry -> logUpdate.add(entry.toString())}
 
-        Assert.assertTrue(serverMap.count() == 0)
-        Assert.assertTrue(clientMap.count() == 0)
+        assertEquals(0, serverMap.count())
+        assertEquals(0, clientMap.count())
 
         serverMap[1] = "Server value 1"
         serverMap[2] = "Server value 2"
         serverMap[3] = "Server value 3"
 
-        Assert.assertEquals(0, clientMap.count())
+        assertEquals(0, clientMap.count())
         clientProtocol.bindStatic(clientMap, "top")
         serverProtocol.bindStatic(serverMap, "top")
 
-        Assert.assertEquals(3, clientMap.count())
-        Assert.assertEquals("Server value 1", clientMap[1])
-        Assert.assertEquals("Server value 2", clientMap[2])
-        Assert.assertEquals("Server value 3", clientMap[3])
+        assertEquals(3, clientMap.count())
+        assertEquals("Server value 1", clientMap[1])
+        assertEquals("Server value 2", clientMap[2])
+        assertEquals("Server value 3", clientMap[3])
 
         serverMap[4] = "Server value 4"
         clientMap[4] = "Client value 4"
 
-        Assert.assertEquals("Client value 4", clientMap[4])
-        Assert.assertEquals("Client value 4", serverMap[4])
+        assertEquals("Client value 4", clientMap[4])
+        assertEquals("Client value 4", serverMap[4])
 
         clientMap[5] = "Client value 5"
         serverMap[5] = "Server value 5"
 
 
-        Assert.assertEquals("Server value 5", clientMap[5])
-        Assert.assertEquals("Server value 5", serverMap[5])
+        assertEquals("Server value 5", clientMap[5])
+        assertEquals("Server value 5", serverMap[5])
 
 
         assertEquals(listOf("Add 1:Server value 1",
@@ -67,7 +66,7 @@ class RdMapTest : RdTestBase() {
     }
 
     @Test
-    fun TestDynamic()
+    fun testDynamic()
     {
         val id = 1
 
@@ -78,8 +77,8 @@ class RdMapTest : RdTestBase() {
         DynamicEntity.create(clientProtocol)
         DynamicEntity.create(serverProtocol)
 
-        Assert.assertTrue(serverMap.count() == 0)
-        Assert.assertTrue(clientMap.count() == 0)
+        assertTrue(serverMap.count() == 0)
+        assertTrue(clientMap.count() == 0)
 
         clientProtocol.bindStatic(clientMap, "top")
         serverProtocol.bindStatic(serverMap," top")
@@ -116,7 +115,12 @@ class RdMapTest : RdTestBase() {
 
         companion object : IMarshaller<DynamicEntity> {
             override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
-                return DynamicEntity(RdProperty.read(ctx, buffer) as RdProperty<Boolean?>)
+                return DynamicEntity(
+                    RdProperty.read(
+                        ctx,
+                        buffer
+                    ) as RdProperty<Boolean?>
+                )
             }
 
             override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DynamicEntity) {

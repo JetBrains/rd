@@ -3,7 +3,7 @@ package com.jetbrains.rider.framework.test.cases
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdSet
 import com.jetbrains.rider.util.reactive.AddRemove
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 

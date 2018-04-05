@@ -1,7 +1,7 @@
 package com.jetbrains.rider.framework
 
 abstract class AbstractBuffer {
-    abstract val position: Int
+    abstract var position: Int
 
     abstract fun writeByte(value: Byte)
     abstract fun readByte(): Byte

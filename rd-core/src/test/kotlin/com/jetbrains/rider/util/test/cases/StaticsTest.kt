@@ -1,8 +1,8 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.Statics
-import org.testng.annotations.Test
 import kotlin.test.assertEquals
+import kotlin.test.Test
 
 class StaticsTest {
 
