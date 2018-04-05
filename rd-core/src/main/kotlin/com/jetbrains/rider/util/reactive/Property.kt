@@ -3,7 +3,8 @@ package com.jetbrains.rider.util.reactive
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 
-class Property<T>(defaultValue: T) : IProperty<T> {
+class Property<T>(defaultValue: T) : IProperty<T>
+{
     override fun set(newValue: T) {
         value = newValue
     }
@@ -12,10 +13,11 @@ class Property<T>(defaultValue: T) : IProperty<T> {
         set(newValue) {
             if (field == newValue) return
             field = newValue
-            change.fire(newValue)
+            _change.fire(newValue)
         }
 
-    override val change = Signal<T>()
+    private val _change = Signal<T>()
+    override val change : ISource<T> get() = _change
 }
 
 open class OptProperty<T : Any>() : IOptProperty<T> {
@@ -25,12 +27,13 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
         _value = defaultValue
     }
 
-    override val change = Signal<T>()
+    private val _change = Signal<T>()
+    override val change : ISource<T> get() = _change
 
     override fun set(newValue: T) {
         if (newValue == _value) return
         _value = newValue
-        change.fire(newValue)
+        _change.fire(newValue)
     }
 
     protected var _value: T? = null
