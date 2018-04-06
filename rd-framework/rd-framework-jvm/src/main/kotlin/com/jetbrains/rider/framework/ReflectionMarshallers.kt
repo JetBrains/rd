@@ -85,7 +85,6 @@ class ReflectionMarshaller<T : Any>(override val _type: KClass<T>) : IMarshaller
 
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: T) {
         for ((p, szr) in membersSerializers) {
-            println(p.name)
             val propValue = p.get(value)
             (szr as ISerializer<Any?>).write(ctx, buffer, propValue)
         }

@@ -14,9 +14,10 @@ import com.jetbrains.rider.util.trace
 
 class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdReactiveBase(), IAsyncSignal<T> {
 
-    companion object {
+    companion object : ISerializer<RdSignal<*>>{
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdSignal<*> = read(ctx, buffer, Polymorphic<Any?>())
         fun<T> read(ctx: SerializationCtx, buffer: AbstractBuffer, valueSerializer: ISerializer<T>): RdSignal<T> = RdSignal(valueSerializer).withId(buffer.readRdId())
-        fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdSignal<*>) = value.rdid.write(buffer)
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdSignal<*>) = value.rdid.write(buffer)
     }
 
     private object DEFAULT_SCHEDULER_MARKER : IScheduler {
