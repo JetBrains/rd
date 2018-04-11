@@ -11,16 +11,15 @@ class Session<T : Any>(val property: IProperty<T?>) {
         private set
 
     init {
-        property.viewNotNull (Lifetime.Eternal) { lt, _ ->
+        property.viewNotNull (Lifetime.Eternal) { lt, v ->
             currentLifetime = lt
         }
     }
 
     val currentValue : T? get() = property.value
 
-    fun refresh(value : T, externalLifetime : Lifetime) : Lifetime {
+    fun refresh(value : T) : Lifetime {
         property.value = value
-        externalLifetime += { property.value = null }
         return currentLifetime
     }
 
@@ -29,11 +28,11 @@ class Session<T : Any>(val property: IProperty<T?>) {
     }
 }
 
-fun <T: Any> Session<T>.refreshOnNew(value : T, externalLifetime : Lifetime) : Lifetime {
+fun <T: Any> Session<T>.refreshOnNew(value : T) : Lifetime {
     if (property.value == value) {
         return currentLifetime
     }
 
-    return refresh(value, externalLifetime)
+    return refresh(value)
 }
 
