@@ -33,7 +33,7 @@ allprojects {
             kotlinOptions.metaInfo = true
             kotlinOptions.outputFile = "$target/${projectName}.js"
             kotlinOptions.sourceMap = true
-            kotlinOptions.moduleKind = 'commonjs'
+            kotlinOptions.moduleKind = 'amd'
             kotlinOptions.main = 'call'
             kotlinOptions.typedArrays = true
         }

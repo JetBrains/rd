@@ -1,0 +1,1 @@
+requirejs(["encoding", "rd-webui"]);
