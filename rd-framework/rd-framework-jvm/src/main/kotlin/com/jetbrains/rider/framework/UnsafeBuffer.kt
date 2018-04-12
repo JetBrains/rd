@@ -166,7 +166,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
 
 
 
-    override fun rewind() {
+    fun rewind() {
         offset = 0
     }
 
