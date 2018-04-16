@@ -16,6 +16,8 @@ class WebSocketWire {
     class Client(lifetime: Lifetime, scheduler: IScheduler, port: Int, optId: String? = "ClientSocket") : WireBase(scheduler) {
         private val logger: Logger = getLogger(this::class)
         private var socket: WebSocket? = null
+        var bytesReceived = 0
+        var bytesSend = 0
 
         init {
             try {
@@ -41,6 +43,7 @@ class WebSocketWire {
                     try {
                         val messageEvent = it as MessageEvent
                         val data = messageEvent.data as ArrayBuffer
+                        bytesReceived += data.byteLength
                         val buffer = JsBuffer(data)
                         val messageLen = buffer.readInt()
                         if (messageLen != data.byteLength - 4)
@@ -71,7 +74,7 @@ class WebSocketWire {
 
             require(!id.isNull) { "id mustn't be null" }
 
-            val unsafeBuffer = JsBuffer(ArrayBuffer(16384))
+            val unsafeBuffer = JsBuffer(ArrayBuffer(4096))
 
             try {
                 unsafeBuffer.writeInt(0) //placeholder for length
@@ -79,11 +82,12 @@ class WebSocketWire {
                 id.write(unsafeBuffer) //write id
                 writer(unsafeBuffer) //write rest
 
-                val len = unsafeBuffer.position
+                val length = unsafeBuffer.position
 
                 unsafeBuffer.rewind()
-                unsafeBuffer.writeInt(len - 4)
-                socket?.send(unsafeBuffer.getFirstBytes(len))
+                unsafeBuffer.writeInt(length - 4)
+                socket?.send(unsafeBuffer.getFirstBytes(length))
+                bytesSend += length
             } catch (ex: Throwable) {
                 logger.error("$id caught processing", ex)
             }
