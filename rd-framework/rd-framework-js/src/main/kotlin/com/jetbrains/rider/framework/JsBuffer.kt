@@ -3,12 +3,15 @@ package com.jetbrains.rider.framework
 import org.khronos.webgl.*
 
 class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
+    companion object {
+        private val textDecoder = TextDecoder("utf-16le")
+        private val textEncoder = TextEncoder("utf-16le", object {
+            @Suppress("unused")
+            val NONSTANDARD_allowLegacyEncoding = true })
+    }
+
     private var dataView : DataView = DataView(buffer)
     private val littleEndian = true
-    private val textDecoder = TextDecoder("utf-16le")
-    private val textEncoder = TextEncoder("utf-16le", object {
-        @Suppress("unused")
-        val NONSTANDARD_allowLegacyEncoding = true })
 
     private var offset: Int = 0
     override var position: Int
