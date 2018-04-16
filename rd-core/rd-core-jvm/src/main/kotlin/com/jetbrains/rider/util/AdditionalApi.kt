@@ -36,7 +36,7 @@ fun <T : Any> ISource<T>.throttleLast(timeout: Duration, scheduler: IScheduler) 
 
 
 //jvm impl backed by commons-logging
-internal object CommonsLoggingLoggerFactory : ILoggerFactory {
+object CommonsLoggingLoggerFactory : ILoggerFactory {
     override fun getLogger(category: String): Logger = object : Logger {
         private val internalLogger = org.apache.commons.logging.LogFactory.getLog(category)
 
