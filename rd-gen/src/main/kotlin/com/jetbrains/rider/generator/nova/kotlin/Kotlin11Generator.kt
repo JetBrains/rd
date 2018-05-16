@@ -248,11 +248,6 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 //            .filterNot { it == tl.namespace }
 //            .distinct()
 //            .printlnWithBlankLine { "import $it.*;" }
-
-        println()
-        + "import java.io.*"
-        + "import java.util.*"
-        + "import java.net.*"
     }
 
 
@@ -601,7 +596,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "override fun equals(other: Any?): Boolean {"
         indent {
             + "if (this === other) return true"
-            + "if (other?.javaClass != javaClass) return false"
+            + "if (other == null || other::class != this::class) return false"
             println()
             + "other as ${decl.name}"
             println()
