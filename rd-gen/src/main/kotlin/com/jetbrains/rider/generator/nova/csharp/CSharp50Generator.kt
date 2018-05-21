@@ -752,7 +752,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
         fun IScalar.hc(v : String) : String = when (this) {
             is Enum -> "(int) $v"
-            is IArray, is IImmutableList -> "CollectionUtil.GetHashCode($v)"
+            is IArray, is IImmutableList -> "Collections.Collections.GetHashCode($v)"
             is INullable -> "($v != null ?" + (itemType as IScalar).hc(v) + " : 0)"
             else -> "$v.GetHashCode()"
         }
