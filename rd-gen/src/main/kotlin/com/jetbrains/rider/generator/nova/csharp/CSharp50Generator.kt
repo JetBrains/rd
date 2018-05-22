@@ -326,7 +326,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "using JetBrains.Platform.RdFramework.Text;"
         println()
 
-        + "using JetBrains.Util;"
+        + "using JetBrains.Util.Collections;"
         + "using JetBrains.Util.Logging;"
         + "using JetBrains.Util.PersistentMap;"
         + "using Lifetime = JetBrains.DataFlow.Lifetime;"
@@ -752,7 +752,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
         fun IScalar.hc(v : String) : String = when (this) {
             is Enum -> "(int) $v"
-            is IArray, is IImmutableList -> "Collections.Collections.GetHashCode($v)"
+            is IArray, is IImmutableList -> "Collections.GetHashCode($v)"
             is INullable -> "($v != null ?" + (itemType as IScalar).hc(v) + " : 0)"
             else -> "$v.GetHashCode()"
         }
