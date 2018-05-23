@@ -18,7 +18,7 @@ fun <T> ISerializer<T>.list() : ISerializer<List<T>> = object : ISerializer<List
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: List<T>) = buffer.writeList(value) { this@list.write(ctx, buffer, it)}
 }
 
-fun <T> ISerializer<T>.array() : ISerializer<Array<T>> = object : ISerializer<Array<T>> {
+inline fun <reified T> ISerializer<T>.array() : ISerializer<Array<T>> = object : ISerializer<Array<T>> {
     override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Array<T> = buffer.readArray { this@array.read(ctx, buffer) }
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Array<T>) = buffer.writeArray(value) { this@array.write(ctx, buffer, it)}
 }

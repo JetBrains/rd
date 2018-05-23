@@ -35,7 +35,7 @@ class ReflectionMarshaller<T : Any>(override val _type: KClass<T>) : IMarshaller
             val res: ISerializer<*> = when {
                 cl.isSubclassOf(IRdReactive::class) -> findCompanionSerializer(cl)!!
                 cl.isSubclassOf(kotlin.collections.List::class) -> serializerFor(typeArg1!!).list()
-                cl.isSubclassOf(kotlin.Array<Any>::class) -> serializerFor(typeArg1!!).array()
+//                cl.isSubclassOf(kotlin.Array<Any>::class) -> serializerFor(typeArg1!!).array()
                 type.arguments.isEmpty() -> invoke(cl)
                 else -> error("Can't build reflection serializer for $type")
             }

@@ -123,11 +123,11 @@ inline fun <T : Any> AbstractBuffer.readNullable(inner: () -> T) : T? {
 
 @Suppress("unused")
 @PublicApi
-inline fun <T : Any?> AbstractBuffer.readArray(inner: () -> T) : Array<T> {
+inline fun <reified T : Any?> AbstractBuffer.readArray(inner: () -> T) : Array<T> {
     val len = readInt()
     if (len < 0) throw NullPointerException("Length of array is negative: $len")
 
-    return Array<Any?>(len) { _ -> inner() } as Array<T>
+    return Array(len) { _ -> inner() }
 }
 
 inline fun <T> AbstractBuffer.readList(inner: () -> T): List<T> {
