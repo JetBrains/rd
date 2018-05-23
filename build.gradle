@@ -14,6 +14,7 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.moowork.gradle:gradle-node-plugin:1.1.1"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
 }
 
@@ -72,10 +73,24 @@ allprojects {
         apply plugin: 'kotlin-platform-jvm'
         apply plugin: "jacoco"
         apply plugin: 'maven-publish'
+        apply plugin: 'org.jetbrains.dokka'
 
 
         task sourceJar(type: Jar) {
             from sourceSets.main.allSource
+            classifier = "sources"
+        }
+
+        dokka {
+            outputFormat = 'html'
+            outputDirectory = "$buildDir/javadoc"
+        }
+
+
+        task packageJavadoc(type: Jar){
+            dependsOn dokka
+            from "$buildDir/javadoc"
+            classifier = 'javadoc'
         }
 
         compileKotlin {
@@ -97,9 +112,8 @@ allprojects {
 
                     from components.java
 
-                    artifact sourceJar {
-                        classifier "sources"
-                    }
+                    artifact sourceJar
+//                    artifact packageJavadoc
                 }
             }
         }
