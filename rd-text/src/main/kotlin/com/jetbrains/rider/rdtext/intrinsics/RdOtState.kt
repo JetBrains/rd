@@ -1,4 +1,4 @@
-package com.jetbrains.rider.framework.text.intrinsics
+package com.jetbrains.rider.rdtext.intrinsics
 
 import com.jetbrains.rider.framework.IIdentities
 import com.jetbrains.rider.framework.IMarshaller
@@ -25,8 +25,8 @@ class RdOtState (
 
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdOtState {
-            val _operation = RdSignal.read(ctx, buffer, com.jetbrains.rider.framework.text.intrinsics.OtOperationMarshaller)
-            val _ack = RdSignal.read(ctx, buffer, com.jetbrains.rider.framework.text.intrinsics.OtOperationMarshaller)
+            val _operation = RdSignal.read(ctx, buffer, OtOperationMarshaller)
+            val _ack = RdSignal.read(ctx, buffer, OtOperationMarshaller)
             return RdOtState(_operation, _ack)
         }
 

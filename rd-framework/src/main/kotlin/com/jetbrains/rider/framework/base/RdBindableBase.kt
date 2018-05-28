@@ -38,7 +38,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     override val protocol : IProtocol get() = parent?.protocol?: nb()
     val wire get() = protocol.wire
 
-    internal val isBound : Boolean  get() = parent != null
+    val isBound : Boolean  get() = parent != null
 
     override val serializationContext: SerializationCtx
         get() = parent?.serializationContext ?: throw IllegalStateException("Trying to get serialization context of unbound object $name")

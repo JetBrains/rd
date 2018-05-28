@@ -1,4 +1,4 @@
-package com.jetbrains.rider.framework.text.intrinsics
+package com.jetbrains.rider.rdtext.intrinsics
 
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.*
@@ -35,7 +35,7 @@ class RdTextBufferState (
             RdOptionalProperty.write(ctx, buffer, value._assertedSlaveText)
         }
 
-        private val __RdTextBufferChangeNullableSerializer = com.jetbrains.rider.framework.text.intrinsics.RdTextBufferChange.nullable()
+        private val __RdTextBufferChangeNullableSerializer = RdTextBufferChange.nullable()
     }
     //fields
     val changes : IProperty<RdTextBufferChange?> get() = _changes

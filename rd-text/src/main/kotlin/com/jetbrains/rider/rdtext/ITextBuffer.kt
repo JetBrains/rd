@@ -1,4 +1,4 @@
-package com.jetbrains.rider.framework.text
+package com.jetbrains.rider.rdtext
 
 import com.jetbrains.rider.util.reactive.ISignal
 import com.jetbrains.rider.util.reactive.ISource
