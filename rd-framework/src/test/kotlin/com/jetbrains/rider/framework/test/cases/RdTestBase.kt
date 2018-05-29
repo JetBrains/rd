@@ -85,6 +85,7 @@ open class RdTestBase {
 
         clientLifetimeDef.terminate()
         serverLifetimeDef.terminate()
+        ErrorAccumulatorLoggerFactory.throwAndClear()
     }
 
     internal fun <T : IRdBindable> IProtocol.bindStatic(x: T, name: String): T {
