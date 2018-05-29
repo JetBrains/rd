@@ -57,7 +57,7 @@ open class RdTestBase {
 
     @BeforeTest
     fun setUp() {
-        Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
+        disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
         clientLifetimeDef = Lifetime.create(Lifetime.Eternal)
         serverLifetimeDef = Lifetime.create(Lifetime.Eternal)
 
