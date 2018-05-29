@@ -1,4 +1,4 @@
-package com.jetbrains.rider.util.ot
+package com.jetbrains.rider.rdtext.impl.ot
 
 sealed class OtChange() {
     abstract fun isId(): Boolean

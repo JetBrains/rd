@@ -1,4 +1,4 @@
-package com.jetbrains.rider.util.ot
+package com.jetbrains.rider.rdtext.impl.ot
 
 import com.jetbrains.rider.util.getLogger
 import com.jetbrains.rider.util.lifetime.Lifetime

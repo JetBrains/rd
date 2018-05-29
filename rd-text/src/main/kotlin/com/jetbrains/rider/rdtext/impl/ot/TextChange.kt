@@ -1,4 +1,4 @@
-package com.jetbrains.rider.util.ot
+package com.jetbrains.rider.rdtext.impl.ot
 
 data class TextChange(val offset: Int, val old: String, val new: String, val fullDocumentLength: Int/*after applying change*/)
 

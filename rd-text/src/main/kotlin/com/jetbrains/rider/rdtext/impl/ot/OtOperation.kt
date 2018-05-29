@@ -1,4 +1,4 @@
-package com.jetbrains.rider.util.ot
+package com.jetbrains.rider.rdtext.impl.ot
 
 class OtOperation(changes: List<OtChange>, val role: OtRole) {
     val changes = normalize(changes)

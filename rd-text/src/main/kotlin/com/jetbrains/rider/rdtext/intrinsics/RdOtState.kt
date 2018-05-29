@@ -8,7 +8,7 @@ import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.impl.RdSignal
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.ot.OtOperation
+import com.jetbrains.rider.rdtext.impl.ot.OtOperation
 import com.jetbrains.rider.util.reactive.ISignal
 import com.jetbrains.rider.util.string.PrettyPrinter
 import kotlin.reflect.*
