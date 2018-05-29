@@ -1,4 +1,4 @@
-package com.jetbrains.rider.rdtext.intrinsics
+package com.jetbrains.rider.rdtext.impl.ot.intrinsics
 
 import com.jetbrains.rider.framework.IIdentities
 import com.jetbrains.rider.framework.IMarshaller

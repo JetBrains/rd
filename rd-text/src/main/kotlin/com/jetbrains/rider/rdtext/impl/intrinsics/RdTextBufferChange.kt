@@ -1,4 +1,4 @@
-package com.jetbrains.rider.rdtext.intrinsics
+package com.jetbrains.rider.rdtext.impl.intrinsics
 
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx

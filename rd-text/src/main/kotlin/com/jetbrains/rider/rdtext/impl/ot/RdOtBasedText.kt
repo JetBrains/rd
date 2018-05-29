@@ -2,7 +2,7 @@ package com.jetbrains.rider.rdtext.impl.ot
 
 import com.jetbrains.rider.framework.IRdDynamic
 import com.jetbrains.rider.framework.base.RdDelegateBase
-import com.jetbrains.rider.rdtext.intrinsics.RdOtState
+import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.ISignal
 import com.jetbrains.rider.util.reactive.flowInto

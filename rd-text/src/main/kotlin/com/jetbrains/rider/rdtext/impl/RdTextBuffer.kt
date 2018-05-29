@@ -4,10 +4,10 @@ import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.RdDelegateBase
 import com.jetbrains.rider.framework.base.RdReactiveBase.Companion.logReceived
 import com.jetbrains.rider.framework.impl.RdProperty
-import com.jetbrains.rider.rdtext.intrinsics.RdAssertion
-import com.jetbrains.rider.rdtext.intrinsics.RdChangeOrigin
-import com.jetbrains.rider.rdtext.intrinsics.RdTextBufferChange
-import com.jetbrains.rider.rdtext.intrinsics.RdTextBufferState
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferChange
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
 import com.jetbrains.rider.rdtext.*
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
