@@ -1,4 +1,4 @@
-package com.jetbrains.rider.framework.text
+package com.jetbrains.rider.rdtext
 
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
@@ -12,10 +12,10 @@ enum class RdTextChangeKind {
 }
 
 class RdTextChange(val kind: RdTextChangeKind,
-                        val startOffset: Int,
-                        val old: String,
-                        val new: String,
-                        val fullTextLength: Int) : IPrintable {
+                   val startOffset: Int,
+                   val old: String,
+                   val new: String,
+                   val fullTextLength: Int) : IPrintable {
     companion object {
         private fun escape(s: String): String = s.replace("\n", "\\n").replace("\r", "\\r")
     }

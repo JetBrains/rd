@@ -14,6 +14,7 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.moowork.gradle:gradle-node-plugin:1.1.1"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
 }
 
@@ -95,10 +96,26 @@ allprojects {
         apply plugin: 'kotlin-platform-jvm'
         apply plugin: "jacoco"
         apply plugin: 'maven-publish'
+        apply plugin: 'org.jetbrains.dokka'
 
 
         task sourceJar(type: Jar) {
-            from sourceSets.main.allSource
+            from sourceSets.main.kotlin
+            if (project.parent.name != "rd")
+                from project.parent.sourceSets.main.kotlin
+            classifier = "sources"
+        }
+
+        dokka {
+            outputFormat = 'html'
+            outputDirectory = "$buildDir/javadoc"
+        }
+
+
+        task packageJavadoc(type: Jar){
+            dependsOn dokka
+            from "$buildDir/javadoc"
+            classifier = 'javadoc'
         }
 
         compileKotlin {
@@ -120,9 +137,8 @@ allprojects {
 
                     from components.java
 
-                    artifact sourceJar {
-                        classifier "sources"
-                    }
+                    artifact sourceJar
+//                    artifact packageJavadoc
                 }
             }
         }
@@ -132,7 +148,7 @@ allprojects {
 
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-            compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+            compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
             compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
             testCompile "junit:junit:4.12"
@@ -195,8 +211,8 @@ allprojects {
             force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
             force "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
             force "org.jetbrains.kotlin:kotlin-runtime:$kotlin_version"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
             force "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
         }
     }

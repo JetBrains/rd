@@ -1,11 +1,11 @@
-package com.jetbrains.rider.framework.text.intrinsics
+package com.jetbrains.rider.rdtext.intrinsics
 
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
 import com.jetbrains.rider.framework.AbstractBuffer
-import com.jetbrains.rider.framework.text.TextBufferVersion
-import com.jetbrains.rider.framework.text.RdTextChange
-import com.jetbrains.rider.framework.text.RdTextChangeKind
+import com.jetbrains.rider.rdtext.TextBufferVersion
+import com.jetbrains.rider.rdtext.RdTextChange
+import com.jetbrains.rider.rdtext.RdTextChangeKind
 import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum
 import com.jetbrains.rider.util.string.IPrintable

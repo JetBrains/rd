@@ -43,7 +43,7 @@ class SwitchLogger(category: String) : Logger {
 
 
 object ConsoleLoggerFactory : ILoggerFactory {
-    var level : LogLevel = LogLevel.Trace
+    var level : LogLevel = LogLevel.Debug
     override fun getLogger(category: String) = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
             if (!isEnabled(level)) return

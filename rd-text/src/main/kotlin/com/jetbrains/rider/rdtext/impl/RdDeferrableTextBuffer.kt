@@ -1,11 +1,11 @@
-package com.jetbrains.rider.framework.text.impl
+package com.jetbrains.rider.rdtext.impl
 
 import com.jetbrains.rider.framework.base.RdReactiveBase
-import com.jetbrains.rider.framework.text.IDeferrableITextBuffer
-import com.jetbrains.rider.framework.text.RdTextChange
-import com.jetbrains.rider.framework.text.RdTextChangeKind
-import com.jetbrains.rider.framework.text.intrinsics.RdTextBufferChange
-import com.jetbrains.rider.framework.text.intrinsics.RdTextBufferState
+import com.jetbrains.rider.rdtext.IDeferrableITextBuffer
+import com.jetbrains.rider.rdtext.RdTextChange
+import com.jetbrains.rider.rdtext.RdTextChangeKind
+import com.jetbrains.rider.rdtext.intrinsics.RdTextBufferChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextBufferState
 import com.jetbrains.rider.util.debug
 import com.jetbrains.rider.util.reflection.usingTrueFlag
 

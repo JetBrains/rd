@@ -1,0 +1,7 @@
+applyKotlinJVM()
+
+dependencies {
+    compile project(':rd-framework:rd-framework-jvm')
+    compile gradleApi()
+}
+

@@ -54,6 +54,9 @@ out
 *.iml
 atlassian-ide-plugin.xml
 
+build
+/.gradle
+
 # Eclipse specific files/directories
 .classpath
 .project
