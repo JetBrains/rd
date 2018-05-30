@@ -238,6 +238,9 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "import com.jetbrains.rider.util.reactive.*"
         + "import com.jetbrains.rider.util.string.*"
         + "import com.jetbrains.rider.util.trace"
+        + "import com.jetbrains.rider.util.Date"
+        + "import com.jetbrains.rider.util.UUID"
+        + "import com.jetbrains.rider.util.URI"
         + "import kotlin.reflect.KClass"
 
 //        tl.referencedTypes.plus(tl.declaredTypes.flatMap { it.referencedTypes })
@@ -587,8 +590,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IScalar.eq(v : String) = when (this) {
             is IArray ->
-                if (isPrimitivesArray) "!Arrays.equals($v, other.$v)"
-                else "!Arrays.deepEquals($v, other.$v)"
+                if (isPrimitivesArray) "!($v contentEquals other.$v)"
+                else "!($v contentDeepEquals other.$v)"
             else -> "$v != other.$v"
         }
 
@@ -619,8 +622,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IScalar.hc(v : String) : String = when (this) {
             is IArray ->
-                if (isPrimitivesArray) "Arrays.hashCode($v)"
-                else "Arrays.deepHashCode($v)"
+                if (isPrimitivesArray) "$v.contentHashCode()"
+                else "$v.contentDeepHashCode()"
             is INullable -> "if ($v != null) " + (itemType as IScalar).hc(v) + " else 0"
             else -> "$v.hashCode()"
         }
