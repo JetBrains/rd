@@ -18,6 +18,7 @@ import com.jetbrains.rider.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rider.util.reactive.IScheduler
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
+import org.jetbrains.jetCheck.IntDistribution
 import org.jetbrains.jetCheck.PropertyChecker
 import org.junit.Assert
 import kotlin.test.Test
@@ -92,7 +93,7 @@ class TextBufferTest {
                 val change = when (kind) {
                     RdTextChangeKind.Insert -> {
                         val offset = r.generate(Generator.integers(0, text.length))
-                        val newText = r.generate(Generator.stringsOf(Generator.asciiLetters()).suchThat { it.length in 1..20 })
+                        val newText = r.generate(Generator.stringsOf(IntDistribution.uniform(1, 10), Generator.asciiLetters()))
                         RdTextChange(kind, offset, "", newText, text.length + newText.length)
                     }
                     RdTextChangeKind.Remove -> {
@@ -105,7 +106,7 @@ class TextBufferTest {
                         val x0 = r.generate(Generator.integers(0, text.length - 1))
                         val x1 = r.generate(Generator.integers(x0 + 1, text.length))
                         val old = text.substring(x0, x1)
-                        val newText = r.generate(Generator.stringsOf(Generator.asciiLetters()).suchThat { it.length in 1..20 })
+                        val newText = r.generate(Generator.stringsOf(IntDistribution.uniform(1, 10), Generator.asciiLetters()))
                         RdTextChange(kind, x0, old, newText, text.length - old.length + newText.length)
                     }
                     else -> throw IllegalArgumentException("Unexpected kind: $kind")
@@ -117,8 +118,7 @@ class TextBufferTest {
 
         override fun performCommand(env: ImperativeCommand.Environment) {
             try {
-                val initialText = env.generateValue(Generator.stringsOf(Generator.asciiLetters())
-                        .suchThat { it.length in 1..50 }, null)
+                val initialText = env.generateValue(Generator.stringsOf(IntDistribution.uniform(1, 50), Generator.asciiLetters()), null)
 
                 var op = TextBufferCommand(
                         RdTextChange(RdTextChangeKind.Reset, 0, "", initialText, initialText.length),
