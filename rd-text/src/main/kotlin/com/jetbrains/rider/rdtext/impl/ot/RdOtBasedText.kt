@@ -2,28 +2,137 @@ package com.jetbrains.rider.rdtext.impl.ot
 
 import com.jetbrains.rider.framework.IRdDynamic
 import com.jetbrains.rider.framework.base.RdDelegateBase
+import com.jetbrains.rider.framework.impl.RdProperty
+import com.jetbrains.rider.rdtext.*
+import com.jetbrains.rider.rdtext.RdChangeOrigin
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.reactive.ISignal
-import com.jetbrains.rider.util.reactive.flowInto
+import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.reflection.usingTrueFlag
 
-@Suppress("unused")
-class RdOtBasedText(delegate: RdOtState) : RdDelegateBase<RdOtState>(delegate), ISignal<TextChange> {
-    private val otState = OtState(OtRole.Master)
-    private val protocolChanges = delegatedBy.operation
-    private val protocolAck = delegatedBy.ack
+
+open class RdOtBasedText(delegate: RdOtState, final override val isMaster: Boolean = true) : RdDelegateBase<RdOtState>(delegate), ITextBuffer {
+    private var isComplexChange = false
+    private val textChanged: IOptProperty<RdTextChange> = OptProperty()
+
+    private var diff: MutableList<OtOperation> = mutableListOf()
+
+    private val _historyChanged: ISignal<RdTextChange> = Signal()
+
+    override val historyChanged: ISource<RdTextChange> get() = _historyChanged
+    final override var bufferVersion: TextBufferVersion = TextBufferVersion.INIT_VERSION
+        private set
+
+    private val localOrigin: RdChangeOrigin = if (isMaster) RdChangeOrigin.Master else RdChangeOrigin.Slave
+
+    init {
+        (delegatedBy.operation as RdProperty<*>).slave()
+    }
 
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
         super.bind(lf, parent, name)
 
-        protocolChanges.flowInto(lf, otState.receiveOperation)
-        otState.sendOperation.flowInto(lf, protocolChanges)
+        delegatedBy.operation.adviseNotNull(lf, {
+            if (it.origin != localOrigin) receiveOperation(it)
+        })
+        delegatedBy.ack.advise(lf, ::updateHistory)
 
-        protocolAck.flowInto(lf, otState.receiveAck)
-        otState.sendAck.flowInto(lf, protocolAck)
+        // for asserting documents equality
+        delegatedBy.assertedSlaveText.compose(delegatedBy.assertedMasterText, { slave, master -> slave to master}).advise(lf) { (s, m) ->
+            if (s.masterVersion == m.masterVersion
+                    && s.slaveVersion == m.slaveVersion
+                    && s.text != m.text) {
+                throw IllegalStateException("Master and Slave texts are different.\nMaster:\n$m\nSlave:\n$s")
+            }
+        }
     }
 
-    override fun advise(lifetime: Lifetime, handler: (TextChange) -> Unit) = otState.advise(lifetime, handler)
+    private fun updateHistory(ack: RdAck) {
+        if (ack.origin == localOrigin) return
+        val ts = ack.timestamp
+        diff.removeIf { it.timestamp == ts }
+    }
 
-    override fun fire(value: TextChange) = otState.fire(value)
+    protected open fun receiveOperation(operation: OtOperation) {
+        val remoteOrigin = operation.origin
+        val transformedOp = when (operation.kind) {
+            OtOperationKind.Normal -> {
+                val (op, newDiff) = diff.fold(operation to mutableListOf<OtOperation>(), { (transformedOp, transformedDiff), localChange ->
+                    val (transformedLocalChange, newTransformedOp) = transform(localChange, transformedOp)
+                    transformedDiff.add(transformedLocalChange)
+                    return@fold newTransformedOp to transformedDiff
+                })
+
+                diff = newDiff
+                op
+            }
+            OtOperationKind.Reset -> {
+                diff = mutableListOf()
+                operation
+            }
+        }
+
+        bufferVersion = if (remoteOrigin == RdChangeOrigin.Master)
+            bufferVersion.incrementMaster()
+        else
+            bufferVersion.incrementSlave()
+
+        val timestamp = operation.timestamp
+        assert(if (remoteOrigin == RdChangeOrigin.Master) bufferVersion.master == timestamp else bufferVersion.slave == timestamp)
+
+        val changes = transformedOp.toRdTextChanges()
+
+        for ((i, ch) in changes.withIndex()) {
+            usingTrueFlag(RdOtBasedText::isComplexChange, i < changes.lastIndex) {
+                _historyChanged.fire(ch)
+                textChanged.set(ch)
+            }
+        }
+
+
+        if (operation.kind == OtOperationKind.Normal)
+            sendAck(timestamp)
+    }
+
+    protected open fun sendAck(timestamp: Int) {
+        delegatedBy.ack.fire(RdAck(timestamp, localOrigin))
+    }
+
+    override fun advise(lifetime: Lifetime, handler: (RdTextChange) -> Unit) {
+        textChanged.advise(lifetime, handler)
+    }
+
+    override fun fire(value: RdTextChange) {
+        bufferVersion = if (isMaster) bufferVersion.incrementMaster()
+        else bufferVersion.incrementSlave()
+
+        val ts = getCurrentTs()
+        val operation = value.toOperation(localOrigin, ts)
+
+        when (operation.kind) {
+            OtOperationKind.Normal -> diff.add(operation)
+            OtOperationKind.Reset -> diff = mutableListOf()
+        }
+
+        _historyChanged.fire(value)
+        sendOperation(operation)
+    }
+
+    protected fun getCurrentTs() = if (isMaster) bufferVersion.master else bufferVersion.slave
+
+    protected open fun sendOperation(operation: OtOperation) {
+        delegatedBy.operation.set(operation)
+    }
+
+    override fun reset(text: String) {
+        fire(RdTextChange(RdTextChangeKind.Reset, 0, "", text, text.length))
+    }
+
+    override fun assertState(allText: String) {
+        if (isComplexChange) return
+        val assertion = RdAssertion(bufferVersion.master, bufferVersion.slave, allText)
+        val assertedTextProp = if (isMaster) delegatedBy.assertedMasterText else delegatedBy.assertedSlaveText
+        assertedTextProp.set(assertion)
+    }
 }

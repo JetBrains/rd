@@ -37,7 +37,7 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
 
     override fun flush() {
         protocol.scheduler.assertThread()
-        require(!queue.isEmpty())
+        require(!queue.isEmpty(), { "!queue.isEmpty()" })
         RdReactiveBase.logSend.debug { "Sending queued changes" }
         try {
             for (e in queue) super.sendChange(e)

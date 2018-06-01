@@ -1,0 +1,217 @@
+package com.jetbrains.rider.rdtext.test.cases
+
+import com.jetbrains.rider.framework.*
+import com.jetbrains.rider.framework.base.IRdBindable
+import com.jetbrains.rider.framework.base.RdDelegateBase
+import com.jetbrains.rider.rdtext.*
+import com.jetbrains.rider.rdtext.impl.RdDeferrableTextBuffer
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
+import com.jetbrains.rider.rdtext.impl.ot.RdDeferrableOtBasedText
+import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
+import com.jetbrains.rider.rdtext.test.util.*
+import com.jetbrains.rider.util.Closeable
+import com.jetbrains.rider.util.ILoggerFactory
+import com.jetbrains.rider.util.Statics
+import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.lifetime.LifetimeDefinition
+import com.jetbrains.rider.util.log.ErrorAccumulatorLoggerFactory
+import com.jetbrains.rider.util.reactive.IScheduler
+import org.jetbrains.jetCheck.Generator
+import org.jetbrains.jetCheck.ImperativeCommand
+import org.jetbrains.jetCheck.PropertyChecker
+import org.junit.Assert
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+private fun IRdBindable.top(lifetime: Lifetime, protocol: IProtocol) {
+    identify(protocol.identity, RdId.Null.mix(this.javaClass.simpleName))
+    bind(lifetime, protocol, this.javaClass.simpleName)
+}
+
+private data class TextBufferCommand(val change: RdTextChange, val isQueued: Boolean, val origin: RdChangeOrigin)
+
+class TextBufferTest {
+    companion object {
+        const val MAX_STEPS = 100
+    }
+
+    class RandomTextChanges(createDeferrableBuffer: (Boolean) -> IDeferrableITextBuffer) : ImperativeCommand {
+        private val serializers = Serializers()
+        private var clientProtocol: IProtocol = Protocol(serializers, Identities(), clientScheduler, TestWire(clientScheduler))
+        private var serverProtocol: IProtocol = Protocol(serializers, Identities(), serverScheduler, TestWire(serverScheduler))
+        private var clientLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
+        private var serverLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
+        private var disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory) as Closeable
+        private val clientScheduler: IScheduler get() = TestScheduler
+        private val serverScheduler: IScheduler get() = TestScheduler
+
+        private val master: IDeferrableITextBuffer
+        private val slave: IDeferrableITextBuffer
+        var masterText = ""
+        var slaveText = ""
+
+        init {
+            val (w1, w2) = (clientProtocol.wire as TestWire) to (serverProtocol.wire as TestWire)
+            w1.counterpart = w2
+            w2.counterpart = w1
+
+            master = createDeferrableBuffer(true).apply {
+                (this as RdDelegateBase<*>).top(clientLifetimeDef.lifetime, clientProtocol)
+            }
+            slave = createDeferrableBuffer(false).apply {
+                (this as RdDelegateBase<*>).top(serverLifetimeDef.lifetime, serverProtocol)
+            }
+
+            master.advise(clientLifetimeDef.lifetime, {
+                masterText = playChange(masterText, it)
+                master.assertState(masterText)
+            })
+            slave.advise(serverLifetimeDef.lifetime, {
+                slaveText = playChange(slaveText, it)
+                slave.assertState(slaveText)
+            })
+        }
+
+        private val nextCommandGen: Generator<TextBufferCommand> by lazy {
+            Generator.from({ r ->
+                val isMasterTurn = r.generate(Generator.booleans())
+                val origin = if (isMasterTurn) RdChangeOrigin.Master else RdChangeOrigin.Slave
+                val text = if (isMasterTurn) masterText else slaveText
+                val isQueued = if (isMasterTurn) r.generate(Generator.booleans()) else false
+                if (text.isEmpty())
+                    return@from TextBufferCommand(
+                            RdTextChange(RdTextChangeKind.Insert, 0, "", "", 0),
+                            isQueued,
+                            origin)
+
+                val kind = r.generate(Generator.sampledFrom(
+                        RdTextChangeKind.Insert,
+                        RdTextChangeKind.Remove,
+                        RdTextChangeKind.Replace))
+
+                val change = when (kind) {
+                    RdTextChangeKind.Insert -> {
+                        val offset = r.generate(Generator.integers(0, text.length))
+                        val newText = r.generate(Generator.stringsOf(Generator.asciiLetters()).suchThat { it.length in 1..20 })
+                        RdTextChange(kind, offset, "", newText, text.length + newText.length)
+                    }
+                    RdTextChangeKind.Remove -> {
+                        val x0 = r.generate(Generator.integers(0, text.length - 1))
+                        val x1 = r.generate(Generator.integers(x0 + 1, text.length))
+                        val old = text.substring(x0, x1)
+                        RdTextChange(kind, x0, old, "", text.length - old.length)
+                    }
+                    RdTextChangeKind.Replace -> {
+                        val x0 = r.generate(Generator.integers(0, text.length - 1))
+                        val x1 = r.generate(Generator.integers(x0 + 1, text.length))
+                        val old = text.substring(x0, x1)
+                        val newText = r.generate(Generator.stringsOf(Generator.asciiLetters()).suchThat { it.length in 1..20 })
+                        RdTextChange(kind, x0, old, newText, text.length - old.length + newText.length)
+                    }
+                    else -> throw IllegalArgumentException("Unexpected kind: $kind")
+                }
+                return@from TextBufferCommand(change, isQueued, origin)
+            })
+        }
+
+
+        override fun performCommand(env: ImperativeCommand.Environment) {
+            try {
+                val initialText = env.generateValue(Generator.stringsOf(Generator.asciiLetters())
+                        .suchThat { it.length in 1..50 }, null)
+
+                var op = TextBufferCommand(
+                        RdTextChange(RdTextChangeKind.Reset, 0, "", initialText, initialText.length),
+                        false,
+                        RdChangeOrigin.Master)
+                var prevChange: RdTextChange? = null
+                var stepCounter = 0
+                while (stepCounter != MAX_STEPS) {
+                    //env.logMessage("-----------------------------------------------------------------")
+                    //env.logMessage("#$stepCounter: $op")
+                    val (change, isQueued, origin) = op
+
+                    if (origin == RdChangeOrigin.Master) {
+                        masterText = playChange(masterText, change)
+                        if (isQueued)
+                            master.queue(change)
+                        else
+                            master.fire(change)
+                        master.assertState(masterText)
+                    } else {
+                        slaveText = playChange(slaveText, change)
+                        slave.fire(change)
+                        slave.assertState(slaveText)
+                    }
+
+                    ErrorAccumulatorLoggerFactory.throwAndClear()
+                    //env.logMessage("Master state: version = ${master.bufferVersion}; text = '$masterText'")
+                    //env.logMessage("Slave state: version = ${slave.bufferVersion}; text = '$slaveText'")
+                    //env.logMessage("Texts are equal:${masterText == slaveText}")
+
+                    if (masterText.isEmpty() && (prevChange?.delta() == 0) && change.delta() == 0) break
+
+                    stepCounter++
+                    prevChange = if (change.kind != RdTextChangeKind.Reset) change else null
+                    op = env.generateValue(nextCommandGen, null)!!
+                }
+
+                // flush queued changes
+                master.fire(RdTextChange(RdTextChangeKind.Insert, 0, "", "", masterText.length))
+
+                Assert.assertEquals(masterText, slaveText)
+            } finally {
+                tearDown()
+            }
+        }
+
+
+        private fun tearDown() {
+            disposeLoggerFactory.close()
+
+            clientLifetimeDef.terminate()
+            serverLifetimeDef.terminate()
+            ErrorAccumulatorLoggerFactory.throwAndClear()
+        }
+
+//        private fun createDeferrableBuffer(master: Boolean): IDeferrableITextBuffer =
+//                 //
+    }
+
+    @Test
+    fun convergenceForOtBasedText() {
+        PropertyChecker.customized()
+                .withIterationCount(1000)
+                .checkScenarios { RandomTextChanges({ RdDeferrableOtBasedText(RdOtState(), it) }) }
+    }
+
+    @Test
+    fun convergenceForNaiveBuffer() {
+        PropertyChecker.customized()
+                .withIterationCount(1000)
+                .checkScenarios { RandomTextChanges({ RdDeferrableTextBuffer(RdTextBufferState(), it) }) }
+    }
+
+}
+
+private fun playChange(initText: String, change: RdTextChange): String {
+    val length = initText.length
+    val x0 = change.startOffset
+    val oldLen = change.old.length
+    val x1 = change.startOffset + oldLen
+    val newText = if (change.kind == RdTextChangeKind.Insert
+            || change.kind == RdTextChangeKind.Remove
+            || change.kind == RdTextChangeKind.Replace)
+        initText.substring(0, x0) +
+                change.new +
+                (if (x1 < length) {
+                    if (oldLen > 0) {
+                        val old = initText.substring(x0, x1)
+                        assertEquals(change.old, old)
+                    }
+                    initText.substring(x1, length)
+                } else "")
+    else change.new
+    assertEquals(change.fullTextLength, newText.length)
+    return newText
+}

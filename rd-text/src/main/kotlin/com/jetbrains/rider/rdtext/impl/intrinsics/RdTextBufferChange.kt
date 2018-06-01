@@ -8,15 +8,11 @@ import com.jetbrains.rider.rdtext.RdTextChange
 import com.jetbrains.rider.rdtext.RdTextChangeKind
 import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum
+import com.jetbrains.rider.rdtext.RdChangeOrigin
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.printToString
 import kotlin.reflect.*
-
-enum class RdChangeOrigin {
-    Master,
-    Slave
-}
 
 data class RdTextBufferChange(val version: TextBufferVersion, val origin: RdChangeOrigin, val change: RdTextChange): IPrintable {
     companion object : IMarshaller<RdTextBufferChange> {

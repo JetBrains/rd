@@ -2,5 +2,7 @@ applyKotlinJVM()
 
 dependencies {
     compile project(':rd-framework:rd-framework-jvm')
+
+    testCompile 'com.github.JetBrains:jetCheck:ba133367e2'
 }
 
