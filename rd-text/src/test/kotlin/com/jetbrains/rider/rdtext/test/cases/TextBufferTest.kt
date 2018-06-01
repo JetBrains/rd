@@ -173,15 +173,12 @@ class TextBufferTest {
             serverLifetimeDef.terminate()
             ErrorAccumulatorLoggerFactory.throwAndClear()
         }
-
-//        private fun createDeferrableBuffer(master: Boolean): IDeferrableITextBuffer =
-//                 //
     }
 
     @Test
     fun convergenceForOtBasedText() {
         PropertyChecker.customized()
-                .withIterationCount(1000)
+                .withIterationCount(10000)
                 .checkScenarios { RandomTextChanges({ RdDeferrableOtBasedText(RdOtState(), it) }) }
     }
 
