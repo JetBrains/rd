@@ -4,8 +4,9 @@ import com.jetbrains.rider.framework.IRdDynamic
 import com.jetbrains.rider.framework.base.RdDelegateBase
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.rdtext.*
-import com.jetbrains.rider.rdtext.RdChangeOrigin
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
+import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdAck
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*

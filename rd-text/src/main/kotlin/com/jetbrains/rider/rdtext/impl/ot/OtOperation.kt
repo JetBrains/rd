@@ -1,8 +1,8 @@
 package com.jetbrains.rider.rdtext.impl.ot
 
-import com.jetbrains.rider.rdtext.RdChangeOrigin
 import com.jetbrains.rider.rdtext.RdTextChange
 import com.jetbrains.rider.rdtext.RdTextChangeKind
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 
 enum class OtOperationKind {
     Normal,

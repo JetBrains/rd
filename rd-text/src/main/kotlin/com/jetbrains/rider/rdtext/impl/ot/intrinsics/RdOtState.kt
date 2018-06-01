@@ -15,7 +15,7 @@ import kotlin.reflect.*
 // auto-generated class
 class RdOtState private constructor(
         private val _operation : RdProperty<com.jetbrains.rider.rdtext.impl.ot.OtOperation?>,
-        private val _ack : RdSignal<com.jetbrains.rider.rdtext.impl.ot.RdAck>,
+        private val _ack : RdSignal<RdAck>,
         private val _assertedMasterText : RdOptionalProperty<com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion>,
         private val _assertedSlaveText : RdOptionalProperty<com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion>
 ) : RdBindableBase() {
@@ -28,7 +28,7 @@ class RdOtState private constructor(
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdOtState {
             val _id = RdId.read(buffer)
             val _operation = RdProperty.read(ctx, buffer, __OtOperationNullableSerializer)
-            val _ack = RdSignal.read(ctx, buffer, com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdAckMarshaller)
+            val _ack = RdSignal.read(ctx, buffer, RdAck)
             val _assertedMasterText = RdOptionalProperty.read(ctx, buffer, com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion)
             val _assertedSlaveText = RdOptionalProperty.read(ctx, buffer, com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion)
             return RdOtState(_operation, _ack, _assertedMasterText, _assertedSlaveText).withId(_id)
@@ -46,7 +46,7 @@ class RdOtState private constructor(
     }
     //fields
     val operation : IProperty<com.jetbrains.rider.rdtext.impl.ot.OtOperation?> get() = _operation
-    val ack : ISignal<com.jetbrains.rider.rdtext.impl.ot.RdAck> get() = _ack
+    val ack : ISignal<RdAck> get() = _ack
     val assertedMasterText : IOptProperty<com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion> get() = _assertedMasterText
     val assertedSlaveText : IOptProperty<com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion> get() = _assertedSlaveText
 
@@ -68,7 +68,7 @@ class RdOtState private constructor(
     constructor(
     ) : this (
             RdProperty<com.jetbrains.rider.rdtext.impl.ot.OtOperation?>(null, __OtOperationNullableSerializer),
-            RdSignal<com.jetbrains.rider.rdtext.impl.ot.RdAck>(com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdAckMarshaller),
+            RdSignal<RdAck>(RdAck),
             RdOptionalProperty<com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion>(com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion),
             RdOptionalProperty<com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion>(com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion)
     )

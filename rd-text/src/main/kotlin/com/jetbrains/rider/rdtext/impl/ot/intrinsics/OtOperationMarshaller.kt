@@ -2,7 +2,7 @@ package com.jetbrains.rider.rdtext.impl.ot.intrinsics
 
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.AbstractBuffer
-import com.jetbrains.rider.rdtext.RdChangeOrigin
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rider.rdtext.impl.ot.*
 import kotlin.reflect.*
 

@@ -5,6 +5,7 @@ import com.jetbrains.rider.framework.base.IRdBindable
 import com.jetbrains.rider.framework.base.RdDelegateBase
 import com.jetbrains.rider.rdtext.*
 import com.jetbrains.rider.rdtext.impl.RdDeferrableTextBuffer
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
 import com.jetbrains.rider.rdtext.impl.ot.RdDeferrableOtBasedText
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
