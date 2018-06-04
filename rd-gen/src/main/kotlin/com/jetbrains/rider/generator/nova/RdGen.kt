@@ -44,7 +44,7 @@ class RdGen : Kli() {
 
     var compilerClassloader : ClassLoader? = null
 
-    val sources =       option_path(  's',    "source", "Folder with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
+    val sources =       option_string('s',    "source", "Folders with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
     val hashFolder =    option_path(  'h',    "hash-folder","Folder to store hash file '$hashFileName' for incremental generation", Paths.get("").toAbsolutePath())
     val compiled =      option_path(  null,   "compiled", "Folder for compiled dsl. Temporary folder is created if option is not specified.")
     val classpath =     option_string('c',    "compiler-classpath","Classpath for kotlin compiler. You must specify it if you referenced something from your dsl" )
@@ -63,8 +63,9 @@ class RdGen : Kli() {
     private fun v(e: Throwable) { if (verbose.value) e.printStackTrace() }
 
     val generationSpecs = mutableListOf<GenerationSpec>()
+    val sourcePaths = mutableListOf<File>()
 
-    private fun compile0(src: Path, dst: Path) : String? {
+    private fun compile0(src: List<File>, dst: Path) : String? {
 
         v("Searching for Kotlin compiler")
         try {
@@ -76,7 +77,7 @@ class RdGen : Kli() {
 
 
             val method = clazz.getMethod("exec", PrintStream::class.java, arrayOf("").javaClass)
-            v("Compiling sources from '${src.toAbsolutePath()}' to '${dst.toAbsolutePath()}'")
+            v("Compiling sources from '${src.joinToString { it.absolutePath } }' to '${dst.toAbsolutePath()}'")
 
 
             val userCp = classpath.value?:""
@@ -92,13 +93,13 @@ class RdGen : Kli() {
             val cp = listOf(userCp, defaultCp).filter { !it.isBlank() }.joinToString ( System.getProperty("path.separator") )
             v("Resulting kotlinc classpath: '$cp'")
 
-            val args = arrayOf(
+            val args = listOf(
                 "-cp", cp,
-                "-d", dst.toString(),
-                src.toString()
-            )
-            v("kotlinc "+args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
-            val returnCode = method.invoke(clazz.newInstance(), System.err, args) as kotlin.Enum<*>
+                "-d", dst.toString()
+            ) + src.map { it.absolutePath }
+
+            v("kotlinc " + args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
+            val returnCode = method.invoke(clazz.newInstance(), System.err, args.toTypedArray()) as kotlin.Enum<*>
 
 
             return if (returnCode.ordinal == 0) {
@@ -127,7 +128,7 @@ class RdGen : Kli() {
 
     private val defaultClassloader = RdGen::class.java.classLoader!!
 
-    private fun compileDsl(src: Path) : ClassLoader? {
+    private fun compileDsl(src: List<File>) : ClassLoader? {
         val dst = compiled.value?.apply {
             v("Compiling into specified folder: $this")
 
@@ -170,7 +171,11 @@ class RdGen : Kli() {
         return PersistentHash().also { res ->
 
             //sources
-            sources.value?. let { res.mixFileRecursively(it.toFile()) }
+            sources.value?. let {
+                for (src in it.split(File.pathSeparatorChar)) {
+                    res.mixFileRecursively(File(src))
+                }
+            }
 
             //output
             outputFolders.forEach { res.mixFileRecursively(it) { file -> file.isFile && file.name != hashFileName } } //if you store hashFile in output
@@ -241,9 +246,14 @@ class RdGen : Kli() {
 
         val srcDir = sources.value
         val classloader =
-            if (srcDir != null) {
-                if (!srcDir.toFile().isDirectory) return errorAndExit("Sources are incorrect. No folder found at '$srcDir'")
-                compileDsl(srcDir) ?: return errorAndExit()
+            if (srcDir != null || sourcePaths.isNotEmpty()) {
+                val sourcePaths = (srcDir?.split(File.pathSeparatorChar)?.map { File(it) } ?: emptyList()) + this.sourcePaths
+                for (sourcePath in sourcePaths) {
+                    if (!sourcePath.isDirectory)
+                        return errorAndExit("Sources are incorrect. No folder found at '$sourcePath'")
+                }
+
+                compileDsl(sourcePaths) ?: return errorAndExit()
             } else {
                 println("Folder 'source' isn't specified, searching for models in classloader of RdGen class (current java process classpath)")
                 defaultClassloader
@@ -257,7 +267,7 @@ class RdGen : Kli() {
             return false
         }
 
-        if (srcDir != null) {
+        if (srcDir != null || sourcePaths.isNotEmpty()) {
             val hash = prepareHash(outputFolders)
             v("Storing hash into '$hashfile'")
             hash.store(hashfile)
@@ -408,7 +418,8 @@ private fun collectGeneratorsToInvoke(
             else -> throw GeneratorException("Unknown language ${generationSpec.language}, use 'kotlin' or 'csharp'")
         }
         val root = roots.find { it.javaClass.canonicalName == generationSpec.root }
-                ?: throw GeneratorException("Can't find root with class name ${generationSpec.root}")
+                ?: throw GeneratorException("Can't find root with class name ${generationSpec.root}. Found roots: " +
+                roots.joinToString { it.javaClass.canonicalName })
         generatorsToInvoke.add(GenPair(generator, root))
     }
 

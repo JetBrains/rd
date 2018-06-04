@@ -21,7 +21,7 @@ open class RdgenParams(val project: Project) {
 //    val message: Property<String> = project.objects.property(String::class.java)
 
 //  option_path('s', "source", "Folder with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
-    val sources = project.objects.property(String::class.java)
+    private val sources = mutableListOf<Any>()
 
 //            option_path(  'h',    "hash-folder","Folder to store hash file '${RdGen.hashFileName}' for incremental generation", Paths.get("").toAbsolutePath())
     val hashFolder = project.objects.property(String::class.java)
@@ -57,6 +57,12 @@ open class RdgenParams(val project: Project) {
         generators.add(generationSpec)
         return generationSpec
     }
+
+    fun sources(vararg paths: Any) {
+        sources.addAll(paths)
+    }
+
+    fun getSources() = project.files(sources)
 }
 
 open class RdgenTask : DefaultTask() {
@@ -68,7 +74,7 @@ open class RdgenTask : DefaultTask() {
 
         Statics<Properties>().use(params.properties) {
             val rdGen = RdGen().apply {
-                sources.parse(params.sources.orNull)
+                sourcePaths.addAll(params.getSources().files)
                 hashFolder.parse(params.hashFolder.orNull)
                 compiled.parse(params.compiled.orNull)
                 classpath.parse(params.classpath.orNull)
