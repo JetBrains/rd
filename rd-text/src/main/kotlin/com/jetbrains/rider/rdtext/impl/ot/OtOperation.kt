@@ -63,6 +63,12 @@ class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val times
 }
 
 fun OtOperation.toRdTextChanges(): List<RdTextChange> {
+    if (kind == OtOperationKind.Reset) {
+        require(changes.size == 1 && changes[0] is InsertText)
+        val new = (changes[0] as InsertText).text
+        return listOf(RdTextChange(RdTextChangeKind.Reset, 0, "", new, new.length))
+    }
+
     var documentLength = this.documentLengthBefore()
     var currOffset = 0
     var lastInsert: InsertText? = null
