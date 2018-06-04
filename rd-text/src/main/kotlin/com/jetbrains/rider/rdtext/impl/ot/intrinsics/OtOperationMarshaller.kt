@@ -34,10 +34,10 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
                 else -> throw IllegalStateException("Can't find reader by id: " + this.id.toString())
             }
         }
-        val role = buffer.readEnum<RdChangeOrigin>()
+        val origin = buffer.readEnum<RdChangeOrigin>()
         val remoteTs = buffer.readInt()
         val kind = buffer.readEnum<OtOperationKind>()
-        return OtOperation(changes, role, remoteTs, kind)
+        return OtOperation(changes, origin, remoteTs, kind)
     }
 
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OtOperation) {

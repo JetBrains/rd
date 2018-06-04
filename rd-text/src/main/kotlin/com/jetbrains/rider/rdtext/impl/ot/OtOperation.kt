@@ -30,6 +30,7 @@ class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val times
             }
         }
         if (prev != null) result.add(prev)
+        if (result.isEmpty()) result.add(Retain(0))
 
         return result
     }

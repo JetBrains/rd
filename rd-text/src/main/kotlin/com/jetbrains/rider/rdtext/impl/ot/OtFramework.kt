@@ -6,14 +6,20 @@ import com.jetbrains.rider.util.collections.toImmutableStack
 
 private fun <T> MutableList<T>.append(el: T): MutableList<T> = this.apply { add(el) }
 
-/*
-// not commutative composition function
+/**
+ * Not commutative composition function.
+ *
+ * Notes: Use it if you want to merge a lot not optimized changes into one.
+ * But all of them must have the same logical timestamp of IDE state (for example they must be generated during the same write action).
+ */
 fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
 
     val after = o1.documentLengthAfter()
     val before = o2.documentLengthBefore()
     require(after == before, { "length after o1($after) != length before o2($before)" })
     require(o1.origin == o2.origin)
+    require(o1.timestamp == o2.timestamp)
+    require(o1.kind == o2.kind)
 
     tailrec fun compose0(acc: MutableList<OtChange>, ops1: ImmutableStack<OtChange>, ops2: ImmutableStack<OtChange>) {
         val op1 = ops1.peek()
@@ -86,9 +92,8 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
     val acc = mutableListOf<OtChange>()
     compose0(acc, o1.changes.toImmutableStack(), o2.changes.toImmutableStack())
 
-    return OtOperation(acc, o1.origin)
+    return OtOperation(acc, o1.origin, o1.timestamp, o1.kind)
 }
-*/
 
 
 
