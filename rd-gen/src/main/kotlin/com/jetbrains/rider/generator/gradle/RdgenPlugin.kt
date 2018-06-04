@@ -1,11 +1,12 @@
 package com.jetbrains.rider.generator.gradle
 
+import com.jetbrains.rider.generator.nova.GenerationSpec
 import com.jetbrains.rider.generator.nova.RdGen
 import com.jetbrains.rider.util.Statics
+import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.TaskAction
 import java.util.*
 
@@ -49,6 +50,13 @@ open class RdgenParams(val project: Project) {
 
     //for passing system properties
     val properties : Properties = Properties()
+
+    val generators =  mutableListOf<GenerationSpec>()
+    fun generator(closure: Closure<GenerationSpec>): GenerationSpec {
+        val generationSpec = project.configure(GenerationSpec(), closure) as GenerationSpec
+        generators.add(generationSpec)
+        return generationSpec
+    }
 }
 
 open class RdgenTask : DefaultTask() {
@@ -66,6 +74,7 @@ open class RdgenTask : DefaultTask() {
                 classpath.parse(params.classpath.orNull)
                 packages.parse(params.packages.orNull)
                 filter.parse(params.filter.orNull)
+                generationSpecs.addAll(params.generators)
 
                 force *= params.force.orNull as? Boolean ?: false
                 verbose *= params.verbose.orNull as? Boolean ?: false
