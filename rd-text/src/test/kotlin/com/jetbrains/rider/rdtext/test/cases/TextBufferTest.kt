@@ -193,23 +193,12 @@ class TextBufferTest {
 }
 
 private fun playChange(initText: String, change: RdTextChange): String {
-    val length = initText.length
     val x0 = change.startOffset
-    val oldLen = change.old.length
-    val x1 = change.startOffset + oldLen
-    val newText = if (change.kind == RdTextChangeKind.Insert
-            || change.kind == RdTextChangeKind.Remove
-            || change.kind == RdTextChangeKind.Replace)
-        initText.substring(0, x0) +
-                change.new +
-                (if (x1 < length) {
-                    if (oldLen > 0) {
-                        val old = initText.substring(x0, x1)
-                        assertEquals(change.old, old)
-                    }
-                    initText.substring(x1, length)
-                } else "")
-    else change.new
+    val x1 = change.startOffset + change.old.length
+    val newText = when (change.kind) {
+        RdTextChangeKind.Reset -> change.new
+        else -> initText.replaceRange(x0, x1, change.new)
+    }
     assertEquals(change.fullTextLength, newText.length)
     return newText
 }
