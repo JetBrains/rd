@@ -37,7 +37,9 @@ open class RdOtBasedText(delegate: RdOtState, final override val isMaster: Boole
         delegatedBy.operation.adviseNotNull(lf, {
             if (it.origin != localOrigin) receiveOperation(it)
         })
-        delegatedBy.ack.advise(lf, ::updateHistory)
+        delegatedBy.ack.advise(lf) {
+            if (it.origin != localOrigin) updateHistory(it)
+        }
 
         // for asserting documents equality
         delegatedBy.assertedSlaveText.compose(delegatedBy.assertedMasterText, { slave, master -> slave to master}).advise(lf) { (s, m) ->
@@ -50,7 +52,6 @@ open class RdOtBasedText(delegate: RdOtState, final override val isMaster: Boole
     }
 
     private fun updateHistory(ack: RdAck) {
-        if (ack.origin == localOrigin) return
         val ts = ack.timestamp
         diff.removeIf { it.timestamp == ts }
     }
@@ -101,10 +102,16 @@ open class RdOtBasedText(delegate: RdOtState, final override val isMaster: Boole
     }
 
     override fun advise(lifetime: Lifetime, handler: (RdTextChange) -> Unit) {
+        require(delegatedBy.isBound)
+        protocol.scheduler.assertThread()
+
         textChanged.advise(lifetime, handler)
     }
 
     override fun fire(value: RdTextChange) {
+        require(delegatedBy.isBound || bufferVersion == TextBufferVersion.INIT_VERSION)
+        if (delegatedBy.isBound) protocol.scheduler.assertThread()
+
         bufferVersion = if (isMaster) bufferVersion.incrementMaster()
         else bufferVersion.incrementSlave()
 
