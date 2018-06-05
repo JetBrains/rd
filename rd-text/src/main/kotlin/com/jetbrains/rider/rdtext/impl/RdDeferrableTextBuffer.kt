@@ -4,8 +4,8 @@ import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.rdtext.IDeferrableITextBuffer
 import com.jetbrains.rider.rdtext.RdTextChange
 import com.jetbrains.rider.rdtext.RdTextChangeKind
-import com.jetbrains.rider.rdtext.intrinsics.RdTextBufferChange
-import com.jetbrains.rider.rdtext.intrinsics.RdTextBufferState
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferChange
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
 import com.jetbrains.rider.util.debug
 import com.jetbrains.rider.util.reflection.usingTrueFlag
 
@@ -37,7 +37,7 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
 
     override fun flush() {
         protocol.scheduler.assertThread()
-        require(!queue.isEmpty())
+        require(!queue.isEmpty(), { "!queue.isEmpty()" })
         RdReactiveBase.logSend.debug { "Sending queued changes" }
         try {
             for (e in queue) super.sendChange(e)

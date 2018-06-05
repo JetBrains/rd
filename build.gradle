@@ -121,7 +121,10 @@ allprojects {
         }
 
 
-        test { finalizedBy jacocoTestReport }
+        test {
+            maxHeapSize = "512m"
+            finalizedBy jacocoTestReport
+        }
 
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

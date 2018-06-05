@@ -1,4 +1,4 @@
-package com.jetbrains.rider.util.ot
+package com.jetbrains.rider.rdtext.impl.ot
 
 import com.jetbrains.rider.util.collections.ImmutableStack
 import com.jetbrains.rider.util.collections.tail
@@ -6,14 +6,20 @@ import com.jetbrains.rider.util.collections.toImmutableStack
 
 private fun <T> MutableList<T>.append(el: T): MutableList<T> = this.apply { add(el) }
 
-// not commutative composition function
+/**
+ * Not commutative composition function.
+ *
+ * Notes: Use it if you want to merge a lot not optimized changes into one.
+ * But all of them must have the same logical timestamp of IDE state (for example they must be generated during the same write action).
+ */
 fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
 
     val after = o1.documentLengthAfter()
     val before = o2.documentLengthBefore()
-    require(o1.isIdentity() || o2.isIdentity() || after == before,
-            { "length after o1($after) != length before o2($before)" })
-    require(o1.role == o2.role)
+    require(after == before, { "length after o1($after) != length before o2($before)" })
+    require(o1.origin == o2.origin)
+    require(o1.timestamp == o2.timestamp)
+    require(o1.kind == o2.kind)
 
     tailrec fun compose0(acc: MutableList<OtChange>, ops1: ImmutableStack<OtChange>, ops2: ImmutableStack<OtChange>) {
         val op1 = ops1.peek()
@@ -86,8 +92,9 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
     val acc = mutableListOf<OtChange>()
     compose0(acc, o1.changes.toImmutableStack(), o2.changes.toImmutableStack())
 
-    return OtOperation(acc, o1.role)
+    return OtOperation(acc, o1.origin, o1.timestamp, o1.kind)
 }
+
 
 
 data class OtTransformResult(val newLocalDiff: OtOperation, val localizedApplyToDocument: OtOperation)
@@ -96,9 +103,9 @@ data class OtTransformResult(val newLocalDiff: OtOperation, val localizedApplyTo
 // Ressel’s transformation function
 fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTransformResult {
 
-    require(localDiff.isIdentity() || remoteApplyToDocument.isIdentity()
-            || localDiff.documentLengthBefore() == remoteApplyToDocument.documentLengthBefore())
-    require(localDiff.role != remoteApplyToDocument.role)
+    require(localDiff.documentLengthBefore() == remoteApplyToDocument.documentLengthBefore())
+    require(localDiff.origin != remoteApplyToDocument.origin)
+    require(localDiff.kind == OtOperationKind.Normal && remoteApplyToDocument.kind == OtOperationKind.Normal)
 
     tailrec fun transform0(resOp1: MutableList<OtChange>, resOp2: MutableList<OtChange>, ops1: ImmutableStack<OtChange>, ops2: ImmutableStack<OtChange>) {
         val op1: OtChange? = ops1.peek()
@@ -125,7 +132,7 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
                     transform0(resOp1.append(op1), resOp2, tail1, tail2)
             }
             op1 is InsertText && op2 is InsertText -> {
-                if (localDiff.role < remoteApplyToDocument.role)
+                if (localDiff.origin < remoteApplyToDocument.origin)
                     transform0(resOp1.append(op1), resOp2.append(Retain(op1.text.length)), tail1, ops2)
                 else
                     transform0(resOp1.append(Retain(op2.text.length)), resOp2.append(op2), ops1, tail2)
@@ -181,7 +188,7 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
     transform0(newLocalDiff, localizedApplyToDocument, localDiff.changes.toImmutableStack(), remoteApplyToDocument.changes.toImmutableStack())
 
     return OtTransformResult(
-            OtOperation(newLocalDiff, localDiff.role),
-            OtOperation(localizedApplyToDocument, remoteApplyToDocument.role)
+            OtOperation(newLocalDiff, localDiff.origin, localDiff.timestamp, OtOperationKind.Normal),
+            OtOperation(localizedApplyToDocument, remoteApplyToDocument.origin, remoteApplyToDocument.timestamp, OtOperationKind.Normal)
     )
 }

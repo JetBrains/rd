@@ -2,7 +2,6 @@ package com.jetbrains.rider.util.log
 
 import com.jetbrains.rider.util.*
 
-///
 object ErrorAccumulatorLoggerFactory : ILoggerFactory {
     var warnAsErrors = false
 
@@ -11,7 +10,11 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
 
 
     override fun getLogger(category: String): Logger = object : Logger {
+        private val consoleLogger by lazy { ConsoleLoggerFactory.getLogger(category) }
+
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
+            consoleLogger.log(level, message, throwable)
+
             if (!isEnabled(level)) return
 
             if (currentThreadName() == creationThread) {
