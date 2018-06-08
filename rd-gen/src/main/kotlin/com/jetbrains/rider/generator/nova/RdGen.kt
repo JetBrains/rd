@@ -176,6 +176,9 @@ class RdGen : Kli() {
                     res.mixFileRecursively(File(src))
                 }
             }
+            for (sourcePath in sourcePaths) {
+                res.mixFileRecursively(sourcePath)
+            }
 
             //output
             outputFolders.forEach { res.mixFileRecursively(it) { file -> file.isFile && file.name != hashFileName } } //if you store hashFile in output
@@ -197,8 +200,8 @@ class RdGen : Kli() {
     }
 
 
-    private fun changedSinceLastStart():Boolean {
-        if (sources.value == null) return true //no incremental generation from classpath
+    private fun changedSinceLastStart(): Boolean {
+        if (sources.value == null && sourcePaths.isEmpty()) return true //no incremental generation from classpath
 
         v("Reading hash from $hashfile")
         val oldHash = PersistentHash.load(hashfile)
