@@ -10,7 +10,7 @@ import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
 import java.io.File
 
-open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaultNamespace: String, override val folder : File) : GeneratorBase() {
+open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaultNamespace: String, override val folder : File, val fileName: (Toplevel) -> String = { tl -> tl.name}) : GeneratorBase() {
 
 
     object Inherits : ISetting<String, Declaration>
@@ -23,10 +23,13 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     val Declaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
 
     object FsPath : ISetting<(CSharp50Generator) -> File, Toplevel>
-    val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "$name.Generated.cs")
+    val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${fileName(this)}.Generated.cs")
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
     val Member.Reactive.flowTransform: FlowTransform get() = owner.getSetting(FlowTransformProperty) ?: defaultFlowTransform
+
+    object AdditionalUsings : ISetting<(CSharp50Generator) -> List<String>, Toplevel>
+    val Toplevel.additionalUsings: List<String> get() = getSetting(CSharp50Generator.AdditionalUsings)?.invoke(this@CSharp50Generator) ?: emptyList()
 
     object Intrinsic : SettingWithDefault<CSharpIntrinsicMarshaller, Declaration>(CSharpIntrinsicMarshaller.default)
     object PublicCtors: ISetting<Unit, Declaration>
@@ -332,6 +335,9 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "using Lifetime = JetBrains.DataFlow.Lifetime;"
         println()
 
+        tl.additionalUsings.printlnWithBlankLine {
+            "using $it;"
+        }
 //        tl.referencedTypes.plus(tl.declaredTypes.flatMap { it.referencedTypes })
 //            .filterIsInstance(Declaration::class.java)
 //            .map {
