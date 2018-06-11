@@ -19,6 +19,38 @@ buildscript {
 }
 
 allprojects {
+    ext.configurePublishing = {
+        publishing {
+            publications {
+                String mvnId = project.name
+                if (mvnId.endsWith('-jvm'))
+                    mvnId = mvnId.substring(0, mvnId.length() - 4)
+                else if (!mvnId.endsWith("-js"))
+                    mvnId = mvnId + "-common"
+
+                maven(MavenPublication) {
+                    groupId 'com.jetbrains.rd'
+                    artifactId mvnId
+                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
+
+                    from components.java
+
+                    artifact sourceJar
+//                    artifact packageJavadoc
+                }
+            }
+            repositories {
+                maven {
+                    url "https://www.myget.org/F/rd-snapshots/maven/"
+                    credentials {
+                        username = System.getenv("MYGET_USERNAME")
+                        password = System.getenv("MYGET_PASSWORD")
+                    }
+                }
+            }
+        }
+    }
+
     ext.applyKotlinJS = {
         apply plugin: 'kotlin-platform-js'
 
@@ -70,22 +102,7 @@ allprojects {
             classifier = "sources"
         }
 
-        publishing {
-            publications {
-                String mvnId = project.name + "-common"
-
-                maven(MavenPublication) {
-                    groupId 'com.jetbrains.rd'
-                    artifactId mvnId
-                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
-
-                    from components.java
-
-                    artifact sourceJar
-//                    artifact packageJavadoc
-                }
-            }
-        }
+        configurePublishing()
     }
 
 
@@ -123,33 +140,7 @@ allprojects {
             }
         }
 
-        publishing {
-            publications {
-                String mvnId = project.name
-                if (mvnId.endsWith('-jvm'))
-                    mvnId = mvnId.substring(0, mvnId.length() - 4)
-
-                maven(MavenPublication) {
-                    groupId 'com.jetbrains.rd'
-                    artifactId mvnId
-                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
-
-                    from components.java
-
-                    artifact sourceJar
-//                    artifact packageJavadoc
-                }
-            }
-            repositories {
-                maven {
-                    url "https://www.myget.org/F/rd-snapshots/maven/"
-                    credentials {
-                        username = System.getenv("MYGET_USERNAME")
-                        password = System.getenv("MYGET_PASSWORD")
-                    }
-                }
-            }
-        }
+        configurePublishing()
 
         test {
             maxHeapSize = "512m"
