@@ -9,6 +9,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 import java.util.*
 
 class RdgenPlugin : Plugin<Project> {
@@ -36,8 +37,7 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
     val compiled = project.objects.property(String::class.java)
 
 //            option_string('c',    "compiler-classpath","Classpath for kotlin compiler. You must specify it if you referenced something from your dsl" )
-    val classpath = project.objects.property(String::class.java)
-
+    private val classpath = mutableListOf<Any>()
 
 //            option_flag(  'f',   "force", "Suppress incremental generation.")
     val force = project.objects.property(Boolean::class.javaObjectType)
@@ -68,10 +68,14 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
         sources.addAll(paths)
     }
 
+    fun classpath(vararg paths: Any) {
+        classpath.addAll(paths)
+    }
+
     fun getSources() = if (sources.isNotEmpty()) project.files(sources) else project.files(projectExtension.sources)
     fun getHashFolder() = hashFolder.orNull ?: projectExtension.hashFolder.orNull
     fun getCompiled() = compiled.orNull ?: projectExtension.compiled.orNull
-    fun getClasspath() = classpath.orNull ?: projectExtension.classpath.orNull
+    fun getClasspath() = if (classpath.isNotEmpty()) project.files(classpath) else project.files(projectExtension.classpath)
     fun getPackages() = packages.orNull ?: projectExtension.packages.orNull
     fun getFilter() = filter.orNull ?: projectExtension.filter.orNull
     fun getGenerators() = if (generators.isNotEmpty()) generators else projectExtension.generators
@@ -94,7 +98,7 @@ open class RdgenTask : DefaultTask() {
                 sourcePaths.addAll(params.getSources().files)
                 hashFolder.parse(params.getHashFolder())
                 compiled.parse(params.getCompiled())
-                classpath.parse(params.getClasspath())
+                classpath.parse(params.getClasspath().files.joinToString(File.pathSeparator) { it.path })
                 packages.parse(params.getPackages())
                 filter.parse(params.getFilter())
                 generationSpecs.addAll(params.getGenerators())
