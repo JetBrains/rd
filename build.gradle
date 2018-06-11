@@ -5,14 +5,14 @@ buildscript {
 
     repositories {
         mavenLocal()
-        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+        maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
         mavenCentral()
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.50-eap-62"
         classpath "com.moowork.gradle:gradle-node-plugin:1.1.1"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
@@ -108,9 +108,9 @@ allprojects {
                     mvnId = mvnId.substring(0, mvnId.length() - 4)
 
                 maven(MavenPublication) {
-                    groupId 'com.jetbrains'
+                    groupId 'com.jetbrains.rd'
                     artifactId mvnId
-                    version '2018.1-SNAPSHOT'
+                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
 
                     from components.java
 
@@ -118,8 +118,16 @@ allprojects {
 //                    artifact packageJavadoc
                 }
             }
+            repositories {
+                maven {
+                    url "https://www.myget.org/F/rd-snapshots/maven/"
+                    credentials {
+                        username = System.getenv("MYGET_USERNAME")
+                        password = System.getenv("MYGET_PASSWORD")
+                    }
+                }
+            }
         }
-
 
         test {
             maxHeapSize = "512m"
@@ -201,15 +209,9 @@ allprojects {
         mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
-        maven { url "http://dl.bintray.com/kotlin/exposed" }
-        maven { url "http://repo.labs.intellij.net/ring-license-checker" }
-        maven { url "https://dl.bintray.com/kotlin/ktor" }
-        maven { url "http://dl.bintray.com/cy6ergn0m/maven" }
+        maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
         maven { url "http://dl.bintray.com/kotlinx/kotlinx" }
-        maven { url "http://maven.labs.intellij.net/hub" }
         maven { url "https://jitpack.io" }
         maven { url "http://packages.confluent.io/maven/" }
-        maven { url "http://dl.bintray.com/hypnosphi/kotlin-wrappers" }
     }
 }

@@ -1,4 +1,4 @@
-ext.kotlin_version='1.2.30'
+ext.kotlin_version='1.2.41'
 ext.kotlinx_coroutines_version='0.22.4'
 ext.kotlinx_html_version='0.6.9'
 
