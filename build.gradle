@@ -55,7 +55,7 @@ allprojects {
 
     ext.applyKotlinCommon = {
         apply plugin: 'kotlin-platform-common'
-
+        apply plugin: 'maven-publish'
 
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
@@ -64,6 +64,28 @@ allprojects {
         }
 
         kotlin { experimental.coroutines = 'enable' }
+
+        task sourceJar(type: Jar) {
+            from sourceSets.main.kotlin
+            classifier = "sources"
+        }
+
+        publishing {
+            publications {
+                String mvnId = project.name + "-common"
+
+                maven(MavenPublication) {
+                    groupId 'com.jetbrains.rd'
+                    artifactId mvnId
+                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
+
+                    from components.java
+
+                    artifact sourceJar
+//                    artifact packageJavadoc
+                }
+            }
+        }
     }
 
 
