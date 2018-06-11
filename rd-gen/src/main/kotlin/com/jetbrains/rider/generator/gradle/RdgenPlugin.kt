@@ -72,17 +72,17 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
         classpath.addAll(paths)
     }
 
-    fun getSources() = if (sources.isNotEmpty()) project.files(sources) else project.files(projectExtension.sources)
-    fun getHashFolder() = hashFolder.orNull ?: projectExtension.hashFolder.orNull
-    fun getCompiled() = compiled.orNull ?: projectExtension.compiled.orNull
-    fun getClasspath() = if (classpath.isNotEmpty()) project.files(classpath) else project.files(projectExtension.classpath)
-    fun getPackages() = packages.orNull ?: projectExtension.packages.orNull
-    fun getFilter() = filter.orNull ?: projectExtension.filter.orNull
-    fun getGenerators() = if (generators.isNotEmpty()) generators else projectExtension.generators
+    fun evalSources() = if (sources.isNotEmpty()) project.files(sources) else project.files(projectExtension.sources)
+    fun evalHashFolder() = hashFolder.orNull ?: projectExtension.hashFolder.orNull
+    fun evalCompiled() = compiled.orNull ?: projectExtension.compiled.orNull
+    fun evalClasspath() = if (classpath.isNotEmpty()) project.files(classpath) else project.files(projectExtension.classpath)
+    fun evalPackages() = packages.orNull ?: projectExtension.packages.orNull
+    fun evalFilter() = filter.orNull ?: projectExtension.filter.orNull
+    fun evalGenerators() = if (generators.isNotEmpty()) generators else projectExtension.generators
 
-    fun getForce(): Boolean = force.orNull ?: (projectExtension.force.orNull ?: false)
-    fun getVerbose(): Boolean = verbose.orNull ?: (projectExtension.verbose.orNull ?: false)
-    fun getClearOutput(): Boolean = clearOutput.orNull ?: (projectExtension.clearOutput.orNull ?: false)
+    fun evalForce(): Boolean = force.orNull ?: (projectExtension.force.orNull ?: false)
+    fun evalVerbose(): Boolean = verbose.orNull ?: (projectExtension.verbose.orNull ?: false)
+    fun evalClearOutput(): Boolean = clearOutput.orNull ?: (projectExtension.clearOutput.orNull ?: false)
 }
 
 open class RdgenTask : DefaultTask() {
@@ -95,17 +95,17 @@ open class RdgenTask : DefaultTask() {
 
         Statics<Properties>().use(params.properties) {
             val rdGen = RdGen().apply {
-                sourcePaths.addAll(params.getSources().files)
-                hashFolder.parse(params.getHashFolder())
-                compiled.parse(params.getCompiled())
-                classpath.parse(params.getClasspath().files.joinToString(File.pathSeparator) { it.path })
-                packages.parse(params.getPackages())
-                filter.parse(params.getFilter())
-                generationSpecs.addAll(params.getGenerators())
+                sourcePaths.addAll(params.evalSources().files)
+                hashFolder.parse(params.evalHashFolder())
+                compiled.parse(params.evalCompiled())
+                classpath.parse(params.evalClasspath().files.joinToString(File.pathSeparator) { it.path })
+                packages.parse(params.evalPackages())
+                filter.parse(params.evalFilter())
+                generationSpecs.addAll(params.evalGenerators())
 
-                force *= params.getForce()
-                verbose *= params.getVerbose()
-                clearOutput *= params.getClearOutput()
+                force *= params.evalForce()
+                verbose *= params.evalVerbose()
+                clearOutput *= params.evalClearOutput()
             }
 
 //            print("Press any key to continue: ")
