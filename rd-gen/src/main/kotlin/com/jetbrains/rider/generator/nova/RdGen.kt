@@ -146,8 +146,12 @@ class RdGen : Kli() {
 
         return if (error == null)
             try {
-                v("Loading compiled classes from '$dst'")
-                URLClassLoader(arrayOf(dst.toUri().toURL()), defaultClassloader)
+                val classpathUris = listOf(dst.toUri().toURL()) + (classpath.value?.let {
+                    it.split(File.pathSeparatorChar).map { File(it).toURI().toURL() }
+                } ?: emptyList())
+
+                v("Loading compiled classes from '${classpathUris.joinToString()}'")
+                URLClassLoader(classpathUris.toTypedArray(), defaultClassloader)
             } catch (e: Throwable) {
                 error = "Error during loading classes from '$dst'"
                 null
