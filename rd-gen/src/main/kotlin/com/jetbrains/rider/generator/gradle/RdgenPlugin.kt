@@ -64,6 +64,13 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
         return generationSpec
     }
 
+    fun generator(closure: GenerationSpec.() -> Unit): GenerationSpec {
+        return GenerationSpec().apply {
+            closure()
+            generators.add(this)
+        }
+    }
+
     fun sources(vararg paths: Any) {
         sources.addAll(paths)
     }
@@ -72,10 +79,21 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
         classpath.addAll(paths)
     }
 
-    fun evalSources() = if (sources.isNotEmpty()) project.files(sources) else project.files(projectExtension.sources)
+    private fun List<Any>.evalCallbacks() = map { if (it is Function0<*>) it.invoke() else it }
+
+    fun evalSources() =
+        if (sources.isNotEmpty())
+            project.files(sources.evalCallbacks())
+        else
+            project.files(projectExtension.sources.evalCallbacks())
+
     fun evalHashFolder() = hashFolder.orNull ?: projectExtension.hashFolder.orNull
     fun evalCompiled() = compiled.orNull ?: projectExtension.compiled.orNull
-    fun evalClasspath() = if (classpath.isNotEmpty()) project.files(classpath) else project.files(projectExtension.classpath)
+    fun evalClasspath() =
+        if (classpath.isNotEmpty())
+            project.files(classpath.evalCallbacks())
+        else
+            project.files(projectExtension.classpath.evalCallbacks())
     fun evalPackages() = packages.orNull ?: projectExtension.packages.orNull
     fun evalFilter() = filter.orNull ?: projectExtension.filter.orNull
     fun evalGenerators() = if (generators.isNotEmpty()) generators else projectExtension.generators
