@@ -81,6 +81,8 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
 
     private fun List<Any>.evalCallbacks() = map { if (it is Function0<*>) it.invoke() else it }
 
+    fun evalProperties() = if (properties.isNotEmpty()) properties else projectExtension.properties
+
     fun evalSources() =
         if (sources.isNotEmpty())
             project.files(sources.evalCallbacks())
@@ -111,7 +113,7 @@ open class RdgenTask : DefaultTask() {
 //        params.properties.putAll(System.getProperties())
 
 
-        Statics<Properties>().use(params.properties) {
+        Statics<Properties>().use(params.evalProperties()) {
             val rdGen = RdGen().apply {
                 sourcePaths.addAll(params.evalSources().files)
                 hashFolder.parse(params.evalHashFolder())

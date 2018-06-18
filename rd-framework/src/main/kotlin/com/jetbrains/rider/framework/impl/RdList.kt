@@ -83,7 +83,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             nextVersion++
 
             when(op) { // todo: better conflict resolution
-                RdList.Companion.Op.Add -> list.add(value!!)
+                RdList.Companion.Op.Add -> if (index < 0) list.add(value!!) else list.add(index, value!!)
                 RdList.Companion.Op.Update -> list[index] = value!!
                 RdList.Companion.Op.Remove -> list.removeAt(index)
             }
