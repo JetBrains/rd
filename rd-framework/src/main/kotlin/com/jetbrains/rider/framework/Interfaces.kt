@@ -4,6 +4,7 @@ import com.jetbrains.rider.framework.base.ISerializersOwner
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IPropertyView
 import com.jetbrains.rider.util.reactive.IScheduler
+import com.jetbrains.rider.util.string.RName
 import kotlin.reflect.*
 
 /**
@@ -12,6 +13,7 @@ import kotlin.reflect.*
 interface IRdDynamic {
     val protocol: IProtocol
     val serializationContext: SerializationCtx
+    val location: RName
 }
 
 /**

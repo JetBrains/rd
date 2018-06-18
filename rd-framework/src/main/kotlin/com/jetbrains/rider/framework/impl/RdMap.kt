@@ -37,14 +37,13 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
 
 
     private fun logmsg(op: Op, version: Long, key: K, value: V? = null) : String {
-        return "map `${location()}` ($rdid) :: ${op.name} :: key = ${key.printToString()}"+
+        return "map `$location` ($rdid) :: ${op.name} :: key = ${key.printToString()}"+
             (version > 0).condstr   { " :: version = $version" }  +
             (value != null).condstr { " :: value = ${value.printToString()}" }
     }
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        map.name = name
 
         val serializationContext = serializationContext
 
@@ -77,7 +76,7 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
             })
         }}
 
-        logSend.trace { "Advise $rdid: ${location()}" }
+        logSend.trace { "Advise $rdid: $location" }
         wire.advise(lifetime, rdid) { buffer ->
             val header = buffer.readInt()
             val msgVersioned = (header shr versionedFlagShift) != 0
@@ -129,7 +128,7 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
                         logSend.trace { logmsg(Op.Ack, version, key) }
                     })
 
-                    if (master) logReceived.error { "Both ends are masters: ${location()}" }
+                    if (master) logReceived.error { "Both ends are masters: $location" }
                 }
 
             }

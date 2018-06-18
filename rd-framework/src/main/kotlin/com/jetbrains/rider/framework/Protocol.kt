@@ -2,6 +2,7 @@ package com.jetbrains.rider.framework
 
 import com.jetbrains.rider.util.getLogger
 import com.jetbrains.rider.util.reactive.IScheduler
+import com.jetbrains.rider.util.string.RName
 
 class Protocol(
         override val serializers: ISerializers,
@@ -9,6 +10,8 @@ class Protocol(
         override val scheduler: IScheduler,
         override val wire: IWire //to initialize field with circular dependencies
 ) : IRdDynamic, IProtocol {
+
+    override val location: RName = RName.Empty
 
     companion object {
         val logCategory = "protocol"

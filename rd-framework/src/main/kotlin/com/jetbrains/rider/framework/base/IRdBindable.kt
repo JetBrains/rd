@@ -21,9 +21,6 @@ interface IRdBindable : IRdDynamic {
      * Assigns IDs to this node and its child nodes in the graph.
      */
     fun identify(identities: IIdentities, id: RdId)
-    val name: String
-
-
 }
 
 //generator comprehension methods

@@ -54,7 +54,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
             wire.send(rdid) { buffer ->
                 buffer.writeInt(masterVersion)
                 valueSerializer.write(serializationContext, buffer, v)
-                logSend.trace { "property `${location()}` ($rdid):: ver = $masterVersion, value = ${v.printToString()}" }
+                logSend.trace { "property `$location` ($rdid):: ver = $masterVersion, value = ${v.printToString()}" }
             }
         }
 
@@ -63,7 +63,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
             val v = valueSerializer.read(serializationContext, buffer)
 
             val rejected = isMaster && version < masterVersion
-            logReceived.trace {"property `${location()}` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
+            logReceived.trace {"property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
 
             if (rejected) return@lambda
             masterVersion = version

@@ -5,22 +5,35 @@ import com.jetbrains.rider.util.concurrentMapOf
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.Signal
 import com.jetbrains.rider.util.string.IPrintable
+import com.jetbrains.rider.util.string.PrettyPrinter
+import com.jetbrains.rider.util.string.RName
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 
 abstract class RdBindableBase : IRdBindable, IPrintable {
 
-    //fields
-    protected var parent : IRdDynamic? = null
-    private var _name: String = "<<not bound yet>>"
-    override val name: String get() = _name
-    protected val bindableChildren = mutableListOf<Pair<String, Any?>>()
-
+    //bound state: main
     override var rdid: RdId = RdId.Null
         internal set
 
+    final override var location: RName = RName("<<not bound>>")
+        private set
+
+    protected var parent : IRdDynamic? = null
+
     private var bindLifetime: Lifetime? = null
+
+
+    //bound state: inferred
+
+    val isBound : Boolean  get() = parent != null
+
+    override val protocol : IProtocol get() = parent?.protocol?: nb()
+
+    protected val bindableChildren = mutableListOf<Pair<String, Any?>>()
+
+    override val serializationContext: SerializationCtx get() = parent?.serializationContext ?: nb()
 
     val containingExt: RdExtBase?
         get() {
@@ -32,37 +45,32 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
             return null
         }
 
-    private fun <T> nb() : T = throw IllegalStateException("Not bound: $name")
+    private fun <T> nb() : T = throw IllegalStateException("Not bound: $location")
 
-    //calculable properties
-    override val protocol : IProtocol get() = parent?.protocol?: nb()
-    val wire get() = protocol.wire
 
-    val isBound : Boolean  get() = parent != null
-
-    override val serializationContext: SerializationCtx
-        get() = parent?.serializationContext ?: throw IllegalStateException("Trying to get serialization context of unbound object $name")
 
 
 
     final override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
-        require (this.parent == null) { "Already bound to `${location()}`: " }
+        require (this.parent == null) { "Trying to bound already bound $this to ${parent.location}" }
+//todo uncomment it
 //        require (!rdid.isNull) { "Must be identified first" }
 
         lf.bracket(
             {
                 this.parent = parent
-                _name = parent.let { if (it is RdBindableBase) it.name + "." + name else name}
+                location = parent.location.sub(name, ".")
                 bindLifetime = lf
             },
             {
                 bindLifetime = lf
+                location = location.sub("<<unbound>>","::")
                 this.parent = null
                 rdid = RdId.Null
             }
         )
 
-        protocol.scheduler.assertThread()
+        protocol.scheduler.assertThread(this)
 
         Signal.priorityAdviseSection {
             init(lf)
@@ -87,7 +95,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
             newExtension
         }
         @Suppress("UNCHECKED_CAST")
-        return res as? T ?: throw error("Wrong class found in extension ${location()}.$name : Expected ${clazz.simpleName} but found ${res::class.simpleName}. Maybe you already set this extension with another type?")
+        return res as? T ?: throw error("Wrong class found in extension `$location.$name` : Expected `${clazz.simpleName}` but found `${res::class.simpleName}`. Maybe you already set this extension with another type?")
     }
 
     //need to implement in subclasses
@@ -98,8 +106,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     }
 
     override fun identify(identities: IIdentities, id: RdId) {
-        require(rdid.isNull) { "Already has RdId: $rdid" }
-        require(!id.isNull) { "Assigned RdId mustn't be null" }
+        require(rdid.isNull) { "Already has RdId: $rdid, entity: $this" }
+        require(!id.isNull) { "Assigned RdId mustn't be null, entity: $this" }
 
         rdid = id
         for ((name, child) in bindableChildren) {
@@ -107,8 +115,16 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
-    fun location() : String = name
+    override fun print(printer: PrettyPrinter) {
+        printer.print(toString())
+        printer.print(" (")
+        printer.print(rdid.toString())
+        printer.print(")")
+    }
 
+    override fun toString(): String {
+        return this::class.simpleName +": `$location`"
+    }
 
     //Reflection
     private fun <T> T.appendToBindableChildren(thisRef: Any?, property: KProperty<*>) : T {

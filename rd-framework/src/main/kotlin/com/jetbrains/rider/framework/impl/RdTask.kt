@@ -80,16 +80,16 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
             val request = requests[taskId]
 
             if (request == null) {
-                logReceived.trace { "call `${location()}` ($rdid) received response '$taskId' but it was dropped" }
+                logReceived.trace { "call `$location` ($rdid) received response '$taskId' but it was dropped" }
 
             } else {
                 val result = RdTaskResult.read(serializationContext, buffer, responseSzr)
-                logReceived.trace { "call `${location()}` ($rdid) received response '$taskId' : ${result.printToString()} " }
+                logReceived.trace { "call `$location` ($rdid) received response '$taskId' : ${result.printToString()} " }
 
                 val (scheduler, task) = request
                 scheduler.queue {
                     if (task.result.hasValue) {
-                        logReceived.trace { "call `${location()}` ($rdid) response was dropped, task result is: ${task.result.valueOrNull}" }
+                        logReceived.trace { "call `$location` ($rdid) response was dropped, task result is: ${task.result.valueOrNull}" }
                         if (isBound && defaultScheduler.isActive && requests.containsKey(taskId)) logAssert.error { "MainThread: ${defaultScheduler.isActive}, taskId=$taskId " }
                     } else {
                         //todo could be race condition in sync mode in case of Timeout, but it's not really valid case
@@ -124,9 +124,9 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
                             containingExt?.pumpScheduler()
                     }
                 )
-                    throw TimeoutException("Sync execution of rpc `${location()}` is timed out in ${effectiveTimeouts.errorAwaitTime} ms")
+                    throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTime} ms")
             }
-            if (freezeTime > effectiveTimeouts.warnAwaitTime) logAssert.error {"Sync execution of rpc `${location()}` executed too long: $freezeTime ms "}
+            if (freezeTime > effectiveTimeouts.warnAwaitTime) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
             return (task.result.valueOrThrow as RdTaskResult<TRes>).unwrap()
         } finally {
             syncTaskId = null
@@ -151,12 +151,12 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         val task = RdTask<TRes>()
         requests.putUnique(taskId, scheduler to task)
         if (sync) {
-            if (syncTaskId != null) throw IllegalStateException("Already exists sync task for call `${location()}`, taskId = $syncTaskId")
+            if (syncTaskId != null) throw IllegalStateException("Already exists sync task for call `$location`, taskId = $syncTaskId")
             syncTaskId = taskId
         }
 
         wire.send(rdid) { buffer ->
-            logSend.trace { "call `${location()}`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
+            logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
             taskId.write(buffer)
             requestSzr.write(serializationContext, buffer, request)
         }
@@ -207,13 +207,13 @@ class RdEndpoint<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymor
         wire.advise(lifetime, rdid, { buffer ->
             val taskId = RdId.read(buffer)
             val value = requestSzr.read(serializationContext, buffer)
-            logReceived.trace {"endpoint `${location()}`::($rdid) request = ${value.printToString()}"}
+            logReceived.trace {"endpoint `$location`::($rdid) request = ${value.printToString()}"}
 
             //little bit monadic programming here
             Result.wrap { handler!!(lifetime, value) }
                 .transform( {it}, { RdTask.faulted(it) })
                 .result.advise(lifetime) { result ->
-                    logSend.trace { "endpoint `${location()}`::($rdid) response = ${result.printToString()}" }
+                    logSend.trace { "endpoint `$location`::($rdid) response = ${result.printToString()}" }
                     wire.send(rdid) { buffer ->
                         taskId.write(buffer)
                         RdTaskResult.write(serializationContext, buffer, result, responseSzr)

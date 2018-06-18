@@ -36,7 +36,7 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
                 buffer.writeEnum(kind)
                 valueSerializer.write(serializationContext, buffer, v)
 
-                logSend.trace { "set `${location()}` ($rdid) :: $kind :: ${v.printToString()} "}
+                logSend.trace { "set `$location` ($rdid) :: $kind :: ${v.printToString()} "}
             })
         }}
 

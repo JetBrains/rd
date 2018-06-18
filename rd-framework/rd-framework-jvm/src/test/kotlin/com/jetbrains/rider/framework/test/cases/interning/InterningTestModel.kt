@@ -94,7 +94,7 @@ class InterningTestModel(
 
     private var mySerializationContext : SerializationCtx? = null
     override val serializationContext: SerializationCtx
-        get() = mySerializationContext ?: throw IllegalStateException("Serialization context was accessed too soon for $name")
+        get() = mySerializationContext ?: throw IllegalStateException("Serialization context was accessed too soon for $location")
 
     //initializer
     init {

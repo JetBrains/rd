@@ -15,6 +15,9 @@ enum class LogLevel {
 }
 
 interface Logger {
+    companion object {
+        val root = getLogger("")
+    }
     fun log(level: LogLevel, message: Any?, throwable: Throwable?)
     fun isEnabled(level: LogLevel): Boolean
 }

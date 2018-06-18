@@ -34,7 +34,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
 
     private fun logmsg(op: Op, version: Long, key: Int, value: V? = null) : String {
-        return "list `${location()}` ($rdid) :: ${op.name} :: key = ${key.printToString()}"+
+        return "list `$location` ($rdid) :: ${op.name} :: key = ${key.printToString()}"+
             (version > 0).condstr   { " :: version = $version" }  +
             (value != null).condstr { " :: value = ${value.printToString()}" }
     }
@@ -77,7 +77,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             logReceived.trace { logmsg(op, version, index, value) }
 
             require(version == nextVersion) {
-                "Version conflict for ${location()}. Expected version $nextVersion, received $version. Are you modifying a list from two sides?"
+                "Version conflict for $location}. Expected version $nextVersion, received $version. Are you modifying a list from two sides?"
             }
 
             nextVersion++

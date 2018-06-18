@@ -16,14 +16,12 @@ class Signal<T> : ISignal<T> {
     }
 
 
-    var name: String? = null
-
     private var priorityListeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
     private var listeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
 
     override fun fire(value: T) {
-        priorityListeners.get().forEach { catch(name) { it(value) } }
-        listeners.get().forEach { catch(name) { it(value) } }
+        priorityListeners.get().forEach { catch { it(value) } }
+        listeners.get().forEach { catch { it(value) } }
     }
 
 

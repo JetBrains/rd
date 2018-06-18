@@ -41,7 +41,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
         schedulerHolder.compose(lifetimeHolder) { sc, lf -> sc to lf }.advise(Lifetime.Eternal) { (sc, lf) ->
             wire.adviseOn(lf, rdid, if (sc == DEFAULT_SCHEDULER_MARKER) defaultScheduler else sc) { buffer ->
                 val value = valueSerializer.read(serializationContext, buffer)
-                logReceived.trace {"signal `${location()}` ($rdid):: value = ${value.printToString()}"}
+                logReceived.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
                 signal.fire(value)
             }
         }
@@ -50,7 +50,6 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     //protocol init, don't mess with initializer above
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        signal.name = name
         serializationContext = super.serializationContext
         lifetimeHolder.set(lifetime)
     }
@@ -60,7 +59,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
         if (!async) assertThreading()
         //localChange {
         wire.send(rdid) { buffer ->
-            logSend.trace {"signal `${location()}` ($rdid):: value = ${value.printToString()}"}
+            logSend.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
             valueSerializer.write(serializationContext, buffer, value)
         }
         signal.fire(value)

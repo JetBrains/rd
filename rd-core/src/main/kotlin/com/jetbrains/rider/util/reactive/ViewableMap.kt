@@ -12,9 +12,6 @@ class ViewableMap<K : Any, V : Any>() : IMutableViewableMap<K, V> {
 
     private val map = linkedMapOf<K, V>()
     private val change = Signal<Event<K, V>>()
-    var name: String?
-        get() = change.name
-        set(value) {change.name = value}
 
     override fun advise(lifetime: Lifetime, handler: (Event<K, V>) -> Unit) {
         change.advise(lifetime, handler)

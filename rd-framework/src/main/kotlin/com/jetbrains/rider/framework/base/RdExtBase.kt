@@ -71,7 +71,7 @@ abstract class RdExtBase : RdReactiveBase() {
 
             val counterpartSerializationHash = buffer.readLong()
             if (serializationHash != counterpartSerializationHash) {
-                error("serializationHash of ext '${location()}' doesn't match to counterpart: maybe you forgot to generate models?")
+                error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
             }
         }
 
@@ -101,7 +101,7 @@ abstract class RdExtBase : RdReactiveBase() {
         it.writeEnum (state)
         it.writeLong(serializationHash)
     }
-    private inline fun Logger.traceMe (message:() -> Any) = this.trace { "ext `${location()}` ($rdid) :: ${message()}" }
+    private inline fun Logger.traceMe (message:() -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
 
     fun pumpScheduler() = extScheduler?.pump()
 }

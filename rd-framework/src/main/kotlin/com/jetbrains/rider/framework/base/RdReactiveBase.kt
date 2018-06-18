@@ -14,6 +14,8 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
         val logAssert = getLogger<RdReactiveBase>()
     }
 
+    val wire get() = protocol.wire
+
     //assertion
     override var async = false
     protected fun assertThreading() {
