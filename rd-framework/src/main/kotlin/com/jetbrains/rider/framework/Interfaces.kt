@@ -1,5 +1,6 @@
 package com.jetbrains.rider.framework
 
+import com.jetbrains.rider.framework.base.IRdReactive
 import com.jetbrains.rider.framework.base.ISerializersOwner
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IPropertyView
@@ -41,13 +42,7 @@ interface IWire {
      * Adds a [handler] for receiving updated values of the object with the given [id]. The handler is removed
      * when the given [lifetime] is terminated.
      */
-    fun advise(lifetime: Lifetime, id: RdId, handler: (AbstractBuffer) -> Unit)
-
-    /**
-     * Adds a [handler] for receiving updated values of the object with the given [id] and handling them through the
-     * specified [scheduler]. The handler is removed when the given [lifetime] is terminated.
-     */
-    fun adviseOn(lifetime: Lifetime, id: RdId, scheduler: IScheduler, handler: (AbstractBuffer) -> Unit)
+    fun advise(lifetime: Lifetime, entity: IRdReactive)
 }
 
 /**

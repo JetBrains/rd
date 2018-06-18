@@ -29,6 +29,7 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
     //delegated
     protected val serializers : ISerializers get() = protocol.serializers
     protected val defaultScheduler : IScheduler get() = protocol.scheduler
+    override val wireScheduler: IScheduler get() = defaultScheduler
 
     //local change
     protected var isLocalChange = false

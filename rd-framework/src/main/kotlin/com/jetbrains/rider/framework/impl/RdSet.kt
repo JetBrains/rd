@@ -40,20 +40,21 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
             })
         }}
 
-        wire.advise(lifetime, rdid) { buffer ->
-            val kind = buffer.readEnum<AddRemove>()
-            val v = valueSerializer.read(serializationContext, buffer)
-
-            //todo maybe identify is forgotten
-
-            when (kind) {
-                AddRemove.Add -> set.add(v)
-                AddRemove.Remove -> set.remove(v)
-                else -> throw IllegalStateException(kind.toString())
-            }
-        }
+        wire.advise(lifetime, this)
     }
 
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val kind = buffer.readEnum<AddRemove>()
+        val v = valueSerializer.read(serializationContext, buffer)
+
+        //todo maybe identify is forgotten
+
+        when (kind) {
+            AddRemove.Add -> set.add(v)
+            AddRemove.Remove -> set.remove(v)
+            else -> throw IllegalStateException(kind.toString())
+        }
+    }
 
     constructor(valueSerializer: ISerializer<T> = Polymorphic<T>()) : this(valueSerializer, ViewableSet())
 

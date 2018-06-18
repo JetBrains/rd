@@ -5,7 +5,6 @@ import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.framework.base.withId
 import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.reactive.OptProperty
 import com.jetbrains.rider.util.reactive.hasValue
@@ -69,48 +68,42 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
     @Volatile
     private var syncTaskId: RdId? = null
     override lateinit var serializationContext : SerializationCtx
+    override lateinit var wireScheduler: IScheduler
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
         //Because we advise on Synchronous Scheduler: RIDER-10986
         serializationContext = super.serializationContext
-        wire.adviseOn(lifetime, rdid, SynchronousScheduler) { buffer ->
-            val taskId = buffer.readRdId()
-            val request = requests[taskId]
+        wireScheduler = SynchronousScheduler
+        wire.advise(lifetime, this)
+    }
 
-            if (request == null) {
-                logReceived.trace { "call `$location` ($rdid) received response '$taskId' but it was dropped" }
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val taskId = buffer.readRdId()
+        val request = requests[taskId]
 
-            } else {
-                val result = RdTaskResult.read(serializationContext, buffer, responseSzr)
-                logReceived.trace { "call `$location` ($rdid) received response '$taskId' : ${result.printToString()} " }
+        if (request == null) {
+            logReceived.trace { "call `$location` ($rdid) received response '$taskId' but it was dropped" }
 
-                val (scheduler, task) = request
-                scheduler.queue {
-                    if (task.result.hasValue) {
-                        logReceived.trace { "call `$location` ($rdid) response was dropped, task result is: ${task.result.valueOrNull}" }
-                        if (isBound && defaultScheduler.isActive && requests.containsKey(taskId)) logAssert.error { "MainThread: ${defaultScheduler.isActive}, taskId=$taskId " }
-                    } else {
-                        //todo could be race condition in sync mode in case of Timeout, but it's not really valid case
-                        //todo but now we could start task on any scheduler - need interlocks in property
-                        task.result.set(result)
-                        requests.remove(taskId)
-                    }
+        } else {
+            val result = RdTaskResult.read(serializationContext, buffer, responseSzr)
+            logReceived.trace { "call `$location` ($rdid) received response '$taskId' : ${result.printToString()} " }
+
+            val (scheduler, task) = request
+            scheduler.queue {
+                if (task.result.hasValue) {
+                    logReceived.trace { "call `$location` ($rdid) response was dropped, task result is: ${task.result.valueOrNull}" }
+                    if (isBound && defaultScheduler.isActive && requests.containsKey(taskId)) logAssert.error { "MainThread: ${defaultScheduler.isActive}, taskId=$taskId " }
+                } else {
+                    //todo could be race condition in sync mode in case of Timeout, but it's not really valid case
+                    //todo but now we could start task on any scheduler - need interlocks in property
+                    task.result.set(result)
+                    requests.remove(taskId)
                 }
             }
         }
-
-        //cancel
-        lifetime += {
-            requests.forEach {
-                val task = it.value.second
-                task.result.set(RdTaskResult.Cancelled())
-            }
-            requests.clear()
-        }
     }
-
 
     override fun sync(request: TReq, timeouts: RpcTimeouts?) : TRes {
         try {
@@ -199,26 +192,32 @@ class RdEndpoint<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymor
     constructor(handler: (TReq) -> TRes) : this () {set(handler)}
 
 
+    override lateinit var serializationContext: SerializationCtx
+    lateinit var lifetime: Lifetime
+
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
-        val serializationContext = serializationContext
+        serializationContext = super.serializationContext
+        this.lifetime = lifetime
 
-        wire.advise(lifetime, rdid, { buffer ->
-            val taskId = RdId.read(buffer)
-            val value = requestSzr.read(serializationContext, buffer)
-            logReceived.trace {"endpoint `$location`::($rdid) request = ${value.printToString()}"}
+        wire.advise(lifetime, this)
+    }
 
-            //little bit monadic programming here
-            Result.wrap { handler!!(lifetime, value) }
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val taskId = RdId.read(buffer)
+        val value = requestSzr.read(serializationContext, buffer)
+        logReceived.trace {"endpoint `$location`::($rdid) request = ${value.printToString()}"}
+
+        //little bit monadic programming here
+        Result.wrap { handler!!(lifetime, value) }
                 .transform( {it}, { RdTask.faulted(it) })
                 .result.advise(lifetime) { result ->
-                    logSend.trace { "endpoint `$location`::($rdid) response = ${result.printToString()}" }
-                    wire.send(rdid) { buffer ->
-                        taskId.write(buffer)
-                        RdTaskResult.write(serializationContext, buffer, result, responseSzr)
-                    }
-                }
-        })
+            logSend.trace { "endpoint `$location`::($rdid) response = ${result.printToString()}" }
+            wire.send(rdid) { buffer ->
+                taskId.write(buffer)
+                RdTaskResult.write(serializationContext, buffer, result, responseSzr)
+            }
+        }
     }
 }

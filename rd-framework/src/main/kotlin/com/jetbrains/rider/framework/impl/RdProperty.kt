@@ -58,20 +58,22 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
             }
         }
 
-        wire.advise(lifetime, rdid) lambda@{ buffer ->
-            val version = buffer.readInt()
-            val v = valueSerializer.read(serializationContext, buffer)
-
-            val rejected = isMaster && version < masterVersion
-            logReceived.trace {"property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
-
-            if (rejected) return@lambda
-            masterVersion = version
-            property.set(v)
-        }
+        wire.advise(lifetime, this)
 
         if (!optimizeNested)
             view(lifetime) { lf, v -> v?.bindPolymorphic(lf, this, "\$")}
+    }
+
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val version = buffer.readInt()
+        val v = valueSerializer.read(serializationContext, buffer)
+
+        val rejected = isMaster && version < masterVersion
+        logReceived.trace {"property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
+
+        if (rejected) return
+        masterVersion = version
+        property.set(v)
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {

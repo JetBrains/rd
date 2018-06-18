@@ -41,9 +41,6 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-//        list.name = name
-
-        val serializationContext = serializationContext
 
         localChange { advise(lifetime) lambda@{
             if (!isLocalChange) return@lambda
@@ -65,35 +62,36 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             })
         }}
 
-        wire.advise(lifetime, rdid) { buffer ->
-            val header = buffer.readLong()
-            val version = header shr versionedFlagShift
-            val op = parseFromOrdinal<Op>((header and ((1 shl versionedFlagShift) - 1L)).toInt())
-            val index = buffer.readInt()
-
-
-            val value = if ((op == Op.Add || op == Op.Update)) valSzr.read(serializationContext, buffer) else null
-
-            logReceived.trace { logmsg(op, version, index, value) }
-
-            require(version == nextVersion) {
-                "Version conflict for $location}. Expected version $nextVersion, received $version. Are you modifying a list from two sides?"
-            }
-
-            nextVersion++
-
-            when(op) { // todo: better conflict resolution
-                RdList.Companion.Op.Add -> if (index < 0) list.add(value!!) else list.add(index, value!!)
-                RdList.Companion.Op.Update -> list[index] = value!!
-                RdList.Companion.Op.Remove -> list.removeAt(index)
-            }
-        }
+        wire.advise(lifetime, this)
 
         if (!optimizeNested)
             view(lifetime, { lf, index, value -> value.bindPolymorphic(lf, this, "[$index]") })
     }
 
 
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val header = buffer.readLong()
+        val version = header shr versionedFlagShift
+        val op = parseFromOrdinal<Op>((header and ((1 shl versionedFlagShift) - 1L)).toInt())
+        val index = buffer.readInt()
+
+
+        val value = if ((op == Op.Add || op == Op.Update)) valSzr.read(serializationContext, buffer) else null
+
+        logReceived.trace { logmsg(op, version, index, value) }
+
+        require(version == nextVersion) {
+            "Version conflict for $location}. Expected version $nextVersion, received $version. Are you modifying a list from two sides?"
+        }
+
+        nextVersion++
+
+        when(op) { // todo: better conflict resolution
+            RdList.Companion.Op.Add -> if (index < 0) list.add(value!!) else list.add(index, value!!)
+            RdList.Companion.Op.Update -> list[index] = value!!
+            RdList.Companion.Op.Remove -> list.removeAt(index)
+        }
+    }
 
     constructor(valSzr: ISerializer<V> = Polymorphic<V>()) : this(valSzr, ViewableList())
 

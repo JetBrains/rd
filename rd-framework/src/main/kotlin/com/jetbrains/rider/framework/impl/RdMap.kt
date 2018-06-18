@@ -45,8 +45,6 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
-        val serializationContext = serializationContext
-
         localChange { advise(lifetime) lambda@{
             if (!isLocalChange) return@lambda
 
@@ -77,17 +75,24 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
         }}
 
         logSend.trace { "Advise $rdid: $location" }
-        wire.advise(lifetime, rdid) { buffer ->
-            val header = buffer.readInt()
-            val msgVersioned = (header shr versionedFlagShift) != 0
-            val op = parseFromOrdinal<Op>(header and ((1 shl versionedFlagShift) - 1))
+        wire.advise(lifetime, this)
 
-            val version = if (msgVersioned) buffer.readLong() else 0
+        if (!optimizeNested)
+            view(lifetime, { lf, entry -> (entry.value).bindPolymorphic(lf, this, "[${entry.key}]") })
+    }
 
-            val key = keySzr.read(serializationContext, buffer)
 
-            if (op == Op.Ack) {
-                val errmsg =
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val header = buffer.readInt()
+        val msgVersioned = (header shr versionedFlagShift) != 0
+        val op = parseFromOrdinal<Op>(header and ((1 shl versionedFlagShift) - 1))
+
+        val version = if (msgVersioned) buffer.readLong() else 0
+
+        val key = keySzr.read(serializationContext, buffer)
+
+        if (op == Op.Ack) {
+            val errmsg =
                     if (!msgVersioned) "Received ${Op.Ack} while msg hasn't versioned flag set"
                     else if (!master) "Received ${Op.Ack} when not a Master"
                     else pendingForAck[key]?.let { pendingVersion ->
@@ -99,47 +104,40 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
                         }
                     } ?: "No pending for ${Op.Ack}"
 
-                if (errmsg.isEmpty())
-                    logReceived.trace  { logmsg(Op.Ack, version, key) }
-                else
-                    logReceived.error {  logmsg(Op.Ack, version, key) + " >> $errmsg"}
+            if (errmsg.isEmpty())
+                logReceived.trace  { logmsg(Op.Ack, version, key) }
+            else
+                logReceived.error {  logmsg(Op.Ack, version, key) + " >> $errmsg"}
+
+        } else {
+            val isPut = (op == Op.Add || op == Op.Update)
+            val value = if (isPut) valSzr.read(serializationContext, buffer) else null
+
+            if (msgVersioned || !master || !pendingForAck.containsKey(key)) {
+                logReceived.trace { logmsg(op, version, key, value) }
+
+                if (value != null) map[key] = value
+                else map.remove(key)
 
             } else {
-                val isPut = (op == Op.Add || op == Op.Update)
-                val value = if (isPut) valSzr.read(serializationContext, buffer) else null
-
-                if (msgVersioned || !master || !pendingForAck.containsKey(key)) {
-                    logReceived.trace { logmsg(op, version, key, value) }
-
-                    if (value != null) map[key] = value
-                    else map.remove(key)
-
-                } else {
-                    logReceived.trace { logmsg(op, version, key, value) + " >> REJECTED" }
-                }
+                logReceived.trace { logmsg(op, version, key, value) + " >> REJECTED" }
+            }
 
 
-                if (msgVersioned) {
-                    wire.send(rdid, { innerBuffer ->
-                        innerBuffer.writeInt((1 shl versionedFlagShift) or Op.Ack.ordinal)
-                        innerBuffer.writeLong(version)
-                        keySzr.write(serializationContext, innerBuffer, key)
+            if (msgVersioned) {
+                wire.send(rdid, { innerBuffer ->
+                    innerBuffer.writeInt((1 shl versionedFlagShift) or Op.Ack.ordinal)
+                    innerBuffer.writeLong(version)
+                    keySzr.write(serializationContext, innerBuffer, key)
 
-                        logSend.trace { logmsg(Op.Ack, version, key) }
-                    })
+                    logSend.trace { logmsg(Op.Ack, version, key) }
+                })
 
-                    if (master) logReceived.error { "Both ends are masters: $location" }
-                }
-
+                if (master) logReceived.error { "Both ends are masters: $location" }
             }
 
         }
-
-        if (!optimizeNested)
-            view(lifetime, { lf, entry -> (entry.value).bindPolymorphic(lf, this, "[${entry.key}]") })
     }
-
-
 
     constructor(keySzr: ISerializer<K> = Polymorphic(), valSzr: ISerializer<V> = Polymorphic()) : this(keySzr, valSzr, ViewableMap())
 

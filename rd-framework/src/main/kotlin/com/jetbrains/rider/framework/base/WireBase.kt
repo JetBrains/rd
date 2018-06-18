@@ -11,8 +11,7 @@ abstract class WireBase(val scheduler: IScheduler) : IWire {
     override val connected = Property(false)
     protected val messageBroker = MessageBroker(scheduler)
 
-    override fun advise(lifetime: Lifetime, id: RdId, handler: (AbstractBuffer) -> Unit) = adviseOn(lifetime, id, scheduler, handler)
-    override fun adviseOn(lifetime: Lifetime, id: RdId, scheduler: IScheduler, handler: (AbstractBuffer) -> Unit) = messageBroker.adviseOn(lifetime, scheduler, id, handler)
+    override fun advise(lifetime: Lifetime, entity: IRdReactive) = messageBroker.adviseOn(lifetime, entity)
 
     fun dumpToString() = messageBroker.printToString()
 }

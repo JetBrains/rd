@@ -20,38 +20,26 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdSignal<*>) = value.rdid.write(buffer)
     }
 
-    private object DEFAULT_SCHEDULER_MARKER : IScheduler {
-        override fun flush() {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        }
-
-        override fun queue(action: () -> Unit) = throw UnsupportedOperationException()
-
-        override val isActive: Boolean
-            get() = throw UnsupportedOperationException()
-    }
-
     private val signal = Signal<T>()
 
-    private val schedulerHolder = OptProperty<IScheduler>()
-    private val lifetimeHolder = OptProperty<Lifetime>()
+
+    override lateinit var wireScheduler: IScheduler
     override lateinit var serializationContext : SerializationCtx
 
-    init {
-        schedulerHolder.compose(lifetimeHolder) { sc, lf -> sc to lf }.advise(Lifetime.Eternal) { (sc, lf) ->
-            wire.adviseOn(lf, rdid, if (sc == DEFAULT_SCHEDULER_MARKER) defaultScheduler else sc) { buffer ->
-                val value = valueSerializer.read(serializationContext, buffer)
-                logReceived.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
-                signal.fire(value)
-            }
-        }
+
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val value = valueSerializer.read(serializationContext, buffer)
+        logReceived.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
+        signal.fire(value)
     }
 
     //protocol init, don't mess with initializer above
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
         serializationContext = super.serializationContext
-        lifetimeHolder.set(lifetime)
+        wireScheduler = defaultScheduler
+        wire.advise(lifetime, this)
+
     }
 
     override fun fire(value: T) {
@@ -69,14 +57,13 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
         if (isBound) assertThreading()
-        schedulerHolder.set(DEFAULT_SCHEDULER_MARKER)
         signal.advise(lifetime, handler)
     }
 
 
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
         if (isBound) assertThreading() //even if listener on pool thread, advise must be on main thread
-        schedulerHolder.set(scheduler)
+        this.wireScheduler = scheduler
         signal.advise(lifetime, handler)
     }
 }

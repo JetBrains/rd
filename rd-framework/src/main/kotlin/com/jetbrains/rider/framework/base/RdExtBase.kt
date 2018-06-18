@@ -8,6 +8,7 @@ import com.jetbrains.rider.util.collections.QueueImpl
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.string.printToString
+import com.jetbrains.rider.util.threading.SynchronousScheduler
 import com.jetbrains.rider.util.trace
 
 abstract class RdExtBase : RdReactiveBase() {
@@ -22,7 +23,7 @@ abstract class RdExtBase : RdReactiveBase() {
     private var extScheduler: ExtScheduler? = null
     private var extProtocol: IProtocol? = null
     val connected = extWire.connected
-
+    override lateinit var wireScheduler: IScheduler
 
     override val protocol : IProtocol get() = extProtocol ?: super.protocol //nb
 
@@ -40,6 +41,7 @@ abstract class RdExtBase : RdReactiveBase() {
 
 //        val sc = ExtScheduler(parentProtocol.scheduler)
         val sc = parentProtocol.scheduler
+        extWire.realWire = parentWire
         lifetime.bracket(
             {
 //                extScheduler = sc
@@ -50,30 +52,8 @@ abstract class RdExtBase : RdReactiveBase() {
             }
         )
 
-
-        parentWire.advise(lifetime, rdid) { buffer ->
-            val remoteState = buffer.readEnum<ExtState>()
-            logReceived.traceMe { "remote: $remoteState " }
-
-            @Suppress("REDUNDANT_ELSE_IN_WHEN")
-            when (remoteState) {
-                RdExtBase.ExtState.Ready -> {
-
-
-                    parentWire.sendState(ExtState.ReceivedCounterpart)
-                    extWire.connectedWire.set(parentWire)
-                }
-                RdExtBase.ExtState.ReceivedCounterpart -> extWire.connectedWire.set(parentWire) //don't set anything if already set
-                RdExtBase.ExtState.Disconnected -> extWire.connectedWire.set(null)
-
-                else -> error("Unknown remote state: $remoteState")
-            }
-
-            val counterpartSerializationHash = buffer.readLong()
-            if (serializationHash != counterpartSerializationHash) {
-                error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
-            }
-        }
+        wireScheduler = SynchronousScheduler
+        parentWire.advise(lifetime, this)
 
         lifetime.bracket(
             { parentWire.sendState(ExtState.Ready) },
@@ -94,6 +74,28 @@ abstract class RdExtBase : RdReactiveBase() {
         }
 
         Protocol.initializationLogger.traceMe { "created and bound :: ${printToString()}" }
+    }
+
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        val remoteState = buffer.readEnum<ExtState>()
+        logReceived.traceMe { "remote: $remoteState " }
+
+        @Suppress("REDUNDANT_ELSE_IN_WHEN")
+        when (remoteState) {
+            RdExtBase.ExtState.Ready -> {
+                extWire.realWire.sendState(ExtState.ReceivedCounterpart)
+                extWire.connected.value = true
+            }
+            RdExtBase.ExtState.ReceivedCounterpart -> extWire.connected.set(true) //don't set anything if already set
+            RdExtBase.ExtState.Disconnected -> extWire.connected.set(false)
+
+            else -> error("Unknown remote state: $remoteState")
+        }
+
+        val counterpartSerializationHash = buffer.readLong()
+        if (serializationHash != counterpartSerializationHash) {
+            error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
+        }
     }
 
     private fun IWire.sendState(state: ExtState) = send(rdid) {
@@ -154,42 +156,30 @@ class ExtScheduler(private val parentScheduler: IScheduler) : IScheduler {
 //todo multithreading
 class ExtWire : IWire {
 
+    internal lateinit var realWire : IWire
+
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
-        connectedWire.value?.send(id, writer)?: sendQ.add(id to createAbstractBuffer().also(writer).getArray())
+        if (connected.value)
+            realWire.send(id, writer)
+        else
+            sendQ.add(id to createAbstractBuffer().also(writer).getArray())
     }
 
-    override fun advise(lifetime: Lifetime, id: RdId, handler: (AbstractBuffer) -> Unit) {
-        connectedWire.value?.advise(lifetime, id, handler) ?: subscriptionQ.add(Subscription(id, lifetime, null, handler))
+    override fun advise(lifetime: Lifetime, entity: IRdReactive) {
+        realWire.advise(lifetime, entity)
     }
 
-    override fun adviseOn(lifetime: Lifetime, id: RdId, scheduler: IScheduler, handler: (AbstractBuffer) -> Unit) {
-        connectedWire.value?.adviseOn(lifetime, id, scheduler, handler) ?: subscriptionQ.add(Subscription(id, lifetime, scheduler, handler))
-    }
 
-    val connectedWire = Property<IWire?>(null)
-    override val connected: IPropertyView<Boolean> = connectedWire.map { it != null }
+    override val connected: Property<Boolean> = Property(false)
 
     private val sendQ = ArrayList<Pair<RdId, ByteArray>>()
-    private data class Subscription(val id: RdId, val lifetime: Lifetime, val scheduler: IScheduler?, val handler: (AbstractBuffer)->Unit)
-    private val subscriptionQ = ArrayList<Subscription>()
 
     init {
-        connectedWire.adviseNotNull(Lifetime.Eternal) { wire ->
+        connected.whenTrue(Lifetime.Eternal) { _ ->
             for ((id, payload) in sendQ) {
-                wire.send(id) { it.writeByteArrayRaw(payload) }
+                realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload) }
             }
             sendQ.clear()
-
-            for ((id, lifetime, scheduler, handler) in subscriptionQ) {
-                if (lifetime.isTerminated)
-                    continue
-
-                if (scheduler == null)
-                    wire.advise(lifetime, id, handler)
-                else
-                    wire.adviseOn(lifetime, id, scheduler, handler)
-            }
-            subscriptionQ.clear()
         }
     }
 
