@@ -533,7 +533,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             + "private var mySerializationContext : SerializationCtx? = null"
             + "override val serializationContext : SerializationCtx"
             indent {
-                + "get() = mySerializationContext ?: throw IllegalStateException(\"Attempting to get serialization context too soon for \$name\")"
+                + "get() = mySerializationContext ?: throw IllegalStateException(\"Attempting to get serialization context too soon for \$location\")"
             }
         }
     }
