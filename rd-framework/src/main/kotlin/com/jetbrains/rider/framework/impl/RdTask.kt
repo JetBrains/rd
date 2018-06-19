@@ -68,14 +68,13 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
     @Volatile
     private var syncTaskId: RdId? = null
     override lateinit var serializationContext : SerializationCtx
-    override lateinit var wireScheduler: IScheduler
+    override val wireScheduler: IScheduler get() = SynchronousScheduler
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
         //Because we advise on Synchronous Scheduler: RIDER-10986
         serializationContext = super.serializationContext
-        wireScheduler = SynchronousScheduler
         wire.advise(lifetime, this)
     }
 

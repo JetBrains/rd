@@ -23,7 +23,7 @@ abstract class RdExtBase : RdReactiveBase() {
     private var extScheduler: ExtScheduler? = null
     private var extProtocol: IProtocol? = null
     val connected = extWire.connected
-    override lateinit var wireScheduler: IScheduler
+    override val wireScheduler: IScheduler get() = SynchronousScheduler
 
     override val protocol : IProtocol get() = extProtocol ?: super.protocol //nb
 
@@ -52,7 +52,6 @@ abstract class RdExtBase : RdReactiveBase() {
             }
         )
 
-        wireScheduler = SynchronousScheduler
         parentWire.advise(lifetime, this)
 
         lifetime.bracket(
