@@ -76,6 +76,8 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         //Because we advise on Synchronous Scheduler: RIDER-10986
         serializationContext = super.serializationContext
         wire.advise(lifetime, this)
+
+        //todo clear requests
     }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
@@ -192,13 +194,13 @@ class RdEndpoint<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymor
 
 
     override lateinit var serializationContext: SerializationCtx
-    lateinit var lifetime: Lifetime
+    lateinit var bindLifetime: Lifetime
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
         serializationContext = super.serializationContext
-        this.lifetime = lifetime
+        this.bindLifetime = lifetime
 
         wire.advise(lifetime, this)
     }
@@ -209,9 +211,9 @@ class RdEndpoint<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymor
         logReceived.trace {"endpoint `$location`::($rdid) request = ${value.printToString()}"}
 
         //little bit monadic programming here
-        Result.wrap { handler!!(lifetime, value) }
+        Result.wrap { handler!!(bindLifetime, value) }
                 .transform( {it}, { RdTask.faulted(it) })
-                .result.advise(lifetime) { result ->
+                .result.advise(bindLifetime) { result ->
             logSend.trace { "endpoint `$location`::($rdid) response = ${result.printToString()}" }
             wire.send(rdid) { buffer ->
                 taskId.write(buffer)
