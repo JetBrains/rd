@@ -14,7 +14,7 @@ class RName private constructor(val parent:RName?, val localName: String, val se
     /**
      * Separator doesn't count if localName is empty or parent is empty.
      */
-    fun sub(localName: String, separator: String) = RName(this, localName, separator = ".")
+    fun sub(localName: String, separator: String) = RName(this, localName, separator)
 
     override fun toString(): String {
         return parent?.toString()?.let {
