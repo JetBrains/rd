@@ -3,6 +3,7 @@ package com.jetbrains.rider.framework.base
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.impl.RdPropertyBase
 import com.jetbrains.rider.util.Logger
+import com.jetbrains.rider.util.Queue
 import com.jetbrains.rider.util.Sync
 import com.jetbrains.rider.util.collections.QueueImpl
 import com.jetbrains.rider.util.lifetime.Lifetime
@@ -157,13 +158,6 @@ class ExtWire : IWire {
 
     internal lateinit var realWire : IWire
 
-    override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
-        if (connected.value)
-            realWire.send(id, writer)
-        else
-            sendQ.add(id to createAbstractBuffer().also(writer).getArray())
-    }
-
     override fun advise(lifetime: Lifetime, entity: IRdReactive) {
         realWire.advise(lifetime, entity)
     }
@@ -171,15 +165,27 @@ class ExtWire : IWire {
 
     override val connected: Property<Boolean> = Property(false)
 
-    private val sendQ = ArrayList<Pair<RdId, ByteArray>>()
+
+    private val sendQ = Queue<Pair<RdId, ByteArray>>()
 
     init {
         connected.whenTrue(Lifetime.Eternal) { _ ->
-            for ((id, payload) in sendQ) {
-                realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload) }
+            Sync.lock(sendQ) {
+                while (true) {
+                    val (id, payload) = sendQ.poll() ?: return@lock
+                    realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload) }
+                }
             }
-            sendQ.clear()
         }
+    }
+
+    override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
+        Sync.lock(sendQ) {
+            if (!sendQ.isEmpty() || !connected.value)
+                sendQ.offer(id to createAbstractBuffer().also(writer).getArray())
+        }
+
+        realWire.send(id, writer)
     }
 
 }
