@@ -179,14 +179,14 @@ class TextBufferTest {
     @Test
     fun convergenceForOtBasedText() {
         PropertyChecker.customized()
-                .withIterationCount(10000)
+                .withIterationCount(100)
                 .checkScenarios { RandomTextChanges({ RdDeferrableOtBasedText(RdOtState(), it) }) }
     }
 
     @Test
     fun convergenceForNaiveBuffer() {
         PropertyChecker.customized()
-                .withIterationCount(1000)
+                .withIterationCount(100)
                 .checkScenarios { RandomTextChanges({ RdDeferrableTextBuffer(RdTextBufferState(), it) }) }
     }
 
