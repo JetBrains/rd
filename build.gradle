@@ -152,12 +152,9 @@ allprojects {
             compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
             compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
-            testCompile "junit:junit:4.12"
+            testCompile "junit:junit:$junit_version"
             testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
             testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-            testCompile "org.jetbrains.kotlin:kotlin-test-testng:$kotlin_version"
-            testCompile "org.testng:testng:6.14.2"
-//            testCompile group: 'junit', name: 'junit', version: junit_version
         }
 
         kotlin { experimental.coroutines = 'enable' }

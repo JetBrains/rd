@@ -4,7 +4,7 @@ import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rider.util.UsedImplicitly
-import org.testng.annotations.Test
+import org.junit.Test
 import java.io.File
 
 

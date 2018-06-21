@@ -2,7 +2,6 @@
 //
 //import com.jetbrains.rider.util.lifetime.Lifetime
 //import com.jetbrains.rider.util.reactive.*
-//import org.testng.annotations.Test
 //import java.util.concurrent.CancellationException
 //import kotlin.concurrent.thread
 //import kotlin.test.assertEquals

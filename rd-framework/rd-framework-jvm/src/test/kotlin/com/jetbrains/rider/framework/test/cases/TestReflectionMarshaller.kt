@@ -8,10 +8,9 @@ import com.jetbrains.rider.framework.base.withId
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.impl.RdSignal
 import com.jetbrains.rider.framework.test.util.TestWire
-import com.jetbrains.rider.util.reactive.IProperty
 import com.jetbrains.rider.util.threading.SynchronousScheduler
-import org.testng.annotations.BeforeMethod
-import org.testng.annotations.Test
+import org.junit.Before
+import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertEquals
@@ -26,7 +25,7 @@ class TestReflectionMarshaller {
     )
     val buf = createAbstractBuffer()
 
-    @BeforeMethod
+    @Before
     fun setup() {
         buf.rewind()
     }

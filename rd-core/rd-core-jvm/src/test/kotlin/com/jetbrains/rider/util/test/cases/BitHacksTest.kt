@@ -2,8 +2,8 @@ package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.parseLong
 import com.jetbrains.rider.util.putLong
-import org.testng.Assert
-import org.testng.annotations.Test
+import org.junit.Assert
+import org.junit.Test
 import java.nio.ByteBuffer
 import java.util.*
 

@@ -1,7 +1,7 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.threading.TestSingleThreadScheduler
-import org.testng.annotations.Test
+import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse

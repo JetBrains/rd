@@ -1,13 +1,11 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.threading.SynchronousScheduler
 import com.jetbrains.rider.util.throttleLast
-import org.testng.annotations.Test
+import org.junit.Test
 import java.time.Duration
-import kotlin.test.assertEquals
 
 class SignalThrottleTest {
     @Test

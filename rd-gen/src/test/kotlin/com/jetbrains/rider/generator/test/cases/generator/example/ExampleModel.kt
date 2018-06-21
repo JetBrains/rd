@@ -4,7 +4,6 @@ import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.PredefinedType.*
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rider.util.PublicApi
-import org.testng.annotations.Test
 import java.io.File
 
 object ExampleRootNova : Root(

@@ -1,7 +1,7 @@
 package com.jetbrains.rider.generator.test.cases.util
 
 import com.jetbrains.rider.util.kli.Kli
-import org.testng.annotations.Test
+import org.junit.Test
 import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

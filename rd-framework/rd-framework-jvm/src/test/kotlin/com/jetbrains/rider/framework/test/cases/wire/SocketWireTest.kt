@@ -11,9 +11,9 @@ import com.jetbrains.rider.framework.test.util.NetUtils
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.reactive.valueOrThrow
-import org.testng.annotations.AfterTest
-import org.testng.annotations.BeforeTest
-import org.testng.annotations.Test
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
@@ -56,14 +56,14 @@ class SocketWireTest {
     val lifetime : Lifetime get() = lifetimeDef.lifetime
     val socketLifetime : Lifetime get() = socketLifetimeDef.lifetime
 
-    @BeforeTest
+    @Before
     fun setUp() {
         lifetimeDef = Lifetime.create(Lifetime.Eternal)
         socketLifetimeDef = Lifetime.create(Lifetime.Eternal)
     }
 
 
-    @AfterTest
+    @After
     fun tearDown() {
         socketLifetimeDef.terminate()
         lifetimeDef.terminate()

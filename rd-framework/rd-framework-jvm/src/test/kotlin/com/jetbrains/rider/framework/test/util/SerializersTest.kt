@@ -3,7 +3,7 @@ package com.jetbrains.rider.framework.test.util
 import com.jetbrains.rider.framework.UnsafeBuffer
 import com.jetbrains.rider.framework.readArray
 import com.jetbrains.rider.framework.writeArray
-import org.testng.annotations.Test
+import org.junit.Test
 
 class SerializersTest {
 
@@ -18,10 +18,4 @@ class SerializersTest {
         val arr = buffer.readArray { "abc" }
     }
 
-    @Test
-    fun testArrayDowncast() {
-        val x = Array<Any?>(10) { null }
-        val y = x as Array<String?>
-        println(y)
-    }
 }

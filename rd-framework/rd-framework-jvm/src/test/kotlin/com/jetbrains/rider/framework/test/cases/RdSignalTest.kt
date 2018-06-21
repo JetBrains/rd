@@ -8,7 +8,7 @@ import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.impl.RdSignal
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
-import org.testng.annotations.Test
+import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -21,8 +21,8 @@ class RdSignalTest : RdAsyncTestBase() {
         val client_property = RdSignal<Int>().static(property_id)
         val server_property = RdSignal<Int>().static(property_id)
 
-        val clientLog = arrayListOf<Int>()
-        val serverLog = arrayListOf<Int>()
+        val clientLog = ArrayList<Int>()
+        val serverLog = ArrayList<Int>()
         client_property.advise(Lifetime.Eternal, {clientLog.add(it)})
         server_property.advise(Lifetime.Eternal, {serverLog.add(it)})
 
@@ -60,8 +60,8 @@ class RdSignalTest : RdAsyncTestBase() {
         clientProtocol.bindStatic(client_property, "top")
         serverProtocol.bindStatic(server_property, "top")
 
-        val clientLog = arrayListOf<String?>()
-        val serverLog = arrayListOf<String?>()
+        val clientLog = ArrayList<String?>()
+        val serverLog = ArrayList<String?>()
 
         client_property.advise(Lifetime.Eternal, {entity -> entity?.foo?.advise(Lifetime.Eternal, { clientLog.add(it)})})
         server_property.advise(Lifetime.Eternal, {entity -> entity?.foo?.advise(Lifetime.Eternal, { serverLog.add(it)})})

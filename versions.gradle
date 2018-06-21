@@ -17,5 +17,5 @@ ext.styled_version='1.0.0-pre.19-kotlin-1.2.30'
 ext.anko_version='0.10.4'
 
 ext.jackson_version='2.8.2'
-ext.junit_version='3.8.1'
+ext.junit_version='4.12'
 ext.sl4j_version='1.7.12'

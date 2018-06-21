@@ -8,7 +8,7 @@ import com.jetbrains.rider.framework.test.cases.RdTestBase
 import com.jetbrains.rider.framework.test.util.TestWire
 import com.jetbrains.rider.framework.withInternRootHere
 import com.jetbrains.rider.util.reactive.valueOrThrow
-import org.testng.annotations.Test
+import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
