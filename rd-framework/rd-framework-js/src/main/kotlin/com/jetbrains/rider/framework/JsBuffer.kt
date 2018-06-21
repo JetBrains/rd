@@ -2,15 +2,16 @@ package com.jetbrains.rider.framework
 
 import org.khronos.webgl.*
 
-class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
+class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
     companion object {
         private val textDecoder = TextDecoder("utf-16le")
         private val textEncoder = TextEncoder("utf-16le", object {
             @Suppress("unused")
-            val NONSTANDARD_allowLegacyEncoding = true })
+            val NONSTANDARD_allowLegacyEncoding = true
+        })
     }
 
-    private var dataView : DataView = DataView(buffer)
+    private var dataView: DataView = DataView(buffer)
     private val littleEndian = true
 
     private var offset: Int = 0
@@ -41,7 +42,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
         dataView = DataView(buffer)
     }
 
-    private inline fun <reified T> read(reader: (DataView, Int) -> T, sizeInBytes: Int) : T {
+    private inline fun <reified T> read(reader: (DataView, Int) -> T, sizeInBytes: Int): T {
         checkAvailable(sizeInBytes)
         val result = reader(dataView, position)
         offset += sizeInBytes
@@ -55,12 +56,17 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
     }
 
     /// readArray cannot be expressed via readAndConvertArray because we can't put dynamic in generic type
-    private inline fun <reified TResult, reified TView> readArray(createView: (ArrayBuffer, Int, Int) -> TView, createDest : (Int) -> TResult, elementSizeInBytes: Int) : TResult {
+    private inline fun <reified TResult, reified TView> readArray(createView: (ArrayBuffer, Int, Int) -> TView,
+                                                                  createDest: (Int) -> TResult,
+                                                                  elementSizeInBytes: Int): TResult {
         val length = readInt()
         return readArrayBody(length, createView, createDest, elementSizeInBytes)
     }
 
-    private inline fun <reified TResult, reified TView> readArrayBody(length: Int, createView: (ArrayBuffer, Int, Int) -> TView, createDest: (Int) -> TResult, elementSizeInBytes: Int): TResult {
+    private inline fun <reified TResult, reified TView> readArrayBody(length: Int,
+                                                                      createView: (ArrayBuffer, Int, Int) -> TView,
+                                                                      createDest: (Int) -> TResult,
+                                                                      elementSizeInBytes: Int): TResult {
         val byteLength = length * elementSizeInBytes
         checkAvailable(byteLength)
         val arrayView = createView(buffer, position, length)
@@ -70,7 +76,9 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
         return result
     }
 
-    private inline fun <reified TResult> readAndConvertArray(createDest : (Int) -> TResult, readAndConvert: (TResult, DataView, Int) -> Unit, elementSizeInBytes: Int) : TResult {
+    private inline fun <reified TResult> readAndConvertArray(createDest: (Int) -> TResult,
+                                                             readAndConvert: (TResult, DataView, Int) -> Unit,
+                                                             elementSizeInBytes: Int): TResult {
         val length = readInt()
         val byteLength = length * elementSizeInBytes
         checkAvailable(byteLength)
@@ -80,12 +88,16 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
         return result
     }
 
-    private inline fun <reified TResult, reified TView> writeArray(array: TResult, arraySize : Int, createView: (ArrayBuffer, Int, Int) -> TView, elementSizeInBytes: Int) {
+    private inline fun <reified TResult, reified TView> writeArray(array: TResult, arraySize: Int,
+                                                                   createView: (ArrayBuffer, Int, Int) -> TView,
+                                                                   elementSizeInBytes: Int) {
         writeInt(arraySize)
         writeArrayBody(array, arraySize, createView, elementSizeInBytes)
     }
 
-    private inline fun <reified TResult, reified TView> writeArrayBody(array: TResult, arraySize: Int, createView: (ArrayBuffer, Int, Int) -> TView, elementSizeInBytes: Int) {
+    private inline fun <reified TResult, reified TView> writeArrayBody(array: TResult, arraySize: Int,
+                                                                       createView: (ArrayBuffer, Int, Int) -> TView,
+                                                                       elementSizeInBytes: Int) {
         val byteLength = arraySize * elementSizeInBytes
         requireAvailable(byteLength)
         val arrayView = createView(buffer, position, arraySize)
@@ -93,7 +105,9 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
         position += byteLength
     }
 
-    private inline fun <reified TResult> convertAndWriteArray(array: TResult, arraySize : Int, convertAndWrite: (TResult, DataView, Int) -> Unit, elementSizeInBytes: Int) {
+    private inline fun <reified TResult> convertAndWriteArray(array: TResult, arraySize: Int,
+                                                              convertAndWrite: (TResult, DataView, Int) -> Unit,
+                                                              elementSizeInBytes: Int) {
         writeInt(arraySize)
         val byteLength = arraySize * elementSizeInBytes
         requireAvailable(byteLength)
@@ -114,31 +128,36 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
             4
     )
 
-    override fun writeByte(value: Byte) = write(value, { view, position, v -> view.setInt8(position, v)}, 1 )
+    override fun writeByte(value: Byte) = write(value, { view, position, v -> view.setInt8(position, v) }, 1)
 
-    override fun readByte() = read({ view, position -> view.getInt8(position)}, 1)
+    override fun readByte() = read({ view, position -> view.getInt8(position) }, 1)
 
-    override fun writeShort(value: Short) = write(value, { view, position, v -> view.setInt16(position, v, littleEndian)}, 2 )
+    override fun writeShort(
+            value: Short) = write(value, { view, position, v -> view.setInt16(position, v, littleEndian) }, 2)
 
-    override fun readShort() = read({ view, position -> view.getInt16(position, littleEndian)}, 2)
+    override fun readShort() = read({ view, position -> view.getInt16(position, littleEndian) }, 2)
 
-    override fun writeInt(value: Int) = write(value, { view, position, v -> view.setInt32(position, v, littleEndian)}, 4)
+    override fun writeInt(
+            value: Int) = write(value, { view, position, v -> view.setInt32(position, v, littleEndian) }, 4)
 
-    override fun readInt() = read({ view, position -> view.getInt32(position, littleEndian)}, 4)
+    override fun readInt() = read({ view, position -> view.getInt32(position, littleEndian) }, 4)
 
-    override fun writeLong(value: Long) = write(value, { view, position, v -> view.setInt64(position, v, littleEndian)}, 8)
+    override fun writeLong(
+            value: Long) = write(value, { view, position, v -> view.setInt64(position, v, littleEndian) }, 8)
 
-    override fun readLong() = read({ view, position -> view.getInt64(position, littleEndian)}, 8)
+    override fun readLong() = read({ view, position -> view.getInt64(position, littleEndian) }, 8)
 
-    override fun writeFloat(value: Float) = write(value, { view, position, v -> view.setFloat32(position, v, littleEndian)}, 4)
+    override fun writeFloat(
+            value: Float) = write(value, { view, position, v -> view.setFloat32(position, v, littleEndian) }, 4)
 
-    override fun readFloat() = read({ view, position -> view.getFloat32(position, littleEndian)}, 4)
+    override fun readFloat() = read({ view, position -> view.getFloat32(position, littleEndian) }, 4)
 
-    override fun writeDouble(value: Double) = write(value, { view, position, v -> view.setFloat64(position, v, littleEndian)}, 8)
+    override fun writeDouble(
+            value: Double) = write(value, { view, position, v -> view.setFloat64(position, v, littleEndian) }, 8)
 
-    override fun readDouble() = read({ view, position -> view.getFloat64(position, littleEndian)}, 8)
+    override fun readDouble() = read({ view, position -> view.getFloat64(position, littleEndian) }, 8)
 
-    override fun writeBoolean(value: Boolean) = writeByte(if(value) 1 else 0)
+    override fun writeBoolean(value: Boolean) = writeByte(if (value) 1 else 0)
 
     override fun readBoolean() = readByte() != 0.toByte()
 
@@ -146,7 +165,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
         requireAvailable(2)
         val encoded = textEncoder.encode(value.toString())
         writeArrayBody(encoded, encoded.length,
-                { buffer, position, length -> Uint8Array(buffer, position, length)},
+                { buffer, position, length -> Uint8Array(buffer, position, length) },
                 1)
     }
 
@@ -165,10 +184,10 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
 
     override fun readByteArrayRaw(array: ByteArray) {
         readArrayBody(
-            array.size,
-            { buffer, position, length -> Int8Array(buffer, position, length) },
-            { _ -> array },
-            1)
+                array.size,
+                { buffer, position, length -> Int8Array(buffer, position, length) },
+                { _ -> array },
+                1)
     }
 
     override fun writeByteArray(array: ByteArray) = writeArray(
@@ -178,10 +197,12 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
             1
     )
 
-    override fun writeByteArrayRaw(array: ByteArray) = writeArrayBody(array, array.size, { buffer, position, length -> Int8Array(buffer, position, length) }, 1)
+    override fun writeByteArrayRaw(
+            array: ByteArray) = writeArrayBody(array, array.size,
+            { buffer, position, length -> Int8Array(buffer, position, length) }, 1)
 
     override fun readNullableString(): String? {
-        val length= readInt()
+        val length = readInt()
         if (length < 0)
             return null
         val byteLength = length * 2
@@ -192,21 +213,20 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
 
 
     override fun writeNullableString(value: String?) {
-        if (value == null)
-        {
+        if (value == null) {
             writeInt(-1)
             return
         }
         writeInt(value.length)
         val encoded = textEncoder.encode(value)
         writeArrayBody(encoded, encoded.length,
-                { buffer, position, length -> Uint8Array(buffer, position, length)},
+                { buffer, position, length -> Uint8Array(buffer, position, length) },
                 1)
     }
 
     override fun readCharArray(): CharArray {
         val string = readNullableString()
-        return CharArray(string!!.length, {string[it]})
+        return CharArray(string!!.length, { string[it] })
     }
 
     override fun writeCharArray(array: CharArray) {
@@ -230,8 +250,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
     override fun readLongArray() = readAndConvertArray(
             { length -> LongArray(length) },
             { dest, dataView, position ->
-                for (i in 0 until dest.size)
-                {
+                for (i in 0 until dest.size) {
                     dest[i] = dataView.getInt64(position + i * 8, littleEndian)
                 }
             },
@@ -242,8 +261,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
             array,
             array.size,
             { source, dataView, position ->
-                for (i in 0 until source.size)
-                {
+                for (i in 0 until source.size) {
                     dataView.setInt64(position + i * 8, source[i], littleEndian)
                 }
             },
@@ -279,8 +297,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
     override fun readBooleanArray() = readAndConvertArray(
             { length -> BooleanArray(length) },
             { dest, dataView, position ->
-                for (i in 0 until dest.size)
-                {
+                for (i in 0 until dest.size) {
                     dest[i] = dataView.getBoolean(position + i)
                 }
             },
@@ -291,8 +308,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
             array,
             array.size,
             { source, dataView, position ->
-                for (i in 0 until source.size)
-                {
+                for (i in 0 until source.size) {
                     dataView.setBoolean(position + i, source[i])
                 }
             },
@@ -303,7 +319,7 @@ class JsBuffer (private var buffer : ArrayBuffer): AbstractBuffer() {
         position = 0
     }
 
-    fun getFirstBytes(length : Int): DataView {
+    fun getFirstBytes(length: Int): DataView {
         return DataView(buffer, 0, length)
     }
 

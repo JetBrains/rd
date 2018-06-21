@@ -20,7 +20,6 @@ fun DataView.getBoolean(byteOffset: Int) : Boolean {
     return !byte.equals(0)
 }
 
-
 fun DataView.setBoolean(byteOffset: Int, value: Boolean) {
     this.setInt8(byteOffset, if (value) 1 else 0)
 }

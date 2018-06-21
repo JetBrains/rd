@@ -13,28 +13,31 @@ import org.w3c.dom.WebSocket
 
 class WebSocketWire {
 
-    class Client(lifetime: Lifetime, scheduler: IScheduler, port: Int, optId: String? = "ClientSocket") : WireBase(scheduler) {
+    class Client(lifetime: Lifetime, scheduler: IScheduler, port: Int, private val optId: String? = "ClientSocket")
+        : WireBase(scheduler)
+    {
         private val logger: Logger = getLogger(this::class)
         private var socket: WebSocket? = null
+        private val initialBufferSize = 4096
         var bytesReceived = 0
         var bytesSend = 0
 
         init {
             try {
-                logger.log(LogLevel.Info, {"creating websocket"})
+                logger.info { "$optId init" }
                 val s = WebSocket("ws://127.0.0.1:$port")
                 s.binaryType = BinaryType.ARRAYBUFFER
                 s.onerror = {
-                    logger.log(LogLevel.Error, it, null)
+                    logger.error { it }
                     Unit
                 }
                 s.onclose = {
-                    logger.log(LogLevel.Info, { "onclose"})
+                    logger.info { "$optId onclose" }
                     socket = null
                     Unit
                 }
                 s.onopen = {
-                    logger.log(LogLevel.Info, { "onopen"})
+                    logger.info { "$optId onopen" }
                     socket = s
                     Unit
                 }
@@ -51,30 +54,29 @@ class WebSocketWire {
                         val id = RdId.read(buffer)
                         messageBroker.dispatch(id, buffer)
                     } catch (ex: Throwable) {
-                        logger.error("$optId caught processing", ex)
+                        logger.error("$optId onmessage exception", ex)
                     }
                     Unit
                 }
 
                 lifetime += {
-                    logger.info { "$optId: start terminating lifetime" }
+                    logger.info { "$optId start terminating lifetime" }
                     catch { socket?.close() }
                 }
             } catch (ex: Throwable) {
-                logger.error(ex)
+                logger.error("$optId init exception", ex)
             }
         }
 
         override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
-            if (socket == null)
-            {
-                logger.log(LogLevel.Warn, {"send is failed, no connection established yet"})
+            if (socket == null) {
+                logger.warn { "$optId send is failed, no connection established yet" }
                 return
             }
 
             require(!id.isNull) { "id mustn't be null" }
 
-            val unsafeBuffer = JsBuffer(ArrayBuffer(4096))
+            val unsafeBuffer = JsBuffer(ArrayBuffer(initialBufferSize))
 
             try {
                 unsafeBuffer.writeInt(0) //placeholder for length
@@ -89,7 +91,7 @@ class WebSocketWire {
                 socket?.send(unsafeBuffer.getFirstBytes(length))
                 bytesSend += length
             } catch (ex: Throwable) {
-                logger.error("$id caught processing", ex)
+                logger.error("$optId send $id exception", ex)
             }
         }
     }
