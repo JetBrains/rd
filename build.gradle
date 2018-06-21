@@ -5,14 +5,13 @@ buildscript {
 
     repositories {
         mavenLocal()
-        maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
         mavenCentral()
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.50-eap-62"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.50"
         classpath "com.moowork.gradle:gradle-node-plugin:1.1.1"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
@@ -219,9 +218,6 @@ allprojects {
         mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
-        maven { url "http://dl.bintray.com/kotlinx/kotlinx" }
         maven { url "https://jitpack.io" }
-        maven { url "http://packages.confluent.io/maven/" }
     }
 }
