@@ -5,20 +5,52 @@ buildscript {
 
     repositories {
         mavenLocal()
-        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+        maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
         mavenCentral()
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.50-eap-62"
         classpath "com.moowork.gradle:gradle-node-plugin:1.1.1"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
 }
 
 allprojects {
+    ext.configurePublishing = {
+        publishing {
+            publications {
+                String mvnId = project.name
+                if (mvnId.endsWith('-jvm'))
+                    mvnId = mvnId.substring(0, mvnId.length() - 4)
+                else if (!mvnId.endsWith("-js") && !mvnId.endsWith("-gen") && !mvnId.endsWith("-text"))
+                    mvnId = mvnId + "-common"
+
+                maven(MavenPublication) {
+                    groupId 'com.jetbrains.rd'
+                    artifactId mvnId
+                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
+
+                    from components.java
+
+                    artifact sourceJar
+//                    artifact packageJavadoc
+                }
+            }
+            repositories {
+                maven {
+                    url "https://www.myget.org/F/rd-snapshots/maven/"
+                    credentials {
+                        username = System.getenv("MYGET_USERNAME")
+                        password = System.getenv("MYGET_PASSWORD")
+                    }
+                }
+            }
+        }
+    }
+
     ext.applyKotlinJS = {
         apply plugin: 'kotlin-platform-js'
         apply plugin: 'maven-publish'
@@ -78,7 +110,7 @@ allprojects {
 
     ext.applyKotlinCommon = {
         apply plugin: 'kotlin-platform-common'
-
+        apply plugin: 'maven-publish'
 
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
@@ -87,6 +119,13 @@ allprojects {
         }
 
         kotlin { experimental.coroutines = 'enable' }
+
+        task sourceJar(type: Jar) {
+            from sourceSets.main.kotlin
+            classifier = "sources"
+        }
+
+        configurePublishing()
     }
 
 
@@ -124,27 +163,12 @@ allprojects {
             }
         }
 
-        publishing {
-            publications {
-                String mvnId = project.name
-                if (mvnId.endsWith('-jvm'))
-                    mvnId = mvnId.substring(0, mvnId.length() - 4)
+        configurePublishing()
 
-                maven(MavenPublication) {
-                    groupId 'com.jetbrains'
-                    artifactId mvnId
-                    version '2018.1-SNAPSHOT'
-
-                    from components.java
-
-                    artifact sourceJar
-//                    artifact packageJavadoc
-                }
-            }
+        test {
+            maxHeapSize = "512m"
+            finalizedBy jacocoTestReport
         }
-
-
-        test { finalizedBy jacocoTestReport }
 
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -221,15 +245,9 @@ allprojects {
         mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
-        maven { url "http://dl.bintray.com/kotlin/exposed" }
-        maven { url "http://repo.labs.intellij.net/ring-license-checker" }
-        maven { url "https://dl.bintray.com/kotlin/ktor" }
-        maven { url "http://dl.bintray.com/cy6ergn0m/maven" }
+        maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
         maven { url "http://dl.bintray.com/kotlinx/kotlinx" }
-        maven { url "http://maven.labs.intellij.net/hub" }
         maven { url "https://jitpack.io" }
         maven { url "http://packages.confluent.io/maven/" }
-        maven { url "http://dl.bintray.com/hypnosphi/kotlin-wrappers" }
     }
 }

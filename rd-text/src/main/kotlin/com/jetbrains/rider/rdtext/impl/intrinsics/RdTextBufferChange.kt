@@ -1,4 +1,4 @@
-package com.jetbrains.rider.rdtext.intrinsics
+package com.jetbrains.rider.rdtext.impl.intrinsics
 
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
@@ -12,11 +12,6 @@ import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.printToString
 import kotlin.reflect.*
-
-enum class RdChangeOrigin {
-    Master,
-    Slave
-}
 
 data class RdTextBufferChange(val version: TextBufferVersion, val origin: RdChangeOrigin, val change: RdTextChange): IPrintable {
     companion object : IMarshaller<RdTextBufferChange> {

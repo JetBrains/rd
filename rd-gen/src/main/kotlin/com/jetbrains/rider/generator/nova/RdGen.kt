@@ -1,5 +1,7 @@
 package com.jetbrains.rider.generator.nova
 
+import com.jetbrains.rider.generator.nova.csharp.CSharp50Generator
+import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rider.util.getThrowableText
 import com.jetbrains.rider.util.hash.PersistentHash
 import com.jetbrains.rider.util.kli.Kli
@@ -16,6 +18,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.measureTimeMillis
+
+data class GenerationSpec(
+    var language: String = "",
+    var transform: String? = null,
+    var root: String = "",
+    var namespace: String = "",
+    var directory: String = ""
+)
 
 class RdGen : Kli() {
     companion object {
@@ -34,7 +44,7 @@ class RdGen : Kli() {
 
     var compilerClassloader : ClassLoader? = null
 
-    val sources =       option_path(  's',    "source", "Folder with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
+    val sources =       option_string('s',    "source", "Folders with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
     val hashFolder =    option_path(  'h',    "hash-folder","Folder to store hash file '$hashFileName' for incremental generation", Paths.get("").toAbsolutePath())
     val compiled =      option_path(  null,   "compiled", "Folder for compiled dsl. Temporary folder is created if option is not specified.")
     val classpath =     option_string('c',    "compiler-classpath","Classpath for kotlin compiler. You must specify it if you referenced something from your dsl" )
@@ -52,8 +62,10 @@ class RdGen : Kli() {
     private fun v(msg: String) { if (verbose.value) println(msg) }
     private fun v(e: Throwable) { if (verbose.value) e.printStackTrace() }
 
+    val generationSpecs = mutableListOf<GenerationSpec>()
+    val sourcePaths = mutableListOf<File>()
 
-    private fun compile0(src: Path, dst: Path) : String? {
+    private fun compile0(src: List<File>, dst: Path) : String? {
 
         v("Searching for Kotlin compiler")
         try {
@@ -65,7 +77,7 @@ class RdGen : Kli() {
 
 
             val method = clazz.getMethod("exec", PrintStream::class.java, arrayOf("").javaClass)
-            v("Compiling sources from '${src.toAbsolutePath()}' to '${dst.toAbsolutePath()}'")
+            v("Compiling sources from '${src.joinToString { it.absolutePath } }' to '${dst.toAbsolutePath()}'")
 
 
             val userCp = classpath.value?:""
@@ -81,13 +93,13 @@ class RdGen : Kli() {
             val cp = listOf(userCp, defaultCp).filter { !it.isBlank() }.joinToString ( System.getProperty("path.separator") )
             v("Resulting kotlinc classpath: '$cp'")
 
-            val args = arrayOf(
+            val args = listOf(
                 "-cp", cp,
-                "-d", dst.toString(),
-                src.toString()
-            )
-            v("kotlinc "+args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
-            val returnCode = method.invoke(clazz.newInstance(), System.err, args) as kotlin.Enum<*>
+                "-d", dst.toString()
+            ) + src.map { it.absolutePath }
+
+            v("kotlinc " + args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
+            val returnCode = method.invoke(clazz.newInstance(), System.err, args.toTypedArray()) as kotlin.Enum<*>
 
 
             return if (returnCode.ordinal == 0) {
@@ -116,7 +128,7 @@ class RdGen : Kli() {
 
     private val defaultClassloader = RdGen::class.java.classLoader!!
 
-    private fun compileDsl(src: Path) : ClassLoader? {
+    private fun compileDsl(src: List<File>) : ClassLoader? {
         val dst = compiled.value?.apply {
             v("Compiling into specified folder: $this")
 
@@ -134,8 +146,12 @@ class RdGen : Kli() {
 
         return if (error == null)
             try {
-                v("Loading compiled classes from '$dst'")
-                URLClassLoader(arrayOf(dst.toUri().toURL()), defaultClassloader)
+                val classpathUris = listOf(dst.toUri().toURL()) + (classpath.value?.let {
+                    it.split(File.pathSeparatorChar).map { File(it).toURI().toURL() }
+                } ?: emptyList())
+
+                v("Loading compiled classes from '${classpathUris.joinToString()}'")
+                URLClassLoader(classpathUris.toTypedArray(), defaultClassloader)
             } catch (e: Throwable) {
                 error = "Error during loading classes from '$dst'"
                 null
@@ -159,7 +175,14 @@ class RdGen : Kli() {
         return PersistentHash().also { res ->
 
             //sources
-            sources.value?. let { res.mixFileRecursively(it.toFile()) }
+            sources.value?. let {
+                for (src in it.split(File.pathSeparatorChar)) {
+                    res.mixFileRecursively(File(src))
+                }
+            }
+            for (sourcePath in sourcePaths) {
+                res.mixFileRecursively(sourcePath)
+            }
 
             //output
             outputFolders.forEach { res.mixFileRecursively(it) { file -> file.isFile && file.name != hashFileName } } //if you store hashFile in output
@@ -181,8 +204,8 @@ class RdGen : Kli() {
     }
 
 
-    private fun changedSinceLastStart():Boolean {
-        if (sources.value == null) return true //no incremental generation from classpath
+    private fun changedSinceLastStart(): Boolean {
+        if (sources.value == null && sourcePaths.isEmpty()) return true //no incremental generation from classpath
 
         v("Reading hash from $hashfile")
         val oldHash = PersistentHash.load(hashfile)
@@ -202,7 +225,7 @@ class RdGen : Kli() {
     }
 
 
-    fun run() : Boolean {
+    fun run(): Boolean {
         if (error != null) return errorAndExit()
 
         //parsing parameters
@@ -230,9 +253,14 @@ class RdGen : Kli() {
 
         val srcDir = sources.value
         val classloader =
-            if (srcDir != null) {
-                if (!srcDir.toFile().isDirectory) return errorAndExit("Sources are incorrect. No folder found at '$srcDir'")
-                compileDsl(srcDir) ?: return errorAndExit()
+            if (srcDir != null || sourcePaths.isNotEmpty()) {
+                val sourcePaths = (srcDir?.split(File.pathSeparatorChar)?.map { File(it) } ?: emptyList()) + this.sourcePaths
+                for (sourcePath in sourcePaths) {
+                    if (!sourcePath.isDirectory)
+                        return errorAndExit("Sources are incorrect. No folder found at '$sourcePath'")
+                }
+
+                compileDsl(sourcePaths) ?: return errorAndExit()
             } else {
                 println("Folder 'source' isn't specified, searching for models in classloader of RdGen class (current java process classpath)")
                 defaultClassloader
@@ -240,13 +268,13 @@ class RdGen : Kli() {
 
 
         val outputFolders = try {
-            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value)
+            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, generationSpecs)
         } catch (e : Throwable) {
             e.printStackTrace()
             return false
         }
 
-        if (srcDir != null) {
+        if (srcDir != null || sourcePaths.isNotEmpty()) {
             val hash = prepareHash(outputFolders)
             v("Storing hash into '$hashfile'")
             hash.store(hashfile)
@@ -258,12 +286,25 @@ class RdGen : Kli() {
     }
 }
 
+//Need to sort generators because we plan to purge generation folders sometimes
+private data class GenPair(val generator: IGenerator, val root: Root) : Comparable<GenPair> {
+    override fun compareTo(other: GenPair): Int {
+        generator.folder.canonicalPath.compareTo(other.generator.folder.canonicalPath).let { if (it != 0) return it}
+        root.name.compareTo(other.root.name).let { if (it != 0) return it }
+        generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
 
-fun generateRdModel(classLoader: ClassLoader, namespacePrefixes: Array<String>
-                    , verbose: Boolean = false
-                    , generatorsFilter : Regex? = null
-                    , clearOutputFolderIfExists: Boolean = false
-) : Set<File> {
+        return 0 //sort is stable so, don't worry much
+    }
+}
+
+fun generateRdModel(
+    classLoader: ClassLoader,
+    namespacePrefixes: Array<String>,
+    verbose: Boolean = false,
+    generatorsFilter: Regex? = null,
+    clearOutputFolderIfExists: Boolean = false,
+    generationSpecs: List<GenerationSpec> = emptyList()
+): Set<File> {
     val startTime = System.currentTimeMillis()
 
     val genfilter = generatorsFilter ?: Regex(".*")
@@ -275,52 +316,20 @@ fun generateRdModel(classLoader: ClassLoader, namespacePrefixes: Array<String>
         println("Generator's filter: '${genfilter.pattern}'")
     }
 
-    val classes = classLoader.scanForClasses(*namespacePrefixes).toList()
-    if (verbose) println("${classes.count()} classes found")
-
-    val toplevelClasses = classes.filter { Toplevel::class.java.isAssignableFrom(it)}.filter { ! (it.isInterface || Modifier.isAbstract(it.modifiers))  }.toList()
-    if (verbose) println("${toplevelClasses.size} toplevel class${(toplevelClasses.size != 1).condstr {"es"}} found")
-
-    val toplevels = toplevelClasses.map {
-        val kclass = it.kotlin
-        if (kclass.constructors.any())
-            it.newInstance()
-        else
-            kclass.objectInstance
-    }.filterIsInstance(Toplevel::class.java).sortedWith (compareBy({it.root.name}, {it.toString()}))
-
-    if (verbose) {
-        println("Toplevels to generate:")
-        toplevels.forEach(::println)
-    }
+    val toplevels = collectTopLevels(classLoader, namespacePrefixes, verbose)
 
 
-    //Need to sort generators because we plan to purge generation folders sometimes
-    data class GenPair(val generator: IGenerator, val root: Root) : Comparable<GenPair> {
-        override fun compareTo(other: GenPair): Int {
-            generator.folder.canonicalPath.compareTo(other.generator.folder.canonicalPath).let { if (it != 0) return it}
-            root.name.compareTo(other.root.name).let { if (it != 0) return it }
-            generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
-
-            return 0 //sort is stable so, don't worry much
-        }
-    }
-
-    val generatorsToInvoke = ArrayList<GenPair>()
     val validationErrors = ArrayList<String>()
 
-    toplevels.map {it.root}.distinct().forEach { root ->
+    val roots = toplevels.map { it.root }.distinct()
+    roots.forEach { root ->
         if (verbose) println("Scanning $root, ${root.generators.size} generators found")
-
-        root.generators.forEach { gen ->
-            val shouldGenerate = genfilter.containsMatchIn(gen.javaClass.simpleName) && gen.folder.toString().isNotEmpty()
-            if (verbose) println("  $gen: "+ if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
-            if (shouldGenerate) generatorsToInvoke.add(GenPair(gen, root))
-        }
 
         root.initialize()
         root.validate(validationErrors)
     }
+
+    val generatorsToInvoke = collectGeneratorsToInvoke(roots, genfilter, verbose, generationSpecs)
 
     if (validationErrors.isNotEmpty())
         throw GeneratorException("Model validation fail:" +
@@ -357,4 +366,69 @@ fun generateRdModel(classLoader: ClassLoader, namespacePrefixes: Array<String>
     return generatedFolders
 }
 
+private fun collectTopLevels(
+    classLoader: ClassLoader,
+    namespacePrefixes: Array<String>,
+    verbose: Boolean
+): List<Toplevel> {
+    val classes = classLoader.scanForClasses(*namespacePrefixes).toList()
+    if (verbose) println("${classes.count()} classes found")
 
+    val toplevelClasses = classes.filter { Toplevel::class.java.isAssignableFrom(it) }
+        .filter { !(it.isInterface || Modifier.isAbstract(it.modifiers)) }.toList()
+    if (verbose) println("${toplevelClasses.size} toplevel class${(toplevelClasses.size != 1).condstr { "es" }} found")
+
+    val toplevels = toplevelClasses.map {
+        val kclass = it.kotlin
+        if (kclass.constructors.any())
+            it.newInstance()
+        else
+            kclass.objectInstance
+    }.filterIsInstance(Toplevel::class.java).sortedWith(compareBy({ it.root.name }, { it.toString() }))
+
+    if (verbose) {
+        println("Toplevels to generate:")
+        toplevels.forEach(::println)
+    }
+    return toplevels
+}
+
+private fun collectGeneratorsToInvoke(
+    roots: List<Root>,
+    genfilter: Regex,
+    verbose: Boolean,
+    generationSpecs: List<GenerationSpec>
+): MutableList<GenPair> {
+    val generatorsToInvoke = mutableListOf<GenPair>()
+    for (root in roots) {
+        root.generators.forEach { gen ->
+            val shouldGenerate =
+                genfilter.containsMatchIn(gen.javaClass.simpleName) && gen.folder.toString().isNotEmpty()
+            if (verbose) println("  $gen: " + if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
+            if (shouldGenerate) generatorsToInvoke.add(GenPair(gen, root))
+        }
+    }
+
+    for (generationSpec in generationSpecs) {
+        val flowTransform = when (generationSpec.transform) {
+            "asis" -> FlowTransform.AsIs
+            "reversed" -> FlowTransform.Reversed
+            "symmetric" -> FlowTransform.Symmetric
+            null -> FlowTransform.AsIs
+            else -> throw GeneratorException("Unknown flow transform type ${generationSpec.transform}, use 'asis', 'reversed' or 'symmetric'")
+        }
+        val generator = when (generationSpec.language) {
+            "kotlin" -> Kotlin11Generator(flowTransform, generationSpec.namespace,
+                File(generationSpec.directory))
+            "csharp" -> CSharp50Generator(flowTransform, generationSpec.namespace,
+                File(generationSpec.directory))
+            else -> throw GeneratorException("Unknown language ${generationSpec.language}, use 'kotlin' or 'csharp'")
+        }
+        val root = roots.find { it.javaClass.canonicalName == generationSpec.root }
+                ?: throw GeneratorException("Can't find root with class name ${generationSpec.root}. Found roots: " +
+                roots.joinToString { it.javaClass.canonicalName })
+        generatorsToInvoke.add(GenPair(generator, root))
+    }
+
+    return generatorsToInvoke
+}

@@ -8,7 +8,11 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
 
 
-inline fun <T,R> T.usingTrueFlag(flag: KMutableProperty1<T, Boolean>, action: () -> R) : R {
+inline fun <T,R> T.usingTrueFlag(flag: KMutableProperty1<T, Boolean>, set: Boolean = true, action: () -> R) : R {
+    if (!set) {
+        return action()
+    }
+
     require(!flag.get(this))
 
     try {

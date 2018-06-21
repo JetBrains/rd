@@ -22,6 +22,7 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
         fun<T: Any> write(ctx: SerializationCtx, stream: AbstractBuffer, value: RdSet<T>) = value.rdid.write(stream)
     }
 
+    var optimizeNested : Boolean = false
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)

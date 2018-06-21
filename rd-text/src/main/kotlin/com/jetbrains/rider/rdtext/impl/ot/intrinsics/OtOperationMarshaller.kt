@@ -1,8 +1,9 @@
-package com.jetbrains.rider.rdtext.intrinsics
+package com.jetbrains.rider.rdtext.impl.ot.intrinsics
 
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.AbstractBuffer
-import com.jetbrains.rider.util.ot.*
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
+import com.jetbrains.rider.rdtext.impl.ot.*
 import kotlin.reflect.*
 
 @Suppress("unused")
@@ -33,8 +34,10 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
                 else -> throw IllegalStateException("Can't find reader by id: " + this.id.toString())
             }
         }
-        val role = buffer.readEnum<OtRole>()
-        return OtOperation(changes, role)
+        val origin = buffer.readEnum<RdChangeOrigin>()
+        val remoteTs = buffer.readInt()
+        val kind = buffer.readEnum<OtOperationKind>()
+        return OtOperation(changes, origin, remoteTs, kind)
     }
 
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OtOperation) {
@@ -54,6 +57,8 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
                 }
             }
         }
-        buffer.writeEnum(value.role)
+        buffer.writeEnum(value.origin)
+        buffer.writeInt(value.timestamp)
+        buffer.writeEnum(value.kind)
     }
 }

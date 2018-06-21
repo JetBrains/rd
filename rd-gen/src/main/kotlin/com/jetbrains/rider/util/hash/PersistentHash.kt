@@ -71,7 +71,9 @@ class PersistentHash {
             sb.append(lst.joinToString(",") {encode(it)})
             sb.append(System.lineSeparator())
         }
-        file.toFile().writeText(sb.toString())
+        val toFile = file.toFile()
+        toFile.parentFile.mkdirs()
+        toFile.writeText(sb.toString())
     }
 
     operator fun get(key: String) : SortedSet<String> {

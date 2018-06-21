@@ -1,7 +1,17 @@
-package com.jetbrains.rider.util.ot
+package com.jetbrains.rider.rdtext.impl.ot
 
-class OtOperation(changes: List<OtChange>, val role: OtRole) {
-    val changes = normalize(changes)
+import com.jetbrains.rider.rdtext.RdTextChange
+import com.jetbrains.rider.rdtext.RdTextChangeKind
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
+
+enum class OtOperationKind {
+    Normal,
+    Reset
+}
+
+// todo make it intrinsic
+class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val timestamp: Int, val kind: OtOperationKind) {
+    val changes = normalize(changes) // todo eliminate for deserialization
 
     private fun normalize(changes: List<OtChange>): List<OtChange> {
         val result = arrayListOf<OtChange>()
@@ -20,9 +30,7 @@ class OtOperation(changes: List<OtChange>, val role: OtRole) {
             }
         }
         if (prev != null) result.add(prev)
-
-        if (result.size == 1 && result[0] is Retain)
-            return emptyList()
+        if (result.isEmpty()) result.add(Retain(0))
 
         return result
     }
@@ -30,41 +38,37 @@ class OtOperation(changes: List<OtChange>, val role: OtRole) {
     fun documentLengthBefore() = changes.sumBy(OtChange::getTextLengthBefore)
     fun documentLengthAfter() = changes.sumBy(OtChange::getTextLengthAfter)
 
-
-    fun isIdentity(): Boolean = changes.isEmpty()
-
-    fun invert() = OtOperation(changes.map {-it}, role)
-
-    override fun toString(): String = changes.joinToString(";", "Op(changes=[", "], role=$role)")
-
+    override fun toString(): String = changes.joinToString(";", "Op(changes=[", "], origin=$origin, timestamp=$timestamp)")
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other == null || this::class != other::class) return false
+        if (javaClass != other?.javaClass) return false
 
         other as OtOperation
 
-        if (role != other.role) return false
+        if (origin != other.origin) return false
+        if (timestamp != other.timestamp) return false
+        if (kind != other.kind) return false
         if (changes != other.changes) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = role.hashCode()
+        var result = origin.hashCode()
+        result = 31 * result + timestamp
+        result = 31 * result + kind.hashCode()
         result = 31 * result + changes.hashCode()
         return result
     }
 }
 
-fun OtOperation.toTextChanges(): List<TextChange> {
-    if (this.isIdentity()) return emptyList()
-
+fun OtOperation.toRdTextChanges(): List<RdTextChange> {
     var documentLength = this.documentLengthBefore()
     var currOffset = 0
     var lastInsert: InsertText? = null
     var lastDelete: DeleteText? = null
 
-    val res = mutableListOf<TextChange>()
+    val res = mutableListOf<RdTextChange>()
     for (change in this.changes) {
         when (change) {
             is Retain -> {
@@ -100,9 +104,37 @@ fun OtOperation.toTextChanges(): List<TextChange> {
     return res
 }
 
-private fun createTextChange(offset: Int, insert: InsertText?, delete: DeleteText?, documentLength: Int): TextChange {
+private fun createTextChange(offset: Int, insert: InsertText?, delete: DeleteText?, documentLength: Int): RdTextChange {
     val newText = insert?.text ?: ""
     val oldText = delete?.text ?: ""
     val startOffset = offset - (insert?.getTextLengthAfter() ?: 0)
-    return TextChange(startOffset, oldText, newText, documentLength)
+    val kind = when {
+        insert != null && delete != null -> RdTextChangeKind.Replace
+        insert != null -> RdTextChangeKind.Insert
+        delete != null -> RdTextChangeKind.Remove
+        else -> throw IllegalArgumentException()
+    }
+    return RdTextChange(kind, startOffset, oldText, newText, documentLength)
+}
+
+fun RdTextChange.toOperation(origin: RdChangeOrigin, ts: Int): OtOperation {
+    val changes = kotlin.collections.mutableListOf<OtChange>().apply {
+        add(Retain(startOffset))
+
+        when (this@toOperation.kind) {
+            RdTextChangeKind.Insert -> add(InsertText(new))
+            RdTextChangeKind.Remove -> add(DeleteText(old))
+            RdTextChangeKind.Replace -> { add(InsertText(new)); add(DeleteText(old)) }
+            RdTextChangeKind.Reset -> add(InsertText(new))
+        }
+
+        val currentOffset = this.sumBy(OtChange::getTextLengthAfter)
+        add(Retain(this@toOperation.fullTextLength - currentOffset))
+    }
+
+    val kind = if (kind == RdTextChangeKind.Reset) OtOperationKind.Reset else OtOperationKind.Normal
+    val operation = OtOperation(changes, origin, ts, kind)
+
+    kotlin.assert(operation.documentLengthAfter() == fullTextLength)
+    return operation
 }

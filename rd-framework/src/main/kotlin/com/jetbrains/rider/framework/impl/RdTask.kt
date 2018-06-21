@@ -1,16 +1,19 @@
 package com.jetbrains.rider.framework.impl
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.framework.base.RdReactiveBase
-import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.framework.base.withId
 import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
-import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.reactive.IScheduler
+import com.jetbrains.rider.util.reactive.OptProperty
+import com.jetbrains.rider.util.reactive.hasValue
+import com.jetbrains.rider.util.reactive.valueOrThrow
 import com.jetbrains.rider.util.string.condstr
+import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.util.threading.SynchronousScheduler
+import kotlin.jvm.Volatile
 
 fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(request: TReq, onSuccess: (TRes) -> Unit) {
     startAndAdviseSuccess(Lifetime.Eternal, request, onSuccess)
