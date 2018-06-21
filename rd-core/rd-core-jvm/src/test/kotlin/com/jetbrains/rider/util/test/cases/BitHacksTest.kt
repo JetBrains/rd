@@ -27,7 +27,7 @@ class BitHacksTest {
             actual.putLong(l1, 0)
             actual.putLong(l2, 8)
 
-            Assert.assertEquals(actual, expected)
+            Assert.assertArrayEquals(actual, expected)
 
             //parse
             Assert.assertEquals(actual.parseLong(0), l1)

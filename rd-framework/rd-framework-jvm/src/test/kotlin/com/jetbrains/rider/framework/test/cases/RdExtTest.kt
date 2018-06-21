@@ -10,12 +10,14 @@ import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
 import com.jetbrains.rider.util.reactive.valueOrThrow
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 
 class RdExtTest : RdTestBase() {
-    @Test // TODO: RIDER-14180
+    @Ignore
+    @Test() // TODO: RIDER-14180
     fun testExtension() {
         val propertyId = 1
         val clientProperty = RdOptionalProperty<DynamicEntity>().static(propertyId)

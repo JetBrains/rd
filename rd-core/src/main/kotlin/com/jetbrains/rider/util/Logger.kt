@@ -31,7 +31,8 @@ class SwitchLogger(category: String) : Logger {
     private lateinit var realLogger: Logger
 
     init {
-        Statics<ILoggerFactory>().stack.viewableTail().advise(Lifetime.Eternal) { factory ->
+        val stack = Statics<ILoggerFactory>().stack
+        stack.viewableTail().advise(Lifetime.Eternal) { factory ->
             realLogger = (factory?:ConsoleLoggerFactory).getLogger(category)
         }
     }

@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
-class RdSignalTest : RdAsyncTestBase() {
+class RdSignalTest : RdTestBase() {
     @Test
     fun TestStatic() {
         val property_id = 1
@@ -146,41 +146,6 @@ class RdSignalTest : RdAsyncTestBase() {
         }
 
         client_signal.fire() //no transmitting
-        assertEquals(2, acc)
-    }
-
-
-    @Test
-    fun TestAsyncSignalStatic() {
-        val client_signal = clientProtocol.bindStatic(RdSignal<Unit>().static(1), "top")
-        val server_signal = serverProtocol.bindStatic(RdSignal<Unit>().static(1), "top")
-
-        var acc = 0
-        Lifetime.using { lf ->
-            server_signal.adviseOn(lf, serverBgScheduler, {
-                serverBgScheduler.assertThread()
-                Thread.sleep(100)
-                acc++
-            })
-
-            assertFails {server_signal.advise(lf, {}) }
-            server_signal.advise(lf, {})
-
-            assertEquals(0, acc)
-
-            client_signal.fire()
-
-            assertEquals(0, acc) //no change
-
-            client_signal.fire()
-            assertEquals(0, acc) //still no change
-
-            serverBgScheduler.flush()
-            assertEquals(2, acc)
-        }
-
-        client_signal.fire() //no transmitting
-        serverBgScheduler.assertNoExceptions()
         assertEquals(2, acc)
     }
 
