@@ -65,8 +65,10 @@ class RdAsyncTaskTest : RdTestBase() {
 
         l.reset()
         val interruptedTask = client_property.valueOrThrow.start(0)
-        //terminate lifetime by setting another endpoint
-        server_property.set( RdEndpoint(Int::toString))
+
+        //terminate request
+        client_property.set(RdCall())
+
         assertTrue { interruptedTask.isCanceled }
         l.disable()
 

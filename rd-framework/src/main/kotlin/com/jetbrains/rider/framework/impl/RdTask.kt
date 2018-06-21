@@ -5,6 +5,7 @@ import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.framework.base.withId
 import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.reactive.OptProperty
 import com.jetbrains.rider.util.reactive.hasValue
@@ -77,6 +78,16 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         serializationContext = super.serializationContext
         wire.advise(lifetime, this)
 
+        lifetime += {
+            for (req in requests) {
+
+                val task = req.value.second
+                if (!task.result.hasValue) //todo race
+                    task.result.set(RdTaskResult.Cancelled())
+            }
+
+            requests.clear()
+        }
         //todo clear requests
     }
 
