@@ -70,7 +70,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                             broker.remove(id)!!.customSchedulerMessages.forEach {
                                 subscription?.apply {
                                     require (wireScheduler != defaultScheduler)
-                                    subscription.invoke(message)
+                                    subscription.invoke(it)
                                 }
                             }
                         }
