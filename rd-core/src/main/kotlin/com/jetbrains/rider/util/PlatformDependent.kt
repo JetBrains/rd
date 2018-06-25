@@ -25,7 +25,7 @@ expect fun <T> threadLocalWithInitial(initial: () -> T) : ThreadLocal<T>
 expect val eol : String
 
 expect object Sync {
-    fun <R: Any?> lock(obj: Any, acton: () -> R) : R
+    inline fun <R: Any?> lock(obj: Any, acton: () -> R) : R
     fun notifyAll(obj: Any) : Unit
     fun notify(obj: Any) : Unit
     fun wait(obj: Any) : Unit

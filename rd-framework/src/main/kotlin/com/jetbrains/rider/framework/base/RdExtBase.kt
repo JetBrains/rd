@@ -181,8 +181,13 @@ class ExtWire : IWire {
 
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
         Sync.lock(sendQ) {
-            if (!sendQ.isEmpty() || !connected.value)
-                sendQ.offer(id to createAbstractBuffer().also(writer).getArray())
+            if (!sendQ.isEmpty() || !connected.value) {
+                val buffer = createAbstractBuffer()
+                writer(buffer)
+                sendQ.offer(id to buffer.getArray())
+                return
+            }
+
         }
 
         realWire.send(id, writer)
