@@ -493,7 +493,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "buffer.writeEnum($field)"
-            is InternedScalar -> "ctx.writeInterned(buffer, $field) { _, _, _ -> ${itemType.writer("value")} }"
+            is InternedScalar -> "ctx.writeInterned(buffer, $field) { _, _, internedValue -> ${itemType.writer("internedValue")} }"
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Write(ctx,buffer, $field)"} ?:
