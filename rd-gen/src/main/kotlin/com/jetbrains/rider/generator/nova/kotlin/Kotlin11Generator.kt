@@ -439,7 +439,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IType.reader() : String  = when (this) {
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
-            is InternedScalar -> "ctx.readInterned(buffer, { ctx, buffer -> ${itemType.reader()} })"
+            is InternedScalar -> "ctx.readInterned(buffer) { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Read(ctx,buffer)"} ?:
@@ -493,7 +493,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "buffer.writeEnum($field)"
-            is InternedScalar -> "ctx.writeInterned(buffer, $field, { ctx, buffer, value -> ${itemType.writer("value")} })"
+            is InternedScalar -> "ctx.writeInterned(buffer, $field) { _, _, _ -> ${itemType.writer("value")} }"
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Write(ctx,buffer, $field)"} ?:
