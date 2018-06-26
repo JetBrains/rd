@@ -7,7 +7,9 @@ import com.jetbrains.rider.util.Queue
 import com.jetbrains.rider.util.Sync
 import com.jetbrains.rider.util.collections.QueueImpl
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.reactive.IScheduler
+import com.jetbrains.rider.util.reactive.Property
+import com.jetbrains.rider.util.reactive.whenTrue
 import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.util.threading.SynchronousScheduler
 import com.jetbrains.rider.util.trace
@@ -26,10 +28,10 @@ abstract class RdExtBase : RdReactiveBase() {
     val connected = extWire.connected
     override val wireScheduler: IScheduler get() = SynchronousScheduler
 
-    override val protocol : IProtocol get() = extProtocol ?: super.protocol //nb
+    override val protocol: IProtocol get() = extProtocol ?: super.protocol //nb
 
-    abstract val serializersOwner : ISerializersOwner
-    open val serializationHash : Long = 0L
+    abstract val serializersOwner: ISerializersOwner
+    open val serializationHash: Long = 0L
 
 
     override fun init(lifetime: Lifetime) {
@@ -94,6 +96,7 @@ abstract class RdExtBase : RdReactiveBase() {
 
         val counterpartSerializationHash = buffer.readLong()
         if (serializationHash != counterpartSerializationHash) {
+            super.protocol.outOfSyncModels.add(this)
             error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
         }
     }
