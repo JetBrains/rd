@@ -2,11 +2,13 @@ package com.jetbrains.rider.framework
 
 import com.jetbrains.rider.framework.base.IRdReactive
 import com.jetbrains.rider.framework.base.ISerializersOwner
+import com.jetbrains.rider.framework.base.RdExtBase
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IPropertyView
 import com.jetbrains.rider.util.reactive.IScheduler
+import com.jetbrains.rider.util.reactive.ViewableSet
 import com.jetbrains.rider.util.string.RName
-import kotlin.reflect.*
+import kotlin.reflect.KClass
 
 /**
  * A node in a graph of entities that can be synchronized with its remote copy over a network or a similar connection.
@@ -25,6 +27,9 @@ interface IProtocol : IRdDynamic {
     val identity: IIdentities
     val scheduler: IScheduler
     val wire: IWire
+
+    // Models for which the serialization hash does not match that on the other side
+    val outOfSyncModels: ViewableSet<RdExtBase>
 }
 
 /**

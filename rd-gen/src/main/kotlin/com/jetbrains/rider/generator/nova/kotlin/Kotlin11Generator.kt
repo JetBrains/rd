@@ -153,10 +153,21 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     protected open val Member.encapsulatedName : String get() = isEncapsulated.condstr { "_" } + publicName
     protected open val Member.isEncapsulated : Boolean get() = this is Member.Reactive
 
-    protected fun Member.ctorParam(containing: Declaration) : String {
-        return "$encapsulatedName : ${implSubstitutedName(containing)}" + (this is Member.Field && isOptional).condstr { " = null" }
+    protected fun Member.ctorParam(containing: Declaration): String {
+        val typeName = implSubstitutedName(containing)
+        return StringBuilder().also {
+            it.append("$encapsulatedName: $typeName")
+            if (this is Member.Field && (isOptional || defaultValue != null)) {
+                it.append(" = ")
+                val defaultValue = this.defaultValue
+                when (defaultValue) {
+                    is String -> it.append(if (type is Enum) "$typeName.$defaultValue" else "\"$defaultValue\"")
+                    is Long -> it.append(defaultValue)
+                    else -> if (isOptional) it.append("null")
+                }
+            }
+        }.toString()
     }
-
 
     protected fun Member.Reactive.customSerializers(scope: Declaration) : List<String> {
         return genericParams.asList().map { it.serializerRef(scope) }
@@ -348,8 +359,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
                 customSerializersTrait(decl)
             }
             + "}"
-            + "override val serializersOwner : ISerializersOwner get() = ${decl.name}"
-            + "override val serializationHash : Long get() = ${decl.serializationHash(IncrementalHash64()).result}L"
+            + "override val serializersOwner: ISerializersOwner get() = ${decl.name}"
+            + "override val serializationHash: Long get() = ${decl.serializationHash(IncrementalHash64()).result}L"
             println()
         }
     }
@@ -373,7 +384,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     }
 
     protected fun  PrettyPrinter.registerSerializersTrait(decl: Toplevel) {
-        + "override fun registerSerializersCore(serializers : ISerializers) {"
+        + "override fun registerSerializersCore(serializers: ISerializers) {"
         indent {
             decl.declaredTypes.filter { !it.isAbstract }.filterIsInstance<IType>().println {
                 "serializers.register(${it.serializerRef(decl)})"
@@ -391,12 +402,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (decl.isExtension) return
 
-        + "fun create(lifetime: Lifetime, protocol: IProtocol) : ${decl.name} {"
+        + "fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} {"
         indent {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
 
-            + "return ${decl.name} ().apply {"
+            + "return ${decl.name}().apply {"
             indent {
                 val quotedName = """"${decl.name}""""
                + "identify(protocol.identity, RdId.Null.mix($quotedName))"
@@ -428,7 +439,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IType.reader() : String  = when (this) {
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
-            is InternedScalar -> "ctx.readInterned(buffer, { ctx, buffer -> ${itemType.reader()} })"
+            is InternedScalar -> "ctx.readInterned(buffer) { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Read(ctx,buffer)"} ?:
@@ -482,17 +493,17 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "buffer.writeEnum($field)"
-            is InternedScalar -> "ctx.writeInterned(buffer, $field, { ctx, buffer, value -> ${itemType.writer("value")} })"
+            is InternedScalar -> "ctx.writeInterned(buffer, $field) { _, _, _ -> ${itemType.writer("value")} }"
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Write(ctx,buffer, $field)"} ?:
                     if (isAbstract) "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
                     else "${substitutedName(decl)}.write(ctx, buffer, $field)"
-            is INullable -> "buffer.writeNullable($field) {${itemType.writer("it")}}"
+            is INullable -> "buffer.writeNullable($field) { ${itemType.writer("it")} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.write${substitutedName(decl)}($field)"
-                else "buffer.writeArray($field) {${itemType.writer("it")}}"
-            is IImmutableList -> "buffer.writeList($field) {v -> ${itemType.writer("v")}}"
+                else "buffer.writeArray($field) { ${itemType.writer("it")} }"
+            is IImmutableList -> "buffer.writeList($field) { v -> ${itemType.writer("v")} }"
 
             else -> fail("Unknown declaration: $decl")
         }
@@ -527,11 +538,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     protected fun  PrettyPrinter.fieldsTrait(decl: Declaration) {
         decl.ownMembers
             .filter { it.isEncapsulated }
-            .printlnWithBlankLine { "val ${it.publicName} : ${it.intfSubstitutedName(decl)} get() = ${it.encapsulatedName}" }
+            .printlnWithBlankLine { "val ${it.publicName}: ${it.intfSubstitutedName(decl)} get() = ${it.encapsulatedName}" }
 
         if (decl is Class && decl.isInternRoot) {
-            + "private var mySerializationContext : SerializationCtx? = null"
-            + "override val serializationContext : SerializationCtx"
+            + "private var mySerializationContext: SerializationCtx? = null"
+            + "override val serializationContext: SerializationCtx"
             indent {
                 + "get() = mySerializationContext ?: throw IllegalStateException(\"Attempting to get serialization context too soon for \$location\")"
             }
@@ -569,7 +580,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
                 .filter { !it.hasEmptyConstructor }
                 .joinToString(",\n") { it.ctorParam(decl) }
         }
-        + ") : this ("
+        + ") : this("
         indent {
             + decl.allMembers
                 .joinToString (",\n") {
