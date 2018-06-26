@@ -17,11 +17,12 @@ sealed class Member(name: String, val referencedTypes: List<IType>) : SettingsHo
 
     fun serializationHash(initial: IncrementalHash64) = referencedTypes.fold(initial.mix(name)) { acc, type -> acc.mix(type.name) }
 
-    class EnumConst (override val name: String) : Member(name, emptyList()) //no need to decapitalize
+    class EnumConst(override val name: String) : Member(name, emptyList()) //no need to decapitalize
 
-    class Field (name : String, val type: IType): Member(name, listOf(type)) {
+    class Field(name : String, val type: IType) : Member(name, listOf(type)) {
         internal var emptyCtorSuppressed = false
         internal var isOptional = false
+        internal var defaultValue: Any? = null
     }
 
     data class ExtensionDelegate(
@@ -100,6 +101,20 @@ val Member.Field.suppressEmptyCtor get() = apply { emptyCtorSuppressed = true }
 val Member.Field.optional get() = apply {
     if (type is INonNullable) throw GeneratorException("Field '$name' can't be optional because it's not nullable, actual type: ${type.name}")
     isOptional = true
+}
+
+fun Member.Field.default(value: Long) {
+    if (type !== PredefinedType.int && type !== PredefinedType.long) {
+        throw GeneratorException("Default value number does not match field type")
+    }
+    defaultValue = value
+}
+
+fun Member.Field.default(value: String) {
+    if (type !== PredefinedType.string && type !is Enum) {
+        throw GeneratorException("Default value string does not match field type")
+    }
+    defaultValue = value
 }
 
 val <T: Member.Reactive> T.write: T get() = apply { flow = FlowKind.Source }

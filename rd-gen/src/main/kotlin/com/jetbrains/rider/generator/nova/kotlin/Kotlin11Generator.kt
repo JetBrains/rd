@@ -153,10 +153,21 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     protected open val Member.encapsulatedName : String get() = isEncapsulated.condstr { "_" } + publicName
     protected open val Member.isEncapsulated : Boolean get() = this is Member.Reactive
 
-    protected fun Member.ctorParam(containing: Declaration) : String {
-        return "$encapsulatedName: ${implSubstitutedName(containing)}" + (this is Member.Field && isOptional).condstr { " = null" }
+    protected fun Member.ctorParam(containing: Declaration): String {
+        val typeName = implSubstitutedName(containing)
+        return StringBuilder().also {
+            it.append("$encapsulatedName: $typeName")
+            if (this is Member.Field && (isOptional || defaultValue != null)) {
+                it.append(" = ")
+                val defaultValue = this.defaultValue
+                when (defaultValue) {
+                    is String -> it.append(if (type is Enum) "$typeName.$defaultValue" else "\"$defaultValue\"")
+                    is Long -> it.append(defaultValue)
+                    else -> if (isOptional) it.append("null")
+                }
+            }
+        }.toString()
     }
-
 
     protected fun Member.Reactive.customSerializers(scope: Declaration) : List<String> {
         return genericParams.asList().map { it.serializerRef(scope) }
