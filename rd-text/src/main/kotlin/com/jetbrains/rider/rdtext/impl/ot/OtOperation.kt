@@ -21,8 +21,8 @@ class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val times
 
             prev = when {
                 prev is Retain && curr is Retain -> Retain(prev.offset + curr.offset)
-                prev is InsertText &&  curr is InsertText -> InsertText(prev.text + curr.text)
-                prev is DeleteText && curr is DeleteText -> DeleteText(prev.text + curr.text)
+                prev is InsertText &&  curr is InsertText && prev.priority == curr.priority -> InsertText(prev.text + curr.text, curr.priority)
+                prev is DeleteText && curr is DeleteText && prev.priority == curr.priority -> DeleteText(prev.text + curr.text, curr.priority)
                 else -> {
                     if (prev != null) result.add(prev)
                     curr
@@ -123,15 +123,15 @@ private fun createTextChange(offset: Int, insert: InsertText?, delete: DeleteTex
     return RdTextChange(kind, startOffset, oldText, newText, documentLength)
 }
 
-fun RdTextChange.toOperation(origin: RdChangeOrigin, ts: Int): OtOperation {
+fun RdTextChange.toOperation(origin: RdChangeOrigin, ts: Int, priority: OtChangePriority = OtChangePriority.Normal): OtOperation {
     val changes = kotlin.collections.mutableListOf<OtChange>().apply {
         add(Retain(startOffset))
 
         when (this@toOperation.kind) {
-            RdTextChangeKind.Insert -> add(InsertText(new))
-            RdTextChangeKind.Remove -> add(DeleteText(old))
-            RdTextChangeKind.Replace -> { add(InsertText(new)); add(DeleteText(old)) }
-            RdTextChangeKind.Reset -> add(InsertText(new))
+            RdTextChangeKind.Insert -> add(InsertText(new, priority))
+            RdTextChangeKind.Remove -> add(DeleteText(old, priority))
+            RdTextChangeKind.Replace -> { add(InsertText(new, priority)); add(DeleteText(old, priority)) }
+            RdTextChangeKind.Reset -> add(InsertText(new, priority))
         }
 
         val currentOffset = this.sumBy(OtChange::getTextLengthAfter)

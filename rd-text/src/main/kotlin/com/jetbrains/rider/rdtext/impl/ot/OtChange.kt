@@ -1,6 +1,17 @@
 package com.jetbrains.rider.rdtext.impl.ot
 
-sealed class OtChange() {
+/**
+ * Defines tie-breaking rules (if we have unordered changes at the same offset).
+ * For example, a closing brace must wrap user typing, that's why InsertText('}') must have AfterAllChanges priority,
+ * but an indentation must have BeforeAllChanges priority.
+ */
+enum class OtChangePriority {
+    BeforeAllChanges,
+    Normal,
+    AfterAllChanges
+}
+
+sealed class OtChange {
     abstract fun isId(): Boolean
     abstract operator fun unaryMinus() : OtChange
     abstract fun getTextLengthBefore(): Int
@@ -14,15 +25,15 @@ data class Retain(val offset: Int) : OtChange() {
     override fun getTextLengthBefore(): Int = offset
     override fun getTextLengthAfter(): Int = offset
 }
-data class InsertText(val text: String) : OtChange() {
+data class InsertText(val text: String, val priority: OtChangePriority) : OtChange() {
     override fun isId() = text.isEmpty()
-    override fun unaryMinus() = DeleteText(text)
+    override fun unaryMinus() = DeleteText(text, priority)
     override fun getTextLengthBefore(): Int = 0
     override fun getTextLengthAfter(): Int = text.length
 }
-data class DeleteText(val text: String) : OtChange() {
+data class DeleteText(val text: String, val priority: OtChangePriority) : OtChange() {
     override fun isId() = text.isEmpty()
-    override fun unaryMinus() = InsertText(text)
+    override fun unaryMinus() = InsertText(text, priority)
     override fun getTextLengthBefore(): Int = text.length
     override fun getTextLengthAfter(): Int = 0
 }

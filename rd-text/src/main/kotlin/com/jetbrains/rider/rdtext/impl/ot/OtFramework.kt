@@ -50,7 +50,7 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
                 when {
                     text1.length > text2.length -> {
                         require(text1.startsWith(text2))
-                        compose0(acc, tail1.push(InsertText(text1.substring(text2.length))), tail2)
+                        compose0(acc, tail1.push(InsertText(text1.substring(text2.length), op1.priority)), tail2)
                     }
                     text1.length == text2.length -> {
                         require(text1 == text2)
@@ -58,7 +58,7 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
                     }
                     text1.length < text2.length -> {
                         require(text2.startsWith(text1))
-                        compose0(acc, tail1, tail2.push(DeleteText(text2.substring(text1.length))))
+                        compose0(acc, tail1, tail2.push(DeleteText(text2.substring(text1.length), op2.priority)))
                     }
                     else -> throw IllegalArgumentException("op1 is InsertText && op2 is DeleteText")
                 }
@@ -67,8 +67,8 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
                 val text1 = op1.text
                 val offset2 = op2.offset
                 when {
-                    text1.length > offset2 -> compose0(acc.append(InsertText(text1.substring(0, offset2))),
-                            tail1.push(InsertText(text1.substring(offset2))), tail2)
+                    text1.length > offset2 -> compose0(acc.append(InsertText(text1.substring(0, offset2), op1.priority)),
+                            tail1.push(InsertText(text1.substring(offset2), op1.priority)), tail2)
                     text1.length == offset2 -> compose0(acc.append(op1), tail1, tail2)
                     text1.length < offset2 -> compose0(acc.append(op1), tail1, tail2.push(Retain(offset2 - text1.length)))
                     else -> throw IllegalArgumentException("op1 is InsertText && op2 is DeleteText")
@@ -80,8 +80,8 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
                 when {
                     offset1 > text2.length -> compose0(acc.append(op2), tail1.push(Retain(offset1 - text2.length)), tail2)
                     offset1 == text2.length -> compose0(acc.append(op2), tail1, tail2)
-                    offset1 < text2.length -> compose0(acc.append(DeleteText(text2.substring(0, offset1))),
-                            tail1, tail2.push(DeleteText(text2.substring(offset1))))
+                    offset1 < text2.length -> compose0(acc.append(DeleteText(text2.substring(0, offset1), op2.priority)),
+                            tail1, tail2.push(DeleteText(text2.substring(offset1), op2.priority)))
                     else -> throw IllegalArgumentException("op1 is InsertText && op2 is DeleteText")
                 }
             }
@@ -132,7 +132,7 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
                     transform0(resOp1.append(op1), resOp2, tail1, tail2)
             }
             op1 is InsertText && op2 is InsertText -> {
-                if (localDiff.origin < remoteApplyToDocument.origin)
+                if (op1.priority < op2.priority || (op1.priority == op2.priority && localDiff.origin < remoteApplyToDocument.origin))
                     transform0(resOp1.append(op1), resOp2.append(Retain(op1.text.length)), tail1, ops2)
                 else
                     transform0(resOp1.append(Retain(op2.text.length)), resOp2.append(op2), ops1, tail2)
@@ -152,20 +152,20 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
                 val text1 = op1.text
                 val text2 = op2.text
                 when {
-                    text1.length > text2.length -> transform0(resOp1, resOp2, tail1.push(DeleteText(text1.substring(text2.length))), tail2)
+                    text1.length > text2.length -> transform0(resOp1, resOp2, tail1.push(DeleteText(text1.substring(text2.length), op1.priority)), tail2)
                     text1.length == text2.length -> {
                         require(text1 == text2)
                         transform0(resOp1, resOp2, tail1, tail2)
                     }
-                    text1.length < text2.length -> transform0(resOp1, resOp2, tail1, tail2.push(DeleteText(text2.substring(text1.length))))
+                    text1.length < text2.length -> transform0(resOp1, resOp2, tail1, tail2.push(DeleteText(text2.substring(text1.length), op2.priority)))
                 }
             }
             op1 is DeleteText && op2 is Retain -> {
                 val text1 = op1.text
                 val offset2 = op2.offset
                 when {
-                    text1.length > offset2 -> transform0(resOp1.append(DeleteText(text1.substring(0, offset2))), resOp2,
-                            tail1.push(DeleteText(text1.substring(offset2))), tail2)
+                    text1.length > offset2 -> transform0(resOp1.append(DeleteText(text1.substring(0, offset2), op1.priority)), resOp2,
+                            tail1.push(DeleteText(text1.substring(offset2), op1.priority)), tail2)
                     text1.length == offset2 -> transform0(resOp1.append(op1), resOp2, tail1, tail2)
                     text1.length < offset2 -> transform0(resOp1.append(op1), resOp2, tail1, tail2.push(Retain(offset2 - text1.length)))
                 }
@@ -176,8 +176,8 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
                 when {
                     offset1 > text2.length -> transform0(resOp1, resOp2.append(op2), tail1.push(Retain(offset1 - text2.length)), tail2)
                     offset1 == text2.length -> transform0(resOp1, resOp2.append(op2), tail1, tail2)
-                    offset1 < text2.length -> transform0(resOp1, resOp2.append(DeleteText(text2.substring(0, offset1))),
-                            tail1, tail2.push(DeleteText(text2.substring(offset1))))
+                    offset1 < text2.length -> transform0(resOp1, resOp2.append(DeleteText(text2.substring(0, offset1), op2.priority)),
+                            tail1, tail2.push(DeleteText(text2.substring(offset1), op2.priority)))
                 }
             }
         }

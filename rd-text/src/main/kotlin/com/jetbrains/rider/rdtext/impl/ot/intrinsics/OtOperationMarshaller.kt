@@ -25,11 +25,13 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
                 }
                 InsertCode -> {
                     val text = buffer.readString()
-                    InsertText(text)
+                    val priority = buffer.readEnum<OtChangePriority>()
+                    InsertText(text, priority)
                 }
                 DeleteCode -> {
                     val text = buffer.readString()
-                    DeleteText(text)
+                    val priority = buffer.readEnum<OtChangePriority>()
+                    DeleteText(text, priority)
                 }
                 else -> throw IllegalStateException("Can't find reader by id: " + this.id.toString())
             }
@@ -50,10 +52,12 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
                 is InsertText -> {
                     buffer.writeByte(InsertCode)
                     buffer.writeString(v.text)
+                    buffer.writeEnum(v.priority)
                 }
                 is DeleteText -> {
                     buffer.writeByte(DeleteCode)
                     buffer.writeString(v.text)
+                    buffer.writeEnum(v.priority)
                 }
             }
         }
