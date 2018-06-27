@@ -1,9 +1,11 @@
 package com.jetbrains.rider.framework
 
+import org.khronos.webgl.ArrayBuffer
+
 actual fun createAbstractBuffer(): AbstractBuffer {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    return JsBuffer(ArrayBuffer(10))
 }
 
 actual inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit) : Boolean {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    TODO("not implemented")
 }

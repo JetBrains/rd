@@ -60,8 +60,6 @@ abstract class AbstractBuffer {
     abstract fun readBooleanArray(): BooleanArray
     abstract fun writeBooleanArray(array: BooleanArray)
 
-    abstract fun rewind()
-
     abstract fun getArray() : ByteArray
 }
 
