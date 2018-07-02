@@ -64,3 +64,7 @@ abstract class AbstractBuffer {
 }
 
 expect fun createAbstractBuffer() : AbstractBuffer
+
+fun AbstractBuffer.rewind() {
+    this.position = 0
+}
