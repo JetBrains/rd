@@ -52,6 +52,7 @@ allprojects {
 
     ext.applyKotlinJS = {
         apply plugin: 'kotlin-platform-js'
+        apply plugin: 'maven-publish'
 
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
@@ -60,6 +61,10 @@ allprojects {
 
         def target = "${projectDir}/build/classes/main"
         def projectName = name
+
+        task sourceJar(type: Jar) {
+            from sourceSets.main.allSource
+        }
 
         compileKotlin2Js {
             kotlinOptions.metaInfo = true
@@ -80,6 +85,24 @@ allprojects {
         }
 
         kotlin { experimental.coroutines = 'enable' }
+
+        publishing {
+            publications {
+                String mvnId = project.name
+
+                maven(MavenPublication) {
+                    groupId 'com.jetbrains'
+                    artifactId mvnId
+                    version '2018.1-SNAPSHOT'
+
+                    from components.java
+
+                    artifact sourceJar {
+                        classifier "sources"
+                    }
+                }
+            }
+        }
     }
 
 
