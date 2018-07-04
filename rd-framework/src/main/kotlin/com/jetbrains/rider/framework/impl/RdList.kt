@@ -15,20 +15,23 @@ import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.util.trace
 
 
-class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private val list: ViewableList<V>)
+class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private val list: ViewableList<V>, private var nextVersion: Long = 1L)
     : RdReactiveBase(), IMutableViewableList<V> by list {
 
     companion object {
         private enum class Op {Add, Update, Remove} // update versionedFlagShift when changing
 
-        //        override val _type : Class<*> get() = throw IllegalStateException("Mustn't be used for polymorphic marshalling")
-        fun<V:Any> read(ctx: SerializationCtx, buffer: AbstractBuffer, valSzr: ISerializer<V>): RdList<V> = RdList(valSzr).withId(RdId.read(buffer))
-        fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdList<*>) = value.rdid.write(buffer)
+        fun<V:Any> read(ctx: SerializationCtx, buffer: AbstractBuffer, valSzr: ISerializer<V>): RdList<V> {
+            return RdList(valSzr, ViewableList(), buffer.readLong()).withId(RdId.read(buffer))
+        }
+
+        fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdList<*>) : Unit = value.run {
+            buffer.writeLong(nextVersion)
+            rdid.write(buffer)
+        }
 
         const val versionedFlagShift = 2 // update when changing Op
     }
-
-    var nextVersion = 1L
 
     var optimizeNested: Boolean = false
 
