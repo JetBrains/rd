@@ -143,4 +143,29 @@ open class RdOtBasedText(delegate: RdOtState, final override val isMaster: Boole
         val assertedTextProp = if (isMaster) delegatedBy.assertedMasterText else delegatedBy.assertedSlaveText
         assertedTextProp.set(assertion)
     }
+
+    fun playCaret(caretOffset: Int): Int {
+        if (isMaster) return caretOffset
+
+        var newCaretOffset = caretOffset
+        for (op in diff) {
+            var offset = 0
+            for (change in op.changes) {
+                when (change) {
+                    is DeleteText ->
+                        if (offset < newCaretOffset) {
+                            newCaretOffset -= change.text.length
+                        }
+                    is InsertText ->
+                        if (offset < newCaretOffset) {
+                            newCaretOffset += change.text.length
+                        } else if (offset == newCaretOffset && change.priority != OtChangePriority.AfterAllChanges) {
+                            newCaretOffset += change.text.length
+                        }
+                    is Retain -> offset += change.offset
+                }
+            }
+        }
+        return newCaretOffset
+    }
 }
