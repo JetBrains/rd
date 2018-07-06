@@ -478,7 +478,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             is InternedScalar -> "ctx.readInterned(buffer) { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
-                this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Read(ctx, buffer)"}
+                this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
                     ?: if (isAbstract)
                         "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
                        else
@@ -534,7 +534,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             is InternedScalar -> "ctx.writeInterned(buffer, $field) { _, _, internedValue -> ${itemType.writer("internedValue")} }"
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
-                this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Write(ctx,buffer, $field)"} ?:
+                this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
                     if (isAbstract) "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
                     else "${substitutedName(decl)}.write(ctx, buffer, $field)"
             is INullable -> "buffer.writeNullable($field) { ${itemType.writer("it")} }"
