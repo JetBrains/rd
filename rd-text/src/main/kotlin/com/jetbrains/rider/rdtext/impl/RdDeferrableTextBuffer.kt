@@ -2,8 +2,8 @@ package com.jetbrains.rider.rdtext.impl
 
 import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.rdtext.IDeferrableITextBuffer
-import com.jetbrains.rider.rdtext.RdTextChange
-import com.jetbrains.rider.rdtext.RdTextChangeKind
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferChange
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
 import com.jetbrains.rider.util.debug

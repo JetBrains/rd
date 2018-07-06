@@ -2,7 +2,7 @@ package com.jetbrains.rider.rdtext.impl.ot
 
 import com.jetbrains.rider.framework.base.RdReactiveBase
 import com.jetbrains.rider.rdtext.IDeferrableITextBuffer
-import com.jetbrains.rider.rdtext.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
 import com.jetbrains.rider.util.debug
 import com.jetbrains.rider.util.reflection.usingTrueFlag

@@ -1,4 +1,4 @@
-package com.jetbrains.rider.rdtext
+package com.jetbrains.rider.rdtext.intrinsics
 
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter

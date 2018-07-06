@@ -9,6 +9,9 @@ import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
 import com.jetbrains.rider.rdtext.impl.ot.RdDeferrableOtBasedText
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
+import com.jetbrains.rider.rdtext.intrinsics.delta
 import com.jetbrains.rider.rdtext.test.util.*
 import com.jetbrains.rider.util.Closeable
 import com.jetbrains.rider.util.ILoggerFactory
