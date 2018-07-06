@@ -26,7 +26,6 @@ import org.jetbrains.jetCheck.IntDistribution
 import org.jetbrains.jetCheck.PropertyChecker
 import org.junit.Assert
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 private fun IRdBindable.top(lifetime: Lifetime, protocol: IProtocol) {
     identify(protocol.identity, RdId.Null.mix(this.javaClass.simpleName))
@@ -42,8 +41,10 @@ class TextBufferTest {
 
     class RandomTextChanges(createDeferrableBuffer: (Boolean) -> IDeferrableITextBuffer) : ImperativeCommand {
         private val serializers = Serializers()
-        private var clientProtocol: IProtocol = Protocol(serializers, Identities(), clientScheduler, TestWire(clientScheduler))
-        private var serverProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Server), serverScheduler, TestWire(serverScheduler))
+        private val clientWire = TestWire(clientScheduler).apply { autoFlush = false }
+        private val serverWire = TestWire(serverScheduler).apply { autoFlush = false }
+        private var clientProtocol: IProtocol = Protocol(serializers, Identities(), clientScheduler, clientWire)
+        private var serverProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Server), serverScheduler, serverWire)
         private var clientLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
         private var serverLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
         private var disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory) as Closeable
@@ -83,13 +84,8 @@ class TextBufferTest {
                 val origin = if (isMasterTurn) RdChangeOrigin.Master else RdChangeOrigin.Slave
                 val text = if (isMasterTurn) masterText else slaveText
                 val isQueued = if (isMasterTurn) r.generate(Generator.booleans()) else false
-                if (text.isEmpty())
-                    return@from TextBufferCommand(
-                            RdTextChange(RdTextChangeKind.Insert, 0, "", "", 0),
-                            isQueued,
-                            origin)
 
-                val kind = r.generate(Generator.sampledFrom(
+                val kind = if (text.isEmpty()) RdTextChangeKind.Insert else  r.generate(Generator.sampledFrom(
                         RdTextChangeKind.Insert,
                         RdTextChangeKind.Remove,
                         RdTextChangeKind.Replace))
@@ -131,8 +127,8 @@ class TextBufferTest {
                 var prevChange: RdTextChange? = null
                 var stepCounter = 0
                 while (stepCounter != MAX_STEPS) {
-                    //env.logMessage("-----------------------------------------------------------------")
-                    //env.logMessage("#$stepCounter: $op")
+//                    println("-----------------------------------------------------------------")
+//                    println("#$stepCounter: $op")
                     val (change, isQueued, origin) = op
 
                     if (origin == RdChangeOrigin.Master) {
@@ -148,10 +144,17 @@ class TextBufferTest {
                         slave.assertState(slaveText)
                     }
 
+                    val pumpNow = env.generateValue(Generator.frequency(60, Generator.constant(true), 40, Generator.constant(false)), null)
+                    if (pumpNow || change.kind == RdTextChangeKind.Reset) {
+                        clientWire.processAllMessages()
+                        serverWire.processAllMessages()
+                        clientWire.processAllMessages()
+                        serverWire.processAllMessages()
+                    }
                     ErrorAccumulatorLoggerFactory.throwAndClear()
-                    //env.logMessage("Master state: version = ${master.bufferVersion}; text = '$masterText'")
-                    //env.logMessage("Slave state: version = ${slave.bufferVersion}; text = '$slaveText'")
-                    //env.logMessage("Texts are equal:${masterText == slaveText}")
+//                    println("Master state: version = ${master.bufferVersion}; text = '$masterText'")
+//                    println("Slave state: version = ${slave.bufferVersion}; text = '$slaveText'")
+//                    println("Texts are equal:${masterText == slaveText}")
 
                     if (masterText.isEmpty() && (prevChange?.delta() == 0) && change.delta() == 0) break
 
@@ -163,6 +166,10 @@ class TextBufferTest {
                 // flush queued changes
                 master.fire(RdTextChange(RdTextChangeKind.Insert, 0, "", "", masterText.length))
 
+                clientWire.processAllMessages()
+                serverWire.processAllMessages()
+                clientWire.processAllMessages()
+                serverWire.processAllMessages()
                 Assert.assertEquals(masterText, slaveText)
             } finally {
                 tearDown()
@@ -202,6 +209,5 @@ private fun playChange(initText: String, change: RdTextChange): String {
         RdTextChangeKind.Reset -> change.new
         else -> initText.replaceRange(x0, x1, change.new)
     }
-    assertEquals(change.fullTextLength, newText.length)
     return newText
 }
