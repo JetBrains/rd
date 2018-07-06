@@ -8,6 +8,8 @@ import com.jetbrains.rider.rdtext.impl.intrinsics.RdAssertion
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdAck
 import com.jetbrains.rider.rdtext.impl.ot.intrinsics.RdOtState
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.reflection.usingTrueFlag

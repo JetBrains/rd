@@ -9,6 +9,8 @@ import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferChange
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdTextBufferState
 import com.jetbrains.rider.rdtext.*
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.warn
@@ -19,7 +21,7 @@ import com.jetbrains.rider.util.warn
  * incompatible change
  */
 open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster: Boolean = true) : RdDelegateBase<RdTextBufferState>(delegate), ITextBuffer {
-    private val changesToConfirmOrRollback: MutableList<RdTextBufferChange> = arrayListOf()
+    private val changesToConfirmOrRollback: MutableList<RdTextBufferChange> = mutableListOf()
     private val textChanged: IOptProperty<RdTextChange> = OptProperty()
     private val _historyChanged: ISignal<RdTextChange> = Signal()
     override val historyChanged: ISource<RdTextChange> get() = _historyChanged

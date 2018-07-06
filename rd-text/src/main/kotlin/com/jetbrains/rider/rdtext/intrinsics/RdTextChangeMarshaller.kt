@@ -1,8 +1,6 @@
-package com.jetbrains.rider.rdtext.impl.intrinsics
+package com.jetbrains.rider.rdtext.intrinsics
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.rdtext.RdTextChange
-import com.jetbrains.rider.rdtext.RdTextChangeKind
 import kotlin.reflect.KClass
 
 @Suppress("unused")

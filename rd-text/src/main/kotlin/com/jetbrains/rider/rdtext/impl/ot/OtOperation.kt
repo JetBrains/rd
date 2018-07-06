@@ -1,7 +1,7 @@
 package com.jetbrains.rider.rdtext.impl.ot
 
-import com.jetbrains.rider.rdtext.RdTextChange
-import com.jetbrains.rider.rdtext.RdTextChangeKind
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 
 enum class OtOperationKind {
@@ -14,7 +14,7 @@ class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val times
     val changes = normalize(changes) // todo eliminate for deserialization
 
     private fun normalize(changes: List<OtChange>): List<OtChange> {
-        val result = arrayListOf<OtChange>()
+        val result = mutableListOf<OtChange>()
         var prev: OtChange? = null
         for (curr in changes) {
             if (curr.isId()) continue

@@ -4,9 +4,10 @@ import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
 import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.rdtext.TextBufferVersion
-import com.jetbrains.rider.rdtext.RdTextChange
 import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeMarshaller
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.printToString
