@@ -2,10 +2,7 @@ package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
-import com.jetbrains.rider.util.reactive.ISignal
-import com.jetbrains.rider.util.reactive.Signal
-import com.jetbrains.rider.util.reactive.adviseEternal
-import com.jetbrains.rider.util.reactive.fire
+import com.jetbrains.rider.util.reactive.*
 import kotlin.test.assertEquals
 import kotlin.test.Test
 
@@ -14,13 +11,13 @@ class SignalTest {
     fun testAdvise() {
         var acc = 0
 
-        val signal : ISignal<Int> = Signal()
+        val signal: ISignal<Int> = Signal()
         signal.fire(++acc)
 
         val log = arrayListOf<Int>()
         Lifetime.using { lf ->
-            signal.advise(lf, {log.add(it)} )
-            lf += {log.add(0)}
+            signal.advise(lf) { log.add(it) }
+            lf += { log.add(0) }
 
             signal.fire(++acc)
             signal.fire(++acc)
@@ -32,7 +29,7 @@ class SignalTest {
 
     @Test
     fun testPriorityAdvise() {
-        val signal  = Signal<Unit>()
+        val signal = Signal<Unit>()
         val log = mutableListOf<Int>()
         signal.adviseEternal { log.add(1) }
         signal.adviseEternal { log.add(2) }
@@ -48,6 +45,4 @@ class SignalTest {
         signal.fire()
         assertEquals(listOf(3, 4, 1, 2, 5), log)
     }
-
-
 }

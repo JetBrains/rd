@@ -18,8 +18,8 @@ class PropertyTest {
 
         val log = arrayListOf<Int>()
         Lifetime.using { lifetime ->
-            property.advise(lifetime, { x -> log.add(-x) })
-            property.view(lifetime, { inner, x -> inner.bracket({ log.add(x) }, { log.add(10 + x) }) })
+            property.advise(lifetime) { x -> log.add(-x) }
+            property.view(lifetime) { inner, x -> inner.bracket({ log.add(x) }, { log.add(10 + x) }) }
 
             lifetime += { log.add(0) }
 
@@ -40,8 +40,8 @@ class PropertyTest {
         val property: IProperty<Boolean> = Property(false)
         property.value = true
         Lifetime.using { lifetime ->
-            property.whenTrue(lifetime, { _ -> acc1++ })
-            property.whenTrue(lifetime, { it.bracket({ acc2 += 2 }, { acc2 -= 1 }) })
+            property.whenTrue(lifetime) { _ -> acc1++ }
+            property.whenTrue(lifetime) { it.bracket({ acc2 += 2 }, { acc2 -= 1 }) }
             assertEquals(1, acc1);assertEquals(2, acc2);
 
             property.value = true

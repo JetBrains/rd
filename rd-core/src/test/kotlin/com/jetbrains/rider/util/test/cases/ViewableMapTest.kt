@@ -21,9 +21,9 @@ class ViewableMapTest {
         val logUpdate = arrayListOf<String>()
         val logView = arrayListOf<Int>()
         Lifetime.using { lifetime ->
-            map.adviseAddRemove(lifetime, {kind, key, value -> logAddRemove.add("${kind} ${key}:${value}")} )
-            map.advise(lifetime, {entry -> logUpdate.add(entry.toString())} )
-            map.view(lifetime, {inner, x -> inner.bracket({ logView.add(x.key) }, { logView.add(-x.value) }) })
+            map.adviseAddRemove(lifetime) { kind, key, value -> logAddRemove.add("${kind} ${key}:${value}")}
+            map.advise(lifetime) { entry -> logUpdate.add(entry.toString())}
+            map.view(lifetime) { inner, x -> inner.bracket({ logView.add(x.key) }, { logView.add(-x.value) }) }
 
             lifetime += {logAddRemove.add("End")}
 
@@ -40,7 +40,7 @@ class ViewableMapTest {
         //let's clear
         logAddRemove.clear()
         Lifetime.using { lifetime ->
-            map.adviseAddRemove(lifetime, { kind, key, value ->  logAddRemove.add("${kind} ${key}:${value}") })
+            map.adviseAddRemove(lifetime) { kind, key, value ->  logAddRemove.add("${kind} ${key}:${value}") }
             map[0] = 0 //same shit, but we need to fire event I think
             map.clear()
         }

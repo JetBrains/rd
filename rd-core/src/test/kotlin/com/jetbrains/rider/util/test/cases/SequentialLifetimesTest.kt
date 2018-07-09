@@ -6,9 +6,10 @@ import com.jetbrains.rider.util.lifetime.SequentialLifetimes
 import com.jetbrains.rider.util.lifetime.plusAssign
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class SequentialLifetimesTest{
+class SequentialLifetimesTest {
     @Test
     fun testContract() {
         val seq = SequentialLifetimes(Lifetime.Eternal)
@@ -37,7 +38,7 @@ class SequentialLifetimesTest{
         LifetimeDefinition.Eternal.terminate(); //bullshit
         assertEquals(0, acc)
 
-        seq.next().plusAssign { acc++}
+        seq.next().plusAssign { acc++ }
         assertEquals(2, acc)
 
         seq.terminateCurrent()
@@ -64,6 +65,32 @@ class SequentialLifetimesTest{
 
         def.terminate()
         assertEquals(3, acc)
+    }
+
+    @Test
+    fun testTwoEternalChildren() {
+        val defA = Lifetime.create(Lifetime.Eternal)
+        val defB = Lifetime.create(Lifetime.Eternal)
+
+        val seqA = SequentialLifetimes(defA.lifetime)
+        val seqB = SequentialLifetimes(defB.lifetime)
+
+        var accA = false
+        var accB = false
+
+        val lfA = seqA.next()
+        val lfB = seqB.next()
+
+        lfA.plusAssign { accA = true }
+        lfB.plusAssign { accB = true }
+
+        lfA.terminate()
+        assertTrue(accA)
+        assertFalse(accB)
+
+        lfB.terminate()
+        assertTrue(accA)
+        assertTrue(accB)
     }
 }
 
