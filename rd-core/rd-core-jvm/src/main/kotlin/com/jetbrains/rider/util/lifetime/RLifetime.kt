@@ -191,7 +191,7 @@ class RLifetimeDef : RLifetime() {
 
         //wait for all executions finished
         val timeout = 500L //todo
-        if (!SpinWait.spinUntil(timeout) { executingSlice[state] > threadLocalExecuting[this] }) {
+        if (!SpinWait.spinUntil(timeout) { executingSlice[state] <= threadLocalExecuting[this] }) {
             log.error { "Can't wait for executeIfAlive for more than $timeout ms. Keep termination." }
         }
 
