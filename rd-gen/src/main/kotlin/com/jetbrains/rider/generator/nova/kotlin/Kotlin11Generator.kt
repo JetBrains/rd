@@ -496,8 +496,9 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             if (decl is Class || decl is Aggregate) {
                 + "val _id = RdId.read(buffer)"
             }
-            decl.allMembers.println {"val ${it.valName()} = ${it.reader()}"}
-            p("return ${decl.name}(${decl.allMembers.joinToString(", ") { it.valName() }})${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
+            (decl.membersOfBaseClasses + decl.ownMembers).println { "val ${it.valName()} = ${it.reader()}" }
+            val ctorParams = decl.allMembers.joinToString(", ") { it.valName() }
+            p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
             if (decl is Class || decl is Aggregate) {
                 p(".withId(_id)")
             }
@@ -548,7 +549,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             if (decl is Class || decl is Aggregate) {
                 + "value.rdid.write(buffer)"
             }
-            decl.allMembers.println(Member::writer)
+            (decl.membersOfBaseClasses + decl.ownMembers).println(Member::writer)
         }
         + "}"
     }

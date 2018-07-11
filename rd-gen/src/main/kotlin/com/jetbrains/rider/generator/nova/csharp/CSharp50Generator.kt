@@ -559,7 +559,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                 if (decl is Class || decl is Aggregate) {
                     + "var _id = RdId.Read(reader);"
                 }
-                decl.allMembers.println { "var ${sanitize(it.name, "ctx", "reader")} = ${it.reader()};" }
+                (decl.membersOfBaseClasses + decl.ownMembers).println { "var ${sanitize(it.name, "ctx", "reader")} = ${it.reader()};" }
                 p("return new ${decl.name}(${decl.allMembers.joinToString(", ") { sanitize(it.name, "ctx", "reader") }})${(decl is Class && decl.isInternRoot).condstr { " { mySerializationContext = ctx }" }}")
                 if (decl is Class || decl is Aggregate) {
                     p(".WithId(_id)")
@@ -633,7 +633,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                 if (decl is Class || decl is Aggregate) {
                     + "value.RdId.Write(writer);"
                 }
-                decl.allMembers.println { it.writer() + ";" }
+                (decl.membersOfBaseClasses + decl.ownMembers).println { it.writer() + ";" }
             }
             +"};"
         }
