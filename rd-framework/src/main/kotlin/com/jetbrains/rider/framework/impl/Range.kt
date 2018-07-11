@@ -9,3 +9,6 @@ data class Range(val start: Int, val end: Int) {
 
     fun shift(offset: Int) = Range(this.start + offset, this.end + offset)
 }
+
+fun Range.isEmpty(): Boolean = start == end
+val Range.length get() = end - start

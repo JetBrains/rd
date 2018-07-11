@@ -1,8 +1,8 @@
 package com.jetbrains.rider.rdtext.impl.ot
 
+import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
-import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 
 enum class OtOperationKind {
     Normal,
@@ -10,30 +10,8 @@ enum class OtOperationKind {
 }
 
 // todo make it intrinsic
-class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val timestamp: Int, val kind: OtOperationKind) {
-    val changes = normalize(changes) // todo eliminate for deserialization
-
-    private fun normalize(changes: List<OtChange>): List<OtChange> {
-        val result = mutableListOf<OtChange>()
-        var prev: OtChange? = null
-        for (curr in changes) {
-            if (curr.isId()) continue
-
-            prev = when {
-                prev is Retain && curr is Retain -> Retain(prev.offset + curr.offset)
-                prev is InsertText &&  curr is InsertText && prev.priority == curr.priority -> InsertText(prev.text + curr.text, curr.priority)
-                prev is DeleteText && curr is DeleteText && prev.priority == curr.priority -> DeleteText(prev.text + curr.text, curr.priority)
-                else -> {
-                    if (prev != null) result.add(prev)
-                    curr
-                }
-            }
-        }
-        if (prev != null) result.add(prev)
-        if (result.isEmpty()) result.add(Retain(0))
-
-        return result
-    }
+class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val timestamp: Int, val kind: OtOperationKind, dontNormalize: Boolean = false) {
+    val changes = if (dontNormalize) changes else changes.filter { !it.isId() }
 
     fun documentLengthBefore() = changes.sumBy(OtChange::getTextLengthBefore)
     fun documentLengthAfter() = changes.sumBy(OtChange::getTextLengthAfter)

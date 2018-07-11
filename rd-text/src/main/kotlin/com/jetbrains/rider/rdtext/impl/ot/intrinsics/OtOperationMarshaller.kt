@@ -39,7 +39,7 @@ object OtOperationMarshaller : IMarshaller<OtOperation> {
         val origin = buffer.readEnum<RdChangeOrigin>()
         val remoteTs = buffer.readInt()
         val kind = buffer.readEnum<OtOperationKind>()
-        return OtOperation(changes, origin, remoteTs, kind)
+        return OtOperation(changes, origin, remoteTs, kind, true)
     }
 
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OtOperation) {

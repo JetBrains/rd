@@ -1,10 +1,136 @@
 package com.jetbrains.rider.rdtext.impl.ot
 
+import com.jetbrains.rider.framework.impl.length
+import com.jetbrains.rider.rdtext.DiffChangeKind
+import com.jetbrains.rider.rdtext.buildChanges
 import com.jetbrains.rider.util.collections.ImmutableStack
 import com.jetbrains.rider.util.collections.tail
 import com.jetbrains.rider.util.collections.toImmutableStack
 
 private fun <T> MutableList<T>.append(el: T): MutableList<T> = this.apply { add(el) }
+
+fun shouldOptimizeFast(changes: List<OtChange>): Boolean {
+    var lastChange: OtChange? = null
+    for (ch in changes) {
+        when {
+            lastChange is Retain && ch is Retain -> return true
+            lastChange is InsertText && ch is InsertText -> {
+                require(lastChange.priority == ch.priority)
+                return true
+            }
+            lastChange is DeleteText && ch is DeleteText -> {
+                require(lastChange.priority == ch.priority)
+                return true
+            }
+
+            lastChange is DeleteText && ch is InsertText -> {
+                require(lastChange.priority == ch.priority)
+                return true
+            }
+            lastChange is InsertText && ch is DeleteText -> {
+                require(lastChange.priority == ch.priority)
+                return true
+            }
+        }
+        lastChange = ch
+    }
+    return false
+}
+
+/**
+ * doesn't take into account tie-breaking rules
+ */
+private fun optimize(changes: List<OtChange>): List<OtChange> {
+    if (!shouldOptimizeFast(changes)) return changes
+
+    val optimizedChanges = mutableListOf<OtChange>()
+
+    var lastRetainShift = 0
+    val oldTextBuilder = StringBuilder()
+    val newTextBuilder = StringBuilder()
+    for (ch in changes) {
+        when (ch) {
+            is Retain -> {
+                if (newTextBuilder.isNotEmpty() || oldTextBuilder.isNotEmpty()) {
+                    optimizeChanges(oldTextBuilder, newTextBuilder, optimizedChanges)
+                }
+                lastRetainShift += ch.offset
+            }
+            is DeleteText -> {
+                if (lastRetainShift != 0) {
+                    optimizedChanges.add(Retain(lastRetainShift))
+                    lastRetainShift = 0
+                }
+
+                oldTextBuilder.append(ch.text)
+            }
+            is InsertText -> {
+                if (lastRetainShift != 0) {
+                    optimizedChanges.add(Retain(lastRetainShift))
+                    lastRetainShift = 0
+                }
+
+                newTextBuilder.append(ch.text)
+            }
+        }
+    }
+    if (newTextBuilder.isNotEmpty() || oldTextBuilder.isNotEmpty()) {
+        optimizeChanges(oldTextBuilder, newTextBuilder, optimizedChanges)
+    }
+    if (lastRetainShift != 0) {
+        optimizedChanges.add(Retain(lastRetainShift))
+    }
+
+    return optimizedChanges
+}
+
+private fun optimizeChanges(oldTextBuilder: StringBuilder, newTextBuilder: StringBuilder, optimizedChanges: MutableList<OtChange>) {
+    if (oldTextBuilder.isEmpty()) {
+        optimizedChanges.add(InsertText(newTextBuilder.toString(), OtChangePriority.Normal))
+        newTextBuilder.delete(0, newTextBuilder.length)
+        return
+    }
+    if (newTextBuilder.isEmpty()) {
+        optimizedChanges.add(DeleteText(oldTextBuilder.toString(), OtChangePriority.Normal))
+        oldTextBuilder.delete(0, oldTextBuilder.length)
+        return
+    }
+
+    // we can do that because every change starts where a previous change ends,
+    // another words virtual caret is growing monotonically
+    val oldText = oldTextBuilder.toString()
+    val newText = newTextBuilder.toString()
+    val diffs = buildChanges(oldText, newText)
+    for (d in diffs) {
+        when (d.kind) {
+            DiffChangeKind.EQUAL -> {
+                val offset = d.newRange.length
+                optimizedChanges.add(Retain(offset))
+            }
+            DiffChangeKind.INSERTED -> {
+                val range = d.newRange
+                val text = newText.substring(range.start, range.end)
+                optimizedChanges.add(InsertText(text, OtChangePriority.Normal))
+            }
+            DiffChangeKind.DELETED -> {
+                val range = d.oldRange
+                val text = oldText.substring(range.start, range.end)
+                optimizedChanges.add(DeleteText(text, OtChangePriority.Normal))
+            }
+            DiffChangeKind.REPLACED -> {
+                val newRange = d.newRange
+                val new = newText.substring(newRange.start, newRange.end)
+                val oldRange = d.oldRange
+                val old = oldText.substring(oldRange.start, oldRange.end)
+                optimizedChanges.add(InsertText(new, OtChangePriority.Normal))
+                optimizedChanges.add(DeleteText(old, OtChangePriority.Normal))
+            }
+        }
+    }
+
+    oldTextBuilder.delete(0, oldTextBuilder.length)
+    newTextBuilder.delete(0, newTextBuilder.length)
+}
 
 /**
  * Not commutative composition function.
@@ -20,6 +146,7 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
     require(o1.origin == o2.origin)
     require(o1.timestamp == o2.timestamp)
     require(o1.kind == o2.kind)
+    require(o1.kind != OtOperationKind.Reset)
 
     tailrec fun compose0(acc: MutableList<OtChange>, ops1: ImmutableStack<OtChange>, ops2: ImmutableStack<OtChange>) {
         val op1 = ops1.peek()
@@ -31,9 +158,8 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
             op1 == null && op2 == null -> Unit
             op1 != null && op2 == null -> compose0(acc.append(op1), tail1, tail2)
             op1 == null && op2 != null -> compose0(acc.append(op2), tail1, tail2)
-            op1 is DeleteText && op2 is InsertText && op1.text == op2.text -> compose0(acc.append(Retain(op1.text.length)), tail1, tail2)
-            op2 is InsertText -> compose0(acc.append(op2), ops1, tail2)
             op1 is DeleteText -> compose0(acc.append(op1), tail1, ops2)
+            op2 is InsertText -> compose0(acc.append(op2), ops1, tail2)
             op1 is Retain && op2 is Retain -> {
                 val offset1 = op1.offset
                 val offset2 = op2.offset
@@ -92,7 +218,8 @@ fun compose(o1: OtOperation, o2: OtOperation): OtOperation {
     val acc = mutableListOf<OtChange>()
     compose0(acc, o1.changes.toImmutableStack(), o2.changes.toImmutableStack())
 
-    return OtOperation(acc, o1.origin, o1.timestamp, o1.kind)
+    val optimizedChanges = optimize(acc)
+    return OtOperation(optimizedChanges, o1.origin, o1.timestamp, o1.kind)
 }
 
 
