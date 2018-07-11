@@ -3,8 +3,7 @@ package com.jetbrains.rider.framework
 import com.jetbrains.rider.framework.base.ISerializersOwner
 import com.jetbrains.rider.framework.impl.RdSecureString
 import com.jetbrains.rider.util.*
-import kotlin.collections.HashSet
-import kotlin.reflect.*
+import kotlin.reflect.KClass
 
 private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. " +
     "Usually it should be done automagically during 'bind()' invocation but in complex cases you should do it manually."
@@ -40,11 +39,23 @@ class Serializers : ISerializers {
         writers[t] = Pair(id, serializer::write) as Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>
     }
 
-    override fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer): T? {
+    override fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>?): T? {
         val id = RdId.read(stream)
         if (id.isNull) return null
+        val size = stream.readInt()
+        stream.checkAvailable(size)
 
-        val reader = readers[id] ?: throw IllegalStateException("Can't find reader by id: $id. $notRegisteredErrorMessage")
+        val reader = readers[id]
+        if (reader == null) {
+            if (abstractDeclaration == null) {
+                throw IllegalStateException("Can't find reader by id: $id. $notRegisteredErrorMessage")
+            }
+
+            val objectStartPosition = stream.position
+            val result = abstractDeclaration.readUnknownInstance(ctx, stream)
+            stream.position = objectStartPosition + size
+            return result
+        }
 
         return reader.invoke(ctx, stream) as T
     }
@@ -57,14 +68,22 @@ class Serializers : ISerializers {
         writePolymorphic(ctx, stream, value as Any)
     }
 
-    override fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer): T {
+    override fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>?): T {
         return readPolymorphicNullable(ctx, stream) ?: throw IllegalStateException("Non-null object expected")
     }
 
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
         val (id, writer) = writers[value::class] ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
         id.write(stream)
+
+        val lengthTagPosition = stream.position
+        stream.writeInt(0)
+        val objectStartPosition = stream.position
         writer(ctx, stream, value)
+        val objectEndPosition = stream.position
+        stream.position = lengthTagPosition
+        stream.writeInt(objectEndPosition - objectStartPosition)
+        stream.position = objectEndPosition
     }
 }
 

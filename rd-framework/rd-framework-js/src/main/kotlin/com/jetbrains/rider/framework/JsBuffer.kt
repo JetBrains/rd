@@ -21,8 +21,8 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
             offset = value
         }
 
-    private fun checkAvailable(bytesCount: Int) {
-        if (offset + bytesCount > buffer.byteLength)
+    override fun checkAvailable(moreSize: Int) {
+        if (offset + moreSize > buffer.byteLength)
             throw IndexOutOfBoundsException()
     }
 

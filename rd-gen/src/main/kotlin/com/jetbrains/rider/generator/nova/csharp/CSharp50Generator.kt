@@ -417,6 +417,12 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
         }
+
+        if (decl is Struct.Abstract) {
+            typedef(Struct.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
+        } else if (decl is Class.Abstract) {
+            typedef(Class.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
+        }
     }
 
 
@@ -537,7 +543,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         val modifiers = "public static" + (decl.base?.let {" new"}?:"")
 
         if (decl.isAbstract) {
-            + "$modifiers CtxReadDelegate<${decl.name}> Read = Polymorphic<${decl.name}>.Read;"
+            + "$modifiers CtxReadDelegate<${decl.name}> Read = Polymorphic<${decl.name}>.ReadAbstract(${decl.name}_Unknown.Read);"
             return
         }
 

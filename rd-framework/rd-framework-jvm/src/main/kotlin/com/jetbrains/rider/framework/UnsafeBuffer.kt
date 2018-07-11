@@ -28,9 +28,9 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
         size = byteArray.size.toLong()
     }
 
-    private fun checkAvailable(moreSize: Long) {
+    override fun checkAvailable(moreSize: Int) {
         if (offset + moreSize > size)
-            throw IndexOutOfBoundsException()
+            throw IndexOutOfBoundsException("Expected $moreSize bytes in buffer, only ${size - offset} available")
     }
 
     override fun getArray(): ByteArray {
@@ -51,7 +51,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
 
     @Suppress("unused")
     inline private fun <reified T> read(size: Long, reader: (Any?, Long) -> T) : T {
-        checkAvailable(size)
+        checkAvailable(size.toInt())
 
         val result = reader(byteBufferMemoryBase, memory + offset)
         offset += size
@@ -90,14 +90,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
         val length = readInt()
 
         val storage = ByteArray(length)
-        checkAvailable(length.toLong())
+        checkAvailable(length)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, storage, Unsafe.ARRAY_BYTE_BASE_OFFSET.toLong(), length.toLong())
         offset += length
         return storage
     }
 
     override fun readByteArrayRaw(array: ByteArray) {
-        checkAvailable(array.size.toLong())
+        checkAvailable(array.size)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, array, Unsafe.ARRAY_BYTE_BASE_OFFSET.toLong(), array.size.toLong())
         offset += array.size
     }
@@ -129,7 +129,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
             return null
         }
 
-        checkAvailable(len * 2L)
+        checkAvailable(len * 2)
 
         if (charArray.size < len)
             charArray = CharArray(len * 2)

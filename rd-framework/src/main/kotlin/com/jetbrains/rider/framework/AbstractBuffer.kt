@@ -61,6 +61,8 @@ abstract class AbstractBuffer {
     abstract fun writeBooleanArray(array: BooleanArray)
 
     abstract fun getArray() : ByteArray
+
+    abstract fun checkAvailable(moreSize: Int)
 }
 
 expect fun createAbstractBuffer() : AbstractBuffer

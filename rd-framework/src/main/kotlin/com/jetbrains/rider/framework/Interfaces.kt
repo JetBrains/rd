@@ -67,16 +67,20 @@ interface IMarshaller<T : Any> : ISerializer<T> {
         get() = RdId(_type.simpleName.getPlatformIndependentHash())
 }
 
+interface IAbstractDeclaration<T> {
+    fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer): T
+}
+
 /**
  * A registry of known serializers.
  */
 interface ISerializers {
     val toplevels : MutableSet<KClass<out ISerializersOwner>>
 
-    fun <T: Any> register(serializer: IMarshaller<T>)
-    fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer): T?
+    fun <T : Any> register(serializer: IMarshaller<T>)
+    fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T?
     fun <T> writePolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, value: T)
-    fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer): T
+    fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T
     fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T)
 }
 

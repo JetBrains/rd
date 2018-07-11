@@ -10,6 +10,12 @@ import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
 import java.io.File
 
+fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
+    + "$title {"
+    indent(body)
+    + "}"
+}
+
 open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder : File) : GeneratorBase() {
 
     //language specific properties
@@ -324,6 +330,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
         }
+
+        if (decl is Struct.Abstract) {
+            typedef(Struct.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
+        } else if (decl is Class.Abstract) {
+            typedef(Class.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
+        }
     }
 
 
@@ -343,6 +355,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             }
             + "}"
         } //todo root, singleton
+        else if (decl.isAbstract) {
+            println()
+            block("companion object : IAbstractDeclaration<${decl.name}>") {
+                abstractDeclarationTrait(decl)
+            }
+        }
 
         if (decl is Toplevel) {
             println()
@@ -381,7 +399,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         allTypesForDelegation.println { "private val ${it.serializerRef(decl)} = ${it.serializerBuilder()}" }
     }
 
-    protected fun  PrettyPrinter.registerSerializersTrait(decl: Toplevel) {
+    protected fun PrettyPrinter.abstractDeclarationTrait(decl: Declaration) {
+        + "override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} = ${decl.name}_Unknown.read(ctx, buffer)"
+    }
+
+    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel) {
         + "override fun registerSerializersCore(serializers: ISerializers) {"
         indent {
             decl.declaredTypes.filter { !it.isAbstract }.filterIsInstance<IType>().println {
@@ -434,26 +456,26 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
     protected fun PrettyPrinter.readerTrait(decl: Declaration) {
 
-
-        fun IType.reader() : String  = when (this) {
+        fun IType.reader(): String = when (this) {
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
             is InternedScalar -> "ctx.readInterned(buffer) { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
-                this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Read(ctx,buffer)"} ?:
-                    if (isAbstract) "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer)"
-                    else "${substitutedName(decl)}.read(ctx, buffer)"
-            is INullable -> "buffer.readNullable {${itemType.reader()}}"
+                this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.Read(ctx, buffer)"}
+                    ?: if (isAbstract)
+                        "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
+                       else
+                        "${substitutedName(decl)}.read(ctx, buffer)"
+            is INullable -> "buffer.readNullable { ${itemType.reader()} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.read${substitutedName(decl)}()"
                 else "buffer.readArray {${itemType.reader()}}"
-            is IImmutableList -> "buffer.readList {${itemType.reader()}}"
+            is IImmutableList -> "buffer.readList { ${itemType.reader()} }"
 
             else -> fail("Unknown declaration: $decl")
         }
 
-
-        fun Member.reader() : String  = when (this) {
+        fun Member.reader(): String = when (this) {
             is Member.Field -> type.reader()
             is Member.Reactive.Stateful.Extension -> "$ctorSimpleName(${delegatedBy.reader()})"
             is Member.Reactive -> {
@@ -463,7 +485,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             else -> fail("Unknown member: $this")
         }
 
-        fun Member.valName() : String = encapsulatedName.let { it + (it == "ctx" || it == "buffer").condstr { "_" } }
+        fun Member.valName(): String = encapsulatedName.let { it + (it == "ctx" || it == "buffer").condstr { "_" } }
 
         + "@Suppress(\"UNCHECKED_CAST\")"
         + "override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} {"
