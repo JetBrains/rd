@@ -137,13 +137,13 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
         }
     }
 
-    val ownMembers : ArrayList<Member> = ArrayList()
+    val ownMembers: ArrayList<Member> = ArrayList()
         get() {
             require(lazyInitializer == null) { "$this: declaration hasn't been initialized" }
             return field
         }
-    val membersOfBaseClasses: List<Member> get() = base ?.allMembers ?: listOf()
-    val allMembers: List<Member> get() = ownMembers.plus(membersOfBaseClasses)
+    val membersOfBaseClasses: List<Member> get() = base?.allMembers.orEmpty()
+    val allMembers: List<Member> get() = ownMembers + membersOfBaseClasses
 
     open fun serializationHash(initial: IncrementalHash64) : IncrementalHash64
         = ownMembers.fold(initial.mix(cl_name).mix(name).mix(base?.name)) { acc, member -> member.serializationHash(acc) }
