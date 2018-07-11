@@ -3,7 +3,6 @@ package com.jetbrains.rider.util.lifetime
 import com.jetbrains.rider.util.forEachReversed
 
 class Lifetime constructor(val isEternal: Boolean = false) {
-
     companion object {
         val Eternal: Lifetime = LifetimeDefinition.Eternal.lifetime
 

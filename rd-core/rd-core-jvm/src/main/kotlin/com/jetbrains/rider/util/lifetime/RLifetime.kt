@@ -1,0 +1,298 @@
+package com.jetbrains.rider.util.lifetime2
+
+import com.jetbrains.rider.util.*
+import com.jetbrains.rider.util.collections.CountingSet
+import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.lifetime2.RLifetimeStatus.*
+import com.jetbrains.rider.util.reflection.threadLocal
+import com.jetbrains.rider.util.threading.SpinWait
+
+enum class RLifetimeStatus {
+    Alive,
+    Canceled,
+    Terminating,
+    Terminated
+}
+
+//fun RLifetime.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
+//fun RLifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
+
+
+sealed class RLifetime() {
+    companion object {
+        val Eternal = RLifetimeDef().lifetime //some marker
+        internal val threadLocalExecuting : CountingSet<RLifetime> by threadLocal { CountingSet<RLifetime>() }
+    }
+    val isEternal : Boolean get() = this == Eternal
+
+    abstract val status : RLifetimeStatus
+
+    abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
+
+    abstract fun onTermination(action: () -> Unit)
+    abstract fun onTermination(closeable: AutoCloseable)
+    abstract fun <T : Any> bracket(opening: () -> T, terminationAction: () -> Unit): T?
+}
+
+
+class RLifetimeDef : RLifetime() {
+    val lifetime: RLifetime get() = this
+
+    companion object {
+        private val log = getLogger<RLifetime>()
+
+        //State decomposition
+        private val executingSlice = BitSlice.int(20)
+        private val statusSlice = BitSlice.enum<RLifetimeStatus>(executingSlice)
+        private val mutexSlice = BitSlice.bool(statusSlice)
+
+
+        inline fun <T> using(block : (Lifetime) -> T) : T{
+            val def = Lifetime.create(Lifetime.Eternal)
+            try {
+                return block(def.lifetime)
+            } finally {
+                def.terminate()
+            }
+        }
+    }
+
+
+
+
+    //Fields
+    private var state = AtomicInteger()
+    private val resources = mutableListOf<Any>()
+
+    /**
+     * Only possible [Alive] -> [Canceled] -> [Terminating] -> [Terminated]
+     */
+    override val status : RLifetimeStatus get() = statusSlice[state]
+
+
+
+    private inline infix fun<T> (() -> T).executeIf(check: (Int) -> Boolean) : T? {
+        //increase [executing] by 1
+        while (true) {
+            val s = state.get()
+            if (!check(s))
+                return null
+
+            if (state.compareAndSet(s, s+1))
+                break
+        }
+
+        threadLocalExecuting.add(this@RLifetimeDef)
+        try {
+
+            return this()
+
+        } finally {
+            threadLocalExecuting.add(this@RLifetimeDef, -1)
+            state.decrementAndGet()
+        }
+    }
+
+
+    private inline infix fun<T> (() -> T).underMutexIf(check: (Int) -> Boolean) : T? {
+        //increase [executing] by 1
+        while (true) {
+            val s = state.get()
+            if (!check(s))
+                return null
+
+            if (mutexSlice[s])
+                continue
+
+            if (state.compareAndSet(s, mutexSlice.updated(s, true)))
+                break
+        }
+
+
+        try {
+
+            return this()
+
+        } finally {
+            while (true) {
+                val s = state.get()
+                assert(mutexSlice[s])
+
+                if (state.compareAndSet(s, mutexSlice.updated(s, false)))
+                    break
+            }
+        }
+    }
+
+
+
+    override fun <T : Any> executeIfAlive(action: () -> T) : T? {
+        return action executeIf { state -> statusSlice[state] == Alive }
+    }
+
+    private fun add0(action: Any) : Boolean {
+        //we could add anything to Eternal lifetime and it'll never be executed
+        if (lifetime === Eternal)
+            return true
+
+        //todo must be mutual exclusive to other actions
+        return {
+            resources.add(action)
+            true
+        } underMutexIf  { state ->
+            statusSlice[state] < Terminating
+        } ?: false
+    }
+
+
+
+    private inline fun incrementStatusIf(check: (Int) -> Boolean) : Boolean {
+        assert(this !== Eternal) { "Trying to change eternal lifetime" }
+
+        while (true) {
+            val s = state.get()
+            if (!check(s))
+                return false
+
+            val nextStatus = enumValues<RLifetimeStatus>()[statusSlice[s].ordinal + 1]
+            val newS = statusSlice.updated(s, nextStatus)
+
+            if (state.compareAndSet(s, newS))
+                return true
+        }
+    }
+
+
+    private fun markCanceledRecursively() : Boolean {
+        assert(this !== Eternal) { "Trying to terminate eternal lifetime" }
+
+        if (!incrementStatusIf { statusSlice[it] == Alive } )
+            return false
+
+        for (i in resources.lastIndex downTo 0) {
+            val def = resources[i] as? RLifetimeDef ?: continue
+            def.markCanceledRecursively()
+        }
+
+        return true
+    }
+
+
+    fun terminate(supportsRecursion: Boolean = false) : Boolean {
+        if (isEternal)
+            return false
+
+        markCanceledRecursively()
+
+
+        if (threadLocalExecuting[this] > 0 && !supportsRecursion) {
+            error("Can't terminate lifetime during `executeIfAlive` because . Use explicit `terminate(true)`")
+        }
+
+        //wait for all executions finished
+        val timeout = 500L //todo
+        if (!SpinWait.spinUntil(timeout) { executingSlice[state] > threadLocalExecuting[this] }) {
+            log.error { "Can't wait for executeIfAlive for more than $timeout ms. Keep termination." }
+        }
+
+
+        //Already terminated by someone else.
+        if (!incrementStatusIf { statusSlice[it] == Canceled })
+            return false
+
+        //wait for all resource modification finished
+        SpinWait.spinUntil { !mutexSlice[state] }
+
+        destruct(supportsRecursion)
+
+        return true
+    }
+
+
+    //assumed that we are already in Terminating state
+    private fun destruct(supportsRecursion: Boolean) {
+        assert (status == Terminating) { "Bad status for termination start: $status"}
+
+        for (i in resources.lastIndex downTo 0) {
+            val resource = resources[i]
+            @Suppress("UNCHECKED_CAST")
+            //first comparing to function
+            (resource as? () -> Unit)?.let {action -> log.catch { action() }}?:
+
+            when(resource) {
+                is AutoCloseable -> log.catch { resource.close() }
+
+                is RLifetimeDef -> log.catch {
+                    resource.terminate(supportsRecursion)
+                }
+
+                is ClearLifetimeMarker -> {
+                    resource.parentToClear.clearObsoleteAttachedLifetimes()
+                }
+
+                else -> log.catch { error("Unknown termination resource: $resource") }
+            }
+
+            //we can don't worry about
+            resources.removeAt(i)
+        }
+
+        require (incrementStatusIf { statusSlice[it] == Terminating }) { "Bad status for terminationEnd: $status" }
+    }
+
+
+
+    private fun badStatusForAddActions() {
+        error {"Lifetime in '$status', can't add termination actions"}
+    }
+    override fun onTermination(action: () -> Unit) {
+        if (!add0(action)) badStatusForAddActions()
+    }
+
+    override fun onTermination(closeable: AutoCloseable) {
+        if (!add0(closeable)) badStatusForAddActions()
+    }
+
+    internal fun attach(def: RLifetimeDef) {
+        require(!def.isEternal) { "Can't attach eternal lifetime" }
+
+        if (def.add0(ClearLifetimeMarker(this))) {
+            if (!this.add0(def))
+                def.terminate()
+        }
+    }
+
+
+    override fun<T:Any> bracket(opening: () -> T, terminationAction: () -> Unit) : T? {
+        return executeIfAlive {
+            add0(terminationAction)
+            opening()
+        }
+    }
+
+    private fun clearObsoleteAttachedLifetimes() {
+        {
+            for (i in resources.lastIndex downTo 0) {
+                if ((resources[i] as? RLifetimeDef)?.let { it.status == Terminated  } == true)
+                    resources.removeAt(i)
+                else
+                    break
+            }
+        } underMutexIf { state ->
+            //no need to clear it lifetime will be cleared soon
+            statusSlice[state] == Alive
+        }
+    }
+}
+
+private class ClearLifetimeMarker (val parentToClear: RLifetimeDef)
+
+fun RLifetime.waitTermination() {
+    SpinWait.spinUntil { status == Terminated }
+}
+
+val RLifetime.isAlive : Boolean get() = status == Alive
+
+
+fun RLifetime.defineNested() = RLifetimeDef().also { (this as RLifetimeDef).attach(it) }
+

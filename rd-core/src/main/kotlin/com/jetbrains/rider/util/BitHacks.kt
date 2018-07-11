@@ -18,3 +18,12 @@ fun ByteArray.putLong(long: Long, offset: Int)  {
         this[offset+i] = (long ushr (8*(7-i))).toByte()
     }
 }
+
+//obvious way, better to use lookup table
+fun log2ceil(value: Int) : Int {
+    for (i in 0..30)
+        if (1 shl i >= value)
+            return i
+
+    return 31
+}

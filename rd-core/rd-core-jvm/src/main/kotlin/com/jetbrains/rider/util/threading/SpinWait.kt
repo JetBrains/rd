@@ -14,7 +14,9 @@ class SpinWait {
                 s.spinOnce()
         }
 
+        inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) = spinUntil(Lifetime.Eternal, timeoutMs, condition)
         inline fun spinUntil(lifetime: Lifetime, timeoutMs: Long, condition: () -> Boolean) = spinUntil(lifetime, Duration.ofMillis(timeoutMs), condition)
+
         //maybe CancellationException or timeout exception?
         inline fun spinUntil(lifetime: Lifetime, duration: Duration, condition: () -> Boolean) : Boolean {
             val s = spin

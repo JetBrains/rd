@@ -4,6 +4,7 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.ifAlive
 import com.jetbrains.rider.util.lifetime.plusAssign
 
+
 fun <T> MutableCollection<T>.addUnique(lifetime : Lifetime, value : T) {
     lifetime.ifAlive {
         if (!add(value)) { throw IllegalArgumentException("Value already exists: $value") }
