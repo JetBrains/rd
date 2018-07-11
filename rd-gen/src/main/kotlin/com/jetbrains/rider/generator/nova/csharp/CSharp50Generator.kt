@@ -369,6 +369,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         println()
         println()
 
+        docComment(decl.documentation)
+
         if (decl is Enum) {
             enum(decl)
             return
@@ -425,7 +427,12 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         }
     }
 
-
+    private fun PrettyPrinter.docComment(documentation: String?) {
+        if (documentation == null) return
+        + "/// <summary>"
+        + "/// $documentation"
+        + "/// </summary>"
+    }
 
     protected fun PrettyPrinter.staticsTrait(decl: Declaration) {
 
@@ -648,14 +655,23 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
 
         + "//public fields"
-        decl.ownMembers
-            .printlnWithBlankLine { when (it) {
+
+        for (member in decl.ownMembers) {
+            docComment(member.documentation)
+            when (member) {
                 is Member.Reactive ->
-                    it.nullAttr() + "public ${it.intfSubstitutedName(decl)} ${it.publicName} { get { return ${it.encapsulatedName}; }}"
+                    + (member.nullAttr() + "public ${member.intfSubstitutedName(decl)} ${member.publicName} { get { return ${member.encapsulatedName}; }}")
                 is Member.Field ->
-                    it.nullAttr() + "public ${it.intfSubstitutedName(decl)} ${it.publicName} {get; private set;}"
-                else -> fail("Unsupported member: $it")
-            }}
+                    + (member.nullAttr() + "public ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}")
+                else -> fail("Unsupported member: $member")
+            }
+            if (member.documentation != null) {
+                println()
+            }
+        }
+        if (!decl.ownMembers.isEmpty() && decl.ownMembers.last().documentation == null) {
+            println()
+        }
 
         + "//private fields"
         decl.ownMembers.filterIsInstance<Member.Reactive>().printlnWithBlankLine {

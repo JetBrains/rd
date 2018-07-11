@@ -286,6 +286,16 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         println()
         println()
 
+        if (decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
+            + "/**"
+            if (decl.documentation != null) {
+                + " * ${decl.documentation}"
+            }
+            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
+                + " * @property ${member.name} ${member.documentation}"
+            }
+            + " */"
+        }
 
         decl.getSetting(Attributes)?.forEach {
             + "@$it"
@@ -338,6 +348,13 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         }
     }
 
+    protected fun PrettyPrinter.docComment(doc: String?) {
+        if (doc != null) {
+            + "/**"
+            + " * $doc"
+            + " */"
+        }
+    }
 
 
     protected fun PrettyPrinter.companionTrait(decl: Declaration) {
@@ -554,12 +571,17 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "}"
     }
 
-
-
-    protected fun  PrettyPrinter.fieldsTrait(decl: Declaration) {
-        decl.ownMembers
-            .filter { it.isEncapsulated }
-            .printlnWithBlankLine { "val ${it.publicName}: ${it.intfSubstitutedName(decl)} get() = ${it.encapsulatedName}" }
+    protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
+        for (member in decl.ownMembers.filter { it.isEncapsulated }) {
+            docComment(member.documentation)
+            + "val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
+            if (member.documentation != null) {
+                println();
+            }
+        }
+        if (!decl.ownMembers.isEmpty() && decl.ownMembers.last().documentation == null) {
+            println()
+        }
 
         if (decl is Class && decl.isInternRoot) {
             + "private var mySerializationContext: SerializationCtx? = null"

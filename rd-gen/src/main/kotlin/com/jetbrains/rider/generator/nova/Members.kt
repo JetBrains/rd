@@ -13,6 +13,7 @@ enum class FlowKind {
 
 sealed class Member(name: String, val referencedTypes: List<IType>) : SettingsHolder() {
     open val name: String = name.decapitalize()
+    var documentation: String? = null
     lateinit var owner: Declaration
 
     fun serializationHash(initial: IncrementalHash64) = referencedTypes.fold(initial.mix(name)) { acc, type -> acc.mix(type.name) }
@@ -115,6 +116,10 @@ fun Member.Field.default(value: String) {
         throw GeneratorException("Default value string does not match field type")
     }
     defaultValue = value
+}
+
+fun Member.doc(value: String) {
+    documentation = value
 }
 
 val <T: Member.Reactive> T.write: T get() = apply { flow = FlowKind.Source }

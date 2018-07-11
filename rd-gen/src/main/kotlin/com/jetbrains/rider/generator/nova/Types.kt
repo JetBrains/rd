@@ -83,13 +83,13 @@ sealed class PredefinedType : INonNullableScalar {
 
 @Suppress("UNCHECKED_CAST")
 abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHolder() {
-    abstract val _name : String
+    abstract val _name: String
+    var documentation: String? = null
 
-    val name : String by lazy {
+    val name: String by lazy {
         if (_name.isNotEmpty()) return@lazy _name.capitalize()
 
-
-        val parent = pointcut as? Toplevel?: return@lazy ""
+        val parent = pointcut as? Toplevel ?: return@lazy ""
 
         //first try to find in toplevel properties
         val res = parent.javaClass.kotlin.declaredMemberProperties.firstOrNull {
@@ -354,7 +354,8 @@ abstract class Root(vararg val generators: IGenerator) : Toplevel(null) {
             if (lst.size > 1) errors.add("Duplicated declaration name: '$name'")
         }
     }
-
-
 }
 
+fun Declaration.doc(value: String) {
+    documentation = value
+}
