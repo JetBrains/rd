@@ -11,121 +11,102 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.*
+import kotlin.reflect.KProperty
 
 class RdgenPlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        //global parameters for all rdgen-based tasks
         project.extensions.create("rdgen", RdgenParams::class.java, project)
+
         project.tasks.create("rdgen", RdgenTask::class.java)
     }
 }
 
 open class RdgenParams @JvmOverloads constructor(val project: Project, val task: Task? = null) {
-    constructor(task: Task) : this(task.project, task) {
-    }
+    constructor(task: Task) : this(task.project, task)
 
-    private val projectExtension get() = project.extensions.getByType(RdgenParams::class.java)
+//  option_path(  'h', "hash-folder","Folder to store hash file '${RdGen.hashFileName}' for incremental generation", Paths.get("").toAbsolutePath())
+    var hashFolder : String? = null
 
-//    val message: Property<String> = project.objects.property(String::class.java)
+//  option_path(  null,   "compiled", "Folder for compiled dsl. Temporary folder is created if option is not specified.")
+    val compiled : String? = null
 
-//  option_path('s', "source", "Folder with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
-    private val sources = mutableListOf<Any>()
-
-//            option_path(  'h',    "hash-folder","Folder to store hash file '${RdGen.hashFileName}' for incremental generation", Paths.get("").toAbsolutePath())
-    val hashFolder = project.objects.property(String::class.java)
-
-    //    option_path(  null,   "compiled", "Folder for compiled dsl. Temporary folder is created if option is not specified.")
-    val compiled = project.objects.property(String::class.java)
-
-//            option_string('c',    "compiler-classpath","Classpath for kotlin compiler. You must specify it if you referenced something from your dsl" )
-    private val classpath = mutableListOf<Any>()
-
-//            option_flag(  'f',   "force", "Suppress incremental generation.")
+//  option_flag(  'f',   "force", "Suppress incremental generation.")
     var force: Boolean? = null
 
-//            option_flag(  'x',   "clear", "Clear output folder before generation (if it is not incremental) ")
+//  option_flag(  'x',   "clear", "Clear output folder before generation (if it is not incremental) ")
     var clearOutput: Boolean? = null
 
-//            option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rider.model.nova", "com,org")
-    val packages =  project.objects.property(String::class.java)
+//  option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rider.model.nova", "com,org")
+    var packages : String? = null
 
-//            option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp")
-    val filter = project.objects.property(String::class.java)
+//  option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp")
+    var filter : String? = null
 
-//            option_flag(  'v',    "verbose", "Verbose output")
+//  option_flag(  'v',    "verbose", "Verbose output")
     var verbose: Boolean? = null
 
-    //for passing system properties
+
+//  for passing system properties
     val properties : Properties = Properties()
 
-    private val generators =  mutableListOf<GenerationSpec>()
-    fun generator(closure: Closure<GenerationSpec>): GenerationSpec {
-        val generationSpec = project.configure(GenerationSpec(), closure) as GenerationSpec
-        generators.add(generationSpec)
-        return generationSpec
+
+    //specify multiple generators
+    internal val generators =  mutableListOf<GenerationSpec>()
+    fun generator(closure: Closure<GenerationSpec>) = GenerationSpec().apply {
+        project.configure(this, closure)
+        generators.add(this)
+    }
+    fun generator(closure: GenerationSpec.() -> Unit) = GenerationSpec().apply {
+        closure()
+        generators.add(this)
     }
 
-    fun generator(closure: GenerationSpec.() -> Unit): GenerationSpec {
-        return GenerationSpec().apply {
-            closure()
-            generators.add(this)
-        }
-    }
+    //specify multiple source folders
+    internal val _sources = mutableListOf<Any>()
+    fun sources(vararg paths: Any) { _sources.addAll(paths) }
 
-    fun sources(vararg paths: Any) {
-        sources.addAll(paths)
-    }
+    //specify classpath
+    internal val _classpath = mutableListOf<Any>()
+    fun classpath(vararg paths: Any) { _classpath.addAll(paths) }
 
-    fun classpath(vararg paths: Any) {
-        classpath.addAll(paths)
-    }
-
-    private fun List<Any>.evalCallbacks() = map { if (it is Function0<*>) it.invoke() else it }
-
-    fun evalProperties() = if (properties.isNotEmpty()) properties else projectExtension.properties
-
-    fun evalSources() =
-        if (sources.isNotEmpty())
-            project.files(sources.evalCallbacks())
-        else
-            project.files(projectExtension.sources.evalCallbacks())
-
-    fun evalHashFolder() = hashFolder.orNull ?: projectExtension.hashFolder.orNull
-    fun evalCompiled() = compiled.orNull ?: projectExtension.compiled.orNull
-    fun evalClasspath() =
-        if (classpath.isNotEmpty())
-            project.files(classpath.evalCallbacks())
-        else
-            project.files(projectExtension.classpath.evalCallbacks())
-    fun evalPackages() = packages.orNull ?: projectExtension.packages.orNull
-    fun evalFilter() = filter.orNull ?: projectExtension.filter.orNull
-    fun evalGenerators() = if (generators.isNotEmpty()) generators else projectExtension.generators
-
-    fun evalForce(): Boolean = force ?: (projectExtension.force ?: false)
-    fun evalVerbose(): Boolean = verbose ?: (projectExtension.verbose ?: false)
-    fun evalClearOutput(): Boolean = clearOutput ?: (projectExtension.clearOutput ?: false)
 }
 
 open class RdgenTask : DefaultTask() {
-    private val params: RdgenParams = extensions.create("params", RdgenParams::class.java, this)
+    private val local: RdgenParams = extensions.create("params", RdgenParams::class.java, this)
+    private val global: RdgenParams get() =  project.extensions.getByType(RdgenParams::class.java)
+
+    fun<T> get(p: KProperty<T>) : T {
+        var res = p.call(local)
+        if (res == null || (res is Collection<*> && res.isEmpty()))
+            res = p.call(global)
+
+        return res
+    }
+
+    fun files(p: KProperty<List<*>>) : Set<File> {
+        val list = get(p)
+        val res = list.map { if (it is Function0<*>) it.invoke() else it  }
+        return project.files(res).files
+    }
 
     @TaskAction
     fun run() {
-//        params.properties.putAll(System.getProperties())
-
-
-        Statics<Properties>().use(params.evalProperties()) {
+        Statics<Properties>().use(get(RdgenParams::properties)) {
             val rdGen = RdGen().apply {
-                sourcePaths.addAll(params.evalSources().files)
-                hashFolder.parse(params.evalHashFolder())
-                compiled.parse(params.evalCompiled())
-                classpath.parse(params.evalClasspath().files.joinToString(File.pathSeparator) { it.path })
-                packages.parse(params.evalPackages())
-                filter.parse(params.evalFilter())
-                generationSpecs.addAll(params.evalGenerators())
+                sourcePaths.addAll( files(  RdgenParams::_sources))
+                hashFolder.parse(   get(    RdgenParams::hashFolder))
+                compiled.parse(     get(    RdgenParams::compiled))
+                classpath.parse(    files(  RdgenParams::_classpath).joinToString(File.pathSeparator) { it.path })
+                packages.parse(     get(    RdgenParams::packages))
+                filter.parse(       get(    RdgenParams::filter))
 
-                force *= params.evalForce()
-                verbose *= params.evalVerbose()
-                clearOutput *= params.evalClearOutput()
+
+                force *=            get(RdgenParams::force) ?: false
+                verbose *=          get(RdgenParams::verbose) ?: false
+                clearOutput *=      get(RdgenParams::clearOutput) ?: false
+
+                generationSpecs.addAll(get(RdgenParams::generators))
             }
 
 //            print("Press any key to continue: ")
