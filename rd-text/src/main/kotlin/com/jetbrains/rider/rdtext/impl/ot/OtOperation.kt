@@ -11,7 +11,13 @@ enum class OtOperationKind {
 
 // todo make it intrinsic
 class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val timestamp: Int, val kind: OtOperationKind, dontNormalize: Boolean = false) {
-    val changes = if (dontNormalize) changes else changes.filter { !it.isId() }
+    val changes = if (dontNormalize) changes else {
+        val nonIdChanges = changes.filter { !it.isId() }
+        if (nonIdChanges.isEmpty()) {
+            listOf(Retain(0))
+        } else
+            nonIdChanges
+    }
 
     fun documentLengthBefore() = changes.sumBy(OtChange::getTextLengthBefore)
     fun documentLengthAfter() = changes.sumBy(OtChange::getTextLengthAfter)
@@ -42,8 +48,8 @@ class OtOperation(changes: List<OtChange>, val origin: RdChangeOrigin, val times
 
 fun OtOperation.toRdTextChanges(): List<RdTextChange> {
     if (kind == OtOperationKind.Reset) {
-        require(changes.size == 1 && changes[0] is InsertText)
-        val new = (changes[0] as InsertText).text
+        require(changes.size == 1 && (changes[0] is InsertText || changes[0].isId()))
+        val new = (changes[0] as? InsertText)?.text ?: ""
         return listOf(RdTextChange(RdTextChangeKind.Reset, 0, "", new, new.length))
     }
 
