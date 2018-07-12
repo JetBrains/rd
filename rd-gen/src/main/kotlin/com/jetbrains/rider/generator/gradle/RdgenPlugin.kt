@@ -40,10 +40,10 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
     private val classpath = mutableListOf<Any>()
 
 //            option_flag(  'f',   "force", "Suppress incremental generation.")
-    val force = project.objects.property(Boolean::class.javaObjectType)
+    var force: Boolean? = null
 
 //            option_flag(  'x',   "clear", "Clear output folder before generation (if it is not incremental) ")
-    val clearOutput = project.objects.property(Boolean::class.javaObjectType)
+    var clearOutput: Boolean? = null
 
 //            option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rider.model.nova", "com,org")
     val packages =  project.objects.property(String::class.java)
@@ -52,7 +52,7 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
     val filter = project.objects.property(String::class.java)
 
 //            option_flag(  'v',    "verbose", "Verbose output")
-    val verbose = project.objects.property(Boolean::class.javaObjectType)
+    var verbose: Boolean? = null
 
     //for passing system properties
     val properties : Properties = Properties()
@@ -100,9 +100,9 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
     fun evalFilter() = filter.orNull ?: projectExtension.filter.orNull
     fun evalGenerators() = if (generators.isNotEmpty()) generators else projectExtension.generators
 
-    fun evalForce(): Boolean = force.orNull ?: (projectExtension.force.orNull ?: false)
-    fun evalVerbose(): Boolean = verbose.orNull ?: (projectExtension.verbose.orNull ?: false)
-    fun evalClearOutput(): Boolean = clearOutput.orNull ?: (projectExtension.clearOutput.orNull ?: false)
+    fun evalForce(): Boolean = force ?: (projectExtension.force ?: false)
+    fun evalVerbose(): Boolean = verbose ?: (projectExtension.verbose ?: false)
+    fun evalClearOutput(): Boolean = clearOutput ?: (projectExtension.clearOutput ?: false)
 }
 
 open class RdgenTask : DefaultTask() {
