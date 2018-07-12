@@ -934,7 +934,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     }
 
     override fun toString(): String {
-        return "CSharp50Generator(defaultFlowTransform=$defaultFlowTransform, defaultNamespace='$defaultNamespace', folder=$folder)"
+        return "CSharp50Generator(defaultFlowTransform=$defaultFlowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
     }
 
 

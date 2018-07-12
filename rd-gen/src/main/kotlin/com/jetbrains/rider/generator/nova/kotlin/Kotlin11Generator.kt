@@ -786,7 +786,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     }
 
     override fun toString(): String {
-        return "Kotlin11Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=$folder)"
+        return "Kotlin11Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
     }
 
 

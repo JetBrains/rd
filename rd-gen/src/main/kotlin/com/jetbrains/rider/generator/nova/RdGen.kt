@@ -57,7 +57,7 @@ class RdGen : Kli() {
     val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp")
     val verbose =       option_flag(  'v',    "verbose", "Verbose output")
 
-    val hashfile : Path get() = Paths.get(hashFolder.value!!.toString(), hashFileName)
+    val hashfile : Path get() = Paths.get(hashFolder.value!!.toString(), hashFileName).normalize()
 
     private fun v(msg: String) { if (verbose.value) println(msg) }
     private fun v(e: Throwable) { if (verbose.value) e.printStackTrace() }
