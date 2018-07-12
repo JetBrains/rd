@@ -186,7 +186,7 @@ class RdGen : Kli() {
 
             //output
             outputFolders.forEach { res.mixFileRecursively(it) { file -> file.isFile && file.name != hashFileName } } //if you store hashFile in output
-            outputFolders.forEach { folder -> res.mix(outputFolderKey, folder.toString()) }
+            outputFolders.forEach { folder -> res.mix(outputFolderKey, folder.canonicalPath) }
 
             //generator contents
             defaultClassloader.scanForResourcesContaining(javaClass.`package`.name).forEach { file ->
