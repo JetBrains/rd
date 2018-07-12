@@ -78,7 +78,7 @@ open class RdgenTask : DefaultTask() {
 
     fun<T> get(p: KProperty<T>) : T {
         var res = p.call(local)
-        if (res == null || (res is Collection<*> && res.isEmpty()))
+        if (res == null || (res is Collection<*> && res.isEmpty()) || (res is Map<*,*> && res.isEmpty()))
             res = p.call(global)
 
         return res
