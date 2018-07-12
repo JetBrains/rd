@@ -30,7 +30,7 @@ allprojects {
                 maven(MavenPublication) {
                     groupId 'com.jetbrains.rd'
                     artifactId mvnId
-                    version System.getenv("RELEASE_VERSION_NUMBER") ?: '2018.1-SNAPSHOT'
+                    version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
 
                     from components.java
 
@@ -86,23 +86,25 @@ allprojects {
 
         kotlin { experimental.coroutines = 'enable' }
 
-        publishing {
-            publications {
-                String mvnId = project.name
+//        configurePublishing()
 
-                maven(MavenPublication) {
-                    groupId 'com.jetbrains'
-                    artifactId mvnId
-                    version '2018.1-SNAPSHOT'
-
-                    from components.java
-
-                    artifact sourceJar {
-                        classifier "sources"
-                    }
-                }
-            }
-        }
+//        publishing {
+//            publications {
+//                String mvnId = project.name
+//
+//                maven(MavenPublication) {
+//                    groupId 'com.jetbrains'
+//                    artifactId mvnId
+//                    version '2018.1-SNAPSHOT'
+//
+//                    from components.java
+//
+//                    artifact sourceJar {
+//                        classifier "sources"
+//                    }
+//                }
+//            }
+//        }
     }
 
 
