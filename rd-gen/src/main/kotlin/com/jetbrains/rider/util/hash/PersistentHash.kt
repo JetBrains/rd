@@ -103,7 +103,7 @@ class PersistentHash {
 
     private val format = SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS")
     fun mixFile(f: File) {
-        if (f.exists()) mix("file: $f", format.format(Date(f.lastModified())))
+        if (f.exists()) mix("file: ${f.canonicalPath}", format.format(Date(f.lastModified())))
     }
 
     fun mixFileRecursively(folder: File, filter: (File) -> Boolean = { it.isFile }) {
