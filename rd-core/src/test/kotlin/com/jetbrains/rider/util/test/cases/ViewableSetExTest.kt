@@ -1,11 +1,12 @@
 package com.jetbrains.rider.util.test.cases
 import com.jetbrains.rider.util.reactive.ViewableSet
 import com.jetbrains.rider.util.reactive.createIsNotEmpty
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ViewableSetExTest() {
+class ViewableSetExTest : RdTestBase()  {
     @Test
     fun createIsNotEmpty() {
         val xs = ViewableSet<Any>()

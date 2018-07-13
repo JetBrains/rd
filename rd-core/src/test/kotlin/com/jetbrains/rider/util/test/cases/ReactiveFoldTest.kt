@@ -1,11 +1,12 @@
 package com.jetbrains.rider.util.test.cases
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.math.max
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class ReactiveFoldTest {
+class ReactiveFoldTest : RdTestBase() {
 
     @Test
     fun reactiveFoldEmpty() {

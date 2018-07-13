@@ -12,7 +12,7 @@ import com.jetbrains.rider.util.threading.Linearization
 import kotlin.concurrent.thread
 import kotlin.test.*
 
-class RdAsyncTaskTest : RdTestBase() {
+class RdAsyncTaskTest : RdFrameworkTestBase() {
     @Suppress("UNCHECKED_CAST")
     @Test
     fun TestDynamic() {

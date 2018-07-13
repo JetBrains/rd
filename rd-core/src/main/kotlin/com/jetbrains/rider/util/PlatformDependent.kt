@@ -72,3 +72,5 @@ expect class Queue<E>() {
     fun isEmpty(): Boolean
     fun poll(): E?
 }
+
+expect fun printlnError(msg: String)

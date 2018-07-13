@@ -2,20 +2,20 @@ package com.jetbrains.rider.util.test.cases
 import com.jetbrains.rider.util.collections.ImmutableStack
 import com.jetbrains.rider.util.collections.tail
 import com.jetbrains.rider.util.collections.toImmutableStack
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
 
-class ImmutableStackTest {
+class ImmutableStackTest : RdTestBase()  {
     @Test
     fun testBasic() {
         var s = ImmutableStack<Int>()
         assertTrue(s.isEmpty)
 
         s.push(1)
-        //naebalovo
         assertTrue(s.isEmpty)
 
         s = s.push(1)

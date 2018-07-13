@@ -2,10 +2,11 @@ package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.Property
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class AdviseVsViewTest {
+class AdviseVsViewTest : RdTestBase() {
     @Test
     fun adviseBehavior1() {
         val lifetimeDef = Lifetime.create(Lifetime.Eternal)

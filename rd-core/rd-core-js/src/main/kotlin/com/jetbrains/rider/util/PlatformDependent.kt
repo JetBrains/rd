@@ -92,3 +92,6 @@ actual class AtomicInteger actual constructor(var v: Int) {
 }
 
 actual typealias Queue<E> = QueueImpl<E>
+
+//no stderr in javascript
+actual fun printlnError(msg: String) = println(msg)

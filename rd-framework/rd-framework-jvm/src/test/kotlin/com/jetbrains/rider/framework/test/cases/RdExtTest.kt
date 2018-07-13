@@ -15,7 +15,7 @@ import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 
-class RdExtTest : RdTestBase() {
+class RdExtTest : RdFrameworkTestBase() {
     @Ignore
     @Test() // TODO: RIDER-14180
     fun testExtension() {

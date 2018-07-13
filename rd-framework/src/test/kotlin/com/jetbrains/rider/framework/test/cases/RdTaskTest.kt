@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
 
-class RdTaskTest : RdTestBase() {
+class RdTaskTest : RdFrameworkTestBase() {
     @Test
     fun testStaticSuccess() {
         val entity_id = 1

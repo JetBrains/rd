@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class RdListTest : RdTestBase() {
+class RdListTest : RdFrameworkTestBase() {
     @Test
     fun testStatic()
     {

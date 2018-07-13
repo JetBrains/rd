@@ -1,14 +1,15 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.collections.QueueImpl
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.*
 
-class QueueImplTest {
+class QueueImplTest  : RdTestBase() {
 
     private val q = QueueImpl<Int>()
 
     @BeforeTest
-    fun setup() {
+    fun setup0() {
         q.clear()
     }
 

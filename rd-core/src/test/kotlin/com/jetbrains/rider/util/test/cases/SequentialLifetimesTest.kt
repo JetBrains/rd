@@ -4,12 +4,13 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
 import com.jetbrains.rider.util.lifetime.plusAssign
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class SequentialLifetimesTest {
+class SequentialLifetimesTest : RdTestBase()  {
     @Test
     fun testContract() {
         val seq = SequentialLifetimes(Lifetime.Eternal)

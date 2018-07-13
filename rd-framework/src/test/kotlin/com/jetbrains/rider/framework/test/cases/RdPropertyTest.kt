@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 
-class RdPropertyTest : RdTestBase() {
+class RdPropertyTest : RdFrameworkTestBase() {
     @Test
     fun testStatic() {
         val property_id = 1

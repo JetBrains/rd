@@ -1,11 +1,12 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.BitSlice
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
-class BitSliceTest {
+class BitSliceTest : RdTestBase()  {
 
     private enum class Enum {
         Zero,

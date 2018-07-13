@@ -13,12 +13,14 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
         private val consoleLogger by lazy { ConsoleLoggerFactory.getLogger(category) }
 
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
-            consoleLogger.log(level, message, throwable)
 
-            if (!isEnabled(level)) return
+            if (!isEnabled(level)) {
+                consoleLogger.log(level, message, throwable)
+                return
+            }
 
             if (currentThreadName() == creationThread) {
-                throw IllegalStateException(message?.toString(), throwable)
+                throw Exception(message?.toString(), throwable)
             }
 
             val renderMessage = defaultLogFormat(category, level, message, throwable)
@@ -38,6 +40,6 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
         val text = "There are ${errors.size} exceptions:$eol" +
                 errors.joinToString("$eol$eol --------------------------- $eol$eol")
         errors.clear()
-        throw IllegalStateException(text)
+        throw Exception(text)
     }
 }

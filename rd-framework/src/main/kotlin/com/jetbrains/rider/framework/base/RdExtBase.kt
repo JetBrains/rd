@@ -57,6 +57,8 @@ abstract class RdExtBase : RdReactiveBase() {
 
         parentWire.advise(lifetime, this)
 
+        //it's critical to advise before 'Ready' is sent because we advise on SynchronousScheduler
+
         lifetime.bracket(
             { parentWire.sendState(ExtState.Ready) },
             { parentWire.sendState(ExtState.Disconnected) }

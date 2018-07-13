@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
-class RdSetTest : RdTestBase() {
+class RdSetTest : RdFrameworkTestBase() {
     @Test
     fun testStatic() {
         val id = 1

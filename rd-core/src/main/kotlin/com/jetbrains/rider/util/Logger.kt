@@ -2,7 +2,6 @@ package com.jetbrains.rider.util
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.viewableTail
-import com.jetbrains.rider.util.string.PrettyPrinter
 import kotlin.reflect.KClass
 
 enum class LogLevel {
@@ -47,20 +46,29 @@ class SwitchLogger(category: String) : Logger {
 
 
 object ConsoleLoggerFactory : ILoggerFactory {
-    var level : LogLevel = LogLevel.Debug
+    var minLevelToLog : LogLevel = LogLevel.Debug
+    var levelToLogStderr : LogLevel? = LogLevel.Warn
+
     override fun getLogger(category: String) = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
             if (!isEnabled(level)) return
-            println(defaultLogFormat(category, level, message, throwable))
+
+            val msg = defaultLogFormat(category, level, message, throwable)
+            if (levelToLogStderr?.let { level > it } == true)
+                printlnError(msg)
+            else
+                println(msg)
         }
 
-        override fun isEnabled(level: LogLevel): Boolean = level >= this@ConsoleLoggerFactory.level
+        override fun isEnabled(level: LogLevel): Boolean = level >= this@ConsoleLoggerFactory.minLevelToLog
 
     }
 }
 
+//This could be changed via Statics or similar plugin technique
 fun defaultLogFormat(category: String, level: LogLevel, message: Any?, throwable: Throwable?) : String {
-    return "$level | $category | ${currentThreadName()} | ${message?.toString()?:""} ${throwable?.getThrowableText()?:""}"
+    val throwableToPrint = if (level < LogLevel.Error) throwable  else throwable ?: Exception() //to print stacktrace
+    return "$level | $category | ${currentThreadName()} | ${message?.toString()?:""} ${throwableToPrint?.getThrowableText()?.let { "| $it" }?:""}"
 }
 
 fun getLogger(category: String) = SwitchLogger(category)

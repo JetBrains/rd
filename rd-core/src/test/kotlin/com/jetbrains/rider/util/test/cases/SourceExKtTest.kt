@@ -2,12 +2,13 @@ package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-internal class SourceExKtTest {
+class SourceExKtTest : RdTestBase()  {
     @Test
     fun testAdviseUntil() {
         val def = Lifetime.create(Lifetime.Eternal)

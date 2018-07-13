@@ -3,10 +3,11 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IMutableViewableMap
 import com.jetbrains.rider.util.reactive.ViewableMap
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ViewableMapTest {
+class ViewableMapTest : RdTestBase()  {
     @Test
     fun testAdvise() {
 

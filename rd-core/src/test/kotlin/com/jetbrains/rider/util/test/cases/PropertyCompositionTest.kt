@@ -5,11 +5,12 @@ import com.jetbrains.rider.util.reactive.OptProperty
 import com.jetbrains.rider.util.reactive.Property
 import com.jetbrains.rider.util.reactive.compose
 import com.jetbrains.rider.util.reactive.map
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
-class PropertyCompositionTest {
+class PropertyCompositionTest  : RdTestBase() {
     @Test
     fun composeTest() {
         val targetLog = mutableListOf<Int>()

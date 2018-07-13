@@ -3,12 +3,13 @@ package com.jetbrains.rider.util.test.cases
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNull
 import kotlin.test.Test
 
-class PropertyTest {
+class PropertyTest  : RdTestBase() {
     @Test
     fun testAdvise() {
         var acc = 0

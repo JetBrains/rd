@@ -6,7 +6,7 @@ import kotlin.test.Test
 
 class StaticsTest {
 
-    class Foo
+    internal class Foo
 
     @Test
     fun test1() {

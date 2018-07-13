@@ -24,7 +24,7 @@ object TestScheduler : IScheduler {
     override val isActive: Boolean get() = true
 }
 
-open class RdTestBase {
+open class RdFrameworkTestBase {
     private val serializers = Serializers()
 
 

@@ -4,7 +4,7 @@ import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.threading.TestSingleThreadScheduler
 import kotlin.test.AfterTest
 
-open class RdAsyncTestBase : RdTestBase() {
+open class RdAsyncTestBase : RdFrameworkTestBase() {
     val clientBgScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ClientBg")
     val clientUiScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ClientUi")
     val serverBgScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ServerBg")

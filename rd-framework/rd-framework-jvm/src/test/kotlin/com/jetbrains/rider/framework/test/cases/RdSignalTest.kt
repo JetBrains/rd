@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
-class RdSignalTest : RdTestBase() {
+class RdSignalTest : RdFrameworkTestBase() {
     @Test
     fun TestStatic() {
         val property_id = 1

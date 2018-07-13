@@ -4,11 +4,12 @@ import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IMutableViewableList
 import com.jetbrains.rider.util.reactive.ViewableList
+import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ViewableListTest {
+class ViewableListTest : RdTestBase()  {
     @Test
     fun addRemoveAdvise() {
         val list: IMutableViewableList<Int> = ViewableList()

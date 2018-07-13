@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class RdMapTest : RdTestBase() {
+class RdMapTest : RdFrameworkTestBase() {
     @Test
     fun testStatic()
     {
