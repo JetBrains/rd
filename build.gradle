@@ -85,26 +85,6 @@ allprojects {
         }
 
         kotlin { experimental.coroutines = 'enable' }
-
-//        configurePublishing()
-
-//        publishing {
-//            publications {
-//                String mvnId = project.name
-//
-//                maven(MavenPublication) {
-//                    groupId 'com.jetbrains'
-//                    artifactId mvnId
-//                    version '2018.1-SNAPSHOT'
-//
-//                    from components.java
-//
-//                    artifact sourceJar {
-//                        classifier "sources"
-//                    }
-//                }
-//            }
-//        }
     }
 
 
