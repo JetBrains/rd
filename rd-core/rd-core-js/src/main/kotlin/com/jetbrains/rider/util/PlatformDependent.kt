@@ -39,6 +39,7 @@ actual object Sync {
     actual fun notifyAll(obj: Any) {}
     actual fun notify(obj: Any) {}
     actual fun wait(obj: Any) {}
+    actual fun wait(obj: Any, timeout: Long) {}
 }
 
 actual fun<K,V> concurrentMapOf() = mutableMapOf<K,V>()

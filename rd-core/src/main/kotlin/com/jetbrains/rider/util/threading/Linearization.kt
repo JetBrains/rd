@@ -1,28 +1,27 @@
 package com.jetbrains.rider.util.threading
 
-import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.CyclicBarrier
+import com.jetbrains.rider.util.Sync
 
+// Puts linearization points into program starting with 0.
 class Linearization {
 
     private var nextId = 0L
-    private val lock = Object()
+    private val lock = Any()
 
 
     private var enabled = true
 
     fun enable() {
-        synchronized(lock) {
+        Sync.lock(lock) {
             enabled = true
-            lock.notifyAll()
+            Sync.notifyAll(lock)
         }
     }
 
     fun disable() {
-        synchronized(lock) {
+        Sync.lock(lock) {
             enabled = false
-            lock.notifyAll()
+            Sync.notifyAll(lock)
         }
     }
 
@@ -30,20 +29,22 @@ class Linearization {
     fun point(id: Int) {
         require(id >= 0) {"$id >= 0"}
 
-        synchronized(lock) {
-            while (enabled && id > nextId) lock.wait(1000L)
+        Sync.lock(lock) {
+            while (enabled && id > nextId)
+                Sync.wait(lock, 1000L)
+
             if (!enabled) return
 
             require (id <= nextId) {"Point $id already set, nextId=$nextId"}
             nextId ++
-            lock.notifyAll()
+            Sync.notifyAll(lock)
         }
     }
 
     fun reset() {
-        synchronized(lock) {
+        Sync.lock(lock) {
             nextId = 0L
-            lock.notifyAll()
+            Sync.notifyAll(lock)
         }
     }
 }

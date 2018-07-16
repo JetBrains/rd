@@ -29,6 +29,7 @@ expect object Sync {
     fun notifyAll(obj: Any) : Unit
     fun notify(obj: Any) : Unit
     fun wait(obj: Any) : Unit
+    fun wait(obj: Any, timeout: Long) : Unit
 }
 
 expect fun<K,V> concurrentMapOf() : MutableMap<K,V>
