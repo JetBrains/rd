@@ -22,15 +22,25 @@ sealed class RLifetime() {
         var waitForExecutingInTerminationTimeout = 500L //timeout for waiting executeIfAlive in termination
         val eternal = RLifetimeDef().lifetime //some marker
         internal val threadLocalExecuting : CountingSet<RLifetime> by threadLocal { CountingSet<RLifetime>() }
+
+        inline fun <T> using(block : (RLifetime) -> T) : T{
+            val def = RLifetimeDef()
+            try {
+                return block(def.lifetime)
+            } finally {
+                def.terminate()
+            }
+        }
     }
-    val isEternal : Boolean get() = this === eternal
 
     abstract val status : RLifetimeStatus
 
     abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
 
-    abstract fun onTermination(action: () -> Unit)
-    abstract fun onTermination(closeable: AutoCloseable)
+    abstract fun onTerminationIfAlive(action: () -> Unit): Boolean
+    abstract fun onTerminationIfAlive(closeable: AutoCloseable): Boolean
+
+
     abstract fun <T : Any> bracket(opening: () -> T, terminationAction: () -> Unit): T?
 }
 
@@ -45,16 +55,6 @@ class RLifetimeDef : RLifetime() {
         private val executingSlice = BitSlice.int(20)
         private val statusSlice = BitSlice.enum<RLifetimeStatus>(executingSlice)
         private val mutexSlice = BitSlice.bool(statusSlice)
-
-
-        inline fun <T> using(block : (RLifetime) -> T) : T{
-            val def = RLifetimeDef()
-            try {
-                return block(def.lifetime)
-            } finally {
-                def.terminate()
-            }
-        }
     }
 
 
@@ -242,17 +242,10 @@ class RLifetimeDef : RLifetime() {
     }
 
 
+    override fun onTerminationIfAlive(action: () -> Unit) = add0(action)
+    override fun onTerminationIfAlive(closeable: AutoCloseable) = add0(closeable)
 
-    private fun badStatusForAddActions() {
-        error {"Lifetime in '$status', can't add termination actions"}
-    }
-    override fun onTermination(action: () -> Unit) {
-        if (!add0(action)) badStatusForAddActions()
-    }
 
-    override fun onTermination(closeable: AutoCloseable) {
-        if (!add0(closeable)) badStatusForAddActions()
-    }
 
     internal fun attach(def: RLifetimeDef) {
         require(!def.isEternal) { "Can't attach eternal lifetime" }
@@ -293,7 +286,21 @@ fun RLifetime.waitTermination() {
 }
 
 val RLifetime.isAlive : Boolean get() = status == Alive
-
-
+val RLifetime.isEternal : Boolean get() = this === RLifetime.eternal
 fun RLifetime.defineNested() = RLifetimeDef().also { (this as RLifetimeDef).attach(it) }
+
+
+private fun RLifetime.badStatusForAddActions() {
+    error {"Lifetime in '$status', can't add termination actions"}
+}
+
+fun RLifetime.onTermination(action: () -> Unit) {
+    if (!onTerminationIfAlive(action))
+        badStatusForAddActions()
+}
+fun RLifetime.onTermination(closeable: AutoCloseable) {
+    if (!onTerminationIfAlive(closeable))
+        badStatusForAddActions()
+}
+
 

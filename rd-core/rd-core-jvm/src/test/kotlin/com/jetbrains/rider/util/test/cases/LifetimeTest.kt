@@ -95,4 +95,21 @@ class LifetimeTest : RdTestBase() {
     }
 
 
+    @Test
+    fun testUsing() {
+        var lf : RLifetime? = null
+        RLifetime.using {
+            lf = it
+            assertTrue { lf?.isAlive == true }
+            assertFalse {lf?.isEternal == false }
+        }
+        assertFalse { lf?.isAlive == true }
+    }
+
+    @Test
+    fun testEternal() {
+        assertTrue { RLifetime.eternal.onTerminationIfAlive {} }
+    }
+
+
 }
