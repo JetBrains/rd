@@ -10,3 +10,5 @@ include 'rd-text'
 include 'rd-framework'
 include 'rd-framework:rd-framework-jvm'
 include 'rd-framework:rd-framework-js'
+include 'rd-swing'
+

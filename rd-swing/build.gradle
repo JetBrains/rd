@@ -1,0 +1,5 @@
+applyKotlinJVM()
+
+dependencies {
+    compile project(':rd-core:rd-core-jvm')
+}
