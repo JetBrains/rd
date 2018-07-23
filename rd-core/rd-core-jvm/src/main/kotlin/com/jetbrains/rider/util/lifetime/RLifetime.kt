@@ -2,7 +2,6 @@ package com.jetbrains.rider.util.lifetime2
 
 import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.collections.CountingSet
-import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime2.RLifetimeStatus.*
 import com.jetbrains.rider.util.reflection.threadLocal
 import com.jetbrains.rider.util.threading.SpinWait
@@ -20,11 +19,11 @@ enum class RLifetimeStatus {
 
 sealed class RLifetime() {
     companion object {
-        var timeout = 500L //timeout for waiting
-        val Eternal = RLifetimeDef().lifetime //some marker
+        var waitForExecutingInTerminationTimeout = 500L //timeout for waiting executeIfAlive in termination
+        val eternal = RLifetimeDef().lifetime //some marker
         internal val threadLocalExecuting : CountingSet<RLifetime> by threadLocal { CountingSet<RLifetime>() }
     }
-    val isEternal : Boolean get() = this == Eternal
+    val isEternal : Boolean get() = this === eternal
 
     abstract val status : RLifetimeStatus
 
@@ -48,8 +47,8 @@ class RLifetimeDef : RLifetime() {
         private val mutexSlice = BitSlice.bool(statusSlice)
 
 
-        inline fun <T> using(block : (Lifetime) -> T) : T{
-            val def = Lifetime.create(Lifetime.Eternal)
+        inline fun <T> using(block : (RLifetime) -> T) : T{
+            val def = RLifetimeDef()
             try {
                 return block(def.lifetime)
             } finally {
@@ -133,7 +132,7 @@ class RLifetimeDef : RLifetime() {
 
     private fun add0(action: Any) : Boolean {
         //we could add anything to Eternal lifetime and it'll never be executed
-        if (lifetime === Eternal)
+        if (lifetime === eternal)
             return true
 
         //todo must be mutual exclusive to other actions
@@ -148,7 +147,7 @@ class RLifetimeDef : RLifetime() {
 
 
     private inline fun incrementStatusIf(check: (Int) -> Boolean) : Boolean {
-        assert(this !== Eternal) { "Trying to change eternal lifetime" }
+        assert(this !== eternal) { "Trying to change eternal lifetime" }
 
         while (true) {
             val s = state.get()
@@ -165,34 +164,36 @@ class RLifetimeDef : RLifetime() {
 
 
     private fun markCanceledRecursively() : Boolean {
-        assert(this !== Eternal) { "Trying to terminate eternal lifetime" }
+        assert(this !== eternal) { "Trying to terminate eternal lifetime" }
 
         if (!incrementStatusIf { statusSlice[it] == Alive } )
             return false
 
-        for (i in resources.lastIndex downTo 0) {
-            val def = resources[i] as? RLifetimeDef ?: continue
-            def.markCanceledRecursively()
-        }
+        {
+            for (i in resources.lastIndex downTo 0) {
+                val def = resources[i] as? RLifetimeDef ?: continue
+                def.markCanceledRecursively()
+            }
+        } underMutexIf { true }
 
         return true
     }
 
 
-    fun terminate(supportsRecursion: Boolean = false) : Boolean {
+    fun terminate(supportsTerminationUnderExecuting: Boolean = false) : Boolean {
         if (isEternal)
             return false
 
         markCanceledRecursively()
 
 
-        if (threadLocalExecuting[this] > 0 && !supportsRecursion) {
-            error("Can't terminate lifetime during `executeIfAlive` because . Use explicit `terminate(true)`")
+        if (threadLocalExecuting[this] > 0 && !supportsTerminationUnderExecuting) {
+            error("Can't terminate lifetime under `executeIfAlive` because termination doesn't support this. Use `terminate(true)`")
         }
 
         //wait for all executions finished
-        if (!SpinWait.spinUntil(timeout) { executingSlice[state] <= threadLocalExecuting[this] }) {
-            log.error { "Can't wait for executeIfAlive for more than $timeout ms. Keep termination." }
+        if (!SpinWait.spinUntil(waitForExecutingInTerminationTimeout) { executingSlice[state] <= threadLocalExecuting[this] }) {
+            log.error { "Can't wait for executeIfAlive for more than $waitForExecutingInTerminationTimeout ms. Keep termination." }
         }
 
 
@@ -203,7 +204,7 @@ class RLifetimeDef : RLifetime() {
         //wait for all resource modification finished
         SpinWait.spinUntil { !mutexSlice[state] }
 
-        destruct(supportsRecursion)
+        destruct(supportsTerminationUnderExecuting)
 
         return true
     }
@@ -217,7 +218,7 @@ class RLifetimeDef : RLifetime() {
             val resource = resources[i]
             @Suppress("UNCHECKED_CAST")
             //first comparing to function
-            (resource as? () -> Unit)?.let {action -> log.catch { action() }}?:
+            (resource as? () -> Any?)?.let {action -> log.catch { action() }}?:
 
             when(resource) {
                 is AutoCloseable -> log.catch { resource.close() }

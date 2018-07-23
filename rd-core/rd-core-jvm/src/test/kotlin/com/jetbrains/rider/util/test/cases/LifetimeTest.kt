@@ -55,7 +55,7 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testTerminationWithAsyncAction() {
-        RLifetime.timeout = 100000
+        RLifetime.waitForExecutingInTerminationTimeout = 100000
         val def = RLifetimeDef()
         val log = mutableListOf<Int>()
 
