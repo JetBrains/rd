@@ -24,7 +24,7 @@ allprojects {
                 String mvnId = project.name
                 if (mvnId.endsWith('-jvm'))
                     mvnId = mvnId.substring(0, mvnId.length() - 4)
-                else if (!mvnId.endsWith("-js") && !mvnId.endsWith("-gen") && !mvnId.endsWith("-text"))
+                else if (mvnId.endsWith("-core") || mvnId.endsWith("-framework"))
                     mvnId = mvnId + "-common"
 
                 maven(MavenPublication) {
