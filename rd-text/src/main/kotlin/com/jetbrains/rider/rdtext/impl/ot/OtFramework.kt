@@ -230,7 +230,7 @@ data class OtTransformResult(val newLocalDiff: OtOperation, val localizedApplyTo
 // Ressel’s transformation function
 fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTransformResult {
 
-    require(localDiff.documentLengthBefore() == remoteApplyToDocument.documentLengthBefore())
+    require(localDiff.documentLengthBefore() == remoteApplyToDocument.documentLengthBefore(), { "$localDiff and $remoteApplyToDocument are not compatible." } )
     require(localDiff.origin != remoteApplyToDocument.origin)
     require(localDiff.kind == OtOperationKind.Normal && remoteApplyToDocument.kind == OtOperationKind.Normal)
 
@@ -259,7 +259,21 @@ fun transform(localDiff: OtOperation, remoteApplyToDocument: OtOperation): OtTra
                     transform0(resOp1.append(op1), resOp2, tail1, tail2)
             }
             op1 is InsertText && op2 is InsertText -> {
-                if (op1.priority < op2.priority || (op1.priority == op2.priority && localDiff.origin < remoteApplyToDocument.origin))
+                if (op1.text == op2.text)
+                    transform0(resOp1.append(Retain(op1.text.length)), resOp2.append(Retain(op1.text.length)), tail1, tail2)
+                else if (op1.text.startsWith(op2.text)) {
+                    val len2 = op2.text.length
+                    transform0(resOp1
+                            .append(Retain(len2))
+                            .append(InsertText(op1.text.substring(len2), op1.priority)),
+                            resOp2.append(Retain(op1.text.length)), tail1, tail2)
+                } else if (op2.text.startsWith(op1.text)) {
+                    val len1 = op1.text.length
+                    transform0(resOp1.append(Retain(op2.text.length)),
+                            resOp2.append(Retain(len1))
+                            .append(InsertText(op2.text.substring(len1), op2.priority)),
+                            tail1, tail2)
+                } else if (op1.priority < op2.priority || (op1.priority == op2.priority && localDiff.origin < remoteApplyToDocument.origin))
                     transform0(resOp1.append(op1), resOp2.append(Retain(op1.text.length)), tail1, ops2)
                 else
                     transform0(resOp1.append(Retain(op2.text.length)), resOp2.append(op2), ops1, tail2)
