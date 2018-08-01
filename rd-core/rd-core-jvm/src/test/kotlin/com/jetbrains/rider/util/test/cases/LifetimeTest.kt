@@ -64,9 +64,9 @@ class LifetimeTest : RdTestBase() {
                 //must execute
                 val first = def.executeIfAlive {
                     log.add(0)
-                    l11n.point(0)
                     assert(def.status == RLifetimeStatus.Alive)
                     assert(def.isAlive)
+                    l11n.point(0)
                     log.add(1)
 
                     SpinWait.spinUntil { def.status == RLifetimeStatus.Canceled }
