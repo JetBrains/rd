@@ -899,16 +899,19 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                     when (decl) {
                         is Toplevel -> "RdExtBase"
                         is BindableDeclaration -> "RdBindableBase"
-                        is Struct -> "IPrintable, IEquatable<${decl.name}>"
-                        else -> fail("Unsupported declaration: $decl")
-                    } //enum must not reach this place
+                        is Struct.Concrete -> "IPrintable, IEquatable<${decl.name}>"
+                        else -> "" //abstract struct doesn't implement these methods, enum must not reach this place
+                    }
                 } else {
                     base.sanitizedName(decl)
                 }
 
-        val res = baseClassesStr +
+        var res = baseClassesStr +
                 (decl.getSetting(Inherits)?.let { ", $it" } ?: "") +
                 (if(decl.getSetting(InheritsAutomation) == true) ", JetBrains.Application.UI.UIAutomation.IAutomation" else "") //todo remove
+
+        if (res.startsWith(','))
+            res = res.substring(1)
 
         + " : $res"
     }
