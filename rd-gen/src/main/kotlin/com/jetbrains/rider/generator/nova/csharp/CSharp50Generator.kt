@@ -390,7 +390,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
         baseClassTrait(decl)
 
-        + " {"
+        + "{"
         indent {
             + "//fields"
             fieldsTrait(decl)
@@ -892,17 +892,25 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
 
     protected open fun PrettyPrinter.baseClassTrait(decl: Declaration) {
-        val base = decl.base ?: let {
-            val inherits = decl.getSetting(Inherits)?.let { ", $it" } ?: ""
-            val inheritsAutomation = if(decl.getSetting(InheritsAutomation) ?: false) ", JetBrains.Application.UI.UIAutomation.IAutomation" else ""
 
-            if (decl is Toplevel) p(" : RdExtBase$inherits$inheritsAutomation")
-            else if (decl is Class || decl is Aggregate || decl is Toplevel) p(" : RdBindableBase$inherits$inheritsAutomation")
-            else if (decl is Struct.Concrete) p(" : IPrintable, IEquatable<${decl.name}>$inherits$inheritsAutomation")
-            return
-        }
+        val base = decl.base
+        val baseClassesStr =
+                if (base == null) {
+                    when (decl) {
+                        is Toplevel -> "RdExtBase"
+                        is BindableDeclaration -> "RdBindableBase"
+                        is Struct -> "IPrintable, IEquatable<${decl.name}>"
+                        else -> fail("Unsupported declaration: $decl")
+                    } //enum must not reach this place
+                } else {
+                    base.sanitizedName(decl)
+                }
 
-        + " : ${base.sanitizedName(decl)}"
+        val res = baseClassesStr +
+                (decl.getSetting(Inherits)?.let { ", $it" } ?: "") +
+                (if(decl.getSetting(InheritsAutomation) == true) ", JetBrains.Application.UI.UIAutomation.IAutomation" else "") //todo remove
+
+        + " : $res"
     }
 
 
