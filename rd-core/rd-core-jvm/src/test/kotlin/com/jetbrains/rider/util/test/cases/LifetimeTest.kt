@@ -94,16 +94,16 @@ class LifetimeTest : RdTestBase() {
         assertEquals(listOf(0, 1, -1), log)
     }
 
-// @korifey please fix
-//    @Test
+
+    @Test
     fun testUsing() {
         var lf : RLifetime? = null
         RLifetime.using {
             lf = it
-            assertTrue { lf?.isAlive == true }
-            assertFalse {lf?.isEternal == false }
+            assertTrue { lf!!.isAlive}
+            assertFalse {lf!!.isEternal}
         }
-        assertFalse { lf?.isAlive == true }
+        assertFalse { lf!!.isAlive}
     }
 
     @Test
