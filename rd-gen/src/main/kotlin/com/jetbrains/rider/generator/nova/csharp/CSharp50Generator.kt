@@ -913,7 +913,9 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         if (res.startsWith(','))
             res = res.substring(1)
 
-        + " : $res"
+        if (!res.isBlank()) {
+            + " : $res"
+        }
     }
 
 
