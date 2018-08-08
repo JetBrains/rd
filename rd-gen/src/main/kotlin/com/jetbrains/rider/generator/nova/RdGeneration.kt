@@ -3,6 +3,7 @@ package com.jetbrains.rider.generator.nova
 import java.io.File
 
 interface IGenerator {
+
     val folder: File
     fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
 }

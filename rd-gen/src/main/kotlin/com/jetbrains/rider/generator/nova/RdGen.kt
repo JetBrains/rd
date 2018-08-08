@@ -7,6 +7,7 @@ import com.jetbrains.rider.util.hash.PersistentHash
 import com.jetbrains.rider.util.kli.Kli
 import com.jetbrains.rider.util.reflection.scanForClasses
 import com.jetbrains.rider.util.reflection.scanForResourcesContaining
+import com.jetbrains.rider.util.reflection.usingValue
 import com.jetbrains.rider.util.string.condstr
 import java.io.File
 import java.io.PrintStream
@@ -355,7 +356,10 @@ fun generateRdModel(
 
         //Here is the real part
         if (verbose) println("Invoke $gen on $root, clearFolder=$shouldClear")
-        gen.generate(root, shouldClear, toplevels.filter { it.root == root })
+
+        ::settingCtx.usingValue(gen) {
+            gen.generate(root, shouldClear, toplevels.filter { it.root == root })
+        }
 
         generatedFolders.add(gen.folder)
     }

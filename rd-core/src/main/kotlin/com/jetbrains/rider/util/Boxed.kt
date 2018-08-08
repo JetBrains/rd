@@ -9,7 +9,7 @@ class TlsBoxed<T>(initialValue : T) {
     var value: T by threadLocal { initialValue }
 }
 
-fun <T> TlsBoxed<Boolean>.forbidReentrancy(action: () -> T) : T {
+inline fun <T> TlsBoxed<Boolean>.forbidReentrancy(action: () -> T) : T {
     require(!value)
     value = true
     try {

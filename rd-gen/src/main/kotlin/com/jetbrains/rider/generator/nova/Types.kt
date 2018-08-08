@@ -116,7 +116,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
 
 
     @Suppress("UNCHECKED_CAST")
-    internal fun <T:Any, S : SettingsHolder> getInheritedSetting(key: ISetting<T, S>) : T? = (settings[key] as? T?) ?: pointcut?.getInheritedSetting(key)
+    internal fun <T:Any, S : SettingsHolder> getSettingInHierarchy(key: ISetting<T, S>) : T? = (settings[key] as? T?) ?: pointcut?.getSettingInHierarchy(key)
 
     //for toString purposes
     protected abstract val cl_name: String

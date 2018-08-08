@@ -5,6 +5,7 @@ import com.jetbrains.rider.util.ThreadLocal
 import com.jetbrains.rider.util.threadLocalWithInitial
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
 
@@ -22,6 +23,17 @@ inline fun <T,R> T.usingTrueFlag(flag: KMutableProperty1<T, Boolean>, set: Boole
         flag.set(this, false)
     }
 }
+
+inline fun <T,R> KMutableProperty0<T>.usingValue(value: T, action: () -> R) : R {
+    val old = get()
+    try {
+        set(value)
+        return action()
+    } finally {
+        set(old)
+    }
+}
+
 
 inline fun <T,R> incrementCookie(obj : T, property: KMutableProperty1<T, Int>, action: () -> R) : R {
     try {
