@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
+
 class RdSignalTest : RdFrameworkTestBase() {
     @Test
     fun TestStatic() {
@@ -23,8 +24,8 @@ class RdSignalTest : RdFrameworkTestBase() {
 
         val clientLog = ArrayList<Int>()
         val serverLog = ArrayList<Int>()
-        client_property.advise(Lifetime.Eternal, {clientLog.add(it)})
-        server_property.advise(Lifetime.Eternal, {serverLog.add(it)})
+        client_property.advise(Lifetime.Eternal) { clientLog.add(it) }
+        server_property.advise(Lifetime.Eternal) { serverLog.add(it) }
 
         //not bound
         assertEquals(listOf<Int>(), clientLog)
@@ -63,8 +64,8 @@ class RdSignalTest : RdFrameworkTestBase() {
         val clientLog = ArrayList<String?>()
         val serverLog = ArrayList<String?>()
 
-        client_property.advise(Lifetime.Eternal, {entity -> entity?.foo?.advise(Lifetime.Eternal, { clientLog.add(it)})})
-        server_property.advise(Lifetime.Eternal, {entity -> entity?.foo?.advise(Lifetime.Eternal, { serverLog.add(it)})})
+        client_property.advise(Lifetime.Eternal) { entity -> entity?.foo?.advise(Lifetime.Eternal, { clientLog.add(it) }) }
+        server_property.advise(Lifetime.Eternal) { entity -> entity?.foo?.advise(Lifetime.Eternal, { serverLog.add(it) }) }
 
         assertEquals(listOf<String?>(), clientLog)
         assertEquals(listOf<String?>(), serverLog)
@@ -97,7 +98,7 @@ class RdSignalTest : RdFrameworkTestBase() {
 
     @Suppress("UNCHECKED_CAST")
     private class DynamicEntity(val _foo: RdSignal<String?>) : RdBindableBase() {
-        val foo : ISignal<String?> = _foo
+        val foo: ISignal<String?> = _foo
 
         companion object : IMarshaller<DynamicEntity> {
             override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
@@ -120,8 +121,8 @@ class RdSignalTest : RdFrameworkTestBase() {
             _foo.bind(lifetime, this, "foo")
         }
 
-        override fun identify(identities: IIdentities, ids: RdId) {
-            _foo.identify(identities, ids.mix("foo"))
+        override fun identify(identities: IIdentities, id: RdId) {
+            _foo.identify(identities, id.mix("foo"))
         }
 
 
@@ -135,7 +136,7 @@ class RdSignalTest : RdFrameworkTestBase() {
 
         var acc = 0
         Lifetime.using {
-            server_signal.advise(it, {acc++})
+            server_signal.advise(it, { acc++ })
             assertEquals(0, acc)
 
             client_signal.fire()
@@ -158,15 +159,13 @@ class RdSignalTest : RdFrameworkTestBase() {
         serverProtocol.serializers.register(VoidSignalEntity)
 
         var acc = 0
-        client_property.adviseNotNull(Lifetime.Eternal, {it.foo.fire()})
-        server_property.viewNotNull(Lifetime.Eternal,
-                {lf, entity -> entity.foo.advise(lf,
-                    {
-                        acc++
-                        lf.add { acc-- }
-                    })
-                }
-        )
+        client_property.adviseNotNull(Lifetime.Eternal) { it.foo.fire() }
+        server_property.viewNotNull(Lifetime.Eternal) { lf, entity ->
+            entity.foo.advise(lf) {
+                acc++
+                lf.add { acc-- }
+            }
+        }
 
         assertEquals(0, acc)
         client_property.value = VoidSignalEntity()
@@ -175,8 +174,62 @@ class RdSignalTest : RdFrameworkTestBase() {
         assertEquals(0, acc)
     }
 
+    class Foo(val negate: Boolean = false, val module: Int = 0) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Foo
+
+            if (negate != other.negate) return false
+            if (module != other.module) return false
+
+            return true
+        }
+    }
+
+    class CustomSerializer : ISerializer<Foo> {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Foo {
+            val negate = buffer.readBoolean()
+            val module = buffer.readInt()
+            return Foo(negate, module)
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Foo) {
+            buffer.writeBoolean(value.negate)
+            buffer.writeInt(value.module)
+        }
+    }
+
+    @Test
+    fun TestCustomSerializer() {
+        val property_id = 1
+
+        val client_property = RdSignal<Foo>(CustomSerializer()).static(property_id)
+        val server_property = RdSignal<Foo>(CustomSerializer()).static(property_id)
+
+        var clientLog = Foo()
+        var serverLog = Foo()
+        client_property.advise(Lifetime.Eternal) { clientLog = it }
+        server_property.advise(Lifetime.Eternal) { serverLog = it }
+
+        //bound
+        clientProtocol.bindStatic(client_property, "top")
+        serverProtocol.bindStatic(server_property, "top")
+
+        //set from client
+        client_property.fire(Foo(true, 2))
+        assertEquals(Foo(true, 2), clientLog)
+        assertEquals(Foo(true, 2), serverLog)
+
+        //set from server
+        server_property.fire(Foo(false, 3))
+        assertEquals(Foo(false, 3), clientLog)
+        assertEquals(Foo(false, 3), serverLog)
+    }
+
     private class VoidSignalEntity(private val _foo: RdSignal<Unit>) : RdBindableBase() {
-        val foo : RdSignal<Unit> get() = _foo
+        val foo: RdSignal<Unit> get() = _foo
 
         companion object : IMarshaller<VoidSignalEntity> {
             override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): VoidSignalEntity {
@@ -197,11 +250,11 @@ class RdSignalTest : RdFrameworkTestBase() {
             _foo.bind(lifetime, this, "foo")
         }
 
-        override fun identify(identities: IIdentities, ids: RdId) {
-            _foo.identify(identities, ids.mix("foo"))
+        override fun identify(identities: IIdentities, id: RdId) {
+            _foo.identify(identities, id.mix("foo"))
         }
 
-        constructor(): this(RdSignal<Unit>())
+        constructor() : this(RdSignal<Unit>())
     }
 }
 
