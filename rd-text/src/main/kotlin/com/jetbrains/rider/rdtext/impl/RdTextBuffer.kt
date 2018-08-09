@@ -132,10 +132,4 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
     override fun toString(): String {
         return "Text Buffer: ($rdid)"
     }
-
-    // don't use, temporary hack
-    fun updateVersionAndFireHistoryChange(change: RdTextChange, newBufferVersion: TextBufferVersion) {
-        bufferVersion = newBufferVersion
-        _historyChanged.fire(change)
-    }
 }
