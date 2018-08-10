@@ -5,8 +5,11 @@ import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
+import com.jetbrains.rider.util.ConsoleLoggerFactory
+import com.jetbrains.rider.util.LogLevel
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
+import com.jetbrains.rider.util.reactive.Property
 import com.jetbrains.rider.util.reactive.valueOrThrow
 import com.jetbrains.rider.util.string.printToString
 import kotlin.reflect.KClass
@@ -25,8 +28,8 @@ class RdPropertyTest : RdFrameworkTestBase() {
 
         val clientLog = arrayListOf<Int>()
         val serverLog = arrayListOf<Int>()
-        client_property.advise(Lifetime.Eternal, {clientLog.add(it)})
-        server_property.advise(Lifetime.Eternal, {serverLog.add(it)})
+        client_property.advise(Lifetime.Eternal) { clientLog.add(it) }
+        server_property.advise(Lifetime.Eternal) { serverLog.add(it) }
 
         //not bound
         assertEquals(listOf(1), clientLog)
@@ -71,8 +74,8 @@ class RdPropertyTest : RdFrameworkTestBase() {
         val clientLog = arrayListOf<Boolean?>()
         val serverLog = arrayListOf<Boolean?>()
 
-        client_property.advise(Lifetime.Eternal, {entity -> entity.foo.advise(Lifetime.Eternal, { clientLog.add(it)})})
-        server_property.advise(Lifetime.Eternal, {entity -> entity.foo.advise(Lifetime.Eternal, { serverLog.add(it)})})
+        client_property.advise(Lifetime.Eternal, { entity -> entity.foo.advise(Lifetime.Eternal, { clientLog.add(it) }) })
+        server_property.advise(Lifetime.Eternal, { entity -> entity.foo.advise(Lifetime.Eternal, { serverLog.add(it) }) })
 
         assertEquals(listOf<Boolean?>(), clientLog)
         assertEquals(listOf<Boolean?>(), serverLog)
@@ -114,7 +117,7 @@ class RdPropertyTest : RdFrameworkTestBase() {
     }
 
     private class DynamicEntity(val _foo: RdProperty<Boolean?>) : RdBindableBase() {
-        val foo : IProperty<Boolean?> = _foo
+        val foo: IProperty<Boolean?> = _foo
 
         companion object : IMarshaller<DynamicEntity> {
             override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
@@ -141,7 +144,7 @@ class RdPropertyTest : RdFrameworkTestBase() {
             _foo.identify(identities, ids.mix("foo"))
         }
 
-        constructor(_foo : Boolean?) : this(RdProperty(_foo, FrameworkMarshallers.Bool.nullable()))
+        constructor(_foo: Boolean?) : this(RdProperty(_foo, FrameworkMarshallers.Bool.nullable()))
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -150,13 +153,13 @@ class RdPropertyTest : RdFrameworkTestBase() {
         setWireAutoFlush(false)
 
         val szr = RdOptionalProperty.Companion as ISerializer<RdOptionalProperty<Int>>
-        val p1 =  RdOptionalProperty(szr)
-        val p2 =  RdOptionalProperty(szr)
+        val p1 = RdOptionalProperty(szr)
+        val p2 = RdOptionalProperty(szr)
 
         var nxt = 0
         val log = arrayListOf<Int>()
-        p1.view(clientLifetimeDef.lifetime, {lf, inner -> inner.advise(lf) {log.add(it)}})
-        p2.advise(serverLifetimeDef.lifetime, { inner -> inner.set(++nxt)  })
+        p1.view(clientLifetimeDef.lifetime) { lf, inner -> inner.advise(lf) { log.add(it) } }
+        p2.advise(serverLifetimeDef.lifetime) { inner -> inner.set(++nxt) }
 
         clientProtocol.bindStatic(p1, 1)
         serverProtocol.bindStatic(p2, 1)
@@ -164,7 +167,6 @@ class RdPropertyTest : RdFrameworkTestBase() {
 
         setWireAutoFlush(true)
         assertEquals(listOf(1), log)
-
 
 
     }
