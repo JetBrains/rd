@@ -129,7 +129,7 @@ fun Iterable<IOptProperty<Boolean>>.all(lifetime: Lifetime): IPropertyView<Boole
 
 
 fun <T, R> IPropertyView<T>.map(f: (T) -> R) = object : IPropertyView<R> {
-    override val change: ISource<R> get() = object : ISource<R> {
+    override val change: ISource<R> = object : ISource<R> {
         override fun advise(lifetime: Lifetime, handler: (R) -> Unit) {
             var lastValue = value
             this@map.advise(lifetime) {
@@ -150,7 +150,7 @@ fun <T : Any, R : Any> IOptPropertyView<T>.map(f: (T) -> R) = object : IOptPrope
     override val valueOrNull: R?
         get() = this@map.valueOrNull?.let { f(it) }
 
-    override val change: ISource<R> get() = object : ISource<R> {
+    override val change: ISource<R> = object : ISource<R> {
         override fun advise(lifetime: Lifetime, handler: (R) -> Unit) {
             var lastValue = valueOrNull
             this@map.advise(lifetime) {
