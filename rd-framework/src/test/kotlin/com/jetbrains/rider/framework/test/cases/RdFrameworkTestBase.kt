@@ -1,9 +1,6 @@
 package com.jetbrains.rider.framework.test.cases
 
-import com.jetbrains.rider.framework.IProtocol
-import com.jetbrains.rider.framework.Identities
-import com.jetbrains.rider.framework.Protocol
-import com.jetbrains.rider.framework.Serializers
+import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.IRdBindable
 import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
@@ -67,7 +64,7 @@ open class RdFrameworkTestBase {
             clientScheduler, TestWire(clientScheduler))
 
         serverProtocol = Protocol(serializers,
-                Identities(),
+                Identities(IdKind.Server),
             serverScheduler, TestWire(serverScheduler))
 
         val (w1, w2) = (clientProtocol.wire as TestWire) to (serverProtocol.wire as TestWire)
