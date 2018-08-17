@@ -98,7 +98,8 @@ abstract class RdExtBase : RdReactiveBase() {
 
         val counterpartSerializationHash = buffer.readLong()
         if (serializationHash != counterpartSerializationHash) {
-            super.protocol.outOfSyncModels.add(this)
+            //need to queue since outOfSyncModels is not synchronized
+            super.protocol.scheduler.queue { super.protocol.outOfSyncModels.add(this) }
             error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
         }
     }
