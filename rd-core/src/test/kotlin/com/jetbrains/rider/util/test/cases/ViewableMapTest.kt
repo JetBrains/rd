@@ -2,7 +2,9 @@ package com.jetbrains.rider.util.test.cases
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IMutableViewableMap
+import com.jetbrains.rider.util.reactive.IMutableViewableSet
 import com.jetbrains.rider.util.reactive.ViewableMap
+import com.jetbrains.rider.util.reactive.ViewableSet
 import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,7 +38,7 @@ class ViewableMapTest : RdTestBase()  {
 
         assertEquals(listOf("Add 0:0", "Add 1:1", "Remove 0:0", "Add 0:1", "Add 10:10", "Remove 0:1", "Add 0:0", "Remove 1:1", "End"), logAddRemove)
         assertEquals(listOf("Add 0:0", "Add 1:1", "Update 0:1", "Add 10:10", "Update 0:0", "Remove 1"), logUpdate)
-        assertEquals(listOf(0, 1, -0, 0, 10, -1, 0, -1, /*this events are arguable*/0, -10), logView);
+        assertEquals(listOf(0, 1, -0, 0, 10, -1, 0, -1, /*this events are arguable*/0, -10), logView)
 
         //let's clear
         logAddRemove.clear()
@@ -47,6 +49,28 @@ class ViewableMapTest : RdTestBase()  {
         }
         assertEquals(listOf("Add 0:0", "Add 10:10", "Remove 0:0", "Remove 10:10"), logAddRemove)
     }
+
+    @Test
+    fun testView() {
+        val elementsView = listOf(2, 0, 1, 8, 3)
+        val elementsUnView = listOf(1, 3, 8, 0, 2)
+
+        val indexesUnView = listOf(2, 4, 3, 1, 0)
+
+        val map: IMutableViewableMap<Int, Int> = ViewableMap()
+        val log = arrayListOf<String>()
+        Lifetime.using { lifetime ->
+            map.view(lifetime) { lt, value ->
+                log.add("View (${value.key}, ${value.value})")
+                lt += { log.add("UnView (${value.key}, ${value.value})") } }
+            elementsView.forEachIndexed { index, v -> map.set(index, v) }
+            map.remove(2)
+        }
+        val a = elementsView.mapIndexed{ index, value -> "View ($index, $value)" }
+        val b = indexesUnView.zip(elementsUnView).map { "UnView (${it.first}, ${it.second})" }
+        assertEquals(a.union(b).toList(), log)
+    }
+
 }
 
 

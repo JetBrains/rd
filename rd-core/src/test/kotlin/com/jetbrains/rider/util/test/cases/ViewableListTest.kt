@@ -37,6 +37,20 @@ class ViewableListTest : RdTestBase()  {
     }
 
     @Test
+    fun addRemoveView2() {
+        val list: IMutableViewableList<Int> = ViewableList()
+        val log = arrayListOf<String>()
+        Lifetime.using { lifetime ->
+            list.view(lifetime) { lt, value -> log.add("View $value"); lt += { log.add("UnView $value") } }
+            list.add(0)
+            list.set(0, 1);
+            list.remove(0)
+        }
+
+        assertEquals(log, arrayListOf("View (0, 0)", "UnView (0, 0)", "View (0, 1)", "UnView (0, 1)"))
+    }
+
+    @Test
     fun insertInMiddle() {
         val list: IMutableViewableList<Int> = ViewableList()
         val log = arrayListOf<String>()

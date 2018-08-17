@@ -3,6 +3,7 @@ package com.jetbrains.rider.util.test.cases
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.AddRemove
+import com.jetbrains.rider.util.reactive.IMutableViewableSet
 import com.jetbrains.rider.util.reactive.ViewableSet
 import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
@@ -51,4 +52,24 @@ class ViewableSetTest : RdTestBase()  {
         assertEquals(listOf(1, 2, -2, 2, -1, -2), logView1)
         assertEquals(listOf(1, 2, -2, 2, -1, 1), logView2)
     }
+
+    @Test
+    fun testView() {
+        val elementsView = listOf(2, 0, 1, 8, 3)
+        val elementsUnView = listOf(1, 3, 8, 0, 2)
+
+        val set: IMutableViewableSet<Int> = ViewableSet()
+        val log = arrayListOf<String>()
+        Lifetime.using { lifetime ->
+            set.view(lifetime) { lt, value -> log.add("View $value"); lt += { log.add("UnView $value") } }
+            for (x in elementsView) {
+                set.add(x)
+            }
+            set.remove(1)
+        }
+        val a = elementsView.map { "View $it" }
+        val b = elementsUnView.map { "UnView $it" }
+        assertEquals(a.union(b).toList(), log)
+    }
+
 }
