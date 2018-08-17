@@ -15,9 +15,25 @@ class BitSliceTest : RdTestBase()  {
         Three
     }
 
+
+    private enum class Enum0
+
+    private enum class Enum1 {
+        Single
+    }
+
+
+
     private val sliceInt = BitSlice.int(4)
     private val sliceEnum = BitSlice.enum<Enum>(sliceInt)
     private val sliceBool = BitSlice.bool(sliceEnum)
+
+
+    @Test
+    fun testBadEnums() {
+        assertFails { BitSlice.enum<Enum0>() }
+        assertFails { BitSlice.enum<Enum1>() }
+    }
 
     @Test
     fun testZero() {

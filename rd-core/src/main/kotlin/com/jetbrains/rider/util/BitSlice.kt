@@ -29,6 +29,7 @@ open class BitSlice(val lowBit: Int, val bitCount: Int) {
 
         inline fun <reified T:Enum<T>> enum(prev: BitSlice? = null) : TypedBitSlice<T> {
             val values = enumValues<T>()
+            require(values.size >= 2) { "Bit slice for enums with $values values is meaningless" }
             return object : TypedBitSlice<T>(prev.nextSliceLow(), log2ceil(values.size)) {
                 override fun get(host: Int): T = values[getRaw(host)]
                 override fun updated(host: Int, value: T) = updatedRaw(host, value.ordinal)
@@ -66,7 +67,7 @@ open class BitSlice(val lowBit: Int, val bitCount: Int) {
         requireSliceFitsHostType<Int>()
         requireValueFitsSlice(value)
 
-        return (host and  (mask shl lowBit).xor(-1)) or (value shl lowBit)
+        return (host and  ((mask shl lowBit) xor -1)) or (value shl lowBit)
     }
 
 
