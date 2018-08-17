@@ -4,10 +4,10 @@ import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
 import com.jetbrains.rider.framework.AbstractBuffer
 import com.jetbrains.rider.rdtext.TextBufferVersion
-import com.jetbrains.rider.rdtext.RdTextChange
-import com.jetbrains.rider.rdtext.RdTextChangeKind
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeMarshaller
 import com.jetbrains.rider.util.string.IPrintable
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.printToString
@@ -21,12 +21,7 @@ data class RdTextBufferChange(val version: TextBufferVersion, val origin: RdChan
             val slaveVersionRemote = buffer.readInt()
             val version = TextBufferVersion(masterVersionRemote, slaveVersionRemote)
             val origin = buffer.readEnum<RdChangeOrigin>()
-            val kind = buffer.readEnum<RdTextChangeKind>()
-            val offset = buffer.readInt()
-            val old = buffer.readString()
-            val new = buffer.readString()
-            val fullLength = buffer.readInt()
-            val change = RdTextChange(kind, offset, old, new, fullLength)
+            val change = RdTextChangeMarshaller.read(ctx, buffer)
             return RdTextBufferChange(version, origin, change)
         }
 
@@ -37,11 +32,7 @@ data class RdTextBufferChange(val version: TextBufferVersion, val origin: RdChan
             val origin = value.origin
             buffer.writeEnum(origin)
             val change = value.change
-            buffer.writeEnum(change.kind)
-            buffer.writeInt(change.startOffset)
-            buffer.writeString(change.old)
-            buffer.writeString(change.new)
-            buffer.writeInt(change.fullTextLength)
+            RdTextChangeMarshaller.write(ctx, buffer, change)
         }
 
         override val _type: KClass<RdTextBufferChange> get() = RdTextBufferChange::class

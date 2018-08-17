@@ -1,5 +1,6 @@
 package com.jetbrains.rider.rdtext
 
+import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rider.util.reactive.ISignal
 import com.jetbrains.rider.util.reactive.ISource
 
