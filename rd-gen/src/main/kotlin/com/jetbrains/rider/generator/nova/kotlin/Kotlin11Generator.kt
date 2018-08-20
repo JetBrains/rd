@@ -781,7 +781,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         val pointcut = decl.pointcut ?: return
         val lowerName = decl.name.decapitalize()
         val extName = decl.extName ?: lowerName
-        + """val ${pointcut.name}.$extName get() = getOrCreateExtension("$lowerName", ::${decl.name})"""
+        + """val ${pointcut.sanitizedName(decl)}.$extName get() = getOrCreateExtension("$lowerName", ::${decl.name})"""
         println()
     }
 

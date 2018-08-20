@@ -936,7 +936,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         indent {
             val lowerName = decl.name.decapitalize()
             val extName = decl.extName?.capitalize() ?: decl.name
-            + "public static ${decl.name} Get$extName(this ${pointcut.name} $ownerLowerName)"
+            + "public static ${decl.name} Get$extName(this ${pointcut.sanitizedName(decl)} $ownerLowerName)"
             + "{"
             indent {
                 + """return $ownerLowerName.GetOrCreateExtension("$lowerName", () => new ${decl.name}());"""
