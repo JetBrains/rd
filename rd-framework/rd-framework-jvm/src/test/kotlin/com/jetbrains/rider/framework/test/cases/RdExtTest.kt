@@ -14,6 +14,7 @@ import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
+import com.jetbrains.rider.framework.test.util.*
 
 class RdExtTest : RdFrameworkTestBase() {
     @Ignore
@@ -60,37 +61,6 @@ class RdExtTest : RdFrameworkTestBase() {
         //server send COUNTERPART_ACK
 
         assertEquals("Ext!", serverExt.bar.value)
-    }
-
-    private class DynamicEntity(val _foo: RdProperty<Boolean?>) : RdBindableBase() {
-        val foo : IProperty<Boolean?> = _foo
-
-        companion object : IMarshaller<DynamicEntity> {
-            override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
-                return DynamicEntity(RdProperty.read(ctx, buffer, FrameworkMarshallers.Bool.nullable()))
-            }
-
-            override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DynamicEntity) {
-                RdProperty.write(ctx, buffer, value._foo)
-            }
-
-            override val _type: KClass<*>
-                get() = DynamicEntity::class
-
-            fun create(protocol: IProtocol) {
-                protocol.serializers.register(DynamicEntity)
-            }
-        }
-
-        override fun init(lifetime: Lifetime) {
-            _foo.bind(lifetime, this, "foo")
-        }
-
-        override fun identify(identities: IIdentities, ids: RdId) {
-            _foo.identify(identities, ids.mix("foo"))
-        }
-
-        constructor(_foo : Boolean?) : this(RdProperty(_foo, FrameworkMarshallers.Bool.nullable()))
     }
 
     private class DynamicExt(val _bar: RdProperty<String>, private val debugName: String) : RdExtBase(), ISerializersOwner {

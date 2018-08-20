@@ -5,6 +5,7 @@ import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdMap
 import com.jetbrains.rider.framework.impl.RdProperty
+import com.jetbrains.rider.framework.test.util.DynamicEntity
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
 import kotlin.reflect.KClass
@@ -109,40 +110,4 @@ class RdMapTest : RdFrameworkTestBase() {
     }
 
 
-    @Suppress("UNCHECKED_CAST")
-    private class DynamicEntity(val _foo: RdProperty<Boolean?>) : RdBindableBase() {
-        val foo : IProperty<Boolean?> = _foo
-
-        companion object : IMarshaller<DynamicEntity> {
-            override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
-                return DynamicEntity(
-                    RdProperty.read(
-                        ctx,
-                        buffer
-                    ) as RdProperty<Boolean?>
-                )
-            }
-
-            override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DynamicEntity) {
-                RdProperty.write(ctx, buffer, value.foo as RdProperty<Boolean?>)
-            }
-
-            override val _type: KClass<*>
-                get() = DynamicEntity::class
-
-            fun create(protocol: IProtocol) {
-                protocol.serializers.register(DynamicEntity)
-            }
-        }
-
-        override fun init(lifetime: Lifetime) {
-            _foo.bind(lifetime, this, "foo")
-        }
-
-        override fun identify(identities: IIdentities, ids: RdId) {
-            _foo.identify(identities, ids.mix("foo"))
-        }
-
-        constructor(_foo : Boolean?) : this(RdProperty(_foo))
-    }
 }

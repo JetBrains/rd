@@ -30,7 +30,9 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
         ostream.position = 0
 
         msgQ.offer(RdMessage(id, ostream))
-        if (autoFlush) processAllMessages()
+        if (autoFlush) {
+            processAllMessages()
+        }
     }
 
 
@@ -38,7 +40,9 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
         get() = field
         set(value) {
             field = value
-            if (value) processAllMessages()
+            if (value) {
+                processAllMessages()
+            }
         }
 
     fun processAllMessages() {
