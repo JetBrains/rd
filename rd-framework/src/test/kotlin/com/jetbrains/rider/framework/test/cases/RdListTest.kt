@@ -1,14 +1,12 @@
 package com.jetbrains.rider.framework.test.cases
 
-import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.RdBindableBase
+import com.jetbrains.rider.framework.ISerializer
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdList
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.test.util.DynamicEntity
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.reactive.IProperty
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -67,8 +65,8 @@ class RdListTest : RdFrameworkTestBase() {
     fun testDynamic() {
         val id = 1
 
-        val serverList = RdList<DynamicEntity>().static(id)
-        val clientList = RdList<DynamicEntity>().static(id)
+        val serverList = RdList<DynamicEntity<Boolean?>>().static(id)
+        val clientList = RdList<DynamicEntity<Boolean?>>().static(id)
 
         DynamicEntity.create(clientProtocol)
         DynamicEntity.create(serverProtocol)
@@ -80,11 +78,11 @@ class RdListTest : RdFrameworkTestBase() {
         serverProtocol.bindStatic(serverList, " top")
 
         val log = arrayListOf<String>()
-        serverList.view(Lifetime.Eternal, { lf, k, v ->
+        serverList.view(Lifetime.Eternal) { lf, k, v ->
             lf.bracket({ log.add("start $k") }, { log.add("finish $k") })
-            v.foo.advise(lf, { fooval -> log.add("$fooval") })
-        })
-        clientList.add(DynamicEntity(null))
+            v.foo.advise(lf) { fooval -> log.add("$fooval") }
+        }
+        clientList.add(DynamicEntity<Boolean?>(null))
         clientList[0].foo.value = true
         clientList[0].foo.value = true //no action
 

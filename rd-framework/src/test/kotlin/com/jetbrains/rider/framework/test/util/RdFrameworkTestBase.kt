@@ -1,10 +1,9 @@
-package com.jetbrains.rider.framework.test.cases
+package com.jetbrains.rider.framework.test.util
 
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.IRdBindable
 import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
-import com.jetbrains.rider.framework.test.util.TestWire
 import com.jetbrains.rider.util.Closeable
 import com.jetbrains.rider.util.ILoggerFactory
 import com.jetbrains.rider.util.Statics

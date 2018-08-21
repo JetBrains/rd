@@ -1,14 +1,10 @@
 package com.jetbrains.rider.framework.test.cases
 
-import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdMap
-import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.test.util.DynamicEntity
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.reactive.IProperty
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -71,8 +67,8 @@ class RdMapTest : RdFrameworkTestBase() {
     {
         val id = 1
 
-        val serverMap = RdMap<Int, DynamicEntity>().static(id)
-        val clientMap = RdMap<Int, DynamicEntity>().static(id)
+        val serverMap = RdMap<Int, DynamicEntity<Boolean?>>().static(id)
+        val clientMap = RdMap<Int, DynamicEntity<Boolean?>>().static(id)
         serverMap.manualMaster = false
 
         DynamicEntity.create(clientProtocol)
@@ -85,20 +81,20 @@ class RdMapTest : RdFrameworkTestBase() {
         serverProtocol.bindStatic(serverMap," top")
 
         val log = arrayListOf<String>()
-        serverMap.view(Lifetime.Eternal, {lf, k, v ->
+        serverMap.view(Lifetime.Eternal) { lf, k, v ->
             lf.bracket({log.add("start $k")}, {log.add("finish $k")})
-            v.foo.advise(lf, {fooval -> log.add("$fooval")})
-        })
-        clientMap[1] = DynamicEntity(null)
+            v.foo.advise(lf) { fooval -> log.add("$fooval")}
+        }
+        clientMap[1] = DynamicEntity<Boolean?>(null)
         clientMap[1]!!.foo.value = true
         clientMap[1]!!.foo.value = true //no action
 
-        clientMap[1] = DynamicEntity(true)
+        clientMap[1] = DynamicEntity<Boolean?>(true)
 
-        serverMap[2] = DynamicEntity(false)
+        serverMap[2] = DynamicEntity<Boolean?>(false)
 
         clientMap.remove(2)
-        clientMap[2] = DynamicEntity(true)
+        clientMap[2] = DynamicEntity<Boolean?>(true)
 
         clientMap.clear()
 

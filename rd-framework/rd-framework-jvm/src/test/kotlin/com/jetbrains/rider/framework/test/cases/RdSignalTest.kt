@@ -6,6 +6,7 @@ import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.impl.RdSignal
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
 import org.junit.Test
@@ -135,8 +136,8 @@ class RdSignalTest : RdFrameworkTestBase() {
         val server_signal = serverProtocol.bindStatic(RdSignal<Unit>().static(1), "top")
 
         var acc = 0
-        Lifetime.using {
-            server_signal.advise(it, { acc++ })
+        Lifetime.using { lifetime ->
+            server_signal.advise(lifetime) { acc++ }
             assertEquals(0, acc)
 
             client_signal.fire()
@@ -174,19 +175,7 @@ class RdSignalTest : RdFrameworkTestBase() {
         assertEquals(0, acc)
     }
 
-    class Foo(val negate: Boolean = false, val module: Int = 0) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Foo
-
-            if (negate != other.negate) return false
-            if (module != other.module) return false
-
-            return true
-        }
-    }
+    data class Foo(val negate: Boolean = false, val module: Int = 0)
 
     class CustomSerializer : ISerializer<Foo> {
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Foo {

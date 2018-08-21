@@ -1,22 +1,17 @@
 package com.jetbrains.rider.framework.test.cases
 
-import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.RdBindableBase
+import com.jetbrains.rider.framework.ISerializer
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
-import com.jetbrains.rider.util.ConsoleLoggerFactory
-import com.jetbrains.rider.util.LogLevel
+import com.jetbrains.rider.framework.test.util.DynamicEntity
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.reactive.IProperty
-import com.jetbrains.rider.util.reactive.Property
 import com.jetbrains.rider.util.reactive.valueOrThrow
 import com.jetbrains.rider.util.string.printToString
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import com.jetbrains.rider.framework.test.util.*
 
 class RdPropertyTest : RdFrameworkTestBase() {
     @Test
@@ -62,8 +57,8 @@ class RdPropertyTest : RdFrameworkTestBase() {
     @Test
     fun testDynamic() {
         val property_id = 1
-        val client_property = RdOptionalProperty<DynamicEntity>().static(property_id)
-        val server_property = RdOptionalProperty<DynamicEntity>().static(property_id).slave()
+        val client_property = RdOptionalProperty<DynamicEntity<Boolean?>>().static(property_id)
+        val server_property = RdOptionalProperty<DynamicEntity<Boolean?>>().static(property_id).slave()
 
         DynamicEntity.create(clientProtocol)
         DynamicEntity.create(serverProtocol)
@@ -74,13 +69,13 @@ class RdPropertyTest : RdFrameworkTestBase() {
         val clientLog = arrayListOf<Boolean?>()
         val serverLog = arrayListOf<Boolean?>()
 
-        client_property.advise(Lifetime.Eternal, { entity -> entity.foo.advise(Lifetime.Eternal, { clientLog.add(it) }) })
-        server_property.advise(Lifetime.Eternal, { entity -> entity.foo.advise(Lifetime.Eternal, { serverLog.add(it) }) })
+        client_property.advise(Lifetime.Eternal) { entity -> entity.foo.advise(Lifetime.Eternal) { clientLog.add(it) } }
+        server_property.advise(Lifetime.Eternal) { entity -> entity.foo.advise(Lifetime.Eternal) { serverLog.add(it) } }
 
         assertEquals(listOf<Boolean?>(), clientLog)
         assertEquals(listOf<Boolean?>(), serverLog)
 
-        client_property.set(DynamicEntity(null))
+        client_property.set(DynamicEntity<Boolean?>(null))
 
         assertEquals(listOf<Boolean?>(null), clientLog)
         assertEquals(listOf<Boolean?>(null), serverLog)
@@ -100,7 +95,7 @@ class RdPropertyTest : RdFrameworkTestBase() {
         assertEquals(listOf(null, false, true, null), serverLog)
 
 
-        val e = DynamicEntity(true)
+        val e = DynamicEntity<Boolean?>(true)
         client_property.set(e) //no listen - no change
         assertEquals(listOf(null, false, true, null, true), clientLog)
         assertEquals(listOf(null, false, true, null, true), serverLog)
@@ -114,6 +109,48 @@ class RdPropertyTest : RdFrameworkTestBase() {
         //reuse
         client_property.set(e)
 
+    }
+
+    @Test
+    fun testDynamic2() {
+        val property_id = 1
+        val client_property = RdProperty(DynamicEntity(RdProperty(0).static(3)).static(2)).static(property_id)
+        val server_property = RdProperty(DynamicEntity(RdProperty(0).static(3)).static(2)).static(property_id).slave()
+
+        DynamicEntity.create(clientProtocol)
+        DynamicEntity.create(serverProtocol)
+        //bound
+        clientProtocol.bindStatic(client_property, "top")
+        serverProtocol.bindStatic(server_property, "top")
+
+        val clientLog = arrayListOf<Int>()
+        val serverLog = arrayListOf<Int>()
+
+        client_property.advise(Lifetime.Eternal) { entity -> entity.foo.advise(Lifetime.Eternal, { clientLog.add(it) }) }
+        server_property.advise(Lifetime.Eternal) { entity -> entity.foo.advise(Lifetime.Eternal, { serverLog.add(it) }) }
+
+        assertEquals(arrayListOf(0), clientLog)
+        assertEquals(arrayListOf(0), serverLog)
+
+        client_property.set(DynamicEntity(2))
+
+        assertEquals((arrayListOf(0, 2)), clientLog)
+        assertEquals((arrayListOf(0, 2)), serverLog)
+
+        client_property.value.foo.set(5)
+
+        assertEquals(arrayListOf(0, 2, 5), clientLog)
+        assertEquals((arrayListOf(0, 2, 5)), serverLog)
+
+        client_property.value.foo.set(5)
+
+        assertEquals(arrayListOf(0, 2, 5), clientLog)
+        assertEquals(arrayListOf(0, 2, 5), serverLog)
+
+        client_property.set(DynamicEntity(5))
+
+        assertEquals(arrayListOf(0, 2, 5, 5), clientLog)
+        assertEquals(arrayListOf(0, 2, 5, 5), serverLog)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -132,12 +169,34 @@ class RdPropertyTest : RdFrameworkTestBase() {
 
         clientProtocol.bindStatic(p1, 1)
         serverProtocol.bindStatic(p2, 1)
-        p1.set(RdOptionalProperty<Int>())
+        p1.set(RdOptionalProperty())
 
         setWireAutoFlush(true)
         assertEquals(listOf(1), log)
 
 
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun testCompanion() {
+        val p1 = RdProperty(RdProperty(0).static(2), RdProperty.Companion as ISerializer<RdProperty<Int>>)
+        val p2 = RdProperty(RdProperty(0).static(2), RdProperty.Companion as ISerializer<RdProperty<Int>>)
+
+
+        var nxt = 10
+        val log = arrayListOf<Int>()
+        p1.view(clientLifetimeDef.lifetime) { lf, inner ->
+            inner.advise(lf) { it -> log.add(it); }
+        }
+        p2.advise(serverLifetimeDef.lifetime) { inner -> inner.set(++nxt); }
+
+        clientProtocol.bindStatic(p1, 1)
+        serverProtocol.bindStatic(p2, 1)
+
+        p2.set(RdProperty(0))
+
+        assertEquals(arrayListOf(0, 0, 12), log)
     }
 }
 

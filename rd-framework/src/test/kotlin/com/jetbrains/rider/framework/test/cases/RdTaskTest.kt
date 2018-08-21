@@ -5,6 +5,7 @@ import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdCall
 import com.jetbrains.rider.framework.impl.RdEndpoint
 import com.jetbrains.rider.framework.isFaulted
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.reactive.valueOrThrow
 import kotlin.test.Test
 import kotlin.test.assertEquals

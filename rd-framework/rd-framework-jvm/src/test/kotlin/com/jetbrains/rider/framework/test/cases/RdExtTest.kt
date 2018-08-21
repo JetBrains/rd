@@ -2,12 +2,10 @@ package com.jetbrains.rider.framework.test.cases
 
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.ISerializersOwner
-import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.RdExtBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
-import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.IProperty
 import com.jetbrains.rider.util.reactive.valueOrThrow
 import org.junit.Ignore
@@ -21,8 +19,8 @@ class RdExtTest : RdFrameworkTestBase() {
     @Test() // TODO: RIDER-14180
     fun testExtension() {
         val propertyId = 1
-        val clientProperty = RdOptionalProperty<DynamicEntity>().static(propertyId)
-        val serverProperty = RdOptionalProperty<DynamicEntity>().static(propertyId).slave()
+        val clientProperty = RdOptionalProperty<DynamicEntity<Boolean?>>().static(propertyId)
+        val serverProperty = RdOptionalProperty<DynamicEntity<Boolean?>>().static(propertyId).slave()
 
         DynamicEntity.create(clientProtocol)
         DynamicEntity.create(serverProtocol)
@@ -34,11 +32,11 @@ class RdExtTest : RdFrameworkTestBase() {
         clientWire.autoFlush = false
         serverWire.autoFlush = false
 
-        var clientEntity = DynamicEntity(true)
+        var clientEntity = DynamicEntity<Boolean?>(true)
         clientProperty.set(clientEntity)
         clientWire.processAllMessages()
 
-        val serverEntity = DynamicEntity(true)
+        val serverEntity = DynamicEntity<Boolean?>(true)
         serverProperty.set(serverEntity)
         serverWire.processAllMessages()
 

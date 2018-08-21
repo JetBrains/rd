@@ -8,15 +8,15 @@ import com.jetbrains.rider.util.reactive.IProperty
 import kotlin.reflect.KClass
 
 
-class DynamicEntity(val _foo: RdProperty<Boolean?>) : RdBindableBase() {
-    val foo: IProperty<Boolean?> = _foo
+class DynamicEntity<T>(val _foo: RdProperty<T>) : RdBindableBase() {
+    val foo: IProperty<T> = _foo
 
-    companion object : IMarshaller<DynamicEntity> {
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity {
-            return DynamicEntity(RdProperty.read(ctx, buffer, FrameworkMarshallers.Bool.nullable()))
+    companion object : IMarshaller<DynamicEntity<*> > {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DynamicEntity<*> {
+            return DynamicEntity(RdProperty.read(ctx, buffer))
         }
 
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DynamicEntity) {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DynamicEntity<*>) {
             RdProperty.write(ctx, buffer, value._foo)
         }
 
@@ -36,5 +36,5 @@ class DynamicEntity(val _foo: RdProperty<Boolean?>) : RdBindableBase() {
         _foo.identify(identities, id.mix("foo"))
     }
 
-    constructor(_foo: Boolean?) : this(RdProperty(_foo, FrameworkMarshallers.Bool.nullable()))
+    constructor(_foo: T) : this(RdProperty<T>(_foo, Polymorphic<T>()))
 }

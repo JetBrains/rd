@@ -1,5 +1,6 @@
 package com.jetbrains.rider.framework.test.cases
 
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.threading.TestSingleThreadScheduler
 import kotlin.test.AfterTest

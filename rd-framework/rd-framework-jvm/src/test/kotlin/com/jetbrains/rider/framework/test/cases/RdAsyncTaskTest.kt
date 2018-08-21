@@ -6,6 +6,7 @@ import com.jetbrains.rider.framework.impl.RdCall
 import com.jetbrains.rider.framework.impl.RdEndpoint
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdTask
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.util.reactive.hasValue
 import com.jetbrains.rider.util.reactive.valueOrThrow
 import com.jetbrains.rider.util.threading.Linearization

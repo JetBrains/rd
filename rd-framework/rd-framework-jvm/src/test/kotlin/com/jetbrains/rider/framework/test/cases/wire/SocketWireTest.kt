@@ -6,7 +6,7 @@ import com.jetbrains.rider.framework.Serializers
 import com.jetbrains.rider.framework.SocketWire
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
-import com.jetbrains.rider.framework.test.cases.TestScheduler
+import com.jetbrains.rider.framework.test.util.TestScheduler
 import com.jetbrains.rider.framework.test.util.NetUtils
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
@@ -40,7 +40,7 @@ class SocketWireTest {
     private fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
         return Protocol(Serializers(), Identities(), TestScheduler,
             SocketWire.Client(lifetime,
-                TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient")
+                    TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient")
         )
     }
 

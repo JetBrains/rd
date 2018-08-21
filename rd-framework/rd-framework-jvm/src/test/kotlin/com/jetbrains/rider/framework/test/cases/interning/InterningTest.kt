@@ -4,7 +4,7 @@ import com.jetbrains.rider.framework.IProtocol
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.interned
-import com.jetbrains.rider.framework.test.cases.RdFrameworkTestBase
+import com.jetbrains.rider.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rider.framework.test.util.TestWire
 import com.jetbrains.rider.framework.withInternRootHere
 import com.jetbrains.rider.util.reactive.valueOrThrow
