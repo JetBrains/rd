@@ -43,7 +43,7 @@ class TextBufferTest {
     class RandomTextChanges(createDeferrableBuffer: (Boolean) -> IDeferrableITextBuffer) : ImperativeCommand {
         private val serializers = Serializers()
         private var clientProtocol: IProtocol = Protocol(serializers, Identities(), clientScheduler, TestWire(clientScheduler))
-        private var serverProtocol: IProtocol = Protocol(serializers, Identities(), serverScheduler, TestWire(serverScheduler))
+        private var serverProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Server), serverScheduler, TestWire(serverScheduler))
         private var clientLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
         private var serverLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
         private var disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory) as Closeable

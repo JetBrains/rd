@@ -1,9 +1,6 @@
 package com.jetbrains.rider.framework.test.cases.wire
 
-import com.jetbrains.rider.framework.Identities
-import com.jetbrains.rider.framework.Protocol
-import com.jetbrains.rider.framework.Serializers
-import com.jetbrains.rider.framework.SocketWire
+import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.test.util.TestScheduler
@@ -31,7 +28,7 @@ class SocketWireTest {
     }
 
     private fun server(lifetime: Lifetime, port: Int? = null): Protocol {
-        return Protocol(Serializers(), Identities(), TestScheduler,
+        return Protocol(Serializers(), Identities(IdKind.Server), TestScheduler,
             SocketWire.Server(lifetime, TestScheduler, port, "TestServer")
         )
     }
