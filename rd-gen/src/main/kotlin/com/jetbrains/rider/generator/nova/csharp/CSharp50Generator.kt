@@ -3,6 +3,7 @@ package com.jetbrains.rider.generator.nova.csharp
 import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.Enum
 import com.jetbrains.rider.generator.nova.FlowKind.*
+import com.jetbrains.rider.generator.nova.util.appendDefaultValueSetter
 import com.jetbrains.rider.generator.nova.util.joinToOptString
 import com.jetbrains.rider.util.hash.IncrementalHash64
 import com.jetbrains.rider.util.string.Eol
@@ -710,7 +711,13 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         indent {
             + decl.allMembers
                 .filter { !it.hasEmptyConstructor }
-                .joinToString(",\n") { "${it.nullAttr(true)}${it.implSubstitutedName(decl)} ${sanitize(it.name)}" }
+                .joinToString(",\n") {
+                    val typeName = it.implSubstitutedName(decl)
+                    StringBuilder("${it.nullAttr(true)}$typeName ${sanitize(it.name)}")
+                    .apply {
+                        appendDefaultValueSetter(it, typeName)
+                    }
+                }
         }
         + ") : this ("
         indent {

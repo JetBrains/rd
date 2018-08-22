@@ -3,6 +3,7 @@ package com.jetbrains.rider.generator.nova.kotlin
 import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.Enum
 import com.jetbrains.rider.generator.nova.FlowKind.*
+import com.jetbrains.rider.generator.nova.util.appendDefaultValueSetter
 import com.jetbrains.rider.generator.nova.util.joinToOptString
 import com.jetbrains.rider.util.hash.IncrementalHash64
 import com.jetbrains.rider.util.string.Eol
@@ -163,15 +164,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         val typeName = implSubstitutedName(containing)
         return StringBuilder().also {
             it.append("$encapsulatedName: $typeName")
-            if (this is Member.Field && (isOptional || defaultValue != null)) {
-                it.append(" = ")
-                val defaultValue = this.defaultValue
-                when (defaultValue) {
-                    is String -> it.append(if (type is Enum) "$typeName.$defaultValue" else "\"$defaultValue\"")
-                    is Long -> it.append(defaultValue)
-                    else -> if (isOptional) it.append("null")
-                }
-            }
+            it.appendDefaultValueSetter(this, typeName)
         }.toString()
     }
 
