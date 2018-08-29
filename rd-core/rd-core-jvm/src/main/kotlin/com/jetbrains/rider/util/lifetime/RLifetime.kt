@@ -212,7 +212,7 @@ class RLifetimeDef : RLifetime() {
 
     //assumed that we are already in Terminating state
     private fun destruct(supportsRecursion: Boolean) {
-        assert (status == Terminating) { "Bad status for termination start: $status"}
+        assert (status == Terminating) { "Bad status for destructuring start: $status"}
 
         for (i in resources.lastIndex downTo 0) {
             val resource = resources[i]
@@ -238,7 +238,7 @@ class RLifetimeDef : RLifetime() {
             resources.removeAt(i)
         }
 
-        require (incrementStatusIf { statusSlice[it] == Terminating }) { "Bad status for terminationEnd: $status" }
+        require (incrementStatusIf { statusSlice[it] == Terminating }) { "Bad status for destructuring finish: $status" }
     }
 
 
