@@ -104,22 +104,25 @@ val Member.Field.optional get() = apply {
     isOptional = true
 }
 
-fun Member.Field.default(value: Long) {
+fun Member.Field.default(value: Long) : Member.Field {
     if (type !== PredefinedType.int && type !== PredefinedType.long) {
         throw GeneratorException("Default value number does not match field type")
     }
     defaultValue = value
+    return this
 }
 
-fun Member.Field.default(value: String) {
+fun Member.Field.default(value: String) : Member.Field {
     if (type !== PredefinedType.string && type !is Enum) {
         throw GeneratorException("Default value string does not match field type")
     }
     defaultValue = value
+    return this
 }
 
-fun Member.doc(value: String) {
+fun Member.doc(value: String) : Member {
     documentation = value
+    return this
 }
 
 val <T: Member.Reactive> T.write: T get() = apply { flow = FlowKind.Source }
