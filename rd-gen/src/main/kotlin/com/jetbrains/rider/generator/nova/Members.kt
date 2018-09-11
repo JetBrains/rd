@@ -24,6 +24,9 @@ sealed class Member(name: String, val referencedTypes: List<IType>) : SettingsHo
         internal var emptyCtorSuppressed = false
         internal var isOptional = false
         internal var defaultValue: Any? = null
+
+        //only for structs
+        internal var usedInEquals = true
     }
 
     data class ExtensionDelegate(
@@ -97,6 +100,8 @@ sealed class Member(name: String, val referencedTypes: List<IType>) : SettingsHo
 
 
 }
+
+fun Member.Field.notUsedInEquals() = apply { usedInEquals = false }
 
 val Member.Field.suppressEmptyCtor get() = apply { emptyCtorSuppressed = true }
 val Member.Field.optional get() = apply {

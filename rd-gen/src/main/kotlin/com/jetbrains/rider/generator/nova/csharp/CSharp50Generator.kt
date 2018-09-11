@@ -768,13 +768,19 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         indent {
             + "if (ReferenceEquals(null, other)) return false;"
             + "if (ReferenceEquals(this, other)) return true;"
-            val res =
-                if (decl.allMembers.isEmpty()) "true"
-                else decl.allMembers.joinToString(" && ") { m ->
-                    val f = m as? Member.Field ?: fail("Must be field but was `$m`")
-                    val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                    t.eq(f.encapsulatedName)
-                }
+            val res = decl.allMembers.flatMap { m ->
+                m as? Member.Field ?: fail("Must be field but was `$m`")
+                if (m.usedInEquals)
+                    listOf(m)
+                else
+                    emptyList()
+
+            }.joinToString(" && ") { f ->
+                val t = f.type as? IScalar ?: fail("Field $decl.`$f` must have scalar type but was ${f.type}")
+                t.eq(f.encapsulatedName)
+
+            }.takeIf { it.isNotBlank() } ?: "true"
+
             + "return $res;"
         }
         +"}"
@@ -803,7 +809,10 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                 decl.allMembers.println { m ->
                     val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                     val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                    "hash = hash * 31 + ${t.hc(f.encapsulatedName)};"
+                    if (f.usedInEquals)
+                        "hash = hash * 31 + ${t.hc(f.encapsulatedName)};"
+                    else
+                        ""
                 }
 
                 +"return hash;"

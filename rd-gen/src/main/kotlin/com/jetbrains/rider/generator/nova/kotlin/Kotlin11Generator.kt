@@ -656,7 +656,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             decl.allMembers.println { m ->
                 val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                 val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                "if (${t.eq(f.encapsulatedName)}) return false"
+
+                if (f.usedInEquals)
+                    "if (${t.eq(f.encapsulatedName)}) return false"
+                else
+                    ""
             }
             println()
             + "return true"
@@ -685,7 +689,10 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             decl.allMembers.println { m ->
                 val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                 val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                "__r = __r*31 + ${t.hc(f.encapsulatedName)}"
+                if (f.usedInEquals)
+                    "__r = __r*31 + ${t.hc(f.encapsulatedName)}"
+                else
+                    ""
             }
 
             + "return __r"
