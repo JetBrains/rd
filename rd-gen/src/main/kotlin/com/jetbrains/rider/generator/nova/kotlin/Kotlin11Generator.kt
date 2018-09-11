@@ -341,12 +341,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         }
     }
 
-    protected fun PrettyPrinter.docComment(doc: String?) {
-        if (doc != null) {
-            + "/**"
-            + " * $doc"
-            + " */"
-        }
+    private fun docComment(doc: String?) = (doc != null).condstr {
+                "\n" +
+                "/**\n" +
+                " * $doc\n" +
+                " */\n"
     }
 
 
@@ -566,14 +565,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
         for (member in decl.ownMembers.filter { it.isEncapsulated }) {
-            docComment(member.documentation)
+            p(docComment(member.documentation))
             + "val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
-            if (member.documentation != null) {
-                println()
-            }
-        }
-        if (!decl.ownMembers.isEmpty() && decl.ownMembers.last().documentation == null) {
-            println()
         }
 
         if (decl is Class && decl.isInternRoot) {
@@ -770,7 +763,9 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     protected open fun PrettyPrinter.enum(decl: Enum) {
         + "enum class ${decl.name} {"
         indent {
-            + decl.constants.joinToString(separator = ",\r\n", postfix = ";") { it.name }
+            + decl.constants.joinToString(separator = ",\r\n", postfix = ";") {
+                docComment(it.documentation) + it.name
+            }
             println()
             + "companion object { val marshaller = FrameworkMarshallers.enum<${decl.name}>() }"
         }

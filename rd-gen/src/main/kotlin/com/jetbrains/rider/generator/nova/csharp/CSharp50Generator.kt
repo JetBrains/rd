@@ -428,11 +428,11 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         }
     }
 
-    private fun PrettyPrinter.docComment(documentation: String?) {
-        if (documentation == null) return
-        + "/// <summary>"
-        + "/// $documentation"
-        + "/// </summary>"
+    private fun docComment(doc: String?) = (doc != null).condstr {
+        "\n" +
+        "/// <summary>\n" +
+        "/// $doc\n" +
+         "/// </summary>\n"
     }
 
     protected fun PrettyPrinter.staticsTrait(decl: Declaration) {
@@ -656,9 +656,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
 
         + "//public fields"
-
         for (member in decl.ownMembers) {
-            docComment(member.documentation)
+            p(docComment(member.documentation))
             when (member) {
                 is Member.Reactive ->
                     + (member.nullAttr() + "public ${member.intfSubstitutedName(decl)} ${member.publicName} { get { return ${member.encapsulatedName}; }}")
@@ -666,13 +665,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                     + (member.nullAttr() + "public ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}")
                 else -> fail("Unsupported member: $member")
             }
-            if (member.documentation != null) {
-                println()
-            }
         }
-        if (!decl.ownMembers.isEmpty() && decl.ownMembers.last().documentation == null) {
-            println()
-        }
+        println()
 
         + "//private fields"
         decl.ownMembers.filterIsInstance<Member.Reactive>().printlnWithBlankLine {
@@ -938,7 +932,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     protected open fun PrettyPrinter.enum(decl: Enum) {
         + "public enum ${decl.name} {"
         indent {
-            + decl.constants.joinToString(separator = ",\r\n") { sanitize(it.name) }
+            + decl.constants.joinToString(separator = ",\r\n") { docComment(it.documentation) + sanitize(it.name) }
         }
         + "}"
     }
