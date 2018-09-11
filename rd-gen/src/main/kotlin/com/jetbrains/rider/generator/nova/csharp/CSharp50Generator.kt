@@ -490,13 +490,16 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "public ${decl.name}(Lifetime lifetime, IProtocol protocol) : this()"
         + "{"
 
+
+        val protocol = decl.namespace.contains(".Protocol").condstr { "JetBrains.Platform.RdFramework.Impl." } + "Protocol"
+
         indent {
             + "Identify(protocol.Identities, RdId.Root.Mix(GetType().Name));"
             + "Bind(lifetime, protocol, GetType().Name);"
 
-            + "if (Protocol.InitializationLogger.IsTraceEnabled())"
+            + "if ($protocol.InitializationLogger.IsTraceEnabled())"
             indent {
-                + "Protocol.InitializationLogger.Trace (\"CREATED toplevel object {0}\", this.PrintToString());"
+                + "$protocol.InitializationLogger.Trace (\"CREATED toplevel object {0}\", this.PrintToString());"
             }
         }
         + "}"
