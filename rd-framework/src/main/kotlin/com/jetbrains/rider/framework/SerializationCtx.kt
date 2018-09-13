@@ -9,8 +9,23 @@ class SerializationCtx(val serializers: ISerializers, val internRoot: IInternRoo
 object Polymorphic : ISerializer<Any?> {
     @Suppress("UNCHECKED_CAST")
     operator fun <T> invoke() : ISerializer<T> = this as ISerializer<T>
-    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Any? = ctx.serializers.readPolymorphicNullable(ctx, buffer)
-    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value:Any?) = ctx.serializers.writePolymorphicNullable(ctx, buffer, value)
+
+    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Any? =
+        ctx.serializers.readPolymorphicNullable(ctx, buffer)
+
+    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Any?) =
+        ctx.serializers.writePolymorphicNullable(ctx, buffer, value)
+}
+
+class AbstractPolymorphic<T>(val declaration: IAbstractDeclaration<T>) : ISerializer<T> {
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> invoke() : ISerializer<T> = this as ISerializer<T>
+
+    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): T =
+        ctx.serializers.readPolymorphicNullable(ctx, buffer, declaration) as T
+
+    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: T) =
+        ctx.serializers.writePolymorphicNullable(ctx, buffer, value)
 }
 
 fun <T> ISerializer<T>.list() : ISerializer<List<T>> = object : ISerializer<List<T>> {

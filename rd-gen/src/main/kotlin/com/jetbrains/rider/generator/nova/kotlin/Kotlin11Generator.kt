@@ -177,14 +177,19 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         return needQualification.condstr { namespace + "." } + name
     }
 
-    protected fun IType.leafSerializerRef(scope: Declaration) : String? = when (this) {
-        is Enum -> "${sanitizedName(scope)}.marshaller"
-        is PredefinedType -> "FrameworkMarshallers.$name"
-        is Declaration ->
-            this.getSetting(Intrinsic)?.marshallerObjectFqn ?:
-                if (isAbstract) "Polymorphic<${sanitizedName(scope)}>()" else sanitizedName(scope)
-        is IArray -> if (this.isPrimitivesArray) "FrameworkMarshallers.$name" else null
-        else -> null
+    protected fun IType.leafSerializerRef(scope: Declaration): String? {
+        return when (this) {
+            is Enum -> "${sanitizedName(scope)}.marshaller"
+            is PredefinedType -> "FrameworkMarshallers.$name"
+            is Declaration ->
+                this.getSetting(Intrinsic)?.marshallerObjectFqn ?: run {
+                    val name = sanitizedName(scope)
+                    if (isAbstract) "AbstractPolymorphic($name)" else name
+                }
+
+            is IArray -> if (this.isPrimitivesArray) "FrameworkMarshallers.$name" else null
+            else -> null
+        }
     }
 
     protected fun IType.serializerRef(scope: Declaration) : String = leafSerializerRef(scope) ?: "__${name}Serializer"
