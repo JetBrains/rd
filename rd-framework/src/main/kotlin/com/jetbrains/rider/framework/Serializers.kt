@@ -69,7 +69,8 @@ class Serializers : ISerializers {
     }
 
     override fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>?): T {
-        return readPolymorphicNullable(ctx, stream) ?: throw IllegalStateException("Non-null object expected")
+        return readPolymorphicNullable(ctx, stream, abstractDeclaration)
+            ?: throw IllegalStateException("Non-null object expected")
     }
 
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
