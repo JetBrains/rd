@@ -228,12 +228,14 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         println()
 
+        val types = tl.declaredTypes + unknowns(tl.declaredTypes)
+
         if (tl.isLibrary)
-            libdef(tl)
+            libdef(tl, types)
         else
             typedef(tl)
 
-        tl.declaredTypes.sortedBy { it.name }.forEach { type ->
+        types.sortedBy { it.name }.forEach { type ->
             typedef(type)
         }
     }
@@ -269,11 +271,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     }
 
 
-    protected open fun PrettyPrinter.libdef(decl: Toplevel) {
+    protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
         if (decl.getSetting(Kotlin11Generator.Intrinsic) != null) return
         + "object ${decl.name} : ISerializersOwner {"
         indent {
-            registerSerializersTrait(decl)
+            registerSerializersTrait(decl, types)
         }
         + "}"
     }
@@ -316,10 +318,15 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         baseClassTrait(decl)
 
+        if (isUnknown(decl)) {
+            p(", IUnknownInstance")
+        }
+
         + " {"
         indent {
             + "//companion"
             companionTrait(decl)
+            unknownTrait(decl)
             + "//fields"
             fieldsTrait(decl)
             + "//initializer"
@@ -338,13 +345,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
         }
-
-        if (decl is Struct.Abstract) {
-            typedef(Struct.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
-        } else if (decl is Class.Abstract) {
-            typedef(Class.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
-        }
     }
+
+    private fun isUnknown(decl: Declaration) =
+            decl is Class.Concrete && decl.isUnknown ||
+            decl is Struct.Concrete && decl.isUnknown
 
     private fun docComment(doc: String?) = (doc != null).condstr {
                 "\n" +
@@ -381,7 +386,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             + "companion object : ISerializersOwner {"
             indent {
                 println()
-                registerSerializersTrait(decl)
+                registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
                 println()
                 println()
                 createMethodTrait(decl)
@@ -417,10 +422,10 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} = ${decl.name}_Unknown.read(ctx, buffer)"
     }
 
-    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel) {
+    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
         + "override fun registerSerializersCore(serializers: ISerializers) {"
         indent {
-            decl.declaredTypes.filter { !it.isAbstract }.filterIsInstance<IType>().println {
+            types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
                 "serializers.register(${it.serializerRef(decl)})"
             }
 
@@ -566,6 +571,13 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             (decl.membersOfBaseClasses + decl.ownMembers).println(Member::writer)
         }
         + "}"
+    }
+
+    protected fun PrettyPrinter.unknownTrait(decl: Declaration) {
+        if (isUnknown(decl)) {
+            + "override lateinit var unknownId: RdId"
+            + "override lateinit var unknownBytes: ByteArray"
+        }
     }
 
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {

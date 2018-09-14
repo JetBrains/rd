@@ -53,7 +53,12 @@ class Serializers : ISerializers {
 
             val objectStartPosition = stream.position
             val result = abstractDeclaration.readUnknownInstance(ctx, stream)
-            stream.position = objectStartPosition + size
+            val bytes = ByteArray(objectStartPosition + size - stream.position)
+            stream.readByteArrayRaw(bytes)
+            with(result as IUnknownInstance) {
+                unknownId = id
+                unknownBytes = bytes
+            }
             return result
         }
 
@@ -75,12 +80,20 @@ class Serializers : ISerializers {
 
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
         val (id, writer) = writers[value::class] ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
-        id.write(stream)
+
+        if (value is IUnknownInstance) {
+            value.unknownId.write(stream)
+        } else {
+            id.write(stream)
+        }
 
         val lengthTagPosition = stream.position
         stream.writeInt(0)
         val objectStartPosition = stream.position
         writer(ctx, stream, value)
+        if (value is IUnknownInstance) {
+            stream.writeByteArrayRaw(value.unknownBytes)
+        }
         val objectEndPosition = stream.position
         stream.position = lengthTagPosition
         stream.writeInt(objectEndPosition - objectStartPosition)

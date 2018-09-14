@@ -250,7 +250,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
 
 
 
-sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Abstract?) : Declaration(pointcut), INonNullableScalar {
+sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Abstract?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_struct"
 
     class Abstract(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base) {
@@ -258,11 +258,11 @@ sealed class Struct(override val _name: String, override val pointcut : Toplevel
         operator fun invoke(body: Struct.() -> Unit)= this to body //for extends
 
     }
-    class Concrete(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base)
+    class Concrete(name: String, pointcut: Toplevel, base: Abstract?, unknown: Boolean = false) : Struct(name, pointcut, base, unknown)
 }
 operator fun <T : Struct> T.getValue(thisRef: Any?, property: KProperty<*>): T = this
 
-sealed class Class(override val _name: String, override val pointcut : Toplevel, override val base: Abstract?) :
+sealed class Class(override val _name: String, override val pointcut : Toplevel, override val base: Abstract?, val isUnknown: Boolean = false) :
         BindableDeclaration(pointcut), INonNullableBindable, Extensible {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_class"
 
@@ -274,7 +274,7 @@ sealed class Class(override val _name: String, override val pointcut : Toplevel,
         override val isAbstract : Boolean get() = true
         operator fun invoke(body: Class.() -> Unit) = this to body //for extends
     }
-    class Concrete (name : String, pointcut : Toplevel, base: Abstract?) : Class(name, pointcut, base)
+    class Concrete (name : String, pointcut : Toplevel, base: Abstract?, unknown: Boolean = false) : Class(name, pointcut, base, unknown)
 }
 operator fun <T : Class> T.getValue(thisRef: Any?, property: KProperty<*>) : T = this
 

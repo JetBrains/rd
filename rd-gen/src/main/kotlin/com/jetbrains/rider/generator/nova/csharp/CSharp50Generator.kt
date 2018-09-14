@@ -296,14 +296,16 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
         namespace(tl)
 
+        val types = tl.declaredTypes + unknowns(tl.declaredTypes)
+
         + "{"
         indent {
             if (tl.isLibrary)
-                libdef(tl)
+                libdef(tl, types)
             else
                 typedef(tl)
 
-            tl.declaredTypes.sortedBy { it.name }.forEach { type ->
+            types.sortedBy { it.name }.forEach { type ->
                 typedef(type)
             }
         }
@@ -355,11 +357,11 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     }
 
 
-    protected open fun PrettyPrinter.libdef(decl: Toplevel) {
+    protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
         if (decl.getSetting(CSharp50Generator.Intrinsic) != null) return
         + "public static class ${decl.name} {"
         indent {
-            registerSerializersTrait(decl)
+            registerSerializersTrait(decl, types)
         }
         + "}"
     }
@@ -420,12 +422,6 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
         }
-
-        if (decl is Struct.Abstract) {
-            typedef(Struct.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
-        } else if (decl is Class.Abstract) {
-            typedef(Class.Concrete("${decl.name}_Unknown", decl.pointcut, decl))
-        }
     }
 
     private fun docComment(doc: String?) = (doc != null).condstr {
@@ -448,20 +444,20 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             println()
             + "protected override long SerializationHash => ${decl.serializationHash(IncrementalHash64()).result}L;"
             println()
-            registerSerializersTrait(decl)
+            registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
             println()
             createMethodTrait(decl)
         }
     }
 
-    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel) {
+    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
         if (!decl.isLibrary)
             + "protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;"
 
         + "public static void RegisterDeclaredTypesSerializers(ISerializers serializers)"
         + "{"
         indent {
-            decl.declaredTypes.filter{ !it.isAbstract }.println {
+            types.filter{ !it.isAbstract }.println {
                 if (it is Enum)
                     "serializers.RegisterEnum<${it.sanitizedName(decl)}>();"
                 else if (it is IType)

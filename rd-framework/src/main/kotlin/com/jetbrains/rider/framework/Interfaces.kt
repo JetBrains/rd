@@ -71,6 +71,11 @@ interface IAbstractDeclaration<T> {
     fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer): T
 }
 
+interface IUnknownInstance {
+    var unknownId: RdId
+    var unknownBytes: ByteArray
+}
+
 /**
  * A registry of known serializers.
  */
