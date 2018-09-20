@@ -70,6 +70,4 @@ class RdDeferrableOtBasedText(delegate: RdOtState, isMaster: Boolean = true) : R
             fire(newChange)
         }
     }
-
-    override val isValid: Boolean get() = delegatedBy.isBound
 }

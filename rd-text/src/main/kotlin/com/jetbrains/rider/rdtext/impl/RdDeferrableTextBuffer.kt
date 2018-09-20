@@ -51,8 +51,6 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
             fire(newChange)
         }
     }
-
-    override val isValid: Boolean get() = delegatedBy.isBound
 }
 
 fun rdDeferrableSlaveTextBuffer(delegate: RdTextBufferState) = RdDeferrableTextBuffer(delegate, false)

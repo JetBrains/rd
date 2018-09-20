@@ -44,7 +44,4 @@ interface IDeferrableITextBuffer : ITextBuffer {
      * Sends all postponed events to protocol.
      */
     fun flush()
-
-    @Deprecated("[todo] drop it")
-    val isValid: Boolean
 }
