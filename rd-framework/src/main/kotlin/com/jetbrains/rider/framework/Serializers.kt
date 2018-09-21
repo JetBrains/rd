@@ -51,15 +51,7 @@ class Serializers : ISerializers {
                 throw IllegalStateException("Can't find reader by id: $id. $notRegisteredErrorMessage")
             }
 
-            val objectStartPosition = stream.position
-            val result = abstractDeclaration.readUnknownInstance(ctx, stream)
-            val bytes = ByteArray(objectStartPosition + size - stream.position)
-            stream.readByteArrayRaw(bytes)
-            with(result as IUnknownInstance) {
-                unknownId = id
-                unknownBytes = bytes
-            }
-            return result
+            return abstractDeclaration.readUnknownInstance(ctx, stream, id, size)
         }
 
         return reader.invoke(ctx, stream) as T
@@ -91,9 +83,6 @@ class Serializers : ISerializers {
         stream.writeInt(0)
         val objectStartPosition = stream.position
         writer(ctx, stream, value)
-        if (value is IUnknownInstance) {
-            stream.writeByteArrayRaw(value.unknownBytes)
-        }
         val objectEndPosition = stream.position
         stream.position = lengthTagPosition
         stream.writeInt(objectEndPosition - objectStartPosition)

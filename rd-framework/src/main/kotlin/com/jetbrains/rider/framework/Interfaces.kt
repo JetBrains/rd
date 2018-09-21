@@ -68,12 +68,11 @@ interface IMarshaller<T : Any> : ISerializer<T> {
 }
 
 interface IAbstractDeclaration<T> {
-    fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer): T
+    fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): T
 }
 
 interface IUnknownInstance {
-    var unknownId: RdId
-    var unknownBytes: ByteArray
+    val unknownId: RdId
 }
 
 /**

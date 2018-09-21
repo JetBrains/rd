@@ -65,8 +65,6 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         else -> fail("Unsupported type ${javaClass.simpleName}")
     }
 
-
-
     //members
     val Member.Reactive.actualFlow : FlowKind get() = flowTransform.transform(flow)
 
@@ -326,7 +324,6 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         indent {
             + "//companion"
             companionTrait(decl)
-            unknownTrait(decl)
             + "//fields"
             fieldsTrait(decl)
             + "//initializer"
@@ -350,6 +347,23 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     private fun isUnknown(decl: Declaration) =
             decl is Class.Concrete && decl.isUnknown ||
             decl is Struct.Concrete && decl.isUnknown
+
+    private fun unknownMembers(decl: Declaration) =
+            if (isUnknown(decl)) arrayOf("override val unknownId: RdId",
+                                         "val unknownBytes: ByteArray")
+            else emptyArray()
+
+    private fun unknownMembersSecondary(decl: Declaration) =
+            if (isUnknown(decl)) arrayOf("unknownId: RdId",
+                                         "unknownBytes: ByteArray")
+            else emptyArray()
+
+    private fun unknownMemberNames(decl: Declaration) =
+            if (isUnknown(decl)) arrayOf("unknownId",
+                                         "unknownBytes")
+            else emptyArray()
+
+    override fun unknown(it: Declaration): Declaration? = super.unknown(it)?.setting(PublicCtors)
 
     private fun docComment(doc: String?) = (doc != null).condstr {
                 "\n" +
@@ -378,6 +392,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             println()
             block("companion object : IAbstractDeclaration<${decl.name}>") {
                 abstractDeclarationTrait(decl)
+                customSerializersTrait(decl)
             }
         }
 
@@ -419,7 +434,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     }
 
     protected fun PrettyPrinter.abstractDeclarationTrait(decl: Declaration) {
-        + "override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} = ${decl.name}_Unknown.read(ctx, buffer)"
+        + "override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): ${decl.name} {"
+        indent {
+            readerBodyTrait(unknown(decl)!!)
+        }
+        + "}"
     }
 
     protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
@@ -474,17 +493,29 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
 
     protected fun PrettyPrinter.readerTrait(decl: Declaration) {
+        + "@Suppress(\"UNCHECKED_CAST\")"
+        + "override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} {"
+        indent {
+            if (isUnknown(decl)) {
+                + "throw NotImplementedError(\"Unknown instances should not be read via serializer\")"
+            } else {
+                readerBodyTrait(decl)
+            }
+        }
+        + "}"
+    }
 
+    fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.reader(): String = when (this) {
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
             is InternedScalar -> "ctx.readInterned(buffer) { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
-                    ?: if (isAbstract)
-                        "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
-                       else
-                        "${substitutedName(decl)}.read(ctx, buffer)"
+                        ?: if (isAbstract)
+                            "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
+                        else
+                            "${substitutedName(decl)}.read(ctx, buffer)"
             is INullable -> "buffer.readNullable { ${itemType.reader()} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.read${substitutedName(decl)}()"
@@ -506,26 +537,28 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun Member.valName(): String = encapsulatedName.let { it + (it == "ctx" || it == "buffer").condstr { "_" } }
 
-        + "@Suppress(\"UNCHECKED_CAST\")"
-        + "override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} {"
-        indent {
-            if(decl is Class && decl.isInternRoot) {
-                + "val ctx = ctx.withInternRootHere(false)"
-            }
-            if (decl is Class || decl is Aggregate) {
-                + "val _id = RdId.read(buffer)"
-            }
-            (decl.membersOfBaseClasses + decl.ownMembers).println { "val ${it.valName()} = ${it.reader()}" }
-            val ctorParams = decl.allMembers.joinToString(", ") { it.valName() }
-            p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
-            if (decl is Class || decl is Aggregate) {
-                p(".withId(_id)")
-            }
-            println()
+        val unknown = isUnknown(decl)
+        if (unknown) {
+            +"val objectStartPosition = buffer.position"
         }
-        + "}"
+        if (decl is Class && decl.isInternRoot) {
+            +"val ctx = ctx.withInternRootHere(false)"
+        }
+        if (decl is Class || decl is Aggregate) {
+            +"val _id = RdId.read(buffer)"
+        }
+        (decl.membersOfBaseClasses + decl.ownMembers).println { "val ${it.valName()} = ${it.reader()}" }
+        if (unknown) {
+            +"val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)"
+            +"buffer.readByteArrayRaw(unknownBytes)"
+        }
+        val ctorParams = decl.allMembers.asSequence().map { it.valName() }.plus(unknownMemberNames(decl)).joinToString(", ")
+        p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
+        if (decl is Class || decl is Aggregate) {
+            p(".withId(_id)")
+        }
+        println()
     }
-
 
 
     protected fun PrettyPrinter.writerTrait(decl: Declaration) {
@@ -569,15 +602,11 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
                 + "value.rdid.write(buffer)"
             }
             (decl.membersOfBaseClasses + decl.ownMembers).println(Member::writer)
+            if (isUnknown(decl)) {
+                + "buffer.writeByteArrayRaw(value.unknownBytes)"
+            }
         }
         + "}"
-    }
-
-    protected fun PrettyPrinter.unknownTrait(decl: Declaration) {
-        if (isUnknown(decl)) {
-            + "override lateinit var unknownId: RdId"
-            + "override lateinit var unknownBytes: ByteArray"
-        }
     }
 
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
@@ -623,20 +652,22 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "constructor("
         indent {
             + decl.allMembers
-                .filter { !it.hasEmptyConstructor }
-                .joinToString(",\n") { it.ctorParam(decl) }
+                    .asSequence()
+                    .filter { !it.hasEmptyConstructor }.map { it.ctorParam(decl) }.plus(unknownMembersSecondary(decl))
+                .joinToString(",\n")
         }
         + ") : this("
         indent {
             + decl.allMembers
-                .joinToString (",\n") {
-                    if (!it.hasEmptyConstructor) it.encapsulatedName
-                    else {
-                        val initialValue = getDefaultValue(decl, it)
-                        val params = (listOf(initialValue) + ((it as? Member.Reactive)?.customSerializers(decl)?: emptyList())).filterNotNull().joinToString (", ")
-                        "${it.ctorSubstitutedName(decl)}($params)"
-                    }
-                }
+                    .asSequence()
+                    .map {
+                        if (!it.hasEmptyConstructor) it.encapsulatedName
+                        else {
+                            val initialValue = getDefaultValue(decl, it)
+                            val params = (listOf(initialValue) + ((it as? Member.Reactive)?.customSerializers(decl)?: emptyList())).filterNotNull().joinToString (", ")
+                            "${it.ctorSubstitutedName(decl)}($params)"
+                        }
+                    }.plus(unknownMemberNames(decl)).joinToString(",\n")
         }
         + ")"
         println()
@@ -755,8 +786,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             (attrs?:"") + "${ctorParamAccessModifier(it)}val ${it.ctorParam(decl)}"
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }
-        
-        + own.plus(base).joinToString(",\n")
+
+        + own.asSequence().plus(base).plus(unknownMembers(decl)).joinToString(",\n")
     }
 
 

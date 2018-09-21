@@ -1,6 +1,5 @@
 package com.jetbrains.rider.generator.nova
 
-import com.jetbrains.rider.util.string.PrettyPrinter
 import java.io.File
 
 interface IGenerator {
@@ -32,14 +31,18 @@ abstract class GeneratorBase : IGenerator {
             fail("Can't create folder '$folder'")
     }
 
-    protected open fun PrettyPrinter.unknowns(declaredTypes: ArrayList<Declaration>): Collection<Declaration> {
+    protected open fun unknowns(declaredTypes: ArrayList<Declaration>): Collection<Declaration> {
         return declaredTypes.mapNotNull {
-            if (it is Struct.Abstract) {
-                return@mapNotNull Struct.Concrete("${it.name}_Unknown", it.pointcut, it, true)
-            } else if (it is Class.Abstract) {
-                return@mapNotNull Class.Concrete("${it.name}_Unknown", it.pointcut, it, true) as Declaration
-            }
-            null
+            val unknown: Declaration? = unknown(it)
+            unknown
+        }
+    }
+
+    protected open fun unknown(it: Declaration): Declaration? {
+        return when (it) {
+            is Struct.Abstract -> Struct.Concrete("${it.name}_Unknown", it.pointcut, it, true)
+            is Class.Abstract -> Class.Concrete("${it.name}_Unknown", it.pointcut, it, true)
+            else -> null
         }
     }
 }
