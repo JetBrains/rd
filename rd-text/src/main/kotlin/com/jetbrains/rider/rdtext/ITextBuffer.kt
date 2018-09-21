@@ -1,6 +1,7 @@
 package com.jetbrains.rider.rdtext
 
 import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
+import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.ISignal
 import com.jetbrains.rider.util.reactive.ISource
 
@@ -29,6 +30,22 @@ interface ITextBuffer : ISignal<RdTextChange> {
      * Asserts that both sides have the same document text if buffer versions are same.
      */
     fun assertState(allText: String)
+}
+
+interface ITextBufferWithTypingSession : ITextBuffer {
+    val discardedBufferVersion: ISource<TextBufferVersion>
+
+    fun startTypingSession(lifetime: Lifetime): ITypingSession
+}
+
+interface ITypingSession {
+    interface IRemoteChange {
+        val source: ITypingSession
+        fun commit()
+    }
+
+    fun rollbackLocalChanges()
+    val onRemoteChange: ISource<IRemoteChange>
 }
 
 /**

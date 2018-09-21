@@ -51,6 +51,15 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
             fire(newChange)
         }
     }
+
+    override fun promoteLocalVersion() {
+        val promotion = RdTextChange(RdTextChangeKind.PromoteVersion, 0, "", "", -1)
+        if (queue.isNotEmpty()) {
+            queue(promotion)
+        } else {
+            fire(promotion)
+        }
+    }
 }
 
 fun rdDeferrableSlaveTextBuffer(delegate: RdTextBufferState) = RdDeferrableTextBuffer(delegate, false)

@@ -8,7 +8,8 @@ enum class RdTextChangeKind {
     Insert,
     Remove,
     Replace,
-    Reset
+    Reset,
+    PromoteVersion
 }
 
 class RdTextChange(val kind: RdTextChangeKind,
@@ -46,6 +47,7 @@ fun RdTextChange.reverse(): RdTextChange {
         RdTextChangeKind.Remove -> RdTextChangeKind.Insert
         RdTextChangeKind.Replace -> RdTextChangeKind.Replace
         RdTextChangeKind.Reset -> throw UnsupportedOperationException()
+        RdTextChangeKind.PromoteVersion -> throw UnsupportedOperationException()
     }
 
     return RdTextChange(newKind, startOffset, new, old, fullTextLength - delta())

@@ -21,11 +21,14 @@ import com.jetbrains.rider.util.warn
  * Slave of the text buffer supports a list of changes that were introduced locally and can be rolled back when master buffer reports
  * incompatible change
  */
-open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster: Boolean = true) : RdDelegateBase<RdTextBufferState>(delegate), ITextBuffer {
+open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster: Boolean = true) : RdDelegateBase<RdTextBufferState>(delegate), ITextBufferWithTypingSession {
     private val changesToConfirmOrRollback: MutableList<RdTextBufferChange> = mutableListOf()
     private val textChanged: IOptProperty<RdTextChange> = OptProperty()
     private val _historyChanged: ISignal<RdTextChange> = Signal()
     override val historyChanged: ISource<RdTextChange> get() = _historyChanged
+    private val _discardedBufferVersion: ISignal<TextBufferVersion> = Signal()
+    override val discardedBufferVersion: ISource<TextBufferVersion> get() = _discardedBufferVersion
+    private var activeTypingSession: TextBufferTypingSession? = null
 
     final override var bufferVersion: TextBufferVersion = TextBufferVersion.INIT_VERSION
         private set
@@ -42,7 +45,16 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
         super.bind(lf, parent, name)
         delegatedBy.changes.adviseNotNull(lf) {
-            if (it.origin != localOrigin) receiveChange(it)
+            if (it.origin == localOrigin) return@adviseNotNull
+
+            val activeSession = activeTypingSession
+            if (activeSession != null) {
+                if (it.version > delegatedBy.versionBeforeTypingSession.valueOrDefault(TextBufferVersion.INIT_VERSION)) {
+                    activeSession.pushRemoteChange(it)
+                    return@adviseNotNull
+                }
+            }
+            receiveChange(it)
         }
 
         // for asserting documents equality
@@ -102,6 +114,7 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
         require(delegatedBy.isBound || bufferVersion == TextBufferVersion.INIT_VERSION)
         if (delegatedBy.isBound) protocol.scheduler.assertThread()
 
+        val oldVersion = bufferVersion
         incrementBufferVersion()
         val bufferChange = RdTextBufferChange(bufferVersion, localOrigin, value)
         if (value.kind == RdTextChangeKind.Reset) {
@@ -110,6 +123,10 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
             changesToConfirmOrRollback.add(bufferChange)
         }
 
+        val activeSession = activeTypingSession
+        if (activeSession != null) {
+            activeSession.pushLocalChange(bufferChange, oldVersion)
+        }
         _historyChanged.fire(value)
         sendChange(bufferChange)
     }
@@ -130,6 +147,7 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
     }
 
     override fun assertState(allText: String) {
+        if (activeTypingSession != null) return
         val assertion = RdAssertion(bufferVersion.master, bufferVersion.slave, allText)
         val assertedTextProp = if (isMaster) delegatedBy.assertedMasterText else delegatedBy.assertedSlaveText
         assertedTextProp.set(assertion)
@@ -137,5 +155,73 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
 
     override fun toString(): String {
         return "Text Buffer: ($rdid)"
+    }
+
+    override fun startTypingSession(lifetime: Lifetime): ITypingSession {
+        require(activeTypingSession == null)
+        require(!lifetime.isTerminated)
+        val session = TextBufferTypingSession(this, lifetime)
+        activeTypingSession = session
+        lifetime.add { activeTypingSession = null }
+        return session
+    }
+
+    private fun rollbackLocalChange(change: RdTextBufferChange, prevVersion: TextBufferVersion) {
+        val reversedChange = change.change.reverse()
+        bufferVersion = prevVersion
+        _discardedBufferVersion.fire(change.version)
+        textChanged.set(reversedChange)
+    }
+
+    protected open fun promoteLocalVersion() {
+        fire(RdTextChange(RdTextChangeKind.PromoteVersion, 0, "", "", -1))
+    }
+
+    private class TextBufferTypingSession(private val textBuffer: RdTextBuffer, lifetime: Lifetime) : ITypingSession {
+        private val localChangeWithPrevVersions = mutableListOf<Pair<RdTextBufferChange, TextBufferVersion>>()
+        private var remoteChanges = mutableListOf<RdTextBufferChange>()
+        private var isLocalCommitted = true
+        override val onRemoteChange = Signal<ITypingSession.IRemoteChange>()
+
+        init {
+            if (textBuffer.isMaster) {
+                textBuffer.delegatedBy.versionBeforeTypingSession.set(textBuffer.bufferVersion)
+                lifetime.add {
+                    if (isLocalCommitted) {
+                        // rollback of slave version is asynchronous, that's why promote master version to protect from late changes
+                        textBuffer.promoteLocalVersion()
+                    }
+                }
+            }
+        }
+
+        override fun rollbackLocalChanges() {
+            isLocalCommitted = false
+            for ((change, prevVersion) in localChangeWithPrevVersions.asReversed()) {
+                textBuffer.rollbackLocalChange(change, prevVersion)
+            }
+            localChangeWithPrevVersions.clear()
+        }
+
+        fun pushLocalChange(change: RdTextBufferChange, prevVersion: TextBufferVersion) {
+            localChangeWithPrevVersions.add(change to prevVersion)
+        }
+
+        fun pushRemoteChange(change: RdTextBufferChange) {
+            onRemoteChange.fire(TextBufferRemoteChange(remoteChanges.size, this))
+            remoteChanges.add(change)
+        }
+
+        private fun commitRemoteChange(changeIdx: Int) {
+            require(localChangeWithPrevVersions.size == 0, { "Before committing remote changes all local changes must be discarded." })
+            require(changeIdx < remoteChanges.size, { "changeIdx >= remoteChanges.size" })
+
+            val change = remoteChanges[changeIdx]
+            textBuffer.receiveChange(change)
+        }
+
+        private class TextBufferRemoteChange(private val idx: Int, override val source: TextBufferTypingSession) : ITypingSession.IRemoteChange {
+            override fun commit() = source.commitRemoteChange(idx)
+        }
     }
 }
