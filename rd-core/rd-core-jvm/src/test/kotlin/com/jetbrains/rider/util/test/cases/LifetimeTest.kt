@@ -47,13 +47,6 @@ class LifetimeTest : RdTestBase() {
     }
 
     @Test
-    fun testTerminate2Times() {
-        val def = RLifetimeDef()
-        assertTrue { def.terminate() }
-        assertFalse { def.terminate() }
-    }
-
-    @Test
     fun testTerminationWithAsyncAction() {
         RLifetime.waitForExecutingInTerminationTimeout = 100000
         val def = RLifetimeDef()
@@ -73,7 +66,7 @@ class LifetimeTest : RdTestBase() {
                     assert(!def.isAlive)
                 }
 
-                //shoudn't execute
+                //shouldn't execute
                 val second = def.executeIfAlive {
                     log.add(2)
                 }
@@ -104,6 +97,47 @@ class LifetimeTest : RdTestBase() {
             assertFalse {lf!!.isEternal}
         }
         assertFalse { lf!!.isAlive}
+    }
+
+    @Test
+    fun testTerminate2Times() {
+        val def = RLifetimeDef()
+        assertTrue { def.terminate() }
+        assertFalse { def.terminate() }
+    }
+
+    @Test
+    fun testBracketSuccess() {
+        val def = RLifetimeDef()
+
+        var x = 0;
+        assertEquals(0, def.bracket({ x++ }, { x++; }))
+        assertEquals(1, x)
+        def.terminate()
+        assertEquals(2, x)
+    }
+
+    @Test
+    fun testBracketFailure() {
+        val def = RLifetimeDef()
+
+        var x = 0;
+        assertFails { def.bracket({ x++; fail() }, { x++; }) }
+        assertEquals(1, x)
+        def.terminate()
+        assertEquals(1, x)
+    }
+
+    @Test
+    fun testBracketCanceled() {
+        val def = RLifetimeDef()
+
+        var x = 0;
+        def.terminate()
+        assertNull (def.bracket({ x++; fail() }, { x++; }) )
+        assertEquals(0, x)
+        def.terminate()
+        assertEquals(0, x)
     }
 
     @Test

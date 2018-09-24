@@ -6,7 +6,7 @@ class CountingSet<T> private constructor(val map: MutableMap<T, Int>): Map<T, In
     /**
      * Returns new value
      */
-    fun add(key: T, value: Int = 1) : Int {
+    fun add(key: T, value: Int) : Int {
         val old = map[key] ?: 0
         val new = old + value
 

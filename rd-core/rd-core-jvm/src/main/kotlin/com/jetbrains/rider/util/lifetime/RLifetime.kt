@@ -62,7 +62,7 @@ class RLifetimeDef : RLifetime() {
 
     //Fields
     private var state = AtomicInteger()
-    private val resources = mutableListOf<Any>()
+    private var resources = mutableListOf<Any>()
 
     /**
      * Only possible [Alive] -> [Canceled] -> [Terminating] -> [Terminated]
@@ -82,7 +82,7 @@ class RLifetimeDef : RLifetime() {
                 break
         }
 
-        threadLocalExecuting.add(this@RLifetimeDef)
+        threadLocalExecuting.add(this@RLifetimeDef, +1)
         try {
 
             return this()
@@ -130,17 +130,16 @@ class RLifetimeDef : RLifetime() {
         return action executeIf { state -> statusSlice[state] == Alive }
     }
 
-    private fun add0(action: Any) : Boolean {
+    private fun tryAdd(action: Any) : Boolean {
         //we could add anything to Eternal lifetime and it'll never be executed
         if (lifetime === eternal)
             return true
 
-        //todo must be mutual exclusive to other actions
         return {
             resources.add(action)
             true
-        } underMutexIf  { state ->
-            statusSlice[state] < Terminating
+        } underMutexIf  {
+            statusSlice[it] < Terminating
         } ?: false
     }
 
@@ -174,7 +173,9 @@ class RLifetimeDef : RLifetime() {
                 val def = resources[i] as? RLifetimeDef ?: continue
                 def.markCanceledRecursively()
             }
-        } underMutexIf { true }
+        } underMutexIf {
+            statusSlice[it] < Terminating //some parallel thread already destructuring
+        } ?: return false
 
         return true
     }
@@ -242,38 +243,39 @@ class RLifetimeDef : RLifetime() {
     }
 
 
-    override fun onTerminationIfAlive(action: () -> Unit) = add0(action)
-    override fun onTerminationIfAlive(closeable: AutoCloseable) = add0(closeable)
+    override fun onTerminationIfAlive(action: () -> Unit) = tryAdd(action)
+    override fun onTerminationIfAlive(closeable: AutoCloseable) = tryAdd(closeable)
 
 
 
-    internal fun attach(def: RLifetimeDef) {
-        require(!def.isEternal) { "Can't attach eternal lifetime" }
+    internal fun attach(child: RLifetimeDef) {
+        require(!child.isEternal) { "Can't attach eternal lifetime" }
 
-        if (def.add0(ClearLifetimeMarker(this))) {
-            if (!this.add0(def))
-                def.terminate()
+        if (child.tryAdd(ClearLifetimeMarker(this))) {
+            if (!this.tryAdd(child))
+                child.terminate()
         }
     }
 
 
     override fun<T:Any> bracket(opening: () -> T, terminationAction: () -> Unit) : T? {
         return executeIfAlive {
-            add0(terminationAction)
-            opening()
+            val res = opening()
+            require(tryAdd(terminationAction))
+            res
         }
     }
 
     private fun clearObsoleteAttachedLifetimes() {
         {
             for (i in resources.lastIndex downTo 0) {
-                if ((resources[i] as? RLifetimeDef)?.let { it.status == Terminated  } == true)
+                if ((resources[i] as? RLifetimeDef)?.let { it.status >= Terminating  } == true)
                     resources.removeAt(i)
                 else
                     break
             }
         } underMutexIf { state ->
-            //no need to clear it lifetime will be cleared soon
+            //no need to clear if lifetime will be cleared soon
             statusSlice[state] == Alive
         }
     }
