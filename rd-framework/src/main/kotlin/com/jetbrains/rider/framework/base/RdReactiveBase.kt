@@ -2,7 +2,6 @@ package com.jetbrains.rider.framework.base
 
 import com.jetbrains.rider.framework.ISerializers
 import com.jetbrains.rider.framework.Protocol
-import com.jetbrains.rider.util.error
 import com.jetbrains.rider.util.getLogger
 import com.jetbrains.rider.util.reactive.IScheduler
 
@@ -19,8 +18,9 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
     //assertion
     override var async = false
     protected fun assertThreading() {
-        if (!async && !defaultScheduler.isActive)
-            logAssert.error("Must be executed on UI thread", IllegalStateException("|E| Wrong thread"))
+        if (!async) {
+            defaultScheduler.assertThread()
+        }
     }
     protected fun assertBound() {
         if (!isBound) { throw IllegalStateException("Not bound") }
