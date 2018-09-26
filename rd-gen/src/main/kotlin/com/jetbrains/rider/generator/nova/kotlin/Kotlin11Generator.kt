@@ -632,6 +632,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable }}
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
 
+        if (flowTransform == FlowTransform.Reversed) {
+            decl.ownMembers
+                .filterIsInstance<Member.Reactive.Stateful.Map>()
+                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = false" }
+        }
+
         decl.ownMembers
             .filterIsInstance<Member.Reactive>()
             .filter {it.freeThreaded}

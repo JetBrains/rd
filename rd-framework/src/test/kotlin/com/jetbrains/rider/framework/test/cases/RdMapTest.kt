@@ -11,8 +11,7 @@ import kotlin.test.assertTrue
 
 class RdMapTest : RdFrameworkTestBase() {
     @Test
-    fun testStatic()
-    {
+    fun testStatic() {
         val id = 1
 
         val serverMap = RdMap<Int, String>().static(id).apply { optimizeNested=true }
@@ -63,13 +62,12 @@ class RdMapTest : RdFrameworkTestBase() {
     }
 
     @Test
-    fun testDynamic()
-    {
+    fun testDynamic() {
         val id = 1
 
         val serverMap = RdMap<Int, DynamicEntity<Boolean?>>().static(id)
         val clientMap = RdMap<Int, DynamicEntity<Boolean?>>().static(id)
-        serverMap.manualMaster = false
+        serverMap.master = false
 
         DynamicEntity.create(clientProtocol)
         DynamicEntity.create(serverProtocol)
