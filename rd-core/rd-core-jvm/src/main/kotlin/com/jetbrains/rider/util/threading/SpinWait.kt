@@ -29,8 +29,6 @@ class SpinWait {
 
             return true
         }
-
-
     }
 
     fun spinOnce() {

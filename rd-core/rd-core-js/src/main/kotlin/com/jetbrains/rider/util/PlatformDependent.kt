@@ -90,9 +90,17 @@ actual class AtomicInteger actual constructor(var v: Int) {
     actual fun incrementAndGet(): Int = ++v
 
     actual fun decrementAndGet(): Int = --v
+    actual fun compareAndSet(expect: Int, updated: Int) = (expect == v).also { if (it) v = expect }
 }
 
 actual typealias Queue<E> = QueueImpl<E>
 
 //no stderr in javascript
 actual fun printlnError(msg: String) = println(msg)
+
+actual fun assert(value: Boolean) = require(value)
+
+actual inline fun assert(value: Boolean, lazyMessage: () -> Any)  = require(value, lazyMessage)
+
+actual inline fun spinUntil(condition: () -> Boolean) { require(condition()) }
+actual inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) = require(condition()).let { true }

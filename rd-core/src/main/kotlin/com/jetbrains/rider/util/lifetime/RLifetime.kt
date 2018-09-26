@@ -4,7 +4,6 @@ import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.collections.CountingSet
 import com.jetbrains.rider.util.lifetime2.RLifetimeStatus.*
 import com.jetbrains.rider.util.reflection.threadLocal
-import com.jetbrains.rider.util.threading.SpinWait
 
 enum class RLifetimeStatus {
     Alive,
@@ -13,8 +12,8 @@ enum class RLifetimeStatus {
     Terminated
 }
 
-//fun RLifetime.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
-//fun RLifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
+fun RLifetime.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
+fun RLifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
 
 
 sealed class RLifetime() {
@@ -38,7 +37,7 @@ sealed class RLifetime() {
     abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
 
     abstract fun onTerminationIfAlive(action: () -> Unit): Boolean
-    abstract fun onTerminationIfAlive(closeable: AutoCloseable): Boolean
+    abstract fun onTerminationIfAlive(closeable: Closeable): Boolean
 
 
     abstract fun <T : Any> bracket(opening: () -> T, terminationAction: () -> Unit): T?
@@ -192,7 +191,7 @@ class RLifetimeDef : RLifetime() {
         }
 
         //wait for all executions finished
-        if (!SpinWait.spinUntil(waitForExecutingInTerminationTimeout) { executingSlice[state] <= threadLocalExecuting[this] }) {
+        if (!spinUntil(waitForExecutingInTerminationTimeout) { executingSlice[state] <= threadLocalExecuting[this] }) {
             log.error { "Can't wait for executeIfAlive for more than $waitForExecutingInTerminationTimeout ms. Keep termination." }
         }
 
@@ -202,7 +201,7 @@ class RLifetimeDef : RLifetime() {
             return false
 
         //wait for all resource modification finished
-        SpinWait.spinUntil { !mutexSlice[state] }
+        spinUntil { !mutexSlice[state] }
 
         destruct(supportsTerminationUnderExecuting)
 
@@ -221,7 +220,7 @@ class RLifetimeDef : RLifetime() {
             (resource as? () -> Any?)?.let {action -> log.catch { action() }}?:
 
             when(resource) {
-                is AutoCloseable -> log.catch { resource.close() }
+                is Closeable -> log.catch { resource.close() }
 
                 is RLifetimeDef -> log.catch {
                     resource.terminate(supportsRecursion)
@@ -243,7 +242,7 @@ class RLifetimeDef : RLifetime() {
 
 
     override fun onTerminationIfAlive(action: () -> Unit) = tryAdd(action)
-    override fun onTerminationIfAlive(closeable: AutoCloseable) = tryAdd(closeable)
+    override fun onTerminationIfAlive(closeable: Closeable) = tryAdd(closeable)
 
 
 
@@ -282,9 +281,7 @@ class RLifetimeDef : RLifetime() {
 
 private class ClearLifetimeMarker (val parentToClear: RLifetimeDef)
 
-fun RLifetime.waitTermination() {
-    SpinWait.spinUntil { status == Terminated }
-}
+fun RLifetime.waitTermination() = spinUntil { status == Terminated }
 
 val RLifetime.isAlive : Boolean get() = status == Alive
 val RLifetime.isEternal : Boolean get() = this === RLifetime.eternal
@@ -299,7 +296,8 @@ fun RLifetime.onTermination(action: () -> Unit) {
     if (!onTerminationIfAlive(action))
         badStatusForAddActions()
 }
-fun RLifetime.onTermination(closeable: AutoCloseable) {
+
+fun RLifetime.onTermination(closeable: Closeable) {
     if (!onTerminationIfAlive(closeable))
         badStatusForAddActions()
 }

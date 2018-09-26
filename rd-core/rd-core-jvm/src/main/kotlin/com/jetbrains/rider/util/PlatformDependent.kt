@@ -1,5 +1,6 @@
 package com.jetbrains.rider.util
 
+import com.jetbrains.rider.util.threading.SpinWait
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.Date
@@ -64,3 +65,10 @@ actual typealias AtomicInteger = AtomicInteger
 actual typealias Queue<E> = java.util.concurrent.LinkedBlockingQueue<E>
 
 actual fun printlnError(msg: String) = System.err.println(msg)
+
+actual fun assert(value: Boolean) = kotlin.assert(value)
+
+actual inline fun assert(value: Boolean, lazyMessage: () -> Any)  = kotlin.assert(value, lazyMessage)
+
+actual inline fun spinUntil(condition: () -> Boolean) = SpinWait.spinUntil(condition)
+actual inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) = SpinWait.spinUntil(timeoutMs, condition)

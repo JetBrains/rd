@@ -46,6 +46,10 @@ expect fun qualifiedName(kclass: KClass<*>) : String
 
 expect fun measureTimeMillis(block: () -> Unit) : Long
 
+expect fun assert(value: Boolean)
+
+expect inline fun assert(value: Boolean, lazyMessage: () -> Any)
+
 //special jvm classes
 expect class URI(uriString: String)
 
@@ -61,11 +65,12 @@ expect class UUID(hi: Long, lo: Long) {
     fun getLeastSignificantBits(): Long
 }
 
-expect class AtomicInteger constructor(v: Int){
+expect class AtomicInteger constructor(v: Int = 0){
     fun get() : Int
     fun getAndAdd(v: Int) : Int
     fun incrementAndGet() : Int
     fun decrementAndGet() : Int
+    fun compareAndSet(expect: Int, updated: Int) : Boolean
 }
 
 expect class Queue<E>() {
@@ -75,3 +80,6 @@ expect class Queue<E>() {
 }
 
 expect fun printlnError(msg: String)
+
+expect inline fun spinUntil(condition: () -> Boolean)
+expect inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) : Boolean
