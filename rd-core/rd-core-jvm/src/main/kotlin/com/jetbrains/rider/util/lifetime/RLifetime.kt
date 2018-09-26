@@ -59,7 +59,6 @@ class RLifetimeDef : RLifetime() {
 
 
 
-
     //Fields
     private var state = AtomicInteger()
     private var resources = mutableListOf<Any>()
