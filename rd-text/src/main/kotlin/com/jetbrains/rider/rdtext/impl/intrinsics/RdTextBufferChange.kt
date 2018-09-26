@@ -3,7 +3,7 @@ package com.jetbrains.rider.rdtext.impl.intrinsics
 import com.jetbrains.rider.framework.IMarshaller
 import com.jetbrains.rider.framework.SerializationCtx
 import com.jetbrains.rider.framework.AbstractBuffer
-import com.jetbrains.rider.rdtext.TextBufferVersion
+import com.jetbrains.rider.rdtext.intrinsics.TextBufferVersion
 import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rider.framework.readEnum
 import com.jetbrains.rider.framework.writeEnum

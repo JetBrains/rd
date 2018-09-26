@@ -1,4 +1,4 @@
-package com.jetbrains.rider.rdtext
+package com.jetbrains.rider.rdtext.intrinsics
 
 data class TextBufferVersion(val master: Int, val slave: Int) : Comparable<TextBufferVersion> {
     companion object {

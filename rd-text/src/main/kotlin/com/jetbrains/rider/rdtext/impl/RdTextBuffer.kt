@@ -11,6 +11,7 @@ import com.jetbrains.rider.rdtext.*
 import com.jetbrains.rider.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rider.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rider.rdtext.intrinsics.RdTextChangeKind
+import com.jetbrains.rider.rdtext.intrinsics.TextBufferVersion
 import com.jetbrains.rider.rdtext.intrinsics.reverse
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reactive.*
