@@ -38,7 +38,7 @@ class LifetimeTest : RdTestBase() {
 
         val def = LifetimeDefinition()
         def.onTermination { log.add(1) }
-        def.define().onTermination { log.add(2) }
+        def.createNested().onTermination { log.add(2) }
         def.onTermination { log.add(3) }
 
         def.terminate()

@@ -36,13 +36,25 @@ sealed class Lifetime {
         }
 
 
+        @Deprecated("Use lifetime.createNested { def -> ... }")
+        fun define(lifetime: Lifetime, atomicAction : (LifetimeDefinition, Lifetime) -> Unit) = lifetime.createNested { atomicAction(it, it) }
 
-        @Deprecated("Use lifetime.define { def -> ... }")
-        fun define(lifetime: Lifetime, atomicAction : (LifetimeDefinition, Lifetime) -> Unit) = lifetime.define { atomicAction(it, it) }
-
-        @Deprecated("Use lifetime.define", ReplaceWith("lifetime.define()"))
-        fun create(lifetime: Lifetime): LifetimeDefinition = lifetime.define()
+        @Deprecated("Use lifetime.createNested", ReplaceWith("lifetime.createNested()"))
+        fun create(lifetime: Lifetime): LifetimeDefinition = lifetime.createNested()
     }
+
+    fun createNested() = LifetimeDefinition().also { attach(it) }
+
+    fun createNested(atomicAction : (LifetimeDefinition) -> Unit) = createNested().also { nested ->
+        attach(nested)
+        try {
+            nested.executeIfAlive { atomicAction(nested) }
+        } catch (e: Exception) {
+            nested.terminate()
+            throw e
+        }
+    }
+
 
     abstract val status : LifetimeStatus
 
@@ -321,15 +333,6 @@ fun Lifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
 
 val Lifetime.isAlive : Boolean get() = status == Alive
 val Lifetime.isEternal : Boolean get() = this === Lifetime.Eternal
-fun Lifetime.define() = LifetimeDefinition().also { attach(it) }
-fun Lifetime.define(atomicAction : (LifetimeDefinition) -> Unit) = define().also { nested ->
-    attach(nested)
-    try {
-        nested.executeIfAlive { atomicAction(nested) }
-    } catch (e: Exception) {
-        throw e;
-    }
-}
 
 
 private fun Lifetime.badStatusForAddActions() {
