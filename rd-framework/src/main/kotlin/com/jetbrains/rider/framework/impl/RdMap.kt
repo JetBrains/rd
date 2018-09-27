@@ -1,7 +1,10 @@
 package com.jetbrains.rider.framework.impl
 
 import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.*
+import com.jetbrains.rider.framework.base.RdReactiveBase
+import com.jetbrains.rider.framework.base.bindPolymorphic
+import com.jetbrains.rider.framework.base.identifyPolymorphic
+import com.jetbrains.rider.framework.base.withId
 import com.jetbrains.rider.util.error
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.parseFromOrdinal
@@ -13,8 +16,11 @@ import com.jetbrains.rider.util.string.printToString
 import com.jetbrains.rider.util.trace
 
 
-class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, val valSzr: ISerializer<V>, private val map: ViewableMap<K,V>)
-: RdReactiveBase(), IAsyncViewableMap<K, V>, IMutableViewableMap<K, V> by map {
+class RdMap<K : Any, V : Any> private constructor(
+    val keySzr: ISerializer<K>,
+    val valSzr: ISerializer<V>,
+    private val map: ViewableMap<K, V>
+) : RdReactiveBase(), IAsyncViewableMap<K, V>, IMutableViewableMap<K, V> by map {
 
     companion object {
         private enum class Op {Add, Update, Remove, Ack}
@@ -26,15 +32,16 @@ class RdMap<K : Any, V : Any> private constructor(val keySzr: ISerializer<K>, va
         const val versionedFlagShift = 8
     }
 
-    var nextVersion = 0L
-    val pendingForAck = mutableMapOf<K, Long>()
+    private var nextVersion = 0L
+    private val pendingForAck = mutableMapOf<K, Long>()
 
-    var manualMaster : Boolean? = null
-    val master: Boolean get() = manualMaster?: !optimizeNested //todo do it correct
-
+    var master: Boolean = true
 
     var optimizeNested: Boolean = false
-
+        set(value) {
+            field = value
+            if (value) master = false
+        }
 
     private fun logmsg(op: Op, version: Long, key: K, value: V? = null) : String {
         return "map `$location` ($rdid) :: ${op.name} :: key = ${key.printToString()}"+
