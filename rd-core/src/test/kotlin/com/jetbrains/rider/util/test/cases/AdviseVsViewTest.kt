@@ -92,7 +92,7 @@ class AdviseVsViewTest : RdTestBase() {
         propertyA.set(1)
         propertyB.set(2)
 
-        lifetime.terminate()
+        lifetimeDef.terminate()
 
         propertyA.set(3)
         propertyB.set(4)
@@ -117,7 +117,7 @@ class AdviseVsViewTest : RdTestBase() {
         propertyA.set(1)
         propertyB.set(2)
 
-        lifetime.terminate()
+        lifetimeDef.terminate()
 
         propertyA.set(3)
         propertyB.set(4)

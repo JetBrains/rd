@@ -2,6 +2,7 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
+import com.jetbrains.rider.util.lifetime.define
 import com.jetbrains.rider.util.putUnique
 
 /**
@@ -39,7 +40,7 @@ interface IViewableSet<T : Any> : Set<T>, IViewable<T>, ISource<IViewableSet.Eve
         advise(lifetime) { kind, v ->
             when (kind) {
                 AddRemove.Add -> {
-                    val def = lifetimes.putUnique(v, Lifetime.create(lifetime))
+                    val def = lifetimes.putUnique(v, lifetime.define())
                     handler(def.lifetime, v)
                 }
                 AddRemove.Remove -> lifetimes.remove(v)!!.terminate()

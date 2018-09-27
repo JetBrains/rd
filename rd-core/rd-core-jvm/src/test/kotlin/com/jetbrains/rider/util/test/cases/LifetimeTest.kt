@@ -1,6 +1,6 @@
 package com.jetbrains.rider.util.test.cases
 
-import com.jetbrains.rider.util.lifetime2.*
+import com.jetbrains.rider.util.lifetime.*
 import com.jetbrains.rider.util.test.framework.RdTestBase
 import com.jetbrains.rider.util.threading.SpinWait
 import org.junit.Test
@@ -11,7 +11,7 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testEmptyLifetime() {
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
         assertTrue { def.terminate() }
 
         assertFalse { def.terminate() }
@@ -22,7 +22,7 @@ class LifetimeTest : RdTestBase() {
     fun testActionsSequence() {
         val log = mutableListOf<Int>()
 
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
         def.onTermination { log.add(1) }
         def.onTermination { log.add(2) }
         def.onTermination { log.add(3) }
@@ -36,9 +36,9 @@ class LifetimeTest : RdTestBase() {
     fun testNestedLifetime() {
         val log = mutableListOf<Int>()
 
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
         def.onTermination { log.add(1) }
-        def.defineNested().onTermination { log.add(2) }
+        def.define().onTermination { log.add(2) }
         def.onTermination { log.add(3) }
 
         def.terminate()
@@ -48,8 +48,8 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testTerminationWithAsyncAction() {
-        RLifetime.waitForExecutingInTerminationTimeout = 100000
-        val def = RLifetimeDef()
+        Lifetime.waitForExecutingInTerminationTimeout = 100000
+        val def = LifetimeDefinition()
         val log = mutableListOf<Int>()
 
         val t = thread {
@@ -57,12 +57,12 @@ class LifetimeTest : RdTestBase() {
                 //must execute
                 val first = def.executeIfAlive {
                     log.add(0)
-                    assert(def.status == RLifetimeStatus.Alive)
+                    assert(def.status == LifetimeStatus.Alive)
                     assert(def.isAlive)
                     l11n.point(0)
                     log.add(1)
 
-                    SpinWait.spinUntil { def.status == RLifetimeStatus.Canceled }
+                    SpinWait.spinUntil { def.status == LifetimeStatus.Canceled }
                     assert(!def.isAlive)
                 }
 
@@ -90,8 +90,8 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testUsing() {
-        var lf : RLifetime? = null
-        RLifetime.using {
+        var lf : Lifetime? = null
+        Lifetime.using {
             lf = it
             assertTrue { lf!!.isAlive}
             assertFalse {lf!!.isEternal}
@@ -101,14 +101,14 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testTerminate2Times() {
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
         assertTrue { def.terminate() }
         assertFalse { def.terminate() }
     }
 
     @Test
     fun testBracketSuccess() {
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
 
         var x = 0;
         assertEquals(0, def.bracket({ x++ }, { x++; }))
@@ -119,7 +119,7 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testBracketFailure() {
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
 
         var x = 0;
         assertFails { def.bracket({ x++; fail() }, { x++; }) }
@@ -130,7 +130,7 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testBracketCanceled() {
-        val def = RLifetimeDef()
+        val def = LifetimeDefinition()
 
         var x = 0;
         def.terminate()
@@ -142,7 +142,7 @@ class LifetimeTest : RdTestBase() {
 
     @Test
     fun testEternal() {
-        assertTrue { RLifetime.eternal.onTerminationIfAlive {} }
+        assertTrue { Lifetime.Eternal.onTerminationIfAlive {} }
     }
 
 

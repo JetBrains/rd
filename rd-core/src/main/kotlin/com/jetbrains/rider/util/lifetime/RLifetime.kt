@@ -1,38 +1,50 @@
-package com.jetbrains.rider.util.lifetime2
+//@file:JvmName("LifetimeKt")
+
+package com.jetbrains.rider.util.lifetime
 
 import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.collections.CountingSet
-import com.jetbrains.rider.util.lifetime2.RLifetimeStatus.*
+import com.jetbrains.rider.util.lifetime.LifetimeStatus.*
+import com.jetbrains.rider.util.reactive.IViewable
+import com.jetbrains.rider.util.reactive.viewNotNull
 import com.jetbrains.rider.util.reflection.threadLocal
 
-enum class RLifetimeStatus {
+enum class LifetimeStatus {
     Alive,
     Canceled,
     Terminating,
     Terminated
 }
 
-fun RLifetime.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
-fun RLifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
 
-
-sealed class RLifetime() {
+sealed class Lifetime {
     companion object {
-        var waitForExecutingInTerminationTimeout = 500L //timeout for waiting executeIfAlive in termination
-        val eternal = RLifetimeDef().lifetime //some marker
-        internal val threadLocalExecuting : CountingSet<RLifetime> by threadLocal { CountingSet<RLifetime>() }
+        internal val threadLocalExecuting : CountingSet<Lifetime> by threadLocal { CountingSet<Lifetime>() }
 
-        inline fun <T> using(block : (RLifetime) -> T) : T{
-            val def = RLifetimeDef()
+        var waitForExecutingInTerminationTimeout = 500L //timeout for waiting executeIfAlive in termination
+
+        val Eternal = LifetimeDefinition().lifetime //some marker
+        val terminated get() = LifetimeDefinition.terminated.lifetime
+
+        inline fun <T> using(block : (Lifetime) -> T) : T{
+            val def = LifetimeDefinition()
             try {
                 return block(def.lifetime)
             } finally {
                 def.terminate()
             }
         }
+
+
+
+        @Deprecated("Use lifetime.define { def -> ... }")
+        fun define(lifetime: Lifetime, atomicAction : (LifetimeDefinition, Lifetime) -> Unit) = lifetime.define { atomicAction(it, it) }
+
+        @Deprecated("Use lifetime.define", ReplaceWith("lifetime.define()"))
+        fun create(lifetime: Lifetime): LifetimeDefinition = lifetime.define()
     }
 
-    abstract val status : RLifetimeStatus
+    abstract val status : LifetimeStatus
 
     abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
 
@@ -41,19 +53,35 @@ sealed class RLifetime() {
 
 
     abstract fun <T : Any> bracket(opening: () -> T, terminationAction: () -> Unit): T?
+    internal abstract fun attach(child: LifetimeDefinition)
+
+    @Deprecated("Use onTermination", ReplaceWith("onTermination(action)"))
+    fun add(action: () -> Unit) = onTermination(action)
+
+    @Deprecated("Use !isAlive", ReplaceWith("!isAlive"))
+    val isTerminated: Boolean get() = !isAlive
+
+    @Deprecated("Use executeIfAlive(action)", ReplaceWith("executeIfAlive(action)"))
+    fun <T : Any> ifAlive(action: () -> T) = executeIfAlive(action)
 }
 
 
-class RLifetimeDef : RLifetime() {
-    val lifetime: RLifetime get() = this
+class LifetimeDefinition : Lifetime() {
+    val lifetime: Lifetime get() = this
 
     companion object {
-        private val log = getLogger<RLifetime>()
+        private val log = getLogger<Lifetime>()
 
         //State decomposition
         private val executingSlice = BitSlice.int(20)
-        private val statusSlice = BitSlice.enum<RLifetimeStatus>(executingSlice)
+        private val statusSlice = BitSlice.enum<LifetimeStatus>(executingSlice)
         private val mutexSlice = BitSlice.bool(statusSlice)
+
+        val terminated : LifetimeDefinition = LifetimeDefinition()
+
+        init {
+            terminated.terminate()
+        }
     }
 
 
@@ -65,7 +93,7 @@ class RLifetimeDef : RLifetime() {
     /**
      * Only possible [Alive] -> [Canceled] -> [Terminating] -> [Terminated]
      */
-    override val status : RLifetimeStatus get() = statusSlice[state]
+    override val status : LifetimeStatus get() = statusSlice[state]
 
 
 
@@ -80,13 +108,13 @@ class RLifetimeDef : RLifetime() {
                 break
         }
 
-        threadLocalExecuting.add(this@RLifetimeDef, +1)
+        threadLocalExecuting.add(this@LifetimeDefinition, +1)
         try {
 
             return this()
 
         } finally {
-            threadLocalExecuting.add(this@RLifetimeDef, -1)
+            threadLocalExecuting.add(this@LifetimeDefinition, -1)
             state.decrementAndGet()
         }
     }
@@ -130,7 +158,7 @@ class RLifetimeDef : RLifetime() {
 
     private fun tryAdd(action: Any) : Boolean {
         //we could add anything to Eternal lifetime and it'll never be executed
-        if (lifetime === eternal)
+        if (lifetime === Eternal)
             return true
 
         return {
@@ -144,14 +172,14 @@ class RLifetimeDef : RLifetime() {
 
 
     private inline fun incrementStatusIf(check: (Int) -> Boolean) : Boolean {
-        assert(this !== eternal) { "Trying to change eternal lifetime" }
+        assert(this !== Eternal) { "Trying to change eternal lifetime" }
 
         while (true) {
             val s = state.get()
             if (!check(s))
                 return false
 
-            val nextStatus = enumValues<RLifetimeStatus>()[statusSlice[s].ordinal + 1]
+            val nextStatus = enumValues<LifetimeStatus>()[statusSlice[s].ordinal + 1]
             val newS = statusSlice.updated(s, nextStatus)
 
             if (state.compareAndSet(s, newS))
@@ -161,14 +189,14 @@ class RLifetimeDef : RLifetime() {
 
 
     private fun markCanceledRecursively() : Boolean {
-        assert(this !== eternal) { "Trying to terminate eternal lifetime" }
+        assert(this !== Eternal) { "Trying to terminate eternal lifetime" }
 
         if (!incrementStatusIf { statusSlice[it] == Alive } )
             return false
 
         {
             for (i in resources.lastIndex downTo 0) {
-                val def = resources[i] as? RLifetimeDef ?: continue
+                val def = resources[i] as? LifetimeDefinition ?: continue
                 def.markCanceledRecursively()
             }
         } underMutexIf {
@@ -222,7 +250,7 @@ class RLifetimeDef : RLifetime() {
             when(resource) {
                 is Closeable -> log.catch { resource.close() }
 
-                is RLifetimeDef -> log.catch {
+                is LifetimeDefinition -> log.catch {
                     resource.terminate(supportsRecursion)
                 }
 
@@ -246,7 +274,7 @@ class RLifetimeDef : RLifetime() {
 
 
 
-    internal fun attach(child: RLifetimeDef) {
+    override fun attach(child: LifetimeDefinition) {
         require(!child.isEternal) { "Can't attach eternal lifetime" }
 
         if (child.tryAdd(ClearLifetimeMarker(this))) {
@@ -259,7 +287,11 @@ class RLifetimeDef : RLifetime() {
     override fun<T:Any> bracket(opening: () -> T, terminationAction: () -> Unit) : T? {
         return executeIfAlive {
             val res = opening()
-            require(tryAdd(terminationAction))
+
+            if(!tryAdd(terminationAction)) {
+                //terminated with `terminate(true)`
+                terminationAction()
+            }
             res
         }
     }
@@ -267,7 +299,7 @@ class RLifetimeDef : RLifetime() {
     private fun clearObsoleteAttachedLifetimes() {
         {
             for (i in resources.lastIndex downTo 0) {
-                if ((resources[i] as? RLifetimeDef)?.let { it.status >= Terminating  } == true)
+                if ((resources[i] as? LifetimeDefinition)?.let { it.status >= Terminating  } == true)
                     resources.removeAt(i)
                 else
                     break
@@ -279,27 +311,57 @@ class RLifetimeDef : RLifetime() {
     }
 }
 
-private class ClearLifetimeMarker (val parentToClear: RLifetimeDef)
+private class ClearLifetimeMarker (val parentToClear: LifetimeDefinition)
 
-fun RLifetime.waitTermination() = spinUntil { status == Terminated }
+fun Lifetime.waitTermination() = spinUntil { status == Terminated }
 
-val RLifetime.isAlive : Boolean get() = status == Alive
-val RLifetime.isEternal : Boolean get() = this === RLifetime.eternal
-fun RLifetime.defineNested() = RLifetimeDef().also { (this as RLifetimeDef).attach(it) }
+fun Lifetime.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
+fun Lifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
+
+val Lifetime.isAlive : Boolean get() = status == Alive
+val Lifetime.isEternal : Boolean get() = this === Lifetime.Eternal
+fun Lifetime.define() = LifetimeDefinition().also { attach(it) }
+fun Lifetime.define(atomicAction : (LifetimeDefinition) -> Unit) = define().also { nested ->
+    attach(nested)
+    try {
+        nested.executeIfAlive { atomicAction(nested) }
+    } catch (e: Exception) {
+        throw e;
+    }
+}
 
 
-private fun RLifetime.badStatusForAddActions() {
+private fun Lifetime.badStatusForAddActions() {
     error {"Lifetime in '$status', can't add termination actions"}
 }
 
-fun RLifetime.onTermination(action: () -> Unit) {
+fun Lifetime.onTermination(action: () -> Unit) {
     if (!onTerminationIfAlive(action))
         badStatusForAddActions()
 }
 
-fun RLifetime.onTermination(closeable: Closeable) {
+fun Lifetime.onTermination(closeable: Closeable) {
     if (!onTerminationIfAlive(closeable))
         badStatusForAddActions()
 }
 
 
+val EternalLifetime get() = Lifetime.Eternal
+
+operator fun Lifetime.plusAssign(action : () -> Unit) = onTermination(action)
+
+fun Lifetime.intersect(lifetime: Lifetime): LifetimeDefinition {
+    return LifetimeDefinition().also {
+        this.attach(it)
+        lifetime.attach(it)
+    }
+}
+
+
+inline fun <T> Lifetime.view(viewable: IViewable<T>, crossinline handler: Lifetime.(T) -> Unit) {
+    viewable.view(this) { lt, value -> lt.handler(value) }
+}
+
+inline fun <T:Any> Lifetime.viewNotNull(viewable: IViewable<T?>, crossinline handler: Lifetime.(T) -> Unit) {
+    viewable.viewNotNull(this) { lt, value -> lt.handler(value) }
+}

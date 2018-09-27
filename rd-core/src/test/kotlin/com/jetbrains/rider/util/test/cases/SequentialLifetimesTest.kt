@@ -36,7 +36,6 @@ class SequentialLifetimesTest : RdTestBase()  {
         lf.plusAssign { acc++ }
         assertEquals(0, acc)
 
-        LifetimeDefinition.Eternal.terminate(); //bullshit
         assertEquals(0, acc)
 
         seq.next().plusAssign { acc++ }
@@ -58,7 +57,6 @@ class SequentialLifetimesTest : RdTestBase()  {
         lf.plusAssign { acc++ }
         assertEquals(0, acc)
 
-        LifetimeDefinition.Eternal.terminate() //bullshit
         assertEquals(0, acc)
 
         seq.next().plusAssign { acc++ }

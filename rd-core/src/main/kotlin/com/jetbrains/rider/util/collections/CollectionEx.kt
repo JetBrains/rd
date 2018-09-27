@@ -1,19 +1,18 @@
 package com.jetbrains.rider.util
 
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.lifetime.ifAlive
 import com.jetbrains.rider.util.lifetime.plusAssign
 
 
 fun <T> MutableCollection<T>.addUnique(lifetime : Lifetime, value : T) {
-    lifetime.ifAlive {
+    lifetime.executeIfAlive {
         if (!add(value)) { throw IllegalArgumentException("Value already exists: $value") }
         lifetime += { this.remove(value) }
     }
 }
 
 fun <K,V> MutableMap<K, V>.addUnique(lifetime : Lifetime, key: K, value : V) : V {
-    lifetime.ifAlive {
+    lifetime.executeIfAlive {
         put(key, value)?.let { throw IllegalArgumentException("Value already exists: $value") }
         lifetime += { this.remove(key) }
     }
@@ -33,7 +32,7 @@ fun <K, V> MutableMap<K, V>.put(lf: Lifetime, key: K, value: V) {
 }
 
 fun <K, V> MutableMap<K, V>.blockingPutUnique(lf: Lifetime, lock: Any, key: K, value: V) {
-    lf.ifAlive {
+    lf.executeIfAlive {
         synchronized(lock) {
             this[key]?. let {throw IllegalStateException("Value $it already exist for key $key") }
             this[key] = value

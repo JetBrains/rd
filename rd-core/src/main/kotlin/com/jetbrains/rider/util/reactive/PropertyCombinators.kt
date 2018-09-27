@@ -2,7 +2,6 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.Boxed
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.lifetime.ifAlive
 import com.jetbrains.rider.util.reflection.usingTrueFlag
 
 fun <T1, T2, TRes> IPropertyView<T1>.compose(other: IPropertyView<T2>, composer: (T1, T2) -> TRes): IPropertyView<TRes> =

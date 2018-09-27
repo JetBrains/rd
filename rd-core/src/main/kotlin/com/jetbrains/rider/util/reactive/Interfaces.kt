@@ -2,6 +2,7 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
+import com.jetbrains.rider.util.lifetime.define
 
 /**
  * An object that allows to subscribe to events of type [T].
@@ -69,7 +70,7 @@ interface IPropertyBase<out T> : ISource<T>, IViewable<T> {
         // nested lifetime is needed due to exception that could be thrown
         // while viewing a property change right at the moment of <param>lifetime</param>'s termination
         // but before <param>handler</param> gets removed (e.g. p.view(lf) { /*here*/ }; lf += { p.set(..) })
-        val lf = lifetime.createNested()
+        val lf = lifetime.define()
         SequentialLifetimes(lf).let {
             advise(lf) { v ->
                 if (!lf.isTerminated) handler(it.next(), v)
