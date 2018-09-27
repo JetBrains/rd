@@ -2,10 +2,10 @@ package com.jetbrains.rider.util.lifetime
 
 
 open class SequentialLifetimes(private val parentLifetime: Lifetime) {
-    private var currentDef = LifetimeDefinition.terminated
+    private var currentDef = LifetimeDefinition.Terminated
 
     init {
-        parentLifetime += { setCurrentLifetime(LifetimeDefinition.terminated) } //todo toRemove
+        parentLifetime += { setCurrentLifetime(LifetimeDefinition.Terminated) } //todo toRemove
     }
 
     open fun next(): LifetimeDefinition {
@@ -14,12 +14,12 @@ open class SequentialLifetimes(private val parentLifetime: Lifetime) {
         return newDef
     }
 
-    open fun terminateCurrent(): Unit = setCurrentLifetime(LifetimeDefinition.terminated)
+    open fun terminateCurrent(): Unit = setCurrentLifetime(LifetimeDefinition.Terminated)
 
     val isTerminated: Boolean get() = currentDef.isEternal || currentDef.isTerminated //todo toRemove
 
     open fun defineNext(fNext: (LifetimeDefinition, Lifetime) -> Unit) {
-        setCurrentLifetime(LifetimeDefinition.terminated)
+        setCurrentLifetime(LifetimeDefinition.Terminated)
         setCurrentLifetime(Lifetime.define(parentLifetime, fNext))
     }
 

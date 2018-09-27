@@ -1,6 +1,8 @@
 package com.jetbrains.rider.util.test.cases
 
 import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.lifetime.LifetimeDefinition
+import com.jetbrains.rider.util.lifetime.onTermination
 import com.jetbrains.rider.util.reactive.Property
 import com.jetbrains.rider.util.test.framework.RdTestBase
 import kotlin.test.Test
@@ -60,20 +62,19 @@ class AdviseVsViewTest : RdTestBase() {
 
     @Test
     fun viewBehavior2() {
-        val lifetimeDef = Lifetime.create(Lifetime.Eternal)
+        val lf = LifetimeDefinition()
         val property = Property(false)
-        val lifetime = lifetimeDef.lifetime
 
         val log = arrayListOf<Boolean>()
 
-        property.view(lifetime) { _, value ->
+        property.view(lf) { _, value ->
             // previously would throw an exception on viewing changes from { property.set(true) }
             log.add(value)
         }
-        lifetime.add { property.set(true) }
-        lifetimeDef.terminate()
+        lf.onTermination { property.set(true) }
+        lf.terminate()
 
-        assertEquals(listOf(false, true), log)
+        assertEquals(listOf(false), log)
     }
 
     @Test

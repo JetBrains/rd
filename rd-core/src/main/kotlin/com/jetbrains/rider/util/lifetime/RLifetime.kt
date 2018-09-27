@@ -23,8 +23,8 @@ sealed class Lifetime {
 
         var waitForExecutingInTerminationTimeout = 500L //timeout for waiting executeIfAlive in termination
 
-        val Eternal = LifetimeDefinition().lifetime //some marker
-        val terminated get() = LifetimeDefinition.terminated.lifetime
+        val Eternal : Lifetime get() = LifetimeDefinition.eternal //some marker
+        val Terminated get() = LifetimeDefinition.Terminated.lifetime
 
         inline fun <T> using(block : (Lifetime) -> T) : T{
             val def = LifetimeDefinition()
@@ -70,17 +70,18 @@ class LifetimeDefinition : Lifetime() {
     val lifetime: Lifetime get() = this
 
     companion object {
-        private val log = getLogger<Lifetime>()
+        internal val eternal = LifetimeDefinition()
+        private val log : Logger by lazy {getLogger<Lifetime>()}
 
         //State decomposition
         private val executingSlice = BitSlice.int(20)
         private val statusSlice = BitSlice.enum<LifetimeStatus>(executingSlice)
         private val mutexSlice = BitSlice.bool(statusSlice)
 
-        val terminated : LifetimeDefinition = LifetimeDefinition()
+        val Terminated : LifetimeDefinition = LifetimeDefinition()
 
         init {
-            terminated.terminate()
+            Terminated.terminate()
         }
     }
 
@@ -158,7 +159,7 @@ class LifetimeDefinition : Lifetime() {
 
     private fun tryAdd(action: Any) : Boolean {
         //we could add anything to Eternal lifetime and it'll never be executed
-        if (lifetime === Eternal)
+        if (lifetime === eternal)
             return true
 
         return {
@@ -172,7 +173,7 @@ class LifetimeDefinition : Lifetime() {
 
 
     private inline fun incrementStatusIf(check: (Int) -> Boolean) : Boolean {
-        assert(this !== Eternal) { "Trying to change eternal lifetime" }
+        assert(this !== eternal) { "Trying to change eternal lifetime" }
 
         while (true) {
             val s = state.get()
@@ -189,7 +190,7 @@ class LifetimeDefinition : Lifetime() {
 
 
     private fun markCanceledRecursively() : Boolean {
-        assert(this !== Eternal) { "Trying to terminate eternal lifetime" }
+        assert(this !== eternal) { "Trying to terminate eternal lifetime" }
 
         if (!incrementStatusIf { statusSlice[it] == Alive } )
             return false
