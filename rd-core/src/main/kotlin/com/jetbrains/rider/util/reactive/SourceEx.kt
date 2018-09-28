@@ -24,7 +24,7 @@ fun <T> ISource<T>.adviseUntil(lifetime: Lifetime, handler: (T) -> Boolean) {
 
     Lifetime.define(lifetime) { definition, lt ->
         this.advise(lt) {
-            if (handler(it)) definition.terminate()
+            if (handler(it)) definition.terminate(true)
         }
     }
 }
@@ -41,7 +41,7 @@ fun <T : Any> ISource<T?>.adviseNotNull(lifetime: Lifetime, handler: (T) -> Unit
  */
 fun <T : Any> ISource<T?>.adviseNotNullOnce(lifetime: Lifetime, handler: (T) -> Unit) = Lifetime.define(lifetime) { def, lt ->
     this.adviseNotNull(lt) {
-        def.terminate()
+        def.terminate(true)
         handler(it)
     }
 }
