@@ -43,6 +43,9 @@ sealed class Lifetime {
         fun create(lifetime: Lifetime): LifetimeDefinition = lifetime.createNested()
     }
 
+    @Deprecated("Use lifetime.createNested", ReplaceWith("lifetime.createNested()"))
+    fun createNestedDef() = createNested()
+
     fun createNested() = LifetimeDefinition().also { attach(it) }
 
     fun createNested(atomicAction : (LifetimeDefinition) -> Unit) = createNested().also { nested ->
