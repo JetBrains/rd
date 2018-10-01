@@ -758,9 +758,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             + "printer.print(\")\")"
         }
         + "}"
+
+        if (decl is Struct.Concrete && decl.base != null) {
+            println()
+            + "override fun toString() = PrettyPrinter().singleLine().also { print(this) }.toString()"
+        }
     }
-
-
 
 
     private val Declaration.primaryCtorVisibility : String get() {

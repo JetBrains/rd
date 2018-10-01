@@ -7,7 +7,8 @@ enum class Eol(val value: String) {
     asIs (""),
     linux ("\n"),
     windows ("\r\n"),
-    osSpecified (eol)
+    osSpecified (eol),
+    none("")
 }
 
 class PrettyPrinter() {
@@ -17,6 +18,12 @@ class PrettyPrinter() {
     private val builder = StringBuilder()
     private var needIndent = true
     var indent: Int = 0
+
+    fun singleLine(): PrettyPrinter {
+        step = 0
+        eolKind = Eol.none
+        return this
+    }
 
     fun indent(action: PrettyPrinter.() -> Unit) : PrettyPrinter {
         try {
