@@ -761,7 +761,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         if (decl is Struct.Concrete && decl.base != null) {
             println()
-            + "override fun toString() = PrettyPrinter().singleLine().also { print(this) }.toString()"
+            + "override fun toString() = PrettyPrinter().singleLine().also { it.print(this) }.toString()"
         }
     }
 
