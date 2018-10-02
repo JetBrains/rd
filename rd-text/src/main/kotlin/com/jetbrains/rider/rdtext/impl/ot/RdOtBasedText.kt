@@ -33,6 +33,8 @@ open class RdOtBasedText(delegate: RdOtState, final override val isMaster: Boole
         (delegatedBy.operation as RdProperty<*>).slave()
     }
 
+    override val changing: Boolean get() = delegatedBy.operation.changing
+
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
         super.bind(lf, parent, name)
 

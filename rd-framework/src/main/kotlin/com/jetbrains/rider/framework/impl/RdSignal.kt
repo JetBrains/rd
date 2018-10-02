@@ -21,7 +21,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     }
 
     private val signal = Signal<T>()
-
+    override val changing: Boolean get() = signal.changing
 
     override lateinit var wireScheduler: IScheduler
     override lateinit var serializationContext : SerializationCtx

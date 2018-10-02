@@ -19,9 +19,14 @@ class Signal<T> : ISignal<T> {
     private var priorityListeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
     private var listeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
 
+    private var _changingCnt = 0
+    override val changing: Boolean get() = _changingCnt > 0
+
     override fun fire(value: T) {
-        priorityListeners.get().forEach { catch { it(value) } }
-        listeners.get().forEach { catch { it(value) } }
+        incrementCookie(this, Signal<*>::_changingCnt) {
+            priorityListeners.get().forEach { catch { it(value) } }
+            listeners.get().forEach { catch { it(value) } }
+        }
     }
 
 

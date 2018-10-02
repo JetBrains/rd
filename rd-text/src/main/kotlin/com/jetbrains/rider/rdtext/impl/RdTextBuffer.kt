@@ -36,6 +36,9 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
         // disabling mastering, text buffer must resolve conflicts by itself
         (delegatedBy.changes as RdProperty<*>).slave()
     }
+
+    override val changing: Boolean get() = delegatedBy.changes.changing
+
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
         super.bind(lf, parent, name)
         delegatedBy.changes.adviseNotNull(lf) {

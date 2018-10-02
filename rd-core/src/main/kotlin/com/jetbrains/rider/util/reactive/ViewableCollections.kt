@@ -13,6 +13,9 @@ enum class AddRemove { Add, Remove }
  * A set allowing its contents to be observed.
  */
 interface IViewableSet<T : Any> : Set<T>, IViewable<T>, ISource<IViewableSet.Event<T>> {
+
+    val change : ISource<IViewableSet.Event<T>>
+
     /**
      * Represents an addition or removal of an element in the set.
      */
@@ -48,7 +51,9 @@ interface IViewableSet<T : Any> : Set<T>, IViewable<T>, ISource<IViewableSet.Eve
     }
 }
 
-interface IMutableViewableSet<T : Any> : MutableSet<T>, IViewableSet<T>
+interface IMutableViewableSet<T : Any> : MutableSet<T>, IViewableSet<T> {
+    val changing: Boolean get() = (change as? ISignal<*>)?.changing ?: false
+}
 
 
 data class KeyValuePair<K, V>(override val key: K, override val value: V) : Map.Entry<K, V>
@@ -57,6 +62,9 @@ data class KeyValuePair<K, V>(override val key: K, override val value: V) : Map.
  * A map allowing its contents to be observed.
  */
 interface IViewableMap<K : Any, V:Any> : Map<K, V>, IViewable<Map.Entry<K, V>>, ISource<IViewableMap.Event<K, V>> {
+
+    val change: ISource<IViewableMap.Event<K, V>>
+
     /**
      * Represents an addition, update or removal of an element in the map.
      */
@@ -226,8 +234,12 @@ interface IViewableList<out V: Any> : List<V>, IViewable<Pair<Int, V>>, ISource<
 
 interface IAsyncViewableMap<K : Any, V: Any> : IViewableMap<K, V>, IAsyncSource<IViewableMap.Event<K, V>>
 
-interface IMutableViewableMap<K : Any, V: Any> : MutableMap<K, V>, IViewableMap<K, V>
+interface IMutableViewableMap<K : Any, V: Any> : MutableMap<K, V>, IViewableMap<K, V> {
+    val changing: Boolean get() = (change as? ISignal<*>)?.changing ?: false
+}
 
-interface IMutableViewableList<V : Any> : MutableList<V>, IViewableList<V>
+interface IMutableViewableList<V : Any> : MutableList<V>, IViewableList<V> {
+    val changing: Boolean get() = (change as? ISignal<*>)?.changing ?: false
+}
 
 

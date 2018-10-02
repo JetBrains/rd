@@ -57,7 +57,7 @@ class ViewableSet<T:Any> : IMutableViewableSet<T> {
     }
 
     private val set = LinkedHashSet<T>()
-    private val change = Signal<IViewableSet.Event<T>>()
+    override val change = Signal<IViewableSet.Event<T>>()
 
     override fun advise(lifetime: Lifetime, handler: (IViewableSet.Event<T>) -> Unit) {
         forEach { catch { handler(IViewableSet.Event(AddRemove.Add, it)) } }

@@ -146,6 +146,7 @@ fun <T : Any> IOptPropertyView<T>.asNullable(): IPropertyView<T?> = object : IPr
  * An object which has a collection of event listeners and can broadcast an event to the listeners.
  */
 interface ISignal<T> : ISource<T> {
+    val changing : Boolean
     fun fire(value : T)
 }
 
@@ -158,6 +159,7 @@ typealias IAsyncVoidSignal = IAsyncSignal<Unit>
 fun IVoidSignal.fire() = fire(Unit)
 
 interface IMutablePropertyBase<T> : IPropertyBase<T> {
+    val changing: Boolean get() = (change as? ISignal<T>)?.changing ?: false
     /**
      * Sets the property to the given value.
      */
