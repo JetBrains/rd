@@ -227,12 +227,14 @@ class LifetimeDefinition : Lifetime() {
         if (isEternal)
             return false
 
-        markCanceledRecursively()
 
 
         if (threadLocalExecuting[this] > 0 && !supportsTerminationUnderExecuting) {
             error("Can't terminate lifetime under `executeIfAlive` because termination doesn't support this. Use `terminate(true)`")
         }
+
+
+        markCanceledRecursively()
 
         //wait for all executions finished
         if (!spinUntil(waitForExecutingInTerminationTimeout) { executingSlice[state] <= threadLocalExecuting[this] }) {
@@ -339,7 +341,7 @@ val Lifetime.isEternal : Boolean get() = this === Lifetime.Eternal
 
 
 private fun Lifetime.badStatusForAddActions() {
-    error {"Lifetime in '$status', can't add termination actions"}
+    error ("Lifetime in '$status', can't add termination actions")
 }
 
 fun Lifetime.onTermination(action: () -> Unit) {
