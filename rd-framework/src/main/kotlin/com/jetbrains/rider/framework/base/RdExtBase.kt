@@ -169,17 +169,18 @@ class ExtWire : IWire {
     }
 
 
+    data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray)
     override val connected: Property<Boolean> = Property(false)
 
 
-    private val sendQ = Queue<Pair<RdId, ByteArray>>()
+    private val sendQ = Queue<QueueItem>()
 
     init {
         connected.whenTrue(Lifetime.Eternal) { _ ->
             Sync.lock(sendQ) {
                 while (true) {
-                    val (id, payload) = sendQ.poll() ?: return@lock
-                    realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload) }
+                    val (id, count, payload) = sendQ.poll() ?: return@lock
+                    realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
                 }
             }
         }
@@ -190,7 +191,7 @@ class ExtWire : IWire {
             if (!sendQ.isEmpty() || !connected.value) {
                 val buffer = createAbstractBuffer()
                 writer(buffer)
-                sendQ.offer(id to buffer.getArray())
+                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray()))
                 return
             }
 

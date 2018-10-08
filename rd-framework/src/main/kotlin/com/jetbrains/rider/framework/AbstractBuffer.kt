@@ -31,7 +31,7 @@ abstract class AbstractBuffer {
     abstract fun readByteArrayRaw(array: ByteArray)
 
     abstract fun writeByteArray(array: ByteArray)
-    abstract fun writeByteArrayRaw(array: ByteArray)
+    abstract fun writeByteArrayRaw(array: ByteArray, count : Int? = null)
 
     fun readString() = readNullableString()!!
     abstract fun readNullableString(): String?
