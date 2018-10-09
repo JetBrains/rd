@@ -1,6 +1,8 @@
 package com.jetbrains.rider.util.wrappers
 
 import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.lifetime.intersect
+import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IProperty
 import com.jetbrains.rider.util.reactive.ISource
 import com.jetbrains.rider.util.reactive.Signal
@@ -15,11 +17,28 @@ class MultiplexingProperty<T, K : Any>(
     private var localChange = false
 
     fun addComponent(property: IProperty<T?>, key: K?) {
+        doAddComponent(property, key, lifetime)
+    }
+
+    private fun doAddComponent(property: IProperty<T?>, key: K?, subscriptionLifetime: Lifetime) {
         componentProperties.add(0, key to property)
-        property.change.advise(lifetime) { newValue ->
+        property.change.advise(subscriptionLifetime) { newValue ->
             if (!localChange && newValue != value) {
-                _value = newValue
-                _change.fire(newValue)
+                setThisValue(newValue)
+            }
+        }
+        if (componentProperties.size == 1 && property.value != null) {
+            setThisValue(property.value)
+        }
+    }
+
+    fun addComponent(property: IProperty<T?>, key: K?, componentLifetime: Lifetime) {
+        doAddComponent(property, key, componentLifetime.intersect(lifetime))
+        componentLifetime += {
+            componentProperties.remove(key to property)
+            val newValue = componentProperties.firstOrNull()?.second?.value
+            if (newValue != _value) {
+                setThisValue(newValue)
             }
         }
     }
@@ -38,6 +57,10 @@ class MultiplexingProperty<T, K : Any>(
         finally {
             localChange = false
         }
+        setThisValue(newValue)
+    }
+
+    private fun setThisValue(newValue: T?) {
         _value = newValue
         _change.fire(newValue)
     }
