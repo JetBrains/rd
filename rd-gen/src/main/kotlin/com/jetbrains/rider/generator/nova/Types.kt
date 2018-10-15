@@ -146,7 +146,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     val allMembers: List<Member> get() = ownMembers + membersOfBaseClasses
 
     open fun serializationHash(initial: IncrementalHash64) : IncrementalHash64
-        = ownMembers.fold(initial.mix(cl_name).mix(name).mix(base?.name)) { acc, member -> member.serializationHash(acc) }
+        = ownMembers.sortedBy { it.name }.fold(initial.mix(cl_name).mix(name).mix(base?.name)) { acc, member -> member.serializationHash(acc) }
 
     //todo delete? no recursion into lists, nullable, etc.?
     val referencedTypes: List<IType> get() = allMembers.flatMap { it.referencedTypes }.distinct()
@@ -184,7 +184,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     val declaredTypes = ArrayList<Declaration>()
 
     override fun serializationHash(initial: IncrementalHash64) : IncrementalHash64 =
-        declaredTypes.fold(super.serializationHash(initial)) {acc, type -> type.serializationHash(acc)}
+        declaredTypes.sortedBy { it.name }.fold(super.serializationHash(initial)) {acc, type -> type.serializationHash(acc)}
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Declaration> append(typedef: T, typedefBody: T.() -> Unit) : T {
