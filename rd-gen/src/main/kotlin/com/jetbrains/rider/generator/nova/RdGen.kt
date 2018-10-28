@@ -96,7 +96,8 @@ class RdGen : Kli() {
 
             val args = listOf(
                 "-cp", cp,
-                "-d", dst.toString()
+                "-d", dst.toString(),
+                "-jvm-target", "1.8"
             ) + src.map { it.absolutePath }
 
             v("kotlinc " + args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
@@ -129,7 +130,7 @@ class RdGen : Kli() {
 
     private val defaultClassloader = RdGen::class.java.classLoader!!
 
-    private fun compileDsl(src: List<File>) : ClassLoader? {
+    fun compileDsl(src: List<File>) : ClassLoader? {
         val dst = compiled.value?.apply {
             v("Compiling into specified folder: $this")
 

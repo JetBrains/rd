@@ -3,5 +3,7 @@ applyKotlinJVM()
 dependencies {
     compile project(':rd-core:rd-core-jvm')
     compile gradleApi()
+    testRuntime project(':rd-framework:rd-framework-jvm')
+    testRuntime "org.jetbrains.kotlin:kotlin-compiler:1.2.71"
 }
 

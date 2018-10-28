@@ -125,6 +125,14 @@ fun Member.Field.default(value: String) : Member.Field {
     return this
 }
 
+fun Member.Field.default(value: Boolean) : Member.Field {
+    if (type !== PredefinedType.bool) {
+        throw GeneratorException("Default value boolean does not match field type")
+    }
+    defaultValue = value
+    return this
+}
+
 fun Member.doc(value: String) : Member {
     documentation = value
     return this

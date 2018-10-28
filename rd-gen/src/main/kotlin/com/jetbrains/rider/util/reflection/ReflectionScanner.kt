@@ -50,11 +50,15 @@ private fun <T> URL.process(pkg: String, processFile: (File) -> T, processJar: (
             processJar(JarFile(path))
         }
         "file" -> {
-            val path = File(urlDecode(path)).absolutePath.removeSuffix(pkg.pkg2path(true))
-            processFile(File(path))
+            processFile(toPath(pkg))
         }
         else -> onFail()
     }
+}
+
+fun URL.toPath(pkg: String = ""): File {
+    val path = File(urlDecode(path)).absolutePath.removeSuffix(pkg.pkg2path(true))
+    return File(path)
 }
 
 

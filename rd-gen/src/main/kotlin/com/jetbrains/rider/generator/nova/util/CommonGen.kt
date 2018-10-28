@@ -9,7 +9,7 @@ fun StringBuilder.appendDefaultValueSetter(member: Member, typeName: String) {
         val defaultValue = member.defaultValue
         when (defaultValue) {
             is String -> append(if (member.type is Enum) "$typeName.$defaultValue" else "\"$defaultValue\"")
-            is Long -> append(defaultValue)
+            is Long, is Boolean -> append(defaultValue)
             else -> if (member.isOptional) append("null")
         }
     }

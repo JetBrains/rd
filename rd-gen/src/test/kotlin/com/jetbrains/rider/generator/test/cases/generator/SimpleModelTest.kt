@@ -4,15 +4,21 @@ import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rider.util.UsedImplicitly
+import com.jetbrains.rider.util.reflection.scanForResourcesContaining
+import com.jetbrains.rider.util.reflection.toPath
+import org.junit.Assert
 import org.junit.Test
 import java.io.File
 
 
 class SimpleModelTest {
+    companion object {
+        val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+    }
 
     object TestRoot1 : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "org.testroot1", File("c:/temp/testOutput/testroot1")),
-        CSharp50Generator(FlowTransform.AsIs, "Org.TestRoot1", File("c:/temp/testOutput/testroot1"))
+        Kotlin11Generator(FlowTransform.AsIs, "org.testroot1", File(kotlinGeneratedSourcesDir)),
+        CSharp50Generator(FlowTransform.AsIs, "Org.TestRoot1", File("build/testOutputCSharp"))
     )
 
     @UsedImplicitly
@@ -24,6 +30,7 @@ class SimpleModelTest {
         val editor = classdef("editor") {
             field("DocumentName", PredefinedType.int)
             property("Caret", PredefinedType.int)
+            field("singleLine", PredefinedType.bool).default(false)
         }
 
         init {
@@ -43,7 +50,23 @@ class SimpleModelTest {
 
     @Test
     fun test1() {
-         generateRdModel(classloader, arrayOf("com.jetbrains.rider.framework.test.cases.generator"), true)
+        generateRdModel(classloader, arrayOf("com.jetbrains.rider.generator.test.cases.generator"), true)
+        val generatedCodeTestFile = classloader.getResource("GeneratedCodeTest.kt").toPath()
+
+        val rdgen = RdGen()
+
+        val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rider.framework") +
+                classloader.scanForResourcesContaining("com.jetbrains.rider.util")
+        rdgen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
+
+        val generatedSources = File(kotlinGeneratedSourcesDir).walk().toList() + listOf(generatedCodeTestFile)
+        val compiledClassesLoader = rdgen.compileDsl(generatedSources)
+        Assert.assertNotNull("Failed to compile generated sources: ${rdgen.error}", compiledClassesLoader)
+
+        val generatedCodeClass = compiledClassesLoader!!.loadClass("GeneratedCodeTestKt")
+        val method = generatedCodeClass.getMethod("main")
+        val result = method.invoke(null) as String
+        Assert.assertEquals(result, "OK", result)
     }
 }
 
