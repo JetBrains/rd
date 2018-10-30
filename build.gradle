@@ -205,11 +205,31 @@ allprojects {
 
     ext.applyMultiplatform = {
         apply plugin: 'org.jetbrains.kotlin.multiplatform'
+        apply plugin: 'maven-publish'
+//        apply plugin: 'org.jetbrains.dokka'
 
         kotlin {
             targets {
-                fromPreset(presets.jvm, 'jvm')
-                fromPreset(presets.js, 'js')
+                fromPreset(presets.jvm, 'jvm') {
+                    mavenPublication {
+                        groupId 'com.jetbrains.rd'
+                        artifactId project.name
+                        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
+                    }
+                }
+                fromPreset(presets.js, 'js') {
+                    mavenPublication {
+                        groupId 'com.jetbrains.rd'
+                        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
+                    }
+                }
+                metadata {
+                    mavenPublication {
+                        groupId 'com.jetbrains.rd'
+                        artifactId project.name + "-common"
+                        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
+                    }
+                }
             }
 
             sourceSets {
@@ -250,6 +270,19 @@ allprojects {
                 }
             }
         }
+
+        /*
+        dokka {
+            outputFormat = 'html'
+            outputDirectory = "$buildDir/javadoc"
+        }
+
+        task packageJavadoc(type: Jar){
+            dependsOn dokka
+            from "$buildDir/javadoc"
+            classifier = 'javadoc'
+        }
+        */
     }
 
     configurations.all {
