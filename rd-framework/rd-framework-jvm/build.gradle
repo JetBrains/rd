@@ -1,6 +1,0 @@
-applyKotlinJVM()
-
-dependencies {
-    expectedBy project(":rd-framework")
-    compile project(':rd-core:rd-core-jvm')
-}
