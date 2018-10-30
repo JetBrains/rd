@@ -1,7 +1,0 @@
-applyKotlinJVM()
-
-dependencies {
-    expectedBy project(":rd-core")
-
-    compile "commons-logging:commons-logging:1.2"
-}
