@@ -206,7 +206,7 @@ allprojects {
     ext.applyMultiplatform = {
         apply plugin: 'org.jetbrains.kotlin.multiplatform'
         apply plugin: 'maven-publish'
-//        apply plugin: 'org.jetbrains.dokka'
+        apply plugin: 'org.jetbrains.dokka'
 
         kotlin {
             targets {
@@ -271,10 +271,11 @@ allprojects {
             }
         }
 
-        /*
         dokka {
             outputFormat = 'html'
             outputDirectory = "$buildDir/javadoc"
+            kotlinTasks { }
+            sourceDirs = files("src/commonMain/kotlin", "src/jvmMain/kotlin")
         }
 
         task packageJavadoc(type: Jar){
@@ -282,7 +283,18 @@ allprojects {
             from "$buildDir/javadoc"
             classifier = 'javadoc'
         }
-        */
+
+        publishing {
+            repositories {
+                maven {
+                    url "https://www.myget.org/F/rd-snapshots/maven/"
+                    credentials {
+                        username = System.getenv("MYGET_USERNAME")
+                        password = System.getenv("MYGET_PASSWORD")
+                    }
+                }
+            }
+        }
     }
 
     configurations.all {
