@@ -44,13 +44,14 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
 
     override fun fire(value: T) {
 //        assertBound()
-        if (!async) assertThreading()
         //localChange {
-        if (isBound)
+        if (isBound) {
+            assertThreading()
             wire.send(rdid) { buffer ->
-                logSend.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
+                logSend.trace { "signal `$location` ($rdid):: value = ${value.printToString()}" }
                 valueSerializer.write(serializationContext, buffer, value)
             }
+        }
         signal.fire(value)
         //}
     }
