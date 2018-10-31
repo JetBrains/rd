@@ -1,6 +1,0 @@
-applyKotlinJS()
-
-dependencies {
-    expectedBy project(":rd-framework")
-    compile project(':rd-core:rd-core-js')
-}
