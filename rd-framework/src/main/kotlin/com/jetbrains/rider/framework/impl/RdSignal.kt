@@ -43,7 +43,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     }
 
     override fun fire(value: T) {
-        assertBound()
+//        assertBound()
         if (!async) assertThreading()
         //localChange {
         wire.send(rdid) { buffer ->
