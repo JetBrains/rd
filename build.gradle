@@ -1,4 +1,5 @@
 //group 'com.jetbrains.rd'
+version = System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
 
 buildscript {
     apply from: 'versions.gradle'
@@ -187,6 +188,9 @@ allprojects {
     }
 
     ext.applyMultiplatform = {
+        group 'com.jetbrains.rd'
+        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
+
         apply plugin: 'org.jetbrains.kotlin.multiplatform'
         apply plugin: 'maven-publish'
         apply plugin: 'org.jetbrains.dokka'
@@ -195,22 +199,14 @@ allprojects {
             targets {
                 fromPreset(presets.jvm, 'jvm') {
                     mavenPublication {
-                        groupId 'com.jetbrains.rd'
                         artifactId project.name
-                        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
                     }
                 }
                 fromPreset(presets.js, 'js') {
-                    mavenPublication {
-                        groupId 'com.jetbrains.rd'
-                        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
-                    }
                 }
                 metadata {
                     mavenPublication {
-                        groupId 'com.jetbrains.rd'
                         artifactId project.name + "-common"
-                        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
                     }
                 }
             }
