@@ -46,10 +46,11 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
 //        assertBound()
         if (!async) assertThreading()
         //localChange {
-        wire.send(rdid) { buffer ->
-            logSend.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
-            valueSerializer.write(serializationContext, buffer, value)
-        }
+        if (isBound)
+            wire.send(rdid) { buffer ->
+                logSend.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
+                valueSerializer.write(serializationContext, buffer, value)
+            }
         signal.fire(value)
         //}
     }
