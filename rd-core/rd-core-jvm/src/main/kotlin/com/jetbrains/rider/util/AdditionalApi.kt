@@ -2,6 +2,8 @@ package com.jetbrains.rider.util
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.plusAssign
+import com.jetbrains.rider.util.reactive.IProperty
+import com.jetbrains.rider.util.reactive.IPropertyView
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.reactive.ISource
 import java.time.Duration
@@ -16,16 +18,19 @@ fun <T : Any> ISource<T>.throttleLast(timeout: Duration, scheduler: IScheduler) 
         var currentTask: TimerTask? = null
         val lastValue = AtomicReference<T?>(null)
 
-        if (lifetime.isTerminated) return
-        lifetime += { currentTask?.cancel() }
+        lifetime.executeIfAlive {
+            lifetime += { currentTask?.cancel() }
+        }
+
 
         this@throttleLast.advise(lifetime) { v ->
             if (lastValue.getAndSet(v) == null) {
                 currentTask = timer.schedule(timeout.toMillis()) {
                     val toSchedule = lastValue.getAndSet(null)?: return@schedule
                     scheduler.invokeOrQueue {
-                        if (!lifetime.isTerminated)
+                        lifetime.executeIfAlive {
                             handler(toSchedule)
+                        }
                     }
                 }
             }
@@ -33,6 +38,42 @@ fun <T : Any> ISource<T>.throttleLast(timeout: Duration, scheduler: IScheduler) 
 
     }
 }
+
+
+fun <T : Any> IPropertyView<T?>.debounceNotNull(timeout: Duration, scheduler: IScheduler) = object : ISource<T?> {
+
+    override fun advise(lifetime: Lifetime, handler: (T?) -> Unit) {
+        var currentTask: TimerTask? = null
+
+        this@debounceNotNull.view(lifetime) { innerLifetime, v ->
+            currentTask?.cancel()
+
+            if (v == null)
+                handler(v)
+            else
+                currentTask = timer.schedule(timeout.toMillis()) {
+                    scheduler.invokeOrQueue {
+                        innerLifetime.executeIfAlive {
+                            handler(v)
+                        }
+                    }
+                }
+        }
+    }
+}
+
+fun <T> ISource<T>.asProperty(defaultValue: T) = object : IPropertyView<T> {
+    override val change: ISource<T>
+        get() = this@asProperty
+    override var value: T = defaultValue
+        private set
+
+    override fun advise(lifetime: Lifetime, handler: (T) -> Unit) = super.advise(lifetime) {
+        value = it
+        handler(it)
+    }
+}
+
 
 
 //jvm impl backed by commons-logging
