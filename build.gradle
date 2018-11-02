@@ -1,4 +1,5 @@
 //group 'com.jetbrains.rd'
+version = System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
 
 buildscript {
     apply from: 'versions.gradle'
@@ -11,7 +12,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.71"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.0"
         classpath "com.moowork.gradle:gradle-node-plugin:1.1.1"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
@@ -85,28 +86,6 @@ allprojects {
         }
 
         kotlin { experimental.coroutines = 'enable' }
-    }
-
-
-
-    ext.applyKotlinCommon = {
-        apply plugin: 'kotlin-platform-common'
-        apply plugin: 'maven-publish'
-
-        dependencies {
-            compile "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
-            testCompile "org.jetbrains.kotlin:kotlin-test-common:$kotlin_version"
-            testCompile "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
-        }
-
-        kotlin { experimental.coroutines = 'enable' }
-
-        task sourceJar(type: Jar) {
-            from sourceSets.main.kotlin
-            classifier = "sources"
-        }
-
-        configurePublishing()
     }
 
 
@@ -205,6 +184,95 @@ allprojects {
 
             // Set the work directory where node_modules should be located
             nodeModulesDir = file("${rootProject.projectDir}")
+        }
+    }
+
+    ext.applyMultiplatform = {
+        group 'com.jetbrains.rd'
+        version System.getenv("RELEASE_VERSION_NUMBER") ?: 'SNAPSHOT'
+
+        apply plugin: 'org.jetbrains.kotlin.multiplatform'
+        apply plugin: 'maven-publish'
+        apply plugin: 'org.jetbrains.dokka'
+
+        kotlin {
+            targets {
+                fromPreset(presets.jvm, 'jvm') {
+                    mavenPublication {
+                        artifactId project.name
+                    }
+                }
+                fromPreset(presets.js, 'js') {
+                }
+                metadata {
+                    mavenPublication {
+                        artifactId project.name + "-common"
+                    }
+                }
+            }
+
+            sourceSets {
+                commonMain {
+                    dependencies {
+                        implementation "org.jetbrains.kotlin:kotlin-stdlib-common"
+                    }
+                }
+                commonTest {
+                    dependencies {
+                        implementation "org.jetbrains.kotlin:kotlin-test-common"
+                        implementation "org.jetbrains.kotlin:kotlin-test-annotations-common"
+                    }
+
+                }
+                jvmMain {
+                    dependencies {
+                        implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+                        implementation "org.jetbrains.kotlin:kotlin-reflect"
+                    }
+                }
+                jvmTest {
+                    dependencies {
+                        implementation "junit:junit:$junit_version"
+                        implementation "org.jetbrains.kotlin:kotlin-test"
+                        implementation "org.jetbrains.kotlin:kotlin-test-junit"
+                    }
+                }
+                jsMain {
+                    dependencies {
+                        implementation "org.jetbrains.kotlin:kotlin-stdlib-js"
+                    }
+                }
+                jsTest {
+                    dependencies {
+                        implementation "org.jetbrains.kotlin:kotlin-test-js"
+                    }
+                }
+            }
+        }
+
+        dokka {
+            outputFormat = 'html'
+            outputDirectory = "$buildDir/javadoc"
+            kotlinTasks { }
+            sourceDirs = files("src/commonMain/kotlin", "src/jvmMain/kotlin")
+        }
+
+        task packageJavadoc(type: Jar){
+            dependsOn dokka
+            from "$buildDir/javadoc"
+            classifier = 'javadoc'
+        }
+
+        publishing {
+            repositories {
+                maven {
+                    url "https://www.myget.org/F/rd-snapshots/maven/"
+                    credentials {
+                        username = System.getenv("MYGET_USERNAME")
+                        password = System.getenv("MYGET_PASSWORD")
+                    }
+                }
+            }
         }
     }
 

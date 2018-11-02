@@ -1,5 +1,11 @@
-applyKotlinCommon()
+applyMultiplatform()
 
-dependencies {
-    compile project(':rd-core')
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation project(':rd-core')
+            }
+        }
+    }
 }
