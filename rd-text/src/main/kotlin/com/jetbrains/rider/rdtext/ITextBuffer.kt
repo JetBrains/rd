@@ -36,17 +36,16 @@ interface ITextBuffer : ISignal<RdTextChange> {
 interface ITextBufferWithTypingSession : ITextBuffer {
     val discardedBufferVersion: ISource<TextBufferVersion>
 
-    fun startTypingSession(lifetime: Lifetime): ITypingSession
+    fun startTypingSession(): ITypingSession<RdTextChange>
+    fun finishTypingSession()
 }
 
-interface ITypingSession {
-    interface IRemoteChange {
-        val source: ITypingSession
-        fun commit()
-    }
-
-    fun rollbackLocalChanges()
-    val onRemoteChange: ISource<IRemoteChange>
+interface ITypingSession<TChange> {
+    fun startCommitRemoteVersion()
+    fun finishCommitRemoteVersion()
+    fun rollbackRemoteVersion()
+    val onRemoteChange: ISource<TChange>
+    val onLocalChange: ISource<TChange>
 }
 
 /**
@@ -62,4 +61,6 @@ interface IDeferrableITextBuffer : ITextBuffer {
      * Sends all postponed events to protocol.
      */
     fun flush()
+
+    val isQueueEmpty: Boolean
 }
