@@ -3,6 +3,7 @@ package com.jetbrains.rider.generator.test.cases.generator
 import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rider.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rider.util.UsedImplicitly
 import com.jetbrains.rider.util.reflection.scanForResourcesContaining
 import com.jetbrains.rider.util.reflection.toPath
@@ -18,7 +19,8 @@ class SimpleModelTest {
 
     object TestRoot1 : Root(
         Kotlin11Generator(FlowTransform.AsIs, "org.testroot1", File(kotlinGeneratedSourcesDir)),
-        CSharp50Generator(FlowTransform.AsIs, "Org.TestRoot1", File("build/testOutputCSharp"))
+        CSharp50Generator(FlowTransform.AsIs, "Org.TestRoot1", File("build/testOutputCSharp")),
+        Cpp17Generator(FlowTransform.AsIs, "Org.TestRoot1", File("build/testOutputCpp"))
     )
 
     @UsedImplicitly

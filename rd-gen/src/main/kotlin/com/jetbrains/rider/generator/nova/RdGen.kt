@@ -1,5 +1,6 @@
 package com.jetbrains.rider.generator.nova
 
+import com.jetbrains.rider.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rider.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rider.util.getThrowableText
@@ -55,7 +56,7 @@ class RdGen : Kli() {
     val clearOutput =   option_flag(  'x',   "clear", "Clear output folder before generation (if it is not incremental) ")
 
     val packages =      option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rider.model.nova", "com,org")
-    val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp")
+    val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp|cpp")
     val verbose =       option_flag(  'v',    "verbose", "Verbose output")
 
     val hashfile : Path get() = Paths.get(hashFolder.value!!.toString(), hashFileName).normalize()
@@ -427,7 +428,9 @@ private fun collectGeneratorsToInvoke(
                 File(generationSpec.directory))
             "csharp" -> CSharp50Generator(flowTransform, generationSpec.namespace,
                 File(generationSpec.directory))
-            else -> throw GeneratorException("Unknown language ${generationSpec.language}, use 'kotlin' or 'csharp'")
+            "cpp" -> Cpp17Generator(flowTransform, generationSpec.namespace,
+                    File(generationSpec.directory))
+            else -> throw GeneratorException("Unknown language ${generationSpec.language}, use 'kotlin' or 'csharp' or 'cpp'")
         }
         val root = roots.find { it.javaClass.canonicalName == generationSpec.root }
                 ?: throw GeneratorException("Can't find root with class name ${generationSpec.root}. Found roots: " +

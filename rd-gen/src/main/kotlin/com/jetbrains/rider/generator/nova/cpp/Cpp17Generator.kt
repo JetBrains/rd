@@ -696,7 +696,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                             "ctx.serializers->readPolymorphic<${substitutedName(decl)}>(ctx, buffer)"
                         else
                             "${substitutedName(decl)}::read(ctx, buffer)"
-//            is INullable -> "buffer.readNullable { ${itemType.reader()} }"
             is INullable -> {
                 val lambda = lambda(null, "return ${itemType.reader()}")
                 """buffer.readNullable<${itemType.substitutedName(decl)}>($lambda)"""

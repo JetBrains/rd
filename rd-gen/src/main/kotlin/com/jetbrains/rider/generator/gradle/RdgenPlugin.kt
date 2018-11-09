@@ -40,7 +40,7 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
 //  option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rider.model.nova", "com,org")
     var packages : String? = null
 
-//  option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp")
+//  option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp|cpp")
     var filter : String? = null
 
 //  option_flag(  'v',    "verbose", "Verbose output")
