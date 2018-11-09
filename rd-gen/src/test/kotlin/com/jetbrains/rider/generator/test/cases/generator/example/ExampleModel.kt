@@ -2,12 +2,14 @@ package com.jetbrains.rider.generator.test.cases.generator.example
 
 import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.PredefinedType.*
+import com.jetbrains.rider.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rider.util.PublicApi
 import java.io.File
 
 object ExampleRootNova : Root(
-    Kotlin11Generator(FlowTransform.AsIs, "org.example", File("C:/temp/ExampleModel"))
+//    Kotlin11Generator(FlowTransform.AsIs, "org.example", File("C:/temp/ExampleModel")),
+      Cpp17Generator(FlowTransform.AsIs, "org.example", File("C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\rd_model"))
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
 )
 

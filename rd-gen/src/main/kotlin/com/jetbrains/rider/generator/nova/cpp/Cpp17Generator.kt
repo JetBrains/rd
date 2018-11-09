@@ -10,6 +10,7 @@ import com.jetbrains.rider.util.string.Eol
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
 import java.io.File
+import javax.annotation.Nullable
 
 open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
 
@@ -314,6 +315,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
 
         File(folder, "CMakeLists.txt").bufferedWriter().use {
+            it.write("cmake_minimum_required(VERSION 3.12)$eol")
             it.write("add_library(rd_model STATIC ${fileNames.joinToString(eol)})" + eol)
             it.write("include_directories(../rd_framework_cpp)\n" +
                     "include_directories(../rd_framework_cpp/src/main)\n" +
@@ -528,6 +530,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 .distinct()
                 .map { it.name }
                 .printlnWithBlankLine { """#include "$it.h" """ }
+        tl.referencedTypes
+                .plus(tl.base ?: emptyList<IType>())
+                .filterIsInstance(NullableScalar::class.java)
+                .distinct()
+                .map { it.itemType.name }
+                .printlnWithBlankLine { """#include "$it.h" """ }
     }
 
     fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {
@@ -597,9 +605,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 if (isPrimitivesArray) "contentHashCode(value.get_$v())"
                 else "contentDeepHashCode(value.get_$v())"
             is INullable -> {
-                "($v != null) ?" + (itemType as IScalar).hc(v) + " : 0"
+                "($v.has_value()) ? " + (itemType as IScalar).hc("$v.value()") + " : 0"
             }
-            else -> "std::hash<${this.substitutedName(decl)}>()(value.get_$v())"
+            else -> "std::hash<${this.substitutedName(decl)}>()($v)"
         }
 
         block("namespace std {", "}") {
@@ -611,7 +619,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                         val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                         val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
                         if (f.usedInEquals)
-                            "__r = __r * 31 + ${t.hc(f.encapsulatedName)};"
+                            "__r = __r * 31 + (${t.hc("""value.get_${f.encapsulatedName}()""")});"
                         else
                             ""
                     }
