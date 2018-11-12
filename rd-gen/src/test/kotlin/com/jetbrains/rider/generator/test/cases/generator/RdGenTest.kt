@@ -19,7 +19,7 @@ class RdGenTest {
 //        rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\Gen"
 //        rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\example"
         rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\ide-model\\src\\com\\jetbrains\\rider\\model\\nova\\ide"
-        rdgen.filter *= "kotlin"
+        rdgen.filter *= "cpp"
         rdgen.compilerClassloader = URLClassLoader(arrayOf(
 //            File("C:\\Users\\dmitry.ivanov\\.IntelliJIdea2017.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
             File("C:\\Users\\jetbrains\\.IntelliJIdea2018.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
