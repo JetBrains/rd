@@ -57,7 +57,7 @@ class RdMap<K : Any, V : Any> private constructor(
 
             if (!optimizeNested) (it.newValueOpt)?.identifyPolymorphic(protocol.identity, protocol.identity.next(rdid))
 
-            wire.send(rdid, { buffer ->
+            wire.send(rdid) { buffer ->
                 val versionedFlag = (if (master) 1 else 0) shl versionedFlagShift
                 val op = when (it) {
                     is IViewableMap.Event.Add ->    Op.Add
@@ -78,7 +78,7 @@ class RdMap<K : Any, V : Any> private constructor(
                 it.newValueOpt?.let { valSzr.write(serializationContext, buffer, it) }
 
                 logSend.trace { logmsg(op, version, it.key, it.newValueOpt) }
-            })
+            }
         }}
 
         logSend.trace { "Advise $rdid: $location" }

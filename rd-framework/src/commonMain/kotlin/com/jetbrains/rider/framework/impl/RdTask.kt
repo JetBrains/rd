@@ -200,7 +200,8 @@ class RdEndpoint<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymor
     /**
      * Assigns a handler that executes the API synchronously.
      */
-    fun set(handler: (TReq) -> TRes) = set ({ lf, req -> RdTask.fromResult(handler(req)) })
+    fun set(handler: (TReq) -> TRes) = set { lf, req -> RdTask.fromResult(handler(req)) }
+
     constructor(handler: (TReq) -> TRes) : this () {set(handler)}
 
 

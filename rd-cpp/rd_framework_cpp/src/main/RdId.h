@@ -51,7 +51,7 @@ public:
 //    static std::shared_ptr<RdId> NULL_ID;
     static RdId Null();
 
-    static const int32_t MAX_STATIC_ID = 1000000;
+    static const int32_t MAX_STATIC_ID = 1'000'000;
 
     static RdId read(Buffer const &buffer);
 

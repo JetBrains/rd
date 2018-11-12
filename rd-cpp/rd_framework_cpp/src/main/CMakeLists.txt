@@ -20,6 +20,8 @@ add_library(rd_framework_cpp STATIC
         MessageBroker.h
         Buffer.cpp Buffer.h
         serialization/Polymorphic.cpp serialization/Polymorphic.h
+        serialization/NullableSerializer.h
+        serialization/ArraySerializer.h
         base/IProtocol.cpp base/IProtocol.h
         base/IRdDynamic.h
         base/IWire.h
@@ -38,7 +40,8 @@ add_library(rd_framework_cpp STATIC
         util/shared_function.cpp util/shared_function.h
         #task
         task/RdCall.cpp task/RdCall.h task/RdTask.cpp task/RdTask.h task/RdTaskResult.cpp task/RdTaskResult.h task/RdEndpoint.cpp task/RdEndpoint.h
-        task/RdTaskImpl.cpp task/RdTaskImpl.h)
+        task/RdTaskImpl.cpp task/RdTaskImpl.h
+        )
 
 target_include_directories(rd_framework_cpp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(rd_framework_cpp PUBLIC base)

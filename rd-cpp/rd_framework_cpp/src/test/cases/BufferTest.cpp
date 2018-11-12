@@ -8,6 +8,8 @@
 
 #include "Buffer.h"
 #include "Polymorphic.h"
+#include "NullableSerializer.h"
+#include "ArraySerializer.h"
 
 TEST(BufferTest, readWritePod) {
     Buffer buffer;
@@ -116,4 +118,68 @@ TEST(BufferTest, Enum) {
     EXPECT_EQ(Numbers::ONE, one);
     EXPECT_EQ(Numbers::TWO, two);
     EXPECT_EQ(Numbers::THREE, three);
+}
+
+TEST(BufferTest, NullableSerializer) {
+    SerializationCtx ctx;
+    Buffer buffer;
+
+    using T = std::string;
+    using S = Polymorphic<T>;
+    using NS = NullableSerializer<S>;
+
+    std::vector<std::optional<T>> list{
+            std::nullopt,
+            "1",
+            "2",
+            std::nullopt,
+            "error"
+    };
+
+	buffer.write_pod<int32_t>(+1);
+    for (auto const &x : list) {
+        NS::write(ctx, buffer, x);
+    }
+	buffer.write_pod<int32_t>(-1);
+
+    buffer.rewind();
+
+	EXPECT_EQ(+1, buffer.read_pod<int32_t>());
+    for (auto const &expected : list) {
+        auto actual = NS::read(ctx, buffer);
+        EXPECT_EQ(expected, actual);
+    }
+	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
+}
+
+TEST(BufferTest, ArraySerializer) {
+    SerializationCtx ctx;
+    Buffer buffer;
+
+    using T = std::string;
+    using S = Polymorphic<T>;
+    using AS = ArraySerializer<S>;
+
+    std::vector<T> list{
+            "start"
+            "1",
+            "2",
+            "",
+            "error"
+    };
+
+	buffer.write_pod<int32_t>(+1);
+    AS::write(ctx, buffer, list);
+	buffer.write_pod<int32_t>(-1);
+
+    buffer.rewind();
+
+    
+
+	EXPECT_EQ(+1, buffer.read_pod<int32_t>());
+
+	auto actual = AS::read(ctx, buffer);
+    EXPECT_EQ(list, actual);
+
+	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
 }

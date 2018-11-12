@@ -10,7 +10,7 @@ enum class IdKind {
 }
 
 //PLEASE DO NOT CHANGE IT!!! IT'S EXACTLY THE SAME ON C# SIDE
-internal fun String?.getPlatformIndependentHash(initial: Long = 19L) : Long = this?.fold(initial, {acc, c -> acc*31 + c.toInt()}) ?:0
+internal fun String?.getPlatformIndependentHash(initial: Long = 19L) : Long = this?.fold(initial) { acc, c -> acc*31 + c.toInt()} ?:0
 internal fun Int.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
 internal fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
 
@@ -22,7 +22,7 @@ data class RdId(val hash: Long) {
 
     companion object {
         val Null : RdId = RdId( 0)
-        const val MAX_STATIC_ID = 1000000
+        const val MAX_STATIC_ID = 1_000_000
 
         fun read(buffer: AbstractBuffer) : RdId {
             val number = buffer.readLong()
