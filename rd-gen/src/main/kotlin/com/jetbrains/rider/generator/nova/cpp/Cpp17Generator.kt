@@ -333,6 +333,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         println()
 
         +"class ${decl.name};"
+        println()
 
         includesDecl(decl)
         println()
@@ -394,6 +395,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         p("class ${decl.name} ")
         baseClassTraitDecl(decl)
         block("{", "};") {
+            comment("custom serializers")
+            customSerializersTrait(decl)
+
             comment("fields")
             fieldsDecl(decl)
 
@@ -500,6 +504,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 "IMarshaller",
                 "ISerializable",
                 "Polymorphic",
+                "NullableSerializer",
+                "ArraySerializer",
                 "SerializationCtx",
                 "Serializers",
                 //ext
@@ -524,6 +530,24 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {
         +decl.bases(false).map { "public $it" }.joinToString(separator = ", ", prefix = ": ")
+    }
+
+    fun PrettyPrinter.customSerializersTrait(decl: Declaration) {
+        fun IType.serializerBuilder() : String = leafSerializerRef(decl)?: when (this) {
+            is IArray -> "ArraySerializer<${itemType.serializerBuilder()}>"
+            is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}>"
+            is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
+            is InternedScalar -> "InternedSerializer<${itemType.serializerBuilder()}>"
+            else -> fail("Unknown type: $this")
+        }
+
+        val allTypesForDelegation = decl.allMembers
+                .filterIsInstance<Member.Reactive>()
+                .flatMap { it.genericParams.toList() }
+                .distinct()
+                .filter { it.leafSerializerRef(decl) == null }
+
+        allTypesForDelegation.println { "using ${it.serializerRef(decl)} = ${it.serializerBuilder()};" }
     }
 
     fun PrettyPrinter.fieldsDecl(decl: Declaration) {
