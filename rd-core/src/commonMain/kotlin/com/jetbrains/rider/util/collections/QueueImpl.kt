@@ -6,17 +6,17 @@ package com.jetbrains.rider.util.collections
 class QueueImpl<E>() {
     private var toPush = ArrayList<E?>()
     private var toPoll = ArrayList<E?>()
-    var pollIndex = 0
+    private var pollIndex = 0
 
     fun offer(element: E): Boolean {
         toPush.add(element)
         return true
     }
 
-    fun poll() : E? {
+    fun poll(): E? {
         if (isEmpty()) return null
 
-        if(pollIndex >= toPoll.size)
+        if (pollIndex >= toPoll.size)
             return null
 
         val res = toPoll[pollIndex]
@@ -24,7 +24,7 @@ class QueueImpl<E>() {
         return res
     }
 
-    fun peek() : E? {
+    fun peek(): E? {
         if (isEmpty()) return null
 
         return toPoll[pollIndex]
@@ -35,7 +35,7 @@ class QueueImpl<E>() {
         if (toPush.isEmpty()) return true
 
         toPoll = toPush
-        toPush = ArrayList<E?>()
+        toPush = ArrayList()
         pollIndex = 0
 
         return false
