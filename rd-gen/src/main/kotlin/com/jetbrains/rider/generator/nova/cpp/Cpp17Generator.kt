@@ -332,10 +332,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"#define ${decl.name}_H"
         println()
 
+        +"class ${decl.name};"
+
         includesDecl(decl)
         println()
 
-        dependenciesDecl(decl)
+        dependenciesDecl(decl, dependencies)
         println()
 
         /*if (decl.isLibrary)
@@ -394,26 +396,29 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         block("{", "};") {
             comment("fields")
             fieldsDecl(decl)
+
             comment("initializer")
             +"private:"
             initializerTraitDecl(decl)
             +";"
+
             comment("primary ctor")
             +(decl.primaryCtorVisibility)
             p("explicit ")
             primaryCtorTraitDecl(decl)
             +";"
+
             comment("default ctors and dtors")
             +"public:"
             defaultCtorsDtors(decl)
+
             comment("reader")
             +"public:"
-            readerTraitDecl(decl)
-            +";"
+            +readerTraitDecl(decl).condstr { ";" }
+
             comment("writer")
             +"public:"
-            writerTraitDecl(decl)
-            +";"
+            +writerTraitDecl(decl).condstr { ";" }
 
             comment("getters")
             +"public:"
@@ -425,7 +430,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
             comment("hash code trait")
             hashCodeTraitDecl(decl)
-            comment("pretty print")
+//            comment("pretty print")
 //            prettyPrintTrait(decl)
 
 
@@ -509,33 +514,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         )/*.subList(0, 0)*/
 
         +frameworkHeaders.joinToString(separator = eol) { s -> """#include "$s.h" """ }
-
-//        tl.referencedTypes.plus(tl.declaredTypes.flatMap { it.referencedTypes })
-//            .filterIsInstance(Declaration::class.java)
-//            .map {
-//                it.namespace
-//            }
-//            .filterNot { it == tl.namespace }
-//            .distinct()
-//            .printlnWithBlankLine { "import $it.*;" }
     }
 
-    fun PrettyPrinter.dependenciesDecl(tl: Declaration) {
-        /*dependencies.forEach {
+    fun PrettyPrinter.dependenciesDecl(tl: Declaration, dependencies: List<Declaration>) {
+        dependencies.forEach {
             +"""#include "${it.name}.h""""
-        }*/
-        tl.referencedTypes
-                .plus(tl.base ?: emptyList<IType>())
-                .filterIsInstance(Declaration::class.java)
-                .distinct()
-                .map { it.name }
-                .printlnWithBlankLine { """#include "$it.h" """ }
-        tl.referencedTypes
-                .plus(tl.base ?: emptyList<IType>())
-                .filterIsInstance(NullableScalar::class.java)
-                .distinct()
-                .map { it.itemType.name }
-                .printlnWithBlankLine { """#include "$it.h" """ }
+        }
     }
 
     fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {
@@ -575,19 +559,24 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"virtual ~$name() = default;"
     }
 
-    fun PrettyPrinter.readerTraitDecl(decl: Declaration) {
+    fun PrettyPrinter.readerTraitDecl(decl: Declaration): Boolean {
         if (decl.isConcrete) {
             p("static ${decl.name} read(SerializationCtx const& ctx, Buffer const & buffer)")
+            return true
         } else if (decl.isAbstract) {
             //todo read abstract
+            return false
         }
+        return false
     }
 
-    fun PrettyPrinter.writerTraitDecl(decl: Declaration) {
+    fun PrettyPrinter.writerTraitDecl(decl: Declaration): Boolean {
         if (decl.isConcrete) {
             p("void write(SerializationCtx const& ctx, Buffer const& buffer) const override")
+            return true
         } else {
             //todo ???
+            return false
         }
     }
 
@@ -608,12 +597,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     fun PrettyPrinter.hashCodeTraitDecl(decl: Declaration) {
         if (decl !is IScalar) return
         if (decl.isAbstract) {
-            p("virtual size_t hashCode() const = 0;")
+            +("virtual size_t hashCode() const = 0;")
         } else {
             if (decl.base == null) {
-                p("size_t hashCode() const;")
+                +("size_t hashCode() const;")
             } else {
-                p("size_t hashCode() const override;")
+                +("size_t hashCode() const override;")
             }
         }
     }
@@ -635,18 +624,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         block("namespace std {", "}") {
             block("template <> struct hash<${decl.name}> {", "};") {
                 block("size_t operator()(const ${decl.name} & value) const {", "}") {
-                    /*+"size_t __r = 0;"
-
-                    decl.allMembers.println { m: Member ->
-                        val f = m as? Member.Field ?: fail("Must be field but was `$m`")
-                        val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                        if (f.usedInEquals)
-                            "__r = __r * 31 + (${t.hc("""value.get_${f.encapsulatedName}()""")});"
-                        else
-                            ""
-                    }
-
-                    +"return __r;"*/
                     +"return value.hashCode();"
                 }
             }
@@ -659,16 +636,22 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     private fun PrettyPrinter.typedef(decl: Declaration) {
         comment("initializer")
         initializerTraitDef(decl)
+
         comment("primary ctor")
         primaryCtorTraitDef(decl)
+
         comment("reader")
         readerTraitDef(decl)
+
         comment("writer")
         writerTraitDef(decl)
+
         comment("getters")
         gettersTraitDef(decl)
+
         comment("equals trait")
         equalsTraitDef(decl)
+
         comment("hash code trait")
         hashCodeTraitDef(decl)
 //        comment("pretty print")
