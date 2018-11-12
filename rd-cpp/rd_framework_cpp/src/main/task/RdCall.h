@@ -13,8 +13,6 @@
 
 template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 class RdCall : public RdReactiveBase, public ISerializable {
-//private val requests = concurrentMapOf<RdId, Pair<IScheduler, RdTask<TRes>>>()
-//    using RdTask<TRes, ResSer> = std::shared_ptr<RdTask<TRes, ResSer>>;
     mutable std::unordered_map<RdId, std::pair<IScheduler const *, RdTask<TRes, ResSer>>> requests;
     std::optional<RdId> syncTaskId;
 
@@ -24,7 +22,7 @@ public:
         RdCall<TReq, TRes, ReqSer, ResSer> res;
         const RdId &id = RdId::read(buffer);
         withId(res, id);
-return res;
+        return res;
     }
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {

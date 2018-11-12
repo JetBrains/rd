@@ -37,6 +37,10 @@ public:
         ptr->result.set(typename RdTaskResult<T>::Cancelled());
     }
 
+    void fault() const {
+        ptr->result.set(typename RdTaskResult<T>::Fault());
+    }
+
     bool has_value() const {
         return ptr->result.get().has_value();
     }
@@ -49,10 +53,16 @@ public:
         throw std::runtime_error("task is empty");
     }
 
+    bool isFaulted() const {
+        return has_value() && value_or_throw().isFaulted(); //todo atomicy
+    }
+
     void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
-        /*ptr->result.advise(lifetime, [](std::optional<RdTaskResult<T, S> > const &opt_value) {
-//            if (opt_value)
-        });*/
+        ptr->result.advise(lifetime, [handler](std::optional<RdTaskResult<T, S> > const &opt_value) {
+            if (opt_value.has_value()) {
+                handler(*opt_value);
+            }
+        });
     }
 };
 

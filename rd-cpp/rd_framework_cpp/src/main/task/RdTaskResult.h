@@ -26,7 +26,7 @@ public:
 
     };
 
-    class Fault {
+    class Fault {//todo
         /*std::exception error;
     public:
         explicit Fault(const std::exception &error) : error(error) {};*/
@@ -88,6 +88,10 @@ public:
                     throw std::exception();
                 },
         }, v);
+    }
+
+	bool isFaulted() const {
+		return v.index() == 2;
     }
 
     friend bool operator==(const RdTaskResult &lhs, const RdTaskResult &rhs) {
