@@ -1,5 +1,3 @@
-#include <utility>
-
 //
 // Created by jetbrains on 09.07.2018.
 //
@@ -7,6 +5,7 @@
 #ifndef RD_CPP_CORE_SIGNAL_H
 #define RD_CPP_CORE_SIGNAL_H
 
+#include <utility>
 #include <functional>
 #include <iostream>
 #include <atomic>
@@ -116,5 +115,6 @@ void priorityAdviseSection(F &&block) {
 }
 
 static_assert(std::is_move_constructible_v<Signal<int>>);
+static_assert(std::is_move_constructible_v<Signal<void *>>);
 
 #endif //RD_CPP_CORE_SIGNAL_H

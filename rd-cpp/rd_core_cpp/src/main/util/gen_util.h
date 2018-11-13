@@ -19,7 +19,7 @@ size_t contentHashCode(std::vector<T> const &list) {
 }
 
 template<typename T>
-size_t contentDeepHashCode(T &&value) {
+size_t contentDeepHashCode(T const& value) {
     return std::hash<T>()(value);
 }
 

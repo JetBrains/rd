@@ -17,7 +17,7 @@ class ViewableMap : public IViewableMap<K, V> {
 public:
     using Event = typename IViewableMap<K, V>::Event;
 private:
-    mutable tsl::ordered_map<std::shared_ptr<K>, std::shared_ptr<V>, HashSharedPtr<K>, KeyEqualSharedPtr<K>> map;
+    mutable tsl::ordered_map<std::unique_ptr<K>, std::unique_ptr<V>, HashSmartPtr<K>, KeyEqualSmartPtr<K>> map;
     Signal<Event> change;
 
 public:
@@ -49,7 +49,7 @@ public:
 
     const V *set(K key, V value) const override {
         if (map.count(key) == 0) {
-            auto[it, success] = map.emplace(std::make_shared<K>(std::move(key)), std::make_shared<V>(std::move(value)));
+            auto[it, success] = map.emplace(std::make_unique<K>(std::move(key)), std::make_unique<V>(std::move(value)));
             auto const &key_ptr = it->first;
             auto const &value_ptr = it->second;
             change.fire(typename Event::Add(key_ptr.get(), value_ptr.get()));
@@ -59,10 +59,10 @@ public:
             auto const &key_ptr = it->first;
             auto const &value_ptr = it->second;
 
-            if (*value_ptr != value) {
-                std::shared_ptr<V> old_value = value_ptr;
+            if (*value_ptr != value) {//todo more effective
+                std::unique_ptr<V> old_value(std::move(map.at(key)));
 
-                map.at(key_ptr) = std::make_shared<V>(std::move(value));
+                map.at(key_ptr) = std::make_unique<V>(std::move(value));
                 change.fire(typename Event::Update(key_ptr.get(), old_value.get(), value_ptr.get()));
             }
             return value_ptr.get();
@@ -71,7 +71,7 @@ public:
 
     std::optional<V> remove(K const &key) const override {
         if (map.count(key) > 0) {
-            std::shared_ptr<V> old_value = map.at(key);
+            std::unique_ptr<V> old_value = std::move(map.at(key));
             change.fire(typename Event::Remove(&key, old_value.get()));
             map.erase(key);
             return std::move(*old_value);

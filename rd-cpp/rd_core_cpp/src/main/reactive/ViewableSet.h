@@ -21,7 +21,7 @@ public:
 private:
     Signal<Event> change;
 
-    mutable tsl::ordered_set<std::shared_ptr<T>, HashSharedPtr<T>, KeyEqualSharedPtr<T>> set;
+    mutable tsl::ordered_set<std::unique_ptr<T>, HashSmartPtr<T>, KeyEqualSmartPtr<T>> set;
 
 public:
     //region ctor/dtor
@@ -38,12 +38,11 @@ public:
     //endregion
 
     bool add(T element) const override {
-        const std::shared_ptr<T> value = std::make_shared<T>(std::move(element));
-        auto const &[it, success] = set.emplace(value);
+        auto const &[it, success] = set.emplace(std::make_unique<T>(std::move(element)));
         if (!success) {
             return false;
         }
-        change.fire(Event(AddRemove::ADD, value.get()));
+        change.fire(Event(AddRemove::ADD, it->get()));
         return true;
     }
 
