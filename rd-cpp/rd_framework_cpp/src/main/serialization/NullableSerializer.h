@@ -13,7 +13,7 @@
 template<typename S, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
 class NullableSerializer {
 public:
-    static auto read(SerializationCtx const &ctx, Buffer const &buffer) -> std::optional<T> {
+    static std::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
         return buffer.readNullable<T>([&]() -> T { return S::read(ctx, buffer); });
     }
 

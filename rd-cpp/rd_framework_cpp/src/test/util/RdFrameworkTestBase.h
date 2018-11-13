@@ -14,8 +14,6 @@
 #include "Protocol.h"
 #include "TestScheduler.h"
 
-inline TestScheduler testScheduler;
-
 class RdFrameworkTestBase : public ::testing::Test {
 public:
     Serializers serializers;
