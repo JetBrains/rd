@@ -3,14 +3,15 @@ package com.jetbrains.rider.framework.test.cases.wire
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
+import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.test.util.TestScheduler
 import com.jetbrains.rider.framework.test.util.NetUtils
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
-import com.jetbrains.rider.util.reactive.valueOrThrow
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
@@ -182,6 +183,23 @@ class SocketWireTest {
             cp.set(1)
             cp.set(2)
             Thread.sleep(50)
+    }
+
+    @Test
+    fun TestRecieveFromCppClient() {
+        val clientProtocol = server(socketLifetime, NetUtils.findFreePort(0))
+        File("C:\\temp\\port.txt").printWriter().use { out ->
+            out.print((clientProtocol.wire as SocketWire.Server).port)
+        }
+        val property = RdProperty<Int>(0, FrameworkMarshallers.Int32).static(1).apply { bind(lifetime, clientProtocol, "top") }
+
+        property.advise(lifetime) {
+            println(it)
+        }
+
+        println("advised")
+
+        Thread.sleep(500000)
     }
 
 //    @BeforeClass
