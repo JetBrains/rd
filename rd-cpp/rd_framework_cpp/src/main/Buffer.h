@@ -11,6 +11,7 @@
 #include <vector>
 #include <type_traits>
 #include <functional>
+#include "core_util.h"
 
 struct is_bool {
 };
@@ -48,7 +49,9 @@ protected:
 
     template<typename T>
     T read_pod_tag(is_bool) const {
-        return read_pod<uint8_t>();
+        auto res = read_pod<word_t>();
+		MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + to_string(res) + " instead of 0 or 1");
+		return res == 1;
     }
 
     template<typename T>
@@ -60,7 +63,7 @@ protected:
 
     template<typename T>
     void write_pod_tag(T const &value, is_bool) const {
-        write_pod<uint8_t>(value);
+        write_pod<word_t>(value ? 1 : 0);
     }
 
     template<typename T>
