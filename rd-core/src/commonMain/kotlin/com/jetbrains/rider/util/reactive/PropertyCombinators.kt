@@ -127,6 +127,15 @@ fun Iterable<IOptProperty<Boolean>>.all(lifetime: Lifetime): IPropertyView<Boole
 */
 
 
+fun <T> ISource<T>.filter(f: (T) -> Boolean) = object : ISource<T> {
+    override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
+        this@filter.advise(lifetime) {
+            if (f(it))
+                handler(it)
+        }
+    }
+}
+
 fun <T, R> IPropertyView<T>.map(f: (T) -> R) = object : IPropertyView<R> {
     override val change: ISource<R> = object : ISource<R> {
         override fun advise(lifetime: Lifetime, handler: (R) -> Unit) {
@@ -144,6 +153,8 @@ fun <T, R> IPropertyView<T>.map(f: (T) -> R) = object : IPropertyView<R> {
     override val value: R
         get() = f(this@map.value)
 }
+
+
 
 fun <T : Any, R : Any> IOptPropertyView<T>.map(f: (T) -> R) = object : IOptPropertyView<R> {
     override val valueOrNull: R?
