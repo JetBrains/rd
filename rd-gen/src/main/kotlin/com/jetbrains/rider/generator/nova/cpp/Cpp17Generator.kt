@@ -6,6 +6,7 @@ import com.jetbrains.rider.generator.nova.FlowKind.*
 import com.jetbrains.rider.generator.nova.util.appendDefaultValueSetter
 import com.jetbrains.rider.generator.nova.util.joinToOptString
 import com.jetbrains.rider.util.eol
+import com.jetbrains.rider.util.hash.IncrementalHash64
 import com.jetbrains.rider.util.string.Eol
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
@@ -43,7 +44,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +postfix
     }
 
-    fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
+    fun PrettyPrinter.titledBlock(title: String, body: PrettyPrinter.() -> Unit) {
         +"$title {"
         indent(body)
         +"}"
@@ -54,7 +55,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     fun PrettyPrinter.define(returnType: String, signature: String, decl: Declaration) {
-        p("$returnType ${decl.scopeResolution()}$signature")
+        p("$returnType ${decl.scopeResolution()}$signature ")
     }
     //endregion
 
@@ -151,7 +152,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             is Member.Reactive.Task -> when (actualFlow) {
                 Sink -> "RdEndpoint"
                 Source -> "RdCall"
-                Both -> "RdCall" //todo
+                Both -> "RdCall"
             }
             is Member.Reactive.Signal -> "RdSignal"
 //            is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
@@ -294,7 +295,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
                                 if (isDefinition) {
                                     if (type !is Enum) {
-                                        source(type)
+                                        source(type, types)
                                     }
                                 } else {
                                     header(type, types.minus(type))
@@ -332,37 +333,42 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"#define ${decl.name}_H"
         println()
 
-        +"class ${decl.name};"
-        println()
-
         includesDecl(decl)
         println()
 
         dependenciesDecl(decl, dependencies)
         println()
 
-        /*if (decl.isLibrary)
-            libdef(decl, dependencies)
-        else*/
-        typedecl(decl, false)
+        if (decl is Toplevel && decl.isLibrary)
+            libdecl(decl)
+        else
+            typedecl(decl)
         println()
 
         +"#endif // ${decl.name}_H"
     }
 
-    fun PrettyPrinter.source(decl: Declaration) {
+    fun PrettyPrinter.source(decl: Declaration, dependencies: List<Declaration>) {
         +"""#include "${decl.name}.h""""
 
         println()
-        /*if (decl.isLibrary)
-                libdef(decl, dependencies)
-            else*/
-        typedef(decl)
+        if (decl is Toplevel && decl.isLibrary)
+            libdef(decl, dependencies)
+        else
+            typedef(decl)
     }
     //endregion
 
     //region declaration
-    protected open fun PrettyPrinter.typedecl(decl: Declaration, isDefinition: Boolean) {
+    protected open fun PrettyPrinter.libdecl(decl: Declaration) {
+        if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
+        block("class lib_${decl.name} : public ISerializersOwner {", "} ${decl.name};") {
+            +"public:"
+//            registerSerializersTraitDecl(decl)
+        }
+    }
+
+    protected open fun PrettyPrinter.typedecl(decl: Declaration) {
         if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
 
 //        println()
@@ -395,6 +401,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         p("class ${decl.name} ")
         baseClassTraitDecl(decl)
         block("{", "};") {
+            comment("companion")
+            companionTraitDecl(decl)
+
             comment("custom serializers")
             customSerializersTrait(decl)
 
@@ -532,8 +541,14 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +decl.bases(false).map { "public $it" }.joinToString(separator = ", ", prefix = ": ")
     }
 
+
+    private fun PrettyPrinter.createMethodTraitDecl(decl: Toplevel) {
+        if (decl.isExtension) return
+        +"static ${decl.name} create(Lifetime lifetime, IProtocol * protocol);"
+    }
+
     fun PrettyPrinter.customSerializersTrait(decl: Declaration) {
-        fun IType.serializerBuilder() : String = leafSerializerRef(decl)?: when (this) {
+        fun IType.serializerBuilder(): String = leafSerializerRef(decl) ?: when (this) {
             is IArray -> "ArraySerializer<${itemType.serializerBuilder()}>"
             is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}>"
             is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
@@ -541,6 +556,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             else -> fail("Unknown type: $this")
         }
 
+        +"private:"
         val allTypesForDelegation = decl.allMembers
                 .filterIsInstance<Member.Reactive>()
                 .flatMap { it.genericParams.toList() }
@@ -548,6 +564,30 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 .filter { it.leafSerializerRef(decl) == null }
 
         allTypesForDelegation.println { "using ${it.serializerRef(decl)} = ${it.serializerBuilder()};" }
+    }
+
+
+    private fun PrettyPrinter.registerSerializersTraitDecl(decl: Declaration) {
+        val serializersOwnerImplName = "${decl.name}SerializersOwner"
+        block("struct $serializersOwnerImplName : public ISerializersOwner {", "}") {
+            +"void registerSerializersCore(ISerializers * serializers) override;"
+        }
+        println()
+        +"inline static std::unique_ptr<ISerializersOwner> serializersOwner = std::make_unique<$serializersOwnerImplName>();"
+        println()
+        +"ISerializersOwner * getSerializersOwner();"
+    }
+
+    private fun PrettyPrinter.companionTraitDecl(decl: Declaration) {
+        if (decl is Toplevel) {
+            println()
+            +"private:"
+            registerSerializersTraitDecl(decl)
+            println()
+            +"public:"
+            createMethodTraitDecl(decl)
+            println()
+        }
     }
 
     fun PrettyPrinter.fieldsDecl(decl: Declaration) {
@@ -657,7 +697,15 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     //endregion
 
     //region definition
+    protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
+        if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
+        registerSerializersTraitDef(decl, types)
+    }
+
     private fun PrettyPrinter.typedef(decl: Declaration) {
+        comment("companion")
+        companionTraitDef(decl)
+
         comment("initializer")
         initializerTraitDef(decl)
 
@@ -682,15 +730,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 //            prettyPrintTrait(decl)
 
     }
-
-    /*protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
-//        if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
-        + "object ${decl.name} : ISerializersOwner {"
-        indent {
-            registerSerializersTrait(decl, types)
-        }
-        + "}"
-    }*/
 
     fun PrettyPrinter.memberInitialize(decl: Declaration) {
         p(decl.bases(true).joinToString(separator = ", ", prefix = ": "))
@@ -767,6 +806,57 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     //endregion
 
     //region TraitDef
+
+    private fun PrettyPrinter.registerSerializersTraitDef(decl: Toplevel, types: List<Declaration>) {//todo name access
+        define("void", "registerSerializersCore(ISerializers * serializers)", decl)
+        block("{", "}") {
+            indent {
+                types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
+                    "serializers->registry(${it.serializerRef(decl)});"
+                }
+
+                if (decl is Root) {
+                    decl.toplevels.println { it.sanitizedName(decl) + ".registry(serializers);" }
+                }
+            }
+        }
+    }
+
+    //only for toplevel Exts
+    protected fun PrettyPrinter.createMethodTraitDef(decl: Toplevel) {
+        if (decl.isExtension) return
+
+        define(decl.name, "create(Lifetime lifetime, IProtocol * protocol)", decl)
+        block("{", "}") {
+            indent {
+                +"${decl.root.sanitizedName(decl)}.registry(protocol.serializers)"
+                println()
+
+                +"${decl.name} res;"
+                val quotedName = """"${decl.name}""""
+                +"res.identify(protocol.identity, RdId::Null().mix($quotedName));"
+                +"res.bind(lifetime, protocol, $quotedName);"
+                +"return res;"
+            }
+        }
+    }
+
+    private fun PrettyPrinter.companionTraitDef(decl: Declaration) {
+        if (decl is Toplevel) {
+            println()
+            registerSerializersTraitDef(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
+            println()
+            createMethodTraitDef(decl)
+
+            define("serializersOwner *", "getSerializersOwner()", decl)
+            block("{", "}") {
+                +"return serializersOwner.get();"
+            }
+            println()
+        }
+    }
+
+
     fun PrettyPrinter.primaryCtorTraitDef(decl: Declaration) {
 //        if (decl.ownMembers.isEmpty()) return
         p(decl.scopeResolution())
@@ -893,6 +983,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 decl.ownMembers
                         .filter { it.isBindable }
                         .println { """//bindableChildren.emplace("${it.name}", ${it.encapsulatedName});""" }
+
+                if (decl is Toplevel) {
+                    +"serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L"
+                }
             }
         }
     }
@@ -992,24 +1086,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 " */\n"
     }
 
-    //only for toplevel Exts
-    protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
-        if (decl.isExtension) return
-
-        +"static ${decl.name} create(lifetime: Lifetime, protocol: IProtocol)  {"
-        indent {
-            +"${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
-            println()
-
-            +"${decl.name} res;"
-            val quotedName = """"${decl.name}""""
-            +"res.identify(protocol.identity, RdId::Null().mix($quotedName));"
-            +"res.bind(lifetime, protocol, $quotedName)"
-            +"return res;"
-        }
-        +"}"
-    }
-
     private fun getDefaultValue(containing: Declaration, member: Member): String? =
             if (member is Member.Reactive.Stateful.Property) {
                 when {
@@ -1039,5 +1115,4 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             PredefinedType.bool
     )
 }
-
 

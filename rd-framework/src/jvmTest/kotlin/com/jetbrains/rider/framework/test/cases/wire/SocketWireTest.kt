@@ -25,7 +25,7 @@ class SocketWireTest {
         while ((System.currentTimeMillis() - start) < timeout && valueOrNull != expected) Thread.sleep(100)
 
         if (valueOrNull == prev) throw TimeoutException("Timeout $timeout ms while waiting value '$expected'")
-        assertEquals(expected, valueOrThrow)
+        assertEquals(expected, valueOrNull)
     }
 
     private fun server(lifetime: Lifetime, port: Int? = null): Protocol {
@@ -191,7 +191,7 @@ class SocketWireTest {
         File("C:\\temp\\port.txt").printWriter().use { out ->
             out.print((clientProtocol.wire as SocketWire.Server).port)
         }
-        val property = RdProperty<Int>(0, FrameworkMarshallers.Int32).static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val property = RdProperty<Int?>(0, FrameworkMarshallers.Int32.nullable()).static(1).apply { bind(lifetime, clientProtocol, "top") }
 
         property.advise(lifetime) {
             println(it)
