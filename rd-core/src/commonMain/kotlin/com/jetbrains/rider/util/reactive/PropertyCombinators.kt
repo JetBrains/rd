@@ -1,6 +1,7 @@
 package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.Boxed
+import com.jetbrains.rider.util.Maybe
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.reflection.usingTrueFlag
 
@@ -125,6 +126,20 @@ fun Iterable<IOptProperty<Boolean>>.all(lifetime: Lifetime): IPropertyView<Boole
     return this.fold(lifetime, true) { acc, x -> acc && x }
 }
 */
+
+
+fun <T> ISource<T>.distinct() = object : ISource<T> {
+    override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
+        var old : Maybe<T> = Maybe.None
+        this@distinct.advise(lifetime) {
+            val new = Maybe.Just(it)
+            if (new != old) {
+                old = new
+                handler(it)
+            }
+        }
+    }
+}
 
 
 fun <T> ISource<T>.filter(f: (T) -> Boolean) = object : ISource<T> {
