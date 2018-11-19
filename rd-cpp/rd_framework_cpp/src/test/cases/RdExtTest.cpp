@@ -64,8 +64,8 @@ TEST_F(SocketWireTestBase, DISABLED_testExtension) {
 
     serverProperty.slave();
 
-    DynamicEntity::registry(&clientProtocol);
-    DynamicEntity::registry(&serverProtocol);
+    DynamicEntity::create(&clientProtocol);
+    DynamicEntity::create(&serverProtocol);
     //bound
     clientProperty.bind(lifetime, &clientProtocol, "top");
     serverProperty.bind(lifetime, &serverProtocol, "top");

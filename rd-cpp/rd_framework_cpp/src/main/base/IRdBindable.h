@@ -5,10 +5,12 @@
 #ifndef RD_CPP_FRAMEWORK_IRDBINDABLE_H
 #define RD_CPP_FRAMEWORK_IRDBINDABLE_H
 
-
+#include "Lifetime.h"
 #include "IRdDynamic.h"
 #include "RdId.h"
 
+
+class IIdentities;
 
 class IRdBindable : public IRdDynamic {
 public:

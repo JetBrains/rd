@@ -65,8 +65,8 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
     client_property.get().rdid = server_property.get().rdid = RdId(2);
     client_property.get().foo.rdid = server_property.get().foo.rdid = RdId(3);
 
-    DynamicEntity::registry(clientProtocol.get());
-    DynamicEntity::registry(serverProtocol.get());
+    DynamicEntity::create(clientProtocol.get());
+    DynamicEntity::create(serverProtocol.get());
     //bound
     bindStatic(serverProtocol.get(), server_property, "top");
     bindStatic(clientProtocol.get(), client_property, "top");
@@ -225,8 +225,8 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
     EXPECT_EQ(0, client_log.size());
     EXPECT_EQ(0, server_log.size());
 
-    DynamicEntity::registry(clientProtocol.get());
-    DynamicEntity::registry(serverProtocol.get());
+    DynamicEntity::create(clientProtocol.get());
+    DynamicEntity::create(serverProtocol.get());
 
     //bound
     bindStatic(serverProtocol.get(), server_property, "top");
@@ -314,4 +314,6 @@ TEST_F(RdFrameworkTestBase, property_optional) {
         EXPECT_EQ(-1, client_log.back());
         EXPECT_EQ(-1, server_log.back());
     });
+
+    AfterTest();
 }

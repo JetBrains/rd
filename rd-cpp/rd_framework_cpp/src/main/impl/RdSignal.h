@@ -19,6 +19,16 @@ protected:
 public:
     //region ctor/dtor
 
+    RdSignal(RdSignal const &) = delete;
+
+    RdSignal &operator=(RdSignal const &) = delete;
+
+    RdSignal() = default;
+
+    RdSignal(RdSignal &&) = default;
+
+    RdSignal &operator=(RdSignal &&) = default;
+
     virtual ~RdSignal() = default;
     //endregion
 
@@ -70,5 +80,6 @@ public:
     }
 };
 
+static_assert(std::is_move_constructible_v<RdSignal<int>>);
 
 #endif //RD_CPP_RDSIGNAL_H

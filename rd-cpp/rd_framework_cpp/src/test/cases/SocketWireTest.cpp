@@ -197,8 +197,8 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
     client_property.get().rdid = server_property.get().rdid = RdId(2);
     client_property.get().foo.rdid = server_property.get().foo.rdid = RdId(3);
 
-    DynamicEntity::registry(&clientProtocol);
-    DynamicEntity::registry(&serverProtocol);
+    DynamicEntity::create(&clientProtocol);
+    DynamicEntity::create(&serverProtocol);
     //bound
 
     server_property.bind(lifetime, &serverProtocol, "top");

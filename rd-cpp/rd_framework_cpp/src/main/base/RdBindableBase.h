@@ -23,7 +23,7 @@ protected:
 
     const IProtocol *const get_protocol() const override;
 
-    mutable std::vector<std::pair<std::string, std::shared_ptr<IRdBindable> > > bindableChildren;
+    mutable std::vector<std::pair<std::string, IRdBindable *> > bindableChildren;
     //mutable std::vector<std::pair<std::string, std::any> > nonBindableChildren;
 
     SerializationCtx const &get_serialization_context() const override;
@@ -83,12 +83,6 @@ public:
 		 }
 		 return std::any_cast<T const &>(non_bindable_extensions.at(name));
 	 }*/
-    /*void print(PrettyPrinter printer) {
-        printer.print(toString())
-        printer.print(" (")
-        printer.print(rdid.toString())
-        printer.print(")")
-    }*/
 };
 
 //T : RdBindableBase

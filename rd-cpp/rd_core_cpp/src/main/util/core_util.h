@@ -42,11 +42,6 @@ struct HashSmartPtr {
     }
 };
 
-template<typename U>
-std::shared_ptr<U> deleted_shared_ptr(U &element) {
-    return std::shared_ptr<U>(&element, [](U *) {});
-}
-
 template<typename T>
 typename std::enable_if_t<std::is_arithmetic_v<T>, std::string> to_string(T const &val) {
     return std::to_string(val);

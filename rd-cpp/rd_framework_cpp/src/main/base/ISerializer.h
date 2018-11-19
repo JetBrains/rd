@@ -7,6 +7,7 @@
 
 #include "SerializationCtx.h"
 #include "Buffer.h"
+#include "ISerializable.h"
 
 template<typename T>
 class ISerializer {
