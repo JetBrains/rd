@@ -120,7 +120,7 @@ TEST_F(RdFrameworkTestBase, signal_custom_serializer) {
     AfterTest();
 }
 
-template<typename K>
+/*template<typename K>
 class Foo : public ISerializable {
     K x, y;
 public:
@@ -160,9 +160,9 @@ public:
     friend bool operator!=(const Foo &lhs, const Foo &rhs) {
         return !(rhs == lhs);
     }
-};
+};*/
 
-TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
+/*TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
     Foo<char>::registry(clientProtocol.get());
     Foo<char>::registry(serverProtocol.get());
 
@@ -194,7 +194,7 @@ TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
     EXPECT_EQ((Foo<char>(1, 8)), server_log);
 
     AfterTest();
-}
+}*/
 
 TEST_F(RdFrameworkTestBase, signal_vector) {
     int signal_id = 1;

@@ -18,6 +18,8 @@ public:
 
     RdProperty(RdProperty const &) = delete;
 
+    RdProperty &operator=(RdProperty const &) = delete;
+
     RdProperty(RdProperty &&) = default;
 
     RdProperty &operator=(RdProperty &&) = default;

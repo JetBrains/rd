@@ -4,16 +4,16 @@
 
 #include "DynamicEntity.h"
 
-void DynamicEntity::registry(IProtocol *protocol) {
-    protocol->serializers.registry<DynamicEntity>(
-            [](SerializationCtx const &ctx, Buffer const &buffer) -> DynamicEntity {
-                RdProperty<int32_t> tmp = RdProperty<int32_t>::read(ctx, buffer);
-                return DynamicEntity(std::move(tmp));
-            });
+DynamicEntity DynamicEntity::read(SerializationCtx const &ctx, Buffer const &buffer) {
+    return DynamicEntity(RdProperty<int32_t>::read(ctx, buffer));
 }
 
 void DynamicEntity::write(SerializationCtx const &ctx, Buffer const &buffer) const {
     foo.write(ctx, buffer);
+}
+
+void DynamicEntity::create(IProtocol *protocol) {
+    protocol->serializers.registry<DynamicEntity>();
 }
 
 void DynamicEntity::init(Lifetime lifetime) const {

@@ -7,17 +7,13 @@
 
 
 #include "IProtocol.h"
-#include "interfaces.h"
-
 
 class Protocol : /*IRdDynamic, */public IProtocol {
 public:
     //region ctor/dtor
-    Protocol(std::shared_ptr<IIdentities> identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire) :
-            IProtocol(std::move(identity), scheduler, std::move(wire)) {}
+    Protocol(std::shared_ptr<IIdentities> identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire);
 
-    Protocol(Identities &&identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire) :
-            IProtocol(std::make_shared<Identities>(identity), scheduler, std::move(wire)) {}
+    Protocol(Identities &&identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire);
 
     Protocol(Protocol const &) = delete;
     //endregion

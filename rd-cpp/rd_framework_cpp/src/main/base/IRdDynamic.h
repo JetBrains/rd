@@ -8,7 +8,7 @@
 #include "RName.h"
 #include "SerializationCtx.h"
 
-//class IProtocol;
+class IProtocol;
 
 class IRdDynamic {
 public:

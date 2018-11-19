@@ -35,9 +35,11 @@ public:
     explicit DynamicEntity(int32_t value) : DynamicEntity(RdProperty<int32_t>(value)) {};
     //endregion
 
-    static void registry(IProtocol *protocol);
+	static DynamicEntity read(SerializationCtx const&, Buffer const& buffer);
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
+
+    static void create(IProtocol *protocol);
 
     void init(Lifetime lifetime) const override;
 

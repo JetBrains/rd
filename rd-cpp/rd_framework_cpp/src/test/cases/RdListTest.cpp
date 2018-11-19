@@ -80,8 +80,8 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
     RdList<DynamicEntity> &server_list = statics(server_list_storage, id);
     RdList<DynamicEntity> &client_list = statics(client_list_storage, id);
 
-    DynamicEntity::registry(clientProtocol.get());
-    DynamicEntity::registry(serverProtocol.get());
+    DynamicEntity::create(clientProtocol.get());
+    DynamicEntity::create(serverProtocol.get());
 
     EXPECT_EQ(0, server_list.size());
     EXPECT_EQ(0, client_list.size());
