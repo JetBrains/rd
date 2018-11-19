@@ -5,13 +5,13 @@
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
+#include "core_util.h"
+#include "optional.hpp"
 
 #include <utility>
-#include <optional>
 #include <vector>
 #include <type_traits>
 #include <functional>
-#include "core_util.h"
 
 struct is_bool {
 };
@@ -153,16 +153,16 @@ public:
     }
 
     template<typename T>
-    std::optional<T> readNullable(std::function<T()> reader) const {
+	tl::optional<T> readNullable(std::function<T()> reader) const {
         bool nullable = !read_pod<bool>();
         if (nullable) {
-            return std::nullopt;
+            return tl::nullopt;
         }
         return reader();
     }
 
     template<typename T>
-    void writeNullable(std::optional<T> const &value, std::function<void(T const &)> writer) const {
+    void writeNullable(tl::optional<T> const &value, std::function<void(T const &)> writer) const {
         if (!value.has_value()) {
             write_pod<bool>(false);
         } else {

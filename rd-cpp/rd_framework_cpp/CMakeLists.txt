@@ -1,2 +1,5 @@
+
 add_subdirectory(src/main)
-add_subdirectory(src/test)
+if(RD_FRAMEWORK_CPP_ENABLE_TESTS)
+    add_subdirectory(src/test)
+endif()

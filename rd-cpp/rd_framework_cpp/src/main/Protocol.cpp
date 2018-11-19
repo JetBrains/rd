@@ -4,6 +4,8 @@
 
 #include "Protocol.h"
 
+const Logger Protocol::initializationLogger;
+
 IProtocol const *const Protocol::get_protocol() const {
     return this;
 }

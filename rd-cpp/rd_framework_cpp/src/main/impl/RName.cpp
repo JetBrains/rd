@@ -4,6 +4,8 @@
 
 #include "RName.h"
 
+#include "optional.hpp"
+
 RName::RName(RName *const parent, const std::string &localName, const std::string &separator) : parent(
         parent), local_name(localName), separator(separator) {}
 
@@ -16,7 +18,7 @@ namespace {
 }
 
 std::string RName::toString() const {
-    std::optional<std::string> res;
+	tl::optional<std::string> res;
     if (parent)
         res = parent->toString();
     if (res && !res->empty()) {

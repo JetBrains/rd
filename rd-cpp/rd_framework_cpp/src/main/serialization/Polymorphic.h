@@ -5,10 +5,11 @@
 #ifndef RD_CPP_POLYMORPHIC_H
 #define RD_CPP_POLYMORPHIC_H
 
-#include <type_traits>
-
 #include "ISerializer.h"
 #include "RdReactiveBase.h"
+
+#include <type_traits>
+
 
 template<typename T, typename R = void>
 class Polymorphic/* : public ISerializer<T>*/ {
@@ -97,15 +98,15 @@ public:
 };
 
 template<typename T>
-class Polymorphic<std::optional<T>> {
+class Polymorphic<tl::optional<T>> {
 public:
-    static std::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
+    static tl::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
         return buffer.readNullable<T>([&ctx, &buffer]() {
             return Polymorphic<T>::read(ctx, buffer);
         });
     }
 
-    static void write(SerializationCtx const &ctx, Buffer const &buffer, std::optional<T> const &value) {
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
         buffer.writeNullable<T>(value, [&ctx, &buffer](T const &v) {
             Polymorphic<T>::write(ctx, buffer, v);
         });

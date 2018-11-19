@@ -5,13 +5,14 @@
 #ifndef RD_CPP_IVIEWABLEMAP_H
 #define RD_CPP_IVIEWABLEMAP_H
 
-#include <variant>
-
 #include "overloaded.h"
 #include "interfaces.h"
 #include "viewable_collections.h"
 #include "util/core_util.h"
 
+#include "mpark/variant.hpp"
+
+#include <unordered_map>
 
 template<typename K, typename V>
 class IViewableMap
@@ -47,7 +48,7 @@ public:
             Remove(K const *key, V const *old_value) : key(key), old_value(old_value) {}
         };
 
-        std::variant<Add, Update, Remove> v;
+		mpark::variant<Add, Update, Remove> v;
 
         Event(Add const &x) : v(x) {}
 
@@ -56,7 +57,7 @@ public:
         Event(Remove const &x) : v(x) {}
 
         K const *get_key() const {
-            return std::visit(overloaded{
+            return mpark::visit(make_visitor(
                     [](typename Event::Add const &e) {
                         return e.key;
                     },
@@ -66,11 +67,11 @@ public:
                     [](typename Event::Remove const &e) {
                         return e.key;
                     }
-            }, v);
+            ), v);
         }
 
         V const *get_new_value() const {
-            return std::visit(overloaded{
+            return mpark::visit(make_visitor(
                     [](typename Event::Add const &e) {
                         return e.new_value;
                     },
@@ -80,7 +81,7 @@ public:
                     [](typename Event::Remove const &e) {
                         return static_cast<V const *>(nullptr);
                     }
-            }, v);
+            ), v);
         }
     };
 
@@ -93,7 +94,10 @@ public:
             switch (kind) {
                 case AddRemove::ADD: {
                     if (lifetimes[lifetime].count(key) == 0) {
-                        auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
+                        /*auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));*/
+						auto const &pair = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
+						auto &it = pair.first;
+						auto &inserted = pair.second;
                         MY_ASSERT_MSG(inserted,
                                       "lifetime definition already exists in viewable map by key:" + to_string(key));
                         handler(it->second.lifetime, entry);
@@ -115,7 +119,7 @@ public:
 
     void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, K const &, V const &)> handler) const {
         advise(lifetime, [handler](Event e) {
-            std::visit(overloaded{
+            mpark::visit(make_visitor(
                     [handler](typename Event::Add const &e) {
                         handler(AddRemove::ADD, *e.key, *e.new_value);
                     },
@@ -126,7 +130,7 @@ public:
                     [handler](typename Event::Remove const &e) {
                         handler(AddRemove::REMOVE, *e.key, *e.old_value);
                     }
-            }, e.v);
+            ), e.v);
         });
     }
 
@@ -142,7 +146,7 @@ public:
 
     virtual const V *set(K, V) const = 0;
 
-    virtual std::optional<V> remove(K const &) const = 0;
+    virtual tl::optional<V> remove(K const &) const = 0;
 
     virtual void clear() const = 0;
 
@@ -151,6 +155,6 @@ public:
     virtual bool empty() const = 0;
 };
 
-static_assert(std::is_move_constructible_v<IViewableMap<int, int>::Event>);
+static_assert(std::is_move_constructible_v<IViewableMap<int, int>::Event>, "Is move constructible from IViewableMap<int, int>::Event");
 
 #endif //RD_CPP_IVIEWABLEMAP_H

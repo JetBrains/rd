@@ -47,8 +47,9 @@ void RdExtBase::init(Lifetime lifetime) const {
 
 
     //todo make it smarter
-    for (auto const &[name, child] : this->bindableChildren) {
-        bindPolymorphic(*child, lifetime, this, name);
+	//for (auto const &[name, child] : this->bindableChildren) {
+    for (auto const &it : this->bindableChildren) {
+        bindPolymorphic(*(it.second), lifetime, this, it.first);
     }
 
     traceMe(Protocol::initializationLogger, "created and bound :: ${printToString()}");

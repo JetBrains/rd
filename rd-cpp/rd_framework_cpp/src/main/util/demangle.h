@@ -46,7 +46,7 @@ std::string demangle()
 
 template<typename R, typename F>
 R synchronized(std::mutex &m, F block) {
-    std::lock_guard l(m);
+    std::lock_guard<std::mutex> l(m);
     return F();
 }*/
 

@@ -5,12 +5,13 @@
 #ifndef RD_CPP_RDTASK_H
 #define RD_CPP_RDTASK_H
 
-#include <functional>
-
 #include "Property.h"
 #include "RdTaskResult.h"
 #include "RdTaskImpl.h"
 #include "Polymorphic.h"
+
+#include <functional>
+
 
 template<typename T, typename S = Polymorphic<T> >
 class RdTask {
@@ -26,11 +27,11 @@ public:
 
     void set(T value) const {
         auto t = typename RdTaskResult<T, S>::Success(std::move(value));
-        ptr->result.set(std::make_optional(std::move(t)));
+        ptr->result.set(tl::make_optional(std::move(t)));
     }
 
     void set_result(RdTaskResult<T, S> value) const {
-        ptr->result.set(std::make_optional(std::move(value)));
+        ptr->result.set(tl::make_optional(std::move(value)));
     }
 
     void cancel() const {
@@ -58,7 +59,7 @@ public:
     }
 
     void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
-        ptr->result.advise(lifetime, [handler](std::optional<RdTaskResult<T, S> > const &opt_value) {
+        ptr->result.advise(lifetime, [handler](tl::optional<RdTaskResult<T, S> > const &opt_value) {
             if (opt_value.has_value()) {
                 handler(*opt_value);
             }

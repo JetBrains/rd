@@ -5,9 +5,9 @@
 #ifndef RD_CPP_CORE_LOGGER_H
 #define RD_CPP_CORE_LOGGER_H
 
+#include "optional.hpp"
 
 #include <functional>
-#include <optional>
 #include <string>
 #include <exception>
 #include <iostream>
@@ -64,7 +64,7 @@ public:
 
 //SwitchLogger get_logger(std::string category);
 
-void catch_(std::optional<std::string> comment, const std::function<void()> &action);
+void catch_(tl::optional<std::string> comment, const std::function<void()> &action);
 
 void catch_(const std::function<void()> &action);
 

@@ -38,11 +38,12 @@ public:
     //endregion
 
     bool add(T element) const override {
-        auto const &[it, success] = set.emplace(std::make_unique<T>(std::move(element)));
-        if (!success) {
+        /*auto const &[it, success] = set.emplace(std::make_unique<T>(std::move(element)));*/
+		auto const &it = set.emplace(std::make_unique<T>(std::move(element)));
+        if (!it.second) {
             return false;
         }
-        change.fire(Event(AddRemove::ADD, it->get()));
+        change.fire(Event(AddRemove::ADD, it.first->get()));
         return true;
     }
 
@@ -89,6 +90,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<ViewableSet<int> >);
+static_assert(std::is_move_constructible_v<ViewableSet<int> >, "Is move constructible from ViewableSet<int>");
 
 #endif //RD_CPP_CORE_VIEWABLESET_H

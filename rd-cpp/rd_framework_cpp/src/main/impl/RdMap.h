@@ -5,12 +5,11 @@
 #ifndef RD_CPP_RDMAP_H
 #define RD_CPP_RDMAP_H
 
-
-#include <cstdint>
-
 #include "ViewableMap.h"
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
+
+#include <cstdint>
 
 template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>>
 class RdMap : public RdReactiveBase, public IViewableMap<K, V>, public ISerializable {
@@ -62,7 +61,7 @@ public:
                " :: value = " + (value ? to_string(*value) : "");
     }
 
-    std::string logmsg(Op op, int64_t version, K const *key, std::optional<V> const &value) const {
+    std::string logmsg(Op op, int64_t version, K const *key, tl::optional<V> const &value) const {
         return logmsg(op, version, key, value.has_value() ? &value.value() : nullptr);
     }
 
@@ -151,7 +150,7 @@ public:
             }
         } else {
             bool isPut = (op == Op::ADD || op == Op::UPDATE);
-            std::optional<V> value;
+            tl::optional<V> value;
             if (isPut) {
                 value = VS::read(this->get_serialization_context(), buffer);
             }
@@ -199,8 +198,8 @@ public:
         });
     }
 
-    std::optional<V> remove(K const &key) const override {
-        return local_change<std::optional<V>>([&]() { return map.remove(key); });
+	tl::optional<V> remove(K const &key) const override {
+        return local_change<tl::optional<V>>([&]() { return map.remove(key); });
     }
 
     void clear() const override {
@@ -216,6 +215,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<RdMap<int, int> >);
+static_assert(std::is_move_constructible_v<RdMap<int, int> >, "Is move constructible RdMap<int, int>");
 
 #endif //RD_CPP_RDMAP_H

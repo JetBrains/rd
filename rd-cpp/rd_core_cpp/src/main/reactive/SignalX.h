@@ -14,7 +14,11 @@
 #include "interfaces.h"
 #include "erase_if.h"
 
+#if __cplusplus >= 201703L
 inline std::atomic<int32_t> cookie;
+#else
+static std::atomic<int32_t> cookie;
+#endif
 
 template<typename T>
 class Event {
@@ -114,7 +118,7 @@ void priorityAdviseSection(F &&block) {
     --cookie;
 }
 
-static_assert(std::is_move_constructible_v<Signal<int>>);
-static_assert(std::is_move_constructible_v<Signal<void *>>);
+static_assert(std::is_move_constructible_v<Signal<int>>, "Is not move constructible from Signal<int>");
+static_assert(std::is_move_constructible_v<Signal<void *>>, "Is not move constructible from Signal<void *>");
 
 #endif //RD_CPP_CORE_SIGNAL_H

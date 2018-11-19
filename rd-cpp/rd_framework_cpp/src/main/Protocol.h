@@ -15,12 +15,16 @@ public:
 
     Protocol(Identities &&identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire);
 
-    Protocol(Protocol const &) = delete;
+	Protocol(Protocol const &) {
+		assert("What the actual fuck" && false);
+	};
+	Protocol(Protocol &&) = default;
+	Protocol& operator = (Protocol&&) = default;
     //endregion
 
     IProtocol const *const get_protocol() const override;
 
-    inline static const Logger initializationLogger;
+    static const Logger initializationLogger;
 };
 
 

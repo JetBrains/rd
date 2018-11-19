@@ -140,6 +140,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<ViewableList<int> >);
+static_assert(std::is_move_constructible_v<ViewableList<int> >, "Is move constructible from ViewableList<int>");
 
 #endif //RD_CPP_CORE_VIEWABLELIST_H

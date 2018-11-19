@@ -10,6 +10,8 @@
 #include "core_util.h"
 #include "viewable_collections.h"
 
+#include <unordered_map>
+
 template<typename T>
 class IViewableSet : public IViewable<T> {
 protected:
@@ -37,9 +39,10 @@ public:
         advise(lifetime, [this, lifetime, handler](AddRemove kind, T const &key) {
             switch (kind) {
                 case AddRemove::ADD: {
-                    auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
-                    MY_ASSERT_MSG(inserted, "lifetime definition already exists in viewable set by key:" + to_string(key));
-                    handler(it->second.lifetime, key);
+                    /*auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));*/
+					auto const &it = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
+                    MY_ASSERT_MSG(it.second, "lifetime definition already exists in viewable set by key:" + to_string(key));
+                    handler(it.first->second.lifetime, key);
                     break;
                 }
                 case AddRemove::REMOVE: {
@@ -68,6 +71,6 @@ public:
     virtual bool empty() const = 0;
 };
 
-static_assert(std::is_move_constructible_v<IViewableSet<int>::Event>);
+static_assert(std::is_move_constructible_v<IViewableSet<int>::Event>, "Is move constructible from IViewableSet<int>::Event");
 
 #endif //RD_CPP_IVIEWABLESET_H

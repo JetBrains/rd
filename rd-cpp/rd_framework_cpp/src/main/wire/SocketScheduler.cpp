@@ -17,7 +17,7 @@ void SocketScheduler::flush() const {
 
 void SocketScheduler::queue(std::function<void()> action) const {
     {
-        std::lock_guard _(lock);
+        std::lock_guard<std::mutex> _(lock);
         messages.push(std::move(action));
     }
     cv.notify_all();
@@ -34,7 +34,7 @@ void SocketScheduler::assert_thread() const {
 }
 
 void SocketScheduler::pump_one_message() const {
-    std::unique_lock ul(lock);
+    std::unique_lock<std::mutex> ul(lock);
     cv.wait(ul, [this]() -> bool { return !messages.empty(); });
     flush();
 }

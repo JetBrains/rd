@@ -5,12 +5,13 @@
 #ifndef RD_CORE_CPP_UTIL_H
 #define RD_CORE_CPP_UTIL_H
 
+#include "optional.hpp"
+
 #include <type_traits>
 #include <memory>
 #include <cassert>
 #include <iostream>
 #include <string>
-#include <optional>
 
 #define MY_ASSERT_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;assert(expr);}
 #define MY_ASSERT_THROW_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;throw std::runtime_error(msg);}
@@ -57,7 +58,7 @@ inline std::string to_string<std::string>(std::string const &val) {
 }
 
 template<typename T>
-inline std::string to_string(std::optional<T> const &val) {
+inline std::string to_string(tl::optional<T> const &val) {
     if (val.has_value()) {
         return to_string(*val);
     } else {

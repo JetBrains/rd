@@ -5,13 +5,14 @@
 #ifndef RD_CPP_IVIEWABLELIST_H
 #define RD_CPP_IVIEWABLELIST_H
 
-
-#include <utility>
-#include <variant>
-
 #include "overloaded.h"
 #include "interfaces.h"
 #include "viewable_collections.h"
+
+#include "mpark/variant.hpp"
+
+#include <unordered_map>
+#include <utility>
 
 /*template<typename T>
 class IViewableList;
@@ -50,7 +51,7 @@ public:
             Remove(size_t index, T const *old_value) : index(index), old_value(old_value) {}
         };
 
-        std::variant<Add, Update, Remove> v;
+        mpark::variant<Add, Update, Remove> v;
 
         Event(Add const &x) : v(x) {}
 
@@ -59,7 +60,7 @@ public:
         Event(Remove const &x) : v(x) {}
 
         int32_t get_index() const {
-            return std::visit(overloaded{
+            return mpark::visit(make_visitor(
                     [](typename Event::Add const &e) {
                         return e.index;
                     },
@@ -69,11 +70,11 @@ public:
                     [](typename Event::Remove const &e) {
                         return e.index;
                     }
-            }, v);
+            ), v);
         }
 
         T const *get_new_value() const {
-            return std::visit(overloaded{
+            return mpark::visit(make_visitor(
                     [](typename Event::Add const &e) {
                         return e.new_value;
                     },
@@ -83,7 +84,7 @@ public:
                     [](typename Event::Remove const &e) {
                         return static_cast<T const *>(nullptr);
                     }
-            }, v);
+            ), v);
         }
     };
 
@@ -94,7 +95,7 @@ public:
 
     void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, size_t, T const &)> handler) const {
         advise(std::move(lifetime), [handler](Event e) {
-            std::visit(overloaded{
+            mpark::visit(make_visitor(
                     [handler](typename Event::Add const &e) {
                         handler(AddRemove::ADD, e.index, *e.new_value);
                     },
@@ -105,7 +106,7 @@ public:
                     [handler](typename Event::Remove const &e) {
                         handler(AddRemove::REMOVE, e.index, *e.old_value);
                     }
-            }, e.v);
+            ), e.v);
         });
     }
 
@@ -179,6 +180,6 @@ std::vector<T> convert_to_list(IViewableList<T> const &list) {
     return res;
 }
 
-static_assert(std::is_move_constructible_v<IViewableList<int>::Event>);
+static_assert(std::is_move_constructible_v<IViewableList<int>::Event>, "Is move constructible from IViewableList<int>::Event");
 
 #endif //RD_CPP_IVIEWABLELIST_H

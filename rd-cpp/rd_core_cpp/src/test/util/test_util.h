@@ -40,7 +40,7 @@ template<typename K, typename V>
 std::string to_string_map_event(typename IViewableMap<K, V>::Event const &e) {
 //    return "";
     using Event = typename IViewableMap<K, V>::Event;
-    std::string res = std::visit(overloaded{
+    std::string res = mpark::visit(make_visitor(
             [](typename Event::Add const &e) {
                 return "Add " +
                        to_string(*e.key) + ":" +
@@ -55,8 +55,8 @@ std::string to_string_map_event(typename IViewableMap<K, V>::Event const &e) {
             [](typename Event::Remove const &e) {
                 return "Remove " +
                        to_string(*e.key);
-            },
-    }, e.v);
+            }
+    ), e.v);
     return res;
 }
 
@@ -64,7 +64,7 @@ template<typename T>
 std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
 //    return "";
     using Event = typename IViewableList<T>::Event;
-    std::string res = std::visit(overloaded{
+    std::string res = mpark::visit(make_visitor(
             [](typename Event::Add const &e) {
                 return "Add " +
                        to_string(e.index) + ":" +
@@ -79,8 +79,8 @@ std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
             [](typename Event::Remove const &e) {
                 return "Remove " +
                        to_string(e.index);
-            },
-    }, e.v);
+            }
+    ), e.v);
     return res;
 }
 
