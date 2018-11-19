@@ -407,10 +407,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
                 createMethodTrait(decl)
                 println()
                 customSerializersTrait(decl)
+                println()
+                + "const val serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L"
             }
             + "}"
             + "override val serializersOwner: ISerializersOwner get() = ${decl.name}"
-            + "override val serializationHash: Long get() = ${decl.serializationHash(IncrementalHash64()).result}L"
+            + "override val serializationHash: Long get() = ${decl.name}.serializationHash"
             println()
         }
     }
