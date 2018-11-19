@@ -16,7 +16,7 @@ void f()
 TEST(advise_vs_view, advise_behaviour1) {
     //int* p = new int(1);
     LifetimeDefinition lifetimeDef(Lifetime::Eternal());
-    Property property(false);
+    Property<bool> property(false);
     Lifetime lifetime = lifetimeDef.lifetime;
 
     std::vector<bool> log;
@@ -33,7 +33,7 @@ TEST(advise_vs_view, advise_behaviour1) {
 
 TEST(advise_vs_view, view_behaviour1) {
     LifetimeDefinition lifetimeDef(Lifetime::Eternal());
-    Property property(false);
+    Property<bool> property(false);
     Lifetime lifetime = lifetimeDef.lifetime;
 
     std::vector<bool> log;
@@ -51,7 +51,7 @@ TEST(advise_vs_view, view_behaviour1) {
 
 TEST(advise_vs_view, advise_behaviour2) {
     LifetimeDefinition lifetimeDef(Lifetime::Eternal());
-    Property property(false);
+    Property<bool> property(false);
     Lifetime lifetime = lifetimeDef.lifetime;
 
     std::vector<bool> log;
@@ -69,7 +69,7 @@ TEST(advise_vs_view, advise_behaviour2) {
 
 TEST(advise_vs_view, view_behaviour2) {
     LifetimeDefinition lifetimeDef(Lifetime::Eternal());
-    Property property(false);
+    Property<bool> property(false);
     Lifetime lifetime = lifetimeDef.lifetime;
 
     std::vector<bool> log;
@@ -86,8 +86,8 @@ TEST(advise_vs_view, view_behaviour2) {
 
 TEST(advise_vs_view, advise_behaviour3) {
     LifetimeDefinition lifetimeDef(Lifetime::Eternal());
-    Property property_a(0);
-    Property property_b(0);
+    Property<int32_t> property_a(0);
+    Property<int32_t> property_b(0);
 
     Lifetime lifetime = lifetimeDef.lifetime;
 
@@ -119,8 +119,8 @@ TEST(advise_vs_view, advise_behaviour3) {
 
 TEST(advise_vs_view, view_behaviour3) {
     LifetimeDefinition lifetimeDef(Lifetime::Eternal());
-    Property property_a(0);
-    Property property_b(0);
+    Property<int32_t> property_a(0);
+    Property<int32_t> property_b(0);
 
     Lifetime lifetime = lifetimeDef.lifetime;
 

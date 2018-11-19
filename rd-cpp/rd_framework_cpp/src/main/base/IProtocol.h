@@ -15,6 +15,7 @@ class IRdDynamic;
 
 class IProtocol : public IRdDynamic {
 public:
+	IProtocol() = default;
     Serializers serializers;
     std::shared_ptr<IIdentities> identity;
     IScheduler const *scheduler;

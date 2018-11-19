@@ -17,19 +17,19 @@ const int STEP = 5;
 
 TEST_F(SocketWireTestBase, ClientWithoutServer) {
     uint16 port = find_free_port();
-    auto protocol = client(socketLifetime, port);
+    Protocol protocol = client(socketLifetime, port);
 
     terminate();
 }
 
 TEST_F(SocketWireTestBase, ServerWithoutClient) {
-    auto protocol = server(socketLifetime);
+    Protocol protocol = server(socketLifetime);
 
     terminate();
 }
 
 TEST_F(SocketWireTestBase, TestServerWithoutClientWithDelay) {
-    auto protocol = server(socketLifetime);
+    Protocol protocol = server(socketLifetime);
     sleep_this_thread(100);
 
     terminate();
@@ -123,7 +123,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
     std::vector<int> log;//concurrent?
     std::mutex lock;
     sp.advise(lifetime, [&](const int &it) {
-        std::lock_guard _(lock);
+        std::lock_guard<std::mutex> _(lock);
         log.push_back(it);
     });
     for (int i = 1; i <= STEP; ++i) {
@@ -134,7 +134,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
     while (true) {
         bool x;
         {
-            std::lock_guard _(lock);
+            std::lock_guard<std::mutex> _(lock);
             x = log.size() < 6;
         }
         if (x) {

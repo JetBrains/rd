@@ -5,7 +5,6 @@
 #ifndef RD_CPP_FRAMEWORK_RNAME_H
 #define RD_CPP_FRAMEWORK_RNAME_H
 
-#include <optional>
 #include <string>
 
 class RName {

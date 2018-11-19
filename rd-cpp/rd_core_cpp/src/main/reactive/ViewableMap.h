@@ -5,12 +5,13 @@
 #ifndef RD_CPP_CORE_VIEWABLE_MAP_H
 #define RD_CPP_CORE_VIEWABLE_MAP_H
 
-#include <ordered-map/include/tsl/ordered_map.h>
 
 #include "Logger.h"
 #include "base/IViewableMap.h"
 #include "SignalX.h"
 #include "util/core_util.h"
+
+#include <ordered-map/include/tsl/ordered_map.h>
 
 template<typename K, typename V>
 class ViewableMap : public IViewableMap<K, V> {
@@ -34,7 +35,10 @@ public:
 
     void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
         change.advise(std::move(lifetime), handler);
-        for (auto const &[key, value] : map) {
+        /*for (auto const &[key, value] : map) {*/
+		for (auto const &it : map) {
+			auto &key = it.first;
+			auto &value = it.second;
             handler(Event(typename Event::Add(key.get(), value.get())));;
         }
     }
@@ -49,7 +53,9 @@ public:
 
     const V *set(K key, V value) const override {
         if (map.count(key) == 0) {
-            auto[it, success] = map.emplace(std::make_unique<K>(std::move(key)), std::make_unique<V>(std::move(value)));
+            /*auto[it, success] = map.emplace(std::make_unique<K>(std::move(key)), std::make_unique<V>(std::move(value)));*/
+			auto node = map.emplace(std::make_unique<K>(std::move(key)), std::make_unique<V>(std::move(value)));
+			auto & it = node.first;
             auto const &key_ptr = it->first;
             auto const &value_ptr = it->second;
             change.fire(typename Event::Add(key_ptr.get(), value_ptr.get()));
@@ -69,20 +75,21 @@ public:
         }
     }
 
-    std::optional<V> remove(K const &key) const override {
+	tl::optional<V> remove(K const &key) const override {
         if (map.count(key) > 0) {
             std::unique_ptr<V> old_value = std::move(map.at(key));
             change.fire(typename Event::Remove(&key, old_value.get()));
             map.erase(key);
             return std::move(*old_value);
         }
-        return std::nullopt;
+        return tl::nullopt;
     }
 
     void clear() const override {
         std::vector<Event> changes;
-        for (auto const &[key, value] : map) {
-            changes.push_back(typename Event::Remove(key.get(), value.get()));
+        /*for (auto const &[key, value] : map) {*/
+		for (auto const &it : map) {
+            changes.push_back(typename Event::Remove(it.first.get(), it.second.get()));
         }
         for (auto const &it : changes) {
             change.fire(it);
@@ -99,6 +106,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<ViewableMap<int, int> >);
+static_assert(std::is_move_constructible_v<ViewableMap<int, int> >, "Is move constructible from ViewableMap<int, int>");
 
 #endif //RD_CPP_CORE_VIEWABLE_MAP_H

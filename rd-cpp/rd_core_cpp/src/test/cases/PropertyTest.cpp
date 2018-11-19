@@ -46,7 +46,7 @@ TEST(property, when_true) {
     int acc1 = 0;
     int acc2 = 0;
 
-    std::unique_ptr<IProperty<bool>> property(new Property(false));
+    std::unique_ptr<IProperty<bool>> property(new Property<bool>(false));
     property->set(true);
     Lifetime::use<int>([&](Lifetime lifetime) {
         property->view(lifetime, [&acc1](Lifetime lt, bool const& flag) {

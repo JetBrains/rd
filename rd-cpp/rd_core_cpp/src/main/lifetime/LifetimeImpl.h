@@ -46,7 +46,7 @@ public:
 
     template<typename F>
     counter_t add_action(F &&action) {
-        std::lock_guard _(lock);
+        std::lock_guard<std::mutex> _(lock);
 
         if (is_eternal()) return -1;
         if (is_terminated()) throw std::invalid_argument("Already Terminated");
@@ -54,8 +54,11 @@ public:
         actions[action_id_in_map] = std::forward<F>(action);
         return action_id_in_map++;
     }
-
+#if __cplusplus >= 201703L
     static inline counter_t get_id = 0;
+#else
+	static counter_t get_id;
+#endif
 
     template<typename F, typename G>
     void bracket(F &&opening, G &&closing) {

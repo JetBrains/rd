@@ -2,10 +2,13 @@
 // Created by jetbrains on 23.08.2018.
 //
 
+#include "SocketWire.h"
+
 #include <utility>
 #include <thread>
 
-#include "SocketWire.h"
+
+std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
 SocketWire::Base::Base(const std::string &id, Lifetime lifetime, const IScheduler *scheduler)
         : WireBase(scheduler), id(id), lifetime(std::move(lifetime)),
@@ -44,7 +47,7 @@ void SocketWire::Base::receiverProc() const {
 
 void SocketWire::Base::send0(const Buffer &msg) const {
     try {
-        std::lock_guard _(socket_lock);
+        std::lock_guard<std::recursive_mutex> _(socket_lock);
         int32_t msglen = static_cast<int32_t>(msg.size());
         MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), msglen) == msglen,
                             this->id + ": failed to send message over the network");
@@ -74,19 +77,19 @@ void SocketWire::Base::send(RdId const &id, std::function<void(Buffer const &buf
     threadLocalSendByteArray = buffer.getArray();
     threadLocalSendByteArray.resize(len);
     /*sendBuffer.put(bytes);*/
-    std::unique_lock ul(send_lock);
+    std::unique_lock<std::mutex> ul(send_lock);
     send_var.wait(ul, [this]() -> bool { return socketProvider != nullptr; });
     send0(Buffer(threadLocalSendByteArray));//todo not copy array
 }
 
 void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket) {
     {
-        std::unique_lock ul(send_lock);
+        std::unique_lock<std::mutex> ul(send_lock);
         socketProvider = std::move(new_socket);
         send_var.notify_all();
     }
     {
-        std::lock_guard _(lock);
+        std::lock_guard<std::timed_mutex> _(lock);
         if (lifetime->is_terminated()) {
             return;
         }
@@ -150,7 +153,7 @@ SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint1
                                         this->id + ": failed to open ActiveSocket");
 
                     {
-                        std::lock_guard _(lock);
+                        std::lock_guard<std::timed_mutex> _(lock);
                         if (lifetime->is_terminated()) {
                             catch_([this]() { socket->Close(); });
                         }
@@ -158,7 +161,7 @@ SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint1
 
                     set_socket_provider(socket);
                 } catch (std::exception const &e) {
-                    std::lock_guard _(lock);
+                    std::lock_guard<std::timed_mutex> _(lock);
                     bool shouldReconnect = false;
                     if (!lifetime->is_terminated()) {
                         cv.wait_for(lock, timeout);
@@ -184,7 +187,7 @@ SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint1
 //        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(sendBufferStopped));
 
         {
-            std::lock_guard _(lock);
+            std::lock_guard<std::timed_mutex> _(lock);
             logger.debug(this->id + ": closing socket");
             catch_([this]() {
                 if (socket != nullptr) {
@@ -216,7 +219,7 @@ SocketWire::Server::Server(Lifetime lifetime, const IScheduler *scheduler, uint1
             MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed");
 
             {
-                std::lock_guard _(lock);
+                std::lock_guard<std::timed_mutex> _(lock);
                 if (lifetime->is_terminated()) {
                     catch_([this]() {
                         logger.debug(this->id + ": closing passive socket");
@@ -246,7 +249,7 @@ SocketWire::Server::Server(Lifetime lifetime, const IScheduler *scheduler, uint1
         });
         catch_([this]() {
             {
-                std::lock_guard _(lock);
+                std::lock_guard<std::timed_mutex> _(lock);
                 logger.debug(this->id + ": closing socket");
                 if (socket != nullptr) {
                     MY_ASSERT_THROW_MSG(socket->Close(), this->id + ": failed to close socket");

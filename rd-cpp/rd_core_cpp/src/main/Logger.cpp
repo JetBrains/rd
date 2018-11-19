@@ -18,7 +18,7 @@ bool SwitchLogger::is_enabled(LogLevel level) {
     return realLogger.isEnabled(level);
 }*/
 
-void catch_(std::optional<std::string> comment, const std::function<void()> &action) {
+void catch_(tl::optional<std::string> comment, const std::function<void()> &action) {
     try {
         action();
     }

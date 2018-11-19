@@ -128,11 +128,11 @@ TEST(BufferTest, NullableSerializer) {
     using S = Polymorphic<T>;
     using NS = NullableSerializer<S>;
 
-    std::vector<std::optional<T>> list{
-            std::nullopt,
+    std::vector<tl::optional<T>> list{
+            tl::nullopt,
             "1",
             "2",
-            std::nullopt,
+            tl::nullopt,
             "error"
     };
 

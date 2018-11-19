@@ -7,15 +7,15 @@
 #ifndef RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 #define RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 
+#include "Logger.h"
+#include "Buffer.h"
+
 #include <chrono>
 #include <string>
 #include <thread>
 #include <mutex>
-#include <optional>
 #include <condition_variable>
 
-#include "Logger.h"
-#include "Buffer.h"
 
 class ByteArraySlice {
 public:

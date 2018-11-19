@@ -22,7 +22,7 @@
 class Lifetime;
 
 class SocketWire {
-    static inline std::chrono::milliseconds timeout = std::chrono::milliseconds(500);
+	static std::chrono::milliseconds timeout;
 public:
     class Base : public WireBase {
     protected:

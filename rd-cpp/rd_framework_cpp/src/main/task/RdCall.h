@@ -5,16 +5,17 @@
 #ifndef RD_CPP_RDCALL_H
 #define RD_CPP_RDCALL_H
 
-#include <thread>
-
 #include "Polymorphic.h"
 #include "RdTask.h"
 #include "RdTaskResult.h"
 
+#include <thread>
+
+
 template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 class RdCall : public RdReactiveBase, public ISerializable {
     mutable std::unordered_map<RdId, std::pair<IScheduler const *, RdTask<TRes, ResSer>>> requests;
-    std::optional<RdId> syncTaskId;
+	tl::optional<RdId> syncTaskId;
 
 public:
 
@@ -58,9 +59,9 @@ public:
             logReceived.trace("call " + location.toString() + " " + rdid.toString() +
                               " received response " + taskId.toString() + " : ${result.printToString()} ");
 
-            auto const&[scheduler, task] = request;
-            /*auto scheduler = request.first;
-            auto const &task = request.second;*/
+            //auto const&[scheduler, task] = request;
+            auto const &scheduler = request.first;
+            auto const &task = request.second;
             scheduler->queue([&]() {
                 if (task.has_value()) {
                     logReceived.trace("call " + location.toString() + " " + rdid.toString() +
@@ -80,12 +81,12 @@ public:
 
     TRes sync(TReq const &request) {
         try {
-            RdTask task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
+            auto task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
             while (!task.has_value()) {
                 std::this_thread::yield();
             }
             auto res = task.value_or_throw().unwrap();
-            syncTaskId = std::nullopt;
+            syncTaskId = tl::nullopt;
             return res;
         } catch (...) {
             throw;

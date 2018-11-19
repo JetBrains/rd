@@ -5,18 +5,17 @@
 #ifndef RD_CPP_RDBINDABLEBASE_H
 #define RD_CPP_RDBINDABLEBASE_H
 
-
-#include <any>
-
 #include "demangle.h"
 #include "IRdBindable.h"
 #include "IProtocol.h"
+
+#include <any>
 
 class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 protected:
     mutable IRdDynamic const *parent = nullptr;
 
-    mutable std::optional<Lifetime> bind_lifetime;
+    mutable tl::optional<Lifetime> bind_lifetime;
 
     //bound state: inferred
 
@@ -25,7 +24,7 @@ protected:
     const IProtocol *const get_protocol() const override;
 
     mutable std::vector<std::pair<std::string, std::shared_ptr<IRdBindable> > > bindableChildren;
-    mutable std::vector<std::pair<std::string, std::any> > nonBindableChildren;
+    //mutable std::vector<std::pair<std::string, std::any> > nonBindableChildren;
 
     SerializationCtx const &get_serialization_context() const override;
 
@@ -56,7 +55,7 @@ public:
     void identify(const IIdentities &identities, RdId id) const override;
 
     mutable std::map<std::string, std::shared_ptr<IRdBindable> > bindable_extensions;//todo concurrency
-    mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
+    //mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
 
     template<typename T, typename F>
     std::enable_if_t<std::is_base_of_v<IRdBindable, T>, T> const &
@@ -76,14 +75,14 @@ public:
         }
     }
 
-    template<typename T>
-    std::enable_if_t<!std::is_base_of_v<IRdBindable, T>, T> const &
-    getOrCreateExtension(std::string const &name, std::function<T()> create) const {
-        if (non_bindable_extensions.count(name) == 0) {
-            return std::any_cast<T const &>(non_bindable_extensions[name] = create());
-        }
-        return std::any_cast<T const &>(non_bindable_extensions.at(name));
-    }
+	/* template<typename T>
+	 std::enable_if_t<!std::is_base_of_v<IRdBindable, T>, T> const &
+	 getOrCreateExtension(std::string const &name, std::function<T()> create) const {
+		 if (non_bindable_extensions.count(name) == 0) {
+			 return std::any_cast<T const &>(non_bindable_extensions[name] = create());
+		 }
+		 return std::any_cast<T const &>(non_bindable_extensions.at(name));
+	 }*/
     /*void print(PrettyPrinter printer) {
         printer.print(toString())
         printer.print(" (")

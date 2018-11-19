@@ -5,12 +5,11 @@
 #ifndef RD_CPP_RDTASKRESULT_H
 #define RD_CPP_RDTASKRESULT_H
 
-
-#include <exception>
-#include <variant>
-
 #include "Polymorphic.h"
 #include "overloaded.h"
+#include "mpark/variant.hpp"
+
+#include <exception>
 
 template<typename T, typename S = Polymorphic<T> >
 class RdTaskResult : ISerializable {
@@ -60,7 +59,7 @@ public:
     }
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-        std::visit(overloaded{
+        mpark::visit(make_visitor(
                 [&ctx, &buffer](typename RdTaskResult::Success const &value) {
                     buffer.write_pod<int32_t>(0);
                     S::write(ctx, buffer, value.value);
@@ -71,12 +70,12 @@ public:
                 [&buffer](typename RdTaskResult::Fault const &value) {
                     buffer.write_pod<int32_t>(2);
                     //todo write reason
-                },
-        }, v);
+                }
+        ), v);
     }
 
     T unwrap() {
-        return std::visit(overloaded{
+        return mpark::visit(make_visitor(
                 [](typename RdTaskResult::Success const &value) -> T {
                     return value.value;
                 },
@@ -86,8 +85,8 @@ public:
                 [](typename RdTaskResult::Fault const &value) -> T {
 //                    throw value.error;
                     throw std::exception();
-                },
-        }, v);
+                }
+        ), v);
     }
 
 	bool isFaulted() const {
@@ -103,7 +102,7 @@ public:
     }
 
 private:
-    std::variant<Success, Cancelled, Fault> v;
+    mpark::variant<Success, Cancelled, Fault> v;
 };
 
 

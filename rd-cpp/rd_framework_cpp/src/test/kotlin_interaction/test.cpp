@@ -26,7 +26,7 @@ int main() {
     TestScheduler testScheduler;
     auto server = new SocketWire::Client(socketLifetime, &testScheduler, port, "TestClient");
     std::shared_ptr<IWire> wire(server);
-    auto clientProtocol = Protocol(Identities(IdKind::Server), &testScheduler, std::move(wire));
+	Protocol clientProtocol{ Identities(IdKind::Server), &testScheduler, std::move(wire) };
 
     RdProperty<int32_t> property{0};
     property.rdid = RdId(1);

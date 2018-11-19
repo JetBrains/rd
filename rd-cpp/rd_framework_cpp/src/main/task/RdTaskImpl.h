@@ -5,16 +5,17 @@
 #ifndef RD_CPP_RDTASKIMPL_H
 #define RD_CPP_RDTASKIMPL_H
 
-#include <optional>
-
 #include "Polymorphic.h"
 #include "RdTaskResult.h"
+
+#include "optional.hpp"
+
 
 template<typename T, typename S = Polymorphic<T> >
 class RdTaskImpl {
     //todo friend class
 public:
-    Property<std::optional<RdTaskResult<T, S> > > result = Property<std::optional<RdTaskResult<T, S> > >(std::nullopt);
+    Property<tl::optional<RdTaskResult<T, S> > > result = Property<tl::optional<RdTaskResult<T, S> > >(tl::nullopt);
 };
 
 
