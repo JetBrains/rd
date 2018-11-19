@@ -8,8 +8,8 @@ import com.jetbrains.rider.util.PublicApi
 import java.io.File
 
 object ExampleRootNova : Root(
-//    Kotlin11Generator(FlowTransform.AsIs, "org.example", File("C:/temp/ExampleModel")),
-      Cpp17Generator(FlowTransform.AsIs, "org.example", File("C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\rd_model"))
+        Kotlin11Generator(FlowTransform.AsIs, "org.example", File("C:\\temp\\ExampleModel")),
+        Cpp17Generator(FlowTransform.AsIs, "org.example", File("C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\rd_model"))
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
 )
 
@@ -28,15 +28,15 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         map("sdf", int, int)
     }
 
-    private val scalarFoo = basestruct ("scalarPrimer") {
+    private val scalarFoo = basestruct("scalarPrimer") {
         field("x", int)
     }
 
-    val Bar = baseclass ("a", foo) {
+    val Bar = baseclass("a") extends foo {
         property("y", string)
         property("z", enum("z") {
-            + "Bar"
-            + "z1"
+            +"Bar"
+            +"z1"
         })
     }
 
@@ -49,7 +49,7 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         map("mapBindable", int, FooBar)
     }
 
-    val FooBar : Class.Concrete  = classdef {
+    val FooBar: Class.Concrete = classdef {
         field("a", baz)
     }
 
@@ -59,36 +59,36 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         property("version", int).readonly
 
         map("documents",
-            int,
-            classdef("Document") {
-                field("moniker", FooBar)
-                field("buffer", string.nullable)
-                callback  ("andBackAgain", string, int)
+                int,
+                classdef("Document") {
+                    field("moniker", FooBar)
+                    field("buffer", string.nullable)
+                    callback("andBackAgain", string, int)
 
-                field("completion", classdef("Completion") {
-                    map("lookupItems", int, bool)
-                })
-                field("arr1", array(byte))
-                field("arr2", array(array(bool)))
-            }
+                    field("completion", classdef("Completion") {
+                        map("lookupItems", int, bool)
+                    })
+                    field("arr1", array(byte))
+                    field("arr2", array(array(bool)))
+                }
         )
 
         map("editors",
-            structdef("ScalarExample") {
-                field("intfield", int)
-            },
-            classdef("TextControl") {
-                property("selection", selection).readonly
-                sink("vsink", void)
-                source("vsource", void)  //hi vsauce, Michael here
-                call ("there1", int, string)
-            }
+                structdef("ScalarExample") {
+                    field("intfield", int)
+                },
+                classdef("TextControl") {
+                    property("selection", selection).readonly
+                    sink("vsink", void)
+                    source("vsource", void)  //hi vsauce, Michael here
+                    call("there1", int, string)
+                }
         )
     }
 }
 
 class TestExample {
-//    @Test
+    //    @Test
     fun test() {
         val pkg1 = javaClass.`package`.name.apply { println(this) }
         val pkg2 = "com.jetbrains.rider.modeltemplate"

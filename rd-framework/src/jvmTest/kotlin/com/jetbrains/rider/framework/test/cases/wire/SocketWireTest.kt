@@ -191,10 +191,11 @@ class SocketWireTest {
         File("C:\\temp\\port.txt").printWriter().use { out ->
             out.print((clientProtocol.wire as SocketWire.Server).port)
         }
-        val property = RdProperty<Int?>(0, FrameworkMarshallers.Int32.nullable()).static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val property_main = RdProperty(0, FrameworkMarshallers.Int32.nullable()).static(1).apply { bind(lifetime, clientProtocol, "main") }
+        val property_rx = RdProperty(0, FrameworkMarshallers.Int32.nullable()).static(2).apply { bind(lifetime, clientProtocol, "rx") }
 
-        property.advise(lifetime) {
-            println(it)
+        property_main.advise(lifetime) {
+            property_rx.value = it
         }
 
         println("advised")
