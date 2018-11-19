@@ -2,12 +2,16 @@
 // Created by jetbrains on 13.11.2018.
 //
 
-#include <fstream>
-
-#include <impl/RdProperty.h>
 #include "../../main/wire/SocketWire.h"
 #include "../util/TestScheduler.h"
 #include "../util/RdFrameworkTestBase.h"
+
+#include "optional.hpp"
+
+#include <impl/RdProperty.h>
+
+#include <fstream>
+
 
 int main() {
     std::ifstream fin("C:\\temp\\port.txt");
@@ -24,15 +28,15 @@ int main() {
     std::shared_ptr<IWire> wire(server);
 	Protocol clientProtocol{ Identities(IdKind::Server), &testScheduler, std::move(wire) };
 
-    RdProperty<std::optional<int32_t>> property_main{0};
+    RdProperty<tl::optional<int32_t>> property_main{0};
     property_main.rdid = RdId(1);
     property_main.bind(lifetime, &clientProtocol, "top");
 
-    RdProperty<std::optional<int32_t>> property_rx{0};
+    RdProperty<tl::optional<int32_t>> property_rx{0};
     property_rx.rdid = RdId(2);
     property_rx.bind(lifetime, &clientProtocol, "rx");
 
-    property_rx.advise(lifetime, [](std::optional<int32_t> const &x) {
+    property_rx.advise(lifetime, [](tl::optional<int32_t> const &x) {
         std::cout << "rx value changed to " << *x << "\n";
     });
     for (int i = 1; i < 10; ++i) {

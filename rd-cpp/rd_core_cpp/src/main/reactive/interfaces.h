@@ -5,12 +5,13 @@
 #ifndef RD_CPP_CORE_INTERFACES_H
 #define RD_CPP_CORE_INTERFACES_H
 
-
-#include <functional>
-#include <optional>
-
 #include "SequentialLifetimes.h"
 #include "Lifetime.h"
+
+#include "optional.hpp"
+
+#include <functional>
+
 
 template<typename T>
 class ISource {
