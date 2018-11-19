@@ -45,7 +45,7 @@
 
 #include <string.h>
 
-#if WIN32
+#ifdef WIN32
   #include <Winsock2.h>
   #include <time.h>
 #endif

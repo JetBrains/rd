@@ -90,6 +90,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<ViewableSet<int> >, "Is move constructible from ViewableSet<int>");
+static_assert(std::is_move_constructible<ViewableSet<int> >::value, "Is move constructible from ViewableSet<int>");
 
 #endif //RD_CPP_CORE_VIEWABLESET_H

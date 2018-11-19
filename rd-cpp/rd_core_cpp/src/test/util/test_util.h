@@ -5,13 +5,15 @@
 #ifndef RD_CPP_CORE_TEST_UTIL_H
 #define RD_CPP_CORE_TEST_UTIL_H
 
-#include <vector>
-#include <type_traits>
+#include "custom_type_traits.h"
 
 #include "ViewableList.h"
 #include "ViewableSet.h"
 #include "ViewableMap.h"
+
 #include "util/core_util.h"
+
+#include <vector>
 
 std::string operator "" _s(char const *str, size_t len);
 

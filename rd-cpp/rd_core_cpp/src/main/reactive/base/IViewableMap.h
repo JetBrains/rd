@@ -155,6 +155,6 @@ public:
     virtual bool empty() const = 0;
 };
 
-static_assert(std::is_move_constructible_v<IViewableMap<int, int>::Event>, "Is move constructible from IViewableMap<int, int>::Event");
+static_assert(std::is_move_constructible<IViewableMap<int, int>::Event>::value, "Is move constructible from IViewableMap<int, int>::Event");
 
 #endif //RD_CPP_IVIEWABLEMAP_H

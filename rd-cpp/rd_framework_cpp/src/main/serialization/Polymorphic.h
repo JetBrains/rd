@@ -25,7 +25,7 @@ public:
 };
 
 template<typename T>
-class Polymorphic<T, typename std::enable_if_t<std::is_integral_v<T> > > {
+class Polymorphic<T, typename std::enable_if<std::is_integral<T>::value>::type> {
 public:
     static T read(SerializationCtx const &ctx, Buffer const &buffer) {
         return buffer.read_pod<T>();
@@ -74,7 +74,7 @@ public:
 };
 
 template<typename T>
-class Polymorphic<T, typename std::enable_if_t<std::is_base_of_v<RdReactiveBase, T> > > {
+class Polymorphic<T, typename std::enable_if<std::is_base_of<RdReactiveBase, T>::value>::type> {
 public:
     static T read(SerializationCtx const &ctx, Buffer const &buffer) {
         return T::read(ctx, buffer);
@@ -86,7 +86,7 @@ public:
 };
 
 template<typename T>
-class Polymorphic<T, typename std::enable_if_t<std::is_enum_v<T> > > {
+class Polymorphic<T, typename std::enable_if<std::is_enum<T>::value>::type> {
 public:
     static T read(SerializationCtx const &ctx, Buffer const &buffer) {
         return buffer.readEnum<T>();

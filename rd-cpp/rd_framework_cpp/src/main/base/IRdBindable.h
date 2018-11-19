@@ -33,7 +33,7 @@ public:
 };
 
 template<typename T>
-typename std::enable_if_t<!std::is_base_of_v<IRdBindable, T>>
+typename std::enable_if<!std::is_base_of<IRdBindable, T>::value>::type
 inline identifyPolymorphic(T const &that, IIdentities const &identities, RdId id) {}
 
 //template <>
@@ -42,7 +42,7 @@ inline void identifyPolymorphic(const IRdBindable &that, IIdentities const &iden
 }
 
 template<typename T>
-std::enable_if_t<std::is_base_of_v<IRdBindable, T>>
+typename std::enable_if<std::is_base_of<IRdBindable, T>::value>::type
 inline identifyPolymorphic(std::vector<T> const &that, IIdentities const &identities, RdId const &id) {
     for (size_t i = 0; i < that.size(); ++i) {
         that[i].identify(identities, id.mix(static_cast<int32_t >(i)));
@@ -50,7 +50,7 @@ inline identifyPolymorphic(std::vector<T> const &that, IIdentities const &identi
 }
 
 template<typename T>
-typename std::enable_if_t<!std::is_base_of_v<IRdBindable, T>>
+typename std::enable_if<!std::is_base_of<IRdBindable, T>::value>::type
 inline bindPolymorphic(T const &that, Lifetime lf, const IRdDynamic *parent, std::string const &name) {}
 
 inline void bindPolymorphic(IRdBindable const &that, Lifetime lf, const IRdDynamic *parent, std::string const &name) {
@@ -58,7 +58,7 @@ inline void bindPolymorphic(IRdBindable const &that, Lifetime lf, const IRdDynam
 }
 
 template<typename T>
-typename std::enable_if_t<std::is_base_of_v<IRdBindable, T>>
+typename std::enable_if<std::is_base_of<IRdBindable, T>::value>::type
 inline bindPolymorphic(std::vector<T> const &that, Lifetime lf, IRdDynamic const *parent, std::string const &name) {
     for (auto &obj : that) {
         obj.bind(lf, parent, name);

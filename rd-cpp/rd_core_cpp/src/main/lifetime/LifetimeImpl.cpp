@@ -46,8 +46,8 @@ void LifetimeImpl::attach_nested(std::shared_ptr<LifetimeImpl> nested) {
     if (nested->is_terminated() || is_eternal()) return;
 
     std::function<void()> action = [nested]() { nested->terminate(); };
-    counter_t action_id = add_action(action).load();
-    nested->add_action([this, id = action_id.load()]() {
+    counter_t action_id = add_action(action);
+    nested->add_action([this, id = action_id]() {
         actions.erase(id);
     });
 }

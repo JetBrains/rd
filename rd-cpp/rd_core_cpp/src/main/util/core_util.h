@@ -5,9 +5,10 @@
 #ifndef RD_CORE_CPP_UTIL_H
 #define RD_CORE_CPP_UTIL_H
 
+#include "custom_type_traits.h"
+
 #include "optional.hpp"
 
-#include <type_traits>
 #include <memory>
 #include <cassert>
 #include <iostream>
@@ -43,12 +44,12 @@ struct HashSmartPtr {
 };
 
 template<typename T>
-typename std::enable_if_t<std::is_arithmetic_v<T>, std::string> to_string(T const &val) {
+typename std::enable_if_t<std::is_arithmetic<T>::value, std::string> to_string(T const &val) {
     return std::to_string(val);
 }
 
 template<typename T>
-typename std::enable_if_t<!std::is_arithmetic_v<T>, std::string> to_string(T const &val) {
+typename std::enable_if_t<!std::is_arithmetic<T>::value, std::string> to_string(T const &val) {
     return "";
 }
 

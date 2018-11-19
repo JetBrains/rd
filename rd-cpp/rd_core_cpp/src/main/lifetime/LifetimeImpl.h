@@ -22,7 +22,7 @@ private:
     bool eternaled = false;
     bool terminated = false;
 
-    using counter_t = std::atomic<int32_t>;
+    using counter_t = int32_t;
     counter_t id = 0;
 
     counter_t action_id_in_map = 0;

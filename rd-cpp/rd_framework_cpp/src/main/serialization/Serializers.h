@@ -5,6 +5,8 @@
 #ifndef RD_CPP_SERIALIZERS_H
 #define RD_CPP_SERIALIZERS_H
 
+#include "custom_type_traits.h"
+
 #include "RdId.h"
 #include "ISerializable.h"
 #include "Identities.h"
@@ -22,8 +24,8 @@ public:
     mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
                                                                                   Buffer const &)>> readers;
 
-    template<typename T>
-    typename std::enable_if_t<std::is_base_of_v<ISerializable, T>> registry() const {
+    template<typename T, typename = typename std::enable_if<std::is_base_of<ISerializable, T>::value>::type>
+    void registry() const {
         std::string type_name = demangle<T>();
         hash_t h = getPlatformIndependentHash(type_name);
         RdId id(h);

@@ -58,7 +58,7 @@ public:
     //mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
 
     template<typename T, typename F>
-    std::enable_if_t<std::is_base_of_v<IRdBindable, T>, T> const &
+    typename std::enable_if<std::is_base_of<IRdBindable, T>::value, T>::type const &
     getOrCreateExtension(std::string const &name, F &&create) const {
         if (bindable_extensions.count(name) > 0) {
             return *dynamic_cast<T const *>(bindable_extensions[name].get());

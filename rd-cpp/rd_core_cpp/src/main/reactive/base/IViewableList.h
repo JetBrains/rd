@@ -12,7 +12,9 @@
 #include "mpark/variant.hpp"
 
 #include <unordered_map>
+#include <vector>
 #include <utility>
+#include <algorithm>
 
 /*template<typename T>
 class IViewableList;
@@ -180,6 +182,6 @@ std::vector<T> convert_to_list(IViewableList<T> const &list) {
     return res;
 }
 
-static_assert(std::is_move_constructible_v<IViewableList<int>::Event>, "Is move constructible from IViewableList<int>::Event");
+static_assert(std::is_move_constructible<IViewableList<int>::Event>::value, "Is move constructible from IViewableList<int>::Event");
 
 #endif //RD_CPP_IVIEWABLELIST_H

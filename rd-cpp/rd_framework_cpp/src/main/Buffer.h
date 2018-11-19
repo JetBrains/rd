@@ -50,8 +50,8 @@ protected:
     template<typename T>
     T read_pod_tag(is_bool) const {
         auto res = read_pod<word_t>();
-		MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + to_string(res) + " instead of 0 or 1");
-		return res == 1;
+        MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + to_string(res) + " instead of 0 or 1");
+        return res == 1;
     }
 
     template<typename T>
@@ -92,12 +92,12 @@ public:
 
     void rewind() const;
 
-    template<typename T, typename = std::enable_if_t<std::is_integral_v<T> > >
+    template<typename T, typename = typename std::enable_if<std::is_integral<T>::value, T>::type>
     T read_pod() const {
         return this->read_pod_tag<T>(typename bool_tag<T>::type());
     }
 
-    template<typename T, typename = std::enable_if_t<std::is_integral_v<T> > >
+    template<typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
     void write_pod(T const &value) const {
         this->write_pod_tag<T>(value, typename bool_tag<T>::type());
     }
@@ -114,7 +114,9 @@ public:
     std::vector<T> readArray(std::function<T()> reader) const {
         int32_t len = read_pod<int32_t>();
         std::vector<T> result(len);
-        std::generate(result.begin(), result.end(), reader);
+        for (auto &x : result) {
+            x = reader();
+        }
         return result;
     }
 
@@ -153,7 +155,7 @@ public:
     }
 
     template<typename T>
-	tl::optional<T> readNullable(std::function<T()> reader) const {
+    tl::optional<T> readNullable(std::function<T()> reader) const {
         bool nullable = !read_pod<bool>();
         if (nullable) {
             return tl::nullopt;

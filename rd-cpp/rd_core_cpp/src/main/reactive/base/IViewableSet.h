@@ -71,6 +71,6 @@ public:
     virtual bool empty() const = 0;
 };
 
-static_assert(std::is_move_constructible_v<IViewableSet<int>::Event>, "Is move constructible from IViewableSet<int>::Event");
+static_assert(std::is_move_constructible<IViewableSet<int>::Event>::value, "Is move constructible from IViewableSet<int>::Event");
 
 #endif //RD_CPP_IVIEWABLESET_H

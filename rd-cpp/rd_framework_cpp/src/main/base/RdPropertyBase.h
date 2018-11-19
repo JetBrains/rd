@@ -118,6 +118,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<RdPropertyBase<int> >, "Is move constructible from RdPropertyBase<int>");
+static_assert(std::is_move_constructible<RdPropertyBase<int> >::value, "Is move constructible from RdPropertyBase<int>");
 
 #endif //RD_CPP_RDPROPERTYBASE_H

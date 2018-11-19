@@ -5,12 +5,15 @@
 #ifndef RD_CPP_CORE_VIEWABLELIST_H
 #define RD_CPP_CORE_VIEWABLELIST_H
 
-#include <set>
-#include <unordered_set>
 
 #include <base/IViewableList.h>
 #include "interfaces.h"
 #include "SignalX.h"
+
+
+#include <set>
+#include <unordered_set>
+#include <algorithm>
 
 template<typename T>
 class ViewableList : public IViewableList<T> {
@@ -140,6 +143,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<ViewableList<int> >, "Is move constructible from ViewableList<int>");
+static_assert(std::is_move_constructible<ViewableList<int> >::value, "Is move constructible from ViewableList<int>");
 
 #endif //RD_CPP_CORE_VIEWABLELIST_H

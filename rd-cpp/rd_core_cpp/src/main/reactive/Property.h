@@ -47,6 +47,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<Property<int>>, "Is not move constructible from Property<int>");
+static_assert(std::is_move_constructible<Property<int>>::value, "Is not move constructible from Property<int>");
 
 #endif //RD_CPP_CORE_PROPERTY_H

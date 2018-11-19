@@ -80,6 +80,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<RdSignal<int>>);
+static_assert(std::is_move_constructible<RdSignal<int>>::value, "Is not move constructible from RdSignal<int>");
 
 #endif //RD_CPP_RDSIGNAL_H

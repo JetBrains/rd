@@ -5,14 +5,16 @@
 #ifndef RD_CPP_CORE_SIGNAL_H
 #define RD_CPP_CORE_SIGNAL_H
 
-#include <utility>
-#include <functional>
-#include <iostream>
-#include <atomic>
+#include "custom_type_traits.h"
 
 #include "Lifetime.h"
 #include "interfaces.h"
 #include "erase_if.h"
+
+#include <utility>
+#include <functional>
+#include <iostream>
+#include <atomic>
 
 #if __cplusplus >= 201703L
 inline std::atomic<int32_t> cookie;
@@ -118,7 +120,7 @@ void priorityAdviseSection(F &&block) {
     --cookie;
 }
 
-static_assert(std::is_move_constructible_v<Signal<int>>, "Is not move constructible from Signal<int>");
-static_assert(std::is_move_constructible_v<Signal<void *>>, "Is not move constructible from Signal<void *>");
+static_assert(std::is_move_constructible<Signal<int>>::value, "Is not move constructible from Signal<int>");
+static_assert(std::is_move_constructible<Signal<void *>>::value, "Is not move constructible from Signal<void *>");
 
 #endif //RD_CPP_CORE_SIGNAL_H
