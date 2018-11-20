@@ -35,7 +35,7 @@ public:
     explicit DynamicEntity(int32_t value) : DynamicEntity(RdProperty<int32_t>(value)) {};
     //endregion
 
-	static DynamicEntity read(SerializationCtx const&, Buffer const& buffer);
+    static DynamicEntity read(SerializationCtx const &, Buffer const &buffer);
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
 
@@ -43,7 +43,7 @@ public:
 
     void init(Lifetime lifetime) const override;
 
-    void identify(IIdentities const &identities, RdId id) const override;
+    void identify(IIdentities const &identities, RdId const &id) const override;
 
     friend bool operator==(const DynamicEntity &lhs, const DynamicEntity &rhs);
 

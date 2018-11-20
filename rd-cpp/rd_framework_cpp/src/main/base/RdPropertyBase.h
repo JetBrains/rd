@@ -22,7 +22,7 @@ protected:
 
     //init
 public:
-    bool optimizeNested = false;
+    mutable bool optimizeNested = false;
 
     //region ctor/dtor
 

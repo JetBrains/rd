@@ -18,7 +18,7 @@ public:
 
     std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
     mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
-    int64_t serializationHash = 0;
+    mutable int64_t serializationHash = 0;
 
     const IProtocol *const get_protocol() const override;
 

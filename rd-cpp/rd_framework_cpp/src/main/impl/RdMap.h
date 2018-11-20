@@ -189,16 +189,16 @@ public:
     }
 
     V const *get(K const &key) const override {
-        return local_change<V const *>([&]() -> V const * { return map.get(key); });
+        return local_change < V const * > ([&]() -> V const * { return map.get(key); });
     }
 
     V const *set(K key, V value) const override {
-        return local_change<V const *>([&]() mutable -> V const * {
+        return local_change < V const * > ([&]() mutable -> V const * {
             return map.set(std::move(key), std::move(value));
         });
     }
 
-	tl::optional<V> remove(K const &key) const override {
+    tl::optional<V> remove(K const &key) const override {
         return local_change<tl::optional<V>>([&]() { return map.remove(key); });
     }
 

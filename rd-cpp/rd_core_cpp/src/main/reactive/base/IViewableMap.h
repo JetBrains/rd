@@ -48,7 +48,7 @@ public:
             Remove(K const *key, V const *old_value) : key(key), old_value(old_value) {}
         };
 
-		mpark::variant<Add, Update, Remove> v;
+        mpark::variant<Add, Update, Remove> v;
 
         Event(Add const &x) : v(x) {}
 
@@ -95,9 +95,9 @@ public:
                 case AddRemove::ADD: {
                     if (lifetimes[lifetime].count(key) == 0) {
                         /*auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));*/
-						auto const &pair = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
-						auto &it = pair.first;
-						auto &inserted = pair.second;
+                        auto const &pair = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
+                        auto &it = pair.first;
+                        auto &inserted = pair.second;
                         MY_ASSERT_MSG(inserted,
                                       "lifetime definition already exists in viewable map by key:" + to_string(key));
                         handler(it->second.lifetime, entry);
@@ -155,6 +155,7 @@ public:
     virtual bool empty() const = 0;
 };
 
-static_assert(std::is_move_constructible<IViewableMap<int, int>::Event>::value, "Is move constructible from IViewableMap<int, int>::Event");
+static_assert(std::is_move_constructible<IViewableMap<int, int>::Event>::value,
+              "Is move constructible from IViewableMap<int, int>::Event");
 
 #endif //RD_CPP_IVIEWABLEMAP_H
