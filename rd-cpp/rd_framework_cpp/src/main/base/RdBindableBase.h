@@ -9,8 +9,6 @@
 #include "IRdBindable.h"
 #include "IProtocol.h"
 
-//#include <any>
-
 class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 protected:
     mutable IRdDynamic const *parent = nullptr;
