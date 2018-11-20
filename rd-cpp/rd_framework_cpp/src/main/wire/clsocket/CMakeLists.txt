@@ -40,7 +40,7 @@ if(UNIX)
         add_definitions(-D_DARWIN)
     endif()
 elseif(WIN32)
-    add_definitions(-DWIN32)
+    add_definitions(-D_WIN32)
     SET(PROJECT_LIBS Ws2_32.lib)
     if(MINGW)
         # Special MINGW stuff here

@@ -215,6 +215,6 @@ public:
     }
 };
 
-static_assert(std::is_move_constructible_v<RdMap<int, int> >, "Is move constructible RdMap<int, int>");
+static_assert(std::is_move_constructible<RdMap<int, int> >::value, "Is move constructible RdMap<int, int>");
 
 #endif //RD_CPP_RDMAP_H

@@ -71,7 +71,7 @@ extern "C"
     typedef int            SOCKET;
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
     struct iovec {
         void  *iov_base;
         size_t iov_len;
@@ -85,11 +85,11 @@ extern "C"
     typedef int            int32;
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
     typedef int socklen_t;
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
     typedef unsigned long long int uint64;
     typedef long long int          int64;
 #elif (__WORDSIZE == 32)
@@ -102,7 +102,7 @@ extern "C"
     typedef long int          int64;
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 
   #ifndef UINT8_MAX
     #define UINT8_MAX  (UCHAR_MAX)
@@ -123,7 +123,7 @@ extern "C"
   #endif
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
   #define ssize_t size_t
 #endif
 
@@ -150,7 +150,7 @@ extern "C"
 /* Socket Macros                                                             */
 /*                                                                           */
 /*---------------------------------------------------------------------------*/
-#ifdef WIN32
+#ifdef _WIN32
 #define SHUT_RD                0
 #define SHUT_WR                1
 #define SHUT_RDWR              2
@@ -226,19 +226,19 @@ extern "C"
 /* Misc Macros                                                               */
 /*                                                                           */
 /*---------------------------------------------------------------------------*/
-#if defined(WIN32)
+#if defined(_WIN32)
   #define GET_CLOCK_COUNT(x) QueryPerformanceCounter((LARGE_INTEGER *)x)
 #else
   #define GET_CLOCK_COUNT(x) gettimeofday(x, NULL)
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
   #define STRTOULL(x) _atoi64(x)
 #else
   #define STRTOULL(x) strtoull(x, NULL, 10)
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
   #define SNPRINTF _snprintf
   #define PRINTF   printf
   #define VPRINTF  vprintf

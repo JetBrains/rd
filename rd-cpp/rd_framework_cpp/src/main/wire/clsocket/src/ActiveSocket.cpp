@@ -64,7 +64,7 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16 nPort)
 
     if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL)
     {
-#ifdef WIN32
+#ifdef _WIN32
         TranslateSocketError();
 #else
         if (h_errno == HOST_NOT_FOUND)
@@ -144,7 +144,7 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
 
     if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL)
     {
-#ifdef WIN32
+#ifdef _WIN32
         TranslateSocketError();
 #else
         if (h_errno == HOST_NOT_FOUND)
@@ -202,7 +202,7 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 
     if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL)
     {
-#ifdef WIN32
+#ifdef _WIN32
         TranslateSocketError();
 #else
         if (h_errno == HOST_NOT_FOUND)

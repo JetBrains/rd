@@ -104,6 +104,6 @@ public:
     using IViewableSet<T>::advise;
 };
 
-static_assert(std::is_move_constructible_v<RdSet<int> >, "Is move constructible RdSet<int>");
+static_assert(std::is_move_constructible<RdSet<int> >::value, "Is move constructible RdSet<int>");
 
 #endif //RD_CPP_RDSET_H

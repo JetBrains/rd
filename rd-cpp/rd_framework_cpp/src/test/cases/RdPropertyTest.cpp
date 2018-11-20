@@ -14,7 +14,7 @@ TEST_F(RdFrameworkTestBase, property_statics) {
     int property_id = 1;
 
     auto client_property_storage = RdProperty<int32_t>(1);
-	auto server_property_storage = RdProperty<int32_t>(1);
+    auto server_property_storage = RdProperty<int32_t>(1);
 
     auto &client_property = statics(client_property_storage, (property_id));
     auto &server_property = statics(server_property_storage, (property_id)).slave();
@@ -38,7 +38,7 @@ TEST_F(RdFrameworkTestBase, property_statics) {
 
     //set from client
 
-	client_property.set(2);
+    client_property.set(2);
     EXPECT_EQ((vi{1, 2}), client_log);
     EXPECT_EQ((vi{1, 2}), server_log);
 
@@ -121,9 +121,13 @@ TEST_F(RdFrameworkTestBase, property_companion) {
     int32_t nxt = 10;
     std::vector<int> log;
     p1.view(clientLifetimeDef.lifetime, [&](Lifetime lf, RdProperty<int32_t> const &inner) {
-        inner.advise(lf, [&log](int32_t const &it) { log.push_back(it); });
+        inner.advise(lf, [&log](int32_t const &it) {
+            log.push_back(it);
+        });
     });
-    p2.advise(serverLifetimeDef.lifetime, [&](RdProperty<int32_t> const &inner) { inner.set(++nxt); });
+    p2.advise(serverLifetimeDef.lifetime, [&](RdProperty<int32_t> const &inner) {
+        inner.set(++nxt);
+    });
 
     bindStatic(clientProtocol.get(), p1, 1);
     bindStatic(serverProtocol.get(), p2, 1);
