@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.10)
 
 project(rd_cpp)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++17 -Wall -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -pedantic")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -D_GLIBCXX_DEBUG")
 elseif(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -15,7 +15,7 @@ endif()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-set(ENABLE_TESTS_OPTION false)
+set(ENABLE_TESTS_OPTION true)
 
 SET(ENABLE_TESTS $<IF:ENABLE_TESTS_OPTION,ON,OFF>)
 option(OPTIONAL_ENABLE_TESTS "Enable tests." OFF)
@@ -30,4 +30,6 @@ add_subdirectory(optional)
 add_subdirectory(variant)
 add_subdirectory(rd_core_cpp)
 add_subdirectory(rd_framework_cpp)
-add_subdirectory(test_client)
+#add_subdirectory(rd_model)
+#add_subdirectory(test_client)
+add_subdirectory(test_server)

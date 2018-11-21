@@ -51,6 +51,7 @@ target_include_directories(rd_framework_cpp PUBLIC serialization)
 target_include_directories(rd_framework_cpp PUBLIC util)
 target_include_directories(rd_framework_cpp PUBLIC wire)
 target_include_directories(rd_framework_cpp PUBLIC task)
+target_include_directories(rd_framework_cpp PUBLIC base/ext)
 
 add_subdirectory(wire)
 
