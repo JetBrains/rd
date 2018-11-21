@@ -23,8 +23,4 @@ target_link_libraries(rd_framework_cpp_test gtest gtest_main rd_framework_cpp rd
 
 add_subdirectory(util)
 
-if (UNIX)
-    add_definitions(-D_LINUX)
-endif ()
-
 add_subdirectory(kotlin_interaction)
