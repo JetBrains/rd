@@ -28,31 +28,6 @@ SET_SOURCE_FILES_PROPERTIES( ${CLSOCKET_HEADERS} PROPERTIES HEADER_FILE_ONLY TRU
 # append to sources so that dependency checks work on headers
 LIST(APPEND CLSOCKET_SOURCES ${CLSOCKET_HEADERS})
 
-# OS and compiler checks. 
-if(UNIX)
-    # linux / normal unix
-    add_definitions(-D_LINUX)
-    if(CYGWIN)
-        # Special Cygwin stuff here
-    elseif(APPLE)
-        # Special Apple stuff here
-        remove_definitions(-D_LINUX)
-        add_definitions(-D_DARWIN)
-    endif()
-elseif(WIN32)
-    add_definitions(-D_WIN32)
-    SET(PROJECT_LIBS Ws2_32.lib)
-    if(MINGW)
-        # Special MINGW stuff here
-    elseif(MSVC)
-        # Special MSVC stuff here
-        add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
-    else()
-        # No idea what it is, but there's a good chance it's too weird.
-        MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
-    endif()
-endif()
-
 OPTION(CLSOCKET_SHARED "Build clsocket lib as shared." OFF)
 OPTION(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependency." ON)
 
@@ -82,6 +57,32 @@ endif()
 
 set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
                                           SOVERSION ${BUILD_MAJOR})
+                                          
+
+# OS and compiler checks. 
+if(UNIX)
+    if(APPLE)
+        # Special Apple stuff here
+        target_compile_definitions(clsocket PUBLIC _DARWIN)
+    else()
+        target_compile_definitions(clsocket PUBLIC _LINUX)
+        if(CYGWIN)
+            # Special Cygwin stuff here
+        endif()
+    endif()
+elseif(WIN32)
+    target_compile_definitions(clsocket PUBLIC _WIN32)
+    SET(PROJECT_LIBS Ws2_32.lib)
+    if(MINGW)
+        # Special MINGW stuff here
+    elseif(MSVC)
+        # Special MSVC stuff here
+        target_compile_definitions(clsocket PUBLIC _WINSOCK_DEPRECATED_NO_WARNINGS)
+    else()
+        # No idea what it is, but there's a good chance it's too weird.
+        MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
+    endif()
+endif()
 
 if(UNIX)
     OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)

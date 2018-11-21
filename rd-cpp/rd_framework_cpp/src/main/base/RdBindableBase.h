@@ -95,8 +95,8 @@ T &withId(T &that, RdId const &id) {
 
 template<typename T>
 T &statics(T &that, int64_t id) {
-    MY_ASSERT_MSG((id > 0 && id < RdId::MAX_STATIC_ID),
-                  ("Expected id > 0 && id < RdId.MaxStaticId, got " + std::to_string(id)));
+    /*MY_ASSERT_MSG((id > 0 && id < RdId::MAX_STATIC_ID),
+                  ("Expected id > 0 && id < RdId.MaxStaticId, got " + std::to_string(id)));*/
     return withId(that, RdId(static_cast<int64_t >(id)));
 }
 

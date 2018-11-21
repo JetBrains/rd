@@ -55,7 +55,3 @@ target_include_directories(rd_framework_cpp PUBLIC task)
 add_subdirectory(wire)
 
 target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp clsocket)
-
-if (UNIX)
-    add_definitions(-D_LINUX)
-endif ()
