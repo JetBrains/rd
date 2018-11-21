@@ -72,7 +72,7 @@ public:
 
     class Client : public Base {
     public:
-        uint16 port = 0;
+        uint16_t port = 0;
 
         //region ctor/dtor
 
@@ -81,12 +81,12 @@ public:
 
         std::condition_variable_any cv;
 
-        Client(Lifetime lifetime, const IScheduler *scheduler, uint16 port, const std::string &id);
+        Client(Lifetime lifetime, const IScheduler *scheduler, uint16_t port, const std::string &id);
     };
 
     class Server : public Base {
     public:
-        uint16 port = 0;
+        uint16_t port = 0;
 
         std::unique_ptr<CPassiveSocket> ss = std::make_unique<CPassiveSocket>();
 
@@ -95,7 +95,7 @@ public:
         virtual ~Server() = default;
         //endregion
 
-        Server(Lifetime lifetime, const IScheduler *scheduler, uint16 port, const std::string &id);
+        Server(Lifetime lifetime, const IScheduler *scheduler, uint16_t port, const std::string &id);
     };
 
 };

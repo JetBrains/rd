@@ -90,11 +90,11 @@ public:
     struct timeval GetEndTime() { return m_endTime; };
     void SetEndTime() { GET_CLOCK_COUNT(&m_endTime); };
 
-    uint32 GetMilliSeconds() { return (CalcTotalUSec() / MILLISECONDS_CONVERSION); };
-    uint32 GetMicroSeconds() { return (CalcTotalUSec()); };
-    uint32 GetSeconds() { return (CalcTotalUSec() / MICROSECONDS_CONVERSION); };
+    uint32_t GetMilliSeconds() { return (CalcTotalUSec() / MILLISECONDS_CONVERSION); };
+    uint32_t GetMicroSeconds() { return (CalcTotalUSec()); };
+    uint32_t GetSeconds() { return (CalcTotalUSec() / MICROSECONDS_CONVERSION); };
 
-    uint32 GetCurrentTime()
+    uint32_t GetCurrentTime()
     {
         struct timeval tmpTime;
         GET_CLOCK_COUNT(&tmpTime);
@@ -102,7 +102,7 @@ public:
     };
 
 private:
-    uint32 CalcTotalUSec() { return (((m_endTime.tv_sec - m_startTime.tv_sec) * MICROSECONDS_CONVERSION) +
+    uint32_t CalcTotalUSec() { return (((m_endTime.tv_sec - m_startTime.tv_sec) * MICROSECONDS_CONVERSION) +
                                     (m_endTime.tv_usec - m_startTime.tv_usec)); };
 
 

@@ -82,7 +82,7 @@ public:
     ///      condiitions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
     ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
-    bool BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort);
+    bool BindMulticast(const char *pInterface, const char *pGroup, uint16_t nPort);
 
     /// Create a listening socket at local ip address 'x.x.x.x' or 'localhost'
     /// if pAddr is NULL on port nPort.
@@ -95,7 +95,7 @@ public:
     ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
     ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
-    virtual bool Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog = 30000);
+    virtual bool Listen(const char *pAddr, uint16_t nPort, int32_t nConnectionBacklog = 30000);
 
     /// Attempts to send a block of data on an established connection.
     /// @param pBuf block of data to be sent.
@@ -109,7 +109,7 @@ public:
     /// CPassiveSocket::SocketProtocolError, CPassiveSocket::SocketNotconnected
     /// <br>\b Note: This function is used only for a socket of type
     /// CSimpleSocket::SocketTypeUdp
-    virtual int32 Send(const uint8 *pBuf, size_t bytesToSend);
+    virtual int32_t Send(const uint8_t *pBuf, size_t bytesToSend);
 
 private:
     struct ip_mreq  m_stMulticastRequest;   /// group address for multicast

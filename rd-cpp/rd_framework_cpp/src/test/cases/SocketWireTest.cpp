@@ -16,7 +16,7 @@
 const int STEP = 5;
 
 TEST_F(SocketWireTestBase, ClientWithoutServer) {
-    uint16 port = find_free_port();
+    uint16_t port = find_free_port();
     Protocol protocol = client(socketLifetime, port);
 
     terminate();
@@ -36,7 +36,7 @@ TEST_F(SocketWireTestBase, TestServerWithoutClientWithDelay) {
 }
 
 TEST_F(SocketWireTestBase, TestClientWithoutServerWithDelay) {
-    uint16 port = find_free_port();
+    uint16_t port = find_free_port();
     auto protocol = client(socketLifetime, port);
     sleep_this_thread(100);
 
@@ -59,7 +59,7 @@ TEST_F(SocketWireTestBase, DISABLED_TestServerWithoutClientWithDelayAndMessages)
 }
 
 TEST_F(SocketWireTestBase, DISABLED_TestClientWithoutServerWithDelayAndMessages) {
-    uint16 port = find_free_port();
+    uint16_t port = find_free_port();
     auto clientProtocol = client(socketLifetime, port);
 
     RdProperty<int> cp(0);
@@ -345,7 +345,7 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
 }
 
 TEST_F(SocketWireTestBase, DISABLED_TestRunWithSlowpokeServer) {
-    uint16 port = find_free_port();
+    uint16_t port = find_free_port();
     auto clientProtocol = client(socketLifetime, port);
 
     RdProperty<int> sp{0}, cp{0};

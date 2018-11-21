@@ -7,7 +7,7 @@
 
 #include "../../main/wire/clsocket/src/Host.h"
 
-uint16 find_free_port();
+uint16_t find_free_port();
 
 void sleep_this_thread(int ms);
 

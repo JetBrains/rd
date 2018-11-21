@@ -51,7 +51,7 @@ CActiveSocket::CActiveSocket(CSocketType nType) : CSimpleSocket(nType)
 // ConnectTCP() -
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::ConnectTCP(const char *pAddr, uint16 nPort)
+bool CActiveSocket::ConnectTCP(const char *pAddr, uint16_t nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
@@ -78,7 +78,7 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16 nPort)
     memcpy(&stIpAddress, m_pHE->h_addr_list[0], m_pHE->h_length);
     m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
 
-    if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
+    if ((int32_t)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
     {
         TranslateSocketError();
         return bRetVal;
@@ -131,7 +131,7 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16 nPort)
 // ConnectUDP() -
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
+bool CActiveSocket::ConnectUDP(const char *pAddr, uint16_t nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
@@ -158,7 +158,7 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     memcpy(&stIpAddress, m_pHE->h_addr_list[0], m_pHE->h_length);
     m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
 
-    if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
+    if ((int32_t)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
     {
         TranslateSocketError();
         return bRetVal;
@@ -190,7 +190,7 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
 // ConnectRAW() -
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
+bool CActiveSocket::ConnectRAW(const char *pAddr, uint16_t nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
@@ -216,7 +216,7 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
     memcpy(&stIpAddress, m_pHE->h_addr_list[0], m_pHE->h_length);
     m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
 
-    if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
+    if ((int32_t)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
     {
         TranslateSocketError();
         return bRetVal;
@@ -249,7 +249,7 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 // Open() - Create a connection to a specified address on a specified port
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::Open(const char *pAddr, uint16 nPort)
+bool CActiveSocket::Open(const char *pAddr, uint16_t nPort)
 {
     bool bRetVal = false;
 

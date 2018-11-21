@@ -45,7 +45,6 @@ else()
         ADD_LIBRARY(clsocket STATIC ${CLSOCKET_SOURCES})
     endif()
 endif()
-TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
 
 # install into configured prefix
 if(NOT CLSOCKET_DEP_ONLY)
@@ -83,6 +82,8 @@ elseif(WIN32)
         MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
     endif()
 endif()
+
+TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
 
 if(UNIX)
     OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)

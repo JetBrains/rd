@@ -27,11 +27,11 @@ public:
 
     int property_id = 1;
 
-    Protocol server(Lifetime lifetime, uint16 port = 0);
+    Protocol server(Lifetime lifetime, uint16_t port = 0);
 
     Protocol client(Lifetime lifetime, Protocol const &serverProtocol);
 
-    Protocol client(Lifetime lifetime, uint16 port);
+    Protocol client(Lifetime lifetime, uint16_t port);
 
 //    @Before
     void SetUp() {

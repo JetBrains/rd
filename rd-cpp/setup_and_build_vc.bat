@@ -1,7 +1,7 @@
-git clone https://github.com/TartanLlama/optional.git
-git clone https://github.com/mpark/variant.git
-git clone https://github.com/google/googletest.git
+@echo off
+call get_dependencies.bat
 mkdir build
 cd build
-cmake -G "Visual Studio 15 2017" ..
+cmake -G "Visual Studio 15 2017 Win64" ..
 cmake --build . --config Release
+@echo on

@@ -10,11 +10,11 @@
 #include <utility>
 #include <thread>
 
-uint16 find_free_port() {
+uint16_t find_free_port() {
     CPassiveSocket fake_server;
     fake_server.Initialize();
     fake_server.Listen("127.0.0.1", 0);
-    uint16 port = fake_server.GetServerPort();
+	uint16_t port = fake_server.GetServerPort();
     MY_ASSERT_MSG(port != 0, "no free port");
     return port;
 }

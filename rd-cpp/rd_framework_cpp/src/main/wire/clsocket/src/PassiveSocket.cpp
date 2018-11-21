@@ -46,7 +46,7 @@
 CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType) {
 }
 
-bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort) {
+bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16_t nPort) {
     bool bRetVal = false;
 #ifdef _WIN32
     ULONG inAddr;
@@ -117,14 +117,14 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 // Listen() -
 //
 //------------------------------------------------------------------------------
-bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog) {
+bool CPassiveSocket::Listen(const char *pAddr, uint16_t nPort, int32_t nConnectionBacklog) {
     bool bRetVal = false;
 #ifdef _WIN32
     ULONG inAddr;
 #else
     in_addr_t      inAddr;
 
-    int32          nReuse;
+    int32_t          nReuse;
     nReuse = IPTOS_LOWDELAY;
 
     //--------------------------------------------------------------------------
@@ -132,8 +132,8 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     // descriptor to be reused immediately after the socket is closed instead
     // of setting in a TIMED_WAIT state.
     //--------------------------------------------------------------------------
-    SETSOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&nReuse, sizeof(int32));
-    SETSOCKOPT(m_socket, IPPROTO_TCP, IP_TOS, &nReuse, sizeof(int32));
+    SETSOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&nReuse, sizeof(int32_t));
+    SETSOCKOPT(m_socket, IPPROTO_TCP, IP_TOS, &nReuse, sizeof(int32_t));
 #endif
 
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
@@ -198,7 +198,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
 //
 //------------------------------------------------------------------------------
 CActiveSocket *CPassiveSocket::Accept() {
-    uint32 nSockLen;
+    uint32_t nSockLen;
     CActiveSocket *pClientSocket = NULL;
     SOCKET socket = CSimpleSocket::SocketError;
 
@@ -263,7 +263,7 @@ CActiveSocket *CPassiveSocket::Accept() {
 // Send() - Send data on a valid socket
 //
 //------------------------------------------------------------------------------
-int32 CPassiveSocket::Send(const uint8 *pBuf, size_t bytesToSend) {
+int32_t CPassiveSocket::Send(const uint8_t *pBuf, size_t bytesToSend) {
     SetSocketError(SocketSuccess);
     m_nBytesSent = 0;
 

@@ -120,7 +120,7 @@ bool SocketWire::Base::ReadFromSocket(char *res, int32_t msglen) const {
             if (!socketProvider->IsSocketValid()) {
                 return false;
             }
-            int32_t read = socketProvider->Receive(static_cast<int32>(receiver_buffer.end() - hi), &*hi);
+            int32_t read = socketProvider->Receive(static_cast<int32_t>(receiver_buffer.end() - hi), &*hi);
             if (read == -1) {
                 logger.error(this->id + ": socket was shutted down for receiving");
                 return false;
@@ -134,7 +134,7 @@ bool SocketWire::Base::ReadFromSocket(char *res, int32_t msglen) const {
 }
 
 
-SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint16 port = 0,
+SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint16_t port = 0,
                            const std::string &id = "ClientSocket") : Base(id, lifetime, scheduler), port(port) {
     thread = std::thread([this, lifetime]() mutable {
         try {
@@ -203,7 +203,7 @@ SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint1
     });
 }
 
-SocketWire::Server::Server(Lifetime lifetime, const IScheduler *scheduler, uint16 port = 0,
+SocketWire::Server::Server(Lifetime lifetime, const IScheduler *scheduler, uint16_t port = 0,
                            const std::string &id = "ServerSocket") : Base(id, lifetime, scheduler) {
     MY_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
     MY_ASSERT_MSG(ss->Listen("127.0.0.1", port),
