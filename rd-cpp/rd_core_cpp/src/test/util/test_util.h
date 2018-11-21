@@ -5,8 +5,6 @@
 #ifndef RD_CPP_CORE_TEST_UTIL_H
 #define RD_CPP_CORE_TEST_UTIL_H
 
-#include "custom_type_traits.h"
-
 #include "ViewableList.h"
 #include "ViewableSet.h"
 #include "ViewableMap.h"

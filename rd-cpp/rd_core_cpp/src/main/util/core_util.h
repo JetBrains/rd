@@ -5,8 +5,6 @@
 #ifndef RD_CORE_CPP_UTIL_H
 #define RD_CORE_CPP_UTIL_H
 
-#include "custom_type_traits.h"
-
 #include "optional.hpp"
 
 #include <memory>

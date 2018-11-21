@@ -5,8 +5,6 @@
 #ifndef RD_CPP_CORE_SIGNAL_H
 #define RD_CPP_CORE_SIGNAL_H
 
-#include "custom_type_traits.h"
-
 #include "Lifetime.h"
 #include "interfaces.h"
 #include "erase_if.h"
@@ -16,11 +14,7 @@
 #include <iostream>
 #include <atomic>
 
-#if __cplusplus >= 201703L
-inline std::atomic<int32_t> cookie;
-#else
-static std::atomic<int32_t> cookie;
-#endif
+extern std::atomic<int32_t> cookie;
 
 template<typename T>
 class Event {

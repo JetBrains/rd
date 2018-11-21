@@ -12,6 +12,59 @@ import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
 import java.io.File
 
+class Signature(val returnType: String, val arguments: String, val scope: String) {
+    private var declPrefix = arrayListOf<String>()
+    private var declPostfix = arrayListOf<String>()
+    private var commonPostfix = arrayListOf<String>()
+
+    private fun <T> ArrayList<T>.front(): String {
+        return toArray().joinToOptString(separator = " ", postfix = " ")
+    }
+
+    private fun <T> ArrayList<T>.back(): String {
+        return toArray().joinToOptString(separator = " ", prefix = " ")
+    }
+
+    fun decl(): String {
+        return "${declPrefix.front()}$returnType $arguments${commonPostfix.back()}${declPostfix.back()};"
+    }
+
+    fun def(): String {
+        return "$returnType ${scope}::$arguments${commonPostfix.back()}"
+    }
+
+    fun const(): Signature {
+        return this.also {
+            commonPostfix.add("const")
+        }
+    }
+
+    fun override(): Signature {
+        return this.also {
+            declPostfix.add("override")
+        }
+    }
+
+    fun static(): Signature {
+        return this.also {
+            declPrefix.add("static")
+        }
+    }
+}
+
+
+private fun PrettyPrinter.declare(signature: Signature?) {
+    signature?.let {
+        this.println(it.decl())
+    }
+}
+
+private fun PrettyPrinter.def(signature: Signature?) {
+    signature?.let {
+        this.println(it.def())
+    }
+}
+
 open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
 
     //region language specific properties
@@ -62,7 +115,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     //region IType.
     protected open fun IType.substitutedName(scope: Declaration): String = when (this) {
         is Declaration -> (namespace != scope.namespace).condstr { "$namespace." } + name
-        is INullable -> "std::optional<${itemType.substitutedName(scope)}>"
+        is INullable -> "tl::optional<${itemType.substitutedName(scope)}>"
         is InternedScalar -> itemType.substitutedName(scope)
         is IArray -> "std::vector<${itemType.substitutedName(scope)}>"
         is IImmutableList -> "std::vector<${itemType.substitutedName(scope)}>"
@@ -214,7 +267,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun Member.Reactive.customSerializers(scope: Declaration): List<String> {
-        return genericParams.asList().map { it.serializerRef(scope) }
+        return genericParams.asList().map { "${scope.name}::${it.serializerRef(scope)}" }
     }
 
     protected open val Member.hasEmptyConstructor: Boolean
@@ -417,8 +470,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
             comment("initializer")
             +"private:"
-            initializerTraitDecl(decl)
-            +";"
+            declare(initializerTraitDecl(decl))
 
             comment("primary ctor")
             +(decl.primaryCtorVisibility)
@@ -430,10 +482,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             defaultCtorsDtors(decl)
 
             comment("reader")
-            +readerTraitDecl(decl).condstr { ";" }
+            +"public:"
+            declare(readerTraitDecl(decl))
 
             comment("writer")
-            +writerTraitDecl(decl).condstr { ";" }
+            +"public:"
+            declare(writerTraitDecl(decl))
 
             comment("getters")
             gettersTraitDecl(decl)
@@ -467,16 +521,14 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
-    protected fun PrettyPrinter.primaryCtorParams(decl: Declaration) {
-//        fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
-
+    protected fun PrettyPrinter.primaryCtorParams(decl: Declaration): String {
         val own = decl.ownMembers.map {
             val attrs = it.getSetting(Cpp17Generator.Attributes)?.fold("") { acc, attr -> "$acc@$attr${eolKind.value}" }
             (attrs ?: "") + it.ctorParam(decl)
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }
 
-        p(own.asSequence().plus(base).plus(unknownMembers(decl)).joinToString(", "))
+        return own.asSequence().plus(base).plus(unknownMembers(decl)).joinToString(", ")
     }
     //endregion
 
@@ -595,7 +647,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     fun PrettyPrinter.fieldsDecl(decl: Declaration) {
-//        fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
         +"protected:"
         val own = decl.ownMembers.map {
             val attrs = it.getSetting(Cpp17Generator.Attributes)?.fold("") { acc, attr -> "$acc@$attr${carry()}" }
@@ -605,16 +656,13 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +own.asSequence().plus(unknownMembers(decl)).joinToString(separator = "") { "$it${carry()}" }
     }
 
-    fun PrettyPrinter.initializerTraitDecl(decl: Declaration) {
-        p("void init()")
+    fun PrettyPrinter.initializerTraitDecl(decl: Declaration): Signature {
+        return Signature("void", "init()", decl.name)
     }
 
     fun PrettyPrinter.primaryCtorTraitDecl(decl: Declaration) {
 //        if (decl.ownMembers.isEmpty()) return false
-        p(decl.name)
-        p("(")
-        primaryCtorParams(decl)
-        p(")")
+        p("${decl.name}(${primaryCtorParams(decl)})")
     }
 
     fun PrettyPrinter.defaultCtorsDtors(decl: Declaration) {
@@ -628,26 +676,22 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"virtual ~$name() = default;"
     }
 
-    fun PrettyPrinter.readerTraitDecl(decl: Declaration): Boolean {
-        +"public:"
+    fun PrettyPrinter.readerTraitDecl(decl: Declaration): Signature? {
         if (decl.isConcrete) {
-            p("static ${decl.name} read(SerializationCtx const& ctx, Buffer const & buffer)")
-            return true
+            return Signature(decl.name, "read(SerializationCtx const& ctx, Buffer const & buffer)", decl.name).static()
         } else if (decl.isAbstract) {
             //todo read abstract
-            return false
+            return null
         }
-        return false
+        return null
     }
 
-    fun PrettyPrinter.writerTraitDecl(decl: Declaration): Boolean {
-        +"public:"
+    fun PrettyPrinter.writerTraitDecl(decl: Declaration): Signature? {
         if (decl.isConcrete) {
-            p("void write(SerializationCtx const& ctx, Buffer const& buffer) const override")
-            return true
+            return Signature("void", "write(SerializationCtx const& ctx, Buffer const& buffer)", decl.name).const().override()
         } else {
             //todo ???
-            return false
+            return null
         }
     }
 
@@ -878,8 +922,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun PrettyPrinter.readerTraitDef(decl: Declaration) {
+        def(readerTraitDecl(decl))
         if (decl.isConcrete) {
-            define(decl.name, "read(SerializationCtx const& ctx, Buffer const & buffer)", decl)
             block("{", "}") {
                 indent {
                     if (isUnknown(decl)) {
@@ -934,7 +978,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
 
         if (decl.isConcrete) {
-            define("void", "write(SerializationCtx const& ctx, Buffer const& buffer) const", decl)
+            def(writerTraitDecl(decl))
             block("{", "}") {
                 indent {
                     if (decl is Class && decl.isInternRoot) {
@@ -972,7 +1016,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun PrettyPrinter.initializerTraitDef(decl: Declaration) {
-        define("void", "init()", decl)
+        def(initializerTraitDecl(decl))
 
         block("{", "}") {
             indent {

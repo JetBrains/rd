@@ -9,8 +9,6 @@
 #include "IRdBindable.h"
 #include "IProtocol.h"
 
-//#include <any>
-
 class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 protected:
     mutable IRdDynamic const *parent = nullptr;
@@ -52,7 +50,7 @@ public:
 
 //    getOrCreateExtension
 
-    void identify(const IIdentities &identities, RdId id) const override;
+    void identify(const IIdentities &identities, RdId const &id) const override;
 
     mutable std::map<std::string, std::shared_ptr<IRdBindable> > bindable_extensions;//todo concurrency
     //mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
@@ -75,14 +73,14 @@ public:
         }
     }
 
-	/* template<typename T>
-	 std::enable_if_t<!std::is_base_of_v<IRdBindable, T>, T> const &
-	 getOrCreateExtension(std::string const &name, std::function<T()> create) const {
-		 if (non_bindable_extensions.count(name) == 0) {
-			 return std::any_cast<T const &>(non_bindable_extensions[name] = create());
-		 }
-		 return std::any_cast<T const &>(non_bindable_extensions.at(name));
-	 }*/
+    /* template<typename T>
+     std::enable_if_t<!std::is_base_of_v<IRdBindable, T>, T> const &
+     getOrCreateExtension(std::string const &name, std::function<T()> create) const {
+         if (non_bindable_extensions.count(name) == 0) {
+             return std::any_cast<T const &>(non_bindable_extensions[name] = create());
+         }
+         return std::any_cast<T const &>(non_bindable_extensions.at(name));
+     }*/
 };
 
 //T : RdBindableBase

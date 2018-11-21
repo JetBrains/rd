@@ -20,7 +20,7 @@ void DynamicEntity::init(Lifetime lifetime) const {
     foo.bind(lifetime, this, "foo");
 }
 
-void DynamicEntity::identify(IIdentities const &identities, RdId id) const {
+void DynamicEntity::identify(IIdentities const &identities, RdId const &id) const {
     foo.identify(identities, id.mix("foo"));
 }
 
