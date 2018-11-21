@@ -1,17 +1,21 @@
 package com.jetbrains.rider.framework.test.cases.wire
 
 import com.jetbrains.rider.framework.*
+import com.jetbrains.rider.framework.base.RdBindableBase
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.test.util.TestScheduler
 import com.jetbrains.rider.framework.test.util.NetUtils
+import com.jetbrains.rider.plugins.unrealengine.UnrealEngineModel
+import com.jetbrains.rider.util.eol
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.LifetimeDefinition
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
@@ -203,6 +207,48 @@ class SocketWireTest {
         Thread.sleep(500000)
     }
 
+    @Test
+    fun TestUnrealEngineModelServer() {
+        val appLifetime = Lifetime.Eternal.createNested()
+        val protocol = server(socketLifetime, NetUtils.findFreePort(0))
+        val model = UnrealEngineModel.create(appLifetime, protocol)
+        File("C:\\temp\\port.txt").printWriter().use { out ->
+            out.println((protocol.wire as SocketWire.Server).port)
+
+            val rdid_test_connection = (model.test_connection as RdBindableBase).rdid.toString()
+            val rdid_filename_to_open = (model.filename_to_open as RdBindableBase).rdid.toString()
+            out.println(rdid_test_connection)
+            out.println(rdid_filename_to_open)
+        }
+
+
+
+        model.test_connection.advise(appLifetime) {
+            println("Connection UE $it")
+        }
+        model.filename_to_open.advise(appLifetime) {
+            println("rdid_filename_to_open changed: $it")
+        }
+        Thread.sleep(500000)
+    }
+
+    @Test
+    fun TestUnrealEngineModelClient() {
+        var port = 0
+        File("C:\\temp\\port.txt").bufferedReader().use { input ->
+            port = input.readLine().toInt()
+        }
+
+        val appLifetime = Lifetime.Eternal.createNested()
+        val protocol = client(socketLifetime, port)
+        val model = UnrealEngineModel.create(appLifetime, protocol)
+
+
+        var newValue : Int = 0xdeadbeef.toInt()
+        model.test_connection.set(newValue)
+        model.filename_to_open.set("beefdeadx0")
+        Thread.sleep(500000)
+    }
 //    @BeforeClass
 //    fun beforeClass() {
 //        setupLogHandler {
