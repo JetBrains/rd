@@ -15,13 +15,13 @@ endif()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-set(ENABLE_TESTS_OPTION true)
+set(ENABLE_TESTS_OPTION false)
 
 SET(ENABLE_TESTS $<IF:ENABLE_TESTS_OPTION,ON,OFF>)
 option(OPTIONAL_ENABLE_TESTS "Enable tests." OFF)
 option(OPTIONAL_ENABLE_DOCS "Enable documentation." OFF)
-option(RD_CORE_CPP_ENABLE_TESTS "Enable tests." ON)
-option(RD_FRAMEWORK_CPP_ENABLE_TESTS "Enable tests." ON)
+option(RD_CORE_CPP_ENABLE_TESTS "Enable tests." OFF)
+option(RD_FRAMEWORK_CPP_ENABLE_TESTS "Enable tests." OFF)
 
 if(ENABLE_TESTS_OPTION)
     add_subdirectory(googletest)
@@ -30,4 +30,4 @@ add_subdirectory(optional)
 add_subdirectory(variant)
 add_subdirectory(rd_core_cpp)
 add_subdirectory(rd_framework_cpp)
-#add_subdirectory(rd_model)
+add_subdirectory(test_client)

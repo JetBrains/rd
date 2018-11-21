@@ -46,8 +46,13 @@
 #include <string.h>
 
 #ifdef _WIN32
+
+#pragma warning( push )
+#pragma warning( disable:4668 )
   #include <Winsock2.h>
   #include <time.h>
+#pragma warning( pop )
+
 #endif
 
 #ifdef _LINUX

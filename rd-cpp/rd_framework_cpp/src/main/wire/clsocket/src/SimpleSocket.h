@@ -74,9 +74,12 @@
 #endif
 
 #ifdef _WIN32
-#include <io.h>
-#include <winsock2.h>
-#include <Ws2tcpip.h>
+#pragma warning( push )
+#pragma warning( disable:4668 )
+	#include <io.h>
+	#include <winsock2.h>
+	#include <Ws2tcpip.h>
+#pragma warning( pop )
 
 #define IPTOS_LOWDELAY  0x10
 

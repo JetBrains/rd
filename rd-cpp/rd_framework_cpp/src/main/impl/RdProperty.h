@@ -11,6 +11,8 @@
 #include "Polymorphic.h"
 #include "ISerializable.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 template<typename T, typename S = Polymorphic<T>>
 class RdProperty : public RdPropertyBase<T, S>, public ISerializable {
 public:
@@ -71,6 +73,7 @@ public:
         return !(rhs == lhs);
     }
 };
+#pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdProperty<int> >::value, "Is move constructible from RdProperty<int>");
 

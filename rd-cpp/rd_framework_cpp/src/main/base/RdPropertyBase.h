@@ -12,6 +12,8 @@
 #include "Polymorphic.h"
 #include "Property.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 template<typename T, typename S = Polymorphic<T>>
 class RdPropertyBase : public RdReactiveBase, public Property<T> {
 protected:
@@ -117,6 +119,7 @@ public:
         return !(rhs == lhs);
     }
 };
+#pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdPropertyBase<int> >::value, "Is move constructible from RdPropertyBase<int>");
 

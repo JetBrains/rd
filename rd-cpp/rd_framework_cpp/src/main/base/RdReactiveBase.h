@@ -12,6 +12,8 @@
 #include "IProtocol.h"
 #include "Logger.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 class RdReactiveBase : public RdBindableBase, public IRdReactive {
 public:
     Logger logReceived;
@@ -64,6 +66,6 @@ public:
     void local_change(const std::function<void()> &action) const;
     //todo catch exception in action()
 };
-
+#pragma warning( pop )
 
 #endif //RD_CPP_RDREACTIVEBASE_H
