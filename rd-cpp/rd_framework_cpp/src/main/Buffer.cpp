@@ -83,7 +83,7 @@ std::string Buffer::readString() const {
 }
 
 void Buffer::writeString(std::string const &value) const {
-    std::vector<char> v(value.begin(), value.end());
-    writeArray<char>(v);
+    std::vector<uint16_t> v(value.begin(), value.end());
+    writeArray<uint16_t>(v);
 }
 
