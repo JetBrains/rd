@@ -64,6 +64,18 @@ public:
 };
 
 template<>
+class Polymorphic<std::wstring> {
+public:
+    static std::wstring read(SerializationCtx const &ctx, Buffer const &buffer) {
+        return buffer.readWString();
+    }
+
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value) {
+        buffer.writeWString(value);
+    }
+};
+
+template<>
 class Polymorphic<void *> {
 public:
     static void *read(SerializationCtx const &ctx, Buffer const &buffer) {

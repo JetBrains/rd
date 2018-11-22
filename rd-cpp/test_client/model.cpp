@@ -38,7 +38,7 @@ void FRiderLinkModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
 	test_connection.set(0xdeadbeef);
-	filename_to_open.set("beefdeadx0");	
+	filename_to_open.set(L"beefdeadx0");	
 }
 
 void FRiderLinkModule::ShutdownModule()

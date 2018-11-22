@@ -78,8 +78,18 @@ size_t Buffer::size() const {
 }
 
 std::string Buffer::readString() const {
-    auto v = readArray<char>();
+    auto v = readArray<uint8_t>();
     return std::string(v.begin(), v.end());
+}
+
+std::wstring Buffer::readWString() const {
+    auto v = readArray<uint16_t>();
+    return std::wstring(v.begin(), v.end());
+}
+
+void Buffer::writeWString(std::wstring const &value) const {
+    std::vector<uint16_t> v(value.begin(), value.end());
+    writeArray<uint16_t>(v);
 }
 
 void Buffer::writeString(std::string const &value) const {

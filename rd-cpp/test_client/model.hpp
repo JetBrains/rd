@@ -24,7 +24,7 @@ public:
 private:
 	/** Handle to the test dll we will load */
 	RdProperty<tl::optional<int>> test_connection{ 0 };
-	RdProperty<tl::optional<std::string>> filename_to_open{ "" };
+	RdProperty<tl::optional<std::wstring>> filename_to_open{ L"" };
 
 	//SocketWire::Client *client = nullptr;
 	std::shared_ptr<IWire> wire;
@@ -36,5 +36,5 @@ private:
 	Lifetime lifetime;
 	Lifetime socketLifetime;
 
-	TestScheduler clientScheduler{ "client" };
+	PumpScheduler clientScheduler{ "client" };
 };

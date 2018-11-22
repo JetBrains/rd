@@ -5,6 +5,7 @@
 #ifndef RD_CPP_IUNKNOWNINSTANCE_H
 #define RD_CPP_IUNKNOWNINSTANCE_H
 
+#include "RdId.h"
 
 class IUnknownInstance {
 protected:
