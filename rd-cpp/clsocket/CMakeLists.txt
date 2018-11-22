@@ -7,20 +7,18 @@ set(BUILD_MINOR "4")
 set(BUILD_VERSION "3")
 set(BUILD_VERSION ${BUILD_MAJOR}.${BUILD_MINOR}.${BUILD_VERSION})
 
-include_directories(src)
-
 SET(CLSOCKET_HEADERS
-src/ActiveSocket.h
-src/Host.h
-src/PassiveSocket.h
-src/SimpleSocket.h
-src/StatTimer.h
+    src/ActiveSocket.h
+    src/Host.h
+    src/PassiveSocket.h
+    src/SimpleSocket.h
+    src/StatTimer.h
 )
 
 SET(CLSOCKET_SOURCES
-src/SimpleSocket.cpp
-src/ActiveSocket.cpp
-src/PassiveSocket.cpp
+    src/SimpleSocket.cpp
+    src/ActiveSocket.cpp
+    src/PassiveSocket.cpp
 )
 
 # mark headers as headers...
@@ -56,6 +54,8 @@ endif()
 
 set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
                                           SOVERSION ${BUILD_MAJOR})
+
+target_include_directories(clsocket PUBLIC src)
                                           
 
 # OS and compiler checks. 
@@ -103,3 +103,10 @@ if(UNIX)
     endif()
 endif()
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/clsocket"
+        CONFIGURATIONS Release
+        FILES_MATCHING
+                PATTERN *.h
+                PATTERN *.hpp
+)

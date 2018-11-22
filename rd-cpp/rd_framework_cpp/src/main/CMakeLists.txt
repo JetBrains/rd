@@ -43,16 +43,37 @@ add_library(rd_framework_cpp STATIC
         task/RdCall.cpp task/RdCall.h task/RdTask.cpp task/RdTask.h task/RdTaskResult.cpp task/RdTaskResult.h task/RdEndpoint.cpp task/RdEndpoint.h
         task/RdTaskImpl.cpp task/RdTaskImpl.h
         )
-
-target_include_directories(rd_framework_cpp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(rd_framework_cpp PUBLIC base)
-target_include_directories(rd_framework_cpp PUBLIC impl)
-target_include_directories(rd_framework_cpp PUBLIC serialization)
-target_include_directories(rd_framework_cpp PUBLIC util)
-target_include_directories(rd_framework_cpp PUBLIC wire)
-target_include_directories(rd_framework_cpp PUBLIC task)
-target_include_directories(rd_framework_cpp PUBLIC base/ext)
-
-add_subdirectory(wire)
+target_include_directories(rd_framework_cpp
+        PUBLIC
+                ${CMAKE_CURRENT_SOURCE_DIR}
+                base
+                base/ext
+                impl
+                serialization
+                util
+                wire
+                task
+)
 
 target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp clsocket)
+
+if(WIN32)
+        if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+                SET(PLATFORM "x86")
+        elseif("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+                SET(PLATFORM "x64")
+        endif()
+        install(TARGETS rd_framework_cpp rd_core_cpp clsocket
+                CONFIGURATIONS Release
+                ARCHIVE
+                        DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/"
+        )
+endif()
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_framework_cpp"
+        CONFIGURATIONS Release
+        FILES_MATCHING
+                PATTERN *.h
+                PATTERN *.hpp
+)

@@ -3,3 +3,6 @@
 build
 /.gradle
 .rdgen
+rd-cpp/build
+rd-cpp/export
+*.code-workspace

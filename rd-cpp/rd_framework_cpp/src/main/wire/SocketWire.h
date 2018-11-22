@@ -5,18 +5,18 @@
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
-#include <string>
-#include <array>
-#include <condition_variable>
-
 #include "IScheduler.h"
 #include "WireBase.h"
 
-#include "clsocket/src/ActiveSocket.h"
-#include "clsocket/src/PassiveSocket.h"
-#include "clsocket/src/SimpleSocket.h"
+#include "ActiveSocket.h"
+#include "PassiveSocket.h"
+#include "SimpleSocket.h"
 #include "Logger.h"
 #include "threading/ByteBufferAsyncProcessor.h"
+
+#include <string>
+#include <array>
+#include <condition_variable>
 
 
 class Lifetime;

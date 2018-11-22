@@ -4,8 +4,8 @@
 
 #include "demangle.h"
 #include "WireUtil.h"
-#include "../../main/wire/clsocket/src/PassiveSocket.h"
-#include "wire/clsocket/src/Host.h"
+#include "PassiveSocket.h"
+#include "Host.h"
 
 #include <utility>
 #include <thread>
