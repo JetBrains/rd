@@ -6,3 +6,4 @@ build
 rd-cpp/build
 rd-cpp/export
 *.code-workspace
+cmake-build-*
