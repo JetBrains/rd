@@ -173,9 +173,9 @@ public:
         }
     }
 
-    ByteArray getArray();
+    ByteArray getArray() const;
 
-    ByteArray getRealArray();
+    ByteArray getRealArray() const;
 
     word_t const *data() const;
 

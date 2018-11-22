@@ -31,7 +31,7 @@ add_library(rd_framework_cpp STATIC
         impl/RdList.h
         impl/RdMap.h
         wire/SocketWire.cpp wire/SocketWire.h
-        wire/SocketScheduler.cpp wire/SocketScheduler.h
+        wire/PumpScheduler.cpp wire/PumpScheduler.h
         impl/RdSet.h
         serialization/ISerializable.cpp serialization/ISerializable.h
         serialization/IMarshaller.cpp serialization/IMarshaller.h

@@ -6,7 +6,7 @@
 #include "wire/SocketWire.h"
 #include "Protocol.h"
 #include "RdProperty.h"
-#include "SocketScheduler.h"
+#include "PumpScheduler.h"
 
 #include <cstdint>
 #include <string>
@@ -36,5 +36,5 @@ private:
 	Lifetime lifetime;
 	Lifetime socketLifetime;
 
-	SocketScheduler clientScheduler{ "client" };
+	TestScheduler clientScheduler{ "client" };
 };

@@ -11,7 +11,7 @@
 
 #include "IScheduler.h"
 
-class SocketScheduler : public IScheduler {
+class PumpScheduler : public IScheduler {
 public:
     std::string name;
 
@@ -23,11 +23,11 @@ public:
 
     //region ctor/dtor
 
-    SocketScheduler();
+    PumpScheduler();
 
-    explicit SocketScheduler(std::string const &name);
+    explicit PumpScheduler(std::string const &name);
 
-    virtual ~SocketScheduler() = default;
+    virtual ~PumpScheduler() = default;
     //endregion
 
     void flush() const override;

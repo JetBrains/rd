@@ -55,11 +55,11 @@ void Buffer::rewind() const {
     set_position(0);
 }
 
-Buffer::ByteArray Buffer::getArray() {
+Buffer::ByteArray Buffer::getArray() const {
     return byteBufferMemoryBase;
 }
 
-Buffer::ByteArray Buffer::getRealArray() {
+Buffer::ByteArray Buffer::getRealArray() const {
     auto res = byteBufferMemoryBase;
     res.resize(offset);
     return res;

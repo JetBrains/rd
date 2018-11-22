@@ -1,6 +1,6 @@
 #include "UnrealEngineModel.h"
 
-#include <wire/SocketScheduler.h>
+#include <wire/PumpScheduler.h>
 #include <wire/SocketWire.h>
 
 #include <fstream>
@@ -8,7 +8,7 @@
 int main() {
     std::shared_ptr<IWire> wire;
     std::unique_ptr<IProtocol> clientProtocol;
-    SocketScheduler clientScheduler{"server"};
+    TestScheduler clientScheduler{"server"};
 
     LifetimeDefinition lifetimeDef{Lifetime::Eternal()};
     LifetimeDefinition socketLifetimeDef{Lifetime::Eternal()};

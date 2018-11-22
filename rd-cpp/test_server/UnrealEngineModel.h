@@ -42,15 +42,17 @@ class UnrealEngineModel : public RdExtBase
     //companion
     
     private:
-    public:
     struct UnrealEngineModelSerializersOwner : public ISerializersOwner {
         void registerSerializersCore(Serializers const& serializers) override;
     };
     
+    public:
     static UnrealEngineModelSerializersOwner serializersOwner;
     
     
     public:
+    
+    //create method
     static UnrealEngineModel create(Lifetime lifetime, IProtocol * protocol);
     
     

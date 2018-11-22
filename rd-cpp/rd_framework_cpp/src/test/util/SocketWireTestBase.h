@@ -12,7 +12,7 @@
 #include "RdProperty.h"
 #include "Protocol.h"
 #include "WireUtil.h"
-#include "SocketScheduler.h"
+#include "PumpScheduler.h"
 
 class SocketWireTestBase : public ::testing::Test {
 public:

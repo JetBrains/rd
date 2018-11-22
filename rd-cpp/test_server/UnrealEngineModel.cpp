@@ -3,12 +3,15 @@
 
 //companion
 
+UnrealEngineModel::UnrealEngineModelSerializersOwner UnrealEngineModel::serializersOwner;
+
 void UnrealEngineModel::UnrealEngineModelSerializersOwner::registerSerializersCore(Serializers const& serializers)
 {
-        UnrealEngineModel::serializersOwner.registry(serializers);
+//        UnrealEngineModel::serializersOwner.registry(serializers);
 }
 
-UnrealEngineModel UnrealEngineModel::create(Lifetime lifetime, IProtocol * protocol) {
+UnrealEngineModel UnrealEngineModel::create(Lifetime lifetime, IProtocol * protocol)
+{
         UnrealEngineModel::serializersOwner.registry(protocol->serializers);
         
         UnrealEngineModel res;
