@@ -356,6 +356,7 @@ struct is_nothrow_swappable
 // destructible.
 
 #pragma warning( push )
+#pragma warning( disable:4582 )
 #pragma warning( disable:4583 )
 template <class T, bool = ::std::is_trivially_destructible<T>::value>
 struct optional_storage_base {
