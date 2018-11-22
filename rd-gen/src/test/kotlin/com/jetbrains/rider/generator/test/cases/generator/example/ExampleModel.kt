@@ -4,16 +4,15 @@ import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.PredefinedType.*
 import com.jetbrains.rider.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rider.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rider.util.PublicApi
+import com.jetbrains.rider.generator.nova.util.syspropertyOrEmpty
 import java.io.File
 
 object ExampleRootNova : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "org.example", File("C:\\temp\\ExampleModel")),
-        Cpp17Generator(FlowTransform.AsIs, "org.example", File("C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\rd_model"))
+        Kotlin11Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrEmpty("model.out.src.kt.dir"))),
+        Cpp17Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrEmpty("model.out.src.cpp.dir")))
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
 )
 
-@PublicApi
 @Suppress("unused")
 object ExampleModelNova : Ext(ExampleRootNova) {
     //separately declared type

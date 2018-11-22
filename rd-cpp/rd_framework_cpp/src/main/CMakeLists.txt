@@ -42,7 +42,7 @@ add_library(rd_framework_cpp STATIC
         #task
         task/RdCall.cpp task/RdCall.h task/RdTask.cpp task/RdTask.h task/RdTaskResult.cpp task/RdTaskResult.h task/RdEndpoint.cpp task/RdEndpoint.h
         task/RdTaskImpl.cpp task/RdTaskImpl.h
-        )
+        base/IUnknownInstance.cpp base/IUnknownInstance.h)
 target_include_directories(rd_framework_cpp
         PUBLIC
                 ${CMAKE_CURRENT_SOURCE_DIR}

@@ -8,21 +8,38 @@ import java.net.URLClassLoader
 
 class RdGenTest {
 
+    enum class Configuration {
+        EXAMPLE,
+        UNREAL_ENGINE,
+        RIDER_MODEL
+    }
+
     @Test
     fun testParse() {
         val rdgen = RdGen()
-        System.setProperty("model.out.src.kt.dir", "C:\\temp\\kt")
         rdgen.verbose *= true
         rdgen.force *= true
-        rdgen.packages *= "com.jetbrains.rider.model.nova.ide"
-//        rdgen.sources *= "C:\\work\\Rider\\Platform\\RdProtocol\\rider-model\\Src"
-//        rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\Gen"
-//        rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\example"
-        rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\ide-model\\src\\com\\jetbrains\\rider\\model\\nova\\ide"
-        rdgen.filter *= "cpp"
+//        rdgen.filter *= "cpp"
+        val configuration = Configuration.EXAMPLE
+        when (configuration) {
+            Configuration.EXAMPLE -> {
+                rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\example"
+                System.setProperty("model.out.src.kt.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\kt_model")
+                System.setProperty("model.out.src.cpp.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\cpp_model")
+            }
+            Configuration.UNREAL_ENGINE -> {
+                rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\ue_model"
+                rdgen.packages *= "com.jetbrains.rider.model.nova.unrealengine"
+                System.setProperty("model.out.src.kt.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\kt_model")
+                System.setProperty("model.out.src.unrealengine.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\cpp_model")
+            }
+            Configuration.RIDER_MODEL -> {
+                rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\ide-model\\src\\com\\jetbrains\\rider\\model\\nova\\ide"
+                rdgen.packages *= "com.jetbrains.rider.model.nova.ide"
+            }
+        }
         rdgen.compilerClassloader = URLClassLoader(arrayOf(
-//            File("C:\\Users\\dmitry.ivanov\\.IntelliJIdea2017.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
-            File("C:\\Users\\jetbrains\\.IntelliJIdea2018.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
+                File("C:\\Users\\jetbrains\\.IntelliJIdea2018.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
         ))
 
         rdgen.run()
