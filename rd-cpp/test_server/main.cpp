@@ -1,14 +1,16 @@
 #include "UnrealEngineModel.h"
 
-#include <wire/PumpScheduler.h>
-#include <wire/SocketWire.h>
+#include "SocketWire.h"
+//#include "TestScheduler.h"
+#include "../rd_framework_cpp/src/test/util/TestScheduler.h"
 
 #include <fstream>
+
 
 int main() {
     std::shared_ptr<IWire> wire;
     std::unique_ptr<IProtocol> clientProtocol;
-    TestScheduler clientScheduler{"server"};
+    TestScheduler serverScheduler;
 
     LifetimeDefinition lifetimeDef{Lifetime::Eternal()};
     LifetimeDefinition socketLifetimeDef{Lifetime::Eternal()};
@@ -18,9 +20,9 @@ int main() {
 
     std::ofstream outputFile("C:\\temp\\port.txt");
 
-    wire = std::make_shared<SocketWire::Server>(lifetime, &clientScheduler, 0, "TestClient");
+    wire = std::make_shared<SocketWire::Server>(lifetime, &serverScheduler, 0, "TestClient");
     outputFile << (dynamic_cast<SocketWire::Server *>(wire.get()))->port;
-    clientProtocol = std::make_unique<Protocol>(Identities(), &clientScheduler, wire);
+    clientProtocol = std::make_unique<Protocol>(Identities(), &serverScheduler, wire);
 
     {
         UnrealEngineModel model = UnrealEngineModel::create(lifetime, clientProtocol.get());

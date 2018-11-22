@@ -2,8 +2,8 @@
 // Created by jetbrains on 03.10.2018.
 //
 
-#ifndef RD_CPP_SOCKETSCHEDULER_H
-#define RD_CPP_SOCKETSCHEDULER_H
+#ifndef RD_CPP_PUMPSCHEDULER_H
+#define RD_CPP_PUMPSCHEDULER_H
 
 #include <condition_variable>
 #include <thread>
@@ -41,4 +41,4 @@ public:
     void pump_one_message() const;
 };
 
-#endif //RD_CPP_SOCKETSCHEDULER_H
+#endif //RD_CPP_PUMPSCHEDULER_H

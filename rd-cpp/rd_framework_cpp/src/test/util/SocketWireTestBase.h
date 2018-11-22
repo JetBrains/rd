@@ -22,8 +22,8 @@ public:
     Lifetime lifetime = lifetimeDef.lifetime;
     Lifetime socketLifetime = socketLifetimeDef.lifetime;
 
-    SocketScheduler serverScheduler{"server"};
-    SocketScheduler clientScheduler{"client"};
+    PumpScheduler serverScheduler{"server"};
+    PumpScheduler clientScheduler{"client"};
 
     int property_id = 1;
 

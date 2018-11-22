@@ -160,8 +160,8 @@ extern "C"
 #define RECVFROM(a,b,c,d,e,f)  recvfrom(a, (char *)b, c, d, (sockaddr *)e, f)
 #define RECV_FLAGS             MSG_WAITALL
 #define SELECT(a,b,c,d,e)      select(a,b,c,d,e)
-#define SEND(a,b,c,d)          send(a, (const int8 *)b, c, d)
-#define SENDTO(a,b,c,d,e,f)    sendto(a, (const int8 *)b, c, d, e, f)
+#define SEND(a,b,c,d)          send(a, (const int8_t *)b, c, d)
+#define SENDTO(a,b,c,d,e,f)    sendto(a, (const int8_t *)b, c, d, e, f)
 #define SEND_FLAGS             0
 #define SENDFILE(a,b,c,d)      sendfile(a, b, c, d)
 #define SET_SOCKET_ERROR(x,y)  errno=y
