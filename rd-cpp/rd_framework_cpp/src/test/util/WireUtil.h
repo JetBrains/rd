@@ -5,7 +5,7 @@
 #ifndef RD_CPP_WIREUTIL_H
 #define RD_CPP_WIREUTIL_H
 
-#include "../../main/wire/clsocket/src/Host.h"
+#include "Host.h"
 
 uint16_t find_free_port();
 
