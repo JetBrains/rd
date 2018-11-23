@@ -123,7 +123,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         is PredefinedType.byte -> "signed char"
         is PredefinedType.int -> "int32_t"
         is PredefinedType.long -> "int64_t"
-        is PredefinedType.string -> "std::string"
+        is PredefinedType.string -> "std::wstring"
         is PredefinedType.dateTime -> "Date"
         is PredefinedType.guid -> "UUID"
         is PredefinedType.uri -> "URI"
@@ -155,7 +155,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
-    protected fun IType.serializerRef(scope: Declaration): String = leafSerializerRef(scope) ?: "__${name}Serializer"
+    protected fun IType.serializerRef(scope: Declaration): String = leafSerializerRef(scope)
+            ?: "${scope.name}::__${name}Serializer"
+
+    protected fun IType.serializerDef(scope: Declaration): String = "__${name}Serializer"
 
     //endregion
 
@@ -267,7 +270,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun Member.Reactive.customSerializers(scope: Declaration): List<String> {
-        return genericParams.asList().map { "${scope.name}::${it.serializerRef(scope)}" }
+        return genericParams.asList().map { it.serializerRef(scope) }
     }
 
     protected open val Member.hasEmptyConstructor: Boolean
@@ -343,7 +346,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         val fileNames = arrayListOf<String>()
 
         toplevels.sortedBy { it.name }.forEach { tl ->
-            val types = tl.declaredTypes + tl + unknowns(tl.declaredTypes)
+            val types = tl.declaredTypes + tl/* + unknowns(tl.declaredTypes)*/
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     type.fsPath(isDefinition).run {
@@ -377,14 +380,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         File(folder, "CMakeLists.txt").bufferedWriter().use {
             it.write("cmake_minimum_required(VERSION 3.12)$eol")
             it.write("add_library(rd_model STATIC ${fileNames.joinToString(eol)})" + eol)
-            it.write("include_directories(../rd_framework_cpp)\n" +
-                    "include_directories(../rd_framework_cpp/src/main)\n" +
-                    "include_directories(../rd_framework_cpp/src/main/base)\n" +
-                    "include_directories(../rd_framework_cpp/src/main/base/ext)\n" +
-                    "include_directories(../rd_framework_cpp/src/main/impl)\n" +
-                    "include_directories(../rd_framework_cpp/src/main/serialization)\n" +
-                    "include_directories(../rd_framework_cpp/src/main/task)\n" +
-                    "target_link_libraries(rd_model rd_framework_cpp)\n")
+            it.write("target_link_libraries(rd_model rd_framework_cpp)\n")
         }
     }
 
@@ -623,7 +619,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 .distinct()
                 .filter { it.leafSerializerRef(decl) == null }
 
-        allTypesForDelegation.println { "using ${it.serializerRef(decl)} = ${it.serializerBuilder()};" }
+        allTypesForDelegation.println { "using ${it.serializerDef(decl)} = ${it.serializerBuilder()};" }
     }
 
 
@@ -733,7 +729,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             if (decl.base == null) {
                 +("size_t hashCode() const;")
             } else {
-                +("size_t hashCode() const override;")
+                +("size_t hashCode() const;")
             }
         }
     }
@@ -871,7 +867,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         block("{", "}") {
             indent {
                 types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
-                    "serializers.registry<${it.serializerRef(decl)}>();"
+                    "serializers.registry<${it.name}>();"
                 }
 
                 if (decl is Root) {
@@ -1143,7 +1139,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     private fun getDefaultValue(containing: Declaration, member: Member): String? =
             if (member is Member.Reactive.Stateful.Property) {
                 when {
-                    member.defaultValue is String -> """"${member.defaultValue}""""
+                    member.defaultValue is String -> """L"${member.defaultValue}""""
                     member.defaultValue != null -> member.defaultValue.toString()
                     member.isNullable -> "tl::nullopt"
                     else -> null

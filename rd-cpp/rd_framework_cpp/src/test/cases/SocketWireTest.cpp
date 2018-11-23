@@ -152,7 +152,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
 }
 
 TEST_F(SocketWireTestBase, TestBigBuffer) {
-    RdProperty<std::string> cp_string{""}, sp_string{""};
+    RdProperty<std::wstring> cp_string{L""}, sp_string{L""};
 
     Protocol serverProtocol = server(socketLifetime);
     Protocol clientProtocol = client(socketLifetime, serverProtocol);
@@ -163,14 +163,14 @@ TEST_F(SocketWireTestBase, TestBigBuffer) {
     statics(cp_string, property_id);
     cp_string.bind(lifetime, &clientProtocol, "top");
 
-    cp_string.set("1");
+    cp_string.set(L"1");
     serverScheduler.pump_one_message();//server get new small string
 
     checkSchedulersAreEmpty();
 
-    EXPECT_EQ(sp_string.get(), "1");
+    EXPECT_EQ(sp_string.get(), L"1");
 
-    std::string str(100'000, '3');
+    std::wstring str(100'000, '3');
     sp_string.set(str);
     clientScheduler.pump_one_message();//client get new big string
 
@@ -257,22 +257,22 @@ TEST_F(SocketWireTestBase, TestEqualChangesRdMap) { //Test pending for ack
     auto serverProtocol = server(socketLifetime);
     auto clientProtocol = client(socketLifetime, serverProtocol);
 
-    RdMap<std::string, std::string> s_map, c_map;
+    RdMap<std::wstring, std::wstring> s_map, c_map;
     s_map.master = true;
     init(serverProtocol, clientProtocol, &s_map, &c_map);
 
-    s_map.set("A", "B");
+    s_map.set(L"A", L"B");
     clientScheduler.pump_one_message();//client get ADD and send ACK
     serverScheduler.pump_one_message();//server get ACK
     for (int i = 0; i < STEP; ++i) {
-        s_map.set("A", "B");
+        s_map.set(L"A", L"B");
     }
-    c_map.set("A", "B");
+    c_map.set(L"A", L"B");
 
     checkSchedulersAreEmpty();
 
-    EXPECT_EQ(*s_map.get("A"), "B");
-    EXPECT_EQ(*c_map.get("A"), "B");
+    EXPECT_EQ(*s_map.get(L"A"), L"B");
+    EXPECT_EQ(*c_map.get(L"A"), L"B");
 
     terminate();
 }
@@ -281,27 +281,27 @@ TEST_F(SocketWireTestBase, TestDifferentChangesRdMap) { //Test pending for ack
     auto serverProtocol = server(socketLifetime);
     auto clientProtocol = client(socketLifetime, serverProtocol);
 
-    RdMap<std::string, std::string> s_map, c_map;
+    RdMap<std::wstring, std::wstring> s_map, c_map;
     s_map.master = true;
     init(serverProtocol, clientProtocol, &s_map, &c_map);
 
-    s_map.set("A", "B");
+    s_map.set(L"A", L"B");
     clientScheduler.pump_one_message();//client get ADD and send ACK
     serverScheduler.pump_one_message();//server get ACK
     for (int i = 0; i < STEP; ++i) {
-        s_map.set("A", "B");
+        s_map.set(L"A", L"B");
     }
 
-    c_map.set("A", "C");
+    c_map.set(L"A", L"C");
     serverScheduler.pump_one_message();//server get ADD
     for (int i = 0; i < STEP; ++i) {
-        c_map.set("A", "C");
+        c_map.set(L"A", L"C");
     }
 
     checkSchedulersAreEmpty();
 
-    EXPECT_EQ(*s_map.get("A"), "C");
-    EXPECT_EQ(*c_map.get("A"), "C");
+    EXPECT_EQ(*s_map.get(L"A"), L"C");
+    EXPECT_EQ(*c_map.get(L"A"), L"C");
 
     terminate();
 }
@@ -312,7 +312,7 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
     auto serverProtocol = server(socketLifetime);
     auto clientProtocol = client(socketLifetime, serverProtocol);
 
-    RdMap<std::string, int> s_map, c_map;
+    RdMap<std::wstring, int> s_map, c_map;
     s_map.master = true;
     init(serverProtocol, clientProtocol, &s_map, &c_map);
 
@@ -324,11 +324,11 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
     bool f = true;
     for (auto x : list) {
         if (f) {
-            s_map.set("A", x);
+            s_map.set(L"A", x);
             clientScheduler.pump_one_message();//client get ADD and send ACK
             serverScheduler.pump_one_message();//server get ACK
         } else {
-            c_map.set("A", x);
+            c_map.set(L"A", x);
             serverScheduler.pump_one_message();//server get ADD and doesn't; send ACK
         }
         f = !f;
@@ -338,8 +338,8 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
 
     checkSchedulersAreEmpty();
 
-    EXPECT_EQ(*s_map.get("A"), last);
-    EXPECT_EQ(*c_map.get("A"), last);
+    EXPECT_EQ(*s_map.get(L"A"), last);
+    EXPECT_EQ(*c_map.get(L"A"), last);
 
     terminate();
 }

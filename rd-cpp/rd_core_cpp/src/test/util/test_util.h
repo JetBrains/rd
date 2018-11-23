@@ -9,7 +9,7 @@
 #include "ViewableSet.h"
 #include "ViewableMap.h"
 
-#include "util/core_util.h"
+#include "core_util.h"
 
 #include <vector>
 
@@ -37,7 +37,7 @@ std::string to_string(const std::pair<F *, S *> p) {
 }
 
 template<typename K, typename V>
-std::string to_string_map_event(typename IViewableMap<K, V>::Event const &e) {
+std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
 //    return "";
     using Event = typename IViewableMap<K, V>::Event;
     std::string res = mpark::visit(make_visitor(

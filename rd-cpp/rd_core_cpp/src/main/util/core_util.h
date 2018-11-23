@@ -56,6 +56,11 @@ inline std::string to_string<std::string>(std::string const &val) {
     return val;
 }
 
+template<>
+inline std::string to_string<std::wstring>(std::wstring const &val) {
+    return std::string(val.begin(), val.end());
+}
+
 template<typename T>
 inline std::string to_string(tl::optional<T> const &val) {
     if (val.has_value()) {

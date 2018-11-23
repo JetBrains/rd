@@ -18,8 +18,8 @@ TEST(BufferTest, readWritePod) {
     buffer.write_pod<int32_t>(4);
     buffer.write_pod<int64_t>(1ll << 32);
     buffer.write_pod<int32_t>(-1);
-    buffer.write_pod<char>('+');
-    buffer.write_pod<char>('-');
+    buffer.write_pod<wchar_t>('+');
+    buffer.write_pod<wchar_t>('-');
     buffer.write_pod<bool>(true);
 
 
@@ -29,8 +29,8 @@ TEST(BufferTest, readWritePod) {
     EXPECT_EQ(4, buffer.read_pod<int32_t>());
     EXPECT_EQ(1ll << 32, buffer.read_pod<int64_t>());
     EXPECT_EQ(-1, buffer.read_pod<int32_t>());
-    EXPECT_EQ('+', buffer.read_pod<char>());
-    EXPECT_EQ('-', buffer.read_pod<char>());
+    EXPECT_EQ('+', buffer.read_pod<wchar_t>());
+    EXPECT_EQ('-', buffer.read_pod<wchar_t>());
     EXPECT_EQ(true, buffer.read_pod<bool>());
 }
 
@@ -62,15 +62,15 @@ TEST(BufferTest, getArray) {
 TEST(BufferTest, string) {
     Buffer buffer;
 
-    std::string s;
+    std::wstring s;
     for (int i = 0; i < 255; ++i) {
-        s += static_cast<char>(i);
+        s += static_cast<wchar_t>(i);
     }
 
-    Polymorphic<std::string>::write(SerializationCtx(), buffer, s);
+    Polymorphic<std::wstring>::write(SerializationCtx(), buffer, s);
     buffer.write_pod<int32_t>(s.length());
     buffer.rewind();
-    auto res = Polymorphic<std::string>::read(SerializationCtx(), buffer);
+    auto res = Polymorphic<std::wstring>::read(SerializationCtx(), buffer);
     auto len = buffer.read_pod<int32_t>();
     EXPECT_EQ(s, res);
     EXPECT_EQ(len, s.length());
@@ -124,16 +124,16 @@ TEST(BufferTest, NullableSerializer) {
     SerializationCtx ctx;
     Buffer buffer;
 
-    using T = std::string;
+    using T = std::wstring;
     using S = Polymorphic<T>;
     using NS = NullableSerializer<S>;
 
     std::vector<tl::optional<T>> list{
             tl::nullopt,
-            "1",
-            "2",
+            L"1",
+            L"2",
             tl::nullopt,
-            "error"
+            L"error"
     };
 
 	buffer.write_pod<int32_t>(+1);
@@ -156,16 +156,16 @@ TEST(BufferTest, ArraySerializer) {
     SerializationCtx ctx;
     Buffer buffer;
 
-    using T = std::string;
+    using T = std::wstring;
     using S = Polymorphic<T>;
     using AS = ArraySerializer<S>;
 
     std::vector<T> list{
-            "start"
-            "1",
-            "2",
-            "",
-            "error"
+            L"start"
+            L"1",
+            L"2",
+            L"",
+            L"error"
     };
 
 	buffer.write_pod<int32_t>(+1);

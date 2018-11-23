@@ -27,7 +27,7 @@ TEST(viewable_map, advise) {
                                            to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
                                });
         map->advise(lifetime, [&](typename IViewableMap<int, int>::Event entry) {
-            log_update.push_back(to_string_map_event<int, int>(entry));
+            log_update.push_back(to_wstring_map_event<int, int>(entry));
         });
         map->view(lifetime, [&](Lifetime inner, const std::pair<int const *, int const *> x) {
             inner->bracket(

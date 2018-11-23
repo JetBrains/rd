@@ -2,9 +2,9 @@
 // Created by jetbrains on 30.07.2018.
 //
 
-#include <string>
-
 #include "Buffer.h"
+
+#include <string>
 #include <algorithm>
 #include <cstring>
 

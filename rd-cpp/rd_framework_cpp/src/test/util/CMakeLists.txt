@@ -7,4 +7,5 @@ add_library(rd_framework_cpp_util STATIC
         TestWire.cpp TestWire.h
         )
 
+target_include_directories(rd_framework_cpp_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(rd_framework_cpp_util rd_framework_cpp)

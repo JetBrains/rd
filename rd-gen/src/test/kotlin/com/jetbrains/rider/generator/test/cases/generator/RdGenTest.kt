@@ -19,8 +19,9 @@ class RdGenTest {
         val rdgen = RdGen()
         rdgen.verbose *= true
         rdgen.force *= true
+        rdgen.clearOutput *= true
 //        rdgen.filter *= "cpp"
-        val configuration = Configuration.EXAMPLE
+        val configuration = Configuration.UNREAL_ENGINE
         when (configuration) {
             Configuration.EXAMPLE -> {
                 rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\example"
@@ -36,6 +37,8 @@ class RdGenTest {
             Configuration.RIDER_MODEL -> {
                 rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\ide-model\\src\\com\\jetbrains\\rider\\model\\nova\\ide"
                 rdgen.packages *= "com.jetbrains.rider.model.nova.ide"
+                System.setProperty("model.out.src.kt.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\kt_model")
+                System.setProperty("model.out.src.cpp.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\cpp_model")
             }
         }
         rdgen.compilerClassloader = URLClassLoader(arrayOf(

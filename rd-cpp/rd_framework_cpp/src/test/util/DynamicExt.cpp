@@ -9,10 +9,10 @@ DynamicExt::DynamicExt() {
     bar.slave();
 }
 
-DynamicExt::DynamicExt(RdProperty<std::string> bar, std::string debugName) : bar(
+DynamicExt::DynamicExt(RdProperty<std::wstring> bar, std::wstring debugName) : bar(
         std::move(bar)), debugName(std::move(debugName)) {}
 
-DynamicExt::DynamicExt(std::string const &bar, std::string const &debugName) : DynamicExt(RdProperty<std::string>(bar),
+DynamicExt::DynamicExt(std::wstring const &bar, std::wstring const &debugName) : DynamicExt(RdProperty<std::wstring>(bar),
                                                                                           debugName) {}
 
 DynamicExt DynamicExt::read(SerializationCtx const &ctx, Buffer const &buffer) {
@@ -28,7 +28,7 @@ void DynamicExt::create(IProtocol *protocol) {
 }
 
 /*
-void DynamicExt::bind(Lifetime lf, IRdDynamic const *parent, std::string const &name) const {
+void DynamicExt::bind(Lifetime lf, IRdDynamic const *parent, std::wstring const &name) const {
     RdExtBase::bind(lf, parent, name);
     bar.bind(lf, this, "bar");
 }

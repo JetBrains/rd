@@ -25,7 +25,7 @@
 //
 //    cp.getOrCreateExtension<std::string>("data", []() { return "Immutable"; });
 //
-////    sp.getOrCreateExtension<int>("data", []() { return int(1); }) = 2;
+//    sp.getOrCreateExtension<int>("data", []() { return int(1); }) = 2;
 //
 //    EXPECT_EQ(cp.get(), 0);
 //    EXPECT_EQ(sp.get(), 0);
@@ -82,14 +82,14 @@ TEST_F(SocketWireTestBase, DISABLED_testExtension) {
     auto const &newServerEntity = serverProperty.get();
 
     DynamicExt const &serverExt = newServerEntity.getOrCreateExtension<DynamicExt>("ext", []() {
-        return DynamicExt("Ext!", "client");
+        return DynamicExt(L"Ext!", L"client");
     });
     clientScheduler.pump_one_message();
     //server send READY
 
     auto const &newClientEntity = clientProperty.get();
     DynamicExt const &clientExt = newClientEntity.getOrCreateExtension<DynamicExt>("ext", []() {
-        return DynamicExt("", "server");
+        return DynamicExt(L"", L"server");
     });
     serverScheduler.pump_one_message();
     //client send READY
@@ -99,8 +99,8 @@ TEST_F(SocketWireTestBase, DISABLED_testExtension) {
 
     checkSchedulersAreEmpty();
 
-    EXPECT_EQ("Ext!", serverExt.bar.get());
-    EXPECT_EQ("Ext!", clientExt.bar.get());
+    EXPECT_EQ(L"Ext!", serverExt.bar.get());
+    EXPECT_EQ(L"Ext!", clientExt.bar.get());
 
     terminate();
 }
@@ -112,18 +112,18 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
     RdProperty<int> serverProperty{0}, clientProperty{0};
     init(serverProtocol, clientProtocol, &serverProperty, &clientProperty);
 
-    auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::string>>("data", []() {
-        return ExtProperty<std::string>("SERVER");
+    auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", []() {
+        return ExtProperty<std::wstring>(L"SERVER");
     });
 
-    serverExt.property.set("UPDATE");
-    serverExt.property.set("UPGRADE");
+    serverExt.property.set(L"UPDATE");
+    serverExt.property.set(L"UPGRADE");
 
-    auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::string>>("data", []() {
-        return ExtProperty<std::string>("CLIENT");
+    auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", []() {
+        return ExtProperty<std::wstring>(L"CLIENT");
     });
 
-    EXPECT_EQ(clientExt.property.get(), "CLIENT");
+    EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 
     clientScheduler.pump_one_message(); //send Ready
     serverScheduler.pump_one_message(); //send Ready
@@ -132,14 +132,14 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
     clientScheduler.pump_one_message(); //send "UPDATE"
 
 
-    EXPECT_EQ(serverExt.property.get(), "UPGRADE");
-    EXPECT_EQ(clientExt.property.get(), "UPDATE");
+    EXPECT_EQ(serverExt.property.get(), L"UPGRADE");
+    EXPECT_EQ(clientExt.property.get(), L"UPDATE");
 
     clientScheduler.pump_one_message(); //send "UPGRADE"
     checkSchedulersAreEmpty();
 
-    EXPECT_EQ(serverExt.property.get(), "UPGRADE");
-    EXPECT_EQ(clientExt.property.get(), "UPGRADE");
+    EXPECT_EQ(serverExt.property.get(), L"UPGRADE");
+    EXPECT_EQ(clientExt.property.get(), L"UPGRADE");
 
     terminate();
 }

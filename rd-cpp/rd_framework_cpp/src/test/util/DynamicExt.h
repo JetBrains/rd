@@ -13,14 +13,14 @@
 
 class DynamicExt : public RdExtBase, public ISerializable {
 public:
-    RdProperty<std::string> bar = RdProperty<std::string>("");
-    std::string debugName;
+    RdProperty<std::wstring> bar{L""};
+    std::wstring debugName;
 
     DynamicExt();
 
-    DynamicExt(RdProperty<std::string> bar, std::string debugName);
+    DynamicExt(RdProperty<std::wstring> bar, std::wstring debugName);
 
-    DynamicExt(std::string const &bar, std::string const &debugName);
+    DynamicExt(std::wstring const &bar, std::wstring const &debugName);
 
     static DynamicExt read(SerializationCtx const &ctx, Buffer const &buffer);
 

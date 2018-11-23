@@ -24,6 +24,7 @@ public:
 
 };
 
+
 template<typename T>
 class Polymorphic<T, typename std::enable_if<std::is_integral<T>::value>::type> {
 public:

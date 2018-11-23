@@ -13,8 +13,8 @@
 TEST_F(RdFrameworkTestBase, testStaticSuccess) {
     int entity_id = 1;
 
-    auto client_entity = RdCall<int, std::string>();
-    auto server_entity = RdEndpoint<int, std::string>([](int const &it) -> std::string { return to_string(it); });
+    auto client_entity = RdCall<int, std::wstring>();
+    auto server_entity = RdEndpoint<int, std::wstring>([](int const &it) -> std::wstring { return std::to_wstring(it); });
 
     statics(client_entity, entity_id);
     statics(server_entity, entity_id);
@@ -27,11 +27,11 @@ TEST_F(RdFrameworkTestBase, testStaticSuccess) {
     bindStatic(serverProtocol.get(), server_entity, "top");
     bindStatic(clientProtocol.get(), client_entity, "top");
 
-    EXPECT_EQ("0", client_entity.sync(0));
-    EXPECT_EQ("1", client_entity.sync(1));
+    EXPECT_EQ(L"0", client_entity.sync(0));
+    EXPECT_EQ(L"1", client_entity.sync(1));
 
     auto taskResult = client_entity.start(2).value_or_throw();
-    EXPECT_EQ("2", taskResult.unwrap());
+    EXPECT_EQ(L"2", taskResult.unwrap());
 
     AfterTest();
 }
@@ -39,9 +39,9 @@ TEST_F(RdFrameworkTestBase, testStaticSuccess) {
 TEST_F(RdFrameworkTestBase, testStaticDifficult) {
     int entity_id = 1;
 
-    auto client_entity = RdCall<std::string, int64_t>();
-    auto server_entity = RdEndpoint<std::string, int64_t>(
-            [](std::string const &s) -> int64_t { return std::hash<std::string>()(s); });
+    auto client_entity = RdCall<std::wstring, int64_t>();
+    auto server_entity = RdEndpoint<std::wstring, int64_t>(
+            [](std::wstring const &s) -> int64_t { return std::hash<std::wstring>()(s); });
 
     statics(client_entity, entity_id);
     statics(server_entity, entity_id);
@@ -49,9 +49,9 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
     bindStatic(serverProtocol.get(), server_entity, "top");
     bindStatic(clientProtocol.get(), client_entity, "top");
 
-    std::string source(10'000'000, '5');
+    std::wstring source(10'000'000, '5');
 
-    EXPECT_EQ(std::hash<std::string>()(source), client_entity.sync(source));
+    EXPECT_EQ(std::hash<std::wstring>()(source), client_entity.sync(source));
 
     AfterTest();
 }
@@ -59,8 +59,8 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
 TEST_F(RdFrameworkTestBase, testStaticFailure) {
     int entity_id = 1;
 
-    auto client_entity = RdCall<int, std::string>();
-    auto server_entity = RdEndpoint<int, std::string>([](int) -> std::string { throw std::runtime_error("1234"); });
+    auto client_entity = RdCall<int, std::wstring>();
+    auto server_entity = RdEndpoint<int, std::wstring>([](int) -> std::wstring { throw std::runtime_error("1234"); });
 
     statics(client_entity, entity_id);
     statics(server_entity, entity_id);
