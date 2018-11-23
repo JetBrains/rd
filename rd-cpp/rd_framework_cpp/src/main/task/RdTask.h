@@ -16,7 +16,7 @@
 template<typename T, typename S = Polymorphic<T> >
 class RdTask {
 
-    std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared< RdTaskImpl<T, S> >()};
+    std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
 public:
 
     static RdTask<T, S> from_result(T value) {
@@ -38,8 +38,8 @@ public:
         ptr->result.set(typename RdTaskResult<T>::Cancelled());
     }
 
-    void fault() const {
-        ptr->result.set(typename RdTaskResult<T>::Fault());
+    void fault(std::exception const &e) const {
+        ptr->result.set(typename RdTaskResult<T>::Fault(e));
     }
 
     bool has_value() const {

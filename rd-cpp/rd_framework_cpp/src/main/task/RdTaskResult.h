@@ -26,14 +26,21 @@ public:
     };
 
     class Fault {//todo
+    public:
         std::wstring reasonTypeFqn;
         std::wstring reasonMessage;
         std::wstring reasonAsText;
+
+        Fault(std::wstring reasonTypeFqn, std::wstring reasonMessage, std::wstring reasonAsText) :
+                reasonTypeFqn(std::move(reasonTypeFqn)),
+                reasonMessage(std::move(reasonMessage)),
+                reasonAsText(std::move(reasonAsText)) {}
+
     public:
-        Fault(std::wstring reasonTypeFqn, std::wstring reasonMessage, std::wstring reasonAsText);
-        /*std::exception error;
-    public:
-        explicit Fault(const std::exception &error) : error(error) {};*/
+        explicit Fault(const std::exception &e) {
+//todo
+            //            reasonMessage = e.what();
+        };
     };
 
     RdTaskResult(Success &&v) : v(std::move(v)) {}
@@ -76,9 +83,9 @@ public:
                 },
                 [&buffer](typename RdTaskResult::Fault const &value) {
                     buffer.write_pod<int32_t>(2);
-                    buffer.writeNullableWString(value.reasonTypeFqn);
-                    buffer.writeNullableWString(value.reasonMessage);
-                    buffer.writeNullableWString(value.reasonAsText);
+                    buffer.writeWString(value.reasonTypeFqn);
+                    buffer.writeWString(value.reasonMessage);
+                    buffer.writeWString(value.reasonAsText);
                 }
         ), v);
     }

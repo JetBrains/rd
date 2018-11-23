@@ -60,7 +60,7 @@ public:
         try {
             task = handler(*bind_lifetime, value);
         } catch (std::exception const &e) {
-            task.fault();
+            task.fault(e);
         }
         task.advise(*bind_lifetime, [&](RdTaskResult<TRes, ResSer> const &taskResult) {
             logSend.trace("endpoint " + location.toString() + " ::(" + rdid.toString() +
