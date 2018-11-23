@@ -65,7 +65,7 @@ data class RdId(val hash: Long) {
  * Generates unique identifiers for objects in an object graph, supporting separate ID spaces for IDs assigned
  * on the client and the server side of the protocol.
  */
-class Identities(dynamicKind : IdKind = IdKind.Client) : IIdentities {
+class Identities(dynamicKind : IdKind) : IIdentities {
     private var idAcc = AtomicInteger(when(dynamicKind) {
         IdKind.Client -> BASE_CLIENT_ID
         IdKind.Server -> BASE_SERVER_ID

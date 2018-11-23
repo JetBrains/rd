@@ -54,12 +54,12 @@ open class RdFrameworkTestBase {
     @BeforeTest
     fun setUp() {
         disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
-        clientLifetimeDef = Lifetime.create(Lifetime.Eternal)
-        serverLifetimeDef = Lifetime.create(Lifetime.Eternal)
+        clientLifetimeDef = Lifetime.Eternal.createNested()
+        serverLifetimeDef = Lifetime.Eternal.createNested()
 
 
         clientProtocol = Protocol(serializers,
-                Identities(),
+                Identities(IdKind.Client),
             clientScheduler, TestWire(clientScheduler))
 
         serverProtocol = Protocol(serializers,

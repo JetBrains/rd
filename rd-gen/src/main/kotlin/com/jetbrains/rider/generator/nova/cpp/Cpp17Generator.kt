@@ -676,7 +676,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"public:"
         val name = decl.name
         println()
-        +"$name() = default;"
+        titledBlock("$name()") {
+            +"init();"
+        }
         println()
         +"$name($name &&) = default;"
         println()
@@ -789,7 +791,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         result += decl.ownMembers.asSequence().map {
             "${it.encapsulatedName}(std::move(${it.encapsulatedName}))"
         }
-        result += ("unknownBytes(std::move(unknownBytes))")
+        if (isUnknown(decl)) {
+            result += ("unknownBytes(std::move(unknownBytes))")
+        }
         p(result.joinToString(separator = ", ", prefix = ": "))
     }
 
@@ -872,7 +876,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 }
 
                 if (decl is Root) {
-                    decl.toplevels.println { it.sanitizedName(decl) + "::serializersOwner.registry(serializers);" }
+                    //decl.toplevels.println { it.sanitizedName(decl) + "::serializersOwner.registry(serializers);" }
+                    //todo mark graph vertex
                 }
             }
         }

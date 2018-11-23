@@ -101,7 +101,7 @@ public:
         return start(request, nullptr);
     }
 
-
+private:
     RdTask<TRes, ResSer> startInternal(TReq const &request, bool sync, IScheduler const *scheduler) const {
         assert_bound();
         if (!async) {
@@ -132,7 +132,6 @@ public:
 
         return task;
     }
-
 };
 
 

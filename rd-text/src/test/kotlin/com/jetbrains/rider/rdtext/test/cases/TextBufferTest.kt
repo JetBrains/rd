@@ -43,7 +43,7 @@ class TextBufferTest {
         private val serializers = Serializers()
         private val clientWire = TestWire(clientScheduler).apply { autoFlush = false }
         private val serverWire = TestWire(serverScheduler).apply { autoFlush = false }
-        private var clientProtocol: IProtocol = Protocol(serializers, Identities(), clientScheduler, clientWire)
+        private var clientProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Client), clientScheduler, clientWire)
         private var serverProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Server), serverScheduler, serverWire)
         private var clientLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
         private var serverLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)

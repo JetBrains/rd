@@ -7,6 +7,7 @@ import com.jetbrains.rider.framework.impl.RdOptionalProperty
 import com.jetbrains.rider.framework.impl.RdProperty
 import com.jetbrains.rider.framework.test.util.TestScheduler
 import com.jetbrains.rider.framework.test.util.NetUtils
+import com.jetbrains.rider.plugins.unrealengine.TestModel
 import com.jetbrains.rider.plugins.unrealengine.UnrealEngineModel
 import com.jetbrains.rider.util.eol
 import com.jetbrains.rider.util.lifetime.Lifetime
@@ -40,14 +41,14 @@ class SocketWireTest {
 
 
     private fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
-        return Protocol(Serializers(), Identities(), TestScheduler,
+        return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
             SocketWire.Client(lifetime,
                     TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient")
         )
     }
 
     private fun client(lifetime: Lifetime, port: Int): Protocol {
-        return Protocol(Serializers(), Identities(), TestScheduler,
+        return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
             SocketWire.Client(lifetime, TestScheduler, port, "TestClient")
         )
     }
@@ -247,6 +248,21 @@ class SocketWireTest {
         var newValue : Int = 0xdeadbeef.toInt()
         model.test_connection.set(newValue)
         model.filename_to_open.set("beefdeadx0")
+        Thread.sleep(500000)
+    }
+
+    @Test
+    fun testRdEndPointClient() {
+        var port = 0
+        File("C:\\temp\\port.txt").bufferedReader().use { input ->
+            port = input.readLine().toInt()
+        }
+
+        val appLifetime = Lifetime.Eternal.createNested()
+        val protocol = client(socketLifetime, port)
+        val model = TestModel.create(appLifetime, protocol)
+
+//        model.test.set(Int::toString)
         Thread.sleep(500000)
     }
 //    @BeforeClass
