@@ -1,0 +1,21 @@
+buildscript {
+    ext.kotlin_version = '1.3.10'
+
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.jetbrains:rdgen:0'
+        classpath 'com.jetbrains:rd-core:0'
+        classpath 'com.jetbrains:rd-framework:0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'com.jetbrains.rdgen'
+
+dependencies {
+    compile "com.jetbrains:rd-core:0"
+    compile "com.jetbrains:rd-framework:0"
+}
