@@ -97,3 +97,22 @@ void Buffer::writeWString(std::wstring const &value) const {
     writeArray<uint16_t>(v);
 }
 
+tl::optional<std::wstring> Buffer::readNullableWString() const {
+    int32_t len = read_pod<int32_t>();
+    if (len < 0) {
+        return tl::nullopt;
+    }
+    std::wstring result;
+    result.resize(len);
+    read(reinterpret_cast<word_t *>(&result[0]), sizeof(wchar_t) * len);
+    return result;
+}
+
+void Buffer::writeNullableWString(tl::optional<std::wstring> const &value) const {
+    if (!value.has_value()) {
+        write_pod<int32_t>(-1);
+        return;
+    }
+    writeWString(value.value());
+}
+

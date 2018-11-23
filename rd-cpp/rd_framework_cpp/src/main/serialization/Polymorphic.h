@@ -128,4 +128,17 @@ public:
     }
 };
 
+template<>
+class Polymorphic<tl::optional<std::wstring>> {
+    using T = std::wstring;
+public:
+    static tl::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
+        return buffer.readNullableWString();
+    }
+
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
+        buffer.writeNullableWString(value);
+    }
+};
+
 #endif //RD_CPP_POLYMORPHIC_H

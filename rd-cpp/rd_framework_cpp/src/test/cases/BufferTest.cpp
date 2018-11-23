@@ -183,3 +183,39 @@ TEST(BufferTest, ArraySerializer) {
 
 	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
 }
+
+TEST(BufferTest, NullableString) {
+    SerializationCtx ctx;
+    Buffer buffer;
+
+    tl::optional<std::wstring> opt;
+
+    buffer.writeWString(L"abc");
+    buffer.writeWString(L"def");
+    buffer.writeNullableWString(opt);
+    opt = L"abcdef";
+    buffer.writeNullableWString(opt);
+    buffer.writeWString(opt.value());
+
+    buffer.rewind();
+
+    opt = buffer.readNullableWString();
+    EXPECT_TRUE(opt.has_value());
+    EXPECT_EQ(opt.value(), L"abc");
+
+    opt = buffer.readWString();
+    EXPECT_TRUE(opt.has_value());
+    EXPECT_EQ(opt.value(), L"def");
+
+    opt = buffer.readNullableWString();
+    EXPECT_FALSE(opt.has_value());
+
+    opt = buffer.readWString();
+    EXPECT_TRUE(opt.has_value());
+    EXPECT_EQ(opt.value(), L"abcdef");
+
+    opt = buffer.readNullableWString();
+    EXPECT_TRUE(opt.has_value());
+    EXPECT_EQ(opt.value(), L"abcdef");
+
+}
