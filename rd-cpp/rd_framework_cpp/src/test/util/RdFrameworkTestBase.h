@@ -36,8 +36,8 @@ public:
     //    /*std::unique_ptr<IWire>*/TestWire clientWire{&clientScheduler};
     //    /*std::unique_ptr<IWire>*/TestWire serverTestWire{&serverScheduler};
 
-    std::shared_ptr<IIdentities> clientIdentities = std::make_shared<Identities>();
-    std::shared_ptr<IIdentities> serverIdentities = std::make_shared<Identities>();
+    std::shared_ptr<IIdentities> clientIdentities = std::make_shared<Identities>(Identities::CLIENT);
+    std::shared_ptr<IIdentities> serverIdentities = std::make_shared<Identities>(Identities::SERVER);
 
     //    private var disposeLoggerFactory: Closeable? = null
 

@@ -7,11 +7,9 @@ UnrealEngineModel::UnrealEngineModelSerializersOwner UnrealEngineModel::serializ
 
 void UnrealEngineModel::UnrealEngineModelSerializersOwner::registerSerializersCore(Serializers const& serializers)
 {
-//        UnrealEngineModel::serializersOwner.registry(serializers);
 }
 
-UnrealEngineModel UnrealEngineModel::create(Lifetime lifetime, IProtocol * protocol)
-{
+UnrealEngineModel UnrealEngineModel::create(Lifetime lifetime, IProtocol * protocol) {
         UnrealEngineModel::serializersOwner.registry(protocol->serializers);
         
         UnrealEngineModel res;
@@ -25,21 +23,21 @@ UnrealEngineModel UnrealEngineModel::create(Lifetime lifetime, IProtocol * proto
 void UnrealEngineModel::init()
 {
         _test_connection.optimizeNested = true;
-        _test_string.optimizeNested = true;
+        _filename_to_open.optimizeNested = true;
         bindableChildren.emplace_back("test_connection", &_test_connection);
-        bindableChildren.emplace_back("test_string", &_test_string);
-        serializationHash = 5138970996713995165L;
+        bindableChildren.emplace_back("filename_to_open", &_filename_to_open);
+        serializationHash = 6166018688604674907L;
 }
 
 //primary ctor
-UnrealEngineModel::UnrealEngineModel(RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> _test_connection, RdProperty<tl::optional<std::string>, UnrealEngineModel::__StringNullableSerializer> _test_string): RdExtBase(), _test_connection(std::move(_test_connection)), _test_string(std::move(_test_string)) { init(); }
+UnrealEngineModel::UnrealEngineModel(RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> _test_connection, RdProperty<tl::optional<std::wstring>, UnrealEngineModel::__StringNullableSerializer> _filename_to_open): RdExtBase(), _test_connection(std::move(_test_connection)), _filename_to_open(std::move(_filename_to_open)) { init(); }
 //reader
 
 //writer
 
 //getters
 RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> const & UnrealEngineModel::get_test_connection() const  { return _test_connection; }
-RdProperty<tl::optional<std::string>, UnrealEngineModel::__StringNullableSerializer> const & UnrealEngineModel::get_test_string() const  { return _test_string; }
+RdProperty<tl::optional<std::wstring>, UnrealEngineModel::__StringNullableSerializer> const & UnrealEngineModel::get_filename_to_open() const  { return _filename_to_open; }
 
 //equals trait
 

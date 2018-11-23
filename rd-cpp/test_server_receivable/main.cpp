@@ -1,4 +1,4 @@
-#include "UnrealEngineModel.h"
+#include "TestModel.h"
 
 #include "SocketWire.h"
 //#include "TestScheduler.h"
@@ -25,15 +25,18 @@ int main() {
     serverProtocol = std::make_unique<Protocol>(Identities(Identities::SERVER), &serverScheduler, wire);
 
     {
-        UnrealEngineModel model = UnrealEngineModel::create(lifetime, serverProtocol.get());
+        TestModel model = TestModel::create(lifetime, serverProtocol.get());
 
-        model.get_test_connection().advise(lifetime, [](tl::optional<int32_t> const &it) {
-            std::cout << "Connection UE: " << to_string(it) << std::endl;
-        });
+        int number = 2018;
+        std::wstring str;
+        try {
+            str = model.get_test().sync(number);
+        } catch (std::exception const &e) {
+            std::cerr << "ERROR:" << e.what() << std::endl;
+        }
 
-        model.get_filename_to_open().advise(lifetime, [](tl::optional<std::wstring> const &it) {
-            std::cout << "rdid_filename_to_open changed:" << to_string(it) << std::endl;
-        });
+        std::cout << number << "------------------>";
+        std::wcout << str << std::endl;
 
         std::this_thread::sleep_for(std::chrono::minutes(10));
     }

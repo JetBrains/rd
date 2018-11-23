@@ -26,6 +26,11 @@ public:
     };
 
     class Fault {//todo
+        std::wstring reasonTypeFqn;
+        std::wstring reasonMessage;
+        std::wstring reasonAsText;
+    public:
+        Fault(std::wstring reasonTypeFqn, std::wstring reasonMessage, std::wstring reasonAsText);
         /*std::exception error;
     public:
         explicit Fault(const std::exception &error) : error(error) {};*/
@@ -50,8 +55,10 @@ public:
                 return Cancelled();
             }
             case 2: {
-                //todo read reason
-                return Fault();
+                auto reasonTypeFqn = buffer.readWString();
+                auto reasonMessage = buffer.readWString();
+                auto reasonAsText = buffer.readWString();
+                return Fault(std::move(reasonTypeFqn), std::move(reasonMessage), std::move(reasonAsText));
             }
             default:
                 throw std::invalid_argument("Fail on RdTaskResult reading with kind: " + to_string(kind));
@@ -69,12 +76,14 @@ public:
                 },
                 [&buffer](typename RdTaskResult::Fault const &value) {
                     buffer.write_pod<int32_t>(2);
-                    //todo write reason
+                    buffer.writeNullableWString(value.reasonTypeFqn);
+                    buffer.writeNullableWString(value.reasonMessage);
+                    buffer.writeNullableWString(value.reasonAsText);
                 }
         ), v);
     }
 
-    T unwrap() {
+    T unwrap() const {
         return mpark::visit(make_visitor(
                 [](typename RdTaskResult::Success const &value) -> T {
                     return value.value;
@@ -89,8 +98,8 @@ public:
         ), v);
     }
 
-	bool isFaulted() const {
-		return v.index() == 2;
+    bool isFaulted() const {
+        return v.index() == 2;
     }
 
     friend bool operator==(const RdTaskResult &lhs, const RdTaskResult &rhs) {

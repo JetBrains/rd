@@ -1,14 +1,6 @@
 #ifndef UnrealEngineModel_H
 #define UnrealEngineModel_H
 
-#include <iostream>
-#include <cstring>
-#include <cstdint>
-#include <vector>
-#include <type_traits>
-#include <optional>
-#include <utility>
-
 #include "Buffer.h" 
 #include "Identities.h" 
 #include "MessageBroker.h" 
@@ -28,6 +20,7 @@
 #include "SerializationCtx.h" 
 #include "Serializers.h" 
 #include "ISerializersOwner.h" 
+#include "IUnknownInstance.h" 
 #include "RdExtBase.h" 
 #include "RdCall.h" 
 #include "RdEndpoint.h" 
@@ -35,36 +28,41 @@
 #include "RdTaskResult.h" 
 #include "gen_util.h" 
 
+#include <iostream>
+#include <cstring>
+#include <cstdint>
+#include <vector>
+#include <type_traits>
+#include <optional>
+#include <utility>
+
 
 class UnrealEngineModel : public RdExtBase
 {
     
     //companion
     
-    private:
+    public:
     struct UnrealEngineModelSerializersOwner : public ISerializersOwner {
         void registerSerializersCore(Serializers const& serializers) override;
     };
     
-    public:
     static UnrealEngineModelSerializersOwner serializersOwner;
     
     
     public:
-    
-    //create method
     static UnrealEngineModel create(Lifetime lifetime, IProtocol * protocol);
     
     
     //custom serializers
     private:
     using __IntNullableSerializer = NullableSerializer<Polymorphic<int32_t>>;
-    using __StringNullableSerializer = NullableSerializer<Polymorphic<std::string>>;
+    using __StringNullableSerializer = NullableSerializer<Polymorphic<std::wstring>>;
     
     //fields
     protected:
     RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> _test_connection{tl::nullopt};
-    RdProperty<tl::optional<std::string>, UnrealEngineModel::__StringNullableSerializer> _test_string{tl::nullopt};
+    RdProperty<tl::optional<std::wstring>, UnrealEngineModel::__StringNullableSerializer> _filename_to_open{tl::nullopt};
     
     
     //initializer
@@ -73,12 +71,14 @@ class UnrealEngineModel : public RdExtBase
     
     //primary ctor
     private:
-    explicit UnrealEngineModel(RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> _test_connection, RdProperty<tl::optional<std::string>, UnrealEngineModel::__StringNullableSerializer> _test_string);
+    explicit UnrealEngineModel(RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> _test_connection, RdProperty<tl::optional<std::wstring>, UnrealEngineModel::__StringNullableSerializer> _filename_to_open);
     
     //default ctors and dtors
     public:
     
-    UnrealEngineModel() = default;
+    UnrealEngineModel() {
+        init();
+    }
     
     UnrealEngineModel(UnrealEngineModel &&) = default;
     
@@ -95,7 +95,7 @@ class UnrealEngineModel : public RdExtBase
     //getters
     public:
     RdProperty<tl::optional<int32_t>, UnrealEngineModel::__IntNullableSerializer> const & get_test_connection() const;
-    RdProperty<tl::optional<std::string>, UnrealEngineModel::__StringNullableSerializer> const & get_test_string() const;
+    RdProperty<tl::optional<std::wstring>, UnrealEngineModel::__StringNullableSerializer> const & get_filename_to_open() const;
     
     //equals trait
     

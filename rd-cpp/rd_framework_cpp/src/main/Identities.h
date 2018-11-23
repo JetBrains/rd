@@ -14,11 +14,6 @@
 #include "interfaces.h"
 #include "RdId.h"
 
-enum class IdKind {
-    Client,
-    Server
-};
-
 using hash_t = int64_t;
 
 const hash_t DEFAULT_HASH = 19;
@@ -50,16 +45,24 @@ inline hash_t getPlatformIndependentHash<int64_t>(int64_t const &that, hash_t in
 
 class Identities : public IIdentities {
 private:
+    enum class IdKind {
+        Client,
+        Server
+    };
+
     mutable int32_t id_acc;
 public:
+
+    static IdKind SERVER;
+    static IdKind CLIENT;
+
     static const int32_t BASE_CLIENT_ID = RdId::MAX_STATIC_ID;
 
     static const int32_t BASE_SERVER_ID = RdId::MAX_STATIC_ID + 1;
 
     //region ctor/dtor
 
-    explicit Identities(IdKind dynamicKind = IdKind::Client) : id_acc(
-            dynamicKind == IdKind::Client ? BASE_CLIENT_ID : BASE_SERVER_ID) {}
+    explicit Identities(IdKind dynamicKind);
 
     virtual ~Identities() = default;
     //endregion

@@ -56,11 +56,13 @@ template<>
 class Polymorphic<std::string> {
 public:
     static std::string read(SerializationCtx const &ctx, Buffer const &buffer) {
-        return buffer.readString();
+        assert("use std::wstring instead of std::string" && 0);
+        //        return buffer.readString();
     }
 
     static void write(SerializationCtx const &ctx, Buffer const &buffer, std::string const &value) {
-        buffer.writeString(value);
+        assert("use std::wstring instead of std::string" && 0);
+        //        buffer.writeString(value);
     }
 };
 

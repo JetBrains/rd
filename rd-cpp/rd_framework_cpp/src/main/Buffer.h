@@ -139,9 +139,9 @@ public:
         write(array.data(), sizeof(T) * array.size());
     }
 
-    std::string readString() const;
+//    std::string readString() const;
 
-    void writeString(std::string const &value) const;
+//    void writeString(std::string const &value) const;
 
     std::wstring readWString() const;
 

@@ -18,7 +18,7 @@ FRiderLinkModule::FRiderLinkModule() :
 
 	inputFile >> port;
 	wire = std::make_shared<SocketWire::Client>(lifetime, &clientScheduler, port, "TestClient");
-	clientProtocol = std::make_unique<Protocol>(Identities(), &clientScheduler, wire);
+	clientProtocol = std::make_unique<Protocol>(Identities(Identities::CLIENT), &clientScheduler, wire);
 
 	inputFile >> test_connection_property_id;
 	statics(test_connection, test_connection_property_id);

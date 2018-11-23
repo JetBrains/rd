@@ -77,7 +77,7 @@ size_t Buffer::size() const {
     return size_;
 }
 
-std::string Buffer::readString() const {
+/*std::string Buffer::readString() const {
     auto v = readArray<uint8_t>();
     return std::string(v.begin(), v.end());
 }
@@ -85,7 +85,7 @@ std::string Buffer::readString() const {
 void Buffer::writeString(std::string const &value) const {
     std::vector<uint8_t> v(value.begin(), value.end());
     writeArray<uint8_t>(v);
-}
+}*/
 
 std::wstring Buffer::readWString() const {
     auto v = readArray<uint16_t>();

@@ -3,10 +3,10 @@
 #pragma once
 
 #include "Identities.h"
-#include "wire/SocketWire.h"
+#include "SocketWire.h"
 #include "Protocol.h"
 #include "RdProperty.h"
-#include "PumpScheduler.h"
+#include "TestScheduler.h"
 
 #include <cstdint>
 #include <string>
@@ -30,11 +30,11 @@ private:
 	std::shared_ptr<IWire> wire;
 	std::unique_ptr<Protocol> clientProtocol;
 
-	LifetimeDefinition lifetimeDef; ;
+	LifetimeDefinition lifetimeDef;
 	LifetimeDefinition socketLifetimeDef;
 
 	Lifetime lifetime;
 	Lifetime socketLifetime;
 
-	PumpScheduler clientScheduler{ "client" };
+	TestScheduler clientScheduler;
 };
