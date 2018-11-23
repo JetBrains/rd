@@ -139,11 +139,13 @@ public:
         write(array.data(), sizeof(T) * array.size());
     }
 
-    std::wstring readWString() const;
     std::string readString() const;
 
-    void writeWString(std::wstring const &value) const;
     void writeString(std::string const &value) const;
+
+    std::wstring readWString() const;
+
+    void writeWString(std::wstring const &value) const;
 
     template<typename T>
     T readEnum() const {

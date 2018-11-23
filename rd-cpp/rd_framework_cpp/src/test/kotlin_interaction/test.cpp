@@ -2,13 +2,12 @@
 // Created by jetbrains on 13.11.2018.
 //
 
-#include "../../main/wire/SocketWire.h"
-#include "../util/TestScheduler.h"
-#include "../util/RdFrameworkTestBase.h"
+#include "SocketWire.h"
+#include "TestScheduler.h"
+#include "RdFrameworkTestBase.h"
+#include "RdProperty.h"
 
 #include "optional.hpp"
-
-#include <impl/RdProperty.h>
 
 #include <fstream>
 

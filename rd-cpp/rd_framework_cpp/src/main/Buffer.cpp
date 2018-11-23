@@ -82,17 +82,17 @@ std::string Buffer::readString() const {
     return std::string(v.begin(), v.end());
 }
 
+void Buffer::writeString(std::string const &value) const {
+    std::vector<uint8_t> v(value.begin(), value.end());
+    writeArray<uint8_t>(v);
+}
+
 std::wstring Buffer::readWString() const {
     auto v = readArray<uint16_t>();
     return std::wstring(v.begin(), v.end());
 }
 
 void Buffer::writeWString(std::wstring const &value) const {
-    std::vector<uint16_t> v(value.begin(), value.end());
-    writeArray<uint16_t>(v);
-}
-
-void Buffer::writeString(std::string const &value) const {
     std::vector<uint16_t> v(value.begin(), value.end());
     writeArray<uint16_t>(v);
 }

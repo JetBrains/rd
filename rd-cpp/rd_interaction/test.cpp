@@ -3,12 +3,12 @@
 //
 
 #include <fstream>
-#include "../rd_core_cpp/src/main/lifetime/LifetimeDefinition.h"
-#include "../rd_framework_cpp/src/main/Identities.h"
-#include "../rd_framework_cpp/src/main/base/IWire.h"
-#include "../rd_framework_cpp/src/main/wire/SocketWire.h"
-#include "../rd_framework_cpp/src/test/util/RdFrameworkTestBase.h"
-#include "../rd_framework_cpp/src/main/Protocol.h"
+#include "LifetimeDefinition.h"
+#include "Identities.h"
+#include "IWire.h"
+#include "SocketWire.h"
+#include "RdFrameworkTestBase.h"
+#include "Protocol.h"
 #include "../test_server/UnrealEngineModel.h"
 
 int main() {

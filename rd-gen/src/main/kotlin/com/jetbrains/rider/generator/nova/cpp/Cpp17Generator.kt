@@ -121,6 +121,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         is IImmutableList -> "std::vector<${itemType.substitutedName(scope)}>"
 
         is PredefinedType.byte -> "signed char"
+        is PredefinedType.char -> "wchar_t"
         is PredefinedType.int -> "int32_t"
         is PredefinedType.long -> "int64_t"
         is PredefinedType.string -> "std::wstring"

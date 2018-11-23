@@ -120,31 +120,29 @@ TEST_F(RdFrameworkTestBase, signal_custom_serializer) {
     AfterTest();
 }
 
-/*template<typename K>
-class Foo : public ISerializable {
+template<typename K>
+class FooScalar : public ISerializable {
     K x, y;
 public:
     //region ctor/dtor
 
-    explicit Foo(K x = 0, K y = 0) : x(x), y(y) {};
+    explicit FooScalar(K x = 0, K y = 0) : x(x), y(y) {};
 
-    Foo(Foo const &) = delete;
+    FooScalar(FooScalar const &) = delete;
 
-    Foo(Foo &&other) noexcept = default;
+    FooScalar(FooScalar &&other) noexcept = default;
 
-    Foo &operator=(Foo const &) = default;
+    FooScalar &operator=(FooScalar const &) = default;
 
-    Foo &operator=(Foo &&) noexcept = default;
+    FooScalar &operator=(FooScalar &&) noexcept = default;
 
-    virtual ~Foo() = default;
+    virtual ~FooScalar() = default;
     //endregion
 
-    static void registry(IProtocol *protocol) {
-        protocol->serializers.registry<Foo>([](SerializationCtx const &ctx, Buffer const &buffer) {
-            K x = buffer.read_pod<K>();
-            K y = buffer.read_pod<K>();
-            return Foo(x, y);
-        });
+    static FooScalar<K> read(SerializationCtx const &ctx, Buffer const &buffer) {
+        K x = buffer.read_pod<K>();
+        K y = buffer.read_pod<K>();
+        return FooScalar(x, y);
     }
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
@@ -152,49 +150,49 @@ public:
         buffer.write_pod(y);
     }
 
-    friend bool operator==(const Foo &lhs, const Foo &rhs) {
+    friend bool operator==(const FooScalar &lhs, const FooScalar &rhs) {
         return lhs.x == rhs.x &&
                lhs.y == rhs.y;
     }
 
-    friend bool operator!=(const Foo &lhs, const Foo &rhs) {
+    friend bool operator!=(const FooScalar &lhs, const FooScalar &rhs) {
         return !(rhs == lhs);
     }
-};*/
+};
 
-/*TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
-    Foo<char>::registry(clientProtocol.get());
-    Foo<char>::registry(serverProtocol.get());
+TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
+    serverProtocol->serializers.registry<FooScalar<wchar_t> >();
+    clientProtocol->serializers.registry<FooScalar<wchar_t> >();
 
     int signal_id = 1;
 
-    RdSignal<Foo<char>> client_signal_storage;
-    RdSignal<Foo<char>> server_signal_storage;
+    RdSignal<FooScalar<wchar_t>> client_signal_storage;
+    RdSignal<FooScalar<wchar_t>> server_signal_storage;
 
-    RdSignal<Foo<char>> &client_signal = statics(client_signal_storage, signal_id);
-    RdSignal<Foo<char>> &server_signal = statics(server_signal_storage, signal_id);
+    RdSignal<FooScalar<wchar_t>> &client_signal = statics(client_signal_storage, signal_id);
+    RdSignal<FooScalar<wchar_t>> &server_signal = statics(server_signal_storage, signal_id);
 
-    Foo<char> client_log;
-    Foo<char> server_log;
+    FooScalar<wchar_t> client_log;
+    FooScalar<wchar_t> server_log;
 
-    client_signal.advise(Lifetime::Eternal(), [&client_log](Foo<char> const &v) { client_log = v; });
-    server_signal.advise(Lifetime::Eternal(), [&server_log](Foo<char> const &v) { server_log = v; });
+    client_signal.advise(Lifetime::Eternal(), [&client_log](FooScalar<wchar_t> const &v) { client_log = v; });
+    server_signal.advise(Lifetime::Eternal(), [&server_log](FooScalar<wchar_t> const &v) { server_log = v; });
 
     bindStatic(serverProtocol.get(), server_signal, "top");
     bindStatic(clientProtocol.get(), client_signal, "top");
 
     //set from client
-    client_signal.fire(Foo<char>(2, 0));
-    EXPECT_EQ(Foo<char>(2, 0), client_log);
-    EXPECT_EQ(Foo<char>(2, 0), server_log);
+    client_signal.fire(FooScalar<wchar_t>('2', '0'));
+    EXPECT_EQ(FooScalar<wchar_t>('2', '0'), client_log);
+    EXPECT_EQ(FooScalar<wchar_t>('2', '0'), server_log);
 
     //set from client
-    server_signal.fire(Foo<char>(1, 8));
-    EXPECT_EQ((Foo<char>(1, 8)), client_log);
-    EXPECT_EQ((Foo<char>(1, 8)), server_log);
+    server_signal.fire(FooScalar<wchar_t>(1, 8));
+    EXPECT_EQ((FooScalar<wchar_t>(1, 8)), client_log);
+    EXPECT_EQ((FooScalar<wchar_t>(1, 8)), server_log);
 
     AfterTest();
-}*/
+}
 
 TEST_F(RdFrameworkTestBase, signal_vector) {
     int signal_id = 1;

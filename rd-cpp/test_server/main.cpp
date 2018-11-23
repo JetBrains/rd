@@ -2,7 +2,7 @@
 
 #include "SocketWire.h"
 //#include "TestScheduler.h"
-#include "../rd_framework_cpp/src/test/util/TestScheduler.h"
+#include "TestScheduler.h"
 
 #include <fstream>
 
