@@ -22,7 +22,7 @@
 class Lifetime;
 
 class SocketWire {
-	static std::chrono::milliseconds timeout;
+    static std::chrono::milliseconds timeout;
 public:
     class Base : public WireBase {
     protected:
@@ -36,7 +36,7 @@ public:
 
         std::string id;
         Lifetime lifetime;
-        IScheduler const *const scheduler = nullptr;
+        IScheduler *scheduler = nullptr;
         std::shared_ptr<CSimpleSocket> socketProvider;
 
         std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
@@ -56,7 +56,7 @@ public:
     public:
         //region ctor/dtor
 
-        Base(const std::string &id, Lifetime lifetime, const IScheduler *scheduler);
+        Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler);
 
         virtual ~Base() = default;
         //endregion
@@ -81,7 +81,7 @@ public:
 
         std::condition_variable_any cv;
 
-        Client(Lifetime lifetime, const IScheduler *scheduler, uint16_t port, const std::string &id);
+        Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
     };
 
     class Server : public Base {
@@ -95,7 +95,7 @@ public:
         virtual ~Server() = default;
         //endregion
 
-        Server(Lifetime lifetime, const IScheduler *scheduler, uint16_t port, const std::string &id);
+        Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
     };
 
 };

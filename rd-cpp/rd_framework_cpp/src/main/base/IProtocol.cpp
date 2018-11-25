@@ -9,7 +9,7 @@
 #include "IWire.h"
 #include "IProtocol.h"
 
-IProtocol::IProtocol(std::shared_ptr<IIdentities> identity, const IScheduler *scheduler, std::shared_ptr<IWire> wire) :
+IProtocol::IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
         identity(std::move(identity)),
         scheduler(scheduler),
         wire(std::move(wire)),

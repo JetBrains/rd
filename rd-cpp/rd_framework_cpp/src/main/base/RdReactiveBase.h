@@ -14,6 +14,7 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
+
 class RdReactiveBase : public RdBindableBase, public IRdReactive {
 public:
     Logger logReceived;
@@ -41,9 +42,9 @@ public:
 
     const Serializers &get_serializers() const;
 
-    const IScheduler *get_default_scheduler() const;
+    IScheduler *get_default_scheduler() const;
 
-    const IScheduler *const get_wire_scheduler() const;
+    IScheduler *get_wire_scheduler() const;
 
     void assert_threading() const;
 
@@ -66,6 +67,7 @@ public:
     void local_change(const std::function<void()> &action) const;
     //todo catch exception in action()
 };
+
 #pragma warning( pop )
 
 #endif //RD_CPP_RDREACTIVEBASE_H

@@ -36,9 +36,10 @@ public:
     static RdProperty<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdId id = RdId::read(buffer);
 //        val value = if (buffer.readBool()) valueSerializer.read(ctx, buffer) else null;
-        buffer.read_pod<bool>();//not null
+        buffer.read_pod<bool>();//not null/
+        //todo what if T is optional?
         T value = S::read(ctx, buffer);
-        RdProperty<T, S> property(value);
+        RdProperty<T, S> property(std::move(value));
         withId(property, id);
         return property;
     }

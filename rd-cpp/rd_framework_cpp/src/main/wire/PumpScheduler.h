@@ -30,15 +30,15 @@ public:
     virtual ~PumpScheduler() = default;
     //endregion
 
-    void flush() const override;
+    void flush() override;
 
-    void queue(std::function<void()> action) const override;
+    void queue(std::function<void()> action) override;
 
     bool is_active() const override;
 
     void assert_thread() const override;
 
-    void pump_one_message() const;
+    void pump_one_message();
 };
 
 #endif //RD_CPP_PUMPSCHEDULER_H

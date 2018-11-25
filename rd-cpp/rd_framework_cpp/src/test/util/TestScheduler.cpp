@@ -4,7 +4,7 @@
 
 #include "TestScheduler.h"
 
-void TestScheduler::queue(std::function<void()> action) const {
+void TestScheduler::queue(std::function<void()> action) {
     action();
 }
 

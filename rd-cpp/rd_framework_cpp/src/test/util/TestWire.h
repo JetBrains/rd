@@ -31,7 +31,7 @@ public:
 
     //region ctor/dtor
 
-    explicit TestWire(IScheduler const *scheduler);
+    explicit TestWire(IScheduler *scheduler);
 
     virtual ~TestWire() = default;
     //endregion

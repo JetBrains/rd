@@ -34,11 +34,11 @@ const Serializers &RdReactiveBase::get_serializers() const {
     return get_protocol()->serializers;
 }
 
-const IScheduler * RdReactiveBase::get_default_scheduler() const {
+IScheduler *RdReactiveBase::get_default_scheduler() const {
     return get_protocol()->scheduler;
 }
 
-const IScheduler *const RdReactiveBase::get_wire_scheduler() const {
+IScheduler *RdReactiveBase::get_wire_scheduler() const {
     return get_default_scheduler();
 }
 

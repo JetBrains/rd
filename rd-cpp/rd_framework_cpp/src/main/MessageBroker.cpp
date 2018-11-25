@@ -33,7 +33,7 @@ void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const
     }
 }
 
-MessageBroker::MessageBroker(IScheduler const *defaultScheduler) : defaultScheduler(defaultScheduler) {}
+MessageBroker::MessageBroker(IScheduler *defaultScheduler) : defaultScheduler(defaultScheduler) {}
 
 void MessageBroker::dispatch(RdId id, Buffer message) const {
     MY_ASSERT_MSG(!id.isNull(), "id mustn't be null");

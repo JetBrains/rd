@@ -10,7 +10,7 @@
 
 std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
-SocketWire::Base::Base(const std::string &id, Lifetime lifetime, const IScheduler *scheduler)
+SocketWire::Base::Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler)
         : WireBase(scheduler), id(id), lifetime(std::move(lifetime)),
           scheduler(scheduler)/*, threadLocalSendByteArray(16384)*/ {
 
@@ -134,7 +134,7 @@ bool SocketWire::Base::ReadFromSocket(char *res, int32_t msglen) const {
 }
 
 
-SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint16_t port = 0,
+SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0,
                            const std::string &id = "ClientSocket") : Base(id, lifetime, scheduler), port(port) {
     thread = std::thread([this, lifetime]() mutable {
         try {
@@ -203,7 +203,7 @@ SocketWire::Client::Client(Lifetime lifetime, const IScheduler *scheduler, uint1
     });
 }
 
-SocketWire::Server::Server(Lifetime lifetime, const IScheduler *scheduler, uint16_t port = 0,
+SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0,
                            const std::string &id = "ServerSocket") : Base(id, lifetime, scheduler) {
     MY_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
     MY_ASSERT_MSG(ss->Listen("127.0.0.1", port),

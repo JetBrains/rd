@@ -4,7 +4,7 @@
 
 #include "TestWire.h"
 
-TestWire::TestWire(IScheduler const *const scheduler) : WireBase(scheduler) {
+TestWire::TestWire(IScheduler *scheduler) : WireBase(scheduler) {
     this->connected.set(true);
 }
 

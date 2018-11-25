@@ -12,7 +12,7 @@
 
 class WireBase : public IWire {
 protected:
-    IScheduler const *const scheduler = nullptr;
+    IScheduler *scheduler = nullptr;
 
     MessageBroker message_broker;
 public:
@@ -20,7 +20,7 @@ public:
 
     WireBase(WireBase &&) = default;
 
-    explicit WireBase(IScheduler const *const scheduler) : scheduler(scheduler), message_broker(scheduler) {}
+    explicit WireBase(IScheduler *scheduler) : scheduler(scheduler), message_broker(scheduler) {}
 
     virtual ~WireBase() = default;
     //endregion

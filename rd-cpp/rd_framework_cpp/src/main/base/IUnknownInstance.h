@@ -9,7 +9,13 @@
 
 class IUnknownInstance {
 protected:
-    RdId unknownId;
+    RdId unknownId{0};
+
+    IUnknownInstance();
+
+    IUnknownInstance(const RdId &unknownId);
+
+    IUnknownInstance(RdId &&unknownId);
 };
 
 

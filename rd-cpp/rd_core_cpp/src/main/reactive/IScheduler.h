@@ -13,16 +13,7 @@
 class IScheduler {
     Logger logger;
 public:
-    virtual void queue(std::function<void()> action) const = 0;
-
-    /*void assertThread(debugInfo: Any? = null) {
-        if (!isActive) {
-            Logger.root.error {
-                "Illegal scheduler for current action, must be: $this, current thread: ${currentThreadName()}" +
-                (debugInfo?.let { ", debug info: $it" } ?:"")
-            }
-        }
-    }*/
+    virtual void queue(std::function<void()> action) = 0;
 
     bool out_of_order_execution = false;
 
@@ -30,7 +21,7 @@ public:
 
     void invoke_or_queue(std::function<void()> action);
 
-    virtual void flush() const = 0;
+    virtual void flush() = 0;
 
     virtual bool is_active() const = 0;
 };

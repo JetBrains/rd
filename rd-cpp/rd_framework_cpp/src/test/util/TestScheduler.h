@@ -11,9 +11,9 @@ class TestScheduler : public IScheduler {
 public:
     virtual ~TestScheduler() = default;
 
-    void flush() const override {}
+    void flush() override {}
 
-    void queue(std::function<void()> action) const override;
+    void queue(std::function<void()> action) override;
 
     bool is_active() const override;
 };

@@ -14,7 +14,7 @@
 
 template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 class RdCall : public RdReactiveBase, public ISerializable {
-    mutable std::unordered_map<RdId, std::pair<IScheduler const *, RdTask<TRes, ResSer>>> requests;
+    mutable std::unordered_map<RdId, std::pair<IScheduler *, RdTask<TRes, ResSer>>> requests;
     mutable tl::optional<RdId> syncTaskId;
 
 public:
@@ -93,7 +93,7 @@ public:
         }
     }
 
-    RdTask<TRes, ResSer> start(TReq const &request, IScheduler const *responseScheduler) const {
+    RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler) const {
         return startInternal(request, false, responseScheduler ? responseScheduler : get_default_scheduler());
     }
 
@@ -102,7 +102,7 @@ public:
     }
 
 private:
-    RdTask<TRes, ResSer> startInternal(TReq const &request, bool sync, IScheduler const *scheduler) const {
+    RdTask<TRes, ResSer> startInternal(TReq const &request, bool sync, IScheduler *scheduler) const {
         assert_bound();
         if (!async) {
             assert_threading();

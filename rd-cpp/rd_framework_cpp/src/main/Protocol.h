@@ -11,15 +11,17 @@
 class Protocol : /*IRdDynamic, */public IProtocol {
 public:
     //region ctor/dtor
-    Protocol(std::shared_ptr<IIdentities> identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire);
+    Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-    Protocol(Identities &&identity, const IScheduler *const scheduler, std::shared_ptr<IWire> wire);
+    Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-	Protocol(Protocol const &) {
-		assert("What the actual fuck" && false);
-	};
-	Protocol(Protocol &&) = default;
-	Protocol& operator = (Protocol&&) = default;
+    Protocol(Protocol const &) {
+        assert("What the actual fuck" && false);
+    };
+
+    Protocol(Protocol &&) = default;
+
+    Protocol &operator=(Protocol &&) = default;
     //endregion
 
     IProtocol const *const get_protocol() const override;

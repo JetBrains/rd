@@ -27,7 +27,7 @@ public:
 
 class MessageBroker {
 private:
-    IScheduler const *defaultScheduler = nullptr;
+    IScheduler *defaultScheduler = nullptr;
     mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
     mutable std::unordered_map<RdId, Mq> broker;
 
@@ -41,7 +41,7 @@ public:
 
     MessageBroker(MessageBroker &&) = default;
 
-    explicit MessageBroker(IScheduler const *defaultScheduler);
+    explicit MessageBroker(IScheduler *defaultScheduler);
     //endregion
 
     void dispatch(RdId id, Buffer message) const;
