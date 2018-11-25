@@ -22,7 +22,7 @@ class RdGenTest {
         rdgen.force *= true
         rdgen.clearOutput *= true
 //        rdgen.filter *= "cpp"
-        val configuration = Configuration.TEST_MODEL
+        val configuration = Configuration.RIDER_MODEL
         when (configuration) {
             Configuration.EXAMPLE -> {
                 rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\example"
