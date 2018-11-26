@@ -25,7 +25,7 @@ void RdExtBase::init(Lifetime lifetime) const {
     lifetime->bracket(
             [&]() {
                 extProtocol = std::make_shared<Protocol>(parentProtocol->identity, sc,
-                                                          std::dynamic_pointer_cast<IWire>(extWire));
+                                                         std::dynamic_pointer_cast<IWire>(extWire));
             },
             [this]() {
                 extProtocol = nullptr;
@@ -46,9 +46,10 @@ void RdExtBase::init(Lifetime lifetime) const {
     );
 
 
-    //todo make it smarter
-	//for (auto const &[name, child] : this->bindableChildren) {
-    for (auto const &it : this->bindableChildren) {
+    for (auto const &it : bindableChildren) {
+        bindPolymorphic(*(it.second), lifetime, this, it.first);
+    }
+    for (auto const &it : bindable_extensions) {
         bindPolymorphic(*(it.second), lifetime, this, it.first);
     }
 
@@ -80,7 +81,8 @@ void RdExtBase::on_wire_received(Buffer buffer) const {
     if (serializationHash != counterpartSerializationHash) {
         //need to queue since outOfSyncModels is not synchronized
 //        RdReactiveBase::get_protocol()->scheduler->queue([this](){ RdReactiveBase::get_protocol().outOfSyncModels.add(this) });
-        MY_ASSERT_MSG(false, "serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
+        MY_ASSERT_MSG(false, "serializationHash of ext " + location.toString() +
+                             " doesn't match to counterpart: maybe you forgot to generate models?")
     }
 }
 

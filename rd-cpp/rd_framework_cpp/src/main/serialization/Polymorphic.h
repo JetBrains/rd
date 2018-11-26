@@ -52,7 +52,7 @@ public:
     }
 };
 
-template<>
+/*template<>
 class Polymorphic<std::string> {
 public:
     static std::string read(SerializationCtx const &ctx, Buffer const &buffer) {
@@ -64,7 +64,7 @@ public:
         assert("use std::wstring instead of std::string" && 0);
         //        buffer.writeString(value);
     }
-};
+};*/
 
 template<>
 class Polymorphic<std::wstring> {

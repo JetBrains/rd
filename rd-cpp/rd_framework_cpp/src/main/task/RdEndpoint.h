@@ -16,6 +16,8 @@ class RdEndpoint : public RdReactiveBase, public ISerializable {
 public:
     //region ctor/dtor
 
+    RdEndpoint() = default;
+
     explicit RdEndpoint(handler_t handler) : handler(std::move(handler)) {}
 
     explicit RdEndpoint(std::function<TRes(TReq const &)> handler) : handler(

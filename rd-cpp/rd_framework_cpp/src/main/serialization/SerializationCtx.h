@@ -28,6 +28,18 @@ public:
 
     explicit SerializationCtx(IProtocol const &protocol);
     //endregion
+
+    template<typename T>
+    T readInterned(Buffer const &buffer,
+                   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
+        //todo implement
+    }
+
+    template<typename T>
+    void writeInterned(Buffer const &buffer, T const &value,
+                       std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
+        //todo implement
+    }
 };
 
 #endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

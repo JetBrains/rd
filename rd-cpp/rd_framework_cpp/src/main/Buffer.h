@@ -178,9 +178,9 @@ public:
         }
     }
 
-    tl::optional<std::wstring> readNullableWString() const;
+    /*tl::optional<std::wstring> readNullableWString() const;
 
-    void writeNullableWString(tl::optional<std::wstring> const &) const;
+    void writeNullableWString(tl::optional<std::wstring> const &) const;*/
 
     ByteArray getArray() const;
 

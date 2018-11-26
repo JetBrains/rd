@@ -16,7 +16,7 @@ class RdMap : public RdReactiveBase, public IViewableMap<K, V>, public ISerializ
 private:
     ViewableMap<K, V> map;
     mutable int64_t nextVersion = 0;
-    mutable std::map<K, int64_t> pendingForAck;
+    mutable std::unordered_map<K, int64_t> pendingForAck;
 
     bool is_master() const {
         return master;
