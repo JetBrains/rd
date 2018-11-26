@@ -7,12 +7,14 @@
 
 #include "base/IProperty.h"
 #include "SignalX.h"
-#include "interfaces.h"
+#include "core_util.h"
 
 template<typename T>
 class Property : public IProperty<T> {
 public:
     //region ctor/dtor
+
+	Property() = default;
 
     Property(Property &&other) = default;
 
@@ -27,14 +29,17 @@ public:
 
 
     T const &get() const override {
-        return this->value;
+        MY_ASSERT_THROW_MSG(this->value.has_value(), "get of uninitialized value from property");
+        return this->value.value();
     }
 
     void set(T new_value) const override {
-        if (this->value != new_value) {
-            this->before_change.fire(this->value);
+        if (!this->has_value() || this->get() != new_value) {
+			if (this->value.has_value()) {
+				this->before_change.fire(this->value.value());
+			}
             this->value = std::move(new_value);
-            this->change.fire(this->value);
+            this->change.fire(this->value.value());
         }
     }
 

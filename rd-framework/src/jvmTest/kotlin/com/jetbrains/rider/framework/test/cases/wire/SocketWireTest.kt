@@ -245,7 +245,7 @@ class SocketWireTest {
         val model = UnrealEngineModel.create(appLifetime, protocol)
 
 
-        var newValue : Int = 0xdeadbeef.toInt()
+        val newValue : Int = 0xdeadbeef.toInt()
         model.test_connection.set(newValue)
         model.filename_to_open.set("beefdeadx0")
         Thread.sleep(500000)
@@ -262,7 +262,7 @@ class SocketWireTest {
         val protocol = client(socketLifetime, port)
         val model = TestModel.create(appLifetime, protocol)
 
-//        model.test.set(Int::toString)
+        model.test.set(Int::toString)
         Thread.sleep(500000)
     }
 //    @BeforeClass

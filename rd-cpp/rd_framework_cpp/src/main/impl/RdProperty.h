@@ -18,6 +18,8 @@ class RdProperty : public RdPropertyBase<T, S>, public ISerializable {
 public:
     //region ctor/dtor
 
+	RdProperty() = default;
+
     RdProperty(RdProperty const &) = delete;
 
     RdProperty &operator=(RdProperty const &) = delete;
@@ -47,7 +49,7 @@ public:
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
         this->rdid.write(buffer);
         buffer.write_pod<bool>(true);
-        S::write(ctx, buffer, this->value);
+        S::write(ctx, buffer, this->get());
     }
 
     void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {

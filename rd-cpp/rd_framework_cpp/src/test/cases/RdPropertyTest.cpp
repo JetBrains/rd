@@ -273,8 +273,12 @@ TEST_F(RdFrameworkTestBase, property_optional) {
     std::vector<opt> server_log;
 
     Lifetime::use([&](Lifetime lifetime) {
-        client_property.advise(lifetime, [&client_log](opt const &v) { client_log.push_back(v); });
-        server_property.advise(lifetime, [&server_log](opt const &v) { server_log.push_back(v); });
+        client_property.advise(lifetime, [&client_log](opt const &v) {
+	        client_log.push_back(v);
+        });
+        server_property.advise(lifetime, [&server_log](opt const &v) {
+	        server_log.push_back(v);
+        });
 
         //not bound
         EXPECT_EQ((std::vector<opt>{tl::nullopt}), client_log);
@@ -318,6 +322,54 @@ TEST_F(RdFrameworkTestBase, property_optional) {
         EXPECT_EQ(-1, client_log.back());
         EXPECT_EQ(-1, server_log.back());
     });
+
+    AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, property_uninitialized) {
+    int property_id = 1;
+
+    RdProperty<int32_t> client_property;
+    RdProperty<int32_t> server_property;
+
+    statics(client_property, (property_id));
+    statics(server_property, (property_id)).slave();
+
+    std::vector<int> client_log;
+    std::vector<int> server_log;
+
+    client_property.advise(Lifetime::Eternal(), [&client_log](int v) { client_log.push_back(v); });
+    server_property.advise(Lifetime::Eternal(), [&server_log](int v) { server_log.push_back(v); });
+
+    //not bound
+    EXPECT_TRUE(client_log.empty());
+    EXPECT_TRUE(server_log.empty());
+
+    //bound
+    bindStatic(serverProtocol.get(), server_property, "top");
+    bindStatic(clientProtocol.get(), client_property, "top");
+
+    EXPECT_TRUE(client_log.empty());
+    EXPECT_TRUE(server_log.empty());
+
+    //set from client
+
+    client_property.set(1);
+    EXPECT_EQ((vi{1}), client_log);
+    EXPECT_EQ((vi{1}), server_log);
+
+    client_property.set(2);
+    EXPECT_EQ((vi{1, 2}), client_log);
+    EXPECT_EQ((vi{1, 2}), server_log);
+
+    //set from server
+    server_property.set(3);
+    EXPECT_EQ((vi{1, 2, 3}), client_log);
+    EXPECT_EQ((vi{1, 2, 3}), server_log);
+
+    client_property.set(3);
+    EXPECT_EQ((vi{1, 2, 3}), client_log);
+    EXPECT_EQ((vi{1, 2, 3}), server_log);
 
     AfterTest();
 }

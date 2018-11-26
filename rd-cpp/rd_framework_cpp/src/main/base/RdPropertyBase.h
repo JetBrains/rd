@@ -7,8 +7,6 @@
 
 
 #include "RdReactiveBase.h"
-#include "ISerializer.h"
-#include "SignalX.h"
 #include "Polymorphic.h"
 #include "Property.h"
 
@@ -27,6 +25,8 @@ public:
     mutable bool optimizeNested = false;
 
     //region ctor/dtor
+
+	RdPropertyBase() = default;
 
     RdPropertyBase(RdPropertyBase const &) = delete;
 
@@ -101,7 +101,7 @@ public:
 
 
     T const &get() const override {
-        return this->value;
+        return Property<T>::get();
     }
 
     void set(T new_value) const override {

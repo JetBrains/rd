@@ -86,7 +86,7 @@ public:
 //T : RdBindableBase
 template<typename T>
 T &withId(T &that, RdId const &id) {
-    MY_ASSERT_MSG(that.rdid == RdId::Null(), "this.id != RdId.NULL_ID, but ${this.rdid}");
+    MY_ASSERT_MSG(that.rdid == RdId::Null(), "this.id != RdId.NULL_ID, but " + that.rdid.toString());
     MY_ASSERT_MSG((id != RdId::Null()), "id != RdId.NULL_ID");
 
     that.rdid = id;

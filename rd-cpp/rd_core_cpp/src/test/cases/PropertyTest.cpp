@@ -49,13 +49,13 @@ TEST(property, when_true) {
     std::unique_ptr<IProperty<bool>> property(new Property<bool>(false));
     property->set(true);
     Lifetime::use<int>([&](Lifetime lifetime) {
-        property->view(lifetime, [&acc1](Lifetime lt, bool const& flag) {
+        property->view(lifetime, [&acc1](Lifetime lt, bool const &flag) {
             if (flag) {
                 acc1++;
             }
         });
 
-        property->view(lifetime, [&](Lifetime lt, bool const& flag) {
+        property->view(lifetime, [&](Lifetime lt, bool const &flag) {
             if (flag) {
                 lt->bracket(
                         [&acc2]() { acc2 += 2; },
@@ -90,7 +90,7 @@ TEST(property, view) {
     int save = 0;
 
     Lifetime::use<int>([&](Lifetime lifetime) {
-        property->view(lifetime, [&](Lifetime lt, int const& value) {
+        property->view(lifetime, [&](Lifetime lt, int const &value) {
             save = value;
         });
         property->set(2);
@@ -103,4 +103,28 @@ TEST(property, view) {
 
     EXPECT_EQ(-1, property->get());
     EXPECT_EQ(-1, save);
+}
+
+TEST(property, uninitialized) {
+    Property<int> property;
+
+    EXPECT_THROW(property.get(), std::exception);
+
+    std::vector<int> log;
+
+    Lifetime::use([&](Lifetime lifetime) {
+        property.advise(lifetime, [&log](int const &val) {
+            log.push_back(val);
+        });
+
+        EXPECT_TRUE(log.empty());
+
+        property.set(~0);
+
+        EXPECT_EQ(~0, log[0]);
+    });
+
+    property.set(0);
+
+    EXPECT_EQ(1, log.size());
 }

@@ -18,6 +18,8 @@ public:
 
     //region ctor/dtor
 
+    IProperty() = default;
+
     IProperty(IProperty &&other) = default;
 
     IProperty &operator=(IProperty &&other) = default;
@@ -36,7 +38,9 @@ public:
             return;
         }
         signal.advise(std::move(lifetime), handler);
-        handler(this->value);
+		if (this->has_value()) {
+			handler(this->get());
+		}
     }
 
     void advise_before(Lifetime lifetime, std::function<void(T const &)> handler) const override {

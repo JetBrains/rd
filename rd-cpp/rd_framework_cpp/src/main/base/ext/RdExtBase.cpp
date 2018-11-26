@@ -77,11 +77,11 @@ void RdExtBase::on_wire_received(Buffer buffer) const {
     }
 
     int64_t counterpartSerializationHash = buffer.read_pod<int64_t>();
-    /*if (serializationHash != counterpartSerializationHash) {
+    if (serializationHash != counterpartSerializationHash) {
         //need to queue since outOfSyncModels is not synchronized
-        RdReactiveBase::get_protocol()->scheduler->queue([this](){ RdReactiveBase::get_protocol().outOfSyncModels.add(this) });
-//        error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
-    }*/
+//        RdReactiveBase::get_protocol()->scheduler->queue([this](){ RdReactiveBase::get_protocol().outOfSyncModels.add(this) });
+        MY_ASSERT_MSG(false, "serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
+    }
 }
 
 void RdExtBase::sendState(IWire const &wire, RdExtBase::ExtState state) const {

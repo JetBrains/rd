@@ -59,7 +59,6 @@ public:
         auto value = ReqSer::read(get_serialization_context(), buffer);
         logReceived.trace(
                 "endpoint " + location.toString() + " ::" + rdid.toString() + " request = ${value.printToString()}");
-        //todo little bit monadic programming here
         if (!handler) {
             throw std::invalid_argument("handler is empty for RdEndPoint");
         }

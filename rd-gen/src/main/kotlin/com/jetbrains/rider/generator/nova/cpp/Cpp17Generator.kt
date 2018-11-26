@@ -3,13 +3,13 @@ package com.jetbrains.rider.generator.nova.cpp
 import com.jetbrains.rider.generator.nova.*
 import com.jetbrains.rider.generator.nova.Enum
 import com.jetbrains.rider.generator.nova.FlowKind.*
-import com.jetbrains.rider.generator.nova.util.appendDefaultValueSetter
 import com.jetbrains.rider.generator.nova.util.joinToOptString
 import com.jetbrains.rider.util.eol
 import com.jetbrains.rider.util.hash.IncrementalHash64
 import com.jetbrains.rider.util.string.Eol
 import com.jetbrains.rider.util.string.PrettyPrinter
 import com.jetbrains.rider.util.string.condstr
+import org.gradle.internal.impldep.aQute.bnd.xmlattribute.ExtensionDef
 import java.io.File
 
 class Signature(val returnType: String, val arguments: String, val scope: String) {
@@ -62,6 +62,19 @@ private fun PrettyPrinter.declare(signature: Signature?) {
 private fun PrettyPrinter.def(signature: Signature?) {
     signature?.let {
         this.println(it.def())
+    }
+}
+
+fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
+    if (member is Member.Field && (member.isOptional || member.defaultValue != null)) {
+        append("{")
+        val defaultValue = member.defaultValue
+        when (defaultValue) {
+            is String -> append(if (member.type is Enum) "$typeName::$defaultValue" else "\"$defaultValue\"")
+            is Long, is Boolean -> append(defaultValue)
+            else -> if (member.isOptional) append("tl::nullopt")
+        }
+        append("}")
     }
 }
 
@@ -262,11 +275,13 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected open val Member.encapsulatedName: String get() = isEncapsulated.condstr { "_" } + publicName
     open val Member.isEncapsulated: Boolean get() = this is Member.Reactive
 
-    protected fun Member.ctorParam(containing: Declaration): String {
+    protected fun Member.ctorParam(containing: Declaration, withSetter: Boolean): String {
         val typeName = implSubstitutedName(containing)
         return StringBuilder().also {
             it.append("$typeName $encapsulatedName")
-            it.appendDefaultValueSetter(this, typeName)
+            if (withSetter) {
+                it.appendDefaultInitialize(this, typeName)
+            }
         }.toString()
     }
 
@@ -474,6 +489,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             comment("companion")
             companionTraitDecl(decl)
 
+            if (decl.isExtension) {
+                comment("extension")
+                declare(extensionTraitDecl(decl as Ext))
+            }
+
             comment("custom serializers")
             customSerializersTrait(decl)
 
@@ -539,9 +559,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun PrettyPrinter.primaryCtorParams(decl: Declaration): String {
         val own = decl.ownMembers.map {
             val attrs = it.getSetting(Cpp17Generator.Attributes)?.fold("") { acc, attr -> "$acc@$attr${eolKind.value}" }
-            (attrs ?: "") + it.ctorParam(decl)
+            (attrs ?: "") + it.ctorParam(decl, false)
         }
-        val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }
+        val base = decl.membersOfBaseClasses.map { it.ctorParam(decl, false) }
 
         return own.asSequence().plus(base).plus(unknownMembers(decl)).joinToString(", ")
     }
@@ -709,13 +729,24 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
+
+    private fun PrettyPrinter.extensionTraitDecl(decl: Ext) : Signature? {
+        val pointcut = decl.pointcut ?: return null
+        val lowerName = decl.name.decapitalize()
+        val extName = decl.extName ?: lowerName
+        return Signature("void", "getOrCreateExtensionOf(${pointcut.sanitizedName(decl)} & pointcut)", decl.name).static()
+        + """val ${pointcut.sanitizedName(decl)}.$extName get() = getOrCreateExtension("$lowerName", ::${decl.name})"""
+        println()
+
+    }
+
     fun PrettyPrinter.fieldsDecl(decl: Declaration) {
         +"protected:"
         val own = decl.ownMembers.map {
             val initial = getDefaultValue(decl, it)?.let {
                 "{$it}"
-            } ?: "{}"
-            "${it.ctorParam(decl)}$initial"
+            } ?: ""
+            "${it.ctorParam(decl, true)}$initial"
         }
 
         +own.asSequence().plus(unknownMembers(decl)).joinToString(separator = "") { "$it${carry()}" }
@@ -1186,6 +1217,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun PrettyPrinter.extensionTraitDef(decl: Ext) {//todo
+        def(extensionTraitDecl(decl))
+        block("{", "}") {
+
+        }
         val pointcut = decl.pointcut ?: return
         val lowerName = decl.name.decapitalize()
         val extName = decl.extName ?: lowerName

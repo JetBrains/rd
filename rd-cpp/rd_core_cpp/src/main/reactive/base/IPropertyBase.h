@@ -12,12 +12,19 @@
 template<typename T>
 class IPropertyBase : public ISource<T>, public IViewable<T> {
 protected:
-    mutable T value;
+    mutable tl::optional<T> value{};
 
     Signal<T> change, before_change;
+
+	bool has_value() const {
+		return value.has_value();
+	}
+
 public:
 
     //region ctor/dtor
+
+	IPropertyBase() = default;
 
     IPropertyBase(IPropertyBase &&other) = default;
 
