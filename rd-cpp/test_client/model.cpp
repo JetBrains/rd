@@ -14,7 +14,7 @@ FRiderLinkModule::FRiderLinkModule() :
 	int64_t test_connection_property_id = 0;
 	int64_t filename_to_open_property_id = 0;
 
-	std::ifstream inputFile("C:\\Users\\alexander.pirogov\\unreal_port.txt");
+	std::ifstream inputFile("C:\\temp\\port.txt");
 
 	inputFile >> port;
 	wire = std::make_shared<SocketWire::Client>(lifetime, &clientScheduler, port, "TestClient");
@@ -38,7 +38,8 @@ void FRiderLinkModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
 	test_connection.set(0xdeadbeef);
-	filename_to_open.set(L"beefdeadx0");	
+	filename_to_open.set(L"beefdeadx0");
+	std::this_thread::sleep_for(std::chrono::minutes(1));
 }
 
 void FRiderLinkModule::ShutdownModule()

@@ -184,6 +184,7 @@ TEST(BufferTest, ArraySerializer) {
 	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
 }
 
+/*
 TEST(BufferTest, NullableString) {
     SerializationCtx ctx;
     Buffer buffer;
@@ -218,4 +219,4 @@ TEST(BufferTest, NullableString) {
     EXPECT_TRUE(opt.has_value());
     EXPECT_EQ(opt.value(), L"abcdef");
 
-}
+}*/

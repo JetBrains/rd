@@ -58,7 +58,7 @@ public:
     static std::string read(SerializationCtx const &ctx, Buffer const &buffer) {
         assert("use std::wstring instead of std::string" && 0);
         //        return buffer.readString();
-    }
+     }
 
     static void write(SerializationCtx const &ctx, Buffer const &buffer, std::string const &value) {
         assert("use std::wstring instead of std::string" && 0);
@@ -128,7 +128,7 @@ public:
     }
 };
 
-template<>
+/*template<>
 class Polymorphic<tl::optional<std::wstring>> {
     using T = std::wstring;
 public:
@@ -139,6 +139,6 @@ public:
     static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
         buffer.writeNullableWString(value);
     }
-};
+};*/
 
 #endif //RD_CPP_POLYMORPHIC_H

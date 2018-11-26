@@ -614,6 +614,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 is INullable -> {
                     parseType(type.itemType)
                 }
+                is InternedScalar -> {
+                    parseType(type.itemType)
+                }
                 !is PredefinedType -> {
                     arrayListOf(type.name)
                 }
@@ -711,7 +714,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         val own = decl.ownMembers.map {
             val initial = getDefaultValue(decl, it)?.let {
                 "{$it}"
-            } ?: ""
+            } ?: "{}"
             "${it.ctorParam(decl)}$initial"
         }
 
@@ -1197,7 +1200,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     decl is Struct.Concrete && decl.isUnknown
 
     private fun unknownMembers(decl: Declaration) =
-            if (isUnknown(decl)) arrayOf("Buffer::ByteArray unknownBytes")
+            if (isUnknown(decl)) arrayOf("RdId unknownId",
+                    "Buffer::ByteArray unknownBytes")
             else emptyArray()
 
     private fun unknownMembersSecondary(decl: Declaration) =

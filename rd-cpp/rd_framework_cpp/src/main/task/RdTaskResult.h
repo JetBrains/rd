@@ -110,7 +110,7 @@ public:
                 },
                 [](typename RdTaskResult<T, S>::Fault const &value) -> T {
 //                    throw value.error;
-                    throw std::exception();
+                    throw std::runtime_error(to_string(value.reasonMessage));
                 }
         ), v);
     }
