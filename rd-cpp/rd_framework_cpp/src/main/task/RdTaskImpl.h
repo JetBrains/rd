@@ -15,7 +15,7 @@ template<typename T, typename S = Polymorphic<T> >
 class RdTaskImpl {
     //todo friend class
 public:
-    Property<tl::optional<RdTaskResult<T, S> > > result{tl::nullopt};
+    mutable Property<tl::optional<RdTaskResult<T, S> > > result{tl::nullopt};
 };
 
 

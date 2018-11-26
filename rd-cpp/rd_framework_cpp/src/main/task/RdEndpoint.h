@@ -10,17 +10,24 @@
 
 template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 class RdEndpoint : public RdReactiveBase, public ISerializable {
-    using handler_t = std::function<RdTask<TRes>(Lifetime, TReq const &)>;
-    handler_t handler;
+    using handler_t = std::function<RdTask<TRes, ResSer>(Lifetime, TReq const &)>;
+    mutable handler_t handler;
 
 public:
     //region ctor/dtor
 
     explicit RdEndpoint(handler_t handler) : handler(std::move(handler)) {}
 
-    explicit RdEndpoint(std::function<TRes(TReq const &)> handler) : handler([handler = std::move(handler)](Lifetime _, TReq const &req) {
-        return RdTask<TRes, ResSer>::from_result(std::move(handler(req)));
-    }) {}
+    explicit RdEndpoint(std::function<TRes(TReq const &)> handler) : handler(
+            [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask<TRes, ResSer> {
+                return RdTask<TRes, ResSer>::from_result(handler(req));
+            }) {}
+
+    RdEndpoint(RdEndpoint &&) = default;
+
+    RdEndpoint &operator=(RdEndpoint &&) = default;
+
+    virtual ~RdEndpoint() = default;
     //endregion
 
     static RdEndpoint<TReq, TRes, ReqSer, ResSer> read(SerializationCtx const &ctx, Buffer const &buffer) {

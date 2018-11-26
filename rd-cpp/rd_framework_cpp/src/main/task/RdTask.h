@@ -16,7 +16,7 @@
 template<typename T, typename S = Polymorphic<T> >
 class RdTask {
 
-    std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
+    mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
 public:
 
     static RdTask<T, S> from_result(T value) {
@@ -26,7 +26,7 @@ public:
     }
 
     void set(T value) const {
-        auto t = typename RdTaskResult<T, S>::Success(std::move(value));
+        typename RdTaskResult<T, S>::Success t(std::move(value));
         ptr->result.set(tl::make_optional(std::move(t)));
     }
 
@@ -35,11 +35,11 @@ public:
     }
 
     void cancel() const {
-        ptr->result.set(typename RdTaskResult<T>::Cancelled());
+        ptr->result.set(typename RdTaskResult<T, S>::Cancelled());
     }
 
     void fault(std::exception const &e) const {
-        ptr->result.set(typename RdTaskResult<T>::Fault(e));
+        ptr->result.set(typename RdTaskResult<T, S>::Fault(e));
     }
 
     bool has_value() const {

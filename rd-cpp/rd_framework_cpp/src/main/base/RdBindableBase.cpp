@@ -41,6 +41,9 @@ void RdBindableBase::identify(const IIdentities &identities, RdId const &id) con
     for (const auto &it : bindableChildren) {
         identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
     }
+    /*for (const auto &it : bindable_extensions) {
+        identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
+    }*/
 }
 
 const IProtocol *const RdBindableBase::get_protocol() const {
@@ -66,6 +69,11 @@ void RdBindableBase::init(Lifetime lifetime) const {
             bindPolymorphic(*(it.second), lifetime, this, it.first);
         }
     }
+    /*for (const auto &it : bindable_extensions) {
+        if (it.second != nullptr) {
+            bindPolymorphic(*(it.second), lifetime, this, it.first);
+        }
+    }*/
 }
 
 

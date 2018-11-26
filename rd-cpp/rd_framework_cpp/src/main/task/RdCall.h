@@ -19,6 +19,16 @@ class RdCall : public RdReactiveBase, public ISerializable {
 
 public:
 
+    //region ctor/dtor
+    RdCall() = default;
+
+    RdCall(RdCall &&) = default;
+
+    RdCall &operator=(RdCall &&) = default;
+
+    virtual ~RdCall() = default;
+    //endregion
+
     static RdCall<TReq, TRes, ReqSer, ResSer> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdCall<TReq, TRes, ReqSer, ResSer> res;
         const RdId &id = RdId::read(buffer);

@@ -12,13 +12,13 @@
 #include <exception>
 
 template<typename T, typename S = Polymorphic<T> >
-class RdTaskResult : ISerializable {
+class RdTaskResult : public ISerializable {
 public:
     class Success {
     public:
-        T value;
+        mutable T value;
 
-        explicit Success(T value) : value(std::move(value)) {}
+        explicit Success(T &&value) : value(std::move(value)) {}
     };
 
     class Cancelled {
@@ -43,20 +43,30 @@ public:
         };
     };
 
+    //region ctor/dtor
+
     RdTaskResult(Success &&v) : v(std::move(v)) {}
 
     RdTaskResult(Cancelled &&v) : v(std::move(v)) {}
 
     RdTaskResult(Fault &&v) : v(std::move(v)) {}
 
+
+    RdTaskResult(RdTaskResult const &) = default;
+
+    RdTaskResult(RdTaskResult &&) = default;
+
+    RdTaskResult &operator=(RdTaskResult &&) = default;
+
     virtual ~RdTaskResult() = default;
+    //endregion
 
 public:
     static RdTaskResult<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         int32_t kind = buffer.read_pod<int32_t>();
         switch (kind) {
             case 0: {
-                return Success(S::read(ctx, buffer));
+                return Success(std::move(S::read(ctx, buffer)));
             }
             case 1: {
                 return Cancelled();
@@ -74,14 +84,14 @@ public:
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
         mpark::visit(make_visitor(
-                [&ctx, &buffer](typename RdTaskResult::Success const &value) {
+                [&ctx, &buffer](typename RdTaskResult<T, S>::Success const &value) {
                     buffer.write_pod<int32_t>(0);
                     S::write(ctx, buffer, value.value);
                 },
-                [&buffer](typename RdTaskResult::Cancelled const &value) {
+                [&buffer](typename RdTaskResult<T, S>::Cancelled const &value) {
                     buffer.write_pod<int32_t>(1);
                 },
-                [&buffer](typename RdTaskResult::Fault const &value) {
+                [&buffer](typename RdTaskResult<T, S>::Fault const &value) {
                     buffer.write_pod<int32_t>(2);
                     buffer.writeWString(value.reasonTypeFqn);
                     buffer.writeWString(value.reasonMessage);
@@ -92,13 +102,13 @@ public:
 
     T unwrap() const {
         return mpark::visit(make_visitor(
-                [](typename RdTaskResult::Success const &value) -> T {
+                [](typename RdTaskResult<T, S>::Success const &value) -> T {
                     return value.value;
                 },
-                [](typename RdTaskResult::Cancelled const &value) -> T {
+                [](typename RdTaskResult<T, S>::Cancelled const &value) -> T {
                     throw std::invalid_argument("Task finished in Cancelled state");
                 },
-                [](typename RdTaskResult::Fault const &value) -> T {
+                [](typename RdTaskResult<T, S>::Fault const &value) -> T {
 //                    throw value.error;
                     throw std::exception();
                 }
@@ -118,7 +128,7 @@ public:
     }
 
 private:
-    mpark::variant<Success, Cancelled, Fault> v;
+    mutable mpark::variant<Success, Cancelled, Fault> v;
 };
 
 

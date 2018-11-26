@@ -2,19 +2,19 @@
 // Created by jetbrains on 01.11.2018.
 //
 
-#include "gtest/gtest.h"
-
-#include <string>
-
 #include "RdFrameworkTestBase.h"
 #include "RdCall.h"
 #include "RdEndpoint.h"
 
+#include "gtest/gtest.h"
+
+#include <string>
+
 TEST_F(RdFrameworkTestBase, testStaticSuccess) {
     int entity_id = 1;
 
-    auto client_entity = RdCall<int, std::wstring>();
-    auto server_entity = RdEndpoint<int, std::wstring>([](int const &it) -> std::wstring { return std::to_wstring(it); });
+    RdCall<int, std::wstring> client_entity;
+    RdEndpoint<int, std::wstring> server_entity([](int const &it) -> std::wstring { return std::to_wstring(it); });
 
     statics(client_entity, entity_id);
     statics(server_entity, entity_id);
@@ -71,7 +71,8 @@ TEST_F(RdFrameworkTestBase, testStaticFailure) {
     auto task = client_entity.start(2);
     EXPECT_TRUE(task.isFaulted());
 
-    auto taskResult = (task.value_or_throw());
+    EXPECT_NO_THROW(auto taskResult = task.value_or_throw());
+
 //    assertEquals("1234", taskResult.error.reasonMessage)
 //    assertEquals("IllegalStateException", taskResult.error.reasonTypeFqn)
 }

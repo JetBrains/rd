@@ -54,3 +54,4 @@ RdId RdId::read(Buffer const &buffer) {
 void RdId::write(const Buffer &buffer) const {
     buffer.write_pod(hash);
 }
+

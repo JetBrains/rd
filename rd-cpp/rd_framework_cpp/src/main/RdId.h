@@ -24,7 +24,7 @@ class RdId {
 private:
     using hash_t = int64_t;
 
-    hash_t hash;
+    hash_t hash{0};
     friend struct std::hash<RdId>;
 public:
     friend bool operator==(RdId const &left, RdId const &right) {
@@ -36,6 +36,7 @@ public:
     }
 
     //region ctor/dtor
+    RdId() = default;
 
     RdId(const RdId &other) = default;
 
