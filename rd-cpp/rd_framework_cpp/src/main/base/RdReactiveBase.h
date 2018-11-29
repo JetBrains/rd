@@ -16,6 +16,18 @@
 #pragma warning( disable:4250 )
 
 class RdReactiveBase : public RdBindableBase, public IRdReactive {
+    class local_change_handler {
+        RdReactiveBase const *ptr;
+    public:
+        local_change_handler(RdReactiveBase const *ptr) : ptr(ptr) {
+            ptr->is_local_change = true;
+        }
+
+        ~local_change_handler() {
+            ptr->is_local_change = false;
+        }
+    };
+
 public:
     Logger logReceived;
     Logger logSend;
@@ -44,28 +56,23 @@ public:
 
     IScheduler *get_default_scheduler() const;
 
-    IScheduler *get_wire_scheduler() const;
+    IScheduler *get_wire_scheduler() const override;
 
     void assert_threading() const;
 
     void assert_bound() const;
 
-    template<typename T, typename F>
-    T local_change(F &&action) const {
-        if (is_bound()) {
+    template<typename F>
+    auto local_change(F &&action) const -> typename std::result_of<F()>::type {
+        if (is_bound() && !async) {
             assert_threading();
         }
 
         MY_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
 
-        is_local_change = true;
-        T res = action();
-        is_local_change = false;
-        return res;
+        local_change_handler lc_handler(this);
+        return action();
     }
-
-    void local_change(const std::function<void()> &action) const;
-    //todo catch exception in action()
 };
 
 #pragma warning( pop )

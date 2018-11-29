@@ -5,8 +5,6 @@
 #ifndef RD_CPP_MESSAGEBROKER_H
 #define RD_CPP_MESSAGEBROKER_H
 
-#include <mutex>
-#include <thread>
 #include "IRdReactive.h"
 #include "Logger.h"
 

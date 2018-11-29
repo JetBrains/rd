@@ -11,8 +11,6 @@
 #include <string>
 #include <exception>
 #include <iostream>
-#include <ctime>
-#include <chrono>
 
 enum class LogLevel {
     Trace,
@@ -64,9 +62,21 @@ public:
 
 //SwitchLogger get_logger(std::string category);
 
-void catch_(tl::optional<std::string> comment, const std::function<void()> &action);
+template<typename F>
+void catch_(tl::optional<std::string> comment, F &&action) {
+    try {
+        action();
+    }
+    catch (std::exception const &e) {
+        std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + *e.what();
+//        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
+    }
+}
 
-void catch_(const std::function<void()> &action);
+template<typename F>
+void catch_(F &&action) {
+    catch_({}, action);
+}
 
 
 #endif //RD_CPP_CORE_LOGGER_H

@@ -5,12 +5,11 @@
 #ifndef RD_CPP_IPROPERTY_H
 #define RD_CPP_IPROPERTY_H
 
-#include <memory>
-#include <functional>
-
 #include "SignalX.h"
 #include "Lifetime.h"
 #include "IPropertyBase.h"
+
+#include <functional>
 
 template<typename T>
 class IProperty : public IPropertyBase<T> {

@@ -9,6 +9,8 @@
 #include <interfaces.h>
 #include <SignalX.h>
 
+#include "optional.hpp"
+
 template<typename T>
 class IPropertyBase : public ISource<T>, public IViewable<T> {
 protected:

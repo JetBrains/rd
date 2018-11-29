@@ -26,10 +26,6 @@ public:
     //endregion
 
     void advise(Lifetime lifetime, IRdReactive const *entity) const override;
-
-    void dumpToString() {
-//        messageBroker.printToString()''
-    }
 };
 
 

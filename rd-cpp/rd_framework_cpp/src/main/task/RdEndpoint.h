@@ -73,9 +73,9 @@ public:
         task.advise(*bind_lifetime, [&](RdTaskResult<TRes, ResSer> const &taskResult) {
             logSend.trace("endpoint " + location.toString() + " ::(" + rdid.toString() +
                           ") response = ${result.printToString()}");
-            get_wire()->send(rdid, [&](Buffer const &buffer) {
-                taskId.write(buffer);
-                taskResult.write(get_serialization_context(), buffer);
+            get_wire()->send(rdid, [&](Buffer const &inner_buffer) {
+                taskId.write(inner_buffer);
+                taskResult.write(get_serialization_context(), inner_buffer);
             });
         });
     }

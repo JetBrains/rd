@@ -8,7 +8,6 @@
 #include "core_util.h"
 #include "optional.hpp"
 
-#include <utility>
 #include <vector>
 #include <type_traits>
 #include <functional>

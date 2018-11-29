@@ -89,7 +89,7 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_so
         send_var.notify_all();
     }
     {
-        std::lock_guard<std::timed_mutex> _(lock);
+        std::lock_guard<std::timed_mutex> guard(lock);
         if (lifetime->is_terminated()) {
             return;
         }
@@ -149,11 +149,10 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
 
                     //https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
                     //HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
-                    MY_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
-                                        this->id + ": failed to open ActiveSocket");
+                    MY_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port), this->id + ": failed to open ActiveSocket");
 
                     {
-                        std::lock_guard<std::timed_mutex> _(lock);
+                        std::lock_guard<std::timed_mutex> guard(lock);
                         if (lifetime->is_terminated()) {
                             catch_([this]() { socket->Close(); });
                         }
@@ -161,7 +160,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
 
                     set_socket_provider(socket);
                 } catch (std::exception const &e) {
-                    std::lock_guard<std::timed_mutex> _(lock);
+                    std::lock_guard<std::timed_mutex> guard(lock);
                     bool shouldReconnect = false;
                     if (!lifetime->is_terminated()) {
                         cv.wait_for(lock, timeout);
@@ -206,8 +205,8 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
 SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0,
                            const std::string &id = "ServerSocket") : Base(id, lifetime, scheduler) {
     MY_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
-    MY_ASSERT_MSG(ss->Listen("127.0.0.1", port),
-                  this->id + ": failed to listen socket on port:" + std::to_string(port));
+    MY_ASSERT_MSG(ss->Listen("127.0.0.1", port), this->id + ": failed to listen socket on port:" + std::to_string(port));
+
     this->port = ss->GetServerPort();
     MY_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen");
 
@@ -219,7 +218,7 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t po
             MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed");
 
             {
-                std::lock_guard<std::timed_mutex> _(lock);
+                std::lock_guard<std::timed_mutex> guard(lock);
                 if (lifetime->is_terminated()) {
                     catch_([this]() {
                         logger.debug(this->id + ": closing passive socket");
@@ -249,7 +248,7 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t po
         });
         catch_([this]() {
             {
-                std::lock_guard<std::timed_mutex> _(lock);
+                std::lock_guard<std::timed_mutex> guard(lock);
                 logger.debug(this->id + ": closing socket");
                 if (socket != nullptr) {
                     MY_ASSERT_THROW_MSG(socket->Close(), this->id + ": failed to close socket");

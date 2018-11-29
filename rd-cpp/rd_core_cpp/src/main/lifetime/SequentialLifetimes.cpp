@@ -5,8 +5,8 @@
 #include "SequentialLifetimes.h"
 
 SequentialLifetimes::SequentialLifetimes(Lifetime parent_lifetime) : parent_lifetime(
-        parent_lifetime) {
-    parent_lifetime->add_action([this]() {
+        std::move(parent_lifetime)) {
+    this->parent_lifetime->add_action([this]() {
         set_current_lifetime(LifetimeDefinition::get_shared_eternal());
     });
 }

@@ -127,8 +127,8 @@ public:
             } else if (!is_master()) {
                 errmsg = "Received " + to_string(Op::ACK) + " when not a Master";
             } else {
-                if (pendingForAck.count(key)) {
-                    int64_t pendingVersion = pendingForAck[key];
+                if (pendingForAck.count(key) > 0) {
+                    int64_t pendingVersion = pendingForAck.at(key);
                     if (pendingVersion < version) {
                         errmsg = "Pending version " + to_string(pendingVersion) + " < " + to_string(Op::ACK) +
                                  " version `" + to_string(version);
@@ -167,7 +167,7 @@ public:
             }
 
             if (msgVersioned) {
-                get_wire()->send(rdid, [this, version, key](Buffer const &innerBuffer) {
+                get_wire()->send(rdid, [this, version, key = std::move(key)](Buffer const &innerBuffer) {
                     innerBuffer.write_pod<int32_t>((1 << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
                     innerBuffer.write_pod<int64_t>(version);
                     KS::write(this->get_serialization_context(), innerBuffer, key);
@@ -189,17 +189,17 @@ public:
     }
 
     V const *get(K const &key) const override {
-        return local_change < V const * > ([&]() -> V const * { return map.get(key); });
+        return local_change([&]() -> V const * { return map.get(key); });
     }
 
     V const *set(K key, V value) const override {
-        return local_change < V const * > ([&]() mutable -> V const * {
+        return local_change([&]() mutable -> V const * {
             return map.set(std::move(key), std::move(value));
         });
     }
 
     tl::optional<V> remove(K const &key) const override {
-        return local_change<tl::optional<V>>([&]() { return map.remove(key); });
+        return local_change([&]() { return map.remove(key); });
     }
 
     void clear() const override {

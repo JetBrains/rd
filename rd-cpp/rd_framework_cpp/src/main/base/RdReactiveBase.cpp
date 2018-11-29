@@ -42,16 +42,4 @@ IScheduler *RdReactiveBase::get_wire_scheduler() const {
     return get_default_scheduler();
 }
 
-void RdReactiveBase::local_change(const std::function<void()> &action) const {
-    if (is_bound() && !async) {
-        assert_threading();
-    }
-
-    MY_ASSERT_MSG(!is_local_change, "!isLocalChange");
-
-    is_local_change = true;
-    action();
-    is_local_change = false;
-}
-
 

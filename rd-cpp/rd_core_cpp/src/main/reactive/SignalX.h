@@ -51,7 +51,7 @@ private:
     mutable counter_t advise_id = 0;
     mutable listeners_t listeners, priority_listeners;
 
-    void cleanup(listeners_t &queue) const {
+    static void cleanup(listeners_t &queue) {
         erase_if(queue, [](Event<T> const &e) -> bool { return !e.is_alive(); });
     }
 

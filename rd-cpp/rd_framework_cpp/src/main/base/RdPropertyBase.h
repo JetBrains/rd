@@ -12,6 +12,7 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
+
 template<typename T, typename S = Polymorphic<T>>
 class RdPropertyBase : public RdReactiveBase, public Property<T> {
 protected:
@@ -26,7 +27,7 @@ public:
 
     //region ctor/dtor
 
-	RdPropertyBase() = default;
+    RdPropertyBase() = default;
 
     RdPropertyBase(RdPropertyBase const &) = delete;
 
@@ -105,7 +106,7 @@ public:
     }
 
     void set(T new_value) const override {
-        this->local_change([this, &new_value]() mutable {
+        this->local_change([this, new_value = std::move(new_value)]() mutable {
             this->default_value_changed = true;
             Property<T>::set(std::move(new_value));
         });
@@ -119,6 +120,7 @@ public:
         return !(rhs == lhs);
     }
 };
+
 #pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdPropertyBase<int> >::value, "Is move constructible from RdPropertyBase<int>");

@@ -22,8 +22,8 @@ TEST_F(RdFrameworkTestBase, property_statics) {
     std::vector<int> client_log;
     std::vector<int> server_log;
 
-    client_property.advise(Lifetime::Eternal(), [&client_log](int v) { client_log.push_back(v); });
-    server_property.advise(Lifetime::Eternal(), [&server_log](int v) { server_log.push_back(v); });
+    client_property.advise(Lifetime::Eternal(), [&client_log](int const &v) { client_log.push_back(v); });
+    server_property.advise(Lifetime::Eternal(), [&server_log](int const &v) { server_log.push_back(v); });
 
     //not bound
     EXPECT_EQ((vi{1}), client_log);

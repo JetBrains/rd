@@ -6,7 +6,7 @@
 
 const Logger Protocol::initializationLogger;
 
-IProtocol const *const Protocol::get_protocol() const {
+const IProtocol *Protocol::get_protocol() const {
     return this;
 }
 

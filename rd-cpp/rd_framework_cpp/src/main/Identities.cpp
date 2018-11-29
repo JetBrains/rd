@@ -15,3 +15,20 @@ RdId Identities::next(const RdId &parent) const {
     id_acc += 2;
     return result;
 }
+
+hash_t getPlatformIndependentHash(std::string const &that, hash_t initial) {
+//    std::cerr << that << " " << initial << std::endl;
+    for (auto c : that) {
+        initial = initial * HASH_FACTOR + static_cast<hash_t>(c);
+    }
+//    std::cerr << initial << std::endl;
+    return initial;
+}
+
+hash_t getPlatformIndependentHash(int32_t const &that, hash_t initial) {
+    return initial * HASH_FACTOR + (that + 1);
+}
+
+hash_t getPlatformIndependentHash(int64_t const &that, hash_t initial) {
+    return initial * HASH_FACTOR + (that + 1);
+}

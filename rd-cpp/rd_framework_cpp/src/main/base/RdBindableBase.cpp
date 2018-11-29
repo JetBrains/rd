@@ -45,7 +45,7 @@ void RdBindableBase::identify(const IIdentities &identities, RdId const &id) con
     }
 }
 
-const IProtocol *const RdBindableBase::get_protocol() const {
+const IProtocol *RdBindableBase::get_protocol() const {
     if (parent && parent->get_protocol()) {
         return parent->get_protocol();
     } else {

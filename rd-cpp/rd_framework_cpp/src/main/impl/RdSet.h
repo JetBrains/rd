@@ -39,7 +39,7 @@ public:
             advise(lifetime, [this](AddRemove kind, T const &v) {
                 if (!is_local_change) return;
 
-                get_wire()->send(rdid, [this, kind, v](Buffer const &buffer) {
+                get_wire()->send(rdid, [this, kind, &v](Buffer const &buffer) {
                     buffer.writeEnum<AddRemove>(kind);
                     S::write(this->get_serialization_context(), buffer, v);
 
@@ -71,7 +71,7 @@ public:
     }
 
     bool add(T value) const override {
-        return local_change<bool>([&]() { return set.add(std::move(value)); });
+        return local_change([this, value = std::move(value)]() mutable { return set.add(std::move(value)); });
     }
 
     void clear() const override {
@@ -79,26 +79,26 @@ public:
     }
 
     bool remove(T const &value) const override {
-        return local_change<bool>([&]() { return set.remove(value); });
+        return local_change([&]() { return set.remove(value); });
     }
 
     size_t size() const override {
-        return local_change<size_t>([&]() { return set.size(); });
+        return local_change([&]() { return set.size(); });
     }
 
     bool contains(T const &value) const override {
-        return local_change<bool>([&]() { return set.contains(value); });
+        return local_change([&]() { return set.contains(value); });
     }
 
     bool empty() const override {
-        return local_change<bool>([&]() { return set.empty(); });
+        return local_change([&]() { return set.empty(); });
     }
 
     void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
         if (is_bound()) {
             assert_threading();
         }
-        set.advise(lifetime, handler);
+        set.advise(lifetime, std::move(handler));
     }
 
     using IViewableSet<T>::advise;

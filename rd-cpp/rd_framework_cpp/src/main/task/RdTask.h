@@ -5,7 +5,6 @@
 #ifndef RD_CPP_RDTASK_H
 #define RD_CPP_RDTASK_H
 
-#include "Property.h"
 #include "RdTaskResult.h"
 #include "RdTaskImpl.h"
 #include "Polymorphic.h"
@@ -59,7 +58,7 @@ public:
     }
 
     void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
-        ptr->result.advise(lifetime, [handler](tl::optional<RdTaskResult<T, S> > const &opt_value) {
+        ptr->result.advise(lifetime, [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
             if (opt_value.has_value()) {
                 handler(*opt_value);
             }

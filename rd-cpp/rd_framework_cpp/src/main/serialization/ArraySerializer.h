@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "SerializationCtx.h"
-#include "Polymorphic.h"
 
 template<typename S, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
 class ArraySerializer {

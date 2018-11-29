@@ -38,7 +38,6 @@ std::string to_string(const std::pair<F *, S *> p) {
 
 template<typename K, typename V>
 std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
-//    return "";
     using Event = typename IViewableMap<K, V>::Event;
     std::string res = mpark::visit(make_visitor(
             [](typename Event::Add const &e) {
@@ -62,7 +61,6 @@ std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
 
 template<typename T>
 std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
-//    return "";
     using Event = typename IViewableList<T>::Event;
     std::string res = mpark::visit(make_visitor(
             [](typename Event::Add const &e) {

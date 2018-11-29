@@ -7,7 +7,7 @@
 #include "RdExtBase.h"
 #include "Protocol.h"
 
-const IProtocol *const RdExtBase::get_protocol() const {
+const IProtocol *RdExtBase::get_protocol() const {
     return extProtocol ? extProtocol.get() : RdReactiveBase::get_protocol();
 }
 

@@ -35,6 +35,8 @@ public:
     Lifetime(Lifetime &&other) noexcept = default;
 
     Lifetime &operator=(Lifetime &&other) noexcept = default;
+
+	~Lifetime() = default;
     //endregion
 
     friend bool operator==(Lifetime const &lw1, Lifetime const &lw2);

@@ -5,8 +5,6 @@
 #ifndef RD_CPP_IMARSHALLER_H
 #define RD_CPP_IMARSHALLER_H
 
-#include "typeinfo"
-
 template<typename T>
 class IMarshaller {
 

@@ -9,7 +9,6 @@
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 #include "SerializationCtx.h"
-#include "demangle.h"
 
 template<typename V, typename S = Polymorphic<V>>
 class RdList : public RdReactiveBase, public IViewableList<V>, public ISerializable {
@@ -67,7 +66,7 @@ public:
                     }
                 }
 
-                get_wire()->send(rdid, [this, &e](Buffer const &buffer) {
+                get_wire()->send(rdid, [this, e](Buffer const &buffer) {
                     Op op = static_cast<Op >(e.v.index());
 
                     buffer.write_pod<int64_t>(static_cast<int64_t>(op) | (nextVersion++ << versionedFlagShift));
@@ -133,24 +132,28 @@ public:
     }
 
     void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
-        if (is_bound()) assert_threading();
+        if (is_bound()) {
+            assert_threading();
+        }
         list.advise(std::move(lifetime), handler);
     }
 
-    bool add(V element) const override { return local_change<bool>([&]() { return list.add(std::move(element)); }); }
-
-    bool add(size_t index, V element) const override {
-        return local_change<bool>([&]() { return list.add(index, std::move(element)); });
+    bool add(V element) const override {
+        return local_change([this, element = std::move(element)]() mutable { return list.add(std::move(element)); });
     }
 
-    bool remove(V const &element) const override { return local_change<bool>([&]() { return list.remove(element); }); }
+    bool add(size_t index, V element) const override {
+        return local_change([this, index, element = std::move(element)]() mutable { return list.add(index, std::move(element)); });
+    }
 
-    V removeAt(size_t index) const override { return local_change<V>([&]() { return list.removeAt(index); }); }
+    bool remove(V const &element) const override { return local_change([&]() { return list.remove(element); }); }
+
+    V removeAt(size_t index) const override { return local_change([&]() { return list.removeAt(index); }); }
 
     V const &get(size_t index) const override { return list.get(index); };
 
     V set(size_t index, V element) const override {
-        return local_change<V>([&]() { return list.set(index, std::move(element)); });
+        return local_change([&]() { return list.set(index, std::move(element)); });
     }
 
     void clear() const override { return local_change([&]() { list.clear(); }); }
@@ -162,15 +165,15 @@ public:
     std::vector<std::shared_ptr<V> > const &getList() const override { return list.getList(); }
 
     bool addAll(size_t index, std::vector<V> elements) const override {
-        return local_change<bool>([&]() mutable { return list.addAll(index, std::move(elements)); });
+        return local_change([&]() mutable { return list.addAll(index, std::move(elements)); });
     }
 
     bool addAll(std::vector<V> elements) const override {
-        return local_change<bool>([&]() mutable { return list.addAll(std::move(elements)); });
+        return local_change([&]() mutable { return list.addAll(std::move(elements)); });
     }
 
     bool removeAll(std::vector<V> elements) const override {
-        return local_change<bool>([&]() mutable { return list.removeAll(std::move(elements)); });
+        return local_change([&]() mutable { return list.removeAll(std::move(elements)); });
     }
 };
 

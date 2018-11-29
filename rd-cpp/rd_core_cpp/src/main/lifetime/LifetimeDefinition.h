@@ -33,6 +33,8 @@ public:
 
     LifetimeDefinition &operator=(LifetimeDefinition &&other) noexcept = default;
 
+	~LifetimeDefinition() = default;
+
 //    static std::shared_ptr<LifetimeDefinition> eternal;
     static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
 

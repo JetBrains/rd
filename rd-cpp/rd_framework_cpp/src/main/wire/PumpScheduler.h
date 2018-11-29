@@ -5,11 +5,11 @@
 #ifndef RD_CPP_PUMPSCHEDULER_H
 #define RD_CPP_PUMPSCHEDULER_H
 
+#include "IScheduler.h"
+
 #include <condition_variable>
 #include <thread>
 #include <queue>
-
-#include "IScheduler.h"
 
 class PumpScheduler : public IScheduler {
 public:

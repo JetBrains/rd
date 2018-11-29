@@ -19,7 +19,7 @@ protected:
 
     bool is_bound() const;
 
-    const IProtocol *const get_protocol() const override;
+    const IProtocol *get_protocol() const override;
 
     mutable std::vector<std::pair<std::string, IRdBindable *> > bindableChildren;
     //mutable std::vector<std::pair<std::string, std::any> > nonBindableChildren;
@@ -44,11 +44,6 @@ public:
     virtual void init(Lifetime lifetime) const;
 
     void bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const override;
-
-
-//    /*concurrent*/std::map<std::string, std::any> extensions;
-
-//    getOrCreateExtension
 
     void identify(const IIdentities &identities, RdId const &id) const override;
 
@@ -95,8 +90,8 @@ T &withId(T &that, RdId const &id) {
 
 template<typename T>
 T &statics(T &that, int64_t id) {
-    /*MY_ASSERT_MSG((id > 0 && id < RdId::MAX_STATIC_ID),
-                  ("Expected id > 0 && id < RdId.MaxStaticId, got " + std::to_string(id)));*/
+    MY_ASSERT_MSG((id > 0 && id < RdId::MAX_STATIC_ID),
+                  ("Expected id > 0 && id < RdId.MaxStaticId, got " + std::to_string(id)));
     return withId(that, RdId(static_cast<int64_t >(id)));
 }
 

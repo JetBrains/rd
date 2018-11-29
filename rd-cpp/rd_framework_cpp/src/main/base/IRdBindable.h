@@ -64,6 +64,5 @@ inline bindPolymorphic(std::vector<T> const &that, Lifetime lf, IRdDynamic const
         obj.bind(lf, parent, name);
     }
 }
-//todo clean sfinae
 
 #endif //RD_CPP_FRAMEWORK_IRDBINDABLE_H

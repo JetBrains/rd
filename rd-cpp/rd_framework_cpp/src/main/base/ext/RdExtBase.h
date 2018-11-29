@@ -20,7 +20,7 @@ public:
     mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
     mutable int64_t serializationHash = 0;
 
-    const IProtocol *const get_protocol() const override;
+    const IProtocol *get_protocol() const override;
 
     void init(Lifetime lifetime) const override;
 

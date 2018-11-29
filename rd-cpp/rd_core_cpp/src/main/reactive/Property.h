@@ -35,7 +35,7 @@ public:
 
     void set(T new_value) const override {
         if (!this->has_value() || this->get() != new_value) {
-			if (this->value.has_value()) {
+			if (this->has_value()) {
 				this->before_change.fire(this->value.value());
 			}
             this->value = std::move(new_value);

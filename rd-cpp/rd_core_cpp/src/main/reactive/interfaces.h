@@ -8,8 +8,6 @@
 #include "SequentialLifetimes.h"
 #include "Lifetime.h"
 
-#include "optional.hpp"
-
 #include <functional>
 
 

@@ -41,7 +41,7 @@ public:
 
     LifetimeImpl(LifetimeImpl const &other) = delete;
 
-    virtual ~LifetimeImpl();
+    ~LifetimeImpl();
     //endregion
 
     template<typename F>

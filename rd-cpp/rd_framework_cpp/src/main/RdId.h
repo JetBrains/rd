@@ -16,7 +16,7 @@ class RdId;
 namespace std {
     template<>
     struct hash<RdId> {
-        size_t operator()(const RdId &value) const;
+        size_t operator()(const RdId &value) const noexcept;
     };
 }
 
@@ -76,7 +76,7 @@ public:
 };
 
 
-inline size_t std::hash<RdId>::operator()(const RdId &value) const {
+inline size_t std::hash<RdId>::operator()(const RdId &value) const noexcept {
     return std::hash<RdId::hash_t>()(value.hash);
 }
 

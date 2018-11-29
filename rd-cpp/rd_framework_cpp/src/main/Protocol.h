@@ -24,7 +24,7 @@ public:
     Protocol &operator=(Protocol &&) = default;
     //endregion
 
-    IProtocol const *const get_protocol() const override;
+    const IProtocol *get_protocol() const override;
 
     static const Logger initializationLogger;
 };

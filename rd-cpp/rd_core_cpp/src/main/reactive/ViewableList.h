@@ -10,9 +10,6 @@
 #include "interfaces.h"
 #include "SignalX.h"
 
-
-#include <set>
-#include <unordered_set>
 #include <algorithm>
 
 template<typename T>
@@ -29,7 +26,7 @@ private:
     Signal<Event> change;
 
 protected:
-    virtual const std::vector<std::shared_ptr<T>> &getList() const {
+    const std::vector<std::shared_ptr<T>> &getList() const override {
         return list;
     }
 

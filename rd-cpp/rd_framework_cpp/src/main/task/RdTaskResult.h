@@ -61,7 +61,6 @@ public:
     virtual ~RdTaskResult() = default;
     //endregion
 
-public:
     static RdTaskResult<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         int32_t kind = buffer.read_pod<int32_t>();
         switch (kind) {
@@ -84,14 +83,14 @@ public:
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
         mpark::visit(make_visitor(
-                [&ctx, &buffer](typename RdTaskResult<T, S>::Success const &value) {
+                [&ctx, &buffer](Success const &value) {
                     buffer.write_pod<int32_t>(0);
                     S::write(ctx, buffer, value.value);
                 },
-                [&buffer](typename RdTaskResult<T, S>::Cancelled const &value) {
+                [&buffer](Cancelled const &value) {
                     buffer.write_pod<int32_t>(1);
                 },
-                [&buffer](typename RdTaskResult<T, S>::Fault const &value) {
+                [&buffer](Fault const &value) {
                     buffer.write_pod<int32_t>(2);
                     buffer.writeWString(value.reasonTypeFqn);
                     buffer.writeWString(value.reasonMessage);
@@ -102,13 +101,13 @@ public:
 
     T unwrap() const {
         return mpark::visit(make_visitor(
-                [](typename RdTaskResult<T, S>::Success const &value) -> T {
+                [](Success const &value) -> T {
                     return value.value;
                 },
-                [](typename RdTaskResult<T, S>::Cancelled const &value) -> T {
+                [](Cancelled const &value) -> T {
                     throw std::invalid_argument("Task finished in Cancelled state");
                 },
-                [](typename RdTaskResult<T, S>::Fault const &value) -> T {
+                [](Fault const &value) -> T {
 //                    throw value.error;
                     throw std::runtime_error(to_string(value.reasonMessage));
                 }
