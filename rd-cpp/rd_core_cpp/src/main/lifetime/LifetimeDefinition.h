@@ -29,11 +29,9 @@ public:
 
     LifetimeDefinition &operator=(LifetimeDefinition const &other) = delete;
 
-    LifetimeDefinition(LifetimeDefinition &&other) noexcept = default;
+    LifetimeDefinition(LifetimeDefinition &&other) = default;
 
-    LifetimeDefinition &operator=(LifetimeDefinition &&other) noexcept = default;
-
-	~LifetimeDefinition() = default;
+    LifetimeDefinition &operator=(LifetimeDefinition &&other) = default;
 
 //    static std::shared_ptr<LifetimeDefinition> eternal;
     static std::shared_ptr<LifetimeDefinition> get_shared_eternal();

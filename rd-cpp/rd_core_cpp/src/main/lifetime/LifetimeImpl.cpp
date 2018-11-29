@@ -22,7 +22,7 @@ void LifetimeImpl::terminate() {
 
     actions_t actions_copy;
     {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         actions_copy = std::move(actions);
 
         actions.clear();

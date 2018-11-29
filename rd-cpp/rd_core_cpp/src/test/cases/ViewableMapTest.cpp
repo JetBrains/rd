@@ -127,3 +127,8 @@ TEST(viewable_map, add_remove_fuzz) {
         EXPECT_EQ("UnView (" + std::to_string(C - i - 1) + ", 0)", log[C + i]);
     }
 }
+
+TEST (viewable_map, move) {
+    ViewableMap<int, int> set1;
+    ViewableMap<int, int> set2(std::move(set1));
+}

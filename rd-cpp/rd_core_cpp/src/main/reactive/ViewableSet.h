@@ -26,7 +26,6 @@ private:
 public:
     //region ctor/dtor
 
-
     ViewableSet() = default;
 
     ViewableSet(ViewableSet &&) = default;
@@ -34,12 +33,11 @@ public:
     ViewableSet &operator=(ViewableSet &&) = default;
 
     virtual ~ViewableSet() = default;
-
     //endregion
 
     bool add(T element) const override {
         /*auto const &[it, success] = set.emplace(std::make_unique<T>(std::move(element)));*/
-		auto const &it = set.emplace(std::make_unique<T>(std::move(element)));
+        auto const &it = set.emplace(std::make_unique<T>(std::move(element)));
         if (!it.second) {
             return false;
         }

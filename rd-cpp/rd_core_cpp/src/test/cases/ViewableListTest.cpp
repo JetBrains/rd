@@ -99,7 +99,6 @@ TEST(viewable_list, insert_middle) {
         return 0;
     });
 }
-
 TEST(viewable_list, other_reactive_api) {
     std::unique_ptr<IViewableList<int> > list(new ViewableList<int>());
     std::vector<std::string> log;
@@ -166,4 +165,9 @@ TEST(viewable_list, other_reactive_api) {
         assertTrue(list->add(0))*/
         return 0;
     });
+}
+
+TEST(viewable_list, move) {
+    ViewableList<int> list1;
+    ViewableList<int> list2(std::move(list1));
 }

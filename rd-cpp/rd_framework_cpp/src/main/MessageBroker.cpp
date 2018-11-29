@@ -19,7 +19,7 @@ void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const
         auto action = [this, that, message = std::move(msg)]() mutable {
             bool exists_id = false;
             {
-                std::lock_guard<std::recursive_mutex> _(lock);
+                std::lock_guard<std::recursive_mutex> guard(lock);
                 exists_id = subscriptions.count(that->rdid) > 0;
             }
             if (exists_id) {
@@ -39,7 +39,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const {
     MY_ASSERT_MSG(!id.isNull(), "id mustn't be null");
 
     {//synchronized recursively
-        std::lock_guard<std::recursive_mutex> _(lock);
+        std::lock_guard<std::recursive_mutex> guard(lock);
         IRdReactive const *s = subscriptions[id];
         if (s == nullptr) {
             if (broker.count(id) == 0) {
@@ -94,7 +94,7 @@ void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const *entity) cons
     //advise MUST happen under default scheduler, not custom
     defaultScheduler->assert_thread();
 
-	std::lock_guard<std::recursive_mutex> _(lock);
+	std::lock_guard<std::recursive_mutex> guard(lock);
     if ( !lifetime->is_terminated()) {
         auto key = entity->rdid;
         IRdReactive const *value = entity;

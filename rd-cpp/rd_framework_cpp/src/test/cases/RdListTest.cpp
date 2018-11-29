@@ -176,3 +176,8 @@ TEST_F(RdFrameworkTestBase, rd_list_of_rd_property) {
 
     AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, list_move) {
+    RdList<int> list1;
+    RdList<int> list2(std::move(list1));
+}

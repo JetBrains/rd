@@ -186,7 +186,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
 //        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(sendBufferStopped));
 
         {
-            std::lock_guard<std::timed_mutex> _(lock);
+            std::lock_guard<std::timed_mutex> guard(lock);
             logger.debug(this->id + ": closing socket");
             catch_([this]() {
                 if (socket != nullptr) {

@@ -9,6 +9,8 @@
 #include "ExtWire.h"
 
 class RdExtBase : public RdReactiveBase {
+    std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
+    mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
 public:
     enum class ExtState {
         Ready,
@@ -16,8 +18,17 @@ public:
         Disconnected
     };
 
-    std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
-    mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
+    //region ctor/dtor
+
+    RdExtBase() = default;
+
+    RdExtBase(RdExtBase &&) = default;
+
+    RdExtBase &operator=(RdExtBase &&) = default;
+
+    virtual ~RdExtBase() = default;
+    //endregion
+
     mutable int64_t serializationHash = 0;
 
     const IProtocol *get_protocol() const override;

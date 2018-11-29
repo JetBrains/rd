@@ -54,3 +54,8 @@ TEST_F(RdFrameworkTestBase, set_statics) {
 
     AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, set_move) {
+    RdSet<int> set1;
+    RdSet<int> set2(std::move(set1));
+}

@@ -31,7 +31,8 @@ public:
 
     static RdList<V, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdList<V, S> result;
-        return withId(result, RdId::read(buffer));
+        withId(result, RdId::read(buffer));
+        return result;
     }
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {

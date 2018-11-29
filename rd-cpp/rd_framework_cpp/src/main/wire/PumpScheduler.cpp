@@ -17,7 +17,7 @@ void PumpScheduler::flush() {
 
 void PumpScheduler::queue(std::function<void()> action) {
     {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         messages.push(std::move(action));
     }
     cv.notify_all();

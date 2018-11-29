@@ -27,3 +27,7 @@ Lifetime const &Lifetime::Eternal() {
 bool operator==(Lifetime const &lw1, Lifetime const &lw2) {
     return lw1.ptr == lw2.ptr;
 }
+
+bool operator!=(Lifetime const &lw1, Lifetime const &lw2) {
+    return !(lw1 == lw2);
+}

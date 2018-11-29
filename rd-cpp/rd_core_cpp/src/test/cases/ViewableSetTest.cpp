@@ -2,9 +2,11 @@
 // Created by jetbrains on 12.07.2018.
 //
 
-#include <gtest/gtest.h>
 #include "ViewableSet.h"
+
 #include "test_util.h"
+
+#include <gtest/gtest.h>
 
 TEST (viewable_set, advise) {
     std::unique_ptr<IViewableSet<int>> set(new ViewableSet<int>());
@@ -132,4 +134,9 @@ TEST(viewable_set, add_remove_fuzz) {
         EXPECT_EQ("View " + std::to_string(i), log[i]);
         EXPECT_EQ("UnView " + std::to_string(C - i - 1), log[C + i]);
     }
+}
+
+TEST (viewable_set, move) {
+    ViewableSet<int> set1;
+    ViewableSet<int> set2(std::move(set1));
 }

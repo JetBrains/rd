@@ -123,7 +123,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
     std::vector<int> log;//concurrent?
     std::mutex lock;
     sp.advise(lifetime, [&](const int &it) {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         log.push_back(it);
     });
     for (int i = 1; i <= STEP; ++i) {
@@ -134,7 +134,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
     while (true) {
         bool x;
         {
-            std::lock_guard<std::mutex> _(lock);
+            std::lock_guard<std::mutex> guard(lock);
             x = log.size() < 6;
         }
         if (x) {

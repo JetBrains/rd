@@ -23,7 +23,7 @@ template<typename T>
 std::vector<T> convert_to_list(IViewableList<T> const &list);*/
 
 template<typename T>
-class IViewableList : public IViewable<const std::pair<size_t, T const *>> {
+class IViewableList : public IViewable<std::pair<size_t, T const *>> {
 public:
     class Event {
     public:
@@ -91,9 +91,18 @@ public:
     };
 
 protected:
-    mutable std::unordered_map<Lifetime, std::vector<LifetimeDefinition>, Lifetime::Hash> lifetimes;
+    mutable std::unordered_map<Lifetime, std::vector<LifetimeDefinition>> lifetimes;
 public:
+    //region ctor/dtor
+
+    IViewableList() = default;
+
+    IViewableList(IViewableList &&) = default;
+
+    IViewableList &operator=(IViewableList &&) = default;
+
     virtual ~IViewableList() = default;
+    //endregion
 
     void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, size_t, T const &)> handler) const {
         advise(std::move(lifetime), [handler](Event e) {

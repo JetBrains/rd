@@ -228,3 +228,8 @@ TEST_F(RdFrameworkTestBase, signal_vector) {
 
     AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, signal_move) {
+    RdSignal<int> signal1;
+    RdSignal<int> signal2(std::move(signal1));
+}

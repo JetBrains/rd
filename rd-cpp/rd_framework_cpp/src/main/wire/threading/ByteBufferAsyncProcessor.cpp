@@ -21,7 +21,7 @@ void ByteBufferAsyncProcessor::cleanup0() const {
 bool ByteBufferAsyncProcessor::terminate0(time_t timeout,
                                           ByteBufferAsyncProcessor::StateKind stateToSet,
                                           const std::string &action) const {
-    std::lock_guard<std::recursive_mutex> _(lock);
+    std::lock_guard<std::recursive_mutex> guard(lock);
     {
         if (state == StateKind::Initialized) {
             log.debug("Can't $action \'" + id + "\', because it hasn't been started yet");
@@ -55,7 +55,7 @@ bool ByteBufferAsyncProcessor::terminate0(time_t timeout,
 
 void ByteBufferAsyncProcessor::ThreadProc() const {
     while (true) {
-        std::lock_guard<std::recursive_mutex> _(lock);
+        std::lock_guard<std::recursive_mutex> guard(lock);
 
         if (state >= StateKind::Terminated) {
             return;
@@ -82,7 +82,7 @@ void ByteBufferAsyncProcessor::ThreadProc() const {
 }
 
 void ByteBufferAsyncProcessor::start() const {
-    std::lock_guard<std::recursive_mutex> _(lock);
+    std::lock_guard<std::recursive_mutex> guard(lock);
 
     if (state != StateKind::Initialized) {
         log.debug("Trying to START async processor '$id' but it's in state '$state'");
@@ -108,7 +108,7 @@ void ByteBufferAsyncProcessor::put(Buffer::ByteArray const &newData, int32_t off
 }
 
 void ByteBufferAsyncProcessor::put(Buffer::ByteArray const &newData, int32_t offset, int32_t count) {
-    std::lock_guard<std::recursive_mutex> _(lock);
+    std::lock_guard<std::recursive_mutex> guard(lock);
 
     if (state >= StateKind::Stopping)
         return;

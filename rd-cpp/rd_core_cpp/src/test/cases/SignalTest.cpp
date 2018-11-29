@@ -107,3 +107,8 @@ TEST(signal, testRecursion) {
     A.fire(nullptr);
     EXPECT_EQ(std::vector<std::string>{"A"}, log); //do we expect {"A"} or {"A", "B"} ?
 }
+
+TEST(signal, move) {
+    Signal<int> signal1;
+    Signal<int> signal2(std::move(signal1));
+}

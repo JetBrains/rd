@@ -18,7 +18,7 @@ template<typename K, typename V>
 class IViewableMap
         : public IViewable<std::pair<K const *, V const *>> {
 protected:
-    mutable std::unordered_map<Lifetime, std::unordered_map<K, LifetimeDefinition>, Lifetime::Hash> lifetimes;
+    mutable std::unordered_map<Lifetime, std::unordered_map<K, LifetimeDefinition>> lifetimes;
 public:
     class Event {
     public:
@@ -85,7 +85,16 @@ public:
         }
     };
 
+    //region ctor/dtor
+
+    IViewableMap() = default;
+
+    IViewableMap(IViewableMap &&) = default;
+
+    IViewableMap &operator=(IViewableMap &&) = default;
+
     virtual ~IViewableMap() = default;
+    //endregion
 
     void view(Lifetime lifetime,
               std::function<void(Lifetime lifetime, std::pair<K const *, V const *> const &)> handler) const override {

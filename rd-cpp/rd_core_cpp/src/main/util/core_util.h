@@ -31,6 +31,7 @@ struct KeyEqualSmartPtr {
 template<typename T>
 struct HashSmartPtr {
     using is_transparent = void;
+    using transparent_key_equal = std::equal_to<>;
 
     size_t operator()(std::unique_ptr<T> const &ptr) const noexcept {
         return std::hash<T>()(*ptr);

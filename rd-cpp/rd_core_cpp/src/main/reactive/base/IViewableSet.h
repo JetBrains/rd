@@ -15,8 +15,19 @@
 template<typename T>
 class IViewableSet : public IViewable<T> {
 protected:
-    mutable std::unordered_map<Lifetime, std::unordered_map<T, LifetimeDefinition>, Lifetime::Hash> lifetimes;
+    mutable std::unordered_map<Lifetime, std::unordered_map<T, LifetimeDefinition>> lifetimes;
 public:
+
+    //region ctor/dtor
+
+    IViewableSet() = default;
+
+    IViewableSet(IViewableSet &&) = default;
+
+    IViewableSet &operator=(IViewableSet &&) = default;
+
+    virtual ~IViewableSet() = default;
+    //endregion
 
     class Event {
     public:
@@ -25,8 +36,6 @@ public:
         AddRemove kind;
         T const *value;
     };
-
-    virtual ~IViewableSet() = default;
 
     virtual void advise(Lifetime lifetime, std::function<void(AddRemove, T const &)> handler) const {
         this->advise(lifetime, [handler](Event e) {
@@ -40,13 +49,14 @@ public:
             switch (kind) {
                 case AddRemove::ADD: {
                     /*auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));*/
-					auto const &it = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
+                    auto const &it = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
                     MY_ASSERT_MSG(it.second, "lifetime definition already exists in viewable set by key:" + to_string(key));
                     handler(it.first->second.lifetime, key);
                     break;
                 }
                 case AddRemove::REMOVE: {
-                    MY_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0, "attempting to remove non-existing lifetime in viewable set by key:" + to_string(key));
+                    MY_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0,
+                                  "attempting to remove non-existing lifetime in viewable set by key:" + to_string(key));
                     LifetimeDefinition def = std::move(lifetimes.at(lifetime).at(key));
                     lifetimes.at(lifetime).erase(key);
                     def.terminate();

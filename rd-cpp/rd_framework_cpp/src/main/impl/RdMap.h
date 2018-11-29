@@ -43,7 +43,7 @@ public:
 
     static RdMap<K, V, KS, VS> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdMap<K, V, KS, VS> res;
-        const RdId &id = RdId::read(buffer);
+        RdId id = RdId::read(buffer);
         withId(res, id);
         return res;
     }
@@ -216,5 +216,7 @@ public:
 };
 
 static_assert(std::is_move_constructible<RdMap<int, int> >::value, "Is move constructible RdMap<int, int>");
+static_assert(std::is_move_assignable<RdMap<int, int> >::value, "Is move constructible RdMap<int, int>");
+static_assert(std::is_default_constructible<RdMap<int, int> >::value, "Is default constructible RdMap<int, int>");
 
 #endif //RD_CPP_RDMAP_H

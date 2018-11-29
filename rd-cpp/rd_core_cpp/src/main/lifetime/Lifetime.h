@@ -10,18 +10,23 @@
 
 #include "LifetimeImpl.h"
 
+class Lifetime;
+
+namespace std {
+    template<>
+    struct hash<Lifetime> {
+        size_t operator()(const Lifetime &value) const noexcept;
+    };
+}
+
 class Lifetime {
 private:
     friend class LifetimeDefinition;
 
+    friend class std::hash<Lifetime>;
+
     std::shared_ptr<LifetimeImpl> ptr;
 public:
-    struct Hash {
-        size_t operator()(Lifetime const &lw) const noexcept {
-            return std::hash<std::shared_ptr<LifetimeImpl> >()(lw.ptr);
-        }
-    };
-
     static Lifetime const &Eternal();
 
     //region ctor/dtor
@@ -36,7 +41,7 @@ public:
 
     Lifetime &operator=(Lifetime &&other) noexcept = default;
 
-	~Lifetime() = default;
+    ~Lifetime() = default;
     //endregion
 
     friend bool operator==(Lifetime const &lw1, Lifetime const &lw2);
@@ -63,5 +68,8 @@ public:
     }
 };
 
+inline size_t std::hash<Lifetime>::operator()(const Lifetime &value) const noexcept {
+    return std::hash<std::shared_ptr<LifetimeImpl> >()(value.ptr);
+}
 
 #endif //RD_CPP_CORE_LIFETIMEWRAPPER_H

@@ -46,7 +46,7 @@ public:
 
     template<typename F>
     counter_t add_action(F &&action) {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
 
         if (is_eternal()) return -1;
         if (is_terminated()) throw std::invalid_argument("Already Terminated");
