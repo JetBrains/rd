@@ -3,28 +3,31 @@ package com.jetbrains.rider.util.reactive
 import com.jetbrains.rider.util.catch
 import com.jetbrains.rider.util.lifetime.Lifetime
 
-class ViewableSet<T:Any> : IMutableViewableSet<T> {
+class ViewableSet<T : Any> : IMutableViewableSet<T> {
     override fun add(element: T): Boolean {
         if (!set.add(element)) return false;
         change.fire(IViewableSet.Event(AddRemove.Add, element))
         return true;
     }
 
-    private inline fun bulkOr(elements: Collection<T>, fn: (T) -> Boolean) = elements.fold(false) { acc, elt -> acc or fn(elt)}
+    private inline fun bulkOr(elements: Collection<T>, fn: (T) -> Boolean) = 
+            elements.fold(false) { acc, elt -> acc or fn(elt) }
 
-    override fun addAll(elements: Collection<T>) = bulkOr(elements) {add(it)}
+    override fun addAll(elements: Collection<T>) = bulkOr(elements) { add(it) }
 
     override fun clear() {
-        with(iterator()) { while(hasNext()) {
-            next()
-            remove()
-        }}
+        with(iterator()) {
+            while (hasNext()) {
+                next()
+                remove()
+            }
+        }
     }
 
     override fun iterator(): MutableIterator<T> {
-        return object:MutableIterator<T> {
+        return object : MutableIterator<T> {
             val delegate = set.iterator()
-            var current : T? = null
+            var current: T? = null
             override fun remove() {
                 delegate.remove()
                 change.fire(IViewableSet.Event(AddRemove.Remove, current!!))
@@ -36,12 +39,12 @@ class ViewableSet<T:Any> : IMutableViewableSet<T> {
     }
 
     override fun remove(element: T): Boolean {
-        if (!set.remove(element)) return false;
+        if (!set.remove(element)) return false
         change.fire(IViewableSet.Event(AddRemove.Remove, element))
-        return true;
+        return true
     }
 
-    override fun removeAll(elements: Collection<T>) = bulkOr(elements) {remove(it)}
+    override fun removeAll(elements: Collection<T>) = bulkOr(elements) { remove(it) }
 
     override fun retainAll(elements: Collection<T>): Boolean {
         val iterator = iterator()

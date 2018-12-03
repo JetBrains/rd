@@ -4,7 +4,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation project(':rd-core')
+                api project(':rd-core')
             }
         }
     }
