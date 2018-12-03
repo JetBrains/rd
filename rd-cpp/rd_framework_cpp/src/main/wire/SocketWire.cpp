@@ -7,6 +7,7 @@
 #include <utility>
 #include <thread>
 
+Logger SocketWire::Base::logger;
 
 std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 

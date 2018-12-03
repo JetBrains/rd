@@ -23,7 +23,7 @@ class Lifetime {
 private:
     friend class LifetimeDefinition;
 
-    friend class std::hash<Lifetime>;
+    friend struct std::hash<Lifetime>;
 
     std::shared_ptr<LifetimeImpl> ptr;
 public:

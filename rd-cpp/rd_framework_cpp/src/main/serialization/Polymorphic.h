@@ -12,16 +12,15 @@
 
 
 template<typename T, typename R = void>
-class Polymorphic/* : public ISerializer<T>*/ {
+class Polymorphic {
 public:
     static T read(SerializationCtx const &ctx, Buffer const &buffer) {
-        return ctx.serializers->readPolymorphic<T>(ctx, buffer);
+        return T::read(ctx, buffer);
     }
 
     static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
-        ctx.serializers->writePolymorphic(ctx, buffer, value);
+        value.write(ctx, buffer);
     }
-
 };
 
 

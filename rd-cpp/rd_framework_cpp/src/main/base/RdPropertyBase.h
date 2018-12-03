@@ -23,7 +23,7 @@ protected:
 
     //init
 public:
-    mutable bool optimizeNested = false;
+    mutable bool optimize_nested = false;
 
     //region ctor/dtor
 
@@ -46,7 +46,7 @@ public:
         RdReactiveBase::init(lifetime);
 
 
-        if (!optimizeNested) {
+        if (!optimize_nested) {
             this->change.advise(lifetime, [this](T const &v) {
                 if (is_local_change) {
                     const IProtocol *iProtocol = get_protocol();
@@ -65,7 +65,7 @@ public:
             get_wire()->send(rdid, [this, &v](Buffer const &buffer) {
                 buffer.write_pod<int32_t>(master_version);
                 S::write(this->get_serialization_context(), buffer, v);
-                this->logSend.trace("property " + location.toString() + " + " + rdid.toString() +
+                logSend.trace("property " + location.toString() + " + " + rdid.toString() +
                                     ":: ver = " + std::to_string(master_version) +
                                     ", value = " + to_string(v));
             });
@@ -73,7 +73,7 @@ public:
 
         get_wire()->advise(lifetime, this);
 
-        if (!optimizeNested) {
+        if (!optimize_nested) {
             this->view(lifetime, [this](Lifetime lf, T const &v) {
                 bindPolymorphic(v, lf, this, "$");
             });

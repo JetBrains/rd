@@ -29,8 +29,8 @@ class RdReactiveBase : public RdBindableBase, public IRdReactive {
     };
 
 public:
-    Logger logReceived;
-    Logger logSend;
+    static Logger logReceived;
+	static Logger logSend;
 
     //region ctor/dtor
 

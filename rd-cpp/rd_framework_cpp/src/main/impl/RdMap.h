@@ -22,11 +22,22 @@ private:
         return master;
     }
 
+    std::string logmsg(Op op, int64_t version, K const *key, V const *value = nullptr) const {
+        return "map " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+               ":: key = " + to_string(*key) +
+               ((version > 0) ? " :: version = " + /*std::*/to_string(version) : "") +
+               " :: value = " + (value ? to_string(*value) : "");
+    }
+
+    std::string logmsg(Op op, int64_t version, K const *key, tl::optional<V> const &value) const {
+        return logmsg(op, version, key, value.has_value() ? &value.value() : nullptr);
+    }
+
 public:
 
     bool master = false;
 
-    bool optimizeNested = false;
+    bool optimize_nested = false;
 
     using Event = typename IViewableMap<K, V>::Event;
 
@@ -53,17 +64,6 @@ public:
     }
 
     static const int32_t versionedFlagShift = 8;
-
-    std::string logmsg(Op op, int64_t version, K const *key, V const *value = nullptr) const {
-        return "map " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
-               ":: key = " + to_string(*key) +
-               ((version > 0) ? " :: version = " + /*std::*/to_string(version) : "") +
-               " :: value = " + (value ? to_string(*value) : "");
-    }
-
-    std::string logmsg(Op op, int64_t version, K const *key, tl::optional<V> const &value) const {
-        return logmsg(op, version, key, value.has_value() ? &value.value() : nullptr);
-    }
 
     void init(Lifetime lifetime) const override {
         RdBindableBase::init(lifetime);
@@ -105,7 +105,7 @@ public:
 
         get_wire()->advise(lifetime, this);
 
-        if (!optimizeNested)
+        if (!optimize_nested)
             this->view(lifetime, [this](Lifetime lf, std::pair<K const *, V const *> entry) {
                 bindPolymorphic(entry.second, lf, this, "[" + to_string(*entry.first) + "]");
             });

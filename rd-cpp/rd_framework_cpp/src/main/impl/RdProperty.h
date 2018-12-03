@@ -51,7 +51,7 @@ public:
     }
 
     void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
-        RdPropertyBase<T, S>::advise(std::move(lifetime), handler);
+        RdPropertyBase<T, S>::advise(std::move(lifetime), std::move(handler));
     }
 
     RdProperty<T, S> &slave() {
@@ -62,8 +62,9 @@ public:
 
     void identify(IIdentities const &identities, RdId const &id) const override {
         RdBindableBase::identify(identities, id);
-        if (!this->optimizeNested)
+        if (!this->optimize_nested && this->has_value()) {
             identifyPolymorphic(this->get(), identities, identities.next(id));
+        }
     }
 
     friend bool operator==(const RdProperty &lhs, const RdProperty &rhs) {

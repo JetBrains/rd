@@ -11,8 +11,8 @@ bool RdBindableBase::is_bound() const {
 }
 
 void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
-    MY_ASSERT_MSG((this->parent == nullptr), ("Trying to bound already bound this to " + parent->location.toString()));
-    lf->bracket([this, lf, parent, name]() {
+    MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
+    lf->bracket([this, lf, parent, &name]() {
                     this->parent = parent;
                     location = parent->location.sub(name, ".");
                     this->bind_lifetime = lf;
@@ -28,7 +28,9 @@ void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::stri
     get_protocol()->scheduler->assert_thread();
 
     priorityAdviseSection(
-            [this, lf]() mutable { init(lf); }
+            [this, lf]() {
+                init(lf);
+            }
     );
 }
 
@@ -37,7 +39,7 @@ void RdBindableBase::identify(const IIdentities &identities, RdId const &id) con
     MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 
     this->rdid = id;
-    for (const auto &it : bindableChildren) {
+    for (const auto &it : bindable_children) {
         identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
     }
     for (const auto &it : bindable_extensions) {
@@ -46,15 +48,17 @@ void RdBindableBase::identify(const IIdentities &identities, RdId const &id) con
 }
 
 const IProtocol *RdBindableBase::get_protocol() const {
-    if (parent && parent->get_protocol()) {
-        return parent->get_protocol();
-    } else {
-        throw std::invalid_argument("Not bound");
+    if (is_bound()) {
+        auto protocol = parent->get_protocol();
+        if (protocol != nullptr) {
+            return protocol;
+        }
     }
+    throw std::invalid_argument("Not bound");
 }
 
 SerializationCtx const &RdBindableBase::get_serialization_context() const {
-    if (parent) {
+    if (is_bound()) {
         return parent->get_serialization_context();
     } else {
         throw std::invalid_argument("Not bound");
@@ -62,7 +66,7 @@ SerializationCtx const &RdBindableBase::get_serialization_context() const {
 }
 
 void RdBindableBase::init(Lifetime lifetime) const {
-    for (const auto &it : bindableChildren) {
+    for (const auto &it : bindable_children) {
         if (it.second != nullptr) {
             bindPolymorphic(*(it.second), lifetime, this, it.first);
         }

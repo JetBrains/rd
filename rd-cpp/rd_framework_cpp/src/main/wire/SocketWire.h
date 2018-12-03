@@ -26,7 +26,7 @@ class SocketWire {
 public:
     class Base : public WireBase {
     protected:
-        Logger logger;
+        static Logger logger;
 
         std::timed_mutex lock;
         mutable std::mutex send_lock;

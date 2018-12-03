@@ -22,10 +22,10 @@ UnrealEngineModel UnrealEngineModel::create(Lifetime lifetime, IProtocol * proto
 //initializer
 void UnrealEngineModel::init()
 {
-        _test_connection.optimizeNested = true;
-        _filename_to_open.optimizeNested = true;
-        bindableChildren.emplace_back("test_connection", &_test_connection);
-        bindableChildren.emplace_back("filename_to_open", &_filename_to_open);
+        _test_connection.optimize_nested = true;
+        _filename_to_open.optimize_nested = true;
+        bindable_children.emplace_back("test_connection", &_test_connection);
+        bindable_children.emplace_back("filename_to_open", &_filename_to_open);
         serializationHash = 6166018688604674907L;
 }
 

@@ -30,7 +30,7 @@ public:
 
     //endregion
 
-    bool optimizeNested = false;
+    bool optimize_nested = false;
 
     void init(Lifetime lifetime) const override {
         RdBindableBase::init(lifetime);
@@ -43,7 +43,7 @@ public:
                     buffer.writeEnum<AddRemove>(kind);
                     S::write(this->get_serialization_context(), buffer, v);
 
-                    this->logSend.trace(
+                    logSend.trace(
                             "set " + location.toString() + " " + rdid.toString() +
                             ":: " + to_string(kind) +
                             ":: " + to_string(v));

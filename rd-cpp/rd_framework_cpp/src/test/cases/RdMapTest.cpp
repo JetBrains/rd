@@ -19,8 +19,8 @@ TEST_F(RdFrameworkTestBase, rd_map_statics) {
     RdMap<int32_t, std::wstring> &serverMap = statics(server_map_storage, id);
     RdMap<int32_t, std::wstring> &clientMap = statics(client_map_storage, id);
 
-    server_map_storage.optimizeNested = true;
-    client_map_storage.optimizeNested = true;
+    server_map_storage.optimize_nested = true;
+    client_map_storage.optimize_nested = true;
 
     std::vector<std::string> logUpdate;
     clientMap.advise(Lifetime::Eternal(), [&](typename IViewableMap<int32_t, std::wstring>::Event entry) {

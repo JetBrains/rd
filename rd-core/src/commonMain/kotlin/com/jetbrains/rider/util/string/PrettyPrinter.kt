@@ -11,7 +11,7 @@ enum class Eol(val value: String) {
     none("")
 }
 
-class PrettyPrinter() {
+class PrettyPrinter {
     var step = 2
 
     var eolKind = Eol.asIs

@@ -16,6 +16,7 @@ class IRdBindable : public IRdDynamic {
 public:
     mutable RdId rdid = RdId::Null();
 
+	mutable IRdDynamic const *parent = nullptr;
     //region ctor/dtor
 
     IRdBindable() = default;

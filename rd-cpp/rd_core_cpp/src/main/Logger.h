@@ -68,14 +68,14 @@ void catch_(tl::optional<std::string> comment, F &&action) {
         action();
     }
     catch (std::exception const &e) {
-        std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + *e.what();
+        std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(e.what());
 //        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
     }
 }
 
 template<typename F>
 void catch_(F &&action) {
-    catch_({}, action);
+    catch_({}, std::forward<F>(action));
 }
 
 

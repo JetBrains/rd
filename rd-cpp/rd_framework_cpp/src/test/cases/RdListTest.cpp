@@ -18,8 +18,8 @@ TEST_F(RdFrameworkTestBase, rd_list_static) {
     statics(server_list, id);
     statics(client_list, id);
 
-    server_list.optimizeNested = true;
-    client_list.optimizeNested = true;
+    server_list.optimize_nested = true;
+    client_list.optimize_nested = true;
 
     std::vector<std::string> logUpdate;
 

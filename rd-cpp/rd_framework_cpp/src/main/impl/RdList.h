@@ -17,6 +17,14 @@ private:
     mutable int64_t nextVersion = 1;
 
     using Event = typename IViewableList<V>::Event;
+
+    std::string logmsg(Op op, int64_t version, int32_t key, V const *value = nullptr) const {
+        return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+               ":: key = " + std::to_string(key) +
+               ((version > 0) ? " :: version = " + /*std::*/to_string(version) : "") +
+               " :: value = " + (value ? to_string(*value) : "");
+    }
+
 public:
     //region ctor/dtor
 
@@ -42,14 +50,7 @@ public:
 
     static const int32_t versionedFlagShift = 2; // update when changing Op
 
-    bool optimizeNested = false;
-
-    std::string logmsg(Op op, int64_t version, int32_t key, V const *value = nullptr) const {
-        return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
-               ":: key = " + std::to_string(key) +
-               ((version > 0) ? " :: version = " + /*std::*/to_string(version) : "") +
-               " :: value = " + (value ? to_string(*value) : "");
-    }
+    bool optimize_nested = false;
 
     void init(Lifetime lifetime) const override {
         RdBindableBase::init(lifetime);
@@ -58,7 +59,7 @@ public:
             advise(lifetime, [this, lifetime](typename IViewableList<V>::Event e) {
                 if (!is_local_change) return;
 
-                if (!optimizeNested) {
+                if (!optimize_nested) {
                     V const *new_value = e.get_new_value();
                     if (new_value) {
                         const IProtocol *iProtocol = get_protocol();
@@ -77,14 +78,14 @@ public:
                     if (new_value) {
                         S::write(this->get_serialization_context(), buffer, *new_value);
                     }
-                    this->logSend.trace(logmsg(op, nextVersion - 1, e.get_index(), new_value));
+                    logSend.trace(logmsg(op, nextVersion - 1, e.get_index(), new_value));
                 });
             });
         });
 
         get_wire()->advise(lifetime, this);
 
-        if (!optimizeNested)
+        if (!optimize_nested)
             this->view(lifetime, [this](Lifetime lf, size_t index, V const &value) {
                 bindPolymorphic(value, lf, this, "[" + std::to_string(index) + "]");
             });
@@ -108,7 +109,7 @@ public:
             case Op::ADD: {
                 V value = S::read(this->get_serialization_context(), buffer);
 
-                this->logReceived.trace(logmsg(op, version, index, &value));
+                logReceived.trace(logmsg(op, version, index, &value));
 
                 (index < 0) ? list.add(std::move(value)) : list.add(static_cast<size_t>(index), std::move(value));
                 break;
@@ -116,13 +117,13 @@ public:
             case Op::UPDATE: {
                 V value = S::read(this->get_serialization_context(), buffer);
 
-                this->logReceived.trace(logmsg(op, version, index, &value));
+                logReceived.trace(logmsg(op, version, index, &value));
 
                 list.set(static_cast<size_t>(index), std::move(value));
                 break;
             }
             case Op::REMOVE: {
-                this->logReceived.trace(logmsg(op, version, index));
+                logReceived.trace(logmsg(op, version, index));
 
                 list.removeAt(static_cast<size_t>(index));
                 break;

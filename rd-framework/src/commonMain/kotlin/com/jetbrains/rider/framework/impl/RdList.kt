@@ -50,7 +50,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
             if (!optimizeNested) (it.newValueOpt)?.identifyPolymorphic(protocol.identity, protocol.identity.next(rdid))
 
-            wire.send(rdid, { buffer ->
+            wire.send(rdid) { buffer ->
                 val op = when (it) {
                     is IViewableList.Event.Add ->    Op.Add
                     is IViewableList.Event.Update -> Op.Update
@@ -62,13 +62,13 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
                 it.newValueOpt?.let { valSzr.write(serializationContext, buffer, it) }
 
                 logSend.trace { logmsg(op, nextVersion-1, it.index, it.newValueOpt) }
-            })
+            }
         }}
 
         wire.advise(lifetime, this)
 
         if (!optimizeNested)
-            view(lifetime, { lf, index, value -> value.bindPolymorphic(lf, this, "[$index]") })
+            view(lifetime) { lf, index, value -> value.bindPolymorphic(lf, this, "[$index]") }
     }
 
 
@@ -143,6 +143,6 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
     fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableList.Event<V>) -> Unit) {
         if (isBound) assertThreading()
-        list.advise(lifetime, { e -> scheduler.invokeOrQueue { handler(e) }})
+        list.advise(lifetime) { e -> scheduler.invokeOrQueue { handler(e) }}
     }
 }

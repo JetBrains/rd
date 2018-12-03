@@ -14,6 +14,11 @@
 
 template<typename T, typename S = Polymorphic<T>>
 class RdSignal : public RdReactiveBase, public ISignal<T>, public ISerializable {
+private:
+    std::string logmsg(T const &value) const {
+        return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
+    }
+
 protected:
     Signal<T> signal;
 public:
@@ -43,10 +48,6 @@ public:
         rdid.write(buffer);
     }
 
-    std::string logmsg(T const &value) const {
-        return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
-    }
-
     void init(Lifetime lifetime) const override {
         RdReactiveBase::init(lifetime);
 //        wire_scheduler = get_default_scheduler();
@@ -55,24 +56,24 @@ public:
 
     void on_wire_received(Buffer buffer) const override {
         T value = S::read(this->get_serialization_context(), buffer);
-        this->logReceived.trace(logmsg(value));
+        logReceived.trace(logmsg(value));
 
         signal.fire(value);
     }
 
-    void fire(T const &value) const {
+    void fire(T const &value) const override {
         assert_bound();
         if (!async) {
             assert_threading();
         }
         get_wire()->send(rdid, [this, &value](Buffer const &buffer) {
-            this->logSend.trace(logmsg(value));
+            logSend.trace(logmsg(value));
             S::write(get_serialization_context(), buffer, value);
         });
         signal.fire(value);
     }
 
-    void advise(Lifetime lifetime, std::function<void(const T &)> handler) const {
+    void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
         if (is_bound()) {
             assert_threading();
         }

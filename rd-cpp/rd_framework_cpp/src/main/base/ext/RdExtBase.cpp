@@ -23,11 +23,11 @@ void RdExtBase::init(Lifetime lifetime) const {
     auto sc = parentProtocol->scheduler;
     extWire->realWire = parentWire.get();
     lifetime->bracket(
-            [&]() {
+            [&] {
                 extProtocol = std::make_shared<Protocol>(parentProtocol->identity, sc,
                                                          std::dynamic_pointer_cast<IWire>(extWire));
             },
-            [this]() {
+            [this] {
                 extProtocol = nullptr;
             }
     );
@@ -46,7 +46,7 @@ void RdExtBase::init(Lifetime lifetime) const {
     );
 
 
-    for (auto const &it : bindableChildren) {
+    for (auto const &it : bindable_children) {
         bindPolymorphic(*(it.second), lifetime, this, it.first);
     }
     for (auto const &it : bindable_extensions) {
@@ -86,7 +86,7 @@ void RdExtBase::on_wire_received(Buffer buffer) const {
     }
 }
 
-void RdExtBase::sendState(IWire const &wire, RdExtBase::ExtState state) const {
+void RdExtBase::sendState(IWire const &wire, ExtState state) const {
 
     wire.send(rdid, [&](Buffer const &buffer) {
 //            logSend.traceMe(state);

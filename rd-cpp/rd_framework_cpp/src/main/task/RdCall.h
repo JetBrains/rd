@@ -135,7 +135,7 @@ private:
 
         get_wire()->send(rdid, [&](Buffer const &buffer) {
             logSend.trace("call " + location.toString() + "::" + rdid.toString() + " send" + (sync ? "SYNC" : "ASYNC") +
-                          " request " + taskId.toString() + " : ${request.printToString()} ");
+                          " request " + taskId.toString() + " : " + to_string(request));
             taskId.write(buffer);
             ReqSer::write(get_serialization_context(), buffer, request);
         });

@@ -143,7 +143,7 @@ interface IViewableMap<K : Any, V:Any> : Map<K, V>, IViewable<Map.Entry<K, V>>, 
      * The subscription is removed when the given [lifetime] expires.
      */
     fun view(lifetime: Lifetime, handler: (Lifetime, K, V) -> Unit) =
-            view(lifetime, { lf, entry -> handler(lf, entry.key, entry.value) })
+            view(lifetime) { lf, entry -> handler(lf, entry.key, entry.value) }
 }
 
 /**

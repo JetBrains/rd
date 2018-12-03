@@ -12,6 +12,8 @@
 
 std::recursive_mutex lock;
 
+Logger MessageBroker::logger;
+
 void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const {
     if (sync) {
         that->on_wire_received(std::move(msg));
@@ -25,7 +27,7 @@ void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const
             if (exists_id) {
                 that->on_wire_received(std::move(message));
             } else {
-                logger.trace("Handler for $this disappeared");
+                logger.trace("Disappeared Handler for Reactive entity with id:" + that->rdid.toString());
             }
         };
         std::function<void()> function = make_shared_function(std::move(action));

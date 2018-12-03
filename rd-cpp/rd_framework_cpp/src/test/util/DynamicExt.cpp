@@ -5,7 +5,7 @@
 #include "DynamicExt.h"
 
 DynamicExt::DynamicExt() {
-    bindableChildren.emplace_back("bar", &bar);
+    bindable_children.emplace_back("bar", &bar);
     bar.slave();
 }
 

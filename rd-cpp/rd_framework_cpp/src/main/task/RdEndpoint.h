@@ -18,12 +18,13 @@ public:
 
     RdEndpoint() = default;
 
-    explicit RdEndpoint(handler_t handler) : handler(std::move(handler)) {}
+    explicit RdEndpoint(handler_t handler) {
+		set(std::move(handler));
+    }
 
-    explicit RdEndpoint(std::function<TRes(TReq const &)> handler) : handler(
-            [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask<TRes, ResSer> {
-                return RdTask<TRes, ResSer>::from_result(handler(req));
-            }) {}
+    explicit RdEndpoint(std::function<TRes(TReq const &)> handler) {
+		set(std::move(handler));
+    }
 
     RdEndpoint(RdEndpoint &&) = default;
 
@@ -43,10 +44,15 @@ public:
         rdid.write(buffer);
     }
 
-    void set(handler_t handler) {
+    void set(handler_t handler) const {
         MY_ASSERT_MSG(handler, "handler is set already");
         this->handler = std::move(handler);
+    }
 
+	void set(std::function<TRes(TReq const &)> handler) const {
+		this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req)->RdTask<TRes, ResSer> {
+			return RdTask<TRes, ResSer>::from_result(handler(req));
+		};
     }
 
     void init(Lifetime lifetime) const override {
@@ -60,7 +66,7 @@ public:
         auto taskId = RdId::read(buffer);
         auto value = ReqSer::read(get_serialization_context(), buffer);
         logReceived.trace(
-                "endpoint " + location.toString() + " ::" + rdid.toString() + " request = ${value.printToString()}");
+                "endpoint " + location.toString() + " ::" + rdid.toString() + " request = " + to_string(value));
         if (!handler) {
             throw std::invalid_argument("handler is empty for RdEndPoint");
         }

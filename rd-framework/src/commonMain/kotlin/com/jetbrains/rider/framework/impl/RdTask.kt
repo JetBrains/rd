@@ -122,6 +122,7 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
             val task = startInternal(request, true, SynchronousScheduler)
 
             val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.maximal
+//            val effectiveTimeouts = RpcTimeouts.maximal //todo!!! RETURN BACK
 
             val freezeTime = measureTimeMillis {
                 if (!task.wait(effectiveTimeouts.errorAwaitTime) {
@@ -148,7 +149,7 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
     fun start(request: TReq) = start(request, null)
 
 
-    private fun startInternal(request: TReq, sync: Boolean, scheduler: IScheduler) : IRdTask<*> {
+    private fun startInternal(request: TReq, sync: Boolean, scheduler: IScheduler) : IRdTask<TRes> {
         assertBound()
         if (!async) assertThreading()
 

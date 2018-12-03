@@ -37,7 +37,7 @@ public:
 
     void on_wire_received(Buffer buffer) const override;
 
-    void sendState(IWire const &wire, RdExtBase::ExtState state) const;
+    void sendState(IWire const &wire, ExtState state) const;
 
     void traceMe(const Logger &logger, std::string const &message) const;
 };

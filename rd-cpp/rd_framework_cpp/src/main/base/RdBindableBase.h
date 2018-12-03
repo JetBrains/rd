@@ -11,18 +11,12 @@
 
 class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 protected:
-    mutable IRdDynamic const *parent = nullptr;
-
     mutable tl::optional<Lifetime> bind_lifetime;
-
-    //bound state: inferred
+    mutable std::vector<std::pair<std::string, IRdBindable *> > bindable_children;
 
     bool is_bound() const;
 
     const IProtocol *get_protocol() const override;
-
-    mutable std::vector<std::pair<std::string, IRdBindable *> > bindableChildren;
-    //mutable std::vector<std::pair<std::string, std::any> > nonBindableChildren;
 
     SerializationCtx const &get_serialization_context() const override;
 
@@ -33,9 +27,9 @@ public:
         location = RName("<<not bound>>");
     };
 
-    RdBindableBase(RdBindableBase &&) = default;
+    RdBindableBase(RdBindableBase &&other) = default;
 
-    RdBindableBase &operator=(RdBindableBase &&) = default;
+    RdBindableBase &operator=(RdBindableBase &&other) = default;
 
     virtual ~RdBindableBase() = default;
     //endregion
