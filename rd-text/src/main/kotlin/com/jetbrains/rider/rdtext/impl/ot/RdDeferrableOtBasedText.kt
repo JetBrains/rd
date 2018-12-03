@@ -70,4 +70,7 @@ class RdDeferrableOtBasedText(delegate: RdOtState, isMaster: Boolean = true) : R
             fire(newChange)
         }
     }
+
+    override val isQueueEmpty: Boolean
+        get() = queue.isEmpty()
 }

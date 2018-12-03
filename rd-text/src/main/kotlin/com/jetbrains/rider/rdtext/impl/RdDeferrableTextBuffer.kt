@@ -37,7 +37,7 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
 
     override fun flush() {
         protocol.scheduler.assertThread()
-        require(!queue.isEmpty(), { "!queue.isEmpty()" })
+        require(!queue.isEmpty()) { "!queue.isEmpty()" }
         RdReactiveBase.logSend.debug { "Sending queued changes" }
         try {
             for (e in queue) super.sendChange(e)
@@ -53,13 +53,15 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
     }
 
     override fun promoteLocalVersion() {
-        val promotion = RdTextChange(RdTextChangeKind.PromoteVersion, 0, "", "", -1)
-        if (queue.isNotEmpty()) {
-            queue(promotion)
-        } else {
-            fire(promotion)
+        usingTrueFlag(RdDeferrableTextBuffer::isQueueing, queue.isNotEmpty()) {
+            super.promoteLocalVersion()
         }
     }
+
+    override val isQueueEmpty get() = queue.isEmpty()
 }
 
-fun rdDeferrableSlaveTextBuffer(delegate: RdTextBufferState) = RdDeferrableTextBuffer(delegate, false)
+@Deprecated("Use normal buffer as backend counterpart", ReplaceWith("rdSlaveTextBuffer(delegate)"))
+fun rdDeferrableSlaveTextBuffer(delegate: RdTextBufferState) = rdSlaveTextBuffer(delegate)
+
+fun rdSlaveTextBuffer(delegate: RdTextBufferState) = RdTextBuffer(delegate, false)
