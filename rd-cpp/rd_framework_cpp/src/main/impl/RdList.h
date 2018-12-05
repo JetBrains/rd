@@ -24,9 +24,9 @@ private:
     }
 
 public:
-	using Event = typename IViewableList<V>::Event;
+    using Event = typename IViewableList<V>::Event;
 
-	using value_t = V;
+    using value_t = V;
     //region ctor/dtor
 
     RdList() = default;
@@ -40,10 +40,10 @@ public:
 
     static RdList<V, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdList<V, S> result;
-		int64_t next_version = buffer.read_pod<int64_t>();
-		RdId id = RdId::read(buffer);
+        int64_t next_version = buffer.read_pod<int64_t>();
+        RdId id = RdId::read(buffer);
 
-		result.next_version = next_version;
+        result.next_version = next_version;
         withId(result, std::move(id));
         return result;
     }
@@ -60,7 +60,7 @@ public:
     void init(Lifetime lifetime) const override {
         RdBindableBase::init(lifetime);
 
-        local_change([this, lifetime]() {
+        local_change([this, lifetime] {
             advise(lifetime, [this, lifetime](typename IViewableList<V>::Event e) {
                 if (!is_local_change) return;
 
@@ -90,11 +90,11 @@ public:
 
         get_wire()->advise(lifetime, this);
 
-		if (!optimize_nested) {
-			this->view(lifetime, [this](Lifetime lf, size_t index, V const &value) {
-				bindPolymorphic(value, lf, this, "[" + std::to_string(index) + "]");
-			});
-		}
+        if (!optimize_nested) {
+            this->view(lifetime, [this](Lifetime lf, size_t index, V const &value) {
+                bindPolymorphic(value, lf, this, "[" + std::to_string(index) + "]");
+            });
+        }
     }
 
     void on_wire_received(Buffer buffer) const override {
@@ -104,10 +104,10 @@ public:
         int32_t index = (buffer.read_pod<int32_t>());
 
         MY_ASSERT_MSG(version == next_version, ("Version conflict for " + location.toString() + "}. Expected version " +
-                                               std::to_string(next_version) +
-                                               ", received " +
-                                               std::to_string(version) +
-                                               ". Are you modifying a list from two sides?"));
+                                                std::to_string(next_version) +
+                                                ", received " +
+                                                std::to_string(version) +
+                                                ". Are you modifying a list from two sides?"));
 
         next_version++;
 
@@ -147,24 +147,24 @@ public:
     }
 
     bool add(V element) const override {
-        return local_change([this, element = std::move(element)]() mutable { return list.add(std::move(element)); });
+        return local_change([this, element = std::move(element)]()mutable  { return list.add(std::move(element)); });
     }
 
     bool add(size_t index, V element) const override {
         return local_change([this, index, element = std::move(element)]() mutable { return list.add(index, std::move(element)); });
     }
 
-    bool remove(V const &element) const override { return local_change([&]() { return list.remove(element); }); }
+    bool remove(V const &element) const override { return local_change([&] { return list.remove(element); }); }
 
-    V removeAt(size_t index) const override { return local_change([&]() { return list.removeAt(index); }); }
+    V removeAt(size_t index) const override { return local_change([&] { return list.removeAt(index); }); }
 
     V const &get(size_t index) const override { return list.get(index); };
 
     V set(size_t index, V element) const override {
-        return local_change([&]() { return list.set(index, std::move(element)); });
+        return local_change([&] { return list.set(index, std::move(element)); });
     }
 
-    void clear() const override { return local_change([&]() { list.clear(); }); }
+    void clear() const override { return local_change([&] { list.clear(); }); }
 
     size_t size() const override { return list.size(); }
 
@@ -173,15 +173,15 @@ public:
     std::vector<std::shared_ptr<V> > const &getList() const override { return list.getList(); }
 
     bool addAll(size_t index, std::vector<V> elements) const override {
-        return local_change([&]() mutable { return list.addAll(index, std::move(elements)); });
+        return local_change([&] { return list.addAll(index, std::move(elements)); });
     }
 
     bool addAll(std::vector<V> elements) const override {
-        return local_change([&]() mutable { return list.addAll(std::move(elements)); });
+        return local_change([&] { return list.addAll(std::move(elements)); });
     }
 
     bool removeAll(std::vector<V> elements) const override {
-        return local_change([&]() mutable { return list.removeAll(std::move(elements)); });
+        return local_change([&] { return list.removeAll(std::move(elements)); });
     }
 };
 

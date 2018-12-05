@@ -12,14 +12,14 @@ bool RdBindableBase::is_bound() const {
 
 void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
     MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
-    lf->bracket([this, lf, parent, &name]() {
-					this->parent = parent;
+    lf->bracket([this, lf, parent, &name] {
+                    this->parent = parent;
                     location = parent->location.sub(name, ".");
-					std::cerr << "THIS:" << this << " " << this->location.toString() << "\n";
+                    std::cerr << "THIS:" << this << " " << this->location.toString() << "\n";
                     this->bind_lifetime = lf;
                 },
                 [this, lf]() {
-					std::cerr << "THIS:" << this << "\n";
+                    std::cerr << "THIS:" << this << "\n";
                     this->bind_lifetime = lf;
                     location = location.sub("<<unbound>>", "::");
                     this->parent = nullptr;
@@ -36,12 +36,13 @@ void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::stri
     );
 }
 
+//must be overriden if derived class have bindable members
 void RdBindableBase::identify(const IIdentities &identities, RdId const &id) const {
     MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
     MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 
     this->rdid = id;
-	for (const auto &it : bindable_extensions) {
+    for (const auto &it : bindable_extensions) {
         identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
     }
 }

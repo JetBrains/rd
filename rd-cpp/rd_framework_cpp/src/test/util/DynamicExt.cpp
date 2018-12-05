@@ -5,7 +5,6 @@
 #include "DynamicExt.h"
 
 DynamicExt::DynamicExt() {
-    bindable_children.emplace_back("bar", &bar);
     bar.slave();
 }
 
@@ -14,6 +13,16 @@ DynamicExt::DynamicExt(RdProperty<std::wstring> bar, std::wstring debugName) : b
 
 DynamicExt::DynamicExt(std::wstring const &bar, std::wstring const &debugName) : DynamicExt(RdProperty<std::wstring>(bar),
                                                                                           debugName) {}
+
+void DynamicExt::init(Lifetime lifetime) const {
+	RdExtBase::init(lifetime);
+	bindPolymorphic(bar, lifetime, this, "bar");
+}
+
+void DynamicExt::identify(const IIdentities& identities, RdId const& id) const {
+	RdBindableBase::identify(identities, id);
+	identifyPolymorphic(bar, identities, id.mix(".bar"));
+}
 
 DynamicExt DynamicExt::read(SerializationCtx const &ctx, Buffer const &buffer) {
     throw std::invalid_argument("reading DynaimcExt is prohibited!");

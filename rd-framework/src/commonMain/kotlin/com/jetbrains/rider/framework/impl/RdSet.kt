@@ -32,12 +32,12 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
         localChange { advise(lifetime) lambda@{ kind, v ->
             if (!isLocalChange) return@lambda
 
-            wire.send(rdid, { buffer ->
+            wire.send(rdid) { buffer ->
                 buffer.writeEnum(kind)
                 valueSerializer.write(serializationContext, buffer, v)
 
                 logSend.trace { "set `$location` ($rdid) :: $kind :: ${v.printToString()} "}
-            })
+            }
         }}
 
         wire.advise(lifetime, this)

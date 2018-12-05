@@ -11,13 +11,13 @@
 #include "Polymorphic.h"
 
 template<typename T, typename S = Polymorphic<T>>
-class RdSet : public RdReactiveBase, public IViewableSet<T> {
+class RdSet : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
 protected:
     ViewableSet<T> set;
 public:
-	using Event = typename IViewableSet<T>::Event;
+    using Event = typename IViewableSet<T>::Event;
 
-	using value_type = T;
+    using value_type = T;
 
     //region ctor/dtor
 
@@ -31,12 +31,23 @@ public:
 
     //endregion
 
+    static RdSet<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+        RdSet<T, S> result;
+        RdId id = RdId::read(buffer);
+        withId(result, std::move(id));
+        return result;
+    }
+
+    void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+        rdid.write(buffer);
+    }
+
     bool optimize_nested = false;
 
     void init(Lifetime lifetime) const override {
         RdBindableBase::init(lifetime);
 
-        local_change([this, lifetime]() {
+        local_change([this, lifetime] {
             advise(lifetime, [this](AddRemove kind, T const &v) {
                 if (!is_local_change) return;
 
@@ -72,27 +83,27 @@ public:
     }
 
     bool add(T value) const override {
-        return local_change([this, value = std::move(value)]() mutable { return set.add(std::move(value)); });
+        return local_change([this, value = std::move(value)] { return set.add(std::move(value)); });
     }
 
     void clear() const override {
-        return local_change([&]() { return set.clear(); });
+        return local_change([&] { return set.clear(); });
     }
 
     bool remove(T const &value) const override {
-        return local_change([&]() { return set.remove(value); });
+        return local_change([&] { return set.remove(value); });
     }
 
     size_t size() const override {
-        return local_change([&]() { return set.size(); });
+        return local_change([&] { return set.size(); });
     }
 
     bool contains(T const &value) const override {
-        return local_change([&]() { return set.contains(value); });
+        return local_change([&] { return set.contains(value); });
     }
 
     bool empty() const override {
-        return local_change([&]() { return set.empty(); });
+        return local_change([&] { return set.empty(); });
     }
 
     void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {

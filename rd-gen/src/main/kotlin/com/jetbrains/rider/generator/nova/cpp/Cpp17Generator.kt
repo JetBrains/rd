@@ -963,7 +963,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
         val ctorParams = decl.allMembers.asSequence().map { "std::move(${it.valName()})" }.plus(unknownMemberNames(decl)).joinToString(", ")
 //        p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
-        +"${decl.name} res = ${decl.name}(${ctorParams.isNotEmpty().condstr { ctorParams }});"
+        +"${decl.name} res{${ctorParams.isNotEmpty().condstr { ctorParams }}};"
         if (decl is Class || decl is Aggregate) {
             +("withId(res, _id);")
         }
@@ -1262,7 +1262,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         def(extensionTraitDecl(decl))
         val lowerName = decl.name.decapitalize()
         block("{", "}") {
-            +"""pointcut.getOrCreateExtension<${decl.name}>("$lowerName", []() { return ${decl.name}(); });"""
+            +"""pointcut.getOrCreateExtension<${decl.name}>("$lowerName");"""
         }
         println()
     }

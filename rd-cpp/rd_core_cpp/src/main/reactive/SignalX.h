@@ -19,40 +19,40 @@ extern std::atomic<int32_t> cookie;
 template<typename T>
 class Signal : public ISignal<T> {
 private:
-	template<typename T>
-	class Event {
-	private:
-		std::function<void(T const &)> action;
-		Lifetime lifetime;
-	public:
-		//region ctor/dtor
-		Event() = delete;
 
-		template<typename F>
-		Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(std::move(lifetime)) {}
+    class Event {
+    private:
+        std::function<void(T const &)> action;
+        Lifetime lifetime;
+    public:
+        //region ctor/dtor
+        Event() = delete;
 
-		Event(Event &&) = default;
-		//endregion
+        template<typename F>
+        Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(std::move(lifetime)) {}
 
-		bool is_alive() const {
-			return !lifetime->is_terminated();
-		}
+        Event(Event &&) = default;
+        //endregion
 
-		void execute_if_alive(T const &value) const {
-			if (is_alive()) {
-				action(value);
-			}
-		}
-	};
+        bool is_alive() const {
+            return !lifetime->is_terminated();
+        }
+
+        void execute_if_alive(T const &value) const {
+            if (is_alive()) {
+                action(value);
+            }
+        }
+    };
 
     using counter_t = int32_t;
-    using listeners_t = std::map<counter_t, Event<T> >;
+    using listeners_t = std::map<counter_t, Event>;
 
     mutable counter_t advise_id = 0;
     mutable listeners_t listeners, priority_listeners;
 
     static void cleanup(listeners_t &queue) {
-        erase_if(queue, [](Event<T> const &e) -> bool { return !e.is_alive(); });
+        erase_if(queue, [](Event const &e) -> bool { return !e.is_alive(); });
     }
 
     void fire_impl(T const &value, listeners_t &queue) const {
@@ -67,7 +67,7 @@ private:
     void advise0(const Lifetime &lifetime, F &&handler, listeners_t &queue) const {
         if (lifetime->is_terminated()) return;
         counter_t id = advise_id/*.load()*/;
-        queue.emplace(id, Event<T>(std::forward<F>(handler), lifetime));
+        queue.emplace(id, Event(std::forward<F>(handler), lifetime));
         ++advise_id;
     }
 

@@ -72,7 +72,7 @@ public:
             //auto const&[scheduler, task] = request;
             auto const &scheduler = request.first;
             auto const &task = request.second;
-            scheduler->queue([&]() {
+            scheduler->queue([&] {
                 if (task.has_value()) {
                     logReceived.trace("call " + location.toString() + " " + rdid.toString() +
                                       " response was dropped, task result is: ${task.result.valueOrNull}");

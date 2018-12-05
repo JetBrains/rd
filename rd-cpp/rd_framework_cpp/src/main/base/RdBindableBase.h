@@ -12,7 +12,6 @@
 class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 protected:
     mutable tl::optional<Lifetime> bind_lifetime;
-    mutable std::vector<std::pair<std::string, IRdBindable *> > bindable_children;
 
     bool is_bound() const;
 
@@ -44,13 +43,13 @@ public:
     mutable std::map<std::string, std::shared_ptr<IRdBindable> > bindable_extensions;//todo concurrency
     //mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
 
-    template<typename T, typename F>
+    template<typename T, typename... Args>
     typename std::enable_if<std::is_base_of<IRdBindable, T>::value, T>::type const &
-    getOrCreateExtension(std::string const &name, F &&create) const {
+    getOrCreateExtension(std::string const &name, Args &&... args) const {
         if (bindable_extensions.count(name) > 0) {
             return *dynamic_cast<T const *>(bindable_extensions[name].get());
         } else {
-            std::shared_ptr<IRdBindable> new_extension = std::make_shared<T>(create());
+            std::shared_ptr<IRdBindable> new_extension = std::make_shared<T>(std::forward<Args>(args)...);
             T const &res = *dynamic_cast<T const *>(new_extension.get());
             if (bind_lifetime.has_value()) {
                 auto protocol = get_protocol();

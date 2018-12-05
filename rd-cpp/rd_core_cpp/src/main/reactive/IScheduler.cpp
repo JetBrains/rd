@@ -3,8 +3,6 @@
 //
 
 #include <functional>
-#include <thread>
-#include <cstring>
 
 #include "IScheduler.h"
 

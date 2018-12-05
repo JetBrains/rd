@@ -40,8 +40,8 @@ public:
 
     using Event = typename IViewableMap<K, V>::Event;
 
-	using key_type = K;
-	using value_type = V;
+    using key_type = K;
+    using value_type = V;
 
     //region ctor/dtor
 
@@ -191,21 +191,21 @@ public:
     }
 
     V const *get(K const &key) const override {
-        return local_change([&]() -> V const * { return map.get(key); });
+        return local_change([&] { return map.get(key); });
     }
 
     V const *set(K key, V value) const override {
-        return local_change([&]() mutable -> V const * {
+        return local_change([&] {
             return map.set(std::move(key), std::move(value));
         });
     }
 
     tl::optional<V> remove(K const &key) const override {
-        return local_change([&]() { return map.remove(key); });
+        return local_change([&] { return map.remove(key); });
     }
 
     void clear() const override {
-        return local_change([&]() { return map.clear(); });
+        return local_change([&] { return map.clear(); });
     }
 
     size_t size() const override {

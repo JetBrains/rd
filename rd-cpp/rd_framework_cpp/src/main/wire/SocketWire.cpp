@@ -237,17 +237,17 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t po
         logger.debug(this->id + ": thread expired");
     });
 
-    lifetime->add_action([this]() mutable {
+    lifetime->add_action([this] {
         logger.info(this->id + ": start terminating lifetime");
 
 //        bool sendBufferStopped = sendBuffer.stop(timeout);
 //        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(sendBufferStopped));
 
-        catch_([this]() {
+        catch_([this] {
             logger.debug(this->id + ": closing socket");
             MY_ASSERT_THROW_MSG(ss->Close(), this->id + ": failed to close socket");
         });
-        catch_([this]() {
+        catch_([this] {
             {
                 std::lock_guard<std::timed_mutex> guard(lock);
                 logger.debug(this->id + ": closing socket");

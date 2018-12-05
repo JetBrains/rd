@@ -8,7 +8,7 @@
 #include "Logger.h"
 
 #if __cplusplus < 201703L
-	LifetimeImpl::counter_t LifetimeImpl::get_id = 0;
+LifetimeImpl::counter_t LifetimeImpl::get_id = 0;
 #endif
 
 LifetimeImpl::LifetimeImpl(bool is_eternal) : eternaled(is_eternal), id(LifetimeImpl::get_id++) {}
@@ -45,9 +45,9 @@ bool LifetimeImpl::is_eternal() const {
 void LifetimeImpl::attach_nested(std::shared_ptr<LifetimeImpl> nested) {
     if (nested->is_terminated() || is_eternal()) return;
 
-    std::function<void()> action = [nested]() { nested->terminate(); };
+    std::function<void()> action = [nested] { nested->terminate(); };
     counter_t action_id = add_action(action);
-    nested->add_action([this, id = action_id]() {
+    nested->add_action([this, id = action_id] {
         actions.erase(id);
     });
 }

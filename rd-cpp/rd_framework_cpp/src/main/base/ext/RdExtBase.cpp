@@ -11,7 +11,7 @@ const IProtocol *RdExtBase::get_protocol() const {
     return extProtocol ? extProtocol.get() : RdReactiveBase::get_protocol();
 }
 
-
+//must be overriden if derived ext have bindable members
 void RdExtBase::init(Lifetime lifetime) const {
 //    Protocol.initializationLogger.traceMe { "binding" }
 
@@ -25,7 +25,7 @@ void RdExtBase::init(Lifetime lifetime) const {
     lifetime->bracket(
             [&] {
                 extProtocol = std::make_shared<Protocol>(parentProtocol->identity, sc,
-                                                         std::dynamic_pointer_cast<IWire>(extWire));
+                                                         std::static_pointer_cast<IWire>(extWire));
             },
             [this] {
                 extProtocol = nullptr;
@@ -37,15 +37,15 @@ void RdExtBase::init(Lifetime lifetime) const {
     //it's critical to advise before 'Ready' is sent because we advise on SynchronousScheduler
 
     lifetime->bracket(
-            [this, parentWire]() {
+            [this, parentWire] {
                 sendState(*parentWire, ExtState::Ready);
             },
-            [this, parentWire]() {
+            [this, parentWire] {
                 sendState(*parentWire, ExtState::Disconnected);
             }
     );
 
-	for (auto const &it : bindable_extensions) {
+    for (auto const &it : bindable_extensions) {
         bindPolymorphic(*(it.second), lifetime, this, it.first);
     }
 
@@ -85,7 +85,7 @@ void RdExtBase::on_wire_received(Buffer buffer) const {
 void RdExtBase::sendState(IWire const &wire, ExtState state) const {
 
     wire.send(rdid, [&](Buffer const &buffer) {
-//            logSend.traceMe(state);
+        // traceMe(logSend, to_string(state));
         buffer.writeEnum<ExtState>(state);
         buffer.write_pod<int64_t>(serializationHash);
     });
