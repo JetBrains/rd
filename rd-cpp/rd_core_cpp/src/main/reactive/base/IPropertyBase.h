@@ -14,7 +14,7 @@
 template<typename T>
 class IPropertyBase : public ISource<T>, public IViewable<T> {
 protected:
-    mutable tl::optional<T> value{};
+    mutable tl::optional<T> value;
 
     Signal<T> change, before_change;
 

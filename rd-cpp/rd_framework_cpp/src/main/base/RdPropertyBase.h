@@ -49,8 +49,10 @@ public:
         if (!optimize_nested) {
             this->change.advise(lifetime, [this](T const &v) {
                 if (is_local_change) {
-                    const IProtocol *iProtocol = get_protocol();
-                    identifyPolymorphic(v, *iProtocol->identity, iProtocol->identity->next(rdid));
+					if (this->has_value()) {
+						const IProtocol *iProtocol = get_protocol();
+						identifyPolymorphic(v, *iProtocol->identity, iProtocol->identity->next(rdid));						
+					}
                 }
             });
         }
@@ -75,7 +77,9 @@ public:
 
         if (!optimize_nested) {
             this->view(lifetime, [this](Lifetime lf, T const &v) {
-                bindPolymorphic(v, lf, this, "$");
+				if (this->has_value()) {
+					bindPolymorphic(v, lf, this, "$");
+				}
             });
         }
     }
@@ -91,7 +95,7 @@ public:
         master_version = version;
 
         Property<T>::set(std::move(v));
-    };
+    }
 
     void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
         if (is_bound()) {

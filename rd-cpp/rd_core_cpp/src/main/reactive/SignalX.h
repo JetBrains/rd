@@ -17,34 +17,34 @@
 extern std::atomic<int32_t> cookie;
 
 template<typename T>
-class Event {
-private:
-    std::function<void(T const &)> action;
-    Lifetime lifetime;
-public:
-    //region ctor/dtor
-    Event() = delete;
-
-    template<typename F>
-    Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(std::move(lifetime)) {}
-
-    Event(Event &&) = default;
-    //endregion
-
-    bool is_alive() const {
-        return !lifetime->is_terminated();
-    }
-
-    void execute_if_alive(T const &value) const {
-        if (is_alive()) {
-            action(value);
-        }
-    }
-};
-
-template<typename T>
 class Signal : public ISignal<T> {
 private:
+	template<typename T>
+	class Event {
+	private:
+		std::function<void(T const &)> action;
+		Lifetime lifetime;
+	public:
+		//region ctor/dtor
+		Event() = delete;
+
+		template<typename F>
+		Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(std::move(lifetime)) {}
+
+		Event(Event &&) = default;
+		//endregion
+
+		bool is_alive() const {
+			return !lifetime->is_terminated();
+		}
+
+		void execute_if_alive(T const &value) const {
+			if (is_alive()) {
+				action(value);
+			}
+		}
+	};
+
     using counter_t = int32_t;
     using listeners_t = std::map<counter_t, Event<T> >;
 

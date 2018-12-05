@@ -15,6 +15,8 @@
 template<typename T, typename S = Polymorphic<T>>
 class RdProperty : public RdPropertyBase<T, S>, public ISerializable {
 public:
+	using value_type = T;
+
     //region ctor/dtor
 
 	RdProperty() = default;

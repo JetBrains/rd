@@ -2,6 +2,7 @@ package com.jetbrains.rider.util.reactive
 
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
+import com.jetbrains.rider.util.lifetime.isAlive
 
 
 /**
@@ -65,7 +66,7 @@ interface IPropertyBase<out T> : ISource<T>, IViewable<T> {
     val change: ISource<T>
 
     override fun view(lifetime: Lifetime, handler: (Lifetime, T) -> Unit) {
-        if (lifetime.isTerminated) return
+        if (!lifetime.isAlive) return
 
         // nested lifetime is needed due to exception that could be thrown
         // while viewing a property change right at the moment of <param>lifetime</param>'s termination
@@ -73,7 +74,7 @@ interface IPropertyBase<out T> : ISource<T>, IViewable<T> {
         val lf = lifetime.createNested()
         SequentialLifetimes(lf).let {
             advise(lf) { v ->
-                if (!lf.isTerminated) handler(it.next(), v)
+                if (lf.isAlive) handler(it.next(), v)
             }
         }
     }

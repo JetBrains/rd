@@ -29,7 +29,7 @@ public:
 
 
     T const &get() const override {
-        MY_ASSERT_THROW_MSG(this->value.has_value(), "get of uninitialized value from property");
+        MY_ASSERT_THROW_MSG(this->has_value(), "get of uninitialized value from property");
         return this->value.value();
     }
 

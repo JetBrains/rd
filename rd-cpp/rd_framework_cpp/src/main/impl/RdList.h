@@ -16,8 +16,6 @@ private:
     mutable ViewableList<V> list;
     mutable int64_t nextVersion = 1;
 
-    using Event = typename IViewableList<V>::Event;
-
     std::string logmsg(Op op, int64_t version, int32_t key, V const *value = nullptr) const {
         return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
                ":: key = " + std::to_string(key) +
@@ -26,6 +24,8 @@ private:
     }
 
 public:
+	using Event = typename IViewableList<V>::Event;
+
     //region ctor/dtor
 
     RdList() = default;
@@ -85,10 +85,11 @@ public:
 
         get_wire()->advise(lifetime, this);
 
-        if (!optimize_nested)
-            this->view(lifetime, [this](Lifetime lf, size_t index, V const &value) {
-                bindPolymorphic(value, lf, this, "[" + std::to_string(index) + "]");
-            });
+		if (!optimize_nested) {
+			this->view(lifetime, [this](Lifetime lf, size_t index, V const &value) {
+				bindPolymorphic(value, lf, this, "[" + std::to_string(index) + "]");
+			});
+		}
     }
 
     void on_wire_received(Buffer buffer) const override {

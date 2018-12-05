@@ -34,12 +34,14 @@ private:
     }
 
 public:
-
     bool master = false;
 
     bool optimize_nested = false;
 
     using Event = typename IViewableMap<K, V>::Event;
+
+	using key_type = K;
+	using value_type = V;
 
     //region ctor/dtor
 

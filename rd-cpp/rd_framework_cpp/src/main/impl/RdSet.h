@@ -14,10 +14,11 @@ template<typename T, typename S = Polymorphic<T>>
 class RdSet : public RdReactiveBase, public IViewableSet<T> {
 protected:
     ViewableSet<T> set;
-
-    using Event = typename IViewableSet<T>::Event;
-
 public:
+	using Event = typename IViewableSet<T>::Event;
+
+	using value_type = T;
+
     //region ctor/dtor
 
     RdSet() = default;

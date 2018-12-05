@@ -3,6 +3,7 @@ package com.jetbrains.rider.framework
 import com.jetbrains.rider.framework.base.WireBase
 import com.jetbrains.rider.util.*
 import com.jetbrains.rider.util.lifetime.Lifetime
+import com.jetbrains.rider.util.lifetime.isAlive
 import com.jetbrains.rider.util.lifetime.plusAssign
 import com.jetbrains.rider.util.reactive.IScheduler
 import com.jetbrains.rider.util.reactive.OptProperty
@@ -146,7 +147,7 @@ class SocketWire {
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
                 try {
-                    while (!lifetime.isTerminated) {
+                    while (lifetime.isAlive) {
                         try {
                             val s = Socket()
                             s.tcpNoDelay = true
@@ -159,7 +160,7 @@ class SocketWire {
                             s.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), port))
 
                             synchronized(lock) {
-                                if (lifetime.isTerminated)
+                                if (!lifetime.isAlive)
                                     catch {s.close()}
                                 else
                                     socket = s
@@ -169,9 +170,9 @@ class SocketWire {
 
                         } catch (e: ConnectException) {
                             val shouldReconnect = synchronized(lock) {
-                                if (!lifetime.isTerminated) {
+                                if (lifetime.isAlive) {
                                     lock.wait(timeout.toMillis())
-                                    !lifetime.isTerminated
+                                    lifetime.isAlive
                                 } else false
 
                             }
@@ -221,7 +222,7 @@ class SocketWire {
                     s.tcpNoDelay = true
 
                     synchronized(lock) {
-                        if (lifetime.isTerminated)
+                        if (!lifetime.isAlive)
                             catch {s.close()}
                         else
                             socket = s
