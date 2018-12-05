@@ -3,6 +3,7 @@ package com.jetbrains.rider.util.reactive
 import com.jetbrains.rider.util.lifetime.Lifetime
 import com.jetbrains.rider.util.lifetime.SequentialLifetimes
 import com.jetbrains.rider.util.lifetime.isAlive
+import com.jetbrains.rider.util.lifetime.onTermination
 
 
 /**
@@ -110,7 +111,7 @@ interface IOptPropertyView<out T : Any> : IPropertyBase<T> {
     val valueOrNull: T?
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
-        if (lifetime.isTerminated)
+        if (!lifetime.isAlive)
             return
 
         change.advise(lifetime, handler)
@@ -180,7 +181,7 @@ interface IProperty<T> : IPropertyView<T>, IMutablePropertyBase<T> {
  */
 fun <T> IProperty<T?>.setValue(lifetime: Lifetime, value: T?) {
     this.value = value
-    lifetime.add {
+    lifetime.onTermination {
         this.value = null
     }
 } //for backward compatibility

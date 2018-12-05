@@ -15,8 +15,6 @@ class IRdDynamic;
 
 class IProtocol : public IRdDynamic {
 public:
-    IProtocol() = default;
-
     Serializers serializers;
     std::shared_ptr<IIdentities> identity;
     IScheduler *scheduler;
@@ -24,6 +22,8 @@ public:
     SerializationCtx context;
 
     //region ctor/dtor
+	
+	IProtocol() = default;
 
     IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 

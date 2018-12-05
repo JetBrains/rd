@@ -9,14 +9,14 @@ val IOptPropertyView<Boolean>.hasTrueValue: Boolean
  * Executes the given [action] every time the value of the property changes to true.
  */
 fun IViewable<Boolean>.whenTrue(lifetime: Lifetime, action: (Lifetime) -> Unit) {
-    view(lifetime, {lf, flag -> if (flag) action(lf)})
+    view(lifetime) { lf, flag -> if (flag) action(lf)}
 }
 
 /**
  * Executes the given [action] every time the value of the property changes to false.
  */
 fun IViewable<Boolean>.whenFalse(lifetime: Lifetime, action: (Lifetime) -> Unit) {
-    view(lifetime, {lf, flag -> if (!flag) action(lf)})
+    view(lifetime) { lf, flag -> if (!flag) action(lf)}
 }
 
 fun IOptPropertyView<Boolean>.and(other: IOptPropertyView<Boolean>) =

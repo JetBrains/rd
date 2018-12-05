@@ -485,7 +485,16 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             +"public:"
             declare(writerTraitDecl(decl))
 
+            comment("virtual init")
+            +"public:"
+            declare(virtualInitTraitDecl(decl))
+
+            comment("identify")
+            +"public:"
+            declare(identifyTraitDecl(decl))
+
             comment("getters")
+            +"public:"
             gettersTraitDecl(decl)
 
             comment("equals trait")
@@ -645,7 +654,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
 
-    private fun PrettyPrinter.createMethodTraitDecl(decl: Toplevel): Signature? {
+    private fun createMethodTraitDecl(decl: Toplevel): Signature? {
         if (decl.isExtension) return null
         return Signature("void", "connect(Lifetime lifetime, IProtocol * protocol)", decl.name)
     }
@@ -698,7 +707,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
 
-    private fun PrettyPrinter.extensionTraitDecl(decl: Ext): Signature? {
+    private fun extensionTraitDecl(decl: Ext): Signature? {
         val pointcut = decl.pointcut ?: return null
         val lowerName = decl.name.decapitalize()
         val extName = decl.extName ?: lowerName
@@ -717,7 +726,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +own.asSequence().plus(unknownMembers(decl)).joinToString(separator = "") { "$it${carry()}" }
     }
 
-    fun PrettyPrinter.initializerTraitDecl(decl: Declaration): Signature {
+    fun initializerTraitDecl(decl: Declaration): Signature {
         return Signature("void", "initialize()", decl.name)
     }
 
@@ -755,7 +764,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"virtual ~$name() = default;"
     }
 
-    fun readerTraitDecl(decl: Declaration): Signature? {
+    private fun readerTraitDecl(decl: Declaration): Signature? {
         if (decl.isConcrete) {
             return Signature(decl.name, "read(SerializationCtx const& ctx, Buffer const & buffer)", decl.name).static()
         } else if (decl.isAbstract) {
@@ -765,7 +774,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         return null
     }
 
-    fun writerTraitDecl(decl: Declaration): Signature? {
+    private fun writerTraitDecl(decl: Declaration): Signature? {
         if (decl.isConcrete) {
             return Signature("void", "write(SerializationCtx const& ctx, Buffer const& buffer)", decl.name).const().override()
         } else {
@@ -774,8 +783,21 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
+    private fun virtualInitTraitDecl(decl: Declaration): Signature? {
+        if (decl !is BindableDeclaration) {
+            return null
+        }
+        return Signature("void", "init(Lifetime lifetime)", decl.name).const().override()
+    }
+
+    private fun identifyTraitDecl(decl: Declaration): Signature? {
+        if (decl !is BindableDeclaration) {
+            return null
+        }
+        return Signature("void", "identify(const IIdentities &identities, RdId const &id)", decl.name).const().override()
+    }
+
     fun PrettyPrinter.gettersTraitDecl(decl: Declaration) {
-        +"public:"
         for (member in decl.ownMembers) {
             p(docComment(member.documentation))
             +"${member.intfSubstitutedName(decl)} const & get_${member.publicName}() const;"
@@ -850,6 +872,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
         comment("writer")
         writerTraitDef(decl)
+
+        comment("virtual init")
+        virtualInitTraitDef(decl)
+
+        comment("identify")
+        identifyTraitDef(decl)
 
         comment("getters")
         gettersTraitDef(decl)
@@ -1083,6 +1111,31 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
+    fun PrettyPrinter.virtualInitTraitDef(decl: Declaration) {
+        virtualInitTraitDecl(decl)?.let {
+            def(it)
+            block("{", "}") {
+                val base = (if (decl is Ext) "RdExtBase" else "RdBindableBase")
+                +"$base::init(lifetime);"
+                decl.ownMembers
+                        .filter { it.isBindable }
+                        .println { """bindPolymorphic(${it.encapsulatedName}, lifetime, this, "${it.name}");""" }
+            }
+        }
+    }
+
+    fun PrettyPrinter.identifyTraitDef(decl: Declaration) {
+        identifyTraitDecl(decl)?.let {
+            def(it)
+            block("{", "}") {
+                +"RdBindableBase::identify(identities, id);"
+                decl.ownMembers
+                        .filter { it.isBindable }
+                        .println { """identifyPolymorphic(${it.encapsulatedName}, identities, id.mix(".${it.name}"));""" }
+            }
+        }
+    }
+
     protected fun PrettyPrinter.gettersTraitDef(decl: Declaration) {
         for (member in decl.ownMembers/*.filter { it.isEncapsulated }*/) {
             p(docComment(member.documentation))
@@ -1119,9 +1172,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     .filter { it.freeThreaded }
                     .println { "${it.encapsulatedName}.async = true;" }
 
-            decl.ownMembers
+            /*decl.ownMembers
                     .filter { it.isBindable }
-                    .println { """bindable_children.emplace_back("${it.name}", &${it.encapsulatedName});""" }
+                    .println { """bindable_children.emplace_back("${it.name}", &${it.encapsulatedName});""" }*/
 
             if (decl is Toplevel) {
                 +"serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L;"
@@ -1270,4 +1323,3 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             PredefinedType.bool
     )
 }
-

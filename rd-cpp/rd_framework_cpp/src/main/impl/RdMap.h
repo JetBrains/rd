@@ -15,7 +15,7 @@ template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Pol
 class RdMap : public RdReactiveBase, public IViewableMap<K, V>, public ISerializable {
 private:
     ViewableMap<K, V> map;
-    mutable int64_t nextVersion = 0;
+    mutable int64_t next_version = 0;
     mutable std::unordered_map<K, int64_t> pendingForAck;
 
     bool is_master() const {
@@ -86,7 +86,7 @@ public:
 
                     buffer.write_pod<int32_t>(static_cast<int32_t>(op) | versionedFlag);
 
-                    int64_t version = is_master() ? ++nextVersion : 0L;
+                    int64_t version = is_master() ? ++next_version : 0L;
 
                     if (is_master()) {
                         pendingForAck.insert(std::make_pair(*e.get_key(), version));
@@ -100,7 +100,7 @@ public:
                         VS::write(this->get_serialization_context(), buffer, *new_value);
                     }
 
-                    logSend.trace(logmsg(op, nextVersion - 1, e.get_key(), new_value));
+                    logSend.trace(logmsg(op, next_version - 1, e.get_key(), new_value));
                 });
             });
         });

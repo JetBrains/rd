@@ -45,11 +45,7 @@ void RdExtBase::init(Lifetime lifetime) const {
             }
     );
 
-
-    for (auto const &it : bindable_children) {
-        bindPolymorphic(*(it.second), lifetime, this, it.first);
-    }
-    for (auto const &it : bindable_extensions) {
+	for (auto const &it : bindable_extensions) {
         bindPolymorphic(*(it.second), lifetime, this, it.first);
     }
 

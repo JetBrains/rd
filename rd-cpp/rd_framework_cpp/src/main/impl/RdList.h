@@ -14,7 +14,7 @@ template<typename V, typename S = Polymorphic<V>>
 class RdList : public RdReactiveBase, public IViewableList<V>, public ISerializable {
 private:
     mutable ViewableList<V> list;
-    mutable int64_t nextVersion = 1;
+    mutable int64_t next_version = 1;
 
     std::string logmsg(Op op, int64_t version, int32_t key, V const *value = nullptr) const {
         return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
@@ -26,6 +26,7 @@ private:
 public:
 	using Event = typename IViewableList<V>::Event;
 
+	using value_t = V;
     //region ctor/dtor
 
     RdList() = default;
@@ -39,12 +40,16 @@ public:
 
     static RdList<V, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdList<V, S> result;
-        withId(result, RdId::read(buffer));
+		int64_t next_version = buffer.read_pod<int64_t>();
+		RdId id = RdId::read(buffer);
+
+		result.next_version = next_version;
+        withId(result, std::move(id));
         return result;
     }
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-        buffer.write_pod<int64_t>(nextVersion);
+        buffer.write_pod<int64_t>(next_version);
         rdid.write(buffer);
     }
 
@@ -71,14 +76,14 @@ public:
                 get_wire()->send(rdid, [this, e](Buffer const &buffer) {
                     Op op = static_cast<Op >(e.v.index());
 
-                    buffer.write_pod<int64_t>(static_cast<int64_t>(op) | (nextVersion++ << versionedFlagShift));
+                    buffer.write_pod<int64_t>(static_cast<int64_t>(op) | (next_version++ << versionedFlagShift));
                     buffer.write_pod<int32_t>(static_cast<const int32_t>(e.get_index()));
 
                     V const *new_value = e.get_new_value();
                     if (new_value) {
                         S::write(this->get_serialization_context(), buffer, *new_value);
                     }
-                    logSend.trace(logmsg(op, nextVersion - 1, e.get_index(), new_value));
+                    logSend.trace(logmsg(op, next_version - 1, e.get_index(), new_value));
                 });
             });
         });
@@ -98,13 +103,13 @@ public:
         Op op = static_cast<Op>((header & ((1 << versionedFlagShift) - 1L)));
         int32_t index = (buffer.read_pod<int32_t>());
 
-        MY_ASSERT_MSG(version == nextVersion, ("Version conflict for " + location.toString() + "}. Expected version " +
-                                               std::to_string(nextVersion) +
+        MY_ASSERT_MSG(version == next_version, ("Version conflict for " + location.toString() + "}. Expected version " +
+                                               std::to_string(next_version) +
                                                ", received " +
                                                std::to_string(version) +
                                                ". Are you modifying a list from two sides?"));
 
-        nextVersion++;
+        next_version++;
 
         switch (op) {
             case Op::ADD: {

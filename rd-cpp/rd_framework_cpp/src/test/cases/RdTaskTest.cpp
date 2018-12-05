@@ -49,7 +49,7 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
     bindStatic(serverProtocol.get(), server_entity, "top");
     bindStatic(clientProtocol.get(), client_entity, "top");
 
-    std::wstring source(10'000'000, '5');
+    std::wstring source(10'000, '5');
 
     EXPECT_EQ(std::hash<std::wstring>()(source), client_entity.sync(source));
 

@@ -87,7 +87,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
             if (newExtension is IRdBindable) {
                 bindableChildren.add(name to newExtension)
                 bindLifetime?.let {
-                    newExtension.identify(protocol.identity, rdid.mix("." + name))
+                    newExtension.identify(protocol.identity, rdid.mix(".$name"))
                     newExtension.bind(it, this, name)
                 }
             }
