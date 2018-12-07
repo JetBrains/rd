@@ -70,6 +70,8 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     inline private fun <reified T> readArray(arrayBase: Int, arrayStride: Int, arrayCtor: (Int) -> T): T {
         val len = readInt()
 
+        checkAvailable(len * arrayStride)
+
         val arr = arrayCtor(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, arrayBase.toLong(), len * arrayStride.toLong())
         offset += len * arrayStride.toLong()
@@ -79,6 +81,8 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     @Suppress("unused")
     inline private fun writeArray(arrayBase: Int, arrayStride: Int, array: Any, len: Int) {
         writeInt(len)
+
+        requireAvailable(len * arrayStride.toLong())
 
         unsafe.copyMemory(array, arrayBase.toLong(), byteBufferMemoryBase, memory + offset, len * arrayStride.toLong())
         offset += len * arrayStride.toLong()
@@ -286,6 +290,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
 
     override fun readCharArray(): CharArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_CHAR_INDEX_SCALE)
         val arr = CharArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_CHAR_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_CHAR_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_CHAR_INDEX_SCALE.toLong()
@@ -293,12 +298,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeCharArray(array: CharArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_CHAR_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_CHAR_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_CHAR_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_CHAR_INDEX_SCALE.toLong()
     }
 
     override fun readShortArray(): ShortArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_SHORT_INDEX_SCALE)
         val arr = ShortArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_SHORT_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_SHORT_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_SHORT_INDEX_SCALE.toLong()
@@ -306,12 +313,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeShortArray(array: ShortArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_SHORT_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_SHORT_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_SHORT_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_SHORT_INDEX_SCALE.toLong()
     }
 
     override fun readIntArray(): IntArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_INT_INDEX_SCALE)
         val arr = IntArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_INT_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_INT_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_INT_INDEX_SCALE.toLong()
@@ -319,12 +328,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeIntArray(array: IntArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_INT_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_INT_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_INT_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_INT_INDEX_SCALE.toLong()
     }
 
     override fun readLongArray(): LongArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_LONG_INDEX_SCALE)
         val arr = LongArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_LONG_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_LONG_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_LONG_INDEX_SCALE.toLong()
@@ -332,12 +343,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeLongArray(array: LongArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_LONG_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_LONG_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_LONG_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_LONG_INDEX_SCALE.toLong()
     }
 
     override fun readFloatArray(): FloatArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_FLOAT_INDEX_SCALE)
         val arr = FloatArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_FLOAT_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_FLOAT_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_FLOAT_INDEX_SCALE.toLong()
@@ -345,12 +358,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeFloatArray(array: FloatArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_FLOAT_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_FLOAT_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_FLOAT_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_FLOAT_INDEX_SCALE.toLong()
     }
 
     override fun readDoubleArray(): DoubleArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_DOUBLE_INDEX_SCALE)
         val arr = DoubleArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_DOUBLE_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_DOUBLE_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_DOUBLE_INDEX_SCALE.toLong()
@@ -358,12 +373,14 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeDoubleArray(array: DoubleArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_DOUBLE_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_DOUBLE_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_DOUBLE_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_DOUBLE_INDEX_SCALE.toLong()
     }
 
     override fun readBooleanArray(): BooleanArray {
         val len = readInt()
+        checkAvailable(len * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE)
         val arr = BooleanArray(len)
         unsafe.copyMemory(byteBufferMemoryBase, memory + offset, arr, Unsafe.ARRAY_BOOLEAN_BASE_OFFSET.toLong(), len * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE.toLong())
         offset += len * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE.toLong()
@@ -371,6 +388,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
     override fun writeBooleanArray(array: BooleanArray) {
         writeInt(array.size)
+        requireAvailable(array.size * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE.toLong())
         unsafe.copyMemory(array, Unsafe.ARRAY_BOOLEAN_BASE_OFFSET.toLong(), byteBufferMemoryBase, memory + offset, array.size * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE.toLong())
         offset += array.size * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE.toLong()
     }
