@@ -10,6 +10,8 @@
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 template<typename T, typename S = Polymorphic<T>>
 class RdSet : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
 protected:
@@ -115,6 +117,8 @@ public:
 
     using IViewableSet<T>::advise;
 };
+
+#pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdSet<int> >::value, "Is move constructible RdSet<int>");
 

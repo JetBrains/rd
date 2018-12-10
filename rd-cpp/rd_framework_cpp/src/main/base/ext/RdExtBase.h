@@ -8,6 +8,8 @@
 #include "RdReactiveBase.h"
 #include "ExtWire.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 class RdExtBase : public RdReactiveBase {
     std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
     mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
@@ -41,6 +43,6 @@ public:
 
     void traceMe(const rd::Logger &logger, std::string const &message) const;
 };
-
+#pragma warning( pop )
 
 #endif //RD_CPP_RDEXTBASE_H

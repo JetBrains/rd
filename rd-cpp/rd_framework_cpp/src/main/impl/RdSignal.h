@@ -12,6 +12,8 @@
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 template<typename T, typename S = Polymorphic<T>>
 class RdSignal : public RdReactiveBase, public ISignal<T>, public ISerializable {
 private:
@@ -80,6 +82,8 @@ public:
         signal.advise(lifetime, handler);
     }
 };
+
+#pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdSignal<int>>::value, "Is not move constructible from RdSignal<int>");
 

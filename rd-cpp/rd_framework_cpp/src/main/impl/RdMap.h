@@ -11,6 +11,8 @@
 
 #include <cstdint>
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>>
 class RdMap : public RdReactiveBase, public IViewableMap<K, V>, public ISerializable {
 private:
@@ -216,6 +218,8 @@ public:
         return map.empty();
     }
 };
+
+#pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdMap<int, int> >::value, "Is move constructible RdMap<int, int>");
 static_assert(std::is_move_assignable<RdMap<int, int> >::value, "Is move constructible RdMap<int, int>");

@@ -10,6 +10,8 @@
 #include "Polymorphic.h"
 #include "SerializationCtx.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 template<typename V, typename S = Polymorphic<V>>
 class RdList : public RdReactiveBase, public IViewableList<V>, public ISerializable {
 private:
@@ -184,7 +186,7 @@ public:
         return local_change([&] { return list.removeAll(std::move(elements)); });
     }
 };
-
+#pragma warning( pop )
 static_assert(std::is_move_constructible<RdList<int> >::value, "Is move constructible RdList<int>");
 
 #endif //RD_CPP_RDLIST_H
