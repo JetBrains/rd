@@ -11,6 +11,6 @@ void ISerializersOwner::registry(Serializers const &serializers) {
 //    if (!serializers.toplevels.add(key)) return
 //todo
 
-    Protocol::initializationLogger.trace("REGISTER serializers for ${key.simpleName}");
+//    Protocol::initializationLogger.trace("REGISTER serializers for ${key.simpleName}");
     registerSerializersCore(serializers);
 }

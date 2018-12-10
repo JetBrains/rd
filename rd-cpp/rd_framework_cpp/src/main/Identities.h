@@ -33,12 +33,12 @@ private:
     mutable int32_t id_acc;
 public:
 
-    static IdKind SERVER;
-    static IdKind CLIENT;
+	constexpr static IdKind SERVER = IdKind::Server;
+	constexpr static IdKind CLIENT = IdKind::Client;
 
-    static const int32_t BASE_CLIENT_ID = RdId::MAX_STATIC_ID;
+    constexpr static const int32_t BASE_CLIENT_ID = RdId::MAX_STATIC_ID;
 
-    static const int32_t BASE_SERVER_ID = RdId::MAX_STATIC_ID + 1;
+	constexpr static const int32_t BASE_SERVER_ID = RdId::MAX_STATIC_ID + 1;
 
     //region ctor/dtor
 

@@ -8,25 +8,11 @@ import java.io.File
 
 object DemoRoot : Root(
         Kotlin11Generator(FlowTransform.Reversed, "org.example", File(syspropertyOrEmpty("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.Reversed, "org.example", File(syspropertyOrEmpty("model.out.src.cpp.dir")))
+        Cpp17Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrEmpty("model.out.src.cpp.dir")))
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
 )
 
 object DemoModel : Ext(DemoRoot) {
-    private var MyList = classdef {
-        list("list", PredefinedType.string)
-    }
-
-    private var MyState = classdef {
-        property("enumProperty", enum("") {
-            +"NONE"
-            +"ONE"
-            +"TWO"
-            +"THREE"
-        })
-        property("string_property", "1")
-    }
-
     private var MyScalar = structdef {
         field("sign_", PredefinedType.bool)
         field("byte_", PredefinedType.byte)
@@ -37,41 +23,23 @@ object DemoModel : Ext(DemoRoot) {
 //        field("double_", PredefinedType.double)
     }
 
-//    private var MyExt = Ext(, extName = "ext")
-
     init {
-        signal("voidSignal", PredefinedType.void)
-
-        property("propertyList", MyList)
-
-        map("mapLongToString", PredefinedType.long, PredefinedType.string)
-
-        property("state", MyState)
-
-        call("callCharToString", PredefinedType.char, PredefinedType.string)
-
-        property("propertyOfArray", array(PredefinedType.char))
-
         property("scalar", MyScalar)
+
+        list("list", PredefinedType.int)
 
         set("set", PredefinedType.int)
 
+        map("mapLongToString", PredefinedType.long, PredefinedType.string)
 
+        call("call", PredefinedType.char, PredefinedType.string)
+
+        callback("callback", PredefinedType.string, PredefinedType.int);
     }
 }
 
-object ExtModel: Ext(DemoModel) {
-    private val ColorChooserParam = structdef {
-        field("caption", PredefinedType.string.nullable)
-    }
-
-    private val ColorChooserSession = classdef("ColorChooserSession") {
-        field("param", ColorChooserParam)
-        signal("colorChanged", PredefinedType.void)
-    }
-
+object ExtModel : Ext(DemoModel) {
     init {
-//        list("ColorList", ColorChooserSession)
-        signal("checkExtension", PredefinedType.void)
+        signal("checker", PredefinedType.void)
     }
 }

@@ -76,12 +76,12 @@ public:
 
         //region ctor/dtor
 
+        Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
+
         virtual ~Client() = default;
         //endregion
 
         std::condition_variable_any cv;
-
-        Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
     };
 
     class Server : public Base {
@@ -92,10 +92,10 @@ public:
 
         //region ctor/dtor
 
+        Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
+
         virtual ~Server() = default;
         //endregion
-
-        Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
     };
 
 };

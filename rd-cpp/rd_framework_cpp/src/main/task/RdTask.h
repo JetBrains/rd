@@ -14,9 +14,11 @@
 
 template<typename T, typename S = Polymorphic<T> >
 class RdTask {
-
+private:
     mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
 public:
+
+    using result_type = RdTaskResult<T, S>;
 
     static RdTask<T, S> from_result(T value) {
         RdTask<T, S> res;
