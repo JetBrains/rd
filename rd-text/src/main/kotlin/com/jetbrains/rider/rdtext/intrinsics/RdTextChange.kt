@@ -36,8 +36,10 @@ class RdTextChange(val kind: RdTextChangeKind,
     override fun toString(): String = this.printToString()
 }
 
+val RdTextChange.isNormalChange: Boolean get() = kind != RdTextChangeKind.Reset && kind != RdTextChangeKind.PromoteVersion
+
 fun RdTextChange.delta(): Int {
-    if (RdTextChangeKind.Reset == kind) throw UnsupportedOperationException()
+    if (!isNormalChange) throw UnsupportedOperationException()
     return new.length - old.length
 }
 
@@ -54,7 +56,7 @@ fun RdTextChange.reverse(): RdTextChange {
 }
 
 fun RdTextChange.assertDocumentLength(current: Int) {
-    if (RdTextChangeKind.Reset == kind) return
+    if (!isNormalChange) return
 
     val actualLength = current + delta()
     val expectedLength = fullTextLength

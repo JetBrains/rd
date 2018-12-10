@@ -35,6 +35,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     object Intrinsic : SettingWithDefault<CSharpIntrinsicMarshaller, Declaration>(CSharpIntrinsicMarshaller.default)
     object PublicCtors: ISetting<Unit, Declaration>
     object Partial : ISetting<Unit, Declaration>
+    object DontRegisterAllSerializers: ISetting<Unit, Toplevel>
 
 
     protected val IType.isPrimitivesArray : Boolean get() =
@@ -467,12 +468,14 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             }
             println()
 
-            val invocationPattern = { typeName : String -> "serializers.RegisterToplevelOnce(typeof($typeName), $typeName.RegisterDeclaredTypesSerializers);"}
+            if (decl.getSetting(DontRegisterAllSerializers) == null) {
+                val invocationPattern = { typeName: String -> "serializers.RegisterToplevelOnce(typeof($typeName), $typeName.RegisterDeclaredTypesSerializers);" }
 
-            if (decl is Root) {
-                decl.toplevels.println { invocationPattern (it.sanitizedName(decl))}
-            } else {
-                + invocationPattern(decl.root.sanitizedName(decl))
+                if (decl is Root) {
+                    decl.toplevels.println { invocationPattern(it.sanitizedName(decl)) }
+                } else {
+                    +invocationPattern(decl.root.sanitizedName(decl))
+                }
             }
         }
         + "}"
