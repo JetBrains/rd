@@ -44,7 +44,7 @@ bool ByteBufferAsyncProcessor::terminate0(time_t timeout,
     bool res = asyncProcessingThread.joinable();
 
     if (!res) {
-        catch_([&]() {
+		rd::catch_([&]() {
 //                asyncProcessingThread.stop();
         });
     }

@@ -91,6 +91,6 @@ void RdExtBase::sendState(IWire const &wire, ExtState state) const {
     });
 }
 
-void RdExtBase::traceMe(const Logger &logger, std::string const &message) const {
+void RdExtBase::traceMe(const rd::Logger &logger, std::string const &message) const {
     logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message);
 }

@@ -4,8 +4,8 @@
 
 #include "RdReactiveBase.h"
 
-Logger RdReactiveBase::logReceived;
-Logger RdReactiveBase::logSend;
+rd::Logger RdReactiveBase::logReceived;
+rd::Logger RdReactiveBase::logSend;
 
 RdReactiveBase::RdReactiveBase(RdReactiveBase &&other) : RdBindableBase(std::move(other))/*, async(other.async)*/ {
     async = other.async;

@@ -26,7 +26,7 @@ public:
 
     const IProtocol *get_protocol() const override;
 
-    static const Logger initializationLogger;
+    static const rd::Logger initializationLogger;
 };
 
 

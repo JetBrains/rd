@@ -11,7 +11,7 @@
 #include "Logger.h"
 
 class IScheduler {
-    static Logger logger;
+    static rd::Logger logger;
 public:
     virtual void queue(std::function<void()> action) = 0;
 

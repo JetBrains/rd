@@ -29,7 +29,7 @@ private:
     mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
     mutable std::unordered_map<RdId, Mq> broker;
 
-    static Logger logger;
+    static rd::Logger logger;
 
     void invoke(const IRdReactive *that, Buffer msg, bool sync = false) const;
 

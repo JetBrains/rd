@@ -4,7 +4,7 @@
 
 #include "Protocol.h"
 
-const Logger Protocol::initializationLogger;
+const rd::Logger Protocol::initializationLogger;
 
 const IProtocol *Protocol::get_protocol() const {
     return this;

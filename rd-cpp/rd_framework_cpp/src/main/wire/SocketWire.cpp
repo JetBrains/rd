@@ -7,7 +7,7 @@
 #include <utility>
 #include <thread>
 
-Logger SocketWire::Base::logger;
+rd::Logger SocketWire::Base::logger;
 
 std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
@@ -155,7 +155,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
                     {
                         std::lock_guard<std::timed_mutex> guard(lock);
                         if (lifetime->is_terminated()) {
-                            catch_([this]() { socket->Close(); });
+                            rd::catch_([this]() { socket->Close(); });
                         }
                     }
 
@@ -189,7 +189,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
         {
             std::lock_guard<std::timed_mutex> guard(lock);
             logger.debug(this->id + ": closing socket");
-            catch_([this]() {
+            rd::catch_([this]() {
                 if (socket != nullptr) {
                     MY_ASSERT_THROW_MSG(socket->Close(), this->id + ": failed to close socket");
                 }
@@ -221,7 +221,7 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t po
             {
                 std::lock_guard<std::timed_mutex> guard(lock);
                 if (lifetime->is_terminated()) {
-                    catch_([this]() {
+                    rd::catch_([this]() {
                         logger.debug(this->id + ": closing passive socket");
                         MY_ASSERT_THROW_MSG(socket->Close(), this->id + ": failed to close socket");
                         logger.info(this->id + ": close passive socket");
@@ -243,11 +243,11 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t po
 //        bool sendBufferStopped = sendBuffer.stop(timeout);
 //        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(sendBufferStopped));
 
-        catch_([this] {
+        rd::catch_([this] {
             logger.debug(this->id + ": closing socket");
             MY_ASSERT_THROW_MSG(ss->Close(), this->id + ": failed to close socket");
         });
-        catch_([this] {
+		rd::catch_([this] {
             {
                 std::lock_guard<std::timed_mutex> guard(lock);
                 logger.debug(this->id + ": closing socket");

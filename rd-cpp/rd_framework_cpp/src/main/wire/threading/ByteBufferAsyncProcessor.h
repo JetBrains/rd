@@ -51,7 +51,7 @@ class ByteBufferAsyncProcessor {
     std::function<void(ByteArraySlice)> processor;
 
     mutable StateKind state = StateKind::Initialized;
-    static Logger log;
+    static rd::Logger log;
 
     mutable std::thread asyncProcessingThread;
 

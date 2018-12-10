@@ -12,7 +12,7 @@
 
 std::recursive_mutex lock;
 
-Logger MessageBroker::logger;
+rd::Logger MessageBroker::logger;
 
 void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const {
     if (sync) {
