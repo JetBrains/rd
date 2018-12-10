@@ -273,7 +273,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         toplevels.sortedBy { it.name }.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
-                    eolKind = Eol.linux
+                    eolKind = Eol.osSpecified
                     step = 2
 
                     //actual generation

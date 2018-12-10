@@ -77,6 +77,10 @@ fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
     }
 }
 
+/*please set VsWarningsDefault to null if you don't need disabling VS warnings
+val VsWarningsDefault : IntArray? = null*/
+val VsWarningsDefault: IntArray? = intArrayOf(4250)
+
 open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
 
     //region language specific properties
@@ -86,7 +90,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     object Intrinsic : SettingWithDefault<CppIntrinsicMarshaller, Declaration>(CppIntrinsicMarshaller.default)
 
-    object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors : ISetting<Unit, Declaration>
 
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
@@ -331,7 +334,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                         fileNames.add(type.fsName(isDefinition))
                         bufferedWriter().use { writer ->
                             PrettyPrinter().apply {
-                                eolKind = Eol.linux
+                                eolKind = Eol.osSpecified
                                 step = 4
 
                                 //actual generation
@@ -375,6 +378,15 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
         dependenciesDecl(decl)
         println()
+
+        if (decl !is Enum) {
+            VsWarningsDefault?.let {
+                +"#pragma warning( push )"
+                it.forEach {
+                    +"#pragma warning( disable:$it )"
+                }
+            }
+        }
 
         if (decl is Toplevel && decl.isLibrary) {
             comment("library")
@@ -431,10 +443,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 +" * @property ${member.name} ${member.documentation}"
             }
             +" */"
-        }
-
-        decl.getSetting(Attributes)?.forEach {
-            +"@$it"
         }
 
         if (decl is Enum) {
@@ -515,6 +523,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             }*/
         }
 
+        VsWarningsDefault?.let {
+            println()
+            +"#pragma warning( pop )"
+            println()
+        }
+
         comment("hash code trait")
         hashSpecialization(decl)
     }
@@ -528,10 +542,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
-    protected fun PrettyPrinter.primaryCtorParams(decl: Declaration): String {
+    protected fun primaryCtorParams(decl: Declaration): String {
         val own = decl.ownMembers.map {
-            val attrs = it.getSetting(Cpp17Generator.Attributes)?.fold("") { acc, attr -> "$acc@$attr${eolKind.value}" }
-            (attrs ?: "") + it.ctorParam(decl, false)
+            it.ctorParam(decl, false)
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl, false) }
 

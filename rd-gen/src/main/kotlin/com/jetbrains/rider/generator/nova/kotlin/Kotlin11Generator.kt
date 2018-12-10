@@ -202,7 +202,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         toplevels.sortedBy { it.name }.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
-                    eolKind = Eol.linux
+                    eolKind = Eol.osSpecified
                     step = 4
 
                     //actual generation
