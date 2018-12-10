@@ -9,21 +9,18 @@ RdFrameworkTestBase::RdFrameworkTestBase() : clientLifetimeDef(Lifetime::Eternal
                                              clientLifetime(clientLifetimeDef.lifetime),
                                              serverLifetime(serverLifetimeDef.lifetime) {
 
+	clientWire = std::make_shared<TestWire>(&clientScheduler);
+	serverWire = std::make_shared<TestWire>(&serverScheduler);
+
     clientProtocol = std::unique_ptr<IProtocol>(
             std::make_unique<Protocol>(/*serializers, */clientIdentities, &clientScheduler,
-                                                        std::make_shared<TestWire>(&clientScheduler)));
+                                                        clientWire));
     serverProtocol = std::unique_ptr<IProtocol>(
             std::make_unique<Protocol>(/*serializers,*/ serverIdentities, &serverScheduler,
-                                                        std::make_shared<TestWire>(&serverScheduler)));
+                                                        serverWire));
 
-    clientWire = std::dynamic_pointer_cast<TestWire>(clientProtocol->wire);
-    serverWire = std::dynamic_pointer_cast<TestWire>(serverProtocol->wire);
-
-    std::pair<TestWire const *, TestWire const *> p = std::make_pair(
-            dynamic_cast<TestWire const *>(clientProtocol->wire.get()),
-            dynamic_cast<TestWire const *>(serverProtocol->wire.get()));
-    TestWire const *w1 = p.first;
-    TestWire const *w2 = p.second;
+    TestWire const *w1 = clientWire.get();
+    TestWire const *w2 = serverWire.get();
     w1->counterpart = w2;
     w2->counterpart = w1;
 }

@@ -8,7 +8,7 @@
 
 
 int main() {
-    std::shared_ptr<IWire> wire;
+    std::shared_ptr<SocketWire::Server> wire;
     std::unique_ptr<IProtocol> serverProtocol;
     TestScheduler serverScheduler;
 
@@ -21,7 +21,7 @@ int main() {
     std::ofstream outputFile("C:\\temp\\port.txt");
 
     wire = std::make_shared<SocketWire::Server>(lifetime, &serverScheduler, 0, "TestClient");
-    outputFile << (dynamic_cast<SocketWire::Server *>(wire.get()))->port << std::endl;
+    outputFile << wire.get()->port << std::endl;
     serverProtocol = std::make_unique<Protocol>(Identities(Identities::SERVER), &serverScheduler, wire);
 
     {

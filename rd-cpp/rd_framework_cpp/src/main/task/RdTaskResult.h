@@ -25,7 +25,7 @@ public:
 
     };
 
-    class Fault {//todo
+    class Fault {
     public:
         std::wstring reasonTypeFqn;
         std::wstring reasonMessage;

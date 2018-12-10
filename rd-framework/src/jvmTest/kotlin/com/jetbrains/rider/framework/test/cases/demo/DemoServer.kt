@@ -5,10 +5,10 @@ package com.jetbrains.rider.framework.test.cases.demo
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.test.util.NetUtils
 import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.string.PrettyPrinter
-import com.jetbrains.rider.util.string.printToString
+import com.jetbrains.rider.util.reactive.fire
 import com.jetbrains.rider.util.threading.SingleThreadScheduler
 import org.example.DemoModel
+import org.example.extModel
 import java.io.File
 
 fun server(lifetime: Lifetime, port: Int? = null): Protocol {
@@ -32,14 +32,28 @@ fun main(args: Array<String>) {
     val model = DemoModel.create(lifetime, protocol);
     //advise
 
-    val printer = PrettyPrinter()
+    /*val printer = PrettyPrinter()
     model.scalar.advise(lifetime) {
         it.print(printer)
         println(printer.toString())
 
         val result = model.callCharToString.sync(it.byte_.toChar())
         println("result of sync call is: $result")
+    }*/
+
+    //ext
+
+    val extModel = model.extModel
+
+    extModel.checkExtension.advise(lifetime) {
+        println("CHECK")
     }
+
+    extModel.checkExtension.fire()
+//    socketLifetimeDef.terminate()
+    extModel.checkExtension.fire()
+    extModel.checkExtension.fire()
+    extModel.checkExtension.fire()
 
     //set
 
@@ -49,13 +63,13 @@ fun main(args: Array<String>) {
         it.printToString()
     }*/
 
-    model.mapLongToString.advise(lifetime) {
+    /*model.mapLongToString.advise(lifetime) {
         println(it)
     }
 
     model.propertyOfArray.advise(lifetime) {
         print(it.printToString())
-    }
+    }*/
 
     /*model.propertyList.valueOrNull?.list?.add("A")
     model.propertyList.valueOrNull?.list?.add("B")
@@ -65,6 +79,6 @@ fun main(args: Array<String>) {
     model.propertyList.valueOrNull?.list?.add("E")
     model.propertyList.valueOrNull?.list?.add("F")*/
 
-    model.propertyOfArray.set(CharArray(10) { '0' })
+//    model.propertyOfArray.set(CharArray(10) { '0' })
     Thread.sleep(500_000_000)
 }

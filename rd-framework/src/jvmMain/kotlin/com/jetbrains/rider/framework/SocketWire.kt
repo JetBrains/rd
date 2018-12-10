@@ -79,7 +79,7 @@ class SocketWire {
         }
 
         private fun receiverProc(socket: Socket) {
-            while (!lifetime.isTerminated) {
+            while (lifetime.isAlive) {
                 try {
                     if (!socket.isConnected) {
                         logger.debug {"Stop receive messages because socket disconnected" }

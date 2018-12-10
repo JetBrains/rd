@@ -15,11 +15,9 @@ void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::stri
     lf->bracket([this, lf, parent, &name] {
                     this->parent = parent;
                     location = parent->location.sub(name, ".");
-                    std::cerr << "THIS:" << this << " " << this->location.toString() << "\n";
                     this->bind_lifetime = lf;
                 },
                 [this, lf]() {
-                    std::cerr << "THIS:" << this << "\n";
                     this->bind_lifetime = lf;
                     location = location.sub("<<unbound>>", "::");
                     this->parent = nullptr;

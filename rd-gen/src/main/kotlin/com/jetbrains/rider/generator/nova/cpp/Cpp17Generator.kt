@@ -711,7 +711,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         val pointcut = decl.pointcut ?: return null
         val lowerName = decl.name.decapitalize()
         val extName = decl.extName ?: lowerName
-        return Signature("void", "getOrCreateExtensionOf(${pointcut.sanitizedName(decl)} & pointcut)", decl.name).static()
+        return Signature("""${decl.name} const &""", "getOrCreateExtensionOf(${pointcut.sanitizedName(decl)} & pointcut)", decl.name).static()
     }
 
     fun PrettyPrinter.fieldsDecl(decl: Declaration) {
@@ -1262,7 +1262,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         def(extensionTraitDecl(decl))
         val lowerName = decl.name.decapitalize()
         block("{", "}") {
-            +"""pointcut.getOrCreateExtension<${decl.name}>("$lowerName");"""
+            +"""return pointcut.getOrCreateExtension<${decl.name}>("$lowerName");"""
         }
         println()
     }

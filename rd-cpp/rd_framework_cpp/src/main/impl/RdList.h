@@ -147,7 +147,7 @@ public:
     }
 
     bool add(V element) const override {
-        return local_change([this, element = std::move(element)]()mutable  { return list.add(std::move(element)); });
+        return local_change([this, element = std::move(element)]() mutable { return list.add(std::move(element)); });
     }
 
     bool add(size_t index, V element) const override {

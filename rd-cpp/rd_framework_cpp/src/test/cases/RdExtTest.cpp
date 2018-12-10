@@ -81,16 +81,14 @@ TEST_F(SocketWireTestBase, DISABLED_testExtension) {
     //it's new!
     auto const &newServerEntity = serverProperty.get();
 
-    DynamicExt const &serverExt = newServerEntity.getOrCreateExtension<DynamicExt>("ext", []() {
-        return DynamicExt(L"Ext!", L"client");
-    });
+    DynamicExt const &serverExt = newServerEntity.getOrCreateExtension<DynamicExt>("ext", L"Ext!", L"client");
+
     clientScheduler.pump_one_message();
     //server send READY
 
     auto const &newClientEntity = clientProperty.get();
-    DynamicExt const &clientExt = newClientEntity.getOrCreateExtension<DynamicExt>("ext", []() {
-        return DynamicExt(L"", L"server");
-    });
+    DynamicExt const &clientExt = newClientEntity.getOrCreateExtension<DynamicExt>("ext", L"", L"server");
+
     serverScheduler.pump_one_message();
     //client send READY
 
@@ -112,16 +110,13 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
     RdProperty<int> serverProperty{0}, clientProperty{0};
     init(serverProtocol, clientProtocol, &serverProperty, &clientProperty);
 
-    auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", []() {
-        return ExtProperty<std::wstring>(L"SERVER");
-    });
+    auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"SERVER");
 
     serverExt.property.set(L"UPDATE");
     serverExt.property.set(L"UPGRADE");
 
-    auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", []() {
-        return ExtProperty<std::wstring>(L"CLIENT");
-    });
+    auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"CLIENT");
+
 
     EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 
