@@ -5,7 +5,6 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.Date
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
@@ -63,6 +62,7 @@ actual typealias UUID = java.util.UUID
 actual typealias AtomicInteger = AtomicInteger
 
 actual typealias Queue<E> = java.util.concurrent.LinkedBlockingQueue<E>
+actual typealias ConcurrentHashMap<K, V> = java.util.concurrent.ConcurrentHashMap<K, V>
 
 actual fun printlnError(msg: String) = System.err.println(msg)
 

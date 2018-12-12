@@ -94,6 +94,9 @@ actual class AtomicInteger actual constructor(var v: Int) {
 }
 
 actual typealias Queue<E> = QueueImpl<E>
+actual class ConcurrentHashMap<K, V> actual constructor() : MutableMap<K, V> by HashMap<K, V>() {
+    actual fun putIfAbsent(key: K, value: V) : V? = get(key).also { if(it == null) put(key, value) }
+}
 
 //no stderr in javascript
 actual fun printlnError(msg: String) = println(msg)

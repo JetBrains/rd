@@ -79,6 +79,10 @@ expect class Queue<E>() {
     fun poll(): E?
 }
 
+expect class ConcurrentHashMap<K, V>() : MutableMap<K, V> {
+    fun putIfAbsent(key: K, value: V) : V?
+}
+
 expect fun printlnError(msg: String)
 
 expect inline fun spinUntil(condition: () -> Boolean)
