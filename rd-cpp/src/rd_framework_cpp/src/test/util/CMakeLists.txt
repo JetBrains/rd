@@ -1,4 +1,4 @@
-add_library(rd_framework_cpp_util STATIC
+add_library(rd_framework_cpp_util
         ExtProperty.cpp ExtProperty.h
         DynamicExt.cpp DynamicExt.h
         TestScheduler.cpp TestScheduler.h
@@ -9,4 +9,4 @@ add_library(rd_framework_cpp_util STATIC
 
 target_include_directories(rd_framework_cpp_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(rd_framework_cpp_util rd_framework_cpp)
+target_link_libraries(rd_framework_cpp_util PUBLIC rd_framework_cpp)
