@@ -1,0 +1,11 @@
+rootProject.name = 'rd-benchmarks'
+
+include 'model'
+
+includeBuild('..') {
+    dependencySubstitution {
+        substitute module("com.jetbrains:rdgen") with project(":rd-gen")
+        substitute module("com.jetbrains:rd-core") with project(":rd-core")
+        substitute module("com.jetbrains:rd-framework") with project(":rd-framework")
+    }
+}
