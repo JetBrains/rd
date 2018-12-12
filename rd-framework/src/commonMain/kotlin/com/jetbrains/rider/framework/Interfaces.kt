@@ -98,7 +98,7 @@ interface IIdentities {
     fun next(parent: RdId): RdId
 }
 
-interface IInternRoot {
+interface IInternRoot: IRdReactive {
     fun tryGetInterned(value: Any): Int
     fun internValue(value: Any): Int
     fun <T : Any> unInternValue(id: Int): T
