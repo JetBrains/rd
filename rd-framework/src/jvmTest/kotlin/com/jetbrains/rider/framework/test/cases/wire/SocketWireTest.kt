@@ -3,6 +3,8 @@ package com.jetbrains.rider.framework.test.cases.wire
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.static
 import com.jetbrains.rider.framework.impl.RdOptionalProperty
+import com.jetbrains.rider.framework.test.cases.interning.InterningNestedTestStringModel
+import com.jetbrains.rider.framework.test.cases.interning.PropertyHolderWithInternRoot
 import com.jetbrains.rider.framework.test.util.NetUtils
 import com.jetbrains.rider.framework.test.util.TestScheduler
 import com.jetbrains.rider.util.lifetime.Lifetime
@@ -181,6 +183,32 @@ class SocketWireTest {
             cp.set(1)
             cp.set(2)
             Thread.sleep(50)
+    }
+
+    @Test
+    fun testReentrantWrites() {
+        val serverProtocol = server(socketLifetime)
+        val clientProtocol = client(socketLifetime, serverProtocol)
+
+        serverProtocol.serializers.register(InterningNestedTestStringModel)
+        clientProtocol.serializers.register(InterningNestedTestStringModel)
+
+        val sp = PropertyHolderWithInternRoot(RdOptionalProperty<InterningNestedTestStringModel>().static(1), serverProtocol.serializationContext)
+        val cp = PropertyHolderWithInternRoot(RdOptionalProperty<InterningNestedTestStringModel>().static(1), clientProtocol.serializationContext)
+
+        sp.mySerializationContext = sp.mySerializationContext.withInternRootsHere(sp, "Test")
+        cp.mySerializationContext = cp.mySerializationContext.withInternRootsHere(cp, "Test")
+
+        sp.bind(lifetime, serverProtocol, "top")
+        cp.bind(lifetime, clientProtocol, "top")
+
+        val modelA = InterningNestedTestStringModel("A", InterningNestedTestStringModel("B", InterningNestedTestStringModel("C", null)))
+        cp.property.set(modelA)
+        sp.property.waitAndAssert(modelA)
+
+        val modelB = InterningNestedTestStringModel("D", InterningNestedTestStringModel("E", InterningNestedTestStringModel("F", null)))
+        sp.property.set(modelB)
+        cp.property.waitAndAssert(modelB, modelA)
     }
 
 //    @BeforeClass
