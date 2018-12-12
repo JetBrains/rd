@@ -52,7 +52,8 @@ fun RdTextChange.reverse(): RdTextChange {
         RdTextChangeKind.PromoteVersion -> throw UnsupportedOperationException()
     }
 
-    return RdTextChange(newKind, startOffset, new, old, fullTextLength - delta())
+    val textLength = if (fullTextLength == -1) -1 else fullTextLength - delta()
+    return RdTextChange(newKind, startOffset, new, old, textLength)
 }
 
 fun RdTextChange.assertDocumentLength(current: Int) {
