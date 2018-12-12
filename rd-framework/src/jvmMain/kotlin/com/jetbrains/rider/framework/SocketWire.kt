@@ -15,6 +15,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.*
 import java.time.Duration
+import java.util.*
 import kotlin.concurrent.thread
 
 private fun InputStream.readByteArray(): ByteArray {
@@ -57,7 +58,7 @@ class SocketWire {
 
         protected val sendBuffer = ByteBufferAsyncProcessor(id+"-AsyncSendProcessor") { send0(it) }
 
-        private val threadLocalSendByteArray = ThreadLocal.withInitial { ByteArray(16384) }
+        private val threadLocalBufferArray = ThreadLocal.withInitial { UnsafeBuffer(ByteArray(16384)) }
 
         protected val lock = Object()
 
@@ -114,27 +115,27 @@ class SocketWire {
             }
         }
 
-
         override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
             require(!id.isNull) { "id mustn't be null" }
 
-            val unsafeBuffer = UnsafeBuffer(threadLocalSendByteArray.get())
+            val unsafeBuffer = threadLocalBufferArray.get()
+            val initialPosition = unsafeBuffer.position
             try {
+
                 unsafeBuffer.writeInt(0) //placeholder for length
 
                 id.write(unsafeBuffer) //write id
                 writer(unsafeBuffer) //write rest
 
-                val len = unsafeBuffer.position
+                val len = unsafeBuffer.position - initialPosition
 
-                unsafeBuffer.rewind()
+                unsafeBuffer.position = initialPosition
                 unsafeBuffer.writeInt(len - 4)
 
-                val bytes = unsafeBuffer.getArray()!!
-                threadLocalSendByteArray.set(bytes)
-                sendBuffer.put(bytes, 0, len)
+                val bytes = unsafeBuffer.getArray()
+                sendBuffer.put(bytes, initialPosition, len)
             } finally {
-                unsafeBuffer.close()
+                unsafeBuffer.position = initialPosition
             }
         }
     }
