@@ -1,0 +1,2 @@
+add_subdirectory(rd_core_cpp)
+add_subdirectory(rd_framework_cpp)
