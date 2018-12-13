@@ -1128,7 +1128,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         virtualInitTraitDecl(decl)?.let {
             def(it)
             block("{", "}") {
-                val base = (if (decl is Ext) "RdExtBase" else "RdBindableBase")
+                val base = (if (decl is Toplevel) "RdExtBase" else "RdBindableBase")
                 +"$base::init(lifetime);"
                 decl.ownMembers
                         .filter { it.isBindable }
