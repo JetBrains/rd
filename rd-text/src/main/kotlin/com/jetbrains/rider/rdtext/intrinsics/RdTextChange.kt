@@ -9,7 +9,9 @@ enum class RdTextChangeKind {
     Remove,
     Replace,
     Reset,
-    PromoteVersion
+    PromoteVersion,
+    InsertLeftSide,
+    InsertRightSide
 }
 
 class RdTextChange(val kind: RdTextChangeKind,
@@ -50,6 +52,8 @@ fun RdTextChange.reverse(): RdTextChange {
         RdTextChangeKind.Replace -> RdTextChangeKind.Replace
         RdTextChangeKind.Reset -> throw UnsupportedOperationException()
         RdTextChangeKind.PromoteVersion -> throw UnsupportedOperationException()
+        RdTextChangeKind.InsertLeftSide -> RdTextChangeKind.Remove
+        RdTextChangeKind.InsertRightSide -> RdTextChangeKind.Remove
     }
 
     val textLength = if (fullTextLength == -1) -1 else fullTextLength - delta()
