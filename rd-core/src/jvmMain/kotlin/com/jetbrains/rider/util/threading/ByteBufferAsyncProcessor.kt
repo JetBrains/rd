@@ -11,7 +11,7 @@ fun OutputStream.write(slice: ByteArraySlice) = this.write(slice.data, slice.off
 
 
 
-class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize, val processor: (ByteArraySlice) -> Unit) {
+class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize, val maxChunks: Int = ByteBufferAsyncProcessor.DefaultMaxChunks, val processor: (ByteArraySlice) -> Unit) {
 
     enum class StateKind {
         Initialized,
@@ -41,6 +41,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
     companion object {
         private const val DefaultChunkSize = 16380
         private const val DefaultShrinkIntervalMs = 30000
+        private const val DefaultMaxChunks = 16
     }
 
     private val log = getLogger(this::class)
@@ -50,6 +51,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
     
     private var freeChunk : Chunk
     private var firstChunkToProcess : Chunk?
+    private var numChunks = 0
 
     private val pauseReasons = ArrayList<String>()
 
@@ -68,6 +70,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
     private fun cleanup0() {
         synchronized(lock) {
             state = StateKind.Terminated
+            lock.notifyAll()
             freeChunk = Chunk.empty
             firstChunkToProcess = null
         }
@@ -128,6 +131,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
                         if (freeChunk.next.ptr != 0)
                             log.debug {"freeChunk.next.ptr != 0"}
 
+                        numChunks--
                         freeChunk.next = freeChunk.next.next
                     }
                 }
@@ -141,6 +145,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
                 synchronized(lock) {
                     chunk.ptr = 0
                     chunk = chunk.next
+                    lock.notifyAll()
                 }
             }
         }
@@ -171,7 +176,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
             },
             { synchronized(lock) {
                     pauseReasons.remove(reason)
-                    lock.notify()
+                    lock.notifyAll()
                 }
             }
         )
@@ -180,14 +185,14 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
     fun stop(timeout: Duration = InfiniteDuration) = terminate0(timeout, StateKind.Stopping, "STOP")
     fun terminate(timeout: Duration = InfiniteDuration) = terminate0(timeout, StateKind.Terminating, "TERMINATE")
 
+    private var threadInLongPut = false
+
     fun put(newData: ByteArray, offset: Int = 0, count: Int = newData.size) {
         synchronized(lock) {
+            while (threadInLongPut) lock.wait() // another thread invoked wait() while writing its buffer, wait for it
             if (state >= StateKind.Stopping) return
 
             var ptr = 0
-
-            //speedup var, only to suppress redundant notifies
-            val shouldNotify = freeChunk.ptr == 0 //everything processed (or we occasionally at 0 of some free chunk that isn't equal to proccessing chunk)
 
             while (ptr < count) {
                 val rest = count - ptr
@@ -200,17 +205,30 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
                     ptr += copylen
 
                 } else {
-                    if (freeChunk.next.ptr != 0) {
-                        log.debug {"Grow: $chunkSize bytes" }
-                        freeChunk.next = Chunk(chunkSize).apply { next = freeChunk.next }
-                        lastShrinkOrGrowTimeMs = System.currentTimeMillis()
+                    while (freeChunk.next.ptr != 0) {
+                        if (maxChunks <= 0 || numChunks < maxChunks) {
+                            log.debug { "Grow: $chunkSize bytes" }
+                            freeChunk.next = Chunk(chunkSize).apply { next = freeChunk.next }
+                            lastShrinkOrGrowTimeMs = System.currentTimeMillis()
+                            numChunks++
+                        } else {
+                            lock.notifyAll()
+                            threadInLongPut = true // indicate to other threads that they should not mix their data with ours
+                            try {
+                                lock.wait()
+                            } finally { // InterruptedException
+                                threadInLongPut = false
+                            }
+                            if (state >= StateKind.Stopping)
+                                return
+                        }
                     }
-                    freeChunk = freeChunk.next
+                    if (freeChunk.ptr != 0) // sender thread has a nasty tendency to move freeChunk forward whenever it pleases
+                        freeChunk = freeChunk.next
                 }
             }
 
-            if (shouldNotify)
-                lock.notify()
+            lock.notifyAll()
         }
     }
 }
