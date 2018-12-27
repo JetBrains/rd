@@ -1,4 +1,4 @@
-package com.jetbrans.rd.benchmarks
+package com.jetbrains.rd.benchmarks
 
 import com.jetbrains.rider.util.reactive.IScheduler
 

@@ -62,6 +62,9 @@ class SocketWire {
 
         protected val lock = Object()
 
+        var bytesWritten: Long = 0
+            private set
+
         init {
             socketProvider.advise(lifetime) { socket ->
 
@@ -74,6 +77,8 @@ class SocketWire {
 
                     sendBuffer.start()
                 }
+
+                connected.value = true
 
                 receiverProc(socket)
             }
@@ -109,6 +114,7 @@ class SocketWire {
 
         private fun send0(msg: ByteArraySlice) {
             try {
+                bytesWritten += msg.len
                 output.write(msg)
             } catch (ex: SocketException) {
                 sendBuffer.terminate()
