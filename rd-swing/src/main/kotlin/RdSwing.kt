@@ -1,7 +1,7 @@
 package com.jetbrains.rd.swing
 
-import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.*
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionListener
