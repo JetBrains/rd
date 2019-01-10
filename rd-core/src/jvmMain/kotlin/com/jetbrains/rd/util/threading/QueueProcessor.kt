@@ -1,8 +1,8 @@
-package com.jetbrains.rider.util.threading
+package com.jetbrains.rd.util.threading
 
-import com.jetbrains.rider.util.catch
-import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.lifetime.isAlive
+import com.jetbrains.rd.util.catch
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED

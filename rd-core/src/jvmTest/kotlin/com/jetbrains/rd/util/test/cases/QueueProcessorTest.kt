@@ -1,7 +1,7 @@
-package com.jetbrains.rider.util.test.cases
+package com.jetbrains.rd.util.test.cases
 
-import com.jetbrains.rider.util.lifetime.LifetimeDefinition
-import com.jetbrains.rider.util.threading.QueueProcessor
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.threading.QueueProcessor
 import org.junit.Test
 import kotlin.test.assertEquals
 
