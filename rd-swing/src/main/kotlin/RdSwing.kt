@@ -1,20 +1,16 @@
 package com.jetbrains.rd.swing
 
-import com.jetbrains.rider.util.asProperty
-import com.jetbrains.rider.util.lifetime.Lifetime
-import com.jetbrains.rider.util.lifetime.isAlive
-import com.jetbrains.rider.util.lifetime.onTermination
-import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rd.util.asProperty
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.reactive.*
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import javax.swing.*
-import javax.swing.event.AncestorEvent
-import javax.swing.event.AncestorListener
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
-import javax.swing.event.ListSelectionListener
+import javax.swing.event.*
 import javax.swing.text.JTextComponent
 
 fun <T> proxyProperty(default: T, onAdvise: (lifetime: Lifetime, set: (T) -> Unit) -> Unit) = object : IPropertyView<T> {
