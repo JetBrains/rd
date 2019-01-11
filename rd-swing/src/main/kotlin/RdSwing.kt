@@ -2,8 +2,6 @@ package com.jetbrains.rd.swing
 
 import com.jetbrains.rd.util.asProperty
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
 import java.awt.*
 import java.awt.event.*
@@ -27,7 +25,7 @@ fun <T> proxyProperty(default: T, onAdvise: (lifetime: Lifetime, set: (T) -> Uni
         get() = vl
 }
 
-private class AWTEventSource(eventMask : Long) : ISource<AWTEvent> {
+private class AWTEventSource(eventMask: Long) : ISource<AWTEvent> {
     val rdSet: ViewableSet<(AWTEvent) -> Unit> = ViewableSet()
 
     init {
@@ -48,11 +46,10 @@ private class AWTEventSource(eventMask : Long) : ISource<AWTEvent> {
     }
 
     override fun advise(lifetime: Lifetime, handler: (AWTEvent) -> Unit) {
-        rdSet.add(handler)
-
-        lifetime.onTermination {
-            rdSet.remove(handler)
-        }
+        lifetime.bracket(
+                { rdSet.add(handler) },
+                { rdSet.remove(handler) }
+        )
     }
 }
 
@@ -60,7 +57,7 @@ val awtMouseOrKeyEvent: ISource<AWTEvent> by lazy {
     AWTEventSource(AWTEvent.MOUSE_EVENT_MASK or AWTEvent.KEY_EVENT_MASK)
 }
 
-fun mouseOrKeyReleased(): IVoidSource = awtMouseOrKeyEvent.filter {it.id == MouseEvent.MOUSE_PRESSED || it.id == KeyEvent.KEY_RELEASED}.map { Unit }
+fun mouseOrKeyReleased(): IVoidSource = awtMouseOrKeyEvent.filter { it.id == MouseEvent.MOUSE_PRESSED || it.id == KeyEvent.KEY_RELEASED }.map { Unit }
 
 val awtMousePoint: ISource<AWTEvent> by lazy {
     AWTEventSource(AWTEvent.MOUSE_MOTION_EVENT_MASK or
@@ -80,7 +77,7 @@ val awtMouseWithMotionAdapterEvent: ISource<AWTEvent> by lazy {
     AWTEventSource(AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
 }
 
-fun escPressedSource(): IVoidSource = awtKeyEvent.filter {it.id == KeyEvent.KEY_PRESSED && (it as KeyEvent).keyCode == KeyEvent.VK_ESCAPE}.map { Unit}
+fun escPressedSource(): IVoidSource = awtKeyEvent.filter { it.id == KeyEvent.KEY_PRESSED && (it as KeyEvent).keyCode == KeyEvent.VK_ESCAPE }.map { Unit }
 
 fun Component.pressOutside(): IVoidSource {
     return object : IVoidSource {
@@ -112,7 +109,7 @@ fun Component.componentHoverPoint(): Point? {
     return if (Rectangle(this@componentHoverPoint.size).contains(point)) point else null
 }
 
-fun JList<*>.hoveredIndex() = awtMousePoint().map {
+fun JList<*>.hoveredIndex(): IPropertyView<Int?> = awtMousePoint().map {
     if (it != null) locationToIndex(it) else null
 }
 
@@ -128,18 +125,16 @@ fun ListSelectionModel.selectedIndexes(): IPropertyView<List<Int>> {
             set(list)
         }
 
-        this@selectedIndexes.addListSelectionListener(listener)
-        lifetime.onTermination {
-            this@selectedIndexes.removeListSelectionListener(listener)
-        }
+        lifetime.bracket(
+                { this@selectedIndexes.addListSelectionListener(listener) },
+                { this@selectedIndexes.removeListSelectionListener(listener)})
     }
 }
 
 
-fun <E> JList<E>.selectedItems() = this@selectedItems.selectionModel.selectedIndexes().map { list ->
+fun <E> JList<E>.selectedItems(): IPropertyView<List<E>> = this@selectedItems.selectionModel.selectedIndexes().map { list ->
     list.map { this@selectedItems.model.getElementAt(it) }
 }
-
 
 
 fun JComponent.mouseClicked(): ISource<MouseEvent> {
@@ -153,45 +148,47 @@ fun JComponent.mouseClicked(): ISource<MouseEvent> {
                 }
             }
 
-            this@mouseClicked.addMouseListener(clickListener)
-            lifetime.onTermination {
-                this@mouseClicked.removeMouseListener(clickListener)
-            }
+
+            lifetime.bracket (
+                    {this@mouseClicked.addMouseListener(clickListener)},
+                    {this@mouseClicked.removeMouseListener(clickListener)}
+            )
         }
     }
 }
 
 fun JLabel.tooltipForCropped(lifetime: Lifetime) {
+    val CROPPED = 10
+
+    fun updateTooltip() {
+        if ((width - preferredSize.width) < CROPPED) {
+            this.toolTipText = this.text
+        } else {
+            this.toolTipText = null
+        }
+    }
+
     this.sizeProperty().advise(lifetime) {
-        this.updateTooltip()
+        updateTooltip()
     }
 
-    val listener = PropertyChangeListener { this.updateTooltip() }
-    this.addPropertyChangeListener("text", listener)
-    lifetime.onTermination {
-        this.removePropertyChangeListener(listener)
-    }
-}
+    val listener = PropertyChangeListener { updateTooltip() }
 
-private fun JLabel.updateTooltip() {
-    if ((this.width - this.preferredSize.width) < 10) {
-        this.toolTipText = this.text
-    } else {
-        this.toolTipText = null
-    }
+    lifetime.bracket(
+            {this.addPropertyChangeListener("text", listener)},
+            {this.removePropertyChangeListener(listener)}
+    )
 }
 
 fun Graphics2D.fillRect(rect: Rectangle) {
     fillRect(rect.x, rect.y, rect.width, rect.height)
 }
 
-fun <T> JComboBox<T>.addItem(lifetime: Lifetime, item: T) {
-    if (lifetime.isAlive) {
-        addItem(item)
-        lifetime.onTermination {
-            removeItem(item)
-        }
-    }
+fun <T> JComboBox<T>.addLifetimedItem(lifetime: Lifetime, item: T) {
+    lifetime.bracket(
+            {addItem(item)},
+            {removeItem(item)}
+    )
 }
 
 fun JComponent.sizeProperty(): IPropertyView<Dimension> = object : IPropertyView<Dimension> {
@@ -204,8 +201,10 @@ fun JComponent.sizeProperty(): IPropertyView<Dimension> = object : IPropertyView
                     }
                 }
 
-                this@sizeProperty.addComponentListener(listener)
-                lifetime.onTermination { this@sizeProperty.removeComponentListener(listener) }
+                lifetime.bracket(
+                        {this@sizeProperty.addComponentListener(listener)},
+                        {this@sizeProperty.removeComponentListener(listener)}
+                )
             }
         }
     override val value: Dimension
@@ -229,8 +228,11 @@ fun JTextComponent.textProperty(): IPropertyView<String> {
                 set(getValue())
             }
         }
-        this@textProperty.document.addDocumentListener(listener)
-        lifetime.onTermination { this@textProperty.document.removeDocumentListener(listener) }
+
+        lifetime.bracket(
+                {this@textProperty.document.addDocumentListener(listener)},
+                {this@textProperty.document.removeDocumentListener(listener)}
+        )
     }
 }
 
@@ -242,10 +244,11 @@ fun <T> JComboBox<T>.selectedItemProperty(): IPropertyView<T?> {
         val ls = ActionListener { e ->
             set(getValue())
         }
-        this@selectedItemProperty.addActionListener(ls)
-        lifetime.onTermination {
-            this@selectedItemProperty.removeActionListener(ls)
-        }
+
+        lifetime.bracket(
+                {this@selectedItemProperty.addActionListener(ls)},
+                {this@selectedItemProperty.removeActionListener(ls)}
+        )
     }
 }
 
@@ -262,10 +265,10 @@ fun Component.visibleProperty(): IPropertyView<Boolean> {
             }
         }
 
-        this@visibleProperty.addComponentListener(listener)
-        lifetime.onTermination {
-            this@visibleProperty.removeComponentListener(listener)
-        }
+        lifetime.bracket(
+                {this@visibleProperty.addComponentListener(listener)},
+                {this@visibleProperty.removeComponentListener(listener)}
+        )
     }
 }
 
@@ -285,8 +288,10 @@ fun JComponent.isInHierarchyProperty(): IPropertyView<Boolean> {
             }
         }
 
-        this@isInHierarchyProperty.addAncestorListener(listener)
-        lifetime.onTermination { this@isInHierarchyProperty.removeAncestorListener(listener) }
+        lifetime.bracket(
+                {this@isInHierarchyProperty.addAncestorListener(listener)},
+                {this@isInHierarchyProperty.removeAncestorListener(listener)}
+        )
     }
 }
 
@@ -298,10 +303,10 @@ fun JComponent.namedProperty(name: String, lifetime: Lifetime): IOptPropertyView
         }
     }
 
-    addPropertyChangeListener(listener)
-    lifetime.add {
-        removePropertyChangeListener(listener)
-    }
+    lifetime.bracket(
+            {addPropertyChangeListener(listener)},
+            {removePropertyChangeListener(listener)}
+    )
 
     return prop
 }
