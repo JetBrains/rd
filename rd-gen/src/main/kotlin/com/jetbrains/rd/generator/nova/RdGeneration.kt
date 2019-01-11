@@ -20,8 +20,9 @@ abstract class GeneratorBase : IGenerator {
             fail("Can't use root folder '$folder' as output")
 
 
-        if (removeIfExists && folder.exists() && !folder.deleteRecursively())
-            fail("Can't delete '$folder'")
+        if (removeIfExists && folder.exists() && !folder.deleteRecursively()
+                && /* if delete failed (held by external process) but directory cleared it's ok */ !folder.list().isNullOrEmpty())
+            fail("Can't clear '$folder'")
 
 
         if (folder.exists()) {
