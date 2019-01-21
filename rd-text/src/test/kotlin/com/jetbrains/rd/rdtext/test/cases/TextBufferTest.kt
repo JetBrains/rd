@@ -45,9 +45,9 @@ class TextBufferTest {
         private val serverWire = TestWire(serverScheduler).apply { autoFlush = false }
         private var clientProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Client), clientScheduler, clientWire)
         private var serverProtocol: IProtocol = Protocol(serializers, Identities(IdKind.Server), serverScheduler, serverWire)
-        private var clientLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
-        private var serverLifetimeDef: LifetimeDefinition = Lifetime.create(Lifetime.Eternal)
-        private var disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory) as Closeable
+        private var clientLifetimeDef: LifetimeDefinition = LifetimeDefinition()
+        private var serverLifetimeDef: LifetimeDefinition = LifetimeDefinition()
+        private var disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
         private val clientScheduler: IScheduler get() = TestScheduler
         private val serverScheduler: IScheduler get() = TestScheduler
 
