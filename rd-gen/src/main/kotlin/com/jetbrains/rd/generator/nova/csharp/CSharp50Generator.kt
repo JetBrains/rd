@@ -3,12 +3,12 @@ package com.jetbrains.rd.generator.nova.csharp
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
-import com.jetbrains.rd.generator.nova.util.appendDefaultValueSetter
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
+import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaultNamespace: String, override val folder : File, val fileName: (Toplevel) -> String = { tl -> tl.name}) : GeneratorBase() {
@@ -695,6 +695,22 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         if (!decl.hasSecondaryCtor) return
 
 
+        fun PrettyPrinter.defaultValue(member: Member, typeName: String) {
+            if (member is Member.Field)
+                member.defaultValue?.let { defaultValue ->
+                    p(" = ")
+                    when (defaultValue) {
+                        is String -> p (
+                                if (member.type is Enum)
+                                    "$typeName.$defaultValue"
+                                else
+                                    "\"$defaultValue\""
+                        )
+                        else -> p(defaultValue.toString())
+                    }
+                }
+        }
+
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
             decl.isExtension -> "internal"
@@ -709,10 +725,14 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                 .filter { !it.hasEmptyConstructor }
                 .joinToString(",\n") {
                     val typeName = it.implSubstitutedName(decl)
-                    StringBuilder("${it.nullAttr(true)}$typeName ${sanitize(it.name)}")
-                    .apply {
-                        appendDefaultValueSetter(it, typeName)
-                    }
+
+                    printer {
+                        p(it.nullAttr(true)) // [Null], [NotNull], [Optional]
+                        p(typeName)
+                        p(" ")
+                        p(sanitize(it.name))
+                        defaultValue(it, typeName)
+                    }.toString()
                 }
         }
         + ") : this ("

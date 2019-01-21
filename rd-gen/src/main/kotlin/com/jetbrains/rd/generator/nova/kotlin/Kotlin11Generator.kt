@@ -3,12 +3,12 @@ package com.jetbrains.rd.generator.nova.kotlin
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
-import com.jetbrains.rd.generator.nova.util.appendDefaultValueSetter
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
+import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
@@ -160,9 +160,26 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
     protected fun Member.ctorParam(containing: Declaration): String {
         val typeName = implSubstitutedName(containing)
-        return StringBuilder().also {
-            it.append("$encapsulatedName: $typeName")
-            it.appendDefaultValueSetter(this, typeName)
+
+        fun PrettyPrinter.defaultValue(member: Member) {
+            if (member is Member.Field && (member.isOptional || member.defaultValue != null))
+                member.defaultValue.let { defaultValue ->
+                    p(" = ")
+                    when (defaultValue) {
+                        is String -> p (
+                                if (member.type is Enum)
+                                    "$typeName.$defaultValue"
+                                else
+                                    "\"$defaultValue\""
+                        )
+                        else -> p("$defaultValue")
+                    }
+                }
+        }
+
+        return printer {
+            p("$encapsulatedName: $typeName")
+            defaultValue(this@ctorParam)
         }.toString()
     }
 

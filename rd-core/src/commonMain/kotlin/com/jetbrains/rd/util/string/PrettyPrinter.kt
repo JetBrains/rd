@@ -11,6 +11,8 @@ enum class Eol(val value: String) {
     none("")
 }
 
+inline fun printer(content: PrettyPrinter.() -> Unit) = PrettyPrinter().apply(content)
+
 class PrettyPrinter {
     var step = 2
 
