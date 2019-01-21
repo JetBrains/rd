@@ -45,9 +45,11 @@ interface INullable : IHasItemType {
 data class NullableScalar(override val itemType : INonNullableScalar) : IScalar, INullable
 data class NullableBindable(override val itemType : INonNullableBindable) : IBindable, INullable
 
-data class InternedScalar(val itemType: INonNullableScalar) : INonNullableScalar {
+data class InternedScalar(val itemType: INonNullableScalar, val internKey: InternRootKey) : INonNullableScalar {
     override val name = itemType.name + "Interned"
 }
+
+data class InternRootKey(val keyName: String)
 
 sealed class PredefinedType : INonNullableScalar {
     override val name : String get() = javaClass.simpleName.capitalize()
@@ -266,7 +268,7 @@ sealed class Class(override val _name: String, override val pointcut : Toplevel,
         BindableDeclaration(pointcut), INonNullableBindable, Extensible {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_class"
 
-    var isInternRoot = false
+    internal val internRootForKeys = mutableListOf<String>()
     override val extensions = mutableListOf<Ext>()
 
     class Abstract (name : String, pointcut : Toplevel, base: Abstract?) : Class(name, pointcut, base) {

@@ -963,8 +963,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (unknown) {
             +"int32_t objectStartPosition = buffer.get_position();"
         }
-        if (decl is Class && decl.isInternRoot) {
-            +"auto ctx = ctx.withInternRootHere(false);"
+        if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
+            error("interning is not supported in C++")
         }
         if (decl is Class || decl is Aggregate) {
             +"auto _id = RdId::read(buffer);"
@@ -1107,9 +1107,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (decl.isConcrete) {
             def(writerTraitDecl(decl))
             block("{", "}") {
-                if (decl is Class && decl.isInternRoot) {
-                    +"val ctx = ctx.withInternRootHere(true);"
-                    +"this->mySerializationContext = ctx;"
+                if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
+                    error("Interning is not supported in C++")
                 }
                 if (decl is Class || decl is Aggregate) {
                     +"this->rdid.write(buffer);"

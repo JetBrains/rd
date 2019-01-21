@@ -99,8 +99,9 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     fun adviseOn(lifetime: Lifetime, entity: IRdReactive) {
         require(!entity.rdid.isNull) {"id is null for entity: $entity"}
 
-        //advise MUST happen under default scheduler, not custom
-        defaultScheduler.assertThread(entity)
+        //advise MUST happen under default scheduler, not custom, unless it doesn't care
+        if (!entity.wireScheduler.outOfOrderExecution)
+            defaultScheduler.assertThread(entity)
 
         //if (lifetime.isTerminated) return
         subscriptions.blockingPutUnique(lifetime, lock, entity.rdid, entity)

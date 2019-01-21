@@ -10,6 +10,8 @@ import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Set
 import com.jetbrains.rd.generator.nova.Member.Reactive.Task
 import com.jetbrains.rd.util.PublicApi
 
+val ProtocolInternRoot = InternRootKey("Protocol")
+
 fun Struct.field(name : String, type : IScalar) = append(Field(name, type))
 fun Class.field(name : String, type : IType) = append(Field(name, type))
 fun Ext.field(name : String, type : Aggregate) = append(Field(name, type))
@@ -71,8 +73,8 @@ fun immutableList(type: IScalar) = ImmutableListOfScalars(type)
 val INonNullableScalar.nullable : NullableScalar get() = NullableScalar(this)
 val INonNullableBindable.nullable : NullableBindable get() = NullableBindable(this)
 
-val INonNullableScalar.interned : InternedScalar get() = InternedScalar(this)
+fun INonNullableScalar.interned(key: InternRootKey) : InternedScalar = InternedScalar(this, key)
 
-val Class.internRoot: Unit get() {
-    isInternRoot = true
+fun Class.internRoot(key: InternRootKey) {
+    internRootForKeys.add(key.keyName)
 }
