@@ -79,13 +79,14 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     private val extensions = concurrentMapOf<String, Any>()
 
-    inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, create)
+    inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, false, create)
+    inline fun <reified T: Any> getOrCreateExtension(name: String, highPriorityExtension: Boolean = false, noinline create: () -> T) = getOrCreateExtension(name, T::class, highPriorityExtension, create)
 
-    fun <T:Any> getOrCreateExtension(name: String, clazz: KClass<T>, create: () -> T) : T {
+    fun <T:Any> getOrCreateExtension(name: String, clazz: KClass<T>, highPriorityExtension: Boolean = false, create: () -> T) : T {
         val res = extensions.getOrPut(name) {
             val newExtension = create()
             if (newExtension is IRdBindable) {
-                bindableChildren.add(name to newExtension)
+                bindableChildren.add(if(highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
                 bindLifetime?.let {
                     newExtension.identify(protocol.identity, rdid.mix(".$name"))
                     newExtension.bind(it, this, name)

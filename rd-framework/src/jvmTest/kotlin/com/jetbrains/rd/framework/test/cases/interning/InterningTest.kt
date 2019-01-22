@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.interning
 
 import com.jetbrains.rd.framework.IProtocol
+import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.interned
@@ -281,5 +282,33 @@ class InterningTest: RdFrameworkTestBase() {
         // expected send: string + 4 bytes length + 4 bytes id + 8+4 bytes polymorphic write, 3 bytes nullability, 3x 4byte ids, 4 bytes property version
         val sendTarget = sameString.length * 2 + 4 + 4 + 8 + 4 + 3 + 4 * 3 + 4
         assert(firstSendBytes <= sendTarget) { "Sent $firstSendBytes, expected $sendTarget" }
+    }
+
+    @Test
+    fun testLateBindOfObjectWithContent() {
+        val serverProperty = RdOptionalProperty(InterningTestModel).slave()
+        val clientProperty = RdOptionalProperty(InterningTestModel)
+
+        serverProperty.identify(serverProtocol.identity, RdId(1L))
+        clientProperty.identify(clientProtocol.identity, RdId(1L))
+
+        serverProtocol.bindStatic(serverProperty, "top")
+        clientProtocol.bindStatic(clientProperty, "top")
+
+        val serverModel = InterningTestModel("")
+
+        val simpleTestData = simpleTestData
+
+        simpleTestData.forEach { (k, v) ->
+            serverModel.issues[k] = WrappedStringModel(v)
+        }
+
+        serverProperty.set(serverModel)
+
+        val clientModel = clientProperty.valueOrThrow
+
+        simpleTestData.forEach { (k, v) ->
+            assertEquals(v, clientModel.issues[k]!!.text)
+        }
     }
 }

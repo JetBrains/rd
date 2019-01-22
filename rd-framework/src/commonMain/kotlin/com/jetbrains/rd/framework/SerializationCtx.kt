@@ -53,7 +53,7 @@ fun <T: Any> ISerializer<T>.interned(internKey: String) : ISerializer<T> = objec
 
 fun SerializationCtx.withInternRootsHere(owner: RdBindableBase, vararg newRoots: String): SerializationCtx {
     return SerializationCtx(serializers, internRoots.plus(newRoots.associate {
-        it to owner.getOrCreateExtension("InternRoot-$it") { InternRoot() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
+        it to owner.getOrCreateExtension("InternRoot-$it", true) { InternRoot() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
 }
 
 inline fun <T: Any> SerializationCtx.readInterned(stream: AbstractBuffer, internKey: String, readValueDelegate: (SerializationCtx, AbstractBuffer) -> T): T {
