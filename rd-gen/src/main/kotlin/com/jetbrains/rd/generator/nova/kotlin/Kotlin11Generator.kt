@@ -576,8 +576,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         if (decl is Class || decl is Aggregate) {
             p(".withId(_id)")
         }
-        if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
-            p(".apply { mySerializationContext = ctx.withInternRootsHere(this, ${decl.internRootForKeys.joinToString { "\"$it\"" }}) }")
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
+            p(".apply { mySerializationContext = ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }}) }")
         }
         println()
     }
@@ -623,8 +623,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             if (isUnknown(decl)) {
                 + "buffer.writeByteArrayRaw(value.unknownBytes)"
             }
-            if(decl is Class && decl.internRootForKeys.isNotEmpty()) {
-                + "value.mySerializationContext = ctx.withInternRootsHere(value, ${decl.internRootForKeys.joinToString { "\"$it\"" }})"
+            if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
+                + "value.mySerializationContext = ctx.withInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }})"
             }
         }
         + "}"
@@ -636,7 +636,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             + "val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
         }
 
-        if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             + "private var mySerializationContext: SerializationCtx? = null"
             + "override val serializationContext: SerializationCtx"
             indent {

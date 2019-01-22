@@ -575,8 +575,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                     p(".WithId(_id)")
                 }
                 +(";")
-                if(decl is Class && decl.internRootForKeys.isNotEmpty()) {
-                    +"_result.mySerializationContext = ctx.WithInternRootsHere(_result, ${decl.internRootForKeys.joinToString { "\"$it\"" }});"
+                if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
+                    +"_result.mySerializationContext = ctx.WithInternRootsHere(_result, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                 }
                 +"return _result;"
             }
@@ -647,8 +647,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                     + "value.RdId.Write(writer);"
                 }
                 (decl.membersOfBaseClasses + decl.ownMembers).println { it.writer() + ";" }
-                if(decl is Class && decl.internRootForKeys.isNotEmpty()) {
-                    + "value.mySerializationContext = ctx.WithInternRootsHere(value, ${decl.internRootForKeys.joinToString { "\"$it\"" }});"
+                if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
+                    + "value.mySerializationContext = ctx.WithInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                 }
             }
             +"};"
@@ -681,7 +681,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             it.nullAttr() + (if (decl.isAbstract) "protected" else "private") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
         }
 
-        if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             + "private SerializationCtx mySerializationContext;"
             + "public override SerializationCtx SerializationContext { get { return mySerializationContext; } }"
         }

@@ -963,7 +963,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (unknown) {
             +"int32_t objectStartPosition = buffer.get_position();"
         }
-        if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             error("interning is not supported in C++")
         }
         if (decl is Class || decl is Aggregate) {
@@ -1107,7 +1107,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (decl.isConcrete) {
             def(writerTraitDecl(decl))
             block("{", "}") {
-                if (decl is Class && decl.internRootForKeys.isNotEmpty()) {
+                if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
                     error("Interning is not supported in C++")
                 }
                 if (decl is Class || decl is Aggregate) {
