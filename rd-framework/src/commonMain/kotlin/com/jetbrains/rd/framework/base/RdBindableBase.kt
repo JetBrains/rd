@@ -79,10 +79,13 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     private val extensions = concurrentMapOf<String, Any>()
 
-    inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, false, create)
-    inline fun <reified T: Any> getOrCreateExtension(name: String, highPriorityExtension: Boolean = false, noinline create: () -> T) = getOrCreateExtension(name, T::class, highPriorityExtension, create)
+    inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, create)
+    internal inline fun <reified T: Any> getOrCreateHighPriorityExtension(name: String, noinline create: () -> T) = getOrCreateHighPriorityExtension(name, T::class, create)
 
-    fun <T:Any> getOrCreateExtension(name: String, clazz: KClass<T>, highPriorityExtension: Boolean = false, create: () -> T) : T {
+    fun <T:Any> getOrCreateExtension(name: String, clazz: KClass<T>, create: () -> T) : T = getOrCreateExtension0(name, clazz, false, create)
+    internal fun <T:Any> getOrCreateHighPriorityExtension(name: String, clazz: KClass<T>, create: () -> T) : T = getOrCreateExtension0(name, clazz, true, create)
+
+    private fun <T:Any> getOrCreateExtension0(name: String, clazz: KClass<T>, highPriorityExtension: Boolean = false, create: () -> T) : T {
         val res = extensions.getOrPut(name) {
             val newExtension = create()
             if (newExtension is IRdBindable) {

@@ -53,6 +53,7 @@ class InterningModelsGenTest {
 
             field("searchLabel", PredefinedType.string)
             signal("signaller", PredefinedType.string.interned(TestInternScope)).async
+            signal("signaller2", PredefinedType.string.interned(TestInternScope)).async
         }
 
         val InternScopeOutOfExt = internScope()

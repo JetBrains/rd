@@ -76,10 +76,10 @@ class InterningExtRootModel private constructor(
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): InterningExtRootModel {
             val _id = RdId.read(buffer)
-            val _internedLocally = RdOptionalProperty.read(ctx, buffer, __StringInternedAtInExtSerializer)
-            val _internedExternally = RdOptionalProperty.read(ctx, buffer, __StringInternedAtOutOfExtSerializer)
+            val _internedLocally = RdOptionalProperty.read(ctx, buffer, __StringInternedAtInternScopeInExtSerializer)
+            val _internedExternally = RdOptionalProperty.read(ctx, buffer, __StringInternedAtInternScopeOutOfExtSerializer)
             val _internedInProtocol = RdOptionalProperty.read(ctx, buffer, __StringInternedAtProtocolSerializer)
-            return InterningExtRootModel(_internedLocally, _internedExternally, _internedInProtocol).withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "InExt") }
+            return InterningExtRootModel(_internedLocally, _internedExternally, _internedInProtocol).withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "InternScopeInExt") }
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InterningExtRootModel) {
@@ -87,11 +87,11 @@ class InterningExtRootModel private constructor(
             RdOptionalProperty.write(ctx, buffer, value._internedLocally)
             RdOptionalProperty.write(ctx, buffer, value._internedExternally)
             RdOptionalProperty.write(ctx, buffer, value._internedInProtocol)
-            value.mySerializationContext = ctx.withInternRootsHere(value, "InExt")
+            value.mySerializationContext = ctx.withInternRootsHere(value, "InternScopeInExt")
         }
 
-        private val __StringInternedAtInExtSerializer = FrameworkMarshallers.String.interned("InExt")
-        private val __StringInternedAtOutOfExtSerializer = FrameworkMarshallers.String.interned("OutOfExt")
+        private val __StringInternedAtInternScopeInExtSerializer = FrameworkMarshallers.String.interned("InternScopeInExt")
+        private val __StringInternedAtInternScopeOutOfExtSerializer = FrameworkMarshallers.String.interned("InternScopeOutOfExt")
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
     }
     //fields
@@ -117,8 +117,8 @@ class InterningExtRootModel private constructor(
     //secondary constructor
     constructor(
     ) : this(
-            RdOptionalProperty<String>(__StringInternedAtInExtSerializer),
-            RdOptionalProperty<String>(__StringInternedAtOutOfExtSerializer),
+            RdOptionalProperty<String>(__StringInternedAtInternScopeInExtSerializer),
+            RdOptionalProperty<String>(__StringInternedAtInternScopeOutOfExtSerializer),
             RdOptionalProperty<String>(__StringInternedAtProtocolSerializer)
     )
 

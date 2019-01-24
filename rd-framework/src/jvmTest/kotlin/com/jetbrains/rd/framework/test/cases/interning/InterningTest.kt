@@ -141,11 +141,11 @@ class InterningTest: RdFrameworkTestBase() {
         serverProtocol.serializers.register(InterningNestedTestModel)
         clientProtocol.serializers.register(InterningNestedTestModel)
 
-        val serverPropertyHolder = PropertyHolderWithInternRoot(RdOptionalProperty(InterningNestedTestModel.interned("Test")).static(1).slave(), serverProtocol.serializationContext)
-        val clientPropertyHolder = PropertyHolderWithInternRoot(RdOptionalProperty(InterningNestedTestModel.interned("Test")).static(1), clientProtocol.serializationContext)
+        val serverPropertyHolder = PropertyHolderWithInternRoot(RdOptionalProperty(InterningNestedTestModel.interned("TestInternScope")).static(1).slave(), serverProtocol.serializationContext)
+        val clientPropertyHolder = PropertyHolderWithInternRoot(RdOptionalProperty(InterningNestedTestModel.interned("TestInternScope")).static(1), clientProtocol.serializationContext)
 
-        serverPropertyHolder.mySerializationContext = serverPropertyHolder.mySerializationContext.withInternRootsHere(serverPropertyHolder, "Test")
-        clientPropertyHolder.mySerializationContext = clientPropertyHolder.mySerializationContext.withInternRootsHere(clientPropertyHolder, "Test")
+        serverPropertyHolder.mySerializationContext = serverPropertyHolder.mySerializationContext.withInternRootsHere(serverPropertyHolder, "TestInternScope")
+        clientPropertyHolder.mySerializationContext = clientPropertyHolder.mySerializationContext.withInternRootsHere(clientPropertyHolder, "TestInternScope")
 
         val serverProperty = serverPropertyHolder.property
         val clientProperty = clientPropertyHolder.property
@@ -257,8 +257,8 @@ class InterningTest: RdFrameworkTestBase() {
         val serverPropertyHolder = PropertyHolderWithInternRoot(RdOptionalProperty(InterningNestedTestStringModel).static(1).slave(), serverProtocol.serializationContext)
         val clientPropertyHolder = PropertyHolderWithInternRoot(RdOptionalProperty(InterningNestedTestStringModel).static(1), clientProtocol.serializationContext)
 
-        serverPropertyHolder.mySerializationContext = serverPropertyHolder.mySerializationContext.withInternRootsHere(serverPropertyHolder, "Test")
-        clientPropertyHolder.mySerializationContext = clientPropertyHolder.mySerializationContext.withInternRootsHere(clientPropertyHolder, "Test")
+        serverPropertyHolder.mySerializationContext = serverPropertyHolder.mySerializationContext.withInternRootsHere(serverPropertyHolder, "TestInternScope")
+        clientPropertyHolder.mySerializationContext = clientPropertyHolder.mySerializationContext.withInternRootsHere(clientPropertyHolder, "TestInternScope")
 
         val serverProperty = serverPropertyHolder.property
         val clientProperty = clientPropertyHolder.property

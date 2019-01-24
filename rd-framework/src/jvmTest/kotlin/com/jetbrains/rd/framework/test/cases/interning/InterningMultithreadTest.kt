@@ -99,4 +99,87 @@ class InterningMultithreadTest : RdAsyncTestBase() {
         println("Interning mt contention: ${clientWire.bytesWritten.toFloat()/actualBytesExpected}")
         println("Interning ratio (more=better): ${rawBytesExpected/clientWire.bytesWritten.toFloat()}")
     }
+
+    @Test
+    fun testLateReceiverBind() {
+        val evt1 = CountDownLatch(3)
+        val evt2 = CountDownLatch(1)
+        val evt3 = CountDownLatch(1)
+        val evt4 = CountDownLatch(1)
+
+        val iterationCount = 10_000
+
+        clientUiScheduler.queue {
+            val clientModel = clientProtocol.bindStatic(RdOptionalProperty(InterningMtModel).static(1), "top")
+
+            clientModel.set(InterningMtModel(""))
+
+            evt1.countDown()
+            evt1.await()
+
+            clientUiScheduler.queue {
+                evt2.await()
+                clientBgScheduler.queue {
+                    for (i in 0 until iterationCount) {
+                        clientModel.valueOrThrow.signaller.fire("b$i")
+                    }
+                }
+                clientBgScheduler.queue {
+                    evt3.await()
+                    for (i in 0 until iterationCount) {
+                        clientModel.valueOrThrow.signaller2.fire("b$i")
+                    }
+                    evt4.countDown()
+                }
+                for (i in 0 until iterationCount) {
+                    clientModel.valueOrThrow.signaller.fire("u$i")
+                }
+            }
+
+
+        }
+
+        val seenValuesBg = HashSet<String>()
+        val seenValuesBg2 = HashSet<String>()
+
+        serverUiScheduler.queue {
+            evt1.countDown()
+            evt1.await()
+
+            evt2.countDown()
+
+            val serverModel = RdOptionalProperty(InterningMtModel).static(1)
+
+            serverModel.view(serverLifetime) { plt, m ->
+                m.signaller.adviseOn(plt, serverBgScheduler) {
+                    seenValuesBg.add(it)
+                }
+                m.signaller2.adviseOn(plt, serverBgScheduler) {
+                    seenValuesBg2.add(it)
+                }
+                evt3.countDown()
+                evt4.await()
+            }
+
+            Thread.sleep(500)
+
+            serverProtocol.bindStatic(serverModel, "top")
+        }
+
+        evt1.countDown()
+        evt1.await()
+
+        evt4.await()
+
+        // these also flush the schedulers
+        clientUiScheduler.assertNoExceptions()
+        clientBgScheduler.assertNoExceptions()
+
+
+        serverUiScheduler.assertNoExceptions()
+        serverBgScheduler.assertNoExceptions()
+
+        assert(seenValuesBg.size == iterationCount * 2) { "Some values were not received" }
+        assert(seenValuesBg2.size == iterationCount) { "Some BG values were not received" }
+    }
 }

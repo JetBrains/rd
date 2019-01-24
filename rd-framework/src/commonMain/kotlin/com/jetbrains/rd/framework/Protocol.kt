@@ -28,6 +28,8 @@ class Protocol(
     override val protocol: IProtocol get() = this
     override val serializationContext: SerializationCtx = serializationCtx ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot().also {
         it.rdid = RdId.Null.mix("ProtocolInternRoot")
-        it.bind(Lifetime.Eternal, this, "ProtocolInternRoot")
+        scheduler.queue {
+            it.bind(Lifetime.Eternal, this, "ProtocolInternRoot")
+        }
     }))
 }

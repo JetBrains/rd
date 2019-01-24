@@ -9,7 +9,7 @@ import com.jetbrains.rd.framework.IInternRoot
 
 class InternRoot: IInternRoot {
     private val myItemsList = ArrayList<Any>()
-    private val otherItemsList = HashMap<Int, Any>()
+    private val otherItemsList = ConcurrentHashMap<Int, Any>()
     private val inverseMap = ConcurrentHashMap<Any, Int>()
 
     override fun tryGetInterned(value: Any): Int {
@@ -103,14 +103,10 @@ class InternRoot: IInternRoot {
 class InternScheduler : IScheduler {
     override fun queue(action: () -> Unit) {
         activeCounts.set(activeCounts.get() + 1)
-        val total = totalActiveCounts.incrementAndGet()
-        assert(activeCounts.get() == total) { "InternScheduler should be used on a single thread" }
         try {
             action()
         } finally {
             activeCounts.set(activeCounts.get() - 1)
-            val total = totalActiveCounts.decrementAndGet()
-            assert(activeCounts.get() == total) { "InternScheduler should be used on a single thread" }
         }
     }
     override val isActive: Boolean
@@ -119,6 +115,5 @@ class InternScheduler : IScheduler {
     override val outOfOrderExecution: Boolean
         get() = true
 
-    private val totalActiveCounts = AtomicInteger()
     private val activeCounts = threadLocalWithInitial { 0 }
 }

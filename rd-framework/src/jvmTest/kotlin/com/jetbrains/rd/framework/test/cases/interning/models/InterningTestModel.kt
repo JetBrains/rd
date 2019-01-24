@@ -46,7 +46,7 @@ class InterningRoot1 private constructor(
         }
 
 
-        const val serializationHash = 2016272947314984652L
+        const val serializationHash = 6669156913087871625L
     }
     override val serializersOwner: ISerializersOwner get() = InterningRoot1
     override val serializationHash: Long get() = InterningRoot1.serializationHash
@@ -74,12 +74,12 @@ class InterningExtensionHolder (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): InterningExtensionHolder {
             val _id = RdId.read(buffer)
-            return InterningExtensionHolder().withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "OutOfExt") }
+            return InterningExtensionHolder().withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "InternScopeOutOfExt") }
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InterningExtensionHolder) {
             value.rdid.write(buffer)
-            value.mySerializationContext = ctx.withInternRootsHere(value, "OutOfExt")
+            value.mySerializationContext = ctx.withInternRootsHere(value, "InternScopeOutOfExt")
         }
 
     }
@@ -101,7 +101,8 @@ class InterningExtensionHolder (
 
 class InterningMtModel private constructor(
         val searchLabel: String,
-        private val _signaller: RdSignal<String>
+        private val _signaller: RdSignal<String>,
+        private val _signaller2: RdSignal<String>
 ) : RdBindableBase() {
     //companion
 
@@ -112,31 +113,36 @@ class InterningMtModel private constructor(
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): InterningMtModel {
             val _id = RdId.read(buffer)
             val searchLabel = buffer.readString()
-            val _signaller = RdSignal.read(ctx, buffer, __StringInternedAtTestSerializer)
-            return InterningMtModel(searchLabel, _signaller).withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "Test") }
+            val _signaller = RdSignal.read(ctx, buffer, __StringInternedAtTestInternScopeSerializer)
+            val _signaller2 = RdSignal.read(ctx, buffer, __StringInternedAtTestInternScopeSerializer)
+            return InterningMtModel(searchLabel, _signaller, _signaller2).withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "TestInternScope") }
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InterningMtModel) {
             value.rdid.write(buffer)
             buffer.writeString(value.searchLabel)
             RdSignal.write(ctx, buffer, value._signaller)
-            value.mySerializationContext = ctx.withInternRootsHere(value, "Test")
+            RdSignal.write(ctx, buffer, value._signaller2)
+            value.mySerializationContext = ctx.withInternRootsHere(value, "TestInternScope")
         }
 
-        private val __StringInternedAtTestSerializer = FrameworkMarshallers.String.interned("Test")
+        private val __StringInternedAtTestInternScopeSerializer = FrameworkMarshallers.String.interned("TestInternScope")
     }
     //fields
     val signaller: IAsyncSignal<String> get() = _signaller
+    val signaller2: IAsyncSignal<String> get() = _signaller2
     private var mySerializationContext: SerializationCtx? = null
     override val serializationContext: SerializationCtx
         get() = mySerializationContext ?: throw IllegalStateException("Attempting to get serialization context too soon for $location")
     //initializer
     init {
         _signaller.async = true
+        _signaller2.async = true
     }
 
     init {
         bindableChildren.add("signaller" to _signaller)
+        bindableChildren.add("signaller2" to _signaller2)
     }
 
     //secondary constructor
@@ -144,7 +150,8 @@ class InterningMtModel private constructor(
             searchLabel: String
     ) : this(
             searchLabel,
-            RdSignal<String>(__StringInternedAtTestSerializer)
+            RdSignal<String>(__StringInternedAtTestInternScopeSerializer),
+            RdSignal<String>(__StringInternedAtTestInternScopeSerializer)
     )
 
     //equals trait
@@ -155,6 +162,7 @@ class InterningMtModel private constructor(
         printer.indent {
             print("searchLabel = "); searchLabel.print(printer); println()
             print("signaller = "); _signaller.print(printer); println()
+            print("signaller2 = "); _signaller2.print(printer); println()
         }
         printer.print(")")
     }
@@ -173,13 +181,13 @@ data class InterningNestedTestModel (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): InterningNestedTestModel {
             val value = buffer.readString()
-            val inner = buffer.readNullable { ctx.readInterned(buffer, "Test") { _, _ -> InterningNestedTestModel.read(ctx, buffer) } }
+            val inner = buffer.readNullable { ctx.readInterned(buffer, "TestInternScope") { _, _ -> InterningNestedTestModel.read(ctx, buffer) } }
             return InterningNestedTestModel(value, inner)
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InterningNestedTestModel) {
             buffer.writeString(value.value)
-            buffer.writeNullable(value.inner) { ctx.writeInterned(buffer, it, "Test") { _, _, internedValue -> InterningNestedTestModel.write(ctx, buffer, internedValue) } }
+            buffer.writeNullable(value.inner) { ctx.writeInterned(buffer, it, "TestInternScope") { _, _, internedValue -> InterningNestedTestModel.write(ctx, buffer, internedValue) } }
         }
 
     }
@@ -228,13 +236,13 @@ data class InterningNestedTestStringModel (
 
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): InterningNestedTestStringModel {
-            val value = ctx.readInterned(buffer, "Test") { _, _ -> buffer.readString() }
+            val value = ctx.readInterned(buffer, "TestInternScope") { _, _ -> buffer.readString() }
             val inner = buffer.readNullable { InterningNestedTestStringModel.read(ctx, buffer) }
             return InterningNestedTestStringModel(value, inner)
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InterningNestedTestStringModel) {
-            ctx.writeInterned(buffer, value.value, "Test") { _, _, internedValue -> buffer.writeString(internedValue) }
+            ctx.writeInterned(buffer, value.value, "TestInternScope") { _, _, internedValue -> buffer.writeString(internedValue) }
             buffer.writeNullable(value.inner) { InterningNestedTestStringModel.write(ctx, buffer, it) }
         }
 
@@ -344,14 +352,14 @@ class InterningTestModel private constructor(
             val _id = RdId.read(buffer)
             val searchLabel = buffer.readString()
             val _issues = RdMap.read(ctx, buffer, FrameworkMarshallers.Int, WrappedStringModel)
-            return InterningTestModel(searchLabel, _issues).withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "Test") }
+            return InterningTestModel(searchLabel, _issues).withId(_id).apply { mySerializationContext = ctx.withInternRootsHere(this, "TestInternScope") }
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InterningTestModel) {
             value.rdid.write(buffer)
             buffer.writeString(value.searchLabel)
             RdMap.write(ctx, buffer, value._issues)
-            value.mySerializationContext = ctx.withInternRootsHere(value, "Test")
+            value.mySerializationContext = ctx.withInternRootsHere(value, "TestInternScope")
         }
 
     }
@@ -451,12 +459,12 @@ data class WrappedStringModel (
 
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): WrappedStringModel {
-            val text = ctx.readInterned(buffer, "Test") { _, _ -> buffer.readString() }
+            val text = ctx.readInterned(buffer, "TestInternScope") { _, _ -> buffer.readString() }
             return WrappedStringModel(text)
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: WrappedStringModel) {
-            ctx.writeInterned(buffer, value.text, "Test") { _, _, internedValue -> buffer.writeString(internedValue) }
+            ctx.writeInterned(buffer, value.text, "TestInternScope") { _, _, internedValue -> buffer.writeString(internedValue) }
         }
 
     }
