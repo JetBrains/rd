@@ -63,15 +63,17 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                     // also, if adviseOn executes messages, it clears this list, also on the same thread as this
                     if (subscription == null) {
                         log.trace { "No handler for id: $id" }
+                        synchronized(lock) { // drop one message
+                            currentIdBroker.defaultSchedulerMessages.removeAt(0)
+                        }
                     } else if(currentIdBroker.defaultSchedulerMessages.isNotEmpty()) {
                         currentIdBroker.defaultSchedulerMessages.removeAt(0).let {
                             subscription.invoke(it, sync = subscription.wireScheduler == defaultScheduler)
                         }
                     }
 
-                    if(currentIdBroker.defaultSchedulerMessages.isEmpty())
+                    if (currentIdBroker.defaultSchedulerMessages.isEmpty())
                         synchronized(lock) {
-                            currentIdBroker.defaultSchedulerMessages.clear()
                             broker.remove(id)?.customSchedulerMessages?.forEach {
                                 subscription?.apply {
                                     require(wireScheduler != defaultScheduler)
