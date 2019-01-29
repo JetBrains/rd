@@ -102,6 +102,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
 
     @Test
     fun testLateReceiverBind() {
+        val evt0 = CountDownLatch(1)
         val evt1 = CountDownLatch(3)
         val evt2 = CountDownLatch(1)
         val evt3 = CountDownLatch(1)
@@ -112,6 +113,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
         clientUiScheduler.queue {
             val clientModel = clientProtocol.bindStatic(RdOptionalProperty(InterningMtModel).static(1), "top")
 
+            evt0.await()
             clientModel.set(InterningMtModel(""))
 
             evt1.countDown()
@@ -143,6 +145,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
         val seenValuesBg2 = HashSet<String>()
 
         serverUiScheduler.queue {
+            evt0.countDown()
             evt1.countDown()
             evt1.await()
 
