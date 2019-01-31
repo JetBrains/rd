@@ -458,10 +458,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "public static void RegisterDeclaredTypesSerializers(ISerializers serializers)"
         + "{"
         indent {
-            types.filter{ !it.isAbstract }.println {
-                if (it is Enum)
-                    "serializers.RegisterEnum<${it.sanitizedName(decl)}>();"
-                else if (it is IType)
+            types.filter{ !it.isAbstract && decl.base != null}.forEach {
+                if (it is IType)
                     "serializers.Register(${it.readerDelegateRef(decl)}, ${it.writerDelegateRef(decl)});"
                 else
                     fail("Unsupported declaration in register: $it")
