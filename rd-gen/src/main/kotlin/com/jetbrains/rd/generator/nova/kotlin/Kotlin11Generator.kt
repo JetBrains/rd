@@ -207,7 +207,10 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         }
     }
 
-    protected fun IType.serializerRef(scope: Declaration) : String = leafSerializerRef(scope) ?: "__${name}Serializer"
+    protected fun IType.serializerRef(scope: Declaration) : String = leafSerializerRef(scope) ?: when(this) {
+        is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
+        else -> "__${name}Serializer"
+    }
 
 
 
@@ -439,7 +442,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             is IArray -> itemType.serializerBuilder() + ".array()"
             is IImmutableList -> itemType.serializerBuilder() + ".list()"
             is INullable -> itemType.serializerBuilder() + ".nullable()"
-            is InternedScalar -> itemType.serializerBuilder() + ".interned()"
+            is InternedScalar -> itemType.serializerBuilder() + ".interned(\"${internKey.keyName}\")"
             else -> fail("Unknown type: $this")
         }
 
@@ -527,7 +530,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.reader(): String = when (this) {
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
-            is InternedScalar -> "ctx.readInterned(buffer) { _, _ -> ${itemType.reader()} }"
+            is InternedScalar -> "ctx.readInterned(buffer, \"${internKey.keyName}\") { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
@@ -560,9 +563,6 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         if (unknown) {
             +"val objectStartPosition = buffer.position"
         }
-        if (decl is Class && decl.isInternRoot) {
-            +"val ctx = ctx.withInternRootHere(false)"
-        }
         if (decl is Class || decl is Aggregate) {
             +"val _id = RdId.read(buffer)"
         }
@@ -572,9 +572,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             +"buffer.readByteArrayRaw(unknownBytes)"
         }
         val ctorParams = decl.allMembers.asSequence().map { it.valName() }.plus(unknownMemberNames(decl)).joinToString(", ")
-        p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
+        p("return ${decl.name}($ctorParams)")
         if (decl is Class || decl is Aggregate) {
             p(".withId(_id)")
+        }
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
+            p(".apply { mySerializationContext = ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }}) }")
         }
         println()
     }
@@ -585,7 +588,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "buffer.writeEnum($field)"
-            is InternedScalar -> "ctx.writeInterned(buffer, $field) { _, _, internedValue -> ${itemType.writer("internedValue")} }"
+            is InternedScalar -> "ctx.writeInterned(buffer, $field, \"${internKey.keyName}\") { _, _, internedValue -> ${itemType.writer("internedValue")} }"
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
@@ -613,16 +616,15 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
         + "override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ${decl.name}) {"
         indent {
-            if(decl is Class && decl.isInternRoot) {
-                + "val ctx = ctx.withInternRootHere(true)"
-                + "value.mySerializationContext = ctx"
-            }
             if (decl is Class || decl is Aggregate) {
                 + "value.rdid.write(buffer)"
             }
             (decl.membersOfBaseClasses + decl.ownMembers).println(Member::writer)
             if (isUnknown(decl)) {
                 + "buffer.writeByteArrayRaw(value.unknownBytes)"
+            }
+            if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
+                + "value.mySerializationContext = ctx.withInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }})"
             }
         }
         + "}"
@@ -634,7 +636,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
             + "val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
         }
 
-        if (decl is Class && decl.isInternRoot) {
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             + "private var mySerializationContext: SerializationCtx? = null"
             + "override val serializationContext: SerializationCtx"
             indent {

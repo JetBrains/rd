@@ -106,6 +106,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             type is IArray && !(type.isPrimitivesArray)
         ||  type is IImmutableList
         ||  type is INullable
+        ||  type is InternedScalar
         ||  type is Enum && memberIsReactive
 
 
@@ -516,14 +517,17 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         else -> null
     }                                                           
 
-    fun IType.readerDelegateRef(containing: Declaration) = readerDeclaredElsewhereDelegateRef(containing) ?: "Read$name" //must be constructed here
+    fun IType.readerDelegateRef(containing: Declaration) = readerDeclaredElsewhereDelegateRef(containing) ?: when(this) {
+        is InternedScalar -> "Read${name}At${internKey.keyName}"
+        else -> "Read$name" //must be constructed here
+    }
     
     protected fun PrettyPrinter.readerAndDelegatesTrait(decl: Declaration) {
 
         fun IType.complexDelegateBuilder() : String = readerDeclaredElsewhereDelegateRef(decl) ?: when (this) {
             is Enum -> "new CtxReadDelegate<${sanitizedName(decl)}>(JetBrains.Platform.RdFramework.Impl.Serializers.ReadEnum<${sanitizedName(decl)}>)"
             is IArray -> itemType.complexDelegateBuilder()+".Array()"
-            is InternedScalar -> itemType.complexDelegateBuilder()+".Interned()"
+            is InternedScalar -> itemType.complexDelegateBuilder()+".Interned(\"${internKey.keyName}\")"
             is IImmutableList -> itemType.complexDelegateBuilder()+".List()"
             is INullable -> itemType.complexDelegateBuilder() +
                 ".Nullable" + (if (itemType.isValueType) "Struct" else "Class") + "()"
@@ -534,7 +538,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         fun IType.reader() : String  = when (this) {
             is Enum -> "(${sanitizedName(decl)})reader.ReadInt()"
             is PredefinedType -> "reader.Read$name()"
-            is InternedScalar -> "ctx.ReadInterned(reader, ${itemType.complexDelegateBuilder()})"
+            is InternedScalar -> "ctx.ReadInterned(reader, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
             else ->  readerDelegateRef(decl) +"(ctx, reader)"
         }
 
@@ -560,25 +564,25 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             +"$modifiers CtxReadDelegate<${decl.name}> Read = (ctx, reader) => "
             +"{"
             indent {
-                if(decl is Class && decl.isInternRoot) {
-                    + "ctx = ctx.WithInternRootHere(false);"
-                }
-
                 if (decl is Class || decl is Aggregate) {
                     + "var _id = RdId.Read(reader);"
                 }
                 (decl.membersOfBaseClasses + decl.ownMembers).println { "var ${sanitize(it.name, "ctx", "reader")} = ${it.reader()};" }
-                p("return new ${decl.name}(${decl.allMembers.joinToString(", ") { sanitize(it.name, "ctx", "reader") }})${(decl is Class && decl.isInternRoot).condstr { " { mySerializationContext = ctx }" }}")
+                p("var _result = new ${decl.name}(${decl.allMembers.joinToString(", ") { sanitize(it.name, "ctx", "reader") }})")
                 if (decl is Class || decl is Aggregate) {
                     p(".WithId(_id)")
                 }
-                +";"
+                +(";")
+                if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
+                    +"_result.mySerializationContext = ctx.WithInternRootsHere(_result, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
+                }
+                +"return _result;"
             }
             +"};"
         }
 
         decl.allTypesForDelegation().forEach {
-            + "public static CtxReadDelegate<${it.substitutedName(decl)}> Read${it.name} = ${it.complexDelegateBuilder()};"
+            + "public static CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
         }
     }
 
@@ -592,7 +596,10 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         else -> null
     }
 
-    fun IType.writerDelegateRef(containing: Declaration) = writerDeclaredElsewhereDelegateRef(containing) ?: "Write$name" //must be constructed here
+    fun IType.writerDelegateRef(containing: Declaration) = writerDeclaredElsewhereDelegateRef(containing) ?: when(this) {
+        is InternedScalar -> "Write${name}At${internKey.keyName}"
+        else -> "Write$name" //must be constructed here
+    }
 
     protected fun PrettyPrinter.writerAndDelegatesTrait(decl: Declaration) {
 
@@ -600,7 +607,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             is Enum -> "new CtxWriteDelegate<${sanitizedName(decl)}>(JetBrains.Platform.RdFramework.Impl.Serializers.WriteEnum<${sanitizedName(decl)}>)"
             is IArray -> itemType.complexDelegateBuilder()+".Array()"
             is IImmutableList -> itemType.complexDelegateBuilder()+".List()"
-            is InternedScalar -> itemType.complexDelegateBuilder()+".Interned()"
+            is InternedScalar -> itemType.complexDelegateBuilder()+".Interned(\"${internKey.keyName}\")"
             is INullable -> itemType.complexDelegateBuilder() +
                 ".Nullable" + (if (itemType.isValueType) "Struct" else "Class") + "()"
             else -> fail("Unknown type: $this")
@@ -610,7 +617,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "writer.Write((int)$field)"
             is PredefinedType -> "writer.Write($field)"
-            is InternedScalar -> "ctx.WriteInterned(writer, $field, ${itemType.complexDelegateBuilder()})"
+            is InternedScalar -> "ctx.WriteInterned(writer, $field, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
             else ->  writerDelegateRef(decl) +"(ctx, writer, $field)"
         }
 
@@ -634,20 +641,19 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             +"$modifiers CtxWriteDelegate<${decl.name}> Write = (ctx, writer, value) => "
             +"{"
             indent {
-                if(decl is Class && decl.isInternRoot) {
-                    + "ctx = ctx.WithInternRootHere(true);"
-                    + "value.mySerializationContext = ctx;"
-                }
                 if (decl is Class || decl is Aggregate) {
                     + "value.RdId.Write(writer);"
                 }
                 (decl.membersOfBaseClasses + decl.ownMembers).println { it.writer() + ";" }
+                if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
+                    + "value.mySerializationContext = ctx.WithInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
+                }
             }
             +"};"
         }
 
         decl.allTypesForDelegation().forEach {
-            + "public static CtxWriteDelegate<${it.substitutedName(decl)}> Write${it.name} = ${it.complexDelegateBuilder()};"
+            + "public static CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
         }
     }
 
@@ -673,7 +679,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
             it.nullAttr() + (if (decl.isAbstract) "protected" else "private") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
         }
 
-        if (decl is Class && decl.isInternRoot) {
+        if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             + "private SerializationCtx mySerializationContext;"
             + "public override SerializationCtx SerializationContext { get { return mySerializationContext; } }"
         }

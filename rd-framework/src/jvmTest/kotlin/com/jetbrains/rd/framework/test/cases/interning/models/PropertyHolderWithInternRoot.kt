@@ -1,0 +1,26 @@
+package com.jetbrains.rd.framework.test.cases.interning
+
+import com.jetbrains.rd.framework.IIdentities
+import com.jetbrains.rd.framework.RdId
+import com.jetbrains.rd.framework.SerializationCtx
+import com.jetbrains.rd.framework.base.RdBindableBase
+import com.jetbrains.rd.framework.impl.RdOptionalProperty
+import com.jetbrains.rd.util.lifetime.Lifetime
+
+
+class PropertyHolderWithInternRoot<T : Any>(val property: RdOptionalProperty<T>, var mySerializationContext: SerializationCtx) : RdBindableBase() {
+    override fun init(lifetime: Lifetime) {
+        property.bind(lifetime, this, "propertyHolderWithInternRoot")
+        super.init(lifetime)
+    }
+
+    override fun identify(identities: IIdentities, ids: RdId) {
+        property.identify(identities, ids.mix("propertyHolderWithInternRoot"))
+        super.identify(identities, ids)
+    }
+
+
+
+    override val serializationContext: SerializationCtx
+        get() = mySerializationContext
+}

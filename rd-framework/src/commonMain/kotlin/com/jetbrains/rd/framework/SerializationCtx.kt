@@ -1,8 +1,11 @@
 package com.jetbrains.rd.framework
 
+import com.jetbrains.rd.framework.base.IRdBindable
+import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.impl.InternRoot
+import com.jetbrains.rd.util.lifetime.Lifetime
 
-class SerializationCtx(val serializers: ISerializers, val internRoot: IInternRoot? = null) {
+class SerializationCtx(val serializers: ISerializers, val internRoots: Map<String, IInternRoot> = emptyMap()) {
     constructor(protocol: IProtocol) : this(protocol.serializers)
 }
 
@@ -43,36 +46,22 @@ fun <T : Any> ISerializer<T>.nullable() : ISerializer<T?> = object : ISerializer
     override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: T?) = buffer.writeNullable(value) { this@nullable.write(ctx, buffer, it)}
 }
 
-fun <T: Any> ISerializer<T>.interned() : ISerializer<T> = object : ISerializer<T> {
-    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): T = ctx.readInterned(buffer, this@interned::read)
-    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: T) = ctx.writeInterned(buffer, value, this@interned::write)
+fun <T: Any> ISerializer<T>.interned(internKey: String) : ISerializer<T> = object : ISerializer<T> {
+    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): T = ctx.readInterned(buffer, internKey, this@interned::read)
+    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: T) = ctx.writeInterned(buffer, value, internKey, this@interned::write)
 }
 
-fun SerializationCtx.withInternRootHere(isMaster: Boolean): SerializationCtx {
-    return SerializationCtx(serializers, InternRoot(isMaster))
+fun SerializationCtx.withInternRootsHere(owner: RdBindableBase, vararg newRoots: String): SerializationCtx {
+    return SerializationCtx(serializers, internRoots.plus(newRoots.associate {
+        it to owner.getOrCreateHighPriorityExtension("InternRoot-$it") { InternRoot() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
 }
 
-inline fun <T: Any> SerializationCtx.readInterned(stream: AbstractBuffer, readValueDelegate: (SerializationCtx, AbstractBuffer) -> T): T {
-    val interningRoot = internRoot ?: return readValueDelegate(this, stream)
-    val hasValue = stream.readBoolean()
-    return if (hasValue) {
-        val value = readValueDelegate(this, stream)
-        val id = stream.readInt()
-        interningRoot.setInternedCorrespondence(id, value)
-        value
-    } else {
-        interningRoot.unInternValue(stream.readInt())
-    }
+inline fun <T: Any> SerializationCtx.readInterned(stream: AbstractBuffer, internKey: String, readValueDelegate: (SerializationCtx, AbstractBuffer) -> T): T {
+    val interningRoot = internRoots[internKey] ?: return readValueDelegate(this, stream)
+    return interningRoot.unInternValue(stream.readInt() xor 1)
 }
 
-inline fun <T: Any> SerializationCtx.writeInterned(stream: AbstractBuffer, value: T, writeValueDelegate: (SerializationCtx, AbstractBuffer, T) -> Unit) {
-    val interningRoot = internRoot ?: return writeValueDelegate(this, stream, value)
-    var alreadyInternedId = interningRoot.tryGetInterned(value)
-    val isNewValue = alreadyInternedId < 0
-    stream.writeBoolean(isNewValue)
-    if (isNewValue) {
-        writeValueDelegate(this, stream, value)
-        alreadyInternedId = interningRoot.internValue(value)
-    }
-    stream.writeInt(alreadyInternedId)
+inline fun <T: Any> SerializationCtx.writeInterned(stream: AbstractBuffer, value: T, internKey: String, writeValueDelegate: (SerializationCtx, AbstractBuffer, T) -> Unit) {
+    val interningRoot = internRoots[internKey] ?: return writeValueDelegate(this, stream, value)
+    stream.writeInt(interningRoot.internValue(value))
 }

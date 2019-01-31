@@ -46,7 +46,9 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
         }
 
     fun processAllMessages() {
-        while (!msgQ.isEmpty()) processOneMessage()
+        scheduler.invokeOrQueue { // emulate normal wire behavior in that all messages are processed in a single thread
+            while (!msgQ.isEmpty()) processOneMessage()
+        }
     }
 
     fun processOneMessage() {

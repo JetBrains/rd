@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.IRdReactive
+import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.blockingPutUnique
 import com.jetbrains.rd.util.getOrCreate
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -39,7 +40,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
 
     private class Mq {
-        var defaultSchedulerMessages: Int = 0
+        var defaultSchedulerMessages = arrayListOf<AbstractBuffer>()
         val customSchedulerMessages = arrayListOf<AbstractBuffer>()
     }
 
@@ -51,32 +52,36 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
             val s = subscriptions[id]
             if (s == null) {
-                broker.getOrCreate(id, { Mq() }).defaultSchedulerMessages++
+                val currentIdBroker = broker.getOrCreate(id, { Mq() })
 
+                currentIdBroker.defaultSchedulerMessages.add(message)
                 defaultScheduler.queue {
                     val subscription = subscriptions[id] //no lock because can be changed only under default scheduler
 
-                    if (subscription != null) {
-                        if (subscription.wireScheduler == defaultScheduler)
-                            subscription.invoke(message, sync = true)
-                        else
-                            subscription.invoke(message)
-                    } else {
+                    // no lock for processing broker contents as all additions happen before subscriptions[id] write,
+                    // and it happens on default scheduler (asserted) before this handler is executed
+                    // also, if adviseOn executes messages, it clears this list, also on the same thread as this
+                    if (subscription == null) {
                         log.trace { "No handler for id: $id" }
+                    } else if(currentIdBroker.defaultSchedulerMessages.isNotEmpty()) {
+                        currentIdBroker.defaultSchedulerMessages[0].let {
+                            subscription.invoke(it, sync = subscription.wireScheduler == defaultScheduler)
+                        }
                     }
 
                     synchronized(lock) {
-                        if (--broker[id]!!.defaultSchedulerMessages == 0) {
-                            broker.remove(id)!!.customSchedulerMessages.forEach {
+                        if (currentIdBroker.defaultSchedulerMessages.isNotEmpty())
+                            currentIdBroker.defaultSchedulerMessages.removeAt(0)
+
+                        if (currentIdBroker.defaultSchedulerMessages.isEmpty())
+                            broker.remove(id)?.customSchedulerMessages?.forEach {
                                 subscription?.apply {
-                                    require (wireScheduler != defaultScheduler)
+                                    require(wireScheduler != defaultScheduler)
                                     subscription.invoke(it)
                                 }
                             }
-                        }
                     }
                 }
-
             } else {
 
                 if (s.wireScheduler == defaultScheduler || s.wireScheduler.outOfOrderExecution) {
@@ -84,7 +89,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                 } else {
                     val mq = broker[id]
                     if (mq != null) {
-                        require(mq.defaultSchedulerMessages > 0)
+                        require(mq.defaultSchedulerMessages.isNotEmpty())
                         mq.customSchedulerMessages.add(message)
                     } else {
                         s.invoke(message)
@@ -104,6 +109,20 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
         //if (lifetime.isTerminated) return
         subscriptions.blockingPutUnique(lifetime, lock, entity.rdid, entity)
+
+        if (entity.wireScheduler.outOfOrderExecution)
+            lifetime.executeIfAlive {
+                synchronized(lock) {
+                    broker.remove(entity.rdid)?.let { mq ->
+                        mq.defaultSchedulerMessages.forEach { msg ->
+                            entity.invoke(msg)
+                        }
+                        mq.defaultSchedulerMessages.clear() // clear it here because it is captured by default scheduler queueing
+                        assert(mq.customSchedulerMessages.isEmpty()) { "Custom scheduler messages for an entity with outOfOrder scheduler $entity" }
+                    }
+                }
+                Unit
+            }
     }
 
     override fun print(printer: PrettyPrinter) {
@@ -118,7 +137,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                 printer.println("".padStart(20, '-') + "----" + "".padStart(9, '-'))
                 for ((key, value) in broker) {
                     val customSize = value.customSchedulerMessages.size
-                    printer.println("$key".padEnd(20) + " -> " + value.defaultSchedulerMessages +
+                    printer.println("$key".padEnd(20) + " -> " + value.defaultSchedulerMessages.size +
                             (customSize > 0).condstr { " (+$customSize background messages)" })
                 }
             }

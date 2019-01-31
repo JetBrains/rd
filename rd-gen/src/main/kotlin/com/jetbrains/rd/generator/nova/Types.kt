@@ -45,8 +45,16 @@ interface INullable : IHasItemType {
 data class NullableScalar(override val itemType : INonNullableScalar) : IScalar, INullable
 data class NullableBindable(override val itemType : INonNullableBindable) : IBindable, INullable
 
-data class InternedScalar(val itemType: INonNullableScalar) : INonNullableScalar {
+data class InternedScalar(val itemType: INonNullableScalar, val internKey: InternScope) : INonNullableScalar {
     override val name = itemType.name + "Interned"
+}
+
+class InternScope(pointcut: BindableDeclaration?, override val _name: String = ""): Declaration(pointcut) {
+    val keyName: String
+        get() = name.also { assert(it != "") { "No name specified for intern root and no name can be derived for intern root in $pointcut" } }
+
+    override val cl_name: String
+        get() = javaClass.simpleName
 }
 
 sealed class PredefinedType : INonNullableScalar {
@@ -246,6 +254,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun enum(name : String, body: Enum.() -> Unit) = append(Enum(name, this), body)
     fun enum(body: Enum.() -> Unit) = enum("", body)
 
+    fun internScope(name: String = "") = InternScope(this, name)
 }
 
 
@@ -266,7 +275,7 @@ sealed class Class(override val _name: String, override val pointcut : Toplevel,
         BindableDeclaration(pointcut), INonNullableBindable, Extensible {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_class"
 
-    var isInternRoot = false
+    internal val internRootForScopes = mutableListOf<String>()
     override val extensions = mutableListOf<Ext>()
 
     class Abstract (name : String, pointcut : Toplevel, base: Abstract?) : Class(name, pointcut, base) {
