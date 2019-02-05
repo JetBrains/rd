@@ -32,7 +32,7 @@ abstract class GeneratorBase : IGenerator {
             fail("Can't create folder '$folder'")
     }
 
-    protected open fun unknowns(declaredTypes: ArrayList<Declaration>): Collection<Declaration> {
+    protected open fun unknowns(declaredTypes: Iterable<Declaration>): Collection<Declaration> {
         return declaredTypes.mapNotNull {
             val unknown: Declaration? = unknown(it)
             unknown

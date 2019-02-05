@@ -298,16 +298,16 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
         namespace(tl)
 
-        val types = tl.declaredTypes + unknowns(tl.declaredTypes)
+        val allTypesWithUnknowns = tl.declaredTypes + unknowns(tl.declaredTypes)
 
         + "{"
         indent {
             if (tl.isLibrary)
-                libdef(tl, types)
+                libdef(tl, allTypesWithUnknowns)
             else
                 typedef(tl)
 
-            types.sortedBy { it.name }.forEach { type ->
+            allTypesWithUnknowns.sortedBy { it.name }.forEach { type ->
                 typedef(type)
             }
         }
