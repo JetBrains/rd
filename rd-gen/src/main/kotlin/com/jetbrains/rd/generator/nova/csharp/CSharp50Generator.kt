@@ -459,7 +459,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "public static void RegisterDeclaredTypesSerializers(ISerializers serializers)"
         + "{"
         indent {
-            types.filter{ !it.isAbstract && decl.base != null}.forEach {
+            types.filter{ !it.isAbstract && it.base != null}.println {
                 if (it is IType)
                     "serializers.Register(${it.readerDelegateRef(decl)}, ${it.writerDelegateRef(decl)});"
                 else
