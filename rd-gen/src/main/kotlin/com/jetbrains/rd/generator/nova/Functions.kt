@@ -14,7 +14,7 @@ val ProtocolInternScope = InternScope(null, "Protocol")
 
 fun Struct.field(name : String, type : IScalar) = append(Field(name, type))
 fun Class.field(name : String, type : IType) = append(Field(name, type))
-fun Ext.field(name : String, type : Aggregate) = append(Field(name, type))
+fun Toplevel.field(name : String, type : Aggregate) = append(Field(name, type))
 
 fun BindableDeclaration.signal(name : String, valueType : IScalar) = append(Signal(name, valueType))
 fun BindableDeclaration.source(name : String, valueType : IScalar) = append(Signal(name, valueType).write)
