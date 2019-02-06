@@ -11,10 +11,19 @@ enum class FlowKind {
 }
 
 
-sealed class Member(name: String, val referencedTypes: List<IType>) : SettingsHolder() {
+sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder() {
     open val name: String = name.decapitalize()
     var documentation: String? = null
     lateinit var owner: Declaration
+    val referencedTypes : List<IType> = referencedTypes.flatMap { expandItemTypes(it) }.distinct()
+
+    private fun expandItemTypes(type: IType) : List<IType> {
+        val res = mutableListOf(type)
+        if (type is IHasItemType)
+            res.addAll(expandItemTypes(type.itemType))
+
+        return res
+    }
 
     fun serializationHash(initial: IncrementalHash64) = referencedTypes.fold(initial.mix(name)) { acc, type -> acc.mix(type.name) }
 

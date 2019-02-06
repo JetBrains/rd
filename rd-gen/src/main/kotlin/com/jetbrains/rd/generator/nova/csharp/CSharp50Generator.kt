@@ -452,14 +452,20 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         }
     }
 
-    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
+    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, declaredAndUnknownTypes: List<Declaration>) {
         if (!decl.isLibrary)
             + "protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;"
 
         + "public static void RegisterDeclaredTypesSerializers(ISerializers serializers)"
         + "{"
         indent {
-            types.filter{ !it.isAbstract && it.base != null}.println {
+            val internedTypes = declaredAndUnknownTypes.flatMap { it.referencedTypes }.filterIsInstance<InternedScalar>().map { it.itemType }
+
+
+            val allTypesForRegistration = declaredAndUnknownTypes.filter{ it.base != null} +
+                    internedTypes.filterIsInstance<Declaration>()
+
+            allTypesForRegistration.filter{!it.isAbstract }.distinct().println {
                 if (it is IType)
                     "serializers.Register(${it.readerDelegateRef(decl)}, ${it.writerDelegateRef(decl)});"
                 else
