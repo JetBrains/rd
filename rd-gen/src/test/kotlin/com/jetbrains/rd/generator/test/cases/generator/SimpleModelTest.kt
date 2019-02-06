@@ -33,7 +33,12 @@ class SimpleModelTest {
             field("DocumentName", PredefinedType.int)
             property("Caret", PredefinedType.int)
             field("singleLine", PredefinedType.bool).default(false)
+
+            field("xxx", immutableList(structdef("Abc"){
+
+            }.interned(ProtocolInternScope)).nullable).optional
         }
+
 
         init {
             map("editors", PredefinedType.int, editor)

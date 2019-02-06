@@ -325,7 +325,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         }
 
         if (decl.isAbstract) p("abstract ")
-        if (decl is Struct.Concrete && decl.base == null) p("data ")
+        if (decl is Struct.Concrete && decl.base == null && decl.allMembers.isNotEmpty()) p("data ")
 
 
         + "class ${decl.name} ${decl.primaryCtorVisibility}("
