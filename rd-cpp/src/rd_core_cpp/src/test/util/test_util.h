@@ -21,65 +21,67 @@ constexpr std::vector<T> arrayListOf(std::initializer_list<T> args) {
     return std::vector<T>(args);
 }
 
-template<typename F, typename S>
-std::string to_string(const std::pair<F, S> p) {
-    return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
-}
+namespace rd {
+    template<typename F, typename S>
+    std::string to_string(const std::pair<F, S> p) {
+        return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
+    }
 
-template<typename F, typename S>
-std::string to_string(const std::pair<F, S *> p) {
-    return "(" + to_string(p.first) + ", " + to_string(*p.second) + ")";
-}
+    template<typename F, typename S>
+    std::string to_string(const std::pair<F, S *> p) {
+        return "(" + to_string(p.first) + ", " + to_string(*p.second) + ")";
+    }
 
-template<typename F, typename S>
-std::string to_string(const std::pair<F *, S *> p) {
-    return "(" + to_string(*p.first) + ", " + to_string(*p.second) + ")";
-}
+    template<typename F, typename S>
+    std::string to_string(const std::pair<F *, S *> p) {
+        return "(" + to_string(*p.first) + ", " + to_string(*p.second) + ")";
+    }
 
-template<typename K, typename V>
-std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
-    using Event = typename IViewableMap<K, V>::Event;
-    std::string res = mpark::visit(make_visitor(
-            [](typename Event::Add const &e) {
-                return "Add " +
-                       to_string(*e.key) + ":" +
-                       to_string(*e.new_value);
-            },
-            [](typename Event::Update const &e) {
-                return "Update " +
-                       to_string(*e.key) + ":" +
-//                       to_string(e.old_value) + ":" +
-                       to_string(*e.new_value);
-            },
-            [](typename Event::Remove const &e) {
-                return "Remove " +
-                       to_string(*e.key);
-            }
-    ), e.v);
-    return res;
-}
+    template<typename K, typename V>
+    std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
+        using Event = typename IViewableMap<K, V>::Event;
+        std::string res = mpark::visit(make_visitor(
+                [](typename Event::Add const &e) {
+                    return "Add " +
+                           rd::to_string(*e.key) + ":" +
+                           rd::to_string(*e.new_value);
+                },
+                [](typename Event::Update const &e) {
+                    return "Update " +
+                           rd::to_string(*e.key) + ":" +
+                           //                       to_string(e.old_value) + ":" +
+                           rd::to_string(*e.new_value);
+                },
+                [](typename Event::Remove const &e) {
+                    return "Remove " +
+                           rd::to_string(*e.key);
+                }
+        ), e.v);
+        return res;
+    }
 
-template<typename T>
-std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
-    using Event = typename IViewableList<T>::Event;
-    std::string res = mpark::visit(make_visitor(
-            [](typename Event::Add const &e) {
-                return "Add " +
-                       to_string(e.index) + ":" +
-                       to_string(*e.new_value);
-            },
-            [](typename Event::Update const &e) {
-                return "Update " +
-                       to_string(e.index) + ":" +
-//                       to_string(e.old_value) + ":" +
-                       to_string(*e.new_value);
-            },
-            [](typename Event::Remove const &e) {
-                return "Remove " +
-                       to_string(e.index);
-            }
-    ), e.v);
-    return res;
+    template<typename T>
+    std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
+        using Event = typename IViewableList<T>::Event;
+        std::string res = mpark::visit(make_visitor(
+                [](typename Event::Add const &e) {
+                    return "Add " +
+                           std::to_string(e.index) + ":" +
+                           rd::to_string(*e.new_value);
+                },
+                [](typename Event::Update const &e) {
+                    return "Update " +
+                           std::to_string(e.index) + ":" +
+                           //                       to_string(e.old_value) + ":" +
+                           rd::to_string(*e.new_value);
+                },
+                [](typename Event::Remove const &e) {
+                    return "Remove " +
+                           std::to_string(e.index);
+                }
+        ), e.v);
+        return res;
+    }
 }
 
 #endif //RD_CPP_CORE_TEST_UTIL_H

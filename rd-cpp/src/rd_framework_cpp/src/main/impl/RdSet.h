@@ -12,8 +12,11 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
+
 template<typename T, typename S = Polymorphic<T>>
-class RdSet : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
+class RdSet final : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
+private:
+    using WT = typename IViewableSet<T>::WT;
 protected:
     ViewableSet<T> set;
 public:
@@ -59,8 +62,8 @@ public:
 
                     logSend.trace(
                             "set " + location.toString() + " " + rdid.toString() +
-                            ":: " + to_string(kind) +
-                            ":: " + to_string(v));
+                            ":: " + rd::to_string(kind) +
+                            ":: " + rd::to_string(v));
                 });
             });
         });
@@ -70,22 +73,22 @@ public:
 
     void on_wire_received(Buffer buffer) const override {
         AddRemove kind = buffer.readEnum<AddRemove>();
-        T value = S::read(this->get_serialization_context(), buffer);
+        auto value = S::read(this->get_serialization_context(), buffer);
 
         switch (kind) {
             case AddRemove::ADD : {
-                set.add(value);
+                set.add(std::move(value));
                 break;
             }
             case AddRemove::REMOVE: {
-                set.remove(value);
+                set.remove(rd::get<T>(value));
                 break;
             }
         }
     }
 
-    bool add(T value) const override {
-        return local_change([this, value = std::move(value)] { return set.add(std::move(value)); });
+    bool add(WT value) const override {
+        return local_change([this, value = std::move(value)]() mutable { return set.add(std::move(value)); });
     }
 
     void clear() const override {

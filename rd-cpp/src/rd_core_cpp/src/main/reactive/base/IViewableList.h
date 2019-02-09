@@ -5,9 +5,11 @@
 #ifndef RD_CPP_IVIEWABLELIST_H
 #define RD_CPP_IVIEWABLELIST_H
 
+#include "LifetimeDefinition.h"
 #include "overloaded.h"
 #include "interfaces.h"
 #include "viewable_collections.h"
+#include "wrapper.h"
 
 #include "mpark/variant.hpp"
 
@@ -24,6 +26,8 @@ std::vector<T> convert_to_list(IViewableList<T> const &list);*/
 
 template<typename T>
 class IViewableList : public IViewable<std::pair<size_t, T const *>> {
+protected:
+    using WT = typename rd::value_or_wrapper<T>;
 public:
     class Event {
     public:
@@ -63,13 +67,13 @@ public:
 
         int32_t get_index() const {
             return mpark::visit(make_visitor(
-                    [](typename Event::Add const &e) {
+                    [](Add const &e) {
                         return e.index;
                     },
-                    [](typename Event::Update const &e) {
+                    [](Update const &e) {
                         return e.index;
                     },
-                    [](typename Event::Remove const &e) {
+                    [](Remove const &e) {
                         return e.index;
                     }
             ), v);
@@ -77,13 +81,13 @@ public:
 
         T const *get_new_value() const {
             return mpark::visit(make_visitor(
-                    [](typename Event::Add const &e) {
+                    [](Add const &e) {
                         return e.new_value;
                     },
-                    [](typename Event::Update const &e) {
+                    [](Update const &e) {
                         return e.new_value;
                     },
-                    [](typename Event::Remove const &e) {
+                    [](Remove const &e) {
                         return static_cast<T const *>(nullptr);
                     }
             ), v);
@@ -152,45 +156,48 @@ public:
 
     virtual void advise(Lifetime lifetime, std::function<void(Event)> handler) const = 0;
 
-    virtual bool add(T element) const = 0;
+    virtual bool add(WT element) const = 0;
 
-    virtual bool add(size_t index, T element) const = 0;
+    virtual bool add(size_t index, WT element) const = 0;
 
-    virtual T removeAt(size_t index) const = 0;
+    virtual WT removeAt(size_t index) const = 0;
 
     virtual bool remove(T const &element) const = 0;
 
     virtual T const &get(size_t index) const = 0;
 
-    virtual T set(size_t index, T element) const = 0;
+    virtual WT set(size_t index, WT element) const = 0;
 
-    virtual bool addAll(size_t index, std::vector<T> elements) const = 0;
+    virtual bool addAll(size_t index, std::vector<WT> elements) const = 0;
 
-    virtual bool addAll(std::vector<T> elements) const = 0;
+    virtual bool addAll(std::vector<WT> elements) const = 0;
 
     virtual void clear() const = 0;
 
-    virtual bool removeAll(std::vector<T> elements) const = 0;
+    virtual bool removeAll(std::vector<WT> elements) const = 0;
 
     virtual size_t size() const = 0;
 
     virtual bool empty() const = 0;
 
     template<typename U>
-    friend std::vector<U> convert_to_list(IViewableList<U> const &list);
+    friend typename std::enable_if<(!std::is_abstract<U>::value), std::vector<U>>::type
+    convert_to_list(IViewableList<U> const &list);
 
 protected:
-    virtual const std::vector<std::shared_ptr<T>> &getList() const = 0;
+    virtual const std::vector<rd::Wrapper<T>> &getList() const = 0;
 };
 
 template<typename T>
-std::vector<T> convert_to_list(IViewableList<T> const &list) {
+typename std::enable_if<(!std::is_abstract<T>::value), std::vector<T>>::type
+convert_to_list(IViewableList<T> const &list) {
     std::vector<T> res(list.size());
     std::transform(list.getList().begin(), list.getList().end(), res.begin(),
-                   [](std::shared_ptr<T> const &ptr) { return *ptr; });
+                   [](rd::Wrapper<T> const &ptr) { return *ptr; });
     return res;
 }
 
-static_assert(std::is_move_constructible<IViewableList<int>::Event>::value, "Is move constructible from IViewableList<int>::Event");
+static_assert(std::is_move_constructible<IViewableList<int>::Event>::value,
+              "Is move constructible from IViewableList<int>::Event");
 
 #endif //RD_CPP_IVIEWABLELIST_H

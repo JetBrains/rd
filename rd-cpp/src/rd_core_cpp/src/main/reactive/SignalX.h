@@ -19,6 +19,7 @@ extern std::atomic<int32_t> cookie;
 template<typename T>
 class Signal : public ISignal<T> {
 private:
+	using WT = typename ISignal<T>::WT;
 
     class Event {
     private:

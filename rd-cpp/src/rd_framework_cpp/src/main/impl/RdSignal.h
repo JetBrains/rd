@@ -15,10 +15,11 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 template<typename T, typename S = Polymorphic<T>>
-class RdSignal : public RdReactiveBase, public ISignal<T>, public ISerializable {
+class RdSignal final : public RdReactiveBase, public ISignal<T>, public ISerializable {
 private:
+	using WT = typename ISignal<T>::WT;
     std::string logmsg(T const &value) const {
-        return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
+        return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + rd::to_string(value);
     }
 
 protected:
@@ -57,10 +58,10 @@ public:
     }
 
     void on_wire_received(Buffer buffer) const override {
-        T value = S::read(this->get_serialization_context(), buffer);
-        logReceived.trace(logmsg(value));
+        auto value = S::read(this->get_serialization_context(), buffer);
+        logReceived.trace(logmsg(rd::get<T>(value)));
 
-        signal.fire(value);
+        signal.fire(rd::get<T>(value));
     }
 
     void fire(T const &value) const override {

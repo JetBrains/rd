@@ -10,8 +10,7 @@
 #include <fstream>
 
 int main() {
-    TestScheduler wire_scheduler;
-    TestScheduler protocol_scheduler;
+    TestScheduler scheduler;
 
     LifetimeDefinition definition(false);
     Lifetime lifetime = definition.lifetime;
@@ -24,8 +23,8 @@ int main() {
     std::ifstream inputFile("C:\\temp\\port.txt");
     inputFile >> port;
 
-    auto wire = std::make_shared<SocketWire::Client>(socket_lifetime, &wire_scheduler, port, "TestClient");
-    auto protocol = std::make_unique<Protocol>(Identities(Identities::CLIENT), &protocol_scheduler, wire);
+    auto wire = std::make_shared<SocketWire::Client>(socket_lifetime, &scheduler, port, "TestClient");
+    auto protocol = std::make_unique<Protocol>(Identities(Identities::CLIENT), &scheduler, wire);
     //endregion
 
     //region Server initialization
@@ -50,7 +49,11 @@ int main() {
 
     //region advise or view
 
+    model.get_bool().advise(lifetime, [&](bool b) {
+        return;
+    });
     model.get_scalar().advise(lifetime, [&](MyScalar const &scalar) {
+        return;
     });
 
     model.get_list().advise(lifetime, [](RdList<int32_t, Polymorphic<int32_t>>::Event e) {//Event must be passed by value!!!
@@ -75,7 +78,7 @@ int main() {
     ExtModel const &ext = ExtModel::getOrCreateExtensionOf(model);
 
     ext.get_checker().advise(lifetime, [](void *) {
-
+        std::cout << "CHECK" << std::endl;
     });
     //endregion
 
@@ -90,13 +93,13 @@ int main() {
 
     //region changes in root
 
-    model.get_scalar().set(scalar_example);
+    /*model.get_scalar().set(scalar_example);
 
     auto task = model.get_call().start(L'A');
     task.advise(lifetime, [](decltype(task)::result_type const &result) {
     });
 
-    auto sync_result = model.get_call().sync(L'B');
+    auto sync_result = model.get_call().sync(L'B');*/
     //endregion
 
     std::this_thread::sleep_for(std::chrono::minutes(100));

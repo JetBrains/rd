@@ -23,6 +23,7 @@ size_t contentDeepHashCode(T const& value) {
     return std::hash<T>()(value);
 }
 
+//todo realize
 template<typename T>
 size_t contentDeepHashCode(std::vector<T> const &value) {
     return contentDeepHashCode<T>(value);

@@ -5,8 +5,8 @@
 #ifndef RD_CPP_CORE_INTERFACES_H
 #define RD_CPP_CORE_INTERFACES_H
 
-#include "SequentialLifetimes.h"
 #include "Lifetime.h"
+#include "wrapper.h"
 
 #include <functional>
 
@@ -29,6 +29,8 @@ public:
 
 template<typename T>
 class ISignal : public ISource<T> {
+protected:
+	using WT = typename rd::value_or_wrapper<T>;
 public:
     virtual ~ISignal() = default;
 

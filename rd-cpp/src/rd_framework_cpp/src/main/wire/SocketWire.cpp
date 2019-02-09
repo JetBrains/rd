@@ -127,7 +127,7 @@ bool SocketWire::Base::ReadFromSocket(char *res, int32_t msglen) const {
                 return false;
             }
             hi += read;
-            logger.info(this->id + ": receive finished: " + to_string(read) + "bytes read");
+            logger.info(this->id + ": receive finished: " + std::to_string(read) + "bytes read");
         }
     }
     MY_ASSERT_MSG(ptr == msglen, "resPtr == res.Length");

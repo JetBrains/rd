@@ -4,6 +4,9 @@ add_library(rd_framework_cpp_util
         TestScheduler.cpp TestScheduler.h
         WireUtil.cpp WireUtil.h
         DynamicEntity.cpp DynamicEntity.h
+        AbstractEntity.cpp AbstractEntity.h
+        ConcreteEntity.cpp ConcreteEntity.h
+        ConcreteEntity_Unknown.cpp ConcreteEntity_Unknown.h
         TestWire.cpp TestWire.h
         )
 

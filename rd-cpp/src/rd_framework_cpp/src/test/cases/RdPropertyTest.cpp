@@ -186,11 +186,11 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 class ListSerializer {
     using list = std::vector<DynamicEntity>;
 public:
-    static std::vector<DynamicEntity> read(SerializationCtx const &ctx, Buffer const &buffer) {
+    static list read(SerializationCtx const &ctx, Buffer const &buffer) {
         int32_t len = buffer.read_pod<int32_t>();
-        std::vector<DynamicEntity> v;
+        list v;
         for (int i = 0; i < len; ++i) {
-            v.push_back(ctx.serializers->readPolymorphic<DynamicEntity>(ctx, buffer));
+            v.push_back(DynamicEntity::read(ctx, buffer));
         }
         return v;
     }
@@ -198,7 +198,7 @@ public:
     static void write(SerializationCtx const &ctx, Buffer const &buffer, const list &value) {
         buffer.write_pod<int32_t>(value.size());
         for (const auto &item : value) {
-            ctx.serializers->writePolymorphic<DynamicEntity>(ctx, buffer, item);
+            item.write(ctx, buffer);
         }
     }
 };
@@ -274,10 +274,10 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 
     Lifetime::use([&](Lifetime lifetime) {
         client_property.advise(lifetime, [&client_log](opt const &v) {
-	        client_log.push_back(v);
+            client_log.push_back(v);
         });
         server_property.advise(lifetime, [&server_log](opt const &v) {
-	        server_log.push_back(v);
+            server_log.push_back(v);
         });
 
         //not bound

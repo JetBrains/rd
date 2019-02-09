@@ -12,14 +12,15 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
+
 template<typename T, typename S = Polymorphic<T>>
-class RdProperty : public RdPropertyBase<T, S>, public ISerializable {
+class RdProperty final : public RdPropertyBase<T, S>, public ISerializable {
 public:
-	using value_type = T;
+    using value_type = T;
 
     //region ctor/dtor
 
-	RdProperty() = default;
+    RdProperty() = default;
 
     RdProperty(RdProperty const &) = delete;
 
@@ -38,17 +39,17 @@ public:
 
     static RdProperty<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
         RdId id = RdId::read(buffer);
-//        val value = if (buffer.readBool()) valueSerializer.read(ctx, buffer) else null;
-        bool not_null = buffer.read_pod<bool>();//not null/
-        T value = S::read(ctx, buffer);
-        RdProperty<T, S> property(std::move(value));
+        bool not_null = buffer.readBool();//not null/
+        auto value = S::read(ctx, buffer);
+        RdProperty<T, S> property;
+        property.value = std::move(value);
         withId(property, id);
         return property;
     }
 
     void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
         this->rdid.write(buffer);
-        buffer.write_pod<bool>(true);
+        buffer.writeBool(true);
         S::write(ctx, buffer, this->get());
     }
 
@@ -77,6 +78,7 @@ public:
         return !(rhs == lhs);
     }
 };
+
 #pragma warning( pop )
 
 static_assert(std::is_move_constructible<RdProperty<int> >::value, "Is move constructible from RdProperty<int>");

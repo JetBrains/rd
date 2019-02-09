@@ -18,3 +18,43 @@ bool SwitchLogger::is_enabled(LogLevel level) {
     return realLogger.isEnabled(level);
 }*/
 
+std::string rd::to_string(rd::LogLevel level) {
+    switch (level) {
+        case LogLevel::Trace:
+            return "Trace";
+        case LogLevel::Debug:
+            return "Debug";
+        case LogLevel::Info:
+            return "Info";
+        case LogLevel::Warn:
+            return "Warn";
+        case LogLevel::Error:
+            return "Error";
+        case LogLevel::Fatal:
+            return "Fatal";
+    }
+}
+
+void rd::Logger::log(rd::LogLevel level, const std::string &message, const std::exception *e) const {
+    std::cerr << std::to_string(static_cast<int>(level))
+                 //                     + " | " + std::to_string(GetCurrentThreadId())
+                 + " | " + message +
+                 +" | " + (e ? e->what() : "")
+              << std::endl;
+}
+
+void rd::Logger::trace(std::string const &msg, const std::exception *e) const {
+    log(LogLevel::Trace, msg, e);
+}
+
+void rd::Logger::debug(std::string const &msg, const std::exception *e) const {
+    log(LogLevel::Debug, msg, e);
+}
+
+void rd::Logger::info(std::string const &msg, const std::exception *e) const {
+    log(LogLevel::Info, msg, e);
+}
+
+void rd::Logger::error(std::string const &msg, const std::exception *e) const {
+    log(LogLevel::Error, msg, e);
+}

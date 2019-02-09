@@ -6,20 +6,22 @@
 #define RD_CPP_IPROPERTYBASE_H
 
 
-#include <interfaces.h>
-#include <SignalX.h>
+#include "wrapper.h"
+#include "interfaces.h"
+#include "SignalX.h"
+#include "SequentialLifetimes.h"
 
 #include "optional.hpp"
 
 template<typename T>
 class IPropertyBase : public ISource<T>, public IViewable<T> {
 protected:
-    mutable tl::optional<T> value;
+    mutable rd::property_storage<T> value;
 
     Signal<T> change, before_change;
 
 	bool has_value() const {
-		return value.has_value();
+		return (bool)(value);
 	}
 
 public:

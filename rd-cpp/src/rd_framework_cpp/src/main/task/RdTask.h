@@ -15,18 +15,20 @@
 template<typename T, typename S = Polymorphic<T> >
 class RdTask {
 private:
+    using WT = rd::value_or_wrapper<T>;
+
     mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
 public:
 
     using result_type = RdTaskResult<T, S>;
 
-    static RdTask<T, S> from_result(T value) {
+    static RdTask<T, S> from_result(WT value) {
         RdTask<T, S> res;
         res.set(std::move(value));
         return res;
     }
 
-    void set(T value) const {
+    void set(WT value) const {
         typename RdTaskResult<T, S>::Success t(std::move(value));
         ptr->result.set(tl::make_optional(std::move(t)));
     }
@@ -60,11 +62,12 @@ public:
     }
 
     void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
-        ptr->result.advise(lifetime, [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
-            if (opt_value.has_value()) {
-                handler(*opt_value);
-            }
-        });
+        ptr->result.advise(lifetime,
+                           [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
+                               if (opt_value.has_value()) {
+                                   handler(*opt_value);
+                               }
+                           });
     }
 };
 

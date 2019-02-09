@@ -7,18 +7,21 @@
 
 #include "Polymorphic.h"
 #include "overloaded.h"
+#include "wrapper.h"
+
 #include "mpark/variant.hpp"
 
 #include <exception>
 
 template<typename T, typename S = Polymorphic<T> >
 class RdTaskResult : public ISerializable {
+    using WT = rd::value_or_wrapper<T>;
 public:
     class Success {
     public:
-        mutable T value;
+        mutable WT value;
 
-        explicit Success(T &&value) : value(std::move(value)) {}
+        explicit Success(WT &&value) : value(std::move(value)) {}
     };
 
     class Cancelled {
@@ -77,7 +80,7 @@ public:
                 return Fault(std::move(reasonTypeFqn), std::move(reasonMessage), std::move(reasonAsText));
             }
             default:
-                throw std::invalid_argument("Fail on RdTaskResult reading with kind: " + to_string(kind));
+                throw std::invalid_argument("Fail on RdTaskResult reading with kind: " + std::to_string(kind));
         }
     }
 
@@ -99,17 +102,17 @@ public:
         ), v);
     }
 
-    T unwrap() const {
+    WT unwrap() const {
         return mpark::visit(make_visitor(
-                [](Success const &value) -> T {
+                [](Success const &value) -> WT {
                     return value.value;
                 },
-                [](Cancelled const &value) -> T {
+                [](Cancelled const &value) -> WT {
                     throw std::invalid_argument("Task finished in Cancelled state");
                 },
-                [](Fault const &value) -> T {
+                [](Fault const &value) -> WT {
 //                    throw value.error;
-                    throw std::runtime_error(to_string(value.reasonMessage));
+                    throw std::runtime_error(rd::to_string(value.reasonMessage));
                 }
         ), v);
     }

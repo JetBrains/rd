@@ -54,7 +54,7 @@ void RdExtBase::init(Lifetime lifetime) const {
 
 void RdExtBase::on_wire_received(Buffer buffer) const {
     ExtState remoteState = buffer.readEnum<ExtState>();
-    traceMe(logReceived, "remote: " + to_string(remoteState));
+    traceMe(logReceived, "remote: " + rd::to_string(remoteState));
 
 
     switch (remoteState) {

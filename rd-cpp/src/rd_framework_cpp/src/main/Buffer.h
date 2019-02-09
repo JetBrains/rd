@@ -11,21 +11,7 @@
 #include <vector>
 #include <type_traits>
 #include <functional>
-
-struct is_bool {
-};
-struct not_bool {
-};
-
-template<typename T>
-struct bool_tag {
-    using type = not_bool;
-};
-
-template<>
-struct bool_tag<bool> {
-    using type = is_bool;
-};
+#include <memory>
 
 class Buffer {
 public:
@@ -45,30 +31,6 @@ protected:
 
     //write
     void write(const word_t *src, size_t size) const;
-
-    template<typename T>
-    T read_pod_tag(is_bool) const {
-        auto res = read_pod<word_t>();
-        MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + to_string(res) + " instead of 0 or 1");
-        return res == 1;
-    }
-
-    template<typename T>
-    T read_pod_tag(not_bool) const {
-        T result;
-        read(reinterpret_cast<word_t *>(&result), sizeof(T));
-        return result;
-    }
-
-    template<typename T>
-    void write_pod_tag(T const &value, is_bool) const {
-        write_pod<word_t>(value ? 1 : 0);
-    }
-
-    template<typename T>
-    void write_pod_tag(T const &value, not_bool) const {
-        write(reinterpret_cast<word_t const *>(&value), sizeof(T));
-    }
 
 public:
     //region ctor/dtor
@@ -93,12 +55,28 @@ public:
 
     template<typename T, typename = typename std::enable_if<std::is_integral<T>::value, T>::type>
     T read_pod() const {
-        return this->read_pod_tag<T>(typename bool_tag<T>::type());
+        T result;
+        read(reinterpret_cast<word_t *>(&result), sizeof(T));
+        return result;
     }
 
     template<typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
     void write_pod(T const &value) const {
-        this->write_pod_tag<T>(value, typename bool_tag<T>::type());
+        write(reinterpret_cast<word_t const *>(&value), sizeof(T));
+    }
+
+    template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
+    T read_floating_point() const {
+        T result;
+        read(reinterpret_cast<word_t *>(&result), sizeof(T));
+        return result;
+        //todo check correctness
+    }
+
+    template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
+    void write_floating_point(T const &value) const {
+        write(reinterpret_cast<word_t const *>(&value), sizeof(T));
+        //todo check correctness
     }
 
     template<typename T>
@@ -111,11 +89,11 @@ public:
     }
 
     template<typename T>
-    std::vector<T> readArray(std::function<T()> reader) const {
+    std::vector<rd::value_or_wrapper<T>> readArray(std::function<rd::value_or_wrapper<T>()> reader) const {
         int32_t len = read_pod<int32_t>();
-        std::vector<T> result(len);
+        std::vector<rd::value_or_wrapper<T>> result(len);
         for (auto &x : result) {
-            x = reader();
+            x = std::move(reader());
         }
         return result;
     }
@@ -127,21 +105,24 @@ public:
     }
 
     template<typename T>
-    void writeArray(std::vector<T> const &array, std::function<void(T const &)> writer) const {
+    void writeArray(std::vector<rd::value_or_wrapper<T>> const &array, std::function<void(T const &)> writer) const {
         write_pod<int32_t>(array.size());
         for (auto const &e : array) {
             writer(e);
         }
     }
 
-    template<typename T>
-    void writeByteArrayRaw(std::vector<T> const &array) const {
-        write(array.data(), sizeof(T) * array.size());
-    }
+    void readByteArrayRaw(ByteArray &array) const;
+
+    void writeByteArrayRaw(ByteArray const &array) const;
 
 //    std::string readString() const;
 
 //    void writeString(std::string const &value) const;
+
+    bool readBool() const;
+
+    void writeBool(bool value) const;
 
     std::wstring readWString() const;
 
@@ -159,27 +140,23 @@ public:
     }
 
     template<typename T>
-    tl::optional<T> readNullable(std::function<T()> reader) const {
-        bool nullable = !read_pod<bool>();
+    rd::opt_or_wrapper<T> readNullable(std::function<T()> reader) const {
+        bool nullable = !readBool();
         if (nullable) {
-            return tl::nullopt;
+            return {};
         }
         return reader();
     }
 
     template<typename T>
-    void writeNullable(tl::optional<T> const &value, std::function<void(T const &)> writer) const {
-        if (!value.has_value()) {
-            write_pod<bool>(false);
+    void writeNullable(rd::opt_or_wrapper<T> const &value, std::function<void(T const &)> writer) const {
+        if (!value) {
+            writeBool(false);
         } else {
-            write_pod<bool>(true);
+            writeBool(true);
             writer(*value);
         }
     }
-
-    /*tl::optional<std::wstring> readNullableWString() const;
-
-    void writeNullableWString(tl::optional<std::wstring> const &) const;*/
 
     ByteArray getArray() const;
 

@@ -20,7 +20,7 @@ TEST(BufferTest, readWritePod) {
     buffer.write_pod<int32_t>(-1);
     buffer.write_pod<wchar_t>('+');
     buffer.write_pod<wchar_t>('-');
-    buffer.write_pod<bool>(true);
+    buffer.writeBool(true);
 
 
     buffer.rewind();
@@ -31,7 +31,7 @@ TEST(BufferTest, readWritePod) {
     EXPECT_EQ(-1, buffer.read_pod<int32_t>());
     EXPECT_EQ('+', buffer.read_pod<wchar_t>());
     EXPECT_EQ('-', buffer.read_pod<wchar_t>());
-    EXPECT_EQ(true, buffer.read_pod<bool>());
+    EXPECT_EQ(true, buffer.readBool());
 }
 
 
