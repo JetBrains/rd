@@ -327,6 +327,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         println()
 
         + "using JetBrains.Core;"
+        + "using JetBrains.Lifetimes;"
         + "using JetBrains.Platform.RdFramework;"
         + "using JetBrains.Platform.RdFramework.Base;"
         + "using JetBrains.Platform.RdFramework.Impl;"
@@ -338,7 +339,6 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "using JetBrains.Util.Collections;"
         + "using JetBrains.Util.Logging;"
         + "using JetBrains.Util.PersistentMap;"
-        + "using Lifetime = JetBrains.DataFlow.Lifetime;"
         println()
 
         tl.additionalUsings.printlnWithBlankLine {
