@@ -138,7 +138,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                   PredefinedType.bool,
                   PredefinedType.string
               ).contains(this)) name.decapitalize()
-              else if (this == PredefinedType.void) "RdVoid"
+              else if (this == PredefinedType.void) "Unit"
               else if (this == PredefinedType.secureString) "RdSecureString"
               else name
           }
@@ -326,6 +326,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "using JetBrains.Annotations;"
         println()
 
+        + "using JetBrains.Core;"
         + "using JetBrains.Platform.RdFramework;"
         + "using JetBrains.Platform.RdFramework.Base;"
         + "using JetBrains.Platform.RdFramework.Impl;"
