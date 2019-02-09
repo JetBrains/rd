@@ -8,6 +8,8 @@
 #include "IRdReactive.h"
 #include "Logger.h"
 
+#include <unordered_map>
+
 class Mq {
 public:
     //region ctor/dtor

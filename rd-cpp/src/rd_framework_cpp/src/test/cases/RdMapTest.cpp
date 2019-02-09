@@ -24,7 +24,7 @@ TEST_F(RdFrameworkTestBase, rd_map_statics) {
 
     std::vector<std::string> logUpdate;
     clientMap.advise(Lifetime::Eternal(), [&](typename IViewableMap<int32_t, std::wstring>::Event entry) {
-        logUpdate.push_back(to_wstring_map_event<int32_t, std::wstring>(entry));
+        logUpdate.push_back(rd::to_wstring_map_event<int32_t, std::wstring>(entry));
     });
 
     EXPECT_EQ(0, serverMap.size());

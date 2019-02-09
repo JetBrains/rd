@@ -10,6 +10,9 @@
 
 template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 class RdEndpoint : public RdReactiveBase, public ISerializable {
+    using WTReq = rd::value_or_wrapper<TReq>;
+    using WTRes = rd::value_or_wrapper<TRes>;
+
     using handler_t = std::function<RdTask<TRes, ResSer>(Lifetime, TReq const &)>;
     mutable handler_t handler;
 
@@ -19,11 +22,11 @@ public:
     RdEndpoint() = default;
 
     explicit RdEndpoint(handler_t handler) {
-		set(std::move(handler));
+        set(std::move(handler));
     }
 
-    explicit RdEndpoint(std::function<TRes(TReq const &)> handler) {
-		set(std::move(handler));
+    explicit RdEndpoint(std::function<WTRes(TReq const &)> handler) {
+        set(std::move(handler));
     }
 
     RdEndpoint(RdEndpoint &&) = default;
@@ -49,10 +52,10 @@ public:
         this->handler = std::move(handler);
     }
 
-	void set(std::function<TRes(TReq const &)> handler) const {
-		this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req)->RdTask<TRes, ResSer> {
-			return RdTask<TRes, ResSer>::from_result(handler(req));
-		};
+    void set(std::function<WTRes(TReq const &)> handler) const {
+        this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask<TRes, ResSer> {
+            return RdTask<TRes, ResSer>::from_result(handler(req));
+        };
     }
 
     void init(Lifetime lifetime) const override {
@@ -66,13 +69,13 @@ public:
         auto taskId = RdId::read(buffer);
         auto value = ReqSer::read(get_serialization_context(), buffer);
         logReceived.trace(
-                "endpoint " + location.toString() + " ::" + rdid.toString() + " request = " + to_string(value));
+                "endpoint " + location.toString() + " ::" + rdid.toString() + " request = " + rd::to_string(value));
         if (!handler) {
             throw std::invalid_argument("handler is empty for RdEndPoint");
         }
         RdTask<TRes, ResSer> task;
         try {
-            task = handler(*bind_lifetime, value);
+            task = handler(*bind_lifetime, rd::get<TReq>(value));
         } catch (std::exception const &e) {
             task.fault(e);
         }

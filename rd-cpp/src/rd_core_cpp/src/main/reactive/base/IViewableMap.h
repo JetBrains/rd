@@ -5,12 +5,14 @@
 #ifndef RD_CPP_IVIEWABLEMAP_H
 #define RD_CPP_IVIEWABLEMAP_H
 
+#include "LifetimeDefinition.h"
 #include "overloaded.h"
 #include "interfaces.h"
 #include "viewable_collections.h"
-#include "util/core_util.h"
+#include "core_util.h"
 
 #include "mpark/variant.hpp"
+#include "tsl/ordered_map.h"
 
 #include <unordered_map>
 
@@ -18,7 +20,13 @@ template<typename K, typename V>
 class IViewableMap
         : public IViewable<std::pair<K const *, V const *>> {
 protected:
-    mutable std::unordered_map<Lifetime, std::unordered_map<K, LifetimeDefinition>> lifetimes;
+    using WK = rd::value_or_wrapper<K>;
+    using WV = rd::value_or_wrapper<V>;
+
+    mutable std::unordered_map<
+            Lifetime,
+            tsl::ordered_map<K const *, LifetimeDefinition, rd::TransparentHash<K>, rd::TransparentKeyEqual<K>>
+            > lifetimes;
 public:
     class Event {
     public:
@@ -104,11 +112,11 @@ public:
                 case AddRemove::ADD: {
                     if (lifetimes[lifetime].count(key) == 0) {
                         /*auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));*/
-                        auto const &pair = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));
+                        auto const &pair = lifetimes[lifetime].emplace(&key, LifetimeDefinition(lifetime));
                         auto &it = pair.first;
                         auto &inserted = pair.second;
                         MY_ASSERT_MSG(inserted,
-                                      "lifetime definition already exists in viewable map by key:" + to_string(key));
+                                      "lifetime definition already exists in viewable map by key:" + rd::to_string(key));
                         handler(it->second.lifetime, entry);
                     }
                     break;
@@ -116,7 +124,7 @@ public:
                 case AddRemove::REMOVE: {
                     MY_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0,
                                   "attempting to remove non-existing lifetime in viewable map by key:" +
-                                  to_string(key));
+                                  rd::to_string(key));
                     LifetimeDefinition def = std::move(lifetimes.at(lifetime).at(key));
                     lifetimes.at(lifetime).erase(key);
                     def.terminate();
@@ -153,9 +161,9 @@ public:
 
     virtual const V *get(K const &) const = 0;
 
-    virtual const V *set(K, V) const = 0;
+    virtual const V *set(WK, WV) const = 0;
 
-    virtual tl::optional<V> remove(K const &) const = 0;
+    virtual tl::optional<WV> remove(K const &) const = 0;
 
     virtual void clear() const = 0;
 

@@ -12,23 +12,26 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
-template<typename V, typename S = Polymorphic<V>>
-class RdList : public RdReactiveBase, public IViewableList<V>, public ISerializable {
+
+template<typename T, typename S = Polymorphic<T>>
+class RdList final : public RdReactiveBase, public IViewableList<T>, public ISerializable {
 private:
-    mutable ViewableList<V> list;
+    using WT = typename IViewableList<T>::WT;
+
+    mutable ViewableList<T> list;
     mutable int64_t next_version = 1;
 
-    std::string logmsg(Op op, int64_t version, int32_t key, V const *value = nullptr) const {
-        return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+    std::string logmsg(Op op, int64_t version, int32_t key, T const *value = nullptr) const {
+        return "list " + location.toString() + " " + rdid.toString() + ":: " + rd::to_string(op) +
                ":: key = " + std::to_string(key) +
-               ((version > 0) ? " :: version = " + /*std::*/to_string(version) : "") +
-               " :: value = " + (value ? to_string(*value) : "");
+               ((version > 0) ? " :: version = " + std::to_string(version) : "") +
+               " :: value = " + (value ? rd::to_string(*value) : "");
     }
 
 public:
-    using Event = typename IViewableList<V>::Event;
+    using Event = typename IViewableList<T>::Event;
 
-    using value_t = V;
+    using value_t = T;
     //region ctor/dtor
 
     RdList() = default;
@@ -40,8 +43,8 @@ public:
     virtual ~RdList() = default;
     //endregion
 
-    static RdList<V, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
-        RdList<V, S> result;
+    static RdList<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+        RdList<T, S> result;
         int64_t next_version = buffer.read_pod<int64_t>();
         RdId id = RdId::read(buffer);
 
@@ -63,11 +66,11 @@ public:
         RdBindableBase::init(lifetime);
 
         local_change([this, lifetime] {
-            advise(lifetime, [this, lifetime](typename IViewableList<V>::Event e) {
+            advise(lifetime, [this, lifetime](typename IViewableList<T>::Event e) {
                 if (!is_local_change) return;
 
                 if (!optimize_nested) {
-                    V const *new_value = e.get_new_value();
+                    T const *new_value = e.get_new_value();
                     if (new_value) {
                         const IProtocol *iProtocol = get_protocol();
                         identifyPolymorphic(*new_value, *iProtocol->identity,
@@ -81,7 +84,7 @@ public:
                     buffer.write_pod<int64_t>(static_cast<int64_t>(op) | (next_version++ << versionedFlagShift));
                     buffer.write_pod<int32_t>(static_cast<const int32_t>(e.get_index()));
 
-                    V const *new_value = e.get_new_value();
+                    T const *new_value = e.get_new_value();
                     if (new_value) {
                         S::write(this->get_serialization_context(), buffer, *new_value);
                     }
@@ -93,7 +96,7 @@ public:
         get_wire()->advise(lifetime, this);
 
         if (!optimize_nested) {
-            this->view(lifetime, [this](Lifetime lf, size_t index, V const &value) {
+            this->view(lifetime, [this](Lifetime lf, size_t index, T const &value) {
                 bindPolymorphic(value, lf, this, "[" + std::to_string(index) + "]");
             });
         }
@@ -115,17 +118,17 @@ public:
 
         switch (op) {
             case Op::ADD: {
-                V value = S::read(this->get_serialization_context(), buffer);
+                auto value = S::read(this->get_serialization_context(), buffer);
 
-                logReceived.trace(logmsg(op, version, index, &value));
+                logReceived.trace(logmsg(op, version, index, &(rd::get<T>(value))));
 
                 (index < 0) ? list.add(std::move(value)) : list.add(static_cast<size_t>(index), std::move(value));
                 break;
             }
             case Op::UPDATE: {
-                V value = S::read(this->get_serialization_context(), buffer);
+                auto value = S::read(this->get_serialization_context(), buffer);
 
-                logReceived.trace(logmsg(op, version, index, &value));
+                logReceived.trace(logmsg(op, version, index, &(rd::get<T>(value))));
 
                 list.set(static_cast<size_t>(index), std::move(value));
                 break;
@@ -148,21 +151,22 @@ public:
         list.advise(std::move(lifetime), handler);
     }
 
-    bool add(V element) const override {
+    bool add(WT element) const override {
         return local_change([this, element = std::move(element)]() mutable { return list.add(std::move(element)); });
     }
 
-    bool add(size_t index, V element) const override {
-        return local_change([this, index, element = std::move(element)]() mutable { return list.add(index, std::move(element)); });
+    bool add(size_t index, WT element) const override {
+        return local_change(
+                [this, index, element = std::move(element)]() mutable { return list.add(index, std::move(element)); });
     }
 
-    bool remove(V const &element) const override { return local_change([&] { return list.remove(element); }); }
+    bool remove(T const &element) const override { return local_change([&] { return list.remove(element); }); }
 
-    V removeAt(size_t index) const override { return local_change([&] { return list.removeAt(index); }); }
+    WT removeAt(size_t index) const override { return local_change([&] { return list.removeAt(index); }); }
 
-    V const &get(size_t index) const override { return list.get(index); };
+    T const &get(size_t index) const override { return list.get(index); };
 
-    V set(size_t index, V element) const override {
+    WT set(size_t index, WT element) const override {
         return local_change([&] { return list.set(index, std::move(element)); });
     }
 
@@ -172,20 +176,21 @@ public:
 
     bool empty() const override { return list.empty(); }
 
-    std::vector<std::shared_ptr<V> > const &getList() const override { return list.getList(); }
+    std::vector<rd::Wrapper<T> > const &getList() const override { return list.getList(); }
 
-    bool addAll(size_t index, std::vector<V> elements) const override {
+    bool addAll(size_t index, std::vector<WT> elements) const override {
         return local_change([&] { return list.addAll(index, std::move(elements)); });
     }
 
-    bool addAll(std::vector<V> elements) const override {
+    bool addAll(std::vector<WT> elements) const override {
         return local_change([&] { return list.addAll(std::move(elements)); });
     }
 
-    bool removeAll(std::vector<V> elements) const override {
+    bool removeAll(std::vector<WT> elements) const override {
         return local_change([&] { return list.removeAll(std::move(elements)); });
     }
 };
+
 #pragma warning( pop )
 static_assert(std::is_move_constructible<RdList<int> >::value, "Is move constructible RdList<int>");
 

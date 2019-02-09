@@ -5,11 +5,11 @@
 #ifndef RD_CPP_CORE_VIEWABLESET_H
 #define RD_CPP_CORE_VIEWABLESET_H
 
-#include "tsl/ordered_set.h"
-
-#include "base/IViewableSet.h"
+#include "IViewableSet.h"
 #include "SignalX.h"
 #include "util/core_util.h"
+
+#include "tsl/ordered_set.h"
 
 
 template<typename T>
@@ -19,10 +19,10 @@ public:
 
     using IViewableSet<T>::advise;
 private:
+    using WT = typename IViewableSet<T>::WT;
+
     Signal<Event> change;
-
-    mutable tsl::ordered_set<std::unique_ptr<T>, HashSmartPtr<T>, KeyEqualSmartPtr<T>> set;
-
+    mutable tsl::ordered_set<rd::Wrapper<T>, rd::TransparentHash<T>, rd::TransparentKeyEqual<T>> set;
 public:
     //region ctor/dtor
 
@@ -35,13 +35,13 @@ public:
     virtual ~ViewableSet() = default;
     //endregion
 
-    bool add(T element) const override {
+    bool add(WT element) const override {
         /*auto const &[it, success] = set.emplace(std::make_unique<T>(std::move(element)));*/
-        auto const &it = set.emplace(std::make_unique<T>(std::move(element)));
+        auto const &it = set.emplace(std::move(element));
         if (!it.second) {
             return false;
         }
-        change.fire(Event(AddRemove::ADD, it.first->get()));
+        change.fire(Event(AddRemove::ADD, &(rd::get<T>(*it.first))));
         return true;
     }
 
@@ -50,7 +50,7 @@ public:
     void clear() const override {
         std::vector<Event> changes;
         for (auto const &element : set) {
-            changes.push_back(Event(AddRemove::REMOVE, element.get()));
+            changes.push_back(Event(AddRemove::REMOVE, &(*element)));
         }
         for (auto const &e : changes) {
             change.fire(e);
@@ -63,14 +63,14 @@ public:
             return false;
         }
         auto it = set.find(element);
-        change.fire(Event(AddRemove::REMOVE, it->get()));
+        change.fire(Event(AddRemove::REMOVE, &(rd::get<T>(*it))));
         set.erase(it);
         return true;
     }
 
     void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
         for (auto const &x : set) {
-            handler(Event(AddRemove::ADD, x.get()));
+            handler(Event(AddRemove::ADD, &(*x)));
         }
         change.advise(lifetime, handler);
     }

@@ -30,7 +30,7 @@ void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const
                 logger.trace("Disappeared Handler for Reactive entity with id:" + that->rdid.toString());
             }
         };
-        std::function<void()> function = make_shared_function(std::move(action));
+        std::function<void()> function = rd::util::make_shared_function(std::move(action));
         that->get_wire_scheduler()->queue(std::move(function));
     }
 }
@@ -70,7 +70,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const {
                     }
                 }
             };
-            std::function<void()> function = make_shared_function(std::move(action));
+            std::function<void()> function = rd::util::make_shared_function(std::move(action));
             defaultScheduler->queue(std::move(function));
         } else {
             if (s->get_wire_scheduler() == defaultScheduler || s->get_wire_scheduler()->out_of_order_execution) {

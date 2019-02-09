@@ -39,7 +39,7 @@ public:
     }
 
     template<typename T>
-    T readPolymorphic(SerializationCtx const &ctx, Buffer const &stream) const {
+    std::unique_ptr<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &stream) const {
         RdId id = RdId::read(stream);
         int32_t size = stream.read_pod<int32_t>();
         stream.check_available(size);
@@ -50,8 +50,8 @@ public:
         }
         auto const &reader = readers.at(id);
         std::unique_ptr<ISerializable> ptr = reader(ctx, stream);
-        T res = std::move(*dynamic_cast<T *>(ptr.get()));
-        return res;
+        return std::unique_ptr<T>(dynamic_cast<T *>(ptr.release()));
+        //todo change the way of dynamic_pointer_cast
     }
 
     /*template<typename T>
@@ -87,6 +87,11 @@ public:
         stream.set_position(lengthTagPosition);
         stream.write_pod<int32_t>(objectEndPosition - objectStartPosition);
         stream.set_position(objectEndPosition);
+    }
+
+    template<typename T>
+    void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const rd::Wrapper<T> &value) const {
+        writePolymorphic(ctx, stream, *value);
     }
 };
 

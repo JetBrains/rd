@@ -8,7 +8,7 @@ TEST(viewable_list, add_remove_advise) {
     std::vector<std::string> log;
     Lifetime::use<int>([&](Lifetime lifetime) {
         list->advise_add_remove(lifetime, [&log](AddRemove kind, size_t index, int const &value) {
-            log.push_back(to_string(kind) + " " + std::to_string(index) + " " + std::to_string(value));
+            log.push_back(rd::to_string(kind) + " " + std::to_string(index) + " " + std::to_string(value));
         });
         list->add(0);
         list->remove(0);
@@ -25,8 +25,8 @@ TEST(viewable_list, add_remove_view) {
     std::vector<std::string> log;
     Lifetime::use<int>([&](Lifetime lifetime) {
         list->view(lifetime, [&log](Lifetime lt, std::pair<size_t, int const *> value) {
-            log.push_back("View " + to_string(value));
-            lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
+            log.push_back("View " + rd::to_string(value));
+            lt->add_action([&log, value]() { log.push_back("UnView " + rd::to_string(value)); });
         });
 
         list->add(0);
@@ -44,8 +44,8 @@ TEST(viewable_list, add_remove_view2) {
     std::vector<std::string> log;
     Lifetime::use<int>([&](Lifetime lifetime) {
         list->view(lifetime, [&log](Lifetime lt, std::pair<size_t, int const *> value) {
-            log.push_back("View " + to_string(value));
-            lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
+            log.push_back("View " + rd::to_string(value));
+            lt->add_action([&log, value]() { log.push_back("UnView " + rd::to_string(value)); });
         });
 
         list->add(0);
@@ -67,8 +67,8 @@ TEST(viewable_list, add_remove_fuzz) {
 
     Lifetime::use([&](Lifetime lifetime) {
         list->view(lifetime, [&log](Lifetime lt, std::pair<size_t, int const *> value) {
-            log.push_back("View " + to_string(value));
-            lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
+            log.push_back("View " + rd::to_string(value));
+            lt->add_action([&log, value]() { log.push_back("UnView " + rd::to_string(value)); });
         });
 
         for (int i = 0; i < C; ++i) {
@@ -87,7 +87,7 @@ TEST(viewable_list, insert_middle) {
     std::vector<std::string> log;
     Lifetime::use<int>([&](Lifetime lifetime) {
         list->advise_add_remove(lifetime, [&log](AddRemove kind, size_t index, int const &value) {
-            log.push_back(to_string(kind) + " " + std::to_string(index) + " " + std::to_string(value));
+            log.push_back(rd::to_string(kind) + " " + std::to_string(index) + " " + std::to_string(value));
         });
         list->add(0);
         list->add(2);
@@ -99,6 +99,7 @@ TEST(viewable_list, insert_middle) {
         return 0;
     });
 }
+
 TEST(viewable_list, other_reactive_api) {
     std::unique_ptr<IViewableList<int> > list(new ViewableList<int>());
     std::vector<std::string> log;
@@ -106,7 +107,7 @@ TEST(viewable_list, other_reactive_api) {
     Lifetime::use<int>([&](Lifetime lifetime) {
 
         list->advise_add_remove(lifetime, [&log](AddRemove kind, size_t index, int const &value) {
-            log.push_back(to_string(kind) + " " + std::to_string(index) + " " + std::to_string(value));
+            log.push_back(rd::to_string(kind) + " " + std::to_string(index) + " " + std::to_string(value));
         });
         list->add(0);
         list->add(0, 1);
@@ -114,7 +115,7 @@ TEST(viewable_list, other_reactive_api) {
         EXPECT_EQ(log, (std::vector<std::string>{"Add 0 0", "Add 0 1"}));
 
 
-        EXPECT_EQ(convert_to_list(*list), arrayListOf({1, 0}));
+        EXPECT_EQ(convert_to_list<int>(*list), arrayListOf({1, 0}));
         log.clear();
 
         list->set(1, 2);

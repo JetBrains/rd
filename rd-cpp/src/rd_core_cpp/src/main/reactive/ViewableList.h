@@ -6,9 +6,10 @@
 #define RD_CPP_CORE_VIEWABLELIST_H
 
 
-#include <base/IViewableList.h>
+#include "IViewableList.h"
 #include "interfaces.h"
 #include "SignalX.h"
+#include "util/core_util.h"
 
 #include <algorithm>
 
@@ -22,11 +23,13 @@ public:
     class RdList;
 
 private:
-    mutable std::vector<std::shared_ptr<T> > list;
+    mutable std::vector<rd::Wrapper<T> > list;
     Signal<Event> change;
 
 protected:
-    const std::vector<std::shared_ptr<T>> &getList() const override {
+    using WT = typename IViewableList<T>::WT;
+
+    const std::vector<rd::Wrapper<T>> &getList() const override {
         return list;
     }
 
@@ -48,28 +51,28 @@ public:
         if (lifetime->is_terminated()) return;
         change.advise(std::move(lifetime), handler);
         for (size_t i = 0; i < size(); ++i) {
-            handler(typename Event::Add(i, list[i].get()));
+            handler(typename Event::Add(i, &(*list[i])));
         }
     }
 
-    bool add(T element) const override {
-        list.push_back(std::make_shared<T>(std::move(element)));
-        change.fire(typename Event::Add(size() - 1, list.back().get()));
+    bool add(WT element) const override {
+        list.emplace_back(std::move(element));
+        change.fire(typename Event::Add(size() - 1, &(*list.back())));
         return true;
     }
 
-    bool add(size_t index, T element) const override {
-        list.insert(list.begin() + index, std::make_shared<T>(std::move(element)));
-        change.fire(typename Event::Add(index, list[index].get()));
+    bool add(size_t index, WT element) const override {
+        list.emplace(list.begin() + index, std::move(element));
+        change.fire(typename Event::Add(index, &(*list[index])));
         return true;
     }
 
-    T removeAt(size_t index) const override {
+    WT removeAt(size_t index) const override {
         auto res = std::move(list[index]);
         list.erase(list.begin() + index);
 
-        change.fire(typename Event::Remove(index, res.get()));
-        return std::move(*res);
+        change.fire(typename Event::Remove(index, &(*res)));
+        return rd::unwrap<T>(std::move(res));
     }
 
     bool remove(T const &element) const override {
@@ -85,14 +88,14 @@ public:
         return *list[index];
     }
 
-    T set(size_t index, T element) const override {
+    WT set(size_t index, WT element) const override {
         auto old_value = std::move(list[index]);
-        list[index] = std::make_shared<T>(std::move(element));
-        change.fire(typename Event::Update(index, old_value.get(), list[index].get()));//???
-        return std::move(*old_value);
+        list[index] = std::move(element);
+        change.fire(typename Event::Update(index, &(*old_value), &(*list[index])));//???
+        return rd::unwrap<T>(std::move(old_value));
     }
 
-    bool addAll(size_t index, std::vector<T> elements) const override {
+    bool addAll(size_t index, std::vector<WT> elements) const override {
         for (auto &element : elements) {
             add(index, std::move(element));
             ++index;
@@ -100,8 +103,8 @@ public:
         return true;
     }
 
-    bool addAll(std::vector<T> elements) const override {
-        for (auto &element : elements) {
+    bool addAll(std::vector<WT> elements) const override {
+        for (auto &&element : elements) {
             add(std::move(element));
         }
         return true;
@@ -110,7 +113,7 @@ public:
     void clear() const override {
         std::vector<Event> changes;
         for (size_t i = size(); i > 0; --i) {
-            changes.push_back(typename Event::Remove(i - 1, list[i - 1].get()));
+            changes.push_back(typename Event::Remove(i - 1, &(*list[i - 1])));
         }
         for (auto const &e : changes) {
             change.fire(e);
@@ -118,12 +121,16 @@ public:
         list.clear();
     }
 
-    bool removeAll(std::vector<T> elements) const override { //todo faster
+    bool removeAll(std::vector<WT> elements) const override { //todo faster
 //        std::unordered_set<T> set(elements.begin(), elements.end());
 
         bool res = false;
         for (size_t i = list.size(); i > 0; --i) {
-            if (std::count(elements.begin(), elements.end(), *list[i - 1]) > 0) {
+            auto const &x = list[i - 1];
+            if (std::count_if(elements.begin(), elements.end(), [this, &x](auto const &elem) {
+                                  return rd::TransparentKeyEqual<T>()(elem, x);
+                              }
+            ) > 0) {
                 removeAt(i - 1);
                 res = true;
             }

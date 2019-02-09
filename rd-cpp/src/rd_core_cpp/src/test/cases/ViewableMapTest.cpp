@@ -24,10 +24,10 @@ TEST(viewable_map, advise) {
         map->advise_add_remove(lifetime,
                                [&](AddRemove kind, int const &key, int const &value) {
                                    log_add_remove.push_back(
-                                           to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
+	                                   rd::to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
                                });
         map->advise(lifetime, [&](typename IViewableMap<int, int>::Event entry) {
-            log_update.push_back(to_wstring_map_event<int, int>(entry));
+            log_update.push_back(rd::to_wstring_map_event<int, int>(entry));
         });
         map->view(lifetime, [&](Lifetime inner, const std::pair<int const *, int const *> x) {
             inner->bracket(
@@ -56,7 +56,7 @@ TEST(viewable_map, advise) {
     log_add_remove.clear();
     Lifetime::use<int>([&](Lifetime lifetime) {
         map->advise_add_remove(lifetime, [&log_add_remove](AddRemove kind, int const &key, int const &value) {
-            log_add_remove.push_back(to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
+            log_add_remove.push_back(rd::to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
         });
         map->set(0, 0);
 
@@ -84,8 +84,8 @@ TEST (viewable_map, view) {
     std::vector<std::string> log;
     Lifetime::use([&](Lifetime lifetime) {
         map->view(lifetime, [&](Lifetime lt, std::pair<int32_t const *, int32_t const *> value) {
-                      log.push_back("View " + to_string(value));
-                      lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
+                      log.push_back("View " + rd::to_string(value));
+                      lt->add_action([&log, value]() { log.push_back("UnView " + rd::to_string(value)); });
                   }
         );
         for (size_t i = 0; i < elementsView.size(); ++i) {
@@ -113,8 +113,8 @@ TEST(viewable_map, add_remove_fuzz) {
 
     Lifetime::use([&](Lifetime lifetime) {
         map->view(lifetime, [&log](Lifetime lt, std::pair<int32_t const *, int32_t const *> value) {
-            log.push_back("View " + to_string(value));
-            lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
+            log.push_back("View " + rd::to_string(value));
+            lt->add_action([&log, value]() { log.push_back("UnView " + rd::to_string(value)); });
         });
 
         for (int i = 0; i < C; ++i) {

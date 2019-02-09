@@ -6,9 +6,9 @@
 #define RD_CPP_CORE_LIFETIMEWRAPPER_H
 
 
-#include <memory>
-
 #include "LifetimeImpl.h"
+
+#include <memory>
 
 class Lifetime;
 

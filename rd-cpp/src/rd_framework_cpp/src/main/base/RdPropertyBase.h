@@ -16,6 +16,7 @@
 template<typename T, typename S = Polymorphic<T>>
 class RdPropertyBase : public RdReactiveBase, public Property<T> {
 protected:
+    using WT = typename IProperty<T>::WT;
     //mastering
     bool is_master = true;
     mutable int32_t master_version = 0;
@@ -49,10 +50,10 @@ public:
         if (!optimize_nested) {
             this->change.advise(lifetime, [this](T const &v) {
                 if (is_local_change) {
-					if (this->has_value()) {
-						const IProtocol *iProtocol = get_protocol();
-						identifyPolymorphic(v, *iProtocol->identity, iProtocol->identity->next(rdid));						
-					}
+                    if (this->has_value()) {
+                        const IProtocol *iProtocol = get_protocol();
+                        identifyPolymorphic(v, *iProtocol->identity, iProtocol->identity->next(rdid));
+                    }
                 }
             });
         }
@@ -68,8 +69,8 @@ public:
                 buffer.write_pod<int32_t>(master_version);
                 S::write(this->get_serialization_context(), buffer, v);
                 logSend.trace("property " + location.toString() + " + " + rdid.toString() +
-                                    ":: ver = " + std::to_string(master_version) +
-                                    ", value = " + to_string(v));
+                              ":: ver = " + std::to_string(master_version) +
+                              ", value = " + rd::to_string(v));
             });
         });
 
@@ -77,16 +78,16 @@ public:
 
         if (!optimize_nested) {
             this->view(lifetime, [this](Lifetime lf, T const &v) {
-				if (this->has_value()) {
-					bindPolymorphic(v, lf, this, "$");
-				}
+                if (this->has_value()) {
+                    bindPolymorphic(v, lf, this, "$");
+                }
             });
         }
     }
 
     void on_wire_received(Buffer buffer) const override {
         int32_t version = buffer.read_pod<int32_t>();
-        T v = S::read(this->get_serialization_context(), buffer);
+        WT v = S::read(this->get_serialization_context(), buffer);
 
         bool rejected = is_master && version < master_version;
         if (rejected) {
@@ -104,12 +105,7 @@ public:
         Property<T>::advise(lifetime, handler);
     }
 
-
-    T const &get() const override {
-        return Property<T>::get();
-    }
-
-    void set(T new_value) const override {
+    void set(rd::value_or_wrapper<T> new_value) const override {
         this->local_change([this, new_value = std::move(new_value)]() mutable {
             this->default_value_changed = true;
             Property<T>::set(std::move(new_value));
@@ -127,6 +123,7 @@ public:
 
 #pragma warning( pop )
 
-static_assert(std::is_move_constructible<RdPropertyBase<int> >::value, "Is move constructible from RdPropertyBase<int>");
+static_assert(std::is_move_constructible<RdPropertyBase<int> >::value,
+              "Is move constructible from RdPropertyBase<int>");
 
 #endif //RD_CPP_RDPROPERTYBASE_H

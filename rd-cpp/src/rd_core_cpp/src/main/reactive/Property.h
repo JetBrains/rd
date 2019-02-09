@@ -5,7 +5,7 @@
 #ifndef RD_CPP_CORE_PROPERTY_H
 #define RD_CPP_CORE_PROPERTY_H
 
-#include "base/IProperty.h"
+#include "IProperty.h"
 #include "SignalX.h"
 #include "core_util.h"
 
@@ -30,16 +30,16 @@ public:
 
     T const &get() const override {
         MY_ASSERT_THROW_MSG(this->has_value(), "get of uninitialized value from property");
-        return this->value.value();
+        return *(this->value);
     }
 
-    void set(T new_value) const override {
-        if (!this->has_value() || this->get() != new_value) {
+    void set(rd::value_or_wrapper<T> new_value) const override {
+        if (!this->has_value() || (this->get() != rd::get<T>(new_value))) {
 			if (this->has_value()) {
-				this->before_change.fire(this->value.value());
+				this->before_change.fire(*(this->value));
 			}
             this->value = std::move(new_value);
-            this->change.fire(this->value.value());
+            this->change.fire(*(this->value));
         }
     }
 

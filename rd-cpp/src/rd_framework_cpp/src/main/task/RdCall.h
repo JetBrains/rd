@@ -14,6 +14,9 @@
 
 template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 class RdCall : public RdReactiveBase, public ISerializable {
+    using WTReq = rd::value_or_wrapper<TReq>;
+    using WTRes = rd::value_or_wrapper<TRes>;
+
     mutable std::unordered_map<RdId, std::pair<IScheduler *, RdTask<TRes, ResSer>>> requests;
     mutable tl::optional<RdId> syncTaskId;
 
@@ -89,7 +92,7 @@ public:
         }
     }
 
-    TRes sync(TReq const &request) const {
+    WTRes sync(TReq const &request) const {
         try {
             auto task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
             while (!task.has_value()) {
@@ -135,7 +138,7 @@ private:
 
         get_wire()->send(rdid, [&](Buffer const &buffer) {
             logSend.trace("call " + location.toString() + "::" + rdid.toString() + " send" + (sync ? "SYNC" : "ASYNC") +
-                          " request " + taskId.toString() + " : " + to_string(request));
+                          " request " + taskId.toString() + " : " + rd::to_string(request));
             taskId.write(buffer);
             ReqSer::write(get_serialization_context(), buffer, request);
         });

@@ -14,7 +14,7 @@ add_executable(rd_framework_cpp_test
         cases/SocketWireTest.cpp
         cases/RdExtTest.cpp
         cases/RdTaskTest.cpp
-        )
+        cases/DynamicPolymorphicTest.cpp)
 
 target_include_directories(rd_framework_cpp_test PUBLIC cases)
 target_include_directories(rd_framework_cpp_test PUBLIC util)

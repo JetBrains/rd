@@ -6,15 +6,17 @@
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
 #include "Buffer.h"
-#include "Serializers.h"
-
+#include "InternRoot.h"
 
 class IProtocol;
+
+class Serializers;
 
 class SerializationCtx {
 public:
     Serializers const *serializers = nullptr;
-//    tl::optional<IInternRoot> internRoot;
+
+    tl::optional<InternRoot> internRoot;
 
 //    SerializationCtx() = delete;
 
@@ -24,20 +26,26 @@ public:
 
     SerializationCtx &operator=(SerializationCtx &&other) noexcept = default;
 
-    SerializationCtx(const Serializers *serializers = nullptr);
+    explicit SerializationCtx(const Serializers *serializers = nullptr);
+
+    SerializationCtx(const Serializers *serializers, InternRoot internRoot);
 
     explicit SerializationCtx(IProtocol const &protocol);
     //endregion
 
+    SerializationCtx withInternRootHere(bool isMaster) const;
+
     template<typename T>
     T readInterned(Buffer const &buffer,
                    std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
+        return T();
         //todo implement
     }
 
     template<typename T>
     void writeInterned(Buffer const &buffer, T const &value,
-                       std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
+                       std::function<void(SerializationCtx const &, Buffer const &,
+                                          T const &)> writeValueDelegate) const {
         //todo implement
     }
 };

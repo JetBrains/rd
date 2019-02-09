@@ -39,5 +39,5 @@ void ExtWire::send(RdId const &id, std::function<void(Buffer const &buffer)> wri
             return;
         }
     }
-    realWire->send(id, writer);
+    realWire->send(id, std::move(writer));
 }

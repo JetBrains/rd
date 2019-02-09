@@ -8,11 +8,14 @@
 #include "SignalX.h"
 #include "Lifetime.h"
 #include "IPropertyBase.h"
+#include "wrapper.h"
 
 #include <functional>
 
 template<typename T>
 class IProperty : public IPropertyBase<T> {
+protected:
+    using WT = rd::value_or_wrapper<T>;
 public:
 
     //region ctor/dtor
@@ -37,9 +40,9 @@ public:
             return;
         }
         signal.advise(std::move(lifetime), handler);
-		if (this->has_value()) {
-			handler(this->get());
-		}
+        if (this->has_value()) {
+            handler(this->get());
+        }
     }
 
     void advise_before(Lifetime lifetime, std::function<void(T const &)> handler) const override {
@@ -50,7 +53,7 @@ public:
         advise0(std::move(lifetime), std::move(handler), this->change);
     }
 
-    virtual void set(T) const = 0;
+    virtual void set(rd::value_or_wrapper<T>) const = 0;
 };
 
 

@@ -25,7 +25,7 @@ TEST_F(RdFrameworkTestBase, rd_list_static) {
 
     client_list.advise(Lifetime::Eternal(),
                        [&](IViewableList<std::wstring>::Event entry) {
-                           logUpdate.emplace_back(to_string_list_event<std::wstring>(entry));
+                           logUpdate.emplace_back(rd::to_string_list_event<std::wstring>(entry));
                        });
 
     EXPECT_EQ(0, server_list.size());

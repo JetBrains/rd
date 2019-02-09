@@ -42,7 +42,9 @@ add_library(rd_framework_cpp STATIC
         #task
         task/RdCall.cpp task/RdCall.h task/RdTask.cpp task/RdTask.h task/RdTaskResult.cpp task/RdTaskResult.h task/RdEndpoint.cpp task/RdEndpoint.h
         task/RdTaskImpl.cpp task/RdTaskImpl.h
-        base/IUnknownInstance.cpp base/IUnknownInstance.h)
+        base/IUnknownInstance.cpp base/IUnknownInstance.h
+        intern/InternRoot.cpp intern/InternRoot.h)
+
 target_include_directories(rd_framework_cpp
         PUBLIC
                 ${CMAKE_CURRENT_SOURCE_DIR}
@@ -53,6 +55,7 @@ target_include_directories(rd_framework_cpp
                 util
                 wire
                 task
+                intern
 )
 
 target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp clsocket)

@@ -34,7 +34,18 @@ public:
     static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
         buffer.write_pod<T>(value);
     }
+};
 
+template<typename T>
+class Polymorphic<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+public:
+    static T read(SerializationCtx const &ctx, Buffer const &buffer) {
+        return buffer.read_floating_point<T>();
+    }
+
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+        buffer.write_floating_point<T>(value);
+    }
 };
 
 //class Polymorphic<int, void>;
@@ -64,6 +75,18 @@ public:
         //        buffer.writeString(value);
     }
 };*/
+
+template<>
+class Polymorphic<bool> {
+public:
+    static bool read(SerializationCtx const &ctx, Buffer const &buffer) {
+        return buffer.readBool();
+    }
+
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, bool const &value) {
+        buffer.writeBool(value);
+    }
+};
 
 template<>
 class Polymorphic<std::wstring> {
@@ -127,17 +150,20 @@ public:
     }
 };
 
-/*template<>
-class Polymorphic<tl::optional<std::wstring>> {
-    using T = std::wstring;
+template<typename T>
+class AbstractPolymorphic {
 public:
-    static tl::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-        return buffer.readNullableWString();
+    static rd::value_or_wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
+        return ctx.serializers->readPolymorphic<T>(ctx, buffer);
     }
 
-    static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
-        buffer.writeNullableWString(value);
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+        ctx.serializers->writePolymorphic(ctx, buffer, value);
     }
-};*/
+
+    static void write(SerializationCtx const &ctx, Buffer const &buffer, rd::Wrapper<T> const &value) {
+        ctx.serializers->writePolymorphic(ctx, buffer, *value);
+    }
+};
 
 #endif //RD_CPP_POLYMORPHIC_H

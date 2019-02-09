@@ -329,8 +329,13 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
             serverScheduler.pump_one_message();//server get ACK
         } else {
             c_map.set(L"A", x);
-            serverScheduler.pump_one_message();//server get ADD and doesn't; send ACK
+            serverScheduler.pump_one_message();//server get ADD and doesn't send ACK
         }
+        checkSchedulersAreEmpty();
+
+        EXPECT_EQ(*s_map.get(L"A"), x);
+        EXPECT_EQ(*c_map.get(L"A"), x);
+
         f = !f;
     }
 

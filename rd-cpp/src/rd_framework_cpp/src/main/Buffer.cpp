@@ -97,6 +97,24 @@ void Buffer::writeWString(std::wstring const &value) const {
     writeArray<uint16_t>(v);
 }
 
+bool Buffer::readBool() const {
+    auto res = read_pod<uint8_t>();
+    MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
+    return res == 1;
+}
+
+void Buffer::writeBool(bool value) const {
+    write_pod<word_t>(value ? 1 : 0);
+}
+
+void Buffer::readByteArrayRaw(Buffer::ByteArray &array) const {
+    read(array.data(), array.size());
+}
+
+void Buffer::writeByteArrayRaw(const Buffer::ByteArray &array) const {
+    write(array.data(), array.size());
+}
+
 /*tl::optional<std::wstring> Buffer::readNullableWString() const {
     int32_t len = read_pod<int32_t>();
     if (len < 0) {
