@@ -327,7 +327,11 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         println()
 
         + "using JetBrains.Core;"
+        + "using JetBrains.Diagnostics;"
+        + "using JetBrains.Collections;"
+        + "using JetBrains.Collections.Viewable;"
         + "using JetBrains.Lifetimes;"
+        + "using JetBrains.Serialization;"
         + "using JetBrains.Platform.RdFramework;"
         + "using JetBrains.Platform.RdFramework.Base;"
         + "using JetBrains.Platform.RdFramework.Impl;"
@@ -336,9 +340,6 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "using JetBrains.Platform.RdFramework.Text;"
         println()
 
-        + "using JetBrains.Util.Collections;"
-        + "using JetBrains.Util.Logging;"
-        + "using JetBrains.Util.PersistentMap;"
         println()
 
         tl.additionalUsings.printlnWithBlankLine {
@@ -820,8 +821,8 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
         fun IScalar.hc(v : String) : String = when (this) {
             is Enum -> "(int) $v"
-            is IArray, is IImmutableList -> "Collections.GetHashCode($v)"
-            is INullable -> "($v != null ?" + (itemType as IScalar).hc(v) + " : 0)"
+            is IArray, is IImmutableList -> "$v.ContentHashCode()"
+            is INullable -> "($v != null ? " + (itemType as IScalar).hc(v) + " : 0)"
             else -> "$v.GetHashCode()"
         }
 
