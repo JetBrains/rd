@@ -12,6 +12,10 @@
 #include "SocketWireTestBase.h"
 #include "ExtProperty.h"
 
+using namespace rd;
+using namespace test;
+using namespace test::util;
+
 //TEST_F(SocketWireTestBase, testStringExtension) {
 //    Protocol serverProtocol = server(socketLifetime);
 //    Protocol clientProtocol = client(socketLifetime, serverProtocol);

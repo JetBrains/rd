@@ -8,6 +8,8 @@
 
 #include <gtest/gtest.h>
 
+using namespace rd;
+
 TEST (viewable_set, advise) {
     std::unique_ptr<IViewableSet<int>> set(new ViewableSet<int>());
 

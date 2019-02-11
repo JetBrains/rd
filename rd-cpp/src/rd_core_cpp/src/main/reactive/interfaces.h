@@ -10,31 +10,32 @@
 
 #include <functional>
 
+namespace rd {
+	template<typename T>
+	class ISource {
+	public:
+		virtual ~ISource() = default;
 
-template<typename T>
-class ISource {
-public:
-    virtual ~ISource() = default;
+		virtual void advise(Lifetime lifetime, std::function<void(T const &)> handler) const = 0;
+	};
 
-    virtual void advise(Lifetime lifetime, std::function<void(T const &)> handler) const = 0;
-};
+	template<typename T>
+	class IViewable {
+	public:
+		virtual ~IViewable() = default;
 
-template<typename T>
-class IViewable {
-public:
-    virtual ~IViewable() = default;
+		virtual void view(Lifetime lifetime, std::function<void(Lifetime, T const &)> handler) const = 0;
+	};
 
-    virtual void view(Lifetime lifetime, std::function<void(Lifetime, T const &)> handler) const = 0;
-};
+	template<typename T>
+	class ISignal : public ISource<T> {
+	protected:
+		using WT = value_or_wrapper<T>;
+	public:
+		virtual ~ISignal() = default;
 
-template<typename T>
-class ISignal : public ISource<T> {
-protected:
-	using WT = typename rd::value_or_wrapper<T>;
-public:
-    virtual ~ISignal() = default;
-
-    virtual void fire(T const &value) const = 0;
-};
+		virtual void fire(T const &value) const = 0;
+	};
+}
 
 #endif //RD_CPP_CORE_INTERFACES_H

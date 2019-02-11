@@ -40,21 +40,21 @@ namespace rd {
     template<typename K, typename V>
     std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
         using Event = typename IViewableMap<K, V>::Event;
-        std::string res = mpark::visit(make_visitor(
+        std::string res = mpark::visit(util::make_visitor(
                 [](typename Event::Add const &e) {
                     return "Add " +
-                           rd::to_string(*e.key) + ":" +
-                           rd::to_string(*e.new_value);
+                           to_string(*e.key) + ":" +
+                           to_string(*e.new_value);
                 },
                 [](typename Event::Update const &e) {
                     return "Update " +
-                           rd::to_string(*e.key) + ":" +
+                           to_string(*e.key) + ":" +
                            //                       to_string(e.old_value) + ":" +
-                           rd::to_string(*e.new_value);
+                           to_string(*e.new_value);
                 },
                 [](typename Event::Remove const &e) {
                     return "Remove " +
-                           rd::to_string(*e.key);
+                           to_string(*e.key);
                 }
         ), e.v);
         return res;
@@ -63,17 +63,17 @@ namespace rd {
     template<typename T>
     std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
         using Event = typename IViewableList<T>::Event;
-        std::string res = mpark::visit(make_visitor(
+        std::string res = mpark::visit(util::make_visitor(
                 [](typename Event::Add const &e) {
                     return "Add " +
                            std::to_string(e.index) + ":" +
-                           rd::to_string(*e.new_value);
+                           to_string(*e.new_value);
                 },
                 [](typename Event::Update const &e) {
                     return "Update " +
                            std::to_string(e.index) + ":" +
                            //                       to_string(e.old_value) + ":" +
-                           rd::to_string(*e.new_value);
+                           to_string(*e.new_value);
                 },
                 [](typename Event::Remove const &e) {
                     return "Remove " +

@@ -10,6 +10,10 @@
 
 using vi = std::vector<int>;
 
+using namespace rd;
+using namespace test;
+using namespace test::util;
+
 TEST_F(RdFrameworkTestBase, property_statics) {
     int property_id = 1;
 

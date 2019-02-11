@@ -7,19 +7,17 @@
 
 #include <string>
 
-enum class AddRemove {
-    ADD, REMOVE
-};
-
 namespace rd {
+    enum class AddRemove {
+        ADD, REMOVE
+    };
+
     std::string to_string(AddRemove kind);
-}
 
-enum class Op {
-    ADD, UPDATE, REMOVE, ACK
-};
+    enum class Op {
+        ADD, UPDATE, REMOVE, ACK
+    };
 
-namespace rd {
     std::string to_string(Op op);
 }
 

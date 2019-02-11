@@ -4,43 +4,50 @@
 
 #include "TestWire.h"
 
-TestWire::TestWire(IScheduler *scheduler) : WireBase(scheduler) {
-    this->connected.set(true);
-}
+namespace rd {
+	namespace test {
+		namespace util {
+			TestWire::TestWire(IScheduler *scheduler) : WireBase(scheduler) {
+				this->connected.set(true);
+			}
 
-void TestWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
-    assert(!id.isNull());
-    Buffer ostream(10);
-    writer(ostream);
+			void TestWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
+				assert(!id.isNull());
+				Buffer ostream(10);
+				writer(ostream);
 
-    bytesWritten += ostream.get_position();
+				bytesWritten += ostream.get_position();
 
-    ostream.rewind();
+				ostream.rewind();
 
-    msgQ.push(RdMessage(id, std::move(ostream)));
-    if (auto_flush) {
-        process_all_messages();
-    }
-}
+				msgQ.push(RdMessage(id, std::move(ostream)));
+				if (auto_flush) {
+					process_all_messages();
+				}
+			}
 
-void TestWire::process_all_messages() const {
-    while (!msgQ.empty()) {
-        process_one_message();
-    }
-}
+			void TestWire::process_all_messages() const {
+				while (!msgQ.empty()) {
+					process_one_message();
+				}
+			}
 
-void TestWire::process_one_message() const {
-    if (msgQ.empty()) {
-        return;
-    }
-    auto msg = std::move(msgQ.front());
-    msgQ.pop();
-    counterpart->message_broker.dispatch(msg.id, std::move(msg.buffer));
-}
+			void TestWire::process_one_message() const {
+				if (msgQ.empty()) {
+					return;
+				}
+				auto msg = std::move(msgQ.front());
+				msgQ.pop();
+				counterpart->message_broker.dispatch(msg.id, std::move(msg.buffer));
+			}
 
-void TestWire::set_auto_flush(bool value) {
-    auto_flush = value;
-    if (value) {
-        process_all_messages();
-    }
+			void TestWire::set_auto_flush(bool value) {
+				auto_flush = value;
+				if (value) {
+					process_all_messages();
+				}
+			}
+	
+		}
+	}
 }

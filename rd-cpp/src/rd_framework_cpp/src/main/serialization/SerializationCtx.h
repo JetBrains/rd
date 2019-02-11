@@ -8,46 +8,47 @@
 #include "Buffer.h"
 #include "InternRoot.h"
 
-class IProtocol;
+namespace rd {
+    class IProtocol;
+    class Serializers;
 
-class Serializers;
+	class SerializationCtx {
+	public:
+		Serializers const *serializers = nullptr;
 
-class SerializationCtx {
-public:
-    Serializers const *serializers = nullptr;
+		tl::optional<InternRoot> internRoot;
 
-    tl::optional<InternRoot> internRoot;
+		//    SerializationCtx() = delete;
 
-//    SerializationCtx() = delete;
+		//region ctor/dtor
 
-    //region ctor/dtor
+		SerializationCtx(SerializationCtx &&other) noexcept = default;
 
-    SerializationCtx(SerializationCtx &&other) noexcept = default;
+		SerializationCtx &operator=(SerializationCtx &&other) noexcept = default;
 
-    SerializationCtx &operator=(SerializationCtx &&other) noexcept = default;
+		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
-    explicit SerializationCtx(const Serializers *serializers = nullptr);
+		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
 
-    SerializationCtx(const Serializers *serializers, InternRoot internRoot);
+		explicit SerializationCtx(IProtocol const &protocol);
+		//endregion
 
-    explicit SerializationCtx(IProtocol const &protocol);
-    //endregion
+		SerializationCtx withInternRootHere(bool isMaster) const;
 
-    SerializationCtx withInternRootHere(bool isMaster) const;
+		template<typename T>
+		T readInterned(Buffer const &buffer,
+		               std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
+			return T();
+			//todo implement
+		}
 
-    template<typename T>
-    T readInterned(Buffer const &buffer,
-                   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
-        return T();
-        //todo implement
-    }
-
-    template<typename T>
-    void writeInterned(Buffer const &buffer, T const &value,
-                       std::function<void(SerializationCtx const &, Buffer const &,
-                                          T const &)> writeValueDelegate) const {
-        //todo implement
-    }
-};
+		template<typename T>
+		void writeInterned(Buffer const &buffer, T const &value,
+		                   std::function<void(SerializationCtx const &, Buffer const &,
+		                                      T const &)> writeValueDelegate) const {
+			//todo implement
+		}
+	};
+}
 
 #endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

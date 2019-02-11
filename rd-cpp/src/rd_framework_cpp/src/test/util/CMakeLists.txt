@@ -1,5 +1,5 @@
 add_library(rd_framework_cpp_util
-        ExtProperty.cpp ExtProperty.h
+        ExtProperty.h
         DynamicExt.cpp DynamicExt.h
         TestScheduler.cpp TestScheduler.h
         WireUtil.cpp WireUtil.h

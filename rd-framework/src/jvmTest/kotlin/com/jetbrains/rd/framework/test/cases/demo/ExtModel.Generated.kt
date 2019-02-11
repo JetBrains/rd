@@ -1,12 +1,19 @@
 @file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")
-package com.jetbrains.rd.framework.test.cases.demo
+package org.example
 
-import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.framework.impl.*
+import com.jetbrains.rider.framework.*
+import com.jetbrains.rider.framework.base.*
+import com.jetbrains.rider.framework.impl.*
 
-import com.jetbrains.rd.util.reactive.*
-import com.jetbrains.rd.util.string.*
+import com.jetbrains.rider.util.lifetime.*
+import com.jetbrains.rider.util.reactive.*
+import com.jetbrains.rider.util.string.*
+import com.jetbrains.rider.util.trace
+import com.jetbrains.rider.util.Date
+import com.jetbrains.rider.util.UUID
+import com.jetbrains.rider.util.URI
+import kotlin.reflect.KClass
+
 
 
 class ExtModel private constructor(
@@ -21,9 +28,11 @@ class ExtModel private constructor(
         
         
         
+        
+        const val serializationHash = 2364843396187734L
     }
     override val serializersOwner: ISerializersOwner get() = ExtModel
-    override val serializationHash: Long get() = 2364843396187734L
+    override val serializationHash: Long get() = ExtModel.serializationHash
     
     //fields
     val checker: ISignal<Unit> get() = _checker

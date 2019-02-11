@@ -11,13 +11,15 @@
 #include "optional.hpp"
 
 
-template<typename T, typename S = Polymorphic<T> >
-class RdTaskImpl {
-    template<typename, typename>
-    friend class RdTask;
+namespace rd {
+	template<typename T, typename S = Polymorphic<T> >
+	class RdTaskImpl {
+		template<typename, typename>
+		friend class RdTask;
 
-    mutable Property<tl::optional<RdTaskResult<T, S> > > result{tl::nullopt};
-};
+		mutable Property<tl::optional<RdTaskResult<T, S> > > result{tl::nullopt};
+	};
+}
 
 
 #endif //RD_CPP_RDTASKIMPL_H

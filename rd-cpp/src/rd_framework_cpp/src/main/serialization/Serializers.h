@@ -14,47 +14,50 @@
 #include <iostream>
 #include <unordered_map>
 
-class SerializationCtx;
+namespace rd {
+	class SerializationCtx;
+}
 
-class Serializers {
-public:
-    mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
-                                                                                  Buffer const &)>> readers;
+namespace rd {
+	class Serializers {
+	public:
+		mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
+		                                                                              Buffer const &)>> readers;
 
-    template<typename T, typename = typename std::enable_if<std::is_base_of<ISerializable, T>::value>::type>
-    void registry() const {
-        std::string type_name = demangle<T>();
-        hash_t h = getPlatformIndependentHash(type_name);
-        RdId id(h);
+		template<typename T, typename = typename std::enable_if<std::is_base_of<ISerializable, T>::value>::type>
+		void registry() const {
+			std::string type_name = demangle<T>();
+			hash_t h = getPlatformIndependentHash(type_name);
+			RdId id(h);
 
-//        Protocol::initializationLogger.trace("Registering type " + type_name + ", id = " + id.toString());
-//todo uncomment
+			//        Protocol::initializationLogger.trace("Registering type " + type_name + ", id = " + id.toString());
+			//todo uncomment
 
-        MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
+			MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
-        readers[id] = [](SerializationCtx const &ctx,
-                         Buffer const &buffer) -> std::unique_ptr<ISerializable> {
-            return std::make_unique<T>(T::read(ctx, buffer));
-        };
-    }
+			readers[id] = [](SerializationCtx const &ctx,
+			                 Buffer const &buffer) -> std::unique_ptr<ISerializable> {
+				return std::make_unique<T>(T::read(ctx, buffer));
+			};
+		}
 
-    template<typename T>
-    std::unique_ptr<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &stream) const {
-        RdId id = RdId::read(stream);
-        int32_t size = stream.read_pod<int32_t>();
-        stream.check_available(size);
+		template<typename T>
+		std::unique_ptr<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &stream) const {
+			RdId id = RdId::read(stream);
+			int32_t size = stream.read_pod<int32_t>();
+			stream.check_available(size);
 
-        if (readers.count(id) == 0) {
-//            std::cerr << std::endl << ' ' << id.get_hash() << '\n';
-            throw std::invalid_argument("no reader");
-        }
-        auto const &reader = readers.at(id);
-        std::unique_ptr<ISerializable> ptr = reader(ctx, stream);
-        return std::unique_ptr<T>(dynamic_cast<T *>(ptr.release()));
-        //todo change the way of dynamic_pointer_cast
-    }
+			if (readers.count(id) == 0) {
+				//            std::cerr << std::endl << ' ' << id.get_hash() << '\n';
+				throw std::invalid_argument("no reader");
+			}
+			auto const &reader = readers.at(id);
+			std::unique_ptr<ISerializable> ptr = reader(ctx, stream);
+			return std::unique_ptr<T>(dynamic_cast<T *>(ptr.release()));
+			//todo change the way of dynamic_pointer_cast
+		}
 
-    /*template<typename T>
+		/*template<typename T>
     void registry(std::function<T(SerializationCtx const &, Buffer const &)> reader) const {
         std::string type_name = demangle<T>();
         hash_t h = getPlatformIndependentHash(type_name);
@@ -71,29 +74,30 @@ public:
         readers[id] = std::move(real_reader);
     }*/
 
-    template<typename T>
-    void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const T &value) const {
-        std::string type_name = demangle<T>();
-        hash_t h = getPlatformIndependentHash(type_name);
-        std::cerr << "write: " << type_name << " with hash: " << h << std::endl;
-        RdId(h).write(stream);
+		template<typename T>
+		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const T &value) const {
+			std::string type_name = demangle<T>();
+			hash_t h = getPlatformIndependentHash(type_name);
+			std::cerr << "write: " << type_name << " with hash: " << h << std::endl;
+			RdId(h).write(stream);
 
 
-        int32_t lengthTagPosition = stream.get_position();
-        stream.write_pod<int32_t>(0);
-        int32_t objectStartPosition = stream.get_position();
-        value.write(ctx, stream);
-        int32_t objectEndPosition = stream.get_position();
-        stream.set_position(lengthTagPosition);
-        stream.write_pod<int32_t>(objectEndPosition - objectStartPosition);
-        stream.set_position(objectEndPosition);
-    }
+			int32_t lengthTagPosition = stream.get_position();
+			stream.write_pod<int32_t>(0);
+			int32_t objectStartPosition = stream.get_position();
+			value.write(ctx, stream);
+			int32_t objectEndPosition = stream.get_position();
+			stream.set_position(lengthTagPosition);
+			stream.write_pod<int32_t>(objectEndPosition - objectStartPosition);
+			stream.set_position(objectEndPosition);
+		}
 
-    template<typename T>
-    void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const rd::Wrapper<T> &value) const {
-        writePolymorphic(ctx, stream, *value);
-    }
-};
+		template<typename T>
+		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const Wrapper<T> &value) const {
+			writePolymorphic(ctx, stream, *value);
+		}
+	};
+}
 
 
 #endif //RD_CPP_SERIALIZERS_H

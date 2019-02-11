@@ -4,30 +4,37 @@
 
 #include "DynamicEntity.h"
 
-DynamicEntity DynamicEntity::read(SerializationCtx const &ctx, Buffer const &buffer) {
-    return DynamicEntity(RdProperty<int32_t>::read(ctx, buffer));
-}
+namespace rd {
+	namespace test {
+		namespace util {
+			DynamicEntity DynamicEntity::read(SerializationCtx const &ctx, Buffer const &buffer) {
+				return DynamicEntity(RdProperty<int32_t>::read(ctx, buffer));
+			}
 
-void DynamicEntity::write(SerializationCtx const &ctx, Buffer const &buffer) const {
-    foo.write(ctx, buffer);
-}
+			void DynamicEntity::write(SerializationCtx const &ctx, Buffer const &buffer) const {
+				foo.write(ctx, buffer);
+			}
 
-void DynamicEntity::create(IProtocol *protocol) {
-    protocol->serializers.registry<DynamicEntity>();
-}
+			void DynamicEntity::create(IProtocol *protocol) {
+				protocol->serializers.registry<DynamicEntity>();
+			}
 
-void DynamicEntity::init(Lifetime lifetime) const {
-    foo.bind(lifetime, this, "foo");
-}
+			void DynamicEntity::init(Lifetime lifetime) const {
+				foo.bind(lifetime, this, "foo");
+			}
 
-void DynamicEntity::identify(IIdentities const &identities, RdId const &id) const {
-    foo.identify(identities, id.mix("foo"));
-}
+			void DynamicEntity::identify(IIdentities const &identities, RdId const &id) const {
+				foo.identify(identities, id.mix("foo"));
+			}
 
-bool operator==(const DynamicEntity &lhs, const DynamicEntity &rhs) {
-    return lhs.foo == rhs.foo;
-}
+			bool operator==(const DynamicEntity &lhs, const DynamicEntity &rhs) {
+				return lhs.foo == rhs.foo;
+			}
 
-bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs) {
-    return !(rhs == lhs);
+			bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs) {
+				return !(rhs == lhs);
+			}
+	
+		}
+	}
 }

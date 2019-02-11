@@ -19,87 +19,86 @@
 #include <condition_variable>
 #include <type_traits>
 
+namespace rd {
+	class SocketWire {
+		static std::chrono::milliseconds timeout;
+	public:
+		class Base : public WireBase {
+		protected:
+			static Logger logger;
 
-class Lifetime;
+			std::timed_mutex lock;
+			mutable std::mutex send_lock;
+			mutable std::mutex socket_lock;
 
-class SocketWire {
-    static std::chrono::milliseconds timeout;
-public:
-    class Base : public WireBase {
-    protected:
-        static rd::Logger logger;
+			std::thread thread;
 
-        std::timed_mutex lock;
-        mutable std::mutex send_lock;
-        mutable std::mutex socket_lock;
+			std::string id;
+			Lifetime lifetime;
+			IScheduler *scheduler = nullptr;
+			std::shared_ptr<CSimpleSocket> socketProvider;
 
-        std::thread thread;
+			std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
 
-        std::string id;
-        Lifetime lifetime;
-        IScheduler *scheduler = nullptr;
-        std::shared_ptr<CSimpleSocket> socketProvider;
+			mutable std::condition_variable send_var;
+			mutable ByteBufferAsyncProcessor sendBuffer{id + "-AsyncSendProcessor",
+				[this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
 
-        std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
+			// mutable Buffer::ByteArray threadLocalSendByteArray;
 
-        mutable std::condition_variable send_var;
-        mutable rd::ByteBufferAsyncProcessor sendBuffer{id + "-AsyncSendProcessor",
-                                                   [this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
+			static const size_t RECIEVE_BUFFER_SIZE = 1u << 16;
+			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
+			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
-        // mutable Buffer::ByteArray threadLocalSendByteArray;
+			bool ReadFromSocket(Buffer::word_t *res, int32_t msglen) const;
 
-		static const size_t RECIEVE_BUFFER_SIZE = 1u << 16;
-        mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
-        mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
+		public:
+			//region ctor/dtor
 
-        bool ReadFromSocket(char *res, int32_t msglen) const;
+			Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler);
 
-    public:
-        //region ctor/dtor
+			virtual ~Base() = default;
+			//endregion
 
-        Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler);
+			void receiverProc() const;
 
-        virtual ~Base() = default;
-        //endregion
+			void send0(Buffer::ByteArray msg) const;
 
-        void receiverProc() const;
+			void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const override;
 
-        void send0(Buffer::ByteArray msg) const;
+			void set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket);
+		};
 
-        void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const override;
+		class Client : public Base {
+		public:
+			uint16_t port = 0;
 
-        void set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket);
-    };
+			//region ctor/dtor
 
-    class Client : public Base {
-    public:
-        uint16_t port = 0;
+			Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
 
-        //region ctor/dtor
+			virtual ~Client() = default;
+			//endregion
 
-        Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
+			std::condition_variable_any cv;
+		};
 
-        virtual ~Client() = default;
-        //endregion
+		class Server : public Base {
+		public:
+			uint16_t port = 0;
 
-        std::condition_variable_any cv;
-    };
+			std::unique_ptr<CPassiveSocket> ss = std::make_unique<CPassiveSocket>();
 
-    class Server : public Base {
-    public:
-        uint16_t port = 0;
+			//region ctor/dtor
 
-        std::unique_ptr<CPassiveSocket> ss = std::make_unique<CPassiveSocket>();
+			Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
 
-        //region ctor/dtor
+			virtual ~Server() = default;
+			//endregion
+		};
 
-        Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
-
-        virtual ~Server() = default;
-        //endregion
-    };
-
-};
+	};
+}
 
 
 #endif //RD_CPP_SOCKETWIRE_H

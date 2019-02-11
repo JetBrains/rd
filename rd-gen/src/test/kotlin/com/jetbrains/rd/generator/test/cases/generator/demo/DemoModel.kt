@@ -24,6 +24,8 @@ object DemoModel : Ext(DemoRoot) {
     }
 
     init {
+        property("bool", PredefinedType.bool)
+
         property("scalar", MyScalar)
 
         list("list", PredefinedType.int)

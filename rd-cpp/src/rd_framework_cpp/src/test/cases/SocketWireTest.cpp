@@ -15,6 +15,11 @@
 
 const int STEP = 5;
 
+using namespace rd;
+using namespace rd::util;
+using namespace test;
+using namespace test::util;
+
 TEST_F(SocketWireTestBase, ClientWithoutServer) {
     uint16_t port = find_free_port();
     Protocol protocol = client(socketLifetime, port);
@@ -368,7 +373,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 
     cp.set(4);
     serverScheduler.pump_one_message();
-	serverScheduler.pump_one_message();
+    serverScheduler.pump_one_message();
 
     checkSchedulersAreEmpty();
 

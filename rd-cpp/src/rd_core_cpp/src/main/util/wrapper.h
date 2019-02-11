@@ -100,32 +100,33 @@ namespace rd {
         }
     };
 
-    template<typename T>
-    decltype(auto) get(T &&w) {
-        return std::forward<T>(w);
-    }
+    namespace wrapper {
+	    template<typename T>
+	    decltype(auto) get(T &&w) {
+		    return std::forward<T>(w);
+	    }
 
-    template<typename T>
-    decltype(auto) get(T const &w) {
-        return w;
-    }
+	    template<typename T>
+	    decltype(auto) get(T const &w) {
+		    return w;
+	    }
 
-    template<typename T>
-    T &get(Wrapper<T> &w) {
-        return *w;
-    }
+	    template<typename T>
+	    T &get(Wrapper<T> &w) {
+		    return *w;
+	    }
 
-    template<typename T>
-    T const &get(Wrapper<T> const &w) {
-        return *w;
-    }
+	    template<typename T>
+	    T const &get(Wrapper<T> const &w) {
+		    return *w;
+	    }
 
-    template<typename T>
-    T &&get(Wrapper<T> &&w) {
-        return std::move(*w);
-    }
+	    template<typename T>
+	    T &&get(Wrapper<T> &&w) {
+		    return std::move(*w);
+	    }
 
-    /*template<typename T>
+	    /*template<typename T>
     Wrapper<T> make_wrapper(T &&value) {
         return Wrapper<T>(std::move(value));
     }
@@ -135,14 +136,15 @@ namespace rd {
         return Wrapper<T>(std::move(value));
     }*/
 
-    template<typename T>
-    typename std::enable_if<!std::is_abstract<T>::value, T>::type unwrap(Wrapper<T> &&ptr) {
-        return std::move(*ptr);
-    }
+	    template<typename T>
+	    typename std::enable_if<!std::is_abstract<T>::value, T>::type unwrap(Wrapper<T> &&ptr) {
+		    return std::move(*ptr);
+	    }
 
-    template<typename T>
-    typename std::enable_if<std::is_abstract<T>::value, Wrapper<T>>::type unwrap(Wrapper<T> &&ptr) {
-        return Wrapper<T>(std::move(ptr));
+	    template<typename T>
+	    typename std::enable_if<std::is_abstract<T>::value, Wrapper<T>>::type unwrap(Wrapper<T> &&ptr) {
+		    return Wrapper<T>(std::move(ptr));
+	    }
     }
 }
 

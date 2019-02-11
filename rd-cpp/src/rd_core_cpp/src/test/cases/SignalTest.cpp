@@ -8,6 +8,8 @@
 #include "interfaces.h"
 #include "SignalX.h"
 
+using namespace rd;
+
 TEST(signal, advice) {
     int acc = 0;
     std::unique_ptr<ISignal<int> > s(new Signal<int>());

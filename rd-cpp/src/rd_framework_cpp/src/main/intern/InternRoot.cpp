@@ -4,6 +4,8 @@
 
 #include "InternRoot.h"
 
-InternRoot::InternRoot(bool is_master) : is_master(is_master) {
+namespace rd {
+    InternRoot::InternRoot(bool is_master) : is_master(is_master) {
 
+    }
 }

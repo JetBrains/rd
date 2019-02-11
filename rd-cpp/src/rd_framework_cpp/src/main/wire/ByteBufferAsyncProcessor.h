@@ -19,14 +19,15 @@
 
 namespace rd {
     class ByteBufferAsyncProcessor {
-		enum class StateKind {
+    public:
+        enum class StateKind {
 			Initialized,
 			AsyncProcessing,
 			Stopping,
 			Terminating,
 			Terminated
 		};
-
+    private:
 		using time_t = std::chrono::milliseconds;
 
 		std::mutex lock;
@@ -36,7 +37,7 @@ namespace rd {
 
 		std::function<void(Buffer::ByteArray)> processor;
 
-		std::atomic<StateKind> state{ StateKind::Initialized };
+		StateKind state{ StateKind::Initialized };
 		static Logger logger;
 
 		std::thread asyncProcessingThread;
@@ -64,17 +65,9 @@ namespace rd {
 		bool terminate(time_t timeout = time_t(0)/*InfiniteDuration*/);
 
 		void put(Buffer::ByteArray newData);
-
-		inline friend std::string to_string(StateKind state) {
-			switch (state) {
-				case StateKind::Initialized: return "Initialized";
-				case StateKind::AsyncProcessing: return "AsyncProcessing";
-				case StateKind::Stopping: return "Stopping";
-				case StateKind::Terminating: return "Terminating";
-				case StateKind::Terminated: return "Terminated";
-			}
-		}
 	};
+
+    std::string to_string(ByteBufferAsyncProcessor::StateKind state);
 }
 
 #endif //RD_CPP_BYTEBUFFERASYNCPROCESSOR_H

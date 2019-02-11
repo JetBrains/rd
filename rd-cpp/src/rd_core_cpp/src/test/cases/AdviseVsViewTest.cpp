@@ -3,15 +3,12 @@
 //
 
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
 #include "LifetimeDefinition.h"
 #include "Property.h"
 
-/*#include <crtdbg.h>
-void f()
-{
-	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-}*/
+using namespace rd;
 
 TEST(advise_vs_view, advise_behaviour1) {
     //int* p = new int(1);

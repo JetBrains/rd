@@ -11,6 +11,9 @@
 
 #include <fstream>
 
+using namespace rd;
+using namespace rd::test;
+using namespace rd::test::util;
 
 int main() {
     std::ifstream fin("C:\\temp\\port.txt");
