@@ -94,3 +94,11 @@ void RdExtBase::sendState(IWire const &wire, ExtState state) const {
 void RdExtBase::traceMe(const rd::Logger &logger, std::string const &message) const {
     logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message);
 }
+
+std::string rd::to_string(RdExtBase::ExtState state) {
+	switch (state) {
+	case RdExtBase::ExtState::Ready: return "Ready";
+	case RdExtBase::ExtState::ReceivedCounterpart: return "ReceivedCounterpart";
+	case RdExtBase::ExtState::Disconnected: return "Disconnected";
+	}
+}

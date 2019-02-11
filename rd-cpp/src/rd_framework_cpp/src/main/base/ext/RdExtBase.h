@@ -43,6 +43,10 @@ public:
 
     void traceMe(const rd::Logger &logger, std::string const &message) const;
 };
+
+namespace rd {
+	std::string to_string(RdExtBase::ExtState state);
+}
 #pragma warning( pop )
 
 #endif //RD_CPP_RDEXTBASE_H

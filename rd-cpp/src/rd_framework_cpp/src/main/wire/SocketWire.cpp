@@ -22,7 +22,7 @@ void SocketWire::Base::receiverProc() const {
         try {
             if (!socketProvider->IsSocketValid()) {
                 logger.debug(this->id + ": stop receive messages because socket disconnected");
-//                sendBuffer.terminate();
+                sendBuffer.terminate();
                 break;
             }
 
@@ -40,15 +40,15 @@ void SocketWire::Base::receiverProc() const {
             logger.debug(this->id + ": message dispatched");
         } catch (std::exception const &ex) {
             logger.error(this->id + " caught processing", &ex);
-//            sendBuffer.terminate();
+            sendBuffer.terminate();
             break;
         }
     }
 }
 
-void SocketWire::Base::send0(const Buffer &msg) const {
+void SocketWire::Base::send0(Buffer::ByteArray msg) const {
     try {
-        std::lock_guard<std::recursive_mutex> _(socket_lock);
+        std::lock_guard<decltype(socket_lock)> _(socket_lock);
         int32_t msglen = static_cast<int32_t>(msg.size());
         MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), msglen) == msglen,
                             this->id + ": failed to send message over the network");
@@ -57,14 +57,14 @@ void SocketWire::Base::send0(const Buffer &msg) const {
                             this->id + ": failed to flush");*/
 //        MY_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
     } catch (...) {
-//        sendBuffer.terminate();
+        sendBuffer.terminate();
     }
 }
 
 void SocketWire::Base::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
     MY_ASSERT_MSG(!id.isNull(), this->id + ": id mustn't be null");
 
-    Buffer buffer{threadLocalSendByteArray};
+	Buffer buffer;
     buffer.write_pod<int32_t>(0); //placeholder for length
 
     id.write(buffer); //write id
@@ -72,20 +72,16 @@ void SocketWire::Base::send(RdId const &id, std::function<void(Buffer const &buf
 
     int32_t len = buffer.get_position();
 
+	int32_t position = buffer.get_position();
     buffer.rewind();
     buffer.write_pod<int32_t>(len - 4);
-
-    threadLocalSendByteArray = buffer.getArray();
-    threadLocalSendByteArray.resize(len);
-    /*sendBuffer.put(bytes);*/
-    std::unique_lock<std::mutex> ul(send_lock);
-    send_var.wait(ul, [this]() -> bool { return socketProvider != nullptr; });
-    send0(Buffer(threadLocalSendByteArray));//todo not copy array
+	buffer.set_position(position);
+    sendBuffer.put(std::move(buffer).getRealArray());
 }
 
 void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket) {
     {
-        std::unique_lock<std::mutex> ul(send_lock);
+        std::unique_lock<decltype(send_lock)> ul(send_lock);
         socketProvider = std::move(new_socket);
         send_var.notify_all();
     }
@@ -95,7 +91,7 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_so
             return;
         }
 
-//        sendBuffer.start();
+        sendBuffer.start();
     }
     receiverProc();
 }
@@ -127,7 +123,9 @@ bool SocketWire::Base::ReadFromSocket(char *res, int32_t msglen) const {
                 return false;
             }
             hi += read;
-            logger.info(this->id + ": receive finished: " + std::to_string(read) + "bytes read");
+            if (read > 0) {
+                logger.info(this->id + ": receive finished: " + std::to_string(read) + "bytes read");
+            }
         }
     }
     MY_ASSERT_MSG(ptr == msglen, "resPtr == res.Length");
@@ -183,8 +181,8 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t po
     lifetime->add_action([this]() {
         logger.info(this->id + ": start terminating lifetime");
 
-//        bool sendBufferStopped = sendBuffer.stop(timeout);
-//        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(sendBufferStopped));
+        bool send_buffer_stopped = sendBuffer.stop(timeout);
+        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
         {
             std::lock_guard<std::timed_mutex> guard(lock);
@@ -240,8 +238,8 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t po
     lifetime->add_action([this] {
         logger.info(this->id + ": start terminating lifetime");
 
-//        bool sendBufferStopped = sendBuffer.stop(timeout);
-//        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(sendBufferStopped));
+        bool send_buffer_stopped = sendBuffer.stop(timeout);
+        logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
         rd::catch_([this] {
             logger.debug(this->id + ": closing socket");

@@ -55,14 +55,24 @@ void Buffer::rewind() const {
     set_position(0);
 }
 
-Buffer::ByteArray Buffer::getArray() const {
+Buffer::ByteArray Buffer::getArray() const & {
     return byteBufferMemoryBase;
 }
 
-Buffer::ByteArray Buffer::getRealArray() const {
-    auto res = byteBufferMemoryBase;
+Buffer::ByteArray Buffer::getArray() && {
+	return std::move(byteBufferMemoryBase);
+}
+
+Buffer::ByteArray Buffer::getRealArray() const & {
+    auto res = getArray();
     res.resize(offset);
     return res;
+}
+
+Buffer::ByteArray Buffer::getRealArray() && {
+	auto res = getArray();
+	res.resize(offset);
+	return res;
 }
 
 const Buffer::word_t *Buffer::data() const {

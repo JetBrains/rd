@@ -158,9 +158,13 @@ public:
         }
     }
 
-    ByteArray getArray() const;
+    ByteArray getArray() const &;
+    
+	ByteArray getArray() &&;
 
-    ByteArray getRealArray() const;
+    ByteArray getRealArray() const &;
+    
+	ByteArray getRealArray() &&;
 
     word_t const *data() const;
 

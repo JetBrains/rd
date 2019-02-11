@@ -58,8 +58,7 @@ namespace rd {
             action();
         }
         catch (std::exception const &e) {
-            std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(
-                    e.what());
+            std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(e.what());
             //        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
         }
     }

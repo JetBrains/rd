@@ -40,14 +40,4 @@ std::string demangle()
     std::string demangle() { return typeid(T).name(); }
 #endif // __GNUG__
 
-
-/*#include <mutex>
-#include <functional>
-
-template<typename R, typename F>
-R synchronized(std::mutex &m, F block) {
-    std::lock_guard<std::mutex> l(m);
-    return F();
-}*/
-
 #endif //RD_CPP_FRAMEWORK_UTIL_H
