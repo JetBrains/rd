@@ -50,7 +50,7 @@ class Signature(private val returnType: String, private val arguments: String, p
         }
     }
 
-    fun abstract(decl : Declaration? = null): Signature {
+    fun abstract(decl: Declaration? = null): Signature {
         return this.also {
             isAbstract = true
             declPrefix.add("virtual")
@@ -224,7 +224,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         get() = (this is IArray || this is IImmutableList) && this.isPrimitive()
 
     protected fun IType.leafSerializerRef(scope: Declaration): String? {
-        return when (this) {
+        return "rd::" + when (this) {
             is Enum -> "Polymorphic<${sanitizedName(scope)}>"
             is PredefinedType -> "Polymorphic<${substitutedName(scope)}>"
             is Declaration ->
@@ -253,14 +253,13 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName: String
-        get () = when (this) {
+        get () = "rd::" + when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
                 Sink -> "RdEndpoint"
                 Source -> "RdCall"
                 Both -> "RdCall"
             }
             is Member.Reactive.Signal -> "RdSignal"
-//            is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
             is Member.Reactive.Stateful.Property -> "RdProperty"
             is Member.Reactive.Stateful.List -> "RdList"
             is Member.Reactive.Stateful.Set -> "RdSet"
@@ -664,7 +663,6 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 "RdSignal",
                 "RName",
                 //serialization
-                "IMarshaller",
                 "ISerializable",
                 "Polymorphic",
                 "NullableSerializer",
@@ -780,8 +778,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun PrettyPrinter.registerSerializersTraitDecl(decl: Declaration) {
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
         public()
-        block("struct $serializersOwnerImplName : public ISerializersOwner {", "};") {
-            declare(Signature("void", "registerSerializersCore(Serializers const& serializers)", decl.name))
+        block("struct $serializersOwnerImplName : public rd::ISerializersOwner {", "};") {
+            declare(Signature("void", "registerSerializersCore(rd::Serializers const& serializers)", decl.name))
         }
         println()
         +"static $serializersOwnerImplName serializersOwner;"
@@ -823,7 +821,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +own.asSequence().plus(unknownMembers(decl)).joinToString(separator = "") { "$it${carry()}" }
 
         if (decl is Class && decl.isInternRoot) {
-            +"mutable tl::optional<SerializationCtx> mySerializationContext;"
+            +"mutable tl::optional<rd::SerializationCtx> mySerializationContext;"
         }
     }
 
@@ -866,16 +864,16 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected fun readerTraitDecl(decl: Declaration): Signature? {
         return if (decl.isConcrete) {
-            Signature(decl.name, "read(SerializationCtx const& ctx, Buffer const & buffer)", decl.name).static()
+            Signature(decl.name, "read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)", decl.name).static()
         } else if (decl.isAbstract) {
-            Signature(decl.name.wrapper(), "readUnknownInstance(SerializationCtx const& ctx, Buffer const & buffer, RdId const& unknownId, int32_t size)", decl.name).static()
+            Signature(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx const& ctx, rd::Buffer const & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
         } else {
             null
         }
     }
 
     protected fun writerTraitDecl(decl: Declaration): Signature? {
-        val signature = Signature("void", "write(SerializationCtx const& ctx, Buffer const& buffer)", decl.name).const()
+        val signature = Signature("void", "write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer)", decl.name).const()
         return if (decl.isConcrete) {
             signature.override()
         } else {
@@ -895,7 +893,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (decl !is BindableDeclaration) {
             return null
         }
-        return Signature("void", "identify(const IIdentities &identities, RdId const &id)", decl.name).const().override()
+        return Signature("void", "identify(const rd::IIdentities &identities, rd::RdId const &id)", decl.name).const().override()
     }
 
     protected fun PrettyPrinter.gettersTraitDecl(decl: Declaration) {
@@ -907,7 +905,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected fun PrettyPrinter.internTraitDecl(decl: Declaration): Signature? {
         return if (decl is Class && decl.isInternRoot) {
-            return Signature("const SerializationCtx &", "get_serialization_context()", decl.name).const().override()
+            return Signature("const rd::SerializationCtx &", "get_serialization_context()", decl.name).const().override()
         } else {
             null
         }
@@ -915,7 +913,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected fun equalsTraitDecl(decl: Declaration): Signature {
 //        val signature = Signature("bool", "equals(${decl.name} const& other)", decl.name).const()
-        val signature = Signature("bool", "equals(ISerializable const& object)", decl.name).const()
+        val signature = Signature("bool", "equals(rd::ISerializable const& object)", decl.name).const()
         return if (decl.isAbstract) {
             signature.abstract(decl)
         } else {
@@ -1029,7 +1027,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         fun IType.reader(): String = when (this) {
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
             is InternedScalar -> {
-                val lambda = lambda("SerializationCtx const &, Buffer const &", "return ${itemType.reader()}")
+                val lambda = lambda("SerializationCtx const &, rd::Buffer const &", "return ${itemType.reader()}")
                 "ctx.readInterned<${itemType.substitutedName(decl)}>(buffer, $lambda)"
             }
             is PredefinedType.void -> "nullptr" //really?
@@ -1081,11 +1079,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             //todo return back
         }
         if (decl is Class || decl is Aggregate) {
-            +"auto _id = RdId::read(buffer);"
+            +"auto _id = rd::RdId::read(buffer);"
         }
         (decl.membersOfBaseClasses + decl.ownMembers).println { "auto ${it.valName()} = ${it.reader()};" }
         if (unknown) {
-            +"auto unknownBytes = Buffer::ByteArray(objectStartPosition + size - buffer.get_position());"
+            +"auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());"
             +"buffer.readByteArrayRaw(unknownBytes);"
         }
         val ctorParams = decl.allMembers.asSequence().map { "std::move(${it.valName()})" }.plus(unknownMemberNames(decl)).joinToString(", ")
@@ -1108,7 +1106,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
         +"${decl.name}::$serializersOwnerImplName ${decl.name}::serializersOwner;"
         println()
-        +"void ${decl.name}::${decl.name}SerializersOwner::registerSerializersCore(Serializers const& serializers)"
+        +"void ${decl.name}::${decl.name}SerializersOwner::registerSerializersCore(rd::Serializers const& serializers)"
         braceBlock {
             indent {
                 types.filter { !it.isAbstract }.filterIsInstance<IType>().filterNot { iType -> iType is Enum }.println {
@@ -1133,7 +1131,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
 //            +"${decl.name} res;"
             val quotedName = """"${decl.name}""""
-            +"identify(*(protocol->identity), RdId::Null().mix($quotedName));"
+            +"identify(*(protocol->identity), rd::RdId::Null().mix($quotedName));"
             +"bind(lifetime, protocol, $quotedName);"
 //            +"return res;"
         }
@@ -1178,7 +1176,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             return when (this) {
                 is Enum -> "buffer.writeEnum($field)"
                 is InternedScalar -> {
-                    val lambda = lambda("SerializationCtx const &, Buffer const &, ${itemType.templateName(decl)} const & internedValue", itemType.writer("internedValue"))
+                    val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &, ${itemType.templateName(decl)} const & internedValue", itemType.writer("internedValue"))
                     "ctx.writeInterned<${itemType.templateName(decl)}>(buffer, $field, $lambda)"
                 }
                 is PredefinedType.void -> "" //really?
@@ -1237,7 +1235,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     fun PrettyPrinter.virtualInitTraitDef(decl: Declaration) {
         virtualInitTraitDecl(decl)?.let {
             define(it) {
-                val base = (if (decl is Toplevel) "RdExtBase" else "RdBindableBase")
+                val base = "rd::" + (if (decl is Toplevel) "RdExtBase" else "RdBindableBase")
                 +"$base::init(lifetime);"
                 decl.ownMembers
                         .filter { it.isBindable }
@@ -1249,7 +1247,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     fun PrettyPrinter.identifyTraitDef(decl: Declaration) {
         identifyTraitDecl(decl)?.let {
             define(it) {
-                +"RdBindableBase::identify(identities, id);"
+                +"rd::RdBindableBase::identify(identities, id);"
                 decl.ownMembers
                         .filter { it.isBindable }
                         .println { """identifyPolymorphic(${it.encapsulatedName}, identities, id.mix(".${it.name}"));""" }
@@ -1404,8 +1402,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     decl is Struct.Concrete && decl.isUnknown
 
     protected fun unknownMembers(decl: Declaration) =
-            if (isUnknown(decl)) arrayOf("RdId unknownId",
-                    "Buffer::ByteArray unknownBytes")
+            if (isUnknown(decl)) arrayOf("rd::RdId unknownId",
+                    "rd::Buffer::ByteArray unknownBytes")
             else emptyArray()
 
     protected fun unknownMemberNames(decl: Declaration) =

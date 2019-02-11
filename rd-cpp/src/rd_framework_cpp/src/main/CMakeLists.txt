@@ -13,13 +13,13 @@ add_library(rd_framework_cpp STATIC
         base/RdBindableBase.cpp base/RdBindableBase.h
         impl/RdProperty.h
         base/ext/RdExtBase.cpp base/ext/RdExtBase.h
-        serialization/Serializers.cpp serialization/Serializers.h
+        serialization/Serializers.h
         base/WireBase.cpp base/WireBase.h
         Protocol.cpp Protocol.h
         base/RdPropertyBase.h MessageBroker.cpp
         MessageBroker.h
         Buffer.cpp Buffer.h
-        serialization/Polymorphic.cpp serialization/Polymorphic.h
+        serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
         base/IProtocol.cpp base/IProtocol.h
@@ -33,15 +33,14 @@ add_library(rd_framework_cpp STATIC
         wire/SocketWire.cpp wire/SocketWire.h
         wire/PumpScheduler.cpp wire/PumpScheduler.h
         impl/RdSet.h
-        serialization/ISerializable.cpp serialization/ISerializable.h
-        serialization/IMarshaller.cpp serialization/IMarshaller.h
+        serialization/ISerializable.h
         util/demangle.cpp util/demangle.h
         wire/ByteBufferAsyncProcessor.cpp wire/ByteBufferAsyncProcessor.h
         base/ext/ExtWire.cpp base/ext/ExtWire.h
         util/shared_function.cpp util/shared_function.h
         #task
-        task/RdCall.cpp task/RdCall.h task/RdTask.cpp task/RdTask.h task/RdTaskResult.cpp task/RdTaskResult.h task/RdEndpoint.cpp task/RdEndpoint.h
-        task/RdTaskImpl.cpp task/RdTaskImpl.h
+        task/RdCall.h task/RdTask.h task/RdTaskResult.h task/RdEndpoint.h
+        task/RdTaskImpl.h
         base/IUnknownInstance.cpp base/IUnknownInstance.h
         intern/InternRoot.cpp intern/InternRoot.h)
 

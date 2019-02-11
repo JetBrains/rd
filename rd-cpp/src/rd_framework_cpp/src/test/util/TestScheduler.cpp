@@ -4,10 +4,16 @@
 
 #include "TestScheduler.h"
 
-void TestScheduler::queue(std::function<void()> action) {
-    action();
-}
+namespace rd {
+	namespace test {
+		namespace util {
+			void TestScheduler::queue(std::function<void()> action) {
+				action();
+			}
 
-bool TestScheduler::is_active() const {
-    return true;
+			bool TestScheduler::is_active() const {
+				return true;
+			}
+		}
+	}
 }

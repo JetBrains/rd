@@ -7,15 +7,21 @@
 
 #include "IScheduler.h"
 
-class TestScheduler : public IScheduler {
-public:
-    virtual ~TestScheduler() = default;
+namespace rd {
+	namespace test {
+		namespace util {
+			class TestScheduler : public IScheduler {
+			public:
+				virtual ~TestScheduler() = default;
 
-    void flush() override {}
+				void flush() override {}
 
-    void queue(std::function<void()> action) override;
+				void queue(std::function<void()> action) override;
 
-    bool is_active() const override;
-};
+				bool is_active() const override;
+			};
+		}
+	}
+}
 
 #endif //RD_CPP_TESTSCHEDULER_H

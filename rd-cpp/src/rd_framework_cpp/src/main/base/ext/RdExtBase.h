@@ -10,39 +10,41 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
-class RdExtBase : public RdReactiveBase {
-    std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
-    mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
-public:
-    enum class ExtState {
-        Ready,
-        ReceivedCounterpart,
-        Disconnected
-    };
+namespace rd {
+	class RdExtBase : public RdReactiveBase {
+		std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
+		mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
+	public:
+		enum class ExtState {
+			Ready,
+			ReceivedCounterpart,
+			Disconnected
+		};
 
-    //region ctor/dtor
+		//region ctor/dtor
 
-    RdExtBase() = default;
+		RdExtBase() = default;
 
-    RdExtBase(RdExtBase &&) = default;
+		RdExtBase(RdExtBase &&) = default;
 
-    RdExtBase &operator=(RdExtBase &&) = default;
+		RdExtBase &operator=(RdExtBase &&) = default;
 
-    virtual ~RdExtBase() = default;
-    //endregion
+		virtual ~RdExtBase() = default;
+		//endregion
 
-    mutable int64_t serializationHash = 0;
+		mutable int64_t serializationHash = 0;
 
-    const IProtocol *get_protocol() const override;
+		const IProtocol *get_protocol() const override;
 
-    void init(Lifetime lifetime) const override;
+		void init(Lifetime lifetime) const override;
 
-    void on_wire_received(Buffer buffer) const override;
+		void on_wire_received(Buffer buffer) const override;
 
-    void sendState(IWire const &wire, ExtState state) const;
+		void sendState(IWire const &wire, ExtState state) const;
 
-    void traceMe(const rd::Logger &logger, std::string const &message) const;
-};
+		void traceMe(const Logger &logger, std::string const &message) const;
+	};
+}
 
 namespace rd {
 	std::string to_string(RdExtBase::ExtState state);

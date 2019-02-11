@@ -11,6 +11,8 @@
 #include "NullableSerializer.h"
 #include "ArraySerializer.h"
 
+using namespace rd;
+
 TEST(BufferTest, readWritePod) {
     Buffer buffer;
 

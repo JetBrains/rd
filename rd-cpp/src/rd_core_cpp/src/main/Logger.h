@@ -40,7 +40,7 @@ namespace rd {
         //    virtual bool is_enabled(LogLevel level) = 0;
     };
 
-    /*class SwitchLogger : public	rd::Logger {
+    /*class SwitchLogger : public	Logger {
 
     public:
         SwitchLogger(const std::string &category);

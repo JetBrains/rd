@@ -7,17 +7,19 @@ import java.net.URLClassLoader
 
 enum class Configuration {
     EXAMPLE,
-    DEMO_MODEL
+    DEMO_MODEL,
+    RIDER_MODEL
 }
 
 
-fun main(args: Array<String>) {
+fun main() {
     val rdgen = RdGen()
     rdgen.verbose *= true
     rdgen.force *= true
-//    rdgen.clearOutput *= true
-//    rdgen.filter *= "cpp"
-    val configuration = Configuration.DEMO_MODEL
+    rdgen.clearOutput *= true
+    rdgen.filter *= "cpp"
+//    rdgen.filter *= "kotlin"
+    val configuration = Configuration.RIDER_MODEL
     when (configuration) {
         Configuration.EXAMPLE -> {
             rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\example"
@@ -28,6 +30,13 @@ fun main(args: Array<String>) {
 
             rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rider\\generator\\test\\cases\\generator\\demo"
             rdgen.packages *= "com.jetbrains.rider.generator.test.cases.generator.demo"
+        }
+        Configuration.RIDER_MODEL -> {
+            System.setProperty("model.out.src.cpp.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-cpp\\cpp_model")
+            System.setProperty("model.out.src.kt.dir", "C:\\Users\\jetbrains\\Documents\\rd\\rd-framework\\src\\jvmTest\\kotlin\\com\\jetbrains\\rider\\framework\\test\\cases\\kotlin_model")
+
+            rdgen.sources *= "C:\\Users\\jetbrains\\Documents\\ide-model\\src\\com\\jetbrains\\rider\\model\\nova\\ide"
+//            rdgen.packages *= "com.jetbrains.rider.generator.test.cases.generator.demo"
         }
     }
     rdgen.compilerClassloader = URLClassLoader(arrayOf(

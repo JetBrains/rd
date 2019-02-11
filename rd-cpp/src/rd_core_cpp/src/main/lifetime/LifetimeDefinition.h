@@ -11,36 +11,38 @@
 
 #include <functional>
 
-class LifetimeDefinition {
-private:
-    friend class SequentialLifetimes;
+namespace rd {
+    class LifetimeDefinition {
+    private:
+        friend class SequentialLifetimes;
 
-    bool eternaled = false;
-public:
-    Lifetime lifetime;
+        bool eternaled = false;
+    public:
+        Lifetime lifetime;
 
-    LifetimeDefinition() = delete;
+        LifetimeDefinition() = delete;
 
-    explicit LifetimeDefinition(bool is_eternal = false);
+        explicit LifetimeDefinition(bool is_eternal = false);
 
-    explicit LifetimeDefinition(const Lifetime &parent);
+        explicit LifetimeDefinition(const Lifetime &parent);
 
-    LifetimeDefinition(LifetimeDefinition const &other) = delete;
+        LifetimeDefinition(LifetimeDefinition const &other) = delete;
 
-    LifetimeDefinition &operator=(LifetimeDefinition const &other) = delete;
+        LifetimeDefinition &operator=(LifetimeDefinition const &other) = delete;
 
-    LifetimeDefinition(LifetimeDefinition &&other) = default;
+        LifetimeDefinition(LifetimeDefinition &&other) = default;
 
-    LifetimeDefinition &operator=(LifetimeDefinition &&other) = default;
+        LifetimeDefinition &operator=(LifetimeDefinition &&other) = default;
 
 //    static std::shared_ptr<LifetimeDefinition> eternal;
-    static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
+        static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
 
-    bool is_terminated() const;
+        bool is_terminated() const;
 
-    bool is_eternal() const;
+        bool is_eternal() const;
 
-    void terminate();
-};
+        void terminate();
+    };
+}
 
 #endif //RD_CPP_CORE_LIFETIME_DEFINITION_H

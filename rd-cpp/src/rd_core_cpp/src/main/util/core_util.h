@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <atomic>
 
 #define MY_ASSERT_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;assert(expr);}
 #define MY_ASSERT_THROW_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;throw std::runtime_error(msg);}
@@ -27,7 +28,7 @@ namespace rd {
             return val_l == val_r;
         }
 
-        bool operator()(rd::Wrapper<T> const &ptr_l, rd::Wrapper<T> const &ptr_r) const {
+        bool operator()(Wrapper<T> const &ptr_l, Wrapper<T> const &ptr_r) const {
             return ptr_l == ptr_r;
         }
 
@@ -35,7 +36,7 @@ namespace rd {
             return *val_l == *val_r;
         }
 
-        bool operator()(T const &val_r, rd::Wrapper<T> const &ptr_l) const {
+        bool operator()(T const &val_r, Wrapper<T> const &ptr_l) const {
             return *ptr_l == val_r;
         }
 
@@ -57,7 +58,7 @@ namespace rd {
             return std::hash<T>()(val);
         }
 
-        size_t operator()(rd::Wrapper<T> const &ptr) const noexcept {
+        size_t operator()(Wrapper<T> const &ptr) const noexcept {
             return std::hash<Wrapper<T>>()(ptr);
         }
 
@@ -112,8 +113,12 @@ namespace rd {
 
     template<typename T>
     inline std::string to_string(Wrapper<T> const &value) {
-        return "";
-        //todo
+        return to_string(*value);
+    }
+
+    template<typename T>
+    inline std::string to_string(std::atomic<T> const& value) {
+        return to_string(value.load());
     }
     //endregion
 }

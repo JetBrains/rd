@@ -8,26 +8,28 @@
 
 #include "IProtocol.h"
 
-class Protocol : /*IRdDynamic, */public IProtocol {
-public:
-    //region ctor/dtor
-    Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+namespace rd {
+	class Protocol : /*IRdDynamic, */public IProtocol {
+	public:
+		//region ctor/dtor
+		Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-    Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-    Protocol(Protocol const &) {
-        assert("What the actual fuck" && false);
-    };
+		Protocol(Protocol const &) {
+			assert("What the actual fuck" && false);
+		};
 
-    Protocol(Protocol &&) = default;
+		Protocol(Protocol &&) = default;
 
-    Protocol &operator=(Protocol &&) = default;
-    //endregion
+		Protocol &operator=(Protocol &&) = default;
+		//endregion
 
-    const IProtocol *get_protocol() const override;
+		const IProtocol *get_protocol() const override;
 
-    static const rd::Logger initializationLogger;
-};
+		static const Logger initializationLogger;
+	};
+}
 
 
 #endif //RD_CPP_PROTOCOL_H

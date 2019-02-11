@@ -10,6 +10,10 @@
 
 #include <string>
 
+using namespace rd;
+using namespace test;
+using namespace test::util;
+
 TEST_F(RdFrameworkTestBase, testStaticSuccess) {
     int entity_id = 1;
 

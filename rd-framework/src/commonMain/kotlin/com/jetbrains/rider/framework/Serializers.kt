@@ -6,14 +6,14 @@ import com.jetbrains.rider.util.*
 import kotlin.reflect.KClass
 
 private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. " +
-    "Usually it should be done automagically during 'bind()' invocation but in complex cases you should do it manually."
+        "Usually it should be done automagically during 'bind()' invocation but in complex cases you should do it manually."
 
 @Suppress("UNCHECKED_CAST")
 class Serializers : ISerializers {
 
     override val toplevels: MutableSet<KClass<out ISerializersOwner>> = HashSet()
 
-    val types = hashMapOf<RdId,KClass<*>>()
+    val types = hashMapOf<RdId, KClass<*>>()
     val readers = hashMapOf<RdId, (SerializationCtx, AbstractBuffer) -> Any>()
     val writers = hashMapOf<KClass<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
 
@@ -29,8 +29,8 @@ class Serializers : ISerializers {
         Protocol.initializationLogger.trace { "Registering type ${t.simpleName}, id = $id" }
 
         val existing = types[id]
-        if (existing != null ){
-            require (existing == t) { "Can't register ${t.simpleName} with id: $id, already registered: ${existing.simpleName}" }
+        if (existing != null) {
+            require(existing == t) { "Can't register ${t.simpleName} with id: $id, already registered: ${existing.simpleName}" }
         } else {
             types[id] = t
         }
@@ -67,11 +67,12 @@ class Serializers : ISerializers {
 
     override fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>?): T {
         return readPolymorphicNullable(ctx, stream, abstractDeclaration)
-            ?: throw IllegalStateException("Non-null object expected")
+                ?: throw IllegalStateException("Non-null object expected")
     }
 
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
-        val (id, writer) = writers[value::class] ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
+        val (id, writer) = writers[value::class]
+                ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
 
         if (value is IUnknownInstance) {
             value.unknownId.write(stream)
@@ -97,7 +98,7 @@ private val TICKS_PER_MILLISECOND: Long = 10000
 // Conversion between .NET Guid (Microsoft GUID Structure) and JVM UUID (RFC 4122)
 // See also https://en.wikipedia.org/wiki/Globally_unique_identifier#Binary_encoding
 // See also http://referencesource.microsoft.com/#mscorlib/system/guid.cs,58
-private fun transformGuidUuid(data : ByteArray) : ByteArray {
+private fun transformGuidUuid(data: ByteArray): ByteArray {
     return byteArrayOf(
             data[3], data[2], data[1], data[0],
             data[5], data[4],
@@ -138,18 +139,18 @@ fun AbstractBuffer.readRdId(): RdId {
     return RdId.read(this)
 }
 
-inline fun <T : Any> AbstractBuffer.readNullable(inner: () -> T) : T? {
+inline fun <T : Any> AbstractBuffer.readNullable(inner: () -> T): T? {
     if (!readBoolean()) return null
     return inner()
 }
 
 @Suppress("unused")
 @PublicApi
-inline fun <reified T : Any?> AbstractBuffer.readArray(inner: () -> T) : Array<T> {
+inline fun <reified T : Any?> AbstractBuffer.readArray(inner: () -> T): Array<T> {
     val len = readInt()
     if (len < 0) throw NullPointerException("Length of array is negative: $len")
 
-    return Array(len) { _ -> inner() }
+    return Array(len) { inner() }
 }
 
 inline fun <T> AbstractBuffer.readList(inner: () -> T): List<T> {
@@ -183,7 +184,7 @@ fun AbstractBuffer.writeUri(value: URI) {
     writeString(value.toString())
 }
 
-fun <T: Any> AbstractBuffer.writeNullable(value : T?, elemWriter:(T) -> Unit) {
+fun <T : Any> AbstractBuffer.writeNullable(value: T?, elemWriter: (T) -> Unit) {
     if (value == null) writeBoolean(false)
     else {
         writeBoolean(true)
@@ -193,7 +194,7 @@ fun <T: Any> AbstractBuffer.writeNullable(value : T?, elemWriter:(T) -> Unit) {
 
 @PublicApi
 @Suppress("unused")
-fun <T: Any?> AbstractBuffer.writeArray(value : Array<T>, elemWriter:(T) -> Unit) {
+fun <T : Any?> AbstractBuffer.writeArray(value: Array<T>, elemWriter: (T) -> Unit) {
     writeInt(value.size)
     value.forEach { elemWriter(it) }
 }

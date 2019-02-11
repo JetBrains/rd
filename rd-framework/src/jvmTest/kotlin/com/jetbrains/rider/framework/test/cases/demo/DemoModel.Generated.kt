@@ -1,5 +1,5 @@
 @file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")
-package com.jetbrains.rider.framework.test.cases.demo
+package org.example
 
 import com.jetbrains.rider.framework.*
 import com.jetbrains.rider.framework.base.*
@@ -8,17 +8,22 @@ import com.jetbrains.rider.framework.impl.*
 import com.jetbrains.rider.util.lifetime.*
 import com.jetbrains.rider.util.reactive.*
 import com.jetbrains.rider.util.string.*
+import com.jetbrains.rider.util.trace
+import com.jetbrains.rider.util.Date
+import com.jetbrains.rider.util.UUID
+import com.jetbrains.rider.util.URI
 import kotlin.reflect.KClass
 
 
 
 class DemoModel private constructor(
-        private val _scalar: RdOptionalProperty<MyScalar>,
-        private val _list: RdList<Int>,
-        private val _set: RdSet<Int>,
-        private val _mapLongToString: RdMap<Long, String>,
-        private val _call: RdEndpoint<Char, String>,
-        private val _callback: RdCall<String, Int>
+    private val _bool: RdOptionalProperty<Boolean>,
+    private val _scalar: RdOptionalProperty<MyScalar>,
+    private val _list: RdList<Int>,
+    private val _set: RdSet<Int>,
+    private val _mapLongToString: RdMap<Long, String>,
+    private val _call: RdEndpoint<Char, String>,
+    private val _callback: RdCall<String, Int>
 ) : RdExtBase() {
     //companion
     
@@ -38,11 +43,14 @@ class DemoModel private constructor(
             }
         }
         
+        
+        const val serializationHash = 8983867708965535233L
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
-    override val serializationHash: Long get() = 5994769912602552949L
+    override val serializationHash: Long get() = DemoModel.serializationHash
     
     //fields
+    val bool: IOptProperty<Boolean> get() = _bool
     val scalar: IOptProperty<MyScalar> get() = _scalar
     val list: IMutableViewableList<Int> get() = _list
     val set: IMutableViewableSet<Int> get() = _set
@@ -51,6 +59,7 @@ class DemoModel private constructor(
     val callback: IRdCall<String, Int> get() = _callback
     //initializer
     init {
+        _bool.optimizeNested = true
         _scalar.optimizeNested = true
         _list.optimizeNested = true
         _set.optimizeNested = true
@@ -62,6 +71,7 @@ class DemoModel private constructor(
     }
     
     init {
+        bindableChildren.add("bool" to _bool)
         bindableChildren.add("scalar" to _scalar)
         bindableChildren.add("list" to _list)
         bindableChildren.add("set" to _set)
@@ -73,6 +83,7 @@ class DemoModel private constructor(
     //secondary constructor
     private constructor(
     ) : this(
+        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
         RdOptionalProperty<MyScalar>(MyScalar),
         RdList<Int>(FrameworkMarshallers.Int),
         RdSet<Int>(FrameworkMarshallers.Int),
@@ -87,6 +98,7 @@ class DemoModel private constructor(
     override fun print(printer: PrettyPrinter) {
         printer.println("DemoModel (")
         printer.indent {
+            print("bool = "); _bool.print(printer); println()
             print("scalar = "); _scalar.print(printer); println()
             print("list = "); _list.print(printer); println()
             print("set = "); _set.print(printer); println()

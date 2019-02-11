@@ -14,8 +14,8 @@ add_library(rd_core_cpp STATIC
         lifetime/Lifetime.cpp lifetime/Lifetime.h
         reactive/IScheduler.cpp reactive/IScheduler.h
         reactive/base/IViewableList.h
-        util/core_util.cpp util/core_util.h
-        util/gen_util.cpp util/gen_util.h
+        util/core_util.h
+        util/gen_util.h
         reactive/base/IViewableSet.h
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h

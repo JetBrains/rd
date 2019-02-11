@@ -85,7 +85,7 @@ class RdMap<K : Any, V : Any> private constructor(
         wire.advise(lifetime, this)
 
         if (!optimizeNested)
-            view(lifetime, { lf, entry -> (entry.value).bindPolymorphic(lf, this, "[${entry.key}]") })
+            view(lifetime) { lf, entry -> (entry.value).bindPolymorphic(lf, this, "[${entry.key}]") }
     }
 
 
@@ -132,13 +132,13 @@ class RdMap<K : Any, V : Any> private constructor(
 
 
             if (msgVersioned) {
-                wire.send(rdid, { innerBuffer ->
+                wire.send(rdid) { innerBuffer ->
                     innerBuffer.writeInt((1 shl versionedFlagShift) or Op.Ack.ordinal)
                     innerBuffer.writeLong(version)
                     keySzr.write(serializationContext, innerBuffer, key)
 
                     logSend.trace { logmsg(Op.Ack, version, key) }
-                })
+                }
 
                 if (master) logReceived.error { "Both ends are masters: $location" }
             }
@@ -181,6 +181,6 @@ class RdMap<K : Any, V : Any> private constructor(
 
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableMap.Event<K, V>) -> Unit) {
         if (isBound) assertThreading()
-        map.advise(lifetime, {e -> scheduler.invokeOrQueue { handler(e) }})
+        map.advise(lifetime) { e -> scheduler.invokeOrQueue { handler(e) }}
     }
 }

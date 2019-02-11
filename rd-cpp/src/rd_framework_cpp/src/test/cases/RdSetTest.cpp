@@ -9,6 +9,10 @@
 
 using vi = std::vector<int>;
 
+using namespace rd;
+using namespace test;
+using namespace test::util;
+
 TEST_F(RdFrameworkTestBase, set_statics) {
     int32_t id = 1;
 

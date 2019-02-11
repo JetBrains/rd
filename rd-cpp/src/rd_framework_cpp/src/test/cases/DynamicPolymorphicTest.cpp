@@ -5,15 +5,26 @@
 #include "gtest/gtest.h"
 
 #include "RdFrameworkTestBase.h"
-#include "Property.h"
+#include "RdProperty.h"
 #include "AbstractEntity.h"
+#include "ArraySerializer.h"
+#include "RdSet.h"
+#include "RdMap.h"
+#include "RdList.h"
+#include "RdCall.h"
+#include "RdEndpoint.h"
+
+
+using namespace rd;
+using namespace rd::test;
+using namespace rd::test::util;
 
 //todo test not only instantiation
 using AS = AbstractPolymorphic<AbstractEntity>;
 
 TEST_F(RdFrameworkTestBase, dynamic_polymorphic_signal) {
     using S = ArraySerializer<AbstractPolymorphic<AbstractEntity>>;
-    RdSignal<std::vector<rd::Wrapper<AbstractEntity>>, S> _actionExecuted;
+    RdSignal<std::vector<Wrapper<AbstractEntity>>, S> _actionExecuted;
 }
 
 TEST_F(RdFrameworkTestBase, dynamic_polymorphic_property) {

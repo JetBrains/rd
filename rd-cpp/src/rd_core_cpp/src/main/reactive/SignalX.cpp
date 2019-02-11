@@ -4,4 +4,6 @@
 
 #include "SignalX.h"
 
-std::atomic<int32_t> cookie;
+namespace rd {
+    std::atomic<int32_t> cookie;
+}

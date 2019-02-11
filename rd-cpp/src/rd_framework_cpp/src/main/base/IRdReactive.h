@@ -10,22 +10,24 @@
 #include "IRdBindable.h"
 
 
-class IRdReactive : public virtual IRdBindable {
-public:
-    bool async = false;
-    //region ctor/dtor
+namespace rd {
+	class IRdReactive : public virtual IRdBindable {
+	public:
+		bool async = false;
+		//region ctor/dtor
 
-    IRdReactive() = default;
+		IRdReactive() = default;
 
-    virtual ~IRdReactive() = default;
-    //endregion
+		virtual ~IRdReactive() = default;
+		//endregion
 
-//    IScheduler *wire_scheduler = nullptr;
+		//    IScheduler *wire_scheduler = nullptr;
 
-    virtual IScheduler *get_wire_scheduler() const = 0;
+		virtual IScheduler *get_wire_scheduler() const = 0;
 
-    virtual void on_wire_received(Buffer buffer) const = 0;
-};
+		virtual void on_wire_received(Buffer buffer) const = 0;
+	};
+}
 
 
 #endif //RD_CPP_FRAMEWORK_IRDREACTIVE_H

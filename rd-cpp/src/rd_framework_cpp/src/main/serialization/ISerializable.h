@@ -5,15 +5,16 @@
 #ifndef RD_CPP_ISERIALIZABLE_H
 #define RD_CPP_ISERIALIZABLE_H
 
+namespace rd {
+    class SerializationCtx;
 
-class SerializationCtx;
+    class ISerializable {
+    public:
+        virtual ~ISerializable() = default;
 
-class ISerializable {
-public:
-    virtual ~ISerializable() = default;
-
-    virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const = 0;
-};
+        virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const = 0;
+    };
+}
 
 
 #endif //RD_CPP_ISERIALIZABLE_H

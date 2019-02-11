@@ -6,6 +6,10 @@
 
 using vi = std::vector<int>;
 
+using namespace rd;
+using namespace test;
+using namespace test::util;
+
 TEST_F(RdFrameworkTestBase, signal_statics) {
     int signal_id = 1;
 

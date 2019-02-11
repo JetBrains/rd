@@ -6,14 +6,16 @@
 #define RD_CPP_INTERNROOT_H
 
 
-class InternRoot {
-private:
+namespace rd {
+    class InternRoot {
+    private:
 
-public:
-    bool is_master;
+    public:
+        bool is_master;
 
-    explicit InternRoot(bool is_master);
-};
+        explicit InternRoot(bool is_master);
+    };
+}
 
 
 #endif //RD_CPP_INTERNROOT_H

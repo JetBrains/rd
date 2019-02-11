@@ -8,12 +8,14 @@
 
 #include "Serializers.h"
 
-class ISerializersOwner {
-public:
-    void registry(Serializers const &serializers);
+namespace rd {
+	class ISerializersOwner {
+	public:
+		void registry(Serializers const &serializers);
 
-    virtual void registerSerializersCore(Serializers const &serializers) = 0;
-};
+		virtual void registerSerializersCore(Serializers const &serializers) = 0;
+	};
+}
 
 
 #endif //RD_CPP_ISERIALIZERSOWNER_H
