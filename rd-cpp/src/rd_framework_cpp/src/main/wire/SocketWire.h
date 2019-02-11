@@ -12,11 +12,12 @@
 #include "PassiveSocket.h"
 #include "SimpleSocket.h"
 #include "Logger.h"
-#include "threading/ByteBufferAsyncProcessor.h"
+#include "ByteBufferAsyncProcessor.h"
 
 #include <string>
 #include <array>
 #include <condition_variable>
+#include <type_traits>
 
 
 class Lifetime;
@@ -30,7 +31,7 @@ public:
 
         std::timed_mutex lock;
         mutable std::mutex send_lock;
-        mutable std::recursive_mutex socket_lock;
+        mutable std::mutex socket_lock;
 
         std::thread thread;
 
@@ -42,13 +43,13 @@ public:
         std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
 
         mutable std::condition_variable send_var;
-        /*mutable ByteBufferAsyncProcessor sendBuffer{id + "-AsyncSendProcessor",
-                                                    [this](ByteArraySlice const &it) { this->send0(it); }};*/
+        mutable rd::ByteBufferAsyncProcessor sendBuffer{id + "-AsyncSendProcessor",
+                                                   [this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
 
-        mutable Buffer::ByteArray threadLocalSendByteArray;
+        // mutable Buffer::ByteArray threadLocalSendByteArray;
 
-
-        mutable std::array<Buffer::word_t, 1u << 16> receiver_buffer;
+		static const size_t RECIEVE_BUFFER_SIZE = 1u << 16;
+        mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
         mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
         bool ReadFromSocket(char *res, int32_t msglen) const;
@@ -63,7 +64,7 @@ public:
 
         void receiverProc() const;
 
-        void send0(const Buffer &msg) const;
+        void send0(Buffer::ByteArray msg) const;
 
         void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const override;
 

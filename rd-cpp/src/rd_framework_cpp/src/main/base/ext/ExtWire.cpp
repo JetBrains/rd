@@ -8,7 +8,7 @@ ExtWire::ExtWire() {
     connected.advise(Lifetime::Eternal(), [this](bool b) {
         if (b) {
             {
-                std::lock_guard<std::mutex> guard(lock);
+                std::lock_guard<decltype(lock)> guard(lock);
                 while (true) {
                     if (sendQ.empty()) {
                         return;
@@ -31,7 +31,7 @@ void ExtWire::advise(Lifetime lifetime, IRdReactive const *entity) const {
 
 void ExtWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
     {
-        std::lock_guard<std::mutex> guard(lock);
+        std::lock_guard<decltype(lock)> guard(lock);
         if (!sendQ.empty() || !connected.get()) {
             Buffer buffer;
             writer(buffer);

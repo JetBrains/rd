@@ -43,7 +43,7 @@ TEST_F(SocketWireTestBase, TestClientWithoutServerWithDelay) {
     terminate();
 }
 
-TEST_F(SocketWireTestBase, DISABLED_TestServerWithoutClientWithDelayAndMessages) {
+TEST_F(SocketWireTestBase, /*DISABLED_*/TestServerWithoutClientWithDelayAndMessages) {
     auto protocol = server(socketLifetime);
     sleep_this_thread(100);
 
@@ -58,7 +58,7 @@ TEST_F(SocketWireTestBase, DISABLED_TestServerWithoutClientWithDelayAndMessages)
     terminate();
 }
 
-TEST_F(SocketWireTestBase, DISABLED_TestClientWithoutServerWithDelayAndMessages) {
+TEST_F(SocketWireTestBase, /*DISABLED_*/TestClientWithoutServerWithDelayAndMessages) {
     uint16_t port = find_free_port();
     auto clientProtocol = client(socketLifetime, port);
 
@@ -123,7 +123,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
     std::vector<int> log;//concurrent?
     std::mutex lock;
     sp.advise(lifetime, [&](const int &it) {
-        std::lock_guard<std::mutex> guard(lock);
+        std::lock_guard<decltype(lock)> guard(lock);
         log.push_back(it);
     });
     for (int i = 1; i <= STEP; ++i) {
@@ -134,7 +134,7 @@ TEST_F(SocketWireTestBase, TestOrdering) {
     while (true) {
         bool x;
         {
-            std::lock_guard<std::mutex> guard(lock);
+            std::lock_guard<decltype(lock)> guard(lock);
             x = log.size() < 6;
         }
         if (x) {
@@ -349,7 +349,7 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
     terminate();
 }
 
-TEST_F(SocketWireTestBase, DISABLED_TestRunWithSlowpokeServer) {
+TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
     uint16_t port = find_free_port();
     auto clientProtocol = client(socketLifetime, port);
 
@@ -368,6 +368,7 @@ TEST_F(SocketWireTestBase, DISABLED_TestRunWithSlowpokeServer) {
 
     cp.set(4);
     serverScheduler.pump_one_message();
+	serverScheduler.pump_one_message();
 
     checkSchedulersAreEmpty();
 

@@ -8,8 +8,7 @@
 PumpScheduler::PumpScheduler() : created_thread_id(std::this_thread::get_id()) {}
 
 void PumpScheduler::flush() {
-    assert_thread();
-
+	assert_thread();
     auto action = std::move(messages.front());
     messages.pop();
     action();
@@ -17,7 +16,7 @@ void PumpScheduler::flush() {
 
 void PumpScheduler::queue(std::function<void()> action) {
     {
-        std::lock_guard<std::mutex> guard(lock);
+        std::lock_guard<decltype(lock)> guard(lock);
         messages.push(std::move(action));
     }
     cv.notify_all();
@@ -34,7 +33,7 @@ void PumpScheduler::assert_thread() const {
 }
 
 void PumpScheduler::pump_one_message() {
-    std::unique_lock<std::mutex> ul(lock);
+    std::unique_lock<decltype(lock)> ul(lock);
     cv.wait(ul, [this]() -> bool { return !messages.empty(); });
     flush();
 }
