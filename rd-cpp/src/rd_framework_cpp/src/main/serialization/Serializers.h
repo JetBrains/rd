@@ -22,7 +22,7 @@ namespace rd {
 	class Serializers {
 	public:
 		mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
-		                                                                              Buffer const &)>> readers;
+																					  Buffer const &)>> readers;
 
 		template<typename T, typename = typename std::enable_if<std::is_base_of<ISerializable, T>::value>::type>
 		void registry() const {
@@ -36,7 +36,7 @@ namespace rd {
 			MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
 			readers[id] = [](SerializationCtx const &ctx,
-			                 Buffer const &buffer) -> std::unique_ptr<ISerializable> {
+							 Buffer const &buffer) -> std::unique_ptr<ISerializable> {
 				return std::make_unique<T>(T::read(ctx, buffer));
 			};
 		}

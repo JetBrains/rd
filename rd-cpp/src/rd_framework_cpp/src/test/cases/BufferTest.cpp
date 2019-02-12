@@ -14,174 +14,173 @@
 using namespace rd;
 
 TEST(BufferTest, readWritePod) {
-    Buffer buffer;
+	Buffer buffer;
 
-    buffer.write_pod<int32_t>(0);
-    buffer.write_pod<int32_t>(4);
-    buffer.write_pod<int64_t>(1ll << 32);
-    buffer.write_pod<int32_t>(-1);
-    buffer.write_pod<wchar_t>('+');
-    buffer.write_pod<wchar_t>('-');
-    buffer.writeBool(true);
+	buffer.write_pod<int32_t>(0);
+	buffer.write_pod<int32_t>(4);
+	buffer.write_pod<int64_t>(1ll << 32);
+	buffer.write_pod<int32_t>(-1);
+	buffer.write_pod<wchar_t>('+');
+	buffer.write_pod<wchar_t>('-');
+	buffer.writeBool(true);
 
 
-    buffer.rewind();
+	buffer.rewind();
 
-    buffer.write_pod<int32_t>(16);
-    EXPECT_EQ(4, buffer.read_pod<int32_t>());
-    EXPECT_EQ(1ll << 32, buffer.read_pod<int64_t>());
-    EXPECT_EQ(-1, buffer.read_pod<int32_t>());
-    EXPECT_EQ('+', buffer.read_pod<wchar_t>());
-    EXPECT_EQ('-', buffer.read_pod<wchar_t>());
-    EXPECT_EQ(true, buffer.readBool());
+	buffer.write_pod<int32_t>(16);
+	EXPECT_EQ(4, buffer.read_pod<int32_t>());
+	EXPECT_EQ(1ll << 32, buffer.read_pod<int64_t>());
+	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
+	EXPECT_EQ('+', buffer.read_pod<wchar_t>());
+	EXPECT_EQ('-', buffer.read_pod<wchar_t>());
+	EXPECT_EQ(true, buffer.readBool());
 }
 
 
 TEST(BufferTest, getArray) {
-    using W = int32_t;
-    const size_t N = 100;
-    const size_t MEM = N * sizeof(W);
+	using W = int32_t;
+	const size_t N = 100;
+	const size_t MEM = N * sizeof(W);
 
-    Buffer buffer;
+	Buffer buffer;
 
-    std::vector<W> list(N, -1);
-    for (auto t : list) {
-        buffer.write_pod(t);
-    }
+	std::vector<W> list(N, -1);
+	for (auto t : list) {
+		buffer.write_pod(t);
+	}
 
-    Buffer::ByteArray data(MEM);
-    memcpy(data.data(), buffer.data(), MEM);
+	Buffer::ByteArray data(MEM);
+	memcpy(data.data(), buffer.data(), MEM);
 
-    auto array = buffer.getArray();
-    auto realArray = buffer.getRealArray();
+	auto array = buffer.getArray();
+	auto realArray = buffer.getRealArray();
 
-    EXPECT_TRUE(array != realArray);
-    EXPECT_EQ(realArray.size(), MEM);
-    EXPECT_EQ(realArray, data);
+	EXPECT_TRUE(array != realArray);
+	EXPECT_EQ(realArray.size(), MEM);
+	EXPECT_EQ(realArray, data);
 }
 
 
 TEST(BufferTest, string) {
-    Buffer buffer;
+	Buffer buffer;
 
-    std::wstring s;
-    for (int i = 0; i < 255; ++i) {
-        s += static_cast<wchar_t>(i);
-    }
+	std::wstring s;
+	for (int i = 0; i < 255; ++i) {
+		s += static_cast<wchar_t>(i);
+	}
 
-    Polymorphic<std::wstring>::write(SerializationCtx(), buffer, s);
-    buffer.write_pod<int32_t>(s.length());
-    buffer.rewind();
-    auto res = Polymorphic<std::wstring>::read(SerializationCtx(), buffer);
-    auto len = buffer.read_pod<int32_t>();
-    EXPECT_EQ(s, res);
-    EXPECT_EQ(len, s.length());
+	Polymorphic<std::wstring>::write(SerializationCtx(), buffer, s);
+	buffer.write_pod<int32_t>(s.length());
+	buffer.rewind();
+	auto res = Polymorphic<std::wstring>::read(SerializationCtx(), buffer);
+	auto len = buffer.read_pod<int32_t>();
+	EXPECT_EQ(s, res);
+	EXPECT_EQ(len, s.length());
 }
 
 
 TEST(BufferTest, bigVector) {
-    const int STEP = 100'000;
+	const int STEP = 100'000;
 
-    Buffer buffer;
+	Buffer buffer;
 
-    int64_t number = -1;
-    std::vector<int64_t> list(STEP);
-    std::generate_n(list.begin(), STEP, [&number]() { return --number; });
-    std::shuffle(list.begin(), list.end(), std::mt19937(std::random_device()()));
+	int64_t number = -1;
+	std::vector<int64_t> list(STEP);
+	std::generate_n(list.begin(), STEP, [&number]() { return --number; });
+	std::shuffle(list.begin(), list.end(), std::mt19937(std::random_device()()));
 
-    buffer.writeArray(list);
+	buffer.writeArray(list);
 
-    buffer.rewind();
+	buffer.rewind();
 
-    auto res = buffer.readArray<int64_t>();
+	auto res = buffer.readArray<int64_t>();
 
-    EXPECT_EQ(res, list);
+	EXPECT_EQ(res, list);
 }
 
 TEST(BufferTest, Enum) {
-    enum class Numbers {
-        ONE,
-        TWO,
-        THREE
-    };
+	enum class Numbers {
+		ONE,
+		TWO,
+		THREE
+	};
 
-    Buffer buffer;
+	Buffer buffer;
 
-    buffer.writeEnum<Numbers>(Numbers::ONE);
-    buffer.writeEnum<Numbers>(Numbers::TWO);
-    buffer.writeEnum<Numbers>(Numbers::THREE);
+	buffer.writeEnum<Numbers>(Numbers::ONE);
+	buffer.writeEnum<Numbers>(Numbers::TWO);
+	buffer.writeEnum<Numbers>(Numbers::THREE);
 
-    buffer.rewind();
+	buffer.rewind();
 
-    auto one = buffer.readEnum<Numbers>();
-    auto two = buffer.readEnum<Numbers>();
-    auto three = buffer.readEnum<Numbers>();
+	auto one = buffer.readEnum<Numbers>();
+	auto two = buffer.readEnum<Numbers>();
+	auto three = buffer.readEnum<Numbers>();
 
-    EXPECT_EQ(Numbers::ONE, one);
-    EXPECT_EQ(Numbers::TWO, two);
-    EXPECT_EQ(Numbers::THREE, three);
+	EXPECT_EQ(Numbers::ONE, one);
+	EXPECT_EQ(Numbers::TWO, two);
+	EXPECT_EQ(Numbers::THREE, three);
 }
 
 TEST(BufferTest, NullableSerializer) {
-    SerializationCtx ctx;
-    Buffer buffer;
+	SerializationCtx ctx;
+	Buffer buffer;
 
-    using T = std::wstring;
-    using S = Polymorphic<T>;
-    using NS = NullableSerializer<S>;
+	using T = std::wstring;
+	using S = Polymorphic<T>;
+	using NS = NullableSerializer<S>;
 
-    std::vector<tl::optional<T>> list{
-            tl::nullopt,
-            L"1",
-            L"2",
-            tl::nullopt,
-            L"error"
-    };
+	std::vector<tl::optional<T>> list{
+			tl::nullopt,
+			L"1",
+			L"2",
+			tl::nullopt,
+			L"error"
+	};
 
 	buffer.write_pod<int32_t>(+1);
-    for (auto const &x : list) {
-        NS::write(ctx, buffer, x);
-    }
+	for (auto const &x : list) {
+		NS::write(ctx, buffer, x);
+	}
 	buffer.write_pod<int32_t>(-1);
 
-    buffer.rewind();
+	buffer.rewind();
 
 	EXPECT_EQ(+1, buffer.read_pod<int32_t>());
-    for (auto const &expected : list) {
-        auto actual = NS::read(ctx, buffer);
-        EXPECT_EQ(expected, actual);
-    }
+	for (auto const &expected : list) {
+		auto actual = NS::read(ctx, buffer);
+		EXPECT_EQ(expected, actual);
+	}
 	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
 }
 
 TEST(BufferTest, ArraySerializer) {
-    SerializationCtx ctx;
-    Buffer buffer;
+	SerializationCtx ctx;
+	Buffer buffer;
 
-    using T = std::wstring;
-    using S = Polymorphic<T>;
-    using AS = ArraySerializer<S>;
+	using T = std::wstring;
+	using S = Polymorphic<T>;
+	using AS = ArraySerializer<S>;
 
-    std::vector<T> list{
-            L"start"
-            L"1",
-            L"2",
-            L"",
-            L"error"
-    };
+	std::vector<T> list{
+			L"start"
+			L"1",
+			L"2",
+			L"",
+			L"error"
+	};
 
 	buffer.write_pod<int32_t>(+1);
-    AS::write(ctx, buffer, list);
+	AS::write(ctx, buffer, list);
 	buffer.write_pod<int32_t>(-1);
 
-    buffer.rewind();
+	buffer.rewind();
 
-    
 
 	EXPECT_EQ(+1, buffer.read_pod<int32_t>());
 
 	auto actual = AS::read(ctx, buffer);
-    EXPECT_EQ(list, actual);
+	EXPECT_EQ(list, actual);
 
 	EXPECT_EQ(-1, buffer.read_pod<int32_t>());
 }

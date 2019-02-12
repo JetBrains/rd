@@ -15,7 +15,7 @@ namespace rd {
 		namespace util {
 			class DynamicEntity : public RdBindableBase, public ISerializable {
 			public:
-				RdProperty<int32_t> foo;
+				RdProperty <int32_t> foo;
 
 				//region ctor/dtor
 
@@ -33,7 +33,7 @@ namespace rd {
 				virtual ~DynamicEntity() = default;
 				//endregion
 
-				explicit DynamicEntity(RdProperty<int32_t> &&foo) : foo(std::move(foo)) {}
+				explicit DynamicEntity(RdProperty <int32_t> &&foo) : foo(std::move(foo)) {}
 
 				explicit DynamicEntity(int32_t value) : DynamicEntity(RdProperty<int32_t>(value)) {};
 				//endregion

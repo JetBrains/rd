@@ -9,8 +9,9 @@
 #include "InternRoot.h"
 
 namespace rd {
-    class IProtocol;
-    class Serializers;
+	class IProtocol;
+
+	class Serializers;
 
 	class SerializationCtx {
 	public:
@@ -37,15 +38,15 @@ namespace rd {
 
 		template<typename T>
 		T readInterned(Buffer const &buffer,
-		               std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
+					   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
 			return T();
 			//todo implement
 		}
 
 		template<typename T>
 		void writeInterned(Buffer const &buffer, T const &value,
-		                   std::function<void(SerializationCtx const &, Buffer const &,
-		                                      T const &)> writeValueDelegate) const {
+						   std::function<void(SerializationCtx const &, Buffer const &,
+											  T const &)> writeValueDelegate) const {
 			//todo implement
 		}
 	};

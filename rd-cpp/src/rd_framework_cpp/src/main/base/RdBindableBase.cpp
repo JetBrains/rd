@@ -7,70 +7,70 @@
 #include "RdBindableBase.h"
 
 namespace rd {
-    bool RdBindableBase::is_bound() const {
-        return parent != nullptr;
-    }
+	bool RdBindableBase::is_bound() const {
+		return parent != nullptr;
+	}
 
-    void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
-        MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
-        lf->bracket([this, lf, parent, &name] {
-                        this->parent = parent;
-                        location = parent->location.sub(name, ".");
-                        this->bind_lifetime = lf;
-                    },
-                    [this, lf]() {
-                        this->bind_lifetime = lf;
-                        location = location.sub("<<unbound>>", "::");
-                        this->parent = nullptr;
-                        rdid = RdId::Null();
-                    }
-        );
+	void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
+		MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
+		lf->bracket([this, lf, parent, &name] {
+						this->parent = parent;
+						location = parent->location.sub(name, ".");
+						this->bind_lifetime = lf;
+					},
+					[this, lf]() {
+						this->bind_lifetime = lf;
+						location = location.sub("<<unbound>>", "::");
+						this->parent = nullptr;
+						rdid = RdId::Null();
+					}
+		);
 
-        get_protocol()->scheduler->assert_thread();
+		get_protocol()->scheduler->assert_thread();
 
-        priorityAdviseSection(
-                [this, lf]() {
-                    init(lf);
-                }
-        );
-    }
+		priorityAdviseSection(
+				[this, lf]() {
+					init(lf);
+				}
+		);
+	}
 
 //must be overriden if derived class have bindable members
-    void RdBindableBase::identify(const IIdentities &identities, RdId const &id) const {
-        MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
-        MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
+	void RdBindableBase::identify(const IIdentities &identities, RdId const &id) const {
+		MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
+		MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 
-        this->rdid = id;
-        for (const auto &it : bindable_extensions) {
-            identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
-        }
-    }
+		this->rdid = id;
+		for (const auto &it : bindable_extensions) {
+			identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
+		}
+	}
 
-    const IProtocol *RdBindableBase::get_protocol() const {
-        if (is_bound()) {
-            auto protocol = parent->get_protocol();
-            if (protocol != nullptr) {
-                return protocol;
-            }
-        }
-        throw std::invalid_argument("Not bound");
-    }
+	const IProtocol *RdBindableBase::get_protocol() const {
+		if (is_bound()) {
+			auto protocol = parent->get_protocol();
+			if (protocol != nullptr) {
+				return protocol;
+			}
+		}
+		throw std::invalid_argument("Not bound");
+	}
 
-    SerializationCtx const &RdBindableBase::get_serialization_context() const {
-        if (is_bound()) {
-            return parent->get_serialization_context();
-        } else {
-            throw std::invalid_argument("Not bound");
-        }
-    }
+	SerializationCtx const &RdBindableBase::get_serialization_context() const {
+		if (is_bound()) {
+			return parent->get_serialization_context();
+		} else {
+			throw std::invalid_argument("Not bound");
+		}
+	}
 
-    void RdBindableBase::init(Lifetime lifetime) const {
-        for (const auto &it : bindable_extensions) {
-            if (it.second != nullptr) {
-                bindPolymorphic(*(it.second), lifetime, this, it.first);
-            }
-        }
-    }
+	void RdBindableBase::init(Lifetime lifetime) const {
+		for (const auto &it : bindable_extensions) {
+			if (it.second != nullptr) {
+				bindPolymorphic(*(it.second), lifetime, this, it.first);
+			}
+		}
+	}
 }
 
 

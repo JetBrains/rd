@@ -14,7 +14,7 @@
 #include <atomic>
 
 namespace rd {
-    extern std::atomic<int32_t> cookie;
+	extern std::atomic<int32_t> cookie;
 
 	template<typename T>
 	class Signal : public ISignal<T> {
@@ -89,17 +89,17 @@ namespace rd {
 
 		//endregion
 
+		using ISignal<T>::fire;
+
 		void fire(T const &value) const override {
 			fire_impl(value, priority_listeners);
 			fire_impl(value, listeners);
 		}
 
+		using ISignal<T>::advise;
+
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			advise0(std::move(lifetime), std::move(handler), isPriorityAdvise() ? priority_listeners : listeners);
-		}
-
-		void advise_eternal(std::function<void(T const &)> handler) const {
-			advise(Lifetime::Eternal(), handler);
 		}
 
 		static bool isPriorityAdvise() {
@@ -107,12 +107,12 @@ namespace rd {
 		}
 	};
 
-    template<typename F>
-    void priorityAdviseSection(F &&block) {
-        ++cookie;
-        block();
-        --cookie;
-    }
+	template<typename F>
+	void priorityAdviseSection(F &&block) {
+		++cookie;
+		block();
+		--cookie;
+	}
 }
 
 static_assert(std::is_move_constructible<rd::Signal<int>>::value, "Is not move constructible from Signal<int>");

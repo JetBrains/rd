@@ -46,40 +46,40 @@ add_library(rd_framework_cpp STATIC
 
 target_include_directories(rd_framework_cpp
         PUBLIC
-                ${CMAKE_CURRENT_SOURCE_DIR}
-                base
-                base/ext
-                impl
-                serialization
-                util
-                wire
-                task
-                intern
-)
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        base
+        base/ext
+        impl
+        serialization
+        util
+        wire
+        task
+        intern
+        )
 
 target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp clsocket)
 
-if(UNIX)
-        target_link_libraries(rd_framework_cpp PRIVATE pthread)
-endif()
+if (UNIX)
+    target_link_libraries(rd_framework_cpp PRIVATE pthread)
+endif ()
 
-if(WIN32)
-        if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-                SET(PLATFORM "x86")
-        elseif("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-                SET(PLATFORM "x64")
-        endif()
-        install(TARGETS rd_framework_cpp rd_core_cpp clsocket
-                CONFIGURATIONS Release
-                ARCHIVE
-                        DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/"
-        )
-endif()
+if (WIN32)
+    if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        SET(PLATFORM "x86")
+    elseif ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+        SET(PLATFORM "x64")
+    endif ()
+    install(TARGETS rd_framework_cpp rd_core_cpp clsocket
+            CONFIGURATIONS Release
+            ARCHIVE
+            DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/"
+            )
+endif ()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_framework_cpp"
         CONFIGURATIONS Release
         FILES_MATCHING
-                PATTERN *.h
-                PATTERN *.hpp
-)
+        PATTERN *.h
+        PATTERN *.hpp
+        )

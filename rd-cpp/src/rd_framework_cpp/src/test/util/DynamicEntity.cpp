@@ -34,7 +34,7 @@ namespace rd {
 			bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs) {
 				return !(rhs == lhs);
 			}
-	
+
 		}
 	}
 }

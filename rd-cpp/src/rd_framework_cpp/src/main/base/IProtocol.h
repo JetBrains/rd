@@ -12,29 +12,29 @@
 #include "Serializers.h"
 
 namespace rd {
-    class IRdDynamic;
+	class IRdDynamic;
 }
 
 namespace rd {
-    class IProtocol : public IRdDynamic {
-    public:
-        Serializers serializers;
-        std::shared_ptr<IIdentities> identity;
-        IScheduler *scheduler = nullptr;
-        std::shared_ptr<IWire> wire;
-        SerializationCtx context;
+	class IProtocol : public IRdDynamic {
+	public:
+		Serializers serializers;
+		std::shared_ptr<IIdentities> identity;
+		IScheduler *scheduler = nullptr;
+		std::shared_ptr<IWire> wire;
+		SerializationCtx context;
 
-        //region ctor/dtor
+		//region ctor/dtor
 
-        IProtocol() = default;
+		IProtocol() = default;
 
-        IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-        virtual ~IProtocol() = default;
-        //endregion
+		virtual ~IProtocol() = default;
+		//endregion
 
-        const SerializationCtx &get_serialization_context() const override;
-    };
+		const SerializationCtx &get_serialization_context() const override;
+	};
 }
 
 

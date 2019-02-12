@@ -10,14 +10,14 @@
 #include "IProtocol.h"
 
 namespace rd {
-    IProtocol::IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire)
-            :
-            identity(std::move(identity)),
-            scheduler(scheduler),
-            wire(std::move(wire)),
-            context(&serializers) {}
+	IProtocol::IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire)
+			:
+			identity(std::move(identity)),
+			scheduler(scheduler),
+			wire(std::move(wire)),
+			context(&serializers) {}
 
-    const SerializationCtx &IProtocol::get_serialization_context() const {
-        return context;
-    }
+	const SerializationCtx &IProtocol::get_serialization_context() const {
+		return context;
+	}
 }

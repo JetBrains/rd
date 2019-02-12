@@ -7,12 +7,12 @@
 #include "Protocol.h"
 
 namespace rd {
-    void ISerializersOwner::registry(Serializers const &serializers) {
+	void ISerializersOwner::registry(Serializers const &serializers) {
 //    val key = this::class
 //    if (!serializers.toplevels.add(key)) return
 //todo
 
 //    Protocol::initializationLogger.trace("REGISTER serializers for ${key.simpleName}");
-        registerSerializersCore(serializers);
-    }
+		registerSerializersCore(serializers);
+	}
 }

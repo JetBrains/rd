@@ -8,11 +8,11 @@
 #include "Host.h"
 
 namespace rd {
-    namespace util {
-        uint16_t find_free_port();
+	namespace util {
+		uint16_t find_free_port();
 
-        void sleep_this_thread(int ms);
-    }
+		void sleep_this_thread(int ms);
+	}
 }
 
 #endif //RD_CPP_WIREUTIL_H

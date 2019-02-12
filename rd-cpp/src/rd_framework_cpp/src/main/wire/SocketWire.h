@@ -42,7 +42,7 @@ namespace rd {
 
 			mutable std::condition_variable send_var;
 			mutable ByteBufferAsyncProcessor sendBuffer{id + "-AsyncSendProcessor",
-				[this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
+														[this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
 

@@ -62,9 +62,9 @@ namespace rd {
 						S::write(this->get_serialization_context(), buffer, v);
 
 						logSend.trace(
-							"set " + location.toString() + " " + rdid.toString() +
-							":: " + to_string(kind) +
-							":: " + to_string(v));
+								"set " + location.toString() + " " + rdid.toString() +
+								":: " + to_string(kind) +
+								":: " + to_string(v));
 					});
 				});
 			});
@@ -77,14 +77,14 @@ namespace rd {
 			auto value = S::read(this->get_serialization_context(), buffer);
 
 			switch (kind) {
-			case AddRemove::ADD : {
-				set.add(std::move(value));
-				break;
-			}
-			case AddRemove::REMOVE: {
-				set.remove(wrapper::get<T>(value));
-				break;
-			}
+				case AddRemove::ADD : {
+					set.add(std::move(value));
+					break;
+				}
+				case AddRemove::REMOVE: {
+					set.remove(wrapper::get<T>(value));
+					break;
+				}
 			}
 		}
 

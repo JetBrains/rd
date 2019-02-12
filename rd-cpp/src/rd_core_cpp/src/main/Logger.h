@@ -13,60 +13,61 @@
 #include <iostream>
 
 namespace rd {
-    enum class LogLevel {
-        Trace,
-        Debug,
-        Info,
-        Warn,
-        Error,
-        Fatal
-    };
+	enum class LogLevel {
+		Trace,
+		Debug,
+		Info,
+		Warn,
+		Error,
+		Fatal
+	};
 
-    std::string to_string(LogLevel level);
+	std::string to_string(LogLevel level);
 
-    class Logger {
-    public:
-        /*virtual */void
-        log(LogLevel level, const std::string &message, std::exception const *e = nullptr)/* = 0;*/const;
+	class Logger {
+	public:
+		/*virtual */void
+		log(LogLevel level, const std::string &message, std::exception const *e = nullptr)/* = 0;*/const;
 
-        void trace(std::string const &msg, std::exception const *e = nullptr) const;
+		void trace(std::string const &msg, std::exception const *e = nullptr) const;
 
-        void debug(std::string const &msg, std::exception const *e = nullptr) const;
+		void debug(std::string const &msg, std::exception const *e = nullptr) const;
 
-        void info(std::string const &msg, std::exception const *e = nullptr) const;
+		void info(std::string const &msg, std::exception const *e = nullptr) const;
 
-        void error(std::string const &msg, std::exception const *e = nullptr) const;
+		void error(std::string const &msg, std::exception const *e = nullptr) const;
 
-        //    virtual bool is_enabled(LogLevel level) = 0;
-    };
+		//    virtual bool is_enabled(LogLevel level) = 0;
+	};
 
-    /*class SwitchLogger : public	Logger {
+	/*class SwitchLogger : public	Logger {
 
-    public:
-        SwitchLogger(const std::string &category);
+	public:
+		SwitchLogger(const std::string &category);
 
-        void log(LogLevel level, std::string message, std::exception const &e) override;
+		void log(LogLevel level, std::string message, std::exception const &e) override;
 
-        bool is_enabled(LogLevel level) override;
-    };*/
+		bool is_enabled(LogLevel level) override;
+	};*/
 
-    //SwitchLogger get_logger(std::string category);
+	//SwitchLogger get_logger(std::string category);
 
-    template<typename F>
-    void catch_(tl::optional<std::string> comment, F &&action) {
-        try {
-            action();
-        }
-        catch (std::exception const &e) {
-            std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(e.what());
-            //        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
-        }
-    }
+	template<typename F>
+	void catch_(tl::optional<std::string> comment, F &&action) {
+		try {
+			action();
+		}
+		catch (std::exception const &e) {
+			std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(
+					e.what());
+			//        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
+		}
+	}
 
-    template<typename F>
-    void catch_(F &&action) {
-        catch_({}, std::forward<F>(action));
-    }
+	template<typename F>
+	void catch_(F &&action) {
+		catch_({}, std::forward<F>(action));
+	}
 
 }
 

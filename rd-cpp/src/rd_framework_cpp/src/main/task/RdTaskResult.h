@@ -14,7 +14,7 @@
 #include <exception>
 
 namespace rd {
-	template<typename T, typename S = Polymorphic<T> >
+	template<typename T, typename S = Polymorphic <T> >
 	class RdTaskResult : public ISerializable {
 		using WT = value_or_wrapper<T>;
 	public:
@@ -36,9 +36,9 @@ namespace rd {
 			std::wstring reasonAsText;
 
 			Fault(std::wstring reasonTypeFqn, std::wstring reasonMessage, std::wstring reasonAsText) :
-				reasonTypeFqn(std::move(reasonTypeFqn)),
-				reasonMessage(std::move(reasonMessage)),
-				reasonAsText(std::move(reasonAsText)) {}
+					reasonTypeFqn(std::move(reasonTypeFqn)),
+					reasonMessage(std::move(reasonMessage)),
+					reasonAsText(std::move(reasonAsText)) {}
 
 		public:
 			explicit Fault(const std::exception &e) {
@@ -68,54 +68,54 @@ namespace rd {
 		static RdTaskResult<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			int32_t kind = buffer.read_pod<int32_t>();
 			switch (kind) {
-			case 0: {
-				return Success(std::move(S::read(ctx, buffer)));
-			}
-			case 1: {
-				return Cancelled();
-			}
-			case 2: {
-				auto reasonTypeFqn = buffer.readWString();
-				auto reasonMessage = buffer.readWString();
-				auto reasonAsText = buffer.readWString();
-				return Fault(std::move(reasonTypeFqn), std::move(reasonMessage), std::move(reasonAsText));
-			}
-			default:
-				throw std::invalid_argument("Fail on RdTaskResult reading with kind: " + std::to_string(kind));
+				case 0: {
+					return Success(std::move(S::read(ctx, buffer)));
+				}
+				case 1: {
+					return Cancelled();
+				}
+				case 2: {
+					auto reasonTypeFqn = buffer.readWString();
+					auto reasonMessage = buffer.readWString();
+					auto reasonAsText = buffer.readWString();
+					return Fault(std::move(reasonTypeFqn), std::move(reasonMessage), std::move(reasonAsText));
+				}
+				default:
+					throw std::invalid_argument("Fail on RdTaskResult reading with kind: " + std::to_string(kind));
 			}
 		}
 
 		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
 			mpark::visit(util::make_visitor(
-				             [&ctx, &buffer](Success const &value) {
-					             buffer.write_pod<int32_t>(0);
-					             S::write(ctx, buffer, value.value);
-				             },
-				             [&buffer](Cancelled const &value) {
-					             buffer.write_pod<int32_t>(1);
-				             },
-				             [&buffer](Fault const &value) {
-					             buffer.write_pod<int32_t>(2);
-					             buffer.writeWString(value.reasonTypeFqn);
-					             buffer.writeWString(value.reasonMessage);
-					             buffer.writeWString(value.reasonAsText);
-				             }
-			             ), v);
+					[&ctx, &buffer](Success const &value) {
+						buffer.write_pod<int32_t>(0);
+						S::write(ctx, buffer, value.value);
+					},
+					[&buffer](Cancelled const &value) {
+						buffer.write_pod<int32_t>(1);
+					},
+					[&buffer](Fault const &value) {
+						buffer.write_pod<int32_t>(2);
+						buffer.writeWString(value.reasonTypeFqn);
+						buffer.writeWString(value.reasonMessage);
+						buffer.writeWString(value.reasonAsText);
+					}
+			), v);
 		}
 
 		WT unwrap() const {
 			return mpark::visit(util::make_visitor(
-				                    [](Success const &value) -> WT {
-					                    return value.value;
-				                    },
-				                    [](Cancelled const &value) -> WT {
-					                    throw std::invalid_argument("Task finished in Cancelled state");
-				                    },
-				                    [](Fault const &value) -> WT {
-					                    //                    throw value.error;
-					                    throw std::runtime_error(to_string(value.reasonMessage));
-				                    }
-			                    ), v);
+					[](Success const &value) -> WT {
+						return value.value;
+					},
+					[](Cancelled const &value) -> WT {
+						throw std::invalid_argument("Task finished in Cancelled state");
+					},
+					[](Fault const &value) -> WT {
+						//                    throw value.error;
+						throw std::runtime_error(to_string(value.reasonMessage));
+					}
+			), v);
 		}
 
 		bool isFaulted() const {

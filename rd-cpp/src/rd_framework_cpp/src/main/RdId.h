@@ -16,10 +16,10 @@ namespace rd {
 }
 
 namespace std {
-    template<>
-    struct hash<rd::RdId> {
-        size_t operator()(const rd::RdId &value) const noexcept;
-    };
+	template<>
+	struct hash<rd::RdId> {
+		size_t operator()(const rd::RdId &value) const noexcept;
+	};
 }
 
 namespace rd {
@@ -81,7 +81,7 @@ namespace rd {
 
 
 inline size_t std::hash<rd::RdId>::operator()(const rd::RdId &value) const noexcept {
-    return std::hash<rd::RdId::hash_t>()(value.hash);
+	return std::hash<rd::RdId::hash_t>()(value.hash);
 }
 
 #endif //RD_CPP_FRAMEWORK_RDID_H

@@ -9,7 +9,7 @@ namespace rd {
 	Logger ByteBufferAsyncProcessor::logger;
 
 	ByteBufferAsyncProcessor::ByteBufferAsyncProcessor(std::string id, std::function<void(Buffer::ByteArray)> processor)
-		: id(std::move(id)), processor(std::move(processor)) {}
+			: id(std::move(id)), processor(std::move(processor)) {}
 
 	void ByteBufferAsyncProcessor::cleanup0() {
 		state = StateKind::Terminated;
@@ -107,11 +107,16 @@ namespace rd {
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state) {
 		switch (state) {
-		case ByteBufferAsyncProcessor::StateKind::Initialized: return "Initialized";
-		case ByteBufferAsyncProcessor::StateKind::AsyncProcessing: return "AsyncProcessing";
-		case ByteBufferAsyncProcessor::StateKind::Stopping: return "Stopping";
-		case ByteBufferAsyncProcessor::StateKind::Terminating: return "Terminating";
-		case ByteBufferAsyncProcessor::StateKind::Terminated: return "Terminated";
+			case ByteBufferAsyncProcessor::StateKind::Initialized:
+				return "Initialized";
+			case ByteBufferAsyncProcessor::StateKind::AsyncProcessing:
+				return "AsyncProcessing";
+			case ByteBufferAsyncProcessor::StateKind::Stopping:
+				return "Stopping";
+			case ByteBufferAsyncProcessor::StateKind::Terminating:
+				return "Terminating";
+			case ByteBufferAsyncProcessor::StateKind::Terminated:
+				return "Terminated";
 		}
 	}
 }

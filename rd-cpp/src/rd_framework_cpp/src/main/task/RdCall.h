@@ -66,12 +66,12 @@ namespace rd {
 
 			if (requests.count(taskId) == 0) {
 				logReceived.trace("call " + location.toString() + " " + rdid.toString() +
-					"received response " + taskId.toString() + " but it was dropped");
+								  "received response " + taskId.toString() + " but it was dropped");
 			} else {
 				auto const &request = requests.at(taskId);
 				auto result = RdTaskResult<TRes, ResSer>::read(get_serialization_context(), buffer);
 				logReceived.trace("call " + location.toString() + " " + rdid.toString() +
-					" received response " + taskId.toString() + " : ${result.printToString()} ");
+								  " received response " + taskId.toString() + " : ${result.printToString()} ");
 
 				//auto const&[scheduler, task] = request;
 				auto const &scheduler = request.first;
@@ -79,7 +79,7 @@ namespace rd {
 				scheduler->queue([&] {
 					if (task.has_value()) {
 						logReceived.trace("call " + location.toString() + " " + rdid.toString() +
-							" response was dropped, task result is: ${task.result.valueOrNull}");
+										  " response was dropped, task result is: ${task.result.valueOrNull}");
 						if (is_bound() && get_default_scheduler()->is_active() && requests.count(taskId) > 0) {
 							//                        logAssert.error("MainThread: ${defaultScheduler.isActive}, taskId=$taskId ");
 						}
@@ -131,15 +131,16 @@ namespace rd {
 			if (sync) {
 				if (syncTaskId.has_value()) {
 					throw std::invalid_argument(
-						"Already exists sync task for call " + location.toString() + ", taskId = " +
-						(*syncTaskId).toString());
+							"Already exists sync task for call " + location.toString() + ", taskId = " +
+							(*syncTaskId).toString());
 				}
 				syncTaskId = taskId;
 			}
 
 			get_wire()->send(rdid, [&](Buffer const &buffer) {
-				logSend.trace("call " + location.toString() + "::" + rdid.toString() + " send" + (sync ? "SYNC" : "ASYNC") +
-					" request " + taskId.toString() + " : " + to_string(request));
+				logSend.trace(
+						"call " + location.toString() + "::" + rdid.toString() + " send" + (sync ? "SYNC" : "ASYNC") +
+						" request " + taskId.toString() + " : " + to_string(request));
 				taskId.write(buffer);
 				ReqSer::write(get_serialization_context(), buffer, request);
 			});

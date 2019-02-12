@@ -9,23 +9,23 @@
 #include "Lifetime.h"
 
 namespace rd {
-    class SequentialLifetimes {
-    private:
-        std::shared_ptr<LifetimeDefinition> current_def = LifetimeDefinition::get_shared_eternal();
-        Lifetime parent_lifetime;
-    public:
-        SequentialLifetimes() = delete;
+	class SequentialLifetimes {
+	private:
+		std::shared_ptr<LifetimeDefinition> current_def = LifetimeDefinition::get_shared_eternal();
+		Lifetime parent_lifetime;
+	public:
+		SequentialLifetimes() = delete;
 
-        explicit SequentialLifetimes(Lifetime parent_lifetime);
+		explicit SequentialLifetimes(Lifetime parent_lifetime);
 
-        Lifetime next();
+		Lifetime next();
 
-        void terminate_current();
+		void terminate_current();
 
-        bool is_terminated();
+		bool is_terminated();
 
-        void set_current_lifetime(std::shared_ptr<LifetimeDefinition> new_def);
-    };
+		void set_current_lifetime(std::shared_ptr<LifetimeDefinition> new_def);
+	};
 }
 
 

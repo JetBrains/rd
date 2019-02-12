@@ -7,14 +7,14 @@
 
 
 namespace rd {
-    class InternRoot {
-    private:
+	class InternRoot {
+	private:
 
-    public:
-        bool is_master;
+	public:
+		bool is_master;
 
-        explicit InternRoot(bool is_master);
-    };
+		explicit InternRoot(bool is_master);
+	};
 }
 
 

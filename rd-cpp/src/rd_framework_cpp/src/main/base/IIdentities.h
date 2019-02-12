@@ -8,10 +8,10 @@
 #include "RdId.h"
 
 namespace rd {
-    class IIdentities {
-    public:
-        virtual RdId next(const RdId &parent) const = 0;
-    };
+	class IIdentities {
+	public:
+		virtual RdId next(const RdId &parent) const = 0;
+	};
 }
 
 

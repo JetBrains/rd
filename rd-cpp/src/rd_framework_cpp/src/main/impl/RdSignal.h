@@ -15,16 +15,17 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 namespace rd {
-	template<typename T, typename S = Polymorphic<T>>
+	template<typename T, typename S = Polymorphic <T>>
 	class RdSignal final : public RdReactiveBase, public ISignal<T>, public ISerializable {
 	private:
 		using WT = typename ISignal<T>::WT;
+
 		std::string logmsg(T const &value) const {
 			return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
 		}
 
 	protected:
-		Signal<T> signal;
+		Signal <T> signal;
 	public:
 		//region ctor/dtor
 
@@ -65,6 +66,8 @@ namespace rd {
 			signal.fire(wrapper::get<T>(value));
 		}
 
+		using ISignal<T>::fire;
+
 		void fire(T const &value) const override {
 			assert_bound();
 			if (!async) {
@@ -76,6 +79,8 @@ namespace rd {
 			});
 			signal.fire(value);
 		}
+
+		using ISource<T>::advise;
 
 		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
 			if (is_bound()) {

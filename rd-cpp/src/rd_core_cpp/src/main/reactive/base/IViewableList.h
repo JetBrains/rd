@@ -41,7 +41,7 @@ namespace rd {
 				T const *new_value;
 
 				Update(size_t index, T const *old_value, T const *new_value) : index(index), old_value(old_value),
-				                                                               new_value(new_value) {}
+																			   new_value(new_value) {}
 			};
 
 			class Remove {
@@ -62,30 +62,30 @@ namespace rd {
 
 			int32_t get_index() const {
 				return mpark::visit(util::make_visitor(
-					                    [](Add const &e) {
-						                    return e.index;
-					                    },
-					                    [](Update const &e) {
-						                    return e.index;
-					                    },
-					                    [](Remove const &e) {
-						                    return e.index;
-					                    }
-				                    ), v);
+						[](Add const &e) {
+							return e.index;
+						},
+						[](Update const &e) {
+							return e.index;
+						},
+						[](Remove const &e) {
+							return e.index;
+						}
+				), v);
 			}
 
 			T const *get_new_value() const {
 				return mpark::visit(util::make_visitor(
-					                    [](Add const &e) {
-						                    return e.new_value;
-					                    },
-					                    [](Update const &e) {
-						                    return e.new_value;
-					                    },
-					                    [](Remove const &e) {
-						                    return static_cast<T const *>(nullptr);
-					                    }
-				                    ), v);
+						[](Add const &e) {
+							return e.new_value;
+						},
+						[](Update const &e) {
+							return e.new_value;
+						},
+						[](Remove const &e) {
+							return static_cast<T const *>(nullptr);
+						}
+				), v);
 			}
 		};
 
@@ -103,48 +103,54 @@ namespace rd {
 		virtual ~IViewableList() = default;
 		//endregion
 
-		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, size_t, T const &)> handler) const {
+		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, size_t, T const &)
+
+		> handler) const {
 			advise(std::move(lifetime), [handler](Event e) {
 				mpark::visit(util::make_visitor(
-					             [handler](typename Event::Add const &e) {
-						             handler(AddRemove::ADD, e.index, *e.new_value);
-					             },
-					             [handler](typename Event::Update const &e) {
-						             handler(AddRemove::REMOVE, e.index, *e.old_value);
-						             handler(AddRemove::ADD, e.index, *e.new_value);
-					             },
-					             [handler](typename Event::Remove const &e) {
-						             handler(AddRemove::REMOVE, e.index, *e.old_value);
-					             }
-				             ), e.v);
+						[handler](typename Event::Add const &e) {
+							handler(AddRemove::ADD, e.index, *e.new_value);
+						},
+						[handler](typename Event::Update const &e) {
+							handler(AddRemove::REMOVE, e.index, *e.old_value);
+							handler(AddRemove::ADD, e.index, *e.new_value);
+						},
+						[handler](typename Event::Remove const &e) {
+							handler(AddRemove::REMOVE, e.index, *e.old_value);
+						}
+				), e.v);
 			});
 		}
 
 		virtual void
 		view(Lifetime lifetime,
-		     std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const {
+			 std::function< void(Lifetime lifetime, std::pair<size_t, T const *> const &)
+
+		> handler) const {
 			view(std::move(lifetime), [handler](Lifetime lt, size_t idx, T const &v) {
 				handler(lt, std::make_pair(idx, &v));
 			});
 		}
 
-		void view(Lifetime lifetime, std::function<void(Lifetime, size_t, T const &)> handler) const {
+		void view(Lifetime lifetime, std::function< void(Lifetime, size_t, T const &)
+
+		> handler) const {
 			advise_add_remove(lifetime, [this, lifetime, handler](AddRemove kind, size_t idx, T const &value) {
 				switch (kind) {
-				case AddRemove::ADD: {
-					LifetimeDefinition def(lifetime);
-					std::vector<LifetimeDefinition> &v = lifetimes[lifetime];
-					auto it = v.emplace(v.begin() + idx, std::move(def));
-					handler(it->lifetime, idx, value);
-					break;
-				}
-				case AddRemove::REMOVE: {
-					LifetimeDefinition def = std::move(lifetimes.at(lifetime)[idx]);
-					std::vector<LifetimeDefinition> &v = lifetimes.at(lifetime);
-					v.erase(v.begin() + idx);
-					def.terminate();
-					break;
-				}
+					case AddRemove::ADD: {
+						LifetimeDefinition def(lifetime);
+						std::vector<LifetimeDefinition> &v = lifetimes[lifetime];
+						auto it = v.emplace(v.begin() + idx, std::move(def));
+						handler(it->lifetime, idx, value);
+						break;
+					}
+					case AddRemove::REMOVE: {
+						LifetimeDefinition def = std::move(lifetimes.at(lifetime)[idx]);
+						std::vector<LifetimeDefinition> &v = lifetimes.at(lifetime);
+						v.erase(v.begin() + idx);
+						def.terminate();
+						break;
+					}
 				}
 			});
 		}
@@ -180,20 +186,22 @@ namespace rd {
 		convert_to_list(IViewableList<U> const &list);
 
 	protected:
-		virtual const std::vector<Wrapper<T>> &getList() const = 0;
+		virtual const std::vector<Wrapper < T>> &
+
+		getList() const = 0;
 	};
-	
+
 	template<typename T>
 	typename std::enable_if<(!std::is_abstract<T>::value), std::vector<T>>::type
-		convert_to_list(IViewableList<T> const &list) {
+	convert_to_list(IViewableList<T> const &list) {
 		std::vector<T> res(list.size());
 		std::transform(list.getList().begin(), list.getList().end(), res.begin(),
-			[](Wrapper<T> const &ptr) { return *ptr; });
+					   [](Wrapper<T> const &ptr) { return *ptr; });
 		return res;
 	}
 }
 
 static_assert(std::is_move_constructible<rd::IViewableList<int>::Event>::value,
-              "Is move constructible from IViewableList<int>::Event");
+			  "Is move constructible from IViewableList<int>::Event");
 
 #endif //RD_CPP_IVIEWABLELIST_H

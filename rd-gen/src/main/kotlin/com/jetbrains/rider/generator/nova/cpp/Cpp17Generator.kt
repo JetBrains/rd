@@ -94,8 +94,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun Declaration.fsName(isDefinition: Boolean) =
             "$name.${if (isDefinition) "cpp" else "h"}"
 
+    protected open fun Toplevel.fsPath(): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
+            ?: folder.relativeTo(File(this.name));
+
     protected open fun Declaration.fsPath(isDefinition: Boolean): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
-            ?: File(folder, fsName(isDefinition))
+            ?: File(folder.relativeTo(File(this.name)), fsName(isDefinition))
     //endregion
 
     protected fun String.wrapper(): String {
@@ -400,17 +403,27 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     private val Declaration.hasSecondaryCtor: Boolean get () = (this is Toplevel || this.isConcrete) && this.allMembers.any { it.hasEmptyConstructor }
 //endregion
 
+    private fun File.cmakeLists(libraryName: String, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList()) {
+        val file = File(this, "CMakeLists.txt")
+        file.createNewFile()
+        file.printWriter().use {
+            it.println("cmake_minimum_required(VERSION 3.10)")
+            it.println("add_library($libraryName STATIC ${fileNames.joinToString(separator = eol)})")
+            it.println("target_link_libraries(cpp_model rd_framework_cpp ${toplevelsDependencies.joinToString(separator = " ") { it.name }})")
+            it.println("target_include_directories(cpp_model PUBLIC \${CMAKE_CURRENT_SOURCE_DIR})")
+        }
+    }
+
     override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
         prepareGenerationFolder(folder, clearFolderIfExists)
 
-        val fileNames = arrayListOf<String>()
-
         toplevels.sortedBy { it.name }.forEach { tl ->
             val types = tl.declaredTypes + tl + unknowns(tl.declaredTypes)
+            val directory = tl.fsPath()
+            directory.cmakeLists(tl.name, types.filter { it !is Enum }.map { it.fsName(true) } + types.map { it.fsName(false) })
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     type.fsPath(isDefinition).run {
-                        fileNames.add(type.fsName(isDefinition))
                         bufferedWriter().use { writer ->
                             PrettyPrinter().apply {
                                 eolKind = Eol.osSpecified
@@ -437,12 +450,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
         }
 
-        File(folder, "CMakeLists.txt").printWriter().use {
-            it.println("cmake_minimum_required(VERSION 3.10)")
-            it.println("add_library(cpp_model STATIC ${fileNames.joinToString(separator = eol)})")
-            it.println("target_link_libraries(cpp_model rd_framework_cpp)")
-            it.println("target_include_directories(cpp_model PUBLIC \${CMAKE_CURRENT_SOURCE_DIR})")
-        }
+        folder.cmakeLists("cpp_model", emptyList(), toplevels)
     }
 
 

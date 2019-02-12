@@ -13,9 +13,9 @@ namespace rd {
 		size_ = initialSize;
 	}
 
-	Buffer::Buffer(const ByteArray& array, int32_t offset): 
-	byteBufferMemoryBase(array), offset(offset),
-	                                                        size_(array.size()) {}
+	Buffer::Buffer(const ByteArray &array, int32_t offset) :
+			byteBufferMemoryBase(array), offset(offset),
+			size_(array.size()) {}
 
 	int32_t Buffer::get_position() const {
 		return offset;
@@ -28,7 +28,8 @@ namespace rd {
 	void Buffer::check_available(int32_t moreSize) const {
 		if (offset + moreSize > size_) {
 			throw std::out_of_range(
-				"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size_ - offset) +"available");
+					"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size_ - offset) +
+					"available");
 		}
 	}
 
@@ -58,31 +59,31 @@ namespace rd {
 		set_position(0);
 	}
 
-	Buffer::ByteArray Buffer::getArray() const & {
+	Buffer::ByteArray Buffer::getArray() const &{
 		return byteBufferMemoryBase;
 	}
 
-	Buffer::ByteArray Buffer::getArray() && {
+	Buffer::ByteArray Buffer::getArray() &&{
 		return std::move(byteBufferMemoryBase);
 	}
 
-	Buffer::ByteArray Buffer::getRealArray() const & {
+	Buffer::ByteArray Buffer::getRealArray() const &{
 		auto res = getArray();
 		res.resize(offset);
 		return res;
 	}
 
-	Buffer::ByteArray Buffer::getRealArray() && {
+	Buffer::ByteArray Buffer::getRealArray() &&{
 		auto res = getArray();
 		res.resize(offset);
 		return res;
 	}
 
-	const Buffer::word_t * Buffer::data() const {
+	const Buffer::word_t *Buffer::data() const {
 		return byteBufferMemoryBase.data();
 	}
 
-	Buffer::word_t * Buffer::data() {
+	Buffer::word_t *Buffer::data() {
 		return byteBufferMemoryBase.data();
 	}
 
@@ -147,5 +148,5 @@ void Buffer::writeNullableWString(tl::optional<std::wstring> const &value) const
     writeWString(value.value());
 }*/
 
-	
+
 }
