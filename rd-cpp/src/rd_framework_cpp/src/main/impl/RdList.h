@@ -24,9 +24,9 @@ namespace rd {
 
 		std::string logmsg(Op op, int64_t version, int32_t key, T const *value = nullptr) const {
 			return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
-				":: key = " + std::to_string(key) +
-				((version > 0) ? " :: version = " + std::to_string(version) : "") +
-				" :: value = " + (value ? to_string(*value) : "");
+				   ":: key = " + std::to_string(key) +
+				   ((version > 0) ? " :: version = " + std::to_string(version) : "") +
+				   " :: value = " + (value ? to_string(*value) : "");
 		}
 
 	public:
@@ -75,7 +75,7 @@ namespace rd {
 						if (new_value) {
 							const IProtocol *iProtocol = get_protocol();
 							identifyPolymorphic(*new_value, *iProtocol->identity,
-							                    iProtocol->identity->next(rdid));
+												iProtocol->identity->next(rdid));
 						}
 					}
 
@@ -109,39 +109,40 @@ namespace rd {
 			Op op = static_cast<Op>((header & ((1 << versionedFlagShift) - 1L)));
 			int32_t index = (buffer.read_pod<int32_t>());
 
-			MY_ASSERT_MSG(version == next_version, ("Version conflict for " + location.toString() + "}. Expected version " +
-                                                std::to_string(next_version) +
-                                                ", received " +
-                                                std::to_string(version) +
-                                                ". Are you modifying a list from two sides?"));
+			MY_ASSERT_MSG(version == next_version,
+						  ("Version conflict for " + location.toString() + "}. Expected version " +
+						   std::to_string(next_version) +
+						   ", received " +
+						   std::to_string(version) +
+						   ". Are you modifying a list from two sides?"));
 
 			next_version++;
 
 			switch (op) {
-			case Op::ADD: {
-				auto value = S::read(this->get_serialization_context(), buffer);
+				case Op::ADD: {
+					auto value = S::read(this->get_serialization_context(), buffer);
 
-				logReceived.trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
+					logReceived.trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
 
-				(index < 0) ? list.add(std::move(value)) : list.add(static_cast<size_t>(index), std::move(value));
-				break;
-			}
-			case Op::UPDATE: {
-				auto value = S::read(this->get_serialization_context(), buffer);
+					(index < 0) ? list.add(std::move(value)) : list.add(static_cast<size_t>(index), std::move(value));
+					break;
+				}
+				case Op::UPDATE: {
+					auto value = S::read(this->get_serialization_context(), buffer);
 
-				logReceived.trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
+					logReceived.trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
 
-				list.set(static_cast<size_t>(index), std::move(value));
-				break;
-			}
-			case Op::REMOVE: {
-				logReceived.trace(logmsg(op, version, index));
+					list.set(static_cast<size_t>(index), std::move(value));
+					break;
+				}
+				case Op::REMOVE: {
+					logReceived.trace(logmsg(op, version, index));
 
-				list.removeAt(static_cast<size_t>(index));
-				break;
-			}
-			case Op::ACK:
-				break;
+					list.removeAt(static_cast<size_t>(index));
+					break;
+				}
+				case Op::ACK:
+					break;
 			}
 		}
 
@@ -153,12 +154,15 @@ namespace rd {
 		}
 
 		bool add(WT element) const override {
-			return local_change([this, element = std::move(element)]() mutable { return list.add(std::move(element)); });
+			return local_change(
+					[this, element = std::move(element)]() mutable { return list.add(std::move(element)); });
 		}
 
 		bool add(size_t index, WT element) const override {
 			return local_change(
-				[this, index, element = std::move(element)]() mutable { return list.add(index, std::move(element)); });
+					[this, index, element = std::move(element)]() mutable {
+						return list.add(index, std::move(element));
+					});
 		}
 
 		bool remove(T const &element) const override { return local_change([&] { return list.remove(element); }); }

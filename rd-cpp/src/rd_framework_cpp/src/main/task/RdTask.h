@@ -64,11 +64,11 @@ namespace rd {
 
 		void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
 			ptr->result.advise(lifetime,
-			                   [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
-				                   if (opt_value.has_value()) {
-					                   handler(*opt_value);
-				                   }
-			                   });
+							   [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
+								   if (opt_value.has_value()) {
+									   handler(*opt_value);
+								   }
+							   });
 		}
 	};
 }

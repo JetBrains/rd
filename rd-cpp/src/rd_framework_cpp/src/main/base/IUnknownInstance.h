@@ -8,16 +8,16 @@
 #include "RdId.h"
 
 namespace rd {
-    class IUnknownInstance {
-    protected:
-        RdId unknownId{0};
+	class IUnknownInstance {
+	protected:
+		RdId unknownId{0};
 
-        IUnknownInstance();
+		IUnknownInstance();
 
-        IUnknownInstance(const RdId &unknownId);
+		IUnknownInstance(const RdId &unknownId);
 
-        IUnknownInstance(RdId &&unknownId);
-    };
+		IUnknownInstance(RdId &&unknownId);
+	};
 }
 
 

@@ -9,12 +9,14 @@
 #include "RdTask.h"
 
 namespace rd {
-	template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
+	template<typename TReq, typename TRes, typename ReqSer = Polymorphic <TReq>, typename ResSer = Polymorphic <TRes> >
 	class RdEndpoint : public RdReactiveBase, public ISerializable {
 		using WTReq = value_or_wrapper<TReq>;
 		using WTRes = value_or_wrapper<TRes>;
 
-		using handler_t = std::function<RdTask<TRes, ResSer>(Lifetime, TReq const &)>;
+		using handler_t = std::function<
+		RdTask<TRes, ResSer>(Lifetime, TReq
+		const &)>;
 		mutable handler_t handler;
 
 	public:
@@ -26,7 +28,9 @@ namespace rd {
 			set(std::move(handler));
 		}
 
-		explicit RdEndpoint(std::function<WTRes(TReq const &)> handler) {
+		explicit RdEndpoint(std::function<WTRes(TReq const &)
+
+		> handler) {
 			set(std::move(handler));
 		}
 
@@ -53,8 +57,10 @@ namespace rd {
 			this->handler = std::move(handler);
 		}
 
-		void set(std::function<WTRes(TReq const &)> handler) const {
-			this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask<TRes, ResSer> {
+		void set(std::function<WTRes(TReq const &)
+
+		> handler) const {
+			this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask <TRes, ResSer> {
 				return RdTask<TRes, ResSer>::from_result(handler(req));
 			};
 		}
@@ -70,7 +76,7 @@ namespace rd {
 			auto taskId = RdId::read(buffer);
 			auto value = ReqSer::read(get_serialization_context(), buffer);
 			logReceived.trace(
-				"endpoint " + location.toString() + " ::" + rdid.toString() + " request = " + to_string(value));
+					"endpoint " + location.toString() + " ::" + rdid.toString() + " request = " + to_string(value));
 			if (!handler) {
 				throw std::invalid_argument("handler is empty for RdEndPoint");
 			}
@@ -82,7 +88,7 @@ namespace rd {
 			}
 			task.advise(*bind_lifetime, [&](RdTaskResult<TRes, ResSer> const &taskResult) {
 				logSend.trace("endpoint " + location.toString() + " ::(" + rdid.toString() +
-					") response = ${result.printToString()}");
+							  ") response = ${result.printToString()}");
 				get_wire()->send(rdid, [&](Buffer const &inner_buffer) {
 					taskId.write(inner_buffer);
 					taskResult.write(get_serialization_context(), inner_buffer);

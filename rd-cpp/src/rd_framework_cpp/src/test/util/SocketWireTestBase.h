@@ -41,8 +41,9 @@ namespace rd {
 
 				}
 
-				void init(Protocol const &serverProtocol, Protocol const &clientProtocol, RdBindableBase const *serverEntity = nullptr,
-				     RdBindableBase const *clientEntity = nullptr);
+				void init(Protocol const &serverProtocol, Protocol const &clientProtocol,
+						  RdBindableBase const *serverEntity = nullptr,
+						  RdBindableBase const *clientEntity = nullptr);
 
 				//    @After
 				void AfterTest() {

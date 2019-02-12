@@ -39,7 +39,7 @@ namespace rd {
 
 		explicit Buffer(int32_t initialSize = 10); //todo
 
-		explicit Buffer(const ByteArray& array, int32_t offset = 0);
+		explicit Buffer(const ByteArray &array, int32_t offset = 0);
 
 		Buffer(Buffer const &) = delete;
 
@@ -160,11 +160,11 @@ namespace rd {
 		}
 
 		ByteArray getArray() const &;
-    
+
 		ByteArray getArray() &&;
 
 		ByteArray getRealArray() const &;
-    
+
 		ByteArray getRealArray() &&;
 
 		word_t const *data() const;

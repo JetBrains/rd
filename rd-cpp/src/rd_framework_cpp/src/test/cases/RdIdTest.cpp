@@ -9,8 +9,8 @@
 using namespace rd;
 
 TEST(rd_id, mix) {
-    RdId id1 = RdId::Null().mix("abcd").mix("efg");
-    RdId id2 = RdId::Null().mix("abcdefg");
-    EXPECT_EQ(id1.get_hash(), id2.get_hash());
-    EXPECT_EQ(id1.get_hash(), 88988021860L);
+	RdId id1 = RdId::Null().mix("abcd").mix("efg");
+	RdId id2 = RdId::Null().mix("abcdefg");
+	EXPECT_EQ(id1.get_hash(), id2.get_hash());
+	EXPECT_EQ(id1.get_hash(), 88988021860L);
 }

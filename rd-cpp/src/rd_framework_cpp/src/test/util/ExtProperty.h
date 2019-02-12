@@ -15,7 +15,7 @@ namespace rd {
 			template<typename T>
 			class ExtProperty : public RdExtBase {
 			public:
-				RdProperty<T> property{T()};
+				RdProperty <T> property{T()};
 
 				//region ctor/dtor
 

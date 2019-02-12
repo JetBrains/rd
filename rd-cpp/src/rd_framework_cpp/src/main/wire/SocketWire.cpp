@@ -13,8 +13,8 @@ namespace rd {
 	std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
 	SocketWire::Base::Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler)
-		: WireBase(scheduler), id(id), lifetime(std::move(lifetime)),
-		  scheduler(scheduler)/*, threadLocalSendByteArray(16384)*/ {
+			: WireBase(scheduler), id(id), lifetime(std::move(lifetime)),
+			  scheduler(scheduler)/*, threadLocalSendByteArray(16384)*/ {
 
 	}
 
@@ -29,11 +29,11 @@ namespace rd {
 
 				int32_t sz = 0;
 				MY_ASSERT_THROW_MSG(ReadFromSocket(reinterpret_cast<Buffer::word_t *>(&sz), 4),
-                                this->id + ": failed to read message size");
+									this->id + ": failed to read message size");
 				logger.info(this->id + ": were received size and " + std::to_string(sz) + " bytes");
 				Buffer msg(sz);
 				MY_ASSERT_THROW_MSG(ReadFromSocket(reinterpret_cast<Buffer::word_t *>(msg.data()), sz),
-                                this->id + ": failed to read message");
+									this->id + ": failed to read message");
 
 				RdId id = RdId::read(msg);
 				logger.debug(this->id + ": message received");
@@ -52,7 +52,7 @@ namespace rd {
 			std::lock_guard<decltype(socket_lock)> _(socket_lock);
 			int32_t msglen = static_cast<int32_t>(msg.size());
 			MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), msglen) == msglen,
-                            this->id + ": failed to send message over the network");
+								this->id + ": failed to send message over the network");
 			logger.info(this->id + ": were sent " + std::to_string(msglen) + " bytes");
 			/*MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), 0) > 0,
                             this->id + ": failed to flush");*/
@@ -135,21 +135,23 @@ namespace rd {
 
 
 	SocketWire::Client::Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0,
-	                           const std::string &id = "ClientSocket") : Base(id, lifetime, scheduler), port(port) {
+							   const std::string &id = "ClientSocket") : Base(id, lifetime, scheduler), port(port) {
 		thread = std::thread([this, lifetime]() mutable {
 			try {
 				while (!lifetime->is_terminated()) {
 					try {
 						socket = std::make_shared<CActiveSocket>();
 						MY_ASSERT_THROW_MSG(socket->Initialize(), this->id + ": failed to init ActiveSocket");
-						MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": failed to DisableNagleAlgoritm");
+						MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
+											this->id + ": failed to DisableNagleAlgoritm");
 
 						// On windows connect will try to send SYN 3 times with interval of 500ms (total time is 1second)
 						// Connect timeout doesn't work if it's more than 1 second. But we don't need it because we can close socket any moment.
 
 						//https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
 						//HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
-						MY_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port), this->id + ": failed to open ActiveSocket");
+						MY_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
+											this->id + ": failed to open ActiveSocket");
 
 						{
 							std::lock_guard<std::timed_mutex> guard(lock);
@@ -203,9 +205,10 @@ namespace rd {
 	}
 
 	SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0,
-	                           const std::string &id = "ServerSocket") : Base(id, lifetime, scheduler) {
+							   const std::string &id = "ServerSocket") : Base(id, lifetime, scheduler) {
 		MY_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
-		MY_ASSERT_MSG(ss->Listen("127.0.0.1", port), this->id + ": failed to listen socket on port:" + std::to_string(port));
+		MY_ASSERT_MSG(ss->Listen("127.0.0.1", port),
+					  this->id + ": failed to listen socket on port:" + std::to_string(port));
 
 		this->port = ss->GetServerPort();
 		MY_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen");

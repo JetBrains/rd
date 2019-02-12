@@ -12,17 +12,18 @@ namespace rd {
 			}
 
 			DynamicExt::DynamicExt(RdProperty<std::wstring> bar, std::wstring debugName) : bar(
-				                                                                               std::move(bar)), debugName(std::move(debugName)) {}
+					std::move(bar)), debugName(std::move(debugName)) {}
 
-			DynamicExt::DynamicExt(std::wstring const &bar, std::wstring const &debugName) : DynamicExt(RdProperty<std::wstring>(bar),
-			                                                                                            debugName) {}
+			DynamicExt::DynamicExt(std::wstring const &bar, std::wstring const &debugName) : DynamicExt(
+					RdProperty<std::wstring>(bar),
+					debugName) {}
 
 			void DynamicExt::init(Lifetime lifetime) const {
 				RdExtBase::init(lifetime);
 				bindPolymorphic(bar, lifetime, this, "bar");
 			}
 
-			void DynamicExt::identify(const IIdentities& identities, RdId const& id) const {
+			void DynamicExt::identify(const IIdentities &identities, RdId const &id) const {
 				RdBindableBase::identify(identities, id);
 				identifyPolymorphic(bar, identities, id.mix(".bar"));
 			}
@@ -50,7 +51,7 @@ void DynamicExt::identify(IIdentities const &identities, RdId id) const {
     bar.identify(identities, id.mix("bar"));
 }*/
 
-	
+
 		}
 	}
 }

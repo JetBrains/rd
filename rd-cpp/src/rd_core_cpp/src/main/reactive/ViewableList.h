@@ -129,8 +129,8 @@ namespace rd {
 			for (size_t i = list.size(); i > 0; --i) {
 				auto const &x = list[i - 1];
 				if (std::count_if(elements.begin(), elements.end(), [this, &x](auto const &elem) {
-					                  return TransparentKeyEqual<T>()(elem, x);
-				                  }
+									  return TransparentKeyEqual<T>()(elem, x);
+								  }
 				) > 0) {
 					removeAt(i - 1);
 					res = true;
@@ -149,6 +149,7 @@ namespace rd {
 	};
 }
 
-static_assert(std::is_move_constructible<rd::ViewableList<int> >::value, "Is move constructible from ViewableList<int>");
+static_assert(std::is_move_constructible<rd::ViewableList<int> >::value,
+			  "Is move constructible from ViewableList<int>");
 
 #endif //RD_CPP_CORE_VIEWABLELIST_H

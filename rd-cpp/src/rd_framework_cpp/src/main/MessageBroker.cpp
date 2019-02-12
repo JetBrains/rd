@@ -98,7 +98,7 @@ namespace rd {
 		defaultScheduler->assert_thread();
 
 		std::lock_guard<decltype(lock)> guard(lock);
-		if ( !lifetime->is_terminated()) {
+		if (!lifetime->is_terminated()) {
 			auto key = entity->rdid;
 			IRdReactive const *value = entity;
 			subscriptions[key] = value;

@@ -111,6 +111,6 @@ namespace rd {
 }
 
 static_assert(std::is_move_constructible<rd::ViewableMap<int, int> >::value,
-              "Is move constructible from ViewableMap<int, int>");
+			  "Is move constructible from ViewableMap<int, int>");
 
 #endif //RD_CPP_CORE_VIEWABLE_MAP_H

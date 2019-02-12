@@ -18,16 +18,16 @@
 #include <condition_variable>
 
 namespace rd {
-    class ByteBufferAsyncProcessor {
-    public:
-        enum class StateKind {
+	class ByteBufferAsyncProcessor {
+	public:
+		enum class StateKind {
 			Initialized,
 			AsyncProcessing,
 			Stopping,
 			Terminating,
 			Terminated
 		};
-    private:
+	private:
 		using time_t = std::chrono::milliseconds;
 
 		std::mutex lock;
@@ -37,7 +37,7 @@ namespace rd {
 
 		std::function<void(Buffer::ByteArray)> processor;
 
-		StateKind state{ StateKind::Initialized };
+		StateKind state{StateKind::Initialized};
 		static Logger logger;
 
 		std::thread asyncProcessingThread;
@@ -54,9 +54,10 @@ namespace rd {
 	private:
 		void cleanup0();
 
-		bool terminate0(std::chrono::milliseconds timeout, StateKind stateToSet, const std::string& action);
+		bool terminate0(std::chrono::milliseconds timeout, StateKind stateToSet, const std::string &action);
 
 		void ThreadProc();
+
 	public:
 		void start();
 
@@ -67,7 +68,7 @@ namespace rd {
 		void put(Buffer::ByteArray newData);
 	};
 
-    std::string to_string(ByteBufferAsyncProcessor::StateKind state);
+	std::string to_string(ByteBufferAsyncProcessor::StateKind state);
 }
 
 #endif //RD_CPP_BYTEBUFFERASYNCPROCESSOR_H

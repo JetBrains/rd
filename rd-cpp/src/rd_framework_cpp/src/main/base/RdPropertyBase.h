@@ -70,8 +70,8 @@ namespace rd {
 					buffer.write_pod<int32_t>(master_version);
 					S::write(this->get_serialization_context(), buffer, v);
 					logSend.trace("property " + location.toString() + " + " + rdid.toString() +
-						":: ver = " + std::to_string(master_version) +
-						", value = " + to_string(v));
+								  ":: ver = " + std::to_string(master_version) +
+								  ", value = " + to_string(v));
 				});
 			});
 
@@ -126,6 +126,6 @@ namespace rd {
 #pragma warning( pop )
 
 static_assert(std::is_move_constructible<rd::RdPropertyBase<int> >::value,
-              "Is move constructible from RdPropertyBase<int>");
+			  "Is move constructible from RdPropertyBase<int>");
 
 #endif //RD_CPP_RDPROPERTYBASE_H

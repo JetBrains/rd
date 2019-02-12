@@ -22,7 +22,7 @@ namespace rd {
 		Signal<T> change, before_change;
 
 		bool has_value() const {
-			return (bool)(value);
+			return (bool) (value);
 		}
 
 	public:

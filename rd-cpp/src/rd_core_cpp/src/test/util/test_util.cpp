@@ -7,5 +7,5 @@
 #include "test_util.h"
 
 std::string operator "" _s(char const *str, size_t len) {
-    return std::string(str, len);
+	return std::string(str, len);
 }

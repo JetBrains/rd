@@ -12,12 +12,13 @@
 
 
 namespace rd {
-	template<typename T, typename S = Polymorphic<T> >
+	template<typename T, typename S = Polymorphic <T> >
 	class RdTaskImpl {
 		template<typename, typename>
-		friend class RdTask;
+		friend
+		class RdTask;
 
-		mutable Property<tl::optional<RdTaskResult<T, S> > > result{tl::nullopt};
+		mutable Property <tl::optional<RdTaskResult < T, S>> > result{ tl::nullopt };
 	};
 }
 

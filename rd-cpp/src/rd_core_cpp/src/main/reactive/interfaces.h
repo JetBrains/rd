@@ -7,8 +7,10 @@
 
 #include "Lifetime.h"
 #include "wrapper.h"
+#include "traits.h"
 
 #include <functional>
+#include <type_traits>
 
 namespace rd {
 	template<typename T>
@@ -17,6 +19,17 @@ namespace rd {
 		virtual ~ISource() = default;
 
 		virtual void advise(Lifetime lifetime, std::function<void(T const &)> handler) const = 0;
+
+		template<typename F>
+		void advise_eternal(F &&handler) const {
+			advise(Lifetime::Eternal(), std::forward<F>(handler));
+		}
+
+		void advise(Lifetime lifetime, std::function<void()> handler) const {
+			advise(lifetime, [handler = std::move(handler)](void *) {
+				handler();
+			});
+		}
 	};
 
 	template<typename T>
@@ -35,6 +48,10 @@ namespace rd {
 		virtual ~ISignal() = default;
 
 		virtual void fire(T const &value) const = 0;
+
+		void fire() const {
+			fire(nullptr);
+		}
 	};
 }
 

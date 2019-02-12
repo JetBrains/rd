@@ -19,7 +19,7 @@ add_library(rd_core_cpp STATIC
         reactive/base/IViewableSet.h
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
-        reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h util/overloaded.h util/erase_if.h util/wrapper.h)
+        reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h util/overloaded.h util/erase_if.h util/wrapper.h util/traits.h)
 
 
 target_include_directories(rd_core_cpp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -33,6 +33,6 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_core_cpp"
         CONFIGURATIONS Release
         FILES_MATCHING
-                PATTERN *.h
-                PATTERN *.hpp
-)
+        PATTERN *.h
+        PATTERN *.hpp
+        )
