@@ -103,7 +103,8 @@ fun JComponent.awtMousePoint(): IPropertyView<Point?> =
         awtMousePoint.map { this@awtMousePoint.componentHoverPoint() }.asProperty(null)
 
 fun Component.componentHoverPoint(): Point? {
-    val point = MouseInfo.getPointerInfo().location
+    val point = MouseInfo.getPointerInfo()?.location ?: return null
+
 
     SwingUtilities.convertPointFromScreen(point, this@componentHoverPoint)
     return if (Rectangle(this@componentHoverPoint.size).contains(point)) point else null
