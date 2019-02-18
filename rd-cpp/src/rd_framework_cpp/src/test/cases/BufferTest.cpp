@@ -4,12 +4,13 @@
 
 #include "gtest/gtest.h"
 
-#include <random>
-
 #include "Buffer.h"
 #include "Polymorphic.h"
 #include "NullableSerializer.h"
 #include "ArraySerializer.h"
+
+#include <random>
+#include <algorithm>
 
 using namespace rd;
 
