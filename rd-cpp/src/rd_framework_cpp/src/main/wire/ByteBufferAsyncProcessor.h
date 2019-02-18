@@ -1,6 +1,3 @@
-#include <utility>
-#include <atomic>
-
 //
 // Created by jetbrains on 15.09.2018.
 //
@@ -13,9 +10,9 @@
 
 #include <chrono>
 #include <string>
-#include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <future>
 
 namespace rd {
 	class ByteBufferAsyncProcessor {
@@ -30,17 +27,21 @@ namespace rd {
 	private:
 		using time_t = std::chrono::milliseconds;
 
+		static size_t INITIAL_CAPACITY;
+
 		std::mutex lock;
 		std::condition_variable_any cv;
 
 		std::string id;
 
 		std::function<void(Buffer::ByteArray)> processor;
+		std::mutex processor_lock;
+		std::condition_variable processor_cv;
 
 		StateKind state{StateKind::Initialized};
 		static Logger logger;
 
-		std::thread asyncProcessingThread;
+		std::future<void> asyncFuture;
 
 		Buffer::ByteArray data;
 	public:
@@ -54,7 +55,7 @@ namespace rd {
 	private:
 		void cleanup0();
 
-		bool terminate0(std::chrono::milliseconds timeout, StateKind stateToSet, const std::string &action);
+		bool terminate0(time_t timeout, StateKind stateToSet, const std::string &action);
 
 		void ThreadProc();
 

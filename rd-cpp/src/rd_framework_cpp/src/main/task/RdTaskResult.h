@@ -8,6 +8,7 @@
 #include "Polymorphic.h"
 #include "overloaded.h"
 #include "wrapper.h"
+#include "core_util.h"
 
 #include "mpark/variant.hpp"
 
@@ -42,8 +43,7 @@ namespace rd {
 
 		public:
 			explicit Fault(const std::exception &e) {
-				//todo
-				//            reasonMessage = e.what();
+				reasonMessage = to_wstring(to_string(e));
 			};
 		};
 
@@ -66,7 +66,7 @@ namespace rd {
 		//endregion
 
 		static RdTaskResult<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			int32_t kind = buffer.read_pod<int32_t>();
+			int32_t kind = buffer.read_integral<int32_t>();
 			switch (kind) {
 				case 0: {
 					return Success(std::move(S::read(ctx, buffer)));
@@ -88,14 +88,14 @@ namespace rd {
 		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
 			mpark::visit(util::make_visitor(
 					[&ctx, &buffer](Success const &value) {
-						buffer.write_pod<int32_t>(0);
+						buffer.write_integral<int32_t>(0);
 						S::write(ctx, buffer, value.value);
 					},
 					[&buffer](Cancelled const &value) {
-						buffer.write_pod<int32_t>(1);
+						buffer.write_integral<int32_t>(1);
 					},
 					[&buffer](Fault const &value) {
-						buffer.write_pod<int32_t>(2);
+						buffer.write_integral<int32_t>(2);
 						buffer.writeWString(value.reasonTypeFqn);
 						buffer.writeWString(value.reasonMessage);
 						buffer.writeWString(value.reasonAsText);

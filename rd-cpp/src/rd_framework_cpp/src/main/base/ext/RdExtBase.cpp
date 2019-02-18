@@ -74,7 +74,7 @@ namespace rd {
 			}
 		}
 
-		int64_t counterpartSerializationHash = buffer.read_pod<int64_t>();
+		int64_t counterpartSerializationHash = buffer.read_integral<int64_t>();
 		if (serializationHash != counterpartSerializationHash) {
 			//need to queue since outOfSyncModels is not synchronized
 //        RdReactiveBase::get_protocol()->scheduler->queue([this](){ RdReactiveBase::get_protocol().outOfSyncModels.add(this) });
@@ -88,7 +88,7 @@ namespace rd {
 		wire.send(rdid, [&](Buffer const &buffer) {
 			// traceMe(logSend, to_string(state));
 			buffer.writeEnum<ExtState>(state);
-			buffer.write_pod<int64_t>(serializationHash);
+			buffer.write_integral<int64_t>(serializationHash);
 		});
 	}
 

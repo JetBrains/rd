@@ -29,11 +29,11 @@ namespace rd {
 	class Polymorphic<T, typename std::enable_if<std::is_integral<T>::value>::type> {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.read_pod<T>();
+			return buffer.read_integral<T>();
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
-			buffer.write_pod<T>(value);
+			buffer.write_integral<T>(value);
 		}
 	};
 

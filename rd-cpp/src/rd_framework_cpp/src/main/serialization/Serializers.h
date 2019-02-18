@@ -44,7 +44,7 @@ namespace rd {
 		template<typename T>
 		std::unique_ptr<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &stream) const {
 			RdId id = RdId::read(stream);
-			int32_t size = stream.read_pod<int32_t>();
+			int32_t size = stream.read_integral<int32_t>();
 			stream.check_available(size);
 
 			if (readers.count(id) == 0) {
@@ -83,12 +83,12 @@ namespace rd {
 
 
 			int32_t lengthTagPosition = stream.get_position();
-			stream.write_pod<int32_t>(0);
+			stream.write_integral<int32_t>(0);
 			int32_t objectStartPosition = stream.get_position();
 			value.write(ctx, stream);
 			int32_t objectEndPosition = stream.get_position();
 			stream.set_position(lengthTagPosition);
-			stream.write_pod<int32_t>(objectEndPosition - objectStartPosition);
+			stream.write_integral<int32_t>(objectEndPosition - objectStartPosition);
 			stream.set_position(objectEndPosition);
 		}
 

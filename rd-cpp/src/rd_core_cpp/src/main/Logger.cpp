@@ -4,6 +4,10 @@
 
 #include "Logger.h"
 
+#include "core_util.h"
+
+#include <thread>
+
 /*SwitchLogger::SwitchLogger(const std::string &category) {}
 
 SwitchLogger get_logger(std::string category) {
@@ -38,7 +42,7 @@ namespace rd {
 
 	void Logger::log(LogLevel level, const std::string &message, const std::exception *e) const {
 		std::cerr << std::to_string(static_cast<int>(level))
-					 //                     + " | " + std::to_string(GetCurrentThreadId())
+					 + " | " + to_string(std::this_thread::get_id())
 					 + " | " + message +
 					 +" | " + (e ? e->what() : "")
 				  << std::endl;

@@ -48,12 +48,12 @@ namespace rd {
 	}
 
 	RdId RdId::read(Buffer const &buffer) {
-		auto number = buffer.read_pod<hash_t>();
+		auto number = buffer.read_integral<hash_t>();
 		return RdId(number);
 	}
 
 	void RdId::write(const Buffer &buffer) const {
-		buffer.write_pod(hash);
+		buffer.write_integral(hash);
 	}
 }
 

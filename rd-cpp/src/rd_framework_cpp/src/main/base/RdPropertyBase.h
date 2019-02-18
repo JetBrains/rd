@@ -67,7 +67,7 @@ namespace rd {
 					master_version++;
 				}
 				get_wire()->send(rdid, [this, &v](Buffer const &buffer) {
-					buffer.write_pod<int32_t>(master_version);
+					buffer.write_integral<int32_t>(master_version);
 					S::write(this->get_serialization_context(), buffer, v);
 					logSend.trace("property " + location.toString() + " + " + rdid.toString() +
 								  ":: ver = " + std::to_string(master_version) +
@@ -87,7 +87,7 @@ namespace rd {
 		}
 
 		void on_wire_received(Buffer buffer) const override {
-			int32_t version = buffer.read_pod<int32_t>();
+			int32_t version = buffer.read_integral<int32_t>();
 			WT v = S::read(this->get_serialization_context(), buffer);
 
 			bool rejected = is_master && version < master_version;

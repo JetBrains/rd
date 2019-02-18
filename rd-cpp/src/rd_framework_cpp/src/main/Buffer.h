@@ -55,14 +55,14 @@ namespace rd {
 		void rewind() const;
 
 		template<typename T, typename = typename std::enable_if<std::is_integral<T>::value, T>::type>
-		T read_pod() const {
+		T read_integral() const {
 			T result;
 			read(reinterpret_cast<word_t *>(&result), sizeof(T));
 			return result;
 		}
 
 		template<typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-		void write_pod(T const &value) const {
+		void write_integral(T const &value) const {
 			write(reinterpret_cast<word_t const *>(&value), sizeof(T));
 		}
 
@@ -82,7 +82,7 @@ namespace rd {
 
 		template<typename T>
 		std::vector<T> readArray() const {
-			int32_t len = read_pod<int32_t>();
+			int32_t len = read_integral<int32_t>();
 			MY_ASSERT_MSG(len >= 0, "read null array(length = " + std::to_string(len) + ")");
 			std::vector<T> result(len);
 			read(reinterpret_cast<word_t *>(result.data()), sizeof(T) * len);
@@ -91,7 +91,7 @@ namespace rd {
 
 		template<typename T>
 		std::vector<value_or_wrapper<T>> readArray(std::function<value_or_wrapper<T>()> reader) const {
-			int32_t len = read_pod<int32_t>();
+			int32_t len = read_integral<int32_t>();
 			std::vector<value_or_wrapper<T>> result(len);
 			for (auto &x : result) {
 				x = std::move(reader());
@@ -101,13 +101,13 @@ namespace rd {
 
 		template<typename T>
 		void writeArray(std::vector<T> const &array) const {
-			write_pod<int32_t>(array.size());
+			write_integral<int32_t>(array.size());
 			write(reinterpret_cast<word_t const *>(array.data()), sizeof(T) * array.size());
 		}
 
 		template<typename T>
 		void writeArray(std::vector<value_or_wrapper<T>> const &array, std::function<void(T const &)> writer) const {
-			write_pod<int32_t>(array.size());
+			write_integral<int32_t>(array.size());
 			for (auto const &e : array) {
 				writer(e);
 			}
@@ -131,13 +131,13 @@ namespace rd {
 
 		template<typename T>
 		T readEnum() const {
-			int32_t x = read_pod<int32_t>();
+			int32_t x = read_integral<int32_t>();
 			return static_cast<T>(x);
 		}
 
 		template<typename T>
 		void writeEnum(T const &x) const {
-			write_pod<int32_t>(static_cast<int32_t>(x));
+			write_integral<int32_t>(static_cast<int32_t>(x));
 		}
 
 		template<typename T>
