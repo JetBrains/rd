@@ -41,7 +41,7 @@ class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
     companion object {
         val default = RpcTimeouts(200L, 3000L)
         val longRunning = RpcTimeouts(10000L, 15000L)
-        val maximal = RpcTimeouts(30000L, 30000L)
+        val infinite = RpcTimeouts(60000L, Long.MAX_VALUE / 1000000) // Long.MAX_VALUE nanoseconds in milliseconds
     }
 }
 
@@ -121,7 +121,7 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         try {
             val task = startInternal(request, true, SynchronousScheduler)
 
-            val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.maximal
+            val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.infinite
 
             val freezeTime = measureTimeMillis {
                 if (!task.wait(effectiveTimeouts.errorAwaitTime) {
