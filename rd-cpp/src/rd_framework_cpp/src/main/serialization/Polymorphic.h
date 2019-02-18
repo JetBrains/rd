@@ -7,6 +7,7 @@
 
 #include "ISerializer.h"
 #include "RdReactiveBase.h"
+#include "SerializationCtx.h"
 
 #include <type_traits>
 

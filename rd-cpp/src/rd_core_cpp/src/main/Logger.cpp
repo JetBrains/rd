@@ -38,6 +38,7 @@ namespace rd {
 			case LogLevel::Fatal:
 				return "Fatal";
 		}
+		return {};
 	}
 
 	void Logger::log(LogLevel level, const std::string &message, const std::exception *e) const {
