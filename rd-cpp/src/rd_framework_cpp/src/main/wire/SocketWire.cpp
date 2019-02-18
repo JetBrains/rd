@@ -66,7 +66,7 @@ namespace rd {
 		MY_ASSERT_MSG(!id.isNull(), this->id + ": id mustn't be null");
 
 		Buffer buffer;
-		buffer.write_pod<int32_t>(0); //placeholder for length
+		buffer.write_integral<int32_t>(0); //placeholder for length
 
 		id.write(buffer); //write id
 		writer(buffer); //write rest
@@ -75,7 +75,7 @@ namespace rd {
 
 		int32_t position = buffer.get_position();
 		buffer.rewind();
-		buffer.write_pod<int32_t>(len - 4);
+		buffer.write_integral<int32_t>(len - 4);
 		buffer.set_position(position);
 		sendBuffer.put(std::move(buffer).getRealArray());
 	}

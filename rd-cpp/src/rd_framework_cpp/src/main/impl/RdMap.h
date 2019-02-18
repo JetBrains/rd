@@ -93,13 +93,13 @@ namespace rd {
 						int32_t versionedFlag = ((is_master() ? 1 : 0)) << versionedFlagShift;
 						Op op = static_cast<Op>(e.v.index());
 
-						buffer.write_pod<int32_t>(static_cast<int32_t>(op) | versionedFlag);
+						buffer.write_integral<int32_t>(static_cast<int32_t>(op) | versionedFlag);
 
 						int64_t version = is_master() ? ++next_version : 0L;
 
 						if (is_master()) {
 							pendingForAck.emplace(e.get_key(), version);
-							buffer.write_pod(version);
+							buffer.write_integral(version);
 						}
 
 						KS::write(this->get_serialization_context(), buffer, *e.get_key());
@@ -123,11 +123,11 @@ namespace rd {
 		}
 
 		void on_wire_received(Buffer buffer) const override {
-			int32_t header = buffer.read_pod<int32_t>();
+			int32_t header = buffer.read_integral<int32_t>();
 			bool msgVersioned = (header >> versionedFlagShift) != 0;
 			Op op = static_cast<Op>(header & ((1 << versionedFlagShift) - 1));
 
-			int64_t version = msgVersioned ? buffer.read_pod<int64_t>() : 0;
+			int64_t version = msgVersioned ? buffer.read_integral<int64_t>() : 0;
 
 			WK key = KS::read(this->get_serialization_context(), buffer);
 
@@ -184,9 +184,9 @@ namespace rd {
 					auto writer = util::make_shared_function(
 							[this, version, serialized_key = std::move(serialized_key)](
 									Buffer const &innerBuffer) mutable {
-								innerBuffer.write_pod<int32_t>(
+								innerBuffer.write_integral<int32_t>(
 										(1 << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
-								innerBuffer.write_pod<int64_t>(version);
+								innerBuffer.write_integral<int64_t>(version);
 								// KS::write(this->get_serialization_context(), innerBuffer, wrapper::get<K>(key));
 								innerBuffer.writeByteArrayRaw(serialized_key.getArray());
 								// logSend.trace(logmsg(Op::ACK, version, serialized_key));

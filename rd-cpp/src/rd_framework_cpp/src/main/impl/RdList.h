@@ -46,7 +46,7 @@ namespace rd {
 
 		static RdList<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			RdList<T, S> result;
-			int64_t next_version = buffer.read_pod<int64_t>();
+			int64_t next_version = buffer.read_integral<int64_t>();
 			RdId id = RdId::read(buffer);
 
 			result.next_version = next_version;
@@ -55,7 +55,7 @@ namespace rd {
 		}
 
 		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-			buffer.write_pod<int64_t>(next_version);
+			buffer.write_integral<int64_t>(next_version);
 			rdid.write(buffer);
 		}
 
@@ -82,8 +82,8 @@ namespace rd {
 					get_wire()->send(rdid, [this, e](Buffer const &buffer) {
 						Op op = static_cast<Op >(e.v.index());
 
-						buffer.write_pod<int64_t>(static_cast<int64_t>(op) | (next_version++ << versionedFlagShift));
-						buffer.write_pod<int32_t>(static_cast<const int32_t>(e.get_index()));
+						buffer.write_integral<int64_t>(static_cast<int64_t>(op) | (next_version++ << versionedFlagShift));
+						buffer.write_integral<int32_t>(static_cast<const int32_t>(e.get_index()));
 
 						T const *new_value = e.get_new_value();
 						if (new_value) {
@@ -104,10 +104,10 @@ namespace rd {
 		}
 
 		void on_wire_received(Buffer buffer) const override {
-			int64_t header = (buffer.read_pod<int64_t>());
+			int64_t header = (buffer.read_integral<int64_t>());
 			int64_t version = header >> versionedFlagShift;
 			Op op = static_cast<Op>((header & ((1 << versionedFlagShift) - 1L)));
-			int32_t index = (buffer.read_pod<int32_t>());
+			int32_t index = (buffer.read_integral<int32_t>());
 
 			MY_ASSERT_MSG(version == next_version,
 						  ("Version conflict for " + location.toString() + "}. Expected version " +

@@ -81,13 +81,13 @@ class CustomSerializer {
 public:
 	static int32_t read(SerializationCtx const &ctx, Buffer const &buffer) {
 		bool negate = buffer.readBool();
-		int32_t module = buffer.read_pod<int32_t>();
+		int32_t module = buffer.read_integral<int32_t>();
 		return negate ? -module : module;
 	}
 
 	static void write(SerializationCtx const &ctx, Buffer const &buffer, const int &value) {
-		buffer.write_pod(value < 0);
-		buffer.write_pod(abs(value));
+		buffer.write_integral(value < 0);
+		buffer.write_integral(abs(value));
 	}
 };
 
@@ -143,14 +143,14 @@ public:
 	//endregion
 
 	static FooScalar<K> read(SerializationCtx const &ctx, Buffer const &buffer) {
-		K x = buffer.read_pod<K>();
-		K y = buffer.read_pod<K>();
+		K x = buffer.read_integral<K>();
+		K y = buffer.read_integral<K>();
 		return FooScalar(x, y);
 	}
 
 	void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-		buffer.write_pod(x);
-		buffer.write_pod(y);
+		buffer.write_integral(x);
+		buffer.write_integral(y);
 	}
 
 	friend bool operator==(const FooScalar &lhs, const FooScalar &rhs) {

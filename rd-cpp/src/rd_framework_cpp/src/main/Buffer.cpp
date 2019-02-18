@@ -112,13 +112,13 @@ void Buffer::writeString(std::string const &value) const {
 	}
 
 	bool Buffer::readBool() const {
-		auto res = read_pod<uint8_t>();
+		auto res = read_integral<uint8_t>();
 		MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
 		return res == 1;
 	}
 
 	void Buffer::writeBool(bool value) const {
-		write_pod<word_t>(value ? 1 : 0);
+		write_integral<word_t>(value ? 1 : 0);
 	}
 
 	void Buffer::readByteArrayRaw(ByteArray &array) const {
@@ -130,7 +130,7 @@ void Buffer::writeString(std::string const &value) const {
 	}
 
 	/*tl::optional<std::wstring> Buffer::readNullableWString() const {
-    int32_t len = read_pod<int32_t>();
+    int32_t len = read_integral<int32_t>();
     if (len < 0) {
         return tl::nullopt;
     }
@@ -142,7 +142,7 @@ void Buffer::writeString(std::string const &value) const {
 
 void Buffer::writeNullableWString(tl::optional<std::wstring> const &value) const {
     if (!value.has_value()) {
-        write_pod<int32_t>(-1);
+        write_integral<int32_t>(-1);
         return;
     }
     writeWString(value.value());

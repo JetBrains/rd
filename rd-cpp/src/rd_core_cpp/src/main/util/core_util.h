@@ -15,6 +15,7 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include <sstream>
 
 #define MY_ASSERT_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;assert(expr);}
 #define MY_ASSERT_THROW_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;throw std::runtime_error(msg);}
@@ -107,8 +108,18 @@ namespace rd {
 	}
 
 	inline std::string to_string(std::thread::id const &id) {
-		return "";
-		//todo
+		std::stringstream ss;
+		ss << id;
+		return ss.str();
+	}
+
+	inline std::string to_string(std::exception const &e) {
+		return std::string(e.what());
+	}
+
+	template<typename T>
+	inline std::string to_string(std::chrono::duration<int64_t, T> const &time) {
+		return std::to_string(time.count());
 	}
 
 	template<typename T>
@@ -121,6 +132,10 @@ namespace rd {
 		return to_string(value.load());
 	}
 	//endregion
+
+	inline std::wstring to_wstring(std::string const &s) {
+		return std::wstring(s.begin(), s.end());
+	}
 }
 
 #endif //RD_CORE_CPP_UTIL_H

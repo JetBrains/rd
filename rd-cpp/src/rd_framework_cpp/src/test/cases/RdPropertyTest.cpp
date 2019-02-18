@@ -191,7 +191,7 @@ class ListSerializer {
 	using list = std::vector<DynamicEntity>;
 public:
 	static list read(SerializationCtx const &ctx, Buffer const &buffer) {
-		int32_t len = buffer.read_pod<int32_t>();
+		int32_t len = buffer.read_integral<int32_t>();
 		list v;
 		for (int i = 0; i < len; ++i) {
 			v.push_back(DynamicEntity::read(ctx, buffer));
@@ -200,7 +200,7 @@ public:
 	}
 
 	static void write(SerializationCtx const &ctx, Buffer const &buffer, const list &value) {
-		buffer.write_pod<int32_t>(value.size());
+		buffer.write_integral<int32_t>(value.size());
 		for (const auto &item : value) {
 			item.write(ctx, buffer);
 		}

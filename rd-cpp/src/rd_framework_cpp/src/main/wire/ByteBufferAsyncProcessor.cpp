@@ -3,13 +3,18 @@
 //
 
 #include "ByteBufferAsyncProcessor.h"
+
 #include <utility>
 
 namespace rd {
+	size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
+
 	Logger ByteBufferAsyncProcessor::logger;
 
 	ByteBufferAsyncProcessor::ByteBufferAsyncProcessor(std::string id, std::function<void(Buffer::ByteArray)> processor)
-			: id(std::move(id)), processor(std::move(processor)) {}
+			: id(std::move(id)), processor(std::move(processor)) {
+		data.reserve(INITIAL_CAPACITY);
+	}
 
 	void ByteBufferAsyncProcessor::cleanup0() {
 		state = StateKind::Terminated;
@@ -32,6 +37,12 @@ namespace rd {
 
 			state = stateToSet;
 			cv.notify_all();
+		}
+
+		std::future_status status = asyncFuture.wait_for(timeout);
+
+		if (status == std::future_status::timeout) {
+			logger.error("Couldn't wait async thread during time:" + to_string(timeout));
 		}
 
 		cleanup0();
@@ -78,8 +89,7 @@ namespace rd {
 
 			state = StateKind::AsyncProcessing;
 
-			asyncProcessingThread = std::thread(&ByteBufferAsyncProcessor::ThreadProc, this);
-			asyncProcessingThread.detach();
+			asyncFuture = std::async(std::launch::async, &ByteBufferAsyncProcessor::ThreadProc, this);
 		}
 	}
 
@@ -118,5 +128,6 @@ namespace rd {
 			case ByteBufferAsyncProcessor::StateKind::Terminated:
 				return "Terminated";
 		}
+		return {};
 	}
 }
