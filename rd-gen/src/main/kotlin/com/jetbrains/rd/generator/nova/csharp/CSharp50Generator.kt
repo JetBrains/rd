@@ -672,11 +672,18 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "//public fields"
         for (member in decl.ownMembers) {
             p(docComment(member.documentation))
+            val prefix = member.nullAttr() + "public"
             when (member) {
                 is Member.Reactive ->
-                    + (member.nullAttr() + "public ${member.intfSubstitutedName(decl)} ${member.publicName} { get { return ${member.encapsulatedName}; }}")
+                    if (member is Member.Reactive.Signal && member.actualFlow == Source) {
+                        val type = member.referencedTypes[0]
+                        val isNotVoid = type != PredefinedType.void
+                        +"$prefix void ${member.publicName}(${isNotVoid.condstr { type.substitutedName(decl) + " value" }}) => ${member.encapsulatedName}.Fire(${isNotVoid.condstr { "value" }});"
+                    }
+                    else
+                        + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"
                 is Member.Field ->
-                    + (member.nullAttr() + "public ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}")
+                    + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}"
                 else -> fail("Unsupported member: $member")
             }
         }
