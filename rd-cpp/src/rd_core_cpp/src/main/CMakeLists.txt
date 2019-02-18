@@ -14,12 +14,11 @@ add_library(rd_core_cpp STATIC
         lifetime/Lifetime.cpp lifetime/Lifetime.h
         reactive/IScheduler.cpp reactive/IScheduler.h
         reactive/base/IViewableList.h
-        util/core_util.h
-        util/gen_util.h
         reactive/base/IViewableSet.h
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
-        reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h util/overloaded.h util/erase_if.h util/wrapper.h util/traits.h)
+        reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
+        )
 
 
 target_include_directories(rd_core_cpp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -27,6 +26,7 @@ target_include_directories(rd_core_cpp PUBLIC lifetime)
 target_include_directories(rd_core_cpp PUBLIC reactive)
 target_include_directories(rd_core_cpp PUBLIC reactive/base)
 target_include_directories(rd_core_cpp PUBLIC util)
+
 target_link_libraries(rd_core_cpp PUBLIC optional mpark_variant tsl::ordered_map)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
