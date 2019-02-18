@@ -320,7 +320,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
 
     protected open val Member.publicName: String get() = name
-    protected open val Member.encapsulatedName: String get() = isEncapsulated.condstr { "_" } + publicName
+    protected open val Member.encapsulatedName: String get() = "${publicName}_"
     open val Member.isEncapsulated: Boolean get() = this is Member.Reactive
 
     protected fun Member.ctorParam(containing: Declaration, withSetter: Boolean): String {
@@ -1402,7 +1402,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                     val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
                     if (f.usedInEquals)
-                        "__r = __r * 31 + (${t.hc("""get_${f.encapsulatedName}()""")});"
+                        "__r = __r * 31 + (${t.hc("""get_${f.publicName}()""")});"
                     else
                         ""
                 }

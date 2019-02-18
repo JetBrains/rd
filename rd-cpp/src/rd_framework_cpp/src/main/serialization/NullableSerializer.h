@@ -24,24 +24,22 @@ namespace rd {
 	};
 
 	template<typename T>
-	class NullableSerializer<AbstractPolymorphic < T>>
+	class NullableSerializer<AbstractPolymorphic<T>, Wrapper<T>> {
+		using S = AbstractPolymorphic<T>;
+		public:
 
-{
-	using S = AbstractPolymorphic<T>;
-	public:
-
-	static Wrapper <T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-		bool nullable = !buffer.readBool();
-		if (nullable) {
-			return {};
+		static Wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
+			bool nullable = !buffer.readBool();
+			if (nullable) {
+				return {};
+			}
+			return S::read(ctx, buffer);
 		}
-		return S::read(ctx, buffer);
-	}
 
-	static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper <T> const &value) {
-		buffer.writeNullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
-	}
-};
+		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {
+			buffer.writeNullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
+		}
+	};
 }
 
 
