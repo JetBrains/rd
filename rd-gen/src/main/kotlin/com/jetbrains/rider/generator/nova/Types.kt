@@ -243,8 +243,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
 
     fun aggregatedef(name: String, body: Aggregate.() -> Unit) = append(Aggregate(name, this), body)
 
-    fun
-            enum(name : String, body: Enum.() -> Unit) = append(Enum(name, this), body)
+    fun enum(name : String, body: Enum.() -> Unit) = append(Enum(name, this), body)
     fun enum(body: Enum.() -> Unit) = enum("", body)
 
 }
