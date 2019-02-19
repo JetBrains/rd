@@ -185,6 +185,11 @@ fun Graphics2D.fillRect(rect: Rectangle) {
     fillRect(rect.x, rect.y, rect.width, rect.height)
 }
 
+fun Graphics2D.fillRect(rect: Rectangle, color: Color) {
+    this.color = color
+    fillRect(rect)
+}
+
 fun <T> JComboBox<T>.addLifetimedItem(lifetime: Lifetime, item: T) {
     lifetime.bracket(
             {addItem(item)},
