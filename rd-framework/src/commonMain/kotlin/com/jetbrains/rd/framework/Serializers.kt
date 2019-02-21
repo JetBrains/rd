@@ -213,7 +213,7 @@ inline fun <reified T : Enum<T>> AbstractBuffer.writeEnum(value: Enum<T>) {
 }
 
 inline fun <reified T : Enum<T>> AbstractBuffer.writeEnumSet(set: EnumSet<T>) {
-    val flags = set.values().fold(0) { acc, nxt -> acc or nxt.ordinal }
+    val flags = set.values().fold(0) { acc, nxt -> acc or (1 shl nxt.ordinal) }
     writeInt(flags)
 }
 
