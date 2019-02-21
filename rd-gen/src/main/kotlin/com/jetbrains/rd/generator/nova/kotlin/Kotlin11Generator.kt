@@ -46,7 +46,8 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
     ///types
     protected open fun IType.substitutedName(scope: Declaration) : String = when (this) {
-        is Declaration -> (namespace != scope.namespace).condstr { namespace + "." } + name
+        is Enum -> if (flags) "EnumSet<${sanitizedName(scope)}>" else sanitizedName(scope)
+        is Declaration -> sanitizedName(scope)
         is INullable    -> "${itemType.substitutedName(scope)}?"
         is InternedScalar -> itemType.substitutedName(scope)
         is IArray       ->
@@ -167,8 +168,12 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
                     p(" = ")
                     when (defaultValue) {
                         is String -> p (
-                                if (member.type is Enum)
-                                    "$typeName.$defaultValue"
+                                if (member.type is Enum) {
+                                    var res = "$typeName.$defaultValue"
+                                    if (member.type.flags)
+                                        res = "enumSetOf(${(defaultValue != "").condstr { res }})"
+                                    res
+                                }
                                 else
                                     "\"$defaultValue\""
                         )
@@ -272,10 +277,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
         + "import com.jetbrains.rd.util.lifetime.*"
         + "import com.jetbrains.rd.util.reactive.*"
         + "import com.jetbrains.rd.util.string.*"
-        + "import com.jetbrains.rd.util.trace"
-        + "import com.jetbrains.rd.util.Date"
-        + "import com.jetbrains.rd.util.UUID"
-        + "import com.jetbrains.rd.util.URI"
+        + "import com.jetbrains.rd.util.*"
         + "import kotlin.reflect.KClass"
 
 //        tl.referencedTypes.plus(tl.declaredTypes.flatMap { it.referencedTypes })
@@ -529,7 +531,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
     fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.reader(): String = when (this) {
-            is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
+            is Enum -> "buffer.readEnum$setOrEmpty<${sanitizedName(decl)}>()"
             is InternedScalar -> "ctx.readInterned(buffer, \"${internKey.keyName}\") { _, _ -> ${itemType.reader()} }"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
@@ -587,7 +589,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
 
 
         fun IType.writer(field: String) : String  = when (this) {
-            is Enum -> "buffer.writeEnum($field)"
+            is Enum -> "buffer.writeEnum$setOrEmpty($field)"
             is InternedScalar -> "ctx.writeInterned(buffer, $field, \"${internKey.keyName}\") { _, _, internedValue -> ${itemType.writer("internedValue")} }"
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
@@ -845,7 +847,7 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
                 docComment(it.documentation) + it.name
             }
             println()
-            + "companion object { val marshaller = FrameworkMarshallers.enum<${decl.name}>() }"
+            + "companion object { val marshaller = FrameworkMarshallers.enum${decl.setOrEmpty}<${decl.name}>() }"
         }
         + "}"
     }

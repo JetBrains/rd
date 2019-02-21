@@ -720,8 +720,12 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                     p(" = ")
                     when (defaultValue) {
                         is String -> p (
-                                if (member.type is Enum)
-                                    "$typeName.$defaultValue"
+                                if (member.type is Enum) {
+                                    var res = "$typeName.$defaultValue"
+                                    if (member.type.flags)
+                                        res = "enumSetOf(res)"
+                                    res
+                                }
                                 else
                                     "\"$defaultValue\""
                         )
@@ -971,9 +975,13 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
 
     protected open fun PrettyPrinter.enum(decl: Enum) {
+        if (decl.flags)
+            + "[Flags]"
         + "public enum ${decl.name} {"
         indent {
-            + decl.constants.joinToString(separator = ",\r\n") { docComment(it.documentation) + sanitize(it.name) }
+            + decl.constants.withIndex().joinToString(separator = ",\r\n") { (idx, enumConst) ->
+                docComment(enumConst.documentation) + sanitize(enumConst.name) + decl.flags.condstr { " = 1 << $idx" }
+            }
         }
         + "}"
     }

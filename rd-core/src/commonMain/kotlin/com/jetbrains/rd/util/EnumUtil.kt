@@ -6,3 +6,20 @@ inline fun <reified T:Enum<T>> parseFromOrdinal(ordinal: Int) : T {
         return values[ordinal]
     }
 }
+
+inline fun <reified T:Enum<T>> parseFromFlags(flags: Int) : EnumSet<T> {
+    enumValues<T>().let { values ->
+        require(flags in 0..(1 shl (values.size - 1))) {"'$flags' not in range of ${T::class.simpleName} enum set: [0..${(1 shl (values.size - 1))})"}
+        val res = mutableSetOf<T>()
+        var x = flags
+        var i = 0
+        while (x > 0) {
+            if (x % 2 == 1)
+                res.add(values[i])
+            i++
+            x /= 2
+        }
+        return enumSetOf(res)
+    }
+}
+

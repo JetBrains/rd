@@ -20,6 +20,11 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         field("start", int)
         field("end", int)
         field("lst", array(int))
+        field("enumSetTest", enumSet {
+            +"a"
+            +"b"
+            +"c"
+        })
     }
 
     val foo = baseclass {

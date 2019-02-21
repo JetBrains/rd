@@ -78,3 +78,4 @@ fun INonNullableScalar.interned(key: InternScope) : InternedScalar = InternedSca
 fun Class.internRoot(scope: InternScope) {
     internRootForScopes.add(scope.keyName)
 }
+

@@ -107,3 +107,7 @@ actual inline fun assert(value: Boolean, lazyMessage: () -> Any)  = require(valu
 
 actual inline fun spinUntil(condition: () -> Boolean) { require(condition()) }
 actual inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) = require(condition()).let { true }
+
+actual abstract class EnumSet<T:Enum<T>>(val values: Set<T>)
+actual inline fun <reified T:Enum<T>> enumSetOf(values: Set<T>) : EnumSet<T> = object : EnumSet<T>(values) {}
+actual fun <T: Enum<T>> EnumSet<T>.values() : Set<T> = this.values

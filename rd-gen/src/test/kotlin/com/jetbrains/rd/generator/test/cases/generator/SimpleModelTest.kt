@@ -34,6 +34,12 @@ class SimpleModelTest {
             property("Caret", PredefinedType.int)
             field("singleLine", PredefinedType.bool).default(false)
 
+            field("es", enumSet {
+                +"a"
+                +"b"
+                +"c"
+            })
+
             field("xxx", immutableList(structdef("Abc"){
 
             }.interned(ProtocolInternScope)).nullable).optional

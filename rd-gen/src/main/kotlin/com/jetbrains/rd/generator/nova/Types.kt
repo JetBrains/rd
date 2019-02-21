@@ -254,6 +254,9 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun enum(name : String, body: Enum.() -> Unit) = append(Enum(name, this), body)
     fun enum(body: Enum.() -> Unit) = enum("", body)
 
+    fun enumSet(name : String, body: Enum.() -> Unit) = enum(name, body).apply { flags = true }
+    fun enumSet(body: Enum.() -> Unit) = enum( body).apply { flags = true }
+
     fun internScope(name: String = "") = InternScope(this, name)
 }
 
@@ -292,12 +295,16 @@ class Aggregate(override val _name: String, override val pointcut: Toplevel)
     override val cl_name = "aggregate"
 }
 
-class Enum(override val _name: String, override val pointcut : Toplevel) : Declaration(pointcut), INonNullableScalar {
+open class Enum(override val _name: String, override val pointcut : Toplevel) : Declaration(pointcut), INonNullableScalar {
     override val cl_name = "enum"
+
+    var flags = false
+    val setOrEmpty : String get() = flags.condstr { "Set" }
 
     val constants : List<Member.EnumConst> get() = ownMembers.filterIsInstance<Member.EnumConst>()
     operator fun String.unaryPlus() = append(Member.EnumConst(this))
 }
+
 
 interface Extensible {
     val extensions: MutableList<Ext>

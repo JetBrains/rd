@@ -87,3 +87,7 @@ expect fun printlnError(msg: String)
 
 expect inline fun spinUntil(condition: () -> Boolean)
 expect inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) : Boolean
+
+expect abstract class EnumSet<T : Enum<T>>
+expect inline fun <reified T:Enum<T>> enumSetOf(values: Set<T>) : EnumSet<T>
+expect fun <T: Enum<T>> EnumSet<T>.values() : Set<T>

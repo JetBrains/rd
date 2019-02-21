@@ -1,10 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.impl.RdSecureString
-import com.jetbrains.rd.util.Date
-import com.jetbrains.rd.util.PublicApi
-import com.jetbrains.rd.util.URI
-import com.jetbrains.rd.util.UUID
+import com.jetbrains.rd.util.*
 import kotlin.reflect.*
 
 open class UniversalMarshaller<T : Any>(
@@ -37,6 +34,10 @@ object FrameworkMarshallers {
 
     inline fun <reified T : Enum<T>> enum(): UniversalMarshaller<T> {
         return create({ it.readEnum<T>() }, { stream, x -> stream.writeEnum(x) })
+    }
+
+    inline fun <reified T : Enum<T>> enumSet(): UniversalMarshaller<EnumSet<T>> {
+        return create({ it.readEnumSet<T>() }, { stream, x -> stream.writeEnumSet(x) })
     }
 
 

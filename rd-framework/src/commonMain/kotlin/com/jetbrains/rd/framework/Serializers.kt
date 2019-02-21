@@ -134,6 +134,11 @@ inline fun <reified T : Enum<T>> AbstractBuffer.readEnum(): T {
     return parseFromOrdinal(ordinal)
 }
 
+inline fun <reified T : Enum<T>> AbstractBuffer.readEnumSet(): EnumSet<T> {
+    val flags = readInt()
+    return parseFromFlags(flags)
+}
+
 fun AbstractBuffer.readRdId(): RdId {
     return RdId.read(this)
 }
@@ -205,6 +210,11 @@ inline fun <T> AbstractBuffer.writeList(value: List<T>, elemWriter: (T) -> Unit)
 
 inline fun <reified T : Enum<T>> AbstractBuffer.writeEnum(value: Enum<T>) {
     writeInt(value.ordinal)
+}
+
+inline fun <reified T : Enum<T>> AbstractBuffer.writeEnumSet(set: EnumSet<T>) {
+    val flags = set.values().fold(0) { acc, nxt -> acc or nxt.ordinal }
+    writeInt(flags)
 }
 
 fun AbstractBuffer.writeRdId(value: RdId) {
