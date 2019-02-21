@@ -303,6 +303,13 @@ open class Enum(override val _name: String, override val pointcut : Toplevel) : 
 
     val constants : List<Member.EnumConst> get() = ownMembers.filterIsInstance<Member.EnumConst>()
     operator fun String.unaryPlus() = append(Member.EnumConst(this))
+
+    override fun validate(errors: MutableList<String>) {
+        super.validate(errors)
+
+        if (flags && constants.size > 30)
+            errors.add("EnumSet $this contains more than 30 constants (does't fit Int)")
+    }
 }
 
 
