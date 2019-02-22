@@ -30,7 +30,7 @@ class SocketWireTest {
 
     private fun server(lifetime: Lifetime, port: Int? = null): Protocol {
         return Protocol(Serializers(), Identities(IdKind.Server), TestScheduler,
-            SocketWire.Server(lifetime, TestScheduler, port, "TestServer")
+            SocketWire.Server(lifetime, TestScheduler, port, "TestServer"), lifetime
         )
     }
 
@@ -38,13 +38,13 @@ class SocketWireTest {
     private fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
         return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
             SocketWire.Client(lifetime,
-                    TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient")
+                    TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient"), lifetime
         )
     }
 
     private fun client(lifetime: Lifetime, port: Int): Protocol {
         return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
-            SocketWire.Client(lifetime, TestScheduler, port, "TestClient")
+            SocketWire.Client(lifetime, TestScheduler, port, "TestClient"), lifetime
         )
     }
 

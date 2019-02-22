@@ -14,7 +14,7 @@ var scheduler : IScheduler? = null
 fun server(lifetime: Lifetime, port: Int? = null): Protocol {
     scheduler = SingleThreadScheduler(lifetime, "SingleThreadScheduler")
     return Protocol(Serializers(), Identities(IdKind.Server), scheduler as SingleThreadScheduler,
-            SocketWire.Server(lifetime, scheduler as SingleThreadScheduler, port, "DemoServer"))
+            SocketWire.Server(lifetime, scheduler as SingleThreadScheduler, port, "DemoServer"), lifetime)
 }
 
 fun main(args: Array<String>) {

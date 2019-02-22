@@ -13,6 +13,7 @@ class Protocol(
         override val identity: IIdentities,
         override val scheduler: IScheduler,
         override val wire: IWire, //to initialize field with circular dependencies
+        val lifetime: Lifetime,
         serializationCtx: SerializationCtx? = null
 ) : IRdDynamic, IProtocol {
 
@@ -29,7 +30,7 @@ class Protocol(
     override val serializationContext: SerializationCtx = serializationCtx ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot().also {
         it.rdid = RdId.Null.mix("ProtocolInternRoot")
         scheduler.queue {
-            it.bind(Lifetime.Eternal, this, "ProtocolInternRoot")
+            it.bind(lifetime, this, "ProtocolInternRoot")
         }
     }))
 }

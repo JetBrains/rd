@@ -7,7 +7,9 @@ import com.jetbrains.rd.framework.base.withId
 import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.TestWire
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SynchronousScheduler
+import org.junit.AfterClass
 import org.junit.Before
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -16,11 +18,21 @@ import kotlin.test.assertEquals
 
 class TestReflectionMarshaller {
 
+    companion object {
+        val lifetimeDef = Lifetime.Eternal.createNested()
+
+        @AfterClass
+        @JvmStatic
+        fun afterTest() {
+            lifetimeDef.terminate()
+        }
+    }
+
 
     val ctx = SerializationCtx(Protocol(Serializers(),
             Identities(IdKind.Client),
             SynchronousScheduler,
-            TestWire(SynchronousScheduler))
+            TestWire(SynchronousScheduler), lifetimeDef.lifetime)
     )
     val buf = createAbstractBuffer()
 

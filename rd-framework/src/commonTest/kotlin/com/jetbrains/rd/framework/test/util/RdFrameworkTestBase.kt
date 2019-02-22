@@ -60,11 +60,11 @@ open class RdFrameworkTestBase {
 
         clientProtocol = Protocol(serializers,
                 Identities(IdKind.Client),
-            clientScheduler, TestWire(clientScheduler))
+            clientScheduler, TestWire(clientScheduler), clientLifetime)
 
         serverProtocol = Protocol(serializers,
                 Identities(IdKind.Server),
-            serverScheduler, TestWire(serverScheduler))
+            serverScheduler, TestWire(serverScheduler), serverLifetime)
 
         val (w1, w2) = (clientProtocol.wire as TestWire) to (serverProtocol.wire as TestWire)
         w1.counterpart = w2
