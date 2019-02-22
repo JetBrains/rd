@@ -20,7 +20,7 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         field("start", int)
         field("end", int)
         field("lst", array(int))
-        field("enumSetTest", enumSet {
+        field("enumSetTest", flags {
             +"a"
             +"b"
             +"c"

@@ -721,10 +721,9 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                     when (defaultValue) {
                         is String -> p (
                                 if (member.type is Enum) {
-                                    var res = "$typeName.$defaultValue"
-                                    if (member.type.flags)
-                                        res = "enumSetOf(res)"
-                                    res
+                                    if (member.type.flags && defaultValue.isEmpty())
+                                        "($typeName)0"
+                                    else "$typeName.$defaultValue"
                                 }
                                 else
                                     "\"$defaultValue\""

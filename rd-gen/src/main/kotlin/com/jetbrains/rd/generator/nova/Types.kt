@@ -147,7 +147,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
 
     val ownMembers: ArrayList<Member> = ArrayList()
         get() {
-            require(lazyInitializer == null) { "$this: declaration hasn't been initialized" }
+            require(lazyInitializer == null) { "${this._name}: declaration hasn't been initialized" }
             return field
         }
     val membersOfBaseClasses: List<Member> get() = base?.allMembers.orEmpty()
@@ -254,8 +254,8 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun enum(name : String, body: Enum.() -> Unit) = append(Enum(name, this), body)
     fun enum(body: Enum.() -> Unit) = enum("", body)
 
-    fun enumSet(name : String, body: Enum.() -> Unit) = enum(name, body).apply { flags = true }
-    fun enumSet(body: Enum.() -> Unit) = enum( body).apply { flags = true }
+    fun flags(name : String, body: Enum.() -> Unit) = enum(name, body).apply { flags = true }
+    fun flags(body: Enum.() -> Unit) = enum( body).apply { flags = true }
 
     fun internScope(name: String = "") = InternScope(this, name)
 }

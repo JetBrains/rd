@@ -34,11 +34,11 @@ class SimpleModelTest {
             property("Caret", PredefinedType.int)
             field("singleLine", PredefinedType.bool).default(false)
 
-            field("es", enumSet {
+            field("es", flags("es") {
                 +"a"
                 +"b"
                 +"c"
-            })
+            }).default("")
 
             field("xxx", immutableList(structdef("Abc"){
 
