@@ -169,7 +169,6 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.intfSimpleName : String get () {
-        val async = this.freeThreaded.condstr { "Async" }
         return when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
                 Source -> "IRdCall"
@@ -177,9 +176,9 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                 Both -> "IRdRpc" //todo
             }
             is Member.Reactive.Signal -> when (actualFlow) {
-                Source -> "ISource"
-                Sink -> "I${async}Sink"
-                Both -> "I${async}RdSignal"
+                Source -> "IRdSignal"
+                Sink -> if (freeThreaded) "IRdSignal" else "ISink"
+                Both -> "IRdSignal"
             }
             is Member.Reactive.Stateful.Property -> when (actualFlow) {
                 Sink -> "IRdProperty"
