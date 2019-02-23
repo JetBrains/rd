@@ -176,13 +176,12 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
                 Both -> "IRdRpc" //todo
             }
             is Member.Reactive.Signal -> when (actualFlow) {
-                Source -> "IRdSignal"
-                Sink -> if (freeThreaded) "IRdSignal" else "ISink"
-                Both -> "IRdSignal"
+                Sink -> if (freeThreaded) "ISignal" else "ISource"
+                Source, Both -> "ISignal"
             }
             is Member.Reactive.Stateful.Property -> when (actualFlow) {
-                Sink -> "IRdProperty"
-                Source, Both -> "IRdProperty"
+                Sink -> "IReadonlyProperty"
+                Source, Both -> "IViewableProperty"
             }
             is Member.Reactive.Stateful.List -> when (actualFlow) {
                 Sink -> "IViewableList"
