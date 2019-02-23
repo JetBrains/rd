@@ -330,12 +330,12 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "using JetBrains.Collections.Viewable;"
         + "using JetBrains.Lifetimes;"
         + "using JetBrains.Serialization;"
-        + "using JetBrains.Platform.RdFramework;"
-        + "using JetBrains.Platform.RdFramework.Base;"
-        + "using JetBrains.Platform.RdFramework.Impl;"
-        + "using JetBrains.Platform.RdFramework.Tasks;"
-        + "using JetBrains.Platform.RdFramework.Util;"
-        + "using JetBrains.Platform.RdFramework.Text;"
+        + "using JetBrains.Rd;"
+        + "using JetBrains.Rd.Base;"
+        + "using JetBrains.Rd.Impl;"
+        + "using JetBrains.Rd.Tasks;"
+        + "using JetBrains.Rd.Util;"
+        + "using JetBrains.Rd.Text;"
         println()
 
         println()
@@ -495,7 +495,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         + "{"
 
 
-        val protocol = decl.namespace.contains(".Protocol").condstr { "JetBrains.Platform.RdFramework.Impl." } + "Protocol"
+        val protocol = decl.namespace.contains(".Protocol").condstr { "JetBrains.Rd.Impl." } + "Protocol"
 
         indent {
             + "Identify(protocol.Identities, RdId.Root.Mix(GetType().Name));"
@@ -517,9 +517,9 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
     fun IType.readerDeclaredElsewhereDelegateRef(containing: Declaration) = when (this) {
         is Enum -> null //to overwrite Declaration
-        is PredefinedType -> "JetBrains.Platform.RdFramework.Impl.Serializers.Read$name"
+        is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Read$name"
         is Declaration -> this.getSetting(Intrinsic)?.readDelegateFqn ?: "${sanitizedName(containing)}.Read"
-        is IArray -> if (this.isPrimitivesArray) "JetBrains.Platform.RdFramework.Impl.Serializers.Read$name" else null
+        is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Read$name" else null
         else -> null
     }                                                           
 
@@ -531,7 +531,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     protected fun PrettyPrinter.readerAndDelegatesTrait(decl: Declaration) {
 
         fun IType.complexDelegateBuilder() : String = readerDeclaredElsewhereDelegateRef(decl) ?: when (this) {
-            is Enum -> "new CtxReadDelegate<${sanitizedName(decl)}>(JetBrains.Platform.RdFramework.Impl.Serializers.ReadEnum<${sanitizedName(decl)}>)"
+            is Enum -> "new CtxReadDelegate<${sanitizedName(decl)}>(JetBrains.Rd.Impl.Serializers.ReadEnum<${sanitizedName(decl)}>)"
             is IArray -> itemType.complexDelegateBuilder()+".Array()"
             is InternedScalar -> itemType.complexDelegateBuilder()+".Interned(\"${internKey.keyName}\")"
             is IImmutableList -> itemType.complexDelegateBuilder()+".List()"
@@ -596,9 +596,9 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
 
     fun IType.writerDeclaredElsewhereDelegateRef(containing: Declaration) = when (this) {
         is Enum -> null //to overwrite Declaration
-        is PredefinedType -> "JetBrains.Platform.RdFramework.Impl.Serializers.Write$name"
+        is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Write$name"
         is Declaration -> this.getSetting(Intrinsic)?.writeDelegateFqn ?: "${sanitizedName(containing)}.Write"
-        is IArray -> if (this.isPrimitivesArray) "JetBrains.Platform.RdFramework.Impl.Serializers.Write$name" else null
+        is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Write$name" else null
         else -> null
     }
 
@@ -610,7 +610,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     protected fun PrettyPrinter.writerAndDelegatesTrait(decl: Declaration) {
 
         fun IType.complexDelegateBuilder() : String = writerDeclaredElsewhereDelegateRef(decl) ?: when (this) {
-            is Enum -> "new CtxWriteDelegate<${sanitizedName(decl)}>(JetBrains.Platform.RdFramework.Impl.Serializers.WriteEnum<${sanitizedName(decl)}>)"
+            is Enum -> "new CtxWriteDelegate<${sanitizedName(decl)}>(JetBrains.Rd.Impl.Serializers.WriteEnum<${sanitizedName(decl)}>)"
             is IArray -> itemType.complexDelegateBuilder()+".Array()"
             is IImmutableList -> itemType.complexDelegateBuilder()+".List()"
             is InternedScalar -> itemType.complexDelegateBuilder()+".Interned(\"${internKey.keyName}\")"
