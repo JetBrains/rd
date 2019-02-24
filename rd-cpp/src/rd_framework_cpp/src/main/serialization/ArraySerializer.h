@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace rd {
-	template<typename S, typename T = decltype(S::read(::std::declval<SerializationCtx>(), ::std::declval<Buffer>()))>
+	template<typename S, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
 	class ArraySerializer {
 	public:
 		static std::vector<T> read(SerializationCtx const &ctx, Buffer const &buffer) {

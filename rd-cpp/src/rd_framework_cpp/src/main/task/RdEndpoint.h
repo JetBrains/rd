@@ -14,9 +14,7 @@ namespace rd {
 		using WTReq = value_or_wrapper<TReq>;
 		using WTRes = value_or_wrapper<TRes>;
 
-		using handler_t = std::function<
-		RdTask<TRes, ResSer>(Lifetime, TReq
-		const &)>;
+		using handler_t = std::function<RdTask<TRes, ResSer>(Lifetime, TReq const &)>;
 		mutable handler_t handler;
 
 	public:

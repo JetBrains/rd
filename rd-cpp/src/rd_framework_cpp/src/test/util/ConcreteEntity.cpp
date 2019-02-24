@@ -10,13 +10,13 @@ namespace rd {
 			}
 
 			//primary ctor
-			ConcreteEntity::ConcreteEntity(::std::wstring filePath) : AbstractEntity(
-					::std::move(filePath)) { initialize(); }
+			ConcreteEntity::ConcreteEntity(std::wstring filePath) : AbstractEntity(
+					std::move(filePath)) { initialize(); }
 
 			//reader
 			ConcreteEntity ConcreteEntity::read(SerializationCtx const &ctx, Buffer const &buffer) {
 				auto filePath = buffer.readWString();
-				ConcreteEntity res{::std::move(filePath)};
+				ConcreteEntity res{std::move(filePath)};
 				return res;
 			}
 
@@ -56,6 +56,8 @@ namespace rd {
 				__r = __r * 31 + (std::hash<std::wstring>()(get_filePath()));
 				return __r;
 			}
+
+			std::string ConcreteEntity::type_name() const { return "ConcreteEntity"; }
 		}
 	}
 }

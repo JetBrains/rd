@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 project(rd_cpp)
 
@@ -30,6 +30,6 @@ add_subdirectory(thirdparty)
 add_subdirectory(src)
 
 if(ENABLE_TESTS_OPTION)
-    add_subdirectory(cpp_model)
+#    add_subdirectory(cpp_model)
     add_subdirectory(demo)
 endif()

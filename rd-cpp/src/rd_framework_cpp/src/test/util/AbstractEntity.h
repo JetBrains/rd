@@ -18,7 +18,7 @@ namespace rd {
 	namespace test {
 		namespace util {
 			//abstract
-			class AbstractEntity : public ISerializable {
+			class AbstractEntity : public IPolymorphicSerializable {
 				//fields
 			protected:
 				std::wstring filePath;
@@ -54,7 +54,7 @@ namespace rd {
 									int32_t size);
 
 				//writer
-				virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const = 0;
+				virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const override = 0;
 
 				//virtual init
 
@@ -73,6 +73,8 @@ namespace rd {
 
 				//hash code trait
 				virtual size_t hashCode() const = 0;
+
+				std::string type_name() const override;
 			};
 
 		}

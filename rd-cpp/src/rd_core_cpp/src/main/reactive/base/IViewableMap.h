@@ -26,8 +26,9 @@ namespace rd {
 
 		mutable std::unordered_map<
 				Lifetime,
-				tsl::ordered_map<K const *, LifetimeDefinition, TransparentHash<K>, TransparentKeyEqual<K>>
-		> lifetimes;
+				tsl::ordered_map<K const *, LifetimeDefinition, TransparentHash < K>, TransparentKeyEqual < K>>
+		>
+		lifetimes;
 	public:
 		class Event {
 		public:
@@ -79,6 +80,20 @@ namespace rd {
 				), v);
 			}
 
+			V const *get_old_value() const {
+				return mpark::visit(util::make_visitor(
+						[](typename Event::Add const &e) {
+							return static_cast<V const *>(nullptr);
+						},
+						[](typename Event::Update const &e) {
+							return e.old_value;
+						},
+						[](typename Event::Remove const &e) {
+							e.old_value;
+						}
+				), v);
+			}
+
 			V const *get_new_value() const {
 				return mpark::visit(util::make_visitor(
 						[](typename Event::Add const &e) {
@@ -106,8 +121,10 @@ namespace rd {
 		//endregion
 
 		void view(Lifetime lifetime,
-				  std::function<void(Lifetime lifetime,
-									 std::pair<K const *, V const *> const &)> handler) const override {
+				  std::function< void(Lifetime lifetime,
+				  std::pair<K const *, V const *> const &)
+
+		> handler) const override {
 			advise_add_remove(lifetime, [this, lifetime, handler](AddRemove kind, K const &key, V const &value) {
 				const std::pair<K const *, V const *> entry = std::make_pair(&key, &value);
 				switch (kind) {
@@ -137,7 +154,9 @@ namespace rd {
 			});
 		}
 
-		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, K const &, V const &)> handler) const {
+		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, K const &, V const &)
+
+		> handler) const {
 			advise(lifetime, [handler](Event e) {
 				mpark::visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
@@ -154,7 +173,9 @@ namespace rd {
 			});
 		}
 
-		void view(Lifetime lifetime, std::function<void(Lifetime, K const &, V const &)> handler) const {
+		void view(Lifetime lifetime, std::function< void(Lifetime, K const &, V const &)
+
+		> handler) const {
 			view(lifetime, [handler](Lifetime lf, const std::pair<K const *, V const *> entry) {
 				handler(lf, *entry.first, *entry.second);
 			});

@@ -9,7 +9,7 @@
 
 namespace rd {
 	class IUnknownInstance {
-	protected:
+	public:
 		RdId unknownId{0};
 
 		IUnknownInstance();

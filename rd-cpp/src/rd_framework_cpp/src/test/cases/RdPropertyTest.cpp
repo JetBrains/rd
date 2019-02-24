@@ -17,11 +17,12 @@ using namespace test::util;
 TEST_F(RdFrameworkTestBase, property_statics) {
 	int property_id = 1;
 
-	auto client_property_storage = RdProperty<int32_t>(1);
-	auto server_property_storage = RdProperty<int32_t>(1);
+	auto client_property = RdProperty<int32_t>(1);
+	auto server_property = RdProperty<int32_t>(1);
 
-	auto &client_property = statics(client_property_storage, (property_id));
-	auto &server_property = statics(server_property_storage, (property_id)).slave();
+	statics(client_property, (property_id));
+	statics(server_property, (property_id));
+	server_property.slave();
 
 	std::vector<int> client_log;
 	std::vector<int> server_log;
@@ -60,11 +61,11 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 
 	int property_id = 1;
 
-	RdProperty<DynamicEntity> client_property_storage{DynamicEntity(0)};
-	RdProperty<DynamicEntity> server_property_storage{DynamicEntity(0)};
+	RdProperty<DynamicEntity> client_property{DynamicEntity(0)};
+	RdProperty<DynamicEntity> server_property{DynamicEntity(0)};
 
-	RdProperty<DynamicEntity> &client_property = statics(client_property_storage, (property_id));
-	RdProperty<DynamicEntity> &server_property = statics(server_property_storage, (property_id)).slave();
+	statics(client_property, (property_id));
+	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
 	client_property.get().foo.rdid = server_property.get().foo.rdid = RdId(3);
@@ -149,11 +150,11 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 
 	int property_id = 1;
 
-	RdProperty<list> client_property_storage{list()};
-	RdProperty<list> server_property_storage{list()};
+	RdProperty<list> client_property{list()};
+	RdProperty<list> server_property{list()};
 
-	RdProperty<list> &client_property = statics(client_property_storage, (property_id));
-	RdProperty<list> &server_property = statics(server_property_storage, (property_id)).slave();
+	statics(client_property, (property_id));
+	statics(server_property, (property_id)).slave();
 
 	std::vector<int> client_log(10, 10);
 	std::vector<int> server_log(10, 10);
@@ -212,11 +213,11 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
 
 	int property_id = 1;
 
-	RdProperty<list, ListSerializer> client_property_storage{list()};
-	RdProperty<list, ListSerializer> server_property_storage{list()};
+	RdProperty<list, ListSerializer> client_property{list()};
+	RdProperty<list, ListSerializer> server_property{list()};
 
-	auto &client_property = statics(client_property_storage, (property_id));
-	auto &server_property = statics(server_property_storage, (property_id)).slave();
+	statics(client_property, (property_id));
+	statics(server_property, (property_id)).slave();
 
 	std::vector<int> client_log;
 	std::vector<int> server_log;

@@ -194,10 +194,10 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
-	RdProperty<DynamicEntity> client_property_storage{DynamicEntity(0)}, server_property_storage{DynamicEntity(0)};
+	RdProperty<DynamicEntity> client_property{DynamicEntity(0)}, server_property{DynamicEntity(0)};
 
-	RdProperty<DynamicEntity> &client_property = statics(client_property_storage, (property_id));
-	RdProperty<DynamicEntity> &server_property = statics(server_property_storage, (property_id)).slave();
+	statics(client_property, (property_id));
+	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
 	client_property.get().foo.rdid = server_property.get().foo.rdid = RdId(3);

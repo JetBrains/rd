@@ -2,11 +2,11 @@
 // Created by jetbrains on 01.11.2018.
 //
 
+#include "gtest/gtest.h"
+
 #include "RdFrameworkTestBase.h"
 #include "RdCall.h"
 #include "RdEndpoint.h"
-
-#include "gtest/gtest.h"
 
 #include <string>
 

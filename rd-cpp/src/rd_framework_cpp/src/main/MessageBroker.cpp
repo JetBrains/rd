@@ -7,10 +7,10 @@
 
 #include "MessageBroker.h"
 #include "demangle.h"
-#include "util/shared_function.h"
+#include "shared_function.h"
 #include "Buffer.h"
 
-std::recursive_mutex lock;
+
 
 namespace rd {
 	Logger MessageBroker::logger;

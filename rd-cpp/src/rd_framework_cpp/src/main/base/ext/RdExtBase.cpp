@@ -105,5 +105,6 @@ namespace rd {
 			case RdExtBase::ExtState::Disconnected:
 				return "Disconnected";
 		}
+		return {};
 	}
 }

@@ -18,9 +18,10 @@ namespace rd {
 	private:
 		using WT = value_or_wrapper<T>;
 
+		using TRes = RdTaskResult<T, S>;
+
 		mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
 	public:
-
 		using result_type = RdTaskResult<T, S>;
 
 		static RdTask<T, S> from_result(WT value) {
@@ -30,42 +31,42 @@ namespace rd {
 		}
 
 		void set(WT value) const {
-			typename RdTaskResult<T, S>::Success t(std::move(value));
+			typename TRes::Success t(std::move(value));
 			ptr->result.set(tl::make_optional(std::move(t)));
 		}
 
-		void set_result(RdTaskResult<T, S> value) const {
+		void set_result(TRes value) const {
 			ptr->result.set(tl::make_optional(std::move(value)));
 		}
 
 		void cancel() const {
-			ptr->result.set(typename RdTaskResult<T, S>::Cancelled());
+			ptr->result.set(typename TRes::Cancelled());
 		}
 
 		void fault(std::exception const &e) const {
-			ptr->result.set(typename RdTaskResult<T, S>::Fault(e));
+			ptr->result.set(typename TRes::Fault(e));
 		}
 
 		bool has_value() const {
 			return ptr->result.get().has_value();
 		}
 
-		RdTaskResult<T, S> value_or_throw() const {
-			auto const &opt_res = ptr->result.get();
-			if (opt_res.has_value()) {
-				return *opt_res;
+		TRes value_or_throw() const {
+			auto opt_res = std::move(ptr->result).steal();
+			if (opt_res) {
+				return *std::move(opt_res);
 			}
-			throw std::runtime_error("task is empty");
+			throw std::invalid_argument("task is empty");
 		}
 
 		bool isFaulted() const {
-			return has_value() && value_or_throw().isFaulted(); //todo atomicy
+			return has_value() && value_or_throw().isFaulted(); //todo atomic
 		}
 
-		void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
+		void advise(Lifetime lifetime, std::function<void(TRes const &)> handler) const {
 			ptr->result.advise(lifetime,
-							   [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
-								   if (opt_value.has_value()) {
+							   [handler = std::move(handler)](tl::optional<TRes> const &opt_value) {
+								   if (opt_value) {
 									   handler(*opt_value);
 								   }
 							   });

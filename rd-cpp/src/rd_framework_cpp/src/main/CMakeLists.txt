@@ -25,7 +25,6 @@ add_library(rd_framework_cpp STATIC
         base/IProtocol.cpp base/IProtocol.h
         base/IRdDynamic.h
         base/IWire.h
-        base/ISerializer.h
         base/ISerializersOwner.cpp
         base/IIdentities.h
         impl/RdList.h

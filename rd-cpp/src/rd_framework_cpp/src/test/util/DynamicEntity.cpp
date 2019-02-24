@@ -11,6 +11,8 @@ namespace rd {
 				return DynamicEntity(RdProperty<int32_t>::read(ctx, buffer));
 			}
 
+			std::string DynamicEntity::type_name() const { return "DynamicEntity"; }
+
 			void DynamicEntity::write(SerializationCtx const &ctx, Buffer const &buffer) const {
 				foo.write(ctx, buffer);
 			}
@@ -34,6 +36,8 @@ namespace rd {
 			bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs) {
 				return !(rhs == lhs);
 			}
+
+
 
 		}
 	}

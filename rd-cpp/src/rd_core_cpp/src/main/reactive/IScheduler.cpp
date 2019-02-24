@@ -2,9 +2,9 @@
 // Created by jetbrains on 23.07.2018.
 //
 
-#include <functional>
-
 #include "IScheduler.h"
+
+#include <functional>
 
 namespace rd {
 	void IScheduler::assert_thread() const {

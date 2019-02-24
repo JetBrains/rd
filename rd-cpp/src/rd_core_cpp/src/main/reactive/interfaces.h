@@ -48,8 +48,9 @@ namespace rd {
 		virtual ~ISignal() = default;
 
 		virtual void fire(T const &value) const = 0;
-
-		void fire() const {
+		
+		template<typename U = T>
+		typename std::enable_if<std::is_same<U, void *>::value>::type fire() const {
 			fire(nullptr);
 		}
 	};

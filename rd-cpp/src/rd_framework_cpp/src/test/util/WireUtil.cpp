@@ -4,6 +4,8 @@
 
 #include "demangle.h"
 #include "WireUtil.h"
+#include "core_util.h"
+
 #include "PassiveSocket.h"
 #include "Host.h"
 

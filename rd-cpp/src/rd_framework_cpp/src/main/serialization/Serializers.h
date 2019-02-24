@@ -8,11 +8,12 @@
 #include "RdId.h"
 #include "ISerializable.h"
 #include "Identities.h"
-#include "demangle.h"
+#include "IUnknownInstance.h"
 
 #include <utility>
 #include <iostream>
 #include <unordered_map>
+
 
 namespace rd {
 	class SerializationCtx;
@@ -20,13 +21,23 @@ namespace rd {
 
 namespace rd {
 	class Serializers {
+	private:
+
+		static RdId real_rd_id(IUnknownInstance const &value) {
+			return value.unknownId;
+		}
+
+		static RdId real_rd_id(IPolymorphicSerializable const &value) {
+			return RdId(getPlatformIndependentHash(value.type_name()));
+		}
+
 	public:
 		mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
 																					  Buffer const &)>> readers;
 
-		template<typename T, typename = typename std::enable_if<std::is_base_of<ISerializable, T>::value>::type>
+		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
 		void registry() const {
-			std::string type_name = demangle<T>();
+			std::string type_name = T().type_name();//todo don't call ctor
 			hash_t h = getPlatformIndependentHash(type_name);
 			RdId id(h);
 
@@ -74,22 +85,23 @@ namespace rd {
         readers[id] = std::move(real_reader);
     }*/
 
-		template<typename T>
+
+		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
 		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const T &value) const {
-			std::string type_name = demangle<T>();
+			std::string const &type_name = value.type_name();
 			hash_t h = getPlatformIndependentHash(type_name);
 			std::cerr << "write: " << type_name << " with hash: " << h << std::endl;
 			RdId(h).write(stream);
 
 
-			int32_t lengthTagPosition = stream.get_position();
+			int32_t length_tag_position = stream.get_position();
 			stream.write_integral<int32_t>(0);
-			int32_t objectStartPosition = stream.get_position();
+			int32_t object_start_position = stream.get_position();
 			value.write(ctx, stream);
-			int32_t objectEndPosition = stream.get_position();
-			stream.set_position(lengthTagPosition);
-			stream.write_integral<int32_t>(objectEndPosition - objectStartPosition);
-			stream.set_position(objectEndPosition);
+			int32_t object_end_position = stream.get_position();
+			stream.set_position(length_tag_position);
+			stream.write_integral<int32_t>(object_end_position - object_start_position);
+			stream.set_position(object_end_position);
 		}
 
 		template<typename T>

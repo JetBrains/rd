@@ -32,6 +32,8 @@ namespace rd {
 		mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
 		mutable std::unordered_map<RdId, Mq> broker;
 
+		mutable std::recursive_mutex lock;
+
 		static Logger logger;
 
 		void invoke(const IRdReactive *that, Buffer msg, bool sync = false) const;

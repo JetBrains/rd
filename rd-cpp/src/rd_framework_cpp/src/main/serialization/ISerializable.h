@@ -14,6 +14,11 @@ namespace rd {
 
 		virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const = 0;
 	};
+
+	class IPolymorphicSerializable : public ISerializable {
+	public:
+		virtual std::string type_name() const = 0/*{ throw std::invalid_argument("type doesn't support polymorphic serialization"); }*/;
+	};
 }
 
 

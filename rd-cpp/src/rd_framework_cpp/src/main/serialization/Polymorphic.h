@@ -5,7 +5,6 @@
 #ifndef RD_CPP_POLYMORPHIC_H
 #define RD_CPP_POLYMORPHIC_H
 
-#include "ISerializer.h"
 #include "RdReactiveBase.h"
 #include "SerializationCtx.h"
 
