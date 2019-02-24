@@ -12,11 +12,11 @@ using namespace test;
 TEST_F(RdFrameworkTestBase, signal_statics) {
 	int signal_id = 1;
 
-	RdSignal<int> client_signal_storage;
-	RdSignal<int> server_signal_storage;
+	RdSignal<int> client_signal;
+	RdSignal<int> server_signal;
 
-	RdSignal<int> &client_signal = statics(client_signal_storage, signal_id);
-	RdSignal<int> &server_signal = statics(server_signal_storage, signal_id);
+	statics(client_signal, signal_id);
+	statics(server_signal, signal_id);
 
 	std::vector<int> client_log;
 	std::vector<int> server_log;
@@ -95,11 +95,11 @@ public:
 TEST_F(RdFrameworkTestBase, signal_custom_serializer) {
 	int signal_id = 1;
 
-	RdSignal<int32_t, CustomSerializer> client_signal_storage;
-	RdSignal<int32_t, CustomSerializer> server_signal_storage;
+	RdSignal<int32_t, CustomSerializer> client_signal;
+	RdSignal<int32_t, CustomSerializer> server_signal;
 
-	RdSignal<int32_t, CustomSerializer> &client_signal = statics(client_signal_storage, signal_id);
-	RdSignal<int32_t, CustomSerializer> &server_signal = statics(server_signal_storage, signal_id);
+	statics(client_signal, signal_id);
+	statics(server_signal, signal_id);
 
 	int32_t client_log;
 	int32_t server_log;
@@ -161,19 +161,18 @@ public:
 	friend bool operator!=(const FooScalar &lhs, const FooScalar &rhs) {
 		return !(rhs == lhs);
 	}
+
+
 };
 
 TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
-	serverProtocol->serializers.registry<FooScalar<wchar_t> >();
-	clientProtocol->serializers.registry<FooScalar<wchar_t> >();
-
 	int signal_id = 1;
 
-	RdSignal<FooScalar<wchar_t>> client_signal_storage;
-	RdSignal<FooScalar<wchar_t>> server_signal_storage;
+	RdSignal<FooScalar<wchar_t>> client_signal;
+	RdSignal<FooScalar<wchar_t>> server_signal;
 
-	RdSignal<FooScalar<wchar_t>> &client_signal = statics(client_signal_storage, signal_id);
-	RdSignal<FooScalar<wchar_t>> &server_signal = statics(server_signal_storage, signal_id);
+	statics(client_signal, signal_id);
+	statics(server_signal, signal_id);
 
 	FooScalar<wchar_t> client_log;
 	FooScalar<wchar_t> server_log;
@@ -202,11 +201,11 @@ TEST_F(RdFrameworkTestBase, signal_vector) {
 
 	using array = std::vector<int>;
 
-	RdSignal<array> client_signal_storage;
-	RdSignal<array> server_signal_storage;
+	RdSignal<array> client_signal;
+	RdSignal<array> server_signal;
 
-	RdSignal<array> &client_signal = statics(client_signal_storage, signal_id);
-	RdSignal<array> &server_signal = statics(server_signal_storage, signal_id);
+	statics(client_signal, signal_id);
+	statics(server_signal, signal_id);
 
 	array client_log;
 	array server_log;

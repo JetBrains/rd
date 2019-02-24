@@ -16,7 +16,7 @@
 
 namespace rd {
 	template<typename T, typename S = Polymorphic <T> >
-	class RdTaskResult : public ISerializable {
+	class RdTaskResult final : public ISerializable {
 		using WT = value_or_wrapper<T>;
 	public:
 		class Success {
@@ -105,17 +105,16 @@ namespace rd {
 
 		WT unwrap() const {
 			return mpark::visit(util::make_visitor(
-					[](Success const &value) -> WT {
-						return value.value;
+					[](Success &&value) -> WT {
+						return std::move(value.value);
 					},
-					[](Cancelled const &value) -> WT {
+					[](Cancelled &&value) -> WT {
 						throw std::invalid_argument("Task finished in Cancelled state");
 					},
-					[](Fault const &value) -> WT {
-						//                    throw value.error;
+					[](Fault &&value) -> WT {
 						throw std::runtime_error(to_string(value.reasonMessage));
 					}
-			), v);
+			), std::move(v));
 		}
 
 		bool isFaulted() const {

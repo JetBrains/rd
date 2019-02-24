@@ -40,6 +40,8 @@ namespace rd {
 				protocol->serializers.registry<DynamicExt>();
 			}
 
+			std::string DynamicExt::type_name() const { return "DynamicExt"; }
+
 			/*
 void DynamicExt::bind(Lifetime lf, IRdDynamic const *parent, std::wstring const &name) const {
     RdExtBase::bind(lf, parent, name);

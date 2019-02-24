@@ -36,7 +36,7 @@ namespace rd {
 
 				//primary ctor
 			public:
-				explicit ConcreteEntity(::std::wstring filePath);
+				explicit ConcreteEntity(std::wstring filePath);
 
 				//default ctors and dtors
 
@@ -76,6 +76,8 @@ namespace rd {
 
 				//hash code trait
 				size_t hashCode() const override;
+
+				std::string type_name() const override;
 			};
 		}
 	}

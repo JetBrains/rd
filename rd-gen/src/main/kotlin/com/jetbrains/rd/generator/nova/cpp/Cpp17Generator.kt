@@ -361,7 +361,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         return if (this.base == null) {
             val result = arrayListOf<String>()
             if (this !is Toplevel) {
-                result.add("rd::ISerializable" + withMembers.condstr { "()" })
+                result.add("rd::IPolymorphicSerializable" + withMembers.condstr { "()" })
             }
             baseName?.let { result.add(it) }
             result
@@ -405,19 +405,16 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 //endregion
 
     private fun File.cmakeLists(targetName: String, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList(), subdirectories: List<String> = emptyList()) {
-        fun String.toLibrary(): String {
-            return "${this}"
-        }
         mkdirs()
         File(this, "CMakeLists.txt").run {
             printWriter().use {
-                it.println("cmake_minimum_required(VERSION 3.10)")
-                it.println("add_library(${targetName.toLibrary()} STATIC ${fileNames.joinToString(separator = eol)})")
+                it.println("cmake_minimum_required(VERSION 3.11)")
+                it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)})")
                 val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
-                val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name.toLibrary() }
+                val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 it.println(subdirectories.map { "add_subdirectory(${it})" }.joinToString(separator = eol))
-                it.println("target_include_directories(${targetName.toLibrary()} PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
-                it.println("target_link_libraries(${targetName.toLibrary()} PUBLIC rd_framework_cpp $toplevelsLibraryList)")
+                it.println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
+                it.println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
             }
         }
     }
@@ -433,8 +430,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 //            val declaredToplevels = listOfNotNull(tl.pointcut?.root)
             val declaredToplevels = tl.root.toplevels.minus(tl)
             //todo chose only needed libraries
-            val toplevelsDependencies = if (tl.isLibrary) emptyList<Toplevel>() else declaredToplevels
-            directory.cmakeLists(tl.name, fileNames, toplevelsDependencies)
+            directory.cmakeLists(tl.name, fileNames)
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     type.fsPath(tl, isDefinition).run {
@@ -618,6 +614,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
             comment("hash code trait")
             declare(hashCodeTraitDecl(decl))
+
+            declare(typenameTraitDecl(decl))
 //            comment("pretty print")
 //            prettyPrintTrait(decl)
 
@@ -938,7 +936,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected fun equalsTraitDecl(decl: Declaration): Signature {
 //        val signature = Signature("bool", "equals(${decl.name} const& other)", decl.name).const()
-        val signature = Signature("bool", "equals(rd::ISerializable const& object)", decl.name).const()
+        val signature = Signature("bool", "equals(rd::IPolymorphicSerializable const& object)", decl.name).const()
         return if (decl.isAbstract) {
             signature.abstract(decl)
         } else {
@@ -970,6 +968,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 signature.override()
             }
         }
+    }
+
+    protected fun typenameTraitDecl(decl: Declaration): Signature? {
+        return Signature("std::string", "()", decl.name).const().override()
     }
 
     protected fun PrettyPrinter.hashSpecialization(decl: Declaration) {
@@ -1033,6 +1035,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
         comment("hash code trait")
         hashCodeTraitDef(decl)
+
+        typenameTraitDef(decl)
 //        comment("pretty print")
 //            prettyPrintTrait(decl)
 
@@ -1366,7 +1370,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             }
         } else {
             braceBlock {
-                +"if (typeid(lhs) != typeid(rhs)) return false;"
+                +"if (lhs.type_name() != rhs.type_name()) return false;"
                 +"return lhs.equals(rhs);"
             }
         }
@@ -1408,6 +1412,14 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 }
 
                 +"return __r;"
+            }
+        }
+    }
+
+    protected fun PrettyPrinter.typenameTraitDef(decl: Declaration) {
+        typenameTraitDecl(decl)?.let {
+            define(it) {
+                +"""return "${decl.name}";"""
             }
         }
     }

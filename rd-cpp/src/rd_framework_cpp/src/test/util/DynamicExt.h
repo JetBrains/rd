@@ -12,7 +12,7 @@
 namespace rd {
 	namespace test {
 		namespace util {
-			class DynamicExt : public RdExtBase, public ISerializable {
+			class DynamicExt : public RdExtBase, public IPolymorphicSerializable {
 			public:
 				RdProperty<std::wstring> bar{L""};
 				std::wstring debugName;
@@ -33,6 +33,9 @@ namespace rd {
 				void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
 
 				static void create(IProtocol *protocol);
+
+
+				std::string type_name() const override;
 			};
 		}
 	}

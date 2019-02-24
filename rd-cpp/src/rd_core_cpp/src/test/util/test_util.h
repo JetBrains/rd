@@ -13,15 +13,15 @@
 
 #include <vector>
 
-std::string operator "" _s(char const *str, size_t len);
-
-
-template<typename T>
-constexpr std::vector<T> arrayListOf(std::initializer_list<T> args) {
-	return std::vector<T>(args);
-}
-
 namespace rd {
+	std::string operator "" _s(char const *str, size_t len);
+
+
+	template<typename T>
+	constexpr std::vector<T> arrayListOf(std::initializer_list<T> args) {
+		return std::vector<T>(args);
+	}
+
 	template<typename F, typename S>
 	std::string to_string(const std::pair<F, S> p) {
 		return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
@@ -38,7 +38,7 @@ namespace rd {
 	}
 
 	template<typename K, typename V>
-	std::string to_wstring_map_event(typename IViewableMap<K, V>::Event const &e) {
+	std::string to_string_map_event(typename IViewableMap<K, V>::Event const &e) {
 		using Event = typename IViewableMap<K, V>::Event;
 		std::string res = mpark::visit(util::make_visitor(
 				[](typename Event::Add const &e) {
@@ -81,6 +81,12 @@ namespace rd {
 				}
 		), e.v);
 		return res;
+	}
+
+	template<typename T>
+	std::string to_string_set_event(typename IViewableSet<T>::Event const &e) {
+		using Event = typename IViewableList<T>::Event;
+		return to_string(e.kind) + " " + to_string(e.value);
 	}
 }
 

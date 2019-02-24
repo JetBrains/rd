@@ -7,8 +7,7 @@
 #include "RdMap.h"
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
-//#include "test_util.h"
-#include "../../../../rd_core_cpp/src/test/util/test_util.h"
+#include "test_util.h"
 
 using namespace rd;
 using namespace test;
@@ -17,50 +16,50 @@ using namespace test::util;
 TEST_F(RdFrameworkTestBase, rd_map_statics) {
 	int32_t id = 1;
 
-	RdMap<int32_t, std::wstring> server_map_storage;
-	RdMap<int32_t, std::wstring> client_map_storage;
+	RdMap<int32_t, std::wstring> server_map;
+	RdMap<int32_t, std::wstring> client_map;
 
-	RdMap<int32_t, std::wstring> &serverMap = statics(server_map_storage, id);
-	RdMap<int32_t, std::wstring> &clientMap = statics(client_map_storage, id);
+	statics(server_map, id);
+	statics(client_map, id);
 
-	server_map_storage.optimize_nested = true;
-	client_map_storage.optimize_nested = true;
+	server_map.optimize_nested = true;
+	client_map.optimize_nested = true;
 
 	std::vector<std::string> logUpdate;
-	clientMap.advise(Lifetime::Eternal(), [&](typename IViewableMap<int32_t, std::wstring>::Event entry) {
-		logUpdate.push_back(to_wstring_map_event<int32_t, std::wstring>(entry));
+	client_map.advise(Lifetime::Eternal(), [&](typename IViewableMap<int32_t, std::wstring>::Event entry) {
+		logUpdate.push_back(to_string_map_event<int32_t, std::wstring>(entry));
 	});
 
-	EXPECT_EQ(0, serverMap.size());
-	EXPECT_EQ(0, clientMap.size());
+	EXPECT_EQ(0, server_map.size());
+	EXPECT_EQ(0, client_map.size());
 
-	serverMap.set(1, L"Server value 1");
-	serverMap.set(2, L"Server value 2");
-	serverMap.set(3, L"Server value 3");
+	server_map.set(1, L"Server value 1");
+	server_map.set(2, L"Server value 2");
+	server_map.set(3, L"Server value 3");
 
-	EXPECT_EQ(0, clientMap.size());
-	bindStatic(clientProtocol.get(), clientMap, "top");
-	bindStatic(serverProtocol.get(), serverMap, "top");
+	EXPECT_EQ(0, client_map.size());
+	bindStatic(clientProtocol.get(), client_map, "top");
+	bindStatic(serverProtocol.get(), server_map, "top");
 
-	EXPECT_EQ(3, clientMap.size());
-	EXPECT_EQ(L"Server value 1", *clientMap.get(1));
-	EXPECT_EQ(L"Server value 2", *clientMap.get(2));
-	EXPECT_EQ(L"Server value 3", *clientMap.get(3));
-	EXPECT_EQ(nullptr, clientMap.get(4));
-	EXPECT_EQ(nullptr, clientMap.get(4));
+	EXPECT_EQ(3, client_map.size());
+	EXPECT_EQ(L"Server value 1", *client_map.get(1));
+	EXPECT_EQ(L"Server value 2", *client_map.get(2));
+	EXPECT_EQ(L"Server value 3", *client_map.get(3));
+	EXPECT_EQ(nullptr, client_map.get(4));
+	EXPECT_EQ(nullptr, client_map.get(4));
 
-	serverMap.set(4, L"Server value 4");
-	clientMap.set(4, L"Client value 4");
+	server_map.set(4, L"Server value 4");
+	client_map.set(4, L"Client value 4");
 
-	EXPECT_EQ(L"Client value 4", *clientMap.get(4));
-	EXPECT_EQ(L"Client value 4", *serverMap.get(4));
+	EXPECT_EQ(L"Client value 4", *client_map.get(4));
+	EXPECT_EQ(L"Client value 4", *server_map.get(4));
 
-	clientMap.set(5, L"Client value 5");
-	serverMap.set(5, L"Server value 5");
+	client_map.set(5, L"Client value 5");
+	server_map.set(5, L"Server value 5");
 
 
-	EXPECT_EQ(L"Server value 5", *clientMap.get(5));
-	EXPECT_EQ(L"Server value 5", *serverMap.get(5));
+	EXPECT_EQ(L"Server value 5", *client_map.get(5));
+	EXPECT_EQ(L"Server value 5", *server_map.get(5));
 
 
 	EXPECT_EQ((std::vector<std::string>{"Add 1:Server value 1",
@@ -79,23 +78,23 @@ TEST_F(RdFrameworkTestBase, rd_map_statics) {
 TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 	int32_t id = 1;
 
-	RdMap<int32_t, DynamicEntity> server_map_storage;
-	RdMap<int32_t, DynamicEntity> client_map_storage;
+	RdMap<int32_t, DynamicEntity> server_map;
+	RdMap<int32_t, DynamicEntity> client_map;
 
-	RdMap<int32_t, DynamicEntity> &serverMap = statics(server_map_storage, id);
-	RdMap<int32_t, DynamicEntity> &clientMap = statics(client_map_storage, id);
+	statics(server_map, id);
+	statics(client_map, id);
 
 	DynamicEntity::create(clientProtocol.get());
 	DynamicEntity::create(serverProtocol.get());
 
-	EXPECT_TRUE(serverMap.empty());
-	EXPECT_TRUE(clientMap.empty());
+	EXPECT_TRUE(server_map.empty());
+	EXPECT_TRUE(client_map.empty());
 
-	bindStatic(clientProtocol.get(), clientMap, "top");
-	bindStatic(serverProtocol.get(), serverMap, "top");
+	bindStatic(clientProtocol.get(), client_map, "top");
+	bindStatic(serverProtocol.get(), server_map, "top");
 
 	std::vector<std::wstring> log;
-	serverMap.view(Lifetime::Eternal(), [&](Lifetime lf, int32_t const &k, DynamicEntity const &v) {
+	server_map.view(Lifetime::Eternal(), [&](Lifetime lf, int32_t const &k, DynamicEntity const &v) {
 		lf->bracket(
 				[&log, &k]() { log.push_back(L"start " + std::to_wstring(k)); },
 				[&log, &k]() { log.push_back(L"finish " + std::to_wstring(k)); }
@@ -105,21 +104,21 @@ TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 		});
 	});
 
-	clientMap.set(2, DynamicEntity(1));
+	client_map.set(2, DynamicEntity(1));
 
-	serverMap.set(0, DynamicEntity(2));
-	serverMap.set(0, DynamicEntity(3));
+	server_map.set(0, DynamicEntity(2));
+	server_map.set(0, DynamicEntity(3));
 
-	EXPECT_EQ(2, clientMap.size());
-	EXPECT_EQ(2, serverMap.size());
+	EXPECT_EQ(2, client_map.size());
+	EXPECT_EQ(2, server_map.size());
 
-	clientMap.remove(0);
-	clientMap.set(5, DynamicEntity(4));
+	client_map.remove(0);
+	client_map.set(5, DynamicEntity(4));
 
-	clientMap.clear();
+	client_map.clear();
 
-	EXPECT_TRUE(clientMap.empty());
-	EXPECT_TRUE(serverMap.empty());
+	EXPECT_TRUE(client_map.empty());
+	EXPECT_TRUE(server_map.empty());
 
 	EXPECT_EQ((std::vector<std::wstring>{L"start 2", L"1",
 										 L"start 0", L"2",

@@ -6,9 +6,9 @@
 #define RD_CPP_ISCHEDULER_H
 
 
-#include <functional>
-
 #include "Logger.h"
+
+#include <functional>
 
 namespace rd {
 	class IScheduler {

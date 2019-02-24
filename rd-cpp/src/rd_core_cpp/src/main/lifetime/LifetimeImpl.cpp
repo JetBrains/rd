@@ -2,10 +2,10 @@
 // Created by jetbrains on 09.07.2018.
 //
 
-#include <utility>
-
 #include "LifetimeImpl.h"
 #include "Logger.h"
+
+#include <utility>
 
 namespace rd {
 #if __cplusplus < 201703L

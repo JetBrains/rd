@@ -6,7 +6,7 @@
 #define RD_CPP_EXTPROPERTY_H
 
 
-#include "ext/RdExtBase.h"
+#include "RdExtBase.h"
 #include "RdProperty.h"
 
 namespace rd {

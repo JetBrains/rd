@@ -8,7 +8,7 @@ add_library(rd_framework_cpp_util
         ConcreteEntity.cpp ConcreteEntity.h
         ConcreteEntity_Unknown.cpp ConcreteEntity_Unknown.h
         SimpleWire.cpp SimpleWire.h
-        )
+        FakeEntity.cpp FakeEntity.h)
 
 target_include_directories(rd_framework_cpp_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

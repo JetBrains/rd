@@ -75,27 +75,27 @@ namespace rd {
 		Wrapper(std::unique_ptr<F> &&ptr) : ptr(std::move(ptr)) {}
 		//endregion
 
-		T &operator*() &{
+		constexpr T &operator*() &{
 			return *ptr;
 		};
 
-		T const &operator*() const &{
+		constexpr T const &operator*() const &{
 			return *ptr;
 		};
 
-		T &&operator*() &&{
-			return *ptr;
-		};
+		/*constexpr T &&operator*() &&{
+			return *ptr.get();
+		};*/
 
-		operator bool() const {
+		constexpr explicit operator bool() const noexcept {
 			return (bool) (ptr);
 		}
 
-		friend bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
+		friend constexpr bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
 			return *(lhs.ptr) == *(rhs.ptr);
 		}
 
-		friend bool operator!=(const Wrapper &lhs, const Wrapper &rhs) {
+		friend constexpr bool operator!=(const Wrapper &lhs, const Wrapper &rhs) {
 			return !(rhs == lhs);
 		}
 	};

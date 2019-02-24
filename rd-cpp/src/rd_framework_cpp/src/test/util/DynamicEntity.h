@@ -13,7 +13,7 @@
 namespace rd {
 	namespace test {
 		namespace util {
-			class DynamicEntity : public RdBindableBase, public ISerializable {
+			class DynamicEntity : public RdBindableBase, public IPolymorphicSerializable {
 			public:
 				RdProperty <int32_t> foo;
 
@@ -23,6 +23,8 @@ namespace rd {
 
 
 				//region ctor/dtor
+
+				DynamicEntity() = default;
 
 				DynamicEntity(DynamicEntity const &other) = delete;
 
@@ -51,6 +53,8 @@ namespace rd {
 				friend bool operator==(const DynamicEntity &lhs, const DynamicEntity &rhs);
 
 				friend bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs);
+
+				std::string type_name() const override;
 			};
 		}
 	}

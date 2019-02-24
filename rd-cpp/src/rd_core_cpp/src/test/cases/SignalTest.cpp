@@ -2,8 +2,9 @@
 // Created by jetbrains on 09.07.2018.
 //
 
-#include <test_util.h>
 #include "gtest/gtest.h"
+
+#include "test_util.h"
 
 #include "interfaces.h"
 #include "SignalX.h"

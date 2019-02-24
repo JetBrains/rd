@@ -11,6 +11,7 @@
 
 #include <random>
 #include <algorithm>
+#include <numeric>
 
 using namespace rd;
 

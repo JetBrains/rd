@@ -7,9 +7,8 @@
 
 
 #include "IViewableList.h"
-#include "interfaces.h"
 #include "SignalX.h"
-#include "util/core_util.h"
+#include "core_util.h"
 
 #include <algorithm>
 
