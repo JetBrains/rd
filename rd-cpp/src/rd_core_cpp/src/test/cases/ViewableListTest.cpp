@@ -4,6 +4,8 @@
 #include "test_util.h"
 
 using namespace rd;
+using namespace rd::test;
+using namespace rd::test::util;
 
 TEST(viewable_list, add_remove_advise) {
 	std::unique_ptr<IViewableList<int>> list = std::make_unique<ViewableList<int>>();
@@ -16,7 +18,7 @@ TEST(viewable_list, add_remove_advise) {
 		list->remove(0);
 	});
 
-	std::vector<std::string> expected{"Add 0 0"_s, "Remove 0 0"_s};
+	std::vector<std::string> expected{"Add 0 0"s, "Remove 0 0"s};
 	EXPECT_EQ(expected, log);
 }
 
@@ -107,45 +109,45 @@ TEST(viewable_list, other_reactive_api) {
 		});
 		list->add(0);
 		list->add(0, 1);
-		//EXPECT_EQ(log, arrayListOf({"Add 0 0"_s, "Add 0 1"_s}));
+		//EXPECT_EQ(log, arrayListOf({"Add 0 0"s, "Add 0 1"s}));
 		EXPECT_EQ(log, (std::vector<std::string>{"Add 0 0", "Add 0 1"}));
 
 
-		EXPECT_EQ(convert_to_list<int>(*list), arrayListOf({1, 0}));
+		EXPECT_EQ(convert_to_list<int>(*list), arrayListOf(1, 0));
 		log.clear();
 
 		list->set(1, 2);
-		EXPECT_EQ(log, arrayListOf({"Remove 1 0"_s, "Add 1 2"_s}));
-		EXPECT_EQ(convert_to_list(*list), arrayListOf({1, 2}));
+		EXPECT_EQ(log, arrayListOf("Remove 1 0"s, "Add 1 2"s));
+		EXPECT_EQ(convert_to_list(*list), arrayListOf(1, 2));
 		log.clear();
 
 		list->clear();
-		EXPECT_EQ(log, arrayListOf({"Remove 1 2"_s, "Remove 0 1"_s}));
+		EXPECT_EQ(log, arrayListOf("Remove 1 2"s, "Remove 0 1"s));
 		EXPECT_TRUE(list->empty());
 		log.clear();
 
 		list->add(1);
 		list->addAll({1, 2});
 
-		EXPECT_EQ(log, arrayListOf({"Add 0 1"_s, "Add 1 1"_s, "Add 2 2"_s}));
-		EXPECT_EQ(convert_to_list(*list), arrayListOf({1, 1, 2}));
+		EXPECT_EQ(log, arrayListOf("Add 0 1"s, "Add 1 1"s, "Add 2 2"s));
+		EXPECT_EQ(convert_to_list(*list), arrayListOf(1, 1, 2));
 		log.clear();
 
 		list->addAll(1, {3, 4});
 
-		EXPECT_EQ(log, arrayListOf({"Add 1 3"_s, "Add 2 4"_s}));
-		EXPECT_EQ(convert_to_list(*list), arrayListOf({1, 3, 4, 1, 2}));
+		EXPECT_EQ(log, arrayListOf("Add 1 3"s, "Add 2 4"s));
+		EXPECT_EQ(convert_to_list(*list), arrayListOf(1, 3, 4, 1, 2));
 		log.clear();
 
 		list->removeAll({1, 3});
 
-		EXPECT_EQ(log, arrayListOf({"Remove 3 1"_s, "Remove 1 3"_s, "Remove 0 1"_s}));
-		EXPECT_EQ(convert_to_list(*list), arrayListOf({4, 2}));
+		EXPECT_EQ(log, arrayListOf("Remove 3 1"s, "Remove 1 3"s, "Remove 0 1"s));
+		EXPECT_EQ(convert_to_list(*list), arrayListOf(4, 2));
 		log.clear();
 
 		list->removeAt(0);
-		EXPECT_EQ(log, arrayListOf({"Remove 0 4"_s}));
-		EXPECT_EQ(convert_to_list(*list), arrayListOf({2}));
+		EXPECT_EQ(log, arrayListOf("Remove 0 4"s));
+		EXPECT_EQ(convert_to_list(*list), arrayListOf(2));
 		log.clear();
 
 		/*list->retainAll(listOf(1, 2))

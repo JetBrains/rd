@@ -26,7 +26,7 @@ namespace rd {
 		}
 
 		void advise(Lifetime lifetime, std::function<void()> handler) const {
-			advise(lifetime, [handler = std::move(handler)](void *) {
+			advise(lifetime, [handler = std::move(handler)](Void) {
 				handler();
 			});
 		}
@@ -50,8 +50,8 @@ namespace rd {
 		virtual void fire(T const &value) const = 0;
 		
 		template<typename U = T>
-		typename std::enable_if<std::is_same<U, void *>::value>::type fire() const {
-			fire(nullptr);
+		typename std::enable_if<std::is_same<U, Void>::value>::type fire() const {
+			fire(Void{});
 		}
 	};
 }

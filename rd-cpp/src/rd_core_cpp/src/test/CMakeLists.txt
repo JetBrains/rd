@@ -6,7 +6,7 @@ add_executable(rd_core_cpp_test
         cases/PropertyTest.cpp
         cases/ViewableSetTest.cpp
         cases/AdviseVsViewTest.cpp
-        cases/ViewableListTest.cpp)
+        cases/ViewableListTest.cpp cases/GeneratorUtilTest.cpp)
 
 add_subdirectory(util)
 

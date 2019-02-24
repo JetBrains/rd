@@ -102,13 +102,13 @@ public:
 	};
 
 	template<>
-	class Polymorphic<void *> {
+	class Polymorphic<Void> {
 	public:
-		static void *read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return nullptr;
+		static Void read(SerializationCtx const &ctx, Buffer const &buffer) {
+			return {};
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, void *const &value) {}
+		static void write(SerializationCtx const &ctx, Buffer const &buffer, Void const &value) {}
 	};
 
 	template<typename T>

@@ -7,7 +7,7 @@
 
 #include "Lifetime.h"
 #include "interfaces.h"
-#include "erase_if.h"
+#include "core_util.h"
 
 #include <utility>
 #include <functional>
@@ -116,6 +116,6 @@ namespace rd {
 }
 
 static_assert(std::is_move_constructible<rd::Signal<int>>::value, "Is not move constructible from Signal<int>");
-static_assert(std::is_move_constructible<rd::Signal<void *>>::value, "Is not move constructible from Signal<void *>");
+static_assert(std::is_move_constructible<rd::Signal<rd::Void>>::value, "Is not move constructible from Signal<Void>");
 
 #endif //RD_CPP_CORE_SIGNAL_H

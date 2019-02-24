@@ -5,7 +5,11 @@
 #ifndef RD_CORE_CPP_UTIL_H
 #define RD_CORE_CPP_UTIL_H
 
+#include "erase_if.h"
+#include "gen_util.h"
+#include "overloaded.h"
 #include "wrapper.h"
+#include "Void.h"
 
 #include "optional.hpp"
 
@@ -135,6 +139,21 @@ namespace rd {
 
 	inline std::wstring to_wstring(std::string const &s) {
 		return std::wstring(s.begin(), s.end());
+	}
+
+	template<typename F, typename S>
+	std::string to_string(const std::pair<F, S> p) {
+		return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
+	}
+
+	template<typename F, typename S>
+	std::string to_string(const std::pair<F, S *> p) {
+		return "(" + to_string(p.first) + ", " + to_string(*p.second) + ")";
+	}
+
+	template<typename F, typename S>
+	std::string to_string(const std::pair<F *, S *> p) {
+		return "(" + to_string(*p.first) + ", " + to_string(*p.second) + ")";
 	}
 }
 

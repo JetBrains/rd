@@ -1,5 +1,3 @@
-#include <utility>
-
 //
 // Created by jetbrains on 09.07.2018.
 //
@@ -12,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include <utility>
 
 namespace rd {
 	class LifetimeImpl {

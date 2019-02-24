@@ -32,8 +32,8 @@ TEST(signal, advice) {
 			 }
 			);
 
-    std::vector<int> expected = {2, 3, 0};
-    EXPECT_EQ(expected, log);
+	std::vector<int> expected = {2, 3, 0};
+	EXPECT_EQ(expected, log);
 }
 
 TEST(signal, temporary_definition) {
@@ -78,7 +78,7 @@ TEST(signal, bamboo) {
 }
 
 TEST(signal, priority_advise) {
-	Signal<void *> signal;
+	Signal<Void> signal;
 	std::vector<int> log;
 	signal.advise_eternal([&log] { log.push_back(1); });
 	signal.advise_eternal([&log] { log.push_back(2); });
@@ -96,8 +96,8 @@ TEST(signal, priority_advise) {
 }
 
 TEST(signal, testRecursion) {
-	Signal<void *> A;
-	Signal<void *> B;
+	Signal<Void> A;
+	Signal<Void> B;
 	LifetimeDefinition lifetimeA(Lifetime::Eternal());
 	LifetimeDefinition lifetimeB(Lifetime::Eternal());
 	std::vector<std::string> log;
@@ -118,7 +118,7 @@ TEST(signal, move) {
 }
 
 TEST(signal, void_specialization) {
-	Signal<void *> signal;
+	Signal<Void> signal;
 	Lifetime::use([&](Lifetime lf) {
 		bool fired = false;
 		signal.advise(lf, [&] {

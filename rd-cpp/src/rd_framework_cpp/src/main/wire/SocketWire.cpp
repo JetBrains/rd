@@ -87,7 +87,7 @@ namespace rd {
 			send_var.notify_all();
 		}
 		{
-			std::lock_guard<std::timed_mutex> guard(lock);
+			std::lock_guard<decltype(lock)> guard(lock);
 			if (lifetime->is_terminated()) {
 				return;
 			}
@@ -154,7 +154,7 @@ namespace rd {
 											this->id + ": failed to open ActiveSocket");
 
 						{
-							std::lock_guard<std::timed_mutex> guard(lock);
+							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {
 								catch_([this]() { socket->Close(); });
 							}
@@ -162,7 +162,7 @@ namespace rd {
 
 						set_socket_provider(socket);
 					} catch (std::exception const &e) {
-						std::lock_guard<std::timed_mutex> guard(lock);
+						std::lock_guard<decltype(lock)> guard(lock);
 						bool shouldReconnect = false;
 						if (!lifetime->is_terminated()) {
 							cv.wait_for(lock, timeout);
@@ -188,7 +188,7 @@ namespace rd {
 			logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
 			{
-				std::lock_guard<std::timed_mutex> guard(lock);
+				std::lock_guard<decltype(lock)> guard(lock);
 				logger.debug(this->id + ": closing socket");
 				catch_([this]() {
 					if (socket != nullptr) {
@@ -221,7 +221,7 @@ namespace rd {
 				MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed");
 
 				{
-					std::lock_guard<std::timed_mutex> guard(lock);
+					std::lock_guard<decltype(lock)> guard(lock);
 					if (lifetime->is_terminated()) {
 						catch_([this]() {
 							logger.debug(this->id + ": closing passive socket");
@@ -251,7 +251,7 @@ namespace rd {
 			});
 			catch_([this] {
 				{
-					std::lock_guard<std::timed_mutex> guard(lock);
+					std::lock_guard<decltype(lock)> guard(lock);
 					logger.debug(this->id + ": closing socket");
 					if (socket != nullptr) {
 						MY_ASSERT_THROW_MSG(socket->Close(), this->id + ": failed to close socket");

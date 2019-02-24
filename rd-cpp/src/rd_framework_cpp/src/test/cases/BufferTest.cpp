@@ -15,6 +15,18 @@
 
 using namespace rd;
 
+SerializationCtx ctx;
+
+TEST(BufferTest, RdVoid) {
+	Buffer buffer;
+	using S = Polymorphic<Void>;
+	S::write(ctx, buffer, Void{});
+	EXPECT_EQ(0, buffer.get_position());
+	auto v = S::read(ctx, buffer);
+	EXPECT_EQ(Void{}, v);
+	EXPECT_EQ(0, buffer.get_position());
+}
+
 TEST(BufferTest, readWritePod) {
 	Buffer buffer;
 
@@ -76,7 +88,7 @@ TEST(BufferTest, string) {
 		s += static_cast<wchar_t>(i);
 	}
 
-	Polymorphic<std::wstring>::write(SerializationCtx(), buffer, s);
+	Polymorphic<std::wstring>::write(ctx, buffer, s);
 	buffer.write_integral<int32_t>(s.length());
 
 	EXPECT_EQ(buffer.get_position(), (
@@ -86,7 +98,7 @@ TEST(BufferTest, string) {
 	));
 
 	buffer.rewind();
-	auto res = Polymorphic<std::wstring>::read(SerializationCtx(), buffer);
+	auto res = Polymorphic<std::wstring>::read(ctx, buffer);
 	auto len = buffer.read_integral<int32_t>();
 	EXPECT_EQ(s, res);
 	EXPECT_EQ(len, s.length());

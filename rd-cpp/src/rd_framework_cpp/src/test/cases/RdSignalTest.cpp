@@ -51,8 +51,8 @@ TEST_F(RdFrameworkTestBase, signal_statics) {
 TEST_F(RdFrameworkTestBase, signal_void_statics) {
 	int signal_id = 1;
 
-	RdSignal<void *> client_signal;
-	RdSignal<void *> server_signal;
+	RdSignal<Void> client_signal;
+	RdSignal<Void> server_signal;
 
 	bindStatic(clientProtocol.get(), statics(client_signal, signal_id),
 			   "top");
