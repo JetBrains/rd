@@ -151,7 +151,7 @@ namespace rd {
 namespace std {
 	template<typename T>
 	struct hash<rd::Wrapper<T>> {
-		size_t operator()(const rd::Wrapper<T> &value) const {
+		size_t operator()(const rd::Wrapper<T> &value) const noexcept {
 			return std::hash<T>()(*value);
 		}
 	};

@@ -9,6 +9,8 @@
 #include "test_util.h"
 
 using namespace rd;
+using namespace rd::test;
+using namespace rd::test::util;
 
 TEST(viewable_map, advise) {
 	std::unique_ptr<IViewableMap<int, int> > map = std::make_unique<ViewableMap<int, int>>();
@@ -48,11 +50,11 @@ TEST(viewable_map, advise) {
 		EXPECT_EQ(0, *map->get(0));
 	});
 	EXPECT_EQ(arrayListOf(
-			{"Add 0:0"_s, "Add 1:1"_s, "Remove 0:0"_s, "Add 0:1"_s, "Add 10:10"_s, "Remove 0:1"_s, "Add 0:0"_s,
-			 "Remove 1:1"_s, "End"_s}), log_add_remove);
-	EXPECT_EQ(arrayListOf({"Add 0:0"_s, "Add 1:1"_s, "Update 0:1"_s, "Add 10:10"_s, "Update 0:0"_s, "Remove 1"_s}),
+			"Add 0:0"s, "Add 1:1"s, "Remove 0:0"s, "Add 0:1"s, "Add 10:10"s, "Remove 0:1"s, "Add 0:0"s,
+			"Remove 1:1"s, "End"s), log_add_remove);
+	EXPECT_EQ(arrayListOf("Add 0:0"s, "Add 1:1"s, "Update 0:1"s, "Add 10:10"s, "Update 0:0"s, "Remove 1"s),
 			  log_update);
-	EXPECT_EQ(arrayListOf({0, 1, -0, 0, 10, -1, 0, -1, /*this events are arguable*/0, -10}), log_view);
+	EXPECT_EQ(arrayListOf(0, 1, -0, 0, 10, -1, 0, -1, /*this events are arguable*/0, -10), log_view);
 
 	log_add_remove.clear();
 	Lifetime::use([&](Lifetime lifetime) {
@@ -66,7 +68,7 @@ TEST(viewable_map, advise) {
 		EXPECT_TRUE(map->empty());
 	});
 
-	EXPECT_EQ(arrayListOf({"Add 0:0"_s, "Add 10:10"_s, "Remove 0:0"_s, "Remove 10:10"_s}), log_add_remove);
+	EXPECT_EQ(arrayListOf("Add 0:0"s, "Add 10:10"s, "Remove 0:0"s, "Remove 10:10"s), log_add_remove);
 }
 
 TEST (viewable_map, view) {

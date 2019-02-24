@@ -83,7 +83,7 @@ int main() {
 
 	ExtModel const &ext = ExtModel::getOrCreateExtensionOf(model);
 
-	ext.get_checker().advise(lifetime, [](void *) {
+	ext.get_checker().advise(lifetime, [](Void) {
 		std::cout << "CHECK" << std::endl;
 	});
 	//endregion
