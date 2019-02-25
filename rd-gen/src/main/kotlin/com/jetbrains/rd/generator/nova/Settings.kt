@@ -22,8 +22,12 @@ internal val genInstanceKeys = mutableMapOf<Pair<GeneratorPredicate, ISetting<*,
 fun <T:Any, S:SettingsHolder> ISetting<T, S>.forGenerator(generator: IGenerator) : ISetting<T, S> =
     genInstanceKeys.getOrPut({ key: IGenerator -> key == generator } to this) { object : ISetting<T,S> {} } as ISetting<T, S>
 
+data class FlowTransformKey(val flowTransform: FlowTransform) : GeneratorPredicate {
+    override fun invoke(p1: IGenerator): Boolean = p1.flowTransform == flowTransform
+}
+
 fun <T:Any, S:SettingsHolder> ISetting<T, S>.forFlowTransform(flowTransform: FlowTransform) : ISetting<T, S> =
-    genInstanceKeys.getOrPut({ key: IGenerator -> key.flowTransform == flowTransform } to this) { object : ISetting<T,S> {} } as ISetting<T, S>
+    genInstanceKeys.getOrPut(FlowTransformKey(flowTransform) to this) { object : ISetting<T,S> {} } as ISetting<T, S>
 
 
 fun <T: Any, S : SettingsHolder> S.setting(key: ISetting<T, S>, value: T) = apply { settings[key] = value }
