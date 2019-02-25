@@ -1,14 +1,14 @@
-package com.jetbrains.rider.generator.nova.cpp
+package com.jetbrains.rd.generator.nova.cpp
 
-import com.jetbrains.rider.generator.nova.*
-import com.jetbrains.rider.generator.nova.Enum
-import com.jetbrains.rider.generator.nova.FlowKind.*
-import com.jetbrains.rider.generator.nova.util.joinToOptString
-import com.jetbrains.rider.util.eol
-import com.jetbrains.rider.util.hash.IncrementalHash64
-import com.jetbrains.rider.util.string.Eol
-import com.jetbrains.rider.util.string.PrettyPrinter
-import com.jetbrains.rider.util.string.condstr
+import com.jetbrains.rd.generator.nova.*
+import com.jetbrains.rd.generator.nova.Enum
+import com.jetbrains.rd.generator.nova.FlowKind.*
+import com.jetbrains.rd.generator.nova.util.joinToOptString
+import com.jetbrains.rd.util.eol
+import com.jetbrains.rd.util.hash.IncrementalHash64
+import com.jetbrains.rd.util.string.Eol
+import com.jetbrains.rd.util.string.PrettyPrinter
+import com.jetbrains.rd.util.string.condstr
 import java.io.File
 
 class Signature(private val returnType: String, private val arguments: String, private val scope: String, private var isAbstract: Boolean = false) {
@@ -100,6 +100,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected open fun Declaration.fsPath(tl: Toplevel, isDefinition: Boolean): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
             ?: File(tl.fsPath(), fsName(isDefinition))
+
+    private val Class.isInternRoot: Boolean
+        get() = internRootForScopes.isNotEmpty()
     //endregion
 
     protected fun String.wrapper(): String {
@@ -171,7 +174,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"public:"
     }
 
-    protected fun Member.getter() = this.publicName
+    protected fun Member.getter() = "get_${this.publicName}"
 
     //endregion
 
@@ -527,14 +530,14 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     //region declaration
     protected open fun PrettyPrinter.libdecl(decl: Declaration) {
-        if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
         titledBlock("class ${decl.name}") {
             registerSerializersTraitDecl(decl)
         }
     }
 
     protected open fun PrettyPrinter.typedecl(decl: Declaration) {
-        if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
 
 //        println()
 //        println()
@@ -1000,7 +1003,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     //region definition
     protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
-        if (decl.getSetting(Cpp17Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
         registerSerializersTraitDef(decl, types)
     }
 
@@ -1069,7 +1072,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &", "return ${itemType.reader()}")
                 "ctx.readInterned<${itemType.substitutedName(decl)}>(buffer, $lambda)"
             }
-            is PredefinedType.void -> "nullptr" //really?
+            is PredefinedType.void -> "rd::Void()" //really?
             is PredefinedType.bool -> "buffer.readBool()"
             is PredefinedType.string -> "buffer.readWString()"
             in PredefinedIntegrals -> "buffer.read_integral<${substitutedName(decl)}>()"

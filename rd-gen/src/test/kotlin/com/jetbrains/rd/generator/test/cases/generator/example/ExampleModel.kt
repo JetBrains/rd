@@ -95,7 +95,7 @@ class TestExample {
     //    @Test
     fun test() {
         val pkg1 = javaClass.`package`.name.apply { println(this) }
-        val pkg2 = "com.jetbrains.rider.modeltemplate"
+        val pkg2 = "com.jetbrains.rd.modeltemplate"
         val classloader = javaClass.classLoader
         generateRdModel(classloader, arrayOf(pkg1, pkg2), true)
     }

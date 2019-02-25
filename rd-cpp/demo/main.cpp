@@ -51,25 +51,25 @@ int main() {
 
 	//region advise or view
 
-	model.boolean_property().advise(lifetime, [&](bool b) {
+	model.get_boolean_property().advise(lifetime, [&](bool b) {
 		return;
 	});
-	model.scalar().advise(lifetime, [&](MyScalar const &scalar) {
+	model.get_scalar().advise(lifetime, [&](MyScalar const &scalar) {
 		return;
 	});
 
-	model.list().advise(lifetime, [](RdList<int32_t, Polymorphic < int32_t>>::Event e) {//Event must be passed by value!!!
+	model.get_list().advise(lifetime, [](RdList<int32_t, Polymorphic < int32_t>>::Event e) {//Event must be passed by value!!!
 	});
 
-	model.set().advise(lifetime, [](AddRemove addRemove, const int &x) {//AddRemove also must be passed by value
+	model.get_set().advise(lifetime, [](AddRemove addRemove, const int &x) {//AddRemove also must be passed by value
 	});
 
-	model.mapLongToString().advise_add_remove(lifetime, [](AddRemove addRemove, int64_t const &key,
+	model.get_mapLongToString().advise_add_remove(lifetime, [](AddRemove addRemove, int64_t const &key,
 															   std::wstring const &value) {
 	});
 
 
-	model.callback().set([](std::wstring const &s) -> int32_t {
+	model.get_callback().set([](std::wstring const &s) -> int32_t {
 		return static_cast<int32_t>(s.length());
 	});
 	//endregion
@@ -80,7 +80,7 @@ int main() {
 
 	ExtModel const &ext = ExtModel::getOrCreateExtensionOf(model);
 
-	ext.checker().advise(lifetime, [](Void) {
+	ext.get_checker().advise(lifetime, [](Void) {
 		std::cout << "CHECK" << std::endl;
 	});
 	//endregion
@@ -89,7 +89,7 @@ int main() {
 
 	//region changes in extension
 
-	ext.checker().fire();
+	ext.get_checker().fire();
 	//endregion
 
 

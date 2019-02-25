@@ -1,17 +1,14 @@
 @file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")
 package org.example
 
-import com.jetbrains.rider.framework.*
-import com.jetbrains.rider.framework.base.*
-import com.jetbrains.rider.framework.impl.*
+import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.framework.impl.*
 
-import com.jetbrains.rider.util.lifetime.*
-import com.jetbrains.rider.util.reactive.*
-import com.jetbrains.rider.util.string.*
-import com.jetbrains.rider.util.trace
-import com.jetbrains.rider.util.Date
-import com.jetbrains.rider.util.UUID
-import com.jetbrains.rider.util.URI
+import com.jetbrains.rd.util.lifetime.*
+import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.string.*
+import com.jetbrains.rd.util.*
 import kotlin.reflect.KClass
 
 

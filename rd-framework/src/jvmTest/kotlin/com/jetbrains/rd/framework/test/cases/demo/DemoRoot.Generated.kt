@@ -1,11 +1,16 @@
 @file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")
-package com.jetbrains.rd.framework.test.cases.demo
+package org.example
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.framework.impl.*
 
 import com.jetbrains.rd.util.lifetime.*
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
+import com.jetbrains.rd.util.*
+import kotlin.reflect.KClass
+
 
 
 class DemoRoot private constructor(
@@ -30,9 +35,11 @@ class DemoRoot private constructor(
             }
         }
         
+        
+        const val serializationHash = 2990580803186469991L
     }
     override val serializersOwner: ISerializersOwner get() = DemoRoot
-    override val serializationHash: Long get() = 2990580803186469991L
+    override val serializationHash: Long get() = DemoRoot.serializationHash
     
     //fields
     //initializer
