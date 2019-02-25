@@ -10,7 +10,6 @@
 #include <fstream>
 
 using namespace rd;
-using namespace rd::test;
 
 int main() {
 	SimpleScheduler scheduler;
@@ -52,27 +51,25 @@ int main() {
 
 	//region advise or view
 
-	model.get_bool().advise(lifetime, [&](bool b) {
+	model.boolean_property().advise(lifetime, [&](bool b) {
 		return;
 	});
-	model.get_scalar().advise(lifetime, [&](MyScalar const &scalar) {
+	model.scalar().advise(lifetime, [&](MyScalar const &scalar) {
 		return;
 	});
 
-	model.get_list().advise(lifetime, [](RdList<int32_t, Polymorphic < int32_t>>
-	::Event
-	e) {//Event must be passed by value!!!
+	model.list().advise(lifetime, [](RdList<int32_t, Polymorphic < int32_t>>::Event e) {//Event must be passed by value!!!
 	});
 
-	model.get_set().advise(lifetime, [](AddRemove addRemove, const int &x) {//AddRemove also must be passed by value
+	model.set().advise(lifetime, [](AddRemove addRemove, const int &x) {//AddRemove also must be passed by value
 	});
 
-	model.get_mapLongToString().advise_add_remove(lifetime, [](AddRemove addRemove, int64_t const &key,
+	model.mapLongToString().advise_add_remove(lifetime, [](AddRemove addRemove, int64_t const &key,
 															   std::wstring const &value) {
 	});
 
 
-	model.get_callback().set([](std::wstring const &s) -> int32_t {
+	model.callback().set([](std::wstring const &s) -> int32_t {
 		return static_cast<int32_t>(s.length());
 	});
 	//endregion
@@ -83,7 +80,7 @@ int main() {
 
 	ExtModel const &ext = ExtModel::getOrCreateExtensionOf(model);
 
-	ext.get_checker().advise(lifetime, [](Void) {
+	ext.checker().advise(lifetime, [](Void) {
 		std::cout << "CHECK" << std::endl;
 	});
 	//endregion
@@ -92,7 +89,7 @@ int main() {
 
 	//region changes in extension
 
-	ext.get_checker().fire(nullptr);
+	ext.checker().fire();
 	//endregion
 
 
