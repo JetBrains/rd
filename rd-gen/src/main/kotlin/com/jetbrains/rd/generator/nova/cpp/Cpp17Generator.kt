@@ -170,6 +170,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun PrettyPrinter.public() {
         +"public:"
     }
+
+    protected fun Member.getter() = this.publicName
+
     //endregion
 
     //region IType.
@@ -216,7 +219,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         is PredefinedType.guid -> "UUID"
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
-        is PredefinedType.void -> "void*"
+        is PredefinedType.void -> "rd::Void"
         is PredefinedType -> name.decapitalize()
 
         else -> fail("Unsupported type ${javaClass.simpleName}")
@@ -414,7 +417,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 it.println(subdirectories.map { "add_subdirectory(${it})" }.joinToString(separator = eol))
                 it.println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
-                it.println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
+                it.println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
+//                it.println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
             }
         }
     }
@@ -422,15 +426,16 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
         prepareGenerationFolder(folder, clearFolderIfExists)
 
+        val allFilePaths = emptyList<String>().toMutableList()
+
         toplevels.sortedBy { it.name }.forEach { tl ->
             val types = tl.declaredTypes + tl + unknowns(tl.declaredTypes)
             val directory = tl.fsPath()
+            directory.mkdirs()
             val fileNames = types.filter { it !is Enum }.map { it.fsName(true) } + types.map { it.fsName(false) }
-//            val declaredToplevels = tl.declaredTypes.asSequence().minus(tl).filter { tl is Toplevel }.map {tl as Toplevel}.plus(tl.root).distinct().toList()
-//            val declaredToplevels = listOfNotNull(tl.pointcut?.root)
-            val declaredToplevels = tl.root.toplevels.minus(tl)
-            //todo chose only needed libraries
-            directory.cmakeLists(tl.name, fileNames)
+            allFilePaths += fileNames.map { "${tl.name}/$it" }
+
+//            directory.cmakeLists(tl.name, fileNames)
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     type.fsPath(tl, isDefinition).run {
@@ -460,7 +465,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
         }
 
-        folder.cmakeLists("cpp_model", emptyList(), toplevels, toplevels.map { it.name })
+        folder.cmakeLists("cpp_model", allFilePaths, toplevels/*, toplevels.map { it.name }*/)
     }
 
 
@@ -470,7 +475,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"#define ${decl.name}_H"
         println()
 
-        includesDecl(decl)
+        includesDecl()
         println()
 
         dependenciesDecl(decl)
@@ -615,6 +620,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             comment("hash code trait")
             declare(hashCodeTraitDecl(decl))
 
+            comment("type name trait")
             declare(typenameTraitDecl(decl))
 //            comment("pretty print")
 //            prettyPrintTrait(decl)
@@ -654,7 +660,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 //endregion
 
     //region TraitDecl
-    protected fun PrettyPrinter.includesDecl(decl: Declaration) {
+    protected fun PrettyPrinter.includesDecl() {
 //        +"class ${decl.name};"
 
         val standardHeaders = listOf(
@@ -922,11 +928,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun PrettyPrinter.gettersTraitDecl(decl: Declaration) {
         for (member in decl.ownMembers) {
             p(docComment(member.documentation))
-            declare(Signature("${member.implTemplateName(decl)} const &", "get_${member.publicName}()", decl.name).const())
+            declare(Signature("${member.implTemplateName(decl)} const &", "${member.getter()}()", decl.name).const())
         }
     }
 
-    protected fun PrettyPrinter.internTraitDecl(decl: Declaration): Signature? {
+    protected fun internTraitDecl(decl: Declaration): Signature? {
         return if (decl is Class && decl.isInternRoot) {
             return Signature("const rd::SerializationCtx &", "get_serialization_context()", decl.name).const().override()
         } else {
@@ -971,7 +977,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun typenameTraitDecl(decl: Declaration): Signature? {
-        return Signature("std::string", "()", decl.name).const().override()
+        return if (decl !is Toplevel) {
+            Signature("std::string", "type_name()", decl.name).const().override()
+        } else {
+            null
+        }
     }
 
     protected fun PrettyPrinter.hashSpecialization(decl: Declaration) {
@@ -1079,8 +1089,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 this as IHasItemType
                 if (isPrimitivesArray) {
                     "buffer.readArray<${itemType.templateName(decl)}>()"
-                }
-                else {
+                } else {
                     """buffer.readArray<${itemType.templateName(decl)}>(${lambda(null, "return ${itemType.reader()}")})"""
                 }
             }
@@ -1288,7 +1297,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun PrettyPrinter.gettersTraitDef(decl: Declaration) {
         for (member in decl.ownMembers/*.filter { it.isEncapsulated }*/) {
             p(docComment(member.documentation))
-            val signature = Signature("${member.implTemplateName(decl)} const &", "get_${member.publicName}()", decl.name).const()
+            val signature = Signature("${member.implTemplateName(decl)} const &", "${member.getter()}()", decl.name).const()
             define(signature) {
                 if (member is Member.Field && member.isAbstract()) {
                     +"return *${member.encapsulatedName};"
@@ -1406,7 +1415,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                     val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
                     if (f.usedInEquals)
-                        "__r = __r * 31 + (${t.hc("""get_${f.publicName}()""")});"
+                        "__r = __r * 31 + (${t.hc("""${f.getter()}()""")});"
                     else
                         ""
                 }
