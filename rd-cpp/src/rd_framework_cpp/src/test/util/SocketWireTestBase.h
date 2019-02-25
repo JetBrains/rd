@@ -25,8 +25,8 @@ namespace rd {
 				Lifetime lifetime = lifetimeDef.lifetime;
 				Lifetime socketLifetime = socketLifetimeDef.lifetime;
 
-				util::PumpScheduler serverScheduler{"server"};
-				util::PumpScheduler clientScheduler{"client"};
+				PumpScheduler serverScheduler{"server"};
+				PumpScheduler clientScheduler{"client"};
 
 				int property_id = 1;
 

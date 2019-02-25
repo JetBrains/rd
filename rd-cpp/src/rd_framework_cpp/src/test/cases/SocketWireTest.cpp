@@ -381,3 +381,43 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 
 	terminate();
 }
+
+TEST_F(SocketWireTestBase, failoverServer) {
+	uint16_t port = find_free_port();
+	auto serverProtocol = server(socketLifetime, port);
+
+	LifetimeDefinition unstableLifetimeDef{Lifetime::Eternal()};
+	Lifetime unstableLifetime = unstableLifetimeDef.lifetime;
+
+	auto clientProtocol = client(unstableLifetime, port);
+
+	RdProperty<int> sp{0}, cp{0};
+	statics(cp, property_id);
+	statics(sp, property_id);
+	sp.bind(lifetime, &serverProtocol, "top");
+	cp.bind(lifetime, &clientProtocol, "top");
+
+	sp.set(1);
+
+	clientScheduler.pump_one_message(); //send 1
+
+	EXPECT_EQ(1, sp.get());
+	EXPECT_EQ(1, cp.get());
+
+
+	unstableLifetimeDef.terminate();
+
+	sp.set(2);
+
+
+	auto rebornClientProtocol = client(socketLifetime, port);
+	RdProperty<int> np;
+	statics(np, property_id);
+	np.bind(lifetime, &rebornClientProtocol, "top");
+
+	checkSchedulersAreEmpty();
+	// clientScheduler.pump_one_message(); //send 2
+	// EXPECT_EQ(2, np.get());
+
+	terminate();
+}
