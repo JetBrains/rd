@@ -3,8 +3,8 @@ package com.jetbrains.rd.generator.nova
 import java.io.File
 
 interface IGenerator {
-
     val folder: File
+    val flowTransform: FlowTransform
     fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
 }
 

@@ -81,7 +81,7 @@ fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
 val VsWarningsDefault : IntArray? = null*/
 val VsWarningsDefault: IntArray? = intArrayOf(4250)
 
-open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
+open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
 
     //region language specific properties
     object Namespace : ISetting<String, Declaration>

@@ -11,8 +11,12 @@ import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
 import java.io.File
 
-open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaultNamespace: String, override val folder : File, val fileName: (Toplevel) -> String = { tl -> tl.name}) : GeneratorBase() {
-
+open class CSharp50Generator(
+    override val flowTransform: FlowTransform,
+    val defaultNamespace: String,
+    override val folder : File,
+    val fileName: (Toplevel) -> String = { tl -> tl.name}
+) : GeneratorBase() {
 
     object Inherits : ISetting<String, Declaration>
     object InheritsAutomation : ISetting<Boolean, Declaration>
@@ -27,7 +31,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${fileName(this)}.Generated.cs")
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
-    val Member.Reactive.flowTransform: FlowTransform get() = owner.getSetting(FlowTransformProperty) ?: defaultFlowTransform
+    val Member.Reactive.memberFlowTransform: FlowTransform get() = owner.getSetting(FlowTransformProperty) ?: flowTransform
 
     object AdditionalUsings : ISetting<(CSharp50Generator) -> List<String>, Toplevel>
     val Toplevel.additionalUsings: List<String> get() = getSetting(CSharp50Generator.AdditionalUsings)?.invoke(this@CSharp50Generator) ?: emptyList()
@@ -151,7 +155,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     protected val Declaration.hasSecondaryCtor : Boolean get () = (this.isConcrete || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
 
     //members
-    val Member.Reactive.actualFlow : FlowKind get() = flowTransform.transform(flow)
+    val Member.Reactive.actualFlow : FlowKind get() = memberFlowTransform.transform(flow)
 
 
     fun Member.needNullCheck() = (this !is Member.Field) || (this.type !is INullable && !this.type.isValueType)
@@ -214,7 +218,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
         is Member.Reactive.Stateful.List -> "RdList"
         is Member.Reactive.Stateful.Set -> "RdSet"
         is Member.Reactive.Stateful.Map -> "RdMap"
-        is Member.Reactive.Stateful.Extension -> fqn(this@CSharp50Generator, flowTransform)
+        is Member.Reactive.Stateful.Extension -> fqn(this@CSharp50Generator, memberFlowTransform)
 
         else -> fail ("Unsupported member: $this")
     }
@@ -1003,7 +1007,7 @@ open class CSharp50Generator(val defaultFlowTransform: FlowTransform, val defaul
     }
 
     override fun toString(): String {
-        return "CSharp50Generator(defaultFlowTransform=$defaultFlowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
+        return "CSharp50Generator(defaultFlowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
     }
 
 
