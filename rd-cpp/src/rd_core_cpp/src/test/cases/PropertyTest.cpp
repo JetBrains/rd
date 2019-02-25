@@ -16,7 +16,7 @@ TEST(property, advise) {
 	property->set(++acc);
 
 	std::vector<int> log;
-	Lifetime::use([&property, &acc, &log](Lifetime lifetime) {
+	LifetimeDefinition::use([&property, &acc, &log](Lifetime lifetime) {
 		property->advise(lifetime, [&log](int const &x) {
 			log.push_back(-x);
 		});
@@ -48,7 +48,7 @@ TEST(property, when_true) {
 
 	std::unique_ptr<IProperty<bool>> property = std::make_unique<Property<bool>>(false);
 	property->set(true);
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		property->view(lifetime, [&acc1](Lifetime lt, bool const &flag) {
 			if (flag) {
 				acc1++;
@@ -87,7 +87,7 @@ TEST(property, view) {
 	std::unique_ptr<IProperty<int>> property = std::make_unique<Property<int>>(1);
 	int save = 0;
 
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		property->view(lifetime, [&](Lifetime lt, int const &value) {
 			save = value;
 		});
@@ -108,7 +108,7 @@ TEST(property, uninitialized) {
 
 	std::vector<int> log;
 
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		property.advise(lifetime, [&log](int const &val) {
 			log.push_back(val);
 		});

@@ -134,4 +134,6 @@ TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 TEST_F(RdFrameworkTestBase, rd_map_move) {
 	RdMap<int, int> map1;
 	RdMap<int, int> map2(std::move(map1));
+
+	AfterTest();
 }

@@ -30,11 +30,19 @@ namespace rd {
 		void RdFrameworkTestBase::AfterTest() {
 			clientLifetimeDef.terminate();
 			serverLifetimeDef.terminate();
+
+			 after_test_called = true;
 		}
 
 		void RdFrameworkTestBase::setWireAutoFlush(bool flag) {
 			clientWire->set_auto_flush(flag);
 			serverWire->set_auto_flush(flag);
+		}
+
+		RdFrameworkTestBase::~RdFrameworkTestBase() {
+			if (!after_test_called) {
+				Logger().log(LogLevel::Warn, "Call AfterTest method in test function body");
+			}
 		}
 	}
 }

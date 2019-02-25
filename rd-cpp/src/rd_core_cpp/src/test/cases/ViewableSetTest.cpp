@@ -16,7 +16,7 @@ TEST (viewable_set, advise) {
 	std::vector<int> logAdvise;
 	std::vector<int> logView1;
 	std::vector<int> logView2;
-	Lifetime::use([&](Lifetime lt) {
+	LifetimeDefinition::use([&](Lifetime lt) {
 		set->advise(lt, [&](AddRemove kind, int const &v) {
 			logAdvise.push_back(kind == AddRemove::ADD ? v : -v);
 		});
@@ -72,7 +72,7 @@ TEST (viewable_set, view) {
 
 	std::unique_ptr<IViewableSet<int>> set = std::make_unique<ViewableSet<int>>();
 	std::vector<std::string> log;
-	auto x = Lifetime::use<bool>([&](Lifetime lifetime) {
+	auto x = LifetimeDefinition::use([&](Lifetime lifetime) {
 		set->view(lifetime, [&](Lifetime lt, int const &value) {
 					  log.push_back("View " + std::to_string(value));
 					  lt->add_action([&]() { log.push_back("UnView " + std::to_string(value)); });
@@ -94,7 +94,7 @@ TEST (viewable_set, view) {
 	EXPECT_EQ(expected, log);
 
 	log.clear();
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		set->view(lifetime, [&](Lifetime lt, int const &value) {
 					  log.push_back("View " + std::to_string(value));
 					  lt->add_action([&]() { log.push_back("UnView " + std::to_string(value)); });
@@ -121,7 +121,7 @@ TEST(viewable_set, add_remove_fuzz) {
 
 	const int C = 10;
 
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		set->view(lifetime, [&log](Lifetime lt, int const &value) {
 			log.push_back("View " + std::to_string(value));
 			lt->add_action([&]() { log.push_back("UnView " + std::to_string(value)); });

@@ -1,9 +1,6 @@
-package com.jetbrains.rider.util.reactive
+package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.ISource
-import com.jetbrains.rd.util.reactive.Property
 
 fun <T, K> IPropertyView<T>.switchMap(f: (T) -> IPropertyView<K>) = object : IPropertyView<K> {
 

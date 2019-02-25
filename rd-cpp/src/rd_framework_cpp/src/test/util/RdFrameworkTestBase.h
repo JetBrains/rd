@@ -64,7 +64,11 @@ namespace rd {
 			}
 
 			void setWireAutoFlush(bool flag);
-		};
+
+            virtual ~RdFrameworkTestBase();
+
+            bool after_test_called = false;
+        };
 	}
 }
 

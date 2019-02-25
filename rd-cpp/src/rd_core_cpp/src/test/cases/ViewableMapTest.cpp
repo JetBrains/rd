@@ -24,7 +24,7 @@ TEST(viewable_map, advise) {
 	std::vector<std::string> log_update;
 	std::vector<int> log_view;
 
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		map->advise_add_remove(lifetime,
 							   [&](AddRemove kind, int const &key, int const &value) {
 								   log_add_remove.push_back(
@@ -57,7 +57,7 @@ TEST(viewable_map, advise) {
 	EXPECT_EQ(arrayListOf(0, 1, -0, 0, 10, -1, 0, -1, /*this events are arguable*/0, -10), log_view);
 
 	log_add_remove.clear();
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		map->advise_add_remove(lifetime, [&log_add_remove](AddRemove kind, int const &key, int const &value) {
 			log_add_remove.push_back(to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
 		});
@@ -83,7 +83,7 @@ TEST (viewable_map, view) {
 
 	std::unique_ptr<IViewableMap<int32_t, int32_t >> map = std::make_unique<ViewableMap<int32_t, int32_t>>();
 	std::vector<std::string> log;
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		map->view(lifetime, [&](Lifetime lt, std::pair<int32_t const *, int32_t const *> value) {
 					  log.push_back("View " + to_string(value));
 					  lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
@@ -112,7 +112,7 @@ TEST(viewable_map, add_remove_fuzz) {
 
 	const int C = 10;
 
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		map->view(lifetime, [&log](Lifetime lt, std::pair<int32_t const *, int32_t const *> value) {
 			log.push_back("View " + to_string(value));
 			lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });

@@ -74,8 +74,9 @@ TEST_F(RdFrameworkTestBase, testStaticFailure) {
 	auto task = client_entity.start(2);
 	EXPECT_TRUE(task.isFaulted());
 
-	EXPECT_NO_THROW(auto taskResult = task.value_or_throw());
+	auto taskResult = task.value_or_throw();
 
-//    assertEquals("1234", taskResult.error.reasonMessage)
-//    assertEquals("IllegalStateException", taskResult.error.reasonTypeFqn)
+//    EXPECT_EQ("1234", taskResult.error.reasonMessage);
+//    EXPECT_EQ("IllegalStateException", taskResult.error.reasonTypeFqn);
+	AfterTest();
 }

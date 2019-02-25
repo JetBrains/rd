@@ -15,7 +15,7 @@ TEST(signal, advice) {
 	std::unique_ptr<ISignal<int> > s = std::make_unique<Signal<int>>();
 
 	s->fire(-1);
-	std::vector<int> log = Lifetime::use<std::vector<int> >
+	std::vector<int> log = LifetimeDefinition::use
 			([&s](Lifetime lf) {
 				 int acc = 1;
 				 std::vector<int> result;
@@ -121,7 +121,7 @@ TEST(signal, move) {
 
 TEST(signal, void_specialization) {
 	Signal<Void> signal;
-	Lifetime::use([&](Lifetime lf) {
+	LifetimeDefinition::use([&](Lifetime lf) {
 		bool fired = false;
 		signal.advise(lf, [&] {
 			fired = true;

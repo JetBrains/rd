@@ -54,21 +54,6 @@ namespace rd {
 		LifetimeImpl *operator->() const;
 
 		Lifetime create_nested() const;
-
-		template<typename T, typename F>
-		static T use(F &&block) {
-			Lifetime lw = Eternal().create_nested();
-			T result = block(lw);
-			lw->terminate();
-			return result;
-		}
-
-		template<typename F>
-		static void use(F &&block) {
-			Lifetime lw = Eternal().create_nested();
-			block(lw);
-			lw->terminate();
-		}
 	};
 }
 

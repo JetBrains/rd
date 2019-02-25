@@ -47,6 +47,8 @@ TEST_F(DSignalTest, dynamic_polymorphic_signal) {
 	EXPECT_EQ(log.size(), 2);
 
 	EXPECT_EQ(hc[0], value_a.hashCode());
+
+	AfterTest();
 }
 
 using DProperty = RdProperty<AbstractEntity, S>;
@@ -66,6 +68,8 @@ TEST_F(DPropertyTest, dynamic_polymorphic_property) {
 	EXPECT_NE(server_entity.get(), value_b);
 
 	client_entity.set(value_a);
+
+	AfterTest();
 }
 
 using DList = RdList<AbstractEntity, S>;
@@ -73,7 +77,7 @@ using DListTest = RdFrameworkDynamicPolymorphicTestBase<DList>;
 
 TEST_F(DListTest, dynamic_polymorphic_list) {
 	std::vector<std::string> log;
-	Lifetime::use([this, &log](Lifetime lifetime) {
+	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DList::Event e) {
 			auto string = to_string_list_event<AbstractEntity>(e);
 			if (e.get_new_value() != nullptr) {
@@ -92,6 +96,8 @@ TEST_F(DListTest, dynamic_polymorphic_list) {
 
 	std::vector<std::string> expected{"Add 0:A", "Add 1:B", "Remove 0"};
 	EXPECT_EQ(expected, log);
+
+	AfterTest();
 }
 
 using DSet = RdSet<AbstractEntity, S>;
@@ -99,7 +105,7 @@ using DSetTest = RdFrameworkDynamicPolymorphicTestBase<DSet>;
 
 TEST_F(DSetTest, dynamic_polymorphic_set) {
 	std::vector<std::string> log;
-	Lifetime::use([this, &log](Lifetime lifetime) {
+	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DSet::Event e) {
 			auto x = e.value->get_filePath();
 			log.push_back(to_string_set_event<AbstractEntity>(e) + to_string(x));
@@ -120,6 +126,8 @@ TEST_F(DSetTest, dynamic_polymorphic_set) {
 
 	std::vector<std::string> expected{"Add C", "Add A", "Add B", "Remove A", "Remove C", "Remove B"};
 	EXPECT_EQ(expected, log);
+
+	AfterTest();
 }
 
 using DMap = RdMap<AbstractEntity, AbstractEntity, S, S>;
@@ -127,7 +135,7 @@ using DMapTest = RdFrameworkDynamicPolymorphicTestBase<DMap>;
 
 TEST_F(DMapTest, dynamic_polymorphic_map) {
 	std::vector<std::string> log;
-	Lifetime::use([this, &log](Lifetime lifetime) {
+	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DMap::Event e) {
 			auto x = to_string_map_event<AbstractEntity, AbstractEntity>(e)
 					 + to_string(e.get_key()->get_filePath());
@@ -156,6 +164,8 @@ TEST_F(DMapTest, dynamic_polymorphic_map) {
 
 	std::vector<std::string> expected{"Add :3", "Add :1", "Add :2", "Remove 1", "Remove 3", "Remove 2"};
 	EXPECT_EQ(expected, log);
+
+	AfterTest();
 }
 
 using DEndpoint = RdEndpoint<AbstractEntity, AbstractEntity, S, S>;
@@ -189,4 +199,6 @@ TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint) {
 	EXPECT_NE(*unwrap, value_a);
 
 	EXPECT_FALSE(task_result.unwrap()); //the value was stolen by previous unwrap
+
+	AfterTest();
 }

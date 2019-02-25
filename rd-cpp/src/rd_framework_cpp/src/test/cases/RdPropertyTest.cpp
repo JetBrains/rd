@@ -277,7 +277,7 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 	std::vector<opt> client_log;
 	std::vector<opt> server_log;
 
-	Lifetime::use([&](Lifetime lifetime) {
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		client_property.advise(lifetime, [&client_log](opt const &v) {
 			client_log.push_back(v);
 		});

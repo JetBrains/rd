@@ -10,6 +10,7 @@
 #include "Lifetime.h"
 
 #include <functional>
+#include <type_traits>
 
 namespace rd {
 	class LifetimeDefinition {
@@ -34,6 +35,8 @@ namespace rd {
 
 		LifetimeDefinition &operator=(LifetimeDefinition &&other) = default;
 
+		virtual ~LifetimeDefinition();
+
 //    static std::shared_ptr<LifetimeDefinition> eternal;
 		static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
 
@@ -42,6 +45,13 @@ namespace rd {
 		bool is_eternal() const;
 
 		void terminate();
+
+		template<typename F>
+		static auto use(F &&block) -> typename std::result_of<F(Lifetime)>::type {
+			LifetimeDefinition definition(false);
+			Lifetime lw = definition.lifetime.create_nested();
+			return block(lw);
+		}
 	};
 }
 

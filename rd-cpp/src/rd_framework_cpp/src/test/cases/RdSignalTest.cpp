@@ -60,7 +60,7 @@ TEST_F(RdFrameworkTestBase, signal_void_statics) {
 			   "top");
 
 	int acc = 0;
-	Lifetime::use([&](Lifetime lt) {
+	LifetimeDefinition::use([&](Lifetime lt) {
 		server_signal.advise(lt, [&acc] { acc++; });
 		EXPECT_EQ(0, acc);
 
@@ -234,4 +234,6 @@ TEST_F(RdFrameworkTestBase, signal_vector) {
 TEST_F(RdFrameworkTestBase, signal_move) {
 	RdSignal<int> signal1;
 	RdSignal<int> signal2(std::move(signal1));
+
+	AfterTest();
 }

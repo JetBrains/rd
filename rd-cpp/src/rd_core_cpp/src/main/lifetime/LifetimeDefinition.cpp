@@ -2,6 +2,7 @@
 // Created by jetbrains on 09.07.2018.
 //
 
+#include <Logger.h>
 #include "LifetimeDefinition.h"
 
 namespace rd {
@@ -30,4 +31,15 @@ namespace rd {
 	std::shared_ptr<LifetimeDefinition> LifetimeDefinition::get_shared_eternal() {
 		return std::shared_ptr<LifetimeDefinition>(&ETERNAL, [](LifetimeDefinition *ld) {});
 	}
+
+    LifetimeDefinition::~LifetimeDefinition() {
+		if (lifetime.ptr != nullptr) { //wasn't moved
+			if (!is_eternal()) {
+				if (!lifetime->is_terminated()) {
+					Logger().log(LogLevel::Warn, "Did you forget to terminate Lifetime definition?");
+					lifetime->terminate();
+				}
+			}
+		}
+    }
 }
