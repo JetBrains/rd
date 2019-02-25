@@ -3,15 +3,14 @@ package com.jetbrains.rd.util.threading
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.time.InfiniteDuration
-import java.io.OutputStream
 import java.time.Duration
 
-data class ByteArraySlice(val data: ByteArray, val offset: Int, val len: Int)
-fun OutputStream.write(slice: ByteArraySlice) = this.write(slice.data, slice.offset, slice.len)
+//data class ByteArraySlice(val data: ByteArray, val offset: Int, val len: Int)
+//fun OutputStream.write(slice: ByteArraySlice) = this.write(slice.data, slice.offset, slice.len)
 
 
 
-class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize, val processor: (ByteArraySlice) -> Unit) {
+class ByteBufferAsyncProcessor(val id : String, private val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize, val processor: (data: ByteArray, offset: Int, len: Int) -> Unit) {
 
     enum class StateKind {
         Initialized,
@@ -34,7 +33,11 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
         }
 
         lateinit var next: Chunk
+
+        //number of filled bytes in this chunk
         var ptr = 0
+
+        //place for data
         val data = ByteArray(chunkSize)
     }
 
@@ -101,7 +104,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
     }
 
 
-    private fun ThreadProc() {
+    private fun threadProc() {
         var chunk = firstChunkToProcess!!
         firstChunkToProcess = null
 
@@ -134,7 +137,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
             }
 
             try {
-                processor(ByteArraySlice(chunk.data, 0, chunk.ptr))
+                processor(chunk.data, 0, chunk.ptr)
             } catch(e: Exception) {
                 log.error("Exception while processing byte queue", e)
             } finally {
@@ -156,7 +159,7 @@ class ByteBufferAsyncProcessor(val id : String, val chunkSize: Int = ByteBufferA
 
             state = StateKind.AsyncProcessing
 
-            asyncProcessingThread = Thread({ThreadProc()}, id).apply { isDaemon = true }
+            asyncProcessingThread = Thread({threadProc()}, id).apply { isDaemon = true }
             asyncProcessingThread.start()
         }
     }

@@ -7,9 +7,7 @@ import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.OptProperty
-import com.jetbrains.rd.util.threading.ByteArraySlice
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
-import com.jetbrains.rd.util.threading.write
 import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
@@ -56,7 +54,7 @@ class SocketWire {
         private lateinit var output : OutputStream
         private lateinit var input : InputStream
 
-        protected val sendBuffer = ByteBufferAsyncProcessor(id+"-AsyncSendProcessor") { send0(it) }
+        protected val sendBuffer = ByteBufferAsyncProcessor("$id-AsyncSendProcessor", processor = ::send0)
 
         private val threadLocalBufferArray = ThreadLocal.withInitial { UnsafeBuffer(ByteArray(16384)) }
 
@@ -66,7 +64,7 @@ class SocketWire {
             socketProvider.advise(lifetime) { socket ->
 
                 synchronized(lock) {
-                    if (lifetime.isTerminated)
+                    if (!lifetime.isAlive)
                         return@advise
 
                     output = socket.outputStream
@@ -107,9 +105,9 @@ class SocketWire {
         }
 
 
-        private fun send0(msg: ByteArraySlice) {
+        private fun send0(data: ByteArray, offset: Int, len: Int) {
             try {
-                output.write(msg)
+                output.write(data, offset, len)
             } catch (ex: SocketException) {
                 sendBuffer.terminate()
             }
