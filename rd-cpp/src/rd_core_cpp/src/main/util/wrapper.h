@@ -91,11 +91,11 @@ namespace rd {
 			return (bool) (ptr);
 		}
 
-		friend constexpr bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
+		friend bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
 			return *(lhs.ptr) == *(rhs.ptr);
 		}
 
-		friend constexpr bool operator!=(const Wrapper &lhs, const Wrapper &rhs) {
+		friend bool operator!=(const Wrapper &lhs, const Wrapper &rhs) {
 			return !(rhs == lhs);
 		}
 	};

@@ -41,7 +41,7 @@ namespace rd {
 			std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
 
 			mutable std::condition_variable send_var;
-			mutable ByteBufferAsyncProcessor sendBuffer{id + "-AsyncSendProcessor",
+			mutable ByteBufferAsyncProcessor async_send_buffer{id + "-AsyncSendProcessor",
 														[this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
@@ -49,6 +49,9 @@ namespace rd {
 			static const size_t RECIEVE_BUFFER_SIZE = 1u << 16;
 			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
 			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
+
+			static const size_t SEND_BUFFER_SIZE = 16 * 1024;
+			mutable Buffer local_send_buffer;
 
 			bool ReadFromSocket(Buffer::word_t *res, int32_t msglen) const;
 

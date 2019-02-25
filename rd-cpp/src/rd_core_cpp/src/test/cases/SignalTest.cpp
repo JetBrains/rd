@@ -15,24 +15,26 @@ TEST(signal, advice) {
 	std::unique_ptr<ISignal<int> > s = std::make_unique<Signal<int>>();
 
 	s->fire(-1);
-
 	std::vector<int> log = Lifetime::use<std::vector<int> >
 			([&s](Lifetime lf) {
 				 int acc = 1;
-				 std::vector<int> log;
+				 std::vector<int> result;
 				 s->advise(lf,
-						   [&log](int const &x) {
-							   log.push_back(x);
+						   [&result](int const &x) {
+							   result.push_back(x);
 						   }
 				 );
-				 lf->add_action([&log]() { log.push_back(0); });
+				 /*lf->add_action([&result]() {
+					 result.push_back(0);
+				 });*/
+				 // don't do it!
 				 s->fire(++acc);
 				 s->fire(++acc);
-				 return log;
+				 return result;
 			 }
 			);
 
-	std::vector<int> expected = {2, 3, 0};
+	std::vector<int> expected = {2, 3};
 	EXPECT_EQ(expected, log);
 }
 

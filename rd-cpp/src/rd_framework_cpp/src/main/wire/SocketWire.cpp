@@ -14,7 +14,7 @@ namespace rd {
 
 	SocketWire::Base::Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler)
 			: WireBase(scheduler), id(id), lifetime(std::move(lifetime)),
-			  scheduler(scheduler)/*, threadLocalSendByteArray(16384)*/ {
+			  scheduler(scheduler), local_send_buffer(SEND_BUFFER_SIZE) {
 
 	}
 
@@ -23,7 +23,7 @@ namespace rd {
 			try {
 				if (!socketProvider->IsSocketValid()) {
 					logger.debug(this->id + ": stop receive messages because socket disconnected");
-					sendBuffer.terminate();
+					async_send_buffer.terminate();
 					break;
 				}
 
@@ -41,7 +41,7 @@ namespace rd {
 				logger.debug(this->id + ": message dispatched");
 			} catch (std::exception const &ex) {
 				logger.error(this->id + " caught processing", &ex);
-				sendBuffer.terminate();
+				async_send_buffer.terminate();
 				break;
 			}
 		}
@@ -58,26 +58,27 @@ namespace rd {
                             this->id + ": failed to flush");*/
 			//        MY_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
 		} catch (...) {
-			sendBuffer.terminate();
+			async_send_buffer.terminate();
 		}
 	}
 
 	void SocketWire::Base::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
 		MY_ASSERT_MSG(!id.isNull(), this->id + ": id mustn't be null");
 
-		Buffer buffer;
-		buffer.write_integral<int32_t>(0); //placeholder for length
+		
+		local_send_buffer.write_integral<int32_t>(0); //placeholder for length
 
-		id.write(buffer); //write id
-		writer(buffer); //write rest
+		id.write(local_send_buffer); //write id
+		writer(local_send_buffer); //write rest
 
-		int32_t len = buffer.get_position();
+		int32_t len = local_send_buffer.get_position();
 
-		int32_t position = buffer.get_position();
-		buffer.rewind();
-		buffer.write_integral<int32_t>(len - 4);
-		buffer.set_position(position);
-		sendBuffer.put(std::move(buffer).getRealArray());
+		int32_t position = local_send_buffer.get_position();
+		local_send_buffer.rewind();
+		local_send_buffer.write_integral<int32_t>(len - 4);
+		local_send_buffer.set_position(position);
+		async_send_buffer.put(std::move(local_send_buffer).getRealArray());
+		local_send_buffer.rewind();
 	}
 
 	void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket) {
@@ -92,7 +93,7 @@ namespace rd {
 				return;
 			}
 
-			sendBuffer.start();
+			async_send_buffer.start();
 		}
 		receiverProc();
 	}
@@ -184,7 +185,7 @@ namespace rd {
 		lifetime->add_action([this]() {
 			logger.info(this->id + ": start terminating lifetime");
 
-			bool send_buffer_stopped = sendBuffer.stop(timeout);
+			bool send_buffer_stopped = async_send_buffer.stop(timeout);
 			logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
 			{
@@ -242,7 +243,7 @@ namespace rd {
 		lifetime->add_action([this] {
 			logger.info(this->id + ": start terminating lifetime");
 
-			bool send_buffer_stopped = sendBuffer.stop(timeout);
+			bool send_buffer_stopped = async_send_buffer.stop(timeout);
 			logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
 			catch_([this] {
