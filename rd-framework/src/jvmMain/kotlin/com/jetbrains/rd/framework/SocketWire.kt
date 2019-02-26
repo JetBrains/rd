@@ -139,7 +139,7 @@ class SocketWire {
     }
 
 
-    class Client(lifetime : Lifetime, scheduler: IScheduler, port : Int, optId: String? = null) : Base(optId ?:"ClientSocket", lifetime, scheduler) {
+    class Client(lifetime : Lifetime, scheduler: IScheduler, port : Int, optId: String? = null, hostAddress: InetAddress = InetAddress.getLoopbackAddress()) : Base(optId ?:"ClientSocket", lifetime, scheduler) {
 
         init {
 
@@ -156,7 +156,7 @@ class SocketWire {
 
                             //https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
                             //HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
-                            s.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), port))
+                            s.connect(InetSocketAddress(hostAddress, port))
 
                             synchronized(lock) {
                                 if (!lifetime.isAlive)
