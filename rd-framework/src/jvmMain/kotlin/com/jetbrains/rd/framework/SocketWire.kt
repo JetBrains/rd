@@ -207,11 +207,11 @@ class SocketWire {
     }
 
 
-    class Server(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
+    class Server(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
         val port : Int
 
         init {
-            val ss = ServerSocket(port?:0, 0, InetAddress.getByName("127.0.0.1"))
+            val ss = ServerSocket(port?:0, 0, if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1"))
             this.port = ss.localPort
 
             var socket : Socket? = null
