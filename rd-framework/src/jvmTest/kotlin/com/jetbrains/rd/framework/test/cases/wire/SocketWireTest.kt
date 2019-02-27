@@ -9,9 +9,11 @@ import com.jetbrains.rd.framework.test.util.NetUtils
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.spinUntil
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
@@ -209,6 +211,15 @@ class SocketWireTest {
         val modelB = InterningNestedTestStringModel("D", InterningNestedTestStringModel("E", InterningNestedTestStringModel("F", null)))
         sp.property.set(modelB)
         cp.property.waitAndAssert(modelB, modelA)
+    }
+
+
+    @Test
+    fun testRemoteSocket() {
+        val serverSocket = SocketWire.Server(lifetime, TestScheduler, 0, allowRemoteConnections = true)
+        val clientSocket = SocketWire.Client(lifetime, TestScheduler, serverSocket.port, hostAddress = InetAddress.getLocalHost())
+
+        spinUntil { clientSocket.connected.value }
     }
 
 //    @BeforeClass

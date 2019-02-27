@@ -63,6 +63,8 @@ class SocketWire {
         init {
             socketProvider.advise(lifetime) { socket ->
 
+                logger.debug { "$id : connected" }
+
                 synchronized(lock) {
                     if (!lifetime.isAlive)
                         return@advise
@@ -70,6 +72,7 @@ class SocketWire {
                     output = socket.outputStream
                     input = socket.inputStream.buffered()
 
+                    connected.value = true
                     sendBuffer.start()
                 }
 
@@ -98,6 +101,7 @@ class SocketWire {
                         else -> logger.error("$id caught processing", ex)
                     }
 
+                    connected.value = false
                     sendBuffer.terminate()
                     break
                 }
@@ -156,11 +160,15 @@ class SocketWire {
 
                             //https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
                             //HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
+                            logger.debug { "$id : connecting to $hostAddress:$port" }
                             s.connect(InetSocketAddress(hostAddress, port))
 
                             synchronized(lock) {
-                                if (!lifetime.isAlive)
+                                if (!lifetime.isAlive) {
+                                    logger.debug { "$id : connected, but lifetime is already canceled, closing socket"}
                                     catch {s.close()}
+                                    return@thread
+                                }
                                 else
                                     socket = s
                             }
@@ -211,21 +219,27 @@ class SocketWire {
         val port : Int
 
         init {
-            val ss = ServerSocket(port?:0, 0, if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1"))
+            val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
+            val ss = ServerSocket(port?:0, 0, address)
             this.port = ss.localPort
 
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
                 try {
+                    logger.debug { "$id: listening ${ss.localSocketAddress}" }
                     val s = ss.accept() //could be terminated by close
                     s.tcpNoDelay = true
 
                     synchronized(lock) {
-                        if (!lifetime.isAlive)
-                            catch {s.close()}
+                        if (!lifetime.isAlive) {
+                            logger.debug { "$id : connected, but lifetime is already canceled, closing socket"}
+                            catch { s.close() }
+                            return@thread
+                        }
                         else
                             socket = s
                     }
+
 
                     socketProvider.set(s)
                 } catch (ex: SocketException) {
