@@ -66,7 +66,7 @@ class SocketWire {
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
 
         protected val logger: Logger = getLogger(this::class)
-        protected val socketProvider = OptProperty<Socket>()
+        public val socketProvider = OptProperty<Socket>()
 
         private lateinit var output : OutputStream
         private lateinit var socketInput : InputStream
@@ -79,6 +79,7 @@ class SocketWire {
         protected val lock = Object()
 
         private var maxReceivedSeqn : Long = 0
+
 
         init {
 
@@ -287,6 +288,7 @@ class SocketWire {
                             }
 
                             socketProvider.set(s)
+                            logger.debug { "$id: receiverProc finished " }
 
                         } catch (e: ConnectException) {
 
@@ -298,8 +300,8 @@ class SocketWire {
 
                             }
                             if (shouldReconnect) continue
+                            else break
                         }
-                        break
                     }
 
                 } catch (ex: SocketException) {

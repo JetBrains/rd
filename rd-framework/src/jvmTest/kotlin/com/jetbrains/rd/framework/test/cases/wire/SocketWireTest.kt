@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.test.cases.wire
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
+import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.cases.interning.InterningNestedTestStringModel
 import com.jetbrains.rd.framework.test.cases.interning.PropertyHolderWithInternRoot
 import com.jetbrains.rd.framework.test.util.NetUtils
@@ -103,6 +104,40 @@ class SocketWireTest {
 
             while (log.size < 5) Thread.sleep(100)
             assertEquals(listOf(1, 2, 3, 4, 5), log.toList())
+    }
+
+
+    @Test
+    fun TestDisconnect() {
+        val serverProtocol = server(socketLifetime)
+        val clientProtocol = client(socketLifetime, serverProtocol)
+
+        val sp = RdSignal<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
+        val cp = RdSignal<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+
+        val log = mutableListOf<Int>()
+        sp.advise(socketLifetime) {log.add(it)}
+
+        cp.fire(1)
+        cp.fire(2)
+
+        spinUntil { log.size == 2 }
+        assertEquals(listOf(1, 2), log)
+
+        (clientProtocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+        cp.fire(3)
+        cp.fire(4)
+
+        spinUntil { log.size == 4 }
+        assertEquals(listOf(1, 2, 3, 4), log)
+
+
+        cp.fire(5)
+        (serverProtocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+        cp.fire(6)
+        spinUntil { log.size == 6 }
+        assertEquals(listOf(1, 2, 3, 4, 5, 6), log)
+
     }
 
 
