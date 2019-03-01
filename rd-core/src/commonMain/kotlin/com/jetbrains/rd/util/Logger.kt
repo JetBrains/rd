@@ -101,6 +101,14 @@ inline fun Logger.catch(comment: String?, action:() -> Unit) {
 }
 inline fun Logger.catch(action:() -> Unit) = catch (null, action)
 
+inline fun catchAndDrop(action:() -> Unit) {
+    try {
+        action()
+    } catch (e : Throwable) {
+        //nothing
+    }
+}
+
 inline fun catch(comment: String?, action:() -> Unit) {
     try {
         action()

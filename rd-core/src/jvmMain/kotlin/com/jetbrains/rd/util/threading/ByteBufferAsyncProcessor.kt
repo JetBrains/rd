@@ -2,15 +2,18 @@ package com.jetbrains.rd.util.threading
 
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.time.InfiniteDuration
+import java.lang.IllegalStateException
 import java.time.Duration
 
 //data class ByteArraySlice(val data: ByteArray, val offset: Int, val len: Int)
 //fun OutputStream.write(slice: ByteArraySlice) = this.write(slice.data, slice.offset, slice.len)
 
 
-
-class ByteBufferAsyncProcessor(val id : String, private val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize, val processor: (data: ByteArray, offset: Int, len: Int) -> Unit) {
+class ByteBufferAsyncProcessor(val id : String,
+                               val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize,
+                               val processor: (Chunk) -> Unit) {
 
     enum class StateKind {
         Initialized,
@@ -20,59 +23,98 @@ class ByteBufferAsyncProcessor(val id : String, private val chunkSize: Int = Byt
         Terminated;
     }
 
-    private class Chunk (chunkSize: Int) {
+    class Chunk (chunkSize: Int) {
         companion object {
-            fun createCycledPair(chunkSize: Int) : Chunk {
-                val chunk1 = Chunk(chunkSize)
-                val chunk2 = Chunk(chunkSize).apply { next = chunk1 }
-                chunk1.next = chunk2
-                return chunk1
-            }
+//            fun createCycledPair(chunkSize: Int): Chunk {
+//                val chunk1 = Chunk(chunkSize)
+//                val chunk2 = Chunk(chunkSize).apply { next = chunk1 }
+//                chunk1.next = chunk2
+//                return chunk1
+//            }
 
             val empty = Chunk(0)
         }
 
-        lateinit var next: Chunk
-
-        //number of filled bytes in this chunk
-        var ptr = 0
-
-        //place for data
         val data = ByteArray(chunkSize)
+        var ptr = 0 //number of filled bytes in this chunk
+        lateinit var next: Chunk
+        var seqn = Long.MAX_VALUE
+
+        fun checkEmpty(buffer: ByteBufferAsyncProcessor) : Boolean{
+            if (ptr == 0) {
+                assert(seqn == Long.MAX_VALUE) {"seqn == long.MaxValue, but: $seqn"}
+                return true
+            }
+
+            if (buffer.acknowledgedSeqn < seqn)
+                return false
+
+            Reset()
+
+            return true
+        }
+
+        val isNotProcessed : Boolean get() = seqn == Long.MAX_VALUE
+
+        internal fun Reset() {
+            seqn = Long.MAX_VALUE
+            ptr = 0
+        }
     }
 
     companion object {
-        private const val DefaultChunkSize = 16380
+        private const val DefaultChunkSize = 16370
         private const val DefaultShrinkIntervalMs = 30000
     }
 
     private val log = getLogger(this::class)
     private val lock = Object()
+    private var asyncProcessingThread: Thread? = null
+
+    private lateinit var chunkToFill : Chunk
+    private lateinit var chunkToProcess : Chunk
+
+    private val pauseReasons = HashSet<String>()
+
+    private var processing = false
+
+    var allDataProcessed : Boolean = true
+        private set
+
+    var acknowledgedSeqn : Long = 0
+        private set
+
+
     private var lastShrinkOrGrowTimeMs = System.currentTimeMillis()
-    private lateinit var asyncProcessingThread: Thread
-    
-    private var freeChunk : Chunk
-    private var firstChunkToProcess : Chunk?
-
-    private val pauseReasons = ArrayList<String>()
-
     var shrinkIntervalMs = DefaultShrinkIntervalMs
 
 
     var state : StateKind = StateKind.Initialized
         private set
 
+
     init {
-        val chunk = Chunk.createCycledPair(chunkSize)
-        freeChunk = chunk
-        firstChunkToProcess = chunk
+        reset()
+    }
+
+    val chunkCount : Int get() {
+        synchronized(lock) {
+            var chunk = chunkToFill.next
+            var res = 1
+            while (chunk != chunkToFill) {
+                res++
+                chunk = chunk.next
+            }
+            return res
+        }
     }
     
     private fun cleanup0() {
         synchronized(lock) {
             state = StateKind.Terminated
-            freeChunk = Chunk.empty
-            firstChunkToProcess = null
+            chunkToFill = Chunk.empty
+            chunkToProcess = Chunk.empty
+            allDataProcessed = true
         }
     }
 
@@ -93,57 +135,89 @@ class ByteBufferAsyncProcessor(val id : String, private val chunkSize: Int = Byt
             lock.notifyAll()
         }
 
-        asyncProcessingThread.join(timeout.toMillis())
+        val t = asyncProcessingThread?: return true
 
-        val res = asyncProcessingThread.isAlive
+        t.join(timeout.toMillis())
+        val res = t.isAlive
 
-        if (!res) catch { @Suppress("DEPRECATION") asyncProcessingThread.stop()}
+        if (!res) catch { @Suppress("DEPRECATION") t.stop()}
         cleanup0()
 
         return res
     }
 
+    fun acknowledge(seqn: Long) {
+        synchronized(lock) {
+            if (seqn > acknowledgedSeqn) {
+                log.trace { "New acknowledged seqn: $seqn" }
+                acknowledgedSeqn = seqn
+            } else
+                throw IllegalStateException("Acknowledge({$seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
+        }
+    }
+
+    fun reprocessUnacknowledged() {
+        require(Thread.currentThread() != asyncProcessingThread) {"Thread.currentThread() != asyncProcessingThread"}
+
+        synchronized(lock) {
+            while (processing)
+                lock.wait(1)
+
+            var chunk = chunkToFill.next
+            while (chunk != chunkToFill) {
+                if (!chunk.checkEmpty(this)) {
+                    chunkToProcess = chunk
+                    allDataProcessed = false
+                    lock.notifyAll()
+                    return
+                } else {
+                    chunk = chunk.next
+                }
+            }
+        }
+    }
+
 
     private fun threadProc() {
-        var chunk = firstChunkToProcess!!
-        firstChunkToProcess = null
-
         while (true) {
             synchronized(lock) {
                 if (state >= StateKind.Terminated) return
 
-                while (chunk.ptr == 0 || pauseReasons.isNotEmpty()) {
+                while (allDataProcessed || pauseReasons.isNotEmpty()) {
                     if (state >= StateKind.Stopping) return
                     lock.wait()
                     if (state >= StateKind.Terminating) return
                 }
 
-                if (freeChunk == chunk)
-                    freeChunk = chunk.next
+                while (chunkToProcess.checkEmpty(this))
+                    chunkToProcess = chunkToProcess.next
 
-                // shrinking
-                val now = System.currentTimeMillis()
-                if (now - lastShrinkOrGrowTimeMs > shrinkIntervalMs) {
-                    lastShrinkOrGrowTimeMs = now
 
-                    while (freeChunk.next != chunk && freeChunk.ptr == 0) {
-                        log.debug {"Shrink: $chunkSize bytes" }
-                        if (freeChunk.next.ptr != 0)
-                            log.debug {"freeChunk.next.ptr != 0"}
-
-                        freeChunk.next = freeChunk.next.next
-                    }
+                if (chunkToFill == chunkToProcess) {
+                    growConditionally()
+                    chunkToFill = chunkToProcess.next
                 }
+
+                shrinkConditionally(chunkToProcess)
+
+                assert(chunkToProcess.ptr > 0) { "chunkToProcess.ptr > 0" }
+                assert(chunkToFill != chunkToProcess && chunkToFill.isNotProcessed) {
+                    "chunkToFill != chunkToProcess && chunkToFill.isNotProcessed"
+                }
+
+                processing = true;
             }
 
             try {
-                processor(chunk.data, 0, chunk.ptr)
+                processor(chunkToProcess)
             } catch(e: Exception) {
                 log.error("Exception while processing byte queue", e)
             } finally {
                 synchronized(lock) {
-                    chunk.ptr = 0
-                    chunk = chunk.next
+                    processing = false
+                    chunkToProcess = chunkToProcess.next
+                    if (chunkToProcess.ptr == 0)
+                        allDataProcessed = true
                 }
             }
         }
@@ -160,24 +234,48 @@ class ByteBufferAsyncProcessor(val id : String, private val chunkSize: Int = Byt
             state = StateKind.AsyncProcessing
 
             asyncProcessingThread = Thread({threadProc()}, id).apply { isDaemon = true }
-            asyncProcessingThread.start()
+            asyncProcessingThread?.start()
+        }
+    }
+
+    private fun reset() {
+        chunkToFill = Chunk(chunkSize)
+        chunkToFill.next = chunkToFill
+        lastShrinkOrGrowTimeMs = System.currentTimeMillis()
+        chunkToProcess = chunkToFill
+    }
+
+    fun clear() {
+        require(Thread.currentThread() != asyncProcessingThread) {"Thread.currentThread() != asyncProcessingThread"}
+
+        synchronized(lock) {
+            log.debug { "Cleaning '$id', state=$state" }
+            if (state >= StateKind.Stopping)
+                return
+
+            while (processing) lock.wait(1)
+
+            reset()
+            allDataProcessed = true
         }
     }
 
 
-    fun pause(lifetime: Lifetime, reason: String) {
+    fun pause(reason: String) {
+        synchronized(lock) {
+            log.debug { "Pausing, reason=$reason, state=$state" }
+            pauseReasons.add(reason)
+            if (Thread.currentThread() != asyncProcessingThread)
+                while (processing) lock.wait(1)
+        }
+    }
 
-        lifetime.bracket(
-            { synchronized(lock) {
-                    pauseReasons.add(reason)
-                }
-            },
-            { synchronized(lock) {
-                    pauseReasons.remove(reason)
-                    lock.notify()
-                }
-            }
-        )
+    fun resume(reason: String) {
+        synchronized(lock) {
+            pauseReasons.remove(reason)
+            log.debug { "Resuming... pause reason=$reason, state=$state, unpaused=${pauseReasons.size > 0}" }
+            lock.notifyAll()
+        }
     }
 
     fun stop(timeout: Duration = InfiniteDuration) = terminate0(timeout, StateKind.Stopping, "STOP")
@@ -188,32 +286,56 @@ class ByteBufferAsyncProcessor(val id : String, private val chunkSize: Int = Byt
             if (state >= StateKind.Stopping) return
 
             var ptr = 0
-
-            //speedup var, only to suppress redundant notifies
-            val shouldNotify = freeChunk.ptr == 0 //everything processed (or we occasionally at 0 of some free chunk that isn't equal to proccessing chunk)
-
             while (ptr < count) {
+                assert(chunkToFill.isNotProcessed) {"chunkToFill.isNotProcessed"}
+
                 val rest = count - ptr
-                val available = chunkSize - freeChunk.ptr
+                val available = chunkSize - chunkToFill.ptr
 
                 if (available > 0) {
                     val copylen = Math.min(rest, available)
-                    System.arraycopy(newData, ptr + offset, freeChunk.data, freeChunk.ptr, copylen)
-                    freeChunk.ptr += copylen
+                    System.arraycopy(newData, ptr + offset, chunkToFill.data, chunkToFill.ptr, copylen)
+                    chunkToFill.ptr += copylen
                     ptr += copylen
 
                 } else {
-                    if (freeChunk.next.ptr != 0) {
-                        log.debug {"Grow: $chunkSize bytes" }
-                        freeChunk.next = Chunk(chunkSize).apply { next = freeChunk.next }
-                        lastShrinkOrGrowTimeMs = System.currentTimeMillis()
-                    }
-                    freeChunk = freeChunk.next
+                    growConditionally()
+                    chunkToFill = chunkToFill.next
                 }
             }
 
-            if (shouldNotify)
+            if (allDataProcessed) { //speedup
+                allDataProcessed = false;
                 lock.notify()
+            }
+        }
+    }
+
+    private fun growConditionally() {
+        if (chunkToFill.next.checkEmpty(this))
+            return
+
+        log.trace {"Grow: $chunkSize bytes" }
+        chunkToFill.next = Chunk(chunkSize).apply { next = chunkToFill.next }
+        lastShrinkOrGrowTimeMs = System.currentTimeMillis()
+    }
+
+    private fun shrinkConditionally(upTo: Chunk) {
+        assert(chunkToFill != upTo) {"chunkToFill != upTo"}
+
+        val now = System.currentTimeMillis()
+        if (now - lastShrinkOrGrowTimeMs <= shrinkIntervalMs)
+            return
+
+        lastShrinkOrGrowTimeMs = now
+
+        while (true) {
+            val toRemove = chunkToFill.next
+            if (toRemove == upTo || !toRemove.checkEmpty(this))
+                break
+
+            log.trace {"Shrink: $chunkSize bytes, seqN: $toRemove" }
+            chunkToFill.next = toRemove.next
         }
     }
 }

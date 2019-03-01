@@ -11,5 +11,5 @@ actual inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit) : Boole
 }
 
 actual fun createAbstractBuffer(): AbstractBuffer {
-    return UnsafeBuffer(ByteArray(10))
+    return UnsafeBuffer(ByteArray(12))
 }

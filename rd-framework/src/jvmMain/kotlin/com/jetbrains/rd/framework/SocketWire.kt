@@ -13,37 +13,54 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.*
 import java.time.Duration
-import java.util.*
 import kotlin.concurrent.thread
 
-private fun InputStream.readByteArray(): ByteArray {
-    val b1 = read()
-    val b2 = read()
-    val b3 = read()
-    val b4 = read()
-    val len = b1 or (b2 shl 8) or (b3 shl 16) or (b4 shl 24)
-
-    if (len < 0)
-        throw SocketException("End of stream was reached")
-
-    if (len > 300_000_000) {
-        throw IllegalStateException("Possible OOM: array_len=$len(0x${len.toString(16)})")
+private fun InputStream.readByteArray(a : ByteArray): Boolean {
+    var pos = 0
+    while (pos < a.size) {
+        val b = read(a, pos, a.size - pos)
+        if (b == -1)
+            return false
+        pos += b
     }
-
-    val bytes = ByteArray(len)
-    var read = 0
-    while(read < bytes.size) {
-        val result = read(bytes, read, bytes.size - read)
-        if (result < 0)
-            throw SocketException("End of stream was reached")
-        read += result
-    }
-    return bytes
+    return true
 }
+
+
+private fun InputStream.readInt32() : Int? {
+    val b1 = read().apply { if (this < 0) return null }
+    val b2 = read().apply { if (this < 0) return null }
+    val b3 = read().apply { if (this < 0) return null }
+    val b4 = read().apply { if (this < 0) return null }
+    val res = b1 or (b2 shl 8) or (b3 shl 16) or (b4 shl 24)
+
+    return res
+}
+
+private fun InputStream.readInt64() : Long? {
+    val b1 = read().toLong().apply { if (this < 0) return null }
+    val b2 = read().toLong().apply { if (this < 0) return null }
+    val b3 = read().toLong().apply { if (this < 0) return null }
+    val b4 = read().toLong().apply { if (this < 0) return null }
+    val b5 = read().toLong().apply { if (this < 0) return null }
+    val b6 = read().toLong().apply { if (this < 0) return null }
+    val b7 = read().toLong().apply { if (this < 0) return null }
+    val b8 = read().toLong().apply { if (this < 0) return null }
+    val res = b1 or (b2 shl 8) or (b3 shl 16) or (b4 shl 24) or
+            (b5 shl 32) or (b6 shl 40) or (b7 shl 48) or (b8 shl 56)
+
+
+    return res
+}
+
 
 class SocketWire {
     companion object {
         val timeout: Duration = Duration.ofMillis(500)
+        private val ack_msg_len: Int = -1
+        private val pkg_header_len = 12
+        val disconnectedPauseReason = "Disconnected"
+
     }
 
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
@@ -52,7 +69,8 @@ class SocketWire {
         protected val socketProvider = OptProperty<Socket>()
 
         private lateinit var output : OutputStream
-        private lateinit var input : InputStream
+        private lateinit var socketInput : InputStream
+        private lateinit var pkgInput : InputStream
 
         protected val sendBuffer = ByteBufferAsyncProcessor("$id-AsyncSendProcessor", processor = ::send0)
 
@@ -60,23 +78,33 @@ class SocketWire {
 
         protected val lock = Object()
 
+        private var maxReceivedSeqn : Long = 0
+
         init {
+
+            sendBuffer.pause(disconnectedPauseReason)
+            sendBuffer.start()
+
             socketProvider.advise(lifetime) { socket ->
 
                 logger.debug { "$id : connected" }
 
-                synchronized(lock) {
-                    if (!lifetime.isAlive)
-                        return@advise
+                output = socket.outputStream
+                socketInput = socket.inputStream.buffered()
+                pkgInput = PkgInputStream(socketInput)
 
-                    output = socket.outputStream
-                    input = socket.inputStream.buffered()
+                sendBuffer.reprocessUnacknowledged()
+                sendBuffer.resume(disconnectedPauseReason)
 
-                    connected.value = true
-                    sendBuffer.start()
+                scheduler.queue { connected.value = true }
+
+                try {
+                    receiverProc(socket)
+                } finally {
+                    scheduler.queue { connected.value = false }
+                    sendBuffer.pause(disconnectedPauseReason)
+                    catchAndDrop { socket.close() }
                 }
-
-                receiverProc(socket)
             }
         }
 
@@ -85,35 +113,120 @@ class SocketWire {
                 try {
                     if (!socket.isConnected) {
                         logger.debug {"Stop receive messages because socket disconnected" }
-                        sendBuffer.terminate()
                         break
                     }
 
-                    val bytes = input.readByteArray()
-                    assert(bytes.size >= 4)
-                    val unsafeBuffer = UnsafeBuffer(bytes)
-                    val id = RdId.read(unsafeBuffer)
-                    messageBroker.dispatch(id, unsafeBuffer)
-
+                    if (!readMsg()) {
+                        logger.debug { "$id: Connection was gracefully shutdown" }
+                        break
+                    }
                 } catch (ex: Throwable) {
                     when (ex) {
                         is SocketException, is EOFException -> logger.debug {"Exception in SocketWire.Receive:  $id: $ex" }
                         else -> logger.error("$id caught processing", ex)
                     }
 
-                    connected.value = false
-                    sendBuffer.terminate()
                     break
                 }
             }
         }
 
+        private fun readMsg() : Boolean {
 
-        private fun send0(data: ByteArray, offset: Int, len: Int) {
+            val seqnAtStart = maxReceivedSeqn
+
+            val len = pkgInput.readInt32() ?: return false
+            require(len > 0) {"len > 0: $len"}
+            require (len < 300_000_000) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
+
+            val data = ByteArray(len)
+            if (!pkgInput.readByteArray(data))
+                return false
+
+            if (maxReceivedSeqn > seqnAtStart)
+                sendAck(maxReceivedSeqn)
+
+            val unsafeBuffer = UnsafeBuffer(data)
+            val id = RdId.read(unsafeBuffer)
+            messageBroker.dispatch(id, unsafeBuffer)
+
+            return true
+        }
+
+
+        inner class PkgInputStream(private val stream: InputStream) : InputStream() {
+            var pkg: ByteArray = ByteArray(0)
+            var pos: Int = 0
+
+            override fun read(): Int {
+                if (pos < pkg.size)
+                    return pkg[pos++].toInt() and 0xff
+
+                while (true) {
+                    val len = stream.readInt32() ?: return -1
+                    val seqn = stream.readInt64() ?: return -1
+
+
+                    if (len == ack_msg_len)
+                        sendBuffer.acknowledge(seqn)
+                    else {
+                        require(len > 0) {"len > 0: $len"}
+                        require (len < 300_000_000) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
+
+                        pkg = ByteArray(len)
+                        pos = 0
+                        stream.readByteArray(pkg)
+
+                        if (seqn > maxReceivedSeqn) {
+                            maxReceivedSeqn = seqn
+                            return pkg[pos++].toInt() and 0xff
+                        } else
+                            sendAck(seqn)
+                    }
+
+                }
+            }
+
+        }
+
+        private fun sendAck(seqn: Long) {
             try {
-                output.write(data, offset, len)
+                ackPkgHeader.rewind()
+                ackPkgHeader.writeInt(ack_msg_len)
+                ackPkgHeader.writeLong(seqn)
+
+                synchronized(socketSendLock) {
+                    output.write(ackPkgHeader.getArray(), 0, pkg_header_len)
+                }
             } catch (ex: SocketException) {
-                sendBuffer.terminate()
+                logger.warn { "$id: Exception raised during ACK, seqn = $seqn" }
+            }
+        }
+
+
+
+        private var sentSeqn = 0L
+        private val socketSendLock = Any()
+        private val sendPkgHeader = createAbstractBuffer()
+        private val ackPkgHeader = createAbstractBuffer()
+
+        private fun send0(chunk: ByteBufferAsyncProcessor.Chunk) {
+            try {
+                if (chunk.isNotProcessed)
+                    chunk.seqn = ++sentSeqn
+
+
+                sendPkgHeader.rewind()
+                sendPkgHeader.writeInt(chunk.ptr)
+                sendPkgHeader.writeLong(chunk.seqn)
+
+                synchronized(socketSendLock) {
+                    output.write(sendPkgHeader.getArray(), 0, pkg_header_len)
+                    output.write(chunk.data, 0, chunk.ptr)
+                }
+            } catch (ex: SocketException) {
+                sendBuffer.pause(disconnectedPauseReason)
+
             }
         }
 
@@ -166,7 +279,7 @@ class SocketWire {
                             synchronized(lock) {
                                 if (!lifetime.isAlive) {
                                     logger.debug { "$id : connected, but lifetime is already canceled, closing socket"}
-                                    catch {s.close()}
+                                    catchAndDrop {s.close()}
                                     return@thread
                                 }
                                 else
@@ -176,6 +289,7 @@ class SocketWire {
                             socketProvider.set(s)
 
                         } catch (e: ConnectException) {
+
                             val shouldReconnect = synchronized(lock) {
                                 if (lifetime.isAlive) {
                                     lock.wait(timeout.toMillis())
@@ -225,26 +339,31 @@ class SocketWire {
 
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
-                try {
-                    logger.debug { "$id: listening ${ss.localSocketAddress}" }
-                    val s = ss.accept() //could be terminated by close
-                    s.tcpNoDelay = true
+                while (lifetime.isAlive)
+                    try {
+                        logger.debug { "$id: listening ${ss.localSocketAddress}" }
+                        val s = ss.accept() //could be terminated by close
+                        s.tcpNoDelay = true
 
-                    synchronized(lock) {
-                        if (!lifetime.isAlive) {
-                            logger.debug { "$id : connected, but lifetime is already canceled, closing socket"}
-                            catch { s.close() }
-                            return@thread
+                        synchronized(lock) {
+                            if (!lifetime.isAlive) {
+                                logger.debug { "$id : connected, but lifetime is already canceled, closing socket"}
+                                catch { s.close() }
+                                return@thread
+                            }
+                            else
+                                socket = s
                         }
-                        else
-                            socket = s
+
+
+                        socketProvider.set(s)
+                    } catch (ex: SocketException) {
+                        logger.debug {"$id closed with exception: $ex"}
+                    } catch (ex: Exception) {
+                        logger.error("$id closed with exception", ex)
                     }
 
 
-                    socketProvider.set(s)
-                } catch (ex: SocketException) {
-                    logger.info {"$id closed with exception: $ex"}
-                }
             }
 
 
