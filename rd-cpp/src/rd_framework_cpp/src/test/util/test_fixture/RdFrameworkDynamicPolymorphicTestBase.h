@@ -20,8 +20,8 @@ namespace rd {
 				C client_entity;
 			protected:
 				void SetUp() override {
-					serverProtocol->serializers.registry<T>();
-					clientProtocol->serializers.registry<T>();
+					serverProtocol->serializers->registry<T>();
+					clientProtocol->serializers->registry<T>();
 
 					int entity_id = 1;
 

@@ -6,19 +6,23 @@
 #define RD_CPP_IPROTOCOL_H
 
 
-#include "IScheduler.h"
-#include "IIdentities.h"
-#include "IWire.h"
 #include "Serializers.h"
+#include "IIdentities.h"
+#include "IScheduler.h"
+#include "IWire.h"
+#include "SerializationCtx.h"
+
+#include <memory>
 
 namespace rd {
+	//region predeclared
+
 	class IRdDynamic;
-}
+	//endregion
 
-namespace rd {
 	class IProtocol : public IRdDynamic {
 	public:
-		Serializers serializers;
+		std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
 		std::shared_ptr<IIdentities> identity;
 		IScheduler *scheduler = nullptr;
 		std::shared_ptr<IWire> wire;
@@ -29,6 +33,10 @@ namespace rd {
 		IProtocol() = default;
 
 		IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+
+		IProtocol(IProtocol &&other) noexcept = default;
+
+		IProtocol &operator=(IProtocol &&other) noexcept = default;
 
 		virtual ~IProtocol() = default;
 		//endregion

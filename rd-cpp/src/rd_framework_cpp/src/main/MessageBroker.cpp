@@ -1,14 +1,9 @@
-//
-// Created by jetbrains on 26.07.2018.
-//
+#include "MessageBroker.h"
 
+#include "core_util.h"
+#include "Buffer.h"
 
 #include <cassert>
-
-#include "MessageBroker.h"
-#include "demangle.h"
-#include "shared_function.h"
-#include "Buffer.h"
 
 
 

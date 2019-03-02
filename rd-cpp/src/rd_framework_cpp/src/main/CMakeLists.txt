@@ -26,7 +26,7 @@ add_library(rd_framework_cpp STATIC
         ext/ExtWire.cpp ext/ExtWire.h
         #serialization
         serialization/SerializationCtx.cpp serialization/SerializationCtx.h
-        serialization/Serializers.h
+        serialization/Serializers.cpp serialization/Serializers.h
         serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
@@ -40,15 +40,15 @@ add_library(rd_framework_cpp STATIC
         wire/PumpScheduler.cpp wire/PumpScheduler.h
         wire/ByteBufferAsyncProcessor.cpp wire/ByteBufferAsyncProcessor.h
         #intern
-#        intern/InternRoot.cpp intern/InternRoot.h
-#        intern/InternScheduler.cpp intern/InternScheduler.h
+        intern/InternRoot.cpp intern/InternRoot.h
+        intern/InternScheduler.cpp intern/InternScheduler.h
 
         Identities.cpp Identities.h
         Buffer.cpp Buffer.h
         RdId.cpp RdId.h
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
-        )
+        serialization/Serializers.cpp)
 
 target_include_directories(rd_framework_cpp
         PUBLIC

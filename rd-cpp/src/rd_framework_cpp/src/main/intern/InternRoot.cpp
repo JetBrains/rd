@@ -1,18 +1,28 @@
 #include "InternRoot.h"
 
 #include "Polymorphic.h"
+#include "NullableSerializer.h"
 
 namespace rd {
+    InternRoot::InternRoot() {
+        async = true;
+    }
+
+    void InternRoot::set_interned_correspondence(int32_t id, Wrapper<IPolymorphicSerializable> wrapper) const {
+        //todo impl
+    }
+
     IScheduler *InternRoot::get_wire_scheduler() const {
         return &intern_scheduler;
     }
 
     void InternRoot::on_wire_received(Buffer buffer) const {
-        auto value = AbstractPolymorphic<IPolymorphicSerializable>::read(get_serialization_context(), buffer);
+        Wrapper<IPolymorphicSerializable> value = NullableSerializer<AbstractPolymorphic<IPolymorphicSerializable>>::read(get_serialization_context(), buffer);
         if (!value) {
             return;
         }
         int32_t remote_id = buffer.read_integral<int32_t>();
+		set_interned_correspondence(remote_id ^ 1, std::move(value));
         MY_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
     }
 

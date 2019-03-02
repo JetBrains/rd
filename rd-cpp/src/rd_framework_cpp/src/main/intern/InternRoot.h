@@ -7,7 +7,7 @@
 
 #include "RdReactiveBase.h"
 #include "InternScheduler.h"
-#include "IRdReactive.h"
+#include "wrapper.h"
 
 #include <string>
 
@@ -20,7 +20,12 @@ namespace rd {
 	class InternRoot final : public RdReactiveBase {
 	private:
 		mutable InternScheduler intern_scheduler;
+
+		void set_interned_correspondence(int32_t id, Wrapper<IPolymorphicSerializable> wrapper) const;
+
 	public:
+		InternRoot();
+
 		bool is_master;
 
 		template<typename T>

@@ -10,7 +10,7 @@ DemoModel::DemoModelSerializersOwner DemoModel::serializersOwner;
 
 void DemoModel::DemoModelSerializersOwner::registerSerializersCore(rd::Serializers const& serializers)
 {
-    serializers.registry<MyScalar>();
+    serializers->registry<MyScalar>();
 }
 
 void DemoModel::connect(rd::Lifetime lifetime, rd::IProtocol const * protocol)

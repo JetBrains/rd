@@ -173,8 +173,8 @@ using DCall = RdCall<AbstractEntity, AbstractEntity, S, S>;
 using DTaskTest = RdFrameworkDynamicPolymorphicTestBase<DEndpoint, DCall>;
 
 TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint) {
-	serverProtocol->serializers.registry<FakeEntity>();
-	clientProtocol->serializers.registry<FakeEntity>();
+	serverProtocol->serializers->registry<FakeEntity>();
+	clientProtocol->serializers->registry<FakeEntity>();
 
 	server_entity.set([](AbstractEntity const &value) -> Wrapper<AbstractEntity> {
 		if (value.type_name() == "ConcreteEntity") {

@@ -6,6 +6,7 @@
 
 #include "core_util.h"
 
+#include <iostream>
 #include <thread>
 
 /*SwitchLogger::SwitchLogger(const std::string &category) {}

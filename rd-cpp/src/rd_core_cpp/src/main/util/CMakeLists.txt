@@ -4,3 +4,4 @@ add_library(rd_core_cpp_util STATIC
         )
 
 target_include_directories(rd_core_cpp_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(rd_core_cpp)
