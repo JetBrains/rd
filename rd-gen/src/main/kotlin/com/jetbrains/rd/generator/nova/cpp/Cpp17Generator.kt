@@ -901,7 +901,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (decl !is BindableDeclaration) {
             return null
         }
-        return Signature("void", "identify(const rd::IIdentities &identities, rd::RdId const &id)", decl.name).const().override()
+        return Signature("void", "identify(const rd::Identities &identities, rd::RdId const &id)", decl.name).const().override()
     }
 
     protected fun PrettyPrinter.gettersTraitDecl(decl: Declaration) {

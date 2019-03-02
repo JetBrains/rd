@@ -40,7 +40,7 @@ void ExtModel::init(rd::Lifetime lifetime) const
 }
 
 //identify
-void ExtModel::identify(const rd::IIdentities &identities, rd::RdId const &id) const
+void ExtModel::identify(const rd::Identities &identities, rd::RdId const &id) const
 {
     rd::RdBindableBase::identify(identities, id);
     identifyPolymorphic(checker_, identities, id.mix(".checker"));

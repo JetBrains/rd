@@ -12,7 +12,7 @@ namespace rd {
 	class Protocol : /*IRdDynamic, */public IProtocol {
 	public:
 		//region ctor/dtor
-		Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
 		Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 

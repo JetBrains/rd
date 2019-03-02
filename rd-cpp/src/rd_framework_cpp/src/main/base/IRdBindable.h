@@ -11,7 +11,7 @@
 
 
 namespace rd {
-	class IIdentities;
+	class Identities;
 }
 
 namespace rd {
@@ -33,21 +33,21 @@ namespace rd {
 
 		virtual void bind(Lifetime lf, IRdDynamic const *parent, std::string const &name) const = 0;
 
-		virtual void identify(IIdentities const &identities, RdId const &id) const = 0;
+		virtual void identify(Identities const &identities, RdId const &id) const = 0;
 	};
 
 	template<typename T>
 	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::remove_reference<T>::type>::value>::type
-	inline identifyPolymorphic(T &&, IIdentities const &identities, RdId const &id) {}
+	inline identifyPolymorphic(T &&, Identities const &identities, RdId const &id) {}
 
 //template <>
-	inline void identifyPolymorphic(const IRdBindable &that, IIdentities const &identities, RdId id) {
+	inline void identifyPolymorphic(const IRdBindable &that, Identities const &identities, RdId id) {
 		that.identify(identities, id);
 	}
 
 	template<typename T>
 	typename std::enable_if<std::is_base_of<IRdBindable, T>::value>::type
-	inline identifyPolymorphic(std::vector<T> const &that, IIdentities const &identities, RdId const &id) {
+	inline identifyPolymorphic(std::vector<T> const &that, Identities const &identities, RdId const &id) {
 		for (size_t i = 0; i < that.size(); ++i) {
 			that[i].identify(identities, id.mix(static_cast<int32_t >(i)));
 		}

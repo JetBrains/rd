@@ -45,7 +45,7 @@ namespace rd {
         get_protocol()->wire->advise(lf, this);
     }
 
-    void InternRoot::identify(const IIdentities &identities, RdId const &id) const {
+    void InternRoot::identify(const Identities &identities, RdId const &id) const {
         MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
         MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 

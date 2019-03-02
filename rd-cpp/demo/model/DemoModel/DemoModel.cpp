@@ -53,7 +53,7 @@ void DemoModel::init(rd::Lifetime lifetime) const
 }
 
 //identify
-void DemoModel::identify(const rd::IIdentities &identities, rd::RdId const &id) const
+void DemoModel::identify(const rd::Identities &identities, rd::RdId const &id) const
 {
     rd::RdBindableBase::identify(identities, id);
     identifyPolymorphic(boolean_property_, identities, id.mix(".boolean_property"));

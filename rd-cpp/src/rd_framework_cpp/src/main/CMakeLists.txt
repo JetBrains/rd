@@ -6,7 +6,6 @@ add_library(rd_framework_cpp STATIC
         base/IRdReactive.h
         base/IRdDynamic.h
         base/IWire.h
-        base/IIdentities.h
         base/IProtocol.cpp base/IProtocol.h
         base/RdReactiveBase.cpp base/RdReactiveBase.h
         base/RdBindableBase.cpp base/RdBindableBase.h

@@ -38,8 +38,8 @@ namespace rd {
 			//    /*std::unique_ptr<IWire>*/SimpleWire clientWire{&clientScheduler};
 			//    /*std::unique_ptr<IWire>*/SimpleWire serverSimpleWire{&serverScheduler};
 
-			std::shared_ptr<IIdentities> clientIdentities = std::make_shared<Identities>(Identities::CLIENT);
-			std::shared_ptr<IIdentities> serverIdentities = std::make_shared<Identities>(Identities::SERVER);
+			std::shared_ptr<Identities> clientIdentities = std::make_shared<Identities>(Identities::CLIENT);
+			std::shared_ptr<Identities> serverIdentities = std::make_shared<Identities>(Identities::SERVER);
 
 			//    private var disposeLoggerFactory: Closeable? = null
 

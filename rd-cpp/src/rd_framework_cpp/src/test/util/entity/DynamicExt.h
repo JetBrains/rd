@@ -26,7 +26,7 @@ namespace rd {
 
 				void init(Lifetime lifetime) const override;
 
-				void identify(const IIdentities &identities, RdId const &id) const override;
+				void identify(const Identities &identities, RdId const &id) const override;
 
 				static DynamicExt read(SerializationCtx const &ctx, Buffer const &buffer);
 

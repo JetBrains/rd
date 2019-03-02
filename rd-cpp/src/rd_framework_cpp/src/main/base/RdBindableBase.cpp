@@ -36,7 +36,7 @@ namespace rd {
 	}
 
 //must be overriden if derived class have bindable members
-	void RdBindableBase::identify(const IIdentities &identities, RdId const &id) const {
+	void RdBindableBase::identify(const Identities &identities, RdId const &id) const {
 		MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
 		MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 
