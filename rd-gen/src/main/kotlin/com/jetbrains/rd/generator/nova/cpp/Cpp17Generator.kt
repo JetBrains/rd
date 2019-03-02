@@ -11,57 +11,7 @@ import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import java.io.File
 
-class Signature(private val returnType: String, private val arguments: String, private val scope: String, private var isAbstract: Boolean = false) {
-    private var declPrefix = arrayListOf<String>()
-    private var declPostfix = arrayListOf<String>()
-    private var commonPostfix = arrayListOf<String>()
-
-    protected fun <T> ArrayList<T>.front(): String {
-        return toArray().joinToOptString(separator = " ", postfix = " ")
-    }
-
-    protected fun <T> ArrayList<T>.back(): String {
-        return toArray().joinToOptString(separator = " ", prefix = " ")
-    }
-
-    fun decl(): String {
-        return "${declPrefix.front()}$returnType $arguments${commonPostfix.back()}${declPostfix.back()}" + isAbstract.condstr { " = 0" } + ";"
-    }
-
-    fun def(): String {
-        return "$returnType $scope::$arguments${commonPostfix.back()}"
-    }
-
-    fun const(): Signature {
-        return this.also {
-            commonPostfix.add("const")
-        }
-    }
-
-    fun override(): Signature {
-        return this.also {
-            declPostfix.add("override")
-        }
-    }
-
-    fun static(): Signature {
-        return this.also {
-            declPrefix.add("static")
-        }
-    }
-
-    fun abstract(decl: Declaration? = null): Signature {
-        return this.also {
-            isAbstract = true
-            declPrefix.add("virtual")
-            decl?.base?.let {
-                override()
-            }
-        }
-    }
-}
-
-fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
+private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
     if (member is Member.Field && (member.isOptional || member.defaultValue != null)) {
         append("{")
         val defaultValue = member.defaultValue
@@ -83,7 +33,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
 
-    val Declaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
+    val Declaration.namespace: String
+        get() {
+            val ns = getSetting(Namespace) ?: defaultNamespace
+            return ns.split('.').joinToString(separator = "::")
+        }
+
+    val nestedNamespaces = defaultNamespace.split('.')
 
     object Intrinsic : SettingWithDefault<CppIntrinsicMarshaller, Declaration>(CppIntrinsicMarshaller.default)
 
@@ -176,6 +132,16 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected fun Member.getter() = "get_${this.publicName}"
 
+    protected fun PrettyPrinter.surroundWithNamespaces(body: PrettyPrinter.() -> Unit) {
+        nestedNamespaces.foldRight(body) { s, acc ->
+            {
+                titledBlock("namespace $s") {
+                    acc()
+                }
+            }
+        }()
+        //don't touch. it works
+    }
     //endregion
 
     //region IType.
@@ -188,13 +154,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     fun IType.substitutedName(scope: Declaration, rawType: Boolean = false, omitNullability: Boolean = false): String = when (this) {
         is Declaration -> {
+            val fullName = sanitizedName(scope)
             if (rawType) {
-                name
+                fullName
             } else {
                 if (isAbstract) {
-                    name.wrapper()
+                    fullName.wrapper()
                 } else {
-                    name
+                    fullName
                 }
             }
         }
@@ -251,10 +218,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }?.let { "rd::$it" }
     }
 
-    protected fun IType.serializerRef(scope: Declaration): String = leafSerializerRef(scope)
-            ?: "${scope.name}::__${name}Serializer"
-
-    protected fun IType.serializerDef(scope: Declaration): String = "__${name}Serializer"
+    protected fun IType.serializerRef(scope: Declaration) : String = leafSerializerRef(scope) ?: when(this) {
+        is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
+        else -> "__${name}Serializer"
+    }
 
 //endregion
 
@@ -350,13 +317,18 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
             else -> fail("Unsupported member: $this")
         }
-//endregion
+    //endregion
 
     //region Declaration.
     protected fun Declaration.sanitizedName(scope: Declaration): String {
         val needQualification = namespace != scope.namespace
         return needQualification.condstr { "$namespace::" } + name
     }
+
+    protected fun Declaration.withNamespace(): String {
+        return "$namespace::$name"
+    }
+
 
     protected fun Declaration.scopeResolution(): String {
         return "$name::"
@@ -495,7 +467,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         if (decl is Toplevel && decl.isLibrary) {
             comment("library")
-            libdecl(decl)
+            surroundWithNamespaces {
+                libdecl(decl)
+            }
         } else {
             typedecl(decl)
         }
@@ -521,9 +495,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             +(unknown(decl)!!.include())
         }
         if (decl is Toplevel && decl.isLibrary) {
-            libdef(decl, dependencies)
+            surroundWithNamespaces { libdef(decl, dependencies) }
         } else {
-            typedef(decl)
+            surroundWithNamespaces { typedef(decl) }
         }
     }
 //endregion
@@ -553,85 +527,87 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             +" */"
         }
 
-        if (decl is Enum) {
-            enum(decl)
-            return
-        }
-
-        if (decl.isAbstract) comment("abstract")
-        if (decl is Struct.Concrete && decl.base == null) comment("data")
-
-
-        p("class ${decl.name} ")
-        baseClassTraitDecl(decl)
-        block("{", "};") {
-            comment("companion")
-            companionTraitDecl(decl)
-
-            if (decl.isExtension) {
-                comment("extension")
-                declare(extensionTraitDecl(decl as Ext))
+        surroundWithNamespaces {
+            if (decl is Enum) {
+                enum(decl)
+                return@surroundWithNamespaces
             }
 
-            comment("custom serializers")
-            customSerializersTrait(decl)
-
-            comment("fields")
-            +"protected:"
-            fieldsDecl(decl)
-
-            comment("initializer")
-            private()
-            declare(initializerTraitDecl(decl))
-
-            comment("primary ctor")
-//            +(decl.primaryCtorVisibility)
-            public()
-            p("explicit ")
-            primaryCtorTraitDecl(decl)
-            +carry()
-
-            comment("default ctors and dtors")
-            defaultCtorsDtors(decl)
-
-            comment("reader")
-            declare(readerTraitDecl(decl))
-
-            comment("writer")
-            declare(writerTraitDecl(decl))
-
-            comment("virtual init")
-            declare(virtualInitTraitDecl(decl))
-
-            comment("identify")
-            declare(identifyTraitDecl(decl))
-
-            comment("getters")
-            gettersTraitDecl(decl)
-
-            comment("intern")
-            declare(internTraitDecl(decl))
-
-            comment("equals trait")
-            private()
-            declare(equalsTraitDecl(decl))
-
-            comment("equality operators")
-            public()
-            equalityOperatorsDecl(decl)
-
-            comment("hash code trait")
-            declare(hashCodeTraitDecl(decl))
-
-            comment("type name trait")
-            declare(typenameTraitDecl(decl))
-//            comment("pretty print")
-//            prettyPrintTrait(decl)
+            if (decl.isAbstract) comment("abstract")
+            if (decl is Struct.Concrete && decl.base == null) comment("data")
 
 
-            /*if (decl.isExtension) {
-                extensionTraitDef(decl as Ext)
-            }*/
+            p("class ${decl.name} ")
+            baseClassTraitDecl(decl)
+            block("{", "};") {
+                comment("companion")
+                companionTraitDecl(decl)
+
+                if (decl.isExtension) {
+                    comment("extension")
+                    declare(extensionTraitDecl(decl as Ext))
+                }
+
+                comment("custom serializers")
+                customSerializersTrait(decl)
+
+                comment("fields")
+                +"protected:"
+                fieldsDecl(decl)
+
+                comment("initializer")
+                private()
+                declare(initializerTraitDecl(decl))
+
+                comment("primary ctor")
+                //            +(decl.primaryCtorVisibility)
+                public()
+                p("explicit ")
+                primaryCtorTraitDecl(decl)
+                +carry()
+
+                comment("default ctors and dtors")
+                defaultCtorsDtors(decl)
+
+                comment("reader")
+                declare(readerTraitDecl(decl))
+
+                comment("writer")
+                declare(writerTraitDecl(decl))
+
+                comment("virtual init")
+                declare(virtualInitTraitDecl(decl))
+
+                comment("identify")
+                declare(identifyTraitDecl(decl))
+
+                comment("getters")
+                gettersTraitDecl(decl)
+
+                comment("intern")
+                declare(internTraitDecl(decl))
+
+                comment("equals trait")
+                private()
+                declare(equalsTraitDecl(decl))
+
+                comment("equality operators")
+                public()
+                equalityOperatorsDecl(decl)
+
+                comment("hash code trait")
+                declare(hashCodeTraitDecl(decl))
+
+                comment("type name trait")
+                declare(typenameTraitDecl(decl))
+                //            comment("pretty print")
+                //            prettyPrintTrait(decl)
+
+
+                /*if (decl.isExtension) {
+                    extensionTraitDef(decl as Ext)
+                }*/
+            }
         }
 
         VsWarningsDefault?.let {
@@ -672,8 +648,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 "cstdint",
                 "vector",
                 "type_traits",
-                "utility",
-                "typeinfo"
+                "utility"
         )
 
 
@@ -696,6 +671,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 "Polymorphic",
                 "NullableSerializer",
                 "ArraySerializer",
+                "InternedSerializer",
                 "SerializationCtx",
                 "Serializers",
                 "ISerializersOwner",
@@ -803,7 +779,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 .distinct()
                 .filter { it.leafSerializerRef(decl) == null }
 
-        allTypesForDelegation.println { "using ${it.serializerDef(decl)} = ${it.serializerBuilder()};" }
+        allTypesForDelegation.println { "using ${it.serializerRef(decl)} = ${it.serializerBuilder()};" }
     }
 
 
@@ -991,8 +967,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (decl !is IScalar) return
 
         block("namespace std {", "}") {
-            block("template <> struct hash<${decl.name}> {", "};") {
-                block("size_t operator()(const ${decl.name} & value) const {", "}") {
+            block("template <> struct hash<${decl.withNamespace()}> {", "};") {
+                block("size_t operator()(const ${decl.withNamespace()} & value) const {", "}") {
                     +"return value.hashCode();"
                 }
             }
@@ -1070,7 +1046,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
             is InternedScalar -> {
                 val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &", "return ${itemType.reader()}")
-                "ctx.readInterned<${itemType.substitutedName(decl)}>(buffer, $lambda)"
+                "ctx.readInterned<${itemType.substitutedName(decl)}>(buffer, \"${internKey.keyName}\", $lambda)"
             }
             is PredefinedType.void -> "rd::Void()" //really?
             is PredefinedType.bool -> "buffer.readBool()"
@@ -1116,7 +1092,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             +"int32_t objectStartPosition = buffer.get_position();"
         }
         if (decl is Class && decl.isInternRoot) {
-            +"auto const &ctx = _ctx.withInternRootHere(false);"
+            +"auto const &ctx = _ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
         } else {
             +"auto const &ctx = _ctx;"
         }
@@ -1132,7 +1108,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 //        p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
         +"${decl.name} res{${ctorParams.isNotEmpty().condstr { ctorParams }}};"
         if (decl is Class || decl is Aggregate) {
-            +("withId(res, _id);")
+            +"withId(res, _id);"
         }
         +"return res;"
     }
@@ -1150,7 +1126,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         println()
         define(Signature("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner")) {
             types.filter { !it.isAbstract }.filterIsInstance<IType>().filterNot { iType -> iType is Enum }.println {
-                "serializers.registry<${it.name}>();"
+                "serializers->registry<${it.name}>();"
             }
 
             if (decl is Root) {
@@ -1216,7 +1192,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 is Enum -> "buffer.writeEnum($field)"
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &, ${itemType.templateName(decl)} const & internedValue", itemType.writer("internedValue"))
-                    "ctx.writeInterned<${itemType.templateName(decl)}>(buffer, $field, $lambda)"
+                    "ctx.writeInterned<${itemType.templateName(decl)}>(buffer, $field, \"${internKey.keyName}\", $lambda)"
                 }
                 is PredefinedType.void -> "" //really?
                 is PredefinedType.bool -> "buffer.writeBool($field)"
@@ -1256,7 +1232,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (decl.isConcrete) {
             define(writerTraitDecl(decl)) {
                 if (decl is Class && decl.isInternRoot) {
-                    +"this->mySerializationContext = _ctx.withInternRootHere(true);"
+                    +"this->mySerializationContext = _ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                     +"auto const &ctx = *this->mySerializationContext;"
                 } else {
                     +"auto const &ctx = _ctx;"

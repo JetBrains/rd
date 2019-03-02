@@ -23,7 +23,7 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
         }
     }
     protected fun assertBound() {
-        if (!isBound) { throw IllegalStateException("Not bound") }
+        if (!isBound) { throw IllegalStateException("Not bound: $location") }
     }
 
     //delegated
