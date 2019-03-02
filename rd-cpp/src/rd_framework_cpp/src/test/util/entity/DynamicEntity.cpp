@@ -25,7 +25,7 @@ namespace rd {
 				foo.bind(lifetime, this, "foo");
 			}
 
-			void DynamicEntity::identify(IIdentities const &identities, RdId const &id) const {
+			void DynamicEntity::identify(Identities const &identities, RdId const &id) const {
 				foo.identify(identities, id.mix("foo"));
 			}
 

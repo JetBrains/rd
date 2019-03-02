@@ -39,7 +39,7 @@ void DemoRoot::init(rd::Lifetime lifetime) const
 }
 
 //identify
-void DemoRoot::identify(const rd::IIdentities &identities, rd::RdId const &id) const
+void DemoRoot::identify(const rd::Identities &identities, rd::RdId const &id) const
 {
     rd::RdBindableBase::identify(identities, id);
 }

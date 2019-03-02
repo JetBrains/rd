@@ -5,7 +5,6 @@
 #ifndef RD_CPP_FRAMEWORK_IDENTITIES_H
 #define RD_CPP_FRAMEWORK_IDENTITIES_H
 
-#include "IIdentities.h"
 #include "interfaces.h"
 #include "RdId.h"
 
@@ -24,7 +23,7 @@ namespace rd {
 
 	hash_t getPlatformIndependentHash(int64_t const &that, hash_t initial = DEFAULT_HASH);
 
-	class Identities : public IIdentities {
+	class Identities {
 	private:
 		enum class IdKind {
 			Client,
@@ -48,7 +47,7 @@ namespace rd {
 		virtual ~Identities() = default;
 		//endregion
 
-		RdId next(const RdId &parent) const override;
+		RdId next(const RdId &parent) const;
 	};
 }
 

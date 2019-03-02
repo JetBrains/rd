@@ -36,7 +36,7 @@ namespace rd {
 					property.bind(lf, this, "property");
 				}
 
-				void identify(IIdentities const &identities, RdId const &id) const override {
+				void identify(Identities const &identities, RdId const &id) const override {
 					RdExtBase::identify(identities, id);
 					property.identify(identities, id.mix("property"));
 				}

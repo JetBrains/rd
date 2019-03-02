@@ -7,7 +7,7 @@
 
 
 #include "Serializers.h"
-#include "IIdentities.h"
+#include "Identities.h"
 #include "IScheduler.h"
 #include "IWire.h"
 #include "SerializationCtx.h"
@@ -23,7 +23,7 @@ namespace rd {
 	class IProtocol : public IRdDynamic {
 	public:
 		std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
-		std::shared_ptr<IIdentities> identity;
+		std::shared_ptr<Identities> identity;
 		IScheduler *scheduler = nullptr;
 		std::shared_ptr<IWire> wire;
 		SerializationCtx context;
@@ -32,7 +32,7 @@ namespace rd {
 
 		IProtocol() = default;
 
-		IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		IProtocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
 		IProtocol(IProtocol &&other) noexcept = default;
 

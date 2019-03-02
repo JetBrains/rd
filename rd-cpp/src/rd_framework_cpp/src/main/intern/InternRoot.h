@@ -14,7 +14,7 @@
 namespace rd {
 	//region predeclared
 
-	class IIdentities;
+	class Identities;
 	//endregion
 
 	class InternRoot final : public RdReactiveBase {
@@ -45,7 +45,7 @@ namespace rd {
 
 		void bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const override;
 
-		void identify(const IIdentities &identities, RdId const &id) const override;
+		void identify(const Identities &identities, RdId const &id) const override;
 
 		void on_wire_received(Buffer buffer) const override;
 	};

@@ -40,7 +40,7 @@ namespace rd {
 
 		void bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const override;
 
-		void identify(const IIdentities &identities, RdId const &id) const override;
+		void identify(const Identities &identities, RdId const &id) const override;
 
 		mutable std::map<std::string, std::shared_ptr<IRdBindable> > bindable_extensions;//todo concurrency
 		//mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency

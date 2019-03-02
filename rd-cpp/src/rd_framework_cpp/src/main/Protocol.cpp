@@ -11,7 +11,7 @@ namespace rd {
 		return this;
 	}
 
-	Protocol::Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler,
+	Protocol::Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler,
 					   std::shared_ptr<IWire> wire) :
 			IProtocol(std::move(identity), scheduler, std::move(wire)) {}
 

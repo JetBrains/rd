@@ -5,12 +5,12 @@
 #include <utility>
 
 #include "IScheduler.h"
-#include "IIdentities.h"
+#include "Identities.h"
 #include "IWire.h"
 #include "IProtocol.h"
 
 namespace rd {
-	IProtocol::IProtocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
+	IProtocol::IProtocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
 			identity(std::move(identity)),
 			scheduler(scheduler),
 			wire(std::move(wire)),

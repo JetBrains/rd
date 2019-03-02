@@ -64,7 +64,7 @@ namespace rd {
 		}
 
 
-		void identify(IIdentities const &identities, RdId const &id) const override {
+		void identify(Identities const &identities, RdId const &id) const override {
 			RdBindableBase::identify(identities, id);
 			if (!this->optimize_nested && this->has_value()) {
 				identifyPolymorphic(this->get(), identities, identities.next(id));

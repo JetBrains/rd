@@ -100,7 +100,7 @@ class DemoModel : public rd::RdExtBase
     void init(rd::Lifetime lifetime) const override;
     
     //identify
-    void identify(const rd::IIdentities &identities, rd::RdId const &id) const override;
+    void identify(const rd::Identities &identities, rd::RdId const &id) const override;
     
     //getters
     rd::RdProperty<bool, rd::Polymorphic<bool>> const & get_boolean_property() const;

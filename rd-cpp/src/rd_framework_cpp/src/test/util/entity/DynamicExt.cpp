@@ -23,7 +23,7 @@ namespace rd {
 				bindPolymorphic(bar, lifetime, this, "bar");
 			}
 
-			void DynamicExt::identify(const IIdentities &identities, RdId const &id) const {
+			void DynamicExt::identify(const Identities &identities, RdId const &id) const {
 				RdBindableBase::identify(identities, id);
 				identifyPolymorphic(bar, identities, id.mix(".bar"));
 			}
@@ -48,7 +48,7 @@ void DynamicExt::bind(Lifetime lf, IRdDynamic const *parent, std::wstring const 
     bar.bind(lf, this, "bar");
 }
 
-void DynamicExt::identify(IIdentities const &identities, RdId id) const {
+void DynamicExt::identify(Identities const &identities, RdId id) const {
     RdExtBase::identify(identities, id);
     bar.identify(identities, id.mix("bar"));
 }*/
