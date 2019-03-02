@@ -2,7 +2,7 @@
 // Created by jetbrains on 07.10.2018.
 //
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "Buffer.h"
 #include "Polymorphic.h"

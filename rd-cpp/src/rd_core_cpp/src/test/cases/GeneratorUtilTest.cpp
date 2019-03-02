@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 24.02.2019.
-//
-
 #include <gtest/gtest.h>
 
 #include "gen_util.h"

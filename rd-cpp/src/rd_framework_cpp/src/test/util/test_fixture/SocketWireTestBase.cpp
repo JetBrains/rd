@@ -1,9 +1,7 @@
-//
-// Created by jetbrains on 27.08.2018.
-//
-
 #include "SocketWireTestBase.h"
+
 #include "SocketWire.h"
+#include "Identities.h"
 
 namespace rd {
 	namespace test {

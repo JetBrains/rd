@@ -2,7 +2,7 @@
 // Created by jetbrains on 11.07.2018.
 //
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "Property.h"
 

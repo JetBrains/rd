@@ -6,12 +6,12 @@
 #define RD_CPP_TESTWIRE_H
 
 
-#include <queue>
-#include <utility>
-
 #include "WireBase.h"
 #include "RdId.h"
 #include "Buffer.h"
+
+#include <queue>
+#include <utility>
 
 namespace rd {
 	namespace test {
