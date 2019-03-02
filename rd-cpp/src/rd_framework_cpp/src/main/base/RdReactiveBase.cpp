@@ -1,9 +1,4 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #include "RdReactiveBase.h"
-#include <future>
 
 namespace rd {
 	Logger RdReactiveBase::logReceived;
@@ -37,7 +32,7 @@ namespace rd {
 	}
 
 	const Serializers &RdReactiveBase::get_serializers() const {
-		return get_protocol()->serializers;
+		return *get_protocol()->serializers.get();
 	}
 
 	IScheduler *RdReactiveBase::get_default_scheduler() const {

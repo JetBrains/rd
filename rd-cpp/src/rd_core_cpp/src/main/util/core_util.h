@@ -8,18 +8,19 @@
 #include "erase_if.h"
 #include "gen_util.h"
 #include "overloaded.h"
+#include "shared_function.h"
 #include "wrapper.h"
 #include "Void.h"
 
 #include "optional.hpp"
 
 #include <memory>
-#include <cassert>
-#include <iostream>
 #include <string>
 #include <thread>
 #include <atomic>
+#include <iostream>
 #include <sstream>
+#include <cassert>
 
 #define MY_ASSERT_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;assert(expr);}
 #define MY_ASSERT_THROW_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;throw std::runtime_error(msg);}

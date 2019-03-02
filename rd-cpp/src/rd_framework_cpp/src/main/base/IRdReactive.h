@@ -6,9 +6,8 @@
 #define RD_CPP_FRAMEWORK_IRDREACTIVE_H
 
 
-#include "IScheduler.h"
 #include "IRdBindable.h"
-
+#include "IScheduler.h"
 
 namespace rd {
 	class IRdReactive : public virtual IRdBindable {

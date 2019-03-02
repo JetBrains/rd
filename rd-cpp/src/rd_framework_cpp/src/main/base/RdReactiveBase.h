@@ -49,9 +49,6 @@ namespace rd {
 		mutable bool is_local_change = false;
 
 		//delegated
-		const Serializers &get_serializers() {
-			return get_protocol()->serializers;
-		}
 
 		const Serializers &get_serializers() const;
 

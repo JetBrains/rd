@@ -17,7 +17,7 @@ add_library(rd_framework_cpp_test_util
         test_fixture/SocketWireTestBase.cpp test_fixture/SocketWireTestBase.h
         test_fixture/RdFrameworkTestBase.cpp test_fixture/RdFrameworkTestBase.h
         test_fixture/RdFrameworkDynamicPolymorphicTestBase.cpp test_fixture/RdFrameworkDynamicPolymorphicTestBase.h
-        #        test_fixture/InterningTestBase.cpp test_fixture/InterningTestBase.h
+#        test_fixture/InterningTestBase.cpp test_fixture/InterningTestBase.h
 
         SimpleScheduler.cpp SimpleScheduler.h
         WireUtil.cpp WireUtil.h

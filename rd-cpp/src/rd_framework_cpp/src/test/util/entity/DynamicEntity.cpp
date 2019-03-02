@@ -18,7 +18,7 @@ namespace rd {
 			}
 
 			void DynamicEntity::create(IProtocol *protocol) {
-				protocol->serializers.registry<DynamicEntity>();
+				protocol->serializers->registry<DynamicEntity>();
 			}
 
 			void DynamicEntity::init(Lifetime lifetime) const {

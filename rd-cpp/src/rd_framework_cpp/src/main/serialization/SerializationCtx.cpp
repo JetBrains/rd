@@ -1,13 +1,7 @@
-//
-// Created by jetbrains on 20.07.2018.
-//
-
 #include "SerializationCtx.h"
 
-#include "IProtocol.h"
-
 namespace rd {
-	SerializationCtx::SerializationCtx(const IProtocol &protocol) : serializers(&protocol.serializers) {}
+//	SerializationCtx::SerializationCtx(const IProtocol &protocol) : serializers(protocol.serializers.get()) {}
 
 	SerializationCtx::SerializationCtx(const Serializers *const serializers) : serializers(serializers) {}
 

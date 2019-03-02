@@ -14,22 +14,18 @@
 #include <iostream>
 #include <unordered_map>
 
-
 namespace rd {
+	//region predeclared
+
 	class SerializationCtx;
-}
+	//endregion
 
-namespace rd {
 	class Serializers {
 	private:
 
-		static RdId real_rd_id(IUnknownInstance const &value) {
-			return value.unknownId;
-		}
+		static RdId real_rd_id(IUnknownInstance const &value);
 
-		static RdId real_rd_id(IPolymorphicSerializable const &value) {
-			return RdId(getPlatformIndependentHash(value.type_name()));
-		}
+		static RdId real_rd_id(IPolymorphicSerializable const &value);
 
 	public:
 		mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
@@ -46,8 +42,7 @@ namespace rd {
 
 			MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
-			readers[id] = [](SerializationCtx const &ctx,
-							 Buffer const &buffer) -> std::unique_ptr<ISerializable> {
+			readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> std::unique_ptr<ISerializable> {
 				return std::make_unique<T>(T::read(ctx, buffer));
 			};
 		}

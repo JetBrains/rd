@@ -5,8 +5,12 @@
 #ifndef RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
-#include "Buffer.h"
 //#include "InternRoot.h"
+#include "Buffer.h"
+
+#include <unordered_map>
+#include <functional>
+#include <string>
 
 namespace rd {
 	class IProtocol;
@@ -17,11 +21,12 @@ namespace rd {
 	public:
 		Serializers const *serializers = nullptr;
 
-//		tl::optional<InternRoot> internRoot;
+//		std::unordered_map<std::string, InternRoot> intern_roots{};
 
 		//    SerializationCtx() = delete;
 
 		//region ctor/dtor
+
 
 		SerializationCtx(SerializationCtx &&other) noexcept = default;
 
@@ -30,11 +35,7 @@ namespace rd {
 		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
 //		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
-
-		explicit SerializationCtx(IProtocol const &protocol);
 		//endregion
-
-		SerializationCtx withInternRootHere(bool isMaster) const;
 
 		template<typename T>
 		T readInterned(Buffer const &buffer,

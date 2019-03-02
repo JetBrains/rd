@@ -7,10 +7,8 @@
 
 #include "optional.hpp"
 
-#include <functional>
 #include <string>
 #include <exception>
-#include <iostream>
 
 namespace rd {
 	enum class LogLevel {

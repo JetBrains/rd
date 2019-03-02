@@ -6,16 +6,17 @@
 #define RD_CPP_IRDDYNAMIC_H
 
 #include "RName.h"
-#include "SerializationCtx.h"
 
 namespace rd {
+	//region predeclared
+
 	class IProtocol;
-}
 
-namespace rd {
+	class SerializationCtx;
+	//endregion
+
 	class IRdDynamic {
 	public:
-		SerializationCtx serialization_context;
 		mutable RName location;
 
 		//region ctor/dtor

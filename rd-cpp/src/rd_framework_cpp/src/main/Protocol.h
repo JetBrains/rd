@@ -16,13 +16,11 @@ namespace rd {
 
 		Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-		Protocol(Protocol const &) {
-			assert("What the actual fuck" && false);
-		};
+		Protocol(Protocol const &) = delete;
 
-		Protocol(Protocol &&) = default;
+		Protocol(Protocol &&) noexcept = default;
 
-		Protocol &operator=(Protocol &&) = default;
+		Protocol &operator=(Protocol &&) noexcept = default;
 		//endregion
 
 		const IProtocol *get_protocol() const override;

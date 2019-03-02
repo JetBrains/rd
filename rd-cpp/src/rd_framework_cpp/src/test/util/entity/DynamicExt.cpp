@@ -37,7 +37,7 @@ namespace rd {
 			}
 
 			void DynamicExt::create(IProtocol *protocol) {
-				protocol->serializers.registry<DynamicExt>();
+				protocol->serializers->registry<DynamicExt>();
 			}
 
 			std::string DynamicExt::type_name() const { return "DynamicExt"; }

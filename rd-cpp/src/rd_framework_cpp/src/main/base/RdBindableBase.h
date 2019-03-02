@@ -5,9 +5,10 @@
 #ifndef RD_CPP_RDBINDABLEBASE_H
 #define RD_CPP_RDBINDABLEBASE_H
 
-#include "demangle.h"
 #include "IRdBindable.h"
 #include "IProtocol.h"
+
+#include "optional.hpp"
 
 namespace rd {
 	class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
