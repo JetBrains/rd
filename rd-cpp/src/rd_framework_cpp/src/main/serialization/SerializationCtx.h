@@ -6,7 +6,7 @@
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
 #include "Buffer.h"
-#include "InternRoot.h"
+//#include "InternRoot.h"
 
 namespace rd {
 	class IProtocol;
@@ -17,7 +17,7 @@ namespace rd {
 	public:
 		Serializers const *serializers = nullptr;
 
-		tl::optional<InternRoot> internRoot;
+//		tl::optional<InternRoot> internRoot;
 
 		//    SerializationCtx() = delete;
 
@@ -29,7 +29,7 @@ namespace rd {
 
 		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
-		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
+//		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
 
 		explicit SerializationCtx(IProtocol const &protocol);
 		//endregion

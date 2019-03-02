@@ -32,7 +32,6 @@
 #include <vector>
 #include <type_traits>
 #include <utility>
-#include <typeinfo>
 
 #include "optional.hpp"
 

@@ -1,59 +1,66 @@
 #lib
 
 add_library(rd_framework_cpp STATIC
-        serialization/SerializationCtx.cpp serialization/SerializationCtx.h
-        Identities.cpp Identities.h
-        impl/RName.cpp impl/RName.h
-        Buffer.cpp Buffer.h
+        #base
         base/IRdBindable.h
         base/IRdReactive.h
-        RdId.cpp RdId.h
-        impl/RdSignal.h
+        base/IRdDynamic.h
+        base/IWire.h
+        base/IIdentities.h
+        base/IProtocol.cpp base/IProtocol.h
         base/RdReactiveBase.cpp base/RdReactiveBase.h
         base/RdBindableBase.cpp base/RdBindableBase.h
-        impl/RdProperty.h
-        base/ext/RdExtBase.cpp base/ext/RdExtBase.h
-        serialization/Serializers.h
         base/WireBase.cpp base/WireBase.h
-        Protocol.cpp Protocol.h
-        base/RdPropertyBase.h MessageBroker.cpp
-        MessageBroker.h
-        Buffer.cpp Buffer.h
+        base/RdPropertyBase.h
+        base/ISerializersOwner.cpp
+        base/IUnknownInstance.cpp base/IUnknownInstance.h
+        #impl
+        impl/RdSignal.h
+        impl/RdProperty.h
+        impl/RdList.h
+        impl/RdMap.h
+        impl/RName.cpp impl/RName.h
+        impl/RdSet.h
+        #ext
+        ext/RdExtBase.cpp ext/RdExtBase.h
+        ext/ExtWire.cpp ext/ExtWire.h
+        #serialization
+        serialization/SerializationCtx.cpp serialization/SerializationCtx.h
+        serialization/Serializers.h
         serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
-        base/IProtocol.cpp base/IProtocol.h
-        base/IRdDynamic.h
-        base/IWire.h
-        base/ISerializersOwner.cpp
-        base/IIdentities.h
-        impl/RdList.h
-        impl/RdMap.h
-        wire/SocketWire.cpp wire/SocketWire.h
-        wire/PumpScheduler.cpp wire/PumpScheduler.h
-        impl/RdSet.h
         serialization/ISerializable.h
-        util/demangle.cpp util/demangle.h
-        wire/ByteBufferAsyncProcessor.cpp wire/ByteBufferAsyncProcessor.h
-        base/ext/ExtWire.cpp base/ext/ExtWire.h
-        util/shared_function.cpp util/shared_function.h
+        serialization/InternedSerializer.h
         #task
         task/RdCall.h task/RdTask.h task/RdTaskResult.h task/RdEndpoint.h
         task/RdTaskImpl.h
-        base/IUnknownInstance.cpp base/IUnknownInstance.h
-        intern/InternRoot.cpp intern/InternRoot.h)
+        #wire
+        wire/SocketWire.cpp wire/SocketWire.h
+        wire/PumpScheduler.cpp wire/PumpScheduler.h
+        wire/ByteBufferAsyncProcessor.cpp wire/ByteBufferAsyncProcessor.h
+        #intern
+#        intern/InternRoot.cpp intern/InternRoot.h
+#        intern/InternScheduler.cpp intern/InternScheduler.h
+
+        Identities.cpp Identities.h
+        Buffer.cpp Buffer.h
+        RdId.cpp RdId.h
+        Protocol.cpp Protocol.h
+        MessageBroker.cpp MessageBroker.h
+        )
 
 target_include_directories(rd_framework_cpp
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         base
-        base/ext
+        ext
         impl
-        serialization
-        util
-        wire
-        task
         intern
+        serialization
+        task
+        wire
+        util
         )
 
 target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp clsocket)

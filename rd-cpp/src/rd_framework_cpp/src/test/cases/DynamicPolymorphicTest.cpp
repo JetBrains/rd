@@ -2,14 +2,14 @@
 // Created by jetbrains on 06.02.2019.
 //
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "RdFrameworkTestBase.h"
 #include "RdFrameworkDynamicPolymorphicTestBase.h"
 
-#include "AbstractEntity.h"
-#include "ConcreteEntity.h"
-#include "FakeEntity.h"
+#include "entity/AbstractEntity.h"
+#include "entity/ConcreteEntity.h"
+#include "entity/FakeEntity.h"
 #include "ArraySerializer.h"
 #include "RdProperty.h"
 #include "RdSet.h"

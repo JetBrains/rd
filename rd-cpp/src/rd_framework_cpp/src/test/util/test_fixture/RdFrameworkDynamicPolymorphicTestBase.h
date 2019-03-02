@@ -5,7 +5,7 @@
 #include "RdReactiveBase.h"
 
 #include <type_traits>
-#include "ConcreteEntity.h"
+#include "entity/ConcreteEntity.h"
 
 namespace rd {
 	namespace test {
@@ -14,7 +14,6 @@ namespace rd {
 					typename = typename std::enable_if<std::is_base_of<RdReactiveBase, S>::value>::type,
 					typename = typename std::enable_if<std::is_base_of<RdReactiveBase, C>::value>::type
 			>
-
 			class RdFrameworkDynamicPolymorphicTestBase : public RdFrameworkTestBase {
 			public:
 				S server_entity;

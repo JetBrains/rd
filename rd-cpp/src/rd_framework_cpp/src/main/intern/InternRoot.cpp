@@ -1,11 +1,44 @@
-//
-// Created by jetbrains on 08.02.2019.
-//
-
 #include "InternRoot.h"
 
-namespace rd {
-	InternRoot::InternRoot(bool is_master) : is_master(is_master) {
+#include "Polymorphic.h"
 
-	}
+namespace rd {
+    IScheduler *InternRoot::get_wire_scheduler() const {
+        return &intern_scheduler;
+    }
+
+    void InternRoot::on_wire_received(Buffer buffer) const {
+        auto value = AbstractPolymorphic<IPolymorphicSerializable>::read(get_serialization_context(), buffer);
+        if (!value) {
+            return;
+        }
+        int32_t remote_id = buffer.read_integral<int32_t>();
+        MY_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
+    }
+
+    void InternRoot::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
+        MY_ASSERT_MSG(!is_bound(), "Trying to bound already bound $this to ${parent.location}")
+
+        lf->bracket([this, parent, &name] {
+            this->parent = parent;
+            location = parent->location.sub(name, ".");
+        }, [this] {
+            location = location.sub("<<unbound>>", "::");
+            this->parent = nullptr;
+            rdid = RdId::Null();
+        });
+
+//        myItemsList.clear()
+//        otherItemsList.clear()
+//        inverseMap.clear()
+
+        get_protocol()->wire->advise(lf, this);
+    }
+
+    void InternRoot::identify(const IIdentities &identities, RdId const &id) const {
+        MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
+        MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
+
+        rdid = id;
+    }
 }

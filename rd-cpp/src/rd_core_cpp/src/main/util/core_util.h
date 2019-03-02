@@ -2,8 +2,8 @@
 // Created by jetbrains on 13.08.2018.
 //
 
-#ifndef RD_CORE_CPP_UTIL_H
-#define RD_CORE_CPP_UTIL_H
+#ifndef RD_CPP_CORE_CPP_UTIL_H
+#define RD_CPP_CORE_CPP_UTIL_H
 
 #include "erase_if.h"
 #include "gen_util.h"
@@ -157,4 +157,4 @@ namespace rd {
 	}
 }
 
-#endif //RD_CORE_CPP_UTIL_H
+#endif //RD_CPP_CORE_CPP_UTIL_H

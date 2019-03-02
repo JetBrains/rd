@@ -1,32 +1,37 @@
 #lib
 
 add_library(rd_core_cpp STATIC
-        lifetime/LifetimeDefinition.cpp lifetime/LifetimeDefinition.h
+        #lifetime
         lifetime/LifetimeImpl.cpp lifetime/LifetimeImpl.h
+        lifetime/Lifetime.cpp lifetime/Lifetime.h
+        lifetime/LifetimeDefinition.cpp lifetime/LifetimeDefinition.h
         lifetime/SequentialLifetimes.cpp lifetime/SequentialLifetimes.h
+        #reactive
         reactive/SignalX.h
         reactive/interfaces.h
         reactive/Property.h
         reactive/ViewableMap.h
         reactive/ViewableSet.h
         reactive/ViewableList.h
-        Logger.cpp Logger.h
-        lifetime/Lifetime.cpp lifetime/Lifetime.h
         reactive/IScheduler.cpp reactive/IScheduler.h
         reactive/base/IViewableList.h
         reactive/base/IViewableSet.h
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
+
+        Logger.cpp Logger.h
         )
 
 add_subdirectory(util)
 
-target_include_directories(rd_core_cpp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(rd_core_cpp PUBLIC lifetime)
-target_include_directories(rd_core_cpp PUBLIC reactive)
-target_include_directories(rd_core_cpp PUBLIC reactive/base)
-target_include_directories(rd_core_cpp PUBLIC util)
+target_include_directories(rd_core_cpp PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        lifetime
+        reactive
+        reactive/base
+        util
+        )
 
 target_link_libraries(rd_core_cpp PUBLIC rd_core_cpp_util optional mpark_variant tsl::ordered_map)
 

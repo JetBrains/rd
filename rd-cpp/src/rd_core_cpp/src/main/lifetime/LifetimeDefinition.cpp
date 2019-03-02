@@ -2,8 +2,9 @@
 // Created by jetbrains on 09.07.2018.
 //
 
-#include <Logger.h>
 #include "LifetimeDefinition.h"
+
+#include "Logger.h"
 
 namespace rd {
 	LifetimeDefinition::LifetimeDefinition(bool eternaled) : eternaled(eternaled), lifetime(eternaled) {}
