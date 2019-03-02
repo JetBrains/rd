@@ -1,9 +1,7 @@
 package com.jetbrains.rd.framework
 
-import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.impl.InternRoot
-import com.jetbrains.rd.util.lifetime.Lifetime
 
 class SerializationCtx(val serializers: ISerializers, val internRoots: Map<String, IInternRoot> = emptyMap()) {
     constructor(protocol: IProtocol) : this(protocol.serializers)

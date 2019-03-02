@@ -1,24 +1,27 @@
 package com.jetbrains.rd.generator.test.cases.generator
 
 import com.jetbrains.rd.generator.nova.*
+import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rd.generator.nova.util.syspropertyOrEmpty
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
 
 
-
 class InterningModelsGenTest {
     companion object {
         val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+        val cppGeneratedSourceDir = "../rd-cpp/src/rd_framework_cpp/src/test/util/models"
     }
 
     @Suppress("unused")
     object InterningRoot1 : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(kotlinGeneratedSourcesDir)),
-        CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp"))
+            Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(kotlinGeneratedSourcesDir)),
+            CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
+            Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(cppGeneratedSourceDir))
     ) {
         val TestInternScope = internScope()
 
