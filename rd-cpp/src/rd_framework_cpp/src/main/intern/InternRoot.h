@@ -29,7 +29,7 @@ namespace rd {
 		InternRoot();
 
 		template<typename T>
-		int32_t intern_value(T &&value) {
+		int32_t intern_value(T const &value) {
 			return 0;
 			//todo impl
 		}

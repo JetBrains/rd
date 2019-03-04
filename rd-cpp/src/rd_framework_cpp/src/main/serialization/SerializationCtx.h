@@ -24,7 +24,7 @@ namespace rd {
 	public:
 		Serializers const *serializers = nullptr;
 
-//		std::unordered_map<std::string, InternRoot> intern_roots{};
+		std::unordered_map<std::string, std::shared_ptr<InternRoot>> intern_roots{};
 
 		//    SerializationCtx() = delete;
 
@@ -39,32 +39,30 @@ namespace rd {
 
 //		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
 
-		SerializationCtx withInternRootsHere(RdBindableBase const &, std::string new_roots... ) const;
+		SerializationCtx withInternRootsHere(RdBindableBase const & owner, std::string new_roots...) const;
 
 		//endregion
 
 		template<typename T>
 		T readInterned(Buffer const &buffer, std::string const &intern_key,
 					   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
-			/*auto interning_root = intern_roots.find(intern_key);
+			auto it = intern_roots.find(intern_key);
 			if (it != intern_roots.end()) {
-//				return it->
+				return it->second->un_intern_value<T>(buffer.read_integral<int32_t>() ^ 1);
 			} else {
 				return readValueDelegate(*this, buffer);
-			}*/
-			//todo implement
+			}
 		}
 
 		template<typename T>
 		void writeInterned(Buffer const &buffer, T const &value, std::string const &intern_key,
 						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
-			/*auto interning_root = intern_roots.find(intern_key);
-			if (interning_root != intern_roots.end()) {
-//				buffer.write_integral<int32_t>()
+			auto it = intern_roots.find(intern_key);
+			if (it != intern_roots.end()) {
+				buffer.write_integral<int32_t>(it->second->intern_value<T>(value));
 			} else {
 				writeValueDelegate(*this, buffer, value);
-			}*/
-			//todo implement
+			}
 		}
 	};
 }

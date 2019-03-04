@@ -14,15 +14,27 @@
 namespace rd {
 	using hash_t = int64_t;
 
-	const hash_t DEFAULT_HASH = 19;
-	const hash_t HASH_FACTOR = 31;
+	constexpr hash_t DEFAULT_HASH = 19;
+	constexpr hash_t HASH_FACTOR = 31;
 
 //PLEASE DO NOT CHANGE IT!!! IT'S EXACTLY THE SAME ON C# SIDE
-	hash_t getPlatformIndependentHash(std::string const &that, hash_t initial = DEFAULT_HASH);
+	namespace {
+		constexpr hash_t hashImpl(hash_t initial, char const *begin, char const *end) {
+			return (begin == end) ? initial : hashImpl(initial * HASH_FACTOR + *begin, begin + 1, end);
+		}
+	}
 
-	hash_t getPlatformIndependentHash(int32_t const &that, hash_t initial = DEFAULT_HASH);
+	constexpr hash_t getPlatformIndependentHash(std::string const &that, hash_t initial = DEFAULT_HASH) {
+		return hashImpl(initial, &(*that.begin()), &(*that.end()));
+	}
 
-	hash_t getPlatformIndependentHash(int64_t const &that, hash_t initial = DEFAULT_HASH);
+	constexpr hash_t getPlatformIndependentHash(int32_t const &that, hash_t initial = DEFAULT_HASH) {
+		return initial * HASH_FACTOR + (that + 1);
+	}
+
+	constexpr hash_t getPlatformIndependentHash(int64_t const &that, hash_t initial = DEFAULT_HASH) {
+		return initial * HASH_FACTOR + (that + 1);
+	}
 
 	class Identities {
 	private:
