@@ -54,10 +54,10 @@ namespace rd {
 				}
 			});
 
-			auto sum = std::accumulate(simpleTestData.begin(), simpleTestData.end(), (size_t) 0,
-									   [&](int32_t acc, std::pair<int32_t, std::wstring> it) -> size_t {
-										   return acc += it.second.length();
-									   });
+			size_t sum = std::accumulate(simpleTestData.begin(), simpleTestData.end(), (size_t) 0,
+										 [&](int32_t acc, std::pair<int32_t, std::wstring> it) -> size_t {
+											 return acc += it.second.length();
+										 });
 
 			EXPECT_TRUE(firstBytesWritten - sum >= secondBytesWritten);
 

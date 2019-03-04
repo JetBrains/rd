@@ -24,7 +24,8 @@ namespace rd {
 	public:
 		Serializers const *serializers = nullptr;
 
-		std::unordered_map<std::string, std::shared_ptr<InternRoot>> intern_roots{};
+//		template<hash_t InternKey>
+		std::unordered_map<RdId::hash_t, std::shared_ptr<InternRoot>> intern_roots{};
 
 		//    SerializationCtx() = delete;
 
@@ -39,14 +40,17 @@ namespace rd {
 
 //		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
 
-		SerializationCtx withInternRootsHere(RdBindableBase const & owner, std::string new_roots...) const;
+		template<RdId::hash_t... R>
+		SerializationCtx withInternRootsHere(RdBindableBase const &owner) {
+			auto next_roots = intern_roots;
+			return SerializationCtx(nullptr);
+		}
 
 		//endregion
 
-		template<typename T>
-		T readInterned(Buffer const &buffer, std::string const &intern_key,
-					   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
-			auto it = intern_roots.find(intern_key);
+		template<typename T, RdId::hash_t InternKey>
+		T readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
+			auto it = intern_roots.find(InternKey);
 			if (it != intern_roots.end()) {
 				return it->second->un_intern_value<T>(buffer.read_integral<int32_t>() ^ 1);
 			} else {
@@ -54,10 +58,10 @@ namespace rd {
 			}
 		}
 
-		template<typename T>
-		void writeInterned(Buffer const &buffer, T const &value, std::string const &intern_key,
+		template<typename T, RdId::hash_t InternKey>
+		void writeInterned(Buffer const &buffer, T const &value,
 						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
-			auto it = intern_roots.find(intern_key);
+			auto it = intern_roots.find(InternKey);
 			if (it != intern_roots.end()) {
 				buffer.write_integral<int32_t>(it->second->intern_value<T>(value));
 			} else {

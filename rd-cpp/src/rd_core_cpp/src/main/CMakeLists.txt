@@ -33,7 +33,7 @@ target_include_directories(rd_core_cpp PUBLIC
         util
         )
 
-target_link_libraries(rd_core_cpp PUBLIC rd_core_cpp_util optional mpark_variant tsl::ordered_map)
+target_link_libraries(rd_core_cpp PUBLIC rd_core_cpp_util optional mpark_variant tsl::ordered_map string_view-lite)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_core_cpp"

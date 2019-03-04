@@ -29,7 +29,7 @@ namespace rd {
 		return RdId(getPlatformIndependentHash(tail, hash));
 	}
 
-	hash_t RdId::get_hash() const {
+	RdId::hash_t RdId::get_hash() const {
 		return hash;
 	}
 

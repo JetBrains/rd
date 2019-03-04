@@ -17,6 +17,7 @@
 namespace rd {
 	namespace test {
 		class RdFrameworkTestBase : public ::testing::Test {
+			bool after_test_called = false;
 		public:
 			Serializers serializers;
 
@@ -66,8 +67,6 @@ namespace rd {
 			void setWireAutoFlush(bool flag);
 
             virtual ~RdFrameworkTestBase();
-
-            bool after_test_called = false;
         };
 	}
 }

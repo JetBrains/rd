@@ -17,7 +17,7 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
         append("{")
         val defaultValue = member.defaultValue
         when (defaultValue) {
-            is String -> append(if (member.type is Enum) "$typeName::$defaultValue" else "\"$defaultValue\"")
+            is String -> append(if (member.type is Enum) "$typeName::$defaultValue" else """"$defaultValue"""")
             is Long, is Boolean -> append(defaultValue)
 //            else -> if (member.isOptional) append("tl::nullopt")
         }
@@ -60,6 +60,16 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     private val Class.isInternRoot: Boolean
         get() = internRootForScopes.isNotEmpty()
+
+    fun InternScope.hash(): String {
+        val s = this.keyName
+        return """getPlatformIndependentHash<${s.length}>("$s")"""
+    }
+
+    fun Class.withInternRootsHere(field : String) : String {
+        val roots = internRootForScopes.map { """getPlatformIndependentHash<${it.length}>("$it")""" }.joinToString { "$it" }
+        return "ctx.withInternRootsHere<$roots>($field)"
+    }
     //endregion
 
     protected fun String.wrapper(): String {
@@ -783,7 +793,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is IArray -> "ArraySerializer<${itemType.serializerBuilder()}>"
             is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}>"
             is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
-            is InternedScalar -> "InternedSerializer<${itemType.serializerBuilder()}>"
+            is InternedScalar -> """InternedSerializer<${itemType.serializerBuilder()}, ${internKey.hash()}>"""
             else -> fail("Unknown type: $this")
         }
 
@@ -1091,7 +1101,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is Enum -> "buffer.readEnum<${substitutedName(decl)}>()"
             is InternedScalar -> {
                 val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &", "return ${itemType.reader()}")
-                "ctx.readInterned<${itemType.substitutedName(decl)}>(buffer, \"${internKey.keyName}\", $lambda)"
+                """ctx.readInterned<${itemType.substitutedName(decl)}, ${internKey.hash()}>(buffer, $lambda)"""
             }
             is PredefinedType.void -> "rd::Void()" //really?
             is PredefinedType.bool -> "buffer.readBool()"
@@ -1151,7 +1161,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             +"withId(res, _id);"
         }
         if (decl is Class && decl.isInternRoot) {
-            +"res.mySerializationContext = ctx.withInternRootsHere(res, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
+//            +"res.mySerializationContext = ${decl.withInternRootsHere("res")};"
         }
         +"return res;"
     }
@@ -1235,7 +1245,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 is Enum -> "buffer.writeEnum($field)"
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &, ${itemType.templateName(decl)} const & internedValue", itemType.writer("internedValue"))
-                    "ctx.writeInterned<${itemType.templateName(decl)}>(buffer, $field, \"${internKey.keyName}\", $lambda)"
+                    """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""
                 }
                 is PredefinedType.void -> "" //really?
                 is PredefinedType.bool -> "buffer.writeBool($field)"
@@ -1282,7 +1292,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     +"buffer.writeByteArrayRaw(unknownBytes);"
                 }
                 if (decl is Class && decl.isInternRoot) {
-                    +"this->mySerializationContext = ctx.withInternRootsHere(*this, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
+//                    +"this->mySerializationContext = ${decl.withInternRootsHere("*this")};"
                 }
             }
         } else {

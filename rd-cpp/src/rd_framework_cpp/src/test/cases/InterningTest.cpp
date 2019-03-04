@@ -16,8 +16,6 @@ using namespace rd::test;
 
 TEST_F(InterningTestBase, testServerToClient) {
     doTest(false, false);
-
-    AfterTest();
 }
 
 TEST_F(InterningTestBase, testClientToServer) {
