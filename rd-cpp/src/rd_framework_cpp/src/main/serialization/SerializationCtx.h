@@ -13,9 +13,12 @@
 #include <string>
 
 namespace rd {
+	//region predeclared
+
 	class IProtocol;
 
 	class Serializers;
+	//endregion
 
 	class SerializationCtx {
 	public:
@@ -35,10 +38,13 @@ namespace rd {
 		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
 //		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
+
+		SerializationCtx withInternRootsHere(RdBindableBase const &, std::string new_roots... ) const;
+
 		//endregion
 
 		template<typename T>
-		T readInterned(Buffer const &buffer, std::string intern_key,
+		T readInterned(Buffer const &buffer, std::string const &intern_key,
 					   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
 			/*auto interning_root = intern_roots.find(intern_key);
 			if (it != intern_roots.end()) {
@@ -50,7 +56,7 @@ namespace rd {
 		}
 
 		template<typename T>
-		void writeInterned(Buffer const &buffer, T const &value,
+		void writeInterned(Buffer const &buffer, T const &value, std::string const &intern_key,
 						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
 			/*auto interning_root = intern_roots.find(intern_key);
 			if (interning_root != intern_roots.end()) {

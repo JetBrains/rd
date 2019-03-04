@@ -8,6 +8,8 @@
 
 #include "RdFrameworkTestBase.h"
 
+#include <functional>
+
 namespace rd {
     namespace test {
         class InterningTestBase : public RdFrameworkTestBase {
@@ -19,15 +21,9 @@ namespace rd {
                     {2, L"why"}
             };
 
-            int64_t measureBytes(IProtocol *protocol, std::function<void()> action) {
-                auto const &wire = dynamic_cast<SimpleWire const &>(*protocol->wire);
-                auto pre = wire.bytesWritten;
-                action();
-                return wire.bytesWritten - pre;
-            }
+            int64_t measureBytes(IProtocol *protocol, std::function<void()> action);
 
             void doTest(bool firstClient, bool secondClient, bool thenSwitchSides = false);
-
         };
     }
 }

@@ -2,15 +2,23 @@
 // Created by jetbrains on 3/1/2019.
 //
 
-#include <numeric>
 #include "InterningTestBase.h"
 
 #include "RdProperty.h"
 #include "InterningProtocolLevelModel.h"
 
+#include <numeric>
+
 namespace rd {
     namespace test {
         using namespace util;
+
+        int64_t InterningTestBase::measureBytes(IProtocol *protocol, std::function<void()> action) {
+            auto const &wire = dynamic_cast<SimpleWire const &>(*protocol->wire);
+            auto pre = wire.bytesWritten;
+            action();
+            return wire.bytesWritten - pre;
+        }
 
         void InterningTestBase::doTest(bool firstClient, bool secondClient, bool thenSwitchSides) {
             RdProperty<InterningProtocolLevelModel> server_property;
@@ -46,62 +54,11 @@ namespace rd {
                 }
             });
 
-            std::accumulate(simpleTestData.begin(), simpleTestData.end(), 0, [](int32_t acc, std::pair<int32_t, std::wstring> it){
+            auto sum = std::accumulate(simpleTestData.begin(), simpleTestData.end(), 0, [](int32_t acc, std::pair<int32_t, std::wstring> it){
                 acc += it.second.length + extraString.length;
             });
-            assertTrue(firstBytesWritten - simpleTestData.sumBy
-            { it.second.length } >= secondBytesWritten)
 
-            val
-            firstReceiver =
-            if (firstClient) serverModel else clientModel
-            val
-            secondReceiver =
-            if (secondClient) serverModel else clientModel
-
-            simpleTestData.forEach
-            {
-                (k, v)->
-                        assertEquals(v, firstReceiver.issues[k]
-                !!.text)
-                assertEquals(v, secondReceiver.issues[k + simpleTestData.size]
-                !!.text)
-            }
-
-            if (!thenSwitchSides)
-                return
-
-                        val
-            extraString = "again"
-
-            val thirdBytesWritten = measureBytes(secondSenderProtocol) {
-                simpleTestData.forEach
-                {
-                    (k, v)->
-                            secondSenderModel.issues[k + simpleTestData.size * 2] = ProtocolWrappedStringModel(v + extraString)
-                }
-            }
-
-
-            val fourthBytesWritten = measureBytes(firstSenderProtocol) {
-                simpleTestData.forEach
-                {
-                    (k, v)->
-                            firstSenderModel.issues[k + simpleTestData.size * 3] = ProtocolWrappedStringModel(v + extraString)
-                }
-            }
-
-            assertTrue(thirdBytesWritten - simpleTestData.sumBy
-            { it.second.length + extraString.length } >= fourthBytesWritten)
-
-            simpleTestData.forEach
-            {
-                (k, v)->
-                        assertEquals(v + extraString, secondReceiver.issues[k + simpleTestData.size * 2]
-                !!.text)
-                assertEquals(v + extraString, firstReceiver.issues[k + simpleTestData.size * 3]
-                !!.text)
-            }
+            EXPECT_TRUE(firstBytesWritten - sum >= secondBytesWritten);
         }
-    }
+	}
 }
