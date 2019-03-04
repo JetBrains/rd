@@ -27,7 +27,7 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
 
 /*please set VsWarningsDefault to null if you don't need disabling VS warnings
 val VsWarningsDefault : IntArray? = null*/
-val VsWarningsDefault: IntArray? = intArrayOf(4250)
+val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307)
 
 open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
 
@@ -63,7 +63,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     fun InternScope.hash(): String {
         val s = this.keyName
-        return """getPlatformIndependentHash<${s.length}>("$s")"""
+        return """rd::util::getPlatformIndependentHash<${s.length}>("$s")"""
     }
 
     fun Class.withInternRootsHere(field : String) : String {

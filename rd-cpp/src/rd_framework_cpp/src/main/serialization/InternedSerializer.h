@@ -9,7 +9,7 @@
 #include "Polymorphic.h"
 
 namespace rd {
-	template<typename S, RdId::hash_t InternKey, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
+	template<typename S, util::hash_t InternKey, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
 	class InternedSerializer {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {

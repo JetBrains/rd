@@ -7,6 +7,7 @@
 
 #include "InternRoot.h"
 #include "Buffer.h"
+#include "RdId.h"
 
 #include <unordered_map>
 #include <functional>
@@ -23,7 +24,7 @@ namespace rd {
 
 	class SerializationCtx {
 	public:
-		using roots_t = std::unordered_map<RdId::hash_t, InternRoot const *>;
+		using roots_t = std::unordered_map<util::hash_t, InternRoot const *>;
 
 		Serializers const *serializers = nullptr;
 
@@ -33,9 +34,9 @@ namespace rd {
 
 		//    SerializationCtx() = delete;
 
-		SerializationCtx(SerializationCtx &&other) noexcept = default;
+		SerializationCtx(SerializationCtx &&other) = default;
 
-		SerializationCtx &operator=(SerializationCtx &&other) noexcept = default;
+		SerializationCtx &operator=(SerializationCtx &&other) = default;
 
 //		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
@@ -45,7 +46,7 @@ namespace rd {
 
 		//endregion
 
-		template<typename T, RdId::hash_t InternKey>
+		template<typename T, util::hash_t InternKey>
 		T readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
 			auto it = intern_roots.find(InternKey);
 			if (it != intern_roots.end()) {
@@ -55,7 +56,7 @@ namespace rd {
 			}
 		}
 
-		template<typename T, RdId::hash_t InternKey>
+		template<typename T, util::hash_t InternKey>
 		void writeInterned(Buffer const &buffer, T const &value,
 						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
 			auto it = intern_roots.find(InternKey);

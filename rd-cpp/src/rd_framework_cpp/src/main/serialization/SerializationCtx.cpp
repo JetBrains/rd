@@ -14,7 +14,7 @@ namespace rd {
 			auto const &name = "InternRoot-" + item;
 			InternRoot const &root = owner.getOrCreateExtension<InternRoot>(name);
 			withId(root, owner.rdid.mix("." + name));
-			intern_roots.emplace(getPlatformIndependentHash(item), &root);
+			intern_roots.emplace(util::getPlatformIndependentHash(item), &root);
 		}
 		return SerializationCtx(serializers, std::move(next_roots));
 	}

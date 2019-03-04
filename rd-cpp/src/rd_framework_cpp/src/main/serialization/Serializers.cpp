@@ -10,6 +10,6 @@ namespace rd {
 	}
 
 	RdId Serializers::real_rd_id(const IPolymorphicSerializable &value) {
-		return RdId(getPlatformIndependentHash(value.type_name()));
+		return RdId(util::getPlatformIndependentHash(value.type_name()));
 	}
 }

@@ -26,7 +26,7 @@ namespace rd {
 
 	const SerializationCtx &Protocol::get_serialization_context() const {
 		if (!context) {
-			context = std::make_unique<SerializationCtx>(serializers.get(), SerializationCtx::roots_t{{getPlatformIndependentHash("Protocol"), internRoot.get()}});
+			context = std::make_unique<SerializationCtx>(serializers.get(), SerializationCtx::roots_t{{util::getPlatformIndependentHash("Protocol"), internRoot.get()}});
 		}
 		return *context;
 	}

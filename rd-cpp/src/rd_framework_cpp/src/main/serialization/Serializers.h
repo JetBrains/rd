@@ -9,6 +9,7 @@
 #include "ISerializable.h"
 #include "Identities.h"
 #include "IUnknownInstance.h"
+#include "hashing.h"
 
 #include <utility>
 #include <iostream>
@@ -34,7 +35,7 @@ namespace rd {
 		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
 		void registry() const {
 			std::string type_name = T().type_name();//todo don't call ctor
-			RdId::hash_t h = getPlatformIndependentHash(type_name);
+			util::hash_t h = util::getPlatformIndependentHash(type_name);
 			RdId id(h);
 
 			//        Protocol::initializationLogger.trace("Registering type " + type_name + ", id = " + id.toString());
