@@ -66,6 +66,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         return "rd::Wrapper<$this>"
     }
 
+    protected fun String.optional(): String {
+        return "tl::optional<$this>"
+    }
+
     //endregion
 
     //region PrettyPrinter
@@ -173,7 +177,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 if (itemType.isAbstract()) {
                     itemType.substitutedName(scope, true).wrapper()
                 } else {
-                    "tl::optional<${itemType.substitutedName(scope, true)}>"
+                    if (parseType(this)[0].name == scope.name) { //if class A contains fild of type A
+                        itemType.substitutedName(scope, true).wrapper()
+                    } else {
+                        itemType.substitutedName(scope, true).optional()
+                    }
                 }
             }
         }
@@ -219,9 +227,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }?.let { "rd::$it" }
     }
 
-    protected fun IType.serializerRef(scope: Declaration): String = leafSerializerRef(scope) ?: when (this) {
-        is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
-        else -> "__${name}Serializer"
+    protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean): String {
+        return leafSerializerRef(scope)
+                ?: isUsage.condstr { "${scope.name}::" } + when (this) {
+                    is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
+                    else -> "__${name}Serializer"
+                }
     }
 
 //endregion
@@ -308,7 +319,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun Member.Reactive.customSerializers(scope: Declaration): List<String> {
-        return genericParams.asList().map { it.serializerRef(scope) }
+        return genericParams.asList().map { it.serializerRef(scope, true) }
     }
 
     protected open val Member.hasEmptyConstructor: Boolean
@@ -698,30 +709,30 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"optional".include("hpp")
     }
 
-    fun PrettyPrinter.dependenciesDecl(decl: Declaration) {
-        fun parseType(type: IType): ArrayList<IType> {
-            return when (type) {
-                is IArray -> {
-                    parseType(type.itemType)
-                }
-                is IImmutableList -> {
-                    parseType(type.itemType)
-                }
-                is INullable -> {
-                    parseType(type.itemType)
-                }
-                is InternedScalar -> {
-                    parseType(type.itemType)
-                }
-                !is PredefinedType -> {
-                    arrayListOf(type)
-                }
-                else -> {
-                    arrayListOf()
-                }
+    fun parseType(type: IType): ArrayList<IType> {
+        return when (type) {
+            is IArray -> {
+                parseType(type.itemType)
+            }
+            is IImmutableList -> {
+                parseType(type.itemType)
+            }
+            is INullable -> {
+                parseType(type.itemType)
+            }
+            is InternedScalar -> {
+                parseType(type.itemType)
+            }
+            !is PredefinedType -> {
+                arrayListOf(type)
+            }
+            else -> {
+                arrayListOf()
             }
         }
+    }
 
+    fun PrettyPrinter.dependenciesDecl(decl: Declaration) {
         fun parseMember(member: Member): List<String> {
             return when (member) {
                 is Member.EnumConst -> {
@@ -783,7 +794,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 .distinct()
                 .filter { it.leafSerializerRef(decl) == null }
 
-        allTypesForDelegation.println { "using ${it.serializerRef(decl)} = ${it.serializerBuilder()};" }
+        allTypesForDelegation.println { "using ${it.serializerRef(decl, false)} = ${it.serializerBuilder()};" }
     }
 
 
@@ -849,7 +860,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected fun PrettyPrinter.secondaryConstructorTraitDecl(decl: Declaration) {
         if (!decl.hasSecondaryCtor) return
 
-        p((decl is Toplevel && !decl.hasSetting(PublicCtors)).condstr { if (!decl.isExtension) "private " else "internal " })
+//        p((decl is Toplevel && !decl.hasSetting(PublicCtors)).condstr { if (!decl.isExtension) "private " else "internal " })
 
 
         val members = decl.allMembers
@@ -1158,7 +1169,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         println()
         define(Signature("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner")) {
             types.filter { !it.isAbstract }.filterIsInstance<IType>().filterNot { iType -> iType is Enum }.println {
-                "serializers->registry<${it.name}>();"
+                "serializers.registry<${it.name}>();"
             }
 
             if (decl is Root) {
@@ -1173,7 +1184,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (decl.isExtension) return
 
         define(createMethodTraitDecl(decl)) {
-            +"${decl.root.sanitizedName(decl)}::serializersOwner.registry(protocol->serializers);"
+            +"${decl.root.sanitizedName(decl)}::serializersOwner.registry(*(protocol->serializers));"
             println()
 
 //            +"${decl.name} res;"

@@ -31,7 +31,7 @@ namespace rd {
 			clientLifetimeDef.terminate();
 			serverLifetimeDef.terminate();
 
-			 after_test_called = true;
+			after_test_called = true;
 		}
 
 		void RdFrameworkTestBase::setWireAutoFlush(bool flag) {
