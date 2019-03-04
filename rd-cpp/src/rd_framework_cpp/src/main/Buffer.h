@@ -159,6 +159,16 @@ namespace rd {
 			}
 		}
 
+		template<typename T>
+		void writeNullable(Wrapper<T> const &value, std::function<void(T const &)> writer) const {
+			if (!value) {
+				writeBool(false);
+			} else {
+				writeBool(true);
+				writer(*value);
+			}
+		}
+
 		ByteArray getArray() const &;
 
 		ByteArray getArray() &&;

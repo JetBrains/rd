@@ -12,7 +12,7 @@ add_executable(rd_framework_cpp_test
         cases/RdExtTest.cpp
         cases/RdTaskTest.cpp
         cases/DynamicPolymorphicTest.cpp
-#        cases/InterningTest.cpp
+        cases/InterningTest.cpp
         )
 
 add_subdirectory(util)

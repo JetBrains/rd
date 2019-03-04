@@ -48,8 +48,11 @@ namespace rd {
 		}
 
 		template<typename T>
-		std::unique_ptr<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &stream) const {
+		std::unique_ptr<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &stream) const {
 			RdId id = RdId::read(stream);
+			if (id.isNull()) {
+				return nullptr;
+			}
 			int32_t size = stream.read_integral<int32_t>();
 			stream.check_available(size);
 
@@ -82,7 +85,7 @@ namespace rd {
 
 
 		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
-		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const T &value) const {
+		void writePolymorphicNullable(SerializationCtx const &ctx, Buffer const &stream, const T &value) const {
 			real_rd_id(value).write(stream);
 
 			int32_t length_tag_position = stream.get_position();
@@ -97,7 +100,7 @@ namespace rd {
 
 		template<typename T>
 		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const Wrapper<T> &value) const {
-			writePolymorphic(ctx, stream, *value);
+			writePolymorphicNullable(ctx, stream, *value);
 		}
 	};
 }

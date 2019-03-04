@@ -5,6 +5,11 @@ namespace rd {
 
 	SerializationCtx::SerializationCtx(const Serializers *const serializers) : serializers(serializers) {}
 
+	SerializationCtx SerializationCtx::withInternRootsHere(RdBindableBase const &, std::string new_roots...) const {
+		return SerializationCtx();
+		//todo impl
+	}
+
 	/*SerializationCtx SerializationCtx::withInternRootHere(bool isMaster) const {
 		return SerializationCtx(serializers, InternRoot(isMaster));
 	}*/
