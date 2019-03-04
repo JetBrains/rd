@@ -8,14 +8,21 @@
 
 #include "RdBindableBase.h"
 #include "IRdReactive.h"
-#include "IWire.h"
-#include "IProtocol.h"
 #include "Logger.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
 
 namespace rd {
+	//region predeclared
+
+	class IWire;
+
+	class IProtocol;
+
+	class Serializers;
+	//endregion
+
 	class RdReactiveBase : public RdBindableBase, public IRdReactive {
 		class local_change_handler {
 			RdReactiveBase const *ptr;

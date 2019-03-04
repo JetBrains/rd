@@ -6,18 +6,19 @@
 #define RD_CPP_IPROTOCOL_H
 
 
+#include "IRdDynamic.h"
+//#include "SerializationCtx.h"
 #include "Serializers.h"
 #include "Identities.h"
 #include "IScheduler.h"
 #include "IWire.h"
-#include "SerializationCtx.h"
 
 #include <memory>
 
 namespace rd {
 	//region predeclared
 
-	class IRdDynamic;
+	class SerializationCtx;
 	//endregion
 
 	class IProtocol : public IRdDynamic {
@@ -26,11 +27,11 @@ namespace rd {
 		std::shared_ptr<Identities> identity;
 		IScheduler *scheduler = nullptr;
 		std::shared_ptr<IWire> wire;
-		SerializationCtx context;
+		std::unique_ptr<SerializationCtx> context;
 
 		//region ctor/dtor
 
-		IProtocol() = default;
+		IProtocol();
 
 		IProtocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
@@ -38,7 +39,7 @@ namespace rd {
 
 		IProtocol &operator=(IProtocol &&other) noexcept = default;
 
-		virtual ~IProtocol() = default;
+		virtual ~IProtocol();
 		//endregion
 
 		const SerializationCtx &get_serialization_context() const override;

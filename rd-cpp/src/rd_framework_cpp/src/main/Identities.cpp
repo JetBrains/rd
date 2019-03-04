@@ -12,8 +12,7 @@ namespace rd {
 			dynamicKind == IdKind::Client ? BASE_CLIENT_ID : BASE_SERVER_ID) {}
 
 	RdId Identities::next(const RdId &parent) const {
-		RdId result = parent.mix(id_acc);
-		id_acc += 2;
+		RdId result = parent.mix(id_acc.fetch_add(2));
 		return result;
 	}
 

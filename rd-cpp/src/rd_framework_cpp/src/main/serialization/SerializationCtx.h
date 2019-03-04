@@ -5,7 +5,7 @@
 #ifndef RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
-//#include "InternRoot.h"
+#include "InternRoot.h"
 #include "Buffer.h"
 
 #include <unordered_map>
@@ -38,16 +38,26 @@ namespace rd {
 		//endregion
 
 		template<typename T>
-		T readInterned(Buffer const &buffer,
+		T readInterned(Buffer const &buffer, std::string intern_key,
 					   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
-			return T();
+			/*auto interning_root = intern_roots.find(intern_key);
+			if (it != intern_roots.end()) {
+//				return it->
+			} else {
+				return readValueDelegate(*this, buffer);
+			}*/
 			//todo implement
 		}
 
 		template<typename T>
 		void writeInterned(Buffer const &buffer, T const &value,
-						   std::function<void(SerializationCtx const &, Buffer const &,
-											  T const &)> writeValueDelegate) const {
+						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
+			/*auto interning_root = intern_roots.find(intern_key);
+			if (interning_root != intern_roots.end()) {
+//				buffer.write_integral<int32_t>()
+			} else {
+				writeValueDelegate(*this, buffer, value);
+			}*/
 			//todo implement
 		}
 	};

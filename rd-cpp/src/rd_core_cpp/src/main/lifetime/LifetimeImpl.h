@@ -31,7 +31,7 @@ namespace rd {
 
 		void terminate();
 
-		std::mutex lock;
+		std::mutex actions_lock;
 	public:
 
 		//region ctor/dtor
@@ -46,7 +46,7 @@ namespace rd {
 
 		template<typename F>
 		counter_t add_action(F &&action) {
-			std::lock_guard<decltype(lock)> guard(lock);
+			std::lock_guard<decltype(actions_lock)> guard(actions_lock);
 
 			if (is_eternal()) {
 				return -1;

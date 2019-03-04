@@ -28,7 +28,7 @@ namespace rd {
 		static RdId real_rd_id(IPolymorphicSerializable const &value);
 
 	public:
-		mutable std::unordered_map<RdId, std::function<std::unique_ptr<ISerializable>(SerializationCtx const &,
+		mutable std::unordered_map<RdId, std::function<std::unique_ptr<IPolymorphicSerializable>(SerializationCtx const &,
 																					  Buffer const &)>> readers;
 
 		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
@@ -42,7 +42,7 @@ namespace rd {
 
 			MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
-			readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> std::unique_ptr<ISerializable> {
+			readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> std::unique_ptr<IPolymorphicSerializable> {
 				return std::make_unique<T>(T::read(ctx, buffer));
 			};
 		}
@@ -58,7 +58,7 @@ namespace rd {
 				throw std::invalid_argument("no reader");
 			}
 			auto const &reader = readers.at(id);
-			std::unique_ptr<ISerializable> ptr = reader(ctx, stream);
+			std::unique_ptr<IPolymorphicSerializable> ptr = reader(ctx, stream);
 			return std::unique_ptr<T>(dynamic_cast<T *>(ptr.release()));
 			//todo change the way of dynamic_pointer_cast
 		}
@@ -83,11 +83,7 @@ namespace rd {
 
 		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
 		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const T &value) const {
-			std::string const &type_name = value.type_name();
-			hash_t h = getPlatformIndependentHash(type_name);
-			std::cerr << "write: " << type_name << " with hash: " << h << std::endl;
-			RdId(h).write(stream);
-
+			real_rd_id(value).write(stream);
 
 			int32_t length_tag_position = stream.get_position();
 			stream.write_integral<int32_t>(0);

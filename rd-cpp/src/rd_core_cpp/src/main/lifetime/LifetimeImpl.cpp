@@ -23,7 +23,7 @@ namespace rd {
 
 		actions_t actions_copy;
 		{
-			std::lock_guard<decltype(lock)> guard(lock);
+			std::lock_guard<decltype(actions_lock)> guard(actions_lock);
 			actions_copy = std::move(actions);
 
 			actions.clear();

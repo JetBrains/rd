@@ -1,14 +1,13 @@
-//
-// Created by jetbrains on 08.02.2019.
-//
-
 #ifndef RD_CPP_INTERNROOT_H
 #define RD_CPP_INTERNROOT_H
 
 #include "RdReactiveBase.h"
 #include "InternScheduler.h"
+#include "ISerializable.h"
+#include "Lifetime.h"
 #include "wrapper.h"
 
+#include <vector>
 #include <string>
 
 namespace rd {
@@ -19,14 +18,15 @@ namespace rd {
 
 	class InternRoot final : public RdReactiveBase {
 	private:
+		/*template <typename T>
+		std::vector<T> my_items;*/
+
 		mutable InternScheduler intern_scheduler;
 
 		void set_interned_correspondence(int32_t id, Wrapper<IPolymorphicSerializable> wrapper) const;
 
 	public:
 		InternRoot();
-
-		bool is_master;
 
 		template<typename T>
 		int32_t intern_value(T &&value) {

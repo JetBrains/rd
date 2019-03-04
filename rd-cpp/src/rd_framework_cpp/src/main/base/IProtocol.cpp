@@ -8,15 +8,22 @@
 #include "Identities.h"
 #include "IWire.h"
 #include "IProtocol.h"
+#include "SerializationCtx.h"
 
 namespace rd {
+	IProtocol::IProtocol() {
+		context = std::make_unique<SerializationCtx>();
+	}
+
 	IProtocol::IProtocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
 			identity(std::move(identity)),
 			scheduler(scheduler),
 			wire(std::move(wire)),
-			context(serializers.get()) {}
+			context(std::make_unique<SerializationCtx>(serializers.get())) {}
 
 	const SerializationCtx &IProtocol::get_serialization_context() const {
-		return context;
+		return *context;
 	}
+
+	IProtocol::~IProtocol() = default;
 }

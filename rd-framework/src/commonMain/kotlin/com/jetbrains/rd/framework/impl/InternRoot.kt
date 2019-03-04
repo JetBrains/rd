@@ -60,7 +60,6 @@ class InternRoot: IInternRoot {
     }
 
     override var rdid: RdId = RdId.Null
-        get
         internal set
 
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
