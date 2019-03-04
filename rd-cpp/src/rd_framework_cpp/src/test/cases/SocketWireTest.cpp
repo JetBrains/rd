@@ -382,7 +382,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	terminate();
 }
 
-TEST_F(SocketWireTestBase, failoverServer) {
+TEST_F(SocketWireTestBase, DISABLED_failoverServer) {
 	uint16_t port = find_free_port();
 	auto serverProtocol = server(socketLifetime, port);
 

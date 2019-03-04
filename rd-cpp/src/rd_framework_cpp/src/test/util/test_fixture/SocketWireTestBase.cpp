@@ -10,7 +10,7 @@ namespace rd {
 				std::shared_ptr<IWire> wire = std::make_shared<SocketWire::Server>(std::move(lifetime),
 																				   &serverScheduler, port,
 																				   "TestServer");
-				return Protocol(Identities::SERVER, &serverScheduler, std::move(wire));
+				return Protocol(Identities::SERVER, &serverScheduler, std::move(wire), lifetime);
 			}
 
 			Protocol SocketWireTestBase::client(Lifetime lifetime, Protocol const &serverProtocol) {
@@ -18,13 +18,13 @@ namespace rd {
 				std::shared_ptr<IWire> wire =
 						std::make_shared<SocketWire::Client>(std::move(lifetime), &clientScheduler, server->port,
 															 "TestClient");
-				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire));
+				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
 			}
 
 			Protocol SocketWireTestBase::client(Lifetime lifetime, uint16_t port) {
 				std::shared_ptr<IWire> wire =
 						std::make_shared<SocketWire::Client>(std::move(lifetime), &clientScheduler, port, "TestClient");
-				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire));
+				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
 			}
 
 			void SocketWireTestBase::init(Protocol const &serverProtocol, Protocol const &clientProtocol,

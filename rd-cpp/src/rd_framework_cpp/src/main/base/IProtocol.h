@@ -7,7 +7,6 @@
 
 
 #include "IRdDynamic.h"
-//#include "SerializationCtx.h"
 #include "Serializers.h"
 #include "Identities.h"
 #include "IScheduler.h"
@@ -27,7 +26,6 @@ namespace rd {
 		std::shared_ptr<Identities> identity;
 		IScheduler *scheduler = nullptr;
 		std::shared_ptr<IWire> wire;
-		std::unique_ptr<SerializationCtx> context;
 
 		//region ctor/dtor
 
@@ -41,8 +39,6 @@ namespace rd {
 
 		virtual ~IProtocol();
 		//endregion
-
-		const SerializationCtx &get_serialization_context() const override;
 	};
 }
 

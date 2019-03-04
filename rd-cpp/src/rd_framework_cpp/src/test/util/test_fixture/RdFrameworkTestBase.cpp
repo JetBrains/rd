@@ -16,10 +16,10 @@ namespace rd {
 
 			clientProtocol = std::unique_ptr<IProtocol>(
 					std::make_unique<Protocol>(/*serializers, */clientIdentities, &clientScheduler,
-																clientWire));
+																clientWire, clientLifetime));
 			serverProtocol = std::unique_ptr<IProtocol>(
 					std::make_unique<Protocol>(/*serializers,*/ serverIdentities, &serverScheduler,
-																serverWire));
+																serverWire, serverLifetime));
 
 			SimpleWire const *w1 = clientWire.get();
 			SimpleWire const *w2 = serverWire.get();
