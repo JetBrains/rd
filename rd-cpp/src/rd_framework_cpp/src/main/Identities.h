@@ -8,32 +8,40 @@
 #include "interfaces.h"
 #include "RdId.h"
 
+#include "nonstd/string_view.hpp"
+
+#include <cstring>
 #include <string>
 #include <atomic>
+#include <type_traits>
+#include <climits>
 
 namespace rd {
-	using hash_t = int64_t;
+	using constexpr_hash_t = uint64_t;//RdId::hash_t;
 
-	constexpr hash_t DEFAULT_HASH = 19;
-	constexpr hash_t HASH_FACTOR = 31;
+	constexpr constexpr_hash_t DEFAULT_HASH = 19;
+	constexpr constexpr_hash_t HASH_FACTOR = 31;
 
 //PLEASE DO NOT CHANGE IT!!! IT'S EXACTLY THE SAME ON C# SIDE
-	namespace {
-		constexpr hash_t hashImpl(hash_t initial, char const *begin, char const *end) {
-			return (begin == end) ? initial : hashImpl(initial * HASH_FACTOR + *begin, begin + 1, end);
-		}
+	constexpr RdId::hash_t hashImpl(constexpr_hash_t initial, char const *begin, char const *end) {
+		return (begin == end) ? initial : hashImpl(initial * HASH_FACTOR + *begin, begin + 1, end);
 	}
 
-	constexpr hash_t getPlatformIndependentHash(std::string const &that, hash_t initial = DEFAULT_HASH) {
-		return hashImpl(initial, &(*that.begin()), &(*that.end()));
+	template<size_t N>
+	constexpr RdId::hash_t getPlatformIndependentHash(char const that[N], constexpr_hash_t initial = DEFAULT_HASH) {
+		return static_cast<RdId::hash_t>(hashImpl(initial, &that[0], &that[N]));
 	}
 
-	constexpr hash_t getPlatformIndependentHash(int32_t const &that, hash_t initial = DEFAULT_HASH) {
-		return initial * HASH_FACTOR + (that + 1);
+	constexpr RdId::hash_t getPlatformIndependentHash(std::string const &that, constexpr_hash_t initial = DEFAULT_HASH) {
+		return static_cast<RdId::hash_t>(hashImpl(initial, &(*that.begin()), &(*that.end())));
 	}
 
-	constexpr hash_t getPlatformIndependentHash(int64_t const &that, hash_t initial = DEFAULT_HASH) {
-		return initial * HASH_FACTOR + (that + 1);
+	constexpr RdId::hash_t getPlatformIndependentHash(int32_t const &that, constexpr_hash_t initial = DEFAULT_HASH) {
+		return static_cast<RdId::hash_t>(initial * HASH_FACTOR + (that + 1));
+	}
+
+	constexpr RdId::hash_t getPlatformIndependentHash(int64_t const &that, constexpr_hash_t initial = DEFAULT_HASH) {
+		return static_cast<RdId::hash_t>(initial * HASH_FACTOR + (that + 1));
 	}
 
 	class Identities {

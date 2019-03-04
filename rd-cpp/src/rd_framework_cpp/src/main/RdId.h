@@ -24,8 +24,9 @@ namespace std {
 
 namespace rd {
 	class RdId {
-	private:
+	public:
 		using hash_t = int64_t;
+	private:
 
 		hash_t hash{0};
 		friend struct std::hash<RdId>;
@@ -55,7 +56,7 @@ namespace rd {
 		//    static std::shared_ptr<RdId> NULL_ID;
 		static RdId Null();
 
-		static const int32_t MAX_STATIC_ID = 1'000'000;
+		static constexpr int32_t MAX_STATIC_ID = 1'000'000;
 
 		static RdId read(Buffer const &buffer);
 
