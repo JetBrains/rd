@@ -73,6 +73,13 @@ namespace rd {
 
 		template<typename F>
 		Wrapper(std::unique_ptr<F> &&ptr) : ptr(std::move(ptr)) {}
+
+		template <typename U = T, typename R = typename std::enable_if<!std::is_abstract<typename std::remove_reference<U>::type>::value>::type>
+		Wrapper(tl::optional<T> &&opt) {
+			if (opt) {
+				ptr = std::make_unique<T>(std::move(*opt));
+			}
+		}
 		//endregion
 
 		constexpr T &operator*() &{

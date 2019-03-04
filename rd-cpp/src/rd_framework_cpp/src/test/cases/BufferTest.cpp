@@ -40,7 +40,7 @@ TEST(BufferTest, readWritePod) {
 
 	EXPECT_EQ(buffer.get_position(), (
 			sizeof(int32_t) + sizeof(int32_t) +
-			sizeof(int64_t) + +sizeof(int32_t) +
+			sizeof(int64_t) + sizeof(int32_t) +
 			sizeof(wchar_t) + sizeof(wchar_t) +
 			sizeof(bool)));
 

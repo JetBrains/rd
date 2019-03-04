@@ -4,14 +4,15 @@
 
 #include <gtest/gtest.h>
 
-#include "RdProperty.h"
 #include "InterningTestBase.h"
+
+#include "RdProperty.h"
 
 #include <cstdint>
 
 using namespace rd;
 using namespace rd::test;
-using namespace rd::test::util;
+//using namespace rd::test::util;
 
 TEST_F(InterningTestBase, testServerToClient) {
     doTest(false, false);
