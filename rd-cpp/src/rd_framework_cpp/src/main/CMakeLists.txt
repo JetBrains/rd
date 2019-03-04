@@ -47,7 +47,9 @@ add_library(rd_framework_cpp STATIC
         RdId.cpp RdId.h
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
-        serialization/Serializers.cpp)
+        )
+
+add_subdirectory(util)
 
 target_include_directories(rd_framework_cpp
         PUBLIC
@@ -62,7 +64,7 @@ target_include_directories(rd_framework_cpp
         util
         )
 
-target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp clsocket)
+target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp rd_framework_cpp_util clsocket)
 
 if (UNIX)
     target_link_libraries(rd_framework_cpp PRIVATE pthread)

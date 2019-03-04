@@ -10,6 +10,7 @@
 #include "ArraySerializer.h"
 
 #include <random>
+#include <numeric>
 
 using namespace rd;
 
