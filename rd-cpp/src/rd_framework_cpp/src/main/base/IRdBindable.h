@@ -5,8 +5,8 @@
 #ifndef RD_CPP_FRAMEWORK_IRDBINDABLE_H
 #define RD_CPP_FRAMEWORK_IRDBINDABLE_H
 
-#include "Lifetime.h"
 #include "IRdDynamic.h"
+#include "Lifetime.h"
 #include "RdId.h"
 
 

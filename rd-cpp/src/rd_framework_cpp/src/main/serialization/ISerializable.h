@@ -6,6 +6,11 @@
 #define RD_CPP_ISERIALIZABLE_H
 
 namespace rd {
+	//region predeclared
+
+	class Buffer;
+	//endregion
+
 	class SerializationCtx;
 
 	class ISerializable {

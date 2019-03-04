@@ -15,7 +15,7 @@ namespace rd {
 					   std::shared_ptr<IWire> wire) :
 			IProtocol(std::move(identity), scheduler, std::move(wire)) {}
 
-	Protocol::Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
-			IProtocol(std::make_shared<Identities>(std::move(identity)), scheduler, std::move(wire)) {}
+	Protocol::Protocol(Identities::IdKind kind, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
+			IProtocol(std::make_shared<Identities>(kind), scheduler, std::move(wire)) {}
 
 }

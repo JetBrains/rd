@@ -7,6 +7,9 @@
 
 
 #include "IProtocol.h"
+#include "Identities.h"
+
+#include <memory>
 
 namespace rd {
 	class Protocol : /*IRdDynamic, */public IProtocol {
@@ -14,7 +17,7 @@ namespace rd {
 		//region ctor/dtor
 		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
-		Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		Protocol(Identities::IdKind, IScheduler *scheduler, std::shared_ptr<IWire> wire);
 
 		Protocol(Protocol const &) = delete;
 

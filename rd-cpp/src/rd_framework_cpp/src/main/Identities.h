@@ -9,6 +9,7 @@
 #include "RdId.h"
 
 #include <string>
+#include <atomic>
 
 namespace rd {
 	using hash_t = int64_t;
@@ -25,13 +26,12 @@ namespace rd {
 
 	class Identities {
 	private:
+		mutable std::atomic_int32_t id_acc;
+	public:
 		enum class IdKind {
 			Client,
 			Server
 		};
-
-		mutable int32_t id_acc;
-	public:
 
 		constexpr static IdKind SERVER = IdKind::Server;
 		constexpr static IdKind CLIENT = IdKind::Client;
