@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import java.io.File
 
+
 private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
     if (member is Member.Field && (member.isOptional || member.defaultValue != null)) {
         append("{")
@@ -218,7 +219,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }?.let { "rd::$it" }
     }
 
-    protected fun IType.serializerRef(scope: Declaration) : String = leafSerializerRef(scope) ?: when(this) {
+    protected fun IType.serializerRef(scope: Declaration): String = leafSerializerRef(scope) ?: when (this) {
         is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
         else -> "__${name}Serializer"
     }
@@ -566,6 +567,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 primaryCtorTraitDecl(decl)
                 +carry()
 
+                comment("secondary constructor")
+                secondaryConstructorTraitDecl(decl)
+
                 comment("default ctors and dtors")
                 defaultCtorsDtors(decl)
 
@@ -842,6 +846,36 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         p("${decl.name}(${primaryCtorParams(decl)})")
     }
 
+    protected fun PrettyPrinter.secondaryConstructorTraitDecl(decl: Declaration) {
+        if (!decl.hasSecondaryCtor) return
+
+        p((decl is Toplevel && !decl.hasSetting(PublicCtors)).condstr { if (!decl.isExtension) "private " else "internal " })
+
+
+        val members = decl.allMembers
+                .asSequence()
+                .filter { !it.hasEmptyConstructor }
+        if (members.count() == 0) {
+            return
+        }
+        +"explicit ${decl.name}"
+        block("(", ")") {
+            +members.map { it.ctorParam(decl, false) }.plus(unknownMembersSecondary(decl))
+                    .joinToString(",\n")
+        }
+
+        +":"
+//        block() {
+        +members
+                .map {
+                    "${it.encapsulatedName}(std::move(${it.encapsulatedName}))"
+                }.plus(unknownMemberNames(decl))
+                .joinToString(",\n")
+//        }
+        +"{}"
+        println()
+    }
+
     fun PrettyPrinter.defaultCtorsDtors(decl: Declaration) {
         val name = decl.name
         println()
@@ -872,16 +906,16 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected fun readerTraitDecl(decl: Declaration): Signature? {
         return if (decl.isConcrete) {
-            Signature(decl.name, "read(rd::SerializationCtx const& _ctx, rd::Buffer const & buffer)", decl.name).static()
+            Signature(decl.name, "read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)", decl.name).static()
         } else if (decl.isAbstract) {
-            Signature(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx const& _ctx, rd::Buffer const & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
+            Signature(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx const& ctx, rd::Buffer const & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
         } else {
             null
         }
     }
 
     protected fun writerTraitDecl(decl: Declaration): Signature? {
-        val signature = Signature("void", "write(rd::SerializationCtx const& _ctx, rd::Buffer const& buffer)", decl.name).const()
+        val signature = Signature("void", "write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer)", decl.name).const()
         return if (decl.isConcrete) {
             signature.override()
         } else {
@@ -1038,7 +1072,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (isUnknown(decl)) {
             result += ("unknownBytes(std::move(unknownBytes))")
         }
-        p(result.joinToString(separator = ", ", prefix = ": "))
+        p(result.joinToString(separator = ", $eol", prefix = ": "))
     }
 
     protected fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
@@ -1091,11 +1125,6 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (unknown) {
             +"int32_t objectStartPosition = buffer.get_position();"
         }
-        if (decl is Class && decl.isInternRoot) {
-            +"auto const &ctx = _ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
-        } else {
-            +"auto const &ctx = _ctx;"
-        }
         if (decl is Class || decl is Aggregate) {
             +"auto _id = rd::RdId::read(buffer);"
         }
@@ -1109,6 +1138,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         +"${decl.name} res{${ctorParams.isNotEmpty().condstr { ctorParams }}};"
         if (decl is Class || decl is Aggregate) {
             +"withId(res, _id);"
+        }
+        if (decl is Class && decl.isInternRoot) {
+            +"res.mySerializationContext = ctx.withInternRootsHere(res, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
         }
         +"return res;"
     }
@@ -1231,18 +1263,15 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         if (decl.isConcrete) {
             define(writerTraitDecl(decl)) {
-                if (decl is Class && decl.isInternRoot) {
-                    +"this->mySerializationContext = _ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
-                    +"auto const &ctx = *this->mySerializationContext;"
-                } else {
-                    +"auto const &ctx = _ctx;"
-                }
                 if (decl is Class || decl is Aggregate) {
                     +"this->rdid.write(buffer);"
                 }
                 (decl.membersOfBaseClasses + decl.ownMembers).println { member -> member.writer() + ";" }
                 if (isUnknown(decl)) {
                     +"buffer.writeByteArrayRaw(unknownBytes);"
+                }
+                if (decl is Class && decl.isInternRoot) {
+                    +"this->mySerializationContext = ctx.withInternRootsHere(*this, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                 }
             }
         } else {
@@ -1428,6 +1457,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     decl is Struct.Concrete && decl.isUnknown
 
     protected fun unknownMembers(decl: Declaration) =
+            if (isUnknown(decl)) arrayOf("rd::RdId unknownId",
+                    "rd::Buffer::ByteArray unknownBytes")
+            else emptyArray()
+
+    private fun unknownMembersSecondary(decl: Declaration) =
             if (isUnknown(decl)) arrayOf("rd::RdId unknownId",
                     "rd::Buffer::ByteArray unknownBytes")
             else emptyArray()
