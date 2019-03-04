@@ -10,12 +10,10 @@
 #include "ArraySerializer.h"
 
 #include <random>
-#include <algorithm>
-#include <numeric>
 
 using namespace rd;
 
-SerializationCtx ctx;
+SerializationCtx ctx{nullptr};
 
 TEST(BufferTest, RdVoid) {
 	Buffer buffer;
@@ -158,7 +156,6 @@ TEST(BufferTest, Enum) {
 }
 
 TEST(BufferTest, NullableSerializer) {
-	SerializationCtx ctx;
 	Buffer buffer;
 
 	using T = std::wstring;
@@ -204,7 +201,6 @@ TEST(BufferTest, NullableSerializer) {
 }
 
 TEST(BufferTest, ArraySerializer) {
-	SerializationCtx ctx;
 	Buffer buffer;
 
 	using T = std::wstring;

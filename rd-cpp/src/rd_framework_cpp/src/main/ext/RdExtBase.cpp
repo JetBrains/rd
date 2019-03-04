@@ -26,7 +26,7 @@ namespace rd {
 		lifetime->bracket(
 				[&] {
 					extProtocol = std::make_shared<Protocol>(parentProtocol->identity, sc,
-															 std::static_pointer_cast<IWire>(extWire));
+															 std::static_pointer_cast<IWire>(extWire), lifetime);
 				},
 				[this] {
 					extProtocol = nullptr;

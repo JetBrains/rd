@@ -8,16 +8,27 @@
 
 #include "IProtocol.h"
 #include "Identities.h"
+#include "SerializationCtx.h"
 
 #include <memory>
 
 namespace rd {
 	class Protocol : /*IRdDynamic, */public IProtocol {
+		constexpr static auto InternRootName = "ProtocolInternRoot";
+
+		Lifetime lifetime;
+
+		mutable std::unique_ptr<SerializationCtx> context;
+
+		std::unique_ptr<InternRoot> internRoot;
+
 	public:
 		//region ctor/dtor
-		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		void initialize();
 
-		Protocol(Identities::IdKind, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
+
+		Protocol(Identities::IdKind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 
 		Protocol(Protocol const &) = delete;
 
@@ -27,6 +38,8 @@ namespace rd {
 		//endregion
 
 		const IProtocol *get_protocol() const override;
+
+		const SerializationCtx &get_serialization_context() const override;
 
 		static const Logger initializationLogger;
 	};

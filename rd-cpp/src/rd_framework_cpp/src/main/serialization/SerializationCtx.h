@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <functional>
 #include <string>
+#include <utility>
 
 namespace rd {
 	//region predeclared
@@ -22,29 +23,25 @@ namespace rd {
 
 	class SerializationCtx {
 	public:
+		using roots_t = std::unordered_map<RdId::hash_t, InternRoot const *>;
+
 		Serializers const *serializers = nullptr;
 
-//		template<hash_t InternKey>
-		std::unordered_map<RdId::hash_t, std::shared_ptr<InternRoot>> intern_roots{};
-
-		//    SerializationCtx() = delete;
+		roots_t intern_roots{};
 
 		//region ctor/dtor
 
+		//    SerializationCtx() = delete;
 
 		SerializationCtx(SerializationCtx &&other) noexcept = default;
 
 		SerializationCtx &operator=(SerializationCtx &&other) noexcept = default;
 
-		explicit SerializationCtx(const Serializers *serializers = nullptr);
+//		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
-//		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
+		explicit SerializationCtx(const Serializers *serializers, roots_t intern_roots = {});
 
-		template<RdId::hash_t... R>
-		SerializationCtx withInternRootsHere(RdBindableBase const &owner) {
-			auto next_roots = intern_roots;
-			return SerializationCtx(nullptr);
-		}
+		SerializationCtx withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots);
 
 		//endregion
 
