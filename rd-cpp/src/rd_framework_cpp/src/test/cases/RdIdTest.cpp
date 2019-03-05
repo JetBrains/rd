@@ -11,7 +11,7 @@ using namespace rd;
 using namespace rd::util;
 
 TEST(rd_id, mix) {
-	constexpr RdId id1 = RdId::Null().mix<4>("abcd").mix<3>("efg");
+	constexpr RdId id1 = RdId::Null().mix("abcd").mix("efg");
 	RdId id2 = RdId::Null().mix("abcdefg");
 	EXPECT_EQ(id1.get_hash(), id2.get_hash());
 	EXPECT_EQ(id1.get_hash(), 88988021860L);
@@ -21,6 +21,6 @@ TEST(rd_id, mix) {
 }
 
 TEST(rd_id, constexprness) {
-	constexpr auto hash = getPlatformIndependentHash<16>("InternScopeInExt");
+	constexpr auto hash = getPlatformIndependentHash("InternScopeInExt");
 	EXPECT_EQ(-4122988489618686035L, hash);
 }

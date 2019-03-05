@@ -23,8 +23,8 @@ namespace rd {
 		}
 
 		template<size_t N>
-		constexpr hash_t getPlatformIndependentHash(char const that[N], constexpr_hash_t initial = DEFAULT_HASH) {
-			return static_cast<hash_t>(hashImpl(initial, &that[0], &that[N]));
+		constexpr hash_t getPlatformIndependentHash(char const (&that)[N], constexpr_hash_t initial = DEFAULT_HASH) {
+			return static_cast<hash_t>(hashImpl(initial, &that[0], &that[N - 1]));
 		}
 
 		constexpr hash_t getPlatformIndependentHash(std::string const &that, constexpr_hash_t initial = DEFAULT_HASH) {

@@ -79,8 +79,8 @@ namespace rd {
 			return *this;
 		}
 
-		template <size_t N>
-		constexpr RdId mix(char const tail[N]) const {
+		template<size_t N>
+		constexpr RdId mix(char const (&tail)[N]) const {
 			return RdId(util::getPlatformIndependentHash<N>(tail, static_cast<util::constexpr_hash_t>(hash)));
 		}
 
