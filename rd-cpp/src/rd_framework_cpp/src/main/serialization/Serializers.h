@@ -10,6 +10,7 @@
 #include "Identities.h"
 #include "IUnknownInstance.h"
 #include "hashing.h"
+#include "RdAny.h"
 
 #include <utility>
 #include <iostream>
@@ -29,8 +30,8 @@ namespace rd {
 		static RdId real_rd_id(IPolymorphicSerializable const &value);
 
 	public:
-		mutable std::unordered_map<RdId, std::function<std::unique_ptr<IPolymorphicSerializable>(SerializationCtx const &,
-																					  Buffer const &)>> readers;
+		mutable std::unordered_map<RdId, std::function<RdAny(SerializationCtx const &,
+															 Buffer const &)>> readers;
 
 		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
 		void registry() const {
@@ -49,10 +50,10 @@ namespace rd {
 		}
 
 		template<typename T>
-		std::unique_ptr<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &stream) const {
+		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &stream) const {
 			RdId id = RdId::read(stream);
 			if (id.isNull()) {
-				return nullptr;
+				return {};
 			}
 			int32_t size = stream.read_integral<int32_t>();
 			stream.check_available(size);
@@ -62,9 +63,8 @@ namespace rd {
 				throw std::invalid_argument("no reader");
 			}
 			auto const &reader = readers.at(id);
-			std::unique_ptr<IPolymorphicSerializable> ptr = reader(ctx, stream);
-			return std::unique_ptr<T>(dynamic_cast<T *>(ptr.release()));
-			//todo change the way of dynamic_pointer_cast
+			RdAny any = reader(ctx, stream);
+			return any::get<T>(std::move(any));
 		}
 
 		/*template<typename T>

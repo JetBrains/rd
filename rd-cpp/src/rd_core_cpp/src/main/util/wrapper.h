@@ -52,9 +52,14 @@ namespace rd {
 	using raw_type = typename helper<T>::raw_type;
 
 	template<typename T>
-	class Wrapper {
+	class Wrapper : private std::unique_ptr<T> {
 	private:
-		std::unique_ptr<T> ptr;
+		template<typename>
+		friend
+		class Wrapper;
+
+		using Base = std::unique_ptr<T>;
+//		std::unique_ptr<T> ptr;
 	public:
 		//region ctor/dtor
 
@@ -69,37 +74,47 @@ namespace rd {
 		Wrapper &operator=(Wrapper &&) = default;
 
 		template<typename F, typename R = typename std::enable_if<!std::is_abstract<typename std::remove_reference<F>::type>::value>::type>
-		Wrapper(F &&value) : ptr(std::make_unique<typename std::remove_reference<F>::type>(std::forward<F>(value))) {}
+		Wrapper(F &&value) : Base(std::make_unique<typename std::remove_reference<F>::type>(std::forward<F>(value))) {}
 
 		template<typename F>
-		Wrapper(std::unique_ptr<F> &&ptr) : ptr(std::move(ptr)) {}
+		Wrapper(std::unique_ptr<F> &&ptr) : Base(std::move(ptr)) {}
 
-		template <typename U = T, typename R = typename std::enable_if<!std::is_abstract<typename std::remove_reference<U>::type>::value>::type>
+		template<typename U = T, typename R = typename std::enable_if<!std::is_abstract<typename std::remove_reference<U>::type>::value>::type>
 		Wrapper(tl::optional<T> &&opt) {
 			if (opt) {
-				ptr = std::make_unique<T>(std::move(*opt));
+				*this = std::make_unique<T>(std::move(*opt));
 			}
+		}
+
+		template<typename R>
+		static Wrapper<T> dynamic(Wrapper<R> &&w) {
+			return Wrapper<T>{std::unique_ptr<T>(dynamic_cast<T *>(w.release()))};
 		}
 		//endregion
 
 		constexpr T &operator*() &{
-			return *ptr;
+			return *static_cast<Base &>(*this);
 		};
 
 		constexpr T const &operator*() const &{
-			return *ptr;
+			return *static_cast<Base const &>(*this);
 		};
 
 		/*constexpr T &&operator*() &&{
 			return *ptr.get();
 		};*/
 
+		template<typename R>
+		operator Wrapper<R>() &&{
+			return Wrapper<T>(static_cast<Base>(*this));
+		}
+
 		constexpr explicit operator bool() const noexcept {
-			return (bool) (ptr);
+			return Base::operator bool();
 		}
 
 		friend bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
-			return *(lhs.ptr) == *(rhs.ptr);
+			return *lhs.get() == *rhs.get();
 		}
 
 		friend bool operator!=(const Wrapper &lhs, const Wrapper &rhs) {
