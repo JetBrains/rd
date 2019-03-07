@@ -47,7 +47,7 @@ add_library(rd_framework_cpp STATIC
         RdId.cpp RdId.h
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
-        )
+        serialization/AbstractPolymorphic.h serialization/RdAny.cpp serialization/RdAny.h)
 
 add_subdirectory(util)
 

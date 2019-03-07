@@ -5,10 +5,12 @@
 #ifndef RD_CPP_ISERIALIZERSOWNER_H
 #define RD_CPP_ISERIALIZERSOWNER_H
 
-
-#include "Serializers.h"
-
 namespace rd {
+	//region predeclared
+
+	class Serializers;
+	//endregion
+
 	class ISerializersOwner {
 	public:
 		void registry(Serializers const &serializers);

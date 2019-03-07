@@ -66,7 +66,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         return """rd::util::getPlatformIndependentHash<${s.length}>("$s")"""
     }
 
-    fun Class.withInternRootsHere(field : String) : String {
+    fun Class.withInternRootsHere(field: String): String {
         val roots = internRootForScopes.map { """getPlatformIndependentHash<${it.length}>("$it")""" }.joinToString { "$it" }
         return "ctx.withInternRootsHere<$roots>($field)"
     }

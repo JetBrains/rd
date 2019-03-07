@@ -5,8 +5,9 @@
 #ifndef RD_CPP_NULLABLESERIALIZER_H
 #define RD_CPP_NULLABLESERIALIZER_H
 
-#include "SerializationCtx.h"
 #include "Polymorphic.h"
+#include "AbstractPolymorphic.h"
+#include "wrapper.h"
 
 #include <type_traits>
 

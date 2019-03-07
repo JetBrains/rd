@@ -8,8 +8,6 @@
 #include "Identities.h"
 
 namespace rd {
-//	constexpr RdId RdId::NULL_ID(0);
-
 	std::string RdId::toString() const {
 		return std::to_string(hash);
 	}
