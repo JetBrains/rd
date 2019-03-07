@@ -7,9 +7,10 @@
 #include "RdFrameworkTestBase.h"
 #include "RdFrameworkDynamicPolymorphicTestBase.h"
 
-#include "entity/AbstractEntity.h"
-#include "entity/ConcreteEntity.h"
-#include "entity/FakeEntity.h"
+#include "AbstractPolymorphic.h"
+#include "AbstractEntity.h"
+#include "ConcreteEntity.h"
+#include "FakeEntity.h"
 #include "ArraySerializer.h"
 #include "RdProperty.h"
 #include "RdSet.h"

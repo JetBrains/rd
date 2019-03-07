@@ -4,8 +4,9 @@
 #include "RdFrameworkTestBase.h"
 #include "RdReactiveBase.h"
 
+#include "ConcreteEntity.h"
+
 #include <type_traits>
-#include "entity/ConcreteEntity.h"
 
 namespace rd {
 	namespace test {

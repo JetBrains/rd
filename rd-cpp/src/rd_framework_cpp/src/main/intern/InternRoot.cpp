@@ -17,7 +17,7 @@ namespace rd {
     }
 
     void InternRoot::on_wire_received(Buffer buffer) const {
-        Wrapper<IPolymorphicSerializable> value = NullableSerializer<AbstractPolymorphic<IPolymorphicSerializable>>::read(get_serialization_context(), buffer);
+        Wrapper<IPolymorphicSerializable> value = AbstractPolymorphic<IPolymorphicSerializable>::read(get_serialization_context(), buffer);
         if (!value) {
             return;
         }
@@ -38,9 +38,9 @@ namespace rd {
             rdid = RdId::Null();
         });
 
-//        myItemsList.clear()
-//        otherItemsList.clear()
-//        inverseMap.clear()
+//		myItemsList.clear();
+//		otherItemsList.clear();
+//		inverseMap.clear();
 
         get_protocol()->wire->advise(lf, this);
     }

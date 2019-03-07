@@ -9,36 +9,62 @@
 
 #include <vector>
 #include <string>
+#include <any>
+
+
 
 namespace rd {
 	//region predeclared
 
 	class Identities;
+
 	//endregion
 
 	class InternRoot final : public RdReactiveBase {
 	private:
-		/*template <typename T>
-		std::vector<T> my_items;*/
+		// template<
+		/*mutable std::vector<std::any> myItemsList;
+		mutable std::unordered_map<int32_t, std::any> otherItemsList;
+		mutable std::unordered_map<std::any, int32_t> inverseMap;*/
 
 		mutable InternScheduler intern_scheduler;
 
 		void set_interned_correspondence(int32_t id, Wrapper<IPolymorphicSerializable> wrapper) const;
 
+		static constexpr bool is_index_owned(int32_t id) {
+			return static_cast<bool>(id & 1);
+		}
+
 	public:
+		//region ctor/dtor
+
 		InternRoot();
+		//endregion
 
 		template<typename T>
 		int32_t intern_value(T const &value) const {
-			return 0;
-			//todo impl
+//			auto it = inverseMap.find(value);
+			int32_t index = 0;
+//			if (it == inverseMap.end()) {
+				get_protocol()->wire->send(this->rdid, [this, &index, &value](Buffer const &buffer) {
+//					NullableSerializer<Polymorphic<T>>::write(get_serialization_context(), buffer, value);
+					{
+//						index = myItemsList.size();
+//						myItemsList.emplace_back(value);
+					}
+					buffer.write_integral<int32_t>(index);
+				});
+//			}
+//			if (inverseMap.count(value) == 0) {
+//				inverseMap[value] = index;
+//			}
+			return index;
 		}
+
 
 		template<typename T>
 		T un_intern_value(int32_t id) const {
-			return T();
-			//todo impl
-//			return items;
+//			return std::any_cast<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]);
 		}
 
 		IScheduler *get_wire_scheduler() const override;

@@ -5,6 +5,8 @@
 #ifndef RD_CPP_ISERIALIZABLE_H
 #define RD_CPP_ISERIALIZABLE_H
 
+#include <string>
+
 namespace rd {
 	//region predeclared
 
