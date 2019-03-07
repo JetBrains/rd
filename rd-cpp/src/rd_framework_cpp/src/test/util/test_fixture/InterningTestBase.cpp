@@ -14,10 +14,10 @@ namespace rd {
 		using namespace util;
 
 		int64_t InterningTestBase::measureBytes(IProtocol *protocol, std::function<void()> action) {
-			auto const &wire = dynamic_cast<SimpleWire const &>(*protocol->wire);
-			auto pre = wire.bytesWritten;
+			auto wire = dynamic_cast<SimpleWire const *>(protocol->get_wire());
+			auto pre = wire->bytesWritten;
 			action();
-			return wire.bytesWritten - pre;
+			return wire->bytesWritten - pre;
 		}
 
 		void InterningTestBase::doTest(bool firstClient, bool secondClient, bool thenSwitchSides) {

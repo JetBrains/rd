@@ -26,7 +26,7 @@ namespace rd {
 					}
 		);
 
-		get_protocol()->scheduler->assert_thread();
+		get_protocol()->get_scheduler()->assert_thread();
 
 		priorityAdviseSection(
 				[this, lf]() {

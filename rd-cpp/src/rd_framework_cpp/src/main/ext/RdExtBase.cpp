@@ -21,7 +21,7 @@ namespace rd {
 
 //    serializersOwner.registry(parentProtocol.serializers);
 
-		auto sc = parentProtocol->scheduler;
+		auto sc = parentProtocol->get_scheduler();
 		extWire->realWire = parentWire.get();
 		lifetime->bracket(
 				[&] {

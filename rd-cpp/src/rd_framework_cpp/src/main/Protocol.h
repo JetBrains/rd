@@ -37,8 +37,6 @@ namespace rd {
 		Protocol &operator=(Protocol &&) noexcept = default;
 		//endregion
 
-		const IProtocol *get_protocol() const override;
-
 		const SerializationCtx &get_serialization_context() const override;
 
 		static const Logger initializationLogger;

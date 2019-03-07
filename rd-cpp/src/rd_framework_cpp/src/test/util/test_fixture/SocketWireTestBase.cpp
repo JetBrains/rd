@@ -14,7 +14,7 @@ namespace rd {
 			}
 
 			Protocol SocketWireTestBase::client(Lifetime lifetime, Protocol const &serverProtocol) {
-				auto const *server = dynamic_cast<SocketWire::Server const *>(serverProtocol.wire.get());
+				auto const *server = dynamic_cast<SocketWire::Server const *>(serverProtocol.get_wire());
 				std::shared_ptr<IWire> wire =
 						std::make_shared<SocketWire::Client>(std::move(lifetime), &clientScheduler, server->port,
 															 "TestClient");

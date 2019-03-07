@@ -49,7 +49,7 @@ namespace rd {
 
 	void SocketWire::Base::send0(Buffer::ByteArray msg) const {
 		try {
-			std::lock_guard<decltype(socket_lock)> _(socket_lock);
+			std::lock_guard<decltype(socket_lock)> guard(socket_lock);
 			int32_t msglen = static_cast<int32_t>(msg.size());
 			MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), msglen) == msglen,
 								this->id + ": failed to send message over the network");
