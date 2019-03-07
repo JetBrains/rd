@@ -6,6 +6,10 @@
 #define RD_CPP_ANY_H
 
 #include "ISerializable.h"
+#include "core_util.h"
+#include "wrapper.h"
+
+#include "mpark/variant.hpp"
 
 #include <variant>
 #include <memory>
@@ -13,7 +17,23 @@
 #include <cstring>
 
 namespace rd {
-	using RdAny = std::variant<std::unique_ptr<IPolymorphicSerializable>, std::wstring>;
+	namespace any {
+		using super_t = Wrapper<IPolymorphicSerializable>;
+	}
+
+	using RdAny = mpark::variant<any::super_t, std::wstring>;
+
+	namespace any {
+		template<typename T>
+		typename std::enable_if<!std::is_base_of<IPolymorphicSerializable, T>::value, T>::type get(RdAny &&any) {
+			return mpark::get<T>(std::move(any));
+		};
+
+		template<typename T>
+		typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value, Wrapper<T>>::type get(RdAny &&any) {
+			return Wrapper<T>::dynamic(mpark::get<super_t>(std::move(any)));
+		};
+	}
 }
 
 

@@ -9,8 +9,6 @@
 
 #include <vector>
 #include <string>
-#include <any>
-
 
 
 namespace rd {
@@ -64,6 +62,7 @@ namespace rd {
 
 		template<typename T>
 		T un_intern_value(int32_t id) const {
+			return T();
 //			return std::any_cast<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]);
 		}
 
