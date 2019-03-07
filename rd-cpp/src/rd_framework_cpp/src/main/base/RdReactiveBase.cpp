@@ -16,7 +16,7 @@ namespace rd {
 	}
 
 	const IWire *const RdReactiveBase::get_wire() const {
-		return get_protocol()->wire.get();
+		return get_protocol()->get_wire();
 	}
 
 	void RdReactiveBase::assert_threading() const {
@@ -36,7 +36,7 @@ namespace rd {
 	}
 
 	IScheduler *RdReactiveBase::get_default_scheduler() const {
-		return get_protocol()->scheduler;
+		return get_protocol()->get_scheduler();
 	}
 
 	IScheduler *RdReactiveBase::get_wire_scheduler() const {

@@ -52,13 +52,16 @@ namespace rd {
 	using raw_type = typename helper<T>::raw_type;
 
 	template<typename T>
-	class Wrapper : private std::unique_ptr<T> {
+	using wrapper_storage = std::unique_ptr<T>;
+
+	template<typename T>
+	class Wrapper : private wrapper_storage<T> {
 	private:
 		template<typename>
 		friend
 		class Wrapper;
 
-		using Base = std::unique_ptr<T>;
+		using Base = wrapper_storage<T>;
 //		std::unique_ptr<T> ptr;
 	public:
 		//region ctor/dtor

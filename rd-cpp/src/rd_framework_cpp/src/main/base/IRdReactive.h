@@ -22,7 +22,7 @@ namespace rd {
 
 		//    IScheduler *wire_scheduler = nullptr;
 
-		virtual IScheduler *get_wire_scheduler() const = 0;
+		virtual IScheduler * get_wire_scheduler() const = 0;
 
 		virtual void on_wire_received(Buffer buffer) const = 0;
 	};

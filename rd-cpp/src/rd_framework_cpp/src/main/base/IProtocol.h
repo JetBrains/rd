@@ -21,12 +21,14 @@ namespace rd {
 	//endregion
 
 	class IProtocol : public IRdDynamic {
+		friend class RdExtBase;
 	public:
 		std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
 		std::shared_ptr<Identities> identity;
+	protected:
 		IScheduler *scheduler = nullptr;
 		std::shared_ptr<IWire> wire;
-
+	public:
 		//region ctor/dtor
 
 		IProtocol();
@@ -39,6 +41,12 @@ namespace rd {
 
 		virtual ~IProtocol();
 		//endregion
+
+		const IProtocol *get_protocol() const override;
+
+		IScheduler *get_scheduler() const;
+
+		const IWire *get_wire() const;
 	};
 }
 

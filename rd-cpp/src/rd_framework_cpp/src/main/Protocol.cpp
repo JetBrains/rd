@@ -20,10 +20,6 @@ namespace rd {
 	Protocol::Protocol(Identities::IdKind kind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime) :
 			IProtocol(std::make_shared<Identities>(kind), scheduler, std::move(wire)), lifetime(std::move(lifetime)) {}
 
-	const IProtocol *Protocol::get_protocol() const {
-		return this;
-	}
-
 	const SerializationCtx &Protocol::get_serialization_context() const {
 		if (!context) {
 			context = std::make_unique<SerializationCtx>(serializers.get(), SerializationCtx::roots_t{{util::getPlatformIndependentHash("Protocol"), internRoot.get()}});

@@ -44,7 +44,7 @@ namespace rd {
 
 			MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
-			readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> std::unique_ptr<IPolymorphicSerializable> {
+			readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> Wrapper<IPolymorphicSerializable> {
 				return std::make_unique<T>(T::read(ctx, buffer));
 			};
 		}

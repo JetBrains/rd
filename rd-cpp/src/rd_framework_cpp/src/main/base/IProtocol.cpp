@@ -18,5 +18,17 @@ namespace rd {
 			scheduler(scheduler),
 			wire(std::move(wire)) {}
 
+	const IProtocol *IProtocol::get_protocol() const {
+		return this;
+	}
+
+	IScheduler *IProtocol::get_scheduler() const {
+		return scheduler;
+	}
+
+	const IWire *IProtocol::get_wire() const {
+		return wire.get();
+	}
+
 	IProtocol::~IProtocol() = default;
 }
