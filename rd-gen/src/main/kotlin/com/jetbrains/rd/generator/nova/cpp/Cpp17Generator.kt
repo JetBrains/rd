@@ -1194,12 +1194,12 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (decl.isExtension) return
 
         define(createMethodTraitDecl(decl)) {
-            +"${decl.root.sanitizedName(decl)}::serializersOwner.registry(*(protocol->serializers));"
+            +"${decl.root.sanitizedName(decl)}::serializersOwner.registry(*(protocol->get_serializers()));"
             println()
 
 //            +"${decl.name} res;"
             val quotedName = """"${decl.name}""""
-            +"identify(*(protocol->identity), rd::RdId::Null().mix($quotedName));"
+            +"identify(*(protocol->get_identity()), rd::RdId::Null().mix($quotedName));"
             +"bind(lifetime, protocol, $quotedName);"
 //            +"return res;"
         }

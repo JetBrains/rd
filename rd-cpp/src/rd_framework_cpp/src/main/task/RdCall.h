@@ -122,7 +122,7 @@ namespace rd {
 				assert_threading();
 			}
 
-			RdId taskId = get_protocol()->identity->next(rdid);
+			RdId taskId = get_protocol()->get_identity()->next(rdid);
 			MY_ASSERT_MSG(requests.count(taskId) == 0, "requests already contain task with id:" + taskId.toString());
 			RdTask<TRes, ResSer> task;
 			auto pair = std::make_pair(scheduler, task);

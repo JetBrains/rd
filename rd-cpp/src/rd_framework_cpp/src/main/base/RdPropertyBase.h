@@ -53,7 +53,8 @@ namespace rd {
 					if (is_local_change) {
 						if (this->has_value()) {
 							const IProtocol *iProtocol = get_protocol();
-							identifyPolymorphic(v, *iProtocol->identity, iProtocol->identity->next(rdid));
+							const Identities *identity = iProtocol->get_identity();
+							identifyPolymorphic(v, *identity, identity->next(rdid));
 						}
 					}
 				});

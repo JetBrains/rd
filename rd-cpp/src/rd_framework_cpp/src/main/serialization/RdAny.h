@@ -20,7 +20,6 @@ namespace rd {
 	namespace any {
 		using super_t = Wrapper<IPolymorphicSerializable>;
 	}
-
 	using RdAny = mpark::variant<any::super_t, std::wstring>;
 
 	namespace any {
