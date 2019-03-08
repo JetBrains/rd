@@ -31,7 +31,7 @@ namespace rd {
 
 			InterningProtocolLevelModel serverModel(L"");
 
-//            server_property.set(serverModel)
+//			server_property.set(serverModel)
 			auto const &clientModel = client_property.get();
 
 			auto simpleTestData = this->simpleTestData;

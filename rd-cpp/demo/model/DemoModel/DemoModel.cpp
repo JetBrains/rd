@@ -10,14 +10,14 @@ DemoModel::DemoModelSerializersOwner DemoModel::serializersOwner;
 
 void DemoModel::DemoModelSerializersOwner::registerSerializersCore(rd::Serializers const& serializers)
 {
-    serializers->registry<MyScalar>();
+    serializers.registry<MyScalar>();
 }
 
 void DemoModel::connect(rd::Lifetime lifetime, rd::IProtocol const * protocol)
 {
-    DemoRoot::serializersOwner.registry(protocol->serializers);
+    DemoRoot::serializersOwner.registry(protocol->get_serializers());
     
-    identify(*(protocol->identity), rd::RdId::Null().mix("DemoModel"));
+    identify(*(protocol->get_identity()), rd::RdId::Null().mix("DemoModel"));
     bind(lifetime, protocol, "DemoModel");
 }
 

@@ -20,7 +20,7 @@ namespace rd {
 
 	//endregion
 
-	class InternRoot final : public RdReactiveBase {
+	class rInternRoot final : public RdReactiveBase {
 	private:
 		template<typename T>
 		static std::vector<value_or_wrapper<T>> myItemsList;

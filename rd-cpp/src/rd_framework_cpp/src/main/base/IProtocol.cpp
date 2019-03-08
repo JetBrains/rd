@@ -30,5 +30,9 @@ namespace rd {
 		return wire.get();
 	}
 
+	const Identities *IProtocol::get_identity() const {
+		return identity.get();
+	}
+
 	IProtocol::~IProtocol() = default;
 }

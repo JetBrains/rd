@@ -32,11 +32,11 @@ namespace rd {
 		}
 
 		constexpr hash_t getPlatformIndependentHash(int32_t const &that, constexpr_hash_t initial = DEFAULT_HASH) {
-			return static_cast<hash_t>(initial * HASH_FACTOR + (that + 1));
+			return static_cast<hash_t>(initial * HASH_FACTOR + static_cast<constexpr_hash_t>(that + 1));
 		}
 
 		constexpr hash_t getPlatformIndependentHash(int64_t const &that, constexpr_hash_t initial = DEFAULT_HASH) {
-			return static_cast<hash_t>(initial * HASH_FACTOR + (that + 1));
+			return static_cast<hash_t>(initial * HASH_FACTOR + static_cast<constexpr_hash_t>(that + 1));
 		}
 	}
 }

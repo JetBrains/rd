@@ -73,6 +73,26 @@ TEST_F(DPropertyTest, dynamic_polymorphic_property) {
 	AfterTest();
 }
 
+/*
+TEST_F(DPropertyTest, dynamic_polymorphic_property_cast) {
+	Wrapper<ConcreteEntity> value_a{L"A"};
+	Wrapper<ConcreteEntity> value_b{L"B"};
+
+	std::vector<std::wstring> log;
+
+	server_entity.advise(clientLifetime, [&log](AbstractEntity const &entity) {
+		log.push_back(entity.get_filePath());
+	});
+	server_entity.set(value_a);
+	EXPECT_EQ(server_entity.get(), value_a);
+	EXPECT_NE(server_entity.get(), value_b);
+
+	client_entity.set(value_a);
+
+	AfterTest();
+}
+*/
+
 using DList = RdList<AbstractEntity, S>;
 using DListTest = RdFrameworkDynamicPolymorphicTestBase<DList>;
 

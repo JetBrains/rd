@@ -24,8 +24,8 @@ namespace rd {
 		friend class RdExtBase;
 	public:
 		std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
-		std::shared_ptr<Identities> identity;
 	protected:
+		std::shared_ptr<Identities> identity;
 		IScheduler *scheduler = nullptr;
 		std::shared_ptr<IWire> wire;
 	public:
@@ -41,6 +41,8 @@ namespace rd {
 
 		virtual ~IProtocol();
 		//endregion
+
+		const Identities * get_identity() const;
 
 		const IProtocol *get_protocol() const override;
 

@@ -74,8 +74,9 @@ namespace rd {
 						T const *new_value = e.get_new_value();
 						if (new_value) {
 							const IProtocol *iProtocol = get_protocol();
-							identifyPolymorphic(*new_value, *iProtocol->identity,
-												iProtocol->identity->next(rdid));
+							const Identities *identity = iProtocol->get_identity();
+							identifyPolymorphic(*new_value, *identity,
+												identity->next(rdid));
 						}
 					}
 
