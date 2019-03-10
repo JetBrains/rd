@@ -6,66 +6,63 @@
 
 #include "InterningTestBase.h"
 
-#include "InterningTestModel.h"
-#include "RdProperty.h"
-
-#include <cstdint>
-#include <models/InterningRoot1/InterningTestModel.h>
-
 
 using namespace rd;
 using namespace rd::test;
 using namespace rd::test::util;
 
-/*TEST_F(InterningTestBase, testServerToClient) {
-    doTest(false, false);
+TEST_F(InterningTestBase, testServerToClient) {
+	doTest(false, false);
 }
 
 TEST_F(InterningTestBase, testClientToServer) {
-    doTest(true, true);
+	doTest(true, true);
 }
 
 TEST_F(InterningTestBase, testServerThenClientMixed) {
-    doTest(false, true);
+	doTest(false, true);
 }
 
 TEST_F(InterningTestBase, testClientThenServerMixed) {
-    doTest(true, false);
+	doTest(true, false);
 }
 
 TEST_F(InterningTestBase, testServerThenClientMixedAndReversed) {
-    doTest(false, true, true);
+	doTest(false, true, true);
 }
 
 TEST_F(InterningTestBase, testClientThenServerMixedAndReversed) {
-    doTest(true, false, true);
-}*/
+	doTest(true, false, true);
+}
 
 TEST_F(InterningTestBase, testLateBindOfObjectWithContent) {
-    auto serverProperty = RdProperty<InterningTestModel>();
-    serverProperty.slave();
-    auto clientProperty = RdProperty<InterningTestModel>();
+	auto serverProperty = RdProperty<InterningTestModel>();
+	serverProperty.slave();
+	auto clientProperty = RdProperty<InterningTestModel>();
 
-    serverProperty.identify(*serverIdentities, RdId(1L));
-    clientProperty.identify(*clientIdentities, RdId(1L));
+	serverProperty.identify(*serverIdentities, RdId(1L));
+	clientProperty.identify(*clientIdentities, RdId(1L));
 
-    bindStatic(serverProtocol.get(), serverProperty, "top");
-    bindStatic(clientProtocol.get(), clientProperty, "top");
+	bindStatic(serverProtocol.get(), serverProperty, "top");
+	bindStatic(clientProtocol.get(), clientProperty, "top");
 
-    /*val serverModel = InterningTestModel("")
+	auto serverModel = InterningTestModel(L"");
 
-    val simpleTestData = simpleTestData
+//    val simpleTestData = simpleTestData
 
-    simpleTestData.forEach { (k, v) ->
-                serverModel.issues[k] = WrappedStringModel(v)
-    }
+	for_each([&](int32_t const &k, std::wstring const &v) {
+		serverModel.get_issues().set(k, WrappedStringModel(v));
+	});
 
-    serverProperty.set(serverModel)
+	serverProperty.set(std::move(serverModel));
 
-    val clientModel = clientProperty.valueOrThrow
+	auto const &clientModel = clientProperty.get();
 
-    simpleTestData.forEach { (k, v) ->
-                assertEquals(v, clientModel.issues[k]!!.text)
-    }*/
+	for_each([&](int32_t const &k, std::wstring const &v) {
+		auto value = clientModel.get_issues().get(k);
+		EXPECT_NE(nullptr, value);
+		EXPECT_EQ(v, value->get_text());
+	});
 
+	AfterTest();
 }

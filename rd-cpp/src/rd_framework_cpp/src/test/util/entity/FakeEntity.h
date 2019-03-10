@@ -25,6 +25,8 @@ namespace rd {
 
 				size_t hashCode() const override;
 
+				virtual bool equals(IPolymorphicSerializable const &serializable) const;
+
 				std::string type_name() const override;
 			};
 		}

@@ -2,6 +2,7 @@
 #define RD_CPP_ABSTRACTPOLYMORPHIC_H
 
 #include "Polymorphic.h"
+#include "SerializationCtx.h"
 #include "wrapper.h"
 
 namespace rd {

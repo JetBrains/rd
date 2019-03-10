@@ -37,8 +37,14 @@ namespace rd {
 				return !(rhs == lhs);
 			}
 
+			size_t DynamicEntity::hashCode() const {
+				return IPolymorphicSerializable::hashCode();
+			}
 
-
+			bool DynamicEntity::equals(const ISerializable &object) const {
+				auto const &other = dynamic_cast<DynamicEntity const&>(object);
+				return this == &object;
+			}
 		}
 	}
 }

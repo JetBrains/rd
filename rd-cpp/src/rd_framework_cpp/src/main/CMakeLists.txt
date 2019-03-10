@@ -31,6 +31,8 @@ add_library(rd_framework_cpp STATIC
         serialization/ArraySerializer.h
         serialization/ISerializable.h
         serialization/InternedSerializer.h
+        serialization/AbstractPolymorphic.h
+        serialization/RdAny.cpp serialization/RdAny.h
         #task
         task/RdCall.h task/RdTask.h task/RdTaskResult.h task/RdEndpoint.h
         task/RdTaskImpl.h
@@ -47,7 +49,7 @@ add_library(rd_framework_cpp STATIC
         RdId.cpp RdId.h
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
-        serialization/AbstractPolymorphic.h serialization/RdAny.cpp serialization/RdAny.h)
+        serialization/AnySerializer.h)
 
 add_subdirectory(util)
 

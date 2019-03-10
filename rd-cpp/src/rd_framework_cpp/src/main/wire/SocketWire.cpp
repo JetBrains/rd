@@ -13,7 +13,7 @@ namespace rd {
 	std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
 	SocketWire::Base::Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler)
-			: WireBase(scheduler), id(id), lifetime(std::move(lifetime)),
+			: WireBase(scheduler), id(id), lifetime(lifetime),
 			  scheduler(scheduler), local_send_buffer(SEND_BUFFER_SIZE) {
 
 	}

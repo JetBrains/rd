@@ -5,7 +5,6 @@
 #ifndef RD_CPP_POLYMORPHIC_H
 #define RD_CPP_POLYMORPHIC_H
 
-#include "SerializationCtx.h"
 #include "Buffer.h"
 #include "RdReactiveBase.h"
 
@@ -13,6 +12,11 @@
 
 
 namespace rd {
+	//region predeclared
+
+	class SerializationCtx;
+	//endregion
+
 	template<typename T, typename R = void>
 	class Polymorphic {
 	public:
@@ -63,20 +67,6 @@ namespace rd {
 			buffer.writeArray<T>(value);
 		}
 	};
-
-	/*template<>
-class Polymorphic<std::string> {
-public:
-    static std::string read(SerializationCtx const &ctx, Buffer const &buffer) {
-        assert("use std::wstring instead of std::string" && 0);
-        //        return buffer.readString();
-     }
-
-    static void write(SerializationCtx const &ctx, Buffer const &buffer, std::string const &value) {
-        assert("use std::wstring instead of std::string" && 0);
-        //        buffer.writeString(value);
-    }
-};*/
 
 	template<>
 	class Polymorphic<bool> {

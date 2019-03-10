@@ -52,46 +52,51 @@ namespace rd {
 	using raw_type = typename helper<T>::raw_type;
 
 	template<typename T>
-	using wrapper_storage = std::unique_ptr<T>;
-
-	template<typename T>
-	class Wrapper : private wrapper_storage<T> {
+	class Wrapper : private std::shared_ptr<T> {
 	private:
 		template<typename>
 		friend
 		class Wrapper;
 
-		using Base = wrapper_storage<T>;
+		using Base = std::shared_ptr<T>;
 //		std::unique_ptr<T> ptr;
 	public:
 		//region ctor/dtor
 
 		Wrapper() = default;
 
-		Wrapper(Wrapper const &) = delete;
+		Wrapper(Wrapper const &) = default;
 
-		Wrapper &operator=(Wrapper const &) = delete;
+		Wrapper &operator=(Wrapper const &) = default;
 
 		Wrapper(Wrapper &&) = default;
 
 		Wrapper &operator=(Wrapper &&) = default;
 
-		template<typename F, typename R = typename std::enable_if<!std::is_abstract<typename std::remove_reference<F>::type>::value>::type>
-		Wrapper(F &&value) : Base(std::make_unique<typename std::remove_reference<F>::type>(std::forward<F>(value))) {}
+		template<typename F, typename R = typename std::enable_if<!std::is_abstract<typename std::decay_t<F>>::value>::type>
+		Wrapper(F &&value) : Base(std::make_shared<typename std::decay_t<F>>(std::forward<F>(value))) {}
 
 		template<typename F>
-		Wrapper(std::unique_ptr<F> &&ptr) : Base(std::move(ptr)) {}
- 
-		template<typename U = T, typename R = typename std::enable_if<!std::is_abstract<typename std::remove_reference<U>::type>::value>::type>
+		Wrapper(std::shared_ptr<F> const &ptr) : Base(std::static_pointer_cast<T>(ptr)) {}
+
+		template<typename F>
+		Wrapper(std::shared_ptr<F> &&ptr) : Base(std::static_pointer_cast<T>(std::move(ptr))) {}
+
+		template<typename U = T, typename R = typename std::enable_if<!std::is_abstract<typename std::decay_t<U>>::value>::type>
 		Wrapper(tl::optional<T> &&opt) {
 			if (opt) {
-				*this = std::make_unique<T>(std::move(*opt));
+				*this = std::make_shared<T>(*std::move(opt));
 			}
 		}
 
 		template<typename R>
+		static Wrapper<T> dynamic(Wrapper<R> const &w) {
+			return Wrapper<T>(std::dynamic_pointer_cast<T>(w));
+		}
+
+		template<typename R>
 		static Wrapper<T> dynamic(Wrapper<R> &&w) {
-			return Wrapper<T>{std::unique_ptr<T>(dynamic_cast<T *>(w.release()))};
+			return Wrapper<T>(std::dynamic_pointer_cast<T>(std::move(w)));
 		}
 		//endregion
 
@@ -108,8 +113,8 @@ namespace rd {
 		};*/
 
 		template<typename R>
-		operator Wrapper<R>() &&{
-			return Wrapper<T>(static_cast<Base>(*this));
+		operator Wrapper<R>() const {
+			return Wrapper<R>(static_cast<Base const &>(*this));
 		}
 
 		constexpr explicit operator bool() const noexcept {
@@ -148,7 +153,7 @@ namespace rd {
 
 		template<typename T>
 		T &&get(Wrapper<T> &&w) {
-			return std::move(*w);
+			return *std::move(std::move(w));
 		}
 
 		/*template<typename T>

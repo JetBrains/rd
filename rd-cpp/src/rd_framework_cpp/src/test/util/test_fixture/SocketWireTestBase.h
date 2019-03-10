@@ -51,7 +51,10 @@ namespace rd {
 
 				void terminate();
 
-				void checkSchedulersAreEmpty();;
+				void checkSchedulersAreEmpty();
+
+				void pump_both();
+
 			};
 		}
 	}

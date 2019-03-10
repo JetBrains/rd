@@ -64,7 +64,7 @@ namespace rd {
 				std::wstring const &get_filePath() const;
 
 				//equals trait
-				virtual bool equals(ISerializable const &object) const = 0;
+				bool equals(ISerializable const &object) const override;
 
 				//equality operators
 				friend bool operator==(const AbstractEntity &lhs, const AbstractEntity &rhs);
@@ -72,7 +72,7 @@ namespace rd {
 				friend bool operator!=(const AbstractEntity &lhs, const AbstractEntity &rhs);
 
 				//hash code trait
-				virtual size_t hashCode() const = 0;
+				size_t hashCode() const override;
 
 				std::string type_name() const override;
 			};

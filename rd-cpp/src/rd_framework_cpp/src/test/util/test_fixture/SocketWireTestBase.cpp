@@ -7,7 +7,7 @@ namespace rd {
 	namespace test {
 		namespace util {
 			Protocol SocketWireTestBase::server(Lifetime lifetime, uint16_t port) {
-				std::shared_ptr<IWire> wire = std::make_shared<SocketWire::Server>(std::move(lifetime),
+				std::shared_ptr<IWire> wire = std::make_shared<SocketWire::Server>(lifetime,
 																				   &serverScheduler, port,
 																				   "TestServer");
 				return Protocol(Identities::SERVER, &serverScheduler, std::move(wire), lifetime);
@@ -16,14 +16,14 @@ namespace rd {
 			Protocol SocketWireTestBase::client(Lifetime lifetime, Protocol const &serverProtocol) {
 				auto const *server = dynamic_cast<SocketWire::Server const *>(serverProtocol.get_wire());
 				std::shared_ptr<IWire> wire =
-						std::make_shared<SocketWire::Client>(std::move(lifetime), &clientScheduler, server->port,
+						std::make_shared<SocketWire::Client>(lifetime, &clientScheduler, server->port,
 															 "TestClient");
 				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
 			}
 
 			Protocol SocketWireTestBase::client(Lifetime lifetime, uint16_t port) {
 				std::shared_ptr<IWire> wire =
-						std::make_shared<SocketWire::Client>(std::move(lifetime), &clientScheduler, port, "TestClient");
+						std::make_shared<SocketWire::Client>(lifetime, &clientScheduler, port, "TestClient");
 				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
 			}
 
@@ -41,6 +41,8 @@ namespace rd {
 			}
 
 			void SocketWireTestBase::terminate() {
+				checkSchedulersAreEmpty();
+
 				socketLifetimeDef.terminate();
 				lifetimeDef.terminate();
 			}
@@ -49,6 +51,11 @@ namespace rd {
 				rd::util::sleep_this_thread(200);
 				EXPECT_TRUE(clientScheduler.messages.empty());
 				EXPECT_TRUE(serverScheduler.messages.empty());
+			}
+
+			void SocketWireTestBase::pump_both() {
+				serverScheduler.pump_one_message();
+				clientScheduler.pump_one_message();
 			}
 		}
 	}

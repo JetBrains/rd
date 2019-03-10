@@ -1,10 +1,7 @@
-//
-// Created by jetbrains on 24.07.2018.
-//
+#include "RdExtBase.h"
 
 #include "Lifetime.h"
 #include "RdPropertyBase.h"
-#include "RdExtBase.h"
 #include "Protocol.h"
 
 namespace rd {

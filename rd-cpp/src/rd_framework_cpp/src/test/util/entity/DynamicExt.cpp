@@ -42,6 +42,14 @@ namespace rd {
 
 			std::string DynamicExt::type_name() const { return "DynamicExt"; }
 
+			size_t DynamicExt::hashCode() const {
+				return IPolymorphicSerializable::hashCode();
+			}
+
+			bool DynamicExt::equals(const ISerializable &serializable) const {
+				return false;
+			}
+
 			/*
 void DynamicExt::bind(Lifetime lf, IRdDynamic const *parent, std::wstring const &name) const {
     RdExtBase::bind(lf, parent, name);

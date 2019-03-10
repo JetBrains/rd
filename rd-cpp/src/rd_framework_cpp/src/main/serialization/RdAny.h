@@ -11,26 +11,100 @@
 
 #include "mpark/variant.hpp"
 
-#include <variant>
 #include <memory>
 #include <string>
 #include <cstring>
 
 namespace rd {
 	namespace any {
-		using super_t = Wrapper<IPolymorphicSerializable>;
+		using super_t = IPolymorphicSerializable;
+		using wrapped_super_t = Wrapper<super_t>;
 	}
-	using RdAny = mpark::variant<any::super_t, std::wstring>;
+	using RdAny = mpark::variant<any::wrapped_super_t, std::wstring>;
 
 	namespace any {
-		template<typename T>
-		typename std::enable_if<!std::is_base_of<IPolymorphicSerializable, T>::value, T>::type get(RdAny &&any) {
-			return mpark::get<T>(std::move(any));
+		template<typename T, typename Any>
+		typename std::enable_if<!std::is_base_of<IPolymorphicSerializable, T>::value, T>::type get(Any &&any) {
+			return mpark::get<T>(std::forward<Any>(any));
 		};
 
-		template<typename T>
-		typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value, Wrapper<T>>::type get(RdAny &&any) {
-			return Wrapper<T>::dynamic(mpark::get<super_t>(std::move(any)));
+		template<typename T, typename Any>
+		typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value, Wrapper<T>>::type get(Any &&any) {
+			return Wrapper<T>::dynamic(mpark::get<wrapped_super_t>(std::forward<Any>(any)));
+		};
+
+		struct TransparentKeyEqual {
+			using is_transparent = void;
+
+			bool operator()(RdAny const &val_l, RdAny const &val_r) const {
+				return val_l == val_r;
+			}
+
+			bool operator()(RdAny const &val_l, wrapped_super_t const &val_r) const {
+				return mpark::visit(util::make_visitor(
+						[&](wrapped_super_t const &value) {
+							return *value == *val_r;
+						},
+						[](std::wstring const &) {
+							return false;
+						}
+				), val_l);
+			}
+
+			bool operator()(super_t const &val_l, RdAny const &val_r) const {
+				return operator()(val_r, val_l);
+			}
+
+			bool operator()(RdAny const &val_l, super_t const &val_r) const {
+				return mpark::visit(util::make_visitor(
+						[&](wrapped_super_t const &value) {
+							return *value == val_r;
+						},
+						[](std::wstring const &) {
+							return false;
+						}
+				), val_l);
+			}
+
+			bool operator()(wrapped_super_t const &val_l, RdAny const &val_r) const {
+				return operator()(val_r, val_l);
+			}
+
+			bool operator()(RdAny const &val_l, std::wstring const &val_r) const {
+				return mpark::visit(util::make_visitor(
+						[](wrapped_super_t const &value) {
+							return false;
+						},
+						[&](std::wstring const &s) {
+							return s == val_r;
+						}
+				), val_l);
+			}
+
+			bool operator()(std::wstring const &val_l, RdAny const &val_r) const {
+				return operator()(val_r, val_l);
+			}
+		};
+
+		struct TransparentHash {
+			using is_transparent = void;
+			using transparent_key_equal = std::equal_to<>;
+
+			size_t operator()(RdAny const &value) const noexcept {
+				return std::hash<RdAny>()(value);
+			}
+
+			size_t operator()(wrapped_super_t const &value) const noexcept {
+				return std::hash<wrapped_super_t>()(value);
+			}
+
+			size_t operator()(super_t const &value) const noexcept {
+				return std::hash<super_t>()(value);
+			}
+
+			size_t operator()(std::wstring const &value) const noexcept {
+				return std::hash<std::wstring>()(value);
+			}
 		};
 	}
 }

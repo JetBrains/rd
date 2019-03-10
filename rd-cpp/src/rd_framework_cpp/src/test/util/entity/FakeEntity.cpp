@@ -31,6 +31,10 @@ namespace rd {
 			std::string FakeEntity::type_name() const {
 				return "FakeEntity";
 			}
+
+			bool FakeEntity::equals(IPolymorphicSerializable const &serializable) const {
+				return false;
+			}
 		}
 	}
 }

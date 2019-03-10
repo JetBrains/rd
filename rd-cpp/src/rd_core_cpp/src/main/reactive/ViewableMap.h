@@ -22,7 +22,7 @@ namespace rd {
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
 
-		mutable tsl::ordered_map<Wrapper<K>, Wrapper<V>, TransparentHash<K>, TransparentKeyEqual<K>> map;
+		mutable tsl::ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> map;
 		Signal<Event> change;
 	public:
 		//region ctor/dtor
@@ -37,7 +37,7 @@ namespace rd {
 		//endregion
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
-			change.advise(std::move(lifetime), handler);
+			change.advise(lifetime, handler);
 			/*for (auto const &[key, value] : map) {*/
 			for (auto const &it : map) {
 				auto &key = it.first;
@@ -57,7 +57,7 @@ namespace rd {
 		const V *set(WK key, WV value) const override {
 			if (map.count(key) == 0) {
 				/*auto[it, success] = map.emplace(std::make_unique<K>(std::move(key)), std::make_unique<V>(std::move(value)));*/
-				auto node = map.emplace(Wrapper<K>(std::move(key)), Wrapper<V>(std::move(value)));
+				auto node = map.emplace(std::move(key), std::move(value));
 				auto &it = node.first;
 				auto const &key_ptr = it->first;
 				auto const &value_ptr = it->second;

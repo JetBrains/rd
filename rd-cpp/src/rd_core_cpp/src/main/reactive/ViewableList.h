@@ -90,7 +90,7 @@ namespace rd {
 
 		WT set(size_t index, WT element) const override {
 			auto old_value = std::move(list[index]);
-			list[index] = std::move(element);
+			list[index] = Wrapper<T>(std::move(element));
 			change.fire(typename Event::Update(index, &(*old_value), &(*list[index])));//???
 			return wrapper::unwrap<T>(std::move(old_value));
 		}
@@ -128,7 +128,7 @@ namespace rd {
 			for (size_t i = list.size(); i > 0; --i) {
 				auto const &x = list[i - 1];
 				if (std::count_if(elements.begin(), elements.end(), [this, &x](auto const &elem) {
-									  return TransparentKeyEqual<T>()(elem, x);
+									  return wrapper::TransparentKeyEqual<T>()(elem, x);
 								  }
 				) > 0) {
 					removeAt(i - 1);

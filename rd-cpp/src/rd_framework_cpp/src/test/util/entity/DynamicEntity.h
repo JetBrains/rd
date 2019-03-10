@@ -54,6 +54,10 @@ namespace rd {
 
 				friend bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs);
 
+				size_t hashCode() const override;
+
+				bool equals(const ISerializable &object) const override;
+
 				std::string type_name() const override;
 			};
 		}

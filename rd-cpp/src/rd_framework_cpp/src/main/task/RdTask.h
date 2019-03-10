@@ -14,7 +14,7 @@
 
 namespace rd {
 	template<typename T, typename S = Polymorphic<T> >
-	class RdTask {
+	class RdTask final {
 	private:
 		using WT = value_or_wrapper<T>;
 
