@@ -17,7 +17,7 @@ namespace rd {
 
 		template<typename U = T>
 		typename std::enable_if<!std::is_abstract<U>::value, U&&>::type steal() && {
-			return std::move(*this->value);
+			return *std::move(this->value);
 		}
 	public:
 		//region ctor/dtor

@@ -14,9 +14,9 @@ namespace rd {
 	IProtocol::IProtocol() {}
 
 	IProtocol::IProtocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
-			identity(std::move(identity)),
-			scheduler(scheduler),
-			wire(std::move(wire)) {}
+		identity(std::move(identity)),
+		scheduler(scheduler),
+		wire(std::move(wire)) {}
 
 	const IProtocol *IProtocol::get_protocol() const {
 		return this;
@@ -28,6 +28,10 @@ namespace rd {
 
 	const IWire *IProtocol::get_wire() const {
 		return wire.get();
+	}
+
+	const Serializers &IProtocol::get_serializers() const {
+		return *serializers;
 	}
 
 	const Identities *IProtocol::get_identity() const {

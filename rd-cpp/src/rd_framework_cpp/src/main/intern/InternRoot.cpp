@@ -1,6 +1,7 @@
 #include "InternRoot.h"
 
-#include "Polymorphic.h"
+#include "AbstractPolymorphic.h"
+#include "AnySerializer.h"
 
 namespace rd {
 	InternRoot::InternRoot() {
@@ -12,13 +13,13 @@ namespace rd {
 	}
 
 	void InternRoot::on_wire_received(Buffer buffer) const {
-		/*Wrapper<IPolymorphicSerializable> value = AbstractPolymorphic<IPolymorphicSerializable>::read(get_serialization_context(), buffer);
+		tl::optional<RdAny> value = AnySerializer::read(get_serialization_context(), buffer);
 		if (!value) {
 			return;
 		}
 		int32_t remote_id = buffer.read_integral<int32_t>();
-		set_interned_correspondence(remote_id ^ 1, std::move(value));
-		MY_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");*/
+		set_interned_correspondence(remote_id ^ 1, *std::move(value));
+		MY_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
 	}
 
 	void InternRoot::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
@@ -33,9 +34,9 @@ namespace rd {
 			rdid = RdId::Null();
 		});
 
-//		myItemsList.clear();
-//		otherItemsList.clear();
-//		inverseMap.clear();
+		myItemsList.clear();
+		otherItemsList.clear();
+		inverseMap.clear();
 
 		get_protocol()->get_wire()->advise(lf, this);
 	}

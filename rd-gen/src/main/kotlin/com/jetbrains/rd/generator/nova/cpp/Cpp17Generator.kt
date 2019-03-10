@@ -63,12 +63,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     fun InternScope.hash(): String {
         val s = this.keyName
-        return """rd::util::getPlatformIndependentHash<${s.length}>("$s")"""
+        return """rd::util::getPlatformIndependentHash("$s")"""
     }
 
     fun Class.withInternRootsHere(field: String): String {
-        val roots = internRootForScopes.map { """getPlatformIndependentHash<${it.length}>("$it")""" }.joinToString { "$it" }
-        return "ctx.withInternRootsHere<$roots>($field)"
+        val roots = internRootForScopes/*.map { """rd::util::getPlatformIndependentHash("$it")""" }*/.joinToString { """"$it"""" }
+        return "ctx.withInternRootsHere($field, {$roots})"
     }
     //endregion
 
@@ -974,18 +974,23 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     }
 
-    protected fun equalsTraitDecl(decl: Declaration): Signature {
+    protected fun equalsTraitDecl(decl: Declaration): Signature? {
 //        val signature = Signature("bool", "equals(${decl.name} const& other)", decl.name).const()
-        val signature = Signature("bool", "equals(rd::IPolymorphicSerializable const& object)", decl.name).const()
-        return if (decl.isAbstract) {
+        val signature = Signature("bool", "equals(rd::ISerializable const& object)", decl.name).const()
+        return if (decl is Toplevel || decl.isAbstract) {
+            null
+        } else {
+            signature.override()
+        }
+        /*return if (decl.isAbstract) {
             signature.abstract(decl)
         } else {
-            if (decl.base == null) {
+            if (decl is Toplevel) {
                 signature
             } else {
                 signature.override()
             }
-        }
+        }*/
     }
 
     protected fun PrettyPrinter.equalityOperatorsDecl(decl: Declaration) {
@@ -999,14 +1004,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (decl !is IScalar) return null
 
         val signature = Signature("size_t", "hashCode()", decl.name).const()
-        return if (decl.isAbstract) {
-            signature.abstract(decl)
+        return if (decl is Toplevel || decl.isAbstract) {
+            null
         } else {
-            if (decl.base == null) {
-                signature
-            } else {
-                signature.override()
-            }
+            signature.override()
         }
     }
 
@@ -1161,7 +1162,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             +"withId(res, _id);"
         }
         if (decl is Class && decl.isInternRoot) {
-//            +"res.mySerializationContext = ${decl.withInternRootsHere("res")};"
+            +"res.mySerializationContext = ${decl.withInternRootsHere("res")};"
         }
         +"return res;"
     }
@@ -1194,7 +1195,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         if (decl.isExtension) return
 
         define(createMethodTraitDecl(decl)) {
-            +"${decl.root.sanitizedName(decl)}::serializersOwner.registry(*(protocol->get_serializers()));"
+            +"${decl.root.sanitizedName(decl)}::serializersOwner.registry(protocol->get_serializers());"
             println()
 
 //            +"${decl.name} res;"
@@ -1292,7 +1293,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     +"buffer.writeByteArrayRaw(unknownBytes);"
                 }
                 if (decl is Class && decl.isInternRoot) {
-//                    +"this->mySerializationContext = ${decl.withInternRootsHere("*this")};"
+                    +"this->mySerializationContext = ${decl.withInternRootsHere("*this")};"
                 }
             }
         } else {

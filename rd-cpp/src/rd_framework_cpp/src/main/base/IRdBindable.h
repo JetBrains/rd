@@ -37,7 +37,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::remove_reference<T>::type>::value>::type
+	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>::type
 	inline identifyPolymorphic(T &&, Identities const &identities, RdId const &id) {}
 
 //template <>
@@ -54,7 +54,7 @@ namespace rd {
 	}
 
 	template<typename T>
-	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::remove_reference<T>::type>::value>::type
+	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>::type
 	inline bindPolymorphic(T &&, Lifetime lf, const IRdDynamic *parent, std::string const &name) {}
 
 	inline void

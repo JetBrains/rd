@@ -49,6 +49,8 @@ namespace rd {
 		IScheduler *get_scheduler() const;
 
 		const IWire *get_wire() const;
+
+		const Serializers& get_serializers() const;
 	};
 }
 

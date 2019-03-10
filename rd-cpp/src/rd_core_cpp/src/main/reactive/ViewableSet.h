@@ -23,7 +23,7 @@ namespace rd {
 		using WT = typename IViewableSet<T>::WT;
 
 		Signal<Event> change;
-		mutable tsl::ordered_set<Wrapper<T>, TransparentHash<T>, TransparentKeyEqual<T>> set;
+		mutable tsl::ordered_set<Wrapper<T>, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>> set;
 	public:
 		//region ctor/dtor
 

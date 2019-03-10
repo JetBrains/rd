@@ -8,6 +8,9 @@
 #include "Polymorphic.h"
 #include "RdTask.h"
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
+
 namespace rd {
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic <TReq>, typename ResSer = Polymorphic <TRes> >
 	class RdEndpoint : public RdReactiveBase, public ISerializable {
@@ -96,5 +99,6 @@ namespace rd {
 	};
 }
 
+#pragma warning( pop )
 
 #endif //RD_CPP_RDENDPOINT_H

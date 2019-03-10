@@ -4,14 +4,14 @@
 
 #include <gtest/gtest.h>
 
-#include <random>
-
 #include "RdMap.h"
 #include "Protocol.h"
 #include "RdProperty.h"
 #include "SocketWireTestBase.h"
 #include "SocketWire.h"
 #include "DynamicEntity.h"
+
+#include <random>
 
 const int STEP = 5;
 
@@ -24,17 +24,24 @@ TEST_F(SocketWireTestBase, ClientWithoutServer) {
 	uint16_t port = find_free_port();
 	Protocol protocol = client(socketLifetime, port);
 
+	clientScheduler.pump_one_message(); //binding InternRoot
+
 	terminate();
 }
 
 TEST_F(SocketWireTestBase, ServerWithoutClient) {
 	Protocol protocol = server(socketLifetime);
 
+	serverScheduler.pump_one_message(); //binding InternRoot
+
 	terminate();
 }
 
 TEST_F(SocketWireTestBase, TestServerWithoutClientWithDelay) {
 	Protocol protocol = server(socketLifetime);
+	
+	serverScheduler.pump_one_message(); //binding InternRoot
+	
 	sleep_this_thread(100);
 
 	terminate();
@@ -43,6 +50,9 @@ TEST_F(SocketWireTestBase, TestServerWithoutClientWithDelay) {
 TEST_F(SocketWireTestBase, TestClientWithoutServerWithDelay) {
 	uint16_t port = find_free_port();
 	auto protocol = client(socketLifetime, port);
+
+	clientScheduler.pump_one_message(); //binding InternRoot
+
 	sleep_this_thread(100);
 
 	terminate();
@@ -50,6 +60,9 @@ TEST_F(SocketWireTestBase, TestClientWithoutServerWithDelay) {
 
 TEST_F(SocketWireTestBase, /*DISABLED_*/TestServerWithoutClientWithDelayAndMessages) {
 	auto protocol = server(socketLifetime);
+
+	serverScheduler.pump_one_message(); //binding InternRoot
+
 	sleep_this_thread(100);
 
 	RdProperty<int> sp(0);
@@ -67,6 +80,8 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestClientWithoutServerWithDelayAndMessa
 	uint16_t port = find_free_port();
 	auto clientProtocol = client(socketLifetime, port);
 
+	clientScheduler.pump_one_message(); //binding InternRoot
+
 	RdProperty<int> cp(0);
 	statics(cp, 1);
 	cp.bind(lifetime, &clientProtocol, "top");
@@ -82,6 +97,8 @@ TEST_F(SocketWireTestBase, TestBasicEmptyRun) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
+	pump_both(); //binding InternRoot
+
 	init(serverProtocol, clientProtocol);
 
 	for (int i = 0; i < 10; ++i) {
@@ -95,6 +112,7 @@ TEST_F(SocketWireTestBase, TestBasicRun) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
+	pump_both(); //binding InternRoot
 
 	RdProperty<int> sp{0}, cp{0};
 
@@ -120,6 +138,8 @@ TEST_F(SocketWireTestBase, TestBasicRun) {
 TEST_F(SocketWireTestBase, TestOrdering) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
+
+	pump_both(); //binding InternRoot
 
 	RdProperty<int> sp{0}, cp{0};
 
@@ -162,6 +182,8 @@ TEST_F(SocketWireTestBase, TestBigBuffer) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
+	pump_both(); //binding InternRoot
+
 	statics(sp_string, property_id);
 	sp_string.bind(lifetime, &serverProtocol, "top");
 
@@ -193,6 +215,8 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
+
+	pump_both(); //binding InternRoot
 
 	RdProperty<DynamicEntity> client_property{DynamicEntity(0)}, server_property{DynamicEntity(0)};
 
@@ -262,6 +286,8 @@ TEST_F(SocketWireTestBase, TestEqualChangesRdMap) { //Test pending for ack
 	auto serverProtocol = server(socketLifetime);
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 
+	pump_both(); //binding InternRoot
+
 	RdMap<std::wstring, std::wstring> s_map, c_map;
 	s_map.master = true;
 	init(serverProtocol, clientProtocol, &s_map, &c_map);
@@ -285,6 +311,8 @@ TEST_F(SocketWireTestBase, TestEqualChangesRdMap) { //Test pending for ack
 TEST_F(SocketWireTestBase, TestDifferentChangesRdMap) { //Test pending for ack
 	auto serverProtocol = server(socketLifetime);
 	auto clientProtocol = client(socketLifetime, serverProtocol);
+
+	pump_both(); //binding InternRoot
 
 	RdMap<std::wstring, std::wstring> s_map, c_map;
 	s_map.master = true;
@@ -316,6 +344,8 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
 
 	auto serverProtocol = server(socketLifetime);
 	auto clientProtocol = client(socketLifetime, serverProtocol);
+
+	pump_both(); //binding InternRoot
 
 	RdMap<std::wstring, int> s_map, c_map;
 	s_map.master = true;
@@ -358,6 +388,8 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	uint16_t port = find_free_port();
 	auto clientProtocol = client(socketLifetime, port);
 
+	clientScheduler.pump_one_message(); //binding InternRoot
+
 	RdProperty<int> sp{0}, cp{0};
 
 	statics(cp, property_id);
@@ -368,6 +400,9 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	sleep_this_thread(2000);
 
 	auto serverProtocol = server(socketLifetime, port);
+
+	serverScheduler.pump_one_message(); //binding InternRoot
+
 	statics(sp, property_id);
 	sp.bind(lifetime, &serverProtocol, "top");
 
@@ -385,6 +420,8 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 TEST_F(SocketWireTestBase, DISABLED_failoverServer) {
 	uint16_t port = find_free_port();
 	auto serverProtocol = server(socketLifetime, port);
+
+	serverScheduler.pump_one_message(); //binding InternRoot
 
 	LifetimeDefinition unstableLifetimeDef{Lifetime::Eternal()};
 	Lifetime unstableLifetime = unstableLifetimeDef.lifetime;

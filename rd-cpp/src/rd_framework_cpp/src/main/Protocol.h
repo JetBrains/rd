@@ -22,10 +22,10 @@ namespace rd {
 
 		std::unique_ptr<InternRoot> internRoot;
 
-	public:
 		//region ctor/dtor
+	private:
 		void initialize();
-
+	public:
 		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 
 		Protocol(Identities::IdKind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);

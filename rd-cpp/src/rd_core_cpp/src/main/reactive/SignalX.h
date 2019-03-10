@@ -30,7 +30,7 @@ namespace rd {
 			Event() = delete;
 
 			template<typename F>
-			Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(std::move(lifetime)) {}
+			Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(lifetime) {}
 
 			Event(Event &&) = default;
 			//endregion
@@ -99,7 +99,7 @@ namespace rd {
 		using ISignal<T>::advise;
 
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
-			advise0(std::move(lifetime), std::move(handler), isPriorityAdvise() ? priority_listeners : listeners);
+			advise0(lifetime, std::move(handler), isPriorityAdvise() ? priority_listeners : listeners);
 		}
 
 		static bool isPriorityAdvise() {

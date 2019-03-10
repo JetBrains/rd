@@ -24,7 +24,7 @@ namespace rd {
 
 		ViewableMap<K, V> map;
 		mutable int64_t next_version = 0;
-		mutable tsl::ordered_map<K const *, int64_t, TransparentHash<K>, TransparentKeyEqual<K>> pendingForAck;
+		mutable tsl::ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
 
 		bool is_master() const {
 			return master;
@@ -173,7 +173,7 @@ namespace rd {
 				if (msgVersioned || !is_master() || pendingForAck.count(key) == 0) {
 					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value));
 					if (value.has_value()) {
-						map.set(std::move(key), std::move(*value));
+						map.set(std::move(key), *std::move(value));
 					} else {
 						map.remove(wrapper::get<K>(key));
 					}

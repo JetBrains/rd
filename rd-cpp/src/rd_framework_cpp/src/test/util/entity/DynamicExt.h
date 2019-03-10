@@ -34,6 +34,9 @@ namespace rd {
 
 				static void create(IProtocol *protocol);
 
+				size_t hashCode() const override;
+
+				bool equals(const ISerializable &serializable) const override;
 
 				std::string type_name() const override;
 			};

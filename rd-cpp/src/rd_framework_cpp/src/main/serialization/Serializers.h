@@ -45,26 +45,29 @@ namespace rd {
 			MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
 			readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> Wrapper<IPolymorphicSerializable> {
-				return std::make_unique<T>(T::read(ctx, buffer));
+				return std::make_shared<T>(T::read(ctx, buffer));
 			};
 		}
 
-		template<typename T>
-		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &stream) const {
-			RdId id = RdId::read(stream);
+		tl::optional<RdAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const {
+			RdId id = RdId::read(buffer);
 			if (id.isNull()) {
-				return {};
+				return tl::nullopt;
 			}
-			int32_t size = stream.read_integral<int32_t>();
-			stream.check_available(size);
+			int32_t size = buffer.read_integral<int32_t>();
+			buffer.check_available(size);
 
 			if (readers.count(id) == 0) {
-				//            std::cerr << std::endl << ' ' << id.get_hash() << '\n';
 				throw std::invalid_argument("no reader");
 			}
 			auto const &reader = readers.at(id);
-			RdAny any = reader(ctx, stream);
-			return any::get<T>(std::move(any));
+			return reader(ctx, buffer);
+		}
+
+		template<typename T>
+		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const {
+			tl::optional<RdAny> any = readAny(ctx, buffer);
+			return any::get<T>(*(std::move(any)));
 		}
 
 		/*template<typename T>

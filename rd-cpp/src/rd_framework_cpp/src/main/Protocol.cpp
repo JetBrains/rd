@@ -15,10 +15,14 @@ namespace rd {
 	}
 
 	Protocol::Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime) :
-			IProtocol(std::move(identity), scheduler, std::move(wire)), lifetime(std::move(lifetime)) {}
+			IProtocol(std::move(identity), scheduler, std::move(wire)), lifetime(lifetime) {
+		initialize();
+	}
 
 	Protocol::Protocol(Identities::IdKind kind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime) :
-			IProtocol(std::make_shared<Identities>(kind), scheduler, std::move(wire)), lifetime(std::move(lifetime)) {}
+			IProtocol(std::make_shared<Identities>(kind), scheduler, std::move(wire)), lifetime(lifetime) {
+		initialize();
+	}
 
 	const SerializationCtx &Protocol::get_serialization_context() const {
 		if (!context) {

@@ -21,7 +21,7 @@ namespace rd {
 		using WT = value_or_wrapper<T>;
 		mutable std::unordered_map<
 				Lifetime,
-				tsl::ordered_map<T const *, LifetimeDefinition, TransparentHash<T>, TransparentKeyEqual<T>>
+				tsl::ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>
 		> lifetimes;
 	public:
 

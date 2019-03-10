@@ -42,7 +42,7 @@ namespace rd {
 
 		explicit SerializationCtx(const Serializers *serializers, roots_t intern_roots = {});
 
-		SerializationCtx withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots);
+		SerializationCtx withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots) const;
 
 		//endregion
 
@@ -50,7 +50,8 @@ namespace rd {
 		T readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
 			auto it = intern_roots.find(InternKey);
 			if (it != intern_roots.end()) {
-				return it->second->un_intern_value<T>(buffer.read_integral<int32_t>() ^ 1);
+				int32_t index = buffer.read_integral<int32_t>() ^ 1;
+				return it->second->un_intern_value<T>(index);
 			} else {
 				return readValueDelegate(*this, buffer);
 			}
@@ -61,7 +62,8 @@ namespace rd {
 						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
 			auto it = intern_roots.find(InternKey);
 			if (it != intern_roots.end()) {
-				buffer.write_integral<int32_t>(it->second->intern_value<T>(value));
+				int32_t index = it->second->intern_value<T>(value);
+				buffer.write_integral<int32_t>(index);
 			} else {
 				writeValueDelegate(*this, buffer, value);
 			}

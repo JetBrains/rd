@@ -26,7 +26,7 @@ namespace rd {
 
 		mutable std::unordered_map<
 				Lifetime,
-				tsl::ordered_map<K const *, LifetimeDefinition, TransparentHash < K>, TransparentKeyEqual < K>>
+				tsl::ordered_map<K const *, LifetimeDefinition, wrapper::TransparentHash < K>, wrapper::TransparentKeyEqual<K>>
 		>
 		lifetimes;
 	public:

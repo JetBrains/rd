@@ -124,10 +124,8 @@ namespace rd {
 
 		virtual void
 		view(Lifetime lifetime,
-			 std::function< void(Lifetime lifetime, std::pair<size_t, T const *> const &)
-
-		> handler) const {
-			view(std::move(lifetime), [handler](Lifetime lt, size_t idx, T const &v) {
+			 std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const {
+			view(lifetime, [handler](Lifetime lt, size_t idx, T const &v) {
 				handler(lt, std::make_pair(idx, &v));
 			});
 		}
