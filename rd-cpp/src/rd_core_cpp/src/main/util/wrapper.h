@@ -73,6 +73,8 @@ namespace rd {
 
 		Wrapper &operator=(Wrapper &&) noexcept = default;
 
+		explicit constexpr Wrapper(std::nullptr_t) noexcept {}
+
 		template<typename R, typename = typename std::enable_if<std::is_base_of<T, R>::value>::type>
 		Wrapper(Wrapper<R> const &other) noexcept : Wrapper(static_cast<Wrapper<T>>(other)) {}
 
@@ -107,11 +109,11 @@ namespace rd {
 
 		//endregion
 
-		constexpr T &operator*() & {
+		constexpr T &operator*() &{
 			return *static_cast<Base &>(*this);
 		};
 
-		constexpr T const &operator*() const & {
+		constexpr T const &operator*() const &{
 			return *static_cast<Base const &>(*this);
 		};
 
@@ -159,14 +161,9 @@ namespace rd {
 		}
 
 		/*template<typename T>
-	Wrapper<T> make_wrapper(T &&value) {
-		return Wrapper<T>(std::move(value));
-	}
-
-	template<typename T>
-	Wrapper<T> make_wrapper(std::unique_ptr<T> &&value) {
-		return Wrapper<T>(std::move(value));
-	}*/
+		Wrapper<T> make_wrapper(std::unique_ptr<T> &&value) {
+			return Wrapper<T>(std::move(value));
+		}*/
 
 		template<typename T>
 		typename std::enable_if<!std::is_abstract<T>::value, T>::type unwrap(Wrapper<T> &&ptr) {
@@ -177,6 +174,14 @@ namespace rd {
 		typename std::enable_if<std::is_abstract<T>::value, Wrapper<T>>::type unwrap(Wrapper<T> &&ptr) {
 			return Wrapper<T>(std::move(ptr));
 		}
+
+		template<typename T, typename ...Args>
+		Wrapper<T> make_wrapper(Args &&... args) {
+			return Wrapper<T>(std::make_shared<T>(std::forward<Args>(args)...));
+		}
+
+		/*template<typename T>
+		constexpr Wrapper<T> null_wrapper = Wrapper<T>(nullptr);*/
 	}
 }
 

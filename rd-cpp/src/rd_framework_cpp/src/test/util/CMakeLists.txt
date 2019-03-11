@@ -21,7 +21,7 @@ add_library(rd_framework_cpp_test_util
 
         SimpleScheduler.cpp SimpleScheduler.h
         WireUtil.cpp WireUtil.h
-        SimpleWire.cpp SimpleWire.h)
+        SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h)
 
 add_subdirectory(models)
 
