@@ -59,6 +59,7 @@ namespace rd {
 
 		void ThreadProc();
 
+		void clear_data();
 	public:
 		void start();
 

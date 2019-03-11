@@ -4,8 +4,6 @@
 
 #include "ByteBufferAsyncProcessor.h"
 
-#include <utility>
-
 namespace rd {
 	size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
 
@@ -52,28 +50,30 @@ namespace rd {
 
 	void ByteBufferAsyncProcessor::ThreadProc() {
 		while (true) {
-			std::lock_guard<decltype(lock)> guard(lock);
+			{
+				std::lock_guard<decltype(lock)> guard(lock);
 
-			if (state >= StateKind::Terminated) {
-				return;
-			}
-
-			while (data.empty()) {
-				if (state >= StateKind::Stopping) {
+				if (state >= StateKind::Terminated) {
 					return;
 				}
-				cv.wait(lock);
-				if (state >= StateKind::Terminating) {
-					return;
+
+				while (data.empty()) {
+					if (state >= StateKind::Stopping) {
+						return;
+					}
+					cv.wait(lock);
+					if (state >= StateKind::Terminating) {
+						return;
+					}
 				}
 			}
 
 			try {
 				processor(std::move(data));
-				data.clear();
+				clear_data();
 			} catch (std::exception const &e) {
 				logger.error("Exception while processing byte queue", &e);
-				data.clear();
+				clear_data();
 			}
 		}
 	}
@@ -113,6 +113,12 @@ namespace rd {
 
 			cv.notify_all();
 		}
+	}
+
+	void ByteBufferAsyncProcessor::clear_data() {
+		std::lock_guard<decltype(lock)> guard(lock);
+		data.clear();
+		data.shrink_to_fit();
 	}
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state) {
