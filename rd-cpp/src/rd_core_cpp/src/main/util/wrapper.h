@@ -59,7 +59,7 @@ namespace rd {
 		class Wrapper;
 
 		using Base = std::shared_ptr<T>;
-//		std::unique_ptr<T> ptr;
+		//		std::unique_ptr<T> ptr;
 	public:
 		//region ctor/dtor
 
@@ -69,20 +69,26 @@ namespace rd {
 
 		Wrapper &operator=(Wrapper const &) = default;
 
-		Wrapper(Wrapper &&) = default;
+		Wrapper(Wrapper &&) noexcept = default;
 
-		Wrapper &operator=(Wrapper &&) = default;
+		Wrapper &operator=(Wrapper &&) noexcept = default;
 
-		template<typename F, typename R = typename std::enable_if<!std::is_abstract<typename std::decay_t<F>>::value>::type>
-		Wrapper(F &&value) : Base(std::make_shared<typename std::decay_t<F>>(std::forward<F>(value))) {}
+		template<typename R, typename = typename std::enable_if<std::is_base_of<T, R>::value>::type>
+		Wrapper(Wrapper<R> const &other) noexcept : Wrapper(static_cast<Wrapper<T>>(other)) {}
+
+		template<typename R, typename = typename std::enable_if<std::is_base_of<T, R>::value>::type>
+		Wrapper(Wrapper<R> &&other) noexcept : Wrapper(static_cast<Wrapper<T>>(std::move(other))) {}
+
+		template<typename F, typename = typename std::enable_if<!std::is_abstract<std::decay_t<F>>::value>::type>
+		Wrapper(F &&value) : Base(std::make_shared<std::decay_t<F>>(std::forward<F>(value))) {}
 
 		template<typename F>
-		Wrapper(std::shared_ptr<F> const &ptr) : Base(std::static_pointer_cast<T>(ptr)) {}
+		Wrapper(std::shared_ptr<F> const &ptr) noexcept : Base(std::static_pointer_cast<T>(ptr)) {}
 
 		template<typename F>
-		Wrapper(std::shared_ptr<F> &&ptr) : Base(std::static_pointer_cast<T>(std::move(ptr))) {}
+		Wrapper(std::shared_ptr<F> &&ptr) noexcept : Base(std::static_pointer_cast<T>(std::move(ptr))) {}
 
-		template<typename U = T, typename R = typename std::enable_if<!std::is_abstract<typename std::decay_t<U>>::value>::type>
+		template<typename U = T, typename R = typename std::enable_if<!std::is_abstract<std::decay_t<U>>::value>::type>
 		Wrapper(tl::optional<T> &&opt) {
 			if (opt) {
 				*this = std::make_shared<T>(*std::move(opt));
@@ -98,24 +104,20 @@ namespace rd {
 		static Wrapper<T> dynamic(Wrapper<R> &&w) {
 			return Wrapper<T>(std::dynamic_pointer_cast<T>(std::move(w)));
 		}
+
 		//endregion
 
-		constexpr T &operator*() &{
+		constexpr T &operator*() & {
 			return *static_cast<Base &>(*this);
 		};
 
-		constexpr T const &operator*() const &{
+		constexpr T const &operator*() const & {
 			return *static_cast<Base const &>(*this);
 		};
 
 		/*constexpr T &&operator*() &&{
 			return *ptr.get();
 		};*/
-
-		template<typename R>
-		operator Wrapper<R>() const {
-			return Wrapper<R>(static_cast<Base const &>(*this));
-		}
 
 		constexpr explicit operator bool() const noexcept {
 			return Base::operator bool();

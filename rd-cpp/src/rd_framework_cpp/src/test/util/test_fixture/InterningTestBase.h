@@ -19,7 +19,7 @@ namespace rd {
 														std::wstring suffix);
 
 		protected:
-			std::vector<std::pair<int32_t, std::wstring> > simpleTestData{
+			const std::vector<std::pair<int32_t, std::wstring> > simpleTestData{
 					{0, L""},
 					{1, L"test"},
 					{2, L"why"}

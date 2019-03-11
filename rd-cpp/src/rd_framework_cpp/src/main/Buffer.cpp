@@ -13,43 +13,43 @@ namespace rd {
 		size_ = initialSize;
 	}
 
-	Buffer::Buffer(const ByteArray &array, int32_t offset) :
-			byteBufferMemoryBase(array), offset(offset),
-			size_(array.size()) {}
+	Buffer::Buffer(const ByteArray &array, size_t offset) :
+		byteBufferMemoryBase(array), offset(offset), size_(array.size()) {}
 
-	int32_t Buffer::get_position() const {
+	Buffer::Buffer(ByteArray &&array, size_t offset) :
+		byteBufferMemoryBase(std::move(array)), offset(offset), size_(array.size()) {}
+
+	size_t Buffer::get_position() const {
 		return offset;
 	}
 
-	void Buffer::set_position(int32_t value) const {
+	void Buffer::set_position(size_t value) const {
 		offset = value;
 	}
 
-	void Buffer::check_available(int32_t moreSize) const {
+	void Buffer::check_available(size_t moreSize) const {
 		if (offset + moreSize > size_) {
 			throw std::out_of_range(
-					"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size_ - offset) +
-					"available");
+				"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size_ - offset) +
+				"available");
 		}
 	}
 
 	void Buffer::read(word_t *dst, size_t size) const {
-		check_available(size);
-		//    memcpy(dst, &byteBufferMemoryBase[offset], size);
+		check_available(size);		
 		std::copy(&byteBufferMemoryBase[offset], &byteBufferMemoryBase[offset] + size, dst);
 		offset += size;
 	}
 
 	void Buffer::write(const word_t *src, size_t size) const {
-		require_available(size);
-		//    memcpy(&byteBufferMemoryBase[offset], src, size);
+		require_available(size);	
 		std::copy(src, src + size, &byteBufferMemoryBase[offset]);
 		offset += size;
 	}
 
-	void Buffer::require_available(int32_t moreSize) const {
+	void Buffer::require_available(size_t moreSize) const {
 		if (offset + moreSize >= size_) {
-			int32_t newSize = (std::max)(size_ * 2, offset + moreSize);
+			size_t newSize = (std::max)(size_ * 2, offset + moreSize);
 			byteBufferMemoryBase.resize(newSize);
 			size_ = newSize;
 		}
@@ -59,21 +59,21 @@ namespace rd {
 		set_position(0);
 	}
 
-	Buffer::ByteArray Buffer::getArray() const &{
+	Buffer::ByteArray Buffer::getArray() const & {
 		return byteBufferMemoryBase;
 	}
 
-	Buffer::ByteArray Buffer::getArray() &&{
+	Buffer::ByteArray Buffer::getArray() && {
 		return std::move(byteBufferMemoryBase);
 	}
 
-	Buffer::ByteArray Buffer::getRealArray() const &{
+	Buffer::ByteArray Buffer::getRealArray() const & {
 		auto res = getArray();
 		res.resize(offset);
 		return res;
 	}
 
-	Buffer::ByteArray Buffer::getRealArray() &&{
+	Buffer::ByteArray Buffer::getRealArray() && {
 		auto res = getArray();
 		res.resize(offset);
 		return res;
@@ -128,25 +128,4 @@ void Buffer::writeString(std::string const &value) const {
 	void Buffer::writeByteArrayRaw(const ByteArray &array) const {
 		write(array.data(), array.size());
 	}
-
-	/*tl::optional<std::wstring> Buffer::readNullableWString() const {
-    int32_t len = read_integral<int32_t>();
-    if (len < 0) {
-        return tl::nullopt;
-    }
-    std::wstring result;
-    result.resize(len);
-    read(reinterpret_cast<word_t *>(&result[0]), sizeof(wchar_t) * len);
-    return result;
-}
-
-void Buffer::writeNullableWString(tl::optional<std::wstring> const &value) const {
-    if (!value.has_value()) {
-        write_integral<int32_t>(-1);
-        return;
-    }
-    writeWString(value.value());
-}*/
-
-
 }

@@ -4,7 +4,7 @@
 
 #include "ISerializersOwner.h"
 
-#include "Protocol.h"
+//#include "Protocol.h"
 
 namespace rd {
 	void ISerializersOwner::registry(Serializers const &serializers) {
@@ -12,7 +12,7 @@ namespace rd {
 //    if (!serializers.toplevels.add(key)) return
 //todo
 
-		Protocol::initializationLogger.trace("REGISTER serializers for ${key.simpleName}");
+//		Protocol::initializationLogger.trace("REGISTER serializers for ${key.simpleName}");
 		registerSerializersCore(serializers);
 	}
 }
