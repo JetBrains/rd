@@ -29,7 +29,9 @@ namespace rd {
 		};
 
 		template<typename T, typename Any>
-		typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value, Wrapper<T>>::type get(Any &&any) {
+		typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value, Wrapper < T>>
+
+		::type get(Any &&any) {
 			return Wrapper<T>::dynamic(mpark::get<wrapped_super_t>(std::forward<Any>(any)));
 		};
 
@@ -91,7 +93,16 @@ namespace rd {
 			using transparent_key_equal = std::equal_to<>;
 
 			size_t operator()(RdAny const &value) const noexcept {
-				return std::hash<RdAny>()(value);
+//				std::wcerr << "HASH RdAny: " << mpark::get<std::wstring>(value) << " " << std::hash<RdAny>()(value) << std::endl;
+//				return std::hash<RdAny>()(value);
+				return mpark::visit(util::make_visitor(
+						[](wrapped_super_t const &value) {
+							return std::hash<wrapped_super_t>()(value);
+						},
+						[](std::wstring const &value) {
+							return std::hash<std::wstring>()(value);
+						}
+				), value);
 			}
 
 			size_t operator()(wrapped_super_t const &value) const noexcept {
@@ -103,6 +114,7 @@ namespace rd {
 			}
 
 			size_t operator()(std::wstring const &value) const noexcept {
+//				std::wcerr << "HASH wstring: " << value << " " << std::hash<std::wstring>()(value) << std::endl;
 				return std::hash<std::wstring>()(value);
 			}
 		};

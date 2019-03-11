@@ -5,7 +5,6 @@
 #ifndef RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
-#include "InternRoot.h"
 #include "Buffer.h"
 #include "RdId.h"
 
@@ -20,6 +19,10 @@ namespace rd {
 	class IProtocol;
 
 	class Serializers;
+
+	class InternRoot;
+
+	class RdBindableBase;
 	//endregion
 
 	class SerializationCtx {
@@ -47,28 +50,38 @@ namespace rd {
 		//endregion
 
 		template<typename T, util::hash_t InternKey>
-		T readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
-			auto it = intern_roots.find(InternKey);
-			if (it != intern_roots.end()) {
-				int32_t index = buffer.read_integral<int32_t>() ^ 1;
-				return it->second->un_intern_value<T>(index);
-			} else {
-				return readValueDelegate(*this, buffer);
-			}
-		}
+		T readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const;
 
 		template<typename T, util::hash_t InternKey>
 		void writeInterned(Buffer const &buffer, T const &value,
-						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
-			auto it = intern_roots.find(InternKey);
-			if (it != intern_roots.end()) {
-				int32_t index = it->second->intern_value<T>(value);
-				buffer.write_integral<int32_t>(index);
-			} else {
-				writeValueDelegate(*this, buffer, value);
-			}
-		}
+						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const;
 	};
 }
 
+#include "InternRoot.h"
+
+namespace rd {
+	template<typename T, util::hash_t InternKey>
+	T SerializationCtx::readInterned(Buffer const &buffer, std::function<T(const SerializationCtx &, const Buffer &)> readValueDelegate) const {
+		auto it = intern_roots.find(InternKey);
+		if (it != intern_roots.end()) {
+			int32_t index = buffer.read_integral<int32_t>() ^1;
+			return it->second->un_intern_value<T>(index);
+		} else {
+			return readValueDelegate(*this, buffer);
+		}
+	}
+
+	template<typename T, util::hash_t InternKey>
+	void SerializationCtx::writeInterned(Buffer const &buffer, T const &value,
+					   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
+		auto it = intern_roots.find(InternKey);
+		if (it != intern_roots.end()) {
+			int32_t index = it->second->intern_value<T>(value);
+			buffer.write_integral<int32_t>(index);
+		} else {
+			writeValueDelegate(*this, buffer, value);
+		}
+	}
+}
 #endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

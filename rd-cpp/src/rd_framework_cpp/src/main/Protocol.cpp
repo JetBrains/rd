@@ -1,6 +1,9 @@
-#include <utility>
-
 #include "Protocol.h"
+
+#include "SerializationCtx.h"
+#include "InternRoot.h"
+
+#include <utility>
 
 namespace rd {
 	const Logger Protocol::initializationLogger;
@@ -23,6 +26,8 @@ namespace rd {
 			IProtocol(std::make_shared<Identities>(kind), scheduler, std::move(wire)), lifetime(lifetime) {
 		initialize();
 	}
+
+	Protocol::~Protocol() = default;
 
 	const SerializationCtx &Protocol::get_serialization_context() const {
 		if (!context) {

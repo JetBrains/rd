@@ -124,17 +124,17 @@ namespace rd {
 	}
 
 	template<typename T>
-	inline std::string to_string(std::chrono::duration<int64_t, T> const &time) {
+	std::string to_string(std::chrono::duration<int64_t, T> const &time) {
 		return std::to_string(time.count());
 	}
 
 	template<typename T>
-	inline std::string to_string(Wrapper<T> const &value) {
+	std::string to_string(Wrapper<T> const &value) {
 		return to_string(*value);
 	}
 
 	template<typename T>
-	inline std::string to_string(std::atomic<T> const &value) {
+	std::string to_string(std::atomic<T> const &value) {
 		return to_string(value.load());
 	}
 	//endregion

@@ -4,7 +4,6 @@
 
 #include "SocketWire.h"
 #include "SimpleScheduler.h"
-#include "RdFrameworkTestBase.h"
 #include "RdProperty.h"
 
 #include "optional.hpp"

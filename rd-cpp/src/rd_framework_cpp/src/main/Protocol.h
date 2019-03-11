@@ -13,6 +13,13 @@
 #include <memory>
 
 namespace rd {
+	//region predeclared
+
+	class SerializationCtx;
+
+	class InternRoot;
+	//endregion
+
 	class Protocol : /*IRdDynamic, */public IProtocol {
 		constexpr static auto InternRootName = "ProtocolInternRoot";
 
@@ -35,6 +42,8 @@ namespace rd {
 		Protocol(Protocol &&) noexcept = default;
 
 		Protocol &operator=(Protocol &&) noexcept = default;
+
+		virtual ~Protocol();
 		//endregion
 
 		const SerializationCtx &get_serialization_context() const override;

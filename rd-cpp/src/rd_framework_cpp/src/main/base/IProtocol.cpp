@@ -8,7 +8,7 @@
 #include "Identities.h"
 #include "IWire.h"
 #include "IProtocol.h"
-#include "SerializationCtx.h"
+//#include "SerializationCtx.h"
 
 namespace rd {
 	IProtocol::IProtocol() {}

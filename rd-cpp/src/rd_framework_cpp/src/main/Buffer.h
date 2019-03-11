@@ -23,10 +23,10 @@ namespace rd {
 	protected:
 
 		mutable ByteArray byteBufferMemoryBase;
-		mutable int32_t offset = 0;
-		mutable int32_t size_ = 0;
+		mutable size_t offset = 0;
+		mutable size_t size_ = 0;
 
-		void require_available(int32_t size) const;
+		void require_available(size_t size) const;
 
 		//read
 		void read(word_t *dst, size_t size) const;
@@ -39,18 +39,20 @@ namespace rd {
 
 		explicit Buffer(int32_t initialSize = 10); //todo
 
-		explicit Buffer(const ByteArray &array, int32_t offset = 0);
+		explicit Buffer(const ByteArray &array, size_t offset = 0);
+
+		explicit Buffer(ByteArray &&array, size_t offset = 0);
 
 		Buffer(Buffer const &) = delete;
 
 		Buffer(Buffer &&) = default;
 		//endregion
 
-		int32_t get_position() const;
+		size_t get_position() const;
 
-		void set_position(int32_t value) const;
+		void set_position(size_t value) const;
 
-		void check_available(int32_t moreSize) const;
+		void check_available(size_t moreSize) const;
 
 		void rewind() const;
 
@@ -101,7 +103,7 @@ namespace rd {
 
 		template<typename T>
 		void writeArray(std::vector<T> const &array) const {
-			write_integral<int32_t>(array.size());
+			write_integral<int32_t>(static_cast<int32_t>(array.size()));
 			write(reinterpret_cast<word_t const *>(array.data()), sizeof(T) * array.size());
 		}
 
@@ -153,7 +155,8 @@ namespace rd {
 		void writeNullable(opt_or_wrapper<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
-			} else {
+			}
+			else {
 				writeBool(true);
 				writer(*value);
 			}
@@ -163,7 +166,8 @@ namespace rd {
 		void writeNullable(Wrapper<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
-			} else {
+			}
+			else {
 				writeBool(true);
 				writer(*value);
 			}

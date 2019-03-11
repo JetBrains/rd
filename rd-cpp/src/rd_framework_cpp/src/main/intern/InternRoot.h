@@ -1,9 +1,9 @@
 #ifndef RD_CPP_INTERNROOT_H
 #define RD_CPP_INTERNROOT_H
 
+
 #include "RdReactiveBase.h"
 #include "InternScheduler.h"
-#include "ISerializable.h"
 #include "Lifetime.h"
 #include "wrapper.h"
 #include "RdAny.h"
@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <mutex>
+
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
@@ -48,7 +49,7 @@ namespace rd {
 		}
 
 		static constexpr bool is_index_owned(int32_t id) {
-			return static_cast<bool>(id & 1);
+			return !static_cast<bool>(id & 1);
 		}
 
 	public:
@@ -75,7 +76,7 @@ namespace rd {
 
 #pragma warning( pop )
 
-#include "Polymorphic.h"
+#include "AnySerializer.h"
 
 namespace rd {
 	/*template<typename T>
@@ -89,7 +90,7 @@ namespace rd {
 
 	template<typename T>
 	value_or_wrapper<T> InternRoot::un_intern_value(int32_t id) const {
-		auto &&v = (any::get<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]));
+		auto const& v = (any::get<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]));
 		return wrapper::get(v);
 	}
 
@@ -99,10 +100,10 @@ namespace rd {
 		int32_t index = 0;
 		if (it == inverseMap.end()) {
 			get_protocol()->get_wire()->send(this->rdid, [this, &index, &value](Buffer const &buffer) {
-				Polymorphic<T>::write(get_serialization_context(), buffer, wrapper::get<T>(value));
+				AnySerializer::write<T>(get_serialization_context(), buffer, wrapper::get<T>(value));
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
-					index = static_cast<int32_t>(myItemsList.size()); //todo change to global counter
+					index = static_cast<int32_t>(myItemsList.size()) * 2; //todo change to global counter
 					myItemsList.emplace_back(value);
 				}
 				buffer.write_integral<int32_t>(index);
