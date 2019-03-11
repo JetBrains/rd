@@ -1,4 +1,4 @@
-package com.jetbrains.rd.framework.test.cases.interning
+package com.jetbrains.rd.framework.test.cases.interning.models
 
 import com.jetbrains.rd.framework.IIdentities
 import com.jetbrains.rd.framework.RdId
@@ -14,9 +14,9 @@ class PropertyHolderWithInternRoot<T : Any>(val property: RdOptionalProperty<T>,
         super.init(lifetime)
     }
 
-    override fun identify(identities: IIdentities, ids: RdId) {
-        property.identify(identities, ids.mix("propertyHolderWithInternRoot"))
-        super.identify(identities, ids)
+    override fun identify(identities: IIdentities, id: RdId) {
+        property.identify(identities, id.mix("propertyHolderWithInternRoot"))
+        super.identify(identities, id)
     }
 
 

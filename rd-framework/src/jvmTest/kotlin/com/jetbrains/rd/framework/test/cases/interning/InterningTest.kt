@@ -5,6 +5,7 @@ import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.interned
+import com.jetbrains.rd.framework.test.cases.interning.models.PropertyHolderWithInternRoot
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.test.util.TestWire
 import com.jetbrains.rd.framework.withInternRootsHere

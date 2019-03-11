@@ -99,5 +99,10 @@ namespace rd {
 
 			AfterTest();
 		}
+
+		void InterningTestBase::testProtocolLevelIntern(bool firstClient, bool secondClient, bool thenSwitchSides) {
+			
+			AfterTest();
+		}
 	}
 }
