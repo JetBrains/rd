@@ -6,25 +6,27 @@
 #define RD_CPP_ISCHEDULER_H
 
 
-#include <functional>
-
 #include "Logger.h"
 
-class IScheduler {
-    static rd::Logger logger;
-public:
-    virtual void queue(std::function<void()> action) = 0;
+#include <functional>
 
-    bool out_of_order_execution = false;
+namespace rd {
+	class IScheduler {
+		static Logger logger;
+	public:
+		virtual void queue(std::function<void()> action) = 0;
 
-    virtual void assert_thread() const;
+		bool out_of_order_execution = false;
 
-    void invoke_or_queue(std::function<void()> action);
+		virtual void assert_thread() const;
 
-    virtual void flush() = 0;
+		void invoke_or_queue(std::function<void()> action);
 
-    virtual bool is_active() const = 0;
-};
+		virtual void flush() = 0;
+
+		virtual bool is_active() const = 0;
+	};
+}
 
 
 #endif //RD_CPP_ISCHEDULER_H

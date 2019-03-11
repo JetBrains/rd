@@ -11,73 +11,77 @@
 
 #include "Buffer.h"
 
-class RdId;
-
-namespace std {
-    template<>
-    struct hash<RdId> {
-        size_t operator()(const RdId &value) const noexcept;
-    };
+namespace rd {
+	class RdId;
 }
 
-class RdId {
-private:
-    using hash_t = int64_t;
+namespace std {
+	template<>
+	struct hash<rd::RdId> {
+		size_t operator()(const rd::RdId &value) const noexcept;
+	};
+}
 
-    hash_t hash{0};
-    friend struct std::hash<RdId>;
-public:
-    friend bool operator==(RdId const &left, RdId const &right) {
-        return left.hash == right.hash;
-    }
+namespace rd {
+	class RdId {
+	private:
+		using hash_t = int64_t;
 
-    friend bool operator!=(const RdId &lhs, const RdId &rhs) {
-        return !(rhs == lhs);
-    }
+		hash_t hash{0};
+		friend struct std::hash<RdId>;
+	public:
+		friend bool operator==(RdId const &left, RdId const &right) {
+			return left.hash == right.hash;
+		}
 
-    //region ctor/dtor
-    RdId() = default;
+		friend bool operator!=(const RdId &lhs, const RdId &rhs) {
+			return !(rhs == lhs);
+		}
 
-    RdId(const RdId &other) = default;
+		//region ctor/dtor
+		RdId() = default;
 
-    RdId &operator=(const RdId &other) = default;
+		RdId(const RdId &other) = default;
 
-    RdId(RdId &&other) noexcept = default;
+		RdId &operator=(const RdId &other) = default;
 
-    RdId &operator=(RdId &&other) noexcept = default;
+		RdId(RdId &&other) noexcept = default;
 
-    explicit RdId(hash_t hash);
-    //endregion
+		RdId &operator=(RdId &&other) noexcept = default;
 
-//    static std::shared_ptr<RdId> NULL_ID;
-    static RdId Null();
+		explicit RdId(hash_t hash);
+		//endregion
 
-    static const int32_t MAX_STATIC_ID = 1'000'000;
+		//    static std::shared_ptr<RdId> NULL_ID;
+		static RdId Null();
 
-    static RdId read(Buffer const &buffer);
+		static const int32_t MAX_STATIC_ID = 1'000'000;
 
-    void write(const Buffer &buffer) const;
+		static RdId read(Buffer const &buffer);
 
-    hash_t get_hash() const;
+		void write(const Buffer &buffer) const;
 
-//    void write(AbstractBufefer& bufefer);
+		hash_t get_hash() const;
 
-    bool isNull() const;
+		//    void write(AbstractBufefer& bufefer);
 
-    std::string toString() const;
+		bool isNull() const;
 
-    RdId notNull();
+		std::string toString() const;
 
-    RdId mix(const std::string &tail) const;
+		RdId notNull();
 
-    RdId mix(int32_t tail) const;
+		RdId mix(const std::string &tail) const;
 
-    RdId mix(int64_t tail) const;
-};
+		RdId mix(int32_t tail) const;
+
+		RdId mix(int64_t tail) const;
+	};
+}
 
 
-inline size_t std::hash<RdId>::operator()(const RdId &value) const noexcept {
-    return std::hash<RdId::hash_t>()(value.hash);
+inline size_t std::hash<rd::RdId>::operator()(const rd::RdId &value) const noexcept {
+	return std::hash<rd::RdId::hash_t>()(value.hash);
 }
 
 #endif //RD_CPP_FRAMEWORK_RDID_H

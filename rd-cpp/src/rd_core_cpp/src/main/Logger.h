@@ -12,9 +12,7 @@
 #include <exception>
 #include <iostream>
 
-namespace rd
-{
-
+namespace rd {
 	enum class LogLevel {
 		Trace,
 		Debug,
@@ -24,36 +22,25 @@ namespace rd
 		Fatal
 	};
 
-	class	Logger {
+	std::string to_string(LogLevel level);
+
+	class Logger {
 	public:
-		/*virtual */void log(LogLevel level, const std::string &message, std::exception const *e = nullptr)/* = 0;*/const {
-			std::cerr << std::to_string(static_cast<int>(level))
-				//                     + " | " + std::to_string(GetCurrentThreadId())
-				+ " | " + message +
-				+" | " + (e ? e->what() : "")
-				<< std::endl;
-		}
+		/*virtual */void
+		log(LogLevel level, const std::string &message, std::exception const *e = nullptr)/* = 0;*/const;
 
-		void trace(std::string const &msg, std::exception const *e = nullptr) const {
-			log(LogLevel::Trace, msg, e);
-		}
+		void trace(std::string const &msg, std::exception const *e = nullptr) const;
 
-		void debug(std::string const &msg, std::exception const *e = nullptr) const {
-			log(LogLevel::Debug, msg, e);
-		}
+		void debug(std::string const &msg, std::exception const *e = nullptr) const;
 
-		void info(std::string const &msg, std::exception const *e = nullptr) const {
-			log(LogLevel::Info, msg, e);
-		}
+		void info(std::string const &msg, std::exception const *e = nullptr) const;
 
-		void error(std::string const &msg, std::exception const *e = nullptr) const {
-			log(LogLevel::Error, msg, e);
-		}
+		void error(std::string const &msg, std::exception const *e = nullptr) const;
 
 		//    virtual bool is_enabled(LogLevel level) = 0;
 	};
 
-	/*class SwitchLogger : public	rd::Logger {
+	/*class SwitchLogger : public	Logger {
 
 	public:
 		SwitchLogger(const std::string &category);
@@ -71,7 +58,8 @@ namespace rd
 			action();
 		}
 		catch (std::exception const &e) {
-			std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(e.what());
+			std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(
+					e.what());
 			//        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
 		}
 	}

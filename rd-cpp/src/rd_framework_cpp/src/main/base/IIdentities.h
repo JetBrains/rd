@@ -7,10 +7,12 @@
 
 #include "RdId.h"
 
-class IIdentities {
-public:
-    virtual RdId next(const RdId &parent) const = 0;
-};
+namespace rd {
+	class IIdentities {
+	public:
+		virtual RdId next(const RdId &parent) const = 0;
+	};
+}
 
 
 #endif //RD_CPP_IIDENTITIES_H

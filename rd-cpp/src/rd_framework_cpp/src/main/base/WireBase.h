@@ -10,23 +10,25 @@
 #include "IWire.h"
 #include "MessageBroker.h"
 
-class WireBase : public IWire {
-protected:
-    IScheduler *scheduler = nullptr;
+namespace rd {
+	class WireBase : public IWire {
+	protected:
+		IScheduler *scheduler = nullptr;
 
-    MessageBroker message_broker;
-public:
-    //region ctor/dtor
+		MessageBroker message_broker;
+	public:
+		//region ctor/dtor
 
-    WireBase(WireBase &&) = default;
+		WireBase(WireBase &&) = default;
 
-    explicit WireBase(IScheduler *scheduler) : scheduler(scheduler), message_broker(scheduler) {}
+		explicit WireBase(IScheduler *scheduler) : scheduler(scheduler), message_broker(scheduler) {}
 
-    virtual ~WireBase() = default;
-    //endregion
+		virtual ~WireBase() = default;
+		//endregion
 
-    void advise(Lifetime lifetime, IRdReactive const *entity) const override;
-};
+		void advise(Lifetime lifetime, IRdReactive const *entity) const override;
+	};
+}
 
 
 #endif //RD_CPP_WIREBASE_H

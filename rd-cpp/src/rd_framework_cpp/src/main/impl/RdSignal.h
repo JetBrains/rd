@@ -14,77 +14,85 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
-template<typename T, typename S = Polymorphic<T>>
-class RdSignal : public RdReactiveBase, public ISignal<T>, public ISerializable {
-private:
-    std::string logmsg(T const &value) const {
-        return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
-    }
+namespace rd {
+	template<typename T, typename S = Polymorphic <T>>
+	class RdSignal final : public RdReactiveBase, public ISignal<T>, public ISerializable {
+	private:
+		using WT = typename ISignal<T>::WT;
 
-protected:
-    Signal<T> signal;
-public:
-    //region ctor/dtor
+		std::string logmsg(T const &value) const {
+			return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
+		}
 
-    RdSignal(RdSignal const &) = delete;
+	protected:
+		Signal <T> signal;
+	public:
+		//region ctor/dtor
 
-    RdSignal &operator=(RdSignal const &) = delete;
+		RdSignal(RdSignal const &) = delete;
 
-    RdSignal() = default;
+		RdSignal &operator=(RdSignal const &) = delete;
 
-    RdSignal(RdSignal &&) = default;
+		RdSignal() = default;
 
-    RdSignal &operator=(RdSignal &&) = default;
+		RdSignal(RdSignal &&) = default;
 
-    virtual ~RdSignal() = default;
-    //endregion
+		RdSignal &operator=(RdSignal &&) = default;
 
-    static RdSignal<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
-        RdSignal<T, S> res;
-        const RdId &id = RdId::read(buffer);
-        withId(res, id);
-        return res;
-    }
+		virtual ~RdSignal() = default;
+		//endregion
 
-    void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-        rdid.write(buffer);
-    }
+		static RdSignal<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+			RdSignal<T, S> res;
+			const RdId &id = RdId::read(buffer);
+			withId(res, id);
+			return res;
+		}
 
-    void init(Lifetime lifetime) const override {
-        RdReactiveBase::init(lifetime);
-//        wire_scheduler = get_default_scheduler();
-        get_wire()->advise(lifetime, this);
-    }
+		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+			rdid.write(buffer);
+		}
 
-    void on_wire_received(Buffer buffer) const override {
-        T value = S::read(this->get_serialization_context(), buffer);
-        logReceived.trace(logmsg(value));
+		void init(Lifetime lifetime) const override {
+			RdReactiveBase::init(lifetime);
+			//        wire_scheduler = get_default_scheduler();
+			get_wire()->advise(lifetime, this);
+		}
 
-        signal.fire(value);
-    }
+		void on_wire_received(Buffer buffer) const override {
+			auto value = S::read(this->get_serialization_context(), buffer);
+			logReceived.trace(logmsg(wrapper::get<T>(value)));
 
-    void fire(T const &value) const override {
-        assert_bound();
-        if (!async) {
-            assert_threading();
-        }
-        get_wire()->send(rdid, [this, &value](Buffer const &buffer) {
-            logSend.trace(logmsg(value));
-            S::write(get_serialization_context(), buffer, value);
-        });
-        signal.fire(value);
-    }
+			signal.fire(wrapper::get<T>(value));
+		}
 
-    void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
-        if (is_bound()) {
-            assert_threading();
-        }
-        signal.advise(lifetime, handler);
-    }
-};
+		using ISignal<T>::fire;
+
+		void fire(T const &value) const override {
+			assert_bound();
+			if (!async) {
+				assert_threading();
+			}
+			get_wire()->send(rdid, [this, &value](Buffer const &buffer) {
+				logSend.trace(logmsg(value));
+				S::write(get_serialization_context(), buffer, value);
+			});
+			signal.fire(value);
+		}
+
+		using ISource<T>::advise;
+
+		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+			if (is_bound()) {
+				assert_threading();
+			}
+			signal.advise(lifetime, handler);
+		}
+	};
+}
 
 #pragma warning( pop )
 
-static_assert(std::is_move_constructible<RdSignal<int>>::value, "Is not move constructible from RdSignal<int>");
+static_assert(std::is_move_constructible<rd::RdSignal<int>>::value, "Is not move constructible from RdSignal<int>");
 
 #endif //RD_CPP_RDSIGNAL_H

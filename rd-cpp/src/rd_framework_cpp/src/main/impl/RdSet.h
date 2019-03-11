@@ -12,114 +12,119 @@
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
-template<typename T, typename S = Polymorphic<T>>
-class RdSet : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
-protected:
-    ViewableSet<T> set;
-public:
-    using Event = typename IViewableSet<T>::Event;
 
-    using value_type = T;
+namespace rd {
+	template<typename T, typename S = Polymorphic<T>>
+	class RdSet final : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
+	private:
+		using WT = typename IViewableSet<T>::WT;
+	protected:
+		ViewableSet<T> set;
+	public:
+		using Event = typename IViewableSet<T>::Event;
 
-    //region ctor/dtor
+		using value_type = T;
 
-    RdSet() = default;
+		//region ctor/dtor
 
-    RdSet(RdSet &&) = default;
+		RdSet() = default;
 
-    RdSet &operator=(RdSet &&) = default;
+		RdSet(RdSet &&) = default;
 
-    virtual ~RdSet() = default;
+		RdSet &operator=(RdSet &&) = default;
 
-    //endregion
+		virtual ~RdSet() = default;
 
-    static RdSet<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
-        RdSet<T, S> result;
-        RdId id = RdId::read(buffer);
-        withId(result, std::move(id));
-        return result;
-    }
+		//endregion
 
-    void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-        rdid.write(buffer);
-    }
+		static RdSet<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+			RdSet<T, S> result;
+			RdId id = RdId::read(buffer);
+			withId(result, std::move(id));
+			return result;
+		}
 
-    bool optimize_nested = false;
+		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+			rdid.write(buffer);
+		}
 
-    void init(Lifetime lifetime) const override {
-        RdBindableBase::init(lifetime);
+		bool optimize_nested = false;
 
-        local_change([this, lifetime] {
-            advise(lifetime, [this](AddRemove kind, T const &v) {
-                if (!is_local_change) return;
+		void init(Lifetime lifetime) const override {
+			RdBindableBase::init(lifetime);
 
-                get_wire()->send(rdid, [this, kind, &v](Buffer const &buffer) {
-                    buffer.writeEnum<AddRemove>(kind);
-                    S::write(this->get_serialization_context(), buffer, v);
+			local_change([this, lifetime] {
+				advise(lifetime, [this](AddRemove kind, T const &v) {
+					if (!is_local_change) return;
 
-                    logSend.trace(
-                            "set " + location.toString() + " " + rdid.toString() +
-                            ":: " + to_string(kind) +
-                            ":: " + to_string(v));
-                });
-            });
-        });
+					get_wire()->send(rdid, [this, kind, &v](Buffer const &buffer) {
+						buffer.writeEnum<AddRemove>(kind);
+						S::write(this->get_serialization_context(), buffer, v);
 
-        get_wire()->advise(lifetime, this);
-    }
+						logSend.trace(
+								"set " + location.toString() + " " + rdid.toString() +
+								":: " + to_string(kind) +
+								":: " + to_string(v));
+					});
+				});
+			});
 
-    void on_wire_received(Buffer buffer) const override {
-        AddRemove kind = buffer.readEnum<AddRemove>();
-        T value = S::read(this->get_serialization_context(), buffer);
+			get_wire()->advise(lifetime, this);
+		}
 
-        switch (kind) {
-            case AddRemove::ADD : {
-                set.add(value);
-                break;
-            }
-            case AddRemove::REMOVE: {
-                set.remove(value);
-                break;
-            }
-        }
-    }
+		void on_wire_received(Buffer buffer) const override {
+			AddRemove kind = buffer.readEnum<AddRemove>();
+			auto value = S::read(this->get_serialization_context(), buffer);
 
-    bool add(T value) const override {
-        return local_change([this, value = std::move(value)] { return set.add(std::move(value)); });
-    }
+			switch (kind) {
+				case AddRemove::ADD : {
+					set.add(std::move(value));
+					break;
+				}
+				case AddRemove::REMOVE: {
+					set.remove(wrapper::get<T>(value));
+					break;
+				}
+			}
+		}
 
-    void clear() const override {
-        return local_change([&] { return set.clear(); });
-    }
+		bool add(WT value) const override {
+			return local_change([this, value = std::move(value)]() mutable { return set.add(std::move(value)); });
+		}
 
-    bool remove(T const &value) const override {
-        return local_change([&] { return set.remove(value); });
-    }
+		void clear() const override {
+			return local_change([&] { return set.clear(); });
+		}
 
-    size_t size() const override {
-        return local_change([&] { return set.size(); });
-    }
+		bool remove(T const &value) const override {
+			return local_change([&] { return set.remove(value); });
+		}
 
-    bool contains(T const &value) const override {
-        return local_change([&] { return set.contains(value); });
-    }
+		size_t size() const override {
+			return local_change([&] { return set.size(); });
+		}
 
-    bool empty() const override {
-        return local_change([&] { return set.empty(); });
-    }
+		bool contains(T const &value) const override {
+			return local_change([&] { return set.contains(value); });
+		}
 
-    void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
-        if (is_bound()) {
-            assert_threading();
-        }
-        set.advise(lifetime, std::move(handler));
-    }
+		bool empty() const override {
+			return local_change([&] { return set.empty(); });
+		}
 
-    using IViewableSet<T>::advise;
-};
+		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+			if (is_bound()) {
+				assert_threading();
+			}
+			set.advise(lifetime, std::move(handler));
+		}
+
+		using IViewableSet<T>::advise;
+	};
+}
 
 #pragma warning( pop )
 
-static_assert(std::is_move_constructible<RdSet<int> >::value, "Is move constructible RdSet<int>");
+static_assert(std::is_move_constructible<rd::RdSet<int> >::value, "Is move constructible RdSet<int>");
 
 #endif //RD_CPP_RDSET_H

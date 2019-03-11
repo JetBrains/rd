@@ -6,70 +6,59 @@
 #define RD_CPP_CORE_LIFETIMEWRAPPER_H
 
 
-#include <memory>
-
 #include "LifetimeImpl.h"
 
-class Lifetime;
+#include <memory>
 
-namespace std {
-    template<>
-    struct hash<Lifetime> {
-        size_t operator()(const Lifetime &value) const noexcept;
-    };
+namespace rd {
+	class Lifetime;
 }
 
-class Lifetime {
-private:
-    friend class LifetimeDefinition;
+namespace std {
+	template<>
+	struct hash<rd::Lifetime> {
+		size_t operator()(const rd::Lifetime &value) const noexcept;
+	};
+}
 
-    friend struct std::hash<Lifetime>;
+namespace rd {
+	class Lifetime {
+	private:
+		friend class LifetimeDefinition;
 
-    std::shared_ptr<LifetimeImpl> ptr;
-public:
-    static Lifetime const &Eternal();
+		friend struct std::hash<Lifetime>;
 
-    //region ctor/dtor
+		std::shared_ptr<LifetimeImpl> ptr;
+	public:
+		static Lifetime const &Eternal();
 
-    Lifetime() = delete;
+		//region ctor/dtor
 
-    Lifetime(Lifetime const &other) = default;
+		Lifetime() = delete;
 
-    Lifetime &operator=(Lifetime const &other) = default;
+		Lifetime(Lifetime const &other) = default;
 
-    Lifetime(Lifetime &&other) noexcept = default;
+		Lifetime &operator=(Lifetime const &other) = default;
 
-    Lifetime &operator=(Lifetime &&other) noexcept = default;
+		Lifetime(Lifetime &&other) noexcept = default;
 
-    ~Lifetime() = default;
-    //endregion
+		Lifetime &operator=(Lifetime &&other) noexcept = default;
 
-    friend bool operator==(Lifetime const &lw1, Lifetime const &lw2);
+		~Lifetime() = default;
+		//endregion
 
-    explicit Lifetime(bool is_eternal = false);
+		friend bool operator==(Lifetime const &lw1, Lifetime const &lw2);
 
-    LifetimeImpl *operator->() const;
+		explicit Lifetime(bool is_eternal = false);
 
-    Lifetime create_nested() const;
+		LifetimeImpl *operator->() const;
 
-    template<typename T, typename F>
-    static T use(F &&block) {
-        Lifetime lw = Eternal().create_nested();
-        T result = block(lw);
-        lw->terminate();
-        return result;
-    }
+		Lifetime create_nested() const;
+	};
+}
 
-    template<typename F>
-    static void use(F &&block) {
-        Lifetime lw = Eternal().create_nested();
-        block(lw);
-        lw->terminate();
-    }
-};
-
-inline size_t std::hash<Lifetime>::operator()(const Lifetime &value) const noexcept {
-    return std::hash<std::shared_ptr<LifetimeImpl> >()(value.ptr);
+inline size_t std::hash<rd::Lifetime>::operator()(const rd::Lifetime &value) const noexcept {
+	return std::hash<std::shared_ptr<rd::LifetimeImpl> >()(value.ptr);
 }
 
 #endif //RD_CPP_CORE_LIFETIMEWRAPPER_H

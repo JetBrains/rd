@@ -15,65 +15,67 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 
-class RdReactiveBase : public RdBindableBase, public IRdReactive {
-    class local_change_handler {
-        RdReactiveBase const *ptr;
-    public:
-        local_change_handler(RdReactiveBase const *ptr) : ptr(ptr) {
-            ptr->is_local_change = true;
-        }
+namespace rd {
+	class RdReactiveBase : public RdBindableBase, public IRdReactive {
+		class local_change_handler {
+			RdReactiveBase const *ptr;
+		public:
+			local_change_handler(RdReactiveBase const *ptr) : ptr(ptr) {
+				ptr->is_local_change = true;
+			}
 
-        ~local_change_handler() {
-            ptr->is_local_change = false;
-        }
-    };
+			~local_change_handler() {
+				ptr->is_local_change = false;
+			}
+		};
 
-public:
-    static rd::Logger logReceived;
-	static rd::Logger logSend;
+	public:
+		static Logger logReceived;
+		static Logger logSend;
 
-    //region ctor/dtor
+		//region ctor/dtor
 
-    RdReactiveBase() = default;
+		RdReactiveBase() = default;
 
-    RdReactiveBase(RdReactiveBase &&other);
+		RdReactiveBase(RdReactiveBase &&other);
 
-    RdReactiveBase &operator=(RdReactiveBase &&other);
+		RdReactiveBase &operator=(RdReactiveBase &&other);
 
-    virtual ~RdReactiveBase() = default;
-    //endregion
+		virtual ~RdReactiveBase() = default;
+		//endregion
 
-    const IWire *const get_wire() const;
+		const IWire *const get_wire() const;
 
-    mutable bool is_local_change = false;
+		mutable bool is_local_change = false;
 
-    //delegated
-    const Serializers &get_serializers() {
-        return get_protocol()->serializers;
-    }
+		//delegated
+		const Serializers &get_serializers() {
+			return get_protocol()->serializers;
+		}
 
-    const Serializers &get_serializers() const;
+		const Serializers &get_serializers() const;
 
-    IScheduler *get_default_scheduler() const;
+		IScheduler *get_default_scheduler() const;
 
-    IScheduler *get_wire_scheduler() const override;
+		IScheduler *get_wire_scheduler() const override;
 
-    void assert_threading() const;
+		void assert_threading() const;
 
-    void assert_bound() const;
+		void assert_bound() const;
 
-    template<typename F>
-    auto local_change(F &&action) const -> typename std::result_of<F()>::type {
-        if (is_bound() && !async) {
-            assert_threading();
-        }
+		template<typename F>
+		auto local_change(F &&action) const -> typename std::result_of<F()>::type {
+			if (is_bound() && !async) {
+				assert_threading();
+			}
 
-        MY_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
+			MY_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
 
-        local_change_handler lc_handler(this);
-        return action();
-    }
-};
+			local_change_handler lc_handler(this);
+			return action();
+		}
+	};
+}
 
 #pragma warning( pop )
 

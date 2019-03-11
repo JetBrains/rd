@@ -14,16 +14,18 @@ object DemoRoot : Root(
 
 object DemoModel : Ext(DemoRoot) {
     private var MyScalar = structdef {
-        field("sign_", PredefinedType.bool)
-        field("byte_", PredefinedType.byte)
-        field("short_", PredefinedType.short)
-        field("int_", PredefinedType.int)
-        field("long_", PredefinedType.long)
+        field("sign", PredefinedType.bool)
+        field("byte", PredefinedType.byte)
+        field("short", PredefinedType.short)
+        field("int", PredefinedType.int)
+        field("long", PredefinedType.long)
 //        field("float_", PredefinedType.float)
 //        field("double_", PredefinedType.double)
     }
 
     init {
+        property("boolean_property", PredefinedType.bool)
+
         property("scalar", MyScalar)
 
         list("list", PredefinedType.int)

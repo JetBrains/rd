@@ -9,53 +9,58 @@
 
 using vi = std::vector<int>;
 
+using namespace rd;
+using namespace test;
+
 TEST_F(RdFrameworkTestBase, set_statics) {
-    int32_t id = 1;
+	int32_t id = 1;
 
-    RdSet<int> server_set_storage;
-    RdSet<int> client_server_set_storage;
+	RdSet<int> server_set;
+	RdSet<int> client_set;
 
-    RdSet<int> &serverSet = statics(server_set_storage, id);
-    RdSet<int> &clientSet = statics(client_server_set_storage, id);
+	statics(server_set, id);
+	statics(client_set, id);
 
-    vi log;
+	vi log;
 
-    serverSet.advise(serverLifetimeDef.lifetime,
-                     [&](AddRemove kind, int v) {
-                         log.push_back((kind == AddRemove::ADD) ? v :
-                                       -v);
-                     });
+	server_set.advise(serverLifetimeDef.lifetime,
+					 [&](AddRemove kind, int v) {
+						 log.push_back((kind == AddRemove::ADD) ? v :
+									   -v);
+					 });
 
-    clientSet.add(2);
-    clientSet.add(0);
-    clientSet.add(1);
-    clientSet.add(8);
-
-
-    EXPECT_EQ(vi(), log);
-
-    bindStatic(serverProtocol.get(), serverSet, "top");
-    bindStatic(clientProtocol.get(), clientSet, "top");
-    EXPECT_EQ((vi{2, 0, 1, 8}), log);
-
-    clientSet.remove(1);
-    EXPECT_EQ((vi{2, 0, 1, 8, -1}), log);
-
-    serverSet.remove(1);
-    clientSet.remove(1);
-    EXPECT_EQ((vi{2, 0, 1, 8, -1}), log);
-
-    clientSet.remove(2);
-    EXPECT_EQ((vi{2, 0, 1, 8, -1, -2}), log);
+	client_set.add(2);
+	client_set.add(0);
+	client_set.add(1);
+	client_set.add(8);
 
 
-    clientSet.clear();
-    EXPECT_EQ((vi{2, 0, 1, 8, -1, -2, -0, -8}), log);
+	EXPECT_EQ(vi(), log);
 
-    AfterTest();
+	bindStatic(serverProtocol.get(), server_set, "top");
+	bindStatic(clientProtocol.get(), client_set, "top");
+	EXPECT_EQ((vi{2, 0, 1, 8}), log);
+
+	client_set.remove(1);
+	EXPECT_EQ((vi{2, 0, 1, 8, -1}), log);
+
+	server_set.remove(1);
+	client_set.remove(1);
+	EXPECT_EQ((vi{2, 0, 1, 8, -1}), log);
+
+	client_set.remove(2);
+	EXPECT_EQ((vi{2, 0, 1, 8, -1, -2}), log);
+
+
+	client_set.clear();
+	EXPECT_EQ((vi{2, 0, 1, 8, -1, -2, -0, -8}), log);
+
+	AfterTest();
 }
 
 TEST_F(RdFrameworkTestBase, set_move) {
-    RdSet<int> set1;
-    RdSet<int> set2(std::move(set1));
+	RdSet<int> set1;
+	RdSet<int> set2(std::move(set1));
+
+	AfterTest();
 }

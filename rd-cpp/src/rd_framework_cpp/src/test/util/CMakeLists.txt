@@ -1,11 +1,14 @@
 add_library(rd_framework_cpp_util
-        ExtProperty.cpp ExtProperty.h
+        ExtProperty.h
         DynamicExt.cpp DynamicExt.h
-        TestScheduler.cpp TestScheduler.h
+        SimpleScheduler.cpp SimpleScheduler.h
         WireUtil.cpp WireUtil.h
         DynamicEntity.cpp DynamicEntity.h
-        TestWire.cpp TestWire.h
-        )
+        AbstractEntity.cpp AbstractEntity.h
+        ConcreteEntity.cpp ConcreteEntity.h
+        ConcreteEntity_Unknown.cpp ConcreteEntity_Unknown.h
+        SimpleWire.cpp SimpleWire.h
+        FakeEntity.cpp FakeEntity.h)
 
 target_include_directories(rd_framework_cpp_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

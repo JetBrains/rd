@@ -6,6 +6,10 @@
 
 #include "test_util.h"
 
-std::string operator "" _s(char const *str, size_t len) {
-    return std::string(str, len);
+namespace rd {
+	namespace test {
+		namespace util {
+
+		}
+	}
 }

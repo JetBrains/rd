@@ -12,61 +12,67 @@
 #include <functional>
 
 
-template<typename T, typename S = Polymorphic<T> >
-class RdTask {
-private:
-    mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
-public:
+namespace rd {
+	template<typename T, typename S = Polymorphic<T> >
+	class RdTask {
+	private:
+		using WT = value_or_wrapper<T>;
 
-    using result_type = RdTaskResult<T, S>;
+		using TRes = RdTaskResult<T, S>;
 
-    static RdTask<T, S> from_result(T value) {
-        RdTask<T, S> res;
-        res.set(std::move(value));
-        return res;
-    }
+		mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
+	public:
+		using result_type = RdTaskResult<T, S>;
 
-    void set(T value) const {
-        typename RdTaskResult<T, S>::Success t(std::move(value));
-        ptr->result.set(tl::make_optional(std::move(t)));
-    }
+		static RdTask<T, S> from_result(WT value) {
+			RdTask<T, S> res;
+			res.set(std::move(value));
+			return res;
+		}
 
-    void set_result(RdTaskResult<T, S> value) const {
-        ptr->result.set(tl::make_optional(std::move(value)));
-    }
+		void set(WT value) const {
+			typename TRes::Success t(std::move(value));
+			ptr->result.set(tl::make_optional(std::move(t)));
+		}
 
-    void cancel() const {
-        ptr->result.set(typename RdTaskResult<T, S>::Cancelled());
-    }
+		void set_result(TRes value) const {
+			ptr->result.set(tl::make_optional(std::move(value)));
+		}
 
-    void fault(std::exception const &e) const {
-        ptr->result.set(typename RdTaskResult<T, S>::Fault(e));
-    }
+		void cancel() const {
+			ptr->result.set(typename TRes::Cancelled());
+		}
 
-    bool has_value() const {
-        return ptr->result.get().has_value();
-    }
+		void fault(std::exception const &e) const {
+			ptr->result.set(typename TRes::Fault(e));
+		}
 
-    RdTaskResult<T, S> value_or_throw() const {
-        auto const &opt_res = ptr->result.get();
-        if (opt_res.has_value()) {
-            return *opt_res;
-        }
-        throw std::runtime_error("task is empty");
-    }
+		bool has_value() const {
+			return ptr->result.get().has_value();
+		}
 
-    bool isFaulted() const {
-        return has_value() && value_or_throw().isFaulted(); //todo atomicy
-    }
+		TRes value_or_throw() const {
+			auto opt_res = std::move(ptr->result).steal();
+			if (opt_res) {
+				return *std::move(opt_res);
+			}
+			throw std::invalid_argument("task is empty");
+		}
 
-    void advise(Lifetime lifetime, std::function<void(RdTaskResult<T, S> const &)> handler) const {
-        ptr->result.advise(lifetime, [handler = std::move(handler)](tl::optional<RdTaskResult<T, S> > const &opt_value) {
-            if (opt_value.has_value()) {
-                handler(*opt_value);
-            }
-        });
-    }
-};
+		bool isFaulted() const {
+			return has_value() && value_or_throw().isFaulted(); //todo atomic
+		}
+
+		void advise(Lifetime lifetime, std::function<void(TRes const &)> handler) const {
+			ptr->result.advise(lifetime,
+							   [handler = std::move(handler)](tl::optional<TRes> const &opt_value) {
+								   if (opt_value) {
+									   handler(*opt_value);
+								   }
+							   });
+		}
+	};
+}
 
 
 #endif //RD_CPP_RDTASK_H

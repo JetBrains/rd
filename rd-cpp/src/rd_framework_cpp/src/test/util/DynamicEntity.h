@@ -10,45 +10,55 @@
 #include "ISerializable.h"
 #include "RdProperty.h"
 
-class DynamicEntity : public RdBindableBase, public ISerializable {
-public:
-    RdProperty<int32_t> foo;
+namespace rd {
+	namespace test {
+		namespace util {
+			class DynamicEntity : public RdBindableBase, public IPolymorphicSerializable {
+			public:
+				RdProperty <int32_t> foo;
 
-    //region ctor/dtor
+				//region ctor/dtor
 
-//    DynamicEntity() = default;
+				//    DynamicEntity() = default;
 
 
-    //region ctor/dtor
+				//region ctor/dtor
 
-    DynamicEntity(DynamicEntity const &other) = delete;
+				DynamicEntity() = default;
 
-    DynamicEntity(DynamicEntity &&other) = default;
+				DynamicEntity(DynamicEntity const &other) = delete;
 
-    DynamicEntity &operator=(DynamicEntity &&other) = default;
+				DynamicEntity(DynamicEntity &&other) = default;
 
-    virtual ~DynamicEntity() = default;
-    //endregion
+				DynamicEntity &operator=(DynamicEntity &&other) = default;
 
-    explicit DynamicEntity(RdProperty<int32_t> &&foo) : foo(std::move(foo)) {}
+				virtual ~DynamicEntity() = default;
+				//endregion
 
-    explicit DynamicEntity(int32_t value) : DynamicEntity(RdProperty<int32_t>(value)) {};
-    //endregion
+				explicit DynamicEntity(RdProperty <int32_t> &&foo) : foo(std::move(foo)) {}
 
-    static DynamicEntity read(SerializationCtx const &, Buffer const &buffer);
+				explicit DynamicEntity(int32_t value) : DynamicEntity(RdProperty<int32_t>(value)) {};
+				//endregion
 
-    void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
+				static DynamicEntity read(SerializationCtx const &, Buffer const &buffer);
 
-    static void create(IProtocol *protocol);
+				void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
 
-    void init(Lifetime lifetime) const override;
+				static void create(IProtocol *protocol);
 
-    void identify(IIdentities const &identities, RdId const &id) const override;
+				void init(Lifetime lifetime) const override;
 
-    friend bool operator==(const DynamicEntity &lhs, const DynamicEntity &rhs);
+				void identify(IIdentities const &identities, RdId const &id) const override;
 
-    friend bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs);
-};
+				friend bool operator==(const DynamicEntity &lhs, const DynamicEntity &rhs);
+
+				friend bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs);
+
+				std::string type_name() const override;
+			};
+		}
+	}
+}
 
 
 #endif //RD_CPP_DYNAMICENTITY_H

@@ -7,16 +7,18 @@
 
 #include <string>
 
-enum class AddRemove {
-    ADD, REMOVE
-};
+namespace rd {
+	enum class AddRemove {
+		ADD, REMOVE
+	};
 
-std::string to_string(AddRemove kind);
+	std::string to_string(AddRemove kind);
 
-enum class Op {
-    ADD, UPDATE, REMOVE, ACK
-};
+	enum class Op {
+		ADD, UPDATE, REMOVE, ACK
+	};
 
-std::string to_string(Op op);
+	std::string to_string(Op op);
+}
 
 #endif //RD_CPP_VIEWABLE_COLLECTIONS_H

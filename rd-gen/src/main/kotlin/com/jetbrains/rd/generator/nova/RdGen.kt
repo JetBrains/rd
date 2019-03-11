@@ -55,7 +55,7 @@ class RdGen : Kli() {
     val force =         option_flag(  'f',   "force", "Suppress incremental generation.")
     val clearOutput =   option_flag(  'x',   "clear", "Clear output folder before generation (if it is not incremental) ")
 
-    val packages =      option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rider.model.nova", "com,org")
+    val packages =      option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rd.model.nova", "com,org")
     val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp|cpp")
     val verbose =       option_flag(  'v',    "verbose", "Verbose output")
 

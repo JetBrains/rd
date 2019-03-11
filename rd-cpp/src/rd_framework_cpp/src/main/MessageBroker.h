@@ -8,43 +8,49 @@
 #include "IRdReactive.h"
 #include "Logger.h"
 
-class Mq {
-public:
-    //region ctor/dtor
+#include <unordered_map>
 
-    Mq() = default;
+namespace rd {
+	class Mq {
+	public:
+		//region ctor/dtor
 
-    Mq(Mq const &) = delete;
+		Mq() = default;
 
-    Mq(Mq &&) = default;
-    //endregion
+		Mq(Mq const &) = delete;
 
-    int32_t defaultSchedulerMessages = 0;
-    std::vector<Buffer> customSchedulerMessages;
-};
+		Mq(Mq &&) = default;
+		//endregion
 
-class MessageBroker {
-private:
-    IScheduler *defaultScheduler = nullptr;
-    mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
-    mutable std::unordered_map<RdId, Mq> broker;
+		int32_t defaultSchedulerMessages = 0;
+		std::vector<Buffer> customSchedulerMessages;
+	};
 
-    static rd::Logger logger;
+	class MessageBroker {
+	private:
+		IScheduler *defaultScheduler = nullptr;
+		mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
+		mutable std::unordered_map<RdId, Mq> broker;
 
-    void invoke(const IRdReactive *that, Buffer msg, bool sync = false) const;
+		mutable std::recursive_mutex lock;
 
-public:
+		static Logger logger;
 
-    //region Description
+		void invoke(const IRdReactive *that, Buffer msg, bool sync = false) const;
 
-    MessageBroker(MessageBroker &&) = default;
+	public:
 
-    explicit MessageBroker(IScheduler *defaultScheduler);
-    //endregion
+		//region Description
 
-    void dispatch(RdId id, Buffer message) const;
+		MessageBroker(MessageBroker &&) = default;
 
-    void advise_on(Lifetime lifetime, IRdReactive const *entity) const;
-};
+		explicit MessageBroker(IScheduler *defaultScheduler);
+		//endregion
+
+		void dispatch(RdId id, Buffer message) const;
+
+		void advise_on(Lifetime lifetime, IRdReactive const *entity) const;
+	};
+}
 
 #endif //RD_CPP_MESSAGEBROKER_H

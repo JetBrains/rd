@@ -6,140 +6,149 @@
 #define RD_CPP_CORE_VIEWABLELIST_H
 
 
-#include <base/IViewableList.h>
-#include "interfaces.h"
+#include "IViewableList.h"
 #include "SignalX.h"
+#include "core_util.h"
 
 #include <algorithm>
 
-template<typename T>
-class ViewableList : public IViewableList<T> {
-public:
-    using Event = typename IViewableList<T>::Event;
+namespace rd {
+	template<typename T>
+	class ViewableList : public IViewableList<T> {
+	public:
+		using Event = typename IViewableList<T>::Event;
 
-    template<typename V, typename S>
-    friend
-    class RdList;
+		template<typename V, typename S>
+		friend
+		class RdList;
 
-private:
-    mutable std::vector<std::shared_ptr<T> > list;
-    Signal<Event> change;
+	private:
+		mutable std::vector<Wrapper<T> > list;
+		Signal<Event> change;
 
-protected:
-    const std::vector<std::shared_ptr<T>> &getList() const override {
-        return list;
-    }
+	protected:
+		using WT = typename IViewableList<T>::WT;
 
-public:
+		const std::vector<Wrapper<T>> &getList() const override {
+			return list;
+		}
 
-    //region ctor/dtor
+	public:
 
-    ViewableList() = default;
+		//region ctor/dtor
 
-    ViewableList(ViewableList &&) = default;
+		ViewableList() = default;
 
-    ViewableList &operator=(ViewableList &&) = default;
+		ViewableList(ViewableList &&) = default;
 
-    virtual ~ViewableList() = default;
+		ViewableList &operator=(ViewableList &&) = default;
 
-    //endregion
+		virtual ~ViewableList() = default;
 
-    void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
-        if (lifetime->is_terminated()) return;
-        change.advise(std::move(lifetime), handler);
-        for (size_t i = 0; i < size(); ++i) {
-            handler(typename Event::Add(i, list[i].get()));
-        }
-    }
+		//endregion
 
-    bool add(T element) const override {
-        list.push_back(std::make_shared<T>(std::move(element)));
-        change.fire(typename Event::Add(size() - 1, list.back().get()));
-        return true;
-    }
+		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+			if (lifetime->is_terminated()) return;
+			change.advise(std::move(lifetime), handler);
+			for (size_t i = 0; i < size(); ++i) {
+				handler(typename Event::Add(i, &(*list[i])));
+			}
+		}
 
-    bool add(size_t index, T element) const override {
-        list.insert(list.begin() + index, std::make_shared<T>(std::move(element)));
-        change.fire(typename Event::Add(index, list[index].get()));
-        return true;
-    }
+		bool add(WT element) const override {
+			list.emplace_back(std::move(element));
+			change.fire(typename Event::Add(size() - 1, &(*list.back())));
+			return true;
+		}
 
-    T removeAt(size_t index) const override {
-        auto res = std::move(list[index]);
-        list.erase(list.begin() + index);
+		bool add(size_t index, WT element) const override {
+			list.emplace(list.begin() + index, std::move(element));
+			change.fire(typename Event::Add(index, &(*list[index])));
+			return true;
+		}
 
-        change.fire(typename Event::Remove(index, res.get()));
-        return std::move(*res);
-    }
+		WT removeAt(size_t index) const override {
+			auto res = std::move(list[index]);
+			list.erase(list.begin() + index);
 
-    bool remove(T const &element) const override {
-        auto it = std::find_if(list.begin(), list.end(), [&element](auto const &p) { return *p == element; });
-        if (it == list.end()) {
-            return false;
-        }
-        removeAt(std::distance(list.begin(), it));
-        return true;
-    }
+			change.fire(typename Event::Remove(index, &(*res)));
+			return wrapper::unwrap<T>(std::move(res));
+		}
 
-    T const &get(size_t index) const override {
-        return *list[index];
-    }
+		bool remove(T const &element) const override {
+			auto it = std::find_if(list.begin(), list.end(), [&element](auto const &p) { return *p == element; });
+			if (it == list.end()) {
+				return false;
+			}
+			removeAt(std::distance(list.begin(), it));
+			return true;
+		}
 
-    T set(size_t index, T element) const override {
-        auto old_value = std::move(list[index]);
-        list[index] = std::make_shared<T>(std::move(element));
-        change.fire(typename Event::Update(index, old_value.get(), list[index].get()));//???
-        return std::move(*old_value);
-    }
+		T const &get(size_t index) const override {
+			return *list[index];
+		}
 
-    bool addAll(size_t index, std::vector<T> elements) const override {
-        for (auto &element : elements) {
-            add(index, std::move(element));
-            ++index;
-        }
-        return true;
-    }
+		WT set(size_t index, WT element) const override {
+			auto old_value = std::move(list[index]);
+			list[index] = std::move(element);
+			change.fire(typename Event::Update(index, &(*old_value), &(*list[index])));//???
+			return wrapper::unwrap<T>(std::move(old_value));
+		}
 
-    bool addAll(std::vector<T> elements) const override {
-        for (auto &element : elements) {
-            add(std::move(element));
-        }
-        return true;
-    }
+		bool addAll(size_t index, std::vector<WT> elements) const override {
+			for (auto &element : elements) {
+				add(index, std::move(element));
+				++index;
+			}
+			return true;
+		}
 
-    void clear() const override {
-        std::vector<Event> changes;
-        for (size_t i = size(); i > 0; --i) {
-            changes.push_back(typename Event::Remove(i - 1, list[i - 1].get()));
-        }
-        for (auto const &e : changes) {
-            change.fire(e);
-        }
-        list.clear();
-    }
+		bool addAll(std::vector<WT> elements) const override {
+			for (auto &&element : elements) {
+				add(std::move(element));
+			}
+			return true;
+		}
 
-    bool removeAll(std::vector<T> elements) const override { //todo faster
-//        std::unordered_set<T> set(elements.begin(), elements.end());
+		void clear() const override {
+			std::vector<Event> changes;
+			for (size_t i = size(); i > 0; --i) {
+				changes.push_back(typename Event::Remove(i - 1, &(*list[i - 1])));
+			}
+			for (auto const &e : changes) {
+				change.fire(e);
+			}
+			list.clear();
+		}
 
-        bool res = false;
-        for (size_t i = list.size(); i > 0; --i) {
-            if (std::count(elements.begin(), elements.end(), *list[i - 1]) > 0) {
-                removeAt(i - 1);
-                res = true;
-            }
-        }
-        return res;
-    }
+		bool removeAll(std::vector<WT> elements) const override { //todo faster
+			//        std::unordered_set<T> set(elements.begin(), elements.end());
 
-    size_t size() const override {
-        return list.size();
-    }
+			bool res = false;
+			for (size_t i = list.size(); i > 0; --i) {
+				auto const &x = list[i - 1];
+				if (std::count_if(elements.begin(), elements.end(), [this, &x](auto const &elem) {
+									  return TransparentKeyEqual<T>()(elem, x);
+								  }
+				) > 0) {
+					removeAt(i - 1);
+					res = true;
+				}
+			}
+			return res;
+		}
 
-    bool empty() const override {
-        return list.empty();
-    }
-};
+		size_t size() const override {
+			return list.size();
+		}
 
-static_assert(std::is_move_constructible<ViewableList<int> >::value, "Is move constructible from ViewableList<int>");
+		bool empty() const override {
+			return list.empty();
+		}
+	};
+}
+
+static_assert(std::is_move_constructible<rd::ViewableList<int> >::value,
+			  "Is move constructible from ViewableList<int>");
 
 #endif //RD_CPP_CORE_VIEWABLELIST_H

@@ -1,15 +1,15 @@
 package com.jetbrains.rd.framework.test.cases.demo
 
-//import com.jetbrains.rider.framework.test.util.NetUtils
-//import com.jetbrains.rider.framework.test.util.TestScheduler
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.test.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
+import org.example.DemoModel
+import org.example.extModel
 import java.io.File
 
-var scheduler : IScheduler? = null
+var scheduler: IScheduler? = null
 
 fun server(lifetime: Lifetime, port: Int? = null): Protocol {
     scheduler = SingleThreadScheduler(lifetime, "SingleThreadScheduler")
@@ -17,7 +17,7 @@ fun server(lifetime: Lifetime, port: Int? = null): Protocol {
             SocketWire.Server(lifetime, scheduler as SingleThreadScheduler, port, "DemoServer"), lifetime)
 }
 
-fun main(args: Array<String>) {
+fun main() {
     val lifetimeDef = Lifetime.Eternal.createNested()
     val socketLifetimeDef = Lifetime.Eternal.createNested()
 
