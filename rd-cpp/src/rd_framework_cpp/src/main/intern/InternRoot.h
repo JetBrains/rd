@@ -41,11 +41,10 @@ namespace rd {
 
 		template<typename T>
 		void set_interned_correspondence(int32_t id, T &&value) const {
-			MY_ASSERT_MSG(!is_index_owned(id),
-						  "Setting interned correspondence for object that we should have written, bug?")
+			MY_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
 
-			otherItemsList[id / 2] = std::forward<T>(value);
-			inverseMap[value] = id;
+			otherItemsList[id / 2] = value;
+			inverseMap[std::forward<T>(value)] = id;
 		}
 
 		static constexpr bool is_index_owned(int32_t id) {
@@ -108,6 +107,8 @@ namespace rd {
 				}
 				buffer.write_integral<int32_t>(index);
 			});
+		} else {
+			index = it->second;
 		}
 		if (inverseMap.count(value) == 0) {
 			inverseMap[value] = index;
