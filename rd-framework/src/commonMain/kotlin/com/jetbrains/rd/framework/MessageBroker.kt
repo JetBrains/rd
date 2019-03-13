@@ -91,7 +91,6 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                 } else {
                     val mq = broker[id]
                     if (mq != null) {
-                        require(mq.defaultSchedulerMessages.isNotEmpty())
                         mq.customSchedulerMessages.add(message)
                     } else {
                         s.invoke(message)
