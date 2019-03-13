@@ -1,10 +1,12 @@
 package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
+import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
 import org.junit.After
 import org.junit.AfterClass
+import org.junit.Before
 import org.junit.BeforeClass
 import kotlin.test.AfterTest
 
@@ -46,6 +48,16 @@ open class RdAsyncTestBase : RdFrameworkTestBase() {
 
     override val serverScheduler: IScheduler
         get() = serverUiScheduler
+
+    @Before
+    fun clearErrorsBeforeTest() {
+        ErrorAccumulatorLoggerFactory.errors.clear()
+    }
+
+    @After
+    fun reportErrorsAfterTest() {
+        ErrorAccumulatorLoggerFactory.throwAndClear()
+    }
 
     @AfterTest
     fun tearDownSchedulers() {
