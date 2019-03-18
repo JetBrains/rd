@@ -58,23 +58,25 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                 defaultScheduler.queue {
                     val subscription = subscriptions[id] //no lock because can be changed only under default scheduler
 
+                    val message = synchronized(lock) {
+                        if (currentIdBroker.defaultSchedulerMessages.isNotEmpty())
+                            currentIdBroker.defaultSchedulerMessages.removeAt(0)
+                        else // messages could have been consumed by adviseOn
+                            null
+                    }
+
                     // no lock for processing broker contents as all additions happen before subscriptions[id] write,
                     // and it happens on default scheduler (asserted) before this handler is executed
                     // also, if adviseOn executes messages, it clears this list, also on the same thread as this
                     if (subscription == null) {
                         log.trace { "No handler for id: $id" }
-                    } else if(currentIdBroker.defaultSchedulerMessages.isNotEmpty()) {
-                        currentIdBroker.defaultSchedulerMessages[0].let {
-                            subscription.invoke(it, sync = subscription.wireScheduler == defaultScheduler)
-                        }
+                    } else if(message != null) {
+                        subscription.invoke(message, sync = subscription.wireScheduler == defaultScheduler)
                     }
 
                     synchronized(lock) {
-                        if (currentIdBroker.defaultSchedulerMessages.isNotEmpty())
-                            currentIdBroker.defaultSchedulerMessages.removeAt(0)
-
                         if (currentIdBroker.defaultSchedulerMessages.isEmpty())
-                            broker.remove(id)?.customSchedulerMessages?.forEach {
+                            broker.remove(id)?.customSchedulerMessages?.forEach { // use result of remove for reentrancy cases
                                 subscription?.apply {
                                     require(wireScheduler != defaultScheduler)
                                     subscription.invoke(it)
@@ -89,7 +91,6 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                 } else {
                     val mq = broker[id]
                     if (mq != null) {
-                        require(mq.defaultSchedulerMessages.isNotEmpty())
                         mq.customSchedulerMessages.add(message)
                     } else {
                         s.invoke(message)
