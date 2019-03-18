@@ -68,7 +68,7 @@ namespace rd {
 		void assert_bound() const;
 
 		template<typename F>
-		auto local_change(F &&action) const -> typename std::result_of<F()>::type {
+		auto local_change(F &&action) const -> typename std::result_of_t<F()> {
 			if (is_bound() && !async) {
 				assert_threading();
 			}

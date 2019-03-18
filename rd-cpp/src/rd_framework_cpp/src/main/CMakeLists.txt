@@ -49,7 +49,7 @@ add_library(rd_framework_cpp STATIC
         RdId.cpp RdId.h
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
-        serialization/AnySerializer.h)
+        serialization/InternedAnySerializer.h)
 
 add_subdirectory(util)
 

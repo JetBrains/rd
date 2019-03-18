@@ -7,12 +7,12 @@
 
 #include "IScheduler.h"
 #include "WireBase.h"
-
-#include "ActiveSocket.h"
-#include "PassiveSocket.h"
-#include "SimpleSocket.h"
 #include "Logger.h"
 #include "ByteBufferAsyncProcessor.h"
+
+#include "SimpleSocket.h"
+#include "ActiveSocket.h"
+#include "PassiveSocket.h"
 
 #include <string>
 #include <array>

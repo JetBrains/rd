@@ -37,7 +37,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>::type
+	typename std::enable_if_t<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>
 	inline identifyPolymorphic(T &&, Identities const &identities, RdId const &id) {}
 
 //template <>
@@ -46,7 +46,7 @@ namespace rd {
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_base_of<IRdBindable, T>::value>::type
+	typename std::enable_if_t<std::is_base_of<IRdBindable, T>::value>
 	inline identifyPolymorphic(std::vector<T> const &that, Identities const &identities, RdId const &id) {
 		for (size_t i = 0; i < that.size(); ++i) {
 			that[i].identify(identities, id.mix(static_cast<int32_t >(i)));
@@ -54,7 +54,7 @@ namespace rd {
 	}
 
 	template<typename T>
-	typename std::enable_if<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>::type
+	typename std::enable_if_t<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>
 	inline bindPolymorphic(T &&, Lifetime lf, const IRdDynamic *parent, std::string const &name) {}
 
 	inline void
@@ -63,7 +63,7 @@ namespace rd {
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_base_of<IRdBindable, T>::value>::type
+	typename std::enable_if_t<std::is_base_of<IRdBindable, T>::value>
 	inline
 	bindPolymorphic(std::vector<T> const &that, Lifetime lf, IRdDynamic const *parent, std::string const &name) {
 		for (auto &obj : that) {

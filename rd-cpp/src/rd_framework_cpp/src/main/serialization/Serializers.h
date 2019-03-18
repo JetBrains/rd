@@ -38,14 +38,14 @@ namespace rd {
 		static void real_write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value);
 
 
-		mutable std::unordered_map<RdId, std::function<RdAny(SerializationCtx const &, Buffer const &)>> readers;
+		mutable std::unordered_map<RdId, std::function<InternedAny(SerializationCtx const &, Buffer const &)>> readers;
 	public:
 		Serializers();
 
-		template<typename T, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type>
+		template<typename T, typename = typename std::enable_if_t<util::is_base_of_v<IPolymorphicSerializable, T>>>
 		void registry() const;
 
-		tl::optional<RdAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const;
+		tl::optional<InternedAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const;
 
 		template<typename T>
 		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const;
@@ -71,13 +71,13 @@ namespace rd {
 		MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
 		readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> Wrapper<IPolymorphicSerializable> {
-			return std::make_shared<T>(T::read(ctx, buffer));
+			return wrapper::make_wrapper<T>(T::read(ctx, buffer));
 		};
 	}
 
 	template<typename T>
 	value_or_wrapper<T> Serializers::readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const {
-		tl::optional<RdAny> any = readAny(ctx, buffer);
+		tl::optional<InternedAny> any = readAny(ctx, buffer);
 		return any::get<T>(*(std::move(any)));
 	}
 

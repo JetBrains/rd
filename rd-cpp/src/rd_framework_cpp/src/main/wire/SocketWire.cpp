@@ -71,12 +71,12 @@ namespace rd {
 		id.write(local_send_buffer); //write id
 		writer(local_send_buffer); //write rest
 
-		int32_t len = local_send_buffer.get_position();
+		int32_t len = static_cast<int32_t>(local_send_buffer.get_position());
 
-		int32_t position = local_send_buffer.get_position();
+		int32_t position = static_cast<int32_t>(local_send_buffer.get_position());
 		local_send_buffer.rewind();
 		local_send_buffer.write_integral<int32_t>(len - 4);
-		local_send_buffer.set_position(position);
+		local_send_buffer.set_position(static_cast<size_t>(position));
 		async_send_buffer.put(std::move(local_send_buffer).getRealArray());
 		local_send_buffer.rewind();
 	}

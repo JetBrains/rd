@@ -163,7 +163,7 @@ TEST(BufferTest, NullableSerializer) {
 	using S = Polymorphic<T>;
 	using NS = NullableSerializer<S>;
 
-	std::vector<tl::optional<T>> list{
+	std::vector<Wrapper<T>> list{
 			tl::nullopt,
 			L"1",
 			L"2",
@@ -177,7 +177,7 @@ TEST(BufferTest, NullableSerializer) {
 	}
 	buffer.write_integral<int32_t>(-1);
 
-	int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, tl::optional<T> const &s) {
+	int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<T> const &s) {
 		if (s) {
 			acc += 4 + 2 * s->size(); //1 - nullable flag, 4 - length siz, 2 - symbol size
 		} else {
@@ -208,7 +208,7 @@ TEST(BufferTest, ArraySerializer) {
 	using S = Polymorphic<T>;
 	using AS = ArraySerializer<S>;
 
-	std::vector<T> list{
+	std::vector<Wrapper<T>> list{
 			L"start"
 			L"1",
 			L"2",
@@ -220,8 +220,8 @@ TEST(BufferTest, ArraySerializer) {
 	AS::write(ctx, buffer, list);
 	buffer.write_integral<int32_t>(-1);
 
-	int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, std::wstring const &s) {
-		acc += 4 + 2 * s.size(); //4 - length siz, 2 - symbol size
+	int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<std::wstring> const &s) {
+		acc += 4 + 2 * s->size(); //4 - length siz, 2 - symbol size
 		return acc;
 	});
 	EXPECT_EQ(buffer.get_position(), (

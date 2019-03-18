@@ -85,12 +85,12 @@ namespace rd {
 */
 
 	template<typename T>
-	typename std::enable_if<std::is_arithmetic<T>::value, std::string>::type to_string(T const &val) {
+	typename std::enable_if_t<std::is_arithmetic<T>::value, std::string> to_string(T const &val) {
 		return std::to_string(val);
 	}
 
 	template<typename T>
-	typename std::enable_if<!std::is_arithmetic<T>::value, std::string>::type to_string(T const &val) {
+	typename std::enable_if_t<!std::is_arithmetic<T>::value, std::string> to_string(T const &val) {
 		return "";
 	}
 

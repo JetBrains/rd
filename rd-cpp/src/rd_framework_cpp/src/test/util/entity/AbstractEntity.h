@@ -54,7 +54,7 @@ namespace rd {
 									int32_t size);
 
 				//writer
-				virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const override = 0;
+				void write(SerializationCtx const &ctx, Buffer const &buffer) const override = 0;
 
 				//virtual init
 
