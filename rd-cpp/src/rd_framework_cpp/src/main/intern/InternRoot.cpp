@@ -1,7 +1,7 @@
 #include "InternRoot.h"
 
 #include "AbstractPolymorphic.h"
-#include "AnySerializer.h"
+#include "InternedAnySerializer.h"
 
 namespace rd {
 	InternRoot::InternRoot() {
@@ -13,7 +13,7 @@ namespace rd {
 	}
 
 	void InternRoot::on_wire_received(Buffer buffer) const {
-		tl::optional<RdAny> value = AnySerializer::read(get_serialization_context(), buffer);
+		tl::optional<InternedAny> value = InternedAnySerializer::read(get_serialization_context(), buffer);
 		if (!value) {
 			return;
 		}

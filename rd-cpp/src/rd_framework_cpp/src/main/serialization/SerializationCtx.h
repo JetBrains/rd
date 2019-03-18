@@ -12,6 +12,7 @@
 #include <functional>
 #include <string>
 #include <utility>
+#include <regex>
 
 namespace rd {
 	//region predeclared
@@ -50,11 +51,12 @@ namespace rd {
 		//endregion
 
 		template<typename T, util::hash_t InternKey>
-		T readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const;
+		Wrapper<T> readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const;
 
-		template<typename T, util::hash_t InternKey>
-		void writeInterned(Buffer const &buffer, T const &value,
-						   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const;
+		template<typename T, util::hash_t InternKey, typename F,
+				typename = decltype(std::declval<SerializationCtx>(), std::declval<Buffer>(), std::declval<Wrapper<T>>())>
+		void writeInterned(Buffer const &buffer, Wrapper<T> const &value, F&& writeValueDelegate) const;
+
 	};
 }
 
@@ -62,25 +64,24 @@ namespace rd {
 
 namespace rd {
 	template<typename T, util::hash_t InternKey>
-	T SerializationCtx::readInterned(Buffer const &buffer, std::function<T(const SerializationCtx &, const Buffer &)> readValueDelegate) const {
+	Wrapper<T> SerializationCtx::readInterned(Buffer const &buffer, std::function<T(const SerializationCtx &, const Buffer &)> readValueDelegate) const {
 		auto it = intern_roots.find(InternKey);
 		if (it != intern_roots.end()) {
 			int32_t index = buffer.read_integral<int32_t>() ^1;
 			return it->second->un_intern_value<T>(index);
 		} else {
-			return readValueDelegate(*this, buffer);
+			return wrapper::make_wrapper<T>(readValueDelegate(*this, buffer));
 		}
 	}
 
-	template<typename T, util::hash_t InternKey>
-	void SerializationCtx::writeInterned(Buffer const &buffer, T const &value,
-					   std::function<void(SerializationCtx const &, Buffer const &, T const &)> writeValueDelegate) const {
+	template<typename T, util::hash_t InternKey, typename F, typename>
+	void SerializationCtx::writeInterned(Buffer const &buffer, const Wrapper<T> &value, F&& writeValueDelegate) const {
 		auto it = intern_roots.find(InternKey);
 		if (it != intern_roots.end()) {
 			int32_t index = it->second->intern_value<T>(value);
 			buffer.write_integral<int32_t>(index);
 		} else {
-			writeValueDelegate(*this, buffer, value);
+			writeValueDelegate(*this, buffer, *value);
 		}
 	}
 }

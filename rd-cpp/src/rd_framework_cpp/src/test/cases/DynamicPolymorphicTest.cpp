@@ -30,6 +30,13 @@ using S = AbstractPolymorphic<AbstractEntity>;
 using DSignal = RdSignal<AbstractEntity, S>;
 using DSignalTest = RdFrameworkDynamicPolymorphicTestBase<DSignal>;
 
+TEST(DSignalTest, wrapper_cast) {
+	Wrapper<ConcreteEntity> value_a{L"A"};
+	Wrapper<AbstractEntity> value_a_interface = static_cast<Wrapper<AbstractEntity>>(value_a);
+	Wrapper<ConcreteEntity> value_a_new = Wrapper<ConcreteEntity>::dynamic(value_a_interface);
+	EXPECT_EQ(value_a, value_a_new);
+}
+
 TEST_F(DSignalTest, dynamic_polymorphic_signal) {
 	ConcreteEntity value_a{L"A"};
 	std::vector<std::wstring> log;
@@ -96,7 +103,8 @@ TEST_F(DPropertyTest, dynamic_polymorphic_property_cast) {
 using DList = RdList<AbstractEntity, S>;
 using DListTest = RdFrameworkDynamicPolymorphicTestBase<DList>;
 
-TEST_F(DListTest, dynamic_polymorphic_list) {
+TEST_F(DListTest, dynamic_polymorphic_list)
+{
 	std::vector<std::string> log;
 	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DList::Event e) {

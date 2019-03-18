@@ -7,6 +7,7 @@
 #include "InterningTestBase.h"
 #include "InterningNestedTestStringModel.h"
 #include "InterningNestedTestModel.h"
+#include "InterningTestModel.h"
 #include "PropertyHolderWithInternRoot.h"
 
 using namespace rd;
@@ -14,27 +15,27 @@ using namespace rd::test;
 using namespace rd::test::util;
 
 TEST_F(InterningTestBase, testServerToClient) {
-	doTest(false, false);
+	testIntern(false, false);
 }
 
 TEST_F(InterningTestBase, testClientToServer) {
-	doTest(true, true);
+	testIntern(true, true);
 }
 
 TEST_F(InterningTestBase, testServerThenClientMixed) {
-	doTest(false, true);
+	testIntern(false, true);
 }
 
 TEST_F(InterningTestBase, testClientThenServerMixed) {
-	doTest(true, false);
+	testIntern(true, false);
 }
 
 TEST_F(InterningTestBase, testServerThenClientMixedAndReversed) {
-	doTest(false, true, true);
+	testIntern(false, true, true);
 }
 
 TEST_F(InterningTestBase, testClientThenServerMixedAndReversed) {
-	doTest(true, false, true);
+	testIntern(true, false, true);
 }
 
 TEST_F(InterningTestBase, testLateBindOfObjectWithContent) {
@@ -126,7 +127,7 @@ TEST_F(InterningTestBase, testNestedInternedObjectsOnSameData) {
 	auto testValue = wrapper::make_wrapper<InterningNestedTestStringModel>(sameString, *nested1);
 	//todo wrapper nullopt
 
-	auto firstSendBytes = measureBytes(serverProtocol.get(), [&]() {
+	auto firstSendBytes = measureBytes(serverProtocol.get(), [&] {
 		server_property_view.set(*testValue);
 		EXPECT_EQ(*testValue, client_property_view.get());
 	});

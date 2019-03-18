@@ -47,7 +47,7 @@ namespace rd {
 		void terminate();
 
 		template<typename F>
-		static auto use(F &&block) -> typename std::result_of<F(Lifetime)>::type {
+		static auto use(F &&block) -> typename std::result_of_t<F(Lifetime)> {
 			LifetimeDefinition definition(false);
 			Lifetime lw = definition.lifetime.create_nested();
 			return block(lw);

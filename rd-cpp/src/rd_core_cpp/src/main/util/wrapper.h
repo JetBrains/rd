@@ -5,6 +5,8 @@
 #ifndef RD_CPP_WRAPPER_H
 #define RD_CPP_WRAPPER_H
 
+#include "traits.h"
+
 #include "optional.hpp"
 
 #include <type_traits>
@@ -24,7 +26,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	struct helper<T, typename std::enable_if<std::is_abstract<T>::value>::type> {
+	struct helper<T, typename std::enable_if_t<util::in_heap_v<T>>> {
 		using value_or_wrapper_type = Wrapper<T>;
 		using opt_or_wrapper_type = Wrapper<T>;
 		using property_storage = Wrapper<T>;
@@ -75,14 +77,16 @@ namespace rd {
 
 		explicit constexpr Wrapper(std::nullptr_t) noexcept {}
 
-		template<typename R, typename = typename std::enable_if<std::is_base_of<T, R>::value>::type>
-		Wrapper(Wrapper<R> const &other) noexcept : Wrapper(static_cast<Wrapper<T>>(other)) {}
+		template<typename R, typename = typename std::enable_if_t<util::is_base_of_v<T, R>>>
+		Wrapper(Wrapper<R> const &other) : Wrapper(std::static_pointer_cast<T>(static_cast<std::shared_ptr<R>>(other))) {}
 
-		template<typename R, typename = typename std::enable_if<std::is_base_of<T, R>::value>::type>
-		Wrapper(Wrapper<R> &&other) noexcept : Wrapper(static_cast<Wrapper<T>>(std::move(other))) {}
+		template<typename R, typename = typename std::enable_if_t<util::is_base_of_v<T, R>>>
+		Wrapper(Wrapper<R> &&other) : Wrapper(std::static_pointer_cast<T>(std::move(other))) {}
 
-		template<typename F, typename = typename std::enable_if<!std::is_abstract<std::decay_t<F>>::value>::type>
-		Wrapper(F &&value) : Base(std::make_shared<std::decay_t<F>>(std::forward<F>(value))) {}
+		template<typename F/*, typename = typename std::enable_if<!util::in_heap_v<std::decay_t<F>>>::type*/>
+		Wrapper(F &&value) {
+//			Base::operator=(std::make_shared<typename util::not_string_literal<F&&>::type >(std::forward<F>(value)));
+		}
 
 		template<typename F>
 		Wrapper(std::shared_ptr<F> const &ptr) noexcept : Base(std::static_pointer_cast<T>(ptr)) {}
@@ -90,7 +94,7 @@ namespace rd {
 		template<typename F>
 		Wrapper(std::shared_ptr<F> &&ptr) noexcept : Base(std::static_pointer_cast<T>(std::move(ptr))) {}
 
-		template<typename U = T, typename R = typename std::enable_if<!std::is_abstract<std::decay_t<U>>::value>::type>
+		template<typename U = T, typename R = typename std::enable_if_t<!util::in_heap_v<std::decay_t<U>>>>
 		Wrapper(tl::optional<T> &&opt) {
 			if (opt) {
 				*this = std::make_shared<T>(*std::move(opt));
@@ -121,11 +125,27 @@ namespace rd {
 			return *ptr.get();
 		};*/
 
+		T const *operator->() const {
+			return Base::operator->();
+		}
+
+		T *operator->() {
+			return Base::operator->();
+		}
+
 		constexpr explicit operator bool() const noexcept {
 			return Base::operator bool();
 		}
 
 		friend bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
+			bool is_lhs = (bool)lhs;
+			bool is_rhs = (bool)rhs;
+			if (is_lhs != is_rhs) {
+				return false;
+			}
+			if (!is_lhs && !is_rhs) {
+				return true;
+			}
 			return *lhs.get() == *rhs.get();
 		}
 
@@ -166,12 +186,12 @@ namespace rd {
 		}*/
 
 		template<typename T>
-		typename std::enable_if<!std::is_abstract<T>::value, T>::type unwrap(Wrapper<T> &&ptr) {
+		typename std::enable_if_t<!util::in_heap_v<T>, T> unwrap(Wrapper<T> &&ptr) {
 			return std::move(*ptr);
 		}
 
 		template<typename T>
-		typename std::enable_if<std::is_abstract<T>::value, Wrapper<T>>::type unwrap(Wrapper<T> &&ptr) {
+		typename std::enable_if_t<util::in_heap_v<T>, Wrapper<T>> unwrap(Wrapper<T> &&ptr) {
 			return Wrapper<T>(std::move(ptr));
 		}
 

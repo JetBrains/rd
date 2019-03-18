@@ -50,7 +50,7 @@ namespace rd {
 		virtual void fire(T const &value) const = 0;
 		
 		template<typename U = T>
-		typename std::enable_if<std::is_same<U, Void>::value>::type fire() const {
+		typename std::enable_if_t<util::is_void<U>> fire() const {
 			fire(Void{});
 		}
 	};

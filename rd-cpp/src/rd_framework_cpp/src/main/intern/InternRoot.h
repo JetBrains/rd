@@ -28,12 +28,12 @@ namespace rd {
 	class InternRoot final : public RdReactiveBase {
 	private:
 		// template<typename T>
-		mutable std::vector<RdAny> myItemsList;
+		mutable std::vector<InternedAny> myItemsList;
 
 		// template<typename T>
-		mutable tsl::ordered_map<int32_t, RdAny> otherItemsList;
+		mutable tsl::ordered_map<int32_t, InternedAny> otherItemsList;
 		// template<typename T>
-		mutable tsl::ordered_map<RdAny, int32_t, any::TransparentHash, any::TransparentKeyEqual> inverseMap;
+		mutable tsl::ordered_map<InternedAny, int32_t, any::TransparentHash, any::TransparentKeyEqual> inverseMap;
 
 		mutable InternScheduler intern_scheduler;
 
@@ -58,10 +58,10 @@ namespace rd {
 		//endregion
 
 		template<typename T>
-		int32_t intern_value(const value_or_wrapper<T> &value) const;
+		int32_t intern_value(const Wrapper<T> &value) const;
 
 		template<typename T>
-		value_or_wrapper<T> un_intern_value(int32_t id) const;
+		Wrapper<T> un_intern_value(int32_t id) const;
 
 		IScheduler *get_wire_scheduler() const override;
 
@@ -75,7 +75,7 @@ namespace rd {
 
 #pragma warning( pop )
 
-#include "AnySerializer.h"
+#include "InternedAnySerializer.h"
 
 namespace rd {
 	/*template<typename T>
@@ -88,18 +88,17 @@ namespace rd {
 	tsl::ordered_map<value_or_wrapper<T>, int32_t> InternRoot::inverseMap = {};*/
 
 	template<typename T>
-	value_or_wrapper<T> InternRoot::un_intern_value(int32_t id) const {
-		auto const& v = (any::get<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]));
-		return wrapper::get(v);
+	Wrapper<T> InternRoot::un_intern_value(int32_t id) const {
+		return any::get<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]);
 	}
 
 	template<typename T>
-	int32_t InternRoot::intern_value(const value_or_wrapper<T> &value) const {
-		auto it = inverseMap.find(value);
+	int32_t InternRoot::intern_value(const Wrapper<T> &value) const {
+//		auto it = inverseMap.find(value);
 		int32_t index = 0;
-		if (it == inverseMap.end()) {
+		/*if (it == inverseMap.end()) {
 			get_protocol()->get_wire()->send(this->rdid, [this, &index, &value](Buffer const &buffer) {
-				AnySerializer::write<T>(get_serialization_context(), buffer, wrapper::get<T>(value));
+				InternedAnySerializer::write<T>(get_serialization_context(), buffer, wrapper::get<T>(value));
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
 					index = static_cast<int32_t>(myItemsList.size()) * 2; //todo change to global counter
@@ -112,7 +111,7 @@ namespace rd {
 		}
 		if (inverseMap.count(value) == 0) {
 			inverseMap[value] = index;
-		}
+		}*/
 		return index;
 	}
 }

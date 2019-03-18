@@ -18,8 +18,7 @@ namespace rd {
 				RdProperty <T> property;
 				tl::optional<SerializationCtx> mySerializationContext;
 
-				explicit PropertyHolderWithInternRoot(RdProperty<T> property) :
-						property(std::move(property)), mySerializationContext(std::move(mySerializationContext)) {}
+				explicit PropertyHolderWithInternRoot(RdProperty <T> property) : property(std::move(property)) {}
 
 				void init(Lifetime lifetime) const override {
 					property.bind(lifetime, this, "propertyHolderWithInternRoot");

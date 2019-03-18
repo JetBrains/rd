@@ -6,6 +6,7 @@
 #define RD_CPP_UNSAFEBUFFER_H
 
 #include "core_util.h"
+#include "wrapper.h"
 
 #include "optional.hpp"
 
@@ -37,7 +38,7 @@ namespace rd {
 	public:
 		//region ctor/dtor
 
-		explicit Buffer(int32_t initialSize = 10); //todo
+		explicit Buffer(size_t initialSize = 10); //todo
 
 		explicit Buffer(const ByteArray &array, size_t offset = 0);
 
@@ -56,19 +57,19 @@ namespace rd {
 
 		void rewind() const;
 
-		template<typename T, typename = typename std::enable_if<std::is_integral<T>::value, T>::type>
+		template<typename T, typename = typename std::enable_if_t<std::is_integral<T>::value, T>>
 		T read_integral() const {
 			T result;
 			read(reinterpret_cast<word_t *>(&result), sizeof(T));
 			return result;
 		}
 
-		template<typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+		template<typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 		void write_integral(T const &value) const {
 			write(reinterpret_cast<word_t const *>(&value), sizeof(T));
 		}
 
-		template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
+		template<typename T, typename = typename std::enable_if_t<std::is_floating_point<T>::value, T>>
 		T read_floating_point() const {
 			T result;
 			read(reinterpret_cast<word_t *>(&result), sizeof(T));
@@ -76,7 +77,7 @@ namespace rd {
 			//todo check correctness
 		}
 
-		template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
+		template<typename T, typename = typename std::enable_if_t<std::is_floating_point<T>::value>>
 		void write_floating_point(T const &value) const {
 			write(reinterpret_cast<word_t const *>(&value), sizeof(T));
 			//todo check correctness
@@ -108,10 +109,18 @@ namespace rd {
 		}
 
 		template<typename T>
-		void writeArray(std::vector<value_or_wrapper<T>> const &array, std::function<void(T const &)> writer) const {
+		void writeArray(std::vector<T> const &array, std::function<void(T const &)> writer) const {
 			write_integral<int32_t>(array.size());
 			for (auto const &e : array) {
 				writer(e);
+			}
+		}
+
+		template<typename T>
+		void writeArray(std::vector<Wrapper<T>> const &array, std::function<void(T const &)> writer) const {
+			write_integral<int32_t>(array.size());
+			for (auto const &e : array) {
+				writer(*e);
 			}
 		}
 
@@ -131,6 +140,8 @@ namespace rd {
 
 		void writeWString(std::wstring const &value) const;
 
+		void writeWString(Wrapper<std::wstring> const &value) const;
+
 		template<typename T>
 		T readEnum() const {
 			int32_t x = read_integral<int32_t>();
@@ -142,8 +153,19 @@ namespace rd {
 			write_integral<int32_t>(static_cast<int32_t>(x));
 		}
 
-		template<typename T>
-		opt_or_wrapper<T> readNullable(std::function<T()> reader) const {
+		template<typename T, typename F,
+				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, T>>>
+		tl::optional<T> readNullable(F &&reader) const {
+			bool nullable = !readBool();
+			if (nullable) {
+				return {};
+			}
+			return tl::make_optional<T>(reader());
+		}
+
+		template<typename T, typename F,
+				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, Wrapper<T>>>>
+		Wrapper<T> readNullable(F &&reader) const {
 			bool nullable = !readBool();
 			if (nullable) {
 				return {};
@@ -152,11 +174,10 @@ namespace rd {
 		}
 
 		template<typename T>
-		void writeNullable(opt_or_wrapper<T> const &value, std::function<void(T const &)> writer) const {
+		void writeNullable(tl::optional<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
-			}
-			else {
+			} else {
 				writeBool(true);
 				writer(*value);
 			}
@@ -166,10 +187,19 @@ namespace rd {
 		void writeNullable(Wrapper<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
-			}
-			else {
+			} else {
 				writeBool(true);
 				writer(*value);
+			}
+		}
+
+		template<typename T, typename F, typename = decltype(F(std::declval<Wrapper<T>>()))>
+		void writeNullable(Wrapper<T> const &value, F &&writer) const {
+			if (!value) {
+				writeBool(false);
+			} else {
+				writeBool(true);
+				writer(value);
 			}
 		}
 

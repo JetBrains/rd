@@ -6,14 +6,16 @@
 
 #include "ConcreteEntity.h"
 
+#include "traits.h"
+
 #include <type_traits>
 
 namespace rd {
 	namespace test {
 		namespace util {
 			template<typename S, typename C = S, typename T = ConcreteEntity,
-					typename = typename std::enable_if<std::is_base_of<RdReactiveBase, S>::value>::type,
-					typename = typename std::enable_if<std::is_base_of<RdReactiveBase, C>::value>::type
+					typename = typename std::enable_if_t<::rd::util::is_base_of_v<RdReactiveBase, S>>,
+					typename = typename std::enable_if_t<::rd::util::is_base_of_v<RdReactiveBase, C>>
 			>
 			class RdFrameworkDynamicPolymorphicTestBase : public RdFrameworkTestBase {
 			public:

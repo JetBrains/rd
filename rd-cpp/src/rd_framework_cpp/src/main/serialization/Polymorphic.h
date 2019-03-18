@@ -31,7 +31,7 @@ namespace rd {
 
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_integral<T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<std::is_integral<T>::value>> {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return buffer.read_integral<T>();
@@ -43,7 +43,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<std::is_floating_point<T>::value>> {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return buffer.read_floating_point<T>();
@@ -90,6 +90,10 @@ namespace rd {
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value) {
 			buffer.writeWString(value);
 		}
+
+		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<std::wstring> const &value) {
+			buffer.writeWString(*value);
+		}
 	};
 
 	template<>
@@ -103,7 +107,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_base_of<RdReactiveBase, T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<util::is_base_of_v<RdReactiveBase, T>>> {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return T::read(ctx, buffer);
@@ -115,7 +119,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_enum<T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<std::is_enum<T>::value>> {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return buffer.readEnum<T>();

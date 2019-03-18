@@ -27,11 +27,11 @@ namespace rd {
 
 		mutable std::unique_ptr<SerializationCtx> context;
 
-		std::unique_ptr<InternRoot> internRoot;
+		mutable std::unique_ptr<InternRoot> internRoot;
 
 		//region ctor/dtor
 	private:
-		void initialize();
+		void initialize() const ;
 	public:
 		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 

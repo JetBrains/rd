@@ -19,71 +19,70 @@ namespace rd {
 	namespace any {
 		using super_t = IPolymorphicSerializable;
 		using wrapped_super_t = Wrapper<super_t>;
+		using string = Wrapper<std::wstring>;
 	}
-	using RdAny = mpark::variant<any::wrapped_super_t, std::wstring>;
+	using InternedAny = mpark::variant<any::wrapped_super_t, any::string>;
 
 	namespace any {
 		template<typename T, typename Any>
-		typename std::enable_if<!std::is_base_of<IPolymorphicSerializable, T>::value, T>::type get(Any &&any) {
-			return mpark::get<T>(std::forward<Any>(any));
+		typename std::enable_if_t<!util::is_base_of_v<IPolymorphicSerializable, T>, any::string> get(Any const &any) {
+			return mpark::get<any::string>(any);
 		};
 
 		template<typename T, typename Any>
-		typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value, Wrapper < T>>
-
-		::type get(Any &&any) {
+		typename std::enable_if_t<util::is_base_of_v<IPolymorphicSerializable, T>, Wrapper<T>> get(Any &&any) {
 			return Wrapper<T>::dynamic(mpark::get<wrapped_super_t>(std::forward<Any>(any)));
 		};
 
 		struct TransparentKeyEqual {
 			using is_transparent = void;
 
-			bool operator()(RdAny const &val_l, RdAny const &val_r) const {
+			bool operator()(InternedAny const &val_l, InternedAny const &val_r) const {
 				return val_l == val_r;
 			}
 
-			bool operator()(RdAny const &val_l, wrapped_super_t const &val_r) const {
+			bool operator()(InternedAny const &val_l, wrapped_super_t const &val_r) const {
 				return mpark::visit(util::make_visitor(
 						[&](wrapped_super_t const &value) {
 							return *value == *val_r;
 						},
-						[](std::wstring const &) {
+						[](any::string const &) {
 							return false;
 						}
 				), val_l);
 			}
 
-			bool operator()(super_t const &val_l, RdAny const &val_r) const {
+			bool operator()(super_t const &val_l, InternedAny const &val_r) const {
 				return operator()(val_r, val_l);
 			}
 
-			bool operator()(RdAny const &val_l, super_t const &val_r) const {
+			bool operator()(InternedAny const &val_l, super_t const &val_r) const {
 				return mpark::visit(util::make_visitor(
 						[&](wrapped_super_t const &value) {
 							return *value == val_r;
 						},
-						[](std::wstring const &) {
+						[](any::string const &) {
 							return false;
 						}
 				), val_l);
 			}
 
-			bool operator()(wrapped_super_t const &val_l, RdAny const &val_r) const {
+			bool operator()(wrapped_super_t const &val_l, InternedAny const &val_r) const {
 				return operator()(val_r, val_l);
 			}
 
-			bool operator()(RdAny const &val_l, std::wstring const &val_r) const {
+			bool operator()(InternedAny const &val_l, any::string const &val_r) const {
 				return mpark::visit(util::make_visitor(
 						[](wrapped_super_t const &value) {
 							return false;
 						},
-						[&](std::wstring const &s) {
+						[&](any::string const &s) {
 							return s == val_r;
 						}
 				), val_l);
 			}
 
-			bool operator()(std::wstring const &val_l, RdAny const &val_r) const {
+			bool operator()(any::string const &val_l, InternedAny const &val_r) const {
 				return operator()(val_r, val_l);
 			}
 		};
@@ -92,15 +91,13 @@ namespace rd {
 			using is_transparent = void;
 			using transparent_key_equal = std::equal_to<>;
 
-			size_t operator()(RdAny const &value) const noexcept {
-//				std::wcerr << "HASH RdAny: " << mpark::get<std::wstring>(value) << " " << std::hash<RdAny>()(value) << std::endl;
-//				return std::hash<RdAny>()(value);
+			size_t operator()(InternedAny const &value) const noexcept {
 				return mpark::visit(util::make_visitor(
 						[](wrapped_super_t const &value) {
 							return std::hash<wrapped_super_t>()(value);
 						},
-						[](std::wstring const &value) {
-							return std::hash<std::wstring>()(value);
+						[](any::string const &value) {
+							return std::hash<any::string>()(value);
 						}
 				), value);
 			}
@@ -113,9 +110,8 @@ namespace rd {
 				return std::hash<super_t>()(value);
 			}
 
-			size_t operator()(std::wstring const &value) const noexcept {
-//				std::wcerr << "HASH wstring: " << value << " " << std::hash<std::wstring>()(value) << std::endl;
-				return std::hash<std::wstring>()(value);
+			size_t operator()(any::string const &value) const noexcept {
+				return std::hash<any::string>()(value);
 			}
 		};
 	}

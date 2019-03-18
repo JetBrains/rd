@@ -16,9 +16,9 @@ namespace rd {
 	class Buffer;
 	//endregion
 
-	class AnySerializer {
+	class InternedAnySerializer {
 	public:
-		static tl::optional<RdAny> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static tl::optional<InternedAny> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return ctx.serializers->readAny(ctx, buffer);
 		}
 

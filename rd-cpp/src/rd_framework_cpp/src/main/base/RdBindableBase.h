@@ -46,7 +46,7 @@ namespace rd {
 		//mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
 
 		template<typename T, typename... Args>
-		typename std::enable_if<std::is_base_of<IRdBindable, T>::value, T>::type const &
+		typename std::enable_if_t<util::is_base_of_v<IRdBindable, T>, T> const &
 		getOrCreateExtension(std::string const &name, Args &&... args) const {
 			if (bindable_extensions.count(name) > 0) {
 				return *dynamic_cast<T const *>(bindable_extensions[name].get());
@@ -64,7 +64,7 @@ namespace rd {
 		}
 
 		/* template<typename T>
-     std::enable_if_t<!std::is_base_of_v<IRdBindable, T>, T> const &
+     std::enable_if_t<!util::is_base_of_v<IRdBindable, T>, T> const &
      getOrCreateExtension(std::string const &name, std::function<T()> create) const {
          if (non_bindable_extensions.count(name) == 0) {
              return std::any_cast<T const &>(non_bindable_extensions[name] = create());

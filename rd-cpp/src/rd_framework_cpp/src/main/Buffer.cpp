@@ -8,7 +8,7 @@
 #include <algorithm>
 
 namespace rd {
-	Buffer::Buffer(int32_t initialSize) {
+	Buffer::Buffer(size_t initialSize) {
 		byteBufferMemoryBase.resize(initialSize);
 		size_ = initialSize;
 	}
@@ -109,6 +109,10 @@ void Buffer::writeString(std::string const &value) const {
 	void Buffer::writeWString(std::wstring const &value) const {
 		std::vector<uint16_t> v(value.begin(), value.end());
 		writeArray<uint16_t>(v);
+	}
+
+	void Buffer::writeWString(Wrapper<std::wstring> const &value) const {
+		writeWString(*value);
 	}
 
 	bool Buffer::readBool() const {
