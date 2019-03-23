@@ -54,6 +54,9 @@ namespace rd {
 		void writePolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer, const T &value) const;
 
 		template<typename T>
+		value_or_wrapper<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &buffer) const;
+
+		template<typename T>
 		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const Wrapper<T> &value) const;
 	};
 }
@@ -94,6 +97,11 @@ namespace rd {
 		buffer.set_position(static_cast<size_t>(length_tag_position));
 		buffer.write_integral<int32_t>(object_end_position - object_start_position);
 		buffer.set_position(static_cast<size_t>(object_end_position));
+	}
+
+	template<typename T>
+	value_or_wrapper<T> Serializers::readPolymorphic(SerializationCtx const &ctx, Buffer const &buffer) const {
+		return readPolymorphicNullable<T>(ctx, buffer);
 	}
 
 	template<typename T>

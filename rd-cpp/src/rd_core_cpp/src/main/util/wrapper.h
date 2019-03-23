@@ -33,6 +33,14 @@ namespace rd {
 		using raw_type = T;
 	};
 
+	/*template<typename T>
+	struct helper<tl::optional<T>> {
+		using value_or_wrapper_type = Wrapper<T>;
+		using opt_or_wrapper_type = Wrapper<T>;
+		using property_storage = tl::optional<tl::optional<T>>;
+		using raw_type = T;
+	};*/
+
 	template<typename T>
 	struct helper<Wrapper<T>> {
 		using value_or_wrapper_type = Wrapper<T>;
@@ -52,6 +60,12 @@ namespace rd {
 
 	template<typename T>
 	using raw_type = typename helper<T>::raw_type;
+
+	template<typename>
+	struct is_wrapper : std::false_type {};
+
+	template<typename T>
+	struct is_wrapper<Wrapper<T>> : std::true_type {};
 
 	template<typename T>
 	class Wrapper : private std::shared_ptr<T> {
@@ -75,17 +89,27 @@ namespace rd {
 
 		Wrapper &operator=(Wrapper &&) noexcept = default;
 
-		explicit constexpr Wrapper(std::nullptr_t) noexcept {}
+		constexpr Wrapper(std::nullptr_t) noexcept {}
 
 		template<typename R, typename = typename std::enable_if_t<util::is_base_of_v<T, R>>>
-		Wrapper(Wrapper<R> const &other) : Wrapper(std::static_pointer_cast<T>(static_cast<std::shared_ptr<R>>(other))) {}
+		Wrapper(Wrapper<R> const &other) :
+				Base(std::static_pointer_cast<T>(static_cast<std::shared_ptr<R>>(other))) {}
 
 		template<typename R, typename = typename std::enable_if_t<util::is_base_of_v<T, R>>>
-		Wrapper(Wrapper<R> &&other) : Wrapper(std::static_pointer_cast<T>(std::move(other))) {}
+		Wrapper(Wrapper<R> &&other) :
+				Base(std::static_pointer_cast<T>(static_cast<std::shared_ptr<R>>(std::move(other)))) {}
 
-		template<typename F/*, typename = typename std::enable_if<!util::in_heap_v<std::decay_t<F>>>::type*/>
-		Wrapper(F &&value) {
-//			Base::operator=(std::make_shared<typename util::not_string_literal<F&&>::type >(std::forward<F>(value)));
+		template<typename F, typename = typename std::enable_if_t<
+			util::negation<
+				util::disjunction<
+					std::is_null_pointer<std::decay_t<F>>,
+					is_wrapper<std::decay_t<F>>,
+					tl::detail::is_optional<std::decay_t<F>>
+				>
+			>::value
+		>>
+		Wrapper(F &&value) :
+			Base(std::make_shared<typename util::not_string_literal<F &&>::type>(std::forward<F>(value))) {
 		}
 
 		template<typename F>
@@ -94,7 +118,7 @@ namespace rd {
 		template<typename F>
 		Wrapper(std::shared_ptr<F> &&ptr) noexcept : Base(std::static_pointer_cast<T>(std::move(ptr))) {}
 
-		template<typename U = T, typename R = typename std::enable_if_t<!util::in_heap_v<std::decay_t<U>>>>
+		template<typename U = T, typename R = typename std::enable_if_t<!std::is_abstract<std::decay_t<U>>::value>>
 		Wrapper(tl::optional<T> &&opt) {
 			if (opt) {
 				*this = std::make_shared<T>(*std::move(opt));
@@ -112,6 +136,10 @@ namespace rd {
 		}
 
 		//endregion
+
+		constexpr bool has_value() const {
+			return operator bool();
+		}
 
 		constexpr T &operator*() &{
 			return *static_cast<Base &>(*this);
@@ -138,8 +166,8 @@ namespace rd {
 		}
 
 		friend bool operator==(const Wrapper &lhs, const Wrapper &rhs) {
-			bool is_lhs = (bool)lhs;
-			bool is_rhs = (bool)rhs;
+			bool is_lhs = (bool) lhs;
+			bool is_rhs = (bool) rhs;
 			if (is_lhs != is_rhs) {
 				return false;
 			}
@@ -199,11 +227,12 @@ namespace rd {
 		Wrapper<T> make_wrapper(Args &&... args) {
 			return Wrapper<T>(std::make_shared<T>(std::forward<Args>(args)...));
 		}
-
 		/*template<typename T>
 		constexpr Wrapper<T> null_wrapper = Wrapper<T>(nullptr);*/
 	}
 }
+
+static_assert(rd::is_wrapper<rd::Wrapper<std::wstring>>::value, "is wrapper doesn't work");
 
 namespace std {
 	template<typename T>

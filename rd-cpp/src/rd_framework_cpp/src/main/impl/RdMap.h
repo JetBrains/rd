@@ -125,16 +125,16 @@ namespace rd {
 
 		void on_wire_received(Buffer buffer) const override {
 			int32_t header = buffer.read_integral<int32_t>();
-			bool msgVersioned = (header >> versionedFlagShift) != 0;
+			bool msg_versioned = (header >> versionedFlagShift) != 0;
 			Op op = static_cast<Op>(header & ((1 << versionedFlagShift) - 1));
 
-			int64_t version = msgVersioned ? buffer.read_integral<int64_t>() : 0;
+			int64_t version = msg_versioned ? buffer.read_integral<int64_t>() : 0;
 
 			WK key = KS::read(this->get_serialization_context(), buffer);
 
 			if (op == Op::ACK) {
 				std::string errmsg;
-				if (!msgVersioned) {
+				if (!msg_versioned) {
 					errmsg = "Received " + to_string(Op::ACK) + " while msg hasn't versioned flag set";
 				} else if (!is_master()) {
 					errmsg = "Received " + to_string(Op::ACK) + " when not a Master";
@@ -164,13 +164,13 @@ namespace rd {
 				Buffer serialized_key;
 				KS::write(this->get_serialization_context(), serialized_key, wrapper::get<K>(key));
 
-				bool isPut = (op == Op::ADD || op == Op::UPDATE);
+				bool is_put = (op == Op::ADD || op == Op::UPDATE);
 				tl::optional<WV> value;
-				if (isPut) {
+				if (is_put) {
 					value = VS::read(this->get_serialization_context(), buffer);
 				}
 
-				if (msgVersioned || !is_master() || pendingForAck.count(key) == 0) {
+				if (msg_versioned || !is_master() || pendingForAck.count(key) == 0) {
 					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value));
 					if (value.has_value()) {
 						map.set(std::move(key), *std::move(value));
@@ -181,7 +181,7 @@ namespace rd {
 					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value) + " >> REJECTED");
 				}
 
-				if (msgVersioned) {
+				if (msg_versioned) {
 					auto writer = util::make_shared_function(
 							[this, version, serialized_key = std::move(serialized_key)](
 									Buffer const &innerBuffer) mutable {

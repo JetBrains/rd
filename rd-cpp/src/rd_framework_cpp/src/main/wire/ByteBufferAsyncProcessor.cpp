@@ -50,6 +50,7 @@ namespace rd {
 
 	void ByteBufferAsyncProcessor::ThreadProc() {
 		while (true) {
+			Buffer::ByteArray send_buffer;
 			{
 				std::lock_guard<decltype(lock)> guard(lock);
 
@@ -66,10 +67,11 @@ namespace rd {
 						return;
 					}
 				}
+				send_buffer = std::move(data);
 			}
 
 			try {
-				processor(std::move(data));
+				processor(std::move(send_buffer));
 				clear_data();
 			} catch (std::exception const &e) {
 				logger.error("Exception while processing byte queue", &e);

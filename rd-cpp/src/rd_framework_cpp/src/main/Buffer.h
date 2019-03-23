@@ -39,7 +39,7 @@ namespace rd {
 		//region ctor/dtor
 
 		explicit Buffer(size_t initialSize = 10); //todo
-
+		
 		explicit Buffer(const ByteArray &array, size_t offset = 0);
 
 		explicit Buffer(ByteArray &&array, size_t offset = 0);

@@ -19,12 +19,12 @@ namespace rd {
 	class InternedAnySerializer {
 	public:
 		static tl::optional<InternedAny> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return ctx.serializers->readAny(ctx, buffer);
+			return ctx.get_serializers().readAny(ctx, buffer);
 		}
 
 		template<typename T>
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
-			ctx.serializers->writePolymorphicNullable(ctx, buffer, value);
+			ctx.get_serializers().writePolymorphicNullable(ctx, buffer, value);
 		}
 	};
 }

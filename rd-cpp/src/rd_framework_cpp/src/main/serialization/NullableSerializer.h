@@ -16,7 +16,7 @@ namespace rd {
 	class NullableSerializer {
 	public:
 		static opt_or_wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readNullable<T>([&]() -> T { return S::read(ctx, buffer); });
+			return buffer.readNullable<T>([&]() { return S::read(ctx, buffer); });
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {

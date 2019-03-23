@@ -27,10 +27,9 @@ namespace rd {
 	//endregion
 
 	class SerializationCtx {
+		Serializers const *serializers = nullptr;
 	public:
 		using roots_t = std::unordered_map<util::hash_t, InternRoot const *>;
-
-		Serializers const *serializers = nullptr;
 
 		roots_t intern_roots{};
 
@@ -57,6 +56,7 @@ namespace rd {
 				typename = decltype(std::declval<SerializationCtx>(), std::declval<Buffer>(), std::declval<Wrapper<T>>())>
 		void writeInterned(Buffer const &buffer, Wrapper<T> const &value, F&& writeValueDelegate) const;
 
+		Serializers const & get_serializers() const;
 	};
 }
 
@@ -83,6 +83,10 @@ namespace rd {
 		} else {
 			writeValueDelegate(*this, buffer, *value);
 		}
+	}
+
+	Serializers const &SerializationCtx::get_serializers() const {
+		return *serializers;
 	}
 }
 #endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

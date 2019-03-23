@@ -44,13 +44,13 @@
 #define __PASSIVESOCKET_H__
 #include "ActiveSocket.h"
 
-/// Provides a platform independent class to create a passive socket.
-/// A passive socket is used to create a "listening" socket.  This type
+/// Provides a platform independent class to create a passive new_socket.
+/// A passive new_socket is used to create a "listening" new_socket.  This type
 /// of object would be used when an application needs to wait for
 /// inbound connections.  Support for CSimpleSocket::SocketTypeTcp,
 /// CSimpleSocket::SocketTypeUdp, and CSimpleSocket::SocketTypeRaw is handled
 /// in a similar fashion.  The big difference is that the method
-/// CPassiveSocket::Accept should not be called on the latter two socket
+/// CPassiveSocket::Accept should not be called on the latter two new_socket
 /// types.
 class CPassiveSocket : public CSimpleSocket {
 public:
@@ -60,7 +60,7 @@ public:
     };
 
     /// Extracts the first connection request on the queue of pending
-    /// connections and creates a newly connected socket.  Used with
+    /// connections and creates a newly connected new_socket.  Used with
     /// CSocketType CSimpleSocket::SocketTypeTcp.  It is the responsibility of
     /// the caller to delete the returned object when finished.
     ///  @return if successful a pointer to a newly created CActiveSocket object
@@ -80,20 +80,20 @@ public:
     ///  @return true if able to bind to interface and multicast group.
     ///      If not successful, the false is returned and one of the following error
     ///      condiitions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
-    ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
+    ///      CPassiveSocket::SocketInvalidSocket.  The following new_socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
     bool BindMulticast(const char *pInterface, const char *pGroup, uint16_t nPort);
 
-    /// Create a listening socket at local ip address 'x.x.x.x' or 'localhost'
+    /// Create a listening new_socket at local ip address 'x.x.x.x' or 'localhost'
     /// if pAddr is NULL on port nPort.
     ///
     ///  @param pAddr specifies the IP address on which to listen.
     ///  @param nPort specifies the port on which to listen.
     ///  @param nConnectionBacklog specifies connection queue backlog (default 30,000)
-    ///  @return true if a listening socket was created.
+    ///  @return true if a listening new_socket was created.
     ///      If not successful, the false is returned and one of the following error
     ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
-    ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
+    ///      CPassiveSocket::SocketInvalidSocket.  The following new_socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
     virtual bool Listen(const char *pAddr, uint16_t nPort, int32_t nConnectionBacklog = 30000);
 
@@ -107,7 +107,7 @@ public:
     /// CPassiveSocket::SocketEwouldblock, SimpleSocket::SocketConnectionReset,
     /// CPassiveSocket::SocketInvalidSocketBuffer, CPassiveSocket::SocketInterrupted,
     /// CPassiveSocket::SocketProtocolError, CPassiveSocket::SocketNotconnected
-    /// <br>\b Note: This function is used only for a socket of type
+    /// <br>\b Note: This function is used only for a new_socket of type
     /// CSimpleSocket::SocketTypeUdp
     virtual int32_t Send(const uint8_t *pBuf, size_t bytesToSend);
 

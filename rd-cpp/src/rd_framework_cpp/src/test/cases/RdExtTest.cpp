@@ -111,24 +111,19 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
-	pump_both(); //binding InterningRoot
-
 	RdProperty<int> serverProperty{0}, clientProperty{0};
 	init(serverProtocol, clientProtocol, &serverProperty, &clientProperty);
 
 	auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"SERVER");
-
-	serverScheduler.pump_one_message(); //binding extProtocol InternRoot
-
+	
 	serverExt.property.set(L"UPDATE");
 	serverExt.property.set(L"UPGRADE");
 
 	auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"CLIENT");
 
-	clientScheduler.pump_one_message(); //binding extProtocol InternRoot
-
 	EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 
+	
 	clientScheduler.pump_one_message(); //send Ready
 	serverScheduler.pump_one_message(); //send Ready
 	serverScheduler.pump_one_message(); //send ReceivedCounterpart

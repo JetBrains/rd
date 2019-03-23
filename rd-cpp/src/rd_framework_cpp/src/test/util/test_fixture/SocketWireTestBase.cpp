@@ -10,7 +10,10 @@ namespace rd {
 				std::shared_ptr<IWire> wire = std::make_shared<SocketWire::Server>(lifetime,
 																				   &serverScheduler, port,
 																				   "TestServer");
-				return Protocol(Identities::SERVER, &serverScheduler, std::move(wire), lifetime);
+				Protocol res(Identities::SERVER, &serverScheduler, std::move(wire), lifetime);
+				res.get_serialization_context();
+				serverScheduler.pump_one_message();//binding InternRoot
+				return res;
 			}
 
 			Protocol SocketWireTestBase::client(Lifetime lifetime, Protocol const &serverProtocol) {
@@ -18,13 +21,19 @@ namespace rd {
 				std::shared_ptr<IWire> wire =
 						std::make_shared<SocketWire::Client>(lifetime, &clientScheduler, server->port,
 															 "TestClient");
-				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
+				Protocol res(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
+				res.get_serialization_context();
+				clientScheduler.pump_one_message();//binding InternRoot
+				return res;
 			}
 
 			Protocol SocketWireTestBase::client(Lifetime lifetime, uint16_t port) {
 				std::shared_ptr<IWire> wire =
 						std::make_shared<SocketWire::Client>(lifetime, &clientScheduler, port, "TestClient");
-				return Protocol(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
+				Protocol res(Identities::CLIENT, &clientScheduler, std::move(wire), lifetime);
+				res.get_serialization_context();
+				clientScheduler.pump_one_message();//binding InternRoot
+				return res;
 			}
 
 			void SocketWireTestBase::init(Protocol const &serverProtocol, Protocol const &clientProtocol,

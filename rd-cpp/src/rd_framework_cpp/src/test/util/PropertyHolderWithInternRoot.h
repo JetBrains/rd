@@ -12,13 +12,13 @@
 namespace rd {
 	namespace test {
 		namespace util {
-			template<typename T>
+			template<typename T, typename S = Polymorphic<T>>
 			class PropertyHolderWithInternRoot : public RdBindableBase {
 			public:
-				RdProperty <T> property;
+				RdProperty<T, S> property;
 				tl::optional<SerializationCtx> mySerializationContext;
 
-				explicit PropertyHolderWithInternRoot(RdProperty <T> property) : property(std::move(property)) {}
+				explicit PropertyHolderWithInternRoot(RdProperty<T, S> property) : property(std::move(property)) {}
 
 				void init(Lifetime lifetime) const override {
 					property.bind(lifetime, this, "propertyHolderWithInternRoot");

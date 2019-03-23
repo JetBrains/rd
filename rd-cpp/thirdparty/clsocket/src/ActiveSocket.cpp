@@ -97,13 +97,13 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16_t nPort)
             CSimpleSocket::SocketError)
     {
         //--------------------------------------------------------------
-        // Get error value this might be a non-blocking socket so we
+        // Get error value this might be a non-blocking new_socket so we
         // must first check.
         //--------------------------------------------------------------
         TranslateSocketError();
 
         //--------------------------------------------------------------
-        // If the socket is non-blocking and the current socket error
+        // If the new_socket is non-blocking and the current new_socket error
         // is SocketEinprogress or SocketEwouldblock then poll connection
         // with select for designated timeout period.
         // Linux returns EINPROGRESS and Windows returns WSAEWOULDBLOCK.

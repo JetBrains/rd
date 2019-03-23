@@ -12,14 +12,14 @@ namespace rd {
 
 		void SimpleWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
 			assert(!id.isNull());
-			Buffer ostream(10);
-			writer(ostream);
+			Buffer buffer;
+			writer(buffer);
 
-			bytesWritten += ostream.get_position();
+			bytesWritten += buffer.get_position();
 
-			ostream.rewind();
+			buffer.rewind();
 
-			msgQ.push(RdMessage(id, std::move(ostream)));
+			msgQ.emplace(id, std::move(buffer));
 			if (auto_flush) {
 				process_all_messages();
 			}

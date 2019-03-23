@@ -24,6 +24,15 @@ namespace rd {
 	using InternedAny = mpark::variant<any::wrapped_super_t, any::string>;
 
 	namespace any {
+		template<typename T/*, typename = typename std::enable_if_t<!util::is_same_v<std::wstring, T>>*/>
+		InternedAny make_interned_any(const Wrapper <T> &wrapper) {
+			return {static_cast<wrapped_super_t>(wrapper)};
+		}
+
+		template<>
+		InternedAny make_interned_any<std::wstring>(const Wrapper<std::wstring> &wrapper);
+
+
 		template<typename T, typename Any>
 		typename std::enable_if_t<!util::is_base_of_v<IPolymorphicSerializable, T>, any::string> get(Any const &any) {
 			return mpark::get<any::string>(any);
