@@ -1,6 +1,7 @@
 package com.jetbrains.rd.generator.nova.cpp
 
 import com.jetbrains.rd.generator.nova.Declaration
+import com.jetbrains.rd.generator.nova.IType
 import com.jetbrains.rd.generator.nova.Member
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
@@ -8,8 +9,8 @@ import com.jetbrains.rd.util.string.condstr
 
 
 sealed class Signature {
-    abstract fun decl() : String
-    abstract fun def() : String
+    abstract fun decl(): String
+    abstract fun def(): String
 
 
     class MemberFunction(private val returnType: String, private val arguments: String, private val scope: String, private var isAbstract: Boolean = false) : Signature() {
@@ -64,6 +65,7 @@ sealed class Signature {
 
     class Constructor(val generator: Cpp17Generator, private val decl: Declaration, private val arguments: List<Member>) : Signature() {
         private var isExplicit = false
+        private var isDefault = false
 
         override fun decl(): String {
             val params = arguments.map { generator.ctorParam(it, decl, false) }.joinToString(separator = ", ")
@@ -72,9 +74,19 @@ sealed class Signature {
 
         override fun def(): String {
             val params = arguments.map { generator.ctorParam(it, decl, false) }.joinToString(separator = ", ")
-            val init = arguments.map { "${it.name}_(std::move(${it.name}_))" }.joinToString(separator = ", ")
+            val initBases = generator.bases(decl).joinToString(separator = ", ") {
+                val params = it.params.joinToString(separator = ",") { p -> "std::move(${p.name}_)" }
+                "${it.type.name}($params)"
+            }
+            val init = arguments.let {
+                if (it.isEmpty()) {
+                    ""
+                } else {
+                    it.joinToString(separator = ", ", prefix = ",") { p -> "${p.name}_(std::move(${p.name}_))" }
+                }
+            }
             val name = decl.name
-            return "$name::$name($params):$init"
+            return "$name::$name($params) :$eol$initBases$eol$init"
         }
 
         fun explicit(): Constructor? {
@@ -82,5 +94,13 @@ sealed class Signature {
                 isExplicit = true
             }
         }
+
+        fun default(): Signature? {
+            return this.also {
+                isDefault = true
+            }
+        }
     }
 }
+
+class BaseClass(val type: IType, val params: List<Member>)

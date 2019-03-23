@@ -32,7 +32,7 @@ namespace rd {
 			template<typename F>
 			Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(lifetime) {}
 
-			Event(Event &&) noexcept = default;
+			Event(Event &&) = default;
 			//endregion
 
 			bool is_alive() const {

@@ -31,7 +31,7 @@ namespace rd {
 				MY_ASSERT_THROW_MSG(ReadFromSocket(reinterpret_cast<Buffer::word_t *>(&sz), 4),
 									this->id + ": failed to read message size");
 				logger.info(this->id + ": were received size and " + std::to_string(sz) + " bytes");
-				Buffer msg(sz);
+				Buffer msg(static_cast<size_t>(sz));
 				MY_ASSERT_THROW_MSG(ReadFromSocket(reinterpret_cast<Buffer::word_t *>(msg.data()), sz),
 									this->id + ": failed to read message");
 

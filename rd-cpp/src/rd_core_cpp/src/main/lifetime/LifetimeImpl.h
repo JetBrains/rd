@@ -20,7 +20,7 @@ namespace rd {
 		friend class Lifetime;
 
 		bool eternaled = false;
-		bool terminated = false;
+		std::atomic<bool> terminated{false};
 
 		using counter_t = int32_t;
 		counter_t id = 0;

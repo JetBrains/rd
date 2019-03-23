@@ -55,8 +55,8 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 #endif
 
     //--------------------------------------------------------------------------
-    // Set the following socket option SO_REUSEADDR.  This will allow the file
-    // descriptor to be reused immediately after the socket is closed instead
+    // Set the following new_socket option SO_REUSEADDR.  This will allow the file
+    // descriptor to be reused immediately after the new_socket is closed instead
     // of setting in a TIMED_WAIT state.
     //--------------------------------------------------------------------------
     memset(&m_stMulticastGroup, 0, sizeof(m_stMulticastGroup));
@@ -99,7 +99,7 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 
 
     //--------------------------------------------------------------------------
-    // If there was a socket error then close the socket to clean out the
+    // If there was a new_socket error then close the new_socket to clean out the
     // connection in the backlog.
     //--------------------------------------------------------------------------
     TranslateSocketError();
@@ -128,8 +128,8 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16_t nPort, int32_t nConnecti
     nReuse = IPTOS_LOWDELAY;
 
     //--------------------------------------------------------------------------
-    // Set the following socket option SO_REUSEADDR.  This will allow the file
-    // descriptor to be reused immediately after the socket is closed instead
+    // Set the following new_socket option SO_REUSEADDR.  This will allow the file
+    // descriptor to be reused immediately after the new_socket is closed instead
     // of setting in a TIMED_WAIT state.
     //--------------------------------------------------------------------------
     SETSOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&nReuse, sizeof(int32_t));
@@ -177,7 +177,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16_t nPort, int32_t nConnecti
     m_timer.SetEndTime();
 
     //--------------------------------------------------------------------------
-    // If there was a socket error then close the socket to clean out the
+    // If there was a new_socket error then close the new_socket to clean out the
     // connection in the backlog.
     //--------------------------------------------------------------------------
     TranslateSocketError();
@@ -260,7 +260,7 @@ CActiveSocket *CPassiveSocket::Accept() {
 
 //------------------------------------------------------------------------------
 //
-// Send() - Send data on a valid socket
+// Send() - Send data on a valid new_socket
 //
 //------------------------------------------------------------------------------
 int32_t CPassiveSocket::Send(const uint8_t *pBuf, size_t bytesToSend) {

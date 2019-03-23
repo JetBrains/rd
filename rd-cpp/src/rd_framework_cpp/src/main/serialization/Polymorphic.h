@@ -27,6 +27,10 @@ namespace rd {
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
 			value.write(ctx, buffer);
 		}
+		
+		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {
+			value->write(ctx, buffer);
+		}
 	};
 
 
@@ -143,6 +147,14 @@ namespace rd {
 			buffer.writeNullable<T>(value, [&ctx, &buffer](T const &v) {
 				Polymorphic<T>::write(ctx, buffer, v);
 			});
+		}
+	};
+
+	template<typename T>
+	class Polymorphic<Wrapper<T>> {
+	public:
+		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {
+			value->write(ctx, buffer);
 		}
 	};
 }

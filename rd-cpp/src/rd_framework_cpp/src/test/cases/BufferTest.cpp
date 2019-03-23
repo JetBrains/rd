@@ -164,10 +164,10 @@ TEST(BufferTest, NullableSerializer) {
 	using NS = NullableSerializer<S>;
 
 	std::vector<Wrapper<T>> list{
-			tl::nullopt,
+			nullptr,
 			L"1",
 			L"2",
-			tl::nullopt,
+			nullptr,
 			L"error"
 	};
 

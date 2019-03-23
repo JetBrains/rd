@@ -47,4 +47,11 @@ namespace rd {
 
 		rdid = id;
 	}
+
+	void InternRoot::set_interned_correspondence(int32_t id, InternedAny &&value) const {
+		MY_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
+
+		otherItemsList[id / 2] = value;
+		inverseMap[value] = id;
+	}
 }

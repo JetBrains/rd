@@ -7,6 +7,7 @@
 #include "Lifetime.h"
 #include "wrapper.h"
 #include "RdAny.h"
+#include "traits.h"
 
 #include "tsl/ordered_map.h"
 
@@ -39,18 +40,12 @@ namespace rd {
 
 		mutable std::mutex lock;
 
-		template<typename T>
-		void set_interned_correspondence(int32_t id, T &&value) const {
-			MY_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
 
-			otherItemsList[id / 2] = value;
-			inverseMap[std::forward<T>(value)] = id;
-		}
+		void set_interned_correspondence(int32_t id, InternedAny &&value) const;
 
 		static constexpr bool is_index_owned(int32_t id) {
 			return !static_cast<bool>(id & 1);
 		}
-
 	public:
 		//region ctor/dtor
 
@@ -58,7 +53,7 @@ namespace rd {
 		//endregion
 
 		template<typename T>
-		int32_t intern_value(const Wrapper<T> &value) const;
+		int32_t intern_value(Wrapper <T> value) const;
 
 		template<typename T>
 		Wrapper<T> un_intern_value(int32_t id) const;
@@ -93,25 +88,27 @@ namespace rd {
 	}
 
 	template<typename T>
-	int32_t InternRoot::intern_value(const Wrapper<T> &value) const {
-//		auto it = inverseMap.find(value);
+	int32_t InternRoot::intern_value(Wrapper <T> value) const {
+		InternedAny any = any::make_interned_any<T>(value);
+
+		auto it = inverseMap.find(any);
 		int32_t index = 0;
-		/*if (it == inverseMap.end()) {
-			get_protocol()->get_wire()->send(this->rdid, [this, &index, &value](Buffer const &buffer) {
+		if (it == inverseMap.end()) {
+			get_protocol()->get_wire()->send(this->rdid, [this, &index, value, any](Buffer const &buffer) {
 				InternedAnySerializer::write<T>(get_serialization_context(), buffer, wrapper::get<T>(value));
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
 					index = static_cast<int32_t>(myItemsList.size()) * 2; //todo change to global counter
-					myItemsList.emplace_back(value);
+					myItemsList.emplace_back(any);
 				}
 				buffer.write_integral<int32_t>(index);
 			});
 		} else {
 			index = it->second;
 		}
-		if (inverseMap.count(value) == 0) {
-			inverseMap[value] = index;
-		}*/
+		if (inverseMap.count(any) == 0) {
+			inverseMap[any] = index;
+		}
 		return index;
 	}
 }
