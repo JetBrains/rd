@@ -19,4 +19,8 @@ namespace rd {
 		}
 		return SerializationCtx(serializers, std::move(next_roots));
 	}
+
+	Serializers const &SerializationCtx::get_serializers() const {
+		return *serializers;
+	}
 }

@@ -39,7 +39,7 @@ namespace rd {
 		//region ctor/dtor
 
 		explicit Buffer(size_t initialSize = 10); //todo
-		
+
 		explicit Buffer(const ByteArray &array, size_t offset = 0);
 
 		explicit Buffer(ByteArray &&array, size_t offset = 0);
@@ -155,12 +155,12 @@ namespace rd {
 
 		template<typename T, typename F,
 				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, T>>>
-		tl::optional<T> readNullable(F &&reader) const {
+		opt_or_wrapper<T> readNullable(F &&reader) const {
 			bool nullable = !readBool();
 			if (nullable) {
 				return {};
 			}
-			return tl::make_optional<T>(reader());
+			return {reader()};
 		}
 
 		template<typename T, typename F,
@@ -173,7 +173,7 @@ namespace rd {
 			return reader();
 		}
 
-		template<typename T>
+		template<typename T, typename = typename std::enable_if_t<!std::is_abstract<T>::value>>
 		void writeNullable(tl::optional<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
@@ -183,8 +183,9 @@ namespace rd {
 			}
 		}
 
-		template<typename T>
-		void writeNullable(Wrapper<T> const &value, std::function<void(T const &)> writer) const {
+		template<typename T, typename F>
+		typename std::enable_if_t<!util::is_invocable_v<F, Wrapper<T>>>
+		writeNullable(Wrapper<T> const &value, F &&writer) const {
 			if (!value) {
 				writeBool(false);
 			} else {
@@ -193,8 +194,9 @@ namespace rd {
 			}
 		}
 
-		template<typename T, typename F, typename = decltype(F(std::declval<Wrapper<T>>()))>
-		void writeNullable(Wrapper<T> const &value, F &&writer) const {
+		template<typename T, typename F>
+		typename std::enable_if_t<util::is_invocable_v<F, Wrapper<T>>>
+		writeNullable(Wrapper<T> const &value, F &&writer) const {
 			if (!value) {
 				writeBool(false);
 			} else {

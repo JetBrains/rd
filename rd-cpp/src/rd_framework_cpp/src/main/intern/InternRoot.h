@@ -7,7 +7,7 @@
 #include "Lifetime.h"
 #include "wrapper.h"
 #include "RdAny.h"
-#include "traits.h"
+#include "core_traits.h"
 
 #include "tsl/ordered_map.h"
 

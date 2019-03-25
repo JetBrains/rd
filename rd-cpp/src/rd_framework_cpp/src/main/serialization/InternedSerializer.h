@@ -7,9 +7,10 @@
 
 #include "SerializationCtx.h"
 #include "Polymorphic.h"
+#include "framework_traits.h"
 
 namespace rd {
-	template<typename S, util::hash_t InternKey, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
+	template<typename S, util::hash_t InternKey, typename T = util::read_t<S>>
 	class InternedSerializer {
 	public:
 		static Wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {

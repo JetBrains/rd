@@ -7,7 +7,7 @@
 
 #include "Lifetime.h"
 #include "wrapper.h"
-#include "traits.h"
+#include "core_traits.h"
 
 #include <functional>
 #include <type_traits>

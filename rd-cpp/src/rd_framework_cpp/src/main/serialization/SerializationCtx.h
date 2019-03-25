@@ -53,7 +53,8 @@ namespace rd {
 		Wrapper<T> readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const;
 
 		template<typename T, util::hash_t InternKey, typename F,
-				typename = decltype(std::declval<SerializationCtx>(), std::declval<Buffer>(), std::declval<Wrapper<T>>())>
+						typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx, Buffer, Wrapper<T>>::value>
+						>
 		void writeInterned(Buffer const &buffer, Wrapper<T> const &value, F&& writeValueDelegate) const;
 
 		Serializers const & get_serializers() const;
@@ -83,10 +84,6 @@ namespace rd {
 		} else {
 			writeValueDelegate(*this, buffer, *value);
 		}
-	}
-
-	Serializers const &SerializationCtx::get_serializers() const {
-		return *serializers;
 	}
 }
 #endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
