@@ -14,9 +14,9 @@ namespace rd {
 
 		IUnknownInstance();
 
-		IUnknownInstance(const RdId &unknownId);
+		explicit IUnknownInstance(const RdId &unknownId);
 
-		IUnknownInstance(RdId &&unknownId);
+		explicit IUnknownInstance(RdId &&unknownId);
 	};
 }
 

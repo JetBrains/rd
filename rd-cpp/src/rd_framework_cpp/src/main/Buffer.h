@@ -25,7 +25,6 @@ namespace rd {
 
 		mutable ByteArray byteBufferMemoryBase;
 		mutable size_t offset = 0;
-		mutable size_t size_ = 0;
 
 		void require_available(size_t size) const;
 

@@ -261,6 +261,7 @@ namespace rd {
 			});
 
 			logger.debug(this->id + ": waiting for receiver thread");
+			logger.debug(std::to_string(thread.joinable()));
 			thread.join();
 			logger.info(this->id + ": termination finished");
 		});

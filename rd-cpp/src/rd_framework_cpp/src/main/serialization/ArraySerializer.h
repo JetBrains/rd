@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace rd {
-	template<typename S, typename T = util::read_t<S>>
+	template<typename S, typename T = typename util::read_t<S>>
 	class ArraySerializer {
 	public:
 		static std::vector<value_or_wrapper<T>> read(SerializationCtx const &ctx, Buffer const &buffer) {

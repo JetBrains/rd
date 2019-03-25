@@ -5,8 +5,6 @@
 #ifndef RD_CPP_CORE_LOGGER_H
 #define RD_CPP_CORE_LOGGER_H
 
-#include "optional.hpp"
-
 #include <string>
 #include <exception>
 
@@ -51,14 +49,14 @@ namespace rd {
 	//SwitchLogger get_logger(std::string category);
 
 	template<typename F>
-	void catch_(tl::optional<std::string> comment, F &&action) {
+	void catch_(std::string comment, F &&action) {
 		try {
 			action();
 		}
 		catch (std::exception const &e) {
-			std::string sfx = (comment.has_value() && !comment.value().empty()) ? comment.value() : " " + std::string(
+			std::string sfx = comment + std::string(
 					e.what());
-			//        get_logger("Default-Error-Logger").log(LogLevel::Error, "Catch$sfx", e);
+			Logger().error("Caught exception:" + sfx);
 		}
 	}
 

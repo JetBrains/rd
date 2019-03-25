@@ -7,7 +7,7 @@
 //#include "Protocol.h"
 
 namespace rd {
-	void ISerializersOwner::registry(Serializers const &serializers) {
+	void ISerializersOwner::registry(Serializers const &serializers) const {
 //    val key = this::class
 //    if (!serializers.toplevels.add(key)) return
 //todo

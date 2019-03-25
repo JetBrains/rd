@@ -53,7 +53,7 @@ namespace rd {
 		Wrapper<T> readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const;
 
 		template<typename T, util::hash_t InternKey, typename F,
-						typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx, Buffer, Wrapper<T>>::value>
+						typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx, Buffer, T>::value>
 						>
 		void writeInterned(Buffer const &buffer, Wrapper<T> const &value, F&& writeValueDelegate) const;
 

@@ -13,9 +13,11 @@ namespace rd {
 
 	class ISerializersOwner {
 	public:
-		void registry(Serializers const &serializers);
+		virtual ~ISerializersOwner() = default;
 
-		virtual void registerSerializersCore(Serializers const &serializers) = 0;
+		void registry(Serializers const &serializers) const;
+
+		virtual void registerSerializersCore(Serializers const &serializers) const = 0;
 	};
 }
 

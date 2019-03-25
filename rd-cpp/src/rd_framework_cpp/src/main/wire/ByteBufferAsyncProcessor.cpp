@@ -71,12 +71,11 @@ namespace rd {
 			}
 
 			try {
-				processor(std::move(send_buffer));
-				clear_data();
+				processor(std::move(send_buffer));				
 			} catch (std::exception const &e) {
-				logger.error("Exception while processing byte queue", &e);
-				clear_data();
+				logger.error("Exception while processing byte queue", &e);			
 			}
+			//clear_data();		
 		}
 	}
 

@@ -31,7 +31,7 @@ namespace rd {
 			mutable std::mutex send_lock;
 			mutable std::mutex socket_lock;
 
-			std::thread thread;
+			std::thread thread{};
 
 			std::string id;
 			Lifetime lifetime;
