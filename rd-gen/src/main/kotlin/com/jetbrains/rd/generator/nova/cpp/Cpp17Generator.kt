@@ -898,10 +898,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
         public()
         block("struct $serializersOwnerImplName : public rd::ISerializersOwner {", "};") {
-            declare(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", decl.name))
+            declare(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", decl.name).const().override())
         }
         println()
-        +"static $serializersOwnerImplName serializersOwner;"
+        +"static const $serializersOwnerImplName serializersOwner;"
         println()
     }
 
@@ -1255,9 +1255,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected fun PrettyPrinter.registerSerializersTraitDef(decl: Toplevel, types: List<Declaration>) {//todo name access
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
-        +"${decl.name}::$serializersOwnerImplName ${decl.name}::serializersOwner;"
+        +"${decl.name}::$serializersOwnerImplName const ${decl.name}::serializersOwner;"
         println()
-        define(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner")) {
+        define(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner").const().override()) {
             types.filter { !it.isAbstract }.filterIsInstance<IType>().filterNot { iType -> iType is Enum }.println {
                 "serializers.registry<${it.name}>();"
             }

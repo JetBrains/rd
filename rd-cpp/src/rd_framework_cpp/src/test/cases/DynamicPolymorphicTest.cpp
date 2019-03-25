@@ -30,13 +30,13 @@ using S = AbstractPolymorphic<AbstractEntity>;
 using DSignal = RdSignal<AbstractEntity, S>;
 using DSignalTest = RdFrameworkDynamicPolymorphicTestBase<DSignal>;
 
-TEST(WrapperTest, wrapper_cast) {
+/*TEST(WrapperTest, wrapper_cast) {
 	Wrapper<ConcreteEntity> value_a = wrapper::make_wrapper<ConcreteEntity>(L"A");
 	Wrapper<AbstractEntity> value_a_interface_copy = value_a;
 	Wrapper<AbstractEntity> value_a_interface = static_cast<Wrapper<AbstractEntity>>(value_a);
 	Wrapper<ConcreteEntity> value_a_new = Wrapper<ConcreteEntity>::dynamic(value_a_interface);
 	EXPECT_EQ(value_a, value_a_new);
-}
+}*/
 
 TEST_F(DSignalTest, dynamic_polymorphic_signal) {
 	ConcreteEntity value_a{L"A"};

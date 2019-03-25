@@ -10,14 +10,13 @@
 namespace rd {
 	Buffer::Buffer(size_t initialSize) {
 		byteBufferMemoryBase.resize(initialSize);
-		size_ = initialSize;
 	}
 
 	Buffer::Buffer(const ByteArray &array, size_t offset) :
-		byteBufferMemoryBase(array), offset(offset), size_(array.size()) {}
+		byteBufferMemoryBase(array), offset(offset) {}
 
 	Buffer::Buffer(ByteArray &&array, size_t offset) :
-		byteBufferMemoryBase(std::move(array)), offset(offset), size_(array.size()) {}
+		byteBufferMemoryBase(std::move(array)), offset(offset) {}
 
 	size_t Buffer::get_position() const {
 		return offset;
@@ -28,9 +27,9 @@ namespace rd {
 	}
 
 	void Buffer::check_available(size_t moreSize) const {
-		if (offset + moreSize > size_) {
+		if (offset + moreSize > size()) {
 			throw std::out_of_range(
-				"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size_ - offset) +
+				"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size() - offset) +
 				"available");
 		}
 	}
@@ -48,10 +47,9 @@ namespace rd {
 	}
 
 	void Buffer::require_available(size_t moreSize) const {
-		if (offset + moreSize >= size_) {
-			size_t newSize = (std::max)(size_ * 2, offset + moreSize);
-			byteBufferMemoryBase.resize(newSize);
-			size_ = newSize;
+		if (offset + moreSize >= size()) {
+			const size_t new_size = (std::max)(size() * 2, offset + moreSize);
+			byteBufferMemoryBase.resize(new_size);
 		}
 	}
 
@@ -64,6 +62,7 @@ namespace rd {
 	}
 
 	Buffer::ByteArray Buffer::getArray() && {
+		rewind();
 		return std::move(byteBufferMemoryBase);
 	}
 
@@ -74,8 +73,9 @@ namespace rd {
 	}
 
 	Buffer::ByteArray Buffer::getRealArray() && {
-		auto res = getArray();
+		auto res = std::move(byteBufferMemoryBase);
 		res.resize(offset);
+		rewind();
 		return res;
 	}
 
@@ -88,7 +88,7 @@ namespace rd {
 	}
 
 	size_t Buffer::size() const {
-		return size_;
+		return byteBufferMemoryBase.size();
 	}
 
 	/*std::string Buffer::readString() const {

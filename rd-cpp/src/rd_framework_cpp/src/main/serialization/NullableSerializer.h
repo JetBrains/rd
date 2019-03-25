@@ -13,12 +13,12 @@
 #include <type_traits>
 
 namespace rd {
-	template<typename S, typename T = util::read_t<S>,
-	        typename = void>
+	template<typename S, typename R = void>
 	class NullableSerializer {
+		using T = typename util::read_t<S>;
 	public:
 		static opt_or_wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readNullable<T>([&]() { return S::read(ctx, buffer); });
+			return buffer.readNullable<T>([&]() -> T { return S::read(ctx, buffer); });
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
@@ -30,17 +30,13 @@ namespace rd {
 		}
 	};
 
-	template<typename S, typename W>
-	class NullableSerializer<S, W, std::enable_if_t<is_wrapper_v<util::read_t<S>>>> {
-//		using W = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()));
+	template<typename S>
+	class NullableSerializer<S, std::enable_if_t<is_wrapper_v<util::read_t<S>>>> {
+		using W = typename util::read_t<S>;
 		using T = typename W::type;
 	public:
 		static Wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			bool nullable = !buffer.readBool();
-			if (nullable) {
-				return {};
-			}
-			return S::read(ctx, buffer);
+			return buffer.readNullable<T>([&]() -> Wrapper<T> { return S::read(ctx, buffer); });
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {

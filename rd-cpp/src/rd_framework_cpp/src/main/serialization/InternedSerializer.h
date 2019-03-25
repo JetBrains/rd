@@ -10,7 +10,7 @@
 #include "framework_traits.h"
 
 namespace rd {
-	template<typename S, util::hash_t InternKey, typename T = util::read_t<S>>
+	template<typename S, util::hash_t InternKey, typename T = typename util::read_t<S>>
 	class InternedSerializer {
 	public:
 		static Wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
@@ -20,7 +20,7 @@ namespace rd {
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {
-			ctx.writeInterned<T, InternKey>(buffer, value, [&](SerializationCtx const &, Buffer const &, T const & inner_value) {
+			ctx.writeInterned<T, InternKey>(buffer, value, [&](SerializationCtx const &, Buffer const &, T const & inner_value) -> void {
 				S::write(ctx, buffer, inner_value);
 			});
 		}

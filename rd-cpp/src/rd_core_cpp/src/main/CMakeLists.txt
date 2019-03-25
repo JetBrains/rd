@@ -19,8 +19,6 @@ add_library(rd_core_cpp STATIC
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
-
-        Logger.cpp Logger.h
         )
 
 add_subdirectory(util)

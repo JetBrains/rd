@@ -26,7 +26,7 @@ TEST (viewable_set, advise) {
 		});
 		set->view(Lifetime::Eternal(), [&](Lifetime inner, int const &v) {
 			logView2.push_back(v);
-			inner->add_action([&]() { logView2.push_back(-v); });
+			inner->add_action([&logView2, v]() { logView2.push_back(-v); });
 		});
 
 		EXPECT_TRUE(set->add(1));//1
