@@ -199,6 +199,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     fun IType.substitutedName(scope: Declaration, rawType: Boolean = false, omitNullability: Boolean = false): String = when (this) {
         is Enum -> name
+//        is Struct.Concrete -> sanitizedName(scope)
         is Declaration -> {
             val fullName = sanitizedName(scope)
             if (rawType) {
@@ -338,7 +339,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
 
     protected open fun Member.ctorSubstitutedName(scope: Declaration) = when (this) {
-        is Member.Reactive.Stateful.Extension -> "rd::" + ctorSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.templateName(scope) } + customSerializers(scope)
+        is Member.Reactive.Stateful.Extension -> {
+            "rd::" + ctorSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.templateName(scope) }
+        }
         else -> implSubstitutedName(scope)
     }
 
@@ -1200,7 +1203,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         fun Member.reader(): String = when (this) {
             is Member.Field -> type.reader()
 //            is Member.Reactive.Stateful.Extension -> "${ctorSubstitutedName(decl)}(${delegatedBy.reader()})"
-            is Member.Reactive.Stateful.Extension -> "${ctorSubstitutedName(decl)}{}"
+            is Member.Reactive.Stateful.Extension -> {
+                "${ctorSubstitutedName(decl)}{}"
+            }
             is Member.Reactive -> {
                 val params = listOf("ctx", "buffer").joinToString(", ")
                 "${implSubstitutedName(decl)}::read($params)"
@@ -1422,11 +1427,17 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         gettersTraitDecl(decl).zip(decl.ownMembers) { s: MemberFunction, member: Member ->
             define(s) {
                 p(docComment(member.documentation))
-                if (member is Member.Field && member is IBindable/* || parseType(member.type, true) is PredefinedType.string*/) {
-//                    +"return *${member.encapsulatedName};"
-                } else {
-//                    +"return ${member.encapsulatedName};"
+                val unwrap = when {
+                    member is Member.Reactive -> false
+                    member is IBindable -> true
+                    member is Member.Field && member.type is Struct -> true
+                    member is Member.Field && member.type is Class -> true
+                    member is Member.Field && member.type is PredefinedType.string -> true
+                    member is Member.Field && member.type is InternedScalar && member.type.itemType is PredefinedType.string -> true
+                    else -> false
                 }
+                val star = unwrap.condstr { "*" }
+                +"return $star${member.encapsulatedName};"
                 /*if (member is Member.Field) {
                     +"return wrapper::get<${member.implTemplateName(decl)}>(${member.encapsulatedName});"
                 }*/
