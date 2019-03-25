@@ -6,7 +6,7 @@
 
 #include "ConcreteEntity.h"
 
-#include "traits.h"
+#include "core_traits.h"
 
 #include <type_traits>
 

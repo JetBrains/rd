@@ -52,6 +52,29 @@ namespace rd {
 				: std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {
 		};
 
+		template<class...>
+		using void_t = void;
+
+		template <typename F, typename... Args>
+		struct is_invocable :
+				std::is_constructible<
+						std::function<void(Args ...)>,
+						std::reference_wrapper<typename std::remove_reference<F>::type>
+				>
+		{
+		};
+
+		template <typename R, typename F, typename... Args>
+		struct is_invocable_r :
+				std::is_constructible<
+						std::function<R(Args ...)>,
+						std::reference_wrapper<typename std::remove_reference<F>::type>
+				>
+		{
+		};
+
+		template<class F, class... Ts>
+		constexpr bool is_invocable_v = is_invocable<F, Ts...>::value;
 
 		//endregion
 

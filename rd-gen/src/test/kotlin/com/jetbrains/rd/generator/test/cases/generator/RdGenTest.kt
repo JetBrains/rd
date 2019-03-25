@@ -34,13 +34,15 @@ fun main() {
         }
         Configuration.RIDER_MODEL -> {
             System.setProperty("model.out.src.cpp.dir", "C:\\Work\\rd\\rd-cpp\\cpp_model")
-            System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\rd-framework\\src\\jvmTest\\kotlin\\com\\jetbrains\\rider\\framework\\test\\cases\\kotlin_model")
+            System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\ide-model")
 
             rdgen.sources *= "C:\\Work\\ide-model"
             rdgen.packages *= "com.jetbrains.rider.model.nova.ide"
         }
         Configuration.INTERNING_MODEL -> {
             System.setProperty("model.out.src.cpp.dir", "C:\\Work\\rd\\rd-cpp\\src\\rd_framework_cpp\\src\\test\\util\\models")
+            System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\rd-cpp\\src\\rd_framework_cpp\\src\\test\\util\\models")
+
 
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator"
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator"

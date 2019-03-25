@@ -502,18 +502,16 @@ open class Kotlin11Generator(val flowTransform: FlowTransform, val defaultNamesp
     }
 
     private fun getDefaultValue(containing: Declaration, member: Member): String? =
-            if (member is Member.Reactive.Stateful.Property) {
-                when {
+            when (member) {
+                is Member.Reactive.Stateful.Property -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
                     member.defaultValue != null -> member.defaultValue.toString()
                     member.isNullable -> "null"
                     else -> null
                 }
+//                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
+                else -> null
             }
-            else if (member is Member.Reactive.Stateful.Extension)
-                member.delegatedBy.sanitizedName(containing) + "()"
-            else
-                null
 
 
     protected fun PrettyPrinter.readerTrait(decl: Declaration) {

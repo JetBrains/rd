@@ -63,43 +63,70 @@ sealed class Signature {
         }
     }
 
-    class Constructor(val generator: Cpp17Generator, private val decl: Declaration, private val arguments: List<Member>) : Signature() {
+    sealed class Constructor(protected val generator: Cpp17Generator, protected val decl: Declaration, private val arguments: List<Member>) : Signature() {
         private var isExplicit = false
         private var isDefault = false
+        private var isSecondary = false
+
+        val name = decl.name
+        val params = arguments.joinToString(separator = ", ") { generator.ctorParam(it, decl, false) }
 
         override fun decl(): String {
-            val params = arguments.map { generator.ctorParam(it, decl, false) }.joinToString(separator = ", ")
             return isExplicit.condstr { "explicit " } + "${decl.name}($params);"
         }
 
-        override fun def(): String {
-            val params = arguments.map { generator.ctorParam(it, decl, false) }.joinToString(separator = ", ")
-            val initBases = generator.bases(decl).joinToString(separator = ", ") {
-                val params = it.params.joinToString(separator = ",") { p -> "std::move(${p.name}_)" }
-                "${it.type.name}($params)"
+        class Default(generator: Cpp17Generator, decl: Declaration) : Constructor(generator, decl, emptyList()) {
+            override fun def(): String {
+                return "$name::$name()"
             }
-            val init = arguments.let {
-                if (it.isEmpty()) {
-                    ""
-                } else {
-                    it.joinToString(separator = ", ", prefix = ",") { p -> "${p.name}_(std::move(${p.name}_))" }
+        }
+
+        class Primary(generator: Cpp17Generator, decl: Declaration, private val allArguments: AllArguments) : Constructor(generator, decl, allArguments.allArguments) {
+            class AllArguments(internal val ownArguments: List<Member> = emptyList(), private val otherArguments : List<Member> = emptyList()) {
+                val allArguments = ownArguments + otherArguments
+
+                fun isEmpty(): Boolean {
+                    return ownArguments.isEmpty() && otherArguments.isEmpty()
                 }
             }
-            val name = decl.name
-            return "$name::$name($params) :$eol$initBases$eol$init"
-        }
 
-        fun explicit(): Constructor? {
-            return this.also {
-                isExplicit = true
+            override fun def(): String {
+                val initBases = generator.bases(decl).joinToString(separator = ", ") {
+                    val params = it.params.joinToString(separator = ",") { p -> "std::move(${p.name}_)" }
+                    "${it.type.name}($params)"
+                }
+                val init = allArguments.ownArguments.let {
+                    if (it.isEmpty()) {
+                        ""
+                    } else {
+                        it.joinToString(separator = ", ", prefix = ",") { p -> "${p.name}_(std::move(${p.name}_))" }
+                    }
+                }
+                return "$name::$name($params) :$eol$initBases$eol$init"
             }
         }
 
-        fun default(): Signature? {
-            return this.also {
-                isDefault = true
+        class Secondary(generator: Cpp17Generator, decl: Declaration, private val allArguments: AllArguments) : Constructor(generator, decl, allArguments.ownArguments) {
+            class AllArguments(internal val ownArguments: List<Member> = emptyList(), internal val otherArguments : List<Member?> = emptyList()) {
+                val allArguments = ownArguments + otherArguments
+
+                fun isEmpty(): Boolean {
+                    return ownArguments.isEmpty() && otherArguments.isEmpty()
+                }
+            }
+
+            override fun def(): String {
+                val init = allArguments.otherArguments.map {
+                    if (it == null) {
+                        "{}"
+                    } else {
+                        "(std::move(${it.name}_))"
+                    }
+                }.joinToString(separator = ",")
+                return "$name::$name($params) : $eol$name($init)"
             }
         }
+
     }
 }
 

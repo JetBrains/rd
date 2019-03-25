@@ -5,7 +5,7 @@
 #ifndef RD_CPP_WRAPPER_H
 #define RD_CPP_WRAPPER_H
 
-#include "traits.h"
+#include "core_traits.h"
 
 #include "optional.hpp"
 
@@ -68,6 +68,9 @@ namespace rd {
 	struct is_wrapper<Wrapper<T>> : std::true_type {};
 
 	template<typename T>
+	constexpr bool is_wrapper_v = is_wrapper<T>::value;
+
+	template<typename T>
 	class Wrapper : private std::shared_ptr<T> {
 	private:
 		template<typename>
@@ -77,6 +80,8 @@ namespace rd {
 		using Base = std::shared_ptr<T>;
 		//		std::unique_ptr<T> ptr;
 	public:
+		using type = T;
+
 		//region ctor/dtor
 
 		Wrapper() = default;
@@ -103,7 +108,7 @@ namespace rd {
 			util::negation<
 				util::disjunction<
 					std::is_null_pointer<std::decay_t<F>>,
-					is_wrapper<std::decay_t<F>>,
+					std::is_same<Wrapper<T>, std::decay_t<F>>,
 					tl::detail::is_optional<std::decay_t<F>>
 				>
 			>::value

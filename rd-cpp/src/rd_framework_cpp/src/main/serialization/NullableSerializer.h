@@ -8,11 +8,13 @@
 #include "Polymorphic.h"
 #include "AbstractPolymorphic.h"
 #include "wrapper.h"
+#include "framework_traits.h"
 
 #include <type_traits>
 
 namespace rd {
-	template<typename S, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
+	template<typename S, typename T = util::read_t<S>,
+	        typename = void>
 	class NullableSerializer {
 	public:
 		static opt_or_wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
@@ -28,9 +30,10 @@ namespace rd {
 		}
 	};
 
-	template<typename T>
-	class NullableSerializer<AbstractPolymorphic<T>, Wrapper<T>> {
-		using S = AbstractPolymorphic<T>;
+	template<typename S, typename W>
+	class NullableSerializer<S, W, std::enable_if_t<is_wrapper_v<util::read_t<S>>>> {
+//		using W = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()));
+		using T = typename W::type;
 	public:
 		static Wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			bool nullable = !buffer.readBool();

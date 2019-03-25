@@ -6,11 +6,12 @@
 #define RD_CPP_ARRAYSERIALIZER_H
 
 #include "SerializationCtx.h"
+#include "framework_traits.h"
 
 #include <vector>
 
 namespace rd {
-	template<typename S, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
+	template<typename S, typename T = util::read_t<S>>
 	class ArraySerializer {
 	public:
 		static std::vector<value_or_wrapper<T>> read(SerializationCtx const &ctx, Buffer const &buffer) {
