@@ -54,8 +54,6 @@ namespace rd {
 			MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), msglen) == msglen,
 								this->id + ": failed to send message over the network");
 			logger.info(this->id + ": were sent " + std::to_string(msglen) + " bytes");
-			/*MY_ASSERT_THROW_MSG(socketProvider->Send(msg.data(), 0) > 0,
-                            this->id + ": failed to flush");*/
 			//        MY_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
 		} catch (...) {
 			async_send_buffer.terminate();
@@ -216,10 +214,12 @@ namespace rd {
 
 		thread = std::thread([this, lifetime]() mutable {
 			try {
-				socket.reset(ss->Accept());
-				MY_ASSERT_THROW_MSG(socket != nullptr, this->id + ": accepting failed");
-				logger.info(this->id + this->id + ": accepted passive socket");
-				MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed");
+				logger.info(this->id + ": accepting started");
+				CActiveSocket *accepted = ss->Accept();
+				MY_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()))
+				socket.reset(accepted);
+				logger.info(this->id + ": accepted passive socket");
+				MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed")
 
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
@@ -261,7 +261,7 @@ namespace rd {
 			});
 
 			logger.debug(this->id + ": waiting for receiver thread");
-			logger.debug(std::to_string(thread.joinable()));
+			logger.debug(this->id + ": is thread joinable? " + std::to_string(thread.joinable()));
 			thread.join();
 			logger.info(this->id + ": termination finished");
 		});
