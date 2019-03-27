@@ -477,13 +477,12 @@ bool CSimpleSocket::Close(void)
     //--------------------------------------------------------------------------
     if (IsSocketValid())
     {
-        if (/*Shutdown(Both)*/true) {
-            if (CLOSE(m_socket) != CSimpleSocket::SocketError)
-            {
-                m_socket = INVALID_SOCKET;
-                bRetVal = true;
-            }
-        }
+		Shutdown(Both);
+        if (CLOSE(m_socket) != CSimpleSocket::SocketError)
+		{
+			m_socket = INVALID_SOCKET;
+			bRetVal = true;
+		}
     }
 
     TranslateSocketError();
