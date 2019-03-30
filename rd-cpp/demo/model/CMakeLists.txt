@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.11)
 add_library(demo_model STATIC DemoModel/MyScalar.cpp
+DemoModel/Base.cpp
+DemoModel/Derived.cpp
 DemoModel/DemoModel.cpp
+DemoModel/Base_Unknown.cpp
 DemoModel/MyScalar.h
+DemoModel/Base.h
+DemoModel/Derived.h
 DemoModel/DemoModel.h
+DemoModel/Base_Unknown.h
 DemoRoot/DemoRoot.cpp
 DemoRoot/DemoRoot.h
 ExtModel/ExtModel.cpp

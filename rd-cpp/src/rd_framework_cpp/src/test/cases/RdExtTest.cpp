@@ -108,6 +108,8 @@ TEST_F(SocketWireTestBase, DISABLED_testExtension) {
 }
 
 TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
+//	int64_t const serialization_hash = 1ll << 40u;
+
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
@@ -115,11 +117,13 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
 	init(serverProtocol, clientProtocol, &serverProperty, &clientProperty);
 
 	auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"SERVER");
+//	serverExt.serializationHash = serialization_hash;
 	
 	serverExt.property.set(L"UPDATE");
 	serverExt.property.set(L"UPGRADE");
 
 	auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"CLIENT");
+//	clientExt.serializationHash = serialization_hash;
 
 	EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 

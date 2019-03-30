@@ -3,6 +3,8 @@
 #include "AbstractPolymorphic.h"
 
 namespace rd {
+	constexpr RdId STRING_PREDEFINED_ID = RdId(10);
+
 	RdId Serializers::real_rd_id(const IUnknownInstance &value) {
 		return value.unknownId;
 	}
@@ -12,8 +14,7 @@ namespace rd {
 	}
 
 	RdId Serializers::real_rd_id(const std::wstring &value) {
-		return RdId(10);
-		//todo constant
+		return STRING_PREDEFINED_ID;
 	}
 
 	void Serializers::real_write(SerializationCtx const &ctx, Buffer const &buffer, IUnknownInstance const &value) {
@@ -28,10 +29,14 @@ namespace rd {
 		Polymorphic<std::wstring>::write(ctx, buffer, value);
 	}
 
-	Serializers::Serializers() {
-		readers[RdId(10)] = [](SerializationCtx const &ctx, Buffer const &buffer) -> InternedAny {
+	void Serializers::register_in() {
+		readers[STRING_PREDEFINED_ID] = [](SerializationCtx const &ctx, Buffer const &buffer) -> InternedAny {
 			return wrapper::make_wrapper<std::wstring>(Polymorphic<std::wstring>::read(ctx, buffer));
 		};
+	}
+
+	Serializers::Serializers() {
+		register_in();
 	}
 
 	tl::optional<InternedAny> Serializers::readAny(SerializationCtx const &ctx, Buffer const &buffer) const {

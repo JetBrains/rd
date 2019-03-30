@@ -9,14 +9,14 @@
 
 namespace rd {
 	Buffer::Buffer(size_t initialSize) {
-		byteBufferMemoryBase.resize(initialSize);
+		data_.resize(initialSize);
 	}
 
 	Buffer::Buffer(const ByteArray &array, size_t offset) :
-		byteBufferMemoryBase(array), offset(offset) {}
+		data_(array), offset(offset) {}
 
 	Buffer::Buffer(ByteArray &&array, size_t offset) :
-		byteBufferMemoryBase(std::move(array)), offset(offset) {}
+		data_(std::move(array)), offset(offset) {}
 
 	size_t Buffer::get_position() const {
 		return offset;
@@ -36,20 +36,20 @@ namespace rd {
 
 	void Buffer::read(word_t *dst, size_t size) const {
 		check_available(size);		
-		std::copy(&byteBufferMemoryBase[offset], &byteBufferMemoryBase[offset] + size, dst);
+		std::copy(&data_[offset], &data_[offset] + size, dst);
 		offset += size;
 	}
 
 	void Buffer::write(const word_t *src, size_t size) const {
 		require_available(size);	
-		std::copy(src, src + size, &byteBufferMemoryBase[offset]);
+		std::copy(src, src + size, &data_[offset]);
 		offset += size;
 	}
 
 	void Buffer::require_available(size_t moreSize) const {
 		if (offset + moreSize >= size()) {
 			const size_t new_size = (std::max)(size() * 2, offset + moreSize);
-			byteBufferMemoryBase.resize(new_size);
+			data_.resize(new_size);
 		}
 	}
 
@@ -58,12 +58,12 @@ namespace rd {
 	}
 
 	Buffer::ByteArray Buffer::getArray() const & {
-		return byteBufferMemoryBase;
+		return data_;
 	}
 
 	Buffer::ByteArray Buffer::getArray() && {
 		rewind();
-		return std::move(byteBufferMemoryBase);
+		return std::move(data_);
 	}
 
 	Buffer::ByteArray Buffer::getRealArray() const & {
@@ -73,22 +73,22 @@ namespace rd {
 	}
 
 	Buffer::ByteArray Buffer::getRealArray() && {
-		auto res = std::move(byteBufferMemoryBase);
+		auto res = std::move(data_);
 		res.resize(offset);
 		rewind();
 		return res;
 	}
 
 	const Buffer::word_t *Buffer::data() const {
-		return byteBufferMemoryBase.data();
+		return data_.data();
 	}
 
 	Buffer::word_t *Buffer::data() {
-		return byteBufferMemoryBase.data();
+		return data_.data();
 	}
 
 	size_t Buffer::size() const {
-		return byteBufferMemoryBase.size();
+		return data_.size();
 	}
 
 	/*std::string Buffer::readString() const {

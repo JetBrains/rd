@@ -6,6 +6,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.example.DemoModel
+import org.example.Derived
 import org.example.extModel
 import java.io.File
 
@@ -27,11 +28,11 @@ fun main() {
 
     val protocol = server(socketLifetime, NetUtils.findFreePort(0))
     File("C:\\temp\\port.txt").printWriter().use { out ->
-        out.print((protocol.wire as SocketWire.Server).port)
+        out.println((protocol.wire as SocketWire.Server).port)
     }
 
     scheduler?.queue {
-        val model = DemoModel.create(lifetime, protocol);
+        val model = DemoModel.create(lifetime, protocol)
 
         model.call.set { c ->
             c.toString()
@@ -46,6 +47,14 @@ fun main() {
         extModel.checker.advise(lifetime) {
             println("check")
         }
+
+        model.interned_string.advise(lifetime) {
+            println("Interned $it")
+        }
+
+        model.polymorphic.set(Derived("Kotlin instance"))
     }
+
+
     Thread.sleep(500_000_000)
 }

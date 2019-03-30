@@ -4,15 +4,13 @@
 
 #include "ISerializersOwner.h"
 
-//#include "Protocol.h"
-
 namespace rd {
 	void ISerializersOwner::registry(Serializers const &serializers) const {
-//    val key = this::class
-//    if (!serializers.toplevels.add(key)) return
-//todo
+		auto it = used.insert(&serializers);
+		if (!it.second) {
+			return;
+		}
 
-//		Protocol::initializationLogger.trace("REGISTER serializers for ${key.simpleName}");
 		registerSerializersCore(serializers);
 	}
 }

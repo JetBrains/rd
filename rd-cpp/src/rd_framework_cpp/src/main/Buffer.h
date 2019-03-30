@@ -23,7 +23,7 @@ namespace rd {
 		using ByteArray = std::vector<word_t>;
 	protected:
 
-		mutable ByteArray byteBufferMemoryBase;
+		mutable ByteArray data_;
 		mutable size_t offset = 0;
 
 		void require_available(size_t size) const;

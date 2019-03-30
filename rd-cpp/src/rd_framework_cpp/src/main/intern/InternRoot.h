@@ -38,14 +38,12 @@ namespace rd {
 
 		mutable InternScheduler intern_scheduler;
 
-		mutable std::mutex lock;
+		mutable std::recursive_mutex lock;
 
 
 		void set_interned_correspondence(int32_t id, InternedAny &&value) const;
 
-		static constexpr bool is_index_owned(int32_t id) {
-			return !static_cast<bool>(id & 1);
-		}
+		static constexpr bool is_index_owned(int32_t id);
 	public:
 		//region ctor/dtor
 
@@ -65,7 +63,7 @@ namespace rd {
 		void identify(const Identities &identities, RdId const &id) const override;
 
 		void on_wire_received(Buffer buffer) const override;
-	};
+	};	
 }
 
 #pragma warning( pop )
@@ -82,8 +80,13 @@ namespace rd {
 	template<typename T>
 	tsl::ordered_map<value_or_wrapper<T>, int32_t> InternRoot::inverseMap = {};*/
 
+	constexpr bool InternRoot::is_index_owned(int32_t id) {
+		return !static_cast<bool>(id & 1);
+	}
+
 	template<typename T>
 	Wrapper<T> InternRoot::un_intern_value(int32_t id) const {
+		//don't need lock because value's already exists and never removes
 		return any::get<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]);
 	}
 
@@ -91,6 +94,8 @@ namespace rd {
 	int32_t InternRoot::intern_value(Wrapper <T> value) const {
 		InternedAny any = any::make_interned_any<T>(value);
 
+		std::lock_guard<decltype(lock)> guard(lock);
+		
 		auto it = inverseMap.find(any);
 		int32_t index = 0;
 		if (it == inverseMap.end()) {
@@ -98,7 +103,7 @@ namespace rd {
 				InternedAnySerializer::write<T>(get_serialization_context(), buffer, wrapper::get<T>(value));
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
-					index = static_cast<int32_t>(myItemsList.size()) * 2; //todo change to global counter
+					index = static_cast<int32_t>(myItemsList.size()) * 2;
 					myItemsList.emplace_back(any);
 				}
 				buffer.write_integral<int32_t>(index);

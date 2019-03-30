@@ -12,7 +12,7 @@
 #include "SimpleWire.h"
 #include "Identities.h"
 #include "Protocol.h"
-#include "SimpleScheduler.h"
+#include "scheduler/SimpleScheduler.h"
 
 namespace rd {
 	namespace test {

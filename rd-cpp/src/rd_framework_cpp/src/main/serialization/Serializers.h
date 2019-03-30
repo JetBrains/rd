@@ -15,6 +15,7 @@
 #include <utility>
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace rd {
 	//region predeclared
@@ -37,6 +38,7 @@ namespace rd {
 
 		static void real_write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value);
 
+		void register_in();
 
 		mutable std::unordered_map<RdId, std::function<InternedAny(SerializationCtx const &, Buffer const &)>> readers;
 	public:

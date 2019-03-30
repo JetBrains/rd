@@ -31,7 +31,7 @@ TEST(BufferTest, readWritePod) {
 
 	buffer.write_integral<int32_t>(0);
 	buffer.write_integral<int32_t>(4);
-	buffer.write_integral<int64_t>(1ll << 32);
+	buffer.write_integral<int64_t>(1ll << 32u);
 	buffer.write_integral<int32_t>(-1);
 	buffer.write_integral<wchar_t>('+');
 	buffer.write_integral<wchar_t>('-');
@@ -47,7 +47,7 @@ TEST(BufferTest, readWritePod) {
 
 	buffer.write_integral<int32_t>(16);
 	EXPECT_EQ(4, buffer.read_integral<int32_t>());
-	EXPECT_EQ(1ll << 32, buffer.read_integral<int64_t>());
+	EXPECT_EQ(1ll << 32u, buffer.read_integral<int64_t>());
 	EXPECT_EQ(-1, buffer.read_integral<int32_t>());
 	EXPECT_EQ('+', buffer.read_integral<wchar_t>());
 	EXPECT_EQ('-', buffer.read_integral<wchar_t>());

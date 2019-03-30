@@ -43,7 +43,7 @@ namespace rd {
 
 		std::future<void> asyncFuture;
 
-		Buffer::ByteArray data;
+		std::vector<Buffer::ByteArray> data;
 	public:
 
 		//region ctor/dtor
@@ -59,7 +59,6 @@ namespace rd {
 
 		void ThreadProc();
 
-		void clear_data();
 	public:
 		void start();
 
@@ -67,7 +66,7 @@ namespace rd {
 
 		bool terminate(time_t timeout = time_t(0)/*InfiniteDuration*/);
 
-		void put(Buffer::ByteArray newData);
+		void put(Buffer::ByteArray new_data);
 	};
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state);

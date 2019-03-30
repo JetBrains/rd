@@ -56,7 +56,7 @@ class SocketWire {
         private lateinit var output : OutputStream
         private lateinit var input : InputStream
 
-        protected val sendBuffer = ByteBufferAsyncProcessor(id+"-AsyncSendProcessor") { send0(it) }
+        protected val sendBuffer = ByteBufferAsyncProcessor("$id-AsyncSendProcessor") { send0(it) }
 
         private val threadLocalBufferArray = ThreadLocal.withInitial { UnsafeBuffer(ByteArray(16384)) }
 

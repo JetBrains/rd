@@ -20,7 +20,9 @@ class DemoModel private constructor(
     private val _set: RdSet<Int>,
     private val _mapLongToString: RdMap<Long, String>,
     private val _call: RdEndpoint<Char, String>,
-    private val _callback: RdCall<String, Int>
+    private val _callback: RdCall<String, Int>,
+    private val _interned_string: RdOptionalProperty<String>,
+    private val _polymorphic: RdOptionalProperty<Base>
 ) : RdExtBase() {
     //companion
     
@@ -28,6 +30,8 @@ class DemoModel private constructor(
         
         override fun registerSerializersCore(serializers: ISerializers) {
             serializers.register(MyScalar)
+            serializers.register(Derived)
+            serializers.register(Base_Unknown)
         }
         
         
@@ -40,8 +44,9 @@ class DemoModel private constructor(
             }
         }
         
+        private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = -7851046433962724830L
+        const val serializationHash = -4109472710845558388L
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
     override val serializationHash: Long get() = DemoModel.serializationHash
@@ -54,6 +59,8 @@ class DemoModel private constructor(
     val mapLongToString: IMutableViewableMap<Long, String> get() = _mapLongToString
     val call: RdEndpoint<Char, String> get() = _call
     val callback: IRdCall<String, Int> get() = _callback
+    val interned_string: IOptProperty<String> get() = _interned_string
+    val polymorphic: IOptProperty<Base> get() = _polymorphic
     //initializer
     init {
         _boolean_property.optimizeNested = true
@@ -61,6 +68,8 @@ class DemoModel private constructor(
         _list.optimizeNested = true
         _set.optimizeNested = true
         _mapLongToString.optimizeNested = true
+        _interned_string.optimizeNested = true
+        _polymorphic.optimizeNested = true
     }
     
     init {
@@ -75,6 +84,8 @@ class DemoModel private constructor(
         bindableChildren.add("mapLongToString" to _mapLongToString)
         bindableChildren.add("call" to _call)
         bindableChildren.add("callback" to _callback)
+        bindableChildren.add("interned_string" to _interned_string)
+        bindableChildren.add("polymorphic" to _polymorphic)
     }
     
     //secondary constructor
@@ -86,7 +97,9 @@ class DemoModel private constructor(
         RdSet<Int>(FrameworkMarshallers.Int),
         RdMap<Long, String>(FrameworkMarshallers.Long, FrameworkMarshallers.String),
         RdEndpoint<Char, String>(FrameworkMarshallers.Char, FrameworkMarshallers.String),
-        RdCall<String, Int>(FrameworkMarshallers.String, FrameworkMarshallers.Int)
+        RdCall<String, Int>(FrameworkMarshallers.String, FrameworkMarshallers.Int),
+        RdOptionalProperty<String>(__StringInternedAtProtocolSerializer),
+        RdOptionalProperty<Base>(AbstractPolymorphic(Base))
     )
     
     //equals trait
@@ -102,9 +115,133 @@ class DemoModel private constructor(
             print("mapLongToString = "); _mapLongToString.print(printer); println()
             print("call = "); _call.print(printer); println()
             print("callback = "); _callback.print(printer); println()
+            print("interned_string = "); _interned_string.print(printer); println()
+            print("polymorphic = "); _polymorphic.print(printer); println()
         }
         printer.print(")")
     }
+}
+
+
+abstract class Base (
+) : IPrintable {
+    //companion
+    
+    companion object : IAbstractDeclaration<Base> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): Base {
+            val objectStartPosition = buffer.position
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return Base_Unknown(unknownId, unknownBytes)
+        }
+    }
+    //fields
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+}
+
+
+class Base_Unknown (
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : Base (
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<Base_Unknown> {
+        override val _type: KClass<Base_Unknown> = Base_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Base_Unknown {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Base_Unknown) {
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+    }
+    //fields
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as Base_Unknown
+        
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int {
+        var __r = 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter) {
+        printer.println("Base_Unknown (")
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+}
+
+
+class Derived (
+    val string: String
+) : Base (
+) {
+    //companion
+    
+    companion object : IMarshaller<Derived> {
+        override val _type: KClass<Derived> = Derived::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Derived {
+            val string = buffer.readString()
+            return Derived(string)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Derived) {
+            buffer.writeString(value.string)
+        }
+        
+    }
+    //fields
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as Derived
+        
+        if (string != other.string) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int {
+        var __r = 0
+        __r = __r*31 + string.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter) {
+        printer.println("Derived (")
+        printer.indent {
+            print("string = "); string.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
 }
 
 

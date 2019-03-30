@@ -14,7 +14,11 @@ namespace rd {
 
     void InternScheduler::queue(std::function<void()> action) {
         ++active_counts;
-        action();
+		try {
+			action();
+		} catch (...) {
+			
+		}
         --active_counts;
         //todo RAII
     }
