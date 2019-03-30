@@ -3,7 +3,7 @@
 //
 
 #include "SocketWire.h"
-#include "SimpleScheduler.h"
+#include "scheduler/SimpleScheduler.h"
 #include "RdFrameworkTestBase.h"
 #include "RdProperty.h"
 

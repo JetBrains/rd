@@ -10,13 +10,18 @@
 namespace rd {
 	class SimpleScheduler : public IScheduler {
 	public:
-		virtual ~SimpleScheduler() = default;
+		//region ctor/dtor
+		SimpleScheduler() = default;
 
-		void flush() override {}
+		virtual ~SimpleScheduler() = default;
+		//endregion
+
+		void flush() override;
 
 		void queue(std::function<void()> action) override;
 
 		bool is_active() const override;
+
 	};
 }
 

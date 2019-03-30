@@ -48,6 +48,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
 
+    object TargetName : ISetting<String, Toplevel>
+
     private fun Declaration.fsName(isDefinition: Boolean) =
             "$name.${if (isDefinition) "cpp" else "h"}"
 
@@ -57,6 +59,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected open fun Declaration.fsPath(tl: Toplevel, isDefinition: Boolean): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
             ?: File(tl.fsPath(), fsName(isDefinition))
+
+    private fun Root.targetName(): String {
+        return getSetting(TargetName) ?: this.name
+    }
 
     private val Class.isInternRoot: Boolean
         get() = internRootForScopes.isNotEmpty()
@@ -519,7 +525,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         }
 
-        folder.cmakeLists("cpp_model", allFilePaths, toplevels/*, toplevels.map { it.name }*/)
+        folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
     }
 
 
@@ -573,8 +579,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (decl.isAbstract) {
             +(unknown(decl)!!.include())
         }
+        if (decl is Root) {
+            decl.toplevels.forEach {
+                +it.include()
+            }
+        }
         if (decl is Toplevel && decl.isLibrary) {
-            surroundWithNamespaces { libdef(decl, dependencies) }
+            surroundWithNamespaces { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
         } else {
             surroundWithNamespaces { typedef(decl) }
         }
@@ -1263,7 +1274,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             }
 
             if (decl is Root) {
-//                decl.toplevels.println { "serializers.registry<${it.sanitizedName(decl)}>();" }
+                decl.toplevels.minus(decl).println {
+                    val name = it.sanitizedName(decl)
+                    "$name::serializersOwner.registry(serializers);"
+                }
                 //todo mark graph vertex
             }
         }

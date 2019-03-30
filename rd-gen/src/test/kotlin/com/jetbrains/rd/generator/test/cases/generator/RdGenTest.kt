@@ -18,9 +18,9 @@ fun main() {
     rdgen.verbose *= true
     rdgen.force *= true
     rdgen.clearOutput *= true
-    rdgen.filter *= "cpp"
+//    rdgen.filter *= "cpp"
 //    rdgen.filter *= "kotlin"
-    val configuration = Configuration.RIDER_MODEL
+    val configuration = Configuration.DEMO_MODEL
     when (configuration) {
         Configuration.EXAMPLE -> {
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\example"
@@ -28,7 +28,6 @@ fun main() {
         Configuration.DEMO_MODEL -> {
             System.setProperty("model.out.src.cpp.dir", "C:\\Work\\rd\\rd-cpp\\demo\\model")
             System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\rd-framework\\src\\jvmTest\\kotlin\\com\\jetbrains\\rd\\framework\\test\\cases\\demo\\model")
-
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\demo"
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator.demo"
         }

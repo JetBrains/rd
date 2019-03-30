@@ -9,6 +9,7 @@
 #include "optional.hpp"
 
 #include <fstream>
+#include "Protocol.h"
 
 using namespace rd;
 using namespace rd::test;
@@ -27,7 +28,7 @@ int main() {
 	SimpleScheduler testScheduler;
 	auto server = new SocketWire::Client(socketLifetime, &testScheduler, port, "TestClient");
 	std::shared_ptr<IWire> wire(server);
-	Protocol clientProtocol{Identities(Identities::CLIENT), &testScheduler, std::move(wire)};
+	Protocol clientProtocol{Identities::CLIENT, &testScheduler, std::move(wire), lifetime};
 
 	RdProperty<tl::optional<int32_t>> property_main{0};
 	property_main.rdid = RdId(1);

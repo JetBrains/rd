@@ -34,10 +34,13 @@ namespace rd {
 			rdid = RdId::Null();
 		});
 
-		myItemsList.clear();
-		otherItemsList.clear();
-		inverseMap.clear();
-
+		{
+			//if something's interned before bind
+			std::lock_guard<decltype(lock)> guard(lock);
+			myItemsList.clear();
+			otherItemsList.clear();
+			inverseMap.clear();
+		}
 		get_protocol()->get_wire()->advise(lf, this);
 	}
 
@@ -51,6 +54,7 @@ namespace rd {
 	void InternRoot::set_interned_correspondence(int32_t id, InternedAny &&value) const {
 		MY_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
 
+		std::lock_guard<decltype(lock)> guard(lock);
 		otherItemsList[id / 2] = value;
 		inverseMap[value] = id;
 	}

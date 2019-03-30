@@ -50,7 +50,7 @@ namespace rd {
 
 	void ByteBufferAsyncProcessor::ThreadProc() {
 		while (true) {
-			Buffer::ByteArray send_buffer;
+			decltype(data) data_to_send;
 			{
 				std::lock_guard<decltype(lock)> guard(lock);
 
@@ -67,15 +67,17 @@ namespace rd {
 						return;
 					}
 				}
-				send_buffer = std::move(data);
+
+				data_to_send = std::move(data);
 			}
 
 			try {
-				processor(std::move(send_buffer));				
+				for (auto &&item : data_to_send) {
+					processor(std::move(item));
+				}
 			} catch (std::exception const &e) {
 				logger.error("Exception while processing byte queue", &e);			
 			}
-			//clear_data();		
 		}
 	}
 
@@ -102,24 +104,17 @@ namespace rd {
 		return terminate0(timeout, StateKind::Terminating, "TERMINATE");
 	}
 
-	void ByteBufferAsyncProcessor::put(Buffer::ByteArray newData) {
+	void ByteBufferAsyncProcessor::put(Buffer::ByteArray new_data) {
 		{
 			std::lock_guard<decltype(lock)> guard(lock);
 
 			if (state >= StateKind::Stopping) {
 				return;
 			}
-			data.insert(data.end(), newData.begin(), newData.end());
-			//todo change to cyclic array?
+			data.emplace_back(std::move(new_data));
 
 			cv.notify_all();
 		}
-	}
-
-	void ByteBufferAsyncProcessor::clear_data() {
-		std::lock_guard<decltype(lock)> guard(lock);
-		data.clear();
-		data.shrink_to_fit();
 	}
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state) {

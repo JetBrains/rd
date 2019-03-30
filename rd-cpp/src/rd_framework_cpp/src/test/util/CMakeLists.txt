@@ -19,7 +19,6 @@ add_library(rd_framework_cpp_test_util
         test_fixture/RdFrameworkDynamicPolymorphicTestBase.cpp test_fixture/RdFrameworkDynamicPolymorphicTestBase.h
         test_fixture/InterningTestBase.cpp test_fixture/InterningTestBase.h
 
-        SimpleScheduler.cpp SimpleScheduler.h
         WireUtil.cpp WireUtil.h
         SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h)
 

@@ -14,6 +14,13 @@ namespace rd {
 	class IScheduler {
 		static Logger logger;
 	public:
+		//region ctor/dtor
+
+		IScheduler() = default;
+
+		virtual ~IScheduler() = default;
+		//endregion
+
 		virtual void queue(std::function<void()> action) = 0;
 
 		bool out_of_order_execution = false;

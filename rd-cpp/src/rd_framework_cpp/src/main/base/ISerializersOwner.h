@@ -5,6 +5,8 @@
 #ifndef RD_CPP_ISERIALIZERSOWNER_H
 #define RD_CPP_ISERIALIZERSOWNER_H
 
+#include <unordered_set>
+
 namespace rd {
 	//region predeclared
 
@@ -12,8 +14,12 @@ namespace rd {
 	//endregion
 
 	class ISerializersOwner {
+		mutable std::unordered_set<Serializers const*> used;
 	public:
+		//region ctor/dtor
+
 		virtual ~ISerializersOwner() = default;
+		//endregion
 
 		void registry(Serializers const &serializers) const;
 

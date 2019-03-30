@@ -23,6 +23,8 @@ add_library(rd_framework_cpp STATIC
         #ext
         ext/RdExtBase.cpp ext/RdExtBase.h
         ext/ExtWire.cpp ext/ExtWire.h
+        #scheduler
+        scheduler/SimpleScheduler.cpp scheduler/SimpleScheduler.h
         #serialization
         serialization/SerializationCtx.cpp serialization/SerializationCtx.h
         serialization/Serializers.cpp serialization/Serializers.h
@@ -61,6 +63,7 @@ target_include_directories(rd_framework_cpp
         ext
         impl
         intern
+        scheduler
         serialization
         task
         wire

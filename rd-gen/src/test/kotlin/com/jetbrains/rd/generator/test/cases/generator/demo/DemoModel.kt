@@ -8,9 +8,13 @@ import java.io.File
 
 object DemoRoot : Root(
         Kotlin11Generator(FlowTransform.Reversed, "org.example", File(syspropertyOrEmpty("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrEmpty("model.out.src.cpp.dir")))
+        Cpp17Generator(FlowTransform.AsIs, "demo", File(syspropertyOrEmpty("model.out.src.cpp.dir")))
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
-)
+) {
+    init {
+        setting(Cpp17Generator.TargetName, "demo_model")
+    }
+}
 
 object DemoModel : Ext(DemoRoot) {
     private var MyScalar = structdef {
@@ -21,6 +25,14 @@ object DemoModel : Ext(DemoRoot) {
         field("long", PredefinedType.long)
 //        field("float_", PredefinedType.float)
 //        field("double_", PredefinedType.double)
+    }
+
+    private var Base = basestruct {
+
+    }
+
+    private var Derived = structdef extends Base {
+        field("string", PredefinedType.string)
     }
 
     init {
@@ -36,7 +48,11 @@ object DemoModel : Ext(DemoRoot) {
 
         call("call", PredefinedType.char, PredefinedType.string)
 
-        callback("callback", PredefinedType.string, PredefinedType.int);
+        callback("callback", PredefinedType.string, PredefinedType.int)
+
+        property("interned_string", PredefinedType.string.interned(ProtocolInternScope))
+
+        property("polymorphic", Base)
     }
 }
 
