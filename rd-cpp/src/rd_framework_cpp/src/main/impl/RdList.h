@@ -82,7 +82,8 @@ namespace rd {
 					get_wire()->send(rdid, [this, e](Buffer const &buffer) {
 						Op op = static_cast<Op >(e.v.index());
 
-						buffer.write_integral<int64_t>(static_cast<int64_t>(op) | (next_version++ << versionedFlagShift));
+						buffer.write_integral<int64_t>(
+								static_cast<int64_t>(op) | (next_version++ << versionedFlagShift));
 						buffer.write_integral<int32_t>(static_cast<const int32_t>(e.get_index()));
 
 						T const *new_value = e.get_new_value();
@@ -194,6 +195,13 @@ namespace rd {
 		bool removeAll(std::vector<WT> elements) const override {
 			return local_change([&] { return list.removeAll(std::move(elements)); });
 		}
+
+		//region iterators
+
+		using iterator = typename ViewableList<T>::iterator;
+
+		using reverse_iterator = typename ViewableList<T>::reverse_iterator;
+		//endregion
 	};
 }
 

@@ -133,3 +133,73 @@ TEST (viewable_map, move) {
 	ViewableMap<int, int> set1;
 	ViewableMap<int, int> set2(std::move(set1));
 }
+
+using container = ViewableMap<std::wstring, int>;
+
+static_assert(!std::is_constructible<container::iterator, std::nullptr_t>::value,
+			  "iterator should not be constructible from nullptr");
+static_assert(!std::is_constructible<container::const_iterator, std::nullptr_t>::value,
+			  "const_iterator should not be constructible from nullptr");
+
+TEST(viewable_map_iterators, end_iterator) {
+	container c;
+	container::iterator i = c.end();
+
+	EXPECT_EQ(c.begin(), i);
+}
+
+const int perm4[] = {2, 0, 1, 9};
+
+TEST(viewable_map_iterators, reverse_iterators) {
+	container c;
+	for (int i : perm4) {
+		c.set(std::to_wstring(i), i);
+	}
+	std::reverse(c.begin(), c.end());
+
+	EXPECT_EQ(2, *c.rbegin());
+	EXPECT_EQ(0, *std::next(c.rbegin()));
+	EXPECT_EQ(9, *std::prev(c.rend()));
+}
+
+const int perm3[] = {1, 2, 8};
+
+TEST(viewable_map_iterators, iterators_postfix) {
+	container s;
+	for (int i : perm3) {
+		s.set(std::to_wstring(i), i);
+	}
+	container::iterator i = s.begin();
+	EXPECT_EQ(1, *i);
+	container::iterator j = i++;
+	EXPECT_EQ(2, *i);
+	EXPECT_EQ(1, *j);
+	j = i++;
+	EXPECT_EQ(8, *i);
+	EXPECT_EQ(2, *j);
+	j = i++;
+	EXPECT_EQ(s.end(), i);
+	EXPECT_EQ(8, *j);
+	j = i--;
+	EXPECT_EQ(8, *i);
+	EXPECT_EQ(s.end(), j);
+}
+
+/*TEST(viewable_map_iterators, insert_return_value) {
+    container c;
+	c.addAll({1, 2, 3, 4});
+
+    container::iterator i = c.add(std::next(c.begin(), 2), 5);
+    EXPECT_EQ(5, *i);
+    EXPECT_EQ(2, *std::prev(i));
+    EXPECT_EQ(3, *std::next(i));
+}
+
+TEST(viewable_map_iterators, erase_return_value) {
+    container c;
+    c.addAll({1, 2, 3, 4});
+    container::iterator i = c.remove(std::next(c.begin()));
+    EXPECT_EQ(3, *i);
+    i = c.remove(i);
+    EXPECT_EQ(4, *i);
+}*/
