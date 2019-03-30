@@ -79,6 +79,8 @@ namespace rd {
 
 		virtual bool add(WT) const = 0;
 
+		virtual bool addAll(std::vector<WT> elements) const = 0;
+
 		virtual void clear() const = 0;
 
 		virtual bool remove(T const &) const = 0;

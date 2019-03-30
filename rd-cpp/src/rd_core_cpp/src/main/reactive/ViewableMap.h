@@ -22,8 +22,10 @@ namespace rd {
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
 
-		mutable tsl::ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> map;
 		Signal<Event> change;
+
+		using data_t = tsl::ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>>;
+		mutable data_t map;
 	public:
 		//region ctor/dtor
 
@@ -34,6 +36,147 @@ namespace rd {
 		ViewableMap &operator=(ViewableMap &&) = default;
 
 		virtual ~ViewableMap() = default;
+		//endregion
+
+		//region iterators
+
+	public:
+		class iterator {
+			friend class ViewableMap<K, V>;
+
+			mutable typename data_t::iterator it_;
+
+			explicit iterator(const typename data_t::iterator &it) : it_(it) {}
+
+		public:
+			using iterator_category = std::random_access_iterator_tag;
+			using key_type = K;
+			using mapped_type = V;
+			using value_type = V;
+			using size_type = size_t;
+			using difference_type = std::ptrdiff_t;
+			using reference = V &;
+			using const_reference = const V &;
+			using pointer = const K *;
+			using const_pointer = const K *;
+
+			iterator(const iterator &other) = default;
+
+			iterator(iterator &&other) noexcept = default;
+
+			iterator &operator=(const iterator &other) = default;
+
+			iterator &operator=(iterator &&other) noexcept = default;
+
+			iterator &operator++() {
+				++it_;
+				return *this;
+			}
+
+			iterator operator++(int) {
+				auto it = *this;
+				++*this;
+				return it;
+			}
+
+			iterator &operator--() {
+				--it_;
+				return *this;
+			}
+
+			iterator operator--(int) {
+				auto it = *this;
+				--*this;
+				return it;
+			}
+
+			iterator &operator+=(difference_type delta) {
+				it_ += delta;
+				return *this;
+			}
+
+			iterator &operator-=(difference_type delta) {
+				it_ -= delta;
+				return *this;
+			}
+
+			iterator operator+(difference_type delta) const {
+				auto it = *this;
+				return it += delta;
+			}
+
+			iterator operator-(difference_type delta) const {
+				auto it = *this;
+				return it -= delta;
+			}
+
+			difference_type operator-(iterator const &other) const {
+				return it_ - other.it_;
+			}
+
+			bool operator<(iterator const &other) const noexcept {
+				return this->it_ < other.it_;
+			}
+
+
+			bool operator>(iterator const &other) const noexcept {
+				return this->it_ > other.it_;
+			}
+
+
+			bool operator==(iterator const &other) const noexcept {
+				return this->it_ == other.it_;
+			}
+
+
+			bool operator!=(iterator const &other) const noexcept {
+				return !(*this == other);
+			}
+
+
+			bool operator<=(iterator const &other) const noexcept {
+				return (this->it_ < other.it_) || (*this == other);
+			}
+
+
+			bool operator>=(iterator const &other) const noexcept {
+				return (this->it_ > other.it_) || (*this == other);
+			}
+
+			reference operator*() noexcept {
+				return *(it_.value());
+			}
+
+			const_reference operator*() const noexcept {
+				return *(it_.value());
+			}
+
+			pointer operator->() const noexcept {
+				return it_.value().get();
+			}
+		};
+
+		using reverse_iterator = std::reverse_iterator<iterator>;
+
+		using const_iterator = iterator;
+
+		using const_reverse_iterator = reverse_iterator;
+
+		iterator begin() { return iterator(map.begin()); }
+
+		const_iterator begin() const { return const_iterator(map.begin()); }
+
+		iterator end() { return iterator(map.end()); }
+
+		const_iterator end() const { return const_iterator(map.end()); }
+
+		reverse_iterator rbegin() { return reverse_iterator(end()); }
+
+		const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+
+		reverse_iterator rend() { return reverse_iterator(begin()); }
+
+		const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 		//endregion
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {

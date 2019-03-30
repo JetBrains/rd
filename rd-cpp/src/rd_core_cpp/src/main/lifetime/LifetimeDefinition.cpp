@@ -37,7 +37,7 @@ namespace rd {
 		if (lifetime.ptr != nullptr) { //wasn't moved
 			if (!is_eternal()) {
 				if (!lifetime->is_terminated()) {
-					Logger().log(LogLevel::Warn, "Did you forget to terminate Lifetime definition?");
+					Logger().warn("Did you forget to terminate Lifetime definition?");
 					lifetime->terminate();
 				}
 			}

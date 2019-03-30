@@ -169,3 +169,65 @@ TEST(viewable_list, move) {
 	ViewableList<int> list1;
 	ViewableList<int> list2(std::move(list1));
 }
+
+using container = ViewableList<int>;
+
+static_assert(!std::is_constructible<container::iterator, std::nullptr_t>::value
+        , "iterator should not be constructible from nullptr");
+static_assert(!std::is_constructible<container::const_iterator, std::nullptr_t>::value
+        , "const_iterator should not be constructible from nullptr");
+
+TEST(viewable_list_iterators, end_iterator) {
+	container c;
+    container::iterator i = c.end();
+
+    EXPECT_EQ(c.begin(), i);
+}
+
+TEST(viewable_list_iterators, reverse_iterators) {
+    container c;
+	c.addAll({1, 2, 3, 4});
+	std::reverse(c.begin(), c.end());
+
+    EXPECT_EQ(1, *c.rbegin());
+    EXPECT_EQ(2, *std::next(c.rbegin()));
+    EXPECT_EQ(4, *std::prev(c.rend()));
+}
+
+TEST(viewable_list_iterators, iterators_postfix) {
+    container s;
+	s.addAll({1, 2, 3});
+    container::iterator i = s.begin();
+    EXPECT_EQ(1, *i);
+    container::iterator j = i++;
+    EXPECT_EQ(2, *i);
+    EXPECT_EQ(1, *j);
+    j = i++;
+    EXPECT_EQ(3, *i);
+    EXPECT_EQ(2, *j);
+    j = i++;
+    EXPECT_EQ(s.end(), i);
+    EXPECT_EQ(3, *j);
+    j = i--;
+    EXPECT_EQ(3, *i);
+    EXPECT_EQ(s.end(), j);
+}
+
+/*TEST(viewable_list_iterators, insert_return_value) {
+    container c;
+	c.addAll({1, 2, 3, 4});
+
+    container::iterator i = c.add(std::next(c.begin(), 2), 5);
+    EXPECT_EQ(5, *i);
+    EXPECT_EQ(2, *std::prev(i));
+    EXPECT_EQ(3, *std::next(i));
+}
+
+TEST(viewable_list_iterators, erase_return_value) {
+    container c;
+    c.addAll({1, 2, 3, 4});
+    container::iterator i = c.remove(std::next(c.begin()));
+    EXPECT_EQ(3, *i);
+    i = c.remove(i);
+    EXPECT_EQ(4, *i);
+}*/

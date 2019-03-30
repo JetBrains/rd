@@ -31,6 +31,8 @@ namespace rd {
 
 		void info(std::string const &msg, std::exception const *e = nullptr) const;
 
+		void warn(std::string const &msg, std::exception const *e = nullptr) const;
+
 		void error(std::string const &msg, std::exception const *e = nullptr) const;
 
 		//    virtual bool is_enabled(LogLevel level) = 0;

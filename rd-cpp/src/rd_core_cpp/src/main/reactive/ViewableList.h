@@ -11,6 +11,8 @@
 #include "core_util.h"
 
 #include <algorithm>
+#include <iterator>
+#include <utility>
 
 namespace rd {
 	template<typename T>
@@ -23,7 +25,8 @@ namespace rd {
 		class RdList;
 
 	private:
-		mutable std::vector<Wrapper<T> > list;
+		using data_t = std::vector<Wrapper<T>>;
+		mutable data_t list;
 		Signal<Event> change;
 
 	protected:
@@ -45,6 +48,148 @@ namespace rd {
 
 		virtual ~ViewableList() = default;
 
+		//endregion
+
+		//region iterators
+
+	protected:
+		using iterator_trait = std::iterator<
+				std::random_access_iterator_tag,
+				T,
+				std::ptrdiff_t,
+				T *,
+				T &>;
+	public:
+
+		class iterator : public iterator_trait {
+			friend class ViewableList<T>;
+
+			typename data_t::iterator it_;
+
+			explicit iterator(const typename data_t::iterator &it) : it_(it) {}
+
+		public:
+			iterator(const iterator &other) = default;
+
+			iterator(iterator &&other) noexcept = default;
+
+			iterator &operator=(const iterator &other) = default;
+
+			iterator &operator=(iterator &&other) noexcept = default;
+
+			iterator &operator++() {
+				++it_;
+				return *this;
+			}
+
+			iterator operator++(int) {
+				auto it = *this;
+				++*this;
+				return it;
+			}
+
+			iterator &operator--() {
+				--it_;
+				return *this;
+			}
+
+			iterator operator--(int) {
+				auto it = *this;
+				--*this;
+				return it;
+			}
+
+			iterator &operator+=(typename iterator_trait::difference_type delta) {
+				it_ += delta;
+				return *this;
+			}
+
+			iterator &operator-=(typename iterator_trait::difference_type delta) {
+				it_ -= delta;
+				return *this;
+			}
+
+			iterator operator+(typename iterator_trait::difference_type delta) const {
+				auto it = *this;
+				return it += delta;
+			}
+
+			iterator operator-(typename iterator_trait::difference_type delta) const {
+				auto it = *this;
+				return it -= delta;
+			}
+
+			typename iterator_trait::difference_type operator-(iterator const &other) const {
+				return it_ - other.it_;
+			}
+
+			bool operator<(iterator const &other) const noexcept {
+				return this->it_ < other.it_;
+			}
+
+
+			bool operator>(iterator const &other) const noexcept {
+				return this->it_ > other.it_;
+			}
+
+
+			bool operator==(iterator const &other) const noexcept {
+				return this->it_ == other.it_;
+			}
+
+
+			bool operator!=(iterator const &other) const noexcept {
+				return !(*this == other);
+			}
+
+
+			bool operator<=(iterator const &other) const noexcept {
+				return (this->it_ < other.it_) || (*this == other);
+			}
+
+
+			bool operator>=(iterator const &other) const noexcept {
+				return (this->it_ > other.it_) || (*this == other);
+			}
+
+			typename iterator_trait::reference operator*() noexcept {
+				return **it_;
+			}
+
+			const typename iterator_trait::reference operator*() const noexcept {
+				return **it_;
+			}
+
+			typename iterator_trait::pointer operator->() noexcept {
+				return (*it_).get();
+			}
+
+			const typename iterator_trait::pointer operator->() const noexcept {
+				return (*it_).get();
+			}
+		};
+
+		using reverse_iterator = std::reverse_iterator<iterator>;
+
+		using const_iterator = iterator;
+
+		using const_reverse_iterator = reverse_iterator;
+
+		iterator begin() { return iterator(list.begin()); }
+
+		const_iterator begin() const { return const_iterator(list.begin()); }
+
+		iterator end() { return iterator(list.end()); }
+
+		const_iterator end() const { return const_iterator(list.end()); }
+
+		reverse_iterator rbegin() { return reverse_iterator(end()); }
+
+		const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+
+		reverse_iterator rend() { return reverse_iterator(begin()); }
+
+		const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 		//endregion
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
@@ -91,7 +236,7 @@ namespace rd {
 		WT set(size_t index, WT element) const override {
 			auto old_value = std::move(list[index]);
 			list[index] = Wrapper<T>(std::move(element));
-			change.fire(typename Event::Update(index, &(*old_value), &(*list[index])));//???
+			change.fire(typename Event::Update(index, &(*old_value), &(*list[index]))); //???
 			return wrapper::unwrap<T>(std::move(old_value));
 		}
 
@@ -121,7 +266,8 @@ namespace rd {
 			list.clear();
 		}
 
-		bool removeAll(std::vector<WT> elements) const override { //todo faster
+		bool removeAll(std::vector<WT> elements) const override {
+			//todo faster
 			//        std::unordered_set<T> set(elements.begin(), elements.end());
 
 			bool res = false;
@@ -148,7 +294,7 @@ namespace rd {
 	};
 }
 
-static_assert(std::is_move_constructible<rd::ViewableList<int> >::value,
+static_assert(std::is_move_constructible<rd::ViewableList<int>>::value,
 			  "Is move constructible from ViewableList<int>");
 
 #endif //RD_CPP_CORE_VIEWABLELIST_H

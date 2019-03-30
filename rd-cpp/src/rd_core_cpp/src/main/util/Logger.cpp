@@ -43,7 +43,7 @@ namespace rd {
 	}
 
 	void Logger::log(LogLevel level, const std::string &message, const std::exception *e) const {
-		std::cerr << std::to_string(static_cast<int>(level))
+		std::cerr << to_string(level)
 					 + " | " + to_string(std::this_thread::get_id())
 					 + " | " + message +
 					 +" | " + (e ? e->what() : "")
@@ -60,6 +60,10 @@ namespace rd {
 
 	void Logger::info(std::string const &msg, const std::exception *e) const {
 		log(LogLevel::Info, msg, e);
+	}
+
+	void Logger::warn(std::string const &msg, const std::exception *e) const {
+		log(LogLevel::Warn, msg, e);
 	}
 
 	void Logger::error(std::string const &msg, const std::exception *e) const {

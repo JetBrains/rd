@@ -41,7 +41,7 @@ namespace rd {
 
 		RdFrameworkTestBase::~RdFrameworkTestBase() {
 			if (!after_test_called) {
-				Logger().log(LogLevel::Warn, "Call AfterTest method in test function body");
+				Logger().warn("Call AfterTest method in test function body");
 			}
 		}
 	}
