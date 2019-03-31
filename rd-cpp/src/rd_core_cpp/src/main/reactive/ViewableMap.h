@@ -13,6 +13,9 @@
 
 #include "tsl/ordered_map.h"
 
+#include <iterator>
+#include <utility>
+
 namespace rd {
 	template<typename K, typename V>
 	class ViewableMap : public IViewableMap<K, V> {
@@ -49,16 +52,12 @@ namespace rd {
 			explicit iterator(const typename data_t::iterator &it) : it_(it) {}
 
 		public:
-			using iterator_category = std::random_access_iterator_tag;
+			using iterator_category = typename data_t::iterator::iterator_category;
 			using key_type = K;
-			using mapped_type = V;
 			using value_type = V;
-			using size_type = size_t;
 			using difference_type = std::ptrdiff_t;
-			using reference = V &;
-			using const_reference = const V &;
-			using pointer = const K *;
-			using const_pointer = const K *;
+			using reference = V const &;
+			using pointer = V const *;
 
 			iterator(const iterator &other) = default;
 
@@ -143,40 +142,62 @@ namespace rd {
 				return (this->it_ > other.it_) || (*this == other);
 			}
 
-			reference operator*() noexcept {
-				return *(it_.value());
-			}
-
-			const_reference operator*() const noexcept {
-				return *(it_.value());
+			reference operator*() const noexcept {
+				return *it_.value();
 			}
 
 			pointer operator->() const noexcept {
 				return it_.value().get();
 			}
+
+			key_type const &key() const {
+				return *it_.key();
+			}
+
+			value_type const &value() const {
+				return *it_.value();
+			}
 		};
 
-		using reverse_iterator = std::reverse_iterator<iterator>;
+		class reverse_iterator : public std::reverse_iterator<iterator> {
+			using base = std::reverse_iterator<iterator>;
+		public:
+			using iterator_category = typename iterator::iterator_category;
+			using key_type = typename iterator::key_type;
+			using value_type = typename iterator::value_type;
+			using difference_type = typename iterator::difference_type;
+			using reference = typename iterator::reference;
+			using pointer = typename iterator::pointer;
 
-		using const_iterator = iterator;
+			reverse_iterator(const reverse_iterator &other) = default;
 
-		using const_reverse_iterator = reverse_iterator;
+			reverse_iterator &operator=(const reverse_iterator &other) = default;
 
-		iterator begin() { return iterator(map.begin()); }
+			explicit reverse_iterator(const iterator &other) : base(other) {};
 
-		const_iterator begin() const { return const_iterator(map.begin()); }
+			reverse_iterator &operator=(const iterator &other) {
+				static_cast<base>(*this) = other;
+			};
 
-		iterator end() { return iterator(map.end()); }
+			key_type const &key() const {
+				auto it = base::current;
+				return (--(it)).key();
+			}
 
-		const_iterator end() const { return const_iterator(map.end()); }
+			value_type const &value() const {
+				auto it = base::current;
+				return (--it).value();
+			}
+		};
 
-		reverse_iterator rbegin() { return reverse_iterator(end()); }
+		iterator begin() const { return iterator(map.begin()); }
 
-		const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+		iterator end() const { return iterator(map.end()); }
 
-		reverse_iterator rend() { return reverse_iterator(begin()); }
+		reverse_iterator rbegin() const { return reverse_iterator(end()); }
 
-		const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+		reverse_iterator rend() const { return reverse_iterator(begin()); }
+
 		//endregion
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {

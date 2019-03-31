@@ -51,17 +51,8 @@ namespace rd {
 		//endregion
 
 		//region iterators
-
-	protected:
-		using iterator_trait = std::iterator<
-				std::random_access_iterator_tag,
-				T,
-				std::ptrdiff_t,
-				T *,
-				T &>;
 	public:
-
-		class iterator : public iterator_trait {
+		class iterator {
 			friend class ViewableList<T>;
 
 			typename data_t::iterator it_;
@@ -69,6 +60,12 @@ namespace rd {
 			explicit iterator(const typename data_t::iterator &it) : it_(it) {}
 
 		public:
+			using iterator_category =  std::random_access_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = T const *;
+			using reference = T const &;
+
 			iterator(const iterator &other) = default;
 
 			iterator(iterator &&other) noexcept = default;
@@ -99,27 +96,27 @@ namespace rd {
 				return it;
 			}
 
-			iterator &operator+=(typename iterator_trait::difference_type delta) {
+			iterator &operator+=(difference_type delta) {
 				it_ += delta;
 				return *this;
 			}
 
-			iterator &operator-=(typename iterator_trait::difference_type delta) {
+			iterator &operator-=(difference_type delta) {
 				it_ -= delta;
 				return *this;
 			}
 
-			iterator operator+(typename iterator_trait::difference_type delta) const {
+			iterator operator+(difference_type delta) const {
 				auto it = *this;
 				return it += delta;
 			}
 
-			iterator operator-(typename iterator_trait::difference_type delta) const {
+			iterator operator-(difference_type delta) const {
 				auto it = *this;
 				return it -= delta;
 			}
 
-			typename iterator_trait::difference_type operator-(iterator const &other) const {
+			difference_type operator-(iterator const &other) const {
 				return it_ - other.it_;
 			}
 
@@ -152,44 +149,32 @@ namespace rd {
 				return (this->it_ > other.it_) || (*this == other);
 			}
 
-			typename iterator_trait::reference operator*() noexcept {
+			reference operator*() noexcept {
 				return **it_;
 			}
 
-			const typename iterator_trait::reference operator*() const noexcept {
+			reference operator*() const noexcept {
 				return **it_;
 			}
 
-			typename iterator_trait::pointer operator->() noexcept {
+			pointer operator->() noexcept {
 				return (*it_).get();
 			}
 
-			const typename iterator_trait::pointer operator->() const noexcept {
+			pointer operator->() const noexcept {
 				return (*it_).get();
 			}
 		};
 
 		using reverse_iterator = std::reverse_iterator<iterator>;
 
-		using const_iterator = iterator;
+		iterator begin() const { return iterator(list.begin()); }
 
-		using const_reverse_iterator = reverse_iterator;
+		iterator end() const { return iterator(list.end()); }
 
-		iterator begin() { return iterator(list.begin()); }
+		reverse_iterator rbegin() const { return reverse_iterator(end()); }
 
-		const_iterator begin() const { return const_iterator(list.begin()); }
-
-		iterator end() { return iterator(list.end()); }
-
-		const_iterator end() const { return const_iterator(list.end()); }
-
-		reverse_iterator rbegin() { return reverse_iterator(end()); }
-
-		const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-
-		reverse_iterator rend() { return reverse_iterator(begin()); }
-
-		const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+		reverse_iterator rend() const { return reverse_iterator(begin()); }
 		//endregion
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
