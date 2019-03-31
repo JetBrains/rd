@@ -64,3 +64,10 @@ TEST_F(RdFrameworkTestBase, set_move) {
 
 	AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, set_iterator) {
+	RdSet<int> set;
+	EXPECT_EQ(set.end(), set.rbegin().base());
+	set.addAll({1, 2, 3});
+	EXPECT_EQ(set.end(), set.rbegin().base());
+}

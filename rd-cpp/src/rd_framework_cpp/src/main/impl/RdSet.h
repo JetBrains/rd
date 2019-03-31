@@ -15,11 +15,11 @@
 
 namespace rd {
 	template<typename T, typename S = Polymorphic<T>>
-	class RdSet final : public RdReactiveBase, public IViewableSet<T>, public ISerializable {
+	class RdSet final : public RdReactiveBase, public ViewableSet<T>, public ISerializable {
 	private:
 		using WT = typename IViewableSet<T>::WT;
 	protected:
-		ViewableSet<T> set;
+		using set = ViewableSet<T>;
 	public:
 		using Event = typename IViewableSet<T>::Event;
 
@@ -78,45 +78,49 @@ namespace rd {
 
 			switch (kind) {
 				case AddRemove::ADD : {
-					set.add(std::move(value));
+					set::add(std::move(value));
 					break;
 				}
 				case AddRemove::REMOVE: {
-					set.remove(wrapper::get<T>(value));
+					set::remove(wrapper::get<T>(value));
 					break;
 				}
 			}
 		}
 
 		bool add(WT value) const override {
-			return local_change([this, value = std::move(value)]() mutable { return set.add(std::move(value)); });
+			return local_change([this, value = std::move(value)]() mutable { return set::add(std::move(value)); });
 		}
 
 		void clear() const override {
-			return local_change([&] { return set.clear(); });
+			return local_change([&] { return set::clear(); });
 		}
 
 		bool remove(T const &value) const override {
-			return local_change([&] { return set.remove(value); });
+			return local_change([&] { return set::remove(value); });
 		}
 
 		size_t size() const override {
-			return local_change([&] { return set.size(); });
+			return local_change([&] { return set::size(); });
 		}
 
 		bool contains(T const &value) const override {
-			return local_change([&] { return set.contains(value); });
+			return local_change([&] { return set::contains(value); });
 		}
 
 		bool empty() const override {
-			return local_change([&] { return set.empty(); });
+			return local_change([&] { return set::empty(); });
 		}
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}
-			set.advise(lifetime, std::move(handler));
+			set::advise(lifetime, std::move(handler));
+		}
+
+		bool addAll(std::vector<WT> elements) const override {
+			return local_change([this, elements = std::move(elements)]() mutable { return set::addAll(elements); });
 		}
 
 		using IViewableSet<T>::advise;

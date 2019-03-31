@@ -160,7 +160,7 @@ namespace rd {
 		};
 
 		class reverse_iterator : public std::reverse_iterator<iterator> {
-			using base = std::reverse_iterator<iterator>;
+			using base_t = std::reverse_iterator<iterator>;
 		public:
 			using iterator_category = typename iterator::iterator_category;
 			using key_type = typename iterator::key_type;
@@ -173,19 +173,19 @@ namespace rd {
 
 			reverse_iterator &operator=(const reverse_iterator &other) = default;
 
-			explicit reverse_iterator(const iterator &other) : base(other) {};
+			explicit reverse_iterator(const iterator &other) : base_t(other) {};
 
 			reverse_iterator &operator=(const iterator &other) {
-				static_cast<base>(*this) = other;
+				static_cast<base_t>(*this) = other;
 			};
 
 			key_type const &key() const {
-				auto it = base::current;
+				auto it = base_t::current;
 				return (--(it)).key();
 			}
 
 			value_type const &value() const {
-				auto it = base::current;
+				auto it = base_t::current;
 				return (--it).value();
 			}
 		};

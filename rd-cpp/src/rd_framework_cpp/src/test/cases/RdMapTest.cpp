@@ -80,7 +80,7 @@ TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 
 	RdMap<int32_t, DynamicEntity> server_map;
 	RdMap<int32_t, DynamicEntity> client_map;
-
+	
 	statics(server_map, id);
 	statics(client_map, id);
 
@@ -136,4 +136,13 @@ TEST_F(RdFrameworkTestBase, rd_map_move) {
 	RdMap<int, int> map2(std::move(map1));
 
 	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, map_iterator) {
+	RdMap<std::wstring, int> map;
+	EXPECT_EQ(map.end(), map.rbegin().base());
+	for (const auto &item : {1, 2, 3}) {
+		map.set(std::to_wstring(item), item);
+	}
+	EXPECT_EQ(map.end(), map.rbegin().base());
 }

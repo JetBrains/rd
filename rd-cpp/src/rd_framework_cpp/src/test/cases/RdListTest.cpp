@@ -187,3 +187,10 @@ TEST_F(RdFrameworkTestBase, list_move) {
 
 	AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, list_iterator) {
+	RdList<int> list;
+	EXPECT_EQ(list.end(), list.rbegin().base());
+	list.addAll({1, 2, 3});
+	EXPECT_EQ(list.end(), list.rbegin().base());
+}
