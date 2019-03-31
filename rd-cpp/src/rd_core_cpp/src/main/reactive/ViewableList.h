@@ -210,7 +210,7 @@ namespace rd {
 			if (it == list.end()) {
 				return false;
 			}
-			removeAt(std::distance(list.begin(), it));
+			ViewableList::removeAt(std::distance(list.begin(), it));
 			return true;
 		}
 
@@ -227,7 +227,7 @@ namespace rd {
 
 		bool addAll(size_t index, std::vector<WT> elements) const override {
 			for (auto &element : elements) {
-				add(index, std::move(element));
+				ViewableList::add(index, std::move(element));
 				++index;
 			}
 			return true;
@@ -235,7 +235,7 @@ namespace rd {
 
 		bool addAll(std::vector<WT> elements) const override {
 			for (auto &&element : elements) {
-				add(std::move(element));
+				ViewableList::add(std::move(element));
 			}
 			return true;
 		}

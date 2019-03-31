@@ -169,7 +169,7 @@ namespace rd {
 
 		bool addAll(std::vector<WT> elements) const override {
 			for (auto &&element : elements) {
-				add(std::move(element));
+				ViewableSet::add(std::move(element));
 			}
 			return true;
 		}
@@ -186,7 +186,7 @@ namespace rd {
 		}
 
 		bool remove(T const &element) const override {
-			if (!contains(element)) {
+			if (!ViewableSet::contains(element)) {
 				return false;
 			}
 			auto it = set.find(element);

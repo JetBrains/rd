@@ -17,12 +17,12 @@
 
 namespace rd {
 	template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>>
-	class RdMap final : public RdReactiveBase, public IViewableMap<K, V>, public ISerializable {
+	class RdMap final : public RdReactiveBase, public ViewableMap<K, V>, public ISerializable {
 	private:
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
 
-		ViewableMap<K, V> map;
+		using map = ViewableMap<K, V>;
 		mutable int64_t next_version = 0;
 		mutable tsl::ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
 
@@ -173,9 +173,9 @@ namespace rd {
 				if (msg_versioned || !is_master() || pendingForAck.count(key) == 0) {
 					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value));
 					if (value.has_value()) {
-						map.set(std::move(key), *std::move(value));
+						map::set(std::move(key), *std::move(value));
 					} else {
-						map.remove(wrapper::get<K>(key));
+						map::remove(wrapper::get<K>(key));
 					}
 				} else {
 					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value) + " >> REJECTED");
@@ -204,33 +204,33 @@ namespace rd {
 			if (is_bound()) {
 				assert_threading();
 			}
-			map.advise(lifetime, handler);
+			map::advise(lifetime, handler);
 		}
 
 		V const *get(K const &key) const override {
-			return local_change([&] { return map.get(key); });
+			return local_change([&] { return map::get(key); });
 		}
 
 		V const *set(WK key, WV value) const override {
 			return local_change([&]() mutable {
-				return map.set(std::move(key), std::move(value));
+				return map::set(std::move(key), std::move(value));
 			});
 		}
 
 		tl::optional<WV> remove(K const &key) const override {
-			return local_change([&] { return map.remove(key); });
+			return local_change([&] { return map::remove(key); });
 		}
 
 		void clear() const override {
-			return local_change([&] { return map.clear(); });
+			return local_change([&] { return map::clear(); });
 		}
 
 		size_t size() const override {
-			return map.size();
+			return map::size();
 		}
 
 		bool empty() const override {
-			return map.empty();
+			return map::empty();
 		}
 	};
 }
