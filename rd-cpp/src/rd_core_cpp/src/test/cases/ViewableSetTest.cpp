@@ -147,8 +147,6 @@ using container = ViewableSet<int>;
 
 static_assert(!std::is_constructible<container::iterator, std::nullptr_t>::value,
 			  "iterator should not be constructible from nullptr");
-static_assert(!std::is_constructible<container::const_iterator, std::nullptr_t>::value,
-			  "const_iterator should not be constructible from nullptr");
 
 TEST(viewable_set_iterators, end_iterator) {
 	container c;
@@ -183,6 +181,28 @@ TEST(viewable_set_iterators, iterators_postfix) {
 	j = i--;
 	EXPECT_EQ(3, *i);
 	EXPECT_EQ(s.end(), j);
+}
+
+std::vector<int> const perm4 = {2, 0, 1, 9};
+
+TEST(viewable_set_iterators, fori) {
+	const container c;
+	c.addAll(perm4);
+
+	std::vector<int> log;
+	for (auto const &item : c) {
+		log.push_back(item);
+	}
+
+	EXPECT_EQ(log, perm4);
+}
+
+TEST(viewable_set_iterators, random_access) {
+	container c;
+	c.addAll(perm4);
+
+	EXPECT_EQ(*(c.begin() + 2), 1);
+	EXPECT_EQ(*(c.rbegin() + 2), 0);
 }
 
 /*TEST(viewable_set_iterators, insert_return_value) {
