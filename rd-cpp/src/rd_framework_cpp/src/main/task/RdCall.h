@@ -23,6 +23,7 @@ namespace rd {
 		mutable std::unordered_map<RdId, std::pair<IScheduler *, RdTask<TRes, ResSer>>> requests;
 		mutable tl::optional<RdId> syncTaskId;
 
+		mutable RdTask<TRes, ResSer> last_task;
 	public:
 
 		//region ctor/dtor
@@ -78,7 +79,7 @@ namespace rd {
 				//auto const&[scheduler, task] = request;
 				auto const &scheduler = request.first;
 				auto const &task = request.second;
-				scheduler->queue([&] {
+				scheduler->queue([&, result = std::move(result)]() mutable {
 					if (task.has_value()) {
 						logReceived.trace("call " + location.toString() + " " + rdid.toString() +
 										  " response was dropped, task result is: ${task.result.valueOrNull}");
@@ -95,13 +96,13 @@ namespace rd {
 			}
 		}
 
-		WTRes sync(TReq const &request) const {
+		TRes const &sync(TReq const &request) const {
 			try {
-				auto task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
-				while (!task.has_value()) {
+				last_task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
+				while (!last_task.has_value()) {
 					std::this_thread::yield();
 				}
-				auto res = task.value_or_throw().unwrap();
+				auto const &res = last_task.value_or_throw().unwrap();
 				syncTaskId = tl::nullopt;
 				return res;
 			} catch (...) {

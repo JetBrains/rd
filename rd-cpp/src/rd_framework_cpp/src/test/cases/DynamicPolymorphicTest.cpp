@@ -104,8 +104,7 @@ TEST_F(DPropertyTest, dynamic_polymorphic_property_cast) {
 using DList = RdList<AbstractEntity, S>;
 using DListTest = RdFrameworkDynamicPolymorphicTestBase<DList>;
 
-TEST_F(DListTest, dynamic_polymorphic_list)
-{
+TEST_F(DListTest, dynamic_polymorphic_list) {
 	std::vector<std::string> log;
 	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DList::Event e) {
@@ -209,26 +208,24 @@ TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint) {
 	server_entity.set([](AbstractEntity const &value) -> Wrapper<AbstractEntity> {
 		if (value.type_name() == "ConcreteEntity") {
 			ConcreteEntity res{value.get_filePath()};
-			return Wrapper<AbstractEntity>{std::move(res)};
+			return Wrapper<ConcreteEntity>{std::move(res)};
 		} else if (value.type_name() == "FakeEntity") {
 			FakeEntity res{value.get_filePath()};
-			return Wrapper<AbstractEntity>{std::move(res)};
+			return Wrapper<FakeEntity>{std::move(res)};
 		} else {
 			throw std::invalid_argument("wrong type");
 		}
 		//todo resolve types
 	});
 	ConcreteEntity value_a{L"A"};
-	Wrapper<AbstractEntity> res = client_entity.sync(value_a);
-	EXPECT_EQ(*res, value_a);
+	AbstractEntity const &res = client_entity.sync(value_a);
+	EXPECT_EQ(res, value_a);
 
 	FakeEntity fake_entity{L"A"};
 	auto task = client_entity.start(fake_entity, &clientScheduler);
 	auto task_result = task.value_or_throw();
-	Wrapper<AbstractEntity> unwrap = task_result.unwrap();
-	EXPECT_NE(*unwrap, value_a);
-
-	EXPECT_FALSE(task_result.unwrap()); //the value was stolen by previous unwrap
+	AbstractEntity const &unwrap = task_result.unwrap();
+	EXPECT_NE(unwrap, value_a);
 
 	AfterTest();
 }
