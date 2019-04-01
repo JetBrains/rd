@@ -1,18 +1,14 @@
 add_library(rd_framework_cpp_test_util
         #entity
-        entity/AbstractEntity.cpp
-        entity/AbstractEntity.h
-        entity/ConcreteEntity.cpp
-        entity/ConcreteEntity.h
-        entity/ConcreteEntity_Unknown.cpp
-        entity/ConcreteEntity_Unknown.h
         entity/DynamicEntity.cpp
         entity/DynamicEntity.h
         entity/DynamicExt.cpp
         entity/DynamicExt.h
         entity/ExtProperty.h
-        entity/FakeEntity.cpp
-        entity/FakeEntity.h
+        entity/FakeEntity.cpp entity/FakeEntity.h
+        entity/AbstractEntity.cpp entity/AbstractEntity.h
+        entity/AbstractEntity_Unknown.cpp entity/AbstractEntity_Unknown.h
+        entity/ConcreteEntity.cpp entity/ConcreteEntity.h
         #test_fixture
         test_fixture/SocketWireTestBase.cpp test_fixture/SocketWireTestBase.h
         test_fixture/RdFrameworkTestBase.cpp test_fixture/RdFrameworkTestBase.h

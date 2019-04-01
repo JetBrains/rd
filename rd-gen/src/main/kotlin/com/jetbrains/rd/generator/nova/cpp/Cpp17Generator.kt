@@ -685,6 +685,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
                 comment("type name trait")
                 declare(typenameTraitDecl(decl))
+
+                comment("static type name trait")
+                declare(staticTypenameTraitDecl(decl))
                 //            comment("pretty print")
                 //            prettyPrintTrait(decl)
 
@@ -986,12 +989,21 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         return Constructor.Secondary(this, decl, arguments)
     }
 
-    fun PrettyPrinter.defaultCtorsDtorsDecl(decl: Declaration): Constructor {
+    fun Declaration.defaultCtor(): Constructor.Default? {
+        return if (allMembers.asSequence().filter { !it.hasEmptyConstructor }.toList().isEmpty()) {
+            Constructor.Default(this@Cpp17Generator, this)
+        } else {
+            null
+        }
+    }
+
+    fun PrettyPrinter.defaultCtorsDtorsDecl(decl: Declaration) {
         val name = decl.name
         println()
 
-        val constructor = Constructor.Default(this@Cpp17Generator, decl)
-        declare(constructor)
+        decl.defaultCtor()?.let {
+            declare(it)
+        } ?: +"$name() = delete;"
 
         if (decl is IScalar) {
             println()
@@ -1011,7 +1023,6 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
         println()
         +"virtual ~$name() = default;"
-        return constructor
     }
 
     private fun readerTraitDecl(decl: Declaration): Signature? {
@@ -1103,6 +1114,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
+    protected fun staticTypenameTraitDecl(decl: Declaration): MemberFunction? {
+        return if (decl !is Toplevel) {
+            MemberFunction("std::string", "static_type_name()", decl.name).static()
+        } else {
+            null
+        }
+    }
+
     protected fun PrettyPrinter.hashSpecialization(decl: Declaration) {
         if (decl !is IScalar) return
         if (decl is Enum) return
@@ -1171,7 +1190,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         comment("hash code trait")
         hashCodeTraitDef(decl)
 
+        comment("type name trait")
         typenameTraitDef(decl)
+
+        comment("static type name trait")
+        staticTypenameTraitDef(decl)
 //        comment("pretty print")
 //            prettyPrintTrait(decl)
 
@@ -1326,7 +1349,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     }
 
     fun PrettyPrinter.defaultCtorsDtorsDef(decl: Declaration) {
-        define(Constructor.Default(this@Cpp17Generator, decl)) {
+        define(decl.defaultCtor()) {
             +"initialize();"
         }
     }
@@ -1523,15 +1546,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     }
 
     private fun PrettyPrinter.equalityOperatorsDef(decl: Declaration) {
-        p("bool operator==(const ${decl.name} &lhs, const ${decl.name} &rhs)")
-        if (decl.isAbstract || decl !is IScalar) {
-            braceBlock {
-                +"return &lhs == &rhs;"
-            }
-        } else {
-            braceBlock {
-                +"if (lhs.type_name() != rhs.type_name()) return false;"
-                +"return lhs.equals(rhs);"
+        titledBlock("bool operator==(const ${decl.name} &lhs, const ${decl.name} &rhs)") {
+            when (decl) {
+                !is IScalar -> +"return &lhs == &rhs;"
+                else -> {
+                    +"if (lhs.type_name() != rhs.type_name()) return false;"
+                    +"return lhs.equals(rhs);"
+                }
             }
         }
 
@@ -1578,6 +1599,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected fun PrettyPrinter.typenameTraitDef(decl: Declaration) {
         typenameTraitDecl(decl)?.let {
+            define(it) {
+                +"""return "${decl.name}";"""
+            }
+        }
+    }
+
+    protected fun PrettyPrinter.staticTypenameTraitDef(decl: Declaration) {
+        staticTypenameTraitDecl(decl)?.let {
             define(it) {
                 +"""return "${decl.name}";"""
             }

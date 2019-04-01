@@ -50,6 +50,11 @@ namespace rd {
 				return false;
 			}
 
+			std::string DynamicExt::static_type_name()
+			{
+				return "DynamicExt";
+			}
+
 			/*
 void DynamicExt::bind(Lifetime lf, IRdDynamic const *parent, std::wstring const &name) const {
     RdExtBase::bind(lf, parent, name);

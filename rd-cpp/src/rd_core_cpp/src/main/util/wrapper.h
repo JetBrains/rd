@@ -94,7 +94,9 @@ namespace rd {
 
 		Wrapper &operator=(Wrapper &&) noexcept = default;
 
-		constexpr Wrapper(std::nullptr_t) noexcept {}
+		constexpr explicit Wrapper(std::nullptr_t) noexcept {}
+
+		constexpr Wrapper(tl::nullopt_t) noexcept {}
 
 		template<typename R, typename = typename std::enable_if_t<util::is_base_of_v<T, R>>>
 		Wrapper(Wrapper<R> const &other) :

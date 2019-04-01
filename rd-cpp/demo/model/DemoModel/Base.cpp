@@ -44,9 +44,9 @@ namespace demo {
     //equals trait
     
     //equality operators
-    bool operator==(const Base &lhs, const Base &rhs){
-        return &lhs == &rhs;
-    }
+    bool operator==(const Base &lhs, const Base &rhs) {
+        return lhs.equals(rhs);
+    };
     bool operator!=(const Base &lhs, const Base &rhs){
         return !(lhs == rhs);
     }
@@ -57,7 +57,15 @@ namespace demo {
         size_t __r = 0;
         return __r;
     }
+    
+    //type name trait
     std::string Base::type_name() const
+    {
+        return "Base";
+    }
+    
+    //static type name trait
+    std::string Base::static_type_name()
     {
         return "Base";
     }

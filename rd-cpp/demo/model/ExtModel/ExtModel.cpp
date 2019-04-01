@@ -72,12 +72,16 @@ namespace demo {
     //equals trait
     
     //equality operators
-    bool operator==(const ExtModel &lhs, const ExtModel &rhs){
+    bool operator==(const ExtModel &lhs, const ExtModel &rhs) {
         return &lhs == &rhs;
-    }
+    };
     bool operator!=(const ExtModel &lhs, const ExtModel &rhs){
         return !(lhs == rhs);
     }
     
     //hash code trait
+    
+    //type name trait
+    
+    //static type name trait
 };

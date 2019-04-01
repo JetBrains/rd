@@ -45,6 +45,11 @@ namespace rd {
 				auto const &other = dynamic_cast<DynamicEntity const&>(object);
 				return this == &object;
 			}
+
+			std::string DynamicEntity::static_type_name()
+			{
+				return "DynamicEntity";
+			}
 		}
 	}
 }

@@ -121,6 +121,9 @@ namespace demo {
         
         //type name trait
         std::string type_name() const override;
+        
+        //static type name trait
+        static std::string static_type_name();
     };
 };
 

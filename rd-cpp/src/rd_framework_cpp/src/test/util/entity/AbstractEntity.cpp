@@ -1,9 +1,12 @@
 #include "AbstractEntity.h"
 
 
+#include "AbstractEntity_Unknown.h"
+
 namespace rd {
 	namespace test {
 		namespace util {
+
 			//companion
 
 			//initializer
@@ -11,14 +14,23 @@ namespace rd {
 			}
 
 			//primary ctor
-			AbstractEntity::AbstractEntity(std::wstring filePath)
-					: IPolymorphicSerializable(), filePath(std::move(filePath)) { initialize(); }
+			AbstractEntity::AbstractEntity(rd::Wrapper<std::wstring> name_) :
+					rd::IPolymorphicSerializable(), name_(std::move(name_)) {
+				initialize();
+			}
+
+			//secondary constructor
 
 			//reader
-			Wrapper<AbstractEntity>
-			AbstractEntity::readUnknownInstance(SerializationCtx const &ctx, Buffer const &buffer,
-												RdId const &unknownId, int32_t size) {
-				return Wrapper<AbstractEntity>();
+			rd::Wrapper<AbstractEntity>
+			AbstractEntity::readUnknownInstance(rd::SerializationCtx const &ctx, rd::Buffer const &buffer,
+											  rd::RdId const &unknownId, int32_t size) {
+				int32_t objectStartPosition = buffer.get_position();
+				auto name_ = buffer.readWString();
+				auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());
+				buffer.readByteArrayRaw(unknownBytes);
+				AbstractEntity_Unknown res{std::move(name_), unknownId, unknownBytes};
+				return res;
 			}
 
 			//writer
@@ -28,21 +40,17 @@ namespace rd {
 			//identify
 
 			//getters
-			std::wstring const &AbstractEntity::get_filePath() const {
-				return filePath;
+			std::wstring const &AbstractEntity::get_name() const {
+				return *name_;
 			}
 
+			//intern
+
 			//equals trait
-			bool AbstractEntity::equals(ISerializable const &object) const {
-				auto const &other = dynamic_cast<AbstractEntity const &>(object);
-				return this == &other;
-			}
 
 			//equality operators
 			bool operator==(const AbstractEntity &lhs, const AbstractEntity &rhs) {
-				if (lhs.type_name() != rhs.type_name()) {
-					return false;
-				}
+				if (lhs.type_name() != rhs.type_name()) return false;
 				return lhs.equals(rhs);
 			}
 
@@ -53,12 +61,19 @@ namespace rd {
 			//hash code trait
 			size_t AbstractEntity::hashCode() const {
 				size_t __r = 0;
-				__r = __r * 31 + (std::hash<std::wstring>()(get_filePath()));
+				__r = __r * 31 + (std::hash<std::wstring>()(get_name()));
 				return __r;
 			}
 
-			std::string AbstractEntity::type_name() const { return "AbstractEntity"; }
+			std::string AbstractEntity::type_name() const {
+				return "AbstractEntity";
+			}
 
-		}
+			//static type name trait
+			std::string AbstractEntity::static_type_name()
+			{
+				return "AbstractEntity";
+			}
+		};
 	}
 }

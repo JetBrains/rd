@@ -120,7 +120,7 @@ TEST_F(InterningTestBase, testNestedInternedObjects) {
 
 	auto testValue = InterningNestedTestModel(L"extremelyLongString",
 	                                          InterningNestedTestModel(L"middle",
-	                                                                   InterningNestedTestModel(L"bottom", nullptr)
+	                                                                   InterningNestedTestModel(L"bottom", tl::nullopt)
 	                                          )
 	);
 

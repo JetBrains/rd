@@ -63,10 +63,10 @@ namespace demo {
     }
     
     //equality operators
-    bool operator==(const Derived &lhs, const Derived &rhs){
+    bool operator==(const Derived &lhs, const Derived &rhs) {
         if (lhs.type_name() != rhs.type_name()) return false;
         return lhs.equals(rhs);
-    }
+    };
     bool operator!=(const Derived &lhs, const Derived &rhs){
         return !(lhs == rhs);
     }
@@ -78,7 +78,15 @@ namespace demo {
         __r = __r * 31 + (std::hash<std::wstring>()(get_string()));
         return __r;
     }
+    
+    //type name trait
     std::string Derived::type_name() const
+    {
+        return "Derived";
+    }
+    
+    //static type name trait
+    std::string Derived::static_type_name()
     {
         return "Derived";
     }

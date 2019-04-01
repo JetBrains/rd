@@ -1,10 +1,9 @@
 ﻿#ifndef RdFrameworkDynamicPolymorphicTestBase_H
 #define RdFrameworkDynamicPolymorphicTestBase_H
 
+#include "ConcreteEntity.h"
 #include "RdFrameworkTestBase.h"
 #include "RdReactiveBase.h"
-
-#include "ConcreteEntity.h"
 
 #include "core_traits.h"
 

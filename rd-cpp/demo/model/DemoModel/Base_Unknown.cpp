@@ -56,10 +56,10 @@ namespace demo {
     }
     
     //equality operators
-    bool operator==(const Base_Unknown &lhs, const Base_Unknown &rhs){
+    bool operator==(const Base_Unknown &lhs, const Base_Unknown &rhs) {
         if (lhs.type_name() != rhs.type_name()) return false;
         return lhs.equals(rhs);
-    }
+    };
     bool operator!=(const Base_Unknown &lhs, const Base_Unknown &rhs){
         return !(lhs == rhs);
     }
@@ -70,7 +70,15 @@ namespace demo {
         size_t __r = 0;
         return __r;
     }
+    
+    //type name trait
     std::string Base_Unknown::type_name() const
+    {
+        return "Base_Unknown";
+    }
+    
+    //static type name trait
+    std::string Base_Unknown::static_type_name()
     {
         return "Base_Unknown";
     }

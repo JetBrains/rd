@@ -1,5 +1,5 @@
-#ifndef ConcreteEntity_H
-#define ConcreteEntity_H
+#ifndef AbstractEntity_Unknown_H
+#define AbstractEntity_Unknown_H
 
 #include "Buffer.h"
 #include "Identities.h"
@@ -45,16 +45,18 @@
 namespace rd {
 	namespace test {
 		namespace util {
-			class ConcreteEntity : public AbstractEntity {
+			class AbstractEntity_Unknown : public AbstractEntity, public rd::IUnknownInstance {
 
 				//companion
+				friend class AbstractEntity;
 
 				//custom serializers
 			private:
 
 				//fields
 			protected:
-				rd::Wrapper<std::wstring> stringValue_;
+				rd::RdId unknownId_;
+				rd::Buffer::ByteArray unknownBytes_;
 
 
 				//initializer
@@ -63,26 +65,27 @@ namespace rd {
 
 				//primary ctor
 			public:
-				ConcreteEntity(rd::Wrapper<std::wstring> stringValue_, rd::Wrapper<std::wstring> name_);
+				AbstractEntity_Unknown(rd::Wrapper<std::wstring> name_, rd::RdId unknownId_,
+									 rd::Buffer::ByteArray unknownBytes_);
 
 				//secondary constructor
 
 				//default ctors and dtors
 
-				ConcreteEntity() = delete;
+				AbstractEntity_Unknown() = delete;
 
-				ConcreteEntity(ConcreteEntity const &) = default;
+				AbstractEntity_Unknown(AbstractEntity_Unknown const &) = default;
 
-				ConcreteEntity &operator=(ConcreteEntity const &) = default;
+				AbstractEntity_Unknown &operator=(AbstractEntity_Unknown const &) = default;
 
-				ConcreteEntity(ConcreteEntity &&) = default;
+				AbstractEntity_Unknown(AbstractEntity_Unknown &&) = default;
 
-				ConcreteEntity &operator=(ConcreteEntity &&) = default;
+				AbstractEntity_Unknown &operator=(AbstractEntity_Unknown &&) = default;
 
-				virtual ~ConcreteEntity() = default;
+				virtual ~AbstractEntity_Unknown() = default;
 
 				//reader
-				static ConcreteEntity read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer);
+				static AbstractEntity_Unknown read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer);
 
 				//writer
 				void write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const override;
@@ -92,7 +95,6 @@ namespace rd {
 				//identify
 
 				//getters
-				std::wstring const &get_stringValue() const;
 
 				//intern
 
@@ -102,9 +104,9 @@ namespace rd {
 
 				//equality operators
 			public:
-				friend bool operator==(const ConcreteEntity &lhs, const ConcreteEntity &rhs);
+				friend bool operator==(const AbstractEntity_Unknown &lhs, const AbstractEntity_Unknown &rhs);
 
-				friend bool operator!=(const ConcreteEntity &lhs, const ConcreteEntity &rhs);
+				friend bool operator!=(const AbstractEntity_Unknown &lhs, const AbstractEntity_Unknown &rhs);
 
 				//hash code trait
 				size_t hashCode() const override;
@@ -124,11 +126,11 @@ namespace rd {
 
 //hash code trait
 namespace std {
-    template <> struct hash<rd::test::util::ConcreteEntity> {
-        size_t operator()(const rd::test::util::ConcreteEntity & value) const {
+    template <> struct hash<rd::test::util::AbstractEntity_Unknown> {
+        size_t operator()(const rd::test::util::AbstractEntity_Unknown & value) const {
             return value.hashCode();
         }
     };
 }
 
-#endif // ConcreteEntity_H
+#endif // AbstractEntity_Unknown_H

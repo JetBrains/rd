@@ -20,7 +20,7 @@ fun main() {
     rdgen.clearOutput *= true
 //    rdgen.filter *= "cpp"
 //    rdgen.filter *= "kotlin"
-    val configuration = Configuration.DEMO_MODEL
+    val configuration = Configuration.RIDER_MODEL
     when (configuration) {
         Configuration.EXAMPLE -> {
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\example"

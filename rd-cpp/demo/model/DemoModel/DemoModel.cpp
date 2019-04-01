@@ -133,12 +133,16 @@ namespace demo {
     //equals trait
     
     //equality operators
-    bool operator==(const DemoModel &lhs, const DemoModel &rhs){
+    bool operator==(const DemoModel &lhs, const DemoModel &rhs) {
         return &lhs == &rhs;
-    }
+    };
     bool operator!=(const DemoModel &lhs, const DemoModel &rhs){
         return !(lhs == rhs);
     }
     
     //hash code trait
+    
+    //type name trait
+    
+    //static type name trait
 };

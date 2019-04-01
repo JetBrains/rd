@@ -59,6 +59,8 @@ namespace rd {
 				bool equals(const ISerializable &object) const override;
 
 				std::string type_name() const override;
+
+				static std::string static_type_name();
 			};
 		}
 	}

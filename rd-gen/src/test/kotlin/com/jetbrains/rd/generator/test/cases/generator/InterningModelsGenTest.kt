@@ -23,6 +23,9 @@ class InterningModelsGenTest {
             CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
             Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(cppGeneratedSourceDir))
     ) {
+        init {
+            setting(Cpp17Generator.TargetName, "interning_test_model")
+        }
         val TestInternScope = internScope()
 
         val InterningTestModel = classdef {

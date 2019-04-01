@@ -116,6 +116,8 @@ namespace demo {
         //hash code trait
         
         //type name trait
+        
+        //static type name trait
     };
 };
 

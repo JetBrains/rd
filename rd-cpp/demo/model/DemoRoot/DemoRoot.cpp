@@ -65,12 +65,16 @@ namespace demo {
     //equals trait
     
     //equality operators
-    bool operator==(const DemoRoot &lhs, const DemoRoot &rhs){
+    bool operator==(const DemoRoot &lhs, const DemoRoot &rhs) {
         return &lhs == &rhs;
-    }
+    };
     bool operator!=(const DemoRoot &lhs, const DemoRoot &rhs){
         return !(lhs == rhs);
     }
     
     //hash code trait
+    
+    //type name trait
+    
+    //static type name trait
 };

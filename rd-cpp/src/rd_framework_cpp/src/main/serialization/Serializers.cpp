@@ -38,19 +38,4 @@ namespace rd {
 	Serializers::Serializers() {
 		register_in();
 	}
-
-	tl::optional<InternedAny> Serializers::readAny(SerializationCtx const &ctx, Buffer const &buffer) const {
-		RdId id = RdId::read(buffer);
-		if (id.isNull()) {
-			return tl::nullopt;
-		}
-		int32_t size = buffer.read_integral<int32_t>();
-		buffer.check_available(static_cast<size_t>(size));
-
-		if (readers.count(id) == 0) {
-			throw std::invalid_argument("no reader");
-		}
-		auto const &reader = readers.at(id);
-		return reader(ctx, buffer);
-	}
 }

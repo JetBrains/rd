@@ -105,10 +105,10 @@ namespace demo {
     }
     
     //equality operators
-    bool operator==(const MyScalar &lhs, const MyScalar &rhs){
+    bool operator==(const MyScalar &lhs, const MyScalar &rhs) {
         if (lhs.type_name() != rhs.type_name()) return false;
         return lhs.equals(rhs);
-    }
+    };
     bool operator!=(const MyScalar &lhs, const MyScalar &rhs){
         return !(lhs == rhs);
     }
@@ -126,7 +126,15 @@ namespace demo {
         __r = __r * 31 + (std::hash<double>()(get_double_()));
         return __r;
     }
+    
+    //type name trait
     std::string MyScalar::type_name() const
+    {
+        return "MyScalar";
+    }
+    
+    //static type name trait
+    std::string MyScalar::static_type_name()
     {
         return "MyScalar";
     }

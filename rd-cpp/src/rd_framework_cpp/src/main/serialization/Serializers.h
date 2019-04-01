@@ -11,6 +11,7 @@
 #include "IUnknownInstance.h"
 #include "hashing.h"
 #include "RdAny.h"
+#include "DefaultAbstractDeclaration.h"
 
 #include <utility>
 #include <iostream>
@@ -47,6 +48,7 @@ namespace rd {
 		template<typename T, typename = typename std::enable_if_t<util::is_base_of_v<IPolymorphicSerializable, T>>>
 		void registry() const;
 
+		template<typename T = DefaultAbstractDeclaration>
 		tl::optional<InternedAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const;
 
 		template<typename T>
@@ -66,7 +68,7 @@ namespace rd {
 namespace rd {
 	template<typename T, typename>
 	void Serializers::registry() const {
-		std::string type_name = T().type_name();//todo don't call ctor
+		std::string type_name = T::static_type_name();
 		util::hash_t h = util::getPlatformIndependentHash(type_name);
 		RdId id(h);
 
@@ -78,8 +80,25 @@ namespace rd {
 	}
 
 	template<typename T>
+	tl::optional<InternedAny> Serializers::readAny(SerializationCtx const &ctx, Buffer const &buffer) const {
+		RdId id = RdId::read(buffer);
+		if (id.isNull()) {
+			return tl::nullopt;
+		}
+		int32_t size = buffer.read_integral<int32_t>();
+		buffer.check_available(static_cast<size_t>(size));
+
+		if (readers.count(id) == 0) {
+			return any::make_interned_any<T>(T::readUnknownInstance(ctx, buffer, id, size));
+//			throw std::invalid_argument("no reader");
+		}
+		auto const &reader = readers.at(id);
+		return reader(ctx, buffer);
+	}
+
+	template<typename T>
 	value_or_wrapper<T> Serializers::readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const {
-		tl::optional<InternedAny> any = readAny(ctx, buffer);
+		tl::optional<InternedAny> any = readAny<T>(ctx, buffer);
 		return any::get<T>(*(std::move(any)));
 	}
 
