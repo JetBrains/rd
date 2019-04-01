@@ -13,7 +13,6 @@ namespace demo {
     
     void DemoRoot::DemoRootSerializersOwner::registerSerializersCore(rd::Serializers const& serializers) const
     {
-        DemoRoot::serializersOwner.registry(serializers);
         DemoModel::serializersOwner.registry(serializers);
         ExtModel::serializersOwner.registry(serializers);
     }

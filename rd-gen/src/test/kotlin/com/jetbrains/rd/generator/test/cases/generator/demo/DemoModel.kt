@@ -23,8 +23,8 @@ object DemoModel : Ext(DemoRoot) {
         field("short", PredefinedType.short)
         field("int", PredefinedType.int)
         field("long", PredefinedType.long)
-//        field("float_", PredefinedType.float)
-//        field("double_", PredefinedType.double)
+        field("float_", PredefinedType.float)
+        field("double_", PredefinedType.double)
     }
 
     private var Base = basestruct {

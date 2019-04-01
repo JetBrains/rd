@@ -58,6 +58,8 @@ namespace demo {
         short short_;
         int32_t int_;
         int64_t long_;
+        float float__;
+        double double__;
         
         
         //initializer
@@ -66,7 +68,7 @@ namespace demo {
         
         //primary ctor
         public:
-        MyScalar(bool sign_, signed char byte_, short short_, int32_t int_, int64_t long_);
+        MyScalar(bool sign_, signed char byte_, short short_, int32_t int_, int64_t long_, float float__, double double__);
         
         //secondary constructor
         
@@ -100,6 +102,8 @@ namespace demo {
         short const & get_short() const;
         int32_t const & get_int() const;
         int64_t const & get_long() const;
+        float const & get_float_() const;
+        double const & get_double_() const;
         
         //intern
         

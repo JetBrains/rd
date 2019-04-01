@@ -46,7 +46,7 @@ class DemoModel private constructor(
         
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = -4109472710845558388L
+        const val serializationHash = 8392662799813291942L
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
     override val serializationHash: Long get() = DemoModel.serializationHash
@@ -250,7 +250,9 @@ data class MyScalar (
     val byte: Byte,
     val short: Short,
     val int: Int,
-    val long: Long
+    val long: Long,
+    val float_: Float,
+    val double_: Double
 ) : IPrintable {
     //companion
     
@@ -264,7 +266,9 @@ data class MyScalar (
             val short = buffer.readShort()
             val int = buffer.readInt()
             val long = buffer.readLong()
-            return MyScalar(sign, byte, short, int, long)
+            val float_ = buffer.readFloat()
+            val double_ = buffer.readDouble()
+            return MyScalar(sign, byte, short, int, long, float_, double_)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: MyScalar) {
@@ -273,6 +277,8 @@ data class MyScalar (
             buffer.writeShort(value.short)
             buffer.writeInt(value.int)
             buffer.writeLong(value.long)
+            buffer.writeFloat(value.float_)
+            buffer.writeDouble(value.double_)
         }
         
     }
@@ -291,6 +297,8 @@ data class MyScalar (
         if (short != other.short) return false
         if (int != other.int) return false
         if (long != other.long) return false
+        if (float_ != other.float_) return false
+        if (double_ != other.double_) return false
         
         return true
     }
@@ -302,6 +310,8 @@ data class MyScalar (
         __r = __r*31 + short.hashCode()
         __r = __r*31 + int.hashCode()
         __r = __r*31 + long.hashCode()
+        __r = __r*31 + float_.hashCode()
+        __r = __r*31 + double_.hashCode()
         return __r
     }
     //pretty print
@@ -313,6 +323,8 @@ data class MyScalar (
             print("short = "); short.print(printer); println()
             print("int = "); int.print(printer); println()
             print("long = "); long.print(printer); println()
+            print("float_ = "); float_.print(printer); println()
+            print("double_ = "); double_.print(printer); println()
         }
         printer.print(")")
     }

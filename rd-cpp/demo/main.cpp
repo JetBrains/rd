@@ -49,7 +49,9 @@ int main() {
 			97,
 			32000,
 			1'000'000'000,
-			-2'000'000'000'000'000'000
+			-2'000'000'000'000'000'000,
+			3.14,
+			-123456789.012345678
 	};
 
 	//region advise or view
@@ -112,13 +114,13 @@ int main() {
 
 	//region changes in root
 
-	/*model.get_scalar().set(scalar_example);
+	model.get_scalar().set(scalar_example);
 
 	auto task = model.get_call().start(L'A');
 	task.advise(lifetime, [](decltype(task)::result_type const &result) {
 	});
 
-	auto sync_result = model.get_call().sync(L'B');*/
+	//auto sync_result = model.get_call().sync(L'B');
 
 	//endregion
 

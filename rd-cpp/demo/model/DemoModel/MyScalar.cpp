@@ -11,9 +11,9 @@ namespace demo {
     }
     
     //primary ctor
-    MyScalar::MyScalar(bool sign_, signed char byte_, short short_, int32_t int_, int64_t long_) :
+    MyScalar::MyScalar(bool sign_, signed char byte_, short short_, int32_t int_, int64_t long_, float float__, double double__) :
     rd::IPolymorphicSerializable()
-    ,sign_(std::move(sign_)), byte_(std::move(byte_)), short_(std::move(short_)), int_(std::move(int_)), long_(std::move(long_))
+    ,sign_(std::move(sign_)), byte_(std::move(byte_)), short_(std::move(short_)), int_(std::move(int_)), long_(std::move(long_)), float__(std::move(float__)), double__(std::move(double__))
     {
         initialize();
     }
@@ -34,7 +34,9 @@ namespace demo {
         auto short_ = buffer.read_integral<short>();
         auto int_ = buffer.read_integral<int32_t>();
         auto long_ = buffer.read_integral<int64_t>();
-        MyScalar res{std::move(sign_), std::move(byte_), std::move(short_), std::move(int_), std::move(long_)};
+        auto float__ = buffer.read_floating_point<float>();
+        auto double__ = buffer.read_floating_point<double>();
+        MyScalar res{std::move(sign_), std::move(byte_), std::move(short_), std::move(int_), std::move(long_), std::move(float__), std::move(double__)};
         return res;
     }
     
@@ -46,6 +48,8 @@ namespace demo {
         buffer.write_integral(short_);
         buffer.write_integral(int_);
         buffer.write_integral(long_);
+        buffer.write_floating_point(float__);
+        buffer.write_floating_point(double__);
     }
     
     //virtual init
@@ -73,6 +77,14 @@ namespace demo {
     {
         return long_;
     }
+    float const & MyScalar::get_float_() const
+    {
+        return float__;
+    }
+    double const & MyScalar::get_double_() const
+    {
+        return double__;
+    }
     
     //intern
     
@@ -86,6 +98,8 @@ namespace demo {
         if (this->short_ != other.short_) return false;
         if (this->int_ != other.int_) return false;
         if (this->long_ != other.long_) return false;
+        if (this->float__ != other.float__) return false;
+        if (this->double__ != other.double__) return false;
         
         return true;
     }
@@ -108,6 +122,8 @@ namespace demo {
         __r = __r * 31 + (std::hash<short>()(get_short()));
         __r = __r * 31 + (std::hash<int32_t>()(get_int()));
         __r = __r * 31 + (std::hash<int64_t>()(get_long()));
+        __r = __r * 31 + (std::hash<float>()(get_float_()));
+        __r = __r * 31 + (std::hash<double>()(get_double_()));
         return __r;
     }
     std::string MyScalar::type_name() const
