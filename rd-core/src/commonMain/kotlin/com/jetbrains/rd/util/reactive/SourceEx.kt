@@ -2,6 +2,7 @@ package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.Maybe
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 
 /**
  * Adds an event subscription that never gets removed.
@@ -19,7 +20,7 @@ fun <T> ISource<T>.adviseOnce(lifetime: Lifetime, handler: (T) -> Unit) {
  * Holds subscription until [handler] returns true or [lifetime] is terminated
  */
 fun <T> ISource<T>.adviseUntil(lifetime: Lifetime, handler: (T) -> Boolean) {
-    if (lifetime.isTerminated) return
+    if (!lifetime.isAlive) return
 
     Lifetime.define(lifetime) { definition, lt ->
         this.advise(lt) {
@@ -32,7 +33,7 @@ fun <T> ISource<T>.adviseUntil(lifetime: Lifetime, handler: (T) -> Boolean) {
  * Adds an event subscription that filters out null values.
  */
 fun <T : Any> ISource<T?>.adviseNotNull(lifetime: Lifetime, handler: (T) -> Unit) =
-        this.advise(lifetime, { if (it != null) handler(it)})
+        this.advise(lifetime) { if (it != null) handler(it)}
 
 /**
  * Executes [handler] exactly once when the source fires an event with a non-null value,

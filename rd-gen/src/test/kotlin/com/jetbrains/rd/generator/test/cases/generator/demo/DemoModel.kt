@@ -35,14 +35,6 @@ object DemoModel : Ext(DemoRoot) {
         field("string", PredefinedType.string)
     }
 
-    private var Base = basestruct {
-
-    }
-
-    private var Derived = structdef extends Base {
-        field("string", PredefinedType.string)
-    }
-
     init {
         property("boolean_property", PredefinedType.bool)
 
