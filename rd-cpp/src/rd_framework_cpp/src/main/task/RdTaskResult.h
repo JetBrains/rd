@@ -103,18 +103,18 @@ namespace rd {
 			), v);
 		}
 
-		WT unwrap() const {
+		T const &unwrap() const {
 			return mpark::visit(util::make_visitor(
-					[](Success &&value) -> WT {
-						return std::move(value.value);
+					[](Success const &value) -> T const & {
+						return wrapper::get<T>(value.value);
 					},
-					[](Cancelled &&value) -> WT {
+					[](Cancelled const &value) -> T const & {
 						throw std::invalid_argument("Task finished in Cancelled state");
 					},
-					[](Fault &&value) -> WT {
+					[](Fault const &value) -> T const & {
 						throw std::runtime_error(to_string(value.reasonMessage));
 					}
-			), std::move(v));
+			), v);
 		}
 
 		bool isFaulted() const {

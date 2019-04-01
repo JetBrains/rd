@@ -32,11 +32,11 @@ namespace rd {
 
 		void set(WT value) const {
 			typename TRes::Success t(std::move(value));
-			ptr->result.set(tl::make_optional(std::move(t)));
+			ptr->result.set(std::move(t));
 		}
 
 		void set_result(TRes value) const {
-			ptr->result.set(tl::make_optional(std::move(value)));
+			ptr->result.set(std::move(value));
 		}
 
 		void cancel() const {
@@ -48,15 +48,15 @@ namespace rd {
 		}
 
 		bool has_value() const {
-			return ptr->result.get().has_value();
+			return ptr->result.has_value();
 		}
 
-		TRes value_or_throw() const {
-			auto opt_res = std::move(ptr->result).steal();
-			if (opt_res) {
-				return *std::move(opt_res);
+		const TRes & value_or_throw() const {
+			if (ptr->result.has_value()) {
+				return ptr->result.get();
+			} else {
+				throw std::invalid_argument("task is empty");
 			}
-			throw std::invalid_argument("task is empty");
 		}
 
 		bool isFaulted() const {

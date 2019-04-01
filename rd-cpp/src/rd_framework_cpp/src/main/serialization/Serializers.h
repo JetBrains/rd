@@ -70,9 +70,6 @@ namespace rd {
 		util::hash_t h = util::getPlatformIndependentHash(type_name);
 		RdId id(h);
 
-		//        Protocol::initializationLogger.trace("Registering type " + type_name + ", id = " + id.toString());
-		//todo uncomment
-
 		MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
 		readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> Wrapper<IPolymorphicSerializable> {

@@ -21,11 +21,11 @@ namespace rd {
 
 		Signal<T> change, before_change;
 
+	public:
+
 		bool has_value() const {
 			return (bool) (value);
 		}
-
-	public:
 
 		//region ctor/dtor
 

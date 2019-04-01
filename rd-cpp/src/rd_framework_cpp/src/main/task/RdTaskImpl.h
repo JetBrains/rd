@@ -18,7 +18,7 @@ namespace rd {
 		friend
 		class RdTask;
 
-		mutable Property<tl::optional<RdTaskResult<T, S>>> result{tl::nullopt};
+		mutable Property<RdTaskResult<T, S>> result;
 	};
 }
 

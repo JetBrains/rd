@@ -12,13 +12,6 @@
 namespace rd {
 	template<typename T>
 	class Property : public IProperty<T> {
-		template<typename, typename>
-		friend class RdTask;
-
-		template<typename U = T>
-		typename std::enable_if_t<!std::is_abstract<U>::value, U&&> steal() && {
-			return *std::move(this->value);
-		}
 	public:
 		//region ctor/dtor
 
