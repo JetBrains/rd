@@ -720,11 +720,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     }
 
     protected fun secondaryCtorParams(decl: Declaration): Constructor.Secondary.AllArguments {
-        var ownMembers = decl.allMembers
+        val ownMembers = decl.allMembers
                 .asSequence()
                 .filter { !it.hasEmptyConstructor }.plus(unknownMembersSecondary(decl))
                 .toList()
-        var membersOfBaseClasses = decl.allMembers
+        val membersOfBaseClasses = decl.allMembers
                 .asSequence()
                 .map {
                     if (ownMembers.contains(it)) {

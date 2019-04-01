@@ -220,10 +220,11 @@ TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint) {
 	ConcreteEntity value_a{L"A"};
 	AbstractEntity const &res = client_entity.sync(value_a);
 	EXPECT_EQ(res, value_a);
+	EXPECT_EQ(res, value_a);//check twice
 
 	FakeEntity fake_entity{L"A"};
 	auto task = client_entity.start(fake_entity, &clientScheduler);
-	auto task_result = task.value_or_throw();
+	auto const &task_result = task.value_or_throw();
 	AbstractEntity const &unwrap = task_result.unwrap();
 	EXPECT_NE(unwrap, value_a);
 

@@ -48,8 +48,9 @@ namespace rd {
 		template<typename T, typename... Args>
 		typename std::enable_if_t<util::is_base_of_v<IRdBindable, T>, T> const &
 		getOrCreateExtension(std::string const &name, Args &&... args) const {
-			if (bindable_extensions.count(name) > 0) {
-				return *dynamic_cast<T const *>(bindable_extensions[name].get());
+			auto it = bindable_extensions.find(name);
+			if (it != bindable_extensions.end()) {
+				return *dynamic_cast<T const *>(it->second.get());
 			} else {
 				std::shared_ptr<IRdBindable> new_extension = std::make_shared<T>(std::forward<Args>(args)...);
 				T const &res = *dynamic_cast<T const *>(new_extension.get());
