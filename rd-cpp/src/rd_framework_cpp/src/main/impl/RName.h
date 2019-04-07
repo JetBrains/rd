@@ -1,6 +1,8 @@
 #ifndef RD_CPP_FRAMEWORK_RNAME_H
 #define RD_CPP_FRAMEWORK_RNAME_H
 
+#include "thirdparty.hpp"
+
 #include <string>
 
 namespace rd {
@@ -21,12 +23,12 @@ namespace rd {
 
 		RName &operator=(RName &&other) noexcept = default;
 
-		RName(RName *parent, const std::string &localName, const std::string &separator);
+		RName(RName *const parent, string_view localName, string_view separator);
 
-		explicit RName(const std::string &local_name);
+		explicit RName(string_view local_name);
 		//endregion
 
-		RName sub(const std::string &localName, const std::string &separator);
+		RName sub(string_view localName, string_view separator);
 
 		std::string toString() const;
 

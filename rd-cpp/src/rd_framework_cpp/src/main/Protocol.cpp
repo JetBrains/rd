@@ -8,13 +8,15 @@
 namespace rd {
 	const Logger Protocol::initializationLogger;
 
+	constexpr string_view Protocol::InternRootName;
+
 	void Protocol::initialize() const {
 		internRoot = std::make_unique<InternRoot>();
 		
 		context = std::make_unique<SerializationCtx>(serializers.get(), SerializationCtx::roots_t{{util::getPlatformIndependentHash("Protocol"), internRoot.get()}});
 
 
-		internRoot->rdid = RdId::Null().mix(*InternRootName);
+		internRoot->rdid = RdId::Null().mix(InternRootName);
 		scheduler->queue([this] {
 			internRoot->bind(lifetime, this, InternRootName);
 		});

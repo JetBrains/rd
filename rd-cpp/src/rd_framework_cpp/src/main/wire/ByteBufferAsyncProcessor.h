@@ -51,7 +51,7 @@ namespace rd {
 	private:
 		void cleanup0();
 
-		bool terminate0(time_t timeout, StateKind stateToSet, const std::string &action);
+		bool terminate0(time_t timeout, StateKind stateToSet, string_view action);
 
 		void ThreadProc();
 

@@ -40,7 +40,7 @@ namespace rd {
 
 		void sendState(IWire const &wire, ExtState state) const;
 
-		void traceMe(const Logger &logger, std::string const &message) const;
+		void traceMe(const Logger &logger, string_view message) const;
 	};
 }
 

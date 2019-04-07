@@ -34,16 +34,16 @@ namespace rd {
 		//need to implement in subclasses
 		virtual void init(Lifetime lifetime) const;
 
-		void bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const override;
+		void bind(Lifetime lf, IRdDynamic const *parent, string_view name) const override;
 
 		void identify(const Identities &identities, RdId const &id) const override;
 
-		mutable std::map<std::string, std::shared_ptr<IRdBindable> > bindable_extensions;//todo concurrency
+		mutable ordered_map<std::string, std::shared_ptr<IRdBindable> > bindable_extensions;//todo concurrency
 		//mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
 
 		template<typename T, typename... Args>
 		typename std::enable_if_t<util::is_base_of_v<IRdBindable, T>, T> const &
-		getOrCreateExtension(std::string const &name, Args &&... args) const {
+		getOrCreateExtension(std::string name, Args &&... args) const {
 			auto it = bindable_extensions.find(name);
 			if (it != bindable_extensions.end()) {
 				return *dynamic_cast<T const *>(it->second.get());
@@ -52,7 +52,7 @@ namespace rd {
 				T const &res = *dynamic_cast<T const *>(new_extension.get());
 				if (bind_lifetime.has_value()) {
 					auto protocol = get_protocol();
-					new_extension->identify(*protocol->get_identity(), rdid.mix("." + name));
+					new_extension->identify(*protocol->get_identity(), rdid.mix(".").mix(name));
 					new_extension->bind(*bind_lifetime, this, name);
 				}
 				bindable_extensions.emplace(name, std::move(new_extension));

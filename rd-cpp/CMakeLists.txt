@@ -30,6 +30,6 @@ add_subdirectory(thirdparty)
 add_subdirectory(src)
 
 if(ENABLE_TESTS_OPTION)
-    add_subdirectory(rider_model)
+#    add_subdirectory(rider_model)
     add_subdirectory(demo)
 endif()

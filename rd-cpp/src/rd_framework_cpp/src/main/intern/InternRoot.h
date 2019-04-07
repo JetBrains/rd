@@ -58,7 +58,7 @@ namespace rd {
 
 		IScheduler *get_wire_scheduler() const override;
 
-		void bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const override;
+		void bind(Lifetime lf, IRdDynamic const *parent, string_view name) const override;
 
 		void identify(const Identities &identities, RdId const &id) const override;
 

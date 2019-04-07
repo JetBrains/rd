@@ -6,7 +6,7 @@ namespace rd {
 		return parent != nullptr;
 	}
 
-	void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
+	void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, string_view name) const {
 		MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
 		lf->bracket([this, lf, parent, &name] {
 						this->parent = parent;
@@ -37,7 +37,7 @@ namespace rd {
 
 		this->rdid = id;
 		for (const auto &it : bindable_extensions) {
-			identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
+			identifyPolymorphic(*(it.second), identities, id.mix(".").mix(it.first));
 		}
 	}
 

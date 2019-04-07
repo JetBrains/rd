@@ -3,10 +3,10 @@
 #include "thirdparty.hpp"
 
 namespace rd {
-	RName::RName(RName *const parent, const std::string &localName, const std::string &separator) : parent(
+	RName::RName(RName *const parent, string_view localName, string_view separator) : parent(
 			parent), local_name(localName), separator(separator) {}
 
-	RName RName::sub(const std::string &localName, const std::string &separator) {
+	RName RName::sub(string_view localName, string_view separator) {
 		return RName(this, localName, separator);
 	}
 
@@ -25,7 +25,7 @@ namespace rd {
 		}
 	}
 
-	RName::RName(const std::string &local_name) : RName(&EMPTY, local_name, "") {}
+	RName::RName(string_view local_name) : RName(&EMPTY, local_name, "") {}
 
 	RName RName::Empty() {
 		return EMPTY;

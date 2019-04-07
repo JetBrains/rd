@@ -27,7 +27,7 @@ namespace rd {
 		virtual ~IRdBindable() = default;
 		//endregion
 
-		virtual void bind(Lifetime lf, IRdDynamic const *parent, std::string const &name) const = 0;
+		virtual void bind(Lifetime lf, IRdDynamic const *parent, string_view name) const = 0;
 
 		virtual void identify(Identities const &identities, RdId const &id) const = 0;
 	};
@@ -51,17 +51,17 @@ namespace rd {
 
 	template<typename T>
 	typename std::enable_if_t<!std::is_base_of<IRdBindable, typename std::decay_t<T>>::value>
-	inline bindPolymorphic(T &&, Lifetime lf, const IRdDynamic *parent, std::string const &name) {}
+	inline bindPolymorphic(T &&, Lifetime lf, const IRdDynamic *parent, string_view name) {}
 
 	inline void
-	bindPolymorphic(IRdBindable const &that, Lifetime lf, const IRdDynamic *parent, std::string const &name) {
+	bindPolymorphic(IRdBindable const &that, Lifetime lf, const IRdDynamic *parent, string_view name) {
 		that.bind(lf, parent, name);
 	}
 
 	template<typename T>
 	typename std::enable_if_t<std::is_base_of<IRdBindable, T>::value>
 	inline
-	bindPolymorphic(std::vector<T> const &that, Lifetime lf, IRdDynamic const *parent, std::string const &name) {
+	bindPolymorphic(std::vector<T> const &that, Lifetime lf, IRdDynamic const *parent, string_view name) {
 		for (auto &obj : that) {
 			obj.bind(lf, parent, name);
 		}

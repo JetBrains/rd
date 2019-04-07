@@ -17,7 +17,7 @@ namespace rd {
 	//endregion
 
 	class Protocol : /*IRdDynamic, */public IProtocol {
-		constexpr static auto InternRootName = "ProtocolInternRoot";
+		constexpr static string_view InternRootName{"ProtocolInternRoot"};
 
 		Lifetime lifetime;
 

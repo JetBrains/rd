@@ -15,7 +15,7 @@ namespace rd {
 		cv.notify_all();
 	}
 
-	bool ByteBufferAsyncProcessor::terminate0(time_t timeout, StateKind stateToSet, const std::string &action) {
+	bool ByteBufferAsyncProcessor::terminate0(time_t timeout, StateKind stateToSet, string_view action) {
 		{
 			std::lock_guard<decltype(lock)> guard(lock);
 			if (state == StateKind::Initialized) {

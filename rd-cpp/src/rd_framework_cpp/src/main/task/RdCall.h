@@ -4,6 +4,7 @@
 #include "Polymorphic.h"
 #include "RdTask.h"
 #include "RdTaskResult.h"
+#include "SynchronousScheduler.h"
 
 #include <thread>
 
@@ -94,7 +95,7 @@ namespace rd {
 
 		TRes const &sync(TReq const &request) const {
 			try {
-				last_task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
+				last_task = startInternal(request, true, get_default_scheduler());
 				while (!last_task.has_value()) {
 					std::this_thread::yield();
 				}
@@ -108,8 +109,7 @@ namespace rd {
 
 
 		IScheduler *get_wire_scheduler() const override {
-			return RdReactiveBase::get_wire_scheduler();
-			//todo SynchronousScheduler
+			return &globalSynchronousScheduler;
 		}
 
 		RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler) const {

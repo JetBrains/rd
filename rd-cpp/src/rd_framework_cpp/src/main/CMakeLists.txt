@@ -54,7 +54,7 @@ add_library(rd_framework_cpp STATIC
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
 
-        )
+        scheduler/SynchronousScheduler.cpp scheduler/SynchronousScheduler.h)
 
 add_subdirectory(util)
 

@@ -27,7 +27,7 @@ namespace rd {
 				virtual ~ExtProperty() = default;
 				//endregion
 
-				void bind(Lifetime lf, IRdDynamic const *parent, std::string const &name) const override {
+				void bind(Lifetime lf, IRdDynamic const *parent, string_view name) const override {
 					RdExtBase::bind(lf, parent, name);
 					property.bind(lf, this, "property");
 				}

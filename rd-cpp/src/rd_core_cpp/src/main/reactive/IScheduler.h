@@ -23,7 +23,7 @@ namespace rd {
 
 		virtual void assert_thread() const;
 
-		void invoke_or_queue(std::function<void()> action);
+		virtual void invoke_or_queue(std::function<void()> action);
 
 		virtual void flush() = 0;
 

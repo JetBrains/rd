@@ -3,6 +3,7 @@
 #include "Lifetime.h"
 #include "RdPropertyBase.h"
 #include "Protocol.h"
+#include "SynchronousScheduler.h"
 
 namespace rd {
 	const IProtocol *RdExtBase::get_protocol() const {
@@ -89,13 +90,12 @@ namespace rd {
 		});
 	}
 
-	void RdExtBase::traceMe(const Logger &logger, std::string const &message) const {
-		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message);
+	void RdExtBase::traceMe(const Logger &logger, string_view message) const {
+		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message.to_string());
 	}
 
 	IScheduler *RdExtBase::get_wire_scheduler() const {
-		return RdReactiveBase::get_wire_scheduler();
-		//todo SynchronousScheduler
+		return &globalSynchronousScheduler;
 	}
 
 	std::string to_string(RdExtBase::ExtState state) {

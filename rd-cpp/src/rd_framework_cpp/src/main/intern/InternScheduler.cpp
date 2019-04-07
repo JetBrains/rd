@@ -1,5 +1,7 @@
 #include "InternScheduler.h"
 
+#include "guards.h"
+
 namespace rd {
 	thread_local int32_t InternScheduler::active_counts = 0;
 
@@ -8,14 +10,8 @@ namespace rd {
     }
 
     void InternScheduler::queue(std::function<void()> action) {
-        ++active_counts;
-		try {
-			action();
-		} catch (...) {
-			
-		}
-        --active_counts;
-        //todo RAII
+		util::increment_guard<int32_t> guard(active_counts);
+    	action();
     }
 
     void InternScheduler::flush() {}

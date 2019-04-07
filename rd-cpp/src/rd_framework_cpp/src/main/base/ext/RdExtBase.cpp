@@ -88,7 +88,7 @@ namespace rd {
 		});
 	}
 
-	void RdExtBase::traceMe(const Logger &logger, std::string const &message) const {
+	void RdExtBase::traceMe(const Logger &logger, string_view message) const {
 		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message);
 	}
 

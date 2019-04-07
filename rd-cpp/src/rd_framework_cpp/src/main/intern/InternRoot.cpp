@@ -22,7 +22,7 @@ namespace rd {
 		MY_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
 	}
 
-	void InternRoot::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
+	void InternRoot::bind(Lifetime lf, IRdDynamic const *parent, string_view name) const {
 		MY_ASSERT_MSG(!is_bound(), "Trying to bound already bound $this to ${parent.location}")
 
 		lf->bracket([this, parent, &name] {
