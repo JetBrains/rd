@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 14.08.2018.
-//
-
 #ifndef RD_CPP_IVIEWABLEMAP_H
 #define RD_CPP_IVIEWABLEMAP_H
 
@@ -11,8 +7,7 @@
 #include "viewable_collections.h"
 #include "core_util.h"
 
-#include "mpark/variant.hpp"
-#include "tsl/ordered_map.h"
+#include "thirdparty.hpp"
 
 #include <unordered_map>
 
@@ -23,10 +18,11 @@ namespace rd {
 	protected:
 		using WK = value_or_wrapper<K>;
 		using WV = value_or_wrapper<V>;
+		using OV = opt_or_wrapper<V>;
 
 		mutable std::unordered_map<
 				Lifetime,
-				tsl::ordered_map<K const *, LifetimeDefinition, wrapper::TransparentHash < K>, wrapper::TransparentKeyEqual<K>>
+				ordered_map<K const *, LifetimeDefinition, wrapper::TransparentHash < K>, wrapper::TransparentKeyEqual<K>>
 		>
 		lifetimes;
 	public:
@@ -58,7 +54,7 @@ namespace rd {
 				Remove(K const *key, V const *old_value) : key(key), old_value(old_value) {}
 			};
 
-			mpark::variant<Add, Update, Remove> v;
+			variant<Add, Update, Remove> v;
 
 			Event(Add const &x) : v(x) {}
 
@@ -67,7 +63,7 @@ namespace rd {
 			Event(Remove const &x) : v(x) {}
 
 			K const *get_key() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](typename Event::Add const &e) {
 							return e.key;
 						},
@@ -81,7 +77,7 @@ namespace rd {
 			}
 
 			V const *get_old_value() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](typename Event::Add const &e) {
 							return static_cast<V const *>(nullptr);
 						},
@@ -95,7 +91,7 @@ namespace rd {
 			}
 
 			V const *get_new_value() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](typename Event::Add const &e) {
 							return e.new_value;
 						},
@@ -158,7 +154,7 @@ namespace rd {
 
 		> handler) const {
 			advise(lifetime, [handler](Event e) {
-				mpark::visit(util::make_visitor(
+				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
 							handler(AddRemove::ADD, *e.key, *e.new_value);
 						},
@@ -173,9 +169,7 @@ namespace rd {
 			});
 		}
 
-		void view(Lifetime lifetime, std::function< void(Lifetime, K const &, V const &)
-
-		> handler) const {
+		void view(Lifetime lifetime, std::function< void(Lifetime, K const &, V const &)> handler) const {
 			view(lifetime, [handler](Lifetime lf, const std::pair<K const *, V const *> entry) {
 				handler(lf, *entry.first, *entry.second);
 			});
@@ -187,7 +181,7 @@ namespace rd {
 
 		virtual const V *set(WK, WV) const = 0;
 
-		virtual tl::optional<WV> remove(K const &) const = 0;
+		virtual OV remove(K const &) const = 0;
 
 		virtual void clear() const = 0;
 

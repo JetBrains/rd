@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 19.11.2018.
-//
-
 #ifndef RD_CPP_ISERIALIZERSOWNER_H
 #define RD_CPP_ISERIALIZERSOWNER_H
 

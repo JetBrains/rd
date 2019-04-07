@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/1/2019.
-//
-
 #include <gtest/gtest.h>
 
 #include "InterningTestBase.h"
@@ -120,7 +116,7 @@ TEST_F(InterningTestBase, testNestedInternedObjects) {
 
 	auto testValue = InterningNestedTestModel(L"extremelyLongString",
 	                                          InterningNestedTestModel(L"middle",
-	                                                                   InterningNestedTestModel(L"bottom", tl::nullopt)
+	                                                                   InterningNestedTestModel(L"bottom", nullopt)
 	                                          )
 	);
 

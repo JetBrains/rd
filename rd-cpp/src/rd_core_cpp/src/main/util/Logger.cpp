@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 11.07.2018.
-//
-
 #include "Logger.h"
 
 #include "core_util.h"

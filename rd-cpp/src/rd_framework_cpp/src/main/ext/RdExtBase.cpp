@@ -93,6 +93,11 @@ namespace rd {
 		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message);
 	}
 
+	IScheduler *RdExtBase::get_wire_scheduler() const {
+		return RdReactiveBase::get_wire_scheduler();
+		//todo SynchronousScheduler
+	}
+
 	std::string to_string(RdExtBase::ExtState state) {
 		switch (state) {
 			case RdExtBase::ExtState::Ready:

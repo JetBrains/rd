@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_RDBINDABLEBASE_H
 #define RD_CPP_RDBINDABLEBASE_H
 
@@ -13,7 +9,7 @@
 namespace rd {
 	class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 	protected:
-		mutable tl::optional<Lifetime> bind_lifetime;
+		mutable optional<Lifetime> bind_lifetime;
 
 		bool is_bound() const;
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 10.07.2018.
-//
-
 #ifndef RD_CPP_CORE_VIEWABLESET_H
 #define RD_CPP_CORE_VIEWABLESET_H
 
@@ -23,7 +19,7 @@ namespace rd {
 		using WT = typename IViewableSet<T>::WT;
 
 		Signal<Event> change;
-		using data_t = tsl::ordered_set<Wrapper<T>, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>;
+		using data_t = ordered_set<Wrapper<T>, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>;
 		mutable data_t set;
 	public:
 		//region ctor/dtor

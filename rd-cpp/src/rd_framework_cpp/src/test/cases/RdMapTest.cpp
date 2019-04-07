@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 03.08.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "RdMap.h"

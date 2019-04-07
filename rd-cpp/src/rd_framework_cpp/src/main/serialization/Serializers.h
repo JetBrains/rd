@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #ifndef RD_CPP_SERIALIZERS_H
 #define RD_CPP_SERIALIZERS_H
 
@@ -49,7 +45,7 @@ namespace rd {
 		void registry() const;
 
 		template<typename T = DefaultAbstractDeclaration>
-		tl::optional<InternedAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const;
+		optional<InternedAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const;
 
 		template<typename T>
 		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const;
@@ -80,17 +76,16 @@ namespace rd {
 	}
 
 	template<typename T>
-	tl::optional<InternedAny> Serializers::readAny(SerializationCtx const &ctx, Buffer const &buffer) const {
+	optional<InternedAny> Serializers::readAny(SerializationCtx const &ctx, Buffer const &buffer) const {
 		RdId id = RdId::read(buffer);
 		if (id.isNull()) {
-			return tl::nullopt;
+			return nullopt;
 		}
 		int32_t size = buffer.read_integral<int32_t>();
 		buffer.check_available(static_cast<size_t>(size));
 
 		if (readers.count(id) == 0) {
 			return any::make_interned_any<T>(T::readUnknownInstance(ctx, buffer, id, size));
-//			throw std::invalid_argument("no reader");
 		}
 		auto const &reader = readers.at(id);
 		return reader(ctx, buffer);
@@ -98,7 +93,7 @@ namespace rd {
 
 	template<typename T>
 	value_or_wrapper<T> Serializers::readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const {
-		tl::optional<InternedAny> any = readAny<T>(ctx, buffer);
+		optional<InternedAny> any = readAny<T>(ctx, buffer);
 		return any::get<T>(*(std::move(any)));
 	}
 

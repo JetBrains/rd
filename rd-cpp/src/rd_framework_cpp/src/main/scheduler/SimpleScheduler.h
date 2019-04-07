@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 03.10.2018.
-//
-
 #ifndef RD_CPP_TESTSCHEDULER_H
 #define RD_CPP_TESTSCHEDULER_H
 

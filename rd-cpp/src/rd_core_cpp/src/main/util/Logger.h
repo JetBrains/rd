@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 11.07.2018.
-//
-
 #ifndef RD_CPP_CORE_LOGGER_H
 #define RD_CPP_CORE_LOGGER_H
 

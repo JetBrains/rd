@@ -1,13 +1,9 @@
-//
-// Created by jetbrains on 13.11.2018.
-//
-
 #include "SocketWire.h"
 #include "scheduler/SimpleScheduler.h"
 #include "RdFrameworkTestBase.h"
 #include "RdProperty.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 #include <fstream>
 
@@ -30,15 +26,15 @@ int main() {
 	std::shared_ptr<IWire> wire(server);
 	Protocol clientProtocol{Identities(Identities::CLIENT), &testScheduler, std::move(wire)};
 
-	RdProperty<tl::optional<int32_t>> property_main{0};
+	RdProperty<optional<int32_t>> property_main{0};
 	property_main.rdid = RdId(1);
 	property_main.bind(lifetime, &clientProtocol, "top");
 
-	RdProperty<tl::optional<int32_t>> property_rx{0};
+	RdProperty<optional<int32_t>> property_rx{0};
 	property_rx.rdid = RdId(2);
 	property_rx.bind(lifetime, &clientProtocol, "rx");
 
-	property_rx.advise(lifetime, [](tl::optional<int32_t> const &x) {
+	property_rx.advise(lifetime, [](optional<int32_t> const &x) {
 		std::cout << "rx value changed to " << *x << "\n";
 	});
 	for (int i = 1; i < 10; ++i) {

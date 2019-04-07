@@ -32,9 +32,9 @@ namespace rd {
 		mutable std::vector<InternedAny> myItemsList;
 
 		// template<typename T>
-		mutable tsl::ordered_map<int32_t, InternedAny> otherItemsList;
+		mutable ordered_map<int32_t, InternedAny> otherItemsList;
 		// template<typename T>
-		mutable tsl::ordered_map<InternedAny, int32_t, any::TransparentHash, any::TransparentKeyEqual> inverseMap;
+		mutable ordered_map<InternedAny, int32_t, any::TransparentHash, any::TransparentKeyEqual> inverseMap;
 
 		mutable InternScheduler intern_scheduler;
 
@@ -75,10 +75,10 @@ namespace rd {
 	std::vector<value_or_wrapper<T>> InternRoot::myItemsList = {};
 
 	template<typename T>
-	tsl::ordered_map<int32_t, value_or_wrapper<T>> InternRoot::otherItemsList = {};
+	ordered_map<int32_t, value_or_wrapper<T>> InternRoot::otherItemsList = {};
 
 	template<typename T>
-	tsl::ordered_map<value_or_wrapper<T>, int32_t> InternRoot::inverseMap = {};*/
+	ordered_map<value_or_wrapper<T>, int32_t> InternRoot::inverseMap = {};*/
 
 	constexpr bool InternRoot::is_index_owned(int32_t id) {
 		return !static_cast<bool>(id & 1);

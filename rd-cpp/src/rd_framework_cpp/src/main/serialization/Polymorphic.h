@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 30.07.2018.
-//
-
 #ifndef RD_CPP_POLYMORPHIC_H
 #define RD_CPP_POLYMORPHIC_H
 
@@ -135,15 +131,15 @@ namespace rd {
 	};
 
 	template<typename T>
-	class Polymorphic<tl::optional<T>> {
+	class Polymorphic<optional<T>> {
 	public:
-		static tl::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return buffer.readNullable<T>([&ctx, &buffer]() {
 				return Polymorphic<T>::read(ctx, buffer);
 			});
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
+		static void write(SerializationCtx const &ctx, Buffer const &buffer, optional<T> const &value) {
 			buffer.writeNullable<T>(value, [&ctx, &buffer](T const &v) {
 				Polymorphic<T>::write(ctx, buffer, v);
 			});

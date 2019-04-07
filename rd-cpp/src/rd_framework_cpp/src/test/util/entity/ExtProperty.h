@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 05.10.2018.
-//
-
 #ifndef RD_CPP_EXTPROPERTY_H
 #define RD_CPP_EXTPROPERTY_H
 

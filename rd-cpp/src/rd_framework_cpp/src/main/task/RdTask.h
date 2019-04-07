@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDTASK_H
 #define RD_CPP_RDTASK_H
 
@@ -65,7 +61,7 @@ namespace rd {
 
 		void advise(Lifetime lifetime, std::function<void(TRes const &)> handler) const {
 			ptr->result.advise(lifetime,
-							   [handler = std::move(handler)](tl::optional<TRes> const &opt_value) {
+							   [handler = std::move(handler)](optional<TRes> const &opt_value) {
 								   if (opt_value) {
 									   handler(*opt_value);
 								   }

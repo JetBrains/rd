@@ -1,13 +1,9 @@
-//
-// Created by jetbrains on 05.02.2019.
-//
-
 #ifndef RD_CPP_WRAPPER_H
 #define RD_CPP_WRAPPER_H
 
 #include "core_traits.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 #include <type_traits>
 #include <memory>
@@ -20,8 +16,8 @@ namespace rd {
 	template<typename T, typename R = void>
 	struct helper {
 		using value_or_wrapper_type = T;
-		using opt_or_wrapper_type = tl::optional<T>;
-		using property_storage = tl::optional<T>;
+		using opt_or_wrapper_type = optional<T>;
+		using property_storage = optional<T>;
 		using raw_type = T;
 	};
 
@@ -34,10 +30,10 @@ namespace rd {
 	};
 
 	/*template<typename T>
-	struct helper<tl::optional<T>> {
+	struct helper<optional<T>> {
 		using value_or_wrapper_type = Wrapper<T>;
 		using opt_or_wrapper_type = Wrapper<T>;
-		using property_storage = tl::optional<tl::optional<T>>;
+		using property_storage = optional<optional<T>>;
 		using raw_type = T;
 	};*/
 
@@ -62,10 +58,12 @@ namespace rd {
 	using raw_type = typename helper<T>::raw_type;
 
 	template<typename>
-	struct is_wrapper : std::false_type {};
+	struct is_wrapper : std::false_type {
+	};
 
 	template<typename T>
-	struct is_wrapper<Wrapper<T>> : std::true_type {};
+	struct is_wrapper<Wrapper<T>> : std::true_type {
+	};
 
 	template<typename T>
 	constexpr bool is_wrapper_v = is_wrapper<T>::value;
@@ -90,13 +88,13 @@ namespace rd {
 
 		Wrapper &operator=(Wrapper const &) = default;
 
-		Wrapper(Wrapper &&) noexcept = default;
+		Wrapper(Wrapper &&) = default;
 
-		Wrapper &operator=(Wrapper &&) noexcept = default;
+		Wrapper &operator=(Wrapper &&) = default;
 
 		constexpr explicit Wrapper(std::nullptr_t) noexcept {}
 
-		constexpr Wrapper(tl::nullopt_t) noexcept {}
+		constexpr Wrapper(nullopt_t) noexcept {}
 
 		template<typename R, typename = typename std::enable_if_t<util::is_base_of_v<T, R>>>
 		Wrapper(Wrapper<R> const &other) :
@@ -106,17 +104,21 @@ namespace rd {
 		Wrapper(Wrapper<R> &&other) :
 				Base(std::static_pointer_cast<T>(static_cast<std::shared_ptr<R>>(std::move(other)))) {}
 
-		template<typename F, typename = typename std::enable_if_t<
-			util::negation<
-				util::disjunction<
-					std::is_null_pointer<std::decay_t<F>>,
-					std::is_same<Wrapper<T>, std::decay_t<F>>,
-					tl::detail::is_optional<std::decay_t<F>>
-				>
-			>::value
+		template<typename F, typename G = typename util::not_string_literal<F &&>::type, typename = typename std::enable_if_t<
+				/*util::negation<
+					util::disjunction<
+						std::is_null_pointer<std::decay_t<F>>,
+						std::is_same<Wrapper<T>, std::decay_t<F>>,
+						detail::is_optional<std::decay_t<F>>
+					>
+				>::value*/
+				util::conjunction<
+						std::is_constructible<std::shared_ptr<T>, std::shared_ptr<G>>,
+						util::negation<std::is_abstract<G>>
+				>::value
 		>>
 		Wrapper(F &&value) :
-			Base(std::make_shared<typename util::not_string_literal<F &&>::type>(std::forward<F>(value))) {
+				Base(std::make_shared<G>(std::forward<F>(value))) {
 		}
 
 		template<typename F>
@@ -126,9 +128,9 @@ namespace rd {
 		Wrapper(std::shared_ptr<F> &&ptr) noexcept : Base(std::static_pointer_cast<T>(std::move(ptr))) {}
 
 		template<typename U = T, typename R = typename std::enable_if_t<!std::is_abstract<std::decay_t<U>>::value>>
-		Wrapper(tl::optional<T> &&opt) {
+		Wrapper(optional<U> &&opt) {
 			if (opt) {
-				*this = std::make_shared<T>(*std::move(opt));
+				*this = std::make_shared<U>(*std::move(opt));
 			}
 		}
 

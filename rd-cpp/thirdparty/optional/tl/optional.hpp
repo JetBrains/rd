@@ -1,7 +1,7 @@
 
 ///
 // optional - An implementation of std::optional with extensions
-// Written in 2017 by Simon Brand (@TartanLlama)
+// Written in 2017 by Simon Brand (tartanllama@gmail.com, @TartanLlama)
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to the
@@ -354,10 +354,6 @@ struct is_nothrow_swappable
 // The storage base manages the actual storage, and correctly propagates
 // trivial destruction from T. This case is for when T is not trivially
 // destructible.
-
-#pragma warning( push )
-#pragma warning( disable:4582 )
-#pragma warning( disable:4583 )
 template <class T, bool = ::std::is_trivially_destructible<T>::value>
 struct optional_storage_base {
   TL_OPTIONAL_11_CONSTEXPR optional_storage_base() noexcept
@@ -382,7 +378,6 @@ struct optional_storage_base {
 
   bool m_has_value;
 };
-#pragma warning( pop )
 
 // This case is for when T is trivially destructible.
 template <class T> struct optional_storage_base<T, true> {
@@ -1195,7 +1190,9 @@ public:
       class U, detail::enable_from_other<T, U, const U &> * = nullptr,
       detail::enable_if_t<std::is_convertible<const U &, T>::value> * = nullptr>
   optional(const optional<U> &rhs) {
-    this->construct(*rhs);
+    if (rhs.has_value()) {
+      this->construct(*rhs);
+    }
   }
 
   /// \exclude
@@ -1203,7 +1200,9 @@ public:
             detail::enable_if_t<!std::is_convertible<const U &, T>::value> * =
                 nullptr>
   explicit optional(const optional<U> &rhs) {
-    this->construct(*rhs);
+    if (rhs.has_value()) {
+      this->construct(*rhs);
+    }
   }
 
   /// Converting move constructor.
@@ -1212,7 +1211,9 @@ public:
       class U, detail::enable_from_other<T, U, U &&> * = nullptr,
       detail::enable_if_t<std::is_convertible<U &&, T>::value> * = nullptr>
   optional(optional<U> &&rhs) {
-    this->construct(std::move(*rhs));
+    if (rhs.has_value()) {
+      this->construct(std::move(*rhs));
+    }
   }
 
   /// \exclude
@@ -1220,7 +1221,9 @@ public:
       class U, detail::enable_from_other<T, U, U &&> * = nullptr,
       detail::enable_if_t<!std::is_convertible<U &&, T>::value> * = nullptr>
   explicit optional(optional<U> &&rhs) {
-    this->construct(std::move(*rhs));
+    if (rhs.has_value()) {
+      this->construct(std::move(*rhs));
+    }
   }
 
   /// Destroys the stored value if there is one.
@@ -2257,6 +2260,7 @@ public:
 
     *this = nullopt;
     this->construct(std::forward<Args>(args)...);
+    return value();
   }
 
   /// Swaps this optional with the other.

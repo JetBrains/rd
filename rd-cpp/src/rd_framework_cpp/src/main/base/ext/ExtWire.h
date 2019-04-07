@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 28.09.2018.
-//
-
 #ifndef RD_CPP_EXTWIRE_H
 #define RD_CPP_EXTWIRE_H
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 22.09.2018.
-//
-
 #ifndef RD_CPP_VIEWABLE_COLLECTIONS_H
 #define RD_CPP_VIEWABLE_COLLECTIONS_H
 

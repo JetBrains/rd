@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_RDPROPERTY_H
 #define RD_CPP_RDPROPERTY_H
 
@@ -41,6 +37,7 @@ namespace rd {
 		static RdProperty<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			RdId id = RdId::read(buffer);
 			bool not_null = buffer.readBool();//not null/
+			(void) not_null;
 			auto value = S::read(ctx, buffer);
 			RdProperty<T, S> property;
 			property.value = std::move(value);

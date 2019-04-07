@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/23/2019.
-//
-
 #ifndef RD_CPP_FRAMEWORK_TRAITS_H
 #define RD_CPP_FRAMEWORK_TRAITS_H
 

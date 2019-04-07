@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/10/2019.
-//
-
 #ifndef RD_CPP_ANYSERIALIZER_H
 #define RD_CPP_ANYSERIALIZER_H
 
@@ -18,7 +14,7 @@ namespace rd {
 
 	class InternedAnySerializer {
 	public:
-		static tl::optional<InternedAny> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static optional<InternedAny> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			return ctx.get_serializers().readAny(ctx, buffer);
 		}
 

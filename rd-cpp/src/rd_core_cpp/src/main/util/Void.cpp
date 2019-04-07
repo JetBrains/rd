@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 24.02.2019.
-//
-
 #include "Void.h"
 
 namespace rd {

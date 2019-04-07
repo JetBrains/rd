@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 24.07.2018.
-//
-
 #include "Lifetime.h"
 #include "RdPropertyBase.h"
 #include "RdExtBase.h"

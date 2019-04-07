@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 19.09.2018.
-//
-
 #ifndef RD_CPP_WIREUTIL_H
 #define RD_CPP_WIREUTIL_H
 

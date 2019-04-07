@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
 #ifndef RD_CPP_CORE_INTERFACES_H
 #define RD_CPP_CORE_INTERFACES_H
 

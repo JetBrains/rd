@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "RdProperty.h"
@@ -264,12 +260,12 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
 
 TEST_F(RdFrameworkTestBase, property_optional) {
 	using Type = int32_t;
-	using opt = tl::optional<Type>;
+	using opt = optional<Type>;
 
 	int property_id = 1;
 
-	auto client_property = RdProperty<opt>(tl::nullopt);
-	auto server_property = RdProperty<opt>(tl::nullopt);
+	auto client_property = RdProperty<opt>(nullopt);
+	auto server_property = RdProperty<opt>(nullopt);
 
 	statics(client_property, (property_id));
 	statics(server_property, (property_id)).slave();
@@ -286,15 +282,15 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 		});
 
 		//not bound
-		EXPECT_EQ((std::vector<opt>{tl::nullopt}), client_log);
-		EXPECT_EQ((std::vector<opt>{tl::nullopt}), server_log);
+		EXPECT_EQ((std::vector<opt>{nullopt}), client_log);
+		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
 
 		//bound
 		bindStatic(serverProtocol.get(), server_property, "top");
 		bindStatic(clientProtocol.get(), client_property, "top");
 
-		EXPECT_EQ((std::vector<opt>{tl::nullopt}), client_log);
-		EXPECT_EQ((std::vector<opt>{tl::nullopt}), server_log);
+		EXPECT_EQ((std::vector<opt>{nullopt}), client_log);
+		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
 
 		client_property.set(1);
 		EXPECT_EQ(1, client_log.back());
@@ -312,8 +308,8 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 		opt empty_object;
 		client_property.set(empty_object);
 
-		EXPECT_EQ(tl::nullopt, client_log.back());
-		EXPECT_EQ(tl::nullopt, server_log.back());
+		EXPECT_EQ(nullopt, client_log.back());
+		EXPECT_EQ(nullopt, server_log.back());
 
 		size_t fixed_size2 = client_log.size();
 

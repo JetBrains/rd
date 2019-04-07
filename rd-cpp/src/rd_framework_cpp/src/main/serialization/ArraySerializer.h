@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 12.11.2018.
-//
-
 #ifndef RD_CPP_ARRAYSERIALIZER_H
 #define RD_CPP_ARRAYSERIALIZER_H
 

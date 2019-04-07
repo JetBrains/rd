@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 24.02.2019.
-//
-
 #ifndef RD_CPP_VOID_H
 #define RD_CPP_VOID_H
 

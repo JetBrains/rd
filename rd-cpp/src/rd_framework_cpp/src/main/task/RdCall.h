@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDCALL_H
 #define RD_CPP_RDCALL_H
 
@@ -21,7 +17,7 @@ namespace rd {
 		using WTRes = value_or_wrapper<TRes>;
 
 		mutable std::unordered_map<RdId, std::pair<IScheduler *, RdTask<TRes, ResSer>>> requests;
-		mutable tl::optional<RdId> syncTaskId;
+		mutable optional<RdId> syncTaskId;
 
 		mutable RdTask<TRes, ResSer> last_task;
 	public:
@@ -103,11 +99,17 @@ namespace rd {
 					std::this_thread::yield();
 				}
 				auto const &res = last_task.value_or_throw().unwrap();
-				syncTaskId = tl::nullopt;
+				syncTaskId = nullopt;
 				return res;
 			} catch (...) {
 				throw;
 			}
+		}
+
+
+		IScheduler *get_wire_scheduler() const override {
+			return RdReactiveBase::get_wire_scheduler();
+			//todo SynchronousScheduler
 		}
 
 		RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler) const {

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #ifndef RD_CPP_TESTWIRE_H
 #define RD_CPP_TESTWIRE_H
 

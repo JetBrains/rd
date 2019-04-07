@@ -1,15 +1,11 @@
-//
-// Created by jetbrains on 3/7/2019.
-//
-
 #ifndef RD_CPP_ANY_H
 #define RD_CPP_ANY_H
 
-#include "ISerializable.h"
 #include "core_util.h"
 #include "wrapper.h"
+#include "ISerializable.h"
 
-#include "mpark/variant.hpp"
+#include "thirdparty.hpp"
 
 #include <memory>
 #include <string>
@@ -21,27 +17,28 @@ namespace rd {
 		using wrapped_super_t = Wrapper<super_t>;
 		using string = Wrapper<std::wstring>;
 	}
-	using InternedAny = mpark::variant<any::wrapped_super_t, any::string>;
+	using InternedAny = variant<any::wrapped_super_t, any::string>;
 
 	namespace any {
-		template<typename T/*, typename = typename std::enable_if_t<!util::is_same_v<std::wstring, T>>*/>
-		InternedAny make_interned_any(const Wrapper <T> &wrapper) {
-			return {static_cast<wrapped_super_t>(wrapper)};
+		template<typename T>
+		InternedAny make_interned_any(Wrapper<T> wrapper) {
+			return {wrapped_super_t(wrapper)};
 		}
 
-		template<>
-		InternedAny make_interned_any<std::wstring>(const Wrapper<std::wstring> &wrapper);
-
+		template <>
+		inline InternedAny make_interned_any<std::wstring>(Wrapper <std::wstring> wrapper) {
+			return {wrapper};
+		}
 
 		template<typename T, typename Any>
 		typename std::enable_if_t<!util::is_base_of_v<IPolymorphicSerializable, T>, any::string> get(Any const &any) {
-			return mpark::get<any::string>(any);
-		};
+			return get<any::string>(any);
+		}
 
 		template<typename T, typename Any>
 		typename std::enable_if_t<util::is_base_of_v<IPolymorphicSerializable, T>, Wrapper<T>> get(Any &&any) {
-			return Wrapper<T>::dynamic(mpark::get<wrapped_super_t>(std::forward<Any>(any)));
-		};
+			return Wrapper<T>::dynamic(get<wrapped_super_t>(std::forward<Any>(any)));
+		}
 
 		struct TransparentKeyEqual {
 			using is_transparent = void;
@@ -51,7 +48,7 @@ namespace rd {
 			}
 
 			bool operator()(InternedAny const &val_l, wrapped_super_t const &val_r) const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[&](wrapped_super_t const &value) {
 							return *value == *val_r;
 						},
@@ -66,7 +63,7 @@ namespace rd {
 			}
 
 			bool operator()(InternedAny const &val_l, super_t const &val_r) const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[&](wrapped_super_t const &value) {
 							return *value == val_r;
 						},
@@ -81,7 +78,7 @@ namespace rd {
 			}
 
 			bool operator()(InternedAny const &val_l, any::string const &val_r) const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](wrapped_super_t const &value) {
 							return false;
 						},
@@ -101,7 +98,7 @@ namespace rd {
 			using transparent_key_equal = std::equal_to<>;
 
 			size_t operator()(InternedAny const &value) const noexcept {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](wrapped_super_t const &value) {
 							return std::hash<wrapped_super_t>()(value);
 						},
@@ -126,5 +123,7 @@ namespace rd {
 	}
 }
 
+static_assert(!std::is_trivially_copy_constructible<rd::Wrapper<rd::IPolymorphicSerializable>>::value,
+			  "wrapper mustn't be trivially_copy_constructible");
 
 #endif //RD_CPP_ANY_H

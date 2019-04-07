@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 25.10.2018.
-//
-
 #ifndef RD_CPP_ERASE_IF_H
 #define RD_CPP_ERASE_IF_H
 

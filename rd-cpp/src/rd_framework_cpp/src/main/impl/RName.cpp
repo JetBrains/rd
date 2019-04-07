@@ -1,6 +1,6 @@
 #include "RName.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 namespace rd {
 	RName::RName(RName *const parent, const std::string &localName, const std::string &separator) : parent(
@@ -15,7 +15,7 @@ namespace rd {
 	}
 
 	std::string RName::toString() const {
-		tl::optional<std::string> res;
+		optional<std::string> res;
 		if (parent)
 			res = parent->toString();
 		if (res && !res->empty()) {

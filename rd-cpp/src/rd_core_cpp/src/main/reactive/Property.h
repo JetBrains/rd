@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 10.07.2018.
-//
-
 #ifndef RD_CPP_CORE_PROPERTY_H
 #define RD_CPP_CORE_PROPERTY_H
 

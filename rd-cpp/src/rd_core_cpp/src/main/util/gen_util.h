@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 04.11.2018.
-//
-
 #ifndef RD_CPP_GEN_UTIL_H
 #define RD_CPP_GEN_UTIL_H
 

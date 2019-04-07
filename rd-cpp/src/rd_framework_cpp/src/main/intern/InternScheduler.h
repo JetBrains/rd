@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/1/2019.
-//
-
 #ifndef RD_CPP_INTERNSCHEDULER_H
 #define RD_CPP_INTERNSCHEDULER_H
 
@@ -10,6 +6,7 @@
 namespace rd {
 
     class InternScheduler : public IScheduler {
+    	static thread_local int32_t active_counts;
     public:
         //region ctor/dtor
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 07.08.2018.
-//
-
 #ifndef RD_CPP_ISERIALIZABLE_H
 #define RD_CPP_ISERIALIZABLE_H
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.10.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "RdProperty.h"

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 14.08.2018.
-//
-
 #ifndef RD_CPP_IVIEWABLESET_H
 #define RD_CPP_IVIEWABLESET_H
 
@@ -21,7 +17,7 @@ namespace rd {
 		using WT = value_or_wrapper<T>;
 		mutable std::unordered_map<
 				Lifetime,
-				tsl::ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>
+				ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>
 		> lifetimes;
 	public:
 

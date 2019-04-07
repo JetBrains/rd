@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 20.07.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "RdId.h"

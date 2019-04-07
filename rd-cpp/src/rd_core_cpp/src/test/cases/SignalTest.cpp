@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "test_util.h"

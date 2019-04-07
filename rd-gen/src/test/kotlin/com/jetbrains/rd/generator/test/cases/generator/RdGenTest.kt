@@ -32,7 +32,7 @@ fun main() {
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator.demo"
         }
         Configuration.RIDER_MODEL -> {
-            System.setProperty("model.out.src.cpp.dir", "C:\\Work\\rd\\rd-cpp\\cpp_model")
+            System.setProperty("model.out.src.cpp.dir", "C:\\Work\\rd\\rd-cpp\\rider_model")
             System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\ide-model")
 
             rdgen.sources *= "C:\\Work\\ide-model"

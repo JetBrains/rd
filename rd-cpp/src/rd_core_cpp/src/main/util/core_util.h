@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 13.08.2018.
-//
-
 #ifndef RD_CPP_CORE_CPP_UTIL_H
 #define RD_CPP_CORE_CPP_UTIL_H
 
@@ -12,7 +8,7 @@
 #include "wrapper.h"
 #include "Void.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 #include <memory>
 #include <string>
@@ -105,7 +101,7 @@ namespace rd {
 	}
 
 	template<typename T>
-	inline std::string to_string(tl::optional<T> const &val) {
+	inline std::string to_string(optional<T> const &val) {
 		if (val.has_value()) {
 			return to_string(*val);
 		} else {

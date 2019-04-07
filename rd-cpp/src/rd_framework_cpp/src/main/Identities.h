@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 20.07.2018.
-//
-
 #ifndef RD_CPP_FRAMEWORK_IDENTITIES_H
 #define RD_CPP_FRAMEWORK_IDENTITIES_H
 

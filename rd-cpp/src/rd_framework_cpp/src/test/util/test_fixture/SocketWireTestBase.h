@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 27.08.2018.
-//
-
 #ifndef RD_CPP_SOCKETWIRETESTBASE_H
 #define RD_CPP_SOCKETWIRETESTBASE_H
 
@@ -37,7 +33,7 @@ namespace rd {
 				Protocol client(Lifetime lifetime, uint16_t port);
 
 				//    @Before
-				void SetUp() {
+				void SetUp() override {
 
 				}
 

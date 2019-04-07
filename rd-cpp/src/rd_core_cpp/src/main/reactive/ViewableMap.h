@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 10.07.2018.
-//
-
 #ifndef RD_CPP_CORE_VIEWABLE_MAP_H
 #define RD_CPP_CORE_VIEWABLE_MAP_H
 
@@ -24,10 +20,11 @@ namespace rd {
 	private:
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
+		using OV = typename IViewableMap<K, V>::OV;
 
 		Signal<Event> change;
 
-		using data_t = tsl::ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>>;
+		using data_t = ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>>;
 		mutable data_t map;
 	public:
 		//region ctor/dtor
@@ -242,14 +239,14 @@ namespace rd {
 			}
 		}
 
-		tl::optional<WV> remove(K const &key) const override {
+		OV remove(K const &key) const override {
 			if (map.count(key) > 0) {
 				Wrapper<V> old_value = std::move(map.at(key));
 				change.fire(typename Event::Remove(&key, &(*old_value)));
 				map.erase(key);
 				return wrapper::unwrap<V>(std::move(old_value));
 			}
-			return tl::nullopt;
+			return nullopt;
 		}
 
 		void clear() const override {

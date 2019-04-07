@@ -4,8 +4,11 @@
 #include "Buffer.h"
 #include "hashing.h"
 
+#include "nonstd/string_view.hpp"
+
 #include <cstdint>
 #include <string>
+
 #include <memory>
 
 namespace rd {
@@ -79,19 +82,20 @@ namespace rd {
 			return *this;
 		}
 
-		template<size_t N>
+		/*template<size_t N>
 		constexpr RdId mix(char const (&tail)[N]) const {
 			return RdId(util::getPlatformIndependentHash<N>(tail, static_cast<util::constexpr_hash_t>(hash)));
-		}
+		}*/
 
-		constexpr RdId mix(const std::string &tail) const {
+		constexpr RdId mix(string_view tail) const {
 			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
 		}
 
-		constexpr RdId mix(int32_t tail) const {
+		/*constexpr RdId mix(int32_t tail) const {
 			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
 		}
 
+		*/
 		constexpr RdId mix(int64_t tail) const {
 			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
 		}

@@ -1,9 +1,7 @@
-//
-// Created by jetbrains on 3/5/2019.
-//
-
 #ifndef RD_CPP_HASHING_H
 #define RD_CPP_HASHING_H
+
+#include "nonstd/string_view.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -22,12 +20,12 @@ namespace rd {
 			return (begin == end) ? initial : hashImpl(initial * HASH_FACTOR + *begin, begin + 1, end);
 		}
 
-		template<size_t N>
+		/*template<size_t N>
 		constexpr hash_t getPlatformIndependentHash(char const (&that)[N], constexpr_hash_t initial = DEFAULT_HASH) {
 			return static_cast<hash_t>(hashImpl(initial, &that[0], &that[N - 1]));
-		}
+		}*/
 
-		constexpr hash_t getPlatformIndependentHash(std::string const &that, constexpr_hash_t initial = DEFAULT_HASH) {
+		constexpr hash_t getPlatformIndependentHash(string_view that, constexpr_hash_t initial = DEFAULT_HASH) {
 			return static_cast<hash_t>(hashImpl(initial, &that[0], &that[that.length()]));
 		}
 

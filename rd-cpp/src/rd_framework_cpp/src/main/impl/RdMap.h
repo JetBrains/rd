@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 02.08.2018.
-//
-
 #ifndef RD_CPP_RDMAP_H
 #define RD_CPP_RDMAP_H
 
@@ -21,10 +17,11 @@ namespace rd {
 	private:
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
+		using OV = typename IViewableMap<K, V>::OV;
 
 		using map = ViewableMap<K, V>;
 		mutable int64_t next_version = 0;
-		mutable tsl::ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
+		mutable ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
 
 		bool is_master() const {
 			return master;
@@ -38,7 +35,7 @@ namespace rd {
 				   " :: value = " + (value ? to_string(*value) : "");
 		}
 
-		std::string logmsg(Op op, int64_t version, K const *key, tl::optional<WV> const &value) const {
+		std::string logmsg(Op op, int64_t version, K const *key, optional<WV> const &value) const {
 			return logmsg(op, version, key, value ? &(wrapper::get(*value)) : nullptr);
 		}
 
@@ -165,7 +162,7 @@ namespace rd {
 				KS::write(this->get_serialization_context(), serialized_key, wrapper::get<K>(key));
 
 				bool is_put = (op == Op::ADD || op == Op::UPDATE);
-				tl::optional<WV> value;
+				optional<WV> value;
 				if (is_put) {
 					value = VS::read(this->get_serialization_context(), buffer);
 				}
@@ -217,7 +214,7 @@ namespace rd {
 			});
 		}
 
-		tl::optional<WV> remove(K const &key) const override {
+		OV remove(K const &key) const override {
 			return local_change([&] { return map::remove(key); });
 		}
 

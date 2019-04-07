@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 12.07.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "ViewableSet.h"

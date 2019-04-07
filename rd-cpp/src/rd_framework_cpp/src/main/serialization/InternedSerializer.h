@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/2/2019.
-//
-
 #ifndef RD_CPP_INTERNEDSERIALIZER_H
 #define RD_CPP_INTERNEDSERIALIZER_H
 

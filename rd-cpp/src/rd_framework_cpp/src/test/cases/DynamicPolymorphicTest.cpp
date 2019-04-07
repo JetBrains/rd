@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 06.02.2019.
-//
-
 #include <gtest/gtest.h>
 #include "RdFrameworkTestBase.h"
 
@@ -187,7 +183,7 @@ TEST_F(DMapTest, dynamic_polymorphic_map) {
 		EXPECT_FALSE(client_entity.remove(value_a)); //remove by value is wrong
 		EXPECT_EQ(server_entity.size(), 3);
 
-		EXPECT_EQ(**server_entity.remove(key_1), value_a);
+		EXPECT_EQ(*server_entity.remove(key_1), value_a);
 
 		server_entity.clear();
 	});

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 16.07.2018.
-//
-
 #ifndef RD_CPP_CORE_TEST_UTIL_H
 #define RD_CPP_CORE_TEST_UTIL_H
 
@@ -27,7 +23,7 @@ namespace rd {
 			template<typename K, typename V>
 			std::string to_string_map_event(typename IViewableMap<K, V>::Event const &e) {
 				using Event = typename IViewableMap<K, V>::Event;
-				std::string res = mpark::visit(make_visitor(
+				std::string res = visit(make_visitor(
 						[](typename Event::Add const &e) {
 							return "Add " +
 								   to_string(*e.key) + ":" +
@@ -51,7 +47,7 @@ namespace rd {
 			template<typename T>
 			std::string to_string_list_event(typename IViewableList<T>::Event const &e) {
 				using Event = typename IViewableList<T>::Event;
-				std::string res = mpark::visit(make_visitor(
+				std::string res = visit(make_visitor(
 						[](typename Event::Add const &e) {
 							return "Add " +
 								   std::to_string(e.index) + ":" +

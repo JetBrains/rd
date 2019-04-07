@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 03.10.2018.
-//
-
 #include "PumpScheduler.h"
 
 #include "core_util.h"

@@ -13,7 +13,7 @@ namespace rd {
 	}
 
 	void InternRoot::on_wire_received(Buffer buffer) const {
-		tl::optional<InternedAny> value = InternedAnySerializer::read(get_serialization_context(), buffer);
+		optional<InternedAny> value = InternedAnySerializer::read(get_serialization_context(), buffer);
 		if (!value) {
 			return;
 		}

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 12.02.2019.
-//
-
 #ifndef RD_CORE_CPP_TRAITS_H
 #define RD_CORE_CPP_TRAITS_H
 
@@ -91,6 +87,8 @@ namespace rd {
 		/*inline */constexpr bool in_heap_v = in_heap<T>::value;
 
 		static_assert(in_heap_v<std::wstring>, "std::wstring should be placed in shared memory");
+		static_assert(!in_heap_v<int>, "int shouldn't be placed in shared memory");
+
 		//endregion
 
 		//region literal
@@ -122,6 +120,7 @@ namespace rd {
 		static_assert(is_wstring_literal<decltype(L" ") &&>::value, "is_wstring trait doesn't work");
 		static_assert(is_wstring_literal<decltype(L" ") &>::value, "is_wstring trait doesn't work");
 		static_assert(is_wstring_literal<wchar_t const (&)[1]>::value, "is_wstring trait doesn't work");
+		static_assert(!is_wstring_literal<int>::value, "is_wstring trait doesn't work");
 //		static_assert(is_wstring_literal<std::wstring>::value, "is_wstring trait doesn't work");
 
 		//endregion

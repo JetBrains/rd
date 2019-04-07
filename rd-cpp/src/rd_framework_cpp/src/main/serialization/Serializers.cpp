@@ -31,7 +31,7 @@ namespace rd {
 
 	void Serializers::register_in() {
 		readers[STRING_PREDEFINED_ID] = [](SerializationCtx const &ctx, Buffer const &buffer) -> InternedAny {
-			return wrapper::make_wrapper<std::wstring>(Polymorphic<std::wstring>::read(ctx, buffer));
+			return {wrapper::make_wrapper<std::wstring>(Polymorphic<std::wstring>::read(ctx, buffer))};
 		};
 	}
 

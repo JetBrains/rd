@@ -21,7 +21,7 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
         when (defaultValue) {
             is String -> append(if (member.type is Enum) "$typeName::$defaultValue" else """L"$defaultValue"""")
             is Long, is Boolean -> append(defaultValue)
-//            else -> if (member.isOptional) append("tl::nullopt")
+//            else -> if (member.isOptional) append("nullopt")
         }
         append("}")
     }
@@ -106,8 +106,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
-    protected fun String.optional(): String {
-        return "tl::optional<$this>"
+    private fun String.optional(): String {
+        return "rd::optional<$this>"
     }
 
     //endregion
@@ -196,10 +196,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     //endregion
 
     //region IType.
-    fun IType.isPrimitive() = this in PredefinedFloating || this in PredefinedIntegrals
+    private fun IType.isPrimitive() = this in PredefinedFloating || this in PredefinedIntegrals
 
-    fun IType.isAbstract0() = (this is Struct.Abstract || this is Class.Abstract)
-    fun IType.isAbstract() = (this.isAbstract0()) || (this is InternedScalar && (this.itemType.isAbstract0()))
+    private fun IType.isAbstract0() = (this is Struct.Abstract || this is Class.Abstract)
+    private fun IType.isAbstract() = (this.isAbstract0()) || (this is InternedScalar && (this.itemType.isAbstract0()))
 
     fun Member.Field.isAbstract() = this.type.isAbstract()
 
@@ -798,7 +798,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         +standardHeaders.joinToString(separator = eolKind.value, transform = { "#include <$it>" })
         println()
         //third-party
-        +"optional".include("hpp")
+        +"thirdparty".include("hpp")
     }
 
     fun parseType(type: IType, allowPredefined: Boolean): IType? {
@@ -939,7 +939,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     }
 
 
-    protected fun extensionTraitDecl(decl: Ext): MemberFunction? {
+    private fun extensionTraitDecl(decl: Ext): MemberFunction? {
         val pointcut = decl.pointcut ?: return null
         val lowerName = decl.name.decapitalize()
         val extName = decl.extName ?: lowerName
@@ -958,7 +958,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         +own.asSequence().plus(unknowns).joinToString(separator = "") { "$it${carry()}" }
 
         if (decl is Class && decl.isInternRoot) {
-            +"mutable tl::optional<rd::SerializationCtx> mySerializationContext;"
+            +"mutable rd::optional<rd::SerializationCtx> mySerializationContext;"
         }
     }
 

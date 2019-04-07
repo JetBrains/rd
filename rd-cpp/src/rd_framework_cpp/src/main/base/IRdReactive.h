@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_FRAMEWORK_IRDREACTIVE_H
 #define RD_CPP_FRAMEWORK_IRDREACTIVE_H
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/11/2019.
-//
-
 #ifndef RD_CPP_PROPERTYHOLDERWITHINTERNROOT_H
 #define RD_CPP_PROPERTYHOLDERWITHINTERNROOT_H
 
@@ -16,7 +12,7 @@ namespace rd {
 			class PropertyHolderWithInternRoot : public RdBindableBase {
 			public:
 				RdProperty<T, S> property;
-				tl::optional<SerializationCtx> mySerializationContext;
+				optional<SerializationCtx> mySerializationContext;
 
 				explicit PropertyHolderWithInternRoot(RdProperty<T, S> property) : property(std::move(property)) {}
 

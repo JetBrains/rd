@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 13.08.2018.
-//
-
 #ifndef RD_CPP_IVIEWABLELIST_H
 #define RD_CPP_IVIEWABLELIST_H
 
@@ -11,7 +7,7 @@
 #include "viewable_collections.h"
 #include "wrapper.h"
 
-#include "mpark/variant.hpp"
+#include "thirdparty.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -52,7 +48,7 @@ namespace rd {
 				Remove(size_t index, T const *old_value) : index(index), old_value(old_value) {}
 			};
 
-			mpark::variant<Add, Update, Remove> v;
+			variant<Add, Update, Remove> v;
 
 			Event(Add const &x) : v(x) {}
 
@@ -61,7 +57,7 @@ namespace rd {
 			Event(Remove const &x) : v(x) {}
 
 			int32_t get_index() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](Add const &e) {
 							return e.index;
 						},
@@ -75,7 +71,7 @@ namespace rd {
 			}
 
 			T const *get_new_value() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](Add const &e) {
 							return e.new_value;
 						},
@@ -107,7 +103,7 @@ namespace rd {
 
 		> handler) const {
 			advise(std::move(lifetime), [handler](Event e) {
-				mpark::visit(util::make_visitor(
+				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
 							handler(AddRemove::ADD, e.index, *e.new_value);
 						},

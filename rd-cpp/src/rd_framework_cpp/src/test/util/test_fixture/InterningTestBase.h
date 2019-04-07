@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 3/1/2019.
-//
-
 #ifndef RD_CPP_INTERNINGTESTBASE_H
 #define RD_CPP_INTERNINGTESTBASE_H
 

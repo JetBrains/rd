@@ -30,7 +30,7 @@ namespace rd {
 				auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());
 				buffer.readByteArrayRaw(unknownBytes);
 				AbstractEntity_Unknown res{std::move(name_), unknownId, unknownBytes};
-				return res;
+				return Wrapper<AbstractEntity_Unknown>(std::move(res));
 			}
 
 			//writer

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 19.11.2018.
-//
-
 #include "ISerializersOwner.h"
 
 namespace rd {

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 24.07.2018.
-//
-
 #ifndef RD_CPP_RDFRAMEWORKTESTBASE_H
 #define RD_CPP_RDFRAMEWORKTESTBASE_H
 

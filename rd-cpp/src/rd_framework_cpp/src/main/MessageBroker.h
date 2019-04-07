@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 26.07.2018.
-//
-
 #ifndef RD_CPP_MESSAGEBROKER_H
 #define RD_CPP_MESSAGEBROKER_H
 
@@ -26,7 +22,7 @@ namespace rd {
 		std::vector<Buffer> customSchedulerMessages;
 	};
 
-	class MessageBroker {
+	class MessageBroker final {
 	private:
 		IScheduler *defaultScheduler = nullptr;
 		mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;

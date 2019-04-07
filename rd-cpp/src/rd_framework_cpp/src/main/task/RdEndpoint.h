@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDENDPOINT_H
 #define RD_CPP_RDENDPOINT_H
 
@@ -58,9 +54,7 @@ namespace rd {
 			this->handler = std::move(handler);
 		}
 
-		void set(std::function<WTRes(TReq const &)
-
-		> handler) const {
+		void set(std::function<WTRes(TReq const &)> handler) const {
 			this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask <TRes, ResSer> {
 				return RdTask<TRes, ResSer>::from_result(handler(req));
 			};

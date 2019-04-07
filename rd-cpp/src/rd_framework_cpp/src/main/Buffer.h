@@ -1,14 +1,10 @@
-//
-// Created by jetbrains on 30.07.2018.
-//
-
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
 #include "core_util.h"
 #include "wrapper.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 #include <vector>
 #include <type_traits>
@@ -16,13 +12,14 @@
 #include <memory>
 
 namespace rd {
-	class Buffer {
+	class Buffer final {
 	public:
 		using word_t = uint8_t;
 
-		using ByteArray = std::vector<word_t>;
-	protected:
+		using Allocator = std::allocator<word_t>;
 
+		using ByteArray = std::vector<word_t, Allocator>;
+	private:
 		mutable ByteArray data_;
 		mutable size_t offset = 0;
 
@@ -173,7 +170,7 @@ namespace rd {
 		}
 
 		template<typename T, typename = typename std::enable_if_t<!std::is_abstract<T>::value>>
-		void writeNullable(tl::optional<T> const &value, std::function<void(T const &)> writer) const {
+		void writeNullable(optional<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
 			} else {

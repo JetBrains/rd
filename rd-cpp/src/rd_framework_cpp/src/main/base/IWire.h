@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 30.07.2018.
-//
-
 #ifndef RD_CPP_IWIRE_H
 #define RD_CPP_IWIRE_H
 

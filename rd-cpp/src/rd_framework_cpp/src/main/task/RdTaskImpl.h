@@ -1,14 +1,10 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDTASKIMPL_H
 #define RD_CPP_RDTASKIMPL_H
 
 #include "Polymorphic.h"
 #include "RdTaskResult.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 
 namespace rd {

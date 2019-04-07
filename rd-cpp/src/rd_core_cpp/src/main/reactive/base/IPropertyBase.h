@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 20.08.2018.
-//
-
 #ifndef RD_CPP_IPROPERTYBASE_H
 #define RD_CPP_IPROPERTYBASE_H
 
@@ -11,7 +7,7 @@
 #include "SignalX.h"
 #include "SequentialLifetimes.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 namespace rd {
 	template<typename T>

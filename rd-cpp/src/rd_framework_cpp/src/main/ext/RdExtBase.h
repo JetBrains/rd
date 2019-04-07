@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 24.07.2018.
-//
-
 #ifndef RD_CPP_RDEXTBASE_H
 #define RD_CPP_RDEXTBASE_H
 
@@ -35,6 +31,8 @@ namespace rd {
 		mutable int64_t serializationHash = 0;
 
 		const IProtocol *get_protocol() const override;
+
+		IScheduler *get_wire_scheduler() const override;
 
 		void init(Lifetime lifetime) const override;
 

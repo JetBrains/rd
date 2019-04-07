@@ -98,3 +98,6 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         PATTERN *.h
         PATTERN *.hpp
         )
+
+#target_compile_options(rd_framework_cpp PUBLIC -ftemplate-backtrace-limit=100)
+#target_link_options(rd_framework_cpp PUBLIC -fdiagnostics-show-template-tree)

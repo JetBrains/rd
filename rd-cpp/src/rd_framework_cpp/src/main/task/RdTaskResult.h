@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDTASKRESULT_H
 #define RD_CPP_RDTASKRESULT_H
 
@@ -10,7 +6,7 @@
 #include "wrapper.h"
 #include "core_util.h"
 
-#include "mpark/variant.hpp"
+#include "thirdparty.hpp"
 
 #include <exception>
 
@@ -86,7 +82,7 @@ namespace rd {
 		}
 
 		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
-			mpark::visit(util::make_visitor(
+			visit(util::make_visitor(
 					[&ctx, &buffer](Success const &value) {
 						buffer.write_integral<int32_t>(0);
 						S::write(ctx, buffer, value.value);
@@ -104,7 +100,7 @@ namespace rd {
 		}
 
 		T const &unwrap() const {
-			return mpark::visit(util::make_visitor(
+			return visit(util::make_visitor(
 					[](Success const &value) -> T const & {
 						return wrapper::get<T>(value.value);
 					},
@@ -130,7 +126,7 @@ namespace rd {
 		}
 
 	private:
-		mutable mpark::variant<Success, Cancelled, Fault> v;
+		mutable variant<Success, Cancelled, Fault> v;
 	};
 }
 

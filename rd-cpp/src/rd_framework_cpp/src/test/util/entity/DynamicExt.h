@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.10.2018.
-//
-
 #ifndef RD_CPP_DYNAMICEXT_H
 #define RD_CPP_DYNAMICEXT_H
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 07.10.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "Buffer.h"
@@ -164,10 +160,10 @@ TEST(BufferTest, NullableSerializer) {
 	using NS = NullableSerializer<S>;
 
 	std::vector<Wrapper<T>> list{
-			tl::nullopt,
+			nullopt,
 			L"1",
 			L"2",
-			tl::nullopt,
+			nullopt,
 			L"error"
 	};
 

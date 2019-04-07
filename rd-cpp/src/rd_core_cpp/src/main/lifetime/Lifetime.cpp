@@ -1,15 +1,15 @@
-//
-// Created by operasfantom on 19.07.18.
-//
-
 #include "Lifetime.h"
 
+#include <memory>
+
 namespace rd {
+	thread_local Lifetime::Allocator Lifetime::allocator;
+
 	LifetimeImpl *Lifetime::operator->() const {
 		return ptr.operator->();
 	}
 
-	Lifetime::Lifetime(bool is_eternal) : ptr(std::make_shared<LifetimeImpl>(is_eternal)) {}
+	Lifetime::Lifetime(bool is_eternal) : ptr(std::allocate_shared<LifetimeImpl, Allocator>(allocator, is_eternal)) {}
 
 	Lifetime Lifetime::create_nested() const {
 		Lifetime lw(false);

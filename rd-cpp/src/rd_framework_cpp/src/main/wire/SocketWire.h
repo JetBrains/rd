@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.08.2018.
-//
-
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 

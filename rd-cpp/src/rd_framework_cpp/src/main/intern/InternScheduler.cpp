@@ -1,12 +1,7 @@
-//
-// Created by jetbrains on 3/1/2019.
-//
-
 #include "InternScheduler.h"
 
 namespace rd {
-    thread_local int32_t active_counts = 0;
-    //todo replace that!!!
+	thread_local int32_t InternScheduler::active_counts = 0;
 
     InternScheduler::InternScheduler() {
         out_of_order_execution = true;
