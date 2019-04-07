@@ -5,6 +5,7 @@
 #include "Logger.h"
 
 #include <unordered_map>
+#include <queue>
 
 namespace rd {
 	class Mq {
@@ -18,7 +19,7 @@ namespace rd {
 		Mq(Mq &&) = default;
 		//endregion
 
-		int32_t defaultSchedulerMessages = 0;
+		mutable std::queue<Buffer> defaultSchedulerMessages;
 		std::vector<Buffer> customSchedulerMessages;
 	};
 

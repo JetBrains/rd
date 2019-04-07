@@ -42,7 +42,11 @@ namespace rd {
 
 		Buffer(Buffer const &) = delete;
 
+		Buffer& operator=(Buffer const &) = delete;
+
 		Buffer(Buffer &&) = default;
+
+		Buffer& operator=(Buffer &&) = default;
 		//endregion
 
 		size_t get_position() const;

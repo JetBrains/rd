@@ -124,10 +124,11 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
 	EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 
 	
-	clientScheduler.pump_one_message(); //send Ready
-	serverScheduler.pump_one_message(); //send Ready
-	serverScheduler.pump_one_message(); //send ReceivedCounterpart
-	clientScheduler.pump_one_message(); //send ReceivedCounterpart
+//	clientScheduler.pump_one_message(); //send Ready
+//	serverScheduler.pump_one_message(); //send Ready
+//	serverScheduler.pump_one_message(); //send ReceivedCounterpart
+//	clientScheduler.pump_one_message(); //send ReceivedCounterpart
+	//no need in pumping due to synchronous scheduler
 	clientScheduler.pump_one_message(); //send "UPDATE"
 
 

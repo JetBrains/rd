@@ -40,28 +40,38 @@ namespace rd {
 			std::lock_guard<decltype(lock)> guard(lock);
 			IRdReactive const *s = subscriptions[id];
 			if (s == nullptr) {
-				if (broker.count(id) == 0) {
-					broker[id];
+				auto it = broker.find(id);
+				if (it == broker.end()) {
+					it = broker.emplace(id, Mq{}).first;
 				}
-				broker[id].defaultSchedulerMessages++;
 
-				auto action = [this, id, message = std::move(message)]() mutable {
+				broker[id].defaultSchedulerMessages.emplace(std::move(message));
+
+				auto action = [this, it, id]() mutable {
+					auto &current = it->second;
 					IRdReactive const *subscription = subscriptions[id];
 
+					optional<Buffer> message;
+					{
+						std::lock_guard<decltype(lock)> guard(lock);
+						if (!current.defaultSchedulerMessages.empty()) {
+							message = std::move(current.defaultSchedulerMessages.front());
+							current.defaultSchedulerMessages.pop();
+						}
+					}
 					if (subscription != nullptr) {
-						if (subscription->get_wire_scheduler() == defaultScheduler)
-							invoke(subscription, std::move(message), true);
-						else
-							invoke(subscription, std::move(message));
+						if (message) {
+							invoke(subscription, *std::move(message), subscription->get_wire_scheduler() == defaultScheduler);
+						}
 					} else {
 						logger.trace("No handler for id: " + id.toString());
 					}
 
-					if (--broker[id].defaultSchedulerMessages == 0) {
+					if (current.defaultSchedulerMessages.empty()) {
 						auto t = std::move(broker[id]);
 						broker.erase(id);
 						for (auto &it : t.customSchedulerMessages) {
-							assert(subscription->get_wire_scheduler() != defaultScheduler);
+							MY_ASSERT_MSG(subscription->get_wire_scheduler() != defaultScheduler, "require equals of wire and default schedulers");
 							invoke(subscription, std::move(it));
 						}
 					}
@@ -72,11 +82,11 @@ namespace rd {
 				if (s->get_wire_scheduler() == defaultScheduler || s->get_wire_scheduler()->out_of_order_execution) {
 					invoke(s, std::move(message));
 				} else {
-					if (broker.count(id) == 0) {
+					auto it = broker.find(id);
+					if (it == broker.end()) {
 						invoke(s, std::move(message));
 					} else {
-						Mq &mq = broker[id];
-						assert(mq.defaultSchedulerMessages > 0);
+						Mq &mq = it->second;
 						mq.customSchedulerMessages.push_back(std::move(message));
 					}
 				}
