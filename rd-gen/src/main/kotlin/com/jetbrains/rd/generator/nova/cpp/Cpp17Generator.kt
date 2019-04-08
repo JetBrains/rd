@@ -1270,7 +1270,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         if (decl is Class && decl.isInternRoot) {
             +"res.mySerializationContext = ${decl.withInternRootsHere("res")};"
         }
-        +"return res;"
+        if (unknown) {
+            +"return rd::Wrapper<${decl.name}>(std::move(res));"
+        } else {
+            +"return res;"
+        }
     }
 
     private fun lambda(args: String?, body: String, resultType: String? = null): String {

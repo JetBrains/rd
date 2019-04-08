@@ -74,13 +74,11 @@ namespace rd {
 			T result;
 			read(reinterpret_cast<word_t *>(&result), sizeof(T));
 			return result;
-			//todo check correctness
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_floating_point<T>::value>>
 		void write_floating_point(T const &value) const {
 			write(reinterpret_cast<word_t const *>(&value), sizeof(T));
-			//todo check correctness
 		}
 
 		template<typename T>
@@ -173,8 +171,9 @@ namespace rd {
 			return reader();
 		}
 
-		template<typename T, typename = typename std::enable_if_t<!std::is_abstract<T>::value>>
-		void writeNullable(optional<T> const &value, std::function<void(T const &)> writer) const {
+		template<typename T>
+		typename std::enable_if_t<!std::is_abstract<T>::value>
+		writeNullable(optional<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
 				writeBool(false);
 			} else {
