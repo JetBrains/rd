@@ -1,7 +1,7 @@
 #ifndef RD_CPP_TESTSCHEDULER_H
 #define RD_CPP_TESTSCHEDULER_H
 
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 
 namespace rd {
 	class SimpleScheduler : public IScheduler {

@@ -1,10 +1,10 @@
 #ifndef RD_CPP_RDSIGNAL_H
 #define RD_CPP_RDSIGNAL_H
 
-#include "Lifetime.h"
+#include "../../../../rd_core_cpp/include/Lifetime.h"
 #include "interfaces.h"
-#include "IScheduler.h"
-#include "SignalX.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
+#include "../../../../rd_core_cpp/include/SignalX.h"
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 

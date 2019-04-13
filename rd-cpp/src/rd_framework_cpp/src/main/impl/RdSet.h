@@ -2,7 +2,7 @@
 #define RD_CPP_RDSET_H
 
 
-#include "ViewableSet.h"
+#include "../../../../rd_core_cpp/include/ViewableSet.h"
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 

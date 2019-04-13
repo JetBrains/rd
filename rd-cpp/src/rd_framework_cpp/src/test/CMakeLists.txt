@@ -13,6 +13,7 @@ add_executable(rd_framework_cpp_test
         cases/RdTaskTest.cpp
         cases/DynamicPolymorphicTest.cpp
         cases/InterningTest.cpp
+        cases/AsyncBufferTest.cpp
         )
 
 add_subdirectory(util)

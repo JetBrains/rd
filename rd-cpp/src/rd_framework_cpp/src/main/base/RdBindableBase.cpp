@@ -1,4 +1,4 @@
-#include "SignalX.h"
+#include "../../../../rd_core_cpp/include/SignalX.h"
 #include "RdBindableBase.h"
 
 namespace rd {

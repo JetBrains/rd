@@ -2,7 +2,7 @@
 #define RD_CPP_FRAMEWORK_IRDBINDABLE_H
 
 #include "IRdDynamic.h"
-#include "Lifetime.h"
+#include "../../../../rd_core_cpp/include/Lifetime.h"
 #include "RdId.h"
 
 

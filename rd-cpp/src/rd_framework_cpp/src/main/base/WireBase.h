@@ -2,7 +2,7 @@
 #define RD_CPP_WIREBASE_H
 
 
-#include "Property.h"
+#include "../../../../rd_core_cpp/include/Property.h"
 #include "IWire.h"
 #include "MessageBroker.h"
 

@@ -3,7 +3,7 @@
 
 
 #include "IRdBindable.h"
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 
 namespace rd {
 	class IRdReactive : public virtual IRdBindable {

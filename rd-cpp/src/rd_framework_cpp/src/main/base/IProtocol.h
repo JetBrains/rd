@@ -5,7 +5,7 @@
 #include "IRdDynamic.h"
 #include "Serializers.h"
 #include "Identities.h"
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 #include "IWire.h"
 
 #include <memory>

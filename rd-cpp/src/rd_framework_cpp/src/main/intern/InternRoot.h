@@ -4,7 +4,7 @@
 
 #include "RdReactiveBase.h"
 #include "InternScheduler.h"
-#include "Lifetime.h"
+#include "../../../../rd_core_cpp/include/Lifetime.h"
 #include "wrapper.h"
 #include "RdAny.h"
 #include "core_traits.h"

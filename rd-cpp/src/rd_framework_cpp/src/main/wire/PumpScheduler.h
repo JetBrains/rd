@@ -1,7 +1,7 @@
 #ifndef RD_CPP_PUMPSCHEDULER_H
 #define RD_CPP_PUMPSCHEDULER_H
 
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 
 #include <condition_variable>
 #include <thread>

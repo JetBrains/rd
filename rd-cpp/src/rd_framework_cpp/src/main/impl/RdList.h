@@ -1,7 +1,7 @@
 #ifndef RD_CPP_RDLIST_H
 #define RD_CPP_RDLIST_H
 
-#include "ViewableList.h"
+#include "../../../../rd_core_cpp/include/ViewableList.h"
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 

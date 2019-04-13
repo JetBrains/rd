@@ -1,6 +1,6 @@
 #include <utility>
 
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 #include "Identities.h"
 #include "IWire.h"
 #include "IProtocol.h"

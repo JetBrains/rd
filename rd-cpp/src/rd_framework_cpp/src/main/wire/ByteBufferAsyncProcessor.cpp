@@ -33,7 +33,13 @@ namespace rd {
 			cv.notify_all();
 		}
 
-		std::future_status status = asyncFuture.wait_for(timeout);
+		std::future_status status;
+		if (timeout == time_t(0)) {
+			asyncFuture.wait();
+			status = std::future_status::ready;
+		} else {
+			status = asyncFuture.wait_for(timeout);
+		}
 
 		if (status == std::future_status::timeout) {
 			logger.error("Couldn't wait async thread during time:" + to_string(timeout));

@@ -6,10 +6,11 @@
 #include "Protocol.h"
 #include "SimpleScheduler.h"
 
+#include <DemoModel/Derived.h>
+
 #include <cstdint>
 #include <fstream>
 #include <string>
-#include <DemoModel/Derived.h>
 
 using namespace rd;
 using namespace demo;

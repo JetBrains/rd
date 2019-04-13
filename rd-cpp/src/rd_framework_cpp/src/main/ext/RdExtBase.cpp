@@ -1,6 +1,6 @@
 #include "RdExtBase.h"
 
-#include "Lifetime.h"
+#include "../../../../rd_core_cpp/include/Lifetime.h"
 #include "RdPropertyBase.h"
 #include "Protocol.h"
 #include "SynchronousScheduler.h"

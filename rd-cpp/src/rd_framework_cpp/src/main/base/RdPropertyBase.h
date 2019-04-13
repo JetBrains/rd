@@ -4,7 +4,7 @@
 
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
-#include "Property.h"
+#include "../../../../rd_core_cpp/include/Property.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )

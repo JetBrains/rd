@@ -4,7 +4,7 @@
 
 #include "interfaces.h"
 #include "IRdReactive.h"
-#include "Property.h"
+#include "../../../../rd_core_cpp/include/Property.h"
 
 namespace rd {
 	class IWire {

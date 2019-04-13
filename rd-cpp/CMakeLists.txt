@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(rd_cpp)
+#project(rd_cpp VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,6 +27,7 @@ option(RD_FRAMEWORK_CPP_ENABLE_TESTS "Enable tests." ${ENABLE_TESTS_OPTION})
 option(ENABLE_PCH_HEADERS "Enable precompiled headers" ON)
 if (ENABLE_PCH_HEADERS)
     set(PCH_CPP_OPT pch.cpp)
+    set(PCH_H_OPT pch.h)
     if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
         set(_PCH_FORCEINCLUDE ON)
     endif ()

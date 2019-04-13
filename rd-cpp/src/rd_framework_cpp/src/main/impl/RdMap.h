@@ -1,7 +1,7 @@
 #ifndef RD_CPP_RDMAP_H
 #define RD_CPP_RDMAP_H
 
-#include "ViewableMap.h"
+#include "../../../../rd_core_cpp/include/ViewableMap.h"
 #include "RdReactiveBase.h"
 #include "Polymorphic.h"
 #include "shared_function.h"

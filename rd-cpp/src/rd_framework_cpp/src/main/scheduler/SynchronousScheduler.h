@@ -5,7 +5,7 @@
 #ifndef RD_CPP_SYNCHRONOUSSCHEDULER_H
 #define RD_CPP_SYNCHRONOUSSCHEDULER_H
 
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 
 #include "guards.h"
 

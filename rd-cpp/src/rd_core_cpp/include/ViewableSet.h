@@ -3,7 +3,7 @@
 
 #include "IViewableSet.h"
 #include "SignalX.h"
-#include "util/core_util.h"
+#include "core_util.h"
 
 #include "tsl/ordered_set.h"
 

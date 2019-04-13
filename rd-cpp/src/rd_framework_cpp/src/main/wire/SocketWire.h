@@ -1,7 +1,7 @@
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
-#include "IScheduler.h"
+#include "../../../../rd_core_cpp/include/IScheduler.h"
 #include "WireBase.h"
 #include "Logger.h"
 #include "ByteBufferAsyncProcessor.h"
