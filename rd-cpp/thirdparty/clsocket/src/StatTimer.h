@@ -55,7 +55,7 @@
 
 #endif
 
-#ifdef _LINUX
+#ifdef __linux__
   #include <stdio.h>
   #include <sys/time.h>
 #endif

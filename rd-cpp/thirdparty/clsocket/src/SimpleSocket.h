@@ -49,7 +49,7 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#if defined(_LINUX) || defined (_DARWIN)
+#if defined(__linux__) || defined (_DARWIN)
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -57,7 +57,7 @@
 #include <netinet/ip.h>
 #include <netdb.h>
 #endif
-#ifdef _LINUX
+#ifdef __linux__
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <linux/if.h>
@@ -66,7 +66,7 @@
 #ifdef _DARWIN
 #include <net/if.h>
 #endif
-#if defined(_LINUX) || defined (_DARWIN)
+#if defined(__linux__) || defined (_DARWIN)
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <unistd.h>

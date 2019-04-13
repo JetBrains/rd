@@ -91,7 +91,7 @@ namespace rd {
 	}
 
 	void RdExtBase::traceMe(const Logger &logger, string_view message) const {
-		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + message.to_string());
+		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + std::string(message));
 	}
 
 	IScheduler *RdExtBase::get_wire_scheduler() const {

@@ -19,7 +19,17 @@ add_library(rd_core_cpp STATIC
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
+        #pch
+        ${PCH_CPP_OPT}
         )
+
+message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
+
+if (ENABLE_PCH_HEADERS)
+    include(${PROJECT_SOURCE_DIR}/PrecompiledHeader.cmake)
+    add_precompiled_header(rd_core_cpp pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
+endif ()
+
 
 add_subdirectory(util)
 

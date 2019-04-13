@@ -1,6 +1,8 @@
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
 
+#include "thirdparty.hpp"
+
 #include <functional>
 #include <map>
 #include <memory>
@@ -22,7 +24,7 @@ namespace rd {
 		counter_t id = 0;
 
 		counter_t action_id_in_map = 0;
-		using actions_t = std::map<int, std::function<void()>>;
+		using actions_t = ordered_map<int, std::function<void()>>;
 		actions_t actions;
 
 		void terminate();

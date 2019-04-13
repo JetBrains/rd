@@ -25,6 +25,7 @@ add_library(rd_framework_cpp STATIC
         ext/ExtWire.cpp ext/ExtWire.h
         #scheduler
         scheduler/SimpleScheduler.cpp scheduler/SimpleScheduler.h
+        scheduler/SynchronousScheduler.cpp scheduler/SynchronousScheduler.h
         #serialization
         serialization/SerializationCtx.cpp serialization/SerializationCtx.h
         serialization/Serializers.cpp serialization/Serializers.h
@@ -53,8 +54,16 @@ add_library(rd_framework_cpp STATIC
         RdId.cpp RdId.h
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
+        #pch
+        ${PCH_CPP_OPT}
+        )
 
-        scheduler/SynchronousScheduler.cpp scheduler/SynchronousScheduler.h)
+message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
+
+if (ENABLE_PCH_HEADERS)
+    include(${PROJECT_SOURCE_DIR}/PrecompiledHeader.cmake)
+    add_precompiled_header(rd_framework_cpp pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
+endif ()
 
 add_subdirectory(util)
 

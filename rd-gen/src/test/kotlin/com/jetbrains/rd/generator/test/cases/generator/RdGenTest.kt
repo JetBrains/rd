@@ -16,7 +16,7 @@ enum class Configuration {
 fun main() {
     val rdgen = RdGen()
     rdgen.verbose *= true
-    rdgen.force *= true
+//    rdgen.force *= true
     rdgen.clearOutput *= true
 //    rdgen.filter *= "cpp"
 //    rdgen.filter *= "kotlin"

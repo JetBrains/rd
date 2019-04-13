@@ -31,7 +31,7 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
 val VsWarningsDefault : IntArray? = null*/
 val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307)
 
-open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File) : GeneratorBase() {
+open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
 
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
@@ -472,13 +472,34 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         File(this, "CMakeLists.txt").run {
             printWriter().use {
                 it.println("cmake_minimum_required(VERSION 3.11)")
-                it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)})")
+
+                val pchCppFile = usingPrecompiledHeaders.condstr { "pch.cpp" }
+                val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
+
+                it.println("option(ENABLE_PCH_HEADERS \"Enable precompiled headers\" $onOrOff)")
+                it.println("""
+                        |if (ENABLE_PCH_HEADERS)
+                        |    set(PCH_CPP_OPT $pchCppFile)
+                        |if (\$\{CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+                        |    set(_PCH_FORCEINCLUDE ON)
+                        |endif ()
+                        |else ()
+                        |    set(PCH_CPP_OPT "")
+                        |endif ()""".trimMargin()
+                )
+                it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)} \$PCH_CPP_OPT)")
                 val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 it.println(subdirectories.map { s -> "add_subdirectory($s)" }.joinToString(separator = eol))
                 it.println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
                 it.println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
 //                it.println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
+                it.println("""
+                            |if (ENABLE_PCH_HEADERS)
+                            |    include(PrecompiledHeader.cmake)
+                            |    add_precompiled_header(${targetName} pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
+                            |endif ()""".trimMargin()
+                )
             }
         }
     }
@@ -750,12 +771,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 //        +"class ${decl.name};"
 
         val standardHeaders = listOf(
-                "iostream",
                 "cstring",
                 "cstdint",
-                "vector",
-                "type_traits",
-                "utility"
+                "vector"
         )
 
 
@@ -763,26 +781,25 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 //root
                 "Buffer",
                 "Identities",
-                "MessageBroker",
                 "Protocol",
                 "RdId",
                 //impl
-                "RdList",
-                "RdMap",
-                "RdProperty",
-                "RdSet",
                 "RdSignal",
-                "RName",
-                //serialization
+                "RdProperty",
+                "RdList",
+                "RdSet",
+                "RdMap",
+                //base
                 "ISerializable",
+                "ISerializersOwner",
+                "IUnknownInstance",
+                //serialization
                 "Polymorphic",
                 "NullableSerializer",
                 "ArraySerializer",
                 "InternedSerializer",
                 "SerializationCtx",
                 "Serializers",
-                "ISerializersOwner",
-                "IUnknownInstance",
                 //ext
                 "RdExtBase",
                 //task

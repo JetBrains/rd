@@ -23,28 +23,28 @@ namespace rd {
 	string_view to_string(LogLevel level) {
 		switch (level) {
 			case LogLevel::Trace:
-				return "Trace"_sv;
+				return "Trace";
 			case LogLevel::Debug:
-				return "Debug"_sv;
+				return "Debug";
 			case LogLevel::Info:
-				return "Info"_sv;
+				return "Info";
 			case LogLevel::Warn:
-				return "Warn"_sv;
+				return "Warn";
 			case LogLevel::Error:
-				return "Error"_sv;
+				return "Error";
 			case LogLevel::Fatal:
-				return "Fatal"_sv;
+				return "Fatal";
 		}
 		return {};
 	}
 
 	void Logger::log(LogLevel level, string_view message, const std::exception *e) const {
 		std::cerr << to_string(level)
-				  << " | "_sv
+				  << " | "
 				  << to_string(std::this_thread::get_id())
-				  << " | "_sv
+				  << " | "
 				  << message
-				  << " | "_sv
+				  << " | "
 				  << (e ? e->what() : "")
 				  << std::endl;
 	}

@@ -24,18 +24,11 @@ namespace rd {
 		virtual ~SynchronousScheduler() = default;
 		//endregion
 
-		void queue(std::function<void()> action) override {
-			util::increment_guard<int32_t> guard(active);
-			action();
-		}
+		void queue(std::function<void()> action) override;
 
-		void flush() override {
+		void flush() override;
 
-		}
-
-		bool is_active() const override {
-			return active > 0;
-		}
+		bool is_active() const override;
 	};
 
 	extern SynchronousScheduler globalSynchronousScheduler;
