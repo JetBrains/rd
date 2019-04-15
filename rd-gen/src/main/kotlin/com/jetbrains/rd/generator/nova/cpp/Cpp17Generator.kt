@@ -473,21 +473,22 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             printWriter().use {
                 it.println("cmake_minimum_required(VERSION 3.11)")
 
-                val pchCppFile = usingPrecompiledHeaders.condstr { "pch.cpp" }
+                val pchCppFile = "pch.cpp"
                 val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
+                val conditionalVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
 
-                it.println("option(ENABLE_PCH_HEADERS \"Enable precompiled headers\" $onOrOff)")
+                it.println("option($conditionalVariable \"Enable precompiled headers\" $onOrOff)")
                 it.println("""
-                        |if (ENABLE_PCH_HEADERS)
+                        |if ($conditionalVariable)
                         |    set(PCH_CPP_OPT $pchCppFile)
-                        |if (\$\{CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+                        |if (${'$'}{CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
                         |    set(_PCH_FORCEINCLUDE ON)
                         |endif ()
                         |else ()
                         |    set(PCH_CPP_OPT "")
                         |endif ()""".trimMargin()
                 )
-                it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)} \$PCH_CPP_OPT)")
+                it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)} \${PCH_CPP_OPT})")
                 val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 it.println(subdirectories.map { s -> "add_subdirectory($s)" }.joinToString(separator = eol))
@@ -495,9 +496,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 it.println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
 //                it.println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
                 it.println("""
-                            |if (ENABLE_PCH_HEADERS)
+                            |if ($conditionalVariable)
                             |    include(PrecompiledHeader.cmake)
-                            |    add_precompiled_header(${targetName} pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
+                            |    add_precompiled_header(${targetName} pch.h SOURCE_CXX ${pchCppFile} FORCEINCLUDE)
                             |endif ()""".trimMargin()
                 )
             }
