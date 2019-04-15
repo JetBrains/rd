@@ -1,5 +1,7 @@
 #include "LifetimeDefinition.h"
 
+#include "LifetimeImpl.h"
+
 #include "Logger.h"
 
 namespace rd {
@@ -10,7 +12,7 @@ namespace rd {
 	}
 
 	bool LifetimeDefinition::is_terminated() const {
-		return lifetime->is_terminated();
+		return lifetime.is_terminated();
 	}
 
 	void LifetimeDefinition::terminate() {
@@ -32,7 +34,7 @@ namespace rd {
     LifetimeDefinition::~LifetimeDefinition() {
 		if (lifetime.ptr != nullptr) { //wasn't moved
 			if (!is_eternal()) {
-				if (!lifetime->is_terminated()) {
+				if (!lifetime.is_terminated()) {
 					Logger().warn("Did you forget to terminate Lifetime definition?");
 					lifetime->terminate();
 				}

@@ -1,5 +1,7 @@
 #include "SequentialLifetimes.h"
 
+#include "LifetimeImpl.h"
+
 namespace rd {
 	SequentialLifetimes::SequentialLifetimes(Lifetime parent_lifetime) : parent_lifetime(
 			std::move(parent_lifetime)) {

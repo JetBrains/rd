@@ -2,7 +2,7 @@
 #define RD_CPP_CORE_LIFETIMEWRAPPER_H
 
 
-#include "LifetimeImpl.h"
+//#include "LifetimeImpl.h"
 
 #include <memory>
 
@@ -18,6 +18,8 @@ namespace std {
 }
 
 namespace rd {
+	class LifetimeImpl;
+
 	class Lifetime final {
 	private:
 		using Allocator = std::allocator<LifetimeImpl>;
@@ -53,8 +55,22 @@ namespace rd {
 
 		LifetimeImpl *operator->() const;
 
+		bool is_terminated() const;
+
 		Lifetime create_nested() const;
+
+		template<typename F, typename G>
+		void bracket(F &&opening, G &&closing);
 	};
+}
+
+#include "LifetimeImpl.h"
+
+namespace rd {
+	template<typename F, typename G>
+	void Lifetime::bracket(F &&opening, G &&closing) {
+		ptr->bracket(std::forward<F>(opening), std::forward<G>(closing));
+	}
 }
 
 inline size_t std::hash<rd::Lifetime>::operator()(const rd::Lifetime &value) const noexcept {

@@ -1,0 +1,8 @@
+add_subdirectory(base)
+add_subdirectory(ext)
+add_subdirectory(impl)
+add_subdirectory(intern)
+add_subdirectory(scheduler)
+add_subdirectory(serialization)
+add_subdirectory(task)
+add_subdirectory(wire)

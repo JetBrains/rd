@@ -174,7 +174,7 @@ namespace rd {
 		//endregion
 
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
-			if (lifetime->is_terminated()) return;
+			if (lifetime.is_terminated()) return;
 			change.advise(std::move(lifetime), handler);
 			for (size_t i = 0; i < size(); ++i) {
 				handler(typename Event::Add(i, &(*list[i])));

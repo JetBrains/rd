@@ -7,7 +7,7 @@ add_library(rd_core_cpp STATIC
         src/lifetime/LifetimeDefinition.cpp
         src/lifetime/SequentialLifetimes.cpp
         #reactive
-        src/reactive/IScheduler.cpp
+        ../rd_framework_cpp/src/base/IScheduler.cpp
         src/reactive/SignalX.cpp
         src/reactive/base/viewable_collections.cpp
         #pch
@@ -28,10 +28,11 @@ target_include_directories(rd_core_cpp
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE
+        INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/
         ${CMAKE_CURRENT_SOURCE_DIR}/src/lifetime
         ${CMAKE_CURRENT_SOURCE_DIR}/src/reactive
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/reactive/base
 #        todo include recursively
         )
 

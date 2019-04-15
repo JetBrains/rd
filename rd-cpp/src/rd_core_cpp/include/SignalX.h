@@ -8,6 +8,7 @@
 #include <utility>
 #include <functional>
 #include <atomic>
+#include <map>
 
 namespace rd {
 	extern std::atomic<int32_t> cookie;
@@ -32,7 +33,7 @@ namespace rd {
 			//endregion
 
 			bool is_alive() const {
-				return !lifetime->is_terminated();
+				return !lifetime.is_terminated();
 			}
 
 			void execute_if_alive(T const &value) const {
@@ -62,7 +63,7 @@ namespace rd {
 
 		template<typename F>
 		void advise0(const Lifetime &lifetime, F &&handler, listeners_t &queue) const {
-			if (lifetime->is_terminated()) return;
+			if (lifetime.is_terminated()) return;
 			counter_t id = advise_id/*.load()*/;
 			queue.emplace(id, Event(std::forward<F>(handler), lifetime));
 			++advise_id;

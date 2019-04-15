@@ -1,5 +1,7 @@
 #include "Lifetime.h"
 
+#include "LifetimeImpl.h"
+
 #include <memory>
 
 namespace rd {
@@ -27,6 +29,10 @@ namespace rd {
 
 	bool operator==(Lifetime const &lw1, Lifetime const &lw2) {
 		return lw1.ptr == lw2.ptr;
+	}
+
+	bool Lifetime::is_terminated() const {
+		return ptr->is_terminated();
 	}
 
 	bool operator!=(Lifetime const &lw1, Lifetime const &lw2) {

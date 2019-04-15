@@ -2,7 +2,6 @@
 #define RD_CPP_CORE_LIFETIME_DEFINITION_H
 
 
-#include "LifetimeImpl.h"
 #include "Lifetime.h"
 
 #include <functional>

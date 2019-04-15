@@ -33,7 +33,7 @@ namespace rd {
 		virtual T const &get() const = 0;
 
 		void advise0(Lifetime lifetime, std::function<void(T const &)> handler, Signal<T> const &signal) const {
-			if (lifetime->is_terminated()) {
+			if (lifetime.is_terminated()) {
 				return;
 			}
 			signal.advise(std::move(lifetime), handler);
