@@ -38,8 +38,12 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     val Declaration.namespace: String
         get() {
-            val ns = getSetting(Namespace) ?: defaultNamespace
-            return ns.split('.').joinToString(separator = "::")
+            return if (this is FakeDeclaration) {
+                decl.namespace
+            } else {
+                val ns = getSetting(Namespace) ?: defaultNamespace
+                ns.split('.').joinToString(separator = "::")
+            }
         }
 
     val nestedNamespaces = defaultNamespace.split('.')
@@ -114,16 +118,20 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     //region PrettyPrinter
 
-    private fun String.include(extension: String = "h"): String {
+    private fun String.include(): String {
+        return "#include <$this>"
+    }
+
+    private fun String.include(extension: String? = "h"): String {
         return """#include "${this}.$extension""""
     }
 
     private fun Declaration.include(): String {
-        return this.name.include()
+        return this.name.include("h")
     }
 
     private fun IType.include(): String {
-        return this.name.include()
+        return this.name.include("h")
     }
 
     private fun PrettyPrinter.carry(): String {
@@ -204,7 +212,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     fun Member.Field.isAbstract() = this.type.isAbstract()
 
     fun IType.substitutedName(scope: Declaration, rawType: Boolean = false, omitNullability: Boolean = false): String = when (this) {
-        is Enum -> name
+        is Enum -> sanitizedName(scope)
 //        is Struct.Concrete -> sanitizedName(scope)
         is Declaration -> {
             val fullName = sanitizedName(scope)
@@ -216,25 +224,27 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
         is INullable -> {
             if (omitNullability) {
-                itemType.substitutedName(scope, rawType)
+                itemType.substitutedName(scope, rawType, omitNullability)
             } else {
+                val substitutedName = itemType.substitutedName(scope, true, omitNullability)
                 when (itemType) {
-                    is PredefinedType.string -> itemType.substitutedName(scope, true).wrapper()
-                    is PredefinedType -> itemType.substitutedName(scope, true).optional()
-                    is Enum -> itemType.substitutedName(scope, true).optional()
-                    else -> itemType.substitutedName(scope, true).wrapper()
+                    is PredefinedType.string -> substitutedName.wrapper()
+                    is PredefinedType -> substitutedName.optional()
+                    is Enum -> substitutedName.optional()
+                    else -> substitutedName.wrapper()
                 }
             }
         }
         is InternedScalar -> {
+            val substitutedName = itemType.substitutedName(scope, rawType, omitNullability)
             if (rawType) {
-                itemType.substitutedName(scope, rawType)
+                substitutedName
             } else {
-                itemType.substitutedName(scope, rawType).wrapper()
+                substitutedName.wrapper()
             }
         }
-        is IArray -> "std::vector<${itemType.substitutedName(scope, false)}>"
-        is IImmutableList -> "std::vector<${itemType.substitutedName(scope, false)}>"
+        is IArray -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
+        is IImmutableList -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
 
         is PredefinedType.byte -> "signed char"
         is PredefinedType.char -> "wchar_t"
@@ -266,15 +276,18 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         get() = (this is IArray || this is IImmutableList) && this.isPrimitive()
 
     protected fun IType.leafSerializerRef(scope: Declaration): String? {
+
         return when (this) {
             is Enum -> "Polymorphic<${sanitizedName(scope)}>"
             is PredefinedType -> "Polymorphic<${templateName(scope)}>"
-            is Declaration ->
+            is Declaration -> {
+                val name = sanitizedName(scope)
                 if (isAbstract) {
-                    "AbstractPolymorphic<${sanitizedName(scope)}>"
+                    "AbstractPolymorphic<$name>"
                 } else {
-                    "Polymorphic<${sanitizedName(scope)}>"
+                    "Polymorphic<$name>"
                 }
+            }
 
 
             is IArray -> if (this.isPrimitivesArray) "Polymorphic<${substitutedName(scope)}>" else null
@@ -282,9 +295,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }?.let { "rd::$it" }
     }
 
-    protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean): String {
+    protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean, withNamespace : Boolean): String {
+        val className = if (withNamespace) "${scope.namespace}::" + scope.name else scope.name
         return leafSerializerRef(scope)
-                ?: isUsage.condstr { "${scope.name}::" } + when (this) {
+                ?: isUsage.condstr { "$className::" } + when (this) {
                     is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
                     else -> "__${name}Serializer"
                 }
@@ -325,7 +339,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> {
-            implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+            implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
             /*val isProperty = (this is Member.Reactive.Stateful.Property)
             implSimpleName + (genericParams.toList().map
             { it.substitutedName(scope, omitNullability = isProperty) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")*/
@@ -336,7 +350,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.templateName(scope)
         is Member.Reactive -> {
-            implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+            implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
             /*val isProperty = (this is Member.Reactive.Stateful.Property)
             implSimpleName + (genericParams.toList().map
             { it.templateName(scope, isProperty) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")*/
@@ -375,8 +389,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }.toString()
     }
 
-    protected fun Member.Reactive.customSerializers(scope: Declaration): List<String> {
-        return genericParams.asList().map { it.serializerRef(scope, true) }
+    protected fun Member.Reactive.customSerializers(scope: Declaration, withNamespace: Boolean): List<String> {
+        return genericParams.asList().map { it.serializerRef(scope, true, withNamespace) }
     }
 
     protected open val Member.hasEmptyConstructor: Boolean
@@ -388,10 +402,21 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     //endregion
 
+    class FakeDeclaration(val decl: Declaration) : Declaration(null) {
+        override val _name: String
+            get() = decl.name
+        override val cl_name: String
+            get() = decl.name
+    }
+
     //region Declaration.
     protected fun Declaration.sanitizedName(scope: Declaration): String {
-        val needQualification = namespace != scope.namespace
-        return needQualification.condstr { "$namespace::" } + name
+        return if (scope is FakeDeclaration) {
+            this.withNamespace()
+        } else {
+            val needQualification = namespace != scope.namespace
+            needQualification.condstr { "$namespace::" } + name
+        }
     }
 
     private fun Declaration.withNamespace(): String {
@@ -471,14 +496,15 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         mkdirs()
         File(this, "CMakeLists.txt").run {
             printWriter().use {
-                it.println("cmake_minimum_required(VERSION 3.11)")
+                it.apply {
+                    println("cmake_minimum_required(VERSION 3.11)")
 
-                val pchCppFile = "pch.cpp"
-                val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
-                val conditionalVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
+                    val pchCppFile = "pch.cpp"
+                    val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
+                    val conditionalVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
 
-                it.println("option($conditionalVariable \"Enable precompiled headers\" $onOrOff)")
-                it.println("""
+                    println("option($conditionalVariable \"Enable precompiled headers\" $onOrOff)")
+                    println("""
                         |if ($conditionalVariable)
                         |    set(PCH_CPP_OPT $pchCppFile)
                         |if (${'$'}{CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
@@ -487,20 +513,59 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                         |else ()
                         |    set(PCH_CPP_OPT "")
                         |endif ()""".trimMargin()
-                )
-                it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)} \${PCH_CPP_OPT})")
-                val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
-                val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
-                it.println(subdirectories.map { s -> "add_subdirectory($s)" }.joinToString(separator = eol))
-                it.println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
-                it.println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
-//                it.println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
-                it.println("""
+                    )
+                    val targetFiles = fileNames + listOf("$INSTANTIATION_FILE_NAME.h",
+                            "$INSTANTIATION_FILE_NAME.cpp",
+                            "\${PCH_CPP_OPT}")
+
+                    println("add_library($targetName STATIC ${targetFiles.joinToString(separator = eol)})")
+                    val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = eol) { it.name }
+                    val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { name }
+                    println(subdirectories.map { s -> "add_subdirectory($s)" }.joinToString(separator = eol))
+                    println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
+                    println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
+//                println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
+                    println("""
                             |if ($conditionalVariable)
                             |    include(PrecompiledHeader.cmake)
                             |    add_precompiled_header(${targetName} pch.h SOURCE_CXX ${pchCppFile} FORCEINCLUDE)
                             |endif ()""".trimMargin()
-                )
+                    )
+                }
+            }
+        }
+    }
+
+    private val INSTANTIATION_FILE_NAME = "instantiations"
+
+    private fun File.templateInstantiate() {
+        val classes = listOf(
+//                "rd::optional<rd::SerializationCtx>"
+                "rd::Wrapper<std::wstring>"
+        )
+
+        File(this, "$INSTANTIATION_FILE_NAME.cpp").run {
+            printWriter().use { writer ->
+                PrettyPrinter().apply {
+                    +"wrapper".include("h")
+                    +"string".include()
+
+                    classes.forEach {
+                        +"template class $it;"
+                    }
+                    writer.write(toString())
+                }
+            }
+        }
+
+        File(this, "$INSTANTIATION_FILE_NAME.h").run {
+            printWriter().use { writer ->
+                PrettyPrinter().apply {
+                    classes.forEach {
+                        +"extern template class $it;"
+                    }
+                    writer.write(toString())
+                }
             }
         }
     }
@@ -548,6 +613,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
 
         folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
+        folder.templateInstantiate()
     }
 
 
@@ -720,6 +786,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             }
         }
 
+        externTemplates(decl)
+
         VsWarningsDefault?.let {
             println()
             +"#pragma warning( pop )"
@@ -811,12 +879,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 "gen_util"
         )
 
-        +frameworkHeaders.joinToString(separator = eol) { s -> s.include() }
+        +frameworkHeaders.joinToString(separator = eol) { s -> s.include("h") }
         println()
         +standardHeaders.joinToString(separator = eolKind.value, transform = { "#include <$it>" })
         println()
         //third-party
         +"thirdparty".include("hpp")
+
+        +INSTANTIATION_FILE_NAME.include("h")
     }
 
     fun parseType(type: IType, allowPredefined: Boolean): IType? {
@@ -888,9 +958,16 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
 
         val extHeader = listOfNotNull(if (decl.isExtension) decl.pointcut?.name else null)
-        dependencies(decl, extHeader).printlnWithBlankLine { it.include() }
+        dependencies(decl, extHeader).printlnWithBlankLine { it.include("h") }
     }
 
+    private fun PrettyPrinter.externTemplates(decl: Declaration) {
+        +decl.ownMembers.filterIsInstance<Member.Reactive>().map {
+            it.implSimpleName + (it.genericParams.toList().map { generic ->
+                generic.templateName(FakeDeclaration(decl))
+            } + it.customSerializers(FakeDeclaration(decl), true)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+        }.joinToString(separator = eol, prefix = eol, postfix = eol) { "extern template class $it;" }
+    }
 
     fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {
         +bases(decl).joinToString(separator = ", ", prefix = ": ") { "public ${it.type.name}" }
@@ -918,7 +995,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 .distinct()
                 .filter { it.leafSerializerRef(decl) == null }
 
-        allTypesForDelegation.println { "using ${it.serializerRef(decl, false)} = ${it.serializerBuilder()};" }
+        allTypesForDelegation.println { "using ${it.serializerRef(decl, false, false)} = ${it.serializerBuilder()};" }
     }
 
 
