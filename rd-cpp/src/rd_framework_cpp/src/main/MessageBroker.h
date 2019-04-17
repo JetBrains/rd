@@ -37,9 +37,7 @@ namespace rd {
 
 	public:
 
-		//region Description
-
-		MessageBroker(MessageBroker &&) = default;
+		//region ctor/dtor
 
 		explicit MessageBroker(IScheduler *defaultScheduler);
 		//endregion

@@ -266,7 +266,6 @@ function(add_precompiled_header _target _input)
   if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     # Clang only uses PCHs when using the -include option
     # See: https://clang.llvm.org/docs/UsersManual.html#using-a-pch-file
-    add_definitions(-U__OPTIMIZE__)
     if(NOT _PCH_FORCEINCLUDE)
       message(WARNING "Clang requires the FORCEINCLUDE option to use PCHs, turning it on")
     endif()

@@ -966,7 +966,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             it.implSimpleName + (it.genericParams.toList().map { generic ->
                 generic.templateName(FakeDeclaration(decl))
             } + it.customSerializers(FakeDeclaration(decl), true)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
-        }.joinToString(separator = eol, prefix = eol, postfix = eol) { "extern template class $it;" }
+        }
+                .distinct()
+                .joinToString(separator = eol, prefix = eol, postfix = eol) { "extern template class $it;" }
     }
 
     fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {

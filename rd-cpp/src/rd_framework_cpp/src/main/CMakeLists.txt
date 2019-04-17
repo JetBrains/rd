@@ -58,7 +58,7 @@ add_library(rd_framework_cpp STATIC
         ${PCH_CPP_OPT}
         )
 
-message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
+message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 
 if (ENABLE_PCH_HEADERS)
     include(${PROJECT_SOURCE_DIR}/PrecompiledHeader.cmake)
