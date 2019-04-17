@@ -79,6 +79,10 @@ function(export_all_flags _filename mode)
   set(_compile_definitions "$<$<BOOL:${_compile_definitions}>:-D$<JOIN:${_compile_definitions},\n-D>\n>")
   set(_compile_flags "$<$<BOOL:${_compile_flags}>:$<JOIN:${_compile_flags},\n>\n>")
   set(_compile_options "$<$<BOOL:${_compile_options}>:$<JOIN:${_compile_options},\n>\n>")
+  #propogate project's compile flags to pch's compiler
+  set(_compile_flags "${_compile_flags}$<$<BOOL:$<CONFIG:Debug>>:${CMAKE_CXX_FLAGS_DEBUG} >")
+  set(_compile_flags "${_compile_flags}$<$<BOOL:$<CONFIG:Release>>:${CMAKE_CXX_FLAGS_RELEASE} >")
+
 
   set(_standard_check "")
   if("${mode}" STREQUAL "CXX")
