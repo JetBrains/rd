@@ -20,6 +20,10 @@ bool SwitchLogger::is_enabled(LogLevel level) {
 }*/
 
 namespace rd {
+	//namespace log {
+		LogLevel minimum_level_to_log;
+	//}
+
 	string_view to_string(LogLevel level) {
 		switch (level) {
 			case LogLevel::Trace:
@@ -39,14 +43,16 @@ namespace rd {
 	}
 
 	void Logger::log(LogLevel level, string_view message, const std::exception *e) const {
-		std::cerr << to_string(level)
-				  << " | "
-				  << to_string(std::this_thread::get_id())
-				  << " | "
-				  << message
-				  << " | "
-				  << (e ? e->what() : "")
-				  << std::endl;
+		if (level >= minimum_level_to_log) {
+			std::cerr << to_string(level)
+				<< " | "
+				<< to_string(std::this_thread::get_id())
+				<< " | "
+				<< message
+				<< " | "
+				<< (e ? e->what() : "")
+				<< std::endl;
+		}
 	}
 
 	void Logger::trace(string_view msg, const std::exception *e) const {

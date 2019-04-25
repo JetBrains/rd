@@ -46,13 +46,13 @@ namespace rd {
 			Lifetime lf = lifetime.create_nested();
 			std::shared_ptr<SequentialLifetimes> seq = std::make_shared<SequentialLifetimes>(lf);
 
-			this->advise_before(lf, [this, lf, seq](T const &v) {
+			this->advise_before(lf, [lf, seq](T const &v) {
 				if (!lf->is_terminated()) {
 					seq->terminate_current();
 				}
 			});
 
-			this->advise(lf, [this, lf, seq, handler](T const &v) {
+			this->advise(lf, [lf, seq, handler](T const &v) {
 				if (!lf->is_terminated()) {
 					handler(seq->next(), v);
 				}

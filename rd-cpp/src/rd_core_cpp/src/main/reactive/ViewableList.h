@@ -254,7 +254,7 @@ namespace rd {
 			bool res = false;
 			for (size_t i = list.size(); i > 0; --i) {
 				auto const &x = list[i - 1];
-				if (std::count_if(elements.begin(), elements.end(), [this, &x](auto const &elem) {
+				if (std::count_if(elements.begin(), elements.end(), [&x](auto const &elem) {
 									  return wrapper::TransparentKeyEqual<T>()(elem, x);
 								  }
 				) > 0) {

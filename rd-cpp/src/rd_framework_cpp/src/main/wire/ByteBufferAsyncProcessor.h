@@ -37,9 +37,11 @@ namespace rd {
 		StateKind state{StateKind::Initialized};
 		static Logger logger;
 
+		std::thread::id async_thread_id;
 		std::future<void> asyncFuture;
 
 		std::vector<Buffer::ByteArray> data;
+
 	public:
 
 		//region ctor/dtor
@@ -47,15 +49,15 @@ namespace rd {
 		ByteBufferAsyncProcessor(std::string id, std::function<void(Buffer::ByteArray)> processor);
 
 		//endregion
-
 	private:
+
 		void cleanup0();
 
 		bool terminate0(time_t timeout, StateKind stateToSet, string_view action);
 
 		void ThreadProc();
-
 	public:
+
 		void start();
 
 		bool stop(time_t timeout = time_t(0));
@@ -63,6 +65,12 @@ namespace rd {
 		bool terminate(time_t timeout = time_t(0)/*InfiniteDuration*/);
 
 		void put(Buffer::ByteArray new_data);
+
+		void pause(const std::string &reason);
+
+		void resume(const std::string &reason);
+
+		void acknowledge(int64_t seq);
 	};
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state);

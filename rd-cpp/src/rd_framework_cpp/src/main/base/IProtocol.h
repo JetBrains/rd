@@ -23,8 +23,8 @@ namespace rd {
 	protected:
 		std::shared_ptr<Identities> identity;
 		IScheduler *scheduler = nullptr;
-		std::shared_ptr<IWire> wire;
 	public:
+		std::shared_ptr<IWire> wire;
 		//region ctor/dtor
 
 		IProtocol();

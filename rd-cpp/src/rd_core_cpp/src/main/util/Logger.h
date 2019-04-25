@@ -16,6 +16,8 @@ namespace rd {
 		Fatal
 	};
 
+	extern LogLevel minimum_level_to_log;
+
 	string_view to_string(LogLevel level);
 
 	class Logger {

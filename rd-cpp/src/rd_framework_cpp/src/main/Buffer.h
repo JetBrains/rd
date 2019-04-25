@@ -4,8 +4,6 @@
 #include "core_util.h"
 #include "wrapper.h"
 
-#include "thirdparty.hpp"
-
 #include <vector>
 #include <type_traits>
 #include <functional>
@@ -21,6 +19,7 @@ namespace rd {
 		using ByteArray = std::vector<word_t, Allocator>;
 	private:
 		mutable ByteArray data_;
+
 		mutable size_t offset = 0;
 
 		void require_available(size_t size) const;
@@ -31,10 +30,14 @@ namespace rd {
 		//write
 		void write(const word_t *src, size_t size) const;
 
+
 	public:
+
 		//region ctor/dtor
 
-		explicit Buffer(size_t initialSize = 10); //todo
+		Buffer();
+
+		explicit Buffer(size_t initial_size);
 
 		explicit Buffer(const ByteArray &array, size_t offset = 0);
 
@@ -45,8 +48,8 @@ namespace rd {
 		Buffer& operator=(Buffer const &) = delete;
 
 		Buffer(Buffer &&) = default;
-
 		Buffer& operator=(Buffer &&) = default;
+
 		//endregion
 
 		size_t get_position() const;

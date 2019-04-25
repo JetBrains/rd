@@ -19,6 +19,18 @@ namespace rd {
 				--x;
 			}
 		};
+
+		class bool_guard {
+			bool &x;
+		public:
+			explicit bool_guard(bool& x) : x(x) {
+				x = true;
+			}
+
+			~bool_guard() {
+				x = false;
+			}
+		};
 	}
 }
 

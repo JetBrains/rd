@@ -22,7 +22,7 @@ namespace rd {
 	private:
 		using Allocator = std::allocator<LifetimeImpl>;
 
-		static thread_local Allocator allocator;
+		static /*thread_local */Allocator allocator;
 
 		friend class LifetimeDefinition;
 

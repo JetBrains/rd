@@ -51,22 +51,20 @@ namespace rd {
 		template<class...>
 		using void_t = void;
 
-		template <typename F, typename... Args>
+		template<typename F, typename... Args>
 		struct is_invocable :
 				std::is_constructible<
 						std::function<void(Args ...)>,
 						std::reference_wrapper<typename std::remove_reference<F>::type>
-				>
-		{
+				> {
 		};
 
-		template <typename R, typename F, typename... Args>
+		template<typename R, typename F, typename... Args>
 		struct is_invocable_r :
 				std::is_constructible<
 						std::function<R(Args ...)>,
 						std::reference_wrapper<typename std::remove_reference<F>::type>
-				>
-		{
+				> {
 		};
 
 		template<class F, class... Ts>
@@ -95,10 +93,10 @@ namespace rd {
 
 		template<typename T>
 		struct is_wstring_literal :
-				std::is_same<
+				/*std::is_same<
 						T,
-						std::add_lvalue_reference_t<const wchar_t[std::extent<std::remove_reference_t<T>>::value]>
-				> {
+						std::add_lvalue_reference_t<const wchar_t[std::extent<std::remove_reference_t<T>>::value]>*/
+				std::is_convertible<T, std::wstring> {
 		};
 
 		template<typename T, bool = is_wstring_literal<T>::value>

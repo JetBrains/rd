@@ -507,8 +507,6 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     println("""
                         |if ($conditionalVariable)
                         |    set(PCH_CPP_OPT $pchCppFile)
-                        |if (${'$'}{CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-                        |    set(_PCH_FORCEINCLUDE ON)
                         |endif ()
                         |else ()
                         |    set(PCH_CPP_OPT "")
@@ -521,7 +519,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     println("add_library($targetName STATIC ${targetFiles.joinToString(separator = eol)})")
                     val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = eol) { it.name }
                     val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { name }
-                    println(subdirectories.map { s -> "add_subdirectory($s)" }.joinToString(separator = eol))
+                    println(subdirectories.joinToString(separator = eol) { s -> "add_subdirectory($s)" })
                     println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
                     println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
 //                println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")

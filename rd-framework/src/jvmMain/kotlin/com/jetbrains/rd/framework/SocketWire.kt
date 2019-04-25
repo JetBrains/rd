@@ -57,16 +57,16 @@ private fun InputStream.readInt64() : Long? {
 class SocketWire {
     companion object {
         val timeout: Duration = Duration.ofMillis(500)
-        private val ack_msg_len: Int = -1
-        private val pkg_header_len = 12
-        val disconnectedPauseReason = "Disconnected"
+        private const val ack_msg_len: Int = -1
+        private const val pkg_header_len = 12
+        const val disconnectedPauseReason = "Disconnected"
 
     }
 
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
 
         protected val logger: Logger = getLogger(this::class)
-        public val socketProvider = OptProperty<Socket>()
+        val socketProvider = OptProperty<Socket>()
 
         private lateinit var output : OutputStream
         private lateinit var socketInput : InputStream

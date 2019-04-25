@@ -8,6 +8,17 @@
 #include "tsl/ordered_set.h"
 #include "tsl/ordered_map.h"
 
+//region memoory
+/*#include <foonathan/memory/container.hpp>
+#include <foonathan/memory/memory_pool.hpp>
+#include <foonathan/memory/smart_ptr.hpp>
+#include <foonathan/memory/static_allocator.hpp>
+#include <foonathan/memory/temporary_allocator.hpp>
+#include <foonathan/memory/joint_allocator.hpp>
+
+#include <foonathan/memory/namespace_alias.hpp>*/
+//endregion
+
 #if __cplusplus >= 201703L
 
 #include <optional>

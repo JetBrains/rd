@@ -4,6 +4,10 @@
 #include <algorithm>
 
 namespace rd {
+	Buffer::Buffer() : Buffer(16) {
+
+	}
+
 	Buffer::Buffer(size_t initialSize) {
 		data_.resize(initialSize);
 	}
@@ -25,8 +29,9 @@ namespace rd {
 	void Buffer::check_available(size_t moreSize) const {
 		if (offset + moreSize > size()) {
 			throw std::out_of_range(
-				"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size() - offset) +
-				"available");
+					"Expected " + std::to_string(moreSize) + " bytes in buffer, only" +
+					std::to_string(size() - offset) +
+					"available");
 		}
 	}
 
@@ -53,22 +58,22 @@ namespace rd {
 		set_position(0);
 	}
 
-	Buffer::ByteArray Buffer::getArray() const & {
+	Buffer::ByteArray Buffer::getArray() const &{
 		return data_;
 	}
 
-	Buffer::ByteArray Buffer::getArray() && {
+	Buffer::ByteArray Buffer::getArray() &&{
 		rewind();
 		return std::move(data_);
 	}
 
-	Buffer::ByteArray Buffer::getRealArray() const & {
+	Buffer::ByteArray Buffer::getRealArray() const &{
 		auto res = getArray();
 		res.resize(offset);
 		return res;
 	}
 
-	Buffer::ByteArray Buffer::getRealArray() && {
+	Buffer::ByteArray Buffer::getRealArray() &&{
 		auto res = std::move(data_);
 		res.resize(offset);
 		rewind();

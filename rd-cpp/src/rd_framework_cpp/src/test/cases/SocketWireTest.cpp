@@ -3,6 +3,7 @@
 #include "RdMap.h"
 #include "Protocol.h"
 #include "RdProperty.h"
+#include "RdSignal.h"
 #include "SocketWireTestBase.h"
 #include "SocketWire.h"
 #include "DynamicEntity.h"
@@ -423,4 +424,56 @@ TEST_F(SocketWireTestBase, DISABLED_failoverServer) {
 	// EXPECT_EQ(2, np.get());
 
 	terminate();
+}
+
+void try_close_socket(Protocol const &protocol) {
+	auto socket = dynamic_cast<SocketWire::Base const *>(protocol.wire.get())->get_socket_provider();
+
+	if (socket != nullptr) {
+		socket->Close();
+	}
+}
+
+TEST_F(SocketWireTestBase, TestDisconnect) {
+	auto serverProtocol = server(socketLifetime);
+	auto clientProtocol = client(socketLifetime, serverProtocol);
+
+	RdSignal<int32_t> sp;
+	RdSignal<int32_t> cp;
+
+	init(serverProtocol, clientProtocol, &sp, &cp);
+
+	std::vector<int32_t> log;
+
+	sp.advise(socketLifetime, [&](int32_t const &it) {
+		log.push_back(it);
+	});
+
+	cp.fire(1);
+	cp.fire(2);
+
+	serverScheduler.pump_one_message();
+	serverScheduler.pump_one_message();
+
+	EXPECT_EQ(log, (decltype(log){1, 2}));
+
+	try_close_socket(clientProtocol);
+
+	cp.fire(3);
+	cp.fire(4);
+
+	clientScheduler.pump_one_message();
+	clientScheduler.pump_one_message();
+
+	EXPECT_EQ(log, (decltype(log){1, 2, 3, 4}));
+
+	try_close_socket(serverProtocol);
+
+	cp.fire(5);
+	cp.fire(6);
+
+	serverScheduler.pump_one_message();
+	serverScheduler.pump_one_message();
+
+	EXPECT_EQ(log, (decltype(log){1, 2, 3, 4, 5, 6}));
 }

@@ -5,6 +5,7 @@
 #include "RdBindableBase.h"
 #include "IRdReactive.h"
 #include "Logger.h"
+#include "guards.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
@@ -19,19 +20,7 @@ namespace rd {
 	class Serializers;
 	//endregion
 
-	class RdReactiveBase : public RdBindableBase, public IRdReactive {
-		class local_change_handler {
-			RdReactiveBase const *ptr;
-		public:
-			local_change_handler(RdReactiveBase const *ptr) : ptr(ptr) {
-				ptr->is_local_change = true;
-			}
-
-			~local_change_handler() {
-				ptr->is_local_change = false;
-			}
-		};
-
+	class RdReactiveBase : public RdBindableBase, public IRdReactive {		
 	public:
 		static Logger logReceived;
 		static Logger logSend;
@@ -71,7 +60,7 @@ namespace rd {
 
 			MY_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
 
-			local_change_handler lc_handler(this);
+			util::bool_guard bool_guard(is_local_change);
 			return action();
 		}
 	};

@@ -1,4 +1,5 @@
 #include "ByteBufferAsyncProcessor.h"
+#include "SocketWire.h"
 
 namespace rd {
 	size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
@@ -45,6 +46,8 @@ namespace rd {
 	}
 
 	void ByteBufferAsyncProcessor::ThreadProc() {
+		async_thread_id = std::this_thread::get_id();
+
 		while (true) {
 			decltype(data) data_to_send;
 			{
@@ -72,7 +75,7 @@ namespace rd {
 					processor(std::move(item));
 				}
 			} catch (std::exception const &e) {
-				logger.error("Exception while processing byte queue", &e);			
+				logger.error("Exception while processing byte queue", &e);
 			}
 		}
 	}
@@ -111,6 +114,31 @@ namespace rd {
 
 			cv.notify_all();
 		}
+	}
+
+	void ByteBufferAsyncProcessor::pause(const std::string &reason) {
+		std::lock_guard<decltype(lock)> guard(lock);
+
+		logger.debug(id + " paused with reason:" + reason);
+
+		if (std::this_thread::get_id() != async_thread_id) {
+			//todo
+		}
+		//todo
+	}
+
+	void ByteBufferAsyncProcessor::resume(const std::string &reason) {
+		std::lock_guard<decltype(lock)> guard(lock);
+
+		logger.debug(id + " resumed with reason:" + reason);
+
+		cv.notify_all();
+	}
+
+	void ByteBufferAsyncProcessor::acknowledge(sequence_number_t seq) {
+		std::lock_guard<decltype(lock)> guard(lock);
+
+		logger.trace("New acknowledged seqn: " + std::to_string(seq));
 	}
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state) {

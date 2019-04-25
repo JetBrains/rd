@@ -24,6 +24,7 @@ add_library(rd_framework_cpp STATIC
         ext/RdExtBase.cpp ext/RdExtBase.h
         ext/ExtWire.cpp ext/ExtWire.h
         #scheduler
+        scheduler/IScheduler.cpp scheduler/IScheduler.h
         scheduler/SimpleScheduler.cpp scheduler/SimpleScheduler.h
         scheduler/SynchronousScheduler.cpp scheduler/SynchronousScheduler.h
         #serialization

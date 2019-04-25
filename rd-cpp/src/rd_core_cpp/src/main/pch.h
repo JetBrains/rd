@@ -1,3 +1,6 @@
+#ifndef RD_CPP_CORE_PCH_H
+#define RD_CPP_CORE_PCH_H
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -23,3 +26,5 @@
 #include <vector>
 
 #include "thirdparty.hpp"
+
+#endif //RD_CPP_CORE_PCH_H

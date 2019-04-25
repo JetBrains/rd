@@ -1,3 +1,6 @@
+#ifndef RD_GEN_PCH_H
+#define RD_GEN_PCH_H
+
 #include "Buffer.h"
 #include "Identities.h"
 #include "Protocol.h"
@@ -21,3 +24,5 @@
 #include "RdEndpoint.h"
 #include "RdTask.h"
 #include "gen_util.h"
+
+#endif //RD_GEN_PCH_H

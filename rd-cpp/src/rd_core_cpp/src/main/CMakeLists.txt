@@ -13,7 +13,6 @@ add_library(rd_core_cpp STATIC
         reactive/ViewableMap.h
         reactive/ViewableSet.h
         reactive/ViewableList.h
-        reactive/IScheduler.cpp reactive/IScheduler.h
         reactive/base/IViewableList.h
         reactive/base/IViewableSet.h
         reactive/base/IViewableMap.h reactive/SignalX.cpp

@@ -3,7 +3,7 @@ add_subdirectory(ordered-map)
 add_subdirectory(variant)
 add_subdirectory(clsocket)
 add_subdirectory(string-view-lite)
-#add_subdirectory(memory)
+add_subdirectory(memory)
 #add_subdirectory(countdownlatchcpp)
 
 add_library(thirdparty STATIC thirdparty.hpp thirdparty.cpp)
@@ -13,7 +13,8 @@ target_include_directories(thirdparty PUBLIC
         ordered-map
         variant
         string-view-lite
-        memory
+#        memory
+#        memory/include/foonathan
         )
 
 target_link_libraries(thirdparty PUBLIC
@@ -23,4 +24,4 @@ target_link_libraries(thirdparty PUBLIC
         string_view-lite
 #        foonathan_memory
         )
-#comp_target_features(thirdparty PUBLIC CPP11)
+#comp_target_features(thirdparty PUBLIC CPP14)

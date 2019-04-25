@@ -2,8 +2,10 @@
 
 #include <memory>
 
+#include "thirdparty.hpp"
+
 namespace rd {
-	thread_local Lifetime::Allocator Lifetime::allocator;
+	/*thread_local */Lifetime::Allocator Lifetime::allocator;
 
 	LifetimeImpl *Lifetime::operator->() const {
 		return ptr.operator->();

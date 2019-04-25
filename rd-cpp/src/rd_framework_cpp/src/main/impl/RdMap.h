@@ -180,7 +180,7 @@ namespace rd {
 
 				if (msg_versioned) {
 					auto writer = util::make_shared_function(
-							[this, version, serialized_key = std::move(serialized_key)](
+							[version, serialized_key = std::move(serialized_key)](
 									Buffer const &innerBuffer) mutable {
 								innerBuffer.write_integral<int32_t>(
 										(1 << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
