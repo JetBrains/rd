@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10.2)
 add_library(demo_model STATIC DemoModel/MyScalar.cpp
 DemoModel/DemoModel.cpp
 DemoModel/MyScalar.h

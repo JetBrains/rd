@@ -12,7 +12,7 @@ target_sources(tsl_ordered_map INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include/ts
                                          "${CMAKE_CURRENT_SOURCE_DIR}/include/tsl/ordered_set.h")
 
 
-if(${CMAKE_VERSION} VERSION_GREATER "3.7") 
+if(${CMAKE_VERSION} VERSION_GREATER "3.8") 
     # Only available since version 3.8
     target_compile_features(tsl_ordered_map INTERFACE cxx_std_11)
 endif()

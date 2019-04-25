@@ -414,7 +414,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         mkdirs()
         File(this, "CMakeLists.txt").run {
             printWriter().use {
-                it.println("cmake_minimum_required(VERSION 3.11)")
+                it.println("cmake_minimum_required(VERSION 3.10.2)")
                 it.println("add_library($targetName STATIC ${fileNames.joinToString(separator = eol)})")
                 val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = " ") { it.name }
                 val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { it.name }

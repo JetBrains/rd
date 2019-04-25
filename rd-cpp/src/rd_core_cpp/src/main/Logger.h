@@ -26,8 +26,9 @@ namespace rd {
 
 	class Logger {
 	public:
-		/*virtual */void
-		log(LogLevel level, const std::string &message, std::exception const *e = nullptr)/* = 0;*/const;
+		Logger() { }
+
+		/*virtual */void log(LogLevel level, const std::string &message, std::exception const *e = nullptr)/* = 0;*/const;
 
 		void trace(std::string const &msg, std::exception const *e = nullptr) const;
 
