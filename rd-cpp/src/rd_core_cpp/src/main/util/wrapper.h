@@ -251,4 +251,7 @@ namespace std {
 		}
 	};
 }
+
+extern template class rd::Wrapper<std::wstring>;
+
 #endif //RD_CPP_WRAPPER_H

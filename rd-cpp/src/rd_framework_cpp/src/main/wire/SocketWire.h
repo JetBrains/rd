@@ -16,8 +16,6 @@
 #include <type_traits>
 
 namespace rd {
-	using sequence_number_t = int64_t;
-
 	class SocketWire {
 		static std::chrono::milliseconds timeout;
 	public:

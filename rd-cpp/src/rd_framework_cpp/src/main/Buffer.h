@@ -87,7 +87,7 @@ namespace rd {
 		template<typename T>
 		std::vector<T> readArray() const {
 			int32_t len = read_integral<int32_t>();
-			MY_ASSERT_MSG(len >= 0, "read null array(length = " + std::to_string(len) + ")");
+			RD_ASSERT_MSG(len >= 0, "read null array(length = " + std::to_string(len) + ")");
 			std::vector<T> result(len);
 			read(reinterpret_cast<word_t *>(result.data()), sizeof(T) * len);
 			return result;

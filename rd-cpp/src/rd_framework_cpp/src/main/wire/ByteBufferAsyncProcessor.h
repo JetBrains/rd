@@ -11,6 +11,8 @@
 #include <future>
 
 namespace rd {
+	using sequence_number_t = int64_t;
+
 	class ByteBufferAsyncProcessor {
 	public:
 		enum class StateKind {
@@ -38,10 +40,11 @@ namespace rd {
 		static Logger logger;
 
 		std::thread::id async_thread_id;
-		std::future<void> asyncFuture;
+		std::future<void> async_future;
 
 		std::vector<Buffer::ByteArray> data;
 
+		sequence_number_t acknowledged_seqn = 0;
 	public:
 
 		//region ctor/dtor
@@ -56,6 +59,7 @@ namespace rd {
 		bool terminate0(time_t timeout, StateKind stateToSet, string_view action);
 
 		void ThreadProc();
+
 	public:
 
 		void start();
@@ -70,7 +74,7 @@ namespace rd {
 
 		void resume(const std::string &reason);
 
-		void acknowledge(int64_t seq);
+		void acknowledge(int64_t seqn);
 	};
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state);

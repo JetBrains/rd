@@ -130,7 +130,7 @@ namespace rd {
 							auto const &pair = lifetimes[lifetime].emplace(&key, LifetimeDefinition(lifetime));
 							auto &it = pair.first;
 							auto &inserted = pair.second;
-							MY_ASSERT_MSG(inserted,
+							RD_ASSERT_MSG(inserted,
 										  "lifetime definition already exists in viewable map by key:" +
 										  to_string(key));
 							handler(it->second.lifetime, entry);
@@ -138,7 +138,7 @@ namespace rd {
 						break;
 					}
 					case AddRemove::REMOVE: {
-						MY_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0,
+						RD_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0,
 									  "attempting to remove non-existing lifetime in viewable map by key:" +
 									  to_string(key));
 						LifetimeDefinition def = std::move(lifetimes.at(lifetime).at(key));

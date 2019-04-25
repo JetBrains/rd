@@ -34,7 +34,7 @@ namespace rd {
 	MessageBroker::MessageBroker(IScheduler *defaultScheduler) : defaultScheduler(defaultScheduler) {}
 
 	void MessageBroker::dispatch(RdId id, Buffer message) const {
-		MY_ASSERT_MSG(!id.isNull(), "id mustn't be null");
+		RD_ASSERT_MSG(!id.isNull(), "id mustn't be null");
 
 		{//synchronized recursively
 			std::lock_guard<decltype(lock)> guard(lock);
@@ -71,7 +71,7 @@ namespace rd {
 						auto t = std::move(broker[id]);
 						broker.erase(id);
 						for (auto &it : t.customSchedulerMessages) {
-							MY_ASSERT_MSG(subscription->get_wire_scheduler() != defaultScheduler, "require equals of wire and default schedulers");
+							RD_ASSERT_MSG(subscription->get_wire_scheduler() != defaultScheduler, "require equals of wire and default schedulers");
 							invoke(subscription, std::move(it));
 						}
 					}
@@ -97,7 +97,7 @@ namespace rd {
 	}
 
 	void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const *entity) const {
-		MY_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entity: " + std::string(typeid(*entity).name())));
+		RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entity: " + std::string(typeid(*entity).name())));
 
 		//advise MUST happen under default scheduler, not custom
 		defaultScheduler->assert_thread();

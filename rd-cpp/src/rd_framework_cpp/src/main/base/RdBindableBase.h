@@ -73,8 +73,8 @@ namespace rd {
 	//T : RdBindableBase
 	template<typename T>
 	T &withId(T &that, RdId const &id) {
-		MY_ASSERT_MSG(that.rdid == RdId::Null(), "this.id != RdId.NULL_ID, but " + that.rdid.toString());
-		MY_ASSERT_MSG((id != RdId::Null()), "id != RdId.NULL_ID");
+		RD_ASSERT_MSG(that.rdid == RdId::Null(), "this.id != RdId.NULL_ID, but " + that.rdid.toString());
+		RD_ASSERT_MSG((id != RdId::Null()), "id != RdId.NULL_ID");
 
 		that.rdid = id;
 		return that;
@@ -82,7 +82,7 @@ namespace rd {
 
 	template<typename T>
 	T &statics(T &that, int64_t id) {
-		MY_ASSERT_MSG((id > 0 && id < RdId::MAX_STATIC_ID),
+		RD_ASSERT_MSG((id > 0 && id < RdId::MAX_STATIC_ID),
 					  ("Expected id > 0 && id < RdId.MaxStaticId, got " + std::to_string(id)));
 		return withId(that, RdId(static_cast<int64_t >(id)));
 	}

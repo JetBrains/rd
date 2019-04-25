@@ -29,7 +29,7 @@ namespace rd {
 				}
 
 				if (!read_and_dispatch()) {
-					logger.debug(id + ": Connection was gracefully shutdown");
+					logger.debug(id + ": connection was gracefully shutdown");
 					break;
 				}
 			} catch (std::exception const &ex) {
@@ -50,21 +50,21 @@ namespace rd {
 			send_package_header.write_integral(msglen);
 			send_package_header.write_integral(++max_sent_seqn);
 
-			MY_ASSERT_THROW_MSG(socket_provider->Send(send_package_header.data(), send_package_header.get_position()) ==
+			RD_ASSERT_THROW_MSG(socket_provider->Send(send_package_header.data(), send_package_header.get_position()) ==
 								PACKAGE_HEADER_LENGTH,
 								this->id + ": failed to send header over the network");
 
-			MY_ASSERT_THROW_MSG(socket_provider->Send(msg.data(), msglen) == msglen,
+			RD_ASSERT_THROW_MSG(socket_provider->Send(msg.data(), msglen) == msglen,
 								this->id + ": failed to send package over the network");
 			logger.info(this->id + ": were sent " + std::to_string(msglen) + " bytes");
-			//        MY_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
+			//        RD_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
 		} catch (std::exception const &e) {
 			async_send_buffer.pause("Disconnected");
 		}
 	}
 
 	void SocketWire::Base::send(RdId const &rd_id, std::function<void(Buffer const &buffer)> writer) const {
-		MY_ASSERT_MSG(!rd_id.isNull(), this->id + ": id mustn't be null");
+		RD_ASSERT_MSG(!rd_id.isNull(), this->id + ": id mustn't be null");
 
 
 		local_send_buffer.write_integral<int32_t>(0); //placeholder for length
@@ -108,7 +108,7 @@ namespace rd {
 	bool SocketWire::Base::read_from_socket(Buffer::word_t *res, int32_t msglen) const {
 		int32_t ptr = 0;
 		while (ptr < msglen) {
-			MY_ASSERT_MSG(hi >= lo, "hi >= lo")
+			RD_ASSERT_MSG(hi >= lo, "hi >= lo")
 
 			int32_t rest = msglen - ptr;
 			int32_t available = static_cast<int32_t>(hi - lo);
@@ -137,7 +137,7 @@ namespace rd {
 				}
 			}
 		}
-		MY_ASSERT_MSG(ptr == msglen, "resPtr == res.Length")
+		RD_ASSERT_MSG(ptr == msglen, "resPtr == res.Length")
 		return true;
 	}
 
@@ -155,7 +155,11 @@ namespace rd {
 			if (len == ACK_MESSAGE_LENGTH) {
 				async_send_buffer.acknowledge(seqn);
 			} else {
-				send_ack(seqn);
+				if (seqn > max_received_seqn) {
+					max_received_seqn = seqn;
+				} else {
+					send_ack(seqn);
+				}
 				read_integral_from_socket<int32_t>(len);
 				return len;
 			}
@@ -195,11 +199,12 @@ namespace rd {
 			ack_buffer.write_integral(seqn);
 			{
 				std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
-				MY_ASSERT_THROW_MSG(socket_provider->Send(ack_buffer.data(), ack_buffer.get_position()) == ack_buffer.get_position(),
-									this->id + ": failed to send ack over the network");
+				RD_ASSERT_THROW_MSG(
+						socket_provider->Send(ack_buffer.data(), ack_buffer.get_position()) == PACKAGE_HEADER_LENGTH,
+						this->id + ": failed to send ack over the network")
 			}
 		} catch (std::exception const &e) {
-			logger.warn(id + "Exception raised during ACK, seqn = " + std::to_string(seqn), &e);
+			logger.warn(id + ": exception raised during ACK, seqn = " + std::to_string(seqn), &e);
 		}
 	}
 
@@ -211,8 +216,8 @@ namespace rd {
 				while (!lifetime->is_terminated()) {
 					try {
 						socket = std::make_shared<CActiveSocket>();
-						MY_ASSERT_THROW_MSG(socket->Initialize(), this->id + ": failed to init ActiveSocket");
-						MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
+						RD_ASSERT_THROW_MSG(socket->Initialize(), this->id + ": failed to init ActiveSocket");
+						RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
 											this->id + ": failed to DisableNagleAlgoritm");
 
 						// On windows connect will try to send SYN 3 times with interval of 500ms (total time is 1second)
@@ -220,7 +225,7 @@ namespace rd {
 
 						//https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
 						//HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
-						MY_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
+						RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
 											this->id + ": failed to open ActiveSocket");
 
 						{
@@ -280,21 +285,21 @@ namespace rd {
 
 	SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port,
 							   const std::string &id) : Base(id, lifetime, scheduler) {
-		MY_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
-		MY_ASSERT_MSG(ss->Listen("127.0.0.1", port),
+		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
+		RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
 					  this->id + ": failed to listen socket on port:" + std::to_string(port));
 
 		this->port = ss->GetServerPort();
-		MY_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen");
+		RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
 
 		thread = std::thread([this, lifetime]() mutable {
 			try {
 				logger.info(this->id + ": accepting started");
 				CActiveSocket *accepted = ss->Accept();
-				MY_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()))
+				RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()))
 				socket.reset(accepted);
 				logger.info(this->id + ": accepted passive socket");
-				MY_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed")
+				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed")
 
 				{
 					std::lock_guard<decltype(lock)> guard(lock);

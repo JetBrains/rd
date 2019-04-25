@@ -107,7 +107,7 @@ namespace rd {
 			Op op = static_cast<Op>((header & ((1 << versionedFlagShift) - 1L)));
 			int32_t index = (buffer.read_integral<int32_t>());
 
-			MY_ASSERT_MSG(version == next_version,
+			RD_ASSERT_MSG(version == next_version,
 						  ("Version conflict for " + location.toString() + "}. Expected version " +
 						   std::to_string(next_version) +
 						   ", received " +

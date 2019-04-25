@@ -19,11 +19,11 @@ namespace rd {
 		}
 		int32_t remote_id = buffer.read_integral<int32_t>();
 		set_interned_correspondence(remote_id ^ 1, *std::move(value));
-		MY_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
+		RD_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
 	}
 
 	void InternRoot::bind(Lifetime lf, IRdDynamic const *parent, string_view name) const {
-		MY_ASSERT_MSG(!is_bound(), "Trying to bound already bound $this to ${parent.location}")
+		RD_ASSERT_MSG(!is_bound(), "Trying to bound already bound $this to ${parent.location}")
 
 		lf->bracket([this, parent, &name] {
 			this->parent = parent;
@@ -45,14 +45,14 @@ namespace rd {
 	}
 
 	void InternRoot::identify(const Identities &identities, RdId const &id) const {
-		MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
-		MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
+		RD_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
+		RD_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 
 		rdid = id;
 	}
 
 	void InternRoot::set_interned_correspondence(int32_t id, InternedAny &&value) const {
-		MY_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
+		RD_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
 
 		std::lock_guard<decltype(lock)> guard(lock);
 		otherItemsList[id / 2] = value;

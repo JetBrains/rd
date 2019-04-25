@@ -53,13 +53,13 @@ namespace rd {
 					case AddRemove::ADD: {
 						/*auto const &[it, inserted] = lifetimes[lifetime].emplace(key, LifetimeDefinition(lifetime));*/
 						auto const &it = lifetimes[lifetime].emplace(&key, LifetimeDefinition(lifetime));
-						MY_ASSERT_MSG(it.second,
+						RD_ASSERT_MSG(it.second,
 									  "lifetime definition already exists in viewable set by key:" + to_string(key));
 						handler(it.first->second.lifetime, key);
 						break;
 					}
 					case AddRemove::REMOVE: {
-						MY_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0,
+						RD_ASSERT_MSG(lifetimes.at(lifetime).count(key) > 0,
 									  "attempting to remove non-existing lifetime in viewable set by key:" +
 									  to_string(key));
 						LifetimeDefinition def = std::move(lifetimes.at(lifetime).at(key));

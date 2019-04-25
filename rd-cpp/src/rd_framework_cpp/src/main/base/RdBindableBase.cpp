@@ -7,7 +7,7 @@ namespace rd {
 	}
 
 	void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, string_view name) const {
-		MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
+		RD_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
 		lf->bracket([this, lf, parent, &name] {
 						this->parent = parent;
 						location = parent->location.sub(name, ".");
@@ -32,8 +32,8 @@ namespace rd {
 
 //must be overriden if derived class have bindable members
 	void RdBindableBase::identify(const Identities &identities, RdId const &id) const {
-		MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
-		MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
+		RD_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
+		RD_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
 
 		this->rdid = id;
 		for (const auto &it : bindable_extensions) {

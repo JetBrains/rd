@@ -57,7 +57,7 @@ add_library(rd_framework_cpp STATIC
         MessageBroker.cpp MessageBroker.h
         #pch
         ${PCH_CPP_OPT}
-        )
+        serialization/Polymorphic.cpp)
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 

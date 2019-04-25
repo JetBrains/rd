@@ -58,7 +58,7 @@ namespace rd {
 				assert_threading();
 			}
 
-			MY_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
+			RD_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
 
 			util::bool_guard bool_guard(is_local_change);
 			return action();

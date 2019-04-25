@@ -155,4 +155,9 @@ namespace rd {
 	};
 }
 
+extern template class rd::Polymorphic<int8_t>;
+extern template class rd::Polymorphic<int16_t>;
+extern template class rd::Polymorphic<int32_t>;
+extern template class rd::Polymorphic<int64_t>;
+
 #endif //RD_CPP_POLYMORPHIC_H

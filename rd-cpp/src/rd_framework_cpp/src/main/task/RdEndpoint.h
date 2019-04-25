@@ -50,7 +50,7 @@ namespace rd {
 		}
 
 		void set(handler_t handler) const {
-			MY_ASSERT_MSG(handler, "handler is set already");
+			RD_ASSERT_MSG(handler, "handler is set already");
 			this->handler = std::move(handler);
 		}
 

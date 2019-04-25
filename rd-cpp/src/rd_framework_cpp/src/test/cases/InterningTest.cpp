@@ -188,7 +188,7 @@ TEST_F(InterningTestBase, testNestedInternedObjectsOnSameData) {
 
 	// expected send: string + 4 bytes length + 4 bytes id + 8+4 bytes polymorphic write, 3 bytes nullability, 3x 4byte ids, 4 bytes property version
 	int32_t send_target = sameString.length() * 2 + 4 + 4 + 8 + 4 + 3 + 4 * 3 + 4;
-	MY_ASSERT_MSG(first_send_bytes <= send_target,
+	RD_ASSERT_MSG(first_send_bytes <= send_target,
 	              "Sent " + std::to_string(first_send_bytes) + ", expected " + std::to_string(send_target))
 
 	AfterTest();

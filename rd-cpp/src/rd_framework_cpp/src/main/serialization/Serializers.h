@@ -68,7 +68,7 @@ namespace rd {
 		util::hash_t h = util::getPlatformIndependentHash(type_name);
 		RdId id(h);
 
-		MY_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
+		RD_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
 		readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> Wrapper<IPolymorphicSerializable> {
 			return wrapper::make_wrapper<T>(T::read(ctx, buffer));

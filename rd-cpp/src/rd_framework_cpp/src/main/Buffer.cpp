@@ -118,7 +118,7 @@ void Buffer::writeString(std::string const &value) const {
 
 	bool Buffer::readBool() const {
 		auto res = read_integral<uint8_t>();
-		MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
+		RD_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
 		return res == 1;
 	}
 

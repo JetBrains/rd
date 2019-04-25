@@ -78,7 +78,7 @@ namespace rd {
 		std::string toString() const;
 
 		RdId notNull() {
-			MY_ASSERT_MSG(!isNull(), "id is null");
+			RD_ASSERT_MSG(!isNull(), "id is null");
 			return *this;
 		}
 

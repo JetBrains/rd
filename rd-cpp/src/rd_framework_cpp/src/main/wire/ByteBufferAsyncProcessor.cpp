@@ -1,5 +1,4 @@
 #include "ByteBufferAsyncProcessor.h"
-#include "SocketWire.h"
 
 namespace rd {
 	size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
@@ -34,7 +33,7 @@ namespace rd {
 			cv.notify_all();
 		}
 
-		std::future_status status = asyncFuture.wait_for(timeout);
+		std::future_status status = async_future.wait_for(timeout);
 
 		if (status == std::future_status::timeout) {
 			logger.error("Couldn't wait async thread during time:" + to_string(timeout));
@@ -91,7 +90,7 @@ namespace rd {
 
 			state = StateKind::AsyncProcessing;
 
-			asyncFuture = std::async(std::launch::async, &ByteBufferAsyncProcessor::ThreadProc, this);
+			async_future = std::async(std::launch::async, &ByteBufferAsyncProcessor::ThreadProc, this);
 		}
 	}
 
@@ -119,7 +118,7 @@ namespace rd {
 	void ByteBufferAsyncProcessor::pause(const std::string &reason) {
 		std::lock_guard<decltype(lock)> guard(lock);
 
-		logger.debug(id + " paused with reason:" + reason);
+		logger.debug(id + " paused with reason" + reason + ",state=" + to_string(state));
 
 		if (std::this_thread::get_id() != async_thread_id) {
 			//todo
@@ -135,10 +134,19 @@ namespace rd {
 		cv.notify_all();
 	}
 
-	void ByteBufferAsyncProcessor::acknowledge(sequence_number_t seq) {
+	void ByteBufferAsyncProcessor::acknowledge(sequence_number_t seqn) {
 		std::lock_guard<decltype(lock)> guard(lock);
 
-		logger.trace("New acknowledged seqn: " + std::to_string(seq));
+		if (seqn > acknowledged_seqn) {
+			logger.trace("New acknowledged seqn: " + std::to_string(seqn));
+			acknowledged_seqn = seqn;
+		} else {
+			throw std::invalid_argument(
+					"Acknowledge " + std::to_string(seqn) + " called," +
+					"while next seqn MUST BE greater than " + std::to_string(acknowledged_seqn)
+			);
+		}
+
 	}
 
 	std::string to_string(ByteBufferAsyncProcessor::StateKind state) {
