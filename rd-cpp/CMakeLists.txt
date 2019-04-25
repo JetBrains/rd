@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10.2)
 
 project(
         rd_cpp
@@ -19,13 +19,13 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -D_GLIBCXX_DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
-    #[[add_compile_options(
-            "$<$<CONFIG:RELEASE>:-std=c++14 -Wall -pedantic -O2>"
-            "$<$<CONFIG:DEBUG>:-std=c++14 -g>"
-    )]]
-elseif (MSVC)
+elseif(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "6.0.0")
+        message(FATAL_ERROR "Insufficient clang version")
+    endif()
+endif()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
@@ -46,6 +46,5 @@ add_subdirectory(src)
 
 if (ENABLE_TESTS_OPTION)
     add_subdirectory(googletest)
-    #    add_subdirectory(rider_model)
     add_subdirectory(demo)
 endif ()
