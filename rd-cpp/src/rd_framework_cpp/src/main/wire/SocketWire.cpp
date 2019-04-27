@@ -83,7 +83,7 @@ namespace rd {
 
 	void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket) {
 		{
-			std::lock_guard<decltype(send_lock)> guard(send_lock);
+			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 			socket_provider = std::move(new_socket);
 			send_var.notify_all();
 		}
@@ -231,9 +231,10 @@ namespace rd {
 						{
 							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {
-								catch_([this]() {
-									socket->Close();
-								});
+								if (!socket->Close()) {
+									logger.error(this->id + "faile to close socket");
+								}
+								return;
 							}
 						}
 

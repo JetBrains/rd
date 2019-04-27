@@ -24,7 +24,6 @@ namespace rd {
 			static Logger logger;
 
 			std::timed_mutex lock;
-			mutable std::mutex send_lock;
 			mutable std::mutex socket_send_lock;
 
 			std::thread thread{};
