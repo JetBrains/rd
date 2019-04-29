@@ -18,7 +18,7 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 }
 
 open class Kotlin11Generator(
-    override val flowTransform: FlowTransform,
+    val flowTransform: FlowTransform,
     private val defaultNamespace: String,
     override val folder: File
 ) : GeneratorBase() {

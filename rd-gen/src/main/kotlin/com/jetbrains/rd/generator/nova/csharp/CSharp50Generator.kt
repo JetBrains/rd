@@ -12,7 +12,7 @@ import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(
-    override val flowTransform: FlowTransform,
+    val defaultFlowTransform: FlowTransform,
     val defaultNamespace: String,
     override val folder : File,
     val fileName: (Toplevel) -> String = { tl -> tl.name}
@@ -31,7 +31,7 @@ open class CSharp50Generator(
     val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${fileName(this)}.Generated.cs")
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
-    val Member.Reactive.memberFlowTransform: FlowTransform get() = owner.getSetting(FlowTransformProperty) ?: flowTransform
+    val Member.Reactive.memberFlowTransform: FlowTransform get() = owner.getSetting(FlowTransformProperty) ?: defaultFlowTransform
 
     object AdditionalUsings : ISetting<(CSharp50Generator) -> List<String>, Toplevel>
     val Toplevel.additionalUsings: List<String> get() = getSetting(CSharp50Generator.AdditionalUsings)?.invoke(this@CSharp50Generator) ?: emptyList()
@@ -1007,7 +1007,7 @@ open class CSharp50Generator(
     }
 
     override fun toString(): String {
-        return "CSharp50Generator(defaultFlowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
+        return "CSharp50Generator(defaultFlowTransform=$defaultFlowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
     }
 
 

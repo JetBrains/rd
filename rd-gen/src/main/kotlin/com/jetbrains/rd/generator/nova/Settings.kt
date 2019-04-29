@@ -14,37 +14,26 @@ open class SettingsHolder {
     internal val settings = mutableMapOf<ISetting<*, *>, Any>()
 }
 
-internal var settingCtx: IGenerator? = null
-typealias GeneratorPredicate = (IGenerator) -> Boolean
-
-internal val genInstanceKeys = mutableMapOf<Pair<GeneratorPredicate, ISetting<*,*>>, ISetting<*,*>>()
+internal var settingCtx : IGenerator? = null
+internal val genInstanceKeys = mutableMapOf<Pair<IGenerator, ISetting<*,*>>, ISetting<*,*>>()
 
 fun <T:Any, S:SettingsHolder> ISetting<T, S>.forGenerator(generator: IGenerator) : ISetting<T, S> =
-    genInstanceKeys.getOrPut({ key: IGenerator -> key == generator } to this) { object : ISetting<T,S> {} } as ISetting<T, S>
-
-data class FlowTransformKey(val flowTransform: FlowTransform) : GeneratorPredicate {
-    override fun invoke(p1: IGenerator): Boolean = p1.flowTransform == flowTransform
-}
-
-fun <T:Any, S:SettingsHolder> ISetting<T, S>.forFlowTransform(flowTransform: FlowTransform) : ISetting<T, S> =
-    genInstanceKeys.getOrPut(FlowTransformKey(flowTransform) to this) { object : ISetting<T,S> {} } as ISetting<T, S>
+        genInstanceKeys.getOrPut(generator to this) { object : ISetting<T,S> {} } as ISetting<T, S>
 
 
 fun <T: Any, S : SettingsHolder> S.setting(key: ISetting<T, S>, value: T) = apply { settings[key] = value }
 fun <T: Any, S : SettingsHolder> S.setting(key: SettingWithDefault<T, S>, value: T = key.default) = setting(key as ISetting<T, S>, value)
 
 fun <T: Any, S : SettingsHolder>  S.getSetting(key: ISetting<T, S>) : T? {
-    val specializedKey = settingCtx?.let { generator ->
-        genInstanceKeys.entries.find { it.key.first(generator) && it.key.second == key }?.value as ISetting<T, S>?
-    }
+    val specializedKey = settingCtx?.let { key.forGenerator(it) }
 
     return if (this is Declaration) {
         specializedKey?.let { this.getSettingInHierarchy(specializedKey)}
-            ?:this.getSettingInHierarchy(key)
+                ?:this.getSettingInHierarchy(key)
     }
     else {
         specializedKey?.let { settings[specializedKey] as T? }
-            ?: settings[key] as T?
+                ?: settings[key] as T?
     }
 }
 
