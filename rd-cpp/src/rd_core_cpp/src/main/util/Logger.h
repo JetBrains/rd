@@ -18,24 +18,31 @@ namespace rd {
 
 	extern LogLevel minimum_level_to_log;
 
-	string_view to_string(LogLevel level);
+	std::string to_string(LogLevel level);
 
 	class Logger {
 	public:
-		/*virtual */void
-		log(LogLevel level, string_view message, std::exception const *e = nullptr)/* = 0;*/const;
+		void log(LogLevel level, string_view format, va_list args, std::exception const *e = nullptr) const;
 
-		void trace(string_view msg, std::exception const *e = nullptr) const;
+		void trace(const std::exception *e, string_view msg, ...) const;
 
-		void debug(string_view msg, std::exception const *e = nullptr) const;
+		void trace(string_view msg, ...) const;
 
-		void info(string_view msg, std::exception const *e = nullptr) const;
+		void debug(const std::exception *e, string_view msg, ...) const;
 
-		void warn(string_view msg, std::exception const *e = nullptr) const;
+		void debug(string_view msg, ...) const;
 
-		void error(string_view msg, std::exception const *e = nullptr) const;
+		void info(const std::exception *e, string_view msg, ...) const;
 
-		//    virtual bool is_enabled(LogLevel level) = 0;
+		void info(string_view msg, ...) const;
+
+		void warn(const std::exception *e, string_view msg, ...) const;
+
+		void warn(string_view msg, ...) const;
+
+		void error(std::exception const *e, string_view msg, ...) const;
+
+		void error(string_view msg, ...) const;
 	};
 
 	/*class SwitchLogger : public	Logger {
@@ -58,7 +65,7 @@ namespace rd {
 		catch (std::exception const &e) {
 			std::string sfx = comment + std::string(
 					e.what());
-			Logger().error("Caught exception:" + sfx);
+			Logger().error("Caught exception: %s", sfx.c_str());
 		}
 	}
 

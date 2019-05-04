@@ -183,7 +183,7 @@ namespace rd {
 							[version, serialized_key = std::move(serialized_key)](
 									Buffer const &innerBuffer) mutable {
 								innerBuffer.write_integral<int32_t>(
-										(1 << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
+										(1u << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
 								innerBuffer.write_integral<int64_t>(version);
 								// KS::write(this->get_serialization_context(), innerBuffer, wrapper::get<K>(key));
 								innerBuffer.writeByteArrayRaw(serialized_key.getArray());
@@ -191,7 +191,7 @@ namespace rd {
 							});
 					get_wire()->send(rdid, std::move(writer));
 					if (is_master()) {
-						logReceived.error("Both ends are masters: " + location.toString());
+						logReceived.error("Both ends are masters: %s", location.toString().c_str());
 					}
 				}
 			}

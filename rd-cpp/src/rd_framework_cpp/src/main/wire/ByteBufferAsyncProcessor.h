@@ -9,6 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <future>
+#include <list>
 
 namespace rd {
 	using sequence_number_t = int64_t;
@@ -27,14 +28,13 @@ namespace rd {
 
 		static size_t INITIAL_CAPACITY;
 
-		std::mutex lock;
+		std::recursive_mutex lock;
 		std::condition_variable_any cv;
 
 		std::string id;
 
-		std::function<void(Buffer::ByteArray)> processor;
+		std::function<bool(Buffer::ByteArray const &)> processor;
 		std::mutex processor_lock;
-		std::condition_variable processor_cv;
 
 		StateKind state{StateKind::Initialized};
 		static Logger logger;
@@ -43,20 +43,30 @@ namespace rd {
 		std::future<void> async_future;
 
 		std::vector<Buffer::ByteArray> data;
+		std::mutex queue_lock;
+		std::list<Buffer::ByteArray> queue;
 
+		sequence_number_t current_seqn = 0;
 		sequence_number_t acknowledged_seqn = 0;
+
+		int32_t interrupt_balance = 0;
+		bool in_processing = false;
 	public:
 
 		//region ctor/dtor
 
-		ByteBufferAsyncProcessor(std::string id, std::function<void(Buffer::ByteArray)> processor);
+		explicit ByteBufferAsyncProcessor(std::string id, std::function<bool(Buffer::ByteArray const &)> processor);
 
 		//endregion
 	private:
 
 		void cleanup0();
 
-		bool terminate0(time_t timeout, StateKind stateToSet, string_view action);
+		bool terminate0(time_t timeout, StateKind state_to_set, string_view action);
+
+		void add_data(std::vector<Buffer::ByteArray> &&new_data);
+
+		void process();
 
 		void ThreadProc();
 
@@ -72,7 +82,7 @@ namespace rd {
 
 		void pause(const std::string &reason);
 
-		void resume(const std::string &reason);
+		void resume();
 
 		void acknowledge(int64_t seqn);
 	};

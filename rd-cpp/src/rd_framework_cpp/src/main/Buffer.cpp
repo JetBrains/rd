@@ -13,10 +13,10 @@ namespace rd {
 	}
 
 	Buffer::Buffer(const ByteArray &array, size_t offset) :
-		data_(array), offset(offset) {}
+			data_(array), offset(offset) {}
 
 	Buffer::Buffer(ByteArray &&array, size_t offset) :
-		data_(std::move(array)), offset(offset) {}
+			data_(std::move(array)), offset(offset) {}
 
 	size_t Buffer::get_position() const {
 		return offset;

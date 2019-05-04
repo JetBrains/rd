@@ -16,7 +16,8 @@ namespace rd {
 	SocketWire::Base::Base(std::string id, Lifetime lifetime, IScheduler *scheduler)
 			: WireBase(scheduler), id(std::move(id)), lifetime(lifetime),
 			  scheduler(scheduler), local_send_buffer(SEND_BUFFER_SIZE) {
-
+		async_send_buffer.pause("initial");
+		async_send_buffer.start();
 	}
 
 	void SocketWire::Base::receiverProc() const {
@@ -30,17 +31,18 @@ namespace rd {
 
 				if (!read_and_dispatch()) {
 					logger.debug(id + ": connection was gracefully shutdown");
+//					async_send_buffer.terminate();
 					break;
 				}
 			} catch (std::exception const &ex) {
-				logger.error(this->id + " caught processing", &ex);
+				logger.error(&ex, this->id + " caught processing");
 //				async_send_buffer.terminate();
 				break;
 			}
 		}
 	}
 
-	void SocketWire::Base::send0(Buffer::ByteArray msg) const {
+	bool SocketWire::Base::send0(const Buffer::ByteArray &msg) const {
 		try {
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 
@@ -52,14 +54,16 @@ namespace rd {
 
 			RD_ASSERT_THROW_MSG(socket_provider->Send(send_package_header.data(), send_package_header.get_position()) ==
 								PACKAGE_HEADER_LENGTH,
-								this->id + ": failed to send header over the network");
+								this->id + ": failed to send header over the network")
 
 			RD_ASSERT_THROW_MSG(socket_provider->Send(msg.data(), msglen) == msglen,
 								this->id + ": failed to send package over the network");
 			logger.info(this->id + ": were sent " + std::to_string(msglen) + " bytes");
 			//        RD_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
+			return true;
 		} catch (std::exception const &e) {
-			async_send_buffer.pause("Disconnected");
+			async_send_buffer.pause("send0");
+			return false;
 		}
 	}
 
@@ -81,27 +85,28 @@ namespace rd {
 		local_send_buffer.rewind();
 	}
 
-	void SocketWire::Base::set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket) {
+	void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_socket) {
 		{
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 			socket_provider = std::move(new_socket);
-			send_var.notify_all();
+			socket_send_var.notify_all();
 		}
 		{
 			std::lock_guard<decltype(lock)> guard(lock);
 			if (lifetime->is_terminated()) {
 				return;
 			}
-
-			async_send_buffer.start();
 		}
+		async_send_buffer.resume();
+
 		receiverProc();
-		scheduler->queue([this] {
-			connected.set(false);
-		});
+
+		connected.set(false);
+
 		async_send_buffer.pause("Disconnected");
-		if (/*!socket_provider->Shutdown(CSimpleSocket::Both) || */!socket_provider->Close()) {
-			logger.error("socket provider closed unsuccessfully");
+		if (!socket_provider->Close()) {
+			//double close?
+			logger.warn(this->id + ": possibly double close after disconnect");
 		}
 	}
 
@@ -128,7 +133,11 @@ namespace rd {
 				}
 				int32_t read = socket_provider->Receive(static_cast<int32_t>(receiver_buffer.end() - hi), &*hi);
 				if (read == -1) {
-					logger.error(this->id + ": socket was shutted down for receiving");
+					logger.error(this->id + ": error has occurred while receiving");
+					return false;
+				}
+				if (read == 0) {
+					logger.warn(this->id + ": socket was shutted down for receiving");
 					return false;
 				}
 				hi += read;
@@ -137,7 +146,11 @@ namespace rd {
 				}
 			}
 		}
-		RD_ASSERT_MSG(ptr == msglen, "resPtr == res.Length")
+		RD_ASSERT_MSG(ptr == msglen, "read invalid number of bytes from socket,"s
+									 + "expected: "
+									 + std::to_string(msglen)
+									 + "actual: "
+									 + std::to_string(ptr))
 		return true;
 	}
 
@@ -156,9 +169,8 @@ namespace rd {
 				async_send_buffer.acknowledge(seqn);
 			} else {
 				if (seqn > max_received_seqn) {
-					max_received_seqn = seqn;
-				} else {
 					send_ack(seqn);
+					max_received_seqn = seqn;
 				}
 				read_integral_from_socket<int32_t>(len);
 				return len;
@@ -204,7 +216,7 @@ namespace rd {
 						this->id + ": failed to send ack over the network")
 			}
 		} catch (std::exception const &e) {
-			logger.warn(id + ": exception raised during ACK, seqn = " + std::to_string(seqn), &e);
+			logger.warn(&e, id + ": exception raised during ACK, seqn = %d", seqn);
 		}
 	}
 
@@ -241,16 +253,16 @@ namespace rd {
 						set_socket_provider(socket);
 					} catch (std::exception const &e) {
 						std::lock_guard<decltype(lock)> guard(lock);
-						bool shouldReconnect = false;
+						bool should_reconnect = false;
 						if (!lifetime->is_terminated()) {
 							cv.wait_for(lock, timeout);
-							shouldReconnect = !lifetime->is_terminated();
+							should_reconnect = !lifetime->is_terminated();
 						}
-						if (shouldReconnect) {
+						if (should_reconnect) {
 							continue;
 						}
+						break;
 					}
-					break;
 				}
 
 			} catch (std::exception const &e) {
@@ -270,7 +282,7 @@ namespace rd {
 				logger.debug(this->id + ": closing socket");
 
 				if (socket != nullptr) {
-					if (/*!socket->Shutdown(CSimpleSocket::Receives) || */!socket->Close()) {
+					if (!socket->Close()) {
 						logger.error(this->id + ": failed to close socket");
 					}
 				}
@@ -294,31 +306,31 @@ namespace rd {
 		RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
 
 		thread = std::thread([this, lifetime]() mutable {
-			try {
-				logger.info(this->id + ": accepting started");
-				CActiveSocket *accepted = ss->Accept();
-				RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()))
-				socket.reset(accepted);
-				logger.info(this->id + ": accepted passive socket");
-				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed")
+			while (!lifetime->is_terminated()) {
+				try {
+					logger.info(this->id + ": accepting started");
+					CActiveSocket *accepted = ss->Accept();
+					RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()))
+					socket.reset(accepted);
+					logger.info(this->id + ": accepted passive socket");
+					RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed")
 
-				{
-					std::lock_guard<decltype(lock)> guard(lock);
-					if (lifetime->is_terminated()) {
-						catch_([this]() {
+					{
+						std::lock_guard<decltype(lock)> guard(lock);
+						if (lifetime->is_terminated()) {
 							logger.debug(this->id + ": closing passive socket");
 							if (!socket->Close()) {
 								logger.error(this->id + ": failed to close socket");
 							}
 							logger.info(this->id + ": close passive socket");
-						});
+						}
 					}
-				}
 
-				logger.debug(this->id + ": setting socket provider");
-				set_socket_provider(socket);
-			} catch (std::exception const &e) {
-				logger.info(this->id + ": closed with exception: ", &e);
+					logger.debug(this->id + ": setting socket provider");
+					set_socket_provider(socket);
+				} catch (std::exception const &e) {
+					logger.info(this->id + ": closed with exception: ", &e);
+				}
 			}
 			logger.debug(this->id + ": thread expired");
 		});
@@ -331,7 +343,7 @@ namespace rd {
 
 
 			logger.debug(this->id + ": closing server socket");
-			if (/*!ss->Shutdown(CSimpleSocket::Receives) || */!ss->Close()) {
+			if (!ss->Close()) {
 				logger.error(this->id + ": failed to close server socket");
 			}
 
@@ -339,7 +351,7 @@ namespace rd {
 				std::lock_guard<decltype(lock)> guard(lock);
 				logger.debug(this->id + ": closing socket");
 				if (socket != nullptr) {
-					if (/*!ss->Shutdown(CSimpleSocket::Sends) || */!socket->Close()) {
+					if (!socket->Close()) {
 						logger.error(this->id + ": failed to close socket");
 					}
 				}

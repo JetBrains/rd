@@ -33,17 +33,17 @@ namespace rd {
 			IScheduler *scheduler = nullptr;
 			std::shared_ptr<CSimpleSocket> socket_provider;
 
-			std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
+			std::shared_ptr<CActiveSocket> socket;
 
-			mutable std::condition_variable send_var;
+			mutable std::condition_variable socket_send_var;
 			mutable ByteBufferAsyncProcessor async_send_buffer{id + "-AsyncSendProcessor",
-															   [this](Buffer::ByteArray it) {
-																   this->send0(std::move(it));
+															   [this](Buffer::ByteArray const& it) -> bool {
+																   return this->send0(it);
 															   }};
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
 
-			static constexpr size_t RECIEVE_BUFFER_SIZE = 1u << 16;
+			static constexpr size_t RECIEVE_BUFFER_SIZE = 1 << 16;
 			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
 			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
@@ -54,8 +54,8 @@ namespace rd {
 			static constexpr int32_t PACKAGE_HEADER_LENGTH = sizeof(ACK_MESSAGE_LENGTH) + sizeof(sequence_number_t);
 			Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
 
-			mutable sequence_number_t max_received_seqn;
-			mutable sequence_number_t max_sent_seqn;
+			mutable sequence_number_t max_received_seqn = 0;
+			mutable sequence_number_t max_sent_seqn = 0;
 			Buffer send_package_header{PACKAGE_HEADER_LENGTH};
 
 			bool read_from_socket(Buffer::word_t *res, int32_t msglen) const;
@@ -83,11 +83,11 @@ namespace rd {
 
 			void receiverProc() const;
 
-			void send0(Buffer::ByteArray msg) const;
+			bool send0(const Buffer::ByteArray &msg) const;
 
 			void send(RdId const &rd_id, std::function<void(Buffer const &buffer)> writer) const override;
 
-			void set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket);
+			void set_socket_provider(std::shared_ptr<CActiveSocket> new_socket);
 
 			CSimpleSocket *get_socket_provider() const;
 
