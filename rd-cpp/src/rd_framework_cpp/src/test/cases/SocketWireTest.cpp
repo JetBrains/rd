@@ -386,7 +386,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	terminate();
 }
 
-TEST_F(SocketWireTestBase, DISABLED_failoverServer) {
+TEST_F(SocketWireTestBase, /*DISABLED_*/TestFailoverServer) {
 	uint16_t port = find_free_port();
 	auto serverProtocol = server(socketLifetime, port);
 
@@ -419,9 +419,8 @@ TEST_F(SocketWireTestBase, DISABLED_failoverServer) {
 	statics(np, property_id);
 	np.bind(lifetime, &rebornClientProtocol, "top");
 
-	checkSchedulersAreEmpty();
-	// clientScheduler.pump_one_message(); //send 2
-	// EXPECT_EQ(2, np.get());
+	clientScheduler.pump_one_message(); //send 2
+	EXPECT_EQ(2, np.get());
 
 	terminate();
 }
