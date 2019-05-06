@@ -65,26 +65,20 @@ namespace rd {
 			RdId taskId = RdId::read(buffer);
 
 			if (requests.count(taskId) == 0) {
-				logReceived.trace("call %s with id=%s received response %s but it was dropped",
-								  location.toString().c_str(),
-								  rdid.toString().c_str(),
-								  taskId.toString().c_str());
+				logReceived.trace("call " + location.toString() + " " + rdid.toString() +
+								  "received response " + taskId.toString() + " but it was dropped");
 			} else {
 				auto const &request = requests.at(taskId);
 				auto result = RdTaskResult<TRes, ResSer>::read(get_serialization_context(), buffer);
-				logReceived.trace("call %s with id=%s received response %s ",
-								  location.toString().c_str(),
-								  rdid.toString().c_str(),
-								  taskId.toString().c_str());
+				logReceived.trace("call " + location.toString() + " " + rdid.toString() +
+								  " received response " + taskId.toString() + " : ${result.printToString()} ");
 				//auto const&[scheduler, task] = request;
 				auto const &scheduler = request.first;
 				auto const &task = request.second;
 				scheduler->queue([&, result = std::move(result)]() mutable {
 					if (task.has_value()) {
-						logReceived.trace("call %s with id=%s, response was dropped, task result is %s",
-										  location.toString().c_str(),
-										  rdid.toString().c_str(),
-										  to_string(result.unwrap()).c_str());
+						logReceived.trace("call " + location.toString() + " " + rdid.toString() +
+										  " response was dropped, task result is: " + to_string(result.unwrap()));
 						if (is_bound() && get_default_scheduler()->is_active() && requests.count(taskId) > 0) {
 							//                        logAssert.error("MainThread: ${defaultScheduler.isActive}, taskId=$taskId ");
 						}

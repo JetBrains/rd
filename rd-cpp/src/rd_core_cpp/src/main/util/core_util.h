@@ -110,7 +110,7 @@ namespace rd {
 	}
 
 	inline std::string to_string(std::thread::id const &id) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << id;
 		return ss.str();
 	}

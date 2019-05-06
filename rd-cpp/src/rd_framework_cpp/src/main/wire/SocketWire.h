@@ -37,14 +37,14 @@ namespace rd {
 
 			mutable std::condition_variable socket_send_var;
 			mutable ByteBufferAsyncProcessor async_send_buffer{id + "-AsyncSendProcessor",
-															   [this](Buffer::ByteArray const& it) -> bool {
-																   return this->send0(it);
+															   [this](Buffer::ByteArray const& it, sequence_number_t seqn) -> bool {
+																   return this->send0(it, seqn);
 															   }};
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
 
-			static constexpr size_t RECIEVE_BUFFER_SIZE = 1 << 16;
-			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
+			static constexpr size_t RECIEVE_BUFFER_SIZE = 1u << 16;
+			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer{};
 			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
 			static constexpr size_t SEND_BUFFER_SIZE = 16 * 1024;
@@ -55,7 +55,6 @@ namespace rd {
 			Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
 
 			mutable sequence_number_t max_received_seqn = 0;
-			mutable sequence_number_t max_sent_seqn = 0;
 			Buffer send_package_header{PACKAGE_HEADER_LENGTH};
 
 			bool read_from_socket(Buffer::word_t *res, int32_t msglen) const;
@@ -77,13 +76,13 @@ namespace rd {
 
 			//endregion
 
-			int32_t read_message_size() const;
+			sequence_number_t read_header() const;
 
 			bool read_and_dispatch() const;
 
 			void receiverProc() const;
 
-			bool send0(const Buffer::ByteArray &msg) const;
+			bool send0(const Buffer::ByteArray &msg, sequence_number_t seqn) const;
 
 			void send(RdId const &rd_id, std::function<void(Buffer const &buffer)> writer) const override;
 
@@ -91,7 +90,7 @@ namespace rd {
 
 			CSimpleSocket *get_socket_provider() const;
 
-			void send_ack(sequence_number_t seqn) const;
+			bool send_ack(sequence_number_t seqn) const;
 		};
 
 		class Client : public Base {

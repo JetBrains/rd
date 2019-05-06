@@ -31,10 +31,10 @@ namespace rd {
 		}
 	}
 
-	MessageBroker::MessageBroker(IScheduler *defaultScheduler) : defaultScheduler(defaultScheduler) {}
+	MessageBroker::MessageBroker(IScheduler *defaultScheduler) : default_scheduler(defaultScheduler) {}
 
 	void MessageBroker::dispatch(RdId id, Buffer message) const {
-		RD_ASSERT_MSG(!id.isNull(), "id mustn't be null");
+		RD_ASSERT_MSG(!id.isNull(), "id mustn't be null")
 
 		{//synchronized recursively
 			std::lock_guard<decltype(lock)> guard(lock);
@@ -45,7 +45,7 @@ namespace rd {
 					it = broker.emplace(id, Mq{}).first;
 				}
 
-				broker[id].defaultSchedulerMessages.emplace(std::move(message));
+				broker[id].default_scheduler_messages.emplace(std::move(message));
 
 				auto action = [this, it, id]() mutable {
 					auto &current = it->second;
@@ -54,32 +54,32 @@ namespace rd {
 					optional<Buffer> message;
 					{
 						std::lock_guard<decltype(lock)> guard(lock);
-						if (!current.defaultSchedulerMessages.empty()) {
-							message = std::move(current.defaultSchedulerMessages.front());
-							current.defaultSchedulerMessages.pop();
+						if (!current.default_scheduler_messages.empty()) {
+							message = std::move(current.default_scheduler_messages.front());
+							current.default_scheduler_messages.pop();
 						}
 					}
 					if (subscription != nullptr) {
 						if (message) {
-							invoke(subscription, *std::move(message), subscription->get_wire_scheduler() == defaultScheduler);
+							invoke(subscription, *std::move(message), subscription->get_wire_scheduler() == default_scheduler);
 						}
 					} else {
 						logger.trace("No handler for id: " + id.toString());
 					}
 
-					if (current.defaultSchedulerMessages.empty()) {
+					if (current.default_scheduler_messages.empty()) {
 						auto t = std::move(broker[id]);
 						broker.erase(id);
-						for (auto &it : t.customSchedulerMessages) {
-							RD_ASSERT_MSG(subscription->get_wire_scheduler() != defaultScheduler, "require equals of wire and default schedulers");
+						for (auto &it : t.custom_scheduler_messages) {
+							RD_ASSERT_MSG(subscription->get_wire_scheduler() != default_scheduler, "require equals of wire and default schedulers")
 							invoke(subscription, std::move(it));
 						}
 					}
 				};
 				std::function<void()> function = util::make_shared_function(std::move(action));
-				defaultScheduler->queue(std::move(function));
+				default_scheduler->queue(std::move(function));
 			} else {
-				if (s->get_wire_scheduler() == defaultScheduler || s->get_wire_scheduler()->out_of_order_execution) {
+				if (s->get_wire_scheduler() == default_scheduler || s->get_wire_scheduler()->out_of_order_execution) {
 					invoke(s, std::move(message));
 				} else {
 					auto it = broker.find(id);
@@ -87,7 +87,7 @@ namespace rd {
 						invoke(s, std::move(message));
 					} else {
 						Mq &mq = it->second;
-						mq.customSchedulerMessages.push_back(std::move(message));
+						mq.custom_scheduler_messages.push_back(std::move(message));
 					}
 				}
 			}
@@ -97,10 +97,10 @@ namespace rd {
 	}
 
 	void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const *entity) const {
-		RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entity: " + std::string(typeid(*entity).name())));
+		RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entity: " + std::string(typeid(*entity).name())))
 
 		//advise MUST happen under default scheduler, not custom
-		defaultScheduler->assert_thread();
+		default_scheduler->assert_thread();
 
 		std::lock_guard<decltype(lock)> guard(lock);
 		if (!lifetime->is_terminated()) {

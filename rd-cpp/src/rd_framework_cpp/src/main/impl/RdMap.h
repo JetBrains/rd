@@ -107,7 +107,7 @@ namespace rd {
 							VS::write(this->get_serialization_context(), buffer, *new_value);
 						}
 
-						logSend.trace(logmsg(op, next_version - 1, e.get_key(), new_value));
+						logSend.trace("SEND" + logmsg(op, next_version - 1, e.get_key(), new_value));
 					});
 				});
 			});
@@ -168,7 +168,7 @@ namespace rd {
 				}
 
 				if (msg_versioned || !is_master() || pendingForAck.count(key) == 0) {
-					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value));
+					logReceived.trace("RECV" + logmsg(op, version, &(wrapper::get<K>(key)), value));
 					if (value.has_value()) {
 						map::set(std::move(key), *std::move(value));
 					} else {

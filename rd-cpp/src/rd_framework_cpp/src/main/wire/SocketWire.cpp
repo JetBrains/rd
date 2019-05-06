@@ -4,6 +4,7 @@
 
 #include <utility>
 #include <thread>
+#include <csignal>
 
 namespace rd {
 	Logger SocketWire::Base::logger;
@@ -42,7 +43,7 @@ namespace rd {
 		}
 	}
 
-	bool SocketWire::Base::send0(const Buffer::ByteArray &msg) const {
+	bool SocketWire::Base::send0(const Buffer::ByteArray &msg, sequence_number_t seqn) const {
 		try {
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 
@@ -50,7 +51,7 @@ namespace rd {
 
 			send_package_header.rewind();
 			send_package_header.write_integral(msglen);
-			send_package_header.write_integral(++max_sent_seqn);
+			send_package_header.write_integral(seqn);
 
 			RD_ASSERT_THROW_MSG(socket_provider->Send(send_package_header.data(), send_package_header.get_position()) ==
 								PACKAGE_HEADER_LENGTH,
@@ -62,7 +63,8 @@ namespace rd {
 			//        RD_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
 			return true;
 		} catch (std::exception const &e) {
-			async_send_buffer.pause("send0");
+//			async_send_buffer.pause("send0");
+			logger.warn(&e, "Send0 failed due to: ");
 			return false;
 		}
 	}
@@ -104,7 +106,7 @@ namespace rd {
 		connected.set(false);
 
 		async_send_buffer.pause("Disconnected");
-		if (!socket_provider->Close()) {
+		if (!socket_provider->Shutdown(CSimpleSocket::Both)) {
 			//double close?
 			logger.warn(this->id + ": possibly double close after disconnect");
 		}
@@ -146,15 +148,14 @@ namespace rd {
 				}
 			}
 		}
-		RD_ASSERT_MSG(ptr == msglen, "read invalid number of bytes from socket,"s
-									 + "expected: "
-									 + std::to_string(msglen)
-									 + "actual: "
-									 + std::to_string(ptr))
+		if (ptr != msglen) {
+			logger.error("read invalid number of bytes from socket, expected: %d, actual: %d", msglen, ptr);
+			assert(false);
+		}
 		return true;
 	}
 
-	int32_t SocketWire::Base::read_message_size() const {
+	sequence_number_t SocketWire::Base::read_header() const {
 		int32_t len = 0;
 		sequence_number_t seqn = 0;
 		while (true) {
@@ -168,28 +169,34 @@ namespace rd {
 			if (len == ACK_MESSAGE_LENGTH) {
 				async_send_buffer.acknowledge(seqn);
 			} else {
-				if (seqn > max_received_seqn) {
-					send_ack(seqn);
-					max_received_seqn = seqn;
-				}
-				read_integral_from_socket<int32_t>(len);
-				return len;
+				return seqn;
 			}
 		}
 	}
 
 	bool SocketWire::Base::read_and_dispatch() const {
-		int32_t sz = read_message_size();
-		if (sz == -1) {
+		sequence_number_t seqn = read_header();
+		if (seqn == -1) {
+			logger.debug(this->id + ": failed to read header");
+			return false;
+		}
+		int32_t sz = 0;
+		if (!read_integral_from_socket(sz)) {
 			logger.debug(this->id + ": failed to read message size");
 			return false;
 		}
-		logger.info(this->id + ": were received size and " + std::to_string(sz) + " bytes");
+		logger.info(this->id + ": were received size and %d bytes", sz);
 		Buffer msg(static_cast<size_t>(sz));
 		if (!read_data_from_socket(msg.data(), sz)) {
 			logger.debug(this->id + ": failed to read message");
 			return false;
 		}
+		logger.debug("read seqn=%lld, max_received_seqn=%lld", seqn, max_received_seqn);
+		send_ack(seqn);
+		if (seqn <= max_received_seqn) {
+			return true;
+		}
+		max_received_seqn = seqn;
 
 		RdId rd_id = RdId::read(msg);
 		logger.debug(this->id + ": message received");
@@ -202,11 +209,10 @@ namespace rd {
 		return socket_provider.get();
 	}
 
-	void SocketWire::Base::send_ack(sequence_number_t seqn) const {
-		logger.trace(id + " send ack " + std::to_string(seqn));
+	bool SocketWire::Base::send_ack(sequence_number_t seqn) const {
+		logger.trace(id + " send ack %lld", seqn);
 		try {
 			ack_buffer.rewind();
-
 			ack_buffer.write_integral(ACK_MESSAGE_LENGTH);
 			ack_buffer.write_integral(seqn);
 			{
@@ -215,8 +221,10 @@ namespace rd {
 						socket_provider->Send(ack_buffer.data(), ack_buffer.get_position()) == PACKAGE_HEADER_LENGTH,
 						this->id + ": failed to send ack over the network")
 			}
+			return true;
 		} catch (std::exception const &e) {
-			logger.warn(&e, id + ": exception raised during ACK, seqn = %d", seqn);
+			logger.warn(&e, id + ": exception raised during ACK, seqn = %lld", seqn);
+			return false;
 		}
 	}
 
@@ -244,7 +252,7 @@ namespace rd {
 							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {
 								if (!socket->Close()) {
-									logger.error(this->id + "faile to close socket");
+									logger.error(this->id + "failed to close socket");
 								}
 								return;
 							}
@@ -286,8 +294,8 @@ namespace rd {
 						logger.error(this->id + ": failed to close socket");
 					}
 				}
-				cv.notify_all();
 			}
+			cv.notify_all();
 
 			logger.debug(this->id + ": waiting for receiver thread");
 			logger.debug(this->id + ": is thread joinable? " + std::to_string(thread.joinable()));
@@ -298,7 +306,9 @@ namespace rd {
 
 	SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port,
 							   const std::string &id) : Base(id, lifetime, scheduler) {
-		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket");
+		signal(SIGPIPE, SIG_IGN);
+
+		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket")
 		RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
 					  this->id + ": failed to listen socket on port:" + std::to_string(port));
 

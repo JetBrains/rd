@@ -33,7 +33,7 @@ namespace rd {
 
 		std::string id;
 
-		std::function<bool(Buffer::ByteArray const &)> processor;
+		std::function<bool(Buffer::ByteArray const &, sequence_number_t seqn)> processor;
 		std::mutex processor_lock;
 
 		StateKind state{StateKind::Initialized};
@@ -44,9 +44,11 @@ namespace rd {
 
 		std::vector<Buffer::ByteArray> data;
 		std::mutex queue_lock;
-		std::list<Buffer::ByteArray> queue;
+		std::queue<Buffer::ByteArray> queue;
+		std::deque<Buffer::ByteArray> pending_queue;
 
-		sequence_number_t current_seqn = 0;
+		sequence_number_t max_sent_seqn = 0;
+		sequence_number_t current_seqn = 1;
 		sequence_number_t acknowledged_seqn = 0;
 
 		int32_t interrupt_balance = 0;
@@ -55,7 +57,7 @@ namespace rd {
 
 		//region ctor/dtor
 
-		explicit ByteBufferAsyncProcessor(std::string id, std::function<bool(Buffer::ByteArray const &)> processor);
+		explicit ByteBufferAsyncProcessor(std::string id, std::function<bool(Buffer::ByteArray const &, sequence_number_t)> processor);
 
 		//endregion
 	private:
@@ -65,6 +67,8 @@ namespace rd {
 		bool terminate0(time_t timeout, StateKind state_to_set, string_view action);
 
 		void add_data(std::vector<Buffer::ByteArray> &&new_data);
+
+		void reprocess();
 
 		void process();
 

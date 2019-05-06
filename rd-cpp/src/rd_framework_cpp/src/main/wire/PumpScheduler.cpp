@@ -33,8 +33,10 @@ namespace rd {
 			}
 
 			void PumpScheduler::pump_one_message() {
-				std::unique_lock<decltype(lock)> ul(lock);
-				cv.wait(ul, [this]() -> bool { return !messages.empty(); });
+				{
+					std::unique_lock<decltype(lock)> ul(lock);
+					cv.wait(ul, [this]() -> bool { return !messages.empty(); });
+				}
 				flush();
 			}
 

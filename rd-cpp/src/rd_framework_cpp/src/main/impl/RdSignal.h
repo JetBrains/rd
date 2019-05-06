@@ -57,7 +57,7 @@ namespace rd {
 
 		void on_wire_received(Buffer buffer) const override {
 			auto value = S::read(this->get_serialization_context(), buffer);
-			logReceived.trace(logmsg(wrapper::get<T>(value)));
+			logReceived.trace("RECV" + logmsg(wrapper::get<T>(value)));
 
 			signal.fire(wrapper::get<T>(value));
 		}
@@ -70,7 +70,7 @@ namespace rd {
 				assert_threading();
 			}
 			get_wire()->send(rdid, [this, &value](Buffer const &buffer) {
-				logSend.trace(logmsg(value));
+				logSend.trace("SEND" + logmsg(value));
 				S::write(get_serialization_context(), buffer, value);
 			});
 			signal.fire(value);

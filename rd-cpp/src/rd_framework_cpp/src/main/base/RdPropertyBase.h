@@ -10,7 +10,7 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
-	template<typename T, typename S = Polymorphic<T>>
+	template<typename T, typename S = Polymorphic <T>>
 	class RdPropertyBase : public RdReactiveBase, public Property<T> {
 	protected:
 		using WT = typename IProperty<T>::WT;
@@ -66,7 +66,7 @@ namespace rd {
 				get_wire()->send(rdid, [this, &v](Buffer const &buffer) {
 					buffer.write_integral<int32_t>(master_version);
 					S::write(this->get_serialization_context(), buffer, v);
-					logSend.trace("property " + location.toString() + " + " + rdid.toString() +
+					logSend.trace("SEND property " + location.toString() + " + " + rdid.toString() +
 								  ":: ver = " + std::to_string(master_version) +
 								  ", value = " + to_string(v));
 				});
@@ -88,6 +88,8 @@ namespace rd {
 			WT v = S::read(this->get_serialization_context(), buffer);
 
 			bool rejected = is_master && version < master_version;
+			logSend.trace("RECV property " + location.toString() + " " + rdid.toString() +
+						  ":: oldver=%d, ver=%d, value = " + to_string(v) + (rejected ? ">> REJECTED" : ""), master_version, version);
 			if (rejected) {
 				return;
 			}
@@ -98,12 +100,12 @@ namespace rd {
 
 		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
 			if (is_bound()) {
-				//            assertThreading();
+				assert_threading();
 			}
 			Property<T>::advise(lifetime, handler);
 		}
 
-		void set(value_or_wrapper<T> new_value) const override {
+		void set(value_or_wrapper <T> new_value) const override {
 			this->local_change([this, new_value = std::move(new_value)]() mutable {
 				this->default_value_changed = true;
 				Property<T>::set(std::move(new_value));

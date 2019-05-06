@@ -19,13 +19,13 @@ namespace rd {
 		Mq(Mq &&) = default;
 		//endregion
 
-		mutable std::queue<Buffer> defaultSchedulerMessages;
-		std::vector<Buffer> customSchedulerMessages;
+		mutable std::queue<Buffer> default_scheduler_messages;
+		std::vector<Buffer> custom_scheduler_messages;
 	};
 
 	class MessageBroker final {
 	private:
-		IScheduler *defaultScheduler = nullptr;
+		IScheduler *default_scheduler = nullptr;
 		mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
 		mutable std::unordered_map<RdId, Mq> broker;
 

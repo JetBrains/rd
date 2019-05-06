@@ -258,3 +258,26 @@ TEST(BufferTest, floating_point) {
 		EXPECT_FLOAT_EQ(d, double_v[i]);
 	}
 }
+
+TEST(BufferTest, unsigned_types) {
+	uint8_t val1 = 8;
+	uint16_t val2 = 16;
+	uint32_t val3 = 32;
+	uint64_t val4 = 64;
+
+	Buffer buffer;
+
+	buffer.write_integral<uint8_t>(val1);
+	buffer.write_integral<uint16_t>(val2);
+	buffer.write_integral<uint32_t>(val3);
+	buffer.write_integral<uint64_t>(val4);
+
+	EXPECT_EQ(buffer.get_position(), sizeof(val1) + sizeof(val2) + sizeof(val3) + sizeof(val4));
+
+	buffer.rewind();
+
+	EXPECT_EQ(buffer.read_integral<uint8_t>(), val1);
+	EXPECT_EQ(buffer.read_integral<uint16_t>(), val2);
+	EXPECT_EQ(buffer.read_integral<uint32_t>(), val3);
+	EXPECT_EQ(buffer.read_integral<uint64_t>(), val4);
+}

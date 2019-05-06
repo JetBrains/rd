@@ -427,15 +427,19 @@ TEST_F(SocketWireTestBase, DISABLED_failoverServer) {
 }
 
 void try_close_socket(Protocol const &protocol) {
-	auto socket = dynamic_cast<SocketWire::Base const *>(protocol.wire.get())->get_socket_provider();
+	auto socket = dynamic_cast<SocketWire::Base const *>(protocol.get_wire())->get_socket_provider();
 
 	if (socket != nullptr) {
-		EXPECT_TRUE(socket->Close());
+		while (!socket->Shutdown(CSimpleSocket::Both)) {}
 	}
 	std::cerr << "Test: Socket closed";
 }
 
-TEST_F(SocketWireTestBase, TestDisconnect) {
+
+struct DisconnectTestBase : SocketWireTestBase, ::testing::WithParamInterface<bool> {
+};
+
+TEST_P(DisconnectTestBase, SimpleDisconnect) {
 	auto serverProtocol = server(socketLifetime);
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 
@@ -460,7 +464,11 @@ TEST_F(SocketWireTestBase, TestDisconnect) {
 
 	EXPECT_EQ(log, (decltype(log){1, 2}));
 
-	try_close_socket(clientProtocol);
+	if (GetParam()) {
+		try_close_socket(serverProtocol);
+	} else {
+		try_close_socket(clientProtocol);
+	}
 
 	cp.fire(3);
 	cp.fire(4);
@@ -472,17 +480,51 @@ TEST_F(SocketWireTestBase, TestDisconnect) {
 
 	EXPECT_EQ(log, (decltype(log){1, 2, 3, 4}));
 
-	/*try_close_socket(serverProtocol);
+	terminate();
+}
 
-	cp.fire(5);
-	cp.fire(6);
+INSTANTIATE_TEST_SUITE_P(SimpleDisconnectServer,
+						 DisconnectTestBase,
+						 ::testing::Values(true));
 
-	serverScheduler.pump_one_message();
-	serverScheduler.pump_one_message();
+INSTANTIATE_TEST_SUITE_P(SimpleDisconnectClient,
+						 DisconnectTestBase,
+						 ::testing::Values(false));
 
-	checkSchedulersAreEmpty();
+TEST_P(DisconnectTestBase, DdosDisconnect) {
+	auto serverProtocol = server(socketLifetime);
+	auto clientProtocol = client(socketLifetime, serverProtocol);
 
-	EXPECT_EQ(log, (decltype(log){1, 2, 3, 4, 5, 6}));*/
+	RdProperty<int32_t> sp{0};
+	RdProperty<int32_t> cp{0};
 
-	AfterTest();
+	init(serverProtocol, clientProtocol, &sp, &cp);
+
+	int count = 0;
+	sp.advise(lifetime, [&](int32_t const &it) {
+		if (it != 0) {
+			EXPECT_EQ(count + 1, it);
+			++count;
+		}
+	});
+	const int C = 50;
+	for (int i = 1; i <= C; ++i) {
+		cp.set(i);
+		if (i == C / 2) {
+			if (GetParam()) {
+				try_close_socket(serverProtocol);
+			} else {
+				try_close_socket(clientProtocol);
+				rd::util::sleep_this_thread(200);
+			}
+		}
+	}
+
+	for (int i = 1; i <= C; ++i) {
+		serverScheduler.pump_one_message();
+		EXPECT_EQ(sp.get(), i);
+	}
+	EXPECT_EQ(C, count);
+
+	terminate();
 }

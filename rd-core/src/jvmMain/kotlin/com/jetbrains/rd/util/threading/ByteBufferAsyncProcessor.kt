@@ -202,7 +202,7 @@ class ByteBufferAsyncProcessor(val id : String,
                     "chunkToFill != chunkToProcess && chunkToFill.isNotProcessed"
                 }
 
-                processing = true;
+                processing = true
             }
 
             try {
@@ -302,7 +302,7 @@ class ByteBufferAsyncProcessor(val id : String,
             }
 
             if (allDataProcessed) { //speedup
-                allDataProcessed = false;
+                allDataProcessed = false
                 lock.notify()
             }
         }
