@@ -5,6 +5,8 @@
         <RootNamespace>JetBrains</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
+        <PackageId>JetBrains.Lifetimes</PackageId>
+        <AssemblyName>JetBrains.Lifetimes</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
