@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup  Condition="'$(OS)' != 'Unix'">
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
+  </PropertyGroup>
+  <PropertyGroup  Condition="'$(OS)' == 'Unix'">
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">/usr/lib/mono/2.0-api</FrameworkPathOverride>
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net461'">/usr/lib/mono/4.6.1-api</FrameworkPathOverride>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+</Project>
