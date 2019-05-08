@@ -8,3 +8,7 @@ rd-cpp/build
 rd-cpp/export
 *.code-workspace
 cmake-build-*
+rd-net/RdCore/bin
+rd-net/RdCore/obj
+rd-net/RdFramework/bin
+rd-net/RdFramework/obj

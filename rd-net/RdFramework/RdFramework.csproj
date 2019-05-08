@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard1.6;net35;net472</TargetFrameworks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\RdCore\RdCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
+        <PackageReference Include="AsyncBridge.Net35" Version="0.2.0" />
+        <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
+    </ItemGroup>
+   
+
+</Project>
