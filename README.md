@@ -2,4 +2,4 @@
 
 # rd
 
-Reactive Distributed communication framework for .net, kotlin, js. Inspired by Rider IDE. 
+Reactive Distributed communication framework for .net, kotlin, js, c++. Inspired by Rider IDE. 
