@@ -103,24 +103,21 @@ using DListTest = RdFrameworkDynamicPolymorphicTestBase<DList>;
 
 TEST_F(DListTest, dynamic_polymorphic_list) {
 	std::vector<std::string> log;
-	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
+	ConcreteEntity value_a{L"Ignored", L"A"};
+	ConcreteEntity value_b{L"Ignored", L"B"};
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DList::Event e) {
-			auto string = to_string_list_event<AbstractEntity>(e);
-			if (e.get_new_value() != nullptr) {
-				string += to_string(e.get_new_value()->get_name());
-			}
-			log.push_back(string);
+			log.push_back(to_string(e));
 		});
-
-		ConcreteEntity value_a{L"Ignored", L"A"};
-		ConcreteEntity value_b{L"Ignored", L"B"};
 		client_entity.add(value_a);
 		client_entity.add(value_b);
 
 		server_entity.remove(value_a);
 	});
 
-	std::vector<std::string> expected{"Add 0:A", "Add 1:B", "Remove 0"};
+	std::vector<std::string> expected{"Add 0:" + to_string(static_cast<AbstractEntity const &>(value_a)),
+									  "Add 1:" + to_string(static_cast<AbstractEntity const &>(value_b)),
+									  "Remove 0"};
 	EXPECT_EQ(expected, log);
 
 	AfterTest();
@@ -131,15 +128,15 @@ using DSetTest = RdFrameworkDynamicPolymorphicTestBase<DSet>;
 
 TEST_F(DSetTest, dynamic_polymorphic_set) {
 	std::vector<std::string> log;
-	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
-		server_entity.advise(lifetime, [&log](DSet::Event e) {
-			auto x = e.value->get_name();
-			log.push_back(to_string_set_event<AbstractEntity>(e) + to_string(x));
-		});
 
-		ConcreteEntity value_a{L"Ignored", L"A"};
-		ConcreteEntity value_b{L"Ignored", L"B"};
-		ConcreteEntity value_c{L"Ignored", L"C"};
+	ConcreteEntity value_a{L"Ignored", L"A"};
+	ConcreteEntity value_b{L"Ignored", L"B"};
+	ConcreteEntity value_c{L"Ignored", L"C"};
+
+	LifetimeDefinition::use([&](Lifetime lifetime) {
+		server_entity.advise(lifetime, [&log](DSet::Event e) {
+			log.push_back(to_string(e));
+		});
 
 		client_entity.add(value_c);
 		client_entity.add(value_a);
@@ -150,7 +147,13 @@ TEST_F(DSetTest, dynamic_polymorphic_set) {
 		server_entity.clear();
 	});
 
-	std::vector<std::string> expected{"Add C", "Add A", "Add B", "Remove A", "Remove C", "Remove B"};
+	std::vector<std::string> expected{"Add:" + to_string(static_cast<AbstractEntity const &>(value_c)),
+									  "Add:" + to_string(static_cast<AbstractEntity const &>(value_a)),
+									  "Add:" + to_string(static_cast<AbstractEntity const &>(value_b)),
+									  "Remove:" + to_string(static_cast<AbstractEntity const &>(value_a)),
+									  "Remove:" + to_string(static_cast<AbstractEntity const &>(value_c)),
+									  "Remove:" + to_string(static_cast<AbstractEntity const &>(value_b))
+	};
 	EXPECT_EQ(expected, log);
 
 	AfterTest();
@@ -161,20 +164,19 @@ using DMapTest = RdFrameworkDynamicPolymorphicTestBase<DMap>;
 
 TEST_F(DMapTest, dynamic_polymorphic_map) {
 	std::vector<std::string> log;
-	LifetimeDefinition::use([this, &log](Lifetime lifetime) {
+
+	ConcreteEntity key_1{L"Ignored", L"1"};
+	ConcreteEntity key_2{L"Ignored", L"2"};
+	ConcreteEntity key_3{L"Ignored", L"3"};
+
+	ConcreteEntity value_a{L"Ignored", L"A"};
+	ConcreteEntity value_b{L"Ignored", L"B"};
+	ConcreteEntity value_c{L"Ignored", L"C"};
+
+	LifetimeDefinition::use([&](Lifetime lifetime) {
 		server_entity.advise(lifetime, [&log](DMap::Event e) {
-			auto x = to_string_map_event<AbstractEntity, AbstractEntity>(e)
-					 + to_string(e.get_key()->get_name());
-			log.push_back(x);
+			log.push_back(to_string(e));
 		});
-
-		ConcreteEntity key_1{L"Ignored", L"1"};
-		ConcreteEntity key_2{L"Ignored", L"2"};
-		ConcreteEntity key_3{L"Ignored", L"3"};
-
-		ConcreteEntity value_a{L"Ignored", L"A"};
-		ConcreteEntity value_b{L"Ignored", L"B"};
-		ConcreteEntity value_c{L"Ignored", L"C"};
 
 		client_entity.set(key_3, value_c);
 		client_entity.set(key_1, value_a);
@@ -188,7 +190,13 @@ TEST_F(DMapTest, dynamic_polymorphic_map) {
 		server_entity.clear();
 	});
 
-	std::vector<std::string> expected{"Add :3", "Add :1", "Add :2", "Remove 1", "Remove 3", "Remove 2"};
+	std::vector<std::string> expected{"Add " + to_string(static_cast<AbstractEntity const &>(key_3)) + ":" + to_string(static_cast<AbstractEntity const &>(value_c)),
+									  "Add " + to_string(static_cast<AbstractEntity const &>(key_1)) + ":" + to_string(static_cast<AbstractEntity const &>(value_a)),
+									  "Add " + to_string(static_cast<AbstractEntity const &>(key_2)) + ":" + to_string(static_cast<AbstractEntity const &>(value_b)),
+									  "Remove " + to_string(static_cast<AbstractEntity const &>(key_1)),
+									  "Remove " + to_string(static_cast<AbstractEntity const &>(key_3)),
+									  "Remove " + to_string(static_cast<AbstractEntity const &>(key_2))
+	};
 	EXPECT_EQ(expected, log);
 
 	AfterTest();

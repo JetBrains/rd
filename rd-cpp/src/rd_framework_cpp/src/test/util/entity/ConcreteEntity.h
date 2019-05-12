@@ -114,6 +114,8 @@ namespace rd {
 
 				//static type name trait
 				static std::string static_type_name();
+
+				friend std::string to_string(ConcreteEntity const &value);
 			};
 		};
 	}

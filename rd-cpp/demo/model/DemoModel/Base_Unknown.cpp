@@ -82,4 +82,11 @@ namespace demo {
     {
         return "Base_Unknown";
     }
+    
+    //to string trait
+    std::string to_string(const demo::Base_Unknown & value)
+    {
+        std::string res = "Base_Unknown\n";
+        return res;
+    }
 };

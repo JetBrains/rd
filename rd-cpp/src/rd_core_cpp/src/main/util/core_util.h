@@ -5,6 +5,7 @@
 #include "gen_util.h"
 #include "overloaded.h"
 #include "shared_function.h"
+#include "to_string.h"
 #include "wrapper.h"
 #include "Void.h"
 
@@ -69,89 +70,6 @@ namespace rd {
 				return std::hash<T>()(*val);
 			}
 		};
-	}
-
-//region to_string
-
-/*
-    template<typename T>
-    std::string to_string(T const &val) {
-        return "";
-    }
-*/
-
-	template<typename T>
-	typename std::enable_if_t<std::is_arithmetic<T>::value, std::string> to_string(T const &val) {
-		return std::to_string(val);
-	}
-
-	template<typename T>
-	typename std::enable_if_t<!std::is_arithmetic<T>::value, std::string> to_string(T const &val) {
-		return "";
-	}
-
-	template<>
-	inline std::string to_string<std::string>(std::string const &val) {
-		return val;
-	}
-
-	template<>
-	inline std::string to_string<std::wstring>(std::wstring const &val) {
-		return std::string(val.begin(), val.end());
-	}
-
-	template<typename T>
-	inline std::string to_string(optional<T> const &val) {
-		if (val.has_value()) {
-			return to_string(*val);
-		} else {
-			return "nullopt";
-		}
-	}
-
-	inline std::string to_string(std::thread::id const &id) {
-		std::ostringstream ss;
-		ss << id;
-		return ss.str();
-	}
-
-	inline std::string to_string(std::exception const &e) {
-		return std::string(e.what());
-	}
-
-	template<typename T>
-	std::string to_string(std::chrono::duration<int64_t, T> const &time) {
-		return std::to_string(time.count());
-	}
-
-	template<typename T>
-	std::string to_string(Wrapper<T> const &value) {
-		return to_string(*value);
-	}
-
-	template<typename T>
-	std::string to_string(std::atomic<T> const &value) {
-		return to_string(value.load());
-	}
-	//endregion
-
-	inline std::wstring to_wstring(std::string const &s) {
-		return std::wstring(s.begin(), s.end());
-	}
-
-	template<typename F, typename S>
-	std::string to_string(const std::pair<F, S> p) {
-		return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
-	}
-
-	template<typename F, typename S>
-	std::string to_string(const std::pair<F, S *> p) {
-		return "(" + to_string(p.first) + ", " + to_string(*p.second) + ")";
-	}
-
-	template<typename F, typename S>
-	std::string to_string(const std::pair<F *, S *> p) {
-		return "(" + to_string(*p.first) + ", " + to_string(*p.second) + ")";
 	}
 }
 

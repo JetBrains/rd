@@ -21,10 +21,6 @@ namespace demo {
     //secondary constructor
     
     //default ctors and dtors
-    MyScalar::MyScalar()
-    {
-        initialize();
-    }
     
     //reader
     MyScalar MyScalar::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
@@ -137,5 +133,19 @@ namespace demo {
     std::string MyScalar::static_type_name()
     {
         return "MyScalar";
+    }
+    
+    //to string trait
+    std::string to_string(const demo::MyScalar & value)
+    {
+        std::string res = "MyScalar\n";
+        res += "\tsign = " + rd::to_string(value.sign_) + '\n';
+        res += "\tbyte = " + rd::to_string(value.byte_) + '\n';
+        res += "\tshort = " + rd::to_string(value.short_) + '\n';
+        res += "\tint = " + rd::to_string(value.int_) + '\n';
+        res += "\tlong = " + rd::to_string(value.long_) + '\n';
+        res += "\tfloat_ = " + rd::to_string(value.float__) + '\n';
+        res += "\tdouble_ = " + rd::to_string(value.double__) + '\n';
+        return res;
     }
 };

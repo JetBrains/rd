@@ -8,7 +8,7 @@
 #include "SimpleWire.h"
 #include "Identities.h"
 #include "Protocol.h"
-#include "scheduler/SimpleScheduler.h"
+#include "SimpleScheduler.h"
 
 namespace rd {
 	namespace test {

@@ -46,6 +46,10 @@ namespace rd {
 			{
 				return "DynamicEntity";
 			}
+
+			std::string to_string(DynamicEntity const &value) {
+				return to_string(value.foo);
+			}
 		}
 	}
 }

@@ -15,11 +15,6 @@ namespace rd {
 
 				//region ctor/dtor
 
-				//    DynamicEntity() = default;
-
-
-				//region ctor/dtor
-
 				DynamicEntity() = default;
 
 				DynamicEntity(DynamicEntity const &other) = delete;
@@ -57,6 +52,8 @@ namespace rd {
 				std::string type_name() const override;
 
 				static std::string static_type_name();
+
+				friend std::string to_string(DynamicEntity const &value);
 			};
 		}
 	}

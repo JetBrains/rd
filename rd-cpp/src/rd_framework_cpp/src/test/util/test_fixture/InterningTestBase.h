@@ -61,12 +61,12 @@ namespace rd {
                     secondSenderProtocol, second_sender_model_view,
                     simpleTestData.size(), L"");
 
-                int64_t sum = std::accumulate(simpleTestData.begin(), simpleTestData.end(), 0L,
+                int64_t sum12 = std::accumulate(simpleTestData.begin(), simpleTestData.end(), 0L,
                                               [&](int64_t acc, std::pair<int32_t, std::wstring> it) {
                                                   return acc += it.second.length();
                                               });
-                std::cerr << first_bytes_written << " " << second_bytes_written << std::endl;
-                EXPECT_TRUE(first_bytes_written - sum >= second_bytes_written);
+//                std::cerr << first_bytes_written << " " << second_bytes_written << std::endl;
+                EXPECT_TRUE(first_bytes_written - sum12 >= second_bytes_written);
 
                 auto const& first_receiver_view = (firstClient) ? server_model_view : client_model_view;
                 auto const& second_receiver_view = (secondClient) ? server_model_view : client_model_view;
@@ -86,7 +86,7 @@ namespace rd {
                     return;
                 }
 
-                auto extraString = L"again";
+                std::wstring extraString = L"again";
 
                 auto third_bytes_written = get_written_bytes_count<String>(
                     secondSenderProtocol, second_sender_model_view,
@@ -95,6 +95,13 @@ namespace rd {
                 auto fourth_bytes_written = get_written_bytes_count<String>(
                     firstSenderProtocol, first_sender_model_view,
                     simpleTestData.size() * 3, extraString);
+
+				int64_t sum34 = std::accumulate(simpleTestData.begin(), simpleTestData.end(), 0L,
+											  [&](int64_t acc, std::pair<int32_t, std::wstring> it) {
+												  return acc += it.second.length() + extraString.length();
+											  });
+
+				EXPECT_TRUE(third_bytes_written - sum34 >= fourth_bytes_written);
 
                 for_each([&](int32_t const& k, std::wstring const& v) {
                     EXPECT_EQ(v + extraString,

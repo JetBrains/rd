@@ -193,6 +193,13 @@ namespace rd {
 			return local_change([&] { return list::removeAll(std::move(elements)); });
 		}
 
+		friend std::string to_string(RdList const &value) {
+			std::string res = "[";
+			for (auto const& p : value) {
+				res += to_string(p) + ",";
+			}
+			return res + "]";
+		}
 		//region iterators
 
 		using iterator = typename ViewableList<T>::iterator;

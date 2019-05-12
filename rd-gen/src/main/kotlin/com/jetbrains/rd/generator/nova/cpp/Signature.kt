@@ -13,7 +13,7 @@ sealed class Signature {
     abstract fun def(): String
 
 
-    class MemberFunction(private val returnType: String, private val arguments: String, private val scope: String, private var isAbstract: Boolean = false) : Signature() {
+    class MemberFunction(private val returnType: String, private val arguments: String, private val scope: String?, private var isAbstract: Boolean = false) : Signature() {
         private var declPrefix = arrayListOf<String>()
         private var declPostfix = arrayListOf<String>()
         private var commonPostfix = arrayListOf<String>()
@@ -31,7 +31,7 @@ sealed class Signature {
         }
 
         override fun def(): String {
-            return "$returnType $scope::$arguments${commonPostfix.back()}"
+            return "$returnType ${scope?.let { "$it::" }.orEmpty()}$arguments${commonPostfix.back()}"
         }
 
         fun const(): MemberFunction {
@@ -61,12 +61,16 @@ sealed class Signature {
                 }
             }
         }
+
+        fun friend(): MemberFunction {
+            return this.also {
+                declPrefix.add("friend")
+            }
+        }
     }
 
     sealed class Constructor(protected val generator: Cpp17Generator, protected val decl: Declaration, private val arguments: List<Member>) : Signature() {
         private var isExplicit = false
-        private var isDefault = false
-        private var isSecondary = false
 
         val name = decl.name
         val params = arguments.joinToString(separator = ", ") { generator.ctorParam(it, decl, false) }

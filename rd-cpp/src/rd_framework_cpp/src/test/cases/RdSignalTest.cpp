@@ -162,7 +162,9 @@ public:
 		return !(rhs == lhs);
 	}
 
-
+	friend std::string to_string(FooScalar const &value) {
+		return rd::to_string(value.x) + "\n" + rd::to_string(value.y);
+	}
 };
 
 TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {

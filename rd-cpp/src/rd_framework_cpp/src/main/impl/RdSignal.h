@@ -84,6 +84,10 @@ namespace rd {
 			}
 			signal.advise(lifetime, handler);
 		}
+
+		friend std::string to_string(RdSignal const &value) {
+			return "";
+		}
 	};
 }
 

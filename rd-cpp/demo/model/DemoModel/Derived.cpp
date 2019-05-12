@@ -21,10 +21,6 @@ namespace demo {
     //secondary constructor
     
     //default ctors and dtors
-    Derived::Derived()
-    {
-        initialize();
-    }
     
     //reader
     Derived Derived::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
@@ -89,5 +85,13 @@ namespace demo {
     std::string Derived::static_type_name()
     {
         return "Derived";
+    }
+    
+    //to string trait
+    std::string to_string(const demo::Derived & value)
+    {
+        std::string res = "Derived\n";
+        res += "\tstring = " + rd::to_string(value.string_) + '\n';
+        return res;
     }
 };

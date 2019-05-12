@@ -2,6 +2,7 @@ add_library(rd_core_cpp_util STATIC
         Void.cpp Void.h
         core_util.h erase_if.h gen_util.h overloaded.h wrapper.h shared_function.h
         core_traits.h
+        to_string.cpp to_string.h
         Logger.cpp Logger.h wrapper.cpp
         filesystem.cpp filesystem.h)
 

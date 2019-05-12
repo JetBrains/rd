@@ -104,7 +104,7 @@ interface IViewableMap<K : Any, V:Any> : Map<K, V>, IViewable<Map.Entry<K, V>>, 
             val entry = KeyValuePair(key, value)
             when (kind) {
                 AddRemove.Add -> {
-                    val def = lifetimes.putUnique(key, Lifetime.create(lifetime))
+                    val def = lifetimes.putUnique(key, lifetime.createNested())
                     handler(def.lifetime, entry)
                 }
                 AddRemove.Remove -> {
@@ -222,7 +222,7 @@ interface IViewableList<out V: Any> : List<V>, IViewable<Pair<Int, V>>, ISource<
         adviseAddRemove(lifetime) { kind, idx, value ->
             when (kind) {
                 AddRemove.Add -> {
-                    val ldef = Lifetime.create(lifetime)
+                    val ldef = lifetime.createNested()
                     lifetimes.add(idx, ldef)
                     handler(ldef.lifetime, idx, value)
                 }

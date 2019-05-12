@@ -295,7 +295,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }?.let { "rd::$it" }
     }
 
-    protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean, withNamespace : Boolean): String {
+    protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean, withNamespace: Boolean): String {
         val className = if (withNamespace) "${scope.namespace}::" + scope.name else scope.name
         return leafSerializerRef(scope)
                 ?: isUsage.condstr { "$className::" } + when (this) {
@@ -507,7 +507,6 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     println("""
                         |if ($conditionalVariable)
                         |    set(PCH_CPP_OPT $pchCppFile)
-                        |endif ()
                         |else ()
                         |    set(PCH_CPP_OPT "")
                         |endif ()""".trimMargin()
@@ -577,7 +576,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             val types = tl.declaredTypes + tl + unknowns(tl.declaredTypes)
             val directory = tl.fsPath()
             directory.mkdirs()
-            val fileNames = types.filter { it !is Enum }.map { it.fsName(true) } + types.map { it.fsName(false) }
+            val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
 //            directory.cmakeLists(tl.name, fileNames)
@@ -592,9 +591,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                                 //actual generation
 
                                 if (isDefinition) {
-                                    if (type !is Enum) {
-                                        source(type, types)
-                                    }
+                                    source(type, types)
                                 } else {
                                     header(type)
                                 }
@@ -653,6 +650,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         +decl.include()
 
         println()
+
+        if (decl is Enum) {
+            surroundWithNamespaces {
+                enumToStringTraitDef(decl)
+            }
+            return
+        }
+
         if (decl is Toplevel) {
             dependencies.filter { !it.isAbstract }.filterIsInstance<IType>().println {
                 it.include()
@@ -774,9 +779,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
                 comment("static type name trait")
                 declare(staticTypenameTraitDecl(decl))
-                //            comment("pretty print")
-                //            prettyPrintTrait(decl)
 
+                comment("to string trait")
+                declare(toStringTraitDecl(decl))
 
                 /*if (decl.isExtension) {
                     extensionTraitDef(decl as Ext)
@@ -784,7 +789,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             }
         }
 
-        externTemplates(decl)
+//        externTemplates(decl)
 
         VsWarningsDefault?.let {
             println()
@@ -801,6 +806,23 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             +decl.constants.joinToString(separator = ",${eolKind.value}") {
                 docComment(it.documentation) + it.name
             }
+        }
+
+        declare(enumToStringTraitDecl(decl))
+    }
+
+    private fun enumToStringTraitDecl(decl: Enum): MemberFunction {
+        return MemberFunction("std::string", "to_string(const ${decl.name} & value)", null)
+    }
+
+    private fun PrettyPrinter.enumToStringTraitDef(decl: Enum) {
+        define(enumToStringTraitDecl(decl)) {
+            +"""
+            |switch(value) {
+            |${decl.constants.joinToString(separator = eol) { """case ${decl.name}::${it.name}: return "${it.name}";""" }}
+            |}
+            """.trimMargin()
+
         }
     }
 
@@ -1217,6 +1239,12 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
+    private fun toStringTraitDecl(decl: Declaration): MemberFunction? {
+        if (!(decl is Toplevel || decl.isConcrete)) return null
+
+        return MemberFunction("std::string", "to_string(const ${decl.name} & value)", null).friend()
+    }
+
     protected fun PrettyPrinter.hashSpecialization(decl: Declaration) {
         if (decl !is IScalar) return
         if (decl is Enum) return
@@ -1290,9 +1318,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         comment("static type name trait")
         staticTypenameTraitDef(decl)
-//        comment("pretty print")
-//            prettyPrintTrait(decl)
 
+        comment("to string trait")
+        toStringTraitDef(decl)
     }
 
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
@@ -1711,6 +1739,19 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             }
         }
     }
+
+    private fun PrettyPrinter.toStringTraitDef(decl: Declaration) {
+        toStringTraitDecl(decl)?.let {
+            define(it) {
+                +"""std::string res = "${decl.name}\n";"""
+                decl.allMembers.forEach {
+                    println("""res += "\t${it.name} = " + rd::to_string(value.${it.encapsulatedName}) + '\n';""")
+                }
+                +"return res;"
+            }
+        }
+    }
+
 
     protected fun PrettyPrinter.extensionTraitDef(decl: Ext) {//todo
         define(extensionTraitDecl(decl)) {

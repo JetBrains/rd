@@ -119,6 +119,14 @@ namespace rd {
 			return local_change([this, elements = std::move(elements)]() mutable { return set::addAll(elements); });
 		}
 
+		friend std::string to_string(RdSet const &value) {
+			std::string res = "[";
+			for (auto const& p : value) {
+				res += to_string(*p) + ",";
+			}
+			return res + "]";
+		}
+
 		using IViewableSet<T>::advise;
 	};
 }

@@ -75,6 +75,10 @@ namespace rd {
 		friend bool operator!=(const RdProperty &lhs, const RdProperty &rhs) {
 			return !(rhs == lhs);
 		}
+
+		friend std::string to_string(RdProperty const &value) {
+			return value.has_value() ? to_string(value.get()) : "nullptr"s;
+		}
 	};
 }
 

@@ -84,4 +84,12 @@ namespace demo {
     //type name trait
     
     //static type name trait
+    
+    //to string trait
+    std::string to_string(const demo::ExtModel & value)
+    {
+        std::string res = "ExtModel\n";
+        res += "\tchecker = " + rd::to_string(value.checker_) + '\n';
+        return res;
+    }
 };

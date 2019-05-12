@@ -82,6 +82,13 @@ namespace rd {
 			{
 				return "ConcreteEntity";
 			}
+
+			std::string to_string(ConcreteEntity const &value) {
+				std::string res = "ConcreteEntity\n";
+				res += "\tname_ = " + rd::to_string(value.name_) + '\n';
+				res += "\tstringValue_ = " + rd::to_string(value.stringValue_) + '\n';
+				return res;
+			}
 		};
 	}
 }

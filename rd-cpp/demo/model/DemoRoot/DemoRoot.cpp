@@ -77,4 +77,11 @@ namespace demo {
     //type name trait
     
     //static type name trait
+    
+    //to string trait
+    std::string to_string(const demo::DemoRoot & value)
+    {
+        std::string res = "DemoRoot\n";
+        return res;
+    }
 };

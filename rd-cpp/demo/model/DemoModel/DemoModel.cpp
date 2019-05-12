@@ -145,4 +145,20 @@ namespace demo {
     //type name trait
     
     //static type name trait
+    
+    //to string trait
+    std::string to_string(const demo::DemoModel & value)
+    {
+        std::string res = "DemoModel\n";
+        res += "\tboolean_property = " + rd::to_string(value.boolean_property_) + '\n';
+        res += "\tscalar = " + rd::to_string(value.scalar_) + '\n';
+        res += "\tlist = " + rd::to_string(value.list_) + '\n';
+        res += "\tset = " + rd::to_string(value.set_) + '\n';
+        res += "\tmapLongToString = " + rd::to_string(value.mapLongToString_) + '\n';
+        res += "\tcall = " + rd::to_string(value.call_) + '\n';
+        res += "\tcallback = " + rd::to_string(value.callback_) + '\n';
+        res += "\tinterned_string = " + rd::to_string(value.interned_string_) + '\n';
+        res += "\tpolymorphic = " + rd::to_string(value.polymorphic_) + '\n';
+        return res;
+    }
 };

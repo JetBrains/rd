@@ -74,6 +74,12 @@ namespace rd {
 			{
 				return "AbstractEntity";
 			}
+
+			std::string to_string(AbstractEntity const &value) {
+				std::string res = "AbstractEntity\n";
+				res += "\tname_ = " + rd::to_string(value.name_) + '\n';
+				return res;
+			}
 		};
 	}
 }

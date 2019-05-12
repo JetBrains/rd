@@ -28,7 +28,7 @@ namespace demo {
         auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());
         buffer.readByteArrayRaw(unknownBytes);
         Base_Unknown res{unknownId, unknownBytes};
-        return res;
+        return rd::Wrapper<Base_Unknown>(std::move(res));
     }
     
     //writer
@@ -45,6 +45,7 @@ namespace demo {
     
     //equality operators
     bool operator==(const Base &lhs, const Base &rhs) {
+        if (lhs.type_name() != rhs.type_name()) return false;
         return lhs.equals(rhs);
     };
     bool operator!=(const Base &lhs, const Base &rhs){
@@ -69,4 +70,6 @@ namespace demo {
     {
         return "Base";
     }
+    
+    //to string trait
 };

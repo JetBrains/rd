@@ -40,7 +40,7 @@ namespace rd {
 			T const *value;
 
 			friend std::string to_string(Event const &e) {
-				return to_string(e.kind) + " " + to_string(e.value);
+				return to_string(e.kind) + ":" + to_string(*e.value);
 			}
 		};
 

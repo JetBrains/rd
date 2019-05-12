@@ -170,7 +170,7 @@ namespace rd {
 			return Base::operator->();
 		}
 
-		constexpr explicit operator bool() const noexcept {
+		explicit operator bool() const noexcept {
 			return Base::operator bool();
 		}
 
@@ -188,6 +188,10 @@ namespace rd {
 
 		friend bool operator!=(const Wrapper &lhs, const Wrapper &rhs) {
 			return !(rhs == lhs);
+		}
+
+		friend std::string to_string(Wrapper const &value) {
+			return value.has_value() ? to_string(*value) : "nullptr"s;
 		}
 	};
 

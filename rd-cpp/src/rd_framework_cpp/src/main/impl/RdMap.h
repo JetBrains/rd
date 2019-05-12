@@ -229,6 +229,14 @@ namespace rd {
 		bool empty() const override {
 			return map::empty();
 		}
+
+		friend std::string to_string(RdMap const &value) {
+			std::string res = "[";
+			for (auto it = value.begin(); it != value.end(); ++it) {
+				res += to_string(it.key()) + "=>" + to_string(it.value()) + ",";
+			}
+			return res + "]";
+		}
 	};
 }
 
