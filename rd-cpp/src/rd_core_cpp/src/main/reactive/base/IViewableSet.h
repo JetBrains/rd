@@ -38,6 +38,10 @@ namespace rd {
 
 			AddRemove kind;
 			T const *value;
+
+			friend std::string to_string(Event const &e) {
+				return to_string(e.kind) + " " + to_string(e.value);
+			}
 		};
 
 		void advise(Lifetime lifetime, std::function<void(AddRemove, T const &)> handler) const {

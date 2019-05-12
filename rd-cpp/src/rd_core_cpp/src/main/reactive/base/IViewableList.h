@@ -83,6 +83,27 @@ namespace rd {
 						}
 				), v);
 			}
+
+			friend std::string to_string(Event const &e) {
+				std::string res = visit(util::make_visitor(
+						[](typename Event::Add const &e) {
+							return "Add " +
+								   std::to_string(e.index) + ":" +
+								   to_string(*e.new_value);
+						},
+						[](typename Event::Update const &e) {
+							return "Update " +
+								   std::to_string(e.index) + ":" +
+								   //                       to_string(e.old_value) + ":" +
+								   to_string(*e.new_value);
+						},
+						[](typename Event::Remove const &e) {
+							return "Remove " +
+								   std::to_string(e.index);
+						}
+				), e.v);
+				return res;
+			}
 		};
 
 	protected:

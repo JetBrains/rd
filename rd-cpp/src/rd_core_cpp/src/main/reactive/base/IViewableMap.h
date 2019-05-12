@@ -103,6 +103,27 @@ namespace rd {
 						}
 				), v);
 			}
+
+			friend std::string to_string(Event const &e) {
+				std::string res = visit(util::make_visitor(
+						[](typename Event::Add const &e) -> std::string {
+							return "Add " +
+								   to_string(*e.key) + ":" +
+								   to_string(*e.new_value);
+						},
+						[](typename Event::Update const &e) -> std::string {
+							return "Update " +
+								   to_string(*e.key) + ":" +
+								   //                       to_string(e.old_value) + ":" +
+								   to_string(*e.new_value);
+						},
+						[](typename Event::Remove const &e) -> std::string {
+							return "Remove " +
+								   to_string(*e.key);
+						}
+				), e.v);
+				return res;
+			}
 		};
 
 		//region ctor/dtor
