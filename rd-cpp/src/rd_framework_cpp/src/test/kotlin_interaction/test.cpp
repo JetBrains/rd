@@ -2,15 +2,18 @@
 #include "SimpleScheduler.h"
 #include "RdProperty.h"
 #include "Protocol.h"
+#include "filesystem.h"
 
 #include "thirdparty.hpp"
 
 #include <fstream>
 
+
 using namespace rd;
 
 int main() {
-	std::ifstream fin("C:\\temp\\port.txt");
+	auto tmp_directory = filesystem::get_temp_directory() + "/rd/port.txt";
+	std::ifstream fin(tmp_directory);
 	uint16_t port;
 	fin >> port;
 	LifetimeDefinition definition(Lifetime::Eternal());

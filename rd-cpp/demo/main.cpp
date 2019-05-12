@@ -5,11 +5,10 @@
 #include "SocketWire.h"
 #include "Protocol.h"
 #include "SimpleScheduler.h"
-
+#include "filesystem.h"
 #include <cstdint>
 #include <fstream>
 #include <string>
-#include <DemoModel/Derived.h>
 
 using namespace rd;
 using namespace demo;
@@ -23,9 +22,10 @@ int main() {
 	LifetimeDefinition socket_definition(false);
 	Lifetime socket_lifetime = definition.lifetime;
 
+	auto tmp_directory = filesystem::get_temp_directory() + "/rd/port.txt";
 	//region Client initialization
 	uint16_t port = 0;
-	std::ifstream inputFile("C:/temp/port.txt");
+	std::ifstream inputFile(tmp_directory);
 	inputFile >> port;
 
 	auto wire = std::make_shared<SocketWire::Client>(socket_lifetime, &scheduler, port, "TestClient");
@@ -37,7 +37,7 @@ int main() {
 	auto protocol = std::make_unique<Protocol>(Identities(Identities::SERVER), &protocol_scheduler, wire);
 
 	uint16_t port = wire->port;
-	std::ofstream outputFile("C:\\temp\\port.txt");
+	std::ofstream outputFile(tmp_directory);
 	outputFile << port;*/
 	//endregion
 

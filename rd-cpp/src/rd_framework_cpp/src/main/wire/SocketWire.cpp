@@ -306,8 +306,9 @@ namespace rd {
 
 	SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port,
 							   const std::string &id) : Base(id, lifetime, scheduler) {
+#ifdef __linux__
 		signal(SIGPIPE, SIG_IGN);
-
+#endif
 		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket")
 		RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
 					  this->id + ": failed to listen socket on port:" + std::to_string(port));

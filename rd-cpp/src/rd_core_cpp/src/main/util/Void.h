@@ -9,6 +9,10 @@ namespace rd {
 
 		friend bool operator!=(const Void &lhs, const Void &rhs);
 	};
+
+	std::string to_string(Void const &) {
+		return "void";
+	}
 }
 
 namespace std {

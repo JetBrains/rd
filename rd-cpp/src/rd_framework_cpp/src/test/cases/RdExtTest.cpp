@@ -137,7 +137,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
 
 	clientScheduler.pump_one_message(); //send "UPGRADE"
 	checkSchedulersAreEmpty();
-
+	
 	EXPECT_EQ(serverExt.property.get(), L"UPGRADE");
 	EXPECT_EQ(clientExt.property.get(), L"UPGRADE");
 

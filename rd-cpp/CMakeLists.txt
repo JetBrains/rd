@@ -31,8 +31,9 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 option(ENABLE_TESTS_OPTION "Global enable test" ON)
 
-option(RD_CORE_CPP_ENABLE_TESTS "Enable tests." ${ENABLE_TESTS_OPTION})
-option(RD_FRAMEWORK_CPP_ENABLE_TESTS "Enable tests." ${ENABLE_TESTS_OPTION})
+option(RD_CORE_CPP_ENABLE_TESTS "Enable core tests." ${ENABLE_TESTS_OPTION})
+option(RD_FRAMEWORK_CPP_ENABLE_TESTS "Enable framework tests." ${ENABLE_TESTS_OPTION})
+option(RD_GEN_CPP_ENABLE_TESTS "Enable gen tests." ${ENABLE_TESTS_OPTION})
 
 option(ENABLE_PCH_HEADERS "Enable precompiled headers" ON)
 if (ENABLE_PCH_HEADERS)

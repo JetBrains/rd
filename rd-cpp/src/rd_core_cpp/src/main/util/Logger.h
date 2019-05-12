@@ -8,6 +8,8 @@
 #include <exception>
 #include <iostream>
 #include <thread>
+#include <cstdarg>
+#include <mutex>
 
 namespace rd {
 	enum class LogLevel {
@@ -25,81 +27,89 @@ namespace rd {
 
 	class Logger {
 		static std::string string_format(string_view format, ...) {
-			va_list args;
-			size_t len = std::vsnprintf(NULL, 0, format.data(), args);
-			va_end(args);
-			std::string vec;
-			vec.resize(len + 1);
-			va_start(args, format);
-			std::vsnprintf(&vec[0], len + 1, format.data(), args);
-			va_end(args);
-			return vec;
+			const char *const format_ptr = format.data();
+
+			va_list arg_list;
+			va_start(arg_list, format);
+
+			va_list va_copy;
+			va_copy(va_copy, arg_list);
+			const int len = std::vsnprintf(nullptr, 0, format_ptr, va_copy);
+			va_end(va_copy);
+
+			std::string buf;
+			buf.resize(len + 1);
+			std::vsnprintf(&buf[0], buf.size(), format_ptr, arg_list);
+			va_end(arg_list);
+			return buf;
 		}
 
+		mutable std::mutex lock;
+		std::ostream &out;
 	public:
+		explicit Logger(std::ostream &out = std::cerr) : out(out) {}
+
 		template<typename... Args>
-		void log(std::exception const *e, LogLevel level, string_view format, Args &&... args) const {
+		void log(std::exception const *e, LogLevel level, string_view format, Args const &... args) const {
 			if (level >= minimum_level_to_log) {
-				std::ostringstream ss;
-				ss << to_string(level) << " | " << to_string(std::this_thread::get_id()) << " | ";
-				ss << string_format(format, std::forward<Args>(args)...);
+				std::lock_guard<std::mutex> guard(lock);
+				out << to_string(level) << " | " << to_string(std::this_thread::get_id()) << " | ";
+				out << string_format(format, args...);
 				if (e) {
-					ss << " | " << e->what();
+					out << " | " << e->what();
 				}
-				ss << "\n";
-//				std::cerr << ss.str();
-				std::cerr.flush();
+				out << std::endl;
 			}
 		}
 
 		template<typename... Args>
-		void trace(const std::exception *e, string_view msg, Args &&... args) const {
-			log(e, LogLevel::Trace, msg, std::forward<Args>(args)...);
+		void trace(const std::exception *e, string_view msg, Args const &... args) const {
+			log(e, LogLevel::Trace, msg, args...);
 		}
 
 		template<typename... Args>
-		void trace(string_view msg, Args &&... args) const {
-			log(nullptr, LogLevel::Trace, msg, std::forward<Args>(args)...);
+		void trace(string_view msg, Args const &... args) const {
+			log(nullptr, LogLevel::Trace, msg, args...);
 		}
 
 		template<typename... Args>
-		void debug(const std::exception *e, string_view msg, Args &&... args) const {
-			log(LogLevel::Debug, msg, std::forward<Args>(args)...);
+		void debug(const std::exception *e, string_view msg, Args const &... args) const {
+			log(LogLevel::Debug, msg, args...);
 		}
 
 		template<typename... Args>
-		void debug(string_view msg, Args &&... args) const {
-			log(nullptr, LogLevel::Debug, msg, std::forward<Args>(args)...);
+		void debug(string_view msg, Args const &... args) const {
+			log(nullptr, LogLevel::Debug, msg, args...);
 		}
 
 		template<typename... Args>
-		void info(const std::exception *e, string_view msg, Args &&... args) const {
-			log(e, LogLevel::Info, msg, std::forward<Args>(args)...);
+		void info(const std::exception *e, string_view msg, Args const &... args) const {
+			log(e, LogLevel::Info, msg, args...);
 		}
 
 		template<typename... Args>
-		void info(string_view msg, Args &&... args) const {
-			log(nullptr, LogLevel::Info, msg, std::forward<Args>(args)...);
+		void info(string_view msg, Args const &... args) const {
+			log(nullptr, LogLevel::Info, msg, args...);
 		}
 
 		template<typename... Args>
-		void warn(const std::exception *e, string_view msg, Args &&... args) const {
-			log(e, LogLevel::Warn, msg, std::forward<Args>(args)...);
+		void warn(const std::exception *e, string_view msg, Args const &... args) const {
+			log(e, LogLevel::Warn, msg, args...);
 		}
 
 		template<typename... Args>
-		void warn(string_view msg, Args &&... args) const {
-			log(nullptr, LogLevel::Warn, msg, std::forward<Args>(args)...);
+		void warn(string_view msg, Args const &... args) const {
+			log(nullptr, LogLevel::Warn, msg, args...);
 		}
 
 		template<typename... Args>
-		void error(std::exception const *e, string_view msg, Args &&... args) const {
-			log(e, LogLevel::Error, msg, std::forward<Args>(args)...);
+		void error(std::exception const *e, string_view msg, Args const &... args) const {
+			log(e, LogLevel::Error, msg, args...);
 		}
 
 		template<typename... Args>
-		void error(string_view msg, Args &&... args) const {
-			log(nullptr, LogLevel::Error, msg, std::forward<Args>(args)...);
+		void error(string_view msg, Args const &... args) const {
+			log(nullptr, LogLevel::Error, msg, args...);
 		}
 	};
 

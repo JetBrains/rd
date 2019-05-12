@@ -40,7 +40,7 @@ namespace rd {
 			T const *value;
 		};
 
-		virtual void advise(Lifetime lifetime, std::function<void(AddRemove, T const &)> handler) const {
+		void advise(Lifetime lifetime, std::function<void(AddRemove, T const &)> handler) const {
 			this->advise(lifetime, [handler](Event e) {
 				handler(e.kind, *e.value);
 			});
