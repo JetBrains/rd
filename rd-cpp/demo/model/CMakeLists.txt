@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10.2)
 option(ENABLE_PCH_HEADERS_FOR_demo_model "Enable precompiled headers" OFF)
 if (ENABLE_PCH_HEADERS_FOR_demo_model)
     set(PCH_CPP_OPT pch.cpp)

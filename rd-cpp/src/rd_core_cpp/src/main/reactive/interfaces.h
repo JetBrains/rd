@@ -33,7 +33,7 @@ namespace rd {
 	public:
 		virtual ~IViewable() = default;
 
-		virtual void view(Lifetime lifetime, std::function<void(Lifetime, T const &)> handler) const = 0;
+		virtual void view(Lifetime lifetime, std::function< void(Lifetime, T const &)> handler) const = 0;
 	};
 
 	template<typename T>
@@ -44,7 +44,7 @@ namespace rd {
 		virtual ~ISignal() = default;
 
 		virtual void fire(T const &value) const = 0;
-		
+
 		template<typename U = T>
 		typename std::enable_if_t<util::is_void<U>> fire() const {
 			fire(Void{});

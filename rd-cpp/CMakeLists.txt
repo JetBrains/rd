@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.10.2)
 project(
         rd_cpp
         VERSION 1.0
-        DESCRIPTION "C++ implementation of JetBrains IPC"
-        HOMEPAGE_URL "https://github.com/jetbrains/rd"
+#        DESCRIPTION "C++ implementation of JetBrains IPC"
+#        HOMEPAGE_URL "https://github.com/jetbrains/rd"
         LANGUAGES CXX
 )
 

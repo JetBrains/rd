@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.fire
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.print
+import com.jetbrains.rd.util.string.println
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.example.*
 import java.io.File
@@ -53,28 +54,28 @@ fun main() {
 private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, printer: PrettyPrinter) {
     model.boolean_property.advise(lifetime) {
         printer.print("BooleanProperty:")
-        it.print(printer)
+        it.println(printer)
     }
 
     model.scalar.advise(lifetime) {
         printer.print("Scalar:")
-        it.print(printer)
+        it.println(printer)
     }
 
     model.list.advise(lifetime) {
         printer.print("RdList:")
-        it.print(printer)
+        it.println(printer)
     }
 
     model.set.advise(lifetime) { e, x ->
         printer.print("RdSet:")
         e.print(printer)
-        x.print(printer)
+        x.println(printer)
     }
 
     model.mapLongToString.advise(lifetime) {
         printer.print("RdMap:")
-        it.print(printer)
+        it.println(printer)
     }
 
     model.call.set { c ->
@@ -86,17 +87,17 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
 
     model.interned_string.advise(lifetime) {
         printer.print("Interned:")
-        it.print(printer)
+        it.println(printer)
     }
 
     model.polymorphic.advise(lifetime) {
         printer.print("Polymorphic:")
-        it.print(printer)
+        it.println(printer)
     }
 
     extModel.checker.advise(lifetime) {
         printer.print("ExtModel:Checker:")
-        it.print(printer)
+        it.println(printer)
     }
 }
 
