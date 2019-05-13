@@ -44,7 +44,7 @@ namespace rd {
 			return buf;
 		}
 
-		mutable std::mutex lock;
+		static std::mutex lock;
 		std::ostream &out;
 	public:
 		explicit Logger(std::ostream &out = std::cerr) : out(out) {}
@@ -52,7 +52,7 @@ namespace rd {
 		template<typename... Args>
 		void log(std::exception const *e, LogLevel level, string_view format, Args const &... args) const {
 			if (level >= minimum_level_to_log) {
-				std::lock_guard<std::mutex> guard(lock);
+				std::lock_guard<std::mutex> guard(Logger::lock);
 				out << to_string(level) << " | " << to_string(std::this_thread::get_id()) << " | ";
 				out << string_format(format, args...);
 				if (e) {
