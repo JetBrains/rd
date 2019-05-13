@@ -6,25 +6,11 @@
 #define RD_CPP_FILESYSTEM_H
 
 #include <string>
-
-#ifdef _WIN32
-
-#include <windows.h>
-
-#endif
+#include <cassert>
 
 namespace rd {
 	namespace filesystem {
-		std::string get_temp_directory() {
-#ifdef _WIN32
-			char path[MAX_PATH];
-			assert (GetTempPath(MAX_PATH, path));
-			return path;
-#endif
-#ifdef __linux__
-			return "/tmp";
-#endif
-		}
+		std::string get_temp_directory();
 	}
 }
 

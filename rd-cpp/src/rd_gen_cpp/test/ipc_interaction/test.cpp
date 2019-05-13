@@ -1,12 +1,13 @@
 #include "DemoModel.h"
 #include "ExtModel.h"
+#include "Derived.h"
 
 #include "Lifetime.h"
 #include "SocketWire.h"
 #include "Protocol.h"
 #include "SimpleScheduler.h"
-#include "filesystem.h"
 
+#include "filesystem.h"
 #include <cstdint>
 #include <fstream>
 #include <string>
@@ -71,7 +72,7 @@ int main() {
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 
 	for (const auto &item : printer) {
-		std::cout << item;
+		std::cout << item << std::endl;
 	}
 	std::cout << std::endl;
 	return 0;
@@ -140,7 +141,8 @@ std::wstring fireAll(const DemoModel &model, const ExtModel &extModel) {
 	);
 	model.get_scalar().set(scalar);
 
-	model.get_list().set(9, 8);
+	// model.get_list().add(9);
+	// model.get_list().add(8);
 
 	model.get_set().add(98);
 
@@ -149,8 +151,9 @@ std::wstring fireAll(const DemoModel &model, const ExtModel &extModel) {
 	auto valA = L"Cpp";
 	auto valB = L"protocol";
 
-	auto res = model.get_call().sync(L'c');
-
+	// auto res = model.get_call().sync(L'c');
+	auto res = L"";
+	
 	model.get_interned_string().set(valA);
 	model.get_interned_string().set(valA);
 	model.get_interned_string().set(valB);

@@ -1240,7 +1240,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     }
 
     private fun toStringTraitDecl(decl: Declaration): MemberFunction? {
-        if (!(decl is Toplevel || decl.isConcrete)) return null
+//        if (!(decl is Toplevel)) return null
 
         return MemberFunction("std::string", "to_string(const ${decl.name} & value)", null).friend()
     }

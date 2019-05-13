@@ -111,7 +111,7 @@ namespace demo {
         static std::string static_type_name();
         
         //to string trait
-        friend std::string to_string(const demo::Base_Unknown & value);
+        friend std::string to_string(const Base_Unknown & value);
     };
 };
 

@@ -136,7 +136,7 @@ namespace demo {
     }
     
     //to string trait
-    std::string to_string(const demo::MyScalar & value)
+    std::string to_string(const MyScalar & value)
     {
         std::string res = "MyScalar\n";
         res += "\tsign = " + rd::to_string(value.sign_) + '\n';

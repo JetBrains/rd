@@ -132,7 +132,7 @@ namespace demo {
         //static type name trait
         
         //to string trait
-        friend std::string to_string(const demo::DemoModel & value);
+        friend std::string to_string(const DemoModel & value);
     };
 };
 

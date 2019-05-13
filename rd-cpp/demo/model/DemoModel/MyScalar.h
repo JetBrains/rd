@@ -122,7 +122,7 @@ namespace demo {
         static std::string static_type_name();
         
         //to string trait
-        friend std::string to_string(const demo::MyScalar & value);
+        friend std::string to_string(const MyScalar & value);
     };
 };
 

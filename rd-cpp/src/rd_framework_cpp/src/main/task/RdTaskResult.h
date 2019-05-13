@@ -125,8 +125,22 @@ namespace rd {
 			return !(rhs == lhs);
 		}
 
+		friend std::string to_string(RdTaskResult const &taskResult) {
+			return visit(util::make_visitor(
+					[](Success const &value) -> std::string {
+						return to_string(value.value);
+					},
+					[](Cancelled const &value) -> std::string {
+						return "Cancelled state";
+					},
+					[](Fault const &value) -> std::string {
+						return to_string(value.reasonMessage);
+					}
+			), taskResult.v);
+		}
+
 	private:
-		mutable variant<Success, Cancelled, Fault> v;
+		mutable variant <Success, Cancelled, Fault> v;
 	};
 }
 

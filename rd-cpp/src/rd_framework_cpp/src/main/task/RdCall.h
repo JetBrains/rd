@@ -71,7 +71,7 @@ namespace rd {
 				auto const &request = requests.at(taskId);
 				auto result = RdTaskResult<TRes, ResSer>::read(get_serialization_context(), buffer);
 				logReceived.trace("call " + location.toString() + " " + rdid.toString() +
-								  " received response " + taskId.toString() + " : ${result.printToString()} ");
+								  " received response " + taskId.toString() + " : " + to_string(result));
 				//auto const&[scheduler, task] = request;
 				auto const &scheduler = request.first;
 				auto const &task = request.second;

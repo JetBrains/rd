@@ -116,7 +116,7 @@ namespace demo {
         //static type name trait
         
         //to string trait
-        friend std::string to_string(const demo::ExtModel & value);
+        friend std::string to_string(const ExtModel & value);
     };
 };
 

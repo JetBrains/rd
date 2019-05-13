@@ -28,23 +28,24 @@ fun main() {
 
     val protocol = server(socketLifetime, NetUtils.findFreePort(0))
     val tmpDir = File(System.getProperty("java.io.tmpdir"))
-    File(tmpDir, "/rd/port.txt").printWriter().use { out ->
+    val file = File(tmpDir, "/rd/port.txt")
+    file.parentFile.mkdirs()
+    file.printWriter().use { out ->
         out.println((protocol.wire as SocketWire.Server).port)
     }
 
     val printer = PrettyPrinter()
-    val model = DemoModel.create(lifetime, protocol)
-    val extModel = model.extModel
     scheduler.queue {
-        adviseAll(lifetime, model, extModel, printer)
-    }
+        val model = DemoModel.create(lifetime, protocol)
+        val extModel = model.extModel
 
-    scheduler.queue {
+        adviseAll(lifetime, model, extModel, printer)
+
         val res = fireAll(model, extModel)
         res.print(printer)
     }
 
-    Thread.sleep(10_000)
+    Thread.sleep(10_000 )
 
     println(printer)
 }
@@ -112,7 +113,8 @@ fun fireAll(model: DemoModel, extModel: ExtModel): Int {
     )
     model.scalar.set(scalar)
 
-    model.list[1] = 3
+    model.list.add(1)
+    model.list.add(3)
 
     model.set.add(13)
 
@@ -121,7 +123,8 @@ fun fireAll(model: DemoModel, extModel: ExtModel): Int {
     val valA = "Kotlin"
     val valB = "protocol"
 
-    val sync = model.callback.sync("Unknown")
+//    val sync = model.callback.sync("Unknown")
+    val sync = 0
 
     model.interned_string.set(valA)
     model.interned_string.set(valA)

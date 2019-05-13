@@ -122,7 +122,7 @@ namespace rd {
 		friend std::string to_string(RdSet const &value) {
 			std::string res = "[";
 			for (auto const& p : value) {
-				res += to_string(*p) + ",";
+				res += to_string(p) + ",";
 			}
 			return res + "]";
 		}

@@ -2,6 +2,7 @@
 #define RD_CPP_VOID_H
 
 #include <functional>
+#include <string>
 
 namespace rd {
 	class Void {

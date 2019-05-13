@@ -108,7 +108,7 @@ namespace demo {
         //static type name trait
         
         //to string trait
-        friend std::string to_string(const demo::DemoRoot & value);
+        friend std::string to_string(const DemoRoot & value);
     };
 };
 

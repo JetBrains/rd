@@ -6,6 +6,7 @@
 #include <thread>
 #include <sstream>
 #include <vector>
+#include <atomic>
 
 #include "thirdparty.hpp"
 

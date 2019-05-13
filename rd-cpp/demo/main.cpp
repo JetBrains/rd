@@ -1,5 +1,6 @@
 #include "DemoModel.h"
 #include "ExtModel.h"
+#include "Derived.h"
 
 #include "Lifetime.h"
 #include "SocketWire.h"
@@ -50,7 +51,7 @@ int main() {
 			32000,
 			1'000'000'000,
 			-2'000'000'000'000'000'000,
-			3.14,
+			3.14f,
 			-123456789.012345678
 	};
 

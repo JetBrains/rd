@@ -110,7 +110,7 @@ namespace demo {
         static std::string static_type_name();
         
         //to string trait
-        friend std::string to_string(const demo::Derived & value);
+        friend std::string to_string(const Derived & value);
     };
 };
 

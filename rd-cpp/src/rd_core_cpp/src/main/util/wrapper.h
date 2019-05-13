@@ -2,6 +2,7 @@
 #define RD_CPP_WRAPPER_H
 
 #include "core_traits.h"
+#include "to_string.h"
 
 #include "thirdparty.hpp"
 

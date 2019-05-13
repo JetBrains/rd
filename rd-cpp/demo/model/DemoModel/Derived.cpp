@@ -88,7 +88,7 @@ namespace demo {
     }
     
     //to string trait
-    std::string to_string(const demo::Derived & value)
+    std::string to_string(const Derived & value)
     {
         std::string res = "Derived\n";
         res += "\tstring = " + rd::to_string(value.string_) + '\n';

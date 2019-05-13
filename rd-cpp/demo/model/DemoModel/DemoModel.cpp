@@ -147,7 +147,7 @@ namespace demo {
     //static type name trait
     
     //to string trait
-    std::string to_string(const demo::DemoModel & value)
+    std::string to_string(const DemoModel & value)
     {
         std::string res = "DemoModel\n";
         res += "\tboolean_property = " + rd::to_string(value.boolean_property_) + '\n';
