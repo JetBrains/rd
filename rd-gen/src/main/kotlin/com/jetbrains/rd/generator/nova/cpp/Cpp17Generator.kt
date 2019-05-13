@@ -497,7 +497,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         File(this, "CMakeLists.txt").run {
             printWriter().use {
                 it.apply {
-                    println("cmake_minimum_required(VERSION 3.11)")
+                    println("cmake_minimum_required(VERSION 3.10.2)")
 
                     val pchCppFile = "pch.cpp"
                     val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
