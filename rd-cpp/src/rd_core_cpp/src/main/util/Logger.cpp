@@ -23,6 +23,9 @@ namespace rd {
 	//namespace log {
 	LogLevel minimum_level_to_log;
 	//}
+
+	std::mutex Logger::lock;
+	
 	using namespace std::literals::string_literals;
 
 	std::string to_string(LogLevel level) {

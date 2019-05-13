@@ -71,10 +71,13 @@ int main() {
 
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 
+	definition.terminate();
+
 	for (const auto &item : printer) {
 		std::cout << item << std::endl;
 	}
 	std::cout << std::endl;
+	
 	return 0;
 }
 
