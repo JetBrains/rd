@@ -429,9 +429,11 @@ void try_close_socket(Protocol const &protocol) {
 	auto socket = dynamic_cast<SocketWire::Base const *>(protocol.get_wire())->get_socket_provider();
 
 	if (socket != nullptr) {
-		while (!socket->Shutdown(CSimpleSocket::Both)) {}
+		while (!socket->Shutdown(CSimpleSocket::Both)) {
+			std::cerr << "Test: Shutdown failed?" << std::endl;
+		}
 	}
-	std::cerr << "Test: Socket closed";
+	std::cerr << "Test: Socket closed" << std::endl;
 }
 
 

@@ -67,6 +67,8 @@ namespace rd {
 		{
 			std::lock_guard<decltype(queue_lock)> guard(queue_lock);
 
+			logger.debug(this->id + ": reprocessing started");
+
 			cv.wait(lock, [this]() -> bool {
 				return !in_processing;
 			});
@@ -89,6 +91,9 @@ namespace rd {
 
 		{
 			std::lock_guard<decltype(queue_lock)> guard(queue_lock);
+
+			logger.debug(this->id + ": processing started");
+
 			while (!queue.empty() && processor(queue.front(), max_sent_seqn + 1)) {
 				++max_sent_seqn;
 				pending_queue.push_back(std::move(queue.front()));
