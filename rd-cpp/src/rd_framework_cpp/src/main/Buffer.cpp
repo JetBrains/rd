@@ -36,12 +36,14 @@ namespace rd {
 	}
 
 	void Buffer::read(word_t *dst, size_t size) const {
+		if (size == 0) return;
 		check_available(size);
 		std::copy(&data_[offset], &data_[offset] + size, dst);
 		offset += size;
 	}
 
 	void Buffer::write(const word_t *src, size_t size) const {
+		if (size == 0) return;
 		require_available(size);
 		std::copy(src, src + size, &data_[offset]);
 		offset += size;
@@ -126,11 +128,21 @@ void Buffer::writeString(std::string const &value) const {
 		write_integral<word_t>(value ? 1 : 0);
 	}
 
+	void Buffer::readByteArray(ByteArray& array) const {
+		const int32_t length = read_integral<int32_t>();
+		array.resize(length);
+		readByteArrayRaw(array);
+	}
+
 	void Buffer::readByteArrayRaw(ByteArray &array) const {
 		read(array.data(), array.size());
 	}
 
 	void Buffer::writeByteArrayRaw(const ByteArray &array) const {
 		write(array.data(), array.size());
+	}
+
+	Buffer::ByteArray &Buffer::get_data() {
+		return data_;
 	}
 }

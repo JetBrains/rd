@@ -89,7 +89,8 @@ namespace rd {
 
 		{
 			std::lock_guard<decltype(queue_lock)> guard(queue_lock);
-			while (!queue.empty() && processor(queue.front(), ++max_sent_seqn)) {
+			while (!queue.empty() && processor(queue.front(), max_sent_seqn + 1)) {
+				++max_sent_seqn;
 				pending_queue.push_back(std::move(queue.front()));
 				queue.pop();
 			}

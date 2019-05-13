@@ -72,4 +72,9 @@ namespace demo {
     }
     
     //to string trait
+    std::string to_string(const Base & value)
+    {
+        std::string res = "Base\n";
+        return res;
+    }
 };

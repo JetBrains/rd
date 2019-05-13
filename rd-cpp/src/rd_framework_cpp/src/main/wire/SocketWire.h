@@ -76,9 +76,9 @@ namespace rd {
 
 			//endregion
 
-			sequence_number_t read_header() const;
+			std::pair<int, sequence_number_t> read_header() const;
 
-			bool read_and_dispatch() const;
+			bool read_and_dispatch_package() const;
 
 			void receiverProc() const;
 

@@ -125,6 +125,8 @@ namespace rd {
 			}
 		}
 
+		void readByteArray(ByteArray &array) const;
+		
 		void readByteArrayRaw(ByteArray &array) const;
 
 		void writeByteArrayRaw(ByteArray const &array) const;
@@ -220,6 +222,8 @@ namespace rd {
 		word_t *data();
 
 		size_t size() const;
+
+		ByteArray &get_data();
 	};
 }
 
