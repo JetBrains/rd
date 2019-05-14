@@ -33,6 +33,7 @@ namespace JetBrains.Collections.Viewable
         private LifetimedList<Action<T>> myListeners = new LifetimedList<Action<T>>();
 
 
+        //todo for future use
         public IScheduler Scheduler { get; set; }
 
         

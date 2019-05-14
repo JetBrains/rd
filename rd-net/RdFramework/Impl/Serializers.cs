@@ -56,7 +56,7 @@ namespace JetBrains.Rd.Impl
     public Serializers()
     {
       myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", Lifetime.Eternal, r => RegisterToplevelInternal(r));
-      myBackgroundRegistrar.Send(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
+      myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
     }
 #else
     public Serializers() => RegisterFrameworkMarshallers(this);
@@ -186,7 +186,7 @@ namespace JetBrains.Rd.Impl
       #if !NET35
       if (!myBackgroundRegistrar.IsInsideProcessing)
       {
-        myBackgroundRegistrar.Send(new ToplevelRegistration(typeof(T), szr => szr.Register(reader, writer, predefinedId)));
+        myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(T), szr => szr.Register(reader, writer, predefinedId)));
         myBackgroundRegistrar.WaitForEmpty();
       }
       #endif

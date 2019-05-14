@@ -31,10 +31,13 @@ namespace JetBrains.Threading
 
     public bool IsInsideProcessing => myInsideProcessingFlow.Value != null;
 
+    
+    //todo move lifetime into Send
     public Actor(string id, Lifetime lifetime, Action<T> processor, TaskScheduler scheduler = null,
       int maxQueueSize = int.MaxValue) :
       this(id, lifetime, async item => processor(item), scheduler, maxQueueSize) {}
     
+    //todo move lifetime into Send
     public Actor(string id, Lifetime lifetime, Func<T, Task> processor, TaskScheduler scheduler = null, int maxQueueSize = int.MaxValue)
     {
       Id = id;
@@ -82,7 +85,7 @@ namespace JetBrains.Threading
       }
     }
 
-    public void Send(T msg) => myChannel.Send(msg);
+    public void SendBlocking(T msg) => myChannel.SendBlocking(msg);
     public Task SendAsync(T msg) => myChannel.SendAsync(msg);
 
     public async Task SendOrExecuteInline(T msg)
@@ -93,7 +96,7 @@ namespace JetBrains.Threading
       }
       else
       {
-        Send(msg);
+        SendBlocking(msg);
       }
     } 
 
