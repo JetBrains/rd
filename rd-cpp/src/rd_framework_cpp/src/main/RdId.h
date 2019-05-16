@@ -23,6 +23,9 @@ namespace std {
 }
 
 namespace rd {
+	/**
+	 * \brief An identifier of the object that participates in the object graph.
+	 */
 	class RdId {
 	private:
 		friend struct std::hash<RdId>;

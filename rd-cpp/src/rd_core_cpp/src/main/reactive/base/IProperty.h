@@ -9,6 +9,10 @@
 #include <functional>
 
 namespace rd {
+	/**
+	 * \brief A mutable property.
+	 * \tparam T type of stored value (may be abstract)
+	 */
 	template<typename T>
 	class IProperty : public IPropertyBase<T> {
 	protected:
@@ -31,7 +35,7 @@ namespace rd {
 		//endregion
 
 		virtual T const &get() const = 0;
-
+	private:
 		void advise0(Lifetime lifetime, std::function<void(T const &)> handler, Signal<T> const &signal) const {
 			if (lifetime->is_terminated()) {
 				return;
@@ -45,11 +49,14 @@ namespace rd {
 		void advise_before(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			advise0(lifetime, handler, this->before_change);
 		}
-
+	public:
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			advise0(std::move(lifetime), std::move(handler), this->change);
 		}
 
+		/**
+		 * \brief set value of type T or derived type to it.
+		 */
 		virtual void set(value_or_wrapper<T>) const = 0;
 	};
 }

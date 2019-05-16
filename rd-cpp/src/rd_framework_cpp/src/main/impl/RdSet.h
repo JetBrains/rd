@@ -10,6 +10,12 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Reactive set for connection through wire.
+	 * 
+	 * \tparam T type of stored values 
+	 * \tparam S "SerDes" for values
+	 */
 	template<typename T, typename S = Polymorphic<T>>
 	class RdSet final : public RdReactiveBase, public ViewableSet<T>, public ISerializable {
 	private:
@@ -54,7 +60,7 @@ namespace rd {
 					if (!is_local_change) return;
 
 					get_wire()->send(rdid, [this, kind, &v](Buffer const &buffer) {
-						buffer.writeEnum<AddRemove>(kind);
+						buffer.write_enum<AddRemove>(kind);
 						S::write(this->get_serialization_context(), buffer, v);
 
 						logSend.trace("SEND"s +
@@ -69,7 +75,7 @@ namespace rd {
 		}
 
 		void on_wire_received(Buffer buffer) const override {
-			AddRemove kind = buffer.readEnum<AddRemove>();
+			AddRemove kind = buffer.read_enum<AddRemove>();
 			auto value = S::read(this->get_serialization_context(), buffer);
 
 			switch (kind) {

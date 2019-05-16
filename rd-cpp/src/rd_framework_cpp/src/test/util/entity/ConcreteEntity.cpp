@@ -22,16 +22,16 @@ namespace rd {
 
 			//reader
 			ConcreteEntity ConcreteEntity::read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) {
-				auto name_ = buffer.readWString();
-				auto stringValue_ = buffer.readWString();
+				auto name_ = buffer.read_wstring();
+				auto stringValue_ = buffer.read_wstring();
 				ConcreteEntity res{std::move(stringValue_), std::move(name_)};
 				return res;
 			}
 
 			//writer
 			void ConcreteEntity::write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const {
-				buffer.writeWString(name_);
-				buffer.writeWString(stringValue_);
+				buffer.write_wstring(name_);
+				buffer.write_wstring(stringValue_);
 			}
 
 			//virtual init

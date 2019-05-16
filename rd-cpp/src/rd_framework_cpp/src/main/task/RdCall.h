@@ -12,6 +12,14 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Represents an API provided by the remote process which can be invoked through the protocol. 
+	 *
+	 * \tparam TReq type of request
+	 * \tparam TRes type of response
+	 * \tparam ReqSer "SerDes" for request
+	 * \tparam ResSer "SerDes" for response
+	 */
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
 	class RdCall final : public RdReactiveBase, public ISerializable {
 		using WTReq = value_or_wrapper<TReq>;
@@ -92,9 +100,15 @@ namespace rd {
 			}
 		}
 
+		/**
+		 * \brief Invokes the API with the parameters given as [request] and waits for the result.
+		 * 
+		 * \param request value to deliver 
+		 * \return result of remote invoking
+		 */
 		TRes const &sync(TReq const &request) const {
 			try {
-				last_task = startInternal(request, true, get_default_scheduler());
+				last_task = start_internal(request, true, get_default_scheduler());
 				while (!last_task.has_value()) {
 					std::this_thread::yield();
 				}
@@ -111,16 +125,18 @@ namespace rd {
 			return &globalSynchronousScheduler;
 		}
 
-		RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler) const {
-			return startInternal(request, false, responseScheduler ? responseScheduler : get_default_scheduler());
+		/**
+		 * \brief Asynchronously invokes the API with the parameters given as [request] and waits for the result.
+		 *                      
+		 * \param request value of request
+		 * \param responseScheduler to assign value
+		 * \return task which will have its result value.
+		 */
+		RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler = nullptr) const {
+			return start_internal(request, false, responseScheduler ? responseScheduler : get_default_scheduler());
 		}
-
-		RdTask<TRes, ResSer> start(TReq const &request) const {
-			return start(request, nullptr);
-		}
-
 	private:
-		RdTask<TRes, ResSer> startInternal(TReq const &request, bool sync, IScheduler *scheduler) const {
+		RdTask<TRes, ResSer> start_internal(TReq const &request, bool sync, IScheduler *scheduler) const {
 			assert_bound();
 			if (!async) {
 				assert_threading();

@@ -25,7 +25,7 @@ namespace demo {
     //reader
     Derived Derived::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
     {
-        auto string_ = buffer.readWString();
+        auto string_ = buffer.read_wstring();
         Derived res{std::move(string_)};
         return res;
     }
@@ -33,7 +33,7 @@ namespace demo {
     //writer
     void Derived::write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const
     {
-        buffer.writeWString(string_);
+        buffer.write_wstring(string_);
     }
     
     //virtual init

@@ -11,11 +11,11 @@ namespace rd {
 	class ArraySerializer {
 	public:
 		static std::vector<value_or_wrapper<T>> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readArray<T>([&] { return S::read(ctx, buffer); });
+			return buffer.read_array<T>([&] { return S::read(ctx, buffer); });
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, std::vector<value_or_wrapper<T>> const &value) {
-			buffer.writeArray<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
+			buffer.write_array<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
 		}
 	};
 }

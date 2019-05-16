@@ -104,41 +104,41 @@ void Buffer::writeString(std::string const &value) const {
     writeArray<uint8_t>(v);
 }*/
 
-	std::wstring Buffer::readWString() const {
-		auto v = readArray<uint16_t>();
+	std::wstring Buffer::read_wstring() const {
+		auto v = read_array<uint16_t>();
 		return std::wstring(v.begin(), v.end());
 	}
 
-	void Buffer::writeWString(std::wstring const &value) const {
+	void Buffer::write_wstring(std::wstring const &value) const {
 		std::vector<uint16_t> v(value.begin(), value.end());
-		writeArray<uint16_t>(v);
+		write_array<uint16_t>(v);
 	}
 
-	void Buffer::writeWString(Wrapper<std::wstring> const &value) const {
-		writeWString(*value);
+	void Buffer::write_wstring(Wrapper<std::wstring> const &value) const {
+		write_wstring(*value);
 	}
 
-	bool Buffer::readBool() const {
+	bool Buffer::read_bool() const {
 		auto res = read_integral<uint8_t>();
 		RD_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
 		return res == 1;
 	}
 
-	void Buffer::writeBool(bool value) const {
+	void Buffer::write_bool(bool value) const {
 		write_integral<word_t>(value ? 1 : 0);
 	}
 
-	void Buffer::readByteArray(ByteArray& array) const {
+	void Buffer::read_byte_array(ByteArray& array) const {
 		const int32_t length = read_integral<int32_t>();
 		array.resize(length);
-		readByteArrayRaw(array);
+		read_byte_array_raw(array);
 	}
 
-	void Buffer::readByteArrayRaw(ByteArray &array) const {
+	void Buffer::read_byte_array_raw(ByteArray &array) const {
 		read(array.data(), array.size());
 	}
 
-	void Buffer::writeByteArrayRaw(const ByteArray &array) const {
+	void Buffer::write_byte_array_raw(const ByteArray &array) const {
 		write(array.data(), array.size());
 	}
 

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 4/7/2019.
-//
-
 #ifndef RD_CPP_THIRDPARTY_HPP
 #define RD_CPP_THIRDPARTY_HPP
 

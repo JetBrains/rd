@@ -16,7 +16,7 @@ namespace rd {
 						auto it = std::move(sendQ.front());
 						sendQ.pop();
 						realWire->send(it.first, [payload = std::move(it.second)](Buffer const &buffer) {
-							buffer.writeByteArrayRaw(payload);
+							buffer.write_byte_array_raw(payload);
 						});
 					}
 				}

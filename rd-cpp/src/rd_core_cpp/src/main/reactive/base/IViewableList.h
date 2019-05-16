@@ -15,11 +15,18 @@
 #include <algorithm>
 
 namespace rd {
+	/**
+	 * \brief A list allowing its contents to be observed.
+	 * \tparam T type of stored values (may be abstract)
+	 */
 	template<typename T>
 	class IViewableList : public IViewable<std::pair<size_t, T const *>> {
 	protected:
 		using WT = value_or_wrapper<T>;
 	public:
+		/**
+		 * \brief Represents an addition, update or removal of an element in the list.
+		 */
 		class Event {
 		public:
 			class Add {
@@ -120,9 +127,13 @@ namespace rd {
 		virtual ~IViewableList() = default;
 		//endregion
 
-		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, size_t, T const &)
-
-		> handler) const {
+		/**
+		 * \brief Adds a subscription to additions and removals of list elements. When a list element is updated,
+		 * the [handler] is called twice: to report the removal of the old element and the addition of the new one.
+		 * \param lifetime lifetime of subscription.
+		 * \param handler to be called.
+		 */
+		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, size_t, T const &)> handler) const {
 			advise(std::move(lifetime), [handler](Event e) {
 				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
@@ -139,17 +150,22 @@ namespace rd {
 			});
 		}
 
-		virtual void
-		view(Lifetime lifetime,
-			 std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const {
+		/**
+		 * \brief Adds a subscription to changes of the contents of the list.
+		 * \param lifetime lifetime of subscription.
+		 * \param handler to be called.
+		 */
+		void view(Lifetime lifetime,
+			 std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const override {
 			view(lifetime, [handler](Lifetime lt, size_t idx, T const &v) {
 				handler(lt, std::make_pair(idx, &v));
 			});
 		}
 
-		void view(Lifetime lifetime, std::function< void(Lifetime, size_t, T const &)
-
-		> handler) const {
+		/**
+		 * \brief @see view	above 
+		 */
+		void view(Lifetime lifetime, std::function<void(Lifetime, size_t, T const &)> handler) const {
 			advise_add_remove(lifetime, [this, lifetime, handler](AddRemove kind, size_t idx, T const &value) {
 				switch (kind) {
 					case AddRemove::ADD: {

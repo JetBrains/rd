@@ -80,7 +80,7 @@ TEST_F(RdFrameworkTestBase, signal_void_statics) {
 class CustomSerializer {
 public:
 	static int32_t read(SerializationCtx const &ctx, Buffer const &buffer) {
-		bool negate = buffer.readBool();
+		bool negate = buffer.read_bool();
 		int32_t module = buffer.read_integral<int32_t>();
 		return negate ? -module : module;
 	}

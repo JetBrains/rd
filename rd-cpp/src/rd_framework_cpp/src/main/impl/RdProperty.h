@@ -10,6 +10,12 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Reactive property for connection through wire. 
+	 
+	 * \tparam T type of stored value
+	 * \tparam S "SerDes" for value
+	 */
 	template<typename T, typename S = Polymorphic<T>>
 	class RdProperty final : public RdPropertyBase<T, S>, public ISerializable {
 	public:
@@ -36,7 +42,7 @@ namespace rd {
 
 		static RdProperty<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
 			RdId id = RdId::read(buffer);
-			bool not_null = buffer.readBool();//not null/
+			bool not_null = buffer.read_bool();//not null/
 			(void) not_null;
 			auto value = S::read(ctx, buffer);
 			RdProperty<T, S> property;
@@ -47,7 +53,7 @@ namespace rd {
 
 		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
 			this->rdid.write(buffer);
-			buffer.writeBool(true);
+			buffer.write_bool(true);
 			S::write(ctx, buffer, this->get());
 		}
 

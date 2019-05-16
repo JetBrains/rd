@@ -3,7 +3,7 @@
 #include "thirdparty.hpp"
 
 namespace rd {
-	RName::RName(RName *const parent, string_view localName, string_view separator) : parent(
+	RName::RName(RName * parent, string_view localName, string_view separator) : parent(
 			parent), local_name(localName), separator(separator) {}
 
 	RName RName::sub(string_view localName, string_view separator) {

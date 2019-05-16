@@ -12,6 +12,11 @@
 #include <unordered_map>
 
 namespace rd {
+	/**
+	 * \brief A set allowing its contents to be observed.
+	 * \tparam K type of stored keys (may be abstract) 
+	 * \tparam V type of stored values (may be abstract)
+	 */
 	template<typename K, typename V>
 	class IViewableMap
 			: public IViewable<std::pair<K const *, V const *>> {
@@ -26,6 +31,9 @@ namespace rd {
 		>
 		lifetimes;
 	public:
+		/**
+		 * \brief Represents an addition, update or removal of an element in the map.
+		 */
 		class Event {
 		public:
 			class Add {
@@ -139,9 +147,7 @@ namespace rd {
 
 		void view(Lifetime lifetime,
 				  std::function< void(Lifetime lifetime,
-				  std::pair<K const *, V const *> const &)
-
-		> handler) const override {
+				  std::pair<K const *, V const *> const &)> handler) const override {
 			advise_add_remove(lifetime, [this, lifetime, handler](AddRemove kind, K const &key, V const &value) {
 				const std::pair<K const *, V const *> entry = std::make_pair(&key, &value);
 				switch (kind) {
@@ -171,9 +177,13 @@ namespace rd {
 			});
 		}
 
-		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, K const &, V const &)
-
-		> handler) const {
+		/**
+		 * \brief Adds a subscription to additions and removals of map elements. When a map element is updated, the [handler]
+		 * is called twice: to report the removal of the old element and the addition of the new one.
+		 * \param lifetime lifetime of subscription.
+		 * \param handler to be called.
+		 */
+		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, K const &, V const &)> handler) const {
 			advise(lifetime, [handler](Event e) {
 				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
@@ -190,6 +200,17 @@ namespace rd {
 			});
 		}
 
+		/**
+		 * \brief Adds a subscription to changes of the contents of the map, with the handler receiving keys and values 
+		 * as separate parameters.
+		 * 
+		 * \details When [handler] is initially added, it is called receiving all keys and values currently in the map.
+		 * Every time a key/value pair is added to the map, the [handler] is called receiving the new key and value.
+		 * The [Lifetime] instance passed to the handler expires when the key/value pair is removed from the map.
+		 * 
+		 * \param lifetime lifetime of subscription.
+		 * \param handler to be called.
+		 */
 		void view(Lifetime lifetime, std::function< void(Lifetime, K const &, V const &)> handler) const {
 			view(lifetime, [handler](Lifetime lf, const std::pair<K const *, V const *> entry) {
 				handler(lf, *entry.first, *entry.second);

@@ -9,6 +9,12 @@
 
 
 namespace rd {
+	/**
+	 * \brief Represents a task that can be asynchronously executed.
+	 * 
+	 * \tparam T type of stored value 
+	 * \tparam S "SerDes" for value
+	 */
 	template<typename T, typename S = Polymorphic<T> >
 	class RdTask final {
 	private:

@@ -3,11 +3,11 @@
 #include <string>
 
 namespace rd {
-	bool operator==(const rd::Void &lhs, const rd::Void &rhs) {
+	bool operator==(const Void &lhs, const Void &rhs) {
 		return true;
 	}
 
-	bool operator!=(const rd::Void &lhs, const rd::Void &rhs) {
+	bool operator!=(const Void &lhs, const Void &rhs) {
 		return !(rhs == lhs);
 	}
 

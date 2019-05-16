@@ -1,9 +1,4 @@
-//
-// Created by jetbrains on 5/9/2019.
-//
-
 #include "filesystem.h"
-
 
 #ifdef _WIN32
 
@@ -21,5 +16,6 @@ namespace rd {
 #ifdef __linux__
 			return "/tmp";
 #endif
+        //todo Mac OS
     }
 }

@@ -16,10 +16,10 @@ namespace rd {
 	//endregion
 
 	class DefaultAbstractDeclaration : public IPolymorphicSerializable, public IUnknownInstance {
-		const static std::string notRegisteredErrorMessage;
+		const static std::string not_registered_error_message;
 	public:
 		static Wrapper<DefaultAbstractDeclaration>
-		readUnknownInstance(rd::SerializationCtx const &ctx, rd::Buffer const &buffer, rd::RdId const &unknownId,
+		readUnknownInstance(SerializationCtx const &ctx, Buffer const &buffer, RdId const &unknownId,
 							int32_t size);
 
 		std::string type_name() const override;

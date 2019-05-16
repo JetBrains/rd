@@ -9,6 +9,10 @@
 
 
 namespace rd {
+	/**
+	 * \brief complete class which has @code IViewableSet<T>'s properties
+	 * \tparam T 
+	 */
 	template<typename T>
 	class ViewableSet : public IViewableSet<T> {
 	public:

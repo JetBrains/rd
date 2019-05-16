@@ -52,7 +52,7 @@ namespace rd {
 	}
 
 	void RdExtBase::on_wire_received(Buffer buffer) const {
-		ExtState remoteState = buffer.readEnum<ExtState>();
+		ExtState remoteState = buffer.read_enum<ExtState>();
 		traceMe(logReceived, "remote: " + to_string(remoteState));
 
 
@@ -85,7 +85,7 @@ namespace rd {
 
 		wire.send(rdid, [&](Buffer const &buffer) {
 			// traceMe(logSend, to_string(state));
-			buffer.writeEnum<ExtState>(state);
+			buffer.write_enum<ExtState>(state);
 			buffer.write_integral<int64_t>(serializationHash);
 		});
 	}

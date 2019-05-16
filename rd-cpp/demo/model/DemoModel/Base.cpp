@@ -26,7 +26,7 @@ namespace demo {
     {
         int32_t objectStartPosition = buffer.get_position();
         auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());
-        buffer.readByteArrayRaw(unknownBytes);
+        buffer.read_byte_array_raw(unknownBytes);
         Base_Unknown res{unknownId, unknownBytes};
         return rd::Wrapper<Base_Unknown>(std::move(res));
     }

@@ -13,6 +13,9 @@
 #include <utility>
 
 namespace rd {
+	/**
+	 * \brief complete class which has @code IViewableMap<K, V>'s properties
+	 */
 	template<typename K, typename V>
 	class ViewableMap : public IViewableMap<K, V> {
 	public:

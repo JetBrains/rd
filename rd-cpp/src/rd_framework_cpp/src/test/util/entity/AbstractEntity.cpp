@@ -26,9 +26,9 @@ namespace rd {
 			AbstractEntity::readUnknownInstance(rd::SerializationCtx const &ctx, rd::Buffer const &buffer,
 											  rd::RdId const &unknownId, int32_t size) {
 				int32_t objectStartPosition = buffer.get_position();
-				auto name_ = buffer.readWString();
+				auto name_ = buffer.read_wstring();
 				auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());
-				buffer.readByteArrayRaw(unknownBytes);
+				buffer.read_byte_array_raw(unknownBytes);
 				AbstractEntity_Unknown res{std::move(name_), unknownId, unknownBytes};
 				return Wrapper<AbstractEntity_Unknown>(std::move(res));
 			}

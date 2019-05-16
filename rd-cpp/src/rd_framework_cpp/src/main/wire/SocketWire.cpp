@@ -202,7 +202,7 @@ namespace rd {
 			
 			const RdId rd_id = RdId::read(pkg);
 			
-			pkg.readByteArrayRaw(msg.get_data());
+			pkg.read_byte_array_raw(msg.get_data());
 
 			logger.debug(this->id + ": message received");
 			message_broker.dispatch(rd_id, std::move(msg));
@@ -318,7 +318,7 @@ namespace rd {
 
 	SocketWire::Server::Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port,
 							   const std::string &id) : Base(id, lifetime, scheduler) {
-#ifdef __linux__
+#ifdef SIGPIPE
 		signal(SIGPIPE, SIG_IGN);
 #endif
 		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket")

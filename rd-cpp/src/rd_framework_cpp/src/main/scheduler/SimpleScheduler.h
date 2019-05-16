@@ -4,6 +4,9 @@
 #include "IScheduler.h"
 
 namespace rd {
+	/**
+	 * \brief simple scheduler, which immediately invoke action on queue, and is always active.
+	 */
 	class SimpleScheduler : public IScheduler {
 	public:
 		//region ctor/dtor

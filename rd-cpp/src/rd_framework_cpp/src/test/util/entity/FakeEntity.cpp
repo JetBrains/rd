@@ -19,16 +19,16 @@ namespace rd {
 
 			//reader
 			FakeEntity FakeEntity::read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) {
-				auto name_ = buffer.readWString();
-				auto booleanValue_ = buffer.readBool();
+				auto name_ = buffer.read_wstring();
+				auto booleanValue_ = buffer.read_bool();
 				FakeEntity res{std::move(booleanValue_), std::move(name_)};
 				return res;
 			}
 
 			//writer
 			void FakeEntity::write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const {
-				buffer.writeWString(name_);
-				buffer.writeBool(booleanValue_);
+				buffer.write_wstring(name_);
+				buffer.write_bool(booleanValue_);
 			}
 
 			//virtual init

@@ -71,9 +71,9 @@ namespace rd {
 					return Cancelled();
 				}
 				case 2: {
-					auto reasonTypeFqn = buffer.readWString();
-					auto reasonMessage = buffer.readWString();
-					auto reasonAsText = buffer.readWString();
+					auto reasonTypeFqn = buffer.read_wstring();
+					auto reasonMessage = buffer.read_wstring();
+					auto reasonAsText = buffer.read_wstring();
 					return Fault(std::move(reasonTypeFqn), std::move(reasonMessage), std::move(reasonAsText));
 				}
 				default:
@@ -92,9 +92,9 @@ namespace rd {
 					},
 					[&buffer](Fault const &value) {
 						buffer.write_integral<int32_t>(2);
-						buffer.writeWString(value.reasonTypeFqn);
-						buffer.writeWString(value.reasonMessage);
-						buffer.writeWString(value.reasonAsText);
+						buffer.write_wstring(value.reasonTypeFqn);
+						buffer.write_wstring(value.reasonMessage);
+						buffer.write_wstring(value.reasonAsText);
 					}
 			), v);
 		}

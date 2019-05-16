@@ -27,8 +27,8 @@ namespace rd {
 
 			//writer
 			void AbstractEntity_Unknown::write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const {
-				buffer.writeWString(name_);
-				buffer.writeByteArrayRaw(unknownBytes_);
+				buffer.write_wstring(name_);
+				buffer.write_byte_array_raw(unknownBytes_);
 			}
 
 			//virtual init

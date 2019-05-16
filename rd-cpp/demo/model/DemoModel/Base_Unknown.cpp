@@ -35,7 +35,7 @@ namespace demo {
     //writer
     void Base_Unknown::write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const
     {
-        buffer.writeByteArrayRaw(unknownBytes_);
+        buffer.write_byte_array_raw(unknownBytes_);
     }
     
     //virtual init

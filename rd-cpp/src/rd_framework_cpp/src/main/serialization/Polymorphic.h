@@ -60,11 +60,11 @@ namespace rd {
 	class Polymorphic<std::vector<T>> {
 	public:
 		static std::vector<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readArray<T>();
+			return buffer.read_array<T>();
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, std::vector<T> const &value) {
-			buffer.writeArray<T>(value);
+			buffer.write_array<T>(value);
 		}
 	};
 
@@ -72,11 +72,11 @@ namespace rd {
 	class Polymorphic<bool> {
 	public:
 		static bool read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readBool();
+			return buffer.read_bool();
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, bool const &value) {
-			buffer.writeBool(value);
+			buffer.write_bool(value);
 		}
 	};
 
@@ -84,15 +84,15 @@ namespace rd {
 	class Polymorphic<std::wstring> {
 	public:
 		static std::wstring read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readWString();
+			return buffer.read_wstring();
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value) {
-			buffer.writeWString(value);
+			buffer.write_wstring(value);
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<std::wstring> const &value) {
-			buffer.writeWString(*value);
+			buffer.write_wstring(*value);
 		}
 	};
 
@@ -122,11 +122,11 @@ namespace rd {
 	class Polymorphic<T, typename std::enable_if_t<std::is_enum<T>::value>> {
 	public:
 		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readEnum<T>();
+			return buffer.read_enum<T>();
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
-			buffer.writeEnum<T>(value);
+			buffer.write_enum<T>(value);
 		}
 	};
 
@@ -134,13 +134,13 @@ namespace rd {
 	class Polymorphic<optional<T>> {
 	public:
 		static optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readNullable<T>([&ctx, &buffer]() {
+			return buffer.read_nullable<T>([&ctx, &buffer]() {
 				return Polymorphic<T>::read(ctx, buffer);
 			});
 		}
 
 		static void write(SerializationCtx const &ctx, Buffer const &buffer, optional<T> const &value) {
-			buffer.writeNullable<T>(value, [&ctx, &buffer](T const &v) {
+			buffer.write_nullable<T>(value, [&ctx, &buffer](T const &v) {
 				Polymorphic<T>::write(ctx, buffer, v);
 			});
 		}

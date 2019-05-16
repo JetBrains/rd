@@ -11,6 +11,10 @@ namespace rd {
 }
 
 namespace rd {
+	/**
+	 * \brief A non-root node in an object graph which can be synchronized with its remote copy over a network or 
+	 * a similar connection.
+	 */
 	class IRdBindable : public IRdDynamic {
 	public:
 		mutable RdId rdid = RdId::Null();
@@ -27,8 +31,22 @@ namespace rd {
 		virtual ~IRdBindable() = default;
 		//endregion
 
+		/**
+		 * \brief Inserts the node into the object graph under the given [parent] and assigns the specified [name] to it.
+		 * The node will be removed from the graph when the specified [lf] lifetime is terminated.
+		 * 
+		 * \param lf lifetime of node.
+		 * \param parent to whom bind.
+		 * \param name specified name of node.
+		 */
 		virtual void bind(Lifetime lf, IRdDynamic const *parent, string_view name) const = 0;
 
+		/**
+		 * \brief Assigns IDs to this node and its child nodes in the graph.
+		 * 
+		 * \param identities to generate unique identifiers for children. 
+		 * \param id which is assigned to this node. 
+		 */
 		virtual void identify(Identities const &identities, RdId const &id) const = 0;
 	};
 

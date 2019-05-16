@@ -44,8 +44,8 @@ namespace rd {
 
 		std::vector<Buffer::ByteArray> data;
 		std::mutex queue_lock;
-		std::queue<Buffer::ByteArray> queue;
-		std::deque<Buffer::ByteArray> pending_queue;
+		std::queue<Buffer::ByteArray> queue{};
+		std::deque<Buffer::ByteArray> pending_queue{};
 
 		sequence_number_t max_sent_seqn = 0;
 		sequence_number_t current_seqn = 1;
@@ -68,7 +68,7 @@ namespace rd {
 
 		void add_data(std::vector<Buffer::ByteArray> &&new_data);
 
-		void reprocess();
+		bool reprocess();
 
 		void process();
 

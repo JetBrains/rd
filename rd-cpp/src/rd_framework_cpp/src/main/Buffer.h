@@ -85,7 +85,7 @@ namespace rd {
 		}
 
 		template<typename T>
-		std::vector<T> readArray() const {
+		std::vector<T> read_array() const {
 			int32_t len = read_integral<int32_t>();
 			RD_ASSERT_MSG(len >= 0, "read null array(length = " + std::to_string(len) + ")");
 			std::vector<T> result(len);
@@ -94,7 +94,7 @@ namespace rd {
 		}
 
 		template<typename T>
-		std::vector<value_or_wrapper<T>> readArray(std::function<value_or_wrapper<T>()> reader) const {
+		std::vector<value_or_wrapper<T>> read_array(std::function<value_or_wrapper<T>()> reader) const {
 			int32_t len = read_integral<int32_t>();
 			std::vector<value_or_wrapper<T>> result(len);
 			for (auto &x : result) {
@@ -104,13 +104,13 @@ namespace rd {
 		}
 
 		template<typename T>
-		void writeArray(std::vector<T> const &array) const {
+		void write_array(std::vector<T> const &array) const {
 			write_integral<int32_t>(static_cast<int32_t>(array.size()));
 			write(reinterpret_cast<word_t const *>(array.data()), sizeof(T) * array.size());
 		}
 
 		template<typename T>
-		void writeArray(std::vector<T> const &array, std::function<void(T const &)> writer) const {
+		void write_array(std::vector<T> const &array, std::function<void(T const &)> writer) const {
 			write_integral<int32_t>(array.size());
 			for (auto const &e : array) {
 				writer(e);
@@ -118,48 +118,48 @@ namespace rd {
 		}
 
 		template<typename T>
-		void writeArray(std::vector<Wrapper<T>> const &array, std::function<void(T const &)> writer) const {
+		void write_array(std::vector<Wrapper<T>> const &array, std::function<void(T const &)> writer) const {
 			write_integral<int32_t>(array.size());
 			for (auto const &e : array) {
 				writer(*e);
 			}
 		}
 
-		void readByteArray(ByteArray &array) const;
+		void read_byte_array(ByteArray &array) const;
 		
-		void readByteArrayRaw(ByteArray &array) const;
+		void read_byte_array_raw(ByteArray &array) const;
 
-		void writeByteArrayRaw(ByteArray const &array) const;
+		void write_byte_array_raw(ByteArray const &array) const;
 
 		//    std::string readString() const;
 
 		//    void writeString(std::string const &value) const;
 
-		bool readBool() const;
+		bool read_bool() const;
 
-		void writeBool(bool value) const;
+		void write_bool(bool value) const;
 
-		std::wstring readWString() const;
+		std::wstring read_wstring() const;
 
-		void writeWString(std::wstring const &value) const;
+		void write_wstring(std::wstring const &value) const;
 
-		void writeWString(Wrapper<std::wstring> const &value) const;
+		void write_wstring(Wrapper<std::wstring> const &value) const;
 
 		template<typename T>
-		T readEnum() const {
+		T read_enum() const {
 			int32_t x = read_integral<int32_t>();
 			return static_cast<T>(x);
 		}
 
 		template<typename T>
-		void writeEnum(T const &x) const {
+		void write_enum(T const &x) const {
 			write_integral<int32_t>(static_cast<int32_t>(x));
 		}
 
 		template<typename T, typename F,
 				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, T>>>
-		opt_or_wrapper<T> readNullable(F &&reader) const {
-			bool nullable = !readBool();
+		opt_or_wrapper<T> read_nullable(F &&reader) const {
+			bool nullable = !read_bool();
 			if (nullable) {
 				return {};
 			}
@@ -168,8 +168,8 @@ namespace rd {
 
 		template<typename T, typename F,
 				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, Wrapper<T>>>>
-		Wrapper<T> readNullable(F &&reader) const {
-			bool nullable = !readBool();
+		Wrapper<T> read_nullable(F &&reader) const {
+			bool nullable = !read_bool();
 			if (nullable) {
 				return {};
 			}
@@ -178,33 +178,33 @@ namespace rd {
 
 		template<typename T>
 		typename std::enable_if_t<!std::is_abstract<T>::value>
-		writeNullable(optional<T> const &value, std::function<void(T const &)> writer) const {
+		write_nullable(optional<T> const &value, std::function<void(T const &)> writer) const {
 			if (!value) {
-				writeBool(false);
+				write_bool(false);
 			} else {
-				writeBool(true);
+				write_bool(true);
 				writer(*value);
 			}
 		}
 
 		template<typename T, typename F>
 		typename std::enable_if_t<!util::is_invocable_v<F, Wrapper<T>>>
-		writeNullable(Wrapper<T> const &value, F &&writer) const {
+		write_nullable(Wrapper<T> const &value, F &&writer) const {
 			if (!value) {
-				writeBool(false);
+				write_bool(false);
 			} else {
-				writeBool(true);
+				write_bool(true);
 				writer(*value);
 			}
 		}
 
 		template<typename T, typename F>
 		typename std::enable_if_t<util::is_invocable_v<F, Wrapper<T>>>
-		writeNullable(Wrapper<T> const &value, F &&writer) const {
+		write_nullable(Wrapper<T> const &value, F &&writer) const {
 			if (!value) {
-				writeBool(false);
+				write_bool(false);
 			} else {
-				writeBool(true);
+				write_bool(true);
 				writer(value);
 			}
 		}

@@ -69,15 +69,18 @@ namespace rd {
 	template<typename T>
 	constexpr bool is_wrapper_v = is_wrapper<T>::value;
 
+	/**
+	 * \brief wrapper over value of any type. It supports semantic of shared ownership due to shared_ptr as storage.
+	 * \tparam T type of value
+	 */
 	template<typename T>
-	class Wrapper : private std::shared_ptr<T> {
+	class Wrapper final : std::shared_ptr<T> {
 	private:
 		template<typename>
 		friend
 		class Wrapper;
 
 		using Base = std::shared_ptr<T>;
-		//		std::unique_ptr<T> ptr;
 	public:
 		using type = T;
 

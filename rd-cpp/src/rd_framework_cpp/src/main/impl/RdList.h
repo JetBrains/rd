@@ -9,6 +9,12 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Reactive list for connection through wire.
+	 *
+	 * \tparam T type of stored values
+	 * \tparam S "SerDes" for values
+	 */
 	template<typename T, typename S = Polymorphic<T>>
 	class RdList final : public RdReactiveBase, public ViewableList<T>, public ISerializable {
 	private:

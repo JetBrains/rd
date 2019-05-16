@@ -11,7 +11,13 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 namespace rd {
-	template<typename T, typename S = Polymorphic <T>>
+	/**
+	 * \brief Reactive signal for connection through wire.
+	 *  
+	 * \tparam T type of events
+	 * \tparam S "SerDes" for events
+	 */
+	template<typename T, typename S = Polymorphic<T>>
 	class RdSignal final : public RdReactiveBase, public ISignal<T>, public ISerializable {
 	private:
 		using WT = typename ISignal<T>::WT;

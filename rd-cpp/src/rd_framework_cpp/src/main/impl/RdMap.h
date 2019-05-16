@@ -12,6 +12,14 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Reactive map for connection through wire. 
+	 *
+	 * \tparam K type of stored keys
+	 * \tparam V type of stored values
+	 * \tparam KS "SerDes" for keys
+	 * \tparam VS "SerDes" for values
+	 */
 	template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>>
 	class RdMap final : public RdReactiveBase, public ViewableMap<K, V>, public ISerializable {
 	private:
@@ -186,7 +194,7 @@ namespace rd {
 										(1u << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
 								innerBuffer.write_integral<int64_t>(version);
 								// KS::write(this->get_serialization_context(), innerBuffer, wrapper::get<K>(key));
-								innerBuffer.writeByteArrayRaw(serialized_key.getArray());
+								innerBuffer.write_byte_array_raw(serialized_key.getArray());
 								// logSend.trace(logmsg(Op::ACK, version, serialized_key));
 							});
 					get_wire()->send(rdid, std::move(writer));

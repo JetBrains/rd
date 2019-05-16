@@ -8,6 +8,14 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief An API that is exposed to the remote process and can be invoked over the protocol.
+	 * 
+	 * \tparam TReq type of request 
+	 * \tparam TRes type of response
+	 * \tparam ReqSer "SerDes" for request
+	 * \tparam ResSer "SerDes" for response
+	 */
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic <TReq>, typename ResSer = Polymorphic <TRes> >
 	class RdEndpoint : public RdReactiveBase, public ISerializable {
 		using WTReq = value_or_wrapper<TReq>;
@@ -49,11 +57,18 @@ namespace rd {
 			rdid.write(buffer);
 		}
 
+		/**
+		 * \brief Assigns a handler that executes the API asynchronously.
+		 * \param handler to assign
+		 */
 		void set(handler_t handler) const {
 			RD_ASSERT_MSG(handler, "handler is set already");
 			this->handler = std::move(handler);
 		}
 
+		/**
+		 * \brief @see set above
+		 */
 		void set(std::function<WTRes(TReq const &)> handler) const {
 			this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask <TRes, ResSer> {
 				return RdTask<TRes, ResSer>::from_result(handler(req));

@@ -3,6 +3,7 @@ package com.jetbrains.rd.util.reactive
 import com.jetbrains.rd.util.TlsBoxed
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.incrementCookie
 
 class Signal<T> : ISignal<T> {
@@ -36,7 +37,7 @@ class Signal<T> : ISignal<T> {
 
 
     private fun advise0(queue:AtomicReference<Array<(T) -> Unit>>, lifetime : Lifetime, handler: (T) -> Unit) {
-        if (lifetime.isTerminated) return
+        if (!lifetime.isAlive) return
 
         lifetime.bracket(
                 {

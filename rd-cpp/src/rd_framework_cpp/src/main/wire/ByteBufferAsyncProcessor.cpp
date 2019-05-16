@@ -1,3 +1,4 @@
+#include <util/guards.h>
 #include "ByteBufferAsyncProcessor.h"
 
 namespace rd {
@@ -63,7 +64,7 @@ namespace rd {
 		}
 	}
 
-	void ByteBufferAsyncProcessor::reprocess() {
+	bool ByteBufferAsyncProcessor::reprocess() {
 		{
 			std::lock_guard<decltype(queue_lock)> guard(queue_lock);
 
@@ -73,6 +74,8 @@ namespace rd {
 				return !in_processing;
 			});
 
+			logger.debug(this->id + ": reprocessing waited for main processing");
+
 			while (current_seqn <= acknowledged_seqn) {
 				pending_queue.pop_front();
 				++current_seqn;
@@ -80,17 +83,17 @@ namespace rd {
 			for (int i = 0; i < pending_queue.size(); ++i) {
 				auto const &item = pending_queue[i];
 				if (!processor(item, current_seqn + i)) {
-					return;
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
 	void ByteBufferAsyncProcessor::process() {
-		in_processing = true;
-
 		{
 			std::lock_guard<decltype(queue_lock)> guard(queue_lock);
+			util::bool_guard bool_guard(in_processing);
 
 			logger.debug(this->id + ": processing started");
 
@@ -101,7 +104,6 @@ namespace rd {
 			}
 		}
 
-		in_processing = false;
 		cv.notify_all();
 	}
 
@@ -121,12 +123,14 @@ namespace rd {
 						return;
 					}
 					cv.wait(lock);
+
+					logger.debug(this->id + "'s ThreadProc waited for notify");
+
 					if (state >= StateKind::Terminating) {
 						return;
 					}
 				}
-				auto data_to_send = std::move(data);
-				add_data(std::move(data_to_send));
+				add_data(std::move(std::move(data)));
 			}
 
 			try {
@@ -186,6 +190,7 @@ namespace rd {
 			cv.wait(lock, [this]() -> bool {
 				return !in_processing;
 			});
+			logger.debug(this->id + ": pausing waited for main processing");
 		}
 	}
 

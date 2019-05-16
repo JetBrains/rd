@@ -31,7 +31,7 @@ TEST(BufferTest, readWritePod) {
 	buffer.write_integral<int32_t>(-1);
 	buffer.write_integral<wchar_t>('+');
 	buffer.write_integral<wchar_t>('-');
-	buffer.writeBool(true);
+	buffer.write_bool(true);
 
 	EXPECT_EQ(buffer.get_position(), (
 			sizeof(int32_t) + sizeof(int32_t) +
@@ -47,7 +47,7 @@ TEST(BufferTest, readWritePod) {
 	EXPECT_EQ(-1, buffer.read_integral<int32_t>());
 	EXPECT_EQ('+', buffer.read_integral<wchar_t>());
 	EXPECT_EQ('-', buffer.read_integral<wchar_t>());
-	EXPECT_EQ(true, buffer.readBool());
+	EXPECT_EQ(true, buffer.read_bool());
 }
 
 
@@ -110,7 +110,7 @@ TEST(BufferTest, bigVector) {
 	std::generate_n(list.begin(), STEP, [&number]() { return --number; });
 	std::shuffle(list.begin(), list.end(), std::mt19937(std::random_device()()));
 
-	buffer.writeArray(list);
+	buffer.write_array(list);
 
 	EXPECT_EQ(buffer.get_position(), (
 			sizeof(int32_t) + //length
@@ -119,7 +119,7 @@ TEST(BufferTest, bigVector) {
 
 	buffer.rewind();
 
-	auto res = buffer.readArray<int64_t>();
+	auto res = buffer.read_array<int64_t>();
 
 	EXPECT_EQ(res, list);
 }
@@ -133,9 +133,9 @@ TEST(BufferTest, Enum) {
 
 	Buffer buffer;
 
-	buffer.writeEnum<Numbers>(Numbers::ONE);
-	buffer.writeEnum<Numbers>(Numbers::TWO);
-	buffer.writeEnum<Numbers>(Numbers::THREE);
+	buffer.write_enum<Numbers>(Numbers::ONE);
+	buffer.write_enum<Numbers>(Numbers::TWO);
+	buffer.write_enum<Numbers>(Numbers::THREE);
 
 	EXPECT_EQ(buffer.get_position(), (
 			3 * 4 //3 - quantity,  4 - enum size
@@ -143,9 +143,9 @@ TEST(BufferTest, Enum) {
 
 	buffer.rewind();
 
-	auto one = buffer.readEnum<Numbers>();
-	auto two = buffer.readEnum<Numbers>();
-	auto three = buffer.readEnum<Numbers>();
+	auto one = buffer.read_enum<Numbers>();
+	auto two = buffer.read_enum<Numbers>();
+	auto three = buffer.read_enum<Numbers>();
 
 	EXPECT_EQ(Numbers::ONE, one);
 	EXPECT_EQ(Numbers::TWO, two);

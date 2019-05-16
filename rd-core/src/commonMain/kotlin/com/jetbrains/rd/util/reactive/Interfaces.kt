@@ -93,7 +93,7 @@ interface IPropertyView<out T> : IPropertyBase<T> {
     operator fun invoke() = value
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
-        if (lifetime.isTerminated)
+        if (!lifetime.isAlive)
             return
 
         change.advise(lifetime, handler)

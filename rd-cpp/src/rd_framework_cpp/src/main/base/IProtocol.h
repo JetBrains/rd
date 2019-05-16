@@ -16,6 +16,9 @@ namespace rd {
 	class SerializationCtx;
 	//endregion
 
+	/**
+	 * \brief A root node in an object graph which can be synchronized with its remote copy over a network or a similar connection.
+	 */
 	class IProtocol : public IRdDynamic {
 		friend class RdExtBase;
 	public:

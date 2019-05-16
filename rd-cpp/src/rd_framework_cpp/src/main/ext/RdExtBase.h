@@ -7,6 +7,9 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 namespace rd {
+	/**
+	 * \brief Base class for creating extension node according to bottom-up design.  
+	 */
 	class RdExtBase : public RdReactiveBase {
 		std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
 		mutable std::shared_ptr<IProtocol> extProtocol/* = nullptr*/;
@@ -42,11 +45,10 @@ namespace rd {
 
 		void traceMe(const Logger &logger, string_view message) const;
 	};
-}
 
-namespace rd {
 	std::string to_string(RdExtBase::ExtState state);
 }
+
 #pragma warning( pop )
 
 #endif //RD_CPP_RDEXTBASE_H

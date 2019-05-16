@@ -25,7 +25,7 @@ namespace demo {
     //reader
     MyScalar MyScalar::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
     {
-        auto sign_ = buffer.readBool();
+        auto sign_ = buffer.read_bool();
         auto byte_ = buffer.read_integral<signed char>();
         auto short_ = buffer.read_integral<short>();
         auto int_ = buffer.read_integral<int32_t>();
@@ -39,7 +39,7 @@ namespace demo {
     //writer
     void MyScalar::write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const
     {
-        buffer.writeBool(sign_);
+        buffer.write_bool(sign_);
         buffer.write_integral(byte_);
         buffer.write_integral(short_);
         buffer.write_integral(int_);

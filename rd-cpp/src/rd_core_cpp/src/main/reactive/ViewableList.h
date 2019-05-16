@@ -11,6 +11,9 @@
 #include <utility>
 
 namespace rd {
+	/**
+	 * \brief complete class which has @code IViewableList<T>'s properties
+	 */
 	template<typename T>
 	class ViewableList : public IViewableList<T> {
 	public:

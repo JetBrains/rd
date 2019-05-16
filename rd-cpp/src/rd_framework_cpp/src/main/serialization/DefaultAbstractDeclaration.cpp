@@ -1,13 +1,13 @@
 #include "DefaultAbstractDeclaration.h"
 
 namespace rd {
-	const std::string DefaultAbstractDeclaration::notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. "
-																			  "Usually it should be done automagically during 'bind()' invocation but in complex cases you should do it manually.";
+	const std::string DefaultAbstractDeclaration::not_registered_error_message = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. "
+																			  "Usually it should be done automatically during 'bind()' invocation but in complex cases you should do it manually.";
 
 	Wrapper<DefaultAbstractDeclaration>
-	DefaultAbstractDeclaration::readUnknownInstance(rd::SerializationCtx const &ctx, rd::Buffer const &buffer,
-													rd::RdId const &unknownId, int32_t size) {
-		throw std::invalid_argument("Can't find reader by id: " + unknownId.toString() + notRegisteredErrorMessage);
+	DefaultAbstractDeclaration::readUnknownInstance(SerializationCtx const &ctx, Buffer const &buffer,
+													RdId const &unknownId, int32_t size) {
+		throw std::invalid_argument("Can't find reader by id: " + unknownId.toString() + not_registered_error_message);
 	}
 
 	std::string DefaultAbstractDeclaration::type_name() const {

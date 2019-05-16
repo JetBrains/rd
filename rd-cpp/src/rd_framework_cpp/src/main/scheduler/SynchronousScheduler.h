@@ -31,6 +31,9 @@ namespace rd {
 		bool is_active() const override;
 	};
 
+	/**
+	 * \brief global synchronous scheduler for whole application.
+	 */
 	extern SynchronousScheduler globalSynchronousScheduler;
 }
 

@@ -5,6 +5,9 @@
 #include <string>
 
 namespace rd {
+	/**
+	 * \brief For using in idle events
+	 */
 	class Void {
 		friend bool operator==(const Void &lhs, const Void &rhs);
 

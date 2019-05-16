@@ -6,6 +6,9 @@
 #include <string>
 
 namespace rd {
+	/**
+	 * \brief Recursive name. For constructs like Aaaa.Bbb::CCC
+	 */
 	class RName {
 	private:
 		RName *parent = nullptr;
@@ -23,7 +26,7 @@ namespace rd {
 
 		RName &operator=(RName &&other) noexcept = default;
 
-		RName(RName *const parent, string_view localName, string_view separator);
+		RName(RName * parent, string_view localName, string_view separator);
 
 		explicit RName(string_view local_name);
 		//endregion

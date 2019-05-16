@@ -11,6 +11,10 @@ namespace rd {
 	class SerializationCtx;
 	//endregion
 
+	/**
+	 * \brief A node in a graph of entities that can be synchronized with its remote copy over a network or 
+	 * a similar connection.
+	 */
 	class IRdDynamic {
 	public:
 		mutable RName location;
