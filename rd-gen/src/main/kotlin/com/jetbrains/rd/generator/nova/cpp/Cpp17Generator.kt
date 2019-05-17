@@ -1325,15 +1325,15 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.reader(): String = when (this) {
-            is Enum -> "buffer.readEnum<${templateName(decl)}>()"
+            is Enum -> "buffer.read_enum<${templateName(decl)}>()"
             is InternedScalar -> {
                 val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &", "return ${itemType.reader()}")
                 """ctx.readInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $lambda)"""
             }
             is PredefinedType.void -> "rd::Void()" //really?
             is PredefinedType.rdId -> "rd::RdId()"
-            is PredefinedType.bool -> "buffer.readBool()"
-            is PredefinedType.string -> "buffer.readWString()"
+            is PredefinedType.bool -> "buffer.read_bool()"
+            is PredefinedType.string -> "buffer.read_wstring()"
             in PredefinedIntegrals -> "buffer.read_integral<${templateName(decl)}>()"
             in PredefinedFloating -> "buffer.read_floating_point<${templateName(decl)}>()"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
@@ -1344,14 +1344,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     "${templateName(decl)}::read(ctx, buffer)"
             is INullable -> {
                 val lambda = lambda(null, "return ${itemType.reader()}")
-                """buffer.readNullable<${itemType.templateName(decl)}>($lambda)"""
+                """buffer.read_nullable<${itemType.templateName(decl)}>($lambda)"""
             }
             is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                 this as IHasItemType
                 if (isPrimitivesArray) {
-                    "buffer.readArray<${itemType.templateName(decl)}>()"
+                    "buffer.read_array<${itemType.templateName(decl)}>()"
                 } else {
-                    """buffer.readArray<${itemType.templateName(decl)}>(${lambda(null, "return ${itemType.reader()}")})"""
+                    """buffer.read_array<${itemType.templateName(decl)}>(${lambda(null, "return ${itemType.reader()}")})"""
                 }
             }
             else -> fail("Unknown declaration: $decl")
@@ -1382,7 +1382,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         (decl.membersOfBaseClasses + decl.ownMembers).println { "auto ${it.valName()} = ${it.reader()};" }
         if (unknown) {
             +"auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());"
-            +"buffer.readByteArrayRaw(unknownBytes);"
+            +"buffer.read_byte_array_raw(unknownBytes);"
         }
         val ctorParams = decl.allMembers.asSequence().map { "std::move(${it.valName()})" }.plus(unknownMemberNames(decl)).joinToString(", ")
 //        p("return ${decl.name}($ctorParams)${(decl is Class && decl.isInternRoot).condstr { ".apply { mySerializationContext = ctx }" }}")
@@ -1503,14 +1503,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     protected fun PrettyPrinter.writerTraitDef(decl: Declaration) {
         fun IType.writer(field: String): String {
             return when (this) {
-                is Enum -> "buffer.writeEnum($field)"
+                is Enum -> "buffer.write_enum($field)"
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
                     """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""
                 }
                 is PredefinedType.void -> "" //really?
-                is PredefinedType.bool -> "buffer.writeBool($field)"
-                is PredefinedType.string -> "buffer.writeWString($field)"
+                is PredefinedType.bool -> "buffer.write_bool($field)"
+                is PredefinedType.string -> "buffer.write_wstring($field)"
                 in PredefinedIntegrals -> "buffer.write_integral($field)"
                 in PredefinedFloating -> "buffer.write_floating_point($field)"
                 is Declaration ->
@@ -1521,15 +1521,15 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     }
                 is INullable -> {
                     val lambda = lambda("${itemType.substitutedName(decl)} const & it", itemType.writer("it"), "void")
-                    "buffer.writeNullable<${itemType.templateName(decl)}>($field, $lambda)"
+                    "buffer.write_nullable<${itemType.templateName(decl)}>($field, $lambda)"
                 }
                 is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                     this as IHasItemType
                     if (isPrimitivesArray) {
-                        "buffer.writeArray($field)"
+                        "buffer.write_array($field)"
                     } else {
                         val lambda = lambda("${itemType.substitutedName(decl)} const & it", itemType.writer("it"), "void")
-                        "buffer.writeArray<${itemType.substitutedName(decl)}>($field, $lambda)"
+                        "buffer.write_array<${itemType.substitutedName(decl)}>($field, $lambda)"
                     }
                 }
                 else -> fail("Unknown declaration: $decl")
@@ -1553,7 +1553,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 }
                 (decl.membersOfBaseClasses + decl.ownMembers).println { member -> member.writer() + ";" }
                 if (isUnknown(decl)) {
-                    +"buffer.writeByteArrayRaw(unknownBytes_);"
+                    +"buffer.write_byte_array_raw(unknownBytes_);"
                 }
                 if (decl is Class && decl.isInternRoot) {
                     +"this->mySerializationContext = ${decl.withInternRootsHere("*this")};"

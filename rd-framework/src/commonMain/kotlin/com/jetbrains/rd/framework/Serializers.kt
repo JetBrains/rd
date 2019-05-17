@@ -6,7 +6,7 @@ import com.jetbrains.rd.util.*
 import kotlin.reflect.KClass
 
 private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. " +
-        "Usually it should be done automagically during 'bind()' invocation but in complex cases you should do it manually."
+        "Usually it should be done automatically during 'bind()' invocation but in complex cases you should do it manually."
 
 @Suppress("UNCHECKED_CAST")
 class Serializers : ISerializers {

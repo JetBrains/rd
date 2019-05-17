@@ -13,7 +13,7 @@ namespace rd {
 	extern std::atomic<int32_t> cookie;
 
 	/**
-	 * \brief complete class which has @code ISignal<T>'s properties
+	 * \brief complete class which has \a Signal<T> 's properties
 	 */
 	template<typename T>
 	class Signal final : public ISignal<T> {

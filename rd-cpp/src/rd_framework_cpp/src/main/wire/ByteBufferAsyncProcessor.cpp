@@ -130,7 +130,8 @@ namespace rd {
 						return;
 					}
 				}
-				add_data(std::move(std::move(data)));
+				add_data(std::move(data));
+				data.clear();
 			}
 
 			try {
