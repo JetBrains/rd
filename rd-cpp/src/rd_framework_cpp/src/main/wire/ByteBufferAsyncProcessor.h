@@ -34,7 +34,6 @@ namespace rd {
 		std::string id;
 
 		std::function<bool(Buffer::ByteArray const &, sequence_number_t seqn)> processor;
-		std::mutex processor_lock;
 
 		StateKind state{StateKind::Initialized};
 		static Logger logger;
@@ -53,6 +52,8 @@ namespace rd {
 
 		int32_t interrupt_balance = 0;
 		bool in_processing = false;
+		std::mutex processing_lock;
+		std::condition_variable processing_cv;
 	public:
 
 		//region ctor/dtor

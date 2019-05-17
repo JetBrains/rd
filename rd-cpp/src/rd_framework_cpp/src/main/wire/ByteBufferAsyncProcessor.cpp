@@ -70,7 +70,8 @@ namespace rd {
 
 			logger.debug(this->id + ": reprocessing started");
 
-			cv.wait(lock, [this]() -> bool {
+			std::unique_lock<decltype(processing_lock)> ul(processing_lock);
+			processing_cv.wait(ul, [this]() -> bool {
 				return !in_processing;
 			});
 
@@ -93,6 +94,7 @@ namespace rd {
 	void ByteBufferAsyncProcessor::process() {
 		{
 			std::lock_guard<decltype(queue_lock)> guard(queue_lock);
+			std::unique_lock<decltype(processing_lock)> ul(processing_lock);
 			util::bool_guard bool_guard(in_processing);
 
 			logger.debug(this->id + ": processing started");
@@ -103,6 +105,7 @@ namespace rd {
 				queue.pop();
 			}
 		}
+		processing_cv.notify_all();
 
 		cv.notify_all();
 	}
@@ -188,7 +191,8 @@ namespace rd {
 		auto current_thread_id = std::this_thread::get_id();
 		if (current_thread_id != async_thread_id) {
 			logger.debug(id + " paused from another thread : " + to_string(current_thread_id));
-			cv.wait(lock, [this]() -> bool {
+			std::unique_lock<decltype(processing_lock)> ul(processing_lock);
+			processing_cv.wait(ul, [this]() -> bool {
 				return !in_processing;
 			});
 			logger.debug(this->id + ": pausing waited for main processing");
