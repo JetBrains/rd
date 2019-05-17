@@ -470,6 +470,7 @@ TEST_P(DisconnectTestBase, SimpleDisconnect) {
 	} else {
 		try_close_socket(clientProtocol);
 	}
+	rd::util::sleep_this_thread(200);
 
 	cp.fire(3);
 	cp.fire(4);
@@ -516,8 +517,8 @@ TEST_P(DisconnectTestBase, DdosDisconnect) {
 				try_close_socket(serverProtocol);
 			} else {
 				try_close_socket(clientProtocol);
-				rd::util::sleep_this_thread(200);
 			}
+			rd::util::sleep_this_thread(200);
 		}
 	}
 
