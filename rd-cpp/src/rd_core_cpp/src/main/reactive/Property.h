@@ -6,6 +6,11 @@
 #include "core_util.h"
 
 namespace rd {
+
+	/**
+	 * \brief complete class which has \a Property<T> 's properties.
+	 * \tparam T type of stored value (may be abstract)
+	 */
 	template<typename T>
 	class Property : public IProperty<T> {
 	public:

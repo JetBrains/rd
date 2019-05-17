@@ -55,7 +55,7 @@ namespace rd {
 	inline identifyPolymorphic(T &&, Identities const &identities, RdId const &id) {}
 
 //template <>
-	inline void identifyPolymorphic(const IRdBindable &that, Identities const &identities, RdId id) {
+	inline void identifyPolymorphic(const IRdBindable &that, Identities const &identities, RdId const &id) {
 		that.identify(identities, id);
 	}
 
