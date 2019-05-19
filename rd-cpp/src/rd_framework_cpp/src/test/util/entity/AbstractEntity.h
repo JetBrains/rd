@@ -108,7 +108,7 @@ namespace rd {
 				friend bool operator!=(const AbstractEntity &lhs, const AbstractEntity &rhs);
 
 				//hash code trait
-				virtual size_t hashCode() const override = 0;
+				virtual size_t hashCode() const noexcept override = 0;
 
 				//type name trait
 				std::string type_name() const override;
@@ -128,7 +128,7 @@ namespace rd {
 //hash code trait
 namespace std {
     template <> struct hash<rd::test::util::AbstractEntity> {
-        size_t operator()(const rd::test::util::AbstractEntity & value) const {
+        size_t operator()(const rd::test::util::AbstractEntity & value) const noexcept {
             return value.hashCode();
         }
     };

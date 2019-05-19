@@ -17,6 +17,10 @@ namespace rd {
 		using wrapped_super_t = Wrapper<super_t>;
 		using string = Wrapper<std::wstring>;
 	}
+	/**
+	 * \brief Presents union type to be interned. It may be either \link std::wstring, 
+	 * either \link rd::IPolymorphicSerializable.
+	 */
 	using InternedAny = variant<any::wrapped_super_t, any::string>;
 
 	namespace any {
@@ -32,7 +36,7 @@ namespace rd {
 
 		template<typename T, typename Any>
 		typename std::enable_if_t<!util::is_base_of_v<IPolymorphicSerializable, T>, any::string> get(Any const &any) {
-			return get<any::string>(any);
+			return get<string>(any);
 		}
 
 		template<typename T, typename Any>

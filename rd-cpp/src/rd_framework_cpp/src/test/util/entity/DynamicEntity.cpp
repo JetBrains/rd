@@ -33,7 +33,7 @@ namespace rd {
 				return !(rhs == lhs);
 			}
 
-			size_t DynamicEntity::hashCode() const {
+			size_t DynamicEntity::hashCode() const noexcept {
 				return IPolymorphicSerializable::hashCode();
 			}
 

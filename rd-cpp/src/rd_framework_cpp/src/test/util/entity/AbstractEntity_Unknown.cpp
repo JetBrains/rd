@@ -59,7 +59,7 @@ namespace rd {
 			}
 
 			//hash code trait
-			size_t AbstractEntity_Unknown::hashCode() const {
+			size_t AbstractEntity_Unknown::hashCode() const noexcept {
 				size_t __r = 0;
 				__r = __r * 31 + (std::hash<std::wstring>()(get_name()));
 				return __r;

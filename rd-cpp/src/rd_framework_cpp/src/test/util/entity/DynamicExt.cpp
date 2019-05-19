@@ -38,7 +38,7 @@ namespace rd {
 
 			std::string DynamicExt::type_name() const { return "DynamicExt"; }
 
-			size_t DynamicExt::hashCode() const {
+			size_t DynamicExt::hashCode() const noexcept {
 				return IPolymorphicSerializable::hashCode();
 			}
 

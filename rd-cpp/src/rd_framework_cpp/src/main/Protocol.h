@@ -16,6 +16,9 @@ namespace rd {
 	class InternRoot;
 	//endregion
 
+	/**
+	 * \brief Top level node in the object graph. It stores [SerializationCtx] for polymorphic "SerDes"
+	 */
 	class Protocol : /*IRdDynamic, */public IProtocol {
 		constexpr static string_view InternRootName{"ProtocolInternRoot"};
 

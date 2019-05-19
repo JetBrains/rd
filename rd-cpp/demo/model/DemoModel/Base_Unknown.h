@@ -102,7 +102,7 @@ namespace demo {
         friend bool operator!=(const Base_Unknown &lhs, const Base_Unknown &rhs);
         
         //hash code trait
-        size_t hashCode() const override;
+        size_t hashCode() const noexcept override;
         
         //type name trait
         std::string type_name() const override;

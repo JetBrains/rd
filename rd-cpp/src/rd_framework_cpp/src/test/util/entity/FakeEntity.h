@@ -107,7 +107,7 @@ namespace rd {
 				friend bool operator!=(const FakeEntity &lhs, const FakeEntity &rhs);
 
 				//hash code trait
-				size_t hashCode() const override;
+				size_t hashCode() const noexcept override;
 
 				//type name trait
 				std::string type_name() const override;

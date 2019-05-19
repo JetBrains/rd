@@ -53,8 +53,8 @@ namespace demo {
     }
     
     //hash code trait
-    size_t Base::hashCode() const
-    {
+    size_t Base::hashCode() const noexcept
+{
         size_t __r = 0;
         return __r;
     }

@@ -110,8 +110,8 @@ namespace demo {
     }
     
     //hash code trait
-    size_t MyScalar::hashCode() const
-    {
+    size_t MyScalar::hashCode() const noexcept
+{
         size_t __r = 0;
         __r = __r * 31 + (std::hash<bool>()(get_sign()));
         __r = __r * 31 + (std::hash<signed char>()(get_byte()));

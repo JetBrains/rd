@@ -18,6 +18,12 @@ namespace rd {
 
 		using ByteArray = std::vector<word_t, Allocator>;
 	private:
+		template<int>
+		friend std::wstring read_wstring_spec(Buffer const&);
+
+		template<int>
+		friend void write_wstring_spec(Buffer const&, std::wstring const&);
+
 		mutable ByteArray data_;
 
 		mutable size_t offset = 0;

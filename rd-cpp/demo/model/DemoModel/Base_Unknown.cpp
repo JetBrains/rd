@@ -65,8 +65,8 @@ namespace demo {
     }
     
     //hash code trait
-    size_t Base_Unknown::hashCode() const
-    {
+    size_t Base_Unknown::hashCode() const noexcept
+{
         size_t __r = 0;
         return __r;
     }

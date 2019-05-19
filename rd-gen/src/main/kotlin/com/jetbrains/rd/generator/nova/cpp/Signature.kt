@@ -40,6 +40,12 @@ sealed class Signature {
             }
         }
 
+        fun noexcept(): MemberFunction {
+            return this.also {
+                commonPostfix.add("noexcept")
+            }
+        }
+
         fun override(): MemberFunction {
             return this.also {
                 declPostfix.add("override")

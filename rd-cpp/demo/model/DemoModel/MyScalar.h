@@ -113,7 +113,7 @@ namespace demo {
         friend bool operator!=(const MyScalar &lhs, const MyScalar &rhs);
         
         //hash code trait
-        size_t hashCode() const override;
+        size_t hashCode() const noexcept override;
         
         //type name trait
         std::string type_name() const override;

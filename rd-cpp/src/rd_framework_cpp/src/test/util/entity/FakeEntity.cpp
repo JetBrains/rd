@@ -63,7 +63,7 @@ namespace rd {
 			}
 
 			//hash code trait
-			size_t FakeEntity::hashCode() const {
+			size_t FakeEntity::hashCode() const noexcept {
 				size_t __r = 0;
 				__r = __r * 31 + (std::hash<bool>()(get_booleanValue()));
 				__r = __r * 31 + (std::hash<std::wstring>()(get_name()));

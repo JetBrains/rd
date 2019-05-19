@@ -4,7 +4,6 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.util.UsedImplicitly
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import com.jetbrains.rd.util.reflection.toPath
 import org.junit.Assert
@@ -23,7 +22,6 @@ class SimpleModelTest {
         Cpp17Generator(FlowTransform.AsIs, "Org.TestRoot1", File("build/testOutputCpp"))
     )
 
-    @UsedImplicitly
     @Suppress("unused")
     class TestRoot2 : Root()
 
@@ -51,7 +49,6 @@ class SimpleModelTest {
         }
     }
 
-    @UsedImplicitly
     @Suppress("unused")
     object Markup : Ext(Solution.editor) {
         init {

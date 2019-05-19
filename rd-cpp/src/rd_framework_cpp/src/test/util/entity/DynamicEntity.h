@@ -45,7 +45,7 @@ namespace rd {
 
 				friend bool operator!=(const DynamicEntity &lhs, const DynamicEntity &rhs);
 
-				size_t hashCode() const override;
+				size_t hashCode() const noexcept override;
 
 				bool equals(const ISerializable &object) const override;
 

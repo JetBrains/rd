@@ -1215,7 +1215,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     protected fun hashCodeTraitDecl(decl: Declaration): MemberFunction? {
         if (decl !is IScalar) return null
 
-        val signature = MemberFunction("size_t", "hashCode()", decl.name).const()
+        val signature = MemberFunction("size_t", "hashCode()", decl.name).const().noexcept()
         return when {
             decl is Toplevel -> return null
             decl.isConcrete -> signature.override()
@@ -1251,7 +1251,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         block("namespace std {", "}") {
             block("template <> struct hash<${decl.withNamespace()}> {", "};") {
-                block("size_t operator()(const ${decl.withNamespace()} & value) const {", "}") {
+                block("size_t operator()(const ${decl.withNamespace()} & value) const noexcept {", "}") {
                     +"return value.hashCode();"
                 }
             }

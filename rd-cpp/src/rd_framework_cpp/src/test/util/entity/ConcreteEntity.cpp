@@ -66,7 +66,7 @@ namespace rd {
 			}
 
 			//hash code trait
-			size_t ConcreteEntity::hashCode() const {
+			size_t ConcreteEntity::hashCode() const noexcept {
 				size_t __r = 0;
 				__r = __r * 31 + (std::hash<std::wstring>()(get_stringValue()));
 				__r = __r * 31 + (std::hash<std::wstring>()(get_name()));

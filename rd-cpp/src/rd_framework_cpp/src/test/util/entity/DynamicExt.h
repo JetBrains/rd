@@ -30,7 +30,7 @@ namespace rd {
 
 				static void create(IProtocol *protocol);
 
-				size_t hashCode() const override;
+				size_t hashCode() const noexcept override;
 
 				bool equals(const ISerializable &serializable) const override;
 

@@ -104,14 +104,40 @@ void Buffer::writeString(std::string const &value) const {
     writeArray<uint8_t>(v);
 }*/
 
-	std::wstring Buffer::read_wstring() const {
-		auto v = read_array<uint16_t>();
+	template<int>
+	std::wstring read_wstring_spec(Buffer const&buffer) {
+		auto v = buffer.read_array<uint16_t>();
 		return std::wstring(v.begin(), v.end());
 	}
 
-	void Buffer::write_wstring(std::wstring const &value) const {
+	template<>
+	std::wstring read_wstring_spec<2>(Buffer const&buffer) {
+		int32_t len = buffer.read_integral<int32_t>();
+		RD_ASSERT_MSG(len >= 0, "read null string(length =" + std::to_string(len) + ")");
+		std::wstring result;
+		result.resize(len);
+		buffer.read(reinterpret_cast<Buffer::word_t *>(&result[0]), sizeof(wchar_t) * len);
+		return result;
+	}
+
+	std::wstring Buffer::read_wstring() const {
+		return read_wstring_spec<sizeof(wchar_t)>(*this);
+	}
+
+	template<int>
+	void write_wstring_spec(Buffer const&buffer, std::wstring const &value) {
 		std::vector<uint16_t> v(value.begin(), value.end());
-		write_array<uint16_t>(v);
+		buffer.write_array<uint16_t>(v);
+	}
+
+	template<>
+	void write_wstring_spec<2>(Buffer const&buffer, std::wstring const &value) {
+		buffer.write_integral<int32_t>(static_cast<int32_t>(value.size()));
+		buffer.write(reinterpret_cast<Buffer::word_t const *>(value.data()), sizeof(wchar_t) * value.size());
+	}
+
+	void Buffer::write_wstring(std::wstring const &value) const {
+		write_wstring_spec<sizeof(wchar_t)>(*this, value);
 	}
 
 	void Buffer::write_wstring(Wrapper<std::wstring> const &value) const {
@@ -128,7 +154,7 @@ void Buffer::writeString(std::string const &value) const {
 		write_integral<word_t>(value ? 1 : 0);
 	}
 
-	void Buffer::read_byte_array(ByteArray& array) const {
+	void Buffer::read_byte_array(ByteArray &array) const {
 		const int32_t length = read_integral<int32_t>();
 		array.resize(length);
 		read_byte_array_raw(array);

@@ -68,8 +68,8 @@ namespace demo {
     }
     
     //hash code trait
-    size_t Derived::hashCode() const
-    {
+    size_t Derived::hashCode() const noexcept
+{
         size_t __r = 0;
         __r = __r * 31 + (std::hash<std::wstring>()(get_string()));
         return __r;
