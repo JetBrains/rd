@@ -23,7 +23,7 @@ namespace demo {
     //default ctors and dtors
     
     //reader
-    Derived Derived::read(rd::SerializationCtx & ctx, rd::Buffer & buffer)
+    Derived Derived::read(rd::SerializationCtx& ctx, rd::Buffer & buffer)
     {
         auto string_ = buffer.read_wstring();
         Derived res{std::move(string_)};
@@ -31,7 +31,7 @@ namespace demo {
     }
     
     //writer
-    void Derived::write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const
+    void Derived::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     {
         buffer.write_wstring(string_);
     }
@@ -69,7 +69,7 @@ namespace demo {
     
     //hash code trait
     size_t Derived::hashCode() const noexcept
-{
+    {
         size_t __r = 0;
         __r = __r * 31 + (std::hash<std::wstring>()(get_string()));
         return __r;
@@ -87,11 +87,17 @@ namespace demo {
         return "Derived";
     }
     
-    //to string trait
-    std::string to_string(const Derived & value)
+    //polymorphic to string
+    std::string Derived::toString() const
     {
         std::string res = "Derived\n";
-        res += "\tstring = " + rd::to_string(value.string_) + '\n';
+        res += "\tstring = " + rd::to_string(string_) + '\n';
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const Derived & value)
+    {
+        return value.toString();
     }
 };

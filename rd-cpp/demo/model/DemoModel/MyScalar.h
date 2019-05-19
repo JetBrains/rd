@@ -83,10 +83,10 @@ namespace demo {
         virtual ~MyScalar() = default;
         
         //reader
-        static MyScalar read(rd::SerializationCtx & ctx, rd::Buffer & buffer);
+        static MyScalar read(rd::SerializationCtx& ctx, rd::Buffer & buffer);
         
         //writer
-        void write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const override;
+        void write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const override;
         
         //virtual init
         
@@ -121,7 +121,12 @@ namespace demo {
         //static type name trait
         static std::string static_type_name();
         
-        //to string trait
+        //polymorphic to string
+        private:
+        std::string toString() const override;
+        
+        //external to string
+        public:
         friend std::string to_string(const MyScalar & value);
     };
 };
@@ -132,7 +137,7 @@ namespace demo {
 //hash code trait
 namespace std {
     template <> struct hash<demo::MyScalar> {
-        size_t operator()(const demo::MyScalar & value) const {
+        size_t operator()(const demo::MyScalar & value) const noexcept {
             return value.hashCode();
         }
     };

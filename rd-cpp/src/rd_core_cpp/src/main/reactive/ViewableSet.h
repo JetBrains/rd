@@ -213,6 +213,11 @@ namespace rd {
 		bool empty() const override {
 			return set.empty();
 		}
+
+		template<typename ... Args>
+		bool emplace_add(Args &&... args) const {
+			return add(WT{std::forward<Args>(args)...});
+		}
 	};
 }
 

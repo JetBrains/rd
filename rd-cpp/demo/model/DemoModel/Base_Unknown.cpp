@@ -27,13 +27,13 @@ namespace demo {
     }
     
     //reader
-    Base_Unknown Base_Unknown::read(rd::SerializationCtx & ctx, rd::Buffer & buffer)
+    Base_Unknown Base_Unknown::read(rd::SerializationCtx& ctx, rd::Buffer & buffer)
     {
         throw std::logic_error("Unknown instances should not be read via serializer");
     }
     
     //writer
-    void Base_Unknown::write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const
+    void Base_Unknown::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     {
         buffer.write_byte_array_raw(unknownBytes_);
     }
@@ -66,7 +66,7 @@ namespace demo {
     
     //hash code trait
     size_t Base_Unknown::hashCode() const noexcept
-{
+    {
         size_t __r = 0;
         return __r;
     }
@@ -83,10 +83,16 @@ namespace demo {
         return "Base_Unknown";
     }
     
-    //to string trait
-    std::string to_string(const Base_Unknown & value)
+    //polymorphic to string
+    std::string Base_Unknown::toString() const
     {
         std::string res = "Base_Unknown\n";
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const Base_Unknown & value)
+    {
+        return value.toString();
     }
 };

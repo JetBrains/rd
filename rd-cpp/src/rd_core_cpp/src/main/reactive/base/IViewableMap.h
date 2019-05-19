@@ -230,6 +230,11 @@ namespace rd {
 		virtual size_t size() const = 0;
 
 		virtual bool empty() const = 0;
+
+		template<typename ... Args>
+		const V *emplace_set(WK wk, Args &&... args) const {
+			return set(std::move(wk), WV{std::forward<Args>(args)...});
+		}
 	};
 }
 

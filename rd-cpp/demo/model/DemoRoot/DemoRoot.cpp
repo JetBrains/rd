@@ -78,10 +78,16 @@ namespace demo {
     
     //static type name trait
     
-    //to string trait
-    std::string to_string(const DemoRoot & value)
+    //polymorphic to string
+    std::string DemoRoot::toString() const
     {
         std::string res = "DemoRoot\n";
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const DemoRoot & value)
+    {
+        return value.toString();
     }
 };

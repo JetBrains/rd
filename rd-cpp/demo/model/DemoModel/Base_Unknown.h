@@ -79,10 +79,10 @@ namespace demo {
         virtual ~Base_Unknown() = default;
         
         //reader
-        static Base_Unknown read(rd::SerializationCtx & ctx, rd::Buffer & buffer);
+        static Base_Unknown read(rd::SerializationCtx& ctx, rd::Buffer & buffer);
         
         //writer
-        void write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const override;
+        void write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const override;
         
         //virtual init
         
@@ -110,7 +110,12 @@ namespace demo {
         //static type name trait
         static std::string static_type_name();
         
-        //to string trait
+        //polymorphic to string
+        private:
+        std::string toString() const override;
+        
+        //external to string
+        public:
         friend std::string to_string(const Base_Unknown & value);
     };
 };
@@ -121,7 +126,7 @@ namespace demo {
 //hash code trait
 namespace std {
     template <> struct hash<demo::Base_Unknown> {
-        size_t operator()(const demo::Base_Unknown & value) const {
+        size_t operator()(const demo::Base_Unknown & value) const noexcept {
             return value.hashCode();
         }
     };

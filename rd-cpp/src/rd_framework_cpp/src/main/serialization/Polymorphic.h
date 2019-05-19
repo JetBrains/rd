@@ -14,7 +14,7 @@ namespace rd {
 	//endregion
 
 	/**
-	 * \brief Class which maintains "SerDes" for statically polymorphic type [T]. 
+	 * \brief Maintains "SerDes" for statically polymorphic type [T].
 	 * Requires static "read" and "write" methods as in common case below.
 	 * \tparam T type to "SerDes"
 	 * \tparam R trait specialisation (void by default)

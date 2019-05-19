@@ -22,7 +22,7 @@ namespace demo {
     }
     
     //reader
-    rd::Wrapper<Base> Base::readUnknownInstance(rd::SerializationCtx & ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)
+    rd::Wrapper<Base> Base::readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)
     {
         int32_t objectStartPosition = buffer.get_position();
         auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());
@@ -54,7 +54,7 @@ namespace demo {
     
     //hash code trait
     size_t Base::hashCode() const noexcept
-{
+    {
         size_t __r = 0;
         return __r;
     }
@@ -71,10 +71,16 @@ namespace demo {
         return "Base";
     }
     
-    //to string trait
-    std::string to_string(const Base & value)
+    //polymorphic to string
+    std::string Base::toString() const
     {
         std::string res = "Base\n";
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const Base & value)
+    {
+        return value.toString();
     }
 };

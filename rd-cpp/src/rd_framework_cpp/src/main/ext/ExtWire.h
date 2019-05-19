@@ -10,7 +10,7 @@
 #include <functional>
 
 namespace rd {
-	class ExtWire : public IWire {
+	class ExtWire final : public IWire {
 		mutable std::mutex lock;
 
 		mutable std::queue<std::pair<RdId, Buffer::ByteArray> > sendQ;

@@ -89,7 +89,8 @@ namespace rd {
 
 			bool rejected = is_master && version < master_version;
 			logSend.trace("RECV property " + location.toString() + " " + rdid.toString() +
-						  ":: oldver=%d, ver=%d, value = " + to_string(v) + (rejected ? ">> REJECTED" : ""), master_version, version);
+						  ":: oldver=%d, ver=%d, value = " + to_string(v) + (rejected ? ">> REJECTED" : ""),
+						  master_version, version);
 			if (rejected) {
 				return;
 			}
@@ -105,7 +106,7 @@ namespace rd {
 			Property<T>::advise(lifetime, handler);
 		}
 
-		void set(value_or_wrapper <T> new_value) const override {
+		void set(value_or_wrapper<T> new_value) const override {
 			this->local_change([this, new_value = std::move(new_value)]() mutable {
 				this->default_value_changed = true;
 				Property<T>::set(std::move(new_value));

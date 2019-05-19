@@ -33,7 +33,7 @@ add_library(rd_framework_cpp STATIC
         serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
-        serialization/ISerializable.h
+        serialization/ISerializable.cpp serialization/ISerializable.h
         serialization/InternedSerializer.h
         serialization/AbstractPolymorphic.h
         serialization/RdAny.cpp serialization/RdAny.h

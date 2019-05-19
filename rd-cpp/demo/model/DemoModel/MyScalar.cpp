@@ -23,7 +23,7 @@ namespace demo {
     //default ctors and dtors
     
     //reader
-    MyScalar MyScalar::read(rd::SerializationCtx & ctx, rd::Buffer & buffer)
+    MyScalar MyScalar::read(rd::SerializationCtx& ctx, rd::Buffer & buffer)
     {
         auto sign_ = buffer.read_bool();
         auto byte_ = buffer.read_integral<signed char>();
@@ -37,7 +37,7 @@ namespace demo {
     }
     
     //writer
-    void MyScalar::write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const
+    void MyScalar::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     {
         buffer.write_bool(sign_);
         buffer.write_integral(byte_);
@@ -111,7 +111,7 @@ namespace demo {
     
     //hash code trait
     size_t MyScalar::hashCode() const noexcept
-{
+    {
         size_t __r = 0;
         __r = __r * 31 + (std::hash<bool>()(get_sign()));
         __r = __r * 31 + (std::hash<signed char>()(get_byte()));
@@ -135,17 +135,23 @@ namespace demo {
         return "MyScalar";
     }
     
-    //to string trait
-    std::string to_string(const MyScalar & value)
+    //polymorphic to string
+    std::string MyScalar::toString() const
     {
         std::string res = "MyScalar\n";
-        res += "\tsign = " + rd::to_string(value.sign_) + '\n';
-        res += "\tbyte = " + rd::to_string(value.byte_) + '\n';
-        res += "\tshort = " + rd::to_string(value.short_) + '\n';
-        res += "\tint = " + rd::to_string(value.int_) + '\n';
-        res += "\tlong = " + rd::to_string(value.long_) + '\n';
-        res += "\tfloat_ = " + rd::to_string(value.float__) + '\n';
-        res += "\tdouble_ = " + rd::to_string(value.double__) + '\n';
+        res += "\tsign = " + rd::to_string(sign_) + '\n';
+        res += "\tbyte = " + rd::to_string(byte_) + '\n';
+        res += "\tshort = " + rd::to_string(short_) + '\n';
+        res += "\tint = " + rd::to_string(int_) + '\n';
+        res += "\tlong = " + rd::to_string(long_) + '\n';
+        res += "\tfloat_ = " + rd::to_string(float__) + '\n';
+        res += "\tdouble_ = " + rd::to_string(double__) + '\n';
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const MyScalar & value)
+    {
+        return value.toString();
     }
 };

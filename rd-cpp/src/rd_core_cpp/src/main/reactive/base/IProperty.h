@@ -58,6 +58,14 @@ namespace rd {
 		 * \brief set value of type T or derived type to it.
 		 */
 		virtual void set(value_or_wrapper<T>) const = 0;
+
+		/**
+		 * \brief construct value of type T and delegate call to set
+		 */
+		template<typename ... Args>
+		void emplace(Args &&... args) const {
+			set(value_or_wrapper<T>{std::forward<Args>(args)...});
+		}
 	};
 }
 

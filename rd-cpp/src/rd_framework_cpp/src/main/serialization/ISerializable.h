@@ -7,9 +7,9 @@ namespace rd {
 	//region predeclared
 
 	class Buffer;
-	//endregion
 
 	class SerializationCtx;
+	//endregion
 
 	/**
 	 * \brief Provides \ref write for serialization to be overriden. For deserialization derived class must have static
@@ -27,26 +27,22 @@ namespace rd {
 	 */
 	class IPolymorphicSerializable : public ISerializable {
 	public:
-		/**	
+		/**
 		 * \return actual class's name as written in source code.
 		 */
 		virtual std::string type_name() const = 0/*{ throw std::invalid_argument("type doesn't support polymorphic serialization"); }*/;
 
 //		virtual bool equals(IPolymorphicSerializable const& object) const = 0;
 
-		virtual size_t hashCode() const noexcept {
-			return std::hash<void const *>()(static_cast<void const *>(this));
-		}
+		virtual size_t hashCode() const noexcept;
+
+		virtual std::string toString() const = 0;
 
 		virtual bool equals(ISerializable const &) const = 0;
 
-		friend bool operator==(const IPolymorphicSerializable &lhs, const IPolymorphicSerializable &rhs) {
-			return lhs.equals(rhs);
-		}
+		friend bool operator==(const IPolymorphicSerializable &lhs, const IPolymorphicSerializable &rhs);
 
-		friend bool operator!=(const IPolymorphicSerializable &lhs, const IPolymorphicSerializable &rhs) {
-			return !(lhs == rhs);
-		}
+		friend bool operator!=(const IPolymorphicSerializable &lhs, const IPolymorphicSerializable &rhs);
 	};
 }
 

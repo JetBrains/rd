@@ -85,8 +85,8 @@ TEST_F(DPropertyTest, dynamic_polymorphic_property_cast) {
 
 	std::vector<std::wstring> log;
 
-	server_entity.advise(clientLifetime, [&log](AbstractEntity const &entity) {
-		log.push_back(entity.get_name());
+	server_entity.advise(clientLifetime, [&log](AbstractEntity const &entities) {
+		log.push_back(entities.get_name());
 	});
 	server_entity.set(value_a);
 	EXPECT_EQ(server_entity.get(), value_a);
@@ -115,8 +115,8 @@ TEST_F(DListTest, dynamic_polymorphic_list) {
 		server_entity.remove(value_a);
 	});
 
-	std::vector<std::string> expected{"Add 0:" + to_string(static_cast<AbstractEntity const &>(value_a)),
-									  "Add 1:" + to_string(static_cast<AbstractEntity const &>(value_b)),
+	std::vector<std::string> expected{"Add 0:" + to_string(value_a),
+									  "Add 1:" + to_string(value_b),
 									  "Remove 0"};
 	EXPECT_EQ(expected, log);
 
@@ -147,12 +147,12 @@ TEST_F(DSetTest, dynamic_polymorphic_set) {
 		server_entity.clear();
 	});
 
-	std::vector<std::string> expected{"Add:" + to_string(static_cast<AbstractEntity const &>(value_c)),
-									  "Add:" + to_string(static_cast<AbstractEntity const &>(value_a)),
-									  "Add:" + to_string(static_cast<AbstractEntity const &>(value_b)),
-									  "Remove:" + to_string(static_cast<AbstractEntity const &>(value_a)),
-									  "Remove:" + to_string(static_cast<AbstractEntity const &>(value_c)),
-									  "Remove:" + to_string(static_cast<AbstractEntity const &>(value_b))
+	std::vector<std::string> expected{"Add:" + to_string(value_c),
+									  "Add:" + to_string(value_a),
+									  "Add:" + to_string(value_b),
+									  "Remove:" + to_string(value_a),
+									  "Remove:" + to_string(value_c),
+									  "Remove:" + to_string(value_b)
 	};
 	EXPECT_EQ(expected, log);
 
@@ -190,12 +190,12 @@ TEST_F(DMapTest, dynamic_polymorphic_map) {
 		server_entity.clear();
 	});
 
-	std::vector<std::string> expected{"Add " + to_string(static_cast<AbstractEntity const &>(key_3)) + ":" + to_string(static_cast<AbstractEntity const &>(value_c)),
-									  "Add " + to_string(static_cast<AbstractEntity const &>(key_1)) + ":" + to_string(static_cast<AbstractEntity const &>(value_a)),
-									  "Add " + to_string(static_cast<AbstractEntity const &>(key_2)) + ":" + to_string(static_cast<AbstractEntity const &>(value_b)),
-									  "Remove " + to_string(static_cast<AbstractEntity const &>(key_1)),
-									  "Remove " + to_string(static_cast<AbstractEntity const &>(key_3)),
-									  "Remove " + to_string(static_cast<AbstractEntity const &>(key_2))
+	std::vector<std::string> expected{"Add " + to_string(key_3) + ":" + to_string(value_c),
+									  "Add " + to_string(key_1) + ":" + to_string(value_a),
+									  "Add " + to_string(key_2) + ":" + to_string(value_b),
+									  "Remove " + to_string(key_1),
+									  "Remove " + to_string(key_3),
+									  "Remove " + to_string(key_2)
 	};
 	EXPECT_EQ(expected, log);
 

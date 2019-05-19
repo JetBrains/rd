@@ -85,11 +85,17 @@ namespace demo {
     
     //static type name trait
     
-    //to string trait
-    std::string to_string(const ExtModel & value)
+    //polymorphic to string
+    std::string ExtModel::toString() const
     {
         std::string res = "ExtModel\n";
-        res += "\tchecker = " + rd::to_string(value.checker_) + '\n';
+        res += "\tchecker = " + rd::to_string(checker_) + '\n';
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const ExtModel & value)
+    {
+        return value.toString();
     }
 };

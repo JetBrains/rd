@@ -146,19 +146,25 @@ namespace demo {
     
     //static type name trait
     
-    //to string trait
-    std::string to_string(const DemoModel & value)
+    //polymorphic to string
+    std::string DemoModel::toString() const
     {
         std::string res = "DemoModel\n";
-        res += "\tboolean_property = " + rd::to_string(value.boolean_property_) + '\n';
-        res += "\tscalar = " + rd::to_string(value.scalar_) + '\n';
-        res += "\tlist = " + rd::to_string(value.list_) + '\n';
-        res += "\tset = " + rd::to_string(value.set_) + '\n';
-        res += "\tmapLongToString = " + rd::to_string(value.mapLongToString_) + '\n';
-        res += "\tcall = " + rd::to_string(value.call_) + '\n';
-        res += "\tcallback = " + rd::to_string(value.callback_) + '\n';
-        res += "\tinterned_string = " + rd::to_string(value.interned_string_) + '\n';
-        res += "\tpolymorphic = " + rd::to_string(value.polymorphic_) + '\n';
+        res += "\tboolean_property = " + rd::to_string(boolean_property_) + '\n';
+        res += "\tscalar = " + rd::to_string(scalar_) + '\n';
+        res += "\tlist = " + rd::to_string(list_) + '\n';
+        res += "\tset = " + rd::to_string(set_) + '\n';
+        res += "\tmapLongToString = " + rd::to_string(mapLongToString_) + '\n';
+        res += "\tcall = " + rd::to_string(call_) + '\n';
+        res += "\tcallback = " + rd::to_string(callback_) + '\n';
+        res += "\tinterned_string = " + rd::to_string(interned_string_) + '\n';
+        res += "\tpolymorphic = " + rd::to_string(polymorphic_) + '\n';
         return res;
+    }
+    
+    //external to string
+    std::string to_string(const DemoModel & value)
+    {
+        return value.toString();
     }
 };

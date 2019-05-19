@@ -7,6 +7,7 @@
 #include "SocketWireTestBase.h"
 #include "SocketWire.h"
 #include "DynamicEntity.h"
+#include "entities_util.h"
 
 #include <random>
 
@@ -197,16 +198,16 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
-	RdProperty<DynamicEntity> client_property{DynamicEntity(0)}, server_property{DynamicEntity(0)};
+	RdProperty<DynamicEntity> client_property{make_dynamic_entity(0)}, server_property{make_dynamic_entity(0)};
 
 	statics(client_property, (property_id));
 	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
-	client_property.get().foo.rdid = server_property.get().foo.rdid = RdId(3);
+	client_property.get().get_foo().rdid = server_property.get().get_foo().rdid = RdId(3);
 
-	DynamicEntity::create(&clientProtocol);
-	DynamicEntity::create(&serverProtocol);
+	/*DynamicEntity::create(&clientProtocol);
+	DynamicEntity::create(&serverProtocol);*/
 	//bound
 
 	server_property.bind(lifetime, &serverProtocol, "top");
@@ -216,10 +217,10 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	std::vector<int32_t> serverLog;
 
 	client_property.advise(Lifetime::Eternal(), [&](DynamicEntity const &entity) {
-		entity.foo.advise(Lifetime::Eternal(), [&](int32_t const &it) { clientLog.push_back(it); });
+		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const &it) { clientLog.push_back(it); });
 	});
 	server_property.advise(Lifetime::Eternal(), [&](DynamicEntity const &entity) {
-		entity.foo.advise(Lifetime::Eternal(), [&](int32_t const &it) { serverLog.push_back(it); });
+		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const &it) { serverLog.push_back(it); });
 	});
 
 	checkSchedulersAreEmpty();
@@ -227,7 +228,7 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	EXPECT_EQ((listOf{0}), clientLog);
 	EXPECT_EQ((listOf{0}), serverLog);
 
-	client_property.set(DynamicEntity(2));
+	client_property.emplace(make_dynamic_entity(2));
 	serverScheduler.pump_one_message();//server get the whole DynamicEntity in one message
 
 	checkSchedulersAreEmpty();
@@ -235,7 +236,7 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	EXPECT_EQ(clientLog, (listOf{0, 2}));
 	EXPECT_EQ(serverLog, (listOf{0, 2}));
 
-	client_property.get().foo.set(5);
+	client_property.get().get_foo().set(5);
 	serverScheduler.pump_one_message();//server get the only foo in one message
 
 	checkSchedulersAreEmpty();
@@ -243,14 +244,14 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	EXPECT_EQ(clientLog, (listOf{0, 2, 5}));
 	EXPECT_EQ(serverLog, (listOf{0, 2, 5}));
 
-	client_property.get().foo.set(5);
+	client_property.get().get_foo().set(5);
 
 	checkSchedulersAreEmpty();
 
 	EXPECT_EQ(clientLog, (listOf{0, 2, 5}));
 	EXPECT_EQ(serverLog, (listOf{0, 2, 5}));
 
-	client_property.set(DynamicEntity(5));
+	client_property.emplace(make_dynamic_entity(5));
 	serverScheduler.pump_one_message();//server get the whole DynamicEntity in one message
 
 	checkSchedulersAreEmpty();

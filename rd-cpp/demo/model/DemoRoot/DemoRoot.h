@@ -107,7 +107,12 @@ namespace demo {
         
         //static type name trait
         
-        //to string trait
+        //polymorphic to string
+        private:
+        std::string toString() const override;
+        
+        //external to string
+        public:
         friend std::string to_string(const DemoRoot & value);
     };
 };

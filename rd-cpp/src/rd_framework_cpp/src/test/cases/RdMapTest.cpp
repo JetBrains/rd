@@ -4,6 +4,7 @@
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
 #include "test_util.h"
+#include "entities_util.h"
 
 using namespace rd;
 using namespace test;
@@ -80,8 +81,8 @@ TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 	statics(server_map, id);
 	statics(client_map, id);
 
-	DynamicEntity::create(clientProtocol.get());
-	DynamicEntity::create(serverProtocol.get());
+	/*DynamicEntity::create(clientProtocol.get());
+	DynamicEntity::create(serverProtocol.get());*/
 
 	EXPECT_TRUE(server_map.empty());
 	EXPECT_TRUE(client_map.empty());
@@ -95,21 +96,21 @@ TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 				[&log, &k]() { log.push_back(L"start " + std::to_wstring(k)); },
 				[&log, &k]() { log.push_back(L"finish " + std::to_wstring(k)); }
 		);
-		v.foo.advise(lf, [&log](int32_t const &fooval) {
+		v.get_foo().advise(lf, [&log](int32_t const &fooval) {
 			log.push_back(std::to_wstring(fooval));
 		});
 	});
 
-	client_map.set(2, DynamicEntity(1));
+	client_map.emplace_set(2, make_dynamic_entity(1));
 
-	server_map.set(0, DynamicEntity(2));
-	server_map.set(0, DynamicEntity(3));
+	server_map.emplace_set(0, make_dynamic_entity(2));
+	server_map.emplace_set(0, make_dynamic_entity(3));
 
 	EXPECT_EQ(2, client_map.size());
 	EXPECT_EQ(2, server_map.size());
 
 	client_map.remove(0);
-	client_map.set(5, DynamicEntity(4));
+	client_map.emplace_set(5, make_dynamic_entity(4));
 
 	client_map.clear();
 

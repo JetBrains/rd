@@ -59,8 +59,8 @@ class SocketWireTest {
 
     @Before
     fun setUp() {
-        lifetimeDef = Lifetime.create(Lifetime.Eternal)
-        socketLifetimeDef = Lifetime.create(Lifetime.Eternal)
+        lifetimeDef = Lifetime.Eternal.createNested()
+        socketLifetimeDef = Lifetime.Eternal.createNested()
     }
 
 

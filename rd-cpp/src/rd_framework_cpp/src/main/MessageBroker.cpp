@@ -23,7 +23,7 @@ namespace rd {
 				if (exists_id) {
 					that->on_wire_received(std::move(message));
 				} else {
-					logger.trace("Disappeared Handler for Reactive entity with id:" + that->rdid.toString());
+					logger.trace("Disappeared Handler for Reactive entities with id:" + that->rdid.toString());
 				}
 			};
 			std::function<void()> function = util::make_shared_function(std::move(action));
@@ -97,7 +97,7 @@ namespace rd {
 	}
 
 	void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const *entity) const {
-		RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entity: " + std::string(typeid(*entity).name())))
+		RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())))
 
 		//advise MUST happen under default scheduler, not custom
 		default_scheduler->assert_thread();

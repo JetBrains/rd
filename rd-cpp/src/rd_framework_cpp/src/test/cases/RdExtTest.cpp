@@ -44,7 +44,7 @@ using namespace test::util;
 //    terminate();
 //}
 
-TEST_F(SocketWireTestBase, DISABLED_testExtension) {
+/*TEST_F(SocketWireTestBase, DISABLED_testExtension) {
 	int property_id = 1;
 	int entity_id = 2;
 	int32_t foo_id = 3;
@@ -101,7 +101,7 @@ TEST_F(SocketWireTestBase, DISABLED_testExtension) {
 	EXPECT_EQ(L"Ext!", clientExt.bar.get());
 
 	terminate();
-}
+}*/
 
 TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
 //	int64_t const serialization_hash = 1ll << 40u;

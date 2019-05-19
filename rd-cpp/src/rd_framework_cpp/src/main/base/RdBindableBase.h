@@ -17,9 +17,7 @@ namespace rd {
 
 		SerializationCtx &get_serialization_context() const override;
 
-		std::string toString() {
-			return "location=" + location.toString() + ",rdid=" + rdid.toString();
-		}
+		virtual std::string toString() const;
 
 	public:
 		//region ctor/dtor

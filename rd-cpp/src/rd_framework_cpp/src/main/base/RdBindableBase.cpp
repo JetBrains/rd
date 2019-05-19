@@ -2,6 +2,10 @@
 #include "RdBindableBase.h"
 
 namespace rd {
+	std::string RdBindableBase::toString() const {
+		return "location=" + location.toString() + ",rdid=" + rdid.toString();
+	}
+
 	bool RdBindableBase::is_bound() const {
 		return parent != nullptr;
 	}
@@ -32,8 +36,8 @@ namespace rd {
 
 //must be overriden if derived class have bindable members
 	void RdBindableBase::identify(const Identities &identities, RdId const &id) const {
-		RD_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
-		RD_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
+		RD_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entities: $this");
+		RD_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entities: $this");
 
 		this->rdid = id;
 		for (const auto &it : bindable_extensions) {

@@ -133,7 +133,7 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, size_t, T const &)> handler) const {
+		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, size_t, T const &)> handler) const {
 			advise(std::move(lifetime), [handler](Event e) {
 				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
@@ -156,7 +156,7 @@ namespace rd {
 		 * \param handler to be called.
 		 */
 		void view(Lifetime lifetime,
-			 std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const override {
+				  std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const override {
 			view(lifetime, [handler](Lifetime lt, size_t idx, T const &v) {
 				handler(lt, std::make_pair(idx, &v));
 			});
@@ -212,14 +212,27 @@ namespace rd {
 
 		virtual bool empty() const = 0;
 
+		template<typename ... Args>
+		bool emplace_add(Args &&... args) const {
+			return add(WT{std::forward<Args>(args)...});
+		}
+
+		template<typename ... Args>
+		bool emplace_add(size_t index, Args &&... args) const {
+			return add(index, WT{std::forward<Args>(args)...});
+		}
+
+		template<typename ... Args>
+		WT emplace_set(size_t index, Args &&... args) const {
+			return set(index, WT{std::forward<Args>(args)...});
+		}
+
 		template<typename U>
 		friend typename std::enable_if<(!std::is_abstract<U>::value), std::vector<U>>::type
 		convert_to_list(IViewableList<U> const &list);
 
 	protected:
-		virtual const std::vector<Wrapper < T>> &
-
-		getList() const = 0;
+		virtual const std::vector<Wrapper<T>> &getList() const = 0;
 	};
 
 	template<typename T>

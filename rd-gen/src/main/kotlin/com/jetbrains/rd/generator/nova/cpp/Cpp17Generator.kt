@@ -31,6 +31,12 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
 val VsWarningsDefault : IntArray? = null*/
 val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307)
 
+/**
+ * Generate C++ code.
+ * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces.
+ * Remember about following properties: "FsPath", "TargetName"!
+ * "a.b.c" to "a::b::c", for instance.
+ */
 open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
 
     //region language specific properties
@@ -780,8 +786,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 comment("static type name trait")
                 declare(staticTypenameTraitDecl(decl))
 
-                comment("to string trait")
-                declare(toStringTraitDecl(decl))
+                comment("polymorphic to string")
+                private()
+                declare(polymorphicToStringTraitDecl(decl))
+
+                comment("external to string")
+                public()
+                declare(externalToStringTraitDecl(decl))
 
                 /*if (decl.isExtension) {
                     extensionTraitDef(decl as Ext)
@@ -1239,7 +1250,17 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
-    private fun toStringTraitDecl(decl: Declaration): MemberFunction? {
+    private fun polymorphicToStringTraitDecl(decl: Declaration): MemberFunction? {
+        val signature = MemberFunction("std::string", "toString()", decl.name).const()
+        return when {
+            decl is Toplevel -> signature.override()
+            decl.isAbstract -> signature.override()
+            decl.isConcrete -> signature.override()
+            else -> signature
+        }
+    }
+
+    private fun externalToStringTraitDecl(decl: Declaration): MemberFunction? {
 //        if (!(decl is Toplevel)) return null
 
         return MemberFunction("std::string", "to_string(const ${decl.name} & value)", null).friend()
@@ -1319,8 +1340,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         comment("static type name trait")
         staticTypenameTraitDef(decl)
 
-        comment("to string trait")
-        toStringTraitDef(decl)
+        comment("polymorphic to string")
+        polymorphicToStringTraitDef(decl)
+
+        comment("external to string")
+        externalToStringTraitDef(decl)
     }
 
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
@@ -1740,14 +1764,22 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
-    private fun PrettyPrinter.toStringTraitDef(decl: Declaration) {
-        toStringTraitDecl(decl)?.let {
-            define(it) {
+    private fun PrettyPrinter.polymorphicToStringTraitDef(decl: Declaration) {
+        polymorphicToStringTraitDecl(decl)?.let { function ->
+            define(function) {
                 +"""std::string res = "${decl.name}\n";"""
-                decl.allMembers.forEach {
-                    println("""res += "\t${it.name} = " + rd::to_string(value.${it.encapsulatedName}) + '\n';""")
+                decl.allMembers.forEach { member ->
+                    println("""res += "\t${member.name} = " + rd::to_string(${member.encapsulatedName}) + '\n';""")
                 }
                 +"return res;"
+            }
+        }
+    }
+
+    private fun PrettyPrinter.externalToStringTraitDef(decl: Declaration) {
+        externalToStringTraitDecl(decl)?.let {
+            define(it) {
+                +"return value.toString();"
             }
         }
     }
