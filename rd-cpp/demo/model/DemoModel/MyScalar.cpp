@@ -23,7 +23,7 @@ namespace demo {
     //default ctors and dtors
     
     //reader
-    MyScalar MyScalar::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
+    MyScalar MyScalar::read(rd::SerializationCtx & ctx, rd::Buffer & buffer)
     {
         auto sign_ = buffer.read_bool();
         auto byte_ = buffer.read_integral<signed char>();
@@ -37,7 +37,7 @@ namespace demo {
     }
     
     //writer
-    void MyScalar::write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const
+    void MyScalar::write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const
     {
         buffer.write_bool(sign_);
         buffer.write_integral(byte_);

@@ -39,14 +39,14 @@ namespace rd {
 
 		//endregion
 
-		static RdSet<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdSet<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdSet<T, S> result;
 			RdId id = RdId::read(buffer);
 			withId(result, std::move(id));
 			return result;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -59,7 +59,7 @@ namespace rd {
 				advise(lifetime, [this](AddRemove kind, T const &v) {
 					if (!is_local_change) return;
 
-					get_wire()->send(rdid, [this, kind, &v](Buffer const &buffer) {
+					get_wire()->send(rdid, [this, kind, &v](Buffer &buffer) {
 						buffer.write_enum<AddRemove>(kind);
 						S::write(this->get_serialization_context(), buffer, v);
 

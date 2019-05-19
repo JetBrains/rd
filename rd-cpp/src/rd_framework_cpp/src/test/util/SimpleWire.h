@@ -34,7 +34,7 @@ namespace rd {
 			virtual ~SimpleWire() = default;
 			//endregion
 
-			void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const override;
+			void send(RdId const &id, std::function<void(Buffer &buffer)> writer) const override;
 
 			void process_all_messages() const;
 

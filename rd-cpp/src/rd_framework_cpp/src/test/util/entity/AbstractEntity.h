@@ -83,11 +83,11 @@ namespace rd {
 
 				//reader
 				static rd::Wrapper<AbstractEntity>
-				readUnknownInstance(rd::SerializationCtx const &ctx, rd::Buffer const &buffer,
+				readUnknownInstance(rd::SerializationCtx  &ctx, rd::Buffer &buffer,
 									rd::RdId const &unknownId, int32_t size);
 
 				//writer
-				virtual void write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const override = 0;
+				virtual void write(rd::SerializationCtx  &ctx, rd::Buffer &buffer) const override = 0;
 
 				//virtual init
 

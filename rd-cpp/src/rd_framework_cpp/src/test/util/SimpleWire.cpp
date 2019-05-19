@@ -6,7 +6,7 @@ namespace rd {
 			this->connected.set(true);
 		}
 
-		void SimpleWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
+		void SimpleWire::send(RdId const &id, std::function<void(Buffer &buffer)> writer) const {
 			assert(!id.isNull());
 			Buffer buffer;
 			writer(buffer);

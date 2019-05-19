@@ -32,7 +32,7 @@ namespace rd {
 
 		virtual const IProtocol *get_protocol() const = 0;
 
-		virtual SerializationCtx const &get_serialization_context() const = 0;
+		virtual SerializationCtx &get_serialization_context() const = 0;
 	};
 }
 

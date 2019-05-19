@@ -79,13 +79,13 @@ TEST_F(RdFrameworkTestBase, signal_void_statics) {
 
 class CustomSerializer {
 public:
-	static int32_t read(SerializationCtx const &ctx, Buffer const &buffer) {
+	static int32_t read(SerializationCtx  &ctx, Buffer &buffer) {
 		bool negate = buffer.read_bool();
 		int32_t module = buffer.read_integral<int32_t>();
 		return negate ? -module : module;
 	}
 
-	static void write(SerializationCtx const &ctx, Buffer const &buffer, const int &value) {
+	static void write(SerializationCtx  &ctx, Buffer &buffer, const int &value) {
 		buffer.write_integral(value < 0);
 		buffer.write_integral(abs(value));
 	}
@@ -142,13 +142,13 @@ public:
 	virtual ~FooScalar() = default;
 	//endregion
 
-	static FooScalar<K> read(SerializationCtx const &ctx, Buffer const &buffer) {
+	static FooScalar<K> read(SerializationCtx  &ctx, Buffer &buffer) {
 		K x = buffer.read_integral<K>();
 		K y = buffer.read_integral<K>();
 		return FooScalar(x, y);
 	}
 
-	void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+	void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 		buffer.write_integral(x);
 		buffer.write_integral(y);
 	}

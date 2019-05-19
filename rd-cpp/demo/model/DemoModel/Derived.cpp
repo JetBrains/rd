@@ -23,7 +23,7 @@ namespace demo {
     //default ctors and dtors
     
     //reader
-    Derived Derived::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
+    Derived Derived::read(rd::SerializationCtx & ctx, rd::Buffer & buffer)
     {
         auto string_ = buffer.read_wstring();
         Derived res{std::move(string_)};
@@ -31,7 +31,7 @@ namespace demo {
     }
     
     //writer
-    void Derived::write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const
+    void Derived::write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const
     {
         buffer.write_wstring(string_);
     }

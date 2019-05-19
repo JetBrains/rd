@@ -44,14 +44,14 @@ namespace rd {
 		virtual ~RdSignal() = default;
 		//endregion
 
-		static RdSignal<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdSignal<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdSignal<T, S> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -75,7 +75,7 @@ namespace rd {
 			if (!async) {
 				assert_threading();
 			}
-			get_wire()->send(rdid, [this, &value](Buffer const &buffer) {
+			get_wire()->send(rdid, [this, &value](Buffer &buffer) {
 				logSend.trace("SEND" + logmsg(value));
 				S::write(get_serialization_context(), buffer, value);
 			});

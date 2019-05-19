@@ -45,7 +45,7 @@ namespace rd {
 		virtual ~Protocol();
 		//endregion
 
-		const SerializationCtx &get_serialization_context() const override;
+		SerializationCtx &get_serialization_context() const override;
 
 		static const Logger initializationLogger;
 	};

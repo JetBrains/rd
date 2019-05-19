@@ -5,7 +5,7 @@ namespace rd {
 																			  "Usually it should be done automatically during 'bind()' invocation but in complex cases you should do it manually.";
 
 	Wrapper<DefaultAbstractDeclaration>
-	DefaultAbstractDeclaration::readUnknownInstance(SerializationCtx const &ctx, Buffer const &buffer,
+	DefaultAbstractDeclaration::readUnknownInstance(SerializationCtx  &ctx, Buffer &buffer,
 													RdId const &unknownId, int32_t size) {
 		throw std::invalid_argument("Can't find reader by id: " + unknownId.toString() + not_registered_error_message);
 	}
@@ -18,7 +18,7 @@ namespace rd {
 		return false;
 	}
 
-	void DefaultAbstractDeclaration::write(SerializationCtx const &ctx, Buffer const &buffer) const {
+	void DefaultAbstractDeclaration::write(SerializationCtx  &ctx, Buffer &buffer) const {
 		throw std::invalid_argument("DefaultAbstractDeclaration couldn't be written");
 	}
 }

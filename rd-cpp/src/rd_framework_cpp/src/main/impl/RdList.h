@@ -46,7 +46,7 @@ namespace rd {
 		virtual ~RdList() = default;
 		//endregion
 
-		static RdList<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdList<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdList<T, S> result;
 			int64_t next_version = buffer.read_integral<int64_t>();
 			RdId id = RdId::read(buffer);
@@ -56,7 +56,7 @@ namespace rd {
 			return result;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			buffer.write_integral<int64_t>(next_version);
 			rdid.write(buffer);
 		}
@@ -82,7 +82,7 @@ namespace rd {
 						}
 					}
 
-					get_wire()->send(rdid, [this, e](Buffer const &buffer) {
+					get_wire()->send(rdid, [this, e](Buffer &buffer) {
 						Op op = static_cast<Op >(e.v.index());
 
 						buffer.write_integral<int64_t>(

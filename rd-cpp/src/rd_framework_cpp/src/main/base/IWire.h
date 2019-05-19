@@ -28,7 +28,7 @@ namespace rd {
 		 * \param id of recipient.
 		 * \param writer is used to serialise data before send. 
 		 */
-		virtual void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const = 0;
+		virtual void send(RdId const &id, std::function<void(Buffer &buffer)> writer) const = 0;
 
 		/**
 		 * \brief Adds a [handler] for receiving updated values of the object with the given [id]. The handler is removed

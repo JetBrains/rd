@@ -16,7 +16,11 @@ namespace rd {
 
 		Mq(Mq const &) = delete;
 
+		Mq& operator=(Mq const &) = delete;
+
 		Mq(Mq &&) = default;
+
+		Mq& operator =(Mq &&) = default;
 		//endregion
 
 		mutable std::queue<Buffer> default_scheduler_messages;

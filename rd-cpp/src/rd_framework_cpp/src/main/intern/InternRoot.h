@@ -26,15 +26,18 @@ namespace rd {
 
 	//endregion
 
+	/**
+	 * \brief Node in graph for storing interned objects.
+	 */
 	class InternRoot final : public RdReactiveBase {
 	private:
 		// template<typename T>
-		mutable std::vector<InternedAny> myItemsList;
+		mutable std::vector<InternedAny> my_items_lis;
 
 		// template<typename T>
-		mutable ordered_map<int32_t, InternedAny> otherItemsList;
+		mutable ordered_map<int32_t, InternedAny> other_items_list;
 		// template<typename T>
-		mutable ordered_map<InternedAny, int32_t, any::TransparentHash, any::TransparentKeyEqual> inverseMap;
+		mutable ordered_map<InternedAny, int32_t, any::TransparentHash, any::TransparentKeyEqual> inverse_map;
 
 		mutable InternScheduler intern_scheduler;
 
@@ -87,7 +90,7 @@ namespace rd {
 	template<typename T>
 	Wrapper<T> InternRoot::un_intern_value(int32_t id) const {
 		//don't need lock because value's already exists and never removes
-		return any::get<T>(is_index_owned(id) ? myItemsList[id / 2] : otherItemsList[id / 2]);
+		return any::get<T>(is_index_owned(id) ? my_items_lis[id / 2] : other_items_list[id / 2]);
 	}
 
 	template<typename T>
@@ -96,23 +99,23 @@ namespace rd {
 
 		std::lock_guard<decltype(lock)> guard(lock);
 		
-		auto it = inverseMap.find(any);
+		auto it = inverse_map.find(any);
 		int32_t index = 0;
-		if (it == inverseMap.end()) {
-			get_protocol()->get_wire()->send(this->rdid, [this, &index, value, any](Buffer const &buffer) {
+		if (it == inverse_map.end()) {
+			get_protocol()->get_wire()->send(this->rdid, [this, &index, value, any](Buffer &buffer) {
 				InternedAnySerializer::write<T>(get_serialization_context(), buffer, wrapper::get<T>(value));
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
-					index = static_cast<int32_t>(myItemsList.size()) * 2;
-					myItemsList.emplace_back(any);
+					index = static_cast<int32_t>(my_items_lis.size()) * 2;
+					my_items_lis.emplace_back(any);
 				}
 				buffer.write_integral<int32_t>(index);
 			});
 		} else {
 			index = it->second;
 		}
-		if (inverseMap.count(any) == 0) {
-			inverseMap[any] = index;
+		if (inverse_map.count(any) == 0) {
+			inverse_map[any] = index;
 		}
 		return index;
 	}

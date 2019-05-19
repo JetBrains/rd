@@ -33,6 +33,10 @@ namespace rd {
 
 		//    SerializationCtx() = delete;
 
+		SerializationCtx(SerializationCtx const &other) = delete;
+
+		SerializationCtx &operator=(SerializationCtx const &other) = delete;
+
 		SerializationCtx(SerializationCtx &&other) = default;
 
 		SerializationCtx &operator=(SerializationCtx &&other) = default;
@@ -41,19 +45,20 @@ namespace rd {
 
 		explicit SerializationCtx(const Serializers *serializers, roots_t intern_roots = {});
 
-		SerializationCtx withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots) const;
+		SerializationCtx
+		withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots) const;
 
 		//endregion
 
 		template<typename T, util::hash_t InternKey>
-		Wrapper<T> readInterned(Buffer const &buffer, std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const;
+		Wrapper<T> readInterned(Buffer &buffer, std::function<T(SerializationCtx &, Buffer &)> readValueDelegate);
 
 		template<typename T, util::hash_t InternKey, typename F,
-						typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx, Buffer, T>::value>
-						>
-		void writeInterned(Buffer const &buffer, Wrapper<T> const &value, F&& writeValueDelegate) const;
+				typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx &, Buffer &, T>::value>
+		>
+		void writeInterned(Buffer &buffer, Wrapper<T> const &value, F &&writeValueDelegate);
 
-		Serializers const & get_serializers() const;
+		Serializers const &get_serializers() const;
 	};
 }
 
@@ -61,7 +66,8 @@ namespace rd {
 
 namespace rd {
 	template<typename T, util::hash_t InternKey>
-	Wrapper<T> SerializationCtx::readInterned(Buffer const &buffer, std::function<T(const SerializationCtx &, const Buffer &)> readValueDelegate) const {
+	Wrapper<T> SerializationCtx::readInterned(Buffer &buffer,
+											  std::function<T(SerializationCtx &, Buffer &)> readValueDelegate) {
 		auto it = intern_roots.find(InternKey);
 		if (it != intern_roots.end()) {
 			int32_t index = buffer.read_integral<int32_t>() ^1;
@@ -72,13 +78,13 @@ namespace rd {
 	}
 
 	template<typename T, util::hash_t InternKey, typename F, typename>
-	void SerializationCtx::writeInterned(Buffer const &buffer, const Wrapper<T> &value, F&& writeValueDelegate) const {
+	void SerializationCtx::writeInterned(Buffer &buffer, const Wrapper<T> &value, F &&writeValueDelegate) {
 		auto it = intern_roots.find(InternKey);
 		if (it != intern_roots.end()) {
 			int32_t index = it->second->intern_value<T>(value);
 			buffer.write_integral<int32_t>(index);
 		} else {
-			writeValueDelegate(*this, buffer, *value);
+			writeValueDelegate(const_cast<SerializationCtx &>(*this), buffer, *value);
 		}
 	}
 }

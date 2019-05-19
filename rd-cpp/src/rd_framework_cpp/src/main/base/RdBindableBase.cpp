@@ -51,7 +51,7 @@ namespace rd {
 		throw std::invalid_argument("Not bound: " + location.toString());
 	}
 
-	SerializationCtx const &RdBindableBase::get_serialization_context() const {
+	SerializationCtx  &RdBindableBase::get_serialization_context() const {
 		if (is_bound()) {
 			return parent->get_serialization_context();
 		} else {

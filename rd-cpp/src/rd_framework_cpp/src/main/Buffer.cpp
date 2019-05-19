@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "Buffer.h"
 
 #include <string>
@@ -12,17 +14,14 @@ namespace rd {
 		data_.resize(initialSize);
 	}
 
-	Buffer::Buffer(const ByteArray &array, size_t offset) :
-			data_(array), offset(offset) {}
-
-	Buffer::Buffer(ByteArray &&array, size_t offset) :
+	Buffer::Buffer(ByteArray array, size_t offset) :
 			data_(std::move(array)), offset(offset) {}
 
 	size_t Buffer::get_position() const {
 		return offset;
 	}
 
-	void Buffer::set_position(size_t value) const {
+	void Buffer::set_position(size_t value) {
 		offset = value;
 	}
 
@@ -35,28 +34,28 @@ namespace rd {
 		}
 	}
 
-	void Buffer::read(word_t *dst, size_t size) const {
+	void Buffer::read(word_t *dst, size_t size) {
 		if (size == 0) return;
 		check_available(size);
 		std::copy(&data_[offset], &data_[offset] + size, dst);
 		offset += size;
 	}
 
-	void Buffer::write(const word_t *src, size_t size) const {
+	void Buffer::write(const word_t *src, size_t size) {
 		if (size == 0) return;
 		require_available(size);
 		std::copy(src, src + size, &data_[offset]);
 		offset += size;
 	}
 
-	void Buffer::require_available(size_t moreSize) const {
+	void Buffer::require_available(size_t moreSize) {
 		if (offset + moreSize >= size()) {
 			const size_t new_size = (std::max)(size() * 2, offset + moreSize);
 			data_.resize(new_size);
 		}
 	}
 
-	void Buffer::rewind() const {
+	void Buffer::rewind() {
 		set_position(0);
 	}
 
@@ -82,7 +81,7 @@ namespace rd {
 		return res;
 	}
 
-	const Buffer::word_t *Buffer::data() const {
+	Buffer::word_t const *Buffer::data() const {
 		return data_.data();
 	}
 
@@ -105,14 +104,14 @@ void Buffer::writeString(std::string const &value) const {
 }*/
 
 	template<int>
-	std::wstring read_wstring_spec(Buffer const&buffer) {
+	std::wstring read_wstring_spec(Buffer &buffer) {
 		auto v = buffer.read_array<uint16_t>();
 		return std::wstring(v.begin(), v.end());
 	}
 
 	template<>
-	std::wstring read_wstring_spec<2>(Buffer const&buffer) {
-		int32_t len = buffer.read_integral<int32_t>();
+	std::wstring read_wstring_spec<2>(Buffer &buffer) {
+		const int32_t len = buffer.read_integral<int32_t>();
 		RD_ASSERT_MSG(len >= 0, "read null string(length =" + std::to_string(len) + ")");
 		std::wstring result;
 		result.resize(len);
@@ -120,51 +119,51 @@ void Buffer::writeString(std::string const &value) const {
 		return result;
 	}
 
-	std::wstring Buffer::read_wstring() const {
+	std::wstring Buffer::read_wstring() {
 		return read_wstring_spec<sizeof(wchar_t)>(*this);
 	}
 
 	template<int>
-	void write_wstring_spec(Buffer const&buffer, std::wstring const &value) {
-		std::vector<uint16_t> v(value.begin(), value.end());
+	void write_wstring_spec(Buffer &buffer, std::wstring const &value) {
+		const std::vector<uint16_t> v(value.begin(), value.end());
 		buffer.write_array<uint16_t>(v);
 	}
 
 	template<>
-	void write_wstring_spec<2>(Buffer const&buffer, std::wstring const &value) {
+	void write_wstring_spec<2>(Buffer &buffer, std::wstring const &value) {
 		buffer.write_integral<int32_t>(static_cast<int32_t>(value.size()));
 		buffer.write(reinterpret_cast<Buffer::word_t const *>(value.data()), sizeof(wchar_t) * value.size());
 	}
 
-	void Buffer::write_wstring(std::wstring const &value) const {
+	void Buffer::write_wstring(std::wstring const &value) {
 		write_wstring_spec<sizeof(wchar_t)>(*this, value);
 	}
 
-	void Buffer::write_wstring(Wrapper<std::wstring> const &value) const {
+	void Buffer::write_wstring(Wrapper<std::wstring> const &value) {
 		write_wstring(*value);
 	}
 
-	bool Buffer::read_bool() const {
-		auto res = read_integral<uint8_t>();
+	bool Buffer::read_bool() {
+		const auto res = read_integral<uint8_t>();
 		RD_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
 		return res == 1;
 	}
 
-	void Buffer::write_bool(bool value) const {
+	void Buffer::write_bool(bool value) {
 		write_integral<word_t>(value ? 1 : 0);
 	}
 
-	void Buffer::read_byte_array(ByteArray &array) const {
+	void Buffer::read_byte_array(ByteArray &array) {
 		const int32_t length = read_integral<int32_t>();
 		array.resize(length);
 		read_byte_array_raw(array);
 	}
 
-	void Buffer::read_byte_array_raw(ByteArray &array) const {
+	void Buffer::read_byte_array_raw(ByteArray &array)  {
 		read(array.data(), array.size());
 	}
 
-	void Buffer::write_byte_array_raw(const ByteArray &array) const {
+	void Buffer::write_byte_array_raw(const ByteArray &array)  {
 		write(array.data(), array.size());
 	}
 

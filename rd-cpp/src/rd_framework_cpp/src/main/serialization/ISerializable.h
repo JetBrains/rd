@@ -19,7 +19,7 @@ namespace rd {
 	public:
 		virtual ~ISerializable() = default;
 
-		virtual void write(SerializationCtx const &ctx, Buffer const &buffer) const = 0;
+		virtual void write(SerializationCtx  &ctx, Buffer &buffer) const = 0;
 	};
 
 	/**

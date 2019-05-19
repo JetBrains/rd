@@ -46,14 +46,14 @@ namespace rd {
 		virtual ~RdEndpoint() = default;
 		//endregion
 
-		static RdEndpoint<TReq, TRes, ReqSer, ResSer> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdEndpoint<TReq, TRes, ReqSer, ResSer> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdEndpoint<TReq, TRes, ReqSer, ResSer> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -99,7 +99,7 @@ namespace rd {
 			task.advise(*bind_lifetime, [&](RdTaskResult<TRes, ResSer> const &taskResult) {
 				logSend.trace("endpoint " + location.toString() + " ::(" + rdid.toString() +
 							  ") response = ${result.printToString()}");
-				get_wire()->send(rdid, [&](Buffer const &inner_buffer) {
+				get_wire()->send(rdid, [&](Buffer &inner_buffer) {
 					taskId.write(inner_buffer);
 					taskResult.write(get_serialization_context(), inner_buffer);
 				});

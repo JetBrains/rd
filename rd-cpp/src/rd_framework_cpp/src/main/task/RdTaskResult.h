@@ -11,6 +11,14 @@
 #include <exception>
 
 namespace rd {
+	/**
+	 * \brief Advanced monad result. It is in of following states: Success, Cancelled, Fault;
+	 * Success -  Execution completed. Result stores in it.
+	 * Cancelled - Task was cancelled on callee side.
+	 * Fault - Something went wrong and reason stores in it.
+	 * \tparam T type of result
+	 * \tparam S "SerDes" for T
+	 */
 	template<typename T, typename S = Polymorphic <T> >
 	class RdTaskResult final : public ISerializable {
 		using WT = value_or_wrapper<T>;
@@ -22,35 +30,28 @@ namespace rd {
 			explicit Success(WT &&value) : value(std::move(value)) {}
 		};
 
-		class Cancelled {
-
-		};
+		class Cancelled {};
 
 		class Fault {
 		public:
-			std::wstring reasonTypeFqn;
-			std::wstring reasonMessage;
-			std::wstring reasonAsText;
+			std::wstring reason_type_fqn;
+			std::wstring reason_message;
+			std::wstring reason_as_text;
 
 			Fault(std::wstring reasonTypeFqn, std::wstring reasonMessage, std::wstring reasonAsText) :
-					reasonTypeFqn(std::move(reasonTypeFqn)),
-					reasonMessage(std::move(reasonMessage)),
-					reasonAsText(std::move(reasonAsText)) {}
+					reason_type_fqn(std::move(reasonTypeFqn)),
+					reason_message(std::move(reasonMessage)),
+					reason_as_text(std::move(reasonAsText)) {}
 
-		public:
 			explicit Fault(const std::exception &e) {
-				reasonMessage = to_wstring(to_string(e));
-			};
+				reason_message = to_wstring(to_string(e));
+			}
 		};
 
 		//region ctor/dtor
 
-		RdTaskResult(Success &&v) : v(std::move(v)) {}
-
-		RdTaskResult(Cancelled &&v) : v(std::move(v)) {}
-
-		RdTaskResult(Fault &&v) : v(std::move(v)) {}
-
+		template<typename F>
+		RdTaskResult(F &&v) : v(std::forward<F>(v)) {}
 
 		RdTaskResult(RdTaskResult const &) = default;
 
@@ -61,8 +62,8 @@ namespace rd {
 		virtual ~RdTaskResult() = default;
 		//endregion
 
-		static RdTaskResult<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			int32_t kind = buffer.read_integral<int32_t>();
+		static RdTaskResult<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+			const int32_t kind = buffer.read_integral<int32_t>();
 			switch (kind) {
 				case 0: {
 					return Success(std::move(S::read(ctx, buffer)));
@@ -71,17 +72,17 @@ namespace rd {
 					return Cancelled();
 				}
 				case 2: {
-					auto reasonTypeFqn = buffer.read_wstring();
-					auto reasonMessage = buffer.read_wstring();
-					auto reasonAsText = buffer.read_wstring();
-					return Fault(std::move(reasonTypeFqn), std::move(reasonMessage), std::move(reasonAsText));
+					auto reason_type_fqn = buffer.read_wstring();
+					auto reason_message = buffer.read_wstring();
+					auto reason_as_text = buffer.read_wstring();
+					return Fault(std::move(reason_type_fqn), std::move(reason_message), std::move(reason_as_text));
 				}
 				default:
 					throw std::invalid_argument("Fail on RdTaskResult reading with kind: " + std::to_string(kind));
 			}
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			visit(util::make_visitor(
 					[&ctx, &buffer](Success const &value) {
 						buffer.write_integral<int32_t>(0);
@@ -92,9 +93,9 @@ namespace rd {
 					},
 					[&buffer](Fault const &value) {
 						buffer.write_integral<int32_t>(2);
-						buffer.write_wstring(value.reasonTypeFqn);
-						buffer.write_wstring(value.reasonMessage);
-						buffer.write_wstring(value.reasonAsText);
+						buffer.write_wstring(value.reason_type_fqn);
+						buffer.write_wstring(value.reason_message);
+						buffer.write_wstring(value.reason_as_text);
 					}
 			), v);
 		}
@@ -104,11 +105,11 @@ namespace rd {
 					[](Success const &value) -> T const & {
 						return wrapper::get<T>(value.value);
 					},
-					[](Cancelled const &value) -> T const & {
+					[](Cancelled const &) -> T const & {
 						throw std::invalid_argument("Task finished in Cancelled state");
 					},
 					[](Fault const &value) -> T const & {
-						throw std::runtime_error(to_string(value.reasonMessage));
+						throw std::runtime_error(to_string(value.reason_message));
 					}
 			), v);
 		}
@@ -130,11 +131,11 @@ namespace rd {
 					[](Success const &value) -> std::string {
 						return to_string(value.value);
 					},
-					[](Cancelled const &value) -> std::string {
+					[](Cancelled const &) -> std::string {
 						return "Cancelled state";
 					},
 					[](Fault const &value) -> std::string {
-						return to_string(value.reasonMessage);
+						return to_string(value.reason_message);
 					}
 			), taskResult.v);
 		}

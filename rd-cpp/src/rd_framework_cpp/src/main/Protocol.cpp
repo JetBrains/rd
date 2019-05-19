@@ -34,7 +34,7 @@ namespace rd {
 
 	Protocol::~Protocol() = default;
 
-	const SerializationCtx &Protocol::get_serialization_context() const {
+	SerializationCtx &Protocol::get_serialization_context() const {
 		if (!context) {
 			initialize();
 		}

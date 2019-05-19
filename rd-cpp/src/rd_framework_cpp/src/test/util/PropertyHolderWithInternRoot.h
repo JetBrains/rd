@@ -12,7 +12,7 @@ namespace rd {
 			class PropertyHolderWithInternRoot : public RdBindableBase {
 			public:
 				RdProperty<T, S> property;
-				optional<SerializationCtx> mySerializationContext;
+				mutable optional<SerializationCtx> mySerializationContext;
 
 				explicit PropertyHolderWithInternRoot(RdProperty<T, S> property) : property(std::move(property)) {}
 
@@ -27,7 +27,7 @@ namespace rd {
 				}
 
 			private:
-				const SerializationCtx &get_serialization_context() const override {
+				SerializationCtx &get_serialization_context() const override {
 					return *mySerializationContext;
 				}
 			};

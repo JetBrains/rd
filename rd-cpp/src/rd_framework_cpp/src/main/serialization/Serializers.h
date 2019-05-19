@@ -29,15 +29,15 @@ namespace rd {
 
 		static RdId real_rd_id(std::wstring const &value);
 
-		static void real_write(SerializationCtx const &ctx, Buffer const &buffer, IUnknownInstance const &value);
+		static void real_write(SerializationCtx  &ctx, Buffer &buffer, IUnknownInstance const &value);
 
-		static void real_write(SerializationCtx const &ctx, Buffer const &buffer, IPolymorphicSerializable const &value);
+		static void real_write(SerializationCtx  &ctx, Buffer &buffer, IPolymorphicSerializable const &value);
 
-		static void real_write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value);
+		static void real_write(SerializationCtx  &ctx, Buffer &buffer, std::wstring const &value);
 
 		void register_in();
 
-		mutable std::unordered_map<RdId, std::function<InternedAny(SerializationCtx const &, Buffer const &)>> readers;
+		mutable std::unordered_map<RdId, std::function<InternedAny(SerializationCtx  &, Buffer &)>> readers;
 	public:
 		Serializers();
 
@@ -45,19 +45,19 @@ namespace rd {
 		void registry() const;
 
 		template<typename T = DefaultAbstractDeclaration>
-		optional<InternedAny> readAny(SerializationCtx const &ctx, Buffer const &buffer) const;
+		optional<InternedAny> readAny(SerializationCtx  &ctx, Buffer &buffer) const;
 
 		template<typename T>
-		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const;
+		value_or_wrapper<T> readPolymorphicNullable(SerializationCtx  &ctx, Buffer &buffer) const;
 
 		template<typename T/*, typename = typename std::enable_if<std::is_base_of<IPolymorphicSerializable, T>::value>::type*/>
-		void writePolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer, const T &value) const;
+		void writePolymorphicNullable(SerializationCtx  &ctx, Buffer &buffer, const T &value) const;
 
 		template<typename T>
-		value_or_wrapper<T> readPolymorphic(SerializationCtx const &ctx, Buffer const &buffer) const;
+		value_or_wrapper<T> readPolymorphic(SerializationCtx  &ctx, Buffer &buffer) const;
 
 		template<typename T>
-		void writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const Wrapper<T> &value) const;
+		void writePolymorphic(SerializationCtx  &ctx, Buffer &stream, const Wrapper<T> &value) const;
 	};
 }
 
@@ -70,13 +70,13 @@ namespace rd {
 
 		RD_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
 
-		readers[id] = [](SerializationCtx const &ctx, Buffer const &buffer) -> Wrapper<IPolymorphicSerializable> {
+		readers[id] = [](SerializationCtx  &ctx, Buffer &buffer) -> Wrapper<IPolymorphicSerializable> {
 			return wrapper::make_wrapper<T>(T::read(ctx, buffer));
 		};
 	}
 
 	template<typename T>
-	optional<InternedAny> Serializers::readAny(SerializationCtx const &ctx, Buffer const &buffer) const {
+	optional<InternedAny> Serializers::readAny(SerializationCtx  &ctx, Buffer &buffer) const {
 		RdId id = RdId::read(buffer);
 		if (id.isNull()) {
 			return nullopt;
@@ -92,13 +92,13 @@ namespace rd {
 	}
 
 	template<typename T>
-	value_or_wrapper<T> Serializers::readPolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer) const {
+	value_or_wrapper<T> Serializers::readPolymorphicNullable(SerializationCtx  &ctx, Buffer &buffer) const {
 		optional<InternedAny> any = readAny<T>(ctx, buffer);
 		return any::get<T>(*(std::move(any)));
 	}
 
 	template<typename T/*, typename*/>
-	void Serializers::writePolymorphicNullable(SerializationCtx const &ctx, Buffer const &buffer, const T &value) const {
+	void Serializers::writePolymorphicNullable(SerializationCtx  &ctx, Buffer &buffer, const T &value) const {
 		real_rd_id(value).write(buffer);
 
 		int32_t length_tag_position = static_cast<int32_t>(buffer.get_position());
@@ -113,12 +113,12 @@ namespace rd {
 	}
 
 	template<typename T>
-	value_or_wrapper<T> Serializers::readPolymorphic(SerializationCtx const &ctx, Buffer const &buffer) const {
+	value_or_wrapper<T> Serializers::readPolymorphic(SerializationCtx  &ctx, Buffer &buffer) const {
 		return readPolymorphicNullable<T>(ctx, buffer);
 	}
 
 	template<typename T>
-	void Serializers::writePolymorphic(SerializationCtx const &ctx, Buffer const &stream, const Wrapper<T> &value) const {
+	void Serializers::writePolymorphic(SerializationCtx  &ctx, Buffer &stream, const Wrapper<T> &value) const {
 		writePolymorphicNullable(ctx, stream, *value);
 	}
 }

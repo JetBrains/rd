@@ -85,10 +85,10 @@ namespace rd {
 				virtual ~AbstractEntity_Unknown() = default;
 
 				//reader
-				static AbstractEntity_Unknown read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer);
+				static AbstractEntity_Unknown read(rd::SerializationCtx  &ctx, rd::Buffer &buffer);
 
 				//writer
-				void write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const override;
+				void write(rd::SerializationCtx  &ctx, rd::Buffer &buffer) const override;
 
 				//virtual init
 

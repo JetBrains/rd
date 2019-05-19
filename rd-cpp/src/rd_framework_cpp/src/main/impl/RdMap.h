@@ -68,14 +68,14 @@ namespace rd {
 		virtual ~RdMap() = default;
 		//endregion
 
-		static RdMap<K, V, KS, VS> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdMap<K, V, KS, VS> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdMap<K, V, KS, VS> res;
 			RdId id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -95,7 +95,7 @@ namespace rd {
 						identifyPolymorphic(*new_value, *identity, identity->next(rdid));
 					}
 
-					get_wire()->send(rdid, [this, e](Buffer const &buffer) {
+					get_wire()->send(rdid, [this, e](Buffer &buffer) {
 						int32_t versionedFlag = ((is_master() ? 1 : 0)) << versionedFlagShift;
 						Op op = static_cast<Op>(e.v.index());
 
@@ -189,7 +189,7 @@ namespace rd {
 				if (msg_versioned) {
 					auto writer = util::make_shared_function(
 							[version, serialized_key = std::move(serialized_key)](
-									Buffer const &innerBuffer) mutable {
+									Buffer &innerBuffer) mutable {
 								innerBuffer.write_integral<int32_t>(
 										(1u << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
 								innerBuffer.write_integral<int64_t>(version);

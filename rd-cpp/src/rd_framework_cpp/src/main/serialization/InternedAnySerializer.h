@@ -14,12 +14,12 @@ namespace rd {
 
 	class InternedAnySerializer {
 	public:
-		static optional<InternedAny> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static optional<InternedAny> read(SerializationCtx  &ctx, Buffer &buffer) {
 			return ctx.get_serializers().readAny(ctx, buffer);
 		}
 
 		template<typename T>
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+		static void write(SerializationCtx  &ctx, Buffer &buffer, T const &value) {
 			ctx.get_serializers().writePolymorphicNullable(ctx, buffer, value);
 		}
 	};

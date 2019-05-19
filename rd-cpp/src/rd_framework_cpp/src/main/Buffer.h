@@ -10,6 +10,9 @@
 #include <memory>
 
 namespace rd {
+	/**
+	 * \brief Simple data buffer. Allows to "SerDes" plenty of types, such as integrals, arrays, etc.
+	 */
 	class Buffer final {
 	public:
 		using word_t = uint8_t;
@@ -19,22 +22,22 @@ namespace rd {
 		using ByteArray = std::vector<word_t, Allocator>;
 	private:
 		template<int>
-		friend std::wstring read_wstring_spec(Buffer const&);
+		friend std::wstring read_wstring_spec(Buffer &);
 
 		template<int>
-		friend void write_wstring_spec(Buffer const&, std::wstring const&);
+		friend void write_wstring_spec(Buffer &, std::wstring const &);
 
-		mutable ByteArray data_;
+		ByteArray data_;
 
-		mutable size_t offset = 0;
+		size_t offset = 0;
 
-		void require_available(size_t size) const;
+		void require_available(size_t size);
 
 		//read
-		void read(word_t *dst, size_t size) const;
+		void read(word_t *dst, size_t size);
 
 		//write
-		void write(const word_t *src, size_t size) const;
+		void write(const word_t *src, size_t size);
 
 
 	public:
@@ -45,53 +48,52 @@ namespace rd {
 
 		explicit Buffer(size_t initial_size);
 
-		explicit Buffer(const ByteArray &array, size_t offset = 0);
-
-		explicit Buffer(ByteArray &&array, size_t offset = 0);
+		explicit Buffer(ByteArray array, size_t offset = 0);
 
 		Buffer(Buffer const &) = delete;
 
-		Buffer& operator=(Buffer const &) = delete;
+		Buffer &operator=(Buffer const &) = delete;
 
-		Buffer(Buffer &&) = default;
-		Buffer& operator=(Buffer &&) = default;
+		Buffer(Buffer &&) noexcept = default;
+
+		Buffer &operator=(Buffer &&) noexcept = default;
 
 		//endregion
 
 		size_t get_position() const;
 
-		void set_position(size_t value) const;
+		void set_position(size_t value);
 
 		void check_available(size_t moreSize) const;
 
-		void rewind() const;
+		void rewind();
 
 		template<typename T, typename = typename std::enable_if_t<std::is_integral<T>::value, T>>
-		T read_integral() const {
+		T read_integral() {
 			T result;
 			read(reinterpret_cast<word_t *>(&result), sizeof(T));
 			return result;
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
-		void write_integral(T const &value) const {
+		void write_integral(T const &value) {
 			write(reinterpret_cast<word_t const *>(&value), sizeof(T));
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_floating_point<T>::value, T>>
-		T read_floating_point() const {
+		T read_floating_point() {
 			T result;
 			read(reinterpret_cast<word_t *>(&result), sizeof(T));
 			return result;
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_floating_point<T>::value>>
-		void write_floating_point(T const &value) const {
+		void write_floating_point(T const &value) {
 			write(reinterpret_cast<word_t const *>(&value), sizeof(T));
 		}
 
 		template<typename T>
-		std::vector<T> read_array() const {
+		std::vector<T> read_array() {
 			int32_t len = read_integral<int32_t>();
 			RD_ASSERT_MSG(len >= 0, "read null array(length = " + std::to_string(len) + ")");
 			std::vector<T> result(len);
@@ -100,7 +102,7 @@ namespace rd {
 		}
 
 		template<typename T>
-		std::vector<value_or_wrapper<T>> read_array(std::function<value_or_wrapper<T>()> reader) const {
+		std::vector<value_or_wrapper<T>> read_array(std::function<value_or_wrapper<T>()> reader) {
 			int32_t len = read_integral<int32_t>();
 			std::vector<value_or_wrapper<T>> result(len);
 			for (auto &x : result) {
@@ -110,13 +112,13 @@ namespace rd {
 		}
 
 		template<typename T>
-		void write_array(std::vector<T> const &array) const {
+		void write_array(std::vector<T> const &array) {
 			write_integral<int32_t>(static_cast<int32_t>(array.size()));
 			write(reinterpret_cast<word_t const *>(array.data()), sizeof(T) * array.size());
 		}
 
 		template<typename T>
-		void write_array(std::vector<T> const &array, std::function<void(T const &)> writer) const {
+		void write_array(std::vector<T> const &array, std::function<void(T const &)> writer) {
 			write_integral<int32_t>(array.size());
 			for (auto const &e : array) {
 				writer(e);
@@ -124,47 +126,47 @@ namespace rd {
 		}
 
 		template<typename T>
-		void write_array(std::vector<Wrapper<T>> const &array, std::function<void(T const &)> writer) const {
+		void write_array(std::vector<Wrapper<T>> const &array, std::function<void(T const &)> writer) {
 			write_integral<int32_t>(array.size());
 			for (auto const &e : array) {
 				writer(*e);
 			}
 		}
 
-		void read_byte_array(ByteArray &array) const;
-		
-		void read_byte_array_raw(ByteArray &array) const;
+		void read_byte_array(ByteArray &array);
 
-		void write_byte_array_raw(ByteArray const &array) const;
+		void read_byte_array_raw(ByteArray &array);
+
+		void write_byte_array_raw(ByteArray const &array);
 
 		//    std::string readString() const;
 
 		//    void writeString(std::string const &value) const;
 
-		bool read_bool() const;
+		bool read_bool();
 
-		void write_bool(bool value) const;
+		void write_bool(bool value);
 
-		std::wstring read_wstring() const;
+		std::wstring read_wstring();
 
-		void write_wstring(std::wstring const &value) const;
+		void write_wstring(std::wstring const &value);
 
-		void write_wstring(Wrapper<std::wstring> const &value) const;
+		void write_wstring(Wrapper<std::wstring> const &value);
 
 		template<typename T>
-		T read_enum() const {
+		T read_enum() {
 			int32_t x = read_integral<int32_t>();
 			return static_cast<T>(x);
 		}
 
 		template<typename T>
-		void write_enum(T const &x) const {
+		void write_enum(T const &x) {
 			write_integral<int32_t>(static_cast<int32_t>(x));
 		}
 
 		template<typename T, typename F,
 				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, T>>>
-		opt_or_wrapper<T> read_nullable(F &&reader) const {
+		opt_or_wrapper<T> read_nullable(F &&reader) {
 			bool nullable = !read_bool();
 			if (nullable) {
 				return {};
@@ -174,7 +176,7 @@ namespace rd {
 
 		template<typename T, typename F,
 				typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, Wrapper<T>>>>
-		Wrapper<T> read_nullable(F &&reader) const {
+		Wrapper<T> read_nullable(F &&reader) {
 			bool nullable = !read_bool();
 			if (nullable) {
 				return {};
@@ -184,7 +186,7 @@ namespace rd {
 
 		template<typename T>
 		typename std::enable_if_t<!std::is_abstract<T>::value>
-		write_nullable(optional<T> const &value, std::function<void(T const &)> writer) const {
+		write_nullable(optional<T> const &value, std::function<void(T const &)> writer) {
 			if (!value) {
 				write_bool(false);
 			} else {
@@ -195,7 +197,7 @@ namespace rd {
 
 		template<typename T, typename F>
 		typename std::enable_if_t<!util::is_invocable_v<F, Wrapper<T>>>
-		write_nullable(Wrapper<T> const &value, F &&writer) const {
+		write_nullable(Wrapper<T> const &value, F &&writer) {
 			if (!value) {
 				write_bool(false);
 			} else {
@@ -206,7 +208,7 @@ namespace rd {
 
 		template<typename T, typename F>
 		typename std::enable_if_t<util::is_invocable_v<F, Wrapper<T>>>
-		write_nullable(Wrapper<T> const &value, F &&writer) const {
+		write_nullable(Wrapper<T> const &value, F &&writer) {
 			if (!value) {
 				write_bool(false);
 			} else {

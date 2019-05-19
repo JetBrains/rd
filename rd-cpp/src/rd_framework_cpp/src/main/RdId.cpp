@@ -7,12 +7,12 @@ namespace rd {
 		return std::to_string(hash);
 	}
 
-	RdId RdId::read(Buffer const &buffer) {
+	RdId RdId::read(Buffer &buffer) {
 		auto number = buffer.read_integral<hash_t>();
 		return RdId(number);
 	}
 
-	void RdId::write(const Buffer &buffer) const {
+	void RdId::write(Buffer &buffer) const {
 		buffer.write_integral(hash);
 	}
 }

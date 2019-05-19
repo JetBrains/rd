@@ -43,7 +43,7 @@ namespace rd {
 		}
 	}
 
-	bool SocketWire::Base::send0(const Buffer::ByteArray &msg, sequence_number_t seqn) const {
+	bool SocketWire::Base::send0(Buffer::ByteArray const &msg, sequence_number_t seqn) const {
 		try {
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 
@@ -69,7 +69,7 @@ namespace rd {
 		}
 	}
 
-	void SocketWire::Base::send(RdId const &rd_id, std::function<void(Buffer const &buffer)> writer) const {
+	void SocketWire::Base::send(RdId const &rd_id, std::function<void(Buffer &buffer)> writer) const {
 		RD_ASSERT_MSG(!rd_id.isNull(), this->id + ": id mustn't be null");
 
 

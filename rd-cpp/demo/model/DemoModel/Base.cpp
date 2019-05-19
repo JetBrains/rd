@@ -22,7 +22,7 @@ namespace demo {
     }
     
     //reader
-    rd::Wrapper<Base> Base::readUnknownInstance(rd::SerializationCtx const& ctx, rd::Buffer const & buffer, rd::RdId const& unknownId, int32_t size)
+    rd::Wrapper<Base> Base::readUnknownInstance(rd::SerializationCtx & ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)
     {
         int32_t objectStartPosition = buffer.get_position();
         auto unknownBytes = rd::Buffer::ByteArray(objectStartPosition + size - buffer.get_position());

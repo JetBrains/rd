@@ -55,7 +55,7 @@ namespace rd {
 					{
 						std::lock_guard<decltype(lock)> guard(lock);
 						if (!current.default_scheduler_messages.empty()) {
-							message = std::move(current.default_scheduler_messages.front());
+							message = make_optional<Buffer>(std::move(current.default_scheduler_messages.front()));
 							current.default_scheduler_messages.pop();
 						}
 					}

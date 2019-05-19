@@ -66,9 +66,9 @@ namespace rd {
 
 		static constexpr int32_t MAX_STATIC_ID = 1'000'000;
 
-		static RdId read(Buffer const &buffer);
+		static RdId read(Buffer &buffer);
 
-		void write(const Buffer &buffer) const;
+		void write(Buffer &buffer) const;
 
 		constexpr hash_t get_hash() const {
 			return hash;

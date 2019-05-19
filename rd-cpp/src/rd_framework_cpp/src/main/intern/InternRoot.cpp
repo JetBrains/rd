@@ -17,7 +17,7 @@ namespace rd {
 		if (!value) {
 			return;
 		}
-		int32_t remote_id = buffer.read_integral<int32_t>();
+		const int32_t remote_id = buffer.read_integral<int32_t>();
 		set_interned_correspondence(remote_id ^ 1, *std::move(value));
 		RD_ASSERT_MSG(((remote_id & 1) == 0), "Remote sent ID marked as our own, bug?");
 	}
@@ -37,9 +37,9 @@ namespace rd {
 		{
 			//if something's interned before bind
 			std::lock_guard<decltype(lock)> guard(lock);
-			myItemsList.clear();
-			otherItemsList.clear();
-			inverseMap.clear();
+			my_items_lis.clear();
+			other_items_list.clear();
+			inverse_map.clear();
 		}
 		get_protocol()->get_wire()->advise(lf, this);
 	}
@@ -55,7 +55,7 @@ namespace rd {
 		RD_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
 
 		std::lock_guard<decltype(lock)> guard(lock);
-		otherItemsList[id / 2] = value;
-		inverseMap[value] = id;
+		other_items_list[id / 2] = value;
+		inverse_map[value] = id;
 	}
 }

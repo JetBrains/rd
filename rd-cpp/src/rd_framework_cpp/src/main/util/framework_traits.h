@@ -9,7 +9,7 @@
 
 namespace rd {
 	namespace util {
-		template<typename S, typename T = decltype((S::read(std::declval<rd::SerializationCtx const &>(), std::declval<rd::Buffer const &>())))>
+		template<typename S, typename T = decltype((S::read(std::declval<rd::SerializationCtx  &>(), std::declval<rd::Buffer &>())))>
 		using read_t = T;
 
 		static_assert(util::is_same_v<std::wstring, read_t<Polymorphic<std::wstring>>>, " ");

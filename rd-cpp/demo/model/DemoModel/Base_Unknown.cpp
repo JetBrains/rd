@@ -27,13 +27,13 @@ namespace demo {
     }
     
     //reader
-    Base_Unknown Base_Unknown::read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)
+    Base_Unknown Base_Unknown::read(rd::SerializationCtx & ctx, rd::Buffer & buffer)
     {
         throw std::logic_error("Unknown instances should not be read via serializer");
     }
     
     //writer
-    void Base_Unknown::write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const
+    void Base_Unknown::write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const
     {
         buffer.write_byte_array_raw(unknownBytes_);
     }

@@ -187,7 +187,7 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 class ListSerializer {
 	using list = std::vector<DynamicEntity>;
 public:
-	static list read(SerializationCtx const &ctx, Buffer const &buffer) {
+	static list read(SerializationCtx  &ctx, Buffer &buffer) {
 		int32_t len = buffer.read_integral<int32_t>();
 		list v;
 		for (int i = 0; i < len; ++i) {
@@ -196,7 +196,7 @@ public:
 		return v;
 	}
 
-	static void write(SerializationCtx const &ctx, Buffer const &buffer, const list &value) {
+	static void write(SerializationCtx  &ctx, Buffer &buffer, const list &value) {
 		buffer.write_integral<int32_t>(value.size());
 		for (const auto &item : value) {
 			item.write(ctx, buffer);

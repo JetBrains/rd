@@ -83,10 +83,10 @@ namespace demo {
         virtual ~MyScalar() = default;
         
         //reader
-        static MyScalar read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer);
+        static MyScalar read(rd::SerializationCtx & ctx, rd::Buffer & buffer);
         
         //writer
-        void write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer) const override;
+        void write(rd::SerializationCtx & ctx, rd::Buffer& buffer) const override;
         
         //virtual init
         

@@ -19,14 +19,14 @@ namespace rd {
 		const static std::string not_registered_error_message;
 	public:
 		static Wrapper<DefaultAbstractDeclaration>
-		readUnknownInstance(SerializationCtx const &ctx, Buffer const &buffer, RdId const &unknownId,
+		readUnknownInstance(SerializationCtx  &ctx, Buffer &buffer, RdId const &unknownId,
 							int32_t size);
 
 		std::string type_name() const override;
 
 		bool equals(ISerializable const &serializable) const override;
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override;
 	};
 }
 

@@ -82,10 +82,10 @@ namespace rd {
 				virtual ~ConcreteEntity() = default;
 
 				//reader
-				static ConcreteEntity read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer);
+				static ConcreteEntity read(rd::SerializationCtx  &ctx, rd::Buffer &buffer);
 
 				//writer
-				void write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const override;
+				void write(rd::SerializationCtx  &ctx, rd::Buffer &buffer) const override;
 
 				//virtual init
 

@@ -23,6 +23,7 @@
 
 namespace rd {
 	using std::optional;
+	using std::make_optional;
 	using std::nullopt_t;
 	using std::nullopt;
 	using std::variant;
@@ -40,6 +41,7 @@ namespace rd {
 
 namespace rd {
 	using tl::optional;
+	using tl::make_optional;
 	using tl::nullopt_t;
 	using tl::nullopt;
 	using mpark::variant;

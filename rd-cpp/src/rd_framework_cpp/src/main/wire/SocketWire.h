@@ -52,10 +52,10 @@ namespace rd {
 
 			static constexpr int32_t ACK_MESSAGE_LENGTH = -1;
 			static constexpr int32_t PACKAGE_HEADER_LENGTH = sizeof(ACK_MESSAGE_LENGTH) + sizeof(sequence_number_t);
-			Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
+			mutable Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
 
 			mutable sequence_number_t max_received_seqn = 0;
-			Buffer send_package_header{PACKAGE_HEADER_LENGTH};
+			mutable Buffer send_package_header{PACKAGE_HEADER_LENGTH};
 
 			bool read_from_socket(Buffer::word_t *res, int32_t msglen) const;
 
@@ -82,9 +82,9 @@ namespace rd {
 
 			void receiverProc() const;
 
-			bool send0(const Buffer::ByteArray &msg, sequence_number_t seqn) const;
+			bool send0(Buffer::ByteArray const &msg, sequence_number_t seqn) const;
 
-			void send(RdId const &rd_id, std::function<void(Buffer const &buffer)> writer) const override;
+			void send(RdId const &rd_id, std::function<void(Buffer &buffer)> writer) const override;
 
 			void set_socket_provider(std::shared_ptr<CActiveSocket> new_socket);
 

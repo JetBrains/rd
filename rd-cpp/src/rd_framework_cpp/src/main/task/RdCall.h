@@ -41,14 +41,14 @@ namespace rd {
 		virtual ~RdCall() = default;
 		//endregion
 
-		static RdCall<TReq, TRes, ReqSer, ResSer> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdCall<TReq, TRes, ReqSer, ResSer> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdCall<TReq, TRes, ReqSer, ResSer> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -157,7 +157,7 @@ namespace rd {
 				syncTaskId = taskId;
 			}
 
-			get_wire()->send(rdid, [&](Buffer const &buffer) {
+			get_wire()->send(rdid, [&](Buffer &buffer) {
 				logSend.trace(
 						"call " + location.toString() + "::" + rdid.toString() + " send" + (sync ? "SYNC" : "ASYNC") +
 						" request " + taskId.toString() + " : " + to_string(request));

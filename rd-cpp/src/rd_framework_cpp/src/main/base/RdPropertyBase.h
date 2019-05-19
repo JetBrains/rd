@@ -63,7 +63,7 @@ namespace rd {
 				if (is_master) {
 					master_version++;
 				}
-				get_wire()->send(rdid, [this, &v](Buffer const &buffer) {
+				get_wire()->send(rdid, [this, &v](Buffer &buffer) {
 					buffer.write_integral<int32_t>(master_version);
 					S::write(this->get_serialization_context(), buffer, v);
 					logSend.trace("SEND property " + location.toString() + " + " + rdid.toString() +

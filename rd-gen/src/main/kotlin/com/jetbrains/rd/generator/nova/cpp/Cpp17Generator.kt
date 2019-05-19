@@ -1022,7 +1022,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
 
     private fun abstractDeclarationTraitDecl(decl: Declaration): MemberFunction {
-        return MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx const& ctx, rd::Buffer const &buffer, rd::RdId const &unknownId, int32_t size)", decl.name).override()
+        return MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer &buffer, rd::RdId const &unknownId, int32_t size)", decl.name).override()
     }
 
     protected fun PrettyPrinter.registerSerializersTraitDecl(decl: Declaration) {
@@ -1144,14 +1144,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     private fun readerTraitDecl(decl: Declaration): Signature? {
         return when {
-            decl.isConcrete -> MemberFunction(decl.name, "read(rd::SerializationCtx const& ctx, rd::Buffer const & buffer)", decl.name).static()
-            decl.isAbstract -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx const& ctx, rd::Buffer const & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
+            decl.isConcrete -> MemberFunction(decl.name, "read(rd::SerializationCtx& ctx, rd::Buffer & buffer)", decl.name).static()
+            decl.isAbstract -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
             else -> null
         }
     }
 
     protected fun writerTraitDecl(decl: Declaration): MemberFunction? {
-        val signature = MemberFunction("void", "write(rd::SerializationCtx const& ctx, rd::Buffer const& buffer)", decl.name).const()
+        val signature = MemberFunction("void", "write(rd::SerializationCtx& ctx, rd::Buffer& buffer)", decl.name).const()
 
         return when {
             decl is Toplevel -> return null
@@ -1180,7 +1180,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected fun internTraitDecl(decl: Declaration): MemberFunction? {
         return if (decl is Class && decl.isInternRoot) {
-            return MemberFunction("const rd::SerializationCtx &", "get_serialization_context()", decl.name).const().override()
+            return MemberFunction("rd::SerializationCtx &", "get_serialization_context()", decl.name).const().override()
         } else {
             null
         }
@@ -1327,7 +1327,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         fun IType.reader(): String = when (this) {
             is Enum -> "buffer.read_enum<${templateName(decl)}>()"
             is InternedScalar -> {
-                val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &", "return ${itemType.reader()}")
+                val lambda = lambda("rd::SerializationCtx &, rd::Buffer &", "return ${itemType.reader()}")
                 """ctx.readInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $lambda)"""
             }
             is PredefinedType.void -> "rd::Void()" //really?
@@ -1402,7 +1402,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     private fun lambda(args: String?, body: String, resultType: String? = null): String {
         val typeHint = resultType?.let { " -> $resultType" } ?: ""
-        return "$eol[&ctx, &buffer](${args ?: ""})$typeHint $eol{ $body; }$eol"
+        return "$eol[&ctx, &buffer](${args ?: ""}) mutable $typeHint $eol{ $body; }$eol"
     }
 //endregion
 
@@ -1505,7 +1505,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             return when (this) {
                 is Enum -> "buffer.write_enum($field)"
                 is InternedScalar -> {
-                    val lambda = lambda("rd::SerializationCtx const &, rd::Buffer const &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
+                    val lambda = lambda("rd::SerializationCtx &, rd::Buffer &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
                     """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""
                 }
                 is PredefinedType.void -> "" //really?

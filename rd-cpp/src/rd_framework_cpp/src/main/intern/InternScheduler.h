@@ -5,6 +5,9 @@
 
 namespace rd {
 
+    /**
+     * \brief Scheduler for interning object. Maintains out of order execution.
+     */
     class InternScheduler : public IScheduler {
     	static thread_local int32_t active_counts;
     public:
