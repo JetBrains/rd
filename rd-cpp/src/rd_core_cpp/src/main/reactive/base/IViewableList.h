@@ -34,7 +34,7 @@ namespace rd {
 				int32_t index;
 				T const *new_value;
 
-				Add(size_t index, T const *new_value) : index(index), new_value(new_value) {}
+				Add(int32_t index, T const *new_value) : index(index), new_value(new_value) {}
 			};
 
 			class Update {
@@ -43,7 +43,7 @@ namespace rd {
 				T const *old_value;
 				T const *new_value;
 
-				Update(size_t index, T const *old_value, T const *new_value) : index(index), old_value(old_value),
+				Update(int32_t index, T const *old_value, T const *new_value) : index(index), old_value(old_value),
 																			   new_value(new_value) {}
 			};
 
@@ -52,7 +52,7 @@ namespace rd {
 				int32_t index;
 				T const *old_value;
 
-				Remove(size_t index, T const *old_value) : index(index), old_value(old_value) {}
+				Remove(int32_t index, T const *old_value) : index(index), old_value(old_value) {}
 			};
 
 			variant<Add, Update, Remove> v;

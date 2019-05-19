@@ -241,7 +241,7 @@ namespace rd {
 
 		void clear() const override {
 			std::vector<Event> changes;
-			for (size_t i = size(); i > 0; --i) {
+			for (int i = size(); i > 0; --i) {
 				changes.push_back(typename Event::Remove(i - 1, &(*list[i - 1])));
 			}
 			for (auto const &e : changes) {

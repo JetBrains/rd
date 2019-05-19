@@ -8,7 +8,7 @@ namespace rd {
 	}
 
 	RdId RdId::read(Buffer &buffer) {
-		auto number = buffer.read_integral<hash_t>();
+		const auto number = buffer.read_integral<hash_t>();
 		return RdId(number);
 	}
 

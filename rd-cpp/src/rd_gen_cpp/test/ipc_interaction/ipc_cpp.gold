@@ -21,7 +21,8 @@ protocol
 Interned:
 Cpp
 Polymorphic:
-Base
+Derived
+        string = Cpp instance
 
 ExtModel:Checker:
 void
@@ -47,7 +48,8 @@ Add 13:Kotlin
 Interned:
 Kotlin
 Polymorphic:
-Base
+Derived
+        string = Kotlin instance
 
 ExtModel:Checker:
 void
