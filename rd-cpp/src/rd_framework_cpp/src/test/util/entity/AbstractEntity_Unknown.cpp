@@ -21,12 +21,12 @@ namespace rd {
 			//secondary constructor
 
 			//reader
-			AbstractEntity_Unknown AbstractEntity_Unknown::read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) {
+			AbstractEntity_Unknown AbstractEntity_Unknown::read(rd::SerializationCtx  &ctx, rd::Buffer &buffer) {
 				throw std::logic_error("Unknown instances should not be read via serializer");
 			}
 
 			//writer
-			void AbstractEntity_Unknown::write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const {
+			void AbstractEntity_Unknown::write(rd::SerializationCtx  &ctx, rd::Buffer &buffer) const {
 				buffer.write_wstring(name_);
 				buffer.write_byte_array_raw(unknownBytes_);
 			}

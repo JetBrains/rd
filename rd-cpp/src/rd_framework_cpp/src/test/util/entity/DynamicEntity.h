@@ -31,9 +31,9 @@ namespace rd {
 				explicit DynamicEntity(int32_t value) : DynamicEntity(RdProperty<int32_t>(value)) {};
 				//endregion
 
-				static DynamicEntity read(SerializationCtx const &, Buffer const &buffer);
+				static DynamicEntity read(SerializationCtx  &, Buffer &buffer);
 
-				void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
+				void write(SerializationCtx  &ctx, Buffer &buffer) const override;
 
 				static void create(IProtocol *protocol);
 

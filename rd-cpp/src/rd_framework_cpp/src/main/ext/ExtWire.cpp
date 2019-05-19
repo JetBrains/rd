@@ -15,7 +15,7 @@ namespace rd {
 						// auto[id, payload] = std::move(sendQ.front());
 						auto it = std::move(sendQ.front());
 						sendQ.pop();
-						realWire->send(it.first, [payload = std::move(it.second)](Buffer const &buffer) {
+						realWire->send(it.first, [payload = std::move(it.second)](Buffer &buffer) {
 							buffer.write_byte_array_raw(payload);
 						});
 					}
@@ -28,7 +28,7 @@ namespace rd {
 		realWire->advise(lifetime, entity);
 	}
 
-	void ExtWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
+	void ExtWire::send(RdId const &id, std::function<void(Buffer &buffer)> writer) const {
 		{
 			std::lock_guard<decltype(lock)> guard(lock);
 			if (!sendQ.empty() || !connected.get()) {

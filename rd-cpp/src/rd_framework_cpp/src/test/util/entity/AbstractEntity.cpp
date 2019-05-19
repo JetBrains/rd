@@ -23,7 +23,7 @@ namespace rd {
 
 			//reader
 			rd::Wrapper<AbstractEntity>
-			AbstractEntity::readUnknownInstance(rd::SerializationCtx const &ctx, rd::Buffer const &buffer,
+			AbstractEntity::readUnknownInstance(rd::SerializationCtx  &ctx, rd::Buffer &buffer,
 											  rd::RdId const &unknownId, int32_t size) {
 				int32_t objectStartPosition = buffer.get_position();
 				auto name_ = buffer.read_wstring();

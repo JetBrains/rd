@@ -21,7 +21,7 @@ namespace rd {
 
 		void advise(Lifetime lifetime, IRdReactive const *entity) const override;
 
-		void send(RdId const &id, std::function< void(Buffer const &buffer)> writer) const override;
+		void send(RdId const &id, std::function< void(Buffer &buffer)> writer) const override;
 	};
 }
 

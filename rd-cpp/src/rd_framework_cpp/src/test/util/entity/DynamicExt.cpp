@@ -24,11 +24,11 @@ namespace rd {
 				identifyPolymorphic(bar, identities, id.mix(".bar"));
 			}
 
-			DynamicExt DynamicExt::read(SerializationCtx const &ctx, Buffer const &buffer) {
+			DynamicExt DynamicExt::read(SerializationCtx  &ctx, Buffer &buffer) {
 				throw std::invalid_argument("reading DynaimcExt is prohibited!");
 			}
 
-			void DynamicExt::write(SerializationCtx const &ctx, Buffer const &buffer) const {
+			void DynamicExt::write(SerializationCtx  &ctx, Buffer &buffer) const {
 				bar.write(ctx, buffer);
 			}
 

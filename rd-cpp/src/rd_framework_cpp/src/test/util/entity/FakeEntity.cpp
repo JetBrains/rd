@@ -18,7 +18,7 @@ namespace rd {
 			//secondary constructor
 
 			//reader
-			FakeEntity FakeEntity::read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) {
+			FakeEntity FakeEntity::read(rd::SerializationCtx  &ctx, rd::Buffer &buffer) {
 				auto name_ = buffer.read_wstring();
 				auto booleanValue_ = buffer.read_bool();
 				FakeEntity res{std::move(booleanValue_), std::move(name_)};
@@ -26,7 +26,7 @@ namespace rd {
 			}
 
 			//writer
-			void FakeEntity::write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const {
+			void FakeEntity::write(rd::SerializationCtx  &ctx, rd::Buffer &buffer) const {
 				buffer.write_wstring(name_);
 				buffer.write_bool(booleanValue_);
 			}

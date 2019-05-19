@@ -83,7 +83,7 @@ namespace rd {
 
 	void RdExtBase::sendState(IWire const &wire, ExtState state) const {
 
-		wire.send(rdid, [&](Buffer const &buffer) {
+		wire.send(rdid, [&](Buffer &buffer) {
 			// traceMe(logSend, to_string(state));
 			buffer.write_enum<ExtState>(state);
 			buffer.write_integral<int64_t>(serializationHash);

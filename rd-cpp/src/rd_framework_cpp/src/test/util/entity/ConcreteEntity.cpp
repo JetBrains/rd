@@ -21,7 +21,7 @@ namespace rd {
 			//secondary constructor
 
 			//reader
-			ConcreteEntity ConcreteEntity::read(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) {
+			ConcreteEntity ConcreteEntity::read(rd::SerializationCtx  &ctx, rd::Buffer &buffer) {
 				auto name_ = buffer.read_wstring();
 				auto stringValue_ = buffer.read_wstring();
 				ConcreteEntity res{std::move(stringValue_), std::move(name_)};
@@ -29,7 +29,7 @@ namespace rd {
 			}
 
 			//writer
-			void ConcreteEntity::write(rd::SerializationCtx const &ctx, rd::Buffer const &buffer) const {
+			void ConcreteEntity::write(rd::SerializationCtx  &ctx, rd::Buffer &buffer) const {
 				buffer.write_wstring(name_);
 				buffer.write_wstring(stringValue_);
 			}

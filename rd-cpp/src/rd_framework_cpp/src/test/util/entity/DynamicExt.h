@@ -24,9 +24,9 @@ namespace rd {
 
 				void identify(const Identities &identities, RdId const &id) const override;
 
-				static DynamicExt read(SerializationCtx const &ctx, Buffer const &buffer);
+				static DynamicExt read(SerializationCtx  &ctx, Buffer &buffer);
 
-				void write(SerializationCtx const &ctx, Buffer const &buffer) const override;
+				void write(SerializationCtx  &ctx, Buffer &buffer) const override;
 
 				static void create(IProtocol *protocol);
 

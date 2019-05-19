@@ -3,13 +3,13 @@
 namespace rd {
 	namespace test {
 		namespace util {
-			DynamicEntity DynamicEntity::read(SerializationCtx const &ctx, Buffer const &buffer) {
+			DynamicEntity DynamicEntity::read(SerializationCtx  &ctx, Buffer &buffer) {
 				return DynamicEntity(RdProperty<int32_t>::read(ctx, buffer));
 			}
 
 			std::string DynamicEntity::type_name() const { return "DynamicEntity"; }
 
-			void DynamicEntity::write(SerializationCtx const &ctx, Buffer const &buffer) const {
+			void DynamicEntity::write(SerializationCtx  &ctx, Buffer &buffer) const {
 				foo.write(ctx, buffer);
 			}
 
