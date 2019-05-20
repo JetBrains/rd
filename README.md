@@ -1,4 +1,3 @@
-[![JetBrains incubator project](http://jb.gg/badges/incubator-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
 # rd
 
