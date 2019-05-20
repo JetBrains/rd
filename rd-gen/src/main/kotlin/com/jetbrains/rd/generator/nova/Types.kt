@@ -31,7 +31,7 @@ interface IArray : IHasItemType {
 data class ArrayOfScalars(override val itemType : IScalar) : INonNullableScalar, IArray
 data class ArrayOfBindables(override val itemType : IBindable) : INonNullableBindable, IArray
 
-interface IImmutableList : IHasItemType {          
+interface IImmutableList : IHasItemType {
     override val name : String get() = itemType.name + "List"
 }
 data class ImmutableListOfScalars(override val itemType : IScalar) : INonNullableScalar, IImmutableList

@@ -11,13 +11,13 @@ import kotlin.test.assertEquals
 class AdviseVsViewTest : RdTestBase() {
     @Test
     fun adviseBehavior1() {
-        val lifetimeDef = Lifetime.create(Lifetime.Eternal)
+        val lifetimeDef = Lifetime.Eternal.createNested()
         val property = Property(false)
         val lifetime = lifetimeDef.lifetime
 
         val log = arrayListOf<Boolean>()
 
-        lifetime.add { property.set(true) }
+        lifetime.onTermination { property.set(true) }
         property.advise(lifetime) { /*lt, */value ->
             log.add(value)
         }
@@ -28,13 +28,13 @@ class AdviseVsViewTest : RdTestBase() {
 
     @Test
     fun viewBehavior1() {
-        val lifetimeDef = Lifetime.create(Lifetime.Eternal)
+        val lifetimeDef = Lifetime.Eternal.createNested()
         val property = Property(false)
         val lifetime = lifetimeDef.lifetime
 
         val log = arrayListOf<Boolean>()
 
-        lifetime.add { property.set(true) }
+        lifetime.onTermination { property.set(true) }
         property.view(lifetime) { _, value ->
             log.add(value)
         }
@@ -45,7 +45,7 @@ class AdviseVsViewTest : RdTestBase() {
 
     @Test
     fun adviseBehavior2() {
-        val lifetimeDef = Lifetime.create(Lifetime.Eternal)
+        val lifetimeDef = Lifetime.Eternal.createNested()
         val property = Property(false)
         val lifetime = lifetimeDef.lifetime
 
@@ -54,7 +54,7 @@ class AdviseVsViewTest : RdTestBase() {
         property.advise(lifetime) { /*lt, */value ->
             log.add(value)
         }
-        lifetime.add { property.set(true) }
+        lifetime.onTermination { property.set(true) }
         lifetimeDef.terminate()
 
         assertEquals(listOf(false, true), log)
@@ -79,7 +79,7 @@ class AdviseVsViewTest : RdTestBase() {
 
     @Test
     fun adviseBehavior3() {
-        val lifetimeDef = Lifetime.create(Lifetime.Eternal)
+        val lifetimeDef = Lifetime.Eternal.createNested()
         val propertyA = Property(0)
         val propertyB = Property(0)
         val lifetime = lifetimeDef.lifetime
@@ -104,7 +104,7 @@ class AdviseVsViewTest : RdTestBase() {
 
     @Test
     fun viewBehavior3() {
-        val lifetimeDef = Lifetime.create(Lifetime.Eternal)
+        val lifetimeDef = Lifetime.Eternal.createNested()
         val propertyA = Property(0)
         val propertyB = Property(0)
         val lifetime = lifetimeDef.lifetime

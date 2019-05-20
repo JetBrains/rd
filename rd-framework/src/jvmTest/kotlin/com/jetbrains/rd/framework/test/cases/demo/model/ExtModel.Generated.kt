@@ -1,5 +1,5 @@
 @file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")
-package org.example
+package demo
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*

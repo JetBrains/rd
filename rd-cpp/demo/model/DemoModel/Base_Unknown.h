@@ -38,6 +38,8 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 #pragma warning( disable:4307 )
+#pragma warning( disable:4267 )
+#pragma warning( disable:4244 )
 namespace demo {
     class Base_Unknown : public Base, public rd::IUnknownInstance
     {

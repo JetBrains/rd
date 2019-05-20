@@ -1,0 +1,3 @@
+add_executable(cross_test CrossTest.cpp)
+
+target_link_libraries(cross_test rd_framework_cpp demo_model)

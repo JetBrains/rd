@@ -1,1 +1,1 @@
-add_subdirectory(ipc_interaction)
+add_subdirectory(cross_test)

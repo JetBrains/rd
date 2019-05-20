@@ -56,21 +56,21 @@ int main() {
 	//endregion
 
 	printer_t printer;
+
 	DemoModel model;
-	ExtModel const &extModel = ExtModel::getOrCreateExtensionOf(model);
-	model.connect(lifetime, protocol.get());
-
 	scheduler.queue([&] {
+		model.connect(lifetime, protocol.get());
+		ExtModel const &extModel = ExtModel::getOrCreateExtensionOf(model);
+
 		adviseAll(lifetime, model, extModel, printer);
-	});
 
-	scheduler.queue([&] {
 		auto res = fireAll(model, extModel);
 		print(printer, res);
 	});
 
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 
+	socket_definition.terminate();
 	definition.terminate();
 
 	for (const auto &item : printer) {

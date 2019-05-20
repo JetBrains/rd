@@ -9,7 +9,7 @@ import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.print
 import com.jetbrains.rd.util.string.println
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
-import org.example.*
+import demo.*
 import java.io.File
 
 lateinit var scheduler: IScheduler
@@ -46,7 +46,10 @@ fun main() {
         res.print(printer)
     }
 
-    Thread.sleep(10_000 )
+    Thread.sleep(10_000)
+
+    socketLifetimeDef.terminate()
+    lifetimeDef.terminate()
 
     println(printer)
 }
@@ -78,12 +81,14 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
         it.println(printer)
     }
 
+/*
     model.call.set { c ->
         printer.print("RdTask:")
         c.print(printer)
 
         c.toUpperCase().toString()
     }
+*/
 
     model.interned_string.advise(lifetime) {
         printer.print("Interned:")

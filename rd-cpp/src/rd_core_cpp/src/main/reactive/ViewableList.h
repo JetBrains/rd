@@ -179,14 +179,14 @@ namespace rd {
 		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
 			if (lifetime->is_terminated()) return;
 			change.advise(std::move(lifetime), handler);
-			for (size_t i = 0; i < size(); ++i) {
+			for (int32_t i = 0; i < static_cast<int32_t>(size()); ++i) {
 				handler(typename Event::Add(i, &(*list[i])));
 			}
 		}
 
 		bool add(WT element) const override {
 			list.emplace_back(std::move(element));
-			change.fire(typename Event::Add(size() - 1, &(*list.back())));
+			change.fire(typename Event::Add(static_cast<int32_t>(size()) - 1, &(*list.back())));
 			return true;
 		}
 
