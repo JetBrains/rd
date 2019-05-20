@@ -2,13 +2,17 @@ BooleanProperty:
 0
 Scalar:
 MyScalar
-        sign = 0
+        bool = 0
         byte = 98
         short = 32000
         int = 1000000000
         long = -2000000000000000000
-        float_ = 3.140000
-        double_ = -123456789.012346
+        float = 3.140000
+        double = -123456789.012346
+        unsigned_short = 65534
+        unsigned_int = 4294967294
+        unsigned_long = 18446744073709551614
+
 
 RdSet:
 Add:98
@@ -29,13 +33,16 @@ void
 
 Scalar:
 MyScalar
-        sign = 0
+        bool = 0
         byte = 13
         short = 32000
         int = 1000000000
         long = -2000000000000000000
-        float_ = 3.140000
-        double_ = -123456789.012346
+        float = 3.140000
+        double = -123456789.012346
+        unsigned_short = 32767
+        unsigned_int = 2147483647
+        unsigned_long = 9223372036854775807
 
 RdList:
 Add 0:1
@@ -53,3 +60,5 @@ Derived
 
 ExtModel:Checker:
 void
+
+

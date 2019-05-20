@@ -19,13 +19,16 @@ object DemoRoot : Root(
 
 object DemoModel : Ext(DemoRoot) {
     private var MyScalar = structdef {
-        field("sign", PredefinedType.bool)
+        field("bool", PredefinedType.bool)
         field("byte", PredefinedType.byte)
         field("short", PredefinedType.short)
         field("int", PredefinedType.int)
         field("long", PredefinedType.long)
-        field("float_", PredefinedType.float)
-        field("double_", PredefinedType.double)
+        field("float", PredefinedType.float)
+        field("double", PredefinedType.double)
+        field("unsigned_short", PredefinedType.short.unsigned())
+        field("unsigned_int", PredefinedType.int.unsigned())
+        field("unsigned_long", PredefinedType.long.unsigned())
     }
 
     private var Base = basestruct {

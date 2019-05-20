@@ -31,14 +31,14 @@ abstract class AbstractBuffer {
     abstract fun readByteArrayRaw(array: ByteArray)
 
     abstract fun writeByteArray(array: ByteArray)
-    abstract fun writeByteArrayRaw(array: ByteArray, count : Int? = null)
+    abstract fun writeByteArrayRaw(array: ByteArray, count: Int? = null)
 
     fun readString() = readNullableString()!!
     abstract fun readNullableString(): String?
 
     fun writeString(value: String) = writeNullableString(value)
     abstract fun writeNullableString(value: String?)
-    
+
     abstract fun readCharArray(): CharArray
     abstract fun writeCharArray(array: CharArray)
 
@@ -60,12 +60,54 @@ abstract class AbstractBuffer {
     abstract fun readBooleanArray(): BooleanArray
     abstract fun writeBooleanArray(array: BooleanArray)
 
-    abstract fun getArray() : ByteArray
+    abstract fun getArray(): ByteArray
 
     abstract fun checkAvailable(moreSize: Int)
+
+    @ExperimentalUnsignedTypes
+    fun readUByte() = readByte().toUByte()
+
+    @ExperimentalUnsignedTypes
+    fun writeUByte(value: UByte) = writeByte(value.toByte())
+
+    @ExperimentalUnsignedTypes
+    fun readUShort() = readShort().toUShort()
+
+    @ExperimentalUnsignedTypes
+    fun writeUShort(value: UShort) = writeShort(value.toShort())
+
+    @ExperimentalUnsignedTypes
+    fun readUInt(): UInt = readInt().toUInt()
+
+    @ExperimentalUnsignedTypes
+    fun writeUInt(value: UInt) = writeInt(value.toInt())
+
+    @ExperimentalUnsignedTypes
+    fun readULong(): ULong = readLong().toULong()
+
+    @ExperimentalUnsignedTypes
+    fun writeULong(value: ULong) = writeLong(value.toLong())
+
+    @ExperimentalUnsignedTypes
+    fun readUShortArray() : UShortArray = readShortArray().asUShortArray()
+
+    @ExperimentalUnsignedTypes
+    fun writeUShortArray(array: UShortArray) = writeShortArray(array.asShortArray())
+
+    @ExperimentalUnsignedTypes
+    fun readUIntArray() : UIntArray = readIntArray().asUIntArray()
+
+    @ExperimentalUnsignedTypes
+    fun writeUIntArray(array: UIntArray) = writeIntArray(array.asIntArray())
+
+    @ExperimentalUnsignedTypes
+    fun readULongArray() : ULongArray = readLongArray().asULongArray()
+
+    @ExperimentalUnsignedTypes
+    fun writeULongArray(array: ULongArray) = writeLongArray(array.asLongArray())
 }
 
-expect fun createAbstractBuffer() : AbstractBuffer
+expect fun createAbstractBuffer(): AbstractBuffer
 
 fun AbstractBuffer.rewind() {
     this.position = 0

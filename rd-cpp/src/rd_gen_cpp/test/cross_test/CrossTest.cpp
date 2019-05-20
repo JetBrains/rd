@@ -1,3 +1,5 @@
+#define NOMINMAX   
+
 #include "DemoModel.h"
 #include "ExtModel.h"
 #include "Derived.h"
@@ -11,6 +13,7 @@
 #include <cstdint>
 #include <fstream>
 #include <string>
+#include <climits>
 
 using namespace rd;
 using namespace demo;
@@ -35,7 +38,7 @@ int main() {
 	LifetimeDefinition socket_definition(false);
 	Lifetime socket_lifetime = definition.lifetime;
 
-	auto tmp_directory = filesystem::get_temp_directory() + "/rd/port.txt";
+	const auto tmp_directory = filesystem::get_temp_directory() + "/rd/port.txt";
 
 	//region Client initialization
 	uint16_t port = 0;
@@ -77,7 +80,7 @@ int main() {
 		std::cout << item << std::endl;
 	}
 	std::cout << std::endl;
-	
+
 	return 0;
 }
 
@@ -140,7 +143,10 @@ std::wstring fireAll(const DemoModel &model, const ExtModel &extModel) {
 						   1'000'000'000,
 						   -2'000'000'000'000'000'000,
 						   3.14f,
-						   -123456789.012345678
+						   -123456789.012345678,
+						   std::numeric_limits<uint16_t>::max() - 1,
+						   std::numeric_limits<uint32_t>::max() - 1,
+						   std::numeric_limits<uint64_t>::max() - 1
 	);
 	model.get_scalar().set(scalar);
 
@@ -156,7 +162,7 @@ std::wstring fireAll(const DemoModel &model, const ExtModel &extModel) {
 
 	// auto res = model.get_call().sync(L'c');
 	auto res = L"";
-	
+
 	model.get_interned_string().set(valA);
 	model.get_interned_string().set(valA);
 	model.get_interned_string().set(valB);

@@ -37,7 +37,7 @@ namespace demo {
         mapLongToString_.optimize_nested = true;
         interned_string_.optimize_nested = true;
         polymorphic_.optimize_nested = true;
-        serializationHash = 8392662799813291942L;
+        serializationHash = 2414154915191782878L;
     }
     
     //primary ctor

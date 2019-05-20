@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")
+@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE")
 package demo
 
 import com.jetbrains.rd.framework.*
@@ -46,7 +46,7 @@ class DemoModel private constructor(
         
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = 8392662799813291942L
+        const val serializationHash = 2414154915191782878L
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
     override val serializationHash: Long get() = DemoModel.serializationHash
@@ -246,13 +246,16 @@ class Derived (
 
 
 data class MyScalar (
-    val sign: Boolean,
+    val bool: Boolean,
     val byte: Byte,
     val short: Short,
     val int: Int,
     val long: Long,
-    val float_: Float,
-    val double_: Double
+    val float: Float,
+    val double: Double,
+    val unsigned_short: UShort,
+    val unsigned_int: UInt,
+    val unsigned_long: ULong
 ) : IPrintable {
     //companion
     
@@ -261,24 +264,30 @@ data class MyScalar (
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): MyScalar {
-            val sign = buffer.readBool()
+            val bool = buffer.readBool()
             val byte = buffer.readByte()
             val short = buffer.readShort()
             val int = buffer.readInt()
             val long = buffer.readLong()
-            val float_ = buffer.readFloat()
-            val double_ = buffer.readDouble()
-            return MyScalar(sign, byte, short, int, long, float_, double_)
+            val float = buffer.readFloat()
+            val double = buffer.readDouble()
+            val unsigned_short = buffer.readUShort()
+            val unsigned_int = buffer.readUInt()
+            val unsigned_long = buffer.readULong()
+            return MyScalar(bool, byte, short, int, long, float, double, unsigned_short, unsigned_int, unsigned_long)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: MyScalar) {
-            buffer.writeBool(value.sign)
+            buffer.writeBool(value.bool)
             buffer.writeByte(value.byte)
             buffer.writeShort(value.short)
             buffer.writeInt(value.int)
             buffer.writeLong(value.long)
-            buffer.writeFloat(value.float_)
-            buffer.writeDouble(value.double_)
+            buffer.writeFloat(value.float)
+            buffer.writeDouble(value.double)
+            buffer.writeUShort(value.unsigned_short)
+            buffer.writeUInt(value.unsigned_int)
+            buffer.writeULong(value.unsigned_long)
         }
         
     }
@@ -292,39 +301,48 @@ data class MyScalar (
         
         other as MyScalar
         
-        if (sign != other.sign) return false
+        if (bool != other.bool) return false
         if (byte != other.byte) return false
         if (short != other.short) return false
         if (int != other.int) return false
         if (long != other.long) return false
-        if (float_ != other.float_) return false
-        if (double_ != other.double_) return false
+        if (float != other.float) return false
+        if (double != other.double) return false
+        if (unsigned_short != other.unsigned_short) return false
+        if (unsigned_int != other.unsigned_int) return false
+        if (unsigned_long != other.unsigned_long) return false
         
         return true
     }
     //hash code trait
     override fun hashCode(): Int {
         var __r = 0
-        __r = __r*31 + sign.hashCode()
+        __r = __r*31 + bool.hashCode()
         __r = __r*31 + byte.hashCode()
         __r = __r*31 + short.hashCode()
         __r = __r*31 + int.hashCode()
         __r = __r*31 + long.hashCode()
-        __r = __r*31 + float_.hashCode()
-        __r = __r*31 + double_.hashCode()
+        __r = __r*31 + float.hashCode()
+        __r = __r*31 + double.hashCode()
+        __r = __r*31 + unsigned_short.hashCode()
+        __r = __r*31 + unsigned_int.hashCode()
+        __r = __r*31 + unsigned_long.hashCode()
         return __r
     }
     //pretty print
     override fun print(printer: PrettyPrinter) {
         printer.println("MyScalar (")
         printer.indent {
-            print("sign = "); sign.print(printer); println()
+            print("bool = "); bool.print(printer); println()
             print("byte = "); byte.print(printer); println()
             print("short = "); short.print(printer); println()
             print("int = "); int.print(printer); println()
             print("long = "); long.print(printer); println()
-            print("float_ = "); float_.print(printer); println()
-            print("double_ = "); double_.print(printer); println()
+            print("float = "); float.print(printer); println()
+            print("double = "); double.print(printer); println()
+            print("unsigned_short = "); unsigned_short.print(printer); println()
+            print("unsigned_int = "); unsigned_int.print(printer); println()
+            print("unsigned_long = "); unsigned_long.print(printer); println()
         }
         printer.print(")")
     }

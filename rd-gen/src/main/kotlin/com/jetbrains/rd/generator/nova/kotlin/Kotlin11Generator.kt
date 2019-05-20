@@ -65,6 +65,7 @@ open class Kotlin11Generator(
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
         is PredefinedType.void -> "Unit"
+        is PredefinedType.UnsignedInteger -> "U${itemType.substitutedName(scope)}"
         is PredefinedType -> name.capitalize()
 
         else -> fail("Unsupported type ${javaClass.simpleName}")
@@ -268,7 +269,7 @@ open class Kotlin11Generator(
     }
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
-        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")"""
+        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE")"""
         + "package ${decl.namespace}"
     }
 

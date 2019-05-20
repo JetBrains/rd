@@ -210,7 +210,26 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     //endregion
 
     //region IType.
-    private fun IType.isPrimitive() = this in PredefinedFloating || this in PredefinedIntegrals
+    private val PredefinedFloatingList = listOf(
+            PredefinedType.float,
+            PredefinedType.double
+    )
+
+    private val PredefinedIntegerList = listOf(
+            PredefinedType.byte,
+            PredefinedType.short,
+            PredefinedType.int,
+            PredefinedType.long
+    )
+
+    private val IType.isPredefinedInteger: Boolean
+        get() = this in PredefinedIntegerList || this is PredefinedType.UnsignedInteger
+
+    val IType.isPredefinedFloating: Boolean
+        get() = this in PredefinedFloatingList
+
+    private val IType.isPrimitive: Boolean
+        get() = this.isPredefinedFloating || this.isPredefinedInteger
 
     private fun IType.isAbstract0() = (this is Struct.Abstract || this is Class.Abstract)
     private fun IType.isAbstract() = (this.isAbstract0()) || (this is InternedScalar && (this.itemType.isAbstract0()))
@@ -252,8 +271,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         is IArray -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
         is IImmutableList -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
 
-        is PredefinedType.byte -> "signed char"
         is PredefinedType.char -> "wchar_t"
+        is PredefinedType.byte -> "uint8_t"
+        is PredefinedType.short -> "int16_t"
         is PredefinedType.int -> "int32_t"
         is PredefinedType.long -> "int64_t"
         is PredefinedType.string -> {
@@ -264,6 +284,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 type.wrapper()
             }
 
+        }
+        is PredefinedType.UnsignedInteger -> {
+            "u" + itemType.substitutedName(scope)
         }
         is PredefinedType.dateTime -> "Date"
         is PredefinedType.guid -> "UUID"
@@ -279,7 +302,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     fun IType.templateName(scope: Declaration, omitNullability: Boolean = false) = substitutedName(scope, true, omitNullability)
 
     protected val IType.isPrimitivesArray
-        get() = (this is IArray || this is IImmutableList) && this.isPrimitive()
+        get() = (this is IArray || this is IImmutableList) && this.isPrimitive
 
     protected fun IType.leafSerializerRef(scope: Declaration): String? {
 
@@ -1358,8 +1381,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is PredefinedType.rdId -> "rd::RdId()"
             is PredefinedType.bool -> "buffer.read_bool()"
             is PredefinedType.string -> "buffer.read_wstring()"
-            in PredefinedIntegrals -> "buffer.read_integral<${templateName(decl)}>()"
-            in PredefinedFloating -> "buffer.read_floating_point<${templateName(decl)}>()"
+            in PredefinedIntegerList, is PredefinedType.UnsignedInteger -> "buffer.read_integral<${templateName(decl)}>()"
+            in PredefinedFloatingList -> "buffer.read_floating_point<${templateName(decl)}>()"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 if (isAbstract)
@@ -1535,8 +1558,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 is PredefinedType.void -> "" //really?
                 is PredefinedType.bool -> "buffer.write_bool($field)"
                 is PredefinedType.string -> "buffer.write_wstring($field)"
-                in PredefinedIntegrals -> "buffer.write_integral($field)"
-                in PredefinedFloating -> "buffer.write_floating_point($field)"
+                in PredefinedIntegerList, is PredefinedType.UnsignedInteger -> "buffer.write_integral($field)"
+                in PredefinedFloatingList -> "buffer.write_floating_point($field)"
                 is Declaration ->
                     if (isAbstract)
                         "ctx.get_serializers().writePolymorphic<${templateName(decl)}>(ctx, buffer, $field)"
@@ -1843,18 +1866,4 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     override fun toString(): String {
         return "Cpp17Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
     }
-
-    val PredefinedIntegrals = listOf(
-            PredefinedType.byte,
-            PredefinedType.short,
-            PredefinedType.int,
-            PredefinedType.long,
-            PredefinedType.char,
-            PredefinedType.bool
-    )
-
-    val PredefinedFloating = listOf(
-            PredefinedType.float,
-            PredefinedType.double
-    )
 }

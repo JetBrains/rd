@@ -1,3 +1,4 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
 package com.jetbrains.rd.framework.test.cases.demo
 
 import com.jetbrains.rd.framework.*
@@ -115,7 +116,10 @@ fun fireAll(model: DemoModel, extModel: ExtModel): Int {
             1_000_000_000,
             -2_000_000_000_000_000_000,
             3.14f,
-            -123456789.012345678
+            -123456789.012345678,
+            UShort.MAX_VALUE.minus(1u).toUShort(),
+            UInt.MAX_VALUE.minus(1u),
+            ULong.MAX_VALUE.minus(1u)
     )
     model.scalar.set(scalar)
 

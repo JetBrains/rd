@@ -27,6 +27,9 @@ ExtModel:Checker:kotlin.Unit
   long = -2000000000000000000
   float_ = 3.14
   double_ = -1.2345678901234567E8
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
 )
 RdSet:Add98
 RdMap:Add 98:Cpp
