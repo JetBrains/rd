@@ -59,7 +59,9 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)> handler) const {
+		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)
+
+		> handler) const {
 			this->advise(lifetime, [handler](Event e) {
 				handler(e.kind, *e.value);
 			});
@@ -76,7 +78,9 @@ namespace rd {
 		 * \param lifetime 
 		 * \param handler 
 		 */
-		void view(Lifetime lifetime, std::function<void(Lifetime, T const &)> handler) const override {
+		void view(Lifetime lifetime, std::function< void(Lifetime, T const &)
+
+		> handler) const override {
 			advise(lifetime, [this, lifetime, handler](AddRemove kind, T const &key) {
 				switch (kind) {
 					case AddRemove::ADD: {
@@ -122,6 +126,11 @@ namespace rd {
 		virtual bool contains(T const &) const = 0;
 
 		virtual bool empty() const = 0;
+
+		template<typename ...Args>
+		bool emplace_add(Args &&... args) const {
+			return add(WT{std::forward<Args>(args)...});
+		}
 	};
 }
 
