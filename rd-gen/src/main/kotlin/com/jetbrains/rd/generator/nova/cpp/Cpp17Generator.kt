@@ -1380,6 +1380,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is PredefinedType.void -> "rd::Void()" //really?
             is PredefinedType.rdId -> "rd::RdId()"
             is PredefinedType.bool -> "buffer.read_bool()"
+            is PredefinedType.char -> "buffer.read_char()"
             is PredefinedType.string -> "buffer.read_wstring()"
             in PredefinedIntegerList, is PredefinedType.UnsignedInteger -> "buffer.read_integral<${templateName(decl)}>()"
             in PredefinedFloatingList -> "buffer.read_floating_point<${templateName(decl)}>()"
@@ -1557,6 +1558,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 }
                 is PredefinedType.void -> "" //really?
                 is PredefinedType.bool -> "buffer.write_bool($field)"
+                is PredefinedType.char -> "buffer.write_char($field)"
                 is PredefinedType.string -> "buffer.write_wstring($field)"
                 in PredefinedIntegerList, is PredefinedType.UnsignedInteger -> "buffer.write_integral($field)"
                 in PredefinedFloatingList -> "buffer.write_floating_point($field)"
