@@ -9,14 +9,14 @@ open class SequentialLifetimes(private val parentLifetime: Lifetime) {
     }
 
     open fun next(): LifetimeDefinition {
-        val newDef = Lifetime.create(parentLifetime)
+        val newDef = parentLifetime.createNested()
         setCurrentLifetime(newDef)
         return newDef
     }
 
     open fun terminateCurrent(): Unit = setCurrentLifetime(LifetimeDefinition.Terminated)
 
-    val isTerminated: Boolean get() = currentDef.isEternal || currentDef.isTerminated //todo toRemove
+    val isTerminated: Boolean get() = currentDef.isEternal || !currentDef.isAlive //todo toRemove
 
     open fun defineNext(fNext: (LifetimeDefinition, Lifetime) -> Unit) {
         setCurrentLifetime(LifetimeDefinition.Terminated)

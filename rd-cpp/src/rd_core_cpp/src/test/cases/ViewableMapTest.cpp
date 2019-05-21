@@ -1,9 +1,4 @@
-//
-// Created by jetbrains on 11.07.2018.
-//
-
-
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "ViewableMap.h"
 #include "test_util.h"
@@ -31,7 +26,7 @@ TEST(viewable_map, advise) {
 										   to_string(kind) + " " + std::to_string(key) + ":" + std::to_string(value));
 							   });
 		map->advise(lifetime, [&](typename IViewableMap<int, int>::Event entry) {
-			log_update.push_back(to_string_map_event<int, int>(entry));
+			log_update.push_back(to_string(entry));
 		});
 		map->view(lifetime, [&](Lifetime inner, const std::pair<int const *, int const *> x) {
 			inner->bracket(
@@ -133,3 +128,100 @@ TEST (viewable_map, move) {
 	ViewableMap<int, int> set1;
 	ViewableMap<int, int> set2(std::move(set1));
 }
+
+using container = ViewableMap<std::wstring, int>;
+
+static_assert(!std::is_constructible<container::iterator, std::nullptr_t>::value,
+			  "iterator should not be constructible from nullptr");
+
+TEST(viewable_map_iterators, end_iterator) {
+	container c;
+	container::iterator i = c.end();
+
+	EXPECT_EQ(c.begin(), i);
+}
+
+const std::vector<int> perm4 = {2, 0, 1, 9};
+auto mapper = [](auto x) { return std::to_wstring(x); };
+
+TEST(viewable_map_iterators, reverse_iterators) {
+	container c;
+	for (int i : perm4) {
+		c.set(mapper(i), i);
+	}
+
+//	EXPECT_EQ(9, c.rbegin().value());
+	EXPECT_EQ(9, *c.rbegin());
+	EXPECT_EQ(1, *std::next(c.rbegin()));
+	EXPECT_EQ(2, *std::prev(c.rend()));
+}
+
+const int perm3[] = {1, 2, 8};
+
+TEST(viewable_map_iterators, iterators_postfix) {
+	container c;
+	for (int i : perm3) {
+		c.set(mapper(i), i);
+	}
+	container::iterator i = c.begin();
+	EXPECT_EQ(1, *i);
+	container::iterator j = i++;
+	EXPECT_EQ(2, *i);
+	EXPECT_EQ(1, *j);
+	j = i++;
+	EXPECT_EQ(8, *i);
+	EXPECT_EQ(2, *j);
+	j = i++;
+	EXPECT_EQ(c.end(), i);
+	EXPECT_EQ(8, *j);
+	j = i--;
+	EXPECT_EQ(8, *i);
+	EXPECT_EQ(c.end(), j);
+}
+
+TEST(viewable_map_iterators, fori) {
+	const container c;
+	for (int i : perm4) {
+		c.set(mapper(i), i);
+	}
+
+	{
+		int i = 0;
+		for (auto const &it : c) {
+			EXPECT_EQ(it, perm4[i]);
+			++i;
+		}
+	}
+
+	for (auto it = c.begin(); it != c.end(); ++it) {
+		int i = it - c.begin();
+		EXPECT_EQ(it.key(), mapper(perm4[i]));
+		EXPECT_EQ(it.value(), perm4[i]);
+	}
+
+	for (auto it = c.rbegin(); it != c.rend(); ++it) {
+		int i = perm4.size() - (it - c.rbegin()) - 1;
+		auto const &type = it.key();
+		EXPECT_EQ(type, mapper(perm4[i]));
+		int const &value = it.value();
+		EXPECT_EQ(value, perm4[i]);
+	}
+}
+/*TEST(viewable_map_iterators, insert_return_value) {
+    container c;
+	c.addAll({1, 2, 3, 4});
+
+    container::iterator i = c.add(std::next(c.begin(), 2), 5);
+    EXPECT_EQ(5, *i);
+    EXPECT_EQ(2, *std::prev(i));
+    EXPECT_EQ(3, *std::next(i));
+}
+
+TEST(viewable_map_iterators, erase_return_value) {
+    container c;
+    c.addAll({1, 2, 3, 4});
+    container::iterator i = c.remove(std::next(c.begin()));
+    EXPECT_EQ(3, *i);
+    i = c.remove(i);
+    EXPECT_EQ(4, *i);
+}*/

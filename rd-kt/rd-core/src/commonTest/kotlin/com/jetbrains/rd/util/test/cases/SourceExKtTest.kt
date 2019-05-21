@@ -91,7 +91,7 @@ class SourceExKtTest : RdTestBase()  {
 
     @Test
     fun testFlowInto() {
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
         val lifetime = def.lifetime
         val signal: ISignal<Int> = Signal()
         val signalDependent: ISignal<Boolean> = Signal()
@@ -130,7 +130,7 @@ class SourceExKtTest : RdTestBase()  {
         signalDependentA.advise(lifetime) { v -> accA = v }
         signalDependentB.advise(lifetime) { v -> accB = v }
 
-        val defFlow = Lifetime.create(lifetime)
+        val defFlow = lifetime.createNested()
         val lifetimeFlow = defFlow.lifetime
         signal.flowInto(lifetimeFlow, signalDependentA)
         signal.flowInto(lifetime, signalDependentB)

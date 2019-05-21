@@ -2,6 +2,7 @@ package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.test.framework.RdTestBase
 import kotlin.test.Test
@@ -16,12 +17,12 @@ class SequentialLifetimesTest : RdTestBase()  {
 
         assertTrue(seq.isTerminated)
 
-        val parentDef = Lifetime.create(Lifetime.Eternal)
+        val parentDef = Lifetime.Eternal.createNested()
         val seq2 = SequentialLifetimes(parentDef.lifetime)
         val nextLt = seq2.next()
         parentDef.terminate()
 
-        assertTrue(nextLt.isTerminated)
+        assertTrue(!nextLt.isAlive)
         assertTrue(seq2.isTerminated)
     }
 
@@ -46,7 +47,7 @@ class SequentialLifetimesTest : RdTestBase()  {
 
     @Test
     fun testNonEternal() {
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
 
         val seq = SequentialLifetimes(def.lifetime)
 
@@ -67,8 +68,8 @@ class SequentialLifetimesTest : RdTestBase()  {
 
     @Test
     fun testTwoEternalChildren() {
-        val defA = Lifetime.create(Lifetime.Eternal)
-        val defB = Lifetime.create(Lifetime.Eternal)
+        val defA = Lifetime.Eternal.createNested()
+        val defB = Lifetime.Eternal.createNested()
 
         val seqA = SequentialLifetimes(defA.lifetime)
         val seqB = SequentialLifetimes(defB.lifetime)

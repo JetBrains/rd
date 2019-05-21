@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
 #ifndef RD_CPP_CORE_SIGNAL_H
 #define RD_CPP_CORE_SIGNAL_H
 
@@ -16,8 +12,11 @@
 namespace rd {
 	extern std::atomic<int32_t> cookie;
 
+	/**
+	 * \brief complete class which has \a Signal<T> 's properties
+	 */
 	template<typename T>
-	class Signal : public ISignal<T> {
+	class Signal final : public ISignal<T> {
 	private:
 		using WT = typename ISignal<T>::WT;
 
@@ -30,7 +29,7 @@ namespace rd {
 			Event() = delete;
 
 			template<typename F>
-			Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(std::move(lifetime)) {}
+			Event(F &&action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(lifetime) {}
 
 			Event(Event &&) = default;
 			//endregion
@@ -99,7 +98,7 @@ namespace rd {
 		using ISignal<T>::advise;
 
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
-			advise0(std::move(lifetime), std::move(handler), isPriorityAdvise() ? priority_listeners : listeners);
+			advise0(lifetime, std::move(handler), isPriorityAdvise() ? priority_listeners : listeners);
 		}
 
 		static bool isPriorityAdvise() {

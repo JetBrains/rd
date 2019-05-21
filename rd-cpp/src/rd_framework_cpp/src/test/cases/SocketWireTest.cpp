@@ -1,17 +1,15 @@
-//
-// Created by jetbrains on 27.08.2018.
-//
-
 #include <gtest/gtest.h>
-
-#include <random>
 
 #include "RdMap.h"
 #include "Protocol.h"
 #include "RdProperty.h"
+#include "RdSignal.h"
 #include "SocketWireTestBase.h"
 #include "SocketWire.h"
 #include "DynamicEntity.h"
+#include "entities_util.h"
+
+#include <random>
 
 const int STEP = 5;
 
@@ -35,6 +33,7 @@ TEST_F(SocketWireTestBase, ServerWithoutClient) {
 
 TEST_F(SocketWireTestBase, TestServerWithoutClientWithDelay) {
 	Protocol protocol = server(socketLifetime);
+
 	sleep_this_thread(100);
 
 	terminate();
@@ -43,6 +42,7 @@ TEST_F(SocketWireTestBase, TestServerWithoutClientWithDelay) {
 TEST_F(SocketWireTestBase, TestClientWithoutServerWithDelay) {
 	uint16_t port = find_free_port();
 	auto protocol = client(socketLifetime, port);
+
 	sleep_this_thread(100);
 
 	terminate();
@@ -50,6 +50,7 @@ TEST_F(SocketWireTestBase, TestClientWithoutServerWithDelay) {
 
 TEST_F(SocketWireTestBase, /*DISABLED_*/TestServerWithoutClientWithDelayAndMessages) {
 	auto protocol = server(socketLifetime);
+
 	sleep_this_thread(100);
 
 	RdProperty<int> sp(0);
@@ -57,6 +58,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestServerWithoutClientWithDelayAndMessa
 	sp.bind(lifetime, &protocol, "top");
 
 	sp.set(1);
+
 	sp.set(2);
 	sleep_this_thread(50);
 
@@ -73,6 +75,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestClientWithoutServerWithDelayAndMessa
 
 	cp.set(1);
 	cp.set(2);
+
 	sleep_this_thread(50);
 
 	terminate();
@@ -95,12 +98,12 @@ TEST_F(SocketWireTestBase, TestBasicRun) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
-
 	RdProperty<int> sp{0}, cp{0};
 
 	init(serverProtocol, clientProtocol, &sp, &cp);
 
 	cp.set(1);
+
 	serverScheduler.pump_one_message(); //server get new value
 
 	checkSchedulersAreEmpty();
@@ -169,7 +172,8 @@ TEST_F(SocketWireTestBase, TestBigBuffer) {
 	cp_string.bind(lifetime, &clientProtocol, "top");
 
 	cp_string.set(L"1");
-	serverScheduler.pump_one_message();//server get new small string
+
+	serverScheduler.pump_one_message();//server gets new small string
 
 	checkSchedulersAreEmpty();
 
@@ -177,7 +181,7 @@ TEST_F(SocketWireTestBase, TestBigBuffer) {
 
 	std::wstring str(100'000, '3');
 	sp_string.set(str);
-	clientScheduler.pump_one_message();//client get new big string
+	clientScheduler.pump_one_message();//client gets new big string
 
 	checkSchedulersAreEmpty();
 
@@ -194,16 +198,16 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
-	RdProperty<DynamicEntity> client_property{DynamicEntity(0)}, server_property{DynamicEntity(0)};
+	RdProperty<DynamicEntity> client_property{make_dynamic_entity(0)}, server_property{make_dynamic_entity(0)};
 
 	statics(client_property, (property_id));
 	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
-	client_property.get().foo.rdid = server_property.get().foo.rdid = RdId(3);
+	client_property.get().get_foo().rdid = server_property.get().get_foo().rdid = RdId(3);
 
-	DynamicEntity::create(&clientProtocol);
-	DynamicEntity::create(&serverProtocol);
+	/*DynamicEntity::create(&clientProtocol);
+	DynamicEntity::create(&serverProtocol);*/
 	//bound
 
 	server_property.bind(lifetime, &serverProtocol, "top");
@@ -213,10 +217,10 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	std::vector<int32_t> serverLog;
 
 	client_property.advise(Lifetime::Eternal(), [&](DynamicEntity const &entity) {
-		entity.foo.advise(Lifetime::Eternal(), [&](int32_t const &it) { clientLog.push_back(it); });
+		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const &it) { clientLog.push_back(it); });
 	});
 	server_property.advise(Lifetime::Eternal(), [&](DynamicEntity const &entity) {
-		entity.foo.advise(Lifetime::Eternal(), [&](int32_t const &it) { serverLog.push_back(it); });
+		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const &it) { serverLog.push_back(it); });
 	});
 
 	checkSchedulersAreEmpty();
@@ -224,7 +228,7 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	EXPECT_EQ((listOf{0}), clientLog);
 	EXPECT_EQ((listOf{0}), serverLog);
 
-	client_property.set(DynamicEntity(2));
+	client_property.emplace(make_dynamic_entity(2));
 	serverScheduler.pump_one_message();//server get the whole DynamicEntity in one message
 
 	checkSchedulersAreEmpty();
@@ -232,7 +236,7 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	EXPECT_EQ(clientLog, (listOf{0, 2}));
 	EXPECT_EQ(serverLog, (listOf{0, 2}));
 
-	client_property.get().foo.set(5);
+	client_property.get().get_foo().set(5);
 	serverScheduler.pump_one_message();//server get the only foo in one message
 
 	checkSchedulersAreEmpty();
@@ -240,14 +244,14 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	EXPECT_EQ(clientLog, (listOf{0, 2, 5}));
 	EXPECT_EQ(serverLog, (listOf{0, 2, 5}));
 
-	client_property.get().foo.set(5);
+	client_property.get().get_foo().set(5);
 
 	checkSchedulersAreEmpty();
 
 	EXPECT_EQ(clientLog, (listOf{0, 2, 5}));
 	EXPECT_EQ(serverLog, (listOf{0, 2, 5}));
 
-	client_property.set(DynamicEntity(5));
+	client_property.emplace(make_dynamic_entity(5));
 	serverScheduler.pump_one_message();//server get the whole DynamicEntity in one message
 
 	checkSchedulersAreEmpty();
@@ -368,6 +372,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	sleep_this_thread(2000);
 
 	auto serverProtocol = server(socketLifetime, port);
+
 	statics(sp, property_id);
 	sp.bind(lifetime, &serverProtocol, "top");
 
@@ -382,7 +387,8 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	terminate();
 }
 
-TEST_F(SocketWireTestBase, failoverServer) {
+//new client has no information about already sent package by previous client :(
+TEST_F(SocketWireTestBase, DISABLED_TestFailoverServer) {
 	uint16_t port = find_free_port();
 	auto serverProtocol = server(socketLifetime, port);
 
@@ -415,9 +421,114 @@ TEST_F(SocketWireTestBase, failoverServer) {
 	statics(np, property_id);
 	np.bind(lifetime, &rebornClientProtocol, "top");
 
+	clientScheduler.pump_one_message(); //send 2
+	EXPECT_EQ(2, np.get());
+
+	terminate();
+}
+
+void try_close_socket(Protocol const &protocol) {
+	auto socket = dynamic_cast<SocketWire::Base const *>(protocol.get_wire())->get_socket_provider();
+
+	if (socket != nullptr) {
+		while (!socket->Shutdown(CSimpleSocket::Both)) {
+			std::cerr << "Test: Shutdown failed?" << std::endl;
+		}
+	}
+	std::cerr << "Test: Socket closed" << std::endl;
+}
+
+
+struct DisconnectTestBase : SocketWireTestBase, ::testing::WithParamInterface<bool> {
+};
+
+TEST_P(DisconnectTestBase, SimpleDisconnect) {
+	auto serverProtocol = server(socketLifetime);
+	auto clientProtocol = client(socketLifetime, serverProtocol);
+
+	RdSignal<int32_t> sp;
+	RdSignal<int32_t> cp;
+
+	init(serverProtocol, clientProtocol, &sp, &cp);
+
+	std::vector<int32_t> log;
+
+	sp.advise(socketLifetime, [&](int32_t const &it) {
+		log.push_back(it);
+	});
+
+	cp.fire(1);
+	cp.fire(2);
+
+	serverScheduler.pump_one_message();
+	serverScheduler.pump_one_message();
+
 	checkSchedulersAreEmpty();
-	// clientScheduler.pump_one_message(); //send 2
-	// EXPECT_EQ(2, np.get());
+
+	EXPECT_EQ(log, (decltype(log){1, 2}));
+
+	if (GetParam()) {
+		try_close_socket(serverProtocol);
+	} else {
+		try_close_socket(clientProtocol);
+	}
+	rd::util::sleep_this_thread(200);
+
+	cp.fire(3);
+	cp.fire(4);
+
+	serverScheduler.pump_one_message();
+	serverScheduler.pump_one_message();
+
+	checkSchedulersAreEmpty();
+
+	EXPECT_EQ(log, (decltype(log){1, 2, 3, 4}));
+
+	terminate();
+}
+
+INSTANTIATE_TEST_SUITE_P(SimpleDisconnectServer,
+						 DisconnectTestBase,
+						 ::testing::Values(true));
+
+INSTANTIATE_TEST_SUITE_P(SimpleDisconnectClient,
+						 DisconnectTestBase,
+						 ::testing::Values(false));
+
+TEST_P(DisconnectTestBase, DdosDisconnect) {
+	auto serverProtocol = server(socketLifetime);
+	auto clientProtocol = client(socketLifetime, serverProtocol);
+
+	RdProperty<int32_t> sp{0};
+	RdProperty<int32_t> cp{0};
+
+	init(serverProtocol, clientProtocol, &sp, &cp);
+
+	int count = 0;
+	sp.advise(lifetime, [&](int32_t const &it) {
+		if (it != 0) {
+			EXPECT_EQ(count + 1, it);
+			++count;
+		}
+	});
+	const int C = 50;
+	for (int i = 1; i <= C; ++i) {
+		cp.set(i);
+		if (i == C / 2) {
+			if (GetParam()) {
+				try_close_socket(serverProtocol);
+			} else {
+				try_close_socket(clientProtocol);
+			}
+//			rd::util::sleep_this_thread(200);
+		}
+	}
+
+	for (int i = 1; i <= C; ++i) {
+		serverScheduler.pump_one_message();
+		EXPECT_EQ(sp.get(), i);
+	}
+	EXPECT_EQ(C, count);
 
 	terminate();
 }

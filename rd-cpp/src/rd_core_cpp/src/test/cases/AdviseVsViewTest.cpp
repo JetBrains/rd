@@ -1,9 +1,4 @@
-//
-// Created by jetbrains on 13.07.2018.
-//
-
-
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "LifetimeDefinition.h"
 #include "Property.h"

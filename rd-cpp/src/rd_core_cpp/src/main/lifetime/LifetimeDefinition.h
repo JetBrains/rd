@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
 #ifndef RD_CPP_CORE_LIFETIME_DEFINITION_H
 #define RD_CPP_CORE_LIFETIME_DEFINITION_H
 
@@ -47,7 +43,7 @@ namespace rd {
 		void terminate();
 
 		template<typename F>
-		static auto use(F &&block) -> typename std::result_of<F(Lifetime)>::type {
+		static auto use(F &&block) -> typename std::result_of_t<F(Lifetime)> {
 			LifetimeDefinition definition(false);
 			Lifetime lw = definition.lifetime.create_nested();
 			return block(lw);

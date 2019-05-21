@@ -1,0 +1,32 @@
+***
+extModel.checker:
+kotlin.Unit
+***
+scalar:
+MyScalar (
+  bool = false
+  byte = 98
+  short = 32000
+  int = 1000000000
+  long = -2000000000000000000
+  float = 3.14
+  double = -1.2345678901234567E8
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
+)
+***
+set:
+Add
+98
+***
+mapLongToString:
+Add 98:Cpp
+***
+interned_string:
+"Cpp"
+***
+polymorphic:
+Derived (
+  string = "Cpp instance"
+)

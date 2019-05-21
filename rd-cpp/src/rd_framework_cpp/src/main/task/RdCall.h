@@ -1,26 +1,34 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDCALL_H
 #define RD_CPP_RDCALL_H
 
 #include "Polymorphic.h"
 #include "RdTask.h"
 #include "RdTaskResult.h"
+#include "SynchronousScheduler.h"
 
 #include <thread>
 
+#pragma warning( push )
+#pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Represents an API provided by the remote process which can be invoked through the protocol. 
+	 *
+	 * \tparam TReq type of request
+	 * \tparam TRes type of response
+	 * \tparam ReqSer "SerDes" for request
+	 * \tparam ResSer "SerDes" for response
+	 */
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
-	class RdCall : public RdReactiveBase, public ISerializable {
+	class RdCall final : public RdReactiveBase, public ISerializable {
 		using WTReq = value_or_wrapper<TReq>;
 		using WTRes = value_or_wrapper<TRes>;
 
 		mutable std::unordered_map<RdId, std::pair<IScheduler *, RdTask<TRes, ResSer>>> requests;
-		mutable tl::optional<RdId> syncTaskId;
+		mutable optional<RdId> syncTaskId;
 
+		mutable RdTask<TRes, ResSer> last_task;
 	public:
 
 		//region ctor/dtor
@@ -33,14 +41,14 @@ namespace rd {
 		virtual ~RdCall() = default;
 		//endregion
 
-		static RdCall<TReq, TRes, ReqSer, ResSer> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdCall<TReq, TRes, ReqSer, ResSer> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdCall<TReq, TRes, ReqSer, ResSer> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -71,15 +79,14 @@ namespace rd {
 				auto const &request = requests.at(taskId);
 				auto result = RdTaskResult<TRes, ResSer>::read(get_serialization_context(), buffer);
 				logReceived.trace("call " + location.toString() + " " + rdid.toString() +
-								  " received response " + taskId.toString() + " : ${result.printToString()} ");
-
+								  " received response " + taskId.toString() + " : " + to_string(result));
 				//auto const&[scheduler, task] = request;
 				auto const &scheduler = request.first;
 				auto const &task = request.second;
-				scheduler->queue([&] {
+				scheduler->queue([&, result = std::move(result)]() mutable {
 					if (task.has_value()) {
 						logReceived.trace("call " + location.toString() + " " + rdid.toString() +
-										  " response was dropped, task result is: ${task.result.valueOrNull}");
+										  " response was dropped, task result is: " + to_string(result.unwrap()));
 						if (is_bound() && get_default_scheduler()->is_active() && requests.count(taskId) > 0) {
 							//                        logAssert.error("MainThread: ${defaultScheduler.isActive}, taskId=$taskId ");
 						}
@@ -93,37 +100,50 @@ namespace rd {
 			}
 		}
 
-		WTRes sync(TReq const &request) const {
+		/**
+		 * \brief Invokes the API with the parameters given as [request] and waits for the result.
+		 * 
+		 * \param request value to deliver 
+		 * \return result of remote invoking
+		 */
+		TRes const &sync(TReq const &request) const {
 			try {
-				auto task = startInternal(request, true, get_default_scheduler());//todo SynchronousScheduler
-				while (!task.has_value()) {
+				last_task = start_internal(request, true, get_default_scheduler());
+				while (!last_task.has_value()) {
 					std::this_thread::yield();
 				}
-				auto res = task.value_or_throw().unwrap();
-				syncTaskId = tl::nullopt;
+				auto const &res = last_task.value_or_throw().unwrap();
+				syncTaskId = nullopt;
 				return res;
 			} catch (...) {
 				throw;
 			}
 		}
 
-		RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler) const {
-			return startInternal(request, false, responseScheduler ? responseScheduler : get_default_scheduler());
+
+		IScheduler *get_wire_scheduler() const override {
+			return &globalSynchronousScheduler;
 		}
 
-		RdTask<TRes, ResSer> start(TReq const &request) const {
-			return start(request, nullptr);
+		/**
+		 * \brief Asynchronously invokes the API with the parameters given as [request] and waits for the result.
+		 *                      
+		 * \param request value of request
+		 * \param responseScheduler to assign value
+		 * \return task which will have its result value.
+		 */
+		RdTask<TRes, ResSer> start(TReq const &request, IScheduler *responseScheduler = nullptr) const {
+			return start_internal(request, false, responseScheduler ? responseScheduler : get_default_scheduler());
 		}
-
 	private:
-		RdTask<TRes, ResSer> startInternal(TReq const &request, bool sync, IScheduler *scheduler) const {
+		RdTask<TRes, ResSer> start_internal(TReq const &request, bool sync, IScheduler *scheduler) const {
 			assert_bound();
 			if (!async) {
 				assert_threading();
 			}
 
-			RdId taskId = get_protocol()->identity->next(rdid);
-			MY_ASSERT_MSG(requests.count(taskId) == 0, "requests already contain task with id:" + taskId.toString());
+			RdId taskId = get_protocol()->get_identity()->next(rdid);
+			RD_ASSERT_MSG(requests.count(taskId) == 0, "requests already contain task with id:" + taskId.toString());
 			RdTask<TRes, ResSer> task;
 			auto pair = std::make_pair(scheduler, task);
 			requests.emplace(taskId, std::move(pair));
@@ -137,7 +157,7 @@ namespace rd {
 				syncTaskId = taskId;
 			}
 
-			get_wire()->send(rdid, [&](Buffer const &buffer) {
+			get_wire()->send(rdid, [&](Buffer &buffer) {
 				logSend.trace(
 						"call " + location.toString() + "::" + rdid.toString() + " send" + (sync ? "SYNC" : "ASYNC") +
 						" request " + taskId.toString() + " : " + to_string(request));
@@ -150,5 +170,6 @@ namespace rd {
 	};
 }
 
+#pragma warning( pop )
 
 #endif //RD_CPP_RDCALL_H

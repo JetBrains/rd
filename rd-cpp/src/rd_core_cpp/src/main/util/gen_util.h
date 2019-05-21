@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 04.11.2018.
-//
-
 #ifndef RD_CPP_GEN_UTIL_H
 #define RD_CPP_GEN_UTIL_H
 
@@ -33,7 +29,7 @@ namespace rd {
 	template<typename T>
 	typename std::enable_if<!std::is_integral<T>::value, size_t>::type
 	contentDeepHashCode(std::vector<T> const &value) noexcept {
-		int result = 1;
+		size_t result = 1;
 		for (auto const &x : value) {
 			result = 31 * result + contentDeepHashCode(x);
 		}

@@ -1,18 +1,20 @@
-//
-// Created by jetbrains on 24.02.2019.
-//
-
 #ifndef RD_CPP_VOID_H
 #define RD_CPP_VOID_H
 
 #include <functional>
+#include <string>
 
 namespace rd {
+	/**
+	 * \brief For using in idle events
+	 */
 	class Void {
 		friend bool operator==(const Void &lhs, const Void &rhs);
 
 		friend bool operator!=(const Void &lhs, const Void &rhs);
 	};
+
+	std::string to_string(Void const &);
 }
 
 namespace std {

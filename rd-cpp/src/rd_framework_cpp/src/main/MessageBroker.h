@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 26.07.2018.
-//
-
 #ifndef RD_CPP_MESSAGEBROKER_H
 #define RD_CPP_MESSAGEBROKER_H
 
@@ -9,6 +5,7 @@
 #include "Logger.h"
 
 #include <unordered_map>
+#include <queue>
 
 namespace rd {
 	class Mq {
@@ -19,16 +16,20 @@ namespace rd {
 
 		Mq(Mq const &) = delete;
 
+		Mq& operator=(Mq const &) = delete;
+
 		Mq(Mq &&) = default;
+
+		Mq& operator =(Mq &&) = default;
 		//endregion
 
-		int32_t defaultSchedulerMessages = 0;
-		std::vector<Buffer> customSchedulerMessages;
+		mutable std::queue<Buffer> default_scheduler_messages;
+		std::vector<Buffer> custom_scheduler_messages;
 	};
 
-	class MessageBroker {
+	class MessageBroker final {
 	private:
-		IScheduler *defaultScheduler = nullptr;
+		IScheduler *default_scheduler = nullptr;
 		mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
 		mutable std::unordered_map<RdId, Mq> broker;
 
@@ -40,9 +41,7 @@ namespace rd {
 
 	public:
 
-		//region Description
-
-		MessageBroker(MessageBroker &&) = default;
+		//region ctor/dtor
 
 		explicit MessageBroker(IScheduler *defaultScheduler);
 		//endregion

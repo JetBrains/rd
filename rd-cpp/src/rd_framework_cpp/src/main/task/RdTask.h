@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDTASK_H
 #define RD_CPP_RDTASK_H
 
@@ -13,8 +9,14 @@
 
 
 namespace rd {
+	/**
+	 * \brief Represents a task that can be asynchronously executed.
+	 * 
+	 * \tparam T type of stored value 
+	 * \tparam S "SerDes" for value
+	 */
 	template<typename T, typename S = Polymorphic<T> >
-	class RdTask {
+	class RdTask final {
 	private:
 		using WT = value_or_wrapper<T>;
 
@@ -32,11 +34,11 @@ namespace rd {
 
 		void set(WT value) const {
 			typename TRes::Success t(std::move(value));
-			ptr->result.set(tl::make_optional(std::move(t)));
+			ptr->result.set(std::move(t));
 		}
 
 		void set_result(TRes value) const {
-			ptr->result.set(tl::make_optional(std::move(value)));
+			ptr->result.set(std::move(value));
 		}
 
 		void cancel() const {
@@ -48,15 +50,15 @@ namespace rd {
 		}
 
 		bool has_value() const {
-			return ptr->result.get().has_value();
+			return ptr->result.has_value();
 		}
 
-		TRes value_or_throw() const {
-			auto opt_res = std::move(ptr->result).steal();
-			if (opt_res) {
-				return *std::move(opt_res);
+		const TRes & value_or_throw() const {
+			if (ptr->result.has_value()) {
+				return ptr->result.get();
+			} else {
+				throw std::invalid_argument("task is empty");
 			}
-			throw std::invalid_argument("task is empty");
 		}
 
 		bool isFaulted() const {
@@ -65,7 +67,7 @@ namespace rd {
 
 		void advise(Lifetime lifetime, std::function<void(TRes const &)> handler) const {
 			ptr->result.advise(lifetime,
-							   [handler = std::move(handler)](tl::optional<TRes> const &opt_value) {
+							   [handler = std::move(handler)](optional<TRes> const &opt_value) {
 								   if (opt_value) {
 									   handler(*opt_value);
 								   }

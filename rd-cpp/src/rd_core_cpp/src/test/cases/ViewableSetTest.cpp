@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 12.07.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "ViewableSet.h"
@@ -26,7 +22,7 @@ TEST (viewable_set, advise) {
 		});
 		set->view(Lifetime::Eternal(), [&](Lifetime inner, int const &v) {
 			logView2.push_back(v);
-			inner->add_action([&]() { logView2.push_back(-v); });
+			inner->add_action([&logView2, v]() { logView2.push_back(-v); });
 		});
 
 		EXPECT_TRUE(set->add(1));//1
@@ -142,3 +138,84 @@ TEST (viewable_set, move) {
 	ViewableSet<int> set1;
 	ViewableSet<int> set2(std::move(set1));
 }
+
+using container = ViewableSet<int>;
+
+static_assert(!std::is_constructible<container::iterator, std::nullptr_t>::value,
+			  "iterator should not be constructible from nullptr");
+
+TEST(viewable_set_iterators, end_iterator) {
+	container c;
+	container::iterator i = c.end();
+
+	EXPECT_EQ(c.begin(), i);
+}
+
+TEST(viewable_set_iterators, reverse_iterators) {
+	container c;
+	c.addAll({4, 3, 2, 1});
+
+	EXPECT_EQ(1, *c.rbegin());
+	EXPECT_EQ(2, *std::next(c.rbegin()));
+	EXPECT_EQ(4, *std::prev(c.rend()));
+}
+
+TEST(viewable_set_iterators, iterators_postfix) {
+	container s;
+	s.addAll({1, 2, 3});
+	container::iterator i = s.begin();
+	EXPECT_EQ(1, *i);
+	container::iterator j = i++;
+	EXPECT_EQ(2, *i);
+	EXPECT_EQ(1, *j);
+	j = i++;
+	EXPECT_EQ(3, *i);
+	EXPECT_EQ(2, *j);
+	j = i++;
+	EXPECT_EQ(s.end(), i);
+	EXPECT_EQ(3, *j);
+	j = i--;
+	EXPECT_EQ(3, *i);
+	EXPECT_EQ(s.end(), j);
+}
+
+std::vector<int> const perm4 = {2, 0, 1, 9};
+
+TEST(viewable_set_iterators, fori) {
+	const container c;
+	c.addAll(perm4);
+
+	std::vector<int> log;
+	for (auto const &item : c) {
+		log.push_back(item);
+	}
+
+	EXPECT_EQ(log, perm4);
+}
+
+TEST(viewable_set_iterators, random_access) {
+	container c;
+	c.addAll(perm4);
+
+	EXPECT_EQ(*(c.begin() + 2), 1);
+	EXPECT_EQ(*(c.rbegin() + 2), 0);
+}
+
+/*TEST(viewable_set_iterators, insert_return_value) {
+    container c;
+	c.addAll({1, 2, 3, 4});
+
+    container::iterator i = c.add(std::next(c.begin(), 2), 5);
+    EXPECT_EQ(5, *i);
+    EXPECT_EQ(2, *std::prev(i));
+    EXPECT_EQ(3, *std::next(i));
+}
+
+TEST(viewable_set_iterators, erase_return_value) {
+    container c;
+    c.addAll({1, 2, 3, 4});
+    container::iterator i = c.remove(std::next(c.begin()));
+    EXPECT_EQ(3, *i);
+    i = c.remove(i);
+    EXPECT_EQ(4, *i);
+}*/

@@ -1,12 +1,8 @@
-//
-// Created by jetbrains on 24.02.2019.
-//
-
 #include <gtest/gtest.h>
 
 #include "gen_util.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 using namespace rd;
 
@@ -25,8 +21,8 @@ TEST(hash, contentDeepHashCodeInt) {
 }
 
 TEST(hash, contentDeepHashCodeOptional) {
-	std::vector<tl::optional<int>> a{tl::nullopt, 2, tl::nullopt};
-	std::vector<tl::optional<int>> b{tl::nullopt, 2, 3};
+	std::vector<optional<int>> a{nullopt, 2, nullopt};
+	std::vector<optional<int>> b{nullopt, 2, 3};
 
 	EXPECT_NE(contentDeepHashCode(a), contentHashCode(b));
 }

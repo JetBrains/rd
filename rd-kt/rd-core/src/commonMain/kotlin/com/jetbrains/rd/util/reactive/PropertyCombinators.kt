@@ -198,7 +198,7 @@ fun <T> IMutablePropertyBase<T>.bind(lifetime: Lifetime, setValue: (value: T) ->
     }
 
     valueUpdated { v ->
-        lifetime.ifAlive {
+        lifetime.executeIfAlive {
             guard.usingTrueFlag(Boxed<Boolean>::value) {
                 set(v)
             }

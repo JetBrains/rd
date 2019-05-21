@@ -5,6 +5,7 @@ import com.jetbrains.rd.generator.nova.PredefinedType.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.generator.nova.util.syspropertyOrEmpty
+import org.junit.Test
 import java.io.File
 
 object ExampleRootNova : Root(

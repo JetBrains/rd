@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
 #include "LifetimeImpl.h"
 #include "Logger.h"
 
@@ -23,7 +19,7 @@ namespace rd {
 
 		actions_t actions_copy;
 		{
-			std::lock_guard<decltype(lock)> guard(lock);
+			std::lock_guard<decltype(actions_lock)> guard(actions_lock);
 			actions_copy = std::move(actions);
 
 			actions.clear();

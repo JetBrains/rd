@@ -1,7 +1,3 @@
-//
-// Created by operasfantom on 19.07.18.
-//
-
 #ifndef RD_CPP_CORE_LIFETIMEWRAPPER_H
 #define RD_CPP_CORE_LIFETIMEWRAPPER_H
 
@@ -22,8 +18,12 @@ namespace std {
 }
 
 namespace rd {
-	class Lifetime {
+	class Lifetime final {
 	private:
+		using Allocator = std::allocator<LifetimeImpl>;
+
+		static /*thread_local */Allocator allocator;
+
 		friend class LifetimeDefinition;
 
 		friend struct std::hash<Lifetime>;

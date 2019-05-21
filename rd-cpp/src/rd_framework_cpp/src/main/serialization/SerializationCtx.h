@@ -1,55 +1,91 @@
-//
-// Created by jetbrains on 20.07.2018.
-//
-
 #ifndef RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
 #include "Buffer.h"
-#include "InternRoot.h"
+#include "RdId.h"
+
+#include <unordered_map>
+#include <functional>
+#include <string>
+#include <utility>
+#include <regex>
 
 namespace rd {
+	//region predeclared
+
 	class IProtocol;
 
 	class Serializers;
 
+	class InternRoot;
+
+	class RdBindableBase;
+	//endregion
+
 	class SerializationCtx {
-	public:
 		Serializers const *serializers = nullptr;
+	public:
+		using roots_t = std::unordered_map<util::hash_t, InternRoot const *>;
 
-		tl::optional<InternRoot> internRoot;
-
-		//    SerializationCtx() = delete;
+		roots_t intern_roots{};
 
 		//region ctor/dtor
 
-		SerializationCtx(SerializationCtx &&other) noexcept = default;
+		//    SerializationCtx() = delete;
 
-		SerializationCtx &operator=(SerializationCtx &&other) noexcept = default;
+		SerializationCtx(SerializationCtx const &other) = delete;
 
-		explicit SerializationCtx(const Serializers *serializers = nullptr);
+		SerializationCtx &operator=(SerializationCtx const &other) = delete;
 
-		SerializationCtx(const Serializers *serializers, InternRoot internRoot);
+		SerializationCtx(SerializationCtx &&other) = default;
 
-		explicit SerializationCtx(IProtocol const &protocol);
+		SerializationCtx &operator=(SerializationCtx &&other) = default;
+
+//		explicit SerializationCtx(const Serializers *serializers = nullptr);
+
+		explicit SerializationCtx(const Serializers *serializers, roots_t intern_roots = {});
+
+		SerializationCtx
+		withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots) const;
+
 		//endregion
 
-		SerializationCtx withInternRootHere(bool isMaster) const;
+		template<typename T, util::hash_t InternKey>
+		Wrapper<T> readInterned(Buffer &buffer, std::function<T(SerializationCtx &, Buffer &)> readValueDelegate);
 
-		template<typename T>
-		T readInterned(Buffer const &buffer,
-					   std::function<T(SerializationCtx const &, Buffer const &)> readValueDelegate) const {
-			return T();
-			//todo implement
-		}
+		template<typename T, util::hash_t InternKey, typename F,
+				typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx &, Buffer &, T>::value>
+		>
+		void writeInterned(Buffer &buffer, Wrapper<T> const &value, F &&writeValueDelegate);
 
-		template<typename T>
-		void writeInterned(Buffer const &buffer, T const &value,
-						   std::function<void(SerializationCtx const &, Buffer const &,
-											  T const &)> writeValueDelegate) const {
-			//todo implement
-		}
+		Serializers const &get_serializers() const;
 	};
 }
 
+#include "InternRoot.h"
+
+namespace rd {
+	template<typename T, util::hash_t InternKey>
+	Wrapper<T> SerializationCtx::readInterned(Buffer &buffer,
+											  std::function<T(SerializationCtx &, Buffer &)> readValueDelegate) {
+		auto it = intern_roots.find(InternKey);
+		if (it != intern_roots.end()) {
+			int32_t index = buffer.read_integral<int32_t>() ^1;
+			return it->second->un_intern_value<T>(index);
+		} else {
+			return wrapper::make_wrapper<T>(readValueDelegate(*this, buffer));
+		}
+	}
+
+	template<typename T, util::hash_t InternKey, typename F, typename>
+	void SerializationCtx::writeInterned(Buffer &buffer, const Wrapper<T> &value, F &&writeValueDelegate) {
+		auto it = intern_roots.find(InternKey);
+		if (it != intern_roots.end()) {
+			int32_t index = it->second->intern_value<T>(value);
+			buffer.write_integral<int32_t>(index);
+		} else {
+			writeValueDelegate(const_cast<SerializationCtx &>(*this), buffer, *value);
+		}
+	}
+}
 #endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

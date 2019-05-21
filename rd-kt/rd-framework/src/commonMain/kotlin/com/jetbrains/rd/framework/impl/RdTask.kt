@@ -132,7 +132,7 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
                     throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTime} ms")
             }
             if (freezeTime > effectiveTimeouts.warnAwaitTime) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
-            return (task.result.valueOrThrow as RdTaskResult<TRes>).unwrap()
+            return task.result.valueOrThrow.unwrap()
         } finally {
             syncTaskId = null
         }

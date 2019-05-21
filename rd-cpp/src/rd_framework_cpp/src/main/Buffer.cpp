@@ -1,6 +1,4 @@
-//
-// Created by jetbrains on 30.07.2018.
-//
+#include <utility>
 
 #include "Buffer.h"
 
@@ -8,63 +6,66 @@
 #include <algorithm>
 
 namespace rd {
-	Buffer::Buffer(int32_t initialSize) {
-		byteBufferMemoryBase.resize(initialSize);
-		size_ = initialSize;
+	Buffer::Buffer() : Buffer(16) {
+
 	}
 
-	Buffer::Buffer(const ByteArray &array, int32_t offset) :
-			byteBufferMemoryBase(array), offset(offset),
-			size_(array.size()) {}
+	Buffer::Buffer(size_t initialSize) {
+		data_.resize(initialSize);
+	}
 
-	int32_t Buffer::get_position() const {
+	Buffer::Buffer(ByteArray array, size_t offset) :
+			data_(std::move(array)), offset(offset) {}
+
+	size_t Buffer::get_position() const {
 		return offset;
 	}
 
-	void Buffer::set_position(int32_t value) const {
+	void Buffer::set_position(size_t value) {
 		offset = value;
 	}
 
-	void Buffer::check_available(int32_t moreSize) const {
-		if (offset + moreSize > size_) {
+	void Buffer::check_available(size_t moreSize) const {
+		if (offset + moreSize > size()) {
 			throw std::out_of_range(
-					"Expected " + std::to_string(moreSize) + " bytes in buffer, only" + std::to_string(size_ - offset) +
+					"Expected " + std::to_string(moreSize) + " bytes in buffer, only" +
+					std::to_string(size() - offset) +
 					"available");
 		}
 	}
 
-	void Buffer::read(word_t *dst, size_t size) const {
+	void Buffer::read(word_t *dst, size_t size) {
+		if (size == 0) return;
 		check_available(size);
-		//    memcpy(dst, &byteBufferMemoryBase[offset], size);
-		std::copy(&byteBufferMemoryBase[offset], &byteBufferMemoryBase[offset] + size, dst);
+		std::copy(&data_[offset], &data_[offset] + size, dst);
 		offset += size;
 	}
 
-	void Buffer::write(const word_t *src, size_t size) const {
+	void Buffer::write(const word_t *src, size_t size) {
+		if (size == 0) return;
 		require_available(size);
-		//    memcpy(&byteBufferMemoryBase[offset], src, size);
-		std::copy(src, src + size, &byteBufferMemoryBase[offset]);
+		std::copy(src, src + size, &data_[offset]);
 		offset += size;
 	}
 
-	void Buffer::require_available(int32_t moreSize) const {
-		if (offset + moreSize >= size_) {
-			int32_t newSize = (std::max)(size_ * 2, offset + moreSize);
-			byteBufferMemoryBase.resize(newSize);
-			size_ = newSize;
+	void Buffer::require_available(size_t moreSize) {
+		if (offset + moreSize >= size()) {
+			const size_t new_size = (std::max)(size() * 2, offset + moreSize);
+			data_.resize(new_size);
 		}
 	}
 
-	void Buffer::rewind() const {
+	void Buffer::rewind() {
 		set_position(0);
 	}
 
 	Buffer::ByteArray Buffer::getArray() const &{
-		return byteBufferMemoryBase;
+		return data_;
 	}
 
 	Buffer::ByteArray Buffer::getArray() &&{
-		return std::move(byteBufferMemoryBase);
+		rewind();
+		return std::move(data_);
 	}
 
 	Buffer::ByteArray Buffer::getRealArray() const &{
@@ -74,21 +75,22 @@ namespace rd {
 	}
 
 	Buffer::ByteArray Buffer::getRealArray() &&{
-		auto res = getArray();
+		auto res = std::move(data_);
 		res.resize(offset);
+		rewind();
 		return res;
 	}
 
-	const Buffer::word_t *Buffer::data() const {
-		return byteBufferMemoryBase.data();
+	Buffer::word_t const *Buffer::data() const {
+		return data_.data();
 	}
 
 	Buffer::word_t *Buffer::data() {
-		return byteBufferMemoryBase.data();
+		return data_.data();
 	}
 
 	size_t Buffer::size() const {
-		return size_;
+		return data_.size();
 	}
 
 	/*std::string Buffer::readString() const {
@@ -101,52 +103,79 @@ void Buffer::writeString(std::string const &value) const {
     writeArray<uint8_t>(v);
 }*/
 
-	std::wstring Buffer::readWString() const {
-		auto v = readArray<uint16_t>();
+	template<int>
+	std::wstring read_wstring_spec(Buffer &buffer) {
+		auto v = buffer.read_array<uint16_t>();
 		return std::wstring(v.begin(), v.end());
 	}
 
-	void Buffer::writeWString(std::wstring const &value) const {
-		std::vector<uint16_t> v(value.begin(), value.end());
-		writeArray<uint16_t>(v);
+	template<>
+	std::wstring read_wstring_spec<2>(Buffer &buffer) {
+		const int32_t len = buffer.read_integral<int32_t>();
+		RD_ASSERT_MSG(len >= 0, "read null string(length =" + std::to_string(len) + ")");
+		std::wstring result;
+		result.resize(len);
+		buffer.read(reinterpret_cast<Buffer::word_t *>(&result[0]), sizeof(wchar_t) * len);
+		return result;
 	}
 
-	bool Buffer::readBool() const {
-		auto res = read_integral<uint8_t>();
-		MY_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
+	std::wstring Buffer::read_wstring() {
+		return read_wstring_spec<sizeof(wchar_t)>(*this);
+	}
+
+	template<int>
+	void write_wstring_spec(Buffer &buffer, std::wstring const &value) {
+		const std::vector<uint16_t> v(value.begin(), value.end());
+		buffer.write_array<uint16_t>(v);
+	}
+
+	template<>
+	void write_wstring_spec<2>(Buffer &buffer, std::wstring const &value) {
+		buffer.write_integral<int32_t>(static_cast<int32_t>(value.size()));
+		buffer.write(reinterpret_cast<Buffer::word_t const *>(value.data()), sizeof(wchar_t) * value.size());
+	}
+
+	void Buffer::write_wstring(std::wstring const &value) {
+		write_wstring_spec<sizeof(wchar_t)>(*this, value);
+	}
+
+	void Buffer::write_wstring(Wrapper<std::wstring> const &value) {
+		write_wstring(*value);
+	}
+
+	bool Buffer::read_bool() {
+		const auto res = read_integral<uint8_t>();
+		RD_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
 		return res == 1;
 	}
 
-	void Buffer::writeBool(bool value) const {
+	void Buffer::write_bool(bool value) {
 		write_integral<word_t>(value ? 1 : 0);
 	}
 
-	void Buffer::readByteArrayRaw(ByteArray &array) const {
+	wchar_t Buffer::read_char() {
+		return static_cast<wchar_t>(read_integral<uint16_t>());
+	}
+
+	void Buffer::write_char(wchar_t value) {
+		write_integral<uint16_t>(value);
+	}
+
+	void Buffer::read_byte_array(ByteArray &array) {
+		const int32_t length = read_integral<int32_t>();
+		array.resize(length);
+		read_byte_array_raw(array);
+	}
+
+	void Buffer::read_byte_array_raw(ByteArray &array)  {
 		read(array.data(), array.size());
 	}
 
-	void Buffer::writeByteArrayRaw(const ByteArray &array) const {
+	void Buffer::write_byte_array_raw(const ByteArray &array)  {
 		write(array.data(), array.size());
 	}
 
-	/*tl::optional<std::wstring> Buffer::readNullableWString() const {
-    int32_t len = read_integral<int32_t>();
-    if (len < 0) {
-        return tl::nullopt;
-    }
-    std::wstring result;
-    result.resize(len);
-    read(reinterpret_cast<word_t *>(&result[0]), sizeof(wchar_t) * len);
-    return result;
-}
-
-void Buffer::writeNullableWString(tl::optional<std::wstring> const &value) const {
-    if (!value.has_value()) {
-        write_integral<int32_t>(-1);
-        return;
-    }
-    writeWString(value.value());
-}*/
-
-
+	Buffer::ByteArray &Buffer::get_data() {
+		return data_;
+	}
 }

@@ -1,9 +1,5 @@
-//
-// Created by jetbrains on 19.09.2018.
-//
-
-#include "demangle.h"
 #include "WireUtil.h"
+
 #include "core_util.h"
 
 #include "PassiveSocket.h"
@@ -19,7 +15,7 @@ namespace rd {
 			fake_server.Initialize();
 			fake_server.Listen("127.0.0.1", 0);
 			uint16_t port = fake_server.GetServerPort();
-			MY_ASSERT_MSG(port != 0, "no free port");
+			RD_ASSERT_MSG(port != 0, "no free port");
 			return port;
 		}
 

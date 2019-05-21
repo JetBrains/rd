@@ -31,7 +31,7 @@ interface IArray : IHasItemType {
 data class ArrayOfScalars(override val itemType : IScalar) : INonNullableScalar, IArray
 data class ArrayOfBindables(override val itemType : IBindable) : INonNullableBindable, IArray
 
-interface IImmutableList : IHasItemType {          
+interface IImmutableList : IHasItemType {
     override val name : String get() = itemType.name + "List"
 }
 data class ImmutableListOfScalars(override val itemType : IScalar) : INonNullableScalar, IImmutableList
@@ -66,16 +66,21 @@ sealed class PredefinedType : INonNullableScalar {
     //primitive
     object bool : PredefinedType()
 
+    open class SignedIntegral : PredefinedType()
+    class UnsignedInteger(val itemType : SignedIntegral) : PredefinedType() {
+        override val name: String
+            get() = "U${itemType.name}"
+    }
+
     object byte : PredefinedType()
-    object short : PredefinedType()
-    object int : PredefinedType()
-    object long : PredefinedType()
+    object short : SignedIntegral()
+    object int : SignedIntegral()
+    object long : SignedIntegral()
 
     object float : PredefinedType()
     object double : PredefinedType()
 
     object char : PredefinedType()
-
     //string
     object string : PredefinedType()
 
@@ -88,6 +93,8 @@ sealed class PredefinedType : INonNullableScalar {
     //rd framework special
     object rdId : PredefinedType()
 }
+
+fun PredefinedType.SignedIntegral.unsigned() = PredefinedType.UnsignedInteger(this)
 
 @Suppress("UNCHECKED_CAST")
 abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHolder() {

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 10.07.2018.
-//
-
 #ifndef RD_CPP_CORE_PROPERTY_H
 #define RD_CPP_CORE_PROPERTY_H
 
@@ -10,15 +6,13 @@
 #include "core_util.h"
 
 namespace rd {
+
+	/**
+	 * \brief complete class which has \a Property<T> 's properties.
+	 * \tparam T type of stored value (may be abstract)
+	 */
 	template<typename T>
 	class Property : public IProperty<T> {
-		template<typename, typename>
-		friend class RdTask;
-
-		template<typename U = T>
-		typename std::enable_if<!std::is_abstract<U>::value, U&&>::type steal() && {
-			return std::move(*this->value);
-		}
 	public:
 		//region ctor/dtor
 
@@ -37,7 +31,7 @@ namespace rd {
 
 
 		T const &get() const override {
-			MY_ASSERT_THROW_MSG(this->has_value(), "get of uninitialized value from property");
+			RD_ASSERT_THROW_MSG(this->has_value(), "get of uninitialized value from property");
 			return *(this->value);
 		}
 

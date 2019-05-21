@@ -92,7 +92,7 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     //----------------------------------------------------------------------
     case CSimpleSocket::SocketTypeRaw:
     {
-#if defined(_LINUX) && !defined(_DARWIN)
+#if defined(__linux__) && !defined(_DARWIN)
         m_nSocketDomain = AF_PACKET;
         m_nSocketType = CSimpleSocket::SocketTypeRaw;
 #endif
@@ -477,13 +477,12 @@ bool CSimpleSocket::Close(void)
     //--------------------------------------------------------------------------
     if (IsSocketValid())
     {
-        if (/*Shutdown(Both)*/true) {
-            if (CLOSE(m_socket) != CSimpleSocket::SocketError)
-            {
-                m_socket = INVALID_SOCKET;
-                bRetVal = true;
-            }
-        }
+		Shutdown(Both);
+        if (CLOSE(m_socket) != CSimpleSocket::SocketError)
+		{
+			m_socket = INVALID_SOCKET;
+			bRetVal = true;
+		}
     }
 
     TranslateSocketError();
@@ -949,7 +948,7 @@ int32_t CSimpleSocket::SendFile(int32_t nOutFd, int32_t nInFd, off_t *pOffset, i
 //------------------------------------------------------------------------------
 void CSimpleSocket::TranslateSocketError(void)
 {
-#if defined(_LINUX) || defined(_DARWIN)
+#if defined(__linux__) || defined(_DARWIN)
     switch (errno)
     {
     case EXIT_SUCCESS:

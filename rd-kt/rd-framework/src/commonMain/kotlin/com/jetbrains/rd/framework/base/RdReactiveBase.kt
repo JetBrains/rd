@@ -23,7 +23,7 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
         }
     }
     protected fun assertBound() {
-        if (!isBound) { throw IllegalStateException("Not bound") }
+        if (!isBound) { throw IllegalStateException("Not bound: $location") }
     }
 
     //delegated
@@ -32,7 +32,11 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
     override val wireScheduler: IScheduler get() = defaultScheduler
 
     //local change
-    protected var isLocalChange = false
+    var isLocalChange = false
+        protected set(value) {
+            field = value
+        }
+
     internal fun <T> localChange(action: () -> T) : T {
         if (isBound && !async) assertThreading()
 

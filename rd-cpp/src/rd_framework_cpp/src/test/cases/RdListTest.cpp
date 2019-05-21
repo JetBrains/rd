@@ -1,6 +1,3 @@
-//
-// Created by jetbrains on 02.08.2018.
-//
 #include <gtest/gtest.h>
 
 #include "RdProperty.h"
@@ -8,6 +5,7 @@
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
 #include "test_util.h"
+#include "entities_util.h"
 
 using namespace rd;
 using namespace test;
@@ -29,7 +27,7 @@ TEST_F(RdFrameworkTestBase, rd_list_static) {
 
 	client_list.advise(Lifetime::Eternal(),
 					   [&](IViewableList<std::wstring>::Event entry) {
-						   logUpdate.emplace_back(to_string_list_event<std::wstring>(entry));
+						   logUpdate.emplace_back(to_string(entry));
 					   });
 
 	EXPECT_EQ(0, server_list.size());
@@ -84,8 +82,8 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 	statics(server_list, id);
 	statics(client_list, id);
 
-	DynamicEntity::create(clientProtocol.get());
-	DynamicEntity::create(serverProtocol.get());
+	/*DynamicEntity::create(clientProtocol.get());
+	DynamicEntity::create(serverProtocol.get());*/
 
 	EXPECT_EQ(0, server_list.size());
 	EXPECT_EQ(0, client_list.size());
@@ -100,20 +98,21 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 				[&log, k]() { log.push_back("start " + std::to_string(k)); },
 				[&log, k]() { log.push_back("finish " + std::to_string(k)); }
 		);
-		v.foo.advise(lf, [&log](int32_t const &fooval) { log.push_back(std::to_string(fooval)); });
+		v.get_foo().advise(lf, [&log](int32_t const &fooval) { log.push_back(std::to_string(fooval)); });
 	});
-	client_list.add(DynamicEntity(2));
-	client_list.get(0).foo.set(0);
-	client_list.get(0).foo.set(0);
 
-	client_list.get(0).foo.set(1);
+	client_list.emplace_add(make_dynamic_entity(2));
+	client_list.get(0).get_foo().set(0);
+	client_list.get(0).get_foo().set(0);
 
-	client_list.set(0, DynamicEntity(1));
+	client_list.get(0).get_foo().set(1);
 
-	server_list.add(DynamicEntity(8));
+	client_list.emplace_set(0, make_dynamic_entity(1));
+
+	server_list.emplace_add(make_dynamic_entity(8));
 
 	client_list.removeAt(1);
-	client_list.add(DynamicEntity(3));
+	client_list.emplace_add(make_dynamic_entity(3));
 
 	client_list.clear();
 
@@ -186,4 +185,11 @@ TEST_F(RdFrameworkTestBase, list_move) {
 	RdList<int> list2(std::move(list1));
 
 	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, list_iterator) {
+	RdList<int> list;
+	EXPECT_EQ(list.end(), list.rbegin().base());
+	list.addAll({1, 2, 3});
+	EXPECT_EQ(list.end(), list.rbegin().base());
 }

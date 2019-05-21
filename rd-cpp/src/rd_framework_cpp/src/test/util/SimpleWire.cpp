@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #include "SimpleWire.h"
 
 namespace rd {
@@ -10,16 +6,16 @@ namespace rd {
 			this->connected.set(true);
 		}
 
-		void SimpleWire::send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const {
+		void SimpleWire::send(RdId const &id, std::function<void(Buffer &buffer)> writer) const {
 			assert(!id.isNull());
-			Buffer ostream(10);
-			writer(ostream);
+			Buffer buffer;
+			writer(buffer);
 
-			bytesWritten += ostream.get_position();
+			bytesWritten += buffer.get_position();
 
-			ostream.rewind();
+			buffer.rewind();
 
-			msgQ.push(RdMessage(id, std::move(ostream)));
+			msgQ.emplace(id, std::move(buffer));
 			if (auto_flush) {
 				process_all_messages();
 			}

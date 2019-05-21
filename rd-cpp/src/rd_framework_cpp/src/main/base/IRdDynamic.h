@@ -1,21 +1,22 @@
-//
-// Created by jetbrains on 30.07.2018.
-//
-
 #ifndef RD_CPP_IRDDYNAMIC_H
 #define RD_CPP_IRDDYNAMIC_H
 
 #include "RName.h"
-#include "SerializationCtx.h"
 
 namespace rd {
+	//region predeclared
+
 	class IProtocol;
-}
 
-namespace rd {
+	class SerializationCtx;
+	//endregion
+
+	/**
+	 * \brief A node in a graph of entities that can be synchronized with its remote copy over a network or 
+	 * a similar connection.
+	 */
 	class IRdDynamic {
 	public:
-		SerializationCtx serialization_context;
 		mutable RName location;
 
 		//region ctor/dtor
@@ -31,7 +32,7 @@ namespace rd {
 
 		virtual const IProtocol *get_protocol() const = 0;
 
-		virtual SerializationCtx const &get_serialization_context() const = 0;
+		virtual SerializationCtx &get_serialization_context() const = 0;
 	};
 }
 

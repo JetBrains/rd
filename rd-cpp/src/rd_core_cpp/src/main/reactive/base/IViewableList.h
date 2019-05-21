@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 13.08.2018.
-//
-
 #ifndef RD_CPP_IVIEWABLELIST_H
 #define RD_CPP_IVIEWABLELIST_H
 
@@ -11,7 +7,7 @@
 #include "viewable_collections.h"
 #include "wrapper.h"
 
-#include "mpark/variant.hpp"
+#include "thirdparty.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -19,11 +15,18 @@
 #include <algorithm>
 
 namespace rd {
+	/**
+	 * \brief A list allowing its contents to be observed.
+	 * \tparam T type of stored values (may be abstract)
+	 */
 	template<typename T>
 	class IViewableList : public IViewable<std::pair<size_t, T const *>> {
 	protected:
 		using WT = value_or_wrapper<T>;
 	public:
+		/**
+		 * \brief Represents an addition, update or removal of an element in the list.
+		 */
 		class Event {
 		public:
 			class Add {
@@ -31,7 +34,7 @@ namespace rd {
 				int32_t index;
 				T const *new_value;
 
-				Add(size_t index, T const *new_value) : index(index), new_value(new_value) {}
+				Add(int32_t index, T const *new_value) : index(index), new_value(new_value) {}
 			};
 
 			class Update {
@@ -40,7 +43,7 @@ namespace rd {
 				T const *old_value;
 				T const *new_value;
 
-				Update(size_t index, T const *old_value, T const *new_value) : index(index), old_value(old_value),
+				Update(int32_t index, T const *old_value, T const *new_value) : index(index), old_value(old_value),
 																			   new_value(new_value) {}
 			};
 
@@ -49,10 +52,10 @@ namespace rd {
 				int32_t index;
 				T const *old_value;
 
-				Remove(size_t index, T const *old_value) : index(index), old_value(old_value) {}
+				Remove(int32_t index, T const *old_value) : index(index), old_value(old_value) {}
 			};
 
-			mpark::variant<Add, Update, Remove> v;
+			variant<Add, Update, Remove> v;
 
 			Event(Add const &x) : v(x) {}
 
@@ -61,7 +64,7 @@ namespace rd {
 			Event(Remove const &x) : v(x) {}
 
 			int32_t get_index() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](Add const &e) {
 							return e.index;
 						},
@@ -75,7 +78,7 @@ namespace rd {
 			}
 
 			T const *get_new_value() const {
-				return mpark::visit(util::make_visitor(
+				return visit(util::make_visitor(
 						[](Add const &e) {
 							return e.new_value;
 						},
@@ -86,6 +89,27 @@ namespace rd {
 							return static_cast<T const *>(nullptr);
 						}
 				), v);
+			}
+
+			friend std::string to_string(Event const &e) {
+				std::string res = visit(util::make_visitor(
+						[](typename Event::Add const &e) {
+							return "Add " +
+								   std::to_string(e.index) + ":" +
+								   to_string(*e.new_value);
+						},
+						[](typename Event::Update const &e) {
+							return "Update " +
+								   std::to_string(e.index) + ":" +
+								   //                       to_string(e.old_value) + ":" +
+								   to_string(*e.new_value);
+						},
+						[](typename Event::Remove const &e) {
+							return "Remove " +
+								   std::to_string(e.index);
+						}
+				), e.v);
+				return res;
 			}
 		};
 
@@ -103,11 +127,15 @@ namespace rd {
 		virtual ~IViewableList() = default;
 		//endregion
 
-		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, size_t, T const &)
-
-		> handler) const {
+		/**
+		 * \brief Adds a subscription to additions and removals of list elements. When a list element is updated,
+		 * the [handler] is called twice: to report the removal of the old element and the addition of the new one.
+		 * \param lifetime lifetime of subscription.
+		 * \param handler to be called.
+		 */
+		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, size_t, T const &)> handler) const {
 			advise(std::move(lifetime), [handler](Event e) {
-				mpark::visit(util::make_visitor(
+				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
 							handler(AddRemove::ADD, e.index, *e.new_value);
 						},
@@ -122,19 +150,22 @@ namespace rd {
 			});
 		}
 
-		virtual void
-		view(Lifetime lifetime,
-			 std::function< void(Lifetime lifetime, std::pair<size_t, T const *> const &)
-
-		> handler) const {
-			view(std::move(lifetime), [handler](Lifetime lt, size_t idx, T const &v) {
+		/**
+		 * \brief Adds a subscription to changes of the contents of the list.
+		 * \param lifetime lifetime of subscription.
+		 * \param handler to be called.
+		 */
+		void view(Lifetime lifetime,
+				  std::function<void(Lifetime lifetime, std::pair<size_t, T const *> const &)> handler) const override {
+			view(lifetime, [handler](Lifetime lt, size_t idx, T const &v) {
 				handler(lt, std::make_pair(idx, &v));
 			});
 		}
 
-		void view(Lifetime lifetime, std::function< void(Lifetime, size_t, T const &)
-
-		> handler) const {
+		/**
+		 * \brief @see view	above 
+		 */
+		void view(Lifetime lifetime, std::function<void(Lifetime, size_t, T const &)> handler) const {
 			advise_add_remove(lifetime, [this, lifetime, handler](AddRemove kind, size_t idx, T const &value) {
 				switch (kind) {
 					case AddRemove::ADD: {
@@ -181,14 +212,27 @@ namespace rd {
 
 		virtual bool empty() const = 0;
 
+		template<typename ... Args>
+		bool emplace_add(Args &&... args) const {
+			return add(WT{std::forward<Args>(args)...});
+		}
+
+		template<typename ... Args>
+		bool emplace_add(size_t index, Args &&... args) const {
+			return add(index, WT{std::forward<Args>(args)...});
+		}
+
+		template<typename ... Args>
+		WT emplace_set(size_t index, Args &&... args) const {
+			return set(index, WT{std::forward<Args>(args)...});
+		}
+
 		template<typename U>
 		friend typename std::enable_if<(!std::is_abstract<U>::value), std::vector<U>>::type
 		convert_to_list(IViewableList<U> const &list);
 
 	protected:
-		virtual const std::vector<Wrapper < T>> &
-
-		getList() const = 0;
+		virtual const std::vector<Wrapper<T>> &getList() const = 0;
 	};
 
 	template<typename T>

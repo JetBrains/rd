@@ -2,13 +2,14 @@ package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.catch
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 
 class ViewableList<T : Any> : IMutableViewableList<T> {
     private val storage: MutableList<T> = mutableListOf()
     override val change = Signal<IViewableList.Event<T>>()
 
     override fun advise(lifetime: Lifetime, handler: (IViewableList.Event<T>) -> Unit) {
-        if (lifetime.isTerminated) return
+        if (!lifetime.isAlive) return
 
         change.advise(lifetime, handler)
         this.withIndex().forEach { catch { handler(IViewableList.Event.Add(it.index, it.value)) } }

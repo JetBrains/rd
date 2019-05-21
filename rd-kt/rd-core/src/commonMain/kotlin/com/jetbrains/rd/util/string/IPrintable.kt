@@ -38,4 +38,9 @@ fun Any?.print(printer: PrettyPrinter) {
     }
 }
 
+fun Any?.println(printer: PrettyPrinter) {
+    print(printer)
+    printer.println()
+}
+
 fun Any?.printToString() = PrettyPrinter().apply { this@printToString.print(this@apply) }.toString()

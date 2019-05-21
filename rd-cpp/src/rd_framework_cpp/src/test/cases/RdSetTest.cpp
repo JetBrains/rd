@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 02.08.2018.
-//
-
 #include <gtest/gtest.h>
 
 #include "RdSet.h"
@@ -63,4 +59,11 @@ TEST_F(RdFrameworkTestBase, set_move) {
 	RdSet<int> set2(std::move(set1));
 
 	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, set_iterator) {
+	RdSet<int> set;
+	EXPECT_EQ(set.end(), set.rbegin().base());
+	set.addAll({1, 2, 3});
+	EXPECT_EQ(set.end(), set.rbegin().base());
 }

@@ -39,7 +39,7 @@ class InternRoot: IInternRoot {
     private fun isIndexOwned(id: Int) = (id and 1 == 0)
 
     override fun setInternedCorrespondence(id: Int, value: Any) {
-        require(!isIndexOwned(id), { "Setting interned correspondence for object that we should have written, bug?" })
+        require(!isIndexOwned(id)) { "Setting interned correspondence for object that we should have written, bug?" }
 //        require(id / 2 == otherItemsList.size, { "Out-of-sequence interned object id" })
 
         otherItemsList[id / 2] = value
@@ -60,7 +60,6 @@ class InternRoot: IInternRoot {
     }
 
     override var rdid: RdId = RdId.Null
-        get
         internal set
 
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {

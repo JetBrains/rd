@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 10.07.2018.
-//
-
 #ifndef RD_CPP_CORE_VIEWABLESET_H
 #define RD_CPP_CORE_VIEWABLESET_H
 
@@ -13,6 +9,10 @@
 
 
 namespace rd {
+	/**
+	 * \brief complete class which has @code IViewableSet<T>'s properties
+	 * \tparam T 
+	 */
 	template<typename T>
 	class ViewableSet : public IViewableSet<T> {
 	public:
@@ -23,7 +23,8 @@ namespace rd {
 		using WT = typename IViewableSet<T>::WT;
 
 		Signal<Event> change;
-		mutable tsl::ordered_set<Wrapper<T>, TransparentHash<T>, TransparentKeyEqual<T>> set;
+		using data_t = ordered_set<Wrapper<T>, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>;
+		mutable data_t set;
 	public:
 		//region ctor/dtor
 
@@ -36,6 +37,126 @@ namespace rd {
 		virtual ~ViewableSet() = default;
 		//endregion
 
+		//region iterators
+	public:
+		class iterator {
+			friend class ViewableSet<T>;
+
+			typename data_t::iterator it_;
+
+			explicit iterator(const typename data_t::iterator &it) : it_(it) {}
+
+		public:
+			using iterator_category =  std::random_access_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = T const *;
+			using reference = T const &;
+
+			iterator(const iterator &other) = default;
+
+			iterator(iterator &&other) noexcept = default;
+
+			iterator &operator=(const iterator &other) = default;
+
+			iterator &operator=(iterator &&other) noexcept = default;
+
+			iterator &operator++() {
+				++it_;
+				return *this;
+			}
+
+			iterator operator++(int) {
+				auto it = *this;
+				++*this;
+				return it;
+			}
+
+			iterator &operator--() {
+				--it_;
+				return *this;
+			}
+
+			iterator operator--(int) {
+				auto it = *this;
+				--*this;
+				return it;
+			}
+
+			iterator &operator+=(difference_type delta) {
+				it_ += delta;
+				return *this;
+			}
+
+			iterator &operator-=(difference_type delta) {
+				it_ -= delta;
+				return *this;
+			}
+
+			iterator operator+(difference_type delta) const {
+				auto it = *this;
+				return it += delta;
+			}
+
+			iterator operator-(difference_type delta) const {
+				auto it = *this;
+				return it -= delta;
+			}
+
+			difference_type operator-(iterator const &other) const {
+				return it_ - other.it_;
+			}
+
+			bool operator<(iterator const &other) const noexcept {
+				return this->it_ < other.it_;
+			}
+
+
+			bool operator>(iterator const &other) const noexcept {
+				return this->it_ > other.it_;
+			}
+
+
+			bool operator==(iterator const &other) const noexcept {
+				return this->it_ == other.it_;
+			}
+
+
+			bool operator!=(iterator const &other) const noexcept {
+				return !(*this == other);
+			}
+
+
+			bool operator<=(iterator const &other) const noexcept {
+				return (this->it_ < other.it_) || (*this == other);
+			}
+
+
+			bool operator>=(iterator const &other) const noexcept {
+				return (this->it_ > other.it_) || (*this == other);
+			}
+
+			reference operator*() const noexcept {
+				return **it_;
+			}
+
+			pointer operator->() const noexcept {
+				return (*it_).get();
+			}
+		};
+
+		using reverse_iterator = std::reverse_iterator<iterator>;
+
+		iterator begin() const { return iterator(set.begin()); }
+
+		iterator end() const { return iterator(set.end()); }
+
+		reverse_iterator rbegin() const { return reverse_iterator(end()); }
+
+		reverse_iterator rend() const { return reverse_iterator(begin()); }
+
+		//endregion
+
 		bool add(WT element) const override {
 			/*auto const &[it, success] = set.emplace(std::make_unique<T>(std::move(element)));*/
 			auto const &it = set.emplace(std::move(element));
@@ -46,7 +167,12 @@ namespace rd {
 			return true;
 		}
 
-		//addAll(collection)?
+		bool addAll(std::vector<WT> elements) const override {
+			for (auto &&element : elements) {
+				ViewableSet::add(std::move(element));
+			}
+			return true;
+		}
 
 		void clear() const override {
 			std::vector<Event> changes;
@@ -60,7 +186,7 @@ namespace rd {
 		}
 
 		bool remove(T const &element) const override {
-			if (!contains(element)) {
+			if (!ViewableSet::contains(element)) {
 				return false;
 			}
 			auto it = set.find(element);
@@ -86,6 +212,11 @@ namespace rd {
 
 		bool empty() const override {
 			return set.empty();
+		}
+
+		template<typename ... Args>
+		bool emplace_add(Args &&... args) const {
+			return add(WT{std::forward<Args>(args)...});
 		}
 	};
 }

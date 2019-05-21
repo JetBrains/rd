@@ -1,14 +1,9 @@
-//
-// Created by jetbrains on 26.07.2018.
-//
+#include "MessageBroker.h"
 
+#include "core_util.h"
+#include "Buffer.h"
 
 #include <cassert>
-
-#include "MessageBroker.h"
-#include "demangle.h"
-#include "shared_function.h"
-#include "Buffer.h"
 
 
 
@@ -28,7 +23,7 @@ namespace rd {
 				if (exists_id) {
 					that->on_wire_received(std::move(message));
 				} else {
-					logger.trace("Disappeared Handler for Reactive entity with id:" + that->rdid.toString());
+					logger.trace("Disappeared Handler for Reactive entities with id:" + that->rdid.toString());
 				}
 			};
 			std::function<void()> function = util::make_shared_function(std::move(action));
@@ -36,53 +31,63 @@ namespace rd {
 		}
 	}
 
-	MessageBroker::MessageBroker(IScheduler *defaultScheduler) : defaultScheduler(defaultScheduler) {}
+	MessageBroker::MessageBroker(IScheduler *defaultScheduler) : default_scheduler(defaultScheduler) {}
 
 	void MessageBroker::dispatch(RdId id, Buffer message) const {
-		MY_ASSERT_MSG(!id.isNull(), "id mustn't be null");
+		RD_ASSERT_MSG(!id.isNull(), "id mustn't be null")
 
 		{//synchronized recursively
 			std::lock_guard<decltype(lock)> guard(lock);
 			IRdReactive const *s = subscriptions[id];
 			if (s == nullptr) {
-				if (broker.count(id) == 0) {
-					broker[id];
+				auto it = broker.find(id);
+				if (it == broker.end()) {
+					it = broker.emplace(id, Mq{}).first;
 				}
-				broker[id].defaultSchedulerMessages++;
 
-				auto action = [this, id, message = std::move(message)]() mutable {
+				broker[id].default_scheduler_messages.emplace(std::move(message));
+
+				auto action = [this, it, id]() mutable {
+					auto &current = it->second;
 					IRdReactive const *subscription = subscriptions[id];
 
+					optional<Buffer> message;
+					{
+						std::lock_guard<decltype(lock)> guard(lock);
+						if (!current.default_scheduler_messages.empty()) {
+							message = make_optional<Buffer>(std::move(current.default_scheduler_messages.front()));
+							current.default_scheduler_messages.pop();
+						}
+					}
 					if (subscription != nullptr) {
-						if (subscription->get_wire_scheduler() == defaultScheduler)
-							invoke(subscription, std::move(message), true);
-						else
-							invoke(subscription, std::move(message));
+						if (message) {
+							invoke(subscription, *std::move(message), subscription->get_wire_scheduler() == default_scheduler);
+						}
 					} else {
 						logger.trace("No handler for id: " + id.toString());
 					}
 
-					if (--broker[id].defaultSchedulerMessages == 0) {
+					if (current.default_scheduler_messages.empty()) {
 						auto t = std::move(broker[id]);
 						broker.erase(id);
-						for (auto &it : t.customSchedulerMessages) {
-							assert(subscription->get_wire_scheduler() != defaultScheduler);
+						for (auto &it : t.custom_scheduler_messages) {
+							RD_ASSERT_MSG(subscription->get_wire_scheduler() != default_scheduler, "require equals of wire and default schedulers")
 							invoke(subscription, std::move(it));
 						}
 					}
 				};
 				std::function<void()> function = util::make_shared_function(std::move(action));
-				defaultScheduler->queue(std::move(function));
+				default_scheduler->queue(std::move(function));
 			} else {
-				if (s->get_wire_scheduler() == defaultScheduler || s->get_wire_scheduler()->out_of_order_execution) {
+				if (s->get_wire_scheduler() == default_scheduler || s->get_wire_scheduler()->out_of_order_execution) {
 					invoke(s, std::move(message));
 				} else {
-					if (broker.count(id) == 0) {
+					auto it = broker.find(id);
+					if (it == broker.end()) {
 						invoke(s, std::move(message));
 					} else {
-						Mq &mq = broker[id];
-						assert(mq.defaultSchedulerMessages > 0);
-						mq.customSchedulerMessages.push_back(std::move(message));
+						Mq &mq = it->second;
+						mq.custom_scheduler_messages.push_back(std::move(message));
 					}
 				}
 			}
@@ -92,10 +97,10 @@ namespace rd {
 	}
 
 	void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const *entity) const {
-		MY_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entity: " + std::string(typeid(*entity).name())));
+		RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())))
 
 		//advise MUST happen under default scheduler, not custom
-		defaultScheduler->assert_thread();
+		default_scheduler->assert_thread();
 
 		std::lock_guard<decltype(lock)> guard(lock);
 		if (!lifetime->is_terminated()) {

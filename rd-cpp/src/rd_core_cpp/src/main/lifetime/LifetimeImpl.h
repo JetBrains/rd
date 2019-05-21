@@ -1,9 +1,7 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
+
+#include "thirdparty.hpp"
 
 #include <functional>
 #include <map>
@@ -13,25 +11,25 @@
 #include <utility>
 
 namespace rd {
-	class LifetimeImpl {
+	class LifetimeImpl final {
 	private:
 		friend class LifetimeDefinition;
 
 		friend class Lifetime;
 
 		bool eternaled = false;
-		bool terminated = false;
+		std::atomic<bool> terminated{false};
 
 		using counter_t = int32_t;
 		counter_t id = 0;
 
 		counter_t action_id_in_map = 0;
-		using actions_t = std::map<int, std::function<void()>>;
+		using actions_t = ordered_map<int, std::function<void()>>;
 		actions_t actions;
 
 		void terminate();
 
-		std::mutex lock;
+		std::mutex actions_lock;
 	public:
 
 		//region ctor/dtor
@@ -46,7 +44,7 @@ namespace rd {
 
 		template<typename F>
 		counter_t add_action(F &&action) {
-			std::lock_guard<decltype(lock)> guard(lock);
+			std::lock_guard<decltype(actions_lock)> guard(actions_lock);
 
 			if (is_eternal()) {
 				return -1;

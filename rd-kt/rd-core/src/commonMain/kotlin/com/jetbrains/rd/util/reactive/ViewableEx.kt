@@ -1,6 +1,7 @@
 package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.onTermination
 
 fun <T : Any> IViewableSet<T>.createIsEmpty(lifetime: Lifetime): IPropertyView<Boolean> {
     val property = Property(this.isEmpty())
@@ -31,7 +32,7 @@ fun <K : Any, V : Any, T : Any> IMutableViewableMap<K, V>.toViewableList(lifetim
     this.view(lifetime) { lt, (_, item) ->
         val t = converter(lt, item)
         viewableList.add(t)
-        lt.add { viewableList.remove(t) }
+        lt.onTermination { viewableList.remove(t) }
     }
     return viewableList
 }

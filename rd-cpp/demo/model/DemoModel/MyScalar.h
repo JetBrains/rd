@@ -3,119 +3,140 @@
 
 #include "Buffer.h"
 #include "Identities.h"
-#include "MessageBroker.h"
 #include "Protocol.h"
 #include "RdId.h"
-#include "RdList.h"
-#include "RdMap.h"
-#include "RdProperty.h"
-#include "RdSet.h"
 #include "RdSignal.h"
-#include "RName.h"
+#include "RdProperty.h"
+#include "RdList.h"
+#include "RdSet.h"
+#include "RdMap.h"
 #include "ISerializable.h"
+#include "ISerializersOwner.h"
+#include "IUnknownInstance.h"
 #include "Polymorphic.h"
 #include "NullableSerializer.h"
 #include "ArraySerializer.h"
+#include "InternedSerializer.h"
 #include "SerializationCtx.h"
 #include "Serializers.h"
-#include "ISerializersOwner.h"
-#include "IUnknownInstance.h"
 #include "RdExtBase.h"
 #include "RdCall.h"
 #include "RdEndpoint.h"
 #include "RdTask.h"
 #include "gen_util.h"
 
-#include <iostream>
 #include <cstring>
 #include <cstdint>
 #include <vector>
-#include <type_traits>
-#include <utility>
-#include <typeinfo>
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
+#include "instantiations.h"
 
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
-
-//data
-class MyScalar : public rd::IPolymorphicSerializable
-{
+#pragma warning( disable:4307 )
+#pragma warning( disable:4267 )
+#pragma warning( disable:4244 )
+namespace demo {
     
-    //companion
-    
-    //custom serializers
-    private:
-    
-    //fields
-    protected:
-    bool sign_;
-    signed char byte_;
-    short short_;
-    int32_t int_;
-    int64_t long_;
-    
-    
-    //initializer
-    private:
-    void initialize();
-    
-    //primary ctor
-    public:
-    explicit MyScalar(bool sign_, signed char byte_, short short_, int32_t int_, int64_t long_);
-    
-    
-    //default ctors and dtors
-    
-    MyScalar() {
-        initialize();
+    //data
+    class MyScalar : public rd::IPolymorphicSerializable
+    {
+        
+        //companion
+        
+        //custom serializers
+        private:
+        
+        //fields
+        protected:
+        bool bool_;
+        uint8_t byte_;
+        int16_t short_;
+        int32_t int_;
+        int64_t long_;
+        float float_;
+        double double_;
+        uint16_t unsigned_short_;
+        uint32_t unsigned_int_;
+        uint64_t unsigned_long_;
+        
+        
+        //initializer
+        private:
+        void initialize();
+        
+        //primary ctor
+        public:
+        MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_);
+        
+        //secondary constructor
+        
+        //default ctors and dtors
+        
+        MyScalar() = delete;
+        
+        MyScalar(MyScalar const &) = default;
+        
+        MyScalar& operator=(MyScalar const &) = default;
+        
+        MyScalar(MyScalar &&) = default;
+        
+        MyScalar& operator=(MyScalar &&) = default;
+        
+        virtual ~MyScalar() = default;
+        
+        //reader
+        static MyScalar read(rd::SerializationCtx& ctx, rd::Buffer & buffer);
+        
+        //writer
+        void write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const override;
+        
+        //virtual init
+        
+        //identify
+        
+        //getters
+        bool const & get_bool() const;
+        uint8_t const & get_byte() const;
+        int16_t const & get_short() const;
+        int32_t const & get_int() const;
+        int64_t const & get_long() const;
+        float const & get_float() const;
+        double const & get_double() const;
+        uint16_t const & get_unsigned_short() const;
+        uint32_t const & get_unsigned_int() const;
+        uint64_t const & get_unsigned_long() const;
+        
+        //intern
+        
+        //equals trait
+        private:
+        bool equals(rd::ISerializable const& object) const override;
+        
+        //equality operators
+        public:
+        friend bool operator==(const MyScalar &lhs, const MyScalar &rhs);
+        friend bool operator!=(const MyScalar &lhs, const MyScalar &rhs);
+        
+        //hash code trait
+        size_t hashCode() const noexcept override;
+        
+        //type name trait
+        std::string type_name() const override;
+        
+        //static type name trait
+        static std::string static_type_name();
+        
+        //polymorphic to string
+        private:
+        std::string toString() const override;
+        
+        //external to string
+        public:
+        friend std::string to_string(const MyScalar & value);
     };
-    
-    MyScalar(MyScalar const &) = default;
-    
-    MyScalar& operator=(MyScalar const &) = default;
-    
-    MyScalar(MyScalar &&) = default;
-    
-    MyScalar& operator=(MyScalar &&) = default;
-    
-    virtual ~MyScalar() = default;
-    
-    //reader
-    static MyScalar read(rd::SerializationCtx const& _ctx, rd::Buffer const & buffer);
-    
-    //writer
-    void write(rd::SerializationCtx const& _ctx, rd::Buffer const& buffer) const override;
-    
-    //virtual init
-    
-    //identify
-    
-    //getters
-    bool const & get_sign() const;
-    signed char const & get_byte() const;
-    short const & get_short() const;
-    int32_t const & get_int() const;
-    int64_t const & get_long() const;
-    
-    //intern
-    
-    //equals trait
-    private:
-    bool equals(rd::IPolymorphicSerializable const& object) const;
-    
-    //equality operators
-    public:
-    friend bool operator==(const MyScalar &lhs, const MyScalar &rhs);
-    friend bool operator!=(const MyScalar &lhs, const MyScalar &rhs);
-    
-    //hash code trait
-    size_t hashCode() const;
-    
-    //type name trait
-    std::string type_name() const override;
 };
 
 #pragma warning( pop )
@@ -123,8 +144,8 @@ class MyScalar : public rd::IPolymorphicSerializable
 
 //hash code trait
 namespace std {
-    template <> struct hash<MyScalar> {
-        size_t operator()(const MyScalar & value) const {
+    template <> struct hash<demo::MyScalar> {
+        size_t operator()(const demo::MyScalar & value) const noexcept {
             return value.hashCode();
         }
     };

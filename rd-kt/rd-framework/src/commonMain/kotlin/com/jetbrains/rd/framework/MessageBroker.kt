@@ -52,7 +52,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
             val s = subscriptions[id]
             if (s == null) {
-                val currentIdBroker = broker.getOrCreate(id, { Mq() })
+                val currentIdBroker = broker.getOrCreate(id) { Mq() }
 
                 currentIdBroker.defaultSchedulerMessages.add(message)
                 defaultScheduler.queue {

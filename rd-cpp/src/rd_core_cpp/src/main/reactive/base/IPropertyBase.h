@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 20.08.2018.
-//
-
 #ifndef RD_CPP_IPROPERTYBASE_H
 #define RD_CPP_IPROPERTYBASE_H
 
@@ -11,7 +7,7 @@
 #include "SignalX.h"
 #include "SequentialLifetimes.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 namespace rd {
 	template<typename T>
@@ -21,11 +17,11 @@ namespace rd {
 
 		Signal<T> change, before_change;
 
+	public:
+
 		bool has_value() const {
 			return (bool) (value);
 		}
-
-	public:
 
 		//region ctor/dtor
 
@@ -50,13 +46,13 @@ namespace rd {
 			Lifetime lf = lifetime.create_nested();
 			std::shared_ptr<SequentialLifetimes> seq = std::make_shared<SequentialLifetimes>(lf);
 
-			this->advise_before(lf, [this, lf, seq](T const &v) {
+			this->advise_before(lf, [lf, seq](T const &v) {
 				if (!lf->is_terminated()) {
 					seq->terminate_current();
 				}
 			});
 
-			this->advise(lf, [this, lf, seq, handler](T const &v) {
+			this->advise(lf, [lf, seq, handler](T const &v) {
 				if (!lf->is_terminated()) {
 					handler(seq->next(), v);
 				}

@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_RDPROPERTY_H
 #define RD_CPP_RDPROPERTY_H
 
@@ -14,6 +10,12 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Reactive property for connection through wire. 
+	 
+	 * \tparam T type of stored value
+	 * \tparam S "SerDes" for value
+	 */
 	template<typename T, typename S = Polymorphic<T>>
 	class RdProperty final : public RdPropertyBase<T, S>, public ISerializable {
 	public:
@@ -38,9 +40,10 @@ namespace rd {
 		virtual ~RdProperty() = default;
 		//endregion
 
-		static RdProperty<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdProperty<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdId id = RdId::read(buffer);
-			bool not_null = buffer.readBool();//not null/
+			bool not_null = buffer.read_bool();//not null/
+			(void) not_null;
 			auto value = S::read(ctx, buffer);
 			RdProperty<T, S> property;
 			property.value = std::move(value);
@@ -48,14 +51,14 @@ namespace rd {
 			return property;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			this->rdid.write(buffer);
-			buffer.writeBool(true);
+			buffer.write_bool(true);
 			S::write(ctx, buffer, this->get());
 		}
 
 		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
-			RdPropertyBase<T, S>::advise(std::move(lifetime), std::move(handler));
+			RdPropertyBase<T, S>::advise(lifetime, std::move(handler));
 		}
 
 		RdProperty<T, S> &slave() {
@@ -64,7 +67,7 @@ namespace rd {
 		}
 
 
-		void identify(IIdentities const &identities, RdId const &id) const override {
+		void identify(Identities const &identities, RdId const &id) const override {
 			RdBindableBase::identify(identities, id);
 			if (!this->optimize_nested && this->has_value()) {
 				identifyPolymorphic(this->get(), identities, identities.next(id));
@@ -77,6 +80,10 @@ namespace rd {
 
 		friend bool operator!=(const RdProperty &lhs, const RdProperty &rhs) {
 			return !(rhs == lhs);
+		}
+
+		friend std::string to_string(RdProperty const &value) {
+			return value.has_value() ? to_string(value.get()) : "nullptr"s;
 		}
 	};
 }

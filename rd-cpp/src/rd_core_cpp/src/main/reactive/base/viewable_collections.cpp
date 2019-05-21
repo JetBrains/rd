@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 22.09.2018.
-//
-
 #include "viewable_collections.h"
 
 namespace rd {

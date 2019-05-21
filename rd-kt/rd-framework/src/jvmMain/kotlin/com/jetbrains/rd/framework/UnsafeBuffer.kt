@@ -79,7 +79,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
 
     @Suppress("unused")
-    inline private fun writeArray(arrayBase: Int, arrayStride: Int, array: Any, len: Int) {
+    private inline fun writeArray(arrayBase: Int, arrayStride: Int, array: Any, len: Int) {
         writeInt(len)
 
         requireAvailable(len * arrayStride.toLong())
@@ -286,7 +286,6 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
         offset += 2
         return result
     }
-
 
     override fun readCharArray(): CharArray {
         val len = readInt()

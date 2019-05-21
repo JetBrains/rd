@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 17.10.2018.
-//
-
 #ifndef RD_CPP_OVERLOADED_H
 #define RD_CPP_OVERLOADED_H
 

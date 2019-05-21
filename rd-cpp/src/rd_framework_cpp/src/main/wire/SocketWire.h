@@ -1,18 +1,14 @@
-//
-// Created by jetbrains on 23.08.2018.
-//
-
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
 #include "IScheduler.h"
 #include "WireBase.h"
-
-#include "ActiveSocket.h"
-#include "PassiveSocket.h"
-#include "SimpleSocket.h"
 #include "Logger.h"
 #include "ByteBufferAsyncProcessor.h"
+
+#include "SimpleSocket.h"
+#include "ActiveSocket.h"
+#include "PassiveSocket.h"
 
 #include <string>
 #include <array>
@@ -28,48 +24,73 @@ namespace rd {
 			static Logger logger;
 
 			std::timed_mutex lock;
-			mutable std::mutex send_lock;
-			mutable std::mutex socket_lock;
+			mutable std::mutex socket_send_lock;
 
-			std::thread thread;
+			std::thread thread{};
 
 			std::string id;
 			Lifetime lifetime;
 			IScheduler *scheduler = nullptr;
-			std::shared_ptr<CSimpleSocket> socketProvider;
+			std::shared_ptr<CSimpleSocket> socket_provider;
 
-			std::shared_ptr<CActiveSocket> socket = std::make_shared<CActiveSocket>();
+			std::shared_ptr<CActiveSocket> socket;
 
-			mutable std::condition_variable send_var;
+			mutable std::condition_variable socket_send_var;
 			mutable ByteBufferAsyncProcessor async_send_buffer{id + "-AsyncSendProcessor",
-														[this](Buffer::ByteArray it) { this->send0(std::move(it)); }};
+															   [this](Buffer::ByteArray const& it, sequence_number_t seqn) -> bool {
+																   return this->send0(it, seqn);
+															   }};
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
 
-			static const size_t RECIEVE_BUFFER_SIZE = 1u << 16;
-			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer;
+			static constexpr size_t RECIEVE_BUFFER_SIZE = 1u << 16;
+			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer{};
 			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
-			static const size_t SEND_BUFFER_SIZE = 16 * 1024;
+			static constexpr size_t SEND_BUFFER_SIZE = 16 * 1024;
 			mutable Buffer local_send_buffer;
 
-			bool ReadFromSocket(Buffer::word_t *res, int32_t msglen) const;
+			static constexpr int32_t ACK_MESSAGE_LENGTH = -1;
+			static constexpr int32_t PACKAGE_HEADER_LENGTH = sizeof(ACK_MESSAGE_LENGTH) + sizeof(sequence_number_t);
+			mutable Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
 
+			mutable sequence_number_t max_received_seqn = 0;
+			mutable Buffer send_package_header{PACKAGE_HEADER_LENGTH};
+
+			bool read_from_socket(Buffer::word_t *res, int32_t msglen) const;
+
+			template<typename T>
+			bool read_integral_from_socket(T &x) const {
+				return read_from_socket(reinterpret_cast<Buffer::word_t *>(&x), sizeof(T));
+			}
+
+			bool read_data_from_socket(Buffer::word_t *data, size_t len) const {
+				return read_from_socket(reinterpret_cast<Buffer::word_t *>(data), len);
+			}
 		public:
+
 			//region ctor/dtor
 
-			Base(const std::string &id, Lifetime lifetime, IScheduler *scheduler);
-
+			Base(std::string id, Lifetime lifetime, IScheduler *scheduler);
 			virtual ~Base() = default;
+
 			//endregion
+
+			std::pair<int, sequence_number_t> read_header() const;
+
+			bool read_and_dispatch_package() const;
 
 			void receiverProc() const;
 
-			void send0(Buffer::ByteArray msg) const;
+			bool send0(Buffer::ByteArray const &msg, sequence_number_t seqn) const;
 
-			void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const override;
+			void send(RdId const &rd_id, std::function<void(Buffer &buffer)> writer) const override;
 
-			void set_socket_provider(std::shared_ptr<CSimpleSocket> new_socket);
+			void set_socket_provider(std::shared_ptr<CActiveSocket> new_socket);
+
+			CSimpleSocket *get_socket_provider() const;
+
+			bool send_ack(sequence_number_t seqn) const;
 		};
 
 		class Client : public Base {
@@ -78,7 +99,7 @@ namespace rd {
 
 			//region ctor/dtor
 
-			Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
+			Client(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0, const std::string &id = "ClientSocket");
 
 			virtual ~Client() = default;
 			//endregion
@@ -94,7 +115,7 @@ namespace rd {
 
 			//region ctor/dtor
 
-			Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port, const std::string &id);
+			Server(Lifetime lifetime, IScheduler *scheduler, uint16_t port = 0, const std::string &id = "ServerSocket");
 
 			virtual ~Server() = default;
 			//endregion

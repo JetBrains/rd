@@ -12,7 +12,7 @@ class SerializersTest {
     @Test
     fun testReadArray() {
         val buffer = UnsafeBuffer(ByteArray(10))
-        buffer.writeArray(Array(1) {"abc"}, {});
+        buffer.writeArray(Array(1) {"abc"}) {}
         buffer.rewind()
 
         val arr = buffer.readArray { "abc" }

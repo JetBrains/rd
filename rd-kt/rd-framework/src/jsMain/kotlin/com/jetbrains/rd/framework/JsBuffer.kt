@@ -186,7 +186,7 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
         readArrayBody(
                 array.size,
                 { buffer, position, length -> Int8Array(buffer, position, length) },
-                { _ -> array },
+                { array },
                 1)
     }
 
@@ -225,7 +225,7 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
 
     override fun readCharArray(): CharArray {
         val string = readNullableString()
-        return CharArray(string!!.length, { string[it] })
+        return CharArray(string!!.length) { string[it] }
     }
 
     override fun writeCharArray(array: CharArray) {
@@ -325,4 +325,6 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
     override fun getArray(): ByteArray {
         TODO("not optimal, remove from interface") //To change body of created functions use File | Settings | File Templates.
     }
+
+    //todo check correctness of default read/write of unsigned types
 }

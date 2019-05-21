@@ -86,7 +86,7 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
 
     override fun iterator(): MutableIterator<T> {
         val delegate = set.iterator()
-        return object:MutableIterator<T> by delegate {
+        return object : MutableIterator<T> by delegate {
             override fun remove() {
                 localChange { delegate.remove() }
             }

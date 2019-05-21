@@ -1,18 +1,17 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
-
 #include "SignalX.h"
 #include "RdBindableBase.h"
 
 namespace rd {
+	std::string RdBindableBase::toString() const {
+		return "location=" + location.toString() + ",rdid=" + rdid.toString();
+	}
+
 	bool RdBindableBase::is_bound() const {
 		return parent != nullptr;
 	}
 
-	void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, const std::string &name) const {
-		MY_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
+	void RdBindableBase::bind(Lifetime lf, IRdDynamic const *parent, string_view name) const {
+		RD_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + parent->location.toString()));
 		lf->bracket([this, lf, parent, &name] {
 						this->parent = parent;
 						location = parent->location.sub(name, ".");
@@ -26,7 +25,7 @@ namespace rd {
 					}
 		);
 
-		get_protocol()->scheduler->assert_thread();
+		get_protocol()->get_scheduler()->assert_thread();
 
 		priorityAdviseSection(
 				[this, lf]() {
@@ -36,13 +35,13 @@ namespace rd {
 	}
 
 //must be overriden if derived class have bindable members
-	void RdBindableBase::identify(const IIdentities &identities, RdId const &id) const {
-		MY_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entity: $this");
-		MY_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entity: $this");
+	void RdBindableBase::identify(const Identities &identities, RdId const &id) const {
+		RD_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + rdid.toString() + ", entities: $this");
+		RD_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entities: $this");
 
 		this->rdid = id;
 		for (const auto &it : bindable_extensions) {
-			identifyPolymorphic(*(it.second), identities, id.mix("." + it.first));
+			identifyPolymorphic(*(it.second), identities, id.mix(".").mix(it.first));
 		}
 	}
 
@@ -53,14 +52,14 @@ namespace rd {
 				return protocol;
 			}
 		}
-		throw std::invalid_argument("Not bound");
+		throw std::invalid_argument("Not bound: " + location.toString());
 	}
 
-	SerializationCtx const &RdBindableBase::get_serialization_context() const {
+	SerializationCtx  &RdBindableBase::get_serialization_context() const {
 		if (is_bound()) {
 			return parent->get_serialization_context();
 		} else {
-			throw std::invalid_argument("Not bound");
+			throw std::invalid_argument("Not bound: " + location.toString());
 		}
 	}
 

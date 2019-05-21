@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #ifndef RD_CPP_RDPROPERTYBASE_H
 #define RD_CPP_RDPROPERTYBASE_H
 
@@ -14,7 +10,7 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
-	template<typename T, typename S = Polymorphic<T>>
+	template<typename T, typename S = Polymorphic <T>>
 	class RdPropertyBase : public RdReactiveBase, public Property<T> {
 	protected:
 		using WT = typename IProperty<T>::WT;
@@ -53,7 +49,8 @@ namespace rd {
 					if (is_local_change) {
 						if (this->has_value()) {
 							const IProtocol *iProtocol = get_protocol();
-							identifyPolymorphic(v, *iProtocol->identity, iProtocol->identity->next(rdid));
+							const Identities *identity = iProtocol->get_identity();
+							identifyPolymorphic(v, *identity, identity->next(rdid));
 						}
 					}
 				});
@@ -66,10 +63,10 @@ namespace rd {
 				if (is_master) {
 					master_version++;
 				}
-				get_wire()->send(rdid, [this, &v](Buffer const &buffer) {
+				get_wire()->send(rdid, [this, &v](Buffer &buffer) {
 					buffer.write_integral<int32_t>(master_version);
 					S::write(this->get_serialization_context(), buffer, v);
-					logSend.trace("property " + location.toString() + " + " + rdid.toString() +
+					logSend.trace("SEND property " + location.toString() + " + " + rdid.toString() +
 								  ":: ver = " + std::to_string(master_version) +
 								  ", value = " + to_string(v));
 				});
@@ -91,6 +88,9 @@ namespace rd {
 			WT v = S::read(this->get_serialization_context(), buffer);
 
 			bool rejected = is_master && version < master_version;
+			logSend.trace("RECV property " + location.toString() + " " + rdid.toString() +
+						  ":: oldver=%d, ver=%d, value = " + to_string(v) + (rejected ? ">> REJECTED" : ""),
+						  master_version, version);
 			if (rejected) {
 				return;
 			}
@@ -101,7 +101,7 @@ namespace rd {
 
 		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
 			if (is_bound()) {
-				//            assertThreading();
+				assert_threading();
 			}
 			Property<T>::advise(lifetime, handler);
 		}

@@ -5,7 +5,7 @@ import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.cases.interning.InterningNestedTestStringModel
-import com.jetbrains.rd.framework.test.cases.interning.PropertyHolderWithInternRoot
+import com.jetbrains.rd.framework.test.cases.interning.models.PropertyHolderWithInternRoot
 import com.jetbrains.rd.framework.test.util.NetUtils
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -33,34 +33,34 @@ class SocketWireTest {
 
     private fun server(lifetime: Lifetime, port: Int? = null): Protocol {
         return Protocol(Serializers(), Identities(IdKind.Server), TestScheduler,
-            SocketWire.Server(lifetime, TestScheduler, port, "TestServer"), lifetime
+                SocketWire.Server(lifetime, TestScheduler, port, "TestServer"), lifetime
         )
     }
 
 
     private fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
         return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
-            SocketWire.Client(lifetime,
-                    TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient"), lifetime
+                SocketWire.Client(lifetime,
+                        TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient"), lifetime
         )
     }
 
     private fun client(lifetime: Lifetime, port: Int): Protocol {
         return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
-            SocketWire.Client(lifetime, TestScheduler, port, "TestClient"), lifetime
+                SocketWire.Client(lifetime, TestScheduler, port, "TestClient"), lifetime
         )
     }
 
     private lateinit var lifetimeDef: LifetimeDefinition
     private lateinit var socketLifetimeDef: LifetimeDefinition
 
-    val lifetime : Lifetime get() = lifetimeDef.lifetime
-    val socketLifetime : Lifetime get() = socketLifetimeDef.lifetime
+    val lifetime: Lifetime get() = lifetimeDef.lifetime
+    val socketLifetime: Lifetime get() = socketLifetimeDef.lifetime
 
     @Before
     fun setUp() {
-        lifetimeDef = Lifetime.create(Lifetime.Eternal)
-        socketLifetimeDef = Lifetime.create(Lifetime.Eternal)
+        lifetimeDef = Lifetime.Eternal.createNested()
+        socketLifetimeDef = Lifetime.Eternal.createNested()
     }
 
 
@@ -73,37 +73,37 @@ class SocketWireTest {
 
     @Test
     fun TestBasicRun() {
-            val serverProtocol = server(socketLifetime)
-            val clientProtocol = client(socketLifetime, serverProtocol)
+        val serverProtocol = server(socketLifetime)
+        val clientProtocol = client(socketLifetime, serverProtocol)
 
-            val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
-            val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
 
-            cp.set(1)
-            sp.waitAndAssert(1)
+        cp.set(1)
+        sp.waitAndAssert(1)
 
-            sp.set(2)
-            cp.waitAndAssert(2, 1)
+        sp.set(2)
+        cp.waitAndAssert(2, 1)
     }
 
     @Test
     fun TestOrdering() {
-            val serverProtocol = server(socketLifetime)
-            val clientProtocol = client(socketLifetime, serverProtocol)
+        val serverProtocol = server(socketLifetime)
+        val clientProtocol = client(socketLifetime, serverProtocol)
 
-            val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
-            val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
 
-            val log = ConcurrentLinkedQueue<Int>()
-            sp.advise(lifetime) { log.add(it) }
-            cp.set(1)
-            cp.set(2)
-            cp.set(3)
-            cp.set(4)
-            cp.set(5)
+        val log = ConcurrentLinkedQueue<Int>()
+        sp.advise(lifetime) { log.add(it) }
+        cp.set(1)
+        cp.set(2)
+        cp.set(3)
+        cp.set(4)
+        cp.set(5)
 
-            while (log.size < 5) Thread.sleep(100)
-            assertEquals(listOf(1, 2, 3, 4, 5), log.toList())
+        while (log.size < 5) Thread.sleep(100)
+        assertEquals(listOf(1, 2, 3, 4, 5), log.toList())
     }
 
 
@@ -116,7 +116,7 @@ class SocketWireTest {
         val cp = RdSignal<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
 
         val log = mutableListOf<Int>()
-        sp.advise(socketLifetime) {log.add(it)}
+        sp.advise(socketLifetime) { log.add(it) }
 
         cp.fire(1)
         cp.fire(2)
@@ -124,7 +124,7 @@ class SocketWireTest {
         spinUntil { log.size == 2 }
         assertEquals(listOf(1, 2), log)
 
-        (clientProtocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+        tryCloseConnection(clientProtocol)
         cp.fire(3)
         cp.fire(4)
 
@@ -133,93 +133,121 @@ class SocketWireTest {
 
 
         cp.fire(5)
-        (serverProtocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+        tryCloseConnection(serverProtocol)
         cp.fire(6)
         spinUntil { log.size == 6 }
         assertEquals(listOf(1, 2, 3, 4, 5, 6), log)
 
     }
 
+    private fun tryCloseConnection(protocol: Protocol) {
+        (protocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+    }
+
+    @Test
+    fun TestDdos() {
+        val serverProtocol = server(socketLifetime)
+        val clientProtocol = client(socketLifetime, serverProtocol)
+
+        val sp = RdSignal<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
+        val cp = RdSignal<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+
+        var count = 0
+        sp.advise(socketLifetime) {
+            assertEquals(count + 1, it)
+            ++count
+        }
+        val C = 500
+        for (i in 1..C) {
+            cp.fire(i)
+            if (i == C / 2) {
+                tryCloseConnection(serverProtocol)
+            }
+        }
+
+        spinUntil { count == C }
+    }
+
 
     @Test
     fun TestBigBuffer() {
-            val serverProtocol = server(socketLifetime)
-            val clientProtocol = client(socketLifetime, serverProtocol)
+        val serverProtocol = server(socketLifetime)
+        val clientProtocol = client(socketLifetime, serverProtocol)
 
-            val sp = RdOptionalProperty<String>().static(1).apply { bind(lifetime, serverProtocol, "top") }
-            val cp = RdOptionalProperty<String>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val sp = RdOptionalProperty<String>().static(1).apply { bind(lifetime, serverProtocol, "top") }
+        val cp = RdOptionalProperty<String>().static(1).apply { bind(lifetime, clientProtocol, "top") }
 
-            cp.set("1")
-            sp.waitAndAssert("1")
+        cp.set("1")
+        sp.waitAndAssert("1")
 
-            sp.set("".padStart(100000, '3'))
-            cp.waitAndAssert("".padStart(100000, '3'), "1")
+        sp.set("".padStart(100000, '3'))
+        cp.waitAndAssert("".padStart(100000, '3'), "1")
     }
 
 
     @Test
     fun TestRunWithSlowpokeServer() {
 
-            val port = NetUtils.findFreePort(0)
-            val clientProtocol = client(socketLifetime, port)
+        val port = NetUtils.findFreePort(0)
+        val clientProtocol = client(socketLifetime, port)
 
 
-            val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
 
-            cp.set(1)
+        cp.set(1)
 
-            Thread.sleep(2000)
+        Thread.sleep(2000)
 
-            val serverProtocol = server(socketLifetime, port)
-            val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
+        val serverProtocol = server(socketLifetime, port)
+        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, "top") }
 
-            val prev = sp.valueOrNull
-            cp.set(4)
-            sp.waitAndAssert(4, prev)
+        val prev = sp.valueOrNull
+        cp.set(4)
+        sp.waitAndAssert(4, prev)
     }
 
     @Test
     fun TestServerWithoutClient() {
-            server(socketLifetime)
+        server(socketLifetime)
     }
 
     @Test
     fun TestServerWithoutClientWithDelay() {
-            server(socketLifetime)
-            Thread.sleep(100)
+        server(socketLifetime)
+        Thread.sleep(100)
     }
 
     @Test
     fun TestServerWithoutClientWithDelayAndMessages() {
-            val protocol = server(socketLifetime)
-            Thread.sleep(100)
-            val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, protocol, "top") }
+        val protocol = server(socketLifetime)
+        Thread.sleep(100)
+        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, protocol, "top") }
 
-            sp.set(1)
-            sp.set(2)
-            Thread.sleep(50)
+        sp.set(1)
+        sp.set(2)
+        Thread.sleep(50)
     }
 
     @Test
     fun TestClientWithoutServer() {
-            client(socketLifetime, NetUtils.findFreePort(0))
+        client(socketLifetime, NetUtils.findFreePort(0))
     }
 
     @Test
     fun TestClientWithoutServerWithDelay() {
-            client(socketLifetime, NetUtils.findFreePort(0))
-            Thread.sleep(100)
+        client(socketLifetime, NetUtils.findFreePort(0))
+        Thread.sleep(100)
     }
 
     @Test
     fun TestClientWithoutServerWithDelayAndMessages() {
-            val clientProtocol = client(socketLifetime, NetUtils.findFreePort(0))
+        val clientProtocol = client(socketLifetime, NetUtils.findFreePort(0))
 
-            val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, "top") }
 
-            cp.set(1)
-            cp.set(2)
-            Thread.sleep(50)
+        cp.set(1)
+        cp.set(2)
+        Thread.sleep(50)
     }
 
     @Test
@@ -259,31 +287,31 @@ class SocketWireTest {
 
 //    @BeforeClass
 //    fun beforeClass() {
-//        setupLogHandler {
-//            if (it.getLevel() == Level.ERROR) {
-//                System.err.println(it.message)
-//                it.throwableInformation?.throwable?.printStackTrace()
-//            }
+//         setupLogHandler {
+//        if (it.getLevel() == Level.ERROR) {
+//            System.err.println(it.message)
+//            it.throwableInformation?.throwable?.printStackTrace()
 //        }
+//         }
 //    }
 //
 //    private fun setupLogHandler(name: String = "default", action: (LoggingEvent) -> Unit) {
-//        val rootLogger = org.apache.log4j.Logger.getRootLogger()
-//        rootLogger.removeAppender("default")
-//        rootLogger.addAppender(object : AppenderSkeleton() {
-//            init {
-//                setName(name)
-//            }
+//         val rootLogger = org.apache.log4j.Logger.getRootLogger()
+//         rootLogger.removeAppender("default")
+//         rootLogger.addAppender(object : AppenderSkeleton() {
+//        init {
+//            setName(name)
+//        }
 //
-//            override fun append(event: LoggingEvent) {
-//                action(event)
-//            }
+//        override fun append(event: LoggingEvent) {
+//            action(event)
+//        }
 //
-//            override fun close() {}
+//        override fun close() {}
 //
-//            override fun requiresLayout(): Boolean {
-//                return false
-//            }
-//        })
+//        override fun requiresLayout(): Boolean {
+//            return false
+//        }
+//         })
 //    }
 }

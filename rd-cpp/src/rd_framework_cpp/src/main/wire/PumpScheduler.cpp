@@ -1,9 +1,5 @@
-//
-// Created by jetbrains on 03.10.2018.
-//
-
 #include "PumpScheduler.h"
-#include "demangle.h"
+
 #include "core_util.h"
 
 namespace rd {
@@ -31,14 +27,16 @@ namespace rd {
 			}
 
 			void PumpScheduler::assert_thread() const {
-				MY_ASSERT_MSG(created_thread_id == std::this_thread::get_id(),
+				RD_ASSERT_MSG(created_thread_id == std::this_thread::get_id(),
 							  "Illegal thread for current action, must be: " + to_string(created_thread_id) +
 							  ", current thread: " + to_string(std::this_thread::get_id()))
 			}
 
 			void PumpScheduler::pump_one_message() {
-				std::unique_lock<decltype(lock)> ul(lock);
-				cv.wait(ul, [this]() -> bool { return !messages.empty(); });
+				{
+					std::unique_lock<decltype(lock)> ul(lock);
+					cv.wait(ul, [this]() -> bool { return !messages.empty(); });
+				}
 				flush();
 			}
 

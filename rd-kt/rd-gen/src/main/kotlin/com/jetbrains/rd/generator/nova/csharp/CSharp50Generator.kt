@@ -131,20 +131,23 @@ open class CSharp50Generator(
           is IArray -> itemType.substitutedName(scope) + "[]"
           is IImmutableList -> "List<${itemType.substitutedName(scope)}>"
           is PredefinedType -> {
-              if (listOf(
-                  PredefinedType.byte,
-                  PredefinedType.short,
-                  PredefinedType.int,
-                  PredefinedType.long,
-                  PredefinedType.float,
-                  PredefinedType.double,
-                  PredefinedType.char,
-                  PredefinedType.bool,
-                  PredefinedType.string
-              ).contains(this)) name.decapitalize()
-              else if (this == PredefinedType.void) "Unit"
-              else if (this == PredefinedType.secureString) "RdSecureString"
-              else name
+              when {
+                  listOf(
+                          PredefinedType.bool,
+                          PredefinedType.byte,
+                          PredefinedType.short,
+                          PredefinedType.int,
+                          PredefinedType.long,
+                          PredefinedType.float,
+                          PredefinedType.double,
+                          PredefinedType.char,
+                          PredefinedType.string
+                  ).contains(this) -> name.decapitalize()
+                  this is PredefinedType.UnsignedInteger -> "u${itemType.substitutedName(scope)}"
+                  this == PredefinedType.void -> "Unit"
+                  this == PredefinedType.secureString -> "RdSecureString"
+                  else -> name
+              }
           }
 
           else -> fail("Unsupported type ${javaClass.simpleName}")

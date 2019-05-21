@@ -65,6 +65,7 @@ open class Kotlin11Generator(
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
         is PredefinedType.void -> "Unit"
+        is PredefinedType.UnsignedInteger -> "U${itemType.substitutedName(scope)}"
         is PredefinedType -> name.capitalize()
 
         else -> fail("Unsupported type ${javaClass.simpleName}")
@@ -268,7 +269,7 @@ open class Kotlin11Generator(
     }
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
-        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName")"""
+        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE")"""
         + "package ${decl.namespace}"
     }
 
@@ -506,18 +507,16 @@ open class Kotlin11Generator(
     }
 
     private fun getDefaultValue(containing: Declaration, member: Member): String? =
-            if (member is Member.Reactive.Stateful.Property) {
-                when {
+            when (member) {
+                is Member.Reactive.Stateful.Property -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
                     member.defaultValue != null -> member.defaultValue.toString()
                     member.isNullable -> "null"
                     else -> null
                 }
+//                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
+                else -> null
             }
-            else if (member is Member.Reactive.Stateful.Extension)
-                member.delegatedBy.sanitizedName(containing) + "()"
-            else
-                null
 
 
     protected fun PrettyPrinter.readerTrait(decl: Declaration) {

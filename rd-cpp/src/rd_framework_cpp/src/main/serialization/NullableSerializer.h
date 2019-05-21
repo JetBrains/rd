@@ -1,43 +1,42 @@
-//
-// Created by jetbrains on 12.11.2018.
-//
-
 #ifndef RD_CPP_NULLABLESERIALIZER_H
 #define RD_CPP_NULLABLESERIALIZER_H
 
-#include "SerializationCtx.h"
 #include "Polymorphic.h"
+#include "AbstractPolymorphic.h"
+#include "wrapper.h"
+#include "framework_traits.h"
 
 #include <type_traits>
 
 namespace rd {
-	template<typename S, typename T = decltype(S::read(std::declval<SerializationCtx>(), std::declval<Buffer>()))>
+	template<typename S, typename R = void>
 	class NullableSerializer {
+		using T = typename util::read_t<S>;
 	public:
-		static opt_or_wrapper <T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readNullable<T>([&]() -> T { return S::read(ctx, buffer); });
+		static opt_or_wrapper<T> read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_nullable<T>([&]() -> T { return S::read(ctx, buffer); });
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, opt_or_wrapper <T> const &value) {
-			buffer.writeNullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
+		static void write(SerializationCtx  &ctx, Buffer &buffer, optional<T> const &value) {
+			buffer.write_nullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
+		}
+
+		static void write(SerializationCtx  &ctx, Buffer &buffer, Wrapper<T> const &value) {
+			buffer.write_nullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
 		}
 	};
 
-	template<typename T>
-	class NullableSerializer<AbstractPolymorphic<T>, Wrapper<T>> {
-		using S = AbstractPolymorphic<T>;
-		public:
-
-		static Wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			bool nullable = !buffer.readBool();
-			if (nullable) {
-				return {};
-			}
-			return S::read(ctx, buffer);
+	template<typename S>
+	class NullableSerializer<S, std::enable_if_t<is_wrapper_v<util::read_t<S>>>> {
+		using W = typename util::read_t<S>;
+		using T = typename W::type;
+	public:
+		static Wrapper<T> read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_nullable<T>([&]() -> Wrapper<T> { return S::read(ctx, buffer); });
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {
-			buffer.writeNullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
+		static void write(SerializationCtx  &ctx, Buffer &buffer, Wrapper<T> const &value) {
+			buffer.write_nullable<T>(value, [&](T const &inner_value) { S::write(ctx, buffer, inner_value); });
 		}
 	};
 }

@@ -1,34 +1,26 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_RDREACTIVEBASE_H
 #define RD_CPP_RDREACTIVEBASE_H
 
 
 #include "RdBindableBase.h"
 #include "IRdReactive.h"
-#include "IWire.h"
-#include "IProtocol.h"
 #include "Logger.h"
+#include "guards.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
 
 namespace rd {
-	class RdReactiveBase : public RdBindableBase, public IRdReactive {
-		class local_change_handler {
-			RdReactiveBase const *ptr;
-		public:
-			local_change_handler(RdReactiveBase const *ptr) : ptr(ptr) {
-				ptr->is_local_change = true;
-			}
+	//region predeclared
 
-			~local_change_handler() {
-				ptr->is_local_change = false;
-			}
-		};
+	class IWire;
 
+	class IProtocol;
+
+	class Serializers;
+	//endregion
+
+	class RdReactiveBase : public RdBindableBase, public IRdReactive {		
 	public:
 		static Logger logReceived;
 		static Logger logSend;
@@ -49,9 +41,6 @@ namespace rd {
 		mutable bool is_local_change = false;
 
 		//delegated
-		const Serializers &get_serializers() {
-			return get_protocol()->serializers;
-		}
 
 		const Serializers &get_serializers() const;
 
@@ -64,14 +53,14 @@ namespace rd {
 		void assert_bound() const;
 
 		template<typename F>
-		auto local_change(F &&action) const -> typename std::result_of<F()>::type {
+		auto local_change(F &&action) const -> typename std::result_of_t<F()> {
 			if (is_bound() && !async) {
 				assert_threading();
 			}
 
-			MY_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
+			RD_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
 
-			local_change_handler lc_handler(this);
+			util::bool_guard bool_guard(is_local_change);
 			return action();
 		}
 	};

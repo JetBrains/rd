@@ -1,14 +1,10 @@
-//
-// Created by jetbrains on 01.11.2018.
-//
-
 #ifndef RD_CPP_RDTASKIMPL_H
 #define RD_CPP_RDTASKIMPL_H
 
 #include "Polymorphic.h"
 #include "RdTaskResult.h"
 
-#include "optional.hpp"
+#include "thirdparty.hpp"
 
 
 namespace rd {
@@ -18,7 +14,7 @@ namespace rd {
 		friend
 		class RdTask;
 
-		mutable Property<tl::optional<RdTaskResult<T, S>>> result{tl::nullopt};
+		mutable Property<RdTaskResult<T, S>> result;
 	};
 }
 

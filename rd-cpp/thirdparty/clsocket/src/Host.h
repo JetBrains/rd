@@ -62,7 +62,7 @@ extern "C"
   #define __WORDSIZE 32
 #endif
 
-#if defined(_LINUX) || defined(_DARWIN)
+#if defined(__linux__) || defined(_DARWIN)
     typedef int            SOCKET;
 #endif
 
@@ -151,7 +151,7 @@ extern "C"
 #define GETHOSTBYNAME(a)       gethostbyname(a)
 #endif
 
-#if defined(_LINUX) || defined(_DARWIN)
+#if defined(__linux__) || defined(_DARWIN)
 #define ACCEPT(a,b,c)          accept(a,b,c)
 #define CONNECT(a,b,c)         connect(a,b,c)
 #define CLOSE(a)               close(a)

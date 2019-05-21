@@ -1,31 +1,51 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #ifndef RD_CPP_PROTOCOL_H
 #define RD_CPP_PROTOCOL_H
 
 
 #include "IProtocol.h"
+#include "Identities.h"
+#include "SerializationCtx.h"
+
+#include <memory>
 
 namespace rd {
+	//region predeclared
+
+	class SerializationCtx;
+
+	class InternRoot;
+	//endregion
+
+	/**
+	 * \brief Top level node in the object graph. It stores [SerializationCtx] for polymorphic "SerDes"
+	 */
 	class Protocol : /*IRdDynamic, */public IProtocol {
-	public:
+		constexpr static string_view InternRootName{"ProtocolInternRoot"};
+
+		Lifetime lifetime;
+
+		mutable std::unique_ptr<SerializationCtx> context;
+
+		mutable std::unique_ptr<InternRoot> internRoot;
+
 		//region ctor/dtor
-		Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+	private:
+		void initialize() const ;
+	public:
+		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 
-		Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+		Protocol(Identities::IdKind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 
-		Protocol(Protocol const &) {
-			assert("What the actual fuck" && false);
-		};
+		Protocol(Protocol const &) = delete;
 
-		Protocol(Protocol &&) = default;
+		Protocol(Protocol &&) noexcept = default;
 
-		Protocol &operator=(Protocol &&) = default;
+		Protocol &operator=(Protocol &&) noexcept = default;
+
+		virtual ~Protocol();
 		//endregion
 
-		const IProtocol *get_protocol() const override;
+		SerializationCtx &get_serialization_context() const override;
 
 		static const Logger initializationLogger;
 	};

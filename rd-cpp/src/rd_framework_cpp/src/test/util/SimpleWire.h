@@ -1,17 +1,13 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #ifndef RD_CPP_TESTWIRE_H
 #define RD_CPP_TESTWIRE_H
 
 
-#include <queue>
-#include <utility>
-
 #include "WireBase.h"
 #include "RdId.h"
 #include "Buffer.h"
+
+#include <queue>
+#include <utility>
 
 namespace rd {
 	namespace test {
@@ -38,7 +34,7 @@ namespace rd {
 			virtual ~SimpleWire() = default;
 			//endregion
 
-			void send(RdId const &id, std::function<void(Buffer const &buffer)> writer) const override;
+			void send(RdId const &id, std::function<void(Buffer &buffer)> writer) const override;
 
 			void process_all_messages() const;
 

@@ -1,9 +1,6 @@
-//
-// Created by jetbrains on 09.07.2018.
-//
-
-#include <Logger.h>
 #include "LifetimeDefinition.h"
+
+#include "Logger.h"
 
 namespace rd {
 	LifetimeDefinition::LifetimeDefinition(bool eternaled) : eternaled(eternaled), lifetime(eternaled) {}
@@ -36,7 +33,7 @@ namespace rd {
 		if (lifetime.ptr != nullptr) { //wasn't moved
 			if (!is_eternal()) {
 				if (!lifetime->is_terminated()) {
-					Logger().log(LogLevel::Warn, "Did you forget to terminate Lifetime definition?");
+					Logger().warn("Did you forget to terminate Lifetime definition?");
 					lifetime->terminate();
 				}
 			}

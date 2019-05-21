@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_RDSIGNAL_H
 #define RD_CPP_RDSIGNAL_H
 
@@ -15,7 +11,13 @@
 #pragma warning( push )
 #pragma warning( disable:4250 )
 namespace rd {
-	template<typename T, typename S = Polymorphic <T>>
+	/**
+	 * \brief Reactive signal for connection through wire.
+	 *  
+	 * \tparam T type of events
+	 * \tparam S "SerDes" for events
+	 */
+	template<typename T, typename S = Polymorphic<T>>
 	class RdSignal final : public RdReactiveBase, public ISignal<T>, public ISerializable {
 	private:
 		using WT = typename ISignal<T>::WT;
@@ -42,14 +44,14 @@ namespace rd {
 		virtual ~RdSignal() = default;
 		//endregion
 
-		static RdSignal<T, S> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdSignal<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdSignal<T, S> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -61,7 +63,7 @@ namespace rd {
 
 		void on_wire_received(Buffer buffer) const override {
 			auto value = S::read(this->get_serialization_context(), buffer);
-			logReceived.trace(logmsg(wrapper::get<T>(value)));
+			logReceived.trace("RECV" + logmsg(wrapper::get<T>(value)));
 
 			signal.fire(wrapper::get<T>(value));
 		}
@@ -73,8 +75,8 @@ namespace rd {
 			if (!async) {
 				assert_threading();
 			}
-			get_wire()->send(rdid, [this, &value](Buffer const &buffer) {
-				logSend.trace(logmsg(value));
+			get_wire()->send(rdid, [this, &value](Buffer &buffer) {
+				logSend.trace("SEND" + logmsg(value));
 				S::write(get_serialization_context(), buffer, value);
 			});
 			signal.fire(value);
@@ -87,6 +89,10 @@ namespace rd {
 				assert_threading();
 			}
 			signal.advise(lifetime, handler);
+		}
+
+		friend std::string to_string(RdSignal const &value) {
+			return "";
 		}
 	};
 }

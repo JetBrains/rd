@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 22.11.2018.
-//
-
 #ifndef RD_CPP_IUNKNOWNINSTANCE_H
 #define RD_CPP_IUNKNOWNINSTANCE_H
 
@@ -14,9 +10,9 @@ namespace rd {
 
 		IUnknownInstance();
 
-		IUnknownInstance(const RdId &unknownId);
+		explicit IUnknownInstance(const RdId &unknownId);
 
-		IUnknownInstance(RdId &&unknownId);
+		explicit IUnknownInstance(RdId &&unknownId);
 	};
 }
 

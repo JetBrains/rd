@@ -1,15 +1,15 @@
-//
-// Created by jetbrains on 23.07.2018.
-//
-
 #ifndef RD_CPP_FRAMEWORK_RDID_H
 #define RD_CPP_FRAMEWORK_RDID_H
 
+#include "Buffer.h"
+#include "hashing.h"
+
+#include "nonstd/string_view.hpp"
+
 #include <cstdint>
 #include <string>
-#include <memory>
 
-#include "Buffer.h"
+#include <memory>
 
 namespace rd {
 	class RdId;
@@ -23,12 +23,18 @@ namespace std {
 }
 
 namespace rd {
+	/**
+	 * \brief An identifier of the object that participates in the object graph.
+	 */
 	class RdId {
 	private:
-		using hash_t = int64_t;
-
-		hash_t hash{0};
 		friend struct std::hash<RdId>;
+
+		using hash_t = util::hash_t;
+
+		constexpr static hash_t NULL_ID = 0;
+
+		hash_t hash{NULL_ID};
 	public:
 		friend bool operator==(RdId const &left, RdId const &right) {
 			return left.hash == right.hash;
@@ -39,43 +45,63 @@ namespace rd {
 		}
 
 		//region ctor/dtor
-		RdId() = default;
+		constexpr RdId() = default;
 
-		RdId(const RdId &other) = default;
+		constexpr RdId(const RdId &other) = default;
 
-		RdId &operator=(const RdId &other) = default;
+		constexpr RdId &operator=(const RdId &other) = default;
 
-		RdId(RdId &&other) noexcept = default;
+		constexpr RdId(RdId &&other) noexcept = default;
 
-		RdId &operator=(RdId &&other) noexcept = default;
+		constexpr RdId &operator=(RdId &&other) noexcept = default;
 
-		explicit RdId(hash_t hash);
+		explicit constexpr RdId(hash_t hash) : hash(hash) {}
 		//endregion
 
-		//    static std::shared_ptr<RdId> NULL_ID;
-		static RdId Null();
+//		static const RdId NULL_ID;
 
-		static const int32_t MAX_STATIC_ID = 1'000'000;
+		static constexpr RdId Null() {
+			return RdId{NULL_ID};
+		}
 
-		static RdId read(Buffer const &buffer);
+		static constexpr int32_t MAX_STATIC_ID = 1'000'000;
 
-		void write(const Buffer &buffer) const;
+		static RdId read(Buffer &buffer);
 
-		hash_t get_hash() const;
+		void write(Buffer &buffer) const;
 
-		//    void write(AbstractBufefer& bufefer);
+		constexpr hash_t get_hash() const {
+			return hash;
+		}
 
-		bool isNull() const;
+		constexpr bool isNull() const {
+			return get_hash() == NULL_ID;
+		}
 
 		std::string toString() const;
 
-		RdId notNull();
+		RdId notNull() {
+			RD_ASSERT_MSG(!isNull(), "id is null");
+			return *this;
+		}
 
-		RdId mix(const std::string &tail) const;
+		/*template<size_t N>
+		constexpr RdId mix(char const (&tail)[N]) const {
+			return RdId(util::getPlatformIndependentHash<N>(tail, static_cast<util::constexpr_hash_t>(hash)));
+		}*/
 
-		RdId mix(int32_t tail) const;
+		constexpr RdId mix(string_view tail) const {
+			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
+		}
 
-		RdId mix(int64_t tail) const;
+		/*constexpr RdId mix(int32_t tail) const {
+			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
+		}
+
+		*/
+		constexpr RdId mix(int64_t tail) const {
+			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
+		}
 	};
 }
 

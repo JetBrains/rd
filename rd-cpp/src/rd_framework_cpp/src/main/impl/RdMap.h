@@ -1,7 +1,3 @@
-//
-// Created by jetbrains on 02.08.2018.
-//
-
 #ifndef RD_CPP_RDMAP_H
 #define RD_CPP_RDMAP_H
 
@@ -16,15 +12,24 @@
 #pragma warning( disable:4250 )
 
 namespace rd {
+	/**
+	 * \brief Reactive map for connection through wire. 
+	 *
+	 * \tparam K type of stored keys
+	 * \tparam V type of stored values
+	 * \tparam KS "SerDes" for keys
+	 * \tparam VS "SerDes" for values
+	 */
 	template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>>
-	class RdMap final : public RdReactiveBase, public IViewableMap<K, V>, public ISerializable {
+	class RdMap final : public RdReactiveBase, public ViewableMap<K, V>, public ISerializable {
 	private:
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
+		using OV = typename IViewableMap<K, V>::OV;
 
-		ViewableMap<K, V> map;
+		using map = ViewableMap<K, V>;
 		mutable int64_t next_version = 0;
-		mutable tsl::ordered_map<K const *, int64_t, TransparentHash<K>, TransparentKeyEqual<K>> pendingForAck;
+		mutable ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
 
 		bool is_master() const {
 			return master;
@@ -38,7 +43,7 @@ namespace rd {
 				   " :: value = " + (value ? to_string(*value) : "");
 		}
 
-		std::string logmsg(Op op, int64_t version, K const *key, tl::optional<WV> const &value) const {
+		std::string logmsg(Op op, int64_t version, K const *key, optional<WV> const &value) const {
 			return logmsg(op, version, key, value ? &(wrapper::get(*value)) : nullptr);
 		}
 
@@ -63,14 +68,14 @@ namespace rd {
 		virtual ~RdMap() = default;
 		//endregion
 
-		static RdMap<K, V, KS, VS> read(SerializationCtx const &ctx, Buffer const &buffer) {
+		static RdMap<K, V, KS, VS> read(SerializationCtx  &ctx, Buffer &buffer) {
 			RdMap<K, V, KS, VS> res;
 			RdId id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx const &ctx, Buffer const &buffer) const override {
+		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -86,10 +91,11 @@ namespace rd {
 					V const *new_value = e.get_new_value();
 					if (new_value) {
 						const IProtocol *iProtocol = get_protocol();
-						identifyPolymorphic(*new_value, *iProtocol->identity, iProtocol->identity->next(rdid));
+						const Identities *identity = iProtocol->get_identity();
+						identifyPolymorphic(*new_value, *identity, identity->next(rdid));
 					}
 
-					get_wire()->send(rdid, [this, e](Buffer const &buffer) {
+					get_wire()->send(rdid, [this, e](Buffer &buffer) {
 						int32_t versionedFlag = ((is_master() ? 1 : 0)) << versionedFlagShift;
 						Op op = static_cast<Op>(e.v.index());
 
@@ -109,7 +115,7 @@ namespace rd {
 							VS::write(this->get_serialization_context(), buffer, *new_value);
 						}
 
-						logSend.trace(logmsg(op, next_version - 1, e.get_key(), new_value));
+						logSend.trace("SEND" + logmsg(op, next_version - 1, e.get_key(), new_value));
 					});
 				});
 			});
@@ -124,16 +130,16 @@ namespace rd {
 
 		void on_wire_received(Buffer buffer) const override {
 			int32_t header = buffer.read_integral<int32_t>();
-			bool msgVersioned = (header >> versionedFlagShift) != 0;
+			bool msg_versioned = (header >> versionedFlagShift) != 0;
 			Op op = static_cast<Op>(header & ((1 << versionedFlagShift) - 1));
 
-			int64_t version = msgVersioned ? buffer.read_integral<int64_t>() : 0;
+			int64_t version = msg_versioned ? buffer.read_integral<int64_t>() : 0;
 
 			WK key = KS::read(this->get_serialization_context(), buffer);
 
 			if (op == Op::ACK) {
 				std::string errmsg;
-				if (!msgVersioned) {
+				if (!msg_versioned) {
 					errmsg = "Received " + to_string(Op::ACK) + " while msg hasn't versioned flag set";
 				} else if (!is_master()) {
 					errmsg = "Received " + to_string(Op::ACK) + " when not a Master";
@@ -163,37 +169,37 @@ namespace rd {
 				Buffer serialized_key;
 				KS::write(this->get_serialization_context(), serialized_key, wrapper::get<K>(key));
 
-				bool isPut = (op == Op::ADD || op == Op::UPDATE);
-				tl::optional<WV> value;
-				if (isPut) {
+				bool is_put = (op == Op::ADD || op == Op::UPDATE);
+				optional<WV> value;
+				if (is_put) {
 					value = VS::read(this->get_serialization_context(), buffer);
 				}
 
-				if (msgVersioned || !is_master() || pendingForAck.count(key) == 0) {
-					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value));
+				if (msg_versioned || !is_master() || pendingForAck.count(key) == 0) {
+					logReceived.trace("RECV" + logmsg(op, version, &(wrapper::get<K>(key)), value));
 					if (value.has_value()) {
-						map.set(std::move(key), std::move(*value));
+						map::set(std::move(key), *std::move(value));
 					} else {
-						map.remove(wrapper::get<K>(key));
+						map::remove(wrapper::get<K>(key));
 					}
 				} else {
 					logReceived.trace(logmsg(op, version, &(wrapper::get<K>(key)), value) + " >> REJECTED");
 				}
 
-				if (msgVersioned) {
+				if (msg_versioned) {
 					auto writer = util::make_shared_function(
-							[this, version, serialized_key = std::move(serialized_key)](
-									Buffer const &innerBuffer) mutable {
+							[version, serialized_key = std::move(serialized_key)](
+									Buffer &innerBuffer) mutable {
 								innerBuffer.write_integral<int32_t>(
-										(1 << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
+										(1u << versionedFlagShift) | static_cast<int32_t>(Op::ACK));
 								innerBuffer.write_integral<int64_t>(version);
 								// KS::write(this->get_serialization_context(), innerBuffer, wrapper::get<K>(key));
-								innerBuffer.writeByteArrayRaw(serialized_key.getArray());
+								innerBuffer.write_byte_array_raw(serialized_key.getArray());
 								// logSend.trace(logmsg(Op::ACK, version, serialized_key));
 							});
 					get_wire()->send(rdid, std::move(writer));
 					if (is_master()) {
-						logReceived.error("Both ends are masters: " + location.toString());
+						logReceived.error("Both ends are masters: %s", location.toString().c_str());
 					}
 				}
 			}
@@ -203,33 +209,41 @@ namespace rd {
 			if (is_bound()) {
 				assert_threading();
 			}
-			map.advise(lifetime, handler);
+			map::advise(lifetime, handler);
 		}
 
 		V const *get(K const &key) const override {
-			return local_change([&] { return map.get(key); });
+			return local_change([&] { return map::get(key); });
 		}
 
 		V const *set(WK key, WV value) const override {
 			return local_change([&]() mutable {
-				return map.set(std::move(key), std::move(value));
+				return map::set(std::move(key), std::move(value));
 			});
 		}
 
-		tl::optional<WV> remove(K const &key) const override {
-			return local_change([&] { return map.remove(key); });
+		OV remove(K const &key) const override {
+			return local_change([&] { return map::remove(key); });
 		}
 
 		void clear() const override {
-			return local_change([&] { return map.clear(); });
+			return local_change([&] { return map::clear(); });
 		}
 
 		size_t size() const override {
-			return map.size();
+			return map::size();
 		}
 
 		bool empty() const override {
-			return map.empty();
+			return map::empty();
+		}
+
+		friend std::string to_string(RdMap const &value) {
+			std::string res = "[";
+			for (auto it = value.begin(); it != value.end(); ++it) {
+				res += to_string(it.key()) + "=>" + to_string(it.value()) + ",";
+			}
+			return res + "]";
 		}
 	};
 }

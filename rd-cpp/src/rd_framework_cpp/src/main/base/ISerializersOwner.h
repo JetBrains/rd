@@ -1,19 +1,25 @@
-//
-// Created by jetbrains on 19.11.2018.
-//
-
 #ifndef RD_CPP_ISERIALIZERSOWNER_H
 #define RD_CPP_ISERIALIZERSOWNER_H
 
-
-#include "Serializers.h"
+#include <unordered_set>
 
 namespace rd {
-	class ISerializersOwner {
-	public:
-		void registry(Serializers const &serializers);
+	//region predeclared
 
-		virtual void registerSerializersCore(Serializers const &serializers) = 0;
+	class Serializers;
+	//endregion
+
+	class ISerializersOwner {
+		mutable std::unordered_set<Serializers const*> used;
+	public:
+		//region ctor/dtor
+
+		virtual ~ISerializersOwner() = default;
+		//endregion
+
+		void registry(Serializers const &serializers) const;
+
+		virtual void registerSerializersCore(Serializers const &serializers) const = 0;
 	};
 }
 

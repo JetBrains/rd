@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.WireBase
+import com.jetbrains.rd.framework.base.identifyPolymorphic
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -57,16 +58,16 @@ private fun InputStream.readInt64() : Long? {
 class SocketWire {
     companion object {
         val timeout: Duration = Duration.ofMillis(500)
-        private val ack_msg_len: Int = -1
-        private val pkg_header_len = 12
-        val disconnectedPauseReason = "Disconnected"
+        private const val ack_msg_len: Int = -1
+        private const val pkg_header_len = 12
+        const val disconnectedPauseReason = "Disconnected"
 
     }
 
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
 
         protected val logger: Logger = getLogger(this::class)
-        public val socketProvider = OptProperty<Socket>()
+        val socketProvider = OptProperty<Socket>()
 
         private lateinit var output : OutputStream
         private lateinit var socketInput : InputStream
@@ -299,8 +300,10 @@ class SocketWire {
                                 } else false
 
                             }
-                            if (shouldReconnect) continue
-                            else break
+                            if (shouldReconnect)
+                                continue
+                            else
+                                break
                         }
                     }
 
@@ -341,7 +344,7 @@ class SocketWire {
 
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
-                while (lifetime.isAlive)
+                while (lifetime.isAlive) {
                     try {
                         logger.debug { "$id: listening ${ss.localSocketAddress}" }
                         val s = ss.accept() //could be terminated by close
@@ -349,22 +352,21 @@ class SocketWire {
 
                         synchronized(lock) {
                             if (!lifetime.isAlive) {
-                                logger.debug { "$id : connected, but lifetime is already canceled, closing socket"}
+                                logger.debug { "$id : connected, but lifetime is already canceled, closing socket" }
                                 catch { s.close() }
                                 return@thread
-                            }
-                            else
+                            } else
                                 socket = s
                         }
 
 
                         socketProvider.set(s)
                     } catch (ex: SocketException) {
-                        logger.debug {"$id closed with exception: $ex"}
+                        logger.debug { "$id closed with exception: $ex" }
                     } catch (ex: Exception) {
                         logger.error("$id closed with exception", ex)
                     }
-
+                }
 
             }
 

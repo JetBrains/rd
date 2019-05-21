@@ -1,4 +1,4 @@
 add_executable(kotlin_interaction_test test.cpp)
 
-target_link_libraries(kotlin_interaction_test gtest gtest_main rd_framework_cpp rd_framework_cpp_util)
+target_link_libraries(kotlin_interaction_test rd_framework_cpp)
 #target_include_directories(kotlin_interaction_test PUBLIC util)

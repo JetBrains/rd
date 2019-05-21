@@ -1,21 +1,44 @@
-//
-// Created by jetbrains on 25.07.2018.
-//
-
 #include "Protocol.h"
+
+#include "SerializationCtx.h"
+#include "InternRoot.h"
+
+#include <utility>
 
 namespace rd {
 	const Logger Protocol::initializationLogger;
 
-	const IProtocol *Protocol::get_protocol() const {
-		return this;
+	constexpr string_view Protocol::InternRootName;
+
+	void Protocol::initialize() const {
+		internRoot = std::make_unique<InternRoot>();
+		
+		context = std::make_unique<SerializationCtx>(serializers.get(), SerializationCtx::roots_t{{util::getPlatformIndependentHash("Protocol"), internRoot.get()}});
+
+
+		internRoot->rdid = RdId::Null().mix(InternRootName);
+		scheduler->queue([this] {
+			internRoot->bind(lifetime, this, InternRootName);
+		});
 	}
 
-	Protocol::Protocol(std::shared_ptr<IIdentities> identity, IScheduler *scheduler,
-					   std::shared_ptr<IWire> wire) :
-			IProtocol(std::move(identity), scheduler, std::move(wire)) {}
+	Protocol::Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime) :
+			IProtocol(std::move(identity), scheduler, std::move(wire)), lifetime(lifetime) {
+		// initialize();
+	}
 
-	Protocol::Protocol(Identities &&identity, IScheduler *scheduler, std::shared_ptr<IWire> wire) :
-			IProtocol(std::make_shared<Identities>(identity), scheduler, std::move(wire)) {}
+	Protocol::Protocol(Identities::IdKind kind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime) :
+			IProtocol(std::make_shared<Identities>(kind), scheduler, std::move(wire)), lifetime(lifetime) {
+		// initialize();
+	}
+
+	Protocol::~Protocol() = default;
+
+	SerializationCtx &Protocol::get_serialization_context() const {
+		if (!context) {
+			initialize();
+		}
+		return *context;
+	}
 
 }

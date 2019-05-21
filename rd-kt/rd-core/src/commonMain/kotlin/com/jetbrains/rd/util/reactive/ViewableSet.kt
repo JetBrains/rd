@@ -5,9 +5,9 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 
 class ViewableSet<T : Any> : IMutableViewableSet<T> {
     override fun add(element: T): Boolean {
-        if (!set.add(element)) return false;
+        if (!set.add(element)) return false
         change.fire(IViewableSet.Event(AddRemove.Add, element))
-        return true;
+        return true
     }
 
     private inline fun bulkOr(elements: Collection<T>, fn: (T) -> Boolean) = 

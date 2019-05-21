@@ -1,50 +1,61 @@
-//
-// Created by jetbrains on 30.07.2018.
-//
-
 #ifndef RD_CPP_POLYMORPHIC_H
 #define RD_CPP_POLYMORPHIC_H
 
+#include "Buffer.h"
 #include "RdReactiveBase.h"
-#include "SerializationCtx.h"
 
 #include <type_traits>
 
 
 namespace rd {
+	//region predeclared
+
+	class SerializationCtx;
+	//endregion
+
+	/**
+	 * \brief Maintains "SerDes" for statically polymorphic type [T].
+	 * Requires static "read" and "write" methods as in common case below.
+	 * \tparam T type to "SerDes"
+	 * \tparam R trait specialisation (void by default)
+	 */
 	template<typename T, typename R = void>
 	class Polymorphic {
 	public:
-		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
+		inline static T read(SerializationCtx  &ctx, Buffer &buffer) {
 			return T::read(ctx, buffer);
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, T const &value) {
 			value.write(ctx, buffer);
+		}
+
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, Wrapper<T> const &value) {
+			value->write(ctx, buffer);
 		}
 	};
 
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_integral<T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<std::is_integral<T>::value>> {
 	public:
-		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
+		inline static T read(SerializationCtx  &ctx, Buffer &buffer) {
 			return buffer.read_integral<T>();
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, T const &value) {
 			buffer.write_integral<T>(value);
 		}
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<std::is_floating_point<T>::value>> {
 	public:
-		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
+		inline static T read(SerializationCtx  &ctx, Buffer &buffer) {
 			return buffer.read_floating_point<T>();
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, T const &value) {
 			buffer.write_floating_point<T>(value);
 		}
 	};
@@ -54,118 +65,117 @@ namespace rd {
 	template<typename T>
 	class Polymorphic<std::vector<T>> {
 	public:
-		static std::vector<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readArray<T>();
+		inline static std::vector<T> read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_array<T>();
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, std::vector<T> const &value) {
-			buffer.writeArray<T>(value);
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, std::vector<T> const &value) {
+			buffer.write_array<T>(value);
 		}
 	};
-
-	/*template<>
-class Polymorphic<std::string> {
-public:
-    static std::string read(SerializationCtx const &ctx, Buffer const &buffer) {
-        assert("use std::wstring instead of std::string" && 0);
-        //        return buffer.readString();
-     }
-
-    static void write(SerializationCtx const &ctx, Buffer const &buffer, std::string const &value) {
-        assert("use std::wstring instead of std::string" && 0);
-        //        buffer.writeString(value);
-    }
-};*/
 
 	template<>
 	class Polymorphic<bool> {
 	public:
-		static bool read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readBool();
+		inline static bool read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_bool();
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, bool const &value) {
-			buffer.writeBool(value);
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, bool const &value) {
+			buffer.write_bool(value);
+		}
+	};
+
+	template<>
+	class Polymorphic<wchar_t> {
+	public:
+		inline static bool read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_char();
+		}
+
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, bool const &value) {
+			buffer.write_char(value);
 		}
 	};
 
 	template<>
 	class Polymorphic<std::wstring> {
 	public:
-		static std::wstring read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readWString();
+		inline static std::wstring read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_wstring();
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, std::wstring const &value) {
-			buffer.writeWString(value);
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, std::wstring const &value) {
+			buffer.write_wstring(value);
+		}
+
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, Wrapper<std::wstring> const &value) {
+			buffer.write_wstring(*value);
 		}
 	};
 
 	template<>
 	class Polymorphic<Void> {
 	public:
-		static Void read(SerializationCtx const &ctx, Buffer const &buffer) {
+		inline static Void read(SerializationCtx  &ctx, Buffer &buffer) {
 			return {};
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, Void const &value) {}
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, Void const &value) {}
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_base_of<RdReactiveBase, T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<util::is_base_of_v<RdReactiveBase, T>>> {
 	public:
-		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
+		inline static T read(SerializationCtx  &ctx, Buffer &buffer) {
 			return T::read(ctx, buffer);
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, T const &value) {
 			value.write(ctx, buffer);
 		}
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if<std::is_enum<T>::value>::type> {
+	class Polymorphic<T, typename std::enable_if_t<std::is_enum<T>::value>> {
 	public:
-		static T read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readEnum<T>();
+		inline static T read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_enum<T>();
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
-			buffer.writeEnum<T>(value);
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, T const &value) {
+			buffer.write_enum<T>(value);
 		}
 	};
 
 	template<typename T>
-	class Polymorphic<tl::optional<T>> {
+	class Polymorphic<optional<T>> {
 	public:
-		static tl::optional<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return buffer.readNullable<T>([&ctx, &buffer]() {
+		inline static optional<T> read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_nullable<T>([&ctx, &buffer]() {
 				return Polymorphic<T>::read(ctx, buffer);
 			});
 		}
 
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, tl::optional<T> const &value) {
-			buffer.writeNullable<T>(value, [&ctx, &buffer](T const &v) {
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, optional<T> const &value) {
+			buffer.write_nullable<T>(value, [&ctx, &buffer](T const &v) {
 				Polymorphic<T>::write(ctx, buffer, v);
 			});
 		}
 	};
 
 	template<typename T>
-	class AbstractPolymorphic {
+	class Polymorphic<Wrapper<T>> {
 	public:
-		static value_or_wrapper<T> read(SerializationCtx const &ctx, Buffer const &buffer) {
-			return ctx.serializers->readPolymorphic<T>(ctx, buffer);
-		}
-
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, T const &value) {
-			ctx.serializers->writePolymorphic(ctx, buffer, value);
-		}
-
-		static void write(SerializationCtx const &ctx, Buffer const &buffer, Wrapper<T> const &value) {
-			ctx.serializers->writePolymorphic(ctx, buffer, *value);
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, Wrapper<T> const &value) {
+			value->write(ctx, buffer);
 		}
 	};
 }
+
+extern template class rd::Polymorphic<int8_t>;
+extern template class rd::Polymorphic<int16_t>;
+extern template class rd::Polymorphic<int32_t>;
+extern template class rd::Polymorphic<int64_t>;
 
 #endif //RD_CPP_POLYMORPHIC_H
