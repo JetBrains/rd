@@ -191,7 +191,7 @@ namespace rd {
 			return false;
 		}
 		send_ack(seqn);
-		if (seqn <= max_received_seqn) {
+		if (seqn <= max_received_seqn && seqn != 1) {
 			return true;
 		}
 		max_received_seqn = seqn;	
