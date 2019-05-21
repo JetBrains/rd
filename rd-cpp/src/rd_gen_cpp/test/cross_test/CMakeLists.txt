@@ -1,3 +1,3 @@
-add_executable(cross_test CrossTest.cpp)
+add_executable(cross_test CrossTestClient.cpp)
 
 target_link_libraries(cross_test rd_framework_cpp demo_model)

@@ -153,6 +153,14 @@ void Buffer::writeString(std::string const &value) const {
 		write_integral<word_t>(value ? 1 : 0);
 	}
 
+	wchar_t Buffer::read_char() {
+		return static_cast<wchar_t>(read_integral<uint16_t>());
+	}
+
+	void Buffer::write_char(wchar_t value) {
+		write_integral<uint16_t>(value);
+	}
+
 	void Buffer::read_byte_array(ByteArray &array) {
 		const int32_t length = read_integral<int32_t>();
 		array.resize(length);

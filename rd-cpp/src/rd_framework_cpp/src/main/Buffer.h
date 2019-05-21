@@ -147,6 +147,10 @@ namespace rd {
 
 		void write_bool(bool value);
 
+		wchar_t read_char();
+
+		void write_char(wchar_t value);
+
 		std::wstring read_wstring();
 
 		void write_wstring(std::wstring const &value);

@@ -1,13 +1,16 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
+
 package com.jetbrains.rd.framework.test.cases.demo
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.framework.test.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.fire
+import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.string.PrettyPrinter
-import com.jetbrains.rd.util.string.print
 import com.jetbrains.rd.util.string.println
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import demo.*
@@ -20,6 +23,8 @@ fun server(lifetime: Lifetime, port: Int? = null): Protocol {
     return Protocol(Serializers(), Identities(IdKind.Server), scheduler,
             SocketWire.Server(lifetime, scheduler, port, "DemoServer"), lifetime)
 }
+
+var finished = false
 
 fun main() {
     val lifetimeDef = Lifetime.Eternal.createNested()
@@ -37,17 +42,16 @@ fun main() {
     }
 
     val printer = PrettyPrinter()
+
     scheduler.queue {
         val model = DemoModel.create(lifetime, protocol)
         val extModel = model.extModel
 
         adviseAll(lifetime, model, extModel, printer)
-
-        val res = fireAll(model, extModel)
-        res.print(printer)
+        fireAll(model, extModel)
     }
 
-    Thread.sleep(10_000)
+    spinUntil(10_000) { finished }
 
     socketLifetimeDef.terminate()
     lifetimeDef.terminate()
@@ -55,31 +59,36 @@ fun main() {
     println(printer)
 }
 
+private fun <T> PrettyPrinter.printIfRemoteChange(entity: ISource<T>, entityName: String, vararg values: Any) {
+    if (!entity.isLocalChange) {
+        println("***")
+        println("$entityName:")
+        values.forEach { value -> value.println(this) }
+    }
+}
+
+private val <T> ISource<T>.isLocalChange
+    get() = (this as? RdReactiveBase)?.isLocalChange == true
+
 private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, printer: PrettyPrinter) {
     model.boolean_property.advise(lifetime) {
-        printer.print("BooleanProperty:")
-        it.println(printer)
+        printer.printIfRemoteChange(model.boolean_property, "boolean_property", it)
     }
 
     model.scalar.advise(lifetime) {
-        printer.print("Scalar:")
-        it.println(printer)
+        printer.printIfRemoteChange(model.scalar, "scalar", it)
     }
 
     model.list.advise(lifetime) {
-        printer.print("RdList:")
-        it.println(printer)
+        printer.printIfRemoteChange(model.list, "list", it)
     }
 
     model.set.advise(lifetime) { e, x ->
-        printer.print("RdSet:")
-        e.print(printer)
-        x.println(printer)
+        printer.printIfRemoteChange(model.set, "set", e, x)
     }
 
     model.mapLongToString.advise(lifetime) {
-        printer.print("RdMap:")
-        it.println(printer)
+        printer.printIfRemoteChange(model.mapLongToString, "mapLongToString", it)
     }
 
 /*
@@ -92,22 +101,23 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
 */
 
     model.interned_string.advise(lifetime) {
-        printer.print("Interned:")
-        it.println(printer)
+        printer.printIfRemoteChange(model.interned_string, "interned_string", it)
     }
 
     model.polymorphic.advise(lifetime) {
-        printer.print("Polymorphic:")
-        it.println(printer)
+        val entity = model.polymorphic;
+        printer.printIfRemoteChange(entity, "polymorphic", it)
+        if (!entity.isLocalChange) {
+            finished = true
+        }
     }
 
     extModel.checker.advise(lifetime) {
-        printer.print("ExtModel:Checker:")
-        it.println(printer)
+        printer.printIfRemoteChange(extModel.checker, "extModel.checker", it)
     }
 }
 
-fun fireAll(model: DemoModel, extModel: ExtModel): Int {
+fun fireAll(model: DemoModel, extModel: ExtModel) {
     model.boolean_property.set(false)
 
     val scalar = MyScalar(false,
@@ -134,7 +144,6 @@ fun fireAll(model: DemoModel, extModel: ExtModel): Int {
     val valB = "protocol"
 
 //    val sync = model.callback.sync("Unknown")
-    val sync = 0
 
     model.interned_string.set(valA)
     model.interned_string.set(valA)
@@ -146,6 +155,4 @@ fun fireAll(model: DemoModel, extModel: ExtModel): Int {
     model.polymorphic.set(derived)
 
     extModel.checker.fire()
-
-    return sync
 }

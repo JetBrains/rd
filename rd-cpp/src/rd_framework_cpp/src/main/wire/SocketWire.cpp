@@ -155,15 +155,17 @@ namespace rd {
 		return true;
 	}
 
+	static constexpr std::pair<int, sequence_number_t> INVALID_HEADER = std::make_pair(-1, -1);
+
 	std::pair<int, sequence_number_t> SocketWire::Base::read_header() const {
 		int32_t len = 0;
 		sequence_number_t seqn = 0;
 		while (true) {
 			if (!read_integral_from_socket(len)) {
-				return std::make_pair(-1, -1);
+				return INVALID_HEADER;
 			}
 			if (!read_integral_from_socket(seqn)) {
-				return std::make_pair(-1, -1);
+				return INVALID_HEADER;
 			}
 
 			if (len == ACK_MESSAGE_LENGTH) {
@@ -176,13 +178,13 @@ namespace rd {
 
 	bool SocketWire::Base::read_and_dispatch_package() const {
 		const auto pair = read_header();
-		const auto len = pair.first;
-		const auto seqn = pair.second;
-		if (seqn == -1 || len == -1) {
+		if (pair == INVALID_HEADER) {
 			logger.debug(this->id + ": failed to read header");
 			return false;
 		}
-		
+		const auto len = pair.first;
+		const auto seqn = pair.second;
+
 		Buffer pkg(len);
 		if (!read_data_from_socket(pkg.data(), len)) {
 			logger.debug(this->id + ": failed to read package");
@@ -260,6 +262,7 @@ namespace rd {
 						RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
 											this->id + ": failed to open ActiveSocket");
 
+						logger.info(this->id + ": openning 127.0.0.1:" + std::to_string(this->port));
 						{
 							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {
@@ -325,6 +328,7 @@ namespace rd {
 		RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
 					  this->id + ": failed to listen socket on port:" + std::to_string(port));
 
+		logger.info(this->id + ": listening 127.0.0.1/" + std::to_string(port));
 		this->port = ss->GetServerPort();
 		RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
 

@@ -65,46 +65,40 @@ abstract class AbstractBuffer {
     abstract fun checkAvailable(moreSize: Int)
 
     @ExperimentalUnsignedTypes
-    fun readUByte() = readByte().toUByte()
+    open fun readUShort() = readShort().toUShort()
 
     @ExperimentalUnsignedTypes
-    fun writeUByte(value: UByte) = writeByte(value.toByte())
+    open fun writeUShort(value: UShort) = writeShort(value.toShort())
 
     @ExperimentalUnsignedTypes
-    fun readUShort() = readShort().toUShort()
+    open fun readUInt(): UInt = readInt().toUInt()
 
     @ExperimentalUnsignedTypes
-    fun writeUShort(value: UShort) = writeShort(value.toShort())
+    open fun writeUInt(value: UInt) = writeInt(value.toInt())
 
     @ExperimentalUnsignedTypes
-    fun readUInt(): UInt = readInt().toUInt()
+    open fun readULong(): ULong = readLong().toULong()
 
     @ExperimentalUnsignedTypes
-    fun writeUInt(value: UInt) = writeInt(value.toInt())
+    open fun writeULong(value: ULong) = writeLong(value.toLong())
 
     @ExperimentalUnsignedTypes
-    fun readULong(): ULong = readLong().toULong()
+    open fun readUShortArray() : UShortArray = readShortArray().asUShortArray()
 
     @ExperimentalUnsignedTypes
-    fun writeULong(value: ULong) = writeLong(value.toLong())
+    open fun writeUShortArray(array: UShortArray) = writeShortArray(array.asShortArray())
 
     @ExperimentalUnsignedTypes
-    fun readUShortArray() : UShortArray = readShortArray().asUShortArray()
+    open fun readUIntArray() : UIntArray = readIntArray().asUIntArray()
 
     @ExperimentalUnsignedTypes
-    fun writeUShortArray(array: UShortArray) = writeShortArray(array.asShortArray())
+    open fun writeUIntArray(array: UIntArray) = writeIntArray(array.asIntArray())
 
     @ExperimentalUnsignedTypes
-    fun readUIntArray() : UIntArray = readIntArray().asUIntArray()
+    open fun readULongArray() : ULongArray = readLongArray().asULongArray()
 
     @ExperimentalUnsignedTypes
-    fun writeUIntArray(array: UIntArray) = writeIntArray(array.asIntArray())
-
-    @ExperimentalUnsignedTypes
-    fun readULongArray() : ULongArray = readLongArray().asULongArray()
-
-    @ExperimentalUnsignedTypes
-    fun writeULongArray(array: ULongArray) = writeLongArray(array.asLongArray())
+    open fun writeULongArray(array: ULongArray) = writeLongArray(array.asLongArray())
 }
 
 expect fun createAbstractBuffer(): AbstractBuffer

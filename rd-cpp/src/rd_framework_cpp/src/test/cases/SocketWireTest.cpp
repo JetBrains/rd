@@ -520,7 +520,7 @@ TEST_P(DisconnectTestBase, DdosDisconnect) {
 			} else {
 				try_close_socket(clientProtocol);
 			}
-			rd::util::sleep_this_thread(200);
+//			rd::util::sleep_this_thread(200);
 		}
 	}
 

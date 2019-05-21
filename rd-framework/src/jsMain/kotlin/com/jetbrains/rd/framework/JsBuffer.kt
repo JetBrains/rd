@@ -325,4 +325,6 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
     override fun getArray(): ByteArray {
         TODO("not optimal, remove from interface") //To change body of created functions use File | Settings | File Templates.
     }
+
+    //todo check correctness of default read/write of unsigned types
 }

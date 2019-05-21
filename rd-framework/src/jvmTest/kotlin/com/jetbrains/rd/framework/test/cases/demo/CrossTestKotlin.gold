@@ -1,40 +1,32 @@
-BooleanProperty:false
-Scalar:MyScalar (
-  sign = false
-  byte = 13
-  short = 32000
-  int = 1000000000
-  long = -2000000000000000000
-  float_ = 3.14
-  double_ = -1.2345678901234567E8
-)
-RdList:Add 0:1
-RdList:Add 1:3
-RdSet:Add13
-RdMap:Add 13:Kotlin
-Interned:"Kotlin"
-Interned:"protocol"
-Interned:"Kotlin"
-Polymorphic:Derived (
-  string = "Kotlin instance"
-)
-ExtModel:Checker:kotlin.Unit
-0Scalar:MyScalar (
-  sign = false
+***
+extModel.checker:
+kotlin.Unit
+***
+scalar:
+MyScalar (
+  bool = false
   byte = 98
   short = 32000
   int = 1000000000
   long = -2000000000000000000
-  float_ = 3.14
-  double_ = -1.2345678901234567E8
+  float = 3.14
+  double = -1.2345678901234567E8
   unsigned_short = 65534
   unsigned_int = 4294967294
   unsigned_long = 18446744073709551614
 )
-RdSet:Add98
-RdMap:Add 98:Cpp
-Interned:"Cpp"
-Polymorphic:Derived (
+***
+set:
+Add
+98
+***
+mapLongToString:
+Add 98:Cpp
+***
+interned_string:
+"Cpp"
+***
+polymorphic:
+Derived (
   string = "Cpp instance"
 )
-ExtModel:Checker:kotlin.Unit

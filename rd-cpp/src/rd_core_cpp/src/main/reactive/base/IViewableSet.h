@@ -59,9 +59,7 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)
-
-		> handler) const {
+		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)> handler) const {
 			this->advise(lifetime, [handler](Event e) {
 				handler(e.kind, *e.value);
 			});

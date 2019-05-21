@@ -1,4 +1,4 @@
-#define NOMINMAX   
+#define NOMINMAX
 
 #include "DemoModel.h"
 #include "ExtModel.h"
@@ -8,28 +8,30 @@
 #include "SocketWire.h"
 #include "Protocol.h"
 #include "SimpleScheduler.h"
-
 #include "filesystem.h"
+
 #include <cstdint>
 #include <fstream>
 #include <string>
 #include <climits>
+#include <future>
 
 using namespace rd;
 using namespace demo;
 
 using printer_t = std::vector<std::string>;
 
-void adviseAll(Lifetime, DemoModel const &, ExtModel const &, printer_t &);
+void adviseAll(Lifetime lifetime, DemoModel const &model, ExtModel const &extModel, printer_t &printer,
+			   std::promise<void> &promise);
 
-std::wstring fireAll(const DemoModel &model, const ExtModel &extModel);
+void fireAll(const DemoModel &model, const ExtModel &extModel);
 
 template<typename T>
 void print(printer_t &printer, T const &x) {
 	printer.push_back(rd::to_string(x));
 }
 
-int main() {
+int main(int argc, char **argv) {
 	SimpleScheduler scheduler;
 
 	LifetimeDefinition definition(false);
@@ -61,17 +63,19 @@ int main() {
 	printer_t printer;
 
 	DemoModel model;
-	scheduler.queue([&] {
+	std::promise<void> promise;
+	std::future<void> f = promise.get_future();
+
+	scheduler.queue([&]() mutable {
 		model.connect(lifetime, protocol.get());
 		ExtModel const &extModel = ExtModel::getOrCreateExtensionOf(model);
 
-		adviseAll(lifetime, model, extModel, printer);
-
-		auto res = fireAll(model, extModel);
-		print(printer, res);
+		adviseAll(lifetime, model, extModel, printer, promise);
+		fireAll(model, extModel);
+//
 	});
 
-	std::this_thread::sleep_for(std::chrono::seconds(10));
+	auto status = f.wait_for(std::chrono::seconds(10));
 
 	socket_definition.terminate();
 	definition.terminate();
@@ -84,57 +88,73 @@ int main() {
 	return 0;
 }
 
-void adviseAll(Lifetime lifetime, DemoModel const &model, ExtModel const &extModel, printer_t &printer) {
+void printIfRemoteChangeImpl(printer_t &printer, RdReactiveBase const &entity, std::string const &entity_name) {}
+
+template<typename T, class... Ts>
+void printIfRemoteChangeImpl(printer_t &printer, RdReactiveBase const &entity, std::string const &entity_name, T &&arg0,
+							 Ts &&...args) {
+	print(printer, arg0);
+	printIfRemoteChangeImpl(printer, entity, entity_name, std::forward<Ts>(args)...);
+}
+
+template<class... Ts>
+void printIfRemoteChange(printer_t &printer, RdReactiveBase const &entity, std::string entity_name, Ts &&...args) {
+	if (!entity.is_local_change) {
+		print(printer, "***");
+		print(printer, entity_name + ':');
+		printIfRemoteChangeImpl(printer, entity, entity_name, std::forward<Ts>(args)...);
+	}
+}
+
+void adviseAll(Lifetime lifetime, DemoModel const &model, ExtModel const &extModel, printer_t &printer,
+			   std::promise<void> &promise) {
 	model.get_boolean_property().advise(lifetime, [&](bool const &it) {
-		print(printer, "BooleanProperty:");
-		print(printer, it);
+		printIfRemoteChange(printer, model.get_boolean_property(), "boolean_property", it);
 	});
 
 	model.get_scalar().advise(lifetime, [&](MyScalar const &it) {
-		print(printer, "Scalar:");
-		print(printer, it);
+		printIfRemoteChange(printer, model.get_scalar(), "scalar", it);
 	});
 
-	model.get_list().advise(lifetime, [&](IViewableList<int32_t>::Event e) {//Event must be passed by value!!!
-		print(printer, "RdList:");
-		print(printer, e);
+	model.get_list().advise(lifetime, [&](IViewableList<int32_t>::Event e) {
+		//Event must be passed by value!!!
+		printIfRemoteChange(printer, model.get_list(), "list", e);
 	});
 
-	model.get_set().advise(lifetime, [&](IViewableSet<int32_t>::Event e) {//Event must be passed by value!!!
-		print(printer, "RdSet:");
-		print(printer, e);
+	model.get_set().advise(lifetime, [&](IViewableSet<int32_t>::Event e) {
+		//Event must be passed by value!!!
+		printIfRemoteChange(printer, model.get_set(), "set", e);
 	});
 
-	model.get_mapLongToString().advise(lifetime,
-									   [&](IViewableMap<int64_t, std::wstring>::Event e) {//Event must be passed by value!!!
-										   print(printer, "RdMap:");
-										   print(printer, e);
-									   });
+	model.get_mapLongToString().advise(lifetime, [&](IViewableMap<int64_t, std::wstring>::Event e) {
+		//Event must be passed by value!!!
+		printIfRemoteChange(printer, model.get_mapLongToString(), "mapLongToString", e);
+	});
 
 	model.get_callback().set([&](std::wstring const &s) -> int32_t {
-		print(printer, "RdTask:");
-		print(printer, s);
-
+		printIfRemoteChange(printer, model.get_mapLongToString(), "callback:", s);
 		return 14;
 	});
 
 	model.get_interned_string().advise(lifetime, [&](std::wstring const &it) {
-		print(printer, "Interned:");
-		print(printer, it);
+		printIfRemoteChange(printer, model.get_interned_string(), "Interned", it);
 	});
 
 	model.get_polymorphic().advise(lifetime, [&](Base const &it) {
-		print(printer, "Polymorphic:");
-		print(printer, it);
+		printIfRemoteChange(printer, model.get_polymorphic(), "polymorphic", it);
+		if (!model.get_polymorphic().is_local_change) {
+			promise.set_value();
+		}
 	});
 
+	
+
 	extModel.get_checker().advise(lifetime, [&]() {
-		print(printer, "ExtModel:Checker:");
-		print(printer, rd::Void());
+		printIfRemoteChange(printer, extModel.get_checker(), "extModel.checker", Void());
 	});
 }
 
-std::wstring fireAll(const DemoModel &model, const ExtModel &extModel) {
+void fireAll(const DemoModel &model, const ExtModel &extModel) {
 	model.get_boolean_property().set(false);
 
 	auto scalar = MyScalar(false,
@@ -174,5 +194,5 @@ std::wstring fireAll(const DemoModel &model, const ExtModel &extModel) {
 
 	extModel.get_checker().fire();
 
-	return res;
+//	return res;
 }

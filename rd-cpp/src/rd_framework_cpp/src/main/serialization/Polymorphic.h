@@ -87,6 +87,18 @@ namespace rd {
 	};
 
 	template<>
+	class Polymorphic<wchar_t> {
+	public:
+		inline static bool read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_char();
+		}
+
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, bool const &value) {
+			buffer.write_char(value);
+		}
+	};
+
+	template<>
 	class Polymorphic<std::wstring> {
 	public:
 		inline static std::wstring read(SerializationCtx  &ctx, Buffer &buffer) {

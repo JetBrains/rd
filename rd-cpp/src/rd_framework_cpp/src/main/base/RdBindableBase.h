@@ -9,7 +9,7 @@
 namespace rd {
 	class RdBindableBase : public virtual IRdBindable/*, IPrintable*/ {
 	protected:
-		mutable optional <Lifetime> bind_lifetime;
+		mutable optional<Lifetime> bind_lifetime;
 
 		bool is_bound() const;
 
@@ -40,15 +40,12 @@ namespace rd {
 
 		void identify(const Identities &identities, RdId const &id) const override;
 
-		mutable ordered_map <std::string, std::shared_ptr<IRdBindable>> bindable_extensions;//todo concurrency
+		mutable ordered_map<std::string, std::shared_ptr<IRdBindable>> bindable_extensions;//todo concurrency
 		//mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
 
 		template<typename T, typename... Args>
-		typename std::enable_if_t<util::is_base_of_v < IRdBindable, T>, T> const &
-		getOrCreateExtension(std::string
-		name,
-		Args &&... args
-		) const {
+		typename std::enable_if_t<util::is_base_of_v<IRdBindable, T>, T> const &
+		getOrCreateExtension(std::string name, Args &&... args) const {
 			auto it = bindable_extensions.find(name);
 			if (it != bindable_extensions.end()) {
 				return *dynamic_cast<T const *>(it->second.get());

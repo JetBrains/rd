@@ -17,7 +17,7 @@ TEST(BufferTest, RdVoid) {
 	using S = Polymorphic<Void>;
 	S::write(ctx, buffer, Void{});
 	EXPECT_EQ(0, buffer.get_position());
-	auto v = S::read(ctx, buffer);
+	const auto v = S::read(ctx, buffer);
 	EXPECT_EQ(Void{}, v);
 	EXPECT_EQ(0, buffer.get_position());
 }
@@ -29,14 +29,14 @@ TEST(BufferTest, readWritePod) {
 	buffer.write_integral<int32_t>(4);
 	buffer.write_integral<int64_t>(1ll << 32u);
 	buffer.write_integral<int32_t>(-1);
-	buffer.write_integral<wchar_t>('+');
-	buffer.write_integral<wchar_t>('-');
+	buffer.write_char('+');
+	buffer.write_char('-');
 	buffer.write_bool(true);
 
 	EXPECT_EQ(buffer.get_position(), (
 			sizeof(int32_t) + sizeof(int32_t) +
 			sizeof(int64_t) + sizeof(int32_t) +
-			sizeof(wchar_t) + sizeof(wchar_t) +
+			sizeof(uint16_t) + sizeof(uint16_t) +
 			sizeof(bool)));
 
 	buffer.rewind();
@@ -45,8 +45,8 @@ TEST(BufferTest, readWritePod) {
 	EXPECT_EQ(4, buffer.read_integral<int32_t>());
 	EXPECT_EQ(1ll << 32u, buffer.read_integral<int64_t>());
 	EXPECT_EQ(-1, buffer.read_integral<int32_t>());
-	EXPECT_EQ('+', buffer.read_integral<wchar_t>());
-	EXPECT_EQ('-', buffer.read_integral<wchar_t>());
+	EXPECT_EQ('+', buffer.read_char());
+	EXPECT_EQ('-', buffer.read_char());
 	EXPECT_EQ(true, buffer.read_bool());
 }
 
@@ -66,8 +66,8 @@ TEST(BufferTest, getArray) {
 	Buffer::ByteArray data(MEM);
 	memcpy(data.data(), buffer.data(), MEM);
 
-	auto array = buffer.getArray();
-	auto realArray = buffer.getRealArray();
+	const auto array = buffer.getArray();
+	const auto realArray = buffer.getRealArray();
 
 	EXPECT_TRUE(array != realArray);
 	EXPECT_EQ(realArray.size(), MEM);
@@ -93,8 +93,8 @@ TEST(BufferTest, string) {
 	));
 
 	buffer.rewind();
-	auto res = Polymorphic<std::wstring>::read(ctx, buffer);
-	auto len = buffer.read_integral<int32_t>();
+	const auto res = Polymorphic<std::wstring>::read(ctx, buffer);
+	const auto len = buffer.read_integral<int32_t>();
 	EXPECT_EQ(s, res);
 	EXPECT_EQ(len, s.length());
 }
@@ -119,7 +119,7 @@ TEST(BufferTest, bigVector) {
 
 	buffer.rewind();
 
-	auto res = buffer.read_array<int64_t>();
+	const auto res = buffer.read_array<int64_t>();
 
 	EXPECT_EQ(res, list);
 }
@@ -143,9 +143,9 @@ TEST(BufferTest, Enum) {
 
 	buffer.rewind();
 
-	auto one = buffer.read_enum<Numbers>();
-	auto two = buffer.read_enum<Numbers>();
-	auto three = buffer.read_enum<Numbers>();
+	const auto one = buffer.read_enum<Numbers>();
+	const auto two = buffer.read_enum<Numbers>();
+	const auto three = buffer.read_enum<Numbers>();
 
 	EXPECT_EQ(Numbers::ONE, one);
 	EXPECT_EQ(Numbers::TWO, two);
@@ -173,7 +173,7 @@ TEST(BufferTest, NullableSerializer) {
 	}
 	buffer.write_integral<int32_t>(-1);
 
-	int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<T> const &s) {
+	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<T> const &s) {
 		if (s) {
 			acc += 4 + 2 * s->size(); //1 - nullable flag, 4 - length siz, 2 - symbol size
 		} else {
@@ -181,11 +181,10 @@ TEST(BufferTest, NullableSerializer) {
 		}
 		return acc;
 	});
-	EXPECT_EQ(buffer.get_position(), (
-			4 + //first integarl
+	EXPECT_EQ(buffer.get_position(), 4 + //first integral
 			(1 + 4 + summary_size) + // 1 - nullable flag, 4 - list's size,
-			4 //last integral
-	));
+			4
+	);
 
 	buffer.rewind();
 
@@ -216,12 +215,12 @@ TEST(BufferTest, ArraySerializer) {
 	AS::write(ctx, buffer, list);
 	buffer.write_integral<int32_t>(-1);
 
-	int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<std::wstring> const &s) {
+	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<std::wstring> const &s) {
 		acc += 4 + 2 * s->size(); //4 - length siz, 2 - symbol size
 		return acc;
 	});
 	EXPECT_EQ(buffer.get_position(), (
-			4 + //first integarl
+			4 + //first integral
 			(4 + summary_size) + //4 - list's size,
 			4 //last integral
 	));
@@ -230,7 +229,7 @@ TEST(BufferTest, ArraySerializer) {
 
 	EXPECT_EQ(+1, buffer.read_integral<int32_t>());
 
-	auto actual = AS::read(ctx, buffer);
+	const auto actual = AS::read(ctx, buffer);
 	EXPECT_EQ(list, actual);
 
 	EXPECT_EQ(-1, buffer.read_integral<int32_t>());
@@ -252,8 +251,8 @@ TEST(BufferTest, floating_point) {
 	buffer.rewind();
 
 	for (int i = 0; i < C; ++i) {
-		auto f = buffer.read_floating_point<float>();
-		auto d = buffer.read_floating_point<double>();
+		const auto f = buffer.read_floating_point<float>();
+		const auto d = buffer.read_floating_point<double>();
 		EXPECT_FLOAT_EQ(f, float_v[i]);
 		EXPECT_FLOAT_EQ(d, double_v[i]);
 	}
