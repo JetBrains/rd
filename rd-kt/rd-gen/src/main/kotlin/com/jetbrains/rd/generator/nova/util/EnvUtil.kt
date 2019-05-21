@@ -4,9 +4,10 @@ import com.jetbrains.rd.util.Statics
 import java.util.*
 
 
-fun syspropertyOrEmpty(name: String) : String {
+val InvalidSysproperty = "--INVALID--"
+fun syspropertyOrInvalid(name: String) : String {
     val properties = Statics<Properties>().get() ?: System.getProperties()
-    return properties[name]?.toString() ?: ""
+    return properties[name]?.toString() ?: InvalidSysproperty
 }
 
 
