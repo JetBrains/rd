@@ -437,5 +437,23 @@ namespace JetBrains.Serialization
     {
       return ReadBoolean();
     }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public ushort ReadUShort()
+    {
+      return ReadUInt16();
+    }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public uint ReadUInt()
+    {
+      return ReadUInt32();
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public ulong ReadULong()
+    {
+      return ReadUInt64();
+    }
   }
 }
