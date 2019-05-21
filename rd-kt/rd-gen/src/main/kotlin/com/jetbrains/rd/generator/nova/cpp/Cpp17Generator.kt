@@ -37,7 +37,7 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
  * Remember about following properties: "FsPath", "TargetName"!
  * "a.b.c" to "a::b::c", for instance.
  */
-open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
+open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
 
     //region language specific properties
     object Namespace : ISetting<String, Declaration>

@@ -115,7 +115,7 @@ abstract class Kli() {
 
     var error: String? = null
 
-    internal fun resetAndParse(vararg cmdline: String) {
+    fun resetAndParse(vararg cmdline: String) {
         reset()
         parse(arrayOf(*cmdline))
     }
