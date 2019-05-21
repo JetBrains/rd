@@ -14,13 +14,13 @@ namespace JetBrains.Threading
 {
   public interface IReceiveChannel<T>
   {
-    T Receive();
+    T ReceiveBlocking();
     Task<T> ReceiveAsync();
   }
 
   public interface ISendChannel<T>
   {
-    void Send(T msg);
+    void SendBlocking(T msg);
     Task SendAsync(T msg);
   }
 
@@ -82,8 +82,8 @@ namespace JetBrains.Threading
 
     #region Blocking API
 
-    [PublicAPI] public void Send(T msg) => SendAsync(msg).Wait();
-    [PublicAPI] public T Receive() => ReceiveAsync().Result;
+    [PublicAPI] public void SendBlocking(T msg) => SendAsync(msg).Wait();
+    [PublicAPI] public T ReceiveBlocking() => ReceiveAsync().Result;
 
     #endregion
 

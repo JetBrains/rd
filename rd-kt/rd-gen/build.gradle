@@ -2,9 +2,17 @@ applyKotlinJVM()
 
 dependencies {
     compile project(':rd-core:')
-    compile gradleApi()
+    implementation gradleApi()
 //    testRuntime project(':rd-framework:')
     testCompile project(':rd-framework:')
-    testRuntime "org.jetbrains.kotlin:kotlin-compiler:1.3.0"
+    compile "org.jetbrains.kotlin:kotlin-compiler:1.3.0"
 }
 
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.jetbrains.rd.generator.nova.MainKt'
+    }
+    baseName = 'rd'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

@@ -4,13 +4,12 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrEmpty
-import org.junit.Test
+import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import java.io.File
 
 object ExampleRootNova : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrEmpty("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrEmpty("model.out.src.cpp.dir")))
+        Kotlin11Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
+        Cpp17Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrInvalid("model.out.src.cpp.dir")))
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
 )
 

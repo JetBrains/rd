@@ -19,16 +19,26 @@ abstract class GeneratorBase : IGenerator {
             fail("Can't use root folder '$folder' as output")
 
 
-        if (removeIfExists && folder.exists() && !folder.deleteRecursively()
+        if (removeIfExists && folder.exists() && ! retry { folder.deleteRecursively() }
                 && /* if delete failed (held by external process) but directory cleared it's ok */ !folder.list().isNullOrEmpty())
+        {
             fail("Can't clear '$folder'")
+        }
 
 
         if (folder.exists()) {
             if (!folder.isDirectory) fail("Not a folder: '$folder'")
         }
-        else if (!folder.mkdirs())
+        else if (! retry { folder.mkdirs() })
             fail("Can't create folder '$folder'")
+    }
+
+    private inline fun retry(action: () -> Boolean) : Boolean {
+        if (action()) return true
+
+        Thread.sleep(100)
+
+        return action()
     }
 
     protected open fun unknowns(declaredTypes: Iterable<Declaration>): Collection<Declaration> {

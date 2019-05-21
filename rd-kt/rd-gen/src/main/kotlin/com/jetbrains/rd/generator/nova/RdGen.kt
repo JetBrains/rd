@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rd.generator.nova.util.InvalidSysproperty
 import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
 import com.jetbrains.rd.util.kli.Kli
@@ -342,7 +343,7 @@ fun generateRdModel(
     generatorsToInvoke.sort()
     if (verbose) {
         println()
-        println(">> Generating: ${generatorsToInvoke.size} filtered generators")
+        println("After filtering ${generatorsToInvoke.size} generator(s) to run")
     }
 
     val generatedFolders = HashSet<File>()
@@ -409,7 +410,7 @@ private fun collectGeneratorsToInvoke(
     for (root in roots) {
         root.generators.forEach { gen ->
             val shouldGenerate =
-                genfilter.containsMatchIn(gen.javaClass.simpleName) && gen.folder.toString().isNotEmpty()
+                genfilter.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)
             if (verbose) println("  $gen: " + if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
             if (shouldGenerate) generatorsToInvoke.add(GenPair(gen, root))
         }

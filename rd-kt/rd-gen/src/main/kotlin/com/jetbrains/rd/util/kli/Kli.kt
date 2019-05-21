@@ -109,7 +109,7 @@ abstract class Kli() {
     val arguments = ArrayList<Argument<*>>()
     private var state: ParseState = Init
 
-    open val usage : String get() = "java -cp [CLASSPATH] ${javaClass.`package`.name}MainKt [OPTION]... ${arguments.joinToString( " "){it.name}}"
+    open val usage : String get() = "java -cp [CLASSPATH] ${javaClass.`package`.name}.MainKt [OPTION]... ${arguments.joinToString( " "){it.name}}"
     abstract val description: String
     abstract val comments: String
 

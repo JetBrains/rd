@@ -86,11 +86,10 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing) => Def.Bracket(opening, closing);
     
     
-//    #if !NET35
+
     [PublicAPI] public CancellationToken ToCancellationToken() => Def.ToCancellationToken();
     [PublicAPI] public static implicit operator CancellationToken(Lifetime lifetime) => lifetime.Def.ToCancellationToken();
     [PublicAPI] public void ThrowIfNotAlive() => Def.ThrowIfNotAlive();
-//    #endif
 
 
     #region Using      
