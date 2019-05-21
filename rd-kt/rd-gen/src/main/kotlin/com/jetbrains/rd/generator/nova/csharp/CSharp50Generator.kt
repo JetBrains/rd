@@ -143,7 +143,13 @@ open class CSharp50Generator(
                           PredefinedType.char,
                           PredefinedType.string
                   ).contains(this) -> name.decapitalize()
-                  this is PredefinedType.UnsignedInteger -> "u${itemType.substitutedName(scope)}"
+                  this is PredefinedType.UnsignedInteger -> {
+                      if (itemType is PredefinedType.byte) {
+                          "byte"
+                      } else {
+                          "u${itemType.substitutedName(scope)}"
+                      }
+                  }
                   this == PredefinedType.void -> "Unit"
                   this == PredefinedType.secureString -> "RdSecureString"
                   else -> name

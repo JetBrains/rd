@@ -26,6 +26,7 @@ object DemoModel : Ext(DemoRoot) {
         field("long", PredefinedType.long)
         field("float", PredefinedType.float)
         field("double", PredefinedType.double)
+        field("unsigned_byte", PredefinedType.byte.unsigned())
         field("unsigned_short", PredefinedType.short.unsigned())
         field("unsigned_int", PredefinedType.int.unsigned())
         field("unsigned_long", PredefinedType.long.unsigned())

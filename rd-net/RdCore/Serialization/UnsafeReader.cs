@@ -439,6 +439,12 @@ namespace JetBrains.Serialization
     }
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public byte ReadUByte()
+    {
+      return ReadByte();
+    }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public ushort ReadUShort()
     {
       return ReadUInt16();

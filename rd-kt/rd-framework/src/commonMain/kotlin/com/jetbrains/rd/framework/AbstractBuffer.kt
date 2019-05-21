@@ -65,6 +65,12 @@ abstract class AbstractBuffer {
     abstract fun checkAvailable(moreSize: Int)
 
     @ExperimentalUnsignedTypes
+    open fun readUByte() = readByte().toUByte()
+
+    @ExperimentalUnsignedTypes
+    open fun writeUByte(value: UByte) = writeByte(value.toByte())
+
+    @ExperimentalUnsignedTypes
     open fun readUShort() = readShort().toUShort()
 
     @ExperimentalUnsignedTypes

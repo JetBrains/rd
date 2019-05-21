@@ -72,7 +72,10 @@ sealed class PredefinedType : INonNullableScalar {
             get() = "U${itemType.name}"
     }
 
-    object byte : PredefinedType()
+    /*
+        No guarantee for being signed. Generates to "byte" in C#, for instance.
+     */
+    object byte : SignedIntegral()
     object short : SignedIntegral()
     object int : SignedIntegral()
     object long : SignedIntegral()

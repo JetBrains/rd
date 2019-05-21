@@ -10,9 +10,9 @@ enum class IdKind {
 }
 
 //PLEASE DO NOT CHANGE IT!!! IT'S EXACTLY THE SAME ON C# SIDE
-internal fun String?.getPlatformIndependentHash(initial: Long = 19L) : Long = this?.fold(initial) { acc, c -> acc*31 + c.toInt()} ?:0
-internal fun Int.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
-internal fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
+fun String?.getPlatformIndependentHash(initial: Long = 19L) : Long = this?.fold(initial) { acc, c -> acc*31 + c.toInt()} ?:0
+fun Int.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
+fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
 
 
 /**

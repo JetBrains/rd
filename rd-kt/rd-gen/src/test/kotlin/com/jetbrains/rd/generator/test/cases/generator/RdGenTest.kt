@@ -28,8 +28,8 @@ fun main() {
         }
         Configuration.DEMO_MODEL -> {
             System.setProperty("model.out.src.cpp.dir", "C:\\Work\\rd\\rd-cpp\\demo\\model")
-            System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\rd-framework\\src\\jvmTest\\kotlin\\com\\jetbrains\\rd\\framework\\test\\cases\\demo\\model")
-            System.setProperty("model.out.src.cs.dir", "C:\\temp\\rd\\rd-net\\RdFramework\\Util\\Model")
+            System.setProperty("model.out.src.kt.dir", "C:\\Work\\rd\\rd-kt\\rd-framework\\src\\jvmTest\\kotlin\\com\\jetbrains\\rd\\framework\\test\\cases\\demo\\model")
+            System.setProperty("model.out.src.cs.dir", "C:\\Work\\rd\\rd-net\\RdFramework\\Util\\Model")
 
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\demo"
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator.demo"
