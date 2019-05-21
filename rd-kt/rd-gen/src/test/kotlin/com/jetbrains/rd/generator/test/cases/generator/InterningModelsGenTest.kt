@@ -4,7 +4,6 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrEmpty
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import org.junit.Assert
 import org.junit.Test
