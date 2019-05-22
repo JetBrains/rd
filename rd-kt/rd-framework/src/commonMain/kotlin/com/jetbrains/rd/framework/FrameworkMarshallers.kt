@@ -26,6 +26,7 @@ open class DelegatedMarshaller<TFrom : Any, TTo : Any>(marshaller: IMarshaller<T
     writer = { ctx, stream, value -> marshaller.write(ctx, stream, from(value)) }
 )
 
+@ExperimentalUnsignedTypes
 object FrameworkMarshallers {
     inline fun <reified T : Any> create(crossinline reader: (AbstractBuffer) -> T, crossinline writer: (AbstractBuffer, T) -> Unit, predefinedId: Int? = null): UniversalMarshaller<T> {
         return UniversalMarshaller(T::class, { _, stream -> reader(stream) }, { _, stream, v -> writer(stream, v) }, predefinedId)
@@ -50,10 +51,11 @@ object FrameworkMarshallers {
     }
 
 
-    val Byte: IMarshaller<Byte> = create(AbstractBuffer::readByte, AbstractBuffer::writeByte, 1)
+    val Int8 : IMarshaller<Byte> = create(AbstractBuffer::readByte, AbstractBuffer::writeByte, 1)
     val Int16: IMarshaller<Short> = create(AbstractBuffer::readShort, AbstractBuffer::writeShort, 2)
     val Int32: IMarshaller<Int> = create(AbstractBuffer::readInt, AbstractBuffer::writeInt, 3)
     val Int64: IMarshaller<Long> = create(AbstractBuffer::readLong, AbstractBuffer::writeLong, 4)
+
     val Float: IMarshaller<Float> = create(AbstractBuffer::readFloat, AbstractBuffer::writeFloat, 5)
     val Double: IMarshaller<Double> = create(AbstractBuffer::readDouble, AbstractBuffer::writeDouble, 6)
     val Char: IMarshaller<Char> = create(AbstractBuffer::readChar, AbstractBuffer::writeChar, 7)
@@ -66,6 +68,7 @@ object FrameworkMarshallers {
     val String: UniversalMarshaller<String> = create(AbstractBuffer::readString, AbstractBuffer::writeString, 10)
 
     //aliases
+    val Byte = Int8
     val Short = Int16
     val Int = Int32
     val Long = Int64
@@ -84,16 +87,30 @@ object FrameworkMarshallers {
 
     //arrays
     val ByteArray: UniversalMarshaller<ByteArray> = create(AbstractBuffer::readByteArray, AbstractBuffer::writeByteArray, 31)
-    val CharArray: UniversalMarshaller<CharArray> = create(AbstractBuffer::readCharArray, AbstractBuffer::writeCharArray, 32)
-    val ShortArray: UniversalMarshaller<ShortArray> = create(AbstractBuffer::readShortArray, AbstractBuffer::writeShortArray, 33)
-    val IntArray: UniversalMarshaller<IntArray> = create(AbstractBuffer::readIntArray, AbstractBuffer::writeIntArray, 34)
-    val LongArray: UniversalMarshaller<LongArray> = create(AbstractBuffer::readLongArray, AbstractBuffer::writeLongArray, 35)
-    val FloatArray: UniversalMarshaller<FloatArray> = create(AbstractBuffer::readFloatArray, AbstractBuffer::writeFloatArray, 36)
-    val DoubleArray: UniversalMarshaller<DoubleArray> = create(AbstractBuffer::readDoubleArray, AbstractBuffer::writeDoubleArray, 37)
+    val ShortArray: UniversalMarshaller<ShortArray> = create(AbstractBuffer::readShortArray, AbstractBuffer::writeShortArray, 32)
+    val IntArray: UniversalMarshaller<IntArray> = create(AbstractBuffer::readIntArray, AbstractBuffer::writeIntArray, 33)
+    val LongArray: UniversalMarshaller<LongArray> = create(AbstractBuffer::readLongArray, AbstractBuffer::writeLongArray, 34)
+
+    val FloatArray: UniversalMarshaller<FloatArray> = create(AbstractBuffer::readFloatArray, AbstractBuffer::writeFloatArray, 35)
+    val DoubleArray: UniversalMarshaller<DoubleArray> = create(AbstractBuffer::readDoubleArray, AbstractBuffer::writeDoubleArray, 36)
+
+    val CharArray: UniversalMarshaller<CharArray> = create(AbstractBuffer::readCharArray, AbstractBuffer::writeCharArray, 37)
     val BooleanArray: UniversalMarshaller<BooleanArray> = create(AbstractBuffer::readBooleanArray, AbstractBuffer::writeBooleanArray, 38)
 
+
+    //unsigned
+    val UByte : IMarshaller<UByte> = create(AbstractBuffer::readUByte, AbstractBuffer::writeUByte, 41)
+    val UShort: IMarshaller<UShort> = create(AbstractBuffer::readUShort, AbstractBuffer::writeUShort, 42)
+    val UInt: IMarshaller<UInt> = create(AbstractBuffer::readUInt, AbstractBuffer::writeUInt, 43)
+    val ULong: IMarshaller<ULong> = create(AbstractBuffer::readULong, AbstractBuffer::writeULong, 44)
+
+    val UByteArray: UniversalMarshaller<UByteArray> = create(AbstractBuffer::readUByteArray, AbstractBuffer::writeUByteArray, 45)
+    val UShortArray: UniversalMarshaller<UShortArray> = create(AbstractBuffer::readUShortArray, AbstractBuffer::writeUShortArray, 46)
+    val UIntArray: UniversalMarshaller<UIntArray> = create(AbstractBuffer::readUIntArray, AbstractBuffer::writeUIntArray, 47)
+    val ULongArray: UniversalMarshaller<ULongArray> = create(AbstractBuffer::readULongArray, AbstractBuffer::writeULongArray, 48)
+
     fun registerIn(serializers: ISerializers) {
-        serializers.register(Byte)
+        serializers.register(Int8)
         serializers.register(Int16)
         serializers.register(Int32)
         serializers.register(Int64)
@@ -112,12 +129,13 @@ object FrameworkMarshallers {
         serializers.register(SecureString)
 
         serializers.register(ByteArray)
-        serializers.register(CharArray)
         serializers.register(ShortArray)
         serializers.register(IntArray)
         serializers.register(LongArray)
+
         serializers.register(FloatArray)
         serializers.register(DoubleArray)
+        serializers.register(CharArray)
         serializers.register(BooleanArray)
     }
 

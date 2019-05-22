@@ -64,6 +64,7 @@ abstract class AbstractBuffer {
 
     abstract fun checkAvailable(moreSize: Int)
 
+    //unsigned types
     @ExperimentalUnsignedTypes
     open fun readUByte() = readByte().toUByte()
 
@@ -88,18 +89,29 @@ abstract class AbstractBuffer {
     @ExperimentalUnsignedTypes
     open fun writeULong(value: ULong) = writeLong(value.toLong())
 
+
+    //unsigned arrays
+    @ExperimentalUnsignedTypes
+    open fun readUByteArray() : UByteArray = readByteArray().asUByteArray()
+
+    @ExperimentalUnsignedTypes
+    open fun writeUByteArray(array: UByteArray) = writeByteArray(array.asByteArray())
+    
+    
     @ExperimentalUnsignedTypes
     open fun readUShortArray() : UShortArray = readShortArray().asUShortArray()
 
     @ExperimentalUnsignedTypes
     open fun writeUShortArray(array: UShortArray) = writeShortArray(array.asShortArray())
 
+    
     @ExperimentalUnsignedTypes
     open fun readUIntArray() : UIntArray = readIntArray().asUIntArray()
 
     @ExperimentalUnsignedTypes
     open fun writeUIntArray(array: UIntArray) = writeIntArray(array.asIntArray())
 
+    
     @ExperimentalUnsignedTypes
     open fun readULongArray() : ULongArray = readLongArray().asULongArray()
 

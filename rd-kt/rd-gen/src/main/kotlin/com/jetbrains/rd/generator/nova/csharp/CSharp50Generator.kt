@@ -143,7 +143,7 @@ open class CSharp50Generator(
                           PredefinedType.char,
                           PredefinedType.string
                   ).contains(this) -> name.decapitalize()
-                  this is PredefinedType.UnsignedInteger -> {
+                  this is PredefinedType.UnsignedIntegral -> {
                       if (itemType is PredefinedType.byte) {
                           "byte"
                       } else {

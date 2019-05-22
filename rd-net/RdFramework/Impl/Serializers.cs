@@ -122,7 +122,7 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxWriteDelegate<float[]> WriteFloatArray = (ctx, writer, value) => writer.WriteArray(WriteFloat, ctx, value);
     public static readonly CtxWriteDelegate<double[]> WriteDoubleArray = (ctx, writer, value) => writer.WriteArray(WriteDouble, ctx, value);
     public static readonly CtxWriteDelegate<char[]> WriteCharArray = (ctx, writer, value) => writer.WriteArray(WriteChar, ctx, value);
-    public static readonly CtxWriteDelegate<bool[]> WriteBoolArray = (ctx, writer, value) => writer.WriteArray(WriteBool, ctx, value);    
+    public static readonly CtxWriteDelegate<bool[]> WriteBoolArray = (ctx, writer, value) => writer.WriteArray(WriteBool, ctx, value);
 
 
     public static void RegisterFrameworkMarshallers([NotNull] ISerializersContainer serializers)
@@ -131,6 +131,7 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadShort, WriteShort, 2);
       serializers.Register(ReadInt, WriteInt, 3);
       serializers.Register(ReadLong, WriteLong, 4);
+      
       serializers.Register(ReadFloat, WriteFloat, 5);
       serializers.Register(ReadDouble, WriteDouble, 6);
       serializers.Register(ReadChar, WriteChar, 7);
@@ -149,6 +150,7 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadShortArray, WriteShortArray, 32);
       serializers.Register(ReadIntArray, WriteIntArray, 33);
       serializers.Register(ReadLongArray, WriteLongArray, 34);
+      
       serializers.Register(ReadFloatArray, WriteFloatArray, 35);
       serializers.Register(ReadDoubleArray, WriteDoubleArray, 36);
       serializers.Register(ReadCharArray, WriteCharArray, 37);

@@ -223,7 +223,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     )
 
     private val IType.isPredefinedInteger: Boolean
-        get() = this in PredefinedIntegerList || this is PredefinedType.UnsignedInteger
+        get() = this in PredefinedIntegerList || this is PredefinedType.UnsignedIntegral
 
     val IType.isPredefinedFloating: Boolean
         get() = this in PredefinedFloatingList
@@ -285,7 +285,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             }
 
         }
-        is PredefinedType.UnsignedInteger -> {
+        is PredefinedType.UnsignedIntegral -> {
             "u" + itemType.substitutedName(scope)
         }
         is PredefinedType.dateTime -> "Date"
@@ -1382,7 +1382,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             is PredefinedType.bool -> "buffer.read_bool()"
             is PredefinedType.char -> "buffer.read_char()"
             is PredefinedType.string -> "buffer.read_wstring()"
-            in PredefinedIntegerList, is PredefinedType.UnsignedInteger -> "buffer.read_integral<${templateName(decl)}>()"
+            in PredefinedIntegerList, is PredefinedType.UnsignedIntegral -> "buffer.read_integral<${templateName(decl)}>()"
             in PredefinedFloatingList -> "buffer.read_floating_point<${templateName(decl)}>()"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
@@ -1560,7 +1560,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 is PredefinedType.bool -> "buffer.write_bool($field)"
                 is PredefinedType.char -> "buffer.write_char($field)"
                 is PredefinedType.string -> "buffer.write_wstring($field)"
-                in PredefinedIntegerList, is PredefinedType.UnsignedInteger -> "buffer.write_integral($field)"
+                in PredefinedIntegerList, is PredefinedType.UnsignedIntegral -> "buffer.write_integral($field)"
                 in PredefinedFloatingList -> "buffer.write_floating_point($field)"
                 is Declaration ->
                     if (isAbstract)

@@ -65,7 +65,7 @@ open class Kotlin11Generator(
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
         is PredefinedType.void -> "Unit"
-        is PredefinedType.UnsignedInteger -> "U${itemType.substitutedName(scope)}"
+        is PredefinedType.UnsignedIntegral -> "U${itemType.substitutedName(scope)}"
         is PredefinedType -> name.capitalize()
 
         else -> fail("Unsupported type ${javaClass.simpleName}")

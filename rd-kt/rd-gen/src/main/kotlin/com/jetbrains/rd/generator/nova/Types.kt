@@ -66,19 +66,45 @@ sealed class PredefinedType : INonNullableScalar {
     //primitive
     object bool : PredefinedType()
 
-    open class SignedIntegral : PredefinedType()
-    class UnsignedInteger(val itemType : SignedIntegral) : PredefinedType() {
-        override val name: String
-            get() = "U${itemType.name}"
+    /**
+     * byte, short, int and long that are signed/unsigned based by platform.
+     * E.g. byte is signed in java but unsigned in C#
+     */
+    open class NativeIntegral : PredefinedType()
+
+    /**
+     * Unsigned versions of primitive integral types on all platforms: java, c#, c++
+     */
+    class UnsignedIntegral internal constructor(val itemType : NativeIntegral) : PredefinedType() {
+        override val name: String get() = "U${itemType.name}"
+    }
+    
+    companion object {
+        val ubyte = UnsignedIntegral(byte)
+        val int8 : NativeIntegral get() = byte
+        val uint8 : UnsignedIntegral get() = ubyte
+
+        val ushort = UnsignedIntegral(short)
+        val int16 : NativeIntegral get() = short
+        val uint16 : UnsignedIntegral get() = ushort
+
+        val uint = UnsignedIntegral(int)
+        val int32 : NativeIntegral get() = int
+        val uint32 : UnsignedIntegral get() = uint
+
+        val ulong = UnsignedIntegral(long)
+        val int64 : NativeIntegral get() = long
+        val uint64 : UnsignedIntegral get() = ulong
     }
 
     /*
         No guarantee for being signed. Generates to "byte" in C#, for instance.
      */
-    object byte : SignedIntegral()
-    object short : SignedIntegral()
-    object int : SignedIntegral()
-    object long : SignedIntegral()
+    object byte : NativeIntegral()
+    object short : NativeIntegral()
+    object int : NativeIntegral()
+    object long : NativeIntegral()
+  
 
     object float : PredefinedType()
     object double : PredefinedType()
@@ -96,8 +122,6 @@ sealed class PredefinedType : INonNullableScalar {
     //rd framework special
     object rdId : PredefinedType()
 }
-
-fun PredefinedType.SignedIntegral.unsigned() = PredefinedType.UnsignedInteger(this)
 
 @Suppress("UNCHECKED_CAST")
 abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHolder() {
