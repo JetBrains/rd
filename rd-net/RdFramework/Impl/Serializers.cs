@@ -95,6 +95,20 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxReadDelegate<double[]> ReadDoubleArray = (ctx, reader) => reader.ReadArray(ReadDouble, ctx);
     public static readonly CtxReadDelegate<char[]> ReadCharArray = (ctx, reader) => reader.ReadArray(ReadChar, ctx);
     public static readonly CtxReadDelegate<bool[]> ReadBoolArray = (ctx, reader) => reader.ReadArray(ReadBool, ctx);
+    
+    
+    
+    public static readonly CtxReadDelegate<byte> ReadUByte = (ctx, reader) => reader.ReadUByte();
+    public static readonly CtxReadDelegate<ushort> ReadUShort = (ctx, reader) => reader.ReadUShort();
+    public static readonly CtxReadDelegate<uint> ReadUInt = (ctx, reader) => reader.ReadUInt();
+    public static readonly CtxReadDelegate<ulong> ReadULong = (ctx, reader) => reader.ReadULong();
+    
+    public static readonly CtxReadDelegate<byte[]> ReadUByteArray = (ctx, reader) => reader.ReadArray(ReadByte, ctx);
+    public static readonly CtxReadDelegate<ushort[]> ReadUShortArray = (ctx, reader) => reader.ReadArray(ReadUShort, ctx);
+    public static readonly CtxReadDelegate<uint[]> ReadUIntArray = (ctx, reader) => reader.ReadArray(ReadUInt, ctx);
+    public static readonly CtxReadDelegate<ulong[]> ReadULongArray = (ctx, reader) => reader.ReadArray(ReadULong, ctx);
+    
+
 
     //writers
     public static readonly CtxWriteDelegate<byte> WriteByte = (ctx, writer, value) => writer.Write(value);
@@ -125,6 +139,16 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxWriteDelegate<bool[]> WriteBoolArray = (ctx, writer, value) => writer.WriteArray(WriteBool, ctx, value);
 
 
+    public static readonly CtxWriteDelegate<byte> WriteUByte = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<ushort> WriteUShort = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<uint> WriteUInt = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<ulong> WriteULong = (ctx, writer, value) => writer.Write(value);
+    
+    public static readonly CtxWriteDelegate<byte[]> WriteUByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
+    public static readonly CtxWriteDelegate<ushort[]> WriteUShortArray = (ctx, writer, value) => writer.WriteArray(WriteUShort, ctx, value);
+    public static readonly CtxWriteDelegate<uint[]> WriteUIntArray = (ctx, writer, value) => writer.WriteArray(WriteUInt, ctx, value);
+    public static readonly CtxWriteDelegate<ulong[]> WriteULongArray = (ctx, writer, value) => writer.WriteArray(WriteULong, ctx, value);
+    
     public static void RegisterFrameworkMarshallers([NotNull] ISerializersContainer serializers)
     {
       serializers.Register(ReadByte, WriteByte, 1);
@@ -155,6 +179,17 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadDoubleArray, WriteDoubleArray, 36);
       serializers.Register(ReadCharArray, WriteCharArray, 37);
       serializers.Register(ReadBoolArray, WriteBoolArray, 38);
+      
+      //unsigned
+      serializers.Register(ReadUByte, WriteUByte, 41);
+      serializers.Register(ReadUShort, WriteUShort, 42);
+      serializers.Register(ReadUInt, WriteUInt, 43);
+      serializers.Register(ReadULong, WriteULong, 44);
+      
+      serializers.Register(ReadUByteArray, WriteUByteArray, 45);
+      serializers.Register(ReadUShortArray, WriteUShortArray, 46);
+      serializers.Register(ReadUIntArray, WriteUIntArray, 47);
+      serializers.Register(ReadULongArray, WriteULongArray, 48);
     }
 
     public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader)
