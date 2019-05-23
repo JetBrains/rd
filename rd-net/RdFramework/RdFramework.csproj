@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;net35;net461</TargetFrameworks>
+        <TargetFrameworks>netstandard1.5;net35;net461</TargetFrameworks>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PackageId>JetBrains.RdFramework</PackageId>
         <AssemblyName>JetBrains.RdFramework</AssemblyName>
@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
+        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">

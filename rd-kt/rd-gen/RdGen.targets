@@ -1,0 +1,66 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <RdModelOutDir>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)rd-gen\Model.CSharp</RdModelOutDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RdModelOutDir)\*.cs">
+      <SubType>Code</SubType>
+      <Link>src\RdGen\CSharp\Stub</Link>
+    </Compile>
+    <RdModel Include="$(RdModelDir)\**\*.kt">
+      <Private>True</Private>
+    </RdModel>
+  </ItemGroup>
+  <Target Name="RdGenerate" Inputs="@(RdModel)" Outputs="$(RdModelOutDir)\.rdgen" BeforeTargets="PrepareResources">
+    <Error Condition="'$(RdModelDir)' == ''" Text="Please define property RdModelDir with path to rd model folder"/>
+    <Error Condition="!Exists('$(RdModelDir)')" Text="$(RdModelDir) not exists" />
+    <PropertyGroup>
+      <IsWindows Condition="'$(OS)'=='Windows_NT'">True</IsWindows>
+      <IsLinux Condition="'$(OS)'!='Windows_NT' AND !Exists('/Library/Frameworks')">True</IsLinux>
+      <IsMacOs Condition="'$(OS)'!='Windows_NT' AND Exists('/Library/Frameworks')">True</IsMacOs>
+      <JavaHome Condition="'$(IsWindows)' == 'True'">$(MSBuildThisFileDirectory)..\DotFiles\jdk\win</JavaHome>
+      <JavaHome Condition="'$(IsLinux)' == 'True'">$(MSBuildThisFileDirectory)..\DotFiles\jdk\linux</JavaHome>
+      <JavaHome Condition="'$(IsMacOs)' == 'True'">$(MSBuildThisFileDirectory)..\DotFiles\jdk\mac\jdk\Contents\Home</JavaHome>
+      <JavaExe Condition="'$(IsWindows)' == 'True'">$(JavaHome)\bin\java.exe</JavaExe>
+      <JavaExe Condition="'$(IsWindows)' != 'True'">$(JavaHome)\bin\java</JavaExe>
+      <_RdProtocolGeneratorLogFile>$(IntermediateOutputPath)generatorOutput.log</_RdProtocolGeneratorLogFile>
+    </PropertyGroup>
+
+    <Exec Condition="'$(IsLinux)' == 'True' OR '$(IsMacOs)' == 'True'" Command="chmod +x &quot;$(JavaExe)&quot;" />
+
+    <Message Text="My home is: $(ProductHomeDir)" Importance="low" />
+    <Message Text="Generator command line: &quot;$(Java)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot;  &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; -jar  &quot;$(MSBuildThisFileDirectory)\rd.jar&quot; -s &quot;$(RdModelDir)&quot; -h &quot;$(RdModelOutDir)&quot;" Importance="low" />
+
+    <Exec Command="&quot;$(JavaExe)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot; &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; -jar &quot;$(MSBuildThisFileDirectory)rd.jar&quot; -s &quot;$(RdModelDir)&quot; -h &quot;$(RdModelOutDir)&quot; &gt; &quot;$(_RdProtocolGeneratorLogFile)&quot; 2&gt;&amp;1" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+
+    <ReadLinesFromFile File="$(_RdProtocolGeneratorLogFile)" Condition="'$(ErrorCode)' != '0'">
+      <Output TaskParameter="Lines" ItemName="_RdProtocolGeneratorLogContent" />
+    </ReadLinesFromFile>
+    <Message Text="Generator exit code is $(ErrorCode)" />
+    <Error Text="RdModel generator failed, generate output:'%0a%0d' @(_RdProtocolGeneratorLogContent, '%0a%0d')" Condition="'$(ErrorCode)' != '0'" />
+    <ItemGroup>
+      <FileWrites Include="$(RdModelOutDir)\*.cs" />
+      <FileWrites Include="$(_RdProtocolGeneratorLogFile)" />
+      <FileWrites Include="$(RdModelOutDir)\.rdgen" />
+
+      <Compile Include="$(RdModelOutDir)\*.cs">
+        <SubType>Code</SubType>
+        <Link>src\RdGen\CSharp\Stub</Link>
+      </Compile>
+      <CompileX Remove="%(CompileX.Identity)" />
+      <CompileX Include="%(Compile.FullPath)" />
+      <Compile Remove="%(Compile.Identity)" />
+    </ItemGroup>
+    <RemoveDuplicates Inputs="@(CompileX)">
+      <Output TaskParameter="Filtered" ItemName="CompileX" />
+    </RemoveDuplicates>
+    <CreateItem Include="@(CompileX)">
+      <Output TaskParameter="Include" ItemName="ExistedFiles" Condition="Exists('%(CompileX.FullPath)')" />
+    </CreateItem>
+    <ItemGroup Condition="'@(Compile)' == ''">
+      <Compile Include="%(ExistedFiles.FullPath)" />
+    </ItemGroup>
+  </Target>
+</Project>

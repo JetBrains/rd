@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>JetBrains.RdGen</id>
+        <version>$version$</version>
+        <authors>JetBrains</authors>
+        <owners>JetBrains</owners>
+        <license type="expression">Apache-2.0</license>
+        <projectUrl>https://github.com/JetBrains/rd</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>RD Generator</description>
+        <dependencies>
+            <group>
+                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
+            </group>
+            <group targetFramework="net35">
+                <dependency id="AsyncBridge.Net35" version="0.2.0"/>
+                <dependency id="TaskParallelLibrary" version="1.0.2856.0"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="RdGen.targets" target="build\RdGen.targets"/>
+        <file src="build\libs\rd.jar" target="build\rd.jar"/>
+        <file src="build\nuget\DotFiles\**\*" target="DotFiles"/>
+
+        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.Lifetimes.dll" target="lib\net35"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.Lifetimes.pdb" target="lib\net35"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.RdFramework.dll " target="lib\net35"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.RdFramework.pdb " target="lib\net35"/>
+
+        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.Lifetimes.dll" target="lib\net461"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.Lifetimes.pdb" target="lib\net461"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.RdFramework.dll" target="lib\net461"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.RdFramework.pdb" target="lib\net461"/>
+
+        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.Lifetimes.dll" target="lib\netstandard1.5"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.Lifetimes.pdb" target="lib\netstandard1.5"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.RdFramework.dll" target="lib\netstandard1.5"/>
+        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.RdFramework.pdb" target="lib\netstandard1.5"/>
+    </files>
+</package>

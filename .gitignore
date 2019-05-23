@@ -15,3 +15,6 @@ rd-net/RdFramework/obj
 rd-net/**/bin
 rd-net/**/obj
 /artifacts/
+.DS_Store
+*.nupkg
+*.DotSettings.user

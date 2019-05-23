@@ -1,13 +1,15 @@
 <Project>
-  <PropertyGroup  Condition="'$(OS)' != 'Unix'">
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
-  </PropertyGroup>
-  <PropertyGroup  Condition="'$(OS)' == 'Unix'">
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">/usr/lib/mono/2.0-api</FrameworkPathOverride>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net461'">/usr/lib/mono/4.6.1-api</FrameworkPathOverride>
+  <PropertyGroup>
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' AND Exists('$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client')">$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' AND Exists('/usr/lib/mono/2.0-api')">/usr/lib/mono/2.0-api</FrameworkPathOverride>
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net461' AND Exists('/usr/lib/mono/4.6.1-api')">/usr/lib/mono/4.6.1-api</FrameworkPathOverride>
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' AND Exists(' /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0-api')"> /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0-api</FrameworkPathOverride>
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net461' AND Exists(' /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.6.1-api')"> /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.6.1-api</FrameworkPathOverride>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\key.snk</AssemblyOriginatorKeyFile>
+    <AssemblyVersion>777.0.0</AssemblyVersion>
+    <FileVersion>777.0.0</FileVersion>
   </PropertyGroup>
 </Project>
