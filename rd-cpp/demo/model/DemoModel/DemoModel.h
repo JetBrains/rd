@@ -61,12 +61,17 @@ namespace demo {
         
         //custom serializers
         private:
+        using __BoolArraySerializer = rd::ArraySerializer<rd::Polymorphic<bool>>;
+        using __UByteArraySerializer = rd::ArraySerializer<rd::Polymorphic<uint8_t>>;
         using __StringInternedAtProtocolSerializer = rd::InternedSerializer<rd::Polymorphic<std::wstring>, rd::util::getPlatformIndependentHash("Protocol")>;
         
         //fields
         protected:
         rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_;
+        rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> bool_array_;
         rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_;
+        rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_;
+        rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_;
         rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_;
         rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_;
         rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_;
@@ -82,7 +87,7 @@ namespace demo {
         
         //primary ctor
         public:
-        DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_);
+        DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> bool_array_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_, rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_);
         
         //secondary constructor
         
@@ -108,7 +113,10 @@ namespace demo {
         
         //getters
         rd::RdProperty<bool, rd::Polymorphic<bool>> const & get_boolean_property() const;
+        rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> const & get_bool_array() const;
         rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> const & get_scalar() const;
+        rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> const & get_ubyte() const;
+        rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> const & get_ubyte_array() const;
         rd::RdList<int32_t, rd::Polymorphic<int32_t>> const & get_list() const;
         rd::RdSet<int32_t, rd::Polymorphic<int32_t>> const & get_set() const;
         rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> const & get_mapLongToString() const;

@@ -75,8 +75,20 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
         printer.printIfRemoteChange(model.boolean_property, "boolean_property", it)
     }
 
+    model.bool_array.advise(lifetime) {
+        printer.printIfRemoteChange(model.bool_array, "bool_array", it)
+    }
+
     model.scalar.advise(lifetime) {
         printer.printIfRemoteChange(model.scalar, "scalar", it)
+    }
+
+    model.ubyte.advise(lifetime) {
+        printer.printIfRemoteChange(model.ubyte, "ubyte", it)
+    }
+
+    model.ubyte_array.advise(lifetime) {
+        printer.printIfRemoteChange(model.ubyte_array, "ubyte_array", it)
     }
 
     model.list.advise(lifetime) {
@@ -120,6 +132,8 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
 fun fireAll(model: DemoModel, extModel: ExtModel) {
     model.boolean_property.set(false)
 
+    model.bool_array.set(booleanArrayOf(true, false))
+
     val scalar = MyScalar(false,
             13,
             32000,
@@ -127,11 +141,17 @@ fun fireAll(model: DemoModel, extModel: ExtModel) {
             -2_000_000_000_000_000_000,
             3.14f,
             -123456789.012345678,
+            UByte.MAX_VALUE.minus(1u).toUByte(),
             UShort.MAX_VALUE.minus(1u).toUShort(),
             UInt.MAX_VALUE.minus(1u),
             ULong.MAX_VALUE.minus(1u)
     )
+
     model.scalar.set(scalar)
+
+    model.ubyte.set(UByte.MAX_VALUE.minus(13u).toUByte())
+
+    model.ubyte_array.set(ubyteArrayOf(13u.toUByte(), (-1).toUByte()))
 
     model.list.add(1)
     model.list.add(3)

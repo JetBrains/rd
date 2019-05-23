@@ -1,3 +1,5 @@
+@file:Suppress("ClassName")
+
 package com.jetbrains.rd.generator.nova
 
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -73,6 +75,12 @@ sealed class PredefinedType : INonNullableScalar {
     open class NativeIntegral : PredefinedType()
 
     /**
+     * float and double that are single and double precision floating point types respectively.
+     * Usually IEEE-754 32 and 64 bit.
+     */
+    open class NativeFloatingPointType : PredefinedType()
+
+    /**
      * Unsigned versions of primitive integral types on all platforms: java, c#, c++
      */
     class UnsignedIntegral internal constructor(val itemType : NativeIntegral) : PredefinedType() {
@@ -106,8 +114,8 @@ sealed class PredefinedType : INonNullableScalar {
     object long : NativeIntegral()
   
 
-    object float : PredefinedType()
-    object double : PredefinedType()
+    object float : NativeFloatingPointType()
+    object double : NativeFloatingPointType()
 
     object char : PredefinedType()
     //string

@@ -208,28 +208,14 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         //don't touch. it works
     }
     //endregion
-
-    //region IType.
-    private val PredefinedFloatingList = listOf(
-            PredefinedType.float,
-            PredefinedType.double
-    )
-
-    private val PredefinedIntegerList = listOf(
-            PredefinedType.byte,
-            PredefinedType.short,
-            PredefinedType.int,
-            PredefinedType.long
-    )
-
-    private val IType.isPredefinedInteger: Boolean
-        get() = this in PredefinedIntegerList || this is PredefinedType.UnsignedIntegral
-
-    val IType.isPredefinedFloating: Boolean
-        get() = this in PredefinedFloatingList
+    private val IType.isPredefinedNumber: Boolean
+        get() = this is PredefinedType.UnsignedIntegral ||
+                this is PredefinedType.NativeIntegral ||
+                this is PredefinedType.bool ||
+                this is PredefinedType.char
 
     private val IType.isPrimitive: Boolean
-        get() = this.isPredefinedFloating || this.isPredefinedInteger
+        get() = this is PredefinedType.NativeFloatingPointType || this.isPredefinedNumber
 
     private fun IType.isAbstract0() = (this is Struct.Abstract || this is Class.Abstract)
     private fun IType.isAbstract() = (this.isAbstract0()) || (this is InternedScalar && (this.itemType.isAbstract0()))
@@ -286,7 +272,11 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
         }
         is PredefinedType.UnsignedIntegral -> {
-            "u" + itemType.substitutedName(scope)
+            if (itemType is PredefinedType.byte) {
+                "uint8_t"
+            } else {
+                "u" + itemType.substitutedName(scope)
+            }
         }
         is PredefinedType.dateTime -> "Date"
         is PredefinedType.guid -> "UUID"
@@ -1382,8 +1372,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             is PredefinedType.bool -> "buffer.read_bool()"
             is PredefinedType.char -> "buffer.read_char()"
             is PredefinedType.string -> "buffer.read_wstring()"
-            in PredefinedIntegerList, is PredefinedType.UnsignedIntegral -> "buffer.read_integral<${templateName(decl)}>()"
-            in PredefinedFloatingList -> "buffer.read_floating_point<${templateName(decl)}>()"
+            is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.read_integral<${templateName(decl)}>()"
+            is PredefinedType.NativeFloatingPointType -> "buffer.read_floating_point<${templateName(decl)}>()"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 if (isAbstract)
@@ -1560,8 +1550,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 is PredefinedType.bool -> "buffer.write_bool($field)"
                 is PredefinedType.char -> "buffer.write_char($field)"
                 is PredefinedType.string -> "buffer.write_wstring($field)"
-                in PredefinedIntegerList, is PredefinedType.UnsignedIntegral -> "buffer.write_integral($field)"
-                in PredefinedFloatingList -> "buffer.write_floating_point($field)"
+                is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.write_integral($field)"
+                is PredefinedType.NativeFloatingPointType -> "buffer.write_floating_point($field)"
                 is Declaration ->
                     if (isAbstract)
                         "ctx.get_serializers().writePolymorphic<${templateName(decl)}>(ctx, buffer, $field)"

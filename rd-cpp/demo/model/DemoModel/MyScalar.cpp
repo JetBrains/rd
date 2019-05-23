@@ -11,9 +11,9 @@ namespace demo {
     }
     
     //primary ctor
-    MyScalar::MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_) :
+    MyScalar::MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint8_t unsigned_byte_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_) :
     rd::IPolymorphicSerializable()
-    ,bool_(std::move(bool_)), byte_(std::move(byte_)), short_(std::move(short_)), int_(std::move(int_)), long_(std::move(long_)), float_(std::move(float_)), double_(std::move(double_)), unsigned_short_(std::move(unsigned_short_)), unsigned_int_(std::move(unsigned_int_)), unsigned_long_(std::move(unsigned_long_))
+    ,bool_(std::move(bool_)), byte_(std::move(byte_)), short_(std::move(short_)), int_(std::move(int_)), long_(std::move(long_)), float_(std::move(float_)), double_(std::move(double_)), unsigned_byte_(std::move(unsigned_byte_)), unsigned_short_(std::move(unsigned_short_)), unsigned_int_(std::move(unsigned_int_)), unsigned_long_(std::move(unsigned_long_))
     {
         initialize();
     }
@@ -32,10 +32,11 @@ namespace demo {
         auto long_ = buffer.read_integral<int64_t>();
         auto float_ = buffer.read_floating_point<float>();
         auto double_ = buffer.read_floating_point<double>();
+        auto unsigned_byte_ = buffer.read_integral<uint8_t>();
         auto unsigned_short_ = buffer.read_integral<uint16_t>();
         auto unsigned_int_ = buffer.read_integral<uint32_t>();
         auto unsigned_long_ = buffer.read_integral<uint64_t>();
-        MyScalar res{std::move(bool_), std::move(byte_), std::move(short_), std::move(int_), std::move(long_), std::move(float_), std::move(double_), std::move(unsigned_short_), std::move(unsigned_int_), std::move(unsigned_long_)};
+        MyScalar res{std::move(bool_), std::move(byte_), std::move(short_), std::move(int_), std::move(long_), std::move(float_), std::move(double_), std::move(unsigned_byte_), std::move(unsigned_short_), std::move(unsigned_int_), std::move(unsigned_long_)};
         return res;
     }
     
@@ -49,6 +50,7 @@ namespace demo {
         buffer.write_integral(long_);
         buffer.write_floating_point(float_);
         buffer.write_floating_point(double_);
+        buffer.write_integral(unsigned_byte_);
         buffer.write_integral(unsigned_short_);
         buffer.write_integral(unsigned_int_);
         buffer.write_integral(unsigned_long_);
@@ -87,6 +89,10 @@ namespace demo {
     {
         return double_;
     }
+    uint8_t const & MyScalar::get_unsigned_byte() const
+    {
+        return unsigned_byte_;
+    }
     uint16_t const & MyScalar::get_unsigned_short() const
     {
         return unsigned_short_;
@@ -114,6 +120,7 @@ namespace demo {
         if (this->long_ != other.long_) return false;
         if (this->float_ != other.float_) return false;
         if (this->double_ != other.double_) return false;
+        if (this->unsigned_byte_ != other.unsigned_byte_) return false;
         if (this->unsigned_short_ != other.unsigned_short_) return false;
         if (this->unsigned_int_ != other.unsigned_int_) return false;
         if (this->unsigned_long_ != other.unsigned_long_) return false;
@@ -141,6 +148,7 @@ namespace demo {
         __r = __r * 31 + (std::hash<int64_t>()(get_long()));
         __r = __r * 31 + (std::hash<float>()(get_float()));
         __r = __r * 31 + (std::hash<double>()(get_double()));
+        __r = __r * 31 + (std::hash<uint8_t>()(get_unsigned_byte()));
         __r = __r * 31 + (std::hash<uint16_t>()(get_unsigned_short()));
         __r = __r * 31 + (std::hash<uint32_t>()(get_unsigned_int()));
         __r = __r * 31 + (std::hash<uint64_t>()(get_unsigned_long()));
@@ -170,6 +178,7 @@ namespace demo {
         res += "\tlong = " + rd::to_string(long_) + '\n';
         res += "\tfloat = " + rd::to_string(float_) + '\n';
         res += "\tdouble = " + rd::to_string(double_) + '\n';
+        res += "\tunsigned_byte = " + rd::to_string(unsigned_byte_) + '\n';
         res += "\tunsigned_short = " + rd::to_string(unsigned_short_) + '\n';
         res += "\tunsigned_int = " + rd::to_string(unsigned_int_) + '\n';
         res += "\tunsigned_long = " + rd::to_string(unsigned_long_) + '\n';

@@ -35,18 +35,17 @@ open class Kotlin11Generator(
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
 
+    private val IType.isPredefinedNumber: Boolean
+        get() = this is PredefinedType.UnsignedIntegral ||
+                this is PredefinedType.NativeIntegral ||
+                this is PredefinedType.bool ||
+                this is PredefinedType.char
 
-    protected val IType.isPrimitivesArray : Boolean get() =
-        this is IArray && listOf (
-            PredefinedType.byte,
-            PredefinedType.short,
-            PredefinedType.int,
-            PredefinedType.long,
-            PredefinedType.float,
-            PredefinedType.double,
-            PredefinedType.char,
-            PredefinedType.bool
-        ).contains(itemType)
+    private val IType.isPrimitive: Boolean
+        get() = this is PredefinedType.NativeFloatingPointType || this.isPredefinedNumber
+
+    private val IType.isPrimitivesArray : Boolean get() =
+        this is IArray && itemType.isPrimitive
 
     ///types
     protected open fun IType.substitutedName(scope: Declaration) : String = when (this) {
@@ -212,7 +211,7 @@ open class Kotlin11Generator(
                     if (isAbstract) "AbstractPolymorphic($name)" else name
                 }
 
-            is IArray -> if (this.isPrimitivesArray) "FrameworkMarshallers.$name" else null
+            is IArray -> if (this.isPrimitivesArray) "FrameworkMarshallers.${substitutedName(scope)}" else null
             else -> null
         }
     }
@@ -269,7 +268,7 @@ open class Kotlin11Generator(
     }
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
-        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE")"""
+        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")"""
         + "package ${decl.namespace}"
     }
 

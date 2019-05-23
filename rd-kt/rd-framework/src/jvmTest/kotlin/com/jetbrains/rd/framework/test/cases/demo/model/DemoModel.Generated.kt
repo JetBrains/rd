@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE")
+@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")
 package demo
 
 import com.jetbrains.rd.framework.*
@@ -15,7 +15,10 @@ import kotlin.reflect.KClass
 
 class DemoModel private constructor(
     private val _boolean_property: RdOptionalProperty<Boolean>,
+    private val _bool_array: RdOptionalProperty<BooleanArray>,
     private val _scalar: RdOptionalProperty<MyScalar>,
+    private val _ubyte: RdOptionalProperty<UByte>,
+    private val _ubyte_array: RdOptionalProperty<UByteArray>,
     private val _list: RdList<Int>,
     private val _set: RdSet<Int>,
     private val _mapLongToString: RdMap<Long, String>,
@@ -46,14 +49,17 @@ class DemoModel private constructor(
         
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = 2414154915191782878L
+        const val serializationHash = -3553877242411509036L
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
     override val serializationHash: Long get() = DemoModel.serializationHash
     
     //fields
     val boolean_property: IOptProperty<Boolean> get() = _boolean_property
+    val bool_array: IOptProperty<BooleanArray> get() = _bool_array
     val scalar: IOptProperty<MyScalar> get() = _scalar
+    val ubyte: IOptProperty<UByte> get() = _ubyte
+    val ubyte_array: IOptProperty<UByteArray> get() = _ubyte_array
     val list: IMutableViewableList<Int> get() = _list
     val set: IMutableViewableSet<Int> get() = _set
     val mapLongToString: IMutableViewableMap<Long, String> get() = _mapLongToString
@@ -64,7 +70,10 @@ class DemoModel private constructor(
     //initializer
     init {
         _boolean_property.optimizeNested = true
+        _bool_array.optimizeNested = true
         _scalar.optimizeNested = true
+        _ubyte.optimizeNested = true
+        _ubyte_array.optimizeNested = true
         _list.optimizeNested = true
         _set.optimizeNested = true
         _mapLongToString.optimizeNested = true
@@ -78,7 +87,10 @@ class DemoModel private constructor(
     
     init {
         bindableChildren.add("boolean_property" to _boolean_property)
+        bindableChildren.add("bool_array" to _bool_array)
         bindableChildren.add("scalar" to _scalar)
+        bindableChildren.add("ubyte" to _ubyte)
+        bindableChildren.add("ubyte_array" to _ubyte_array)
         bindableChildren.add("list" to _list)
         bindableChildren.add("set" to _set)
         bindableChildren.add("mapLongToString" to _mapLongToString)
@@ -92,7 +104,10 @@ class DemoModel private constructor(
     private constructor(
     ) : this(
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
+        RdOptionalProperty<BooleanArray>(FrameworkMarshallers.BooleanArray),
         RdOptionalProperty<MyScalar>(MyScalar),
+        RdOptionalProperty<UByte>(FrameworkMarshallers.UByte),
+        RdOptionalProperty<UByteArray>(FrameworkMarshallers.UByteArray),
         RdList<Int>(FrameworkMarshallers.Int),
         RdSet<Int>(FrameworkMarshallers.Int),
         RdMap<Long, String>(FrameworkMarshallers.Long, FrameworkMarshallers.String),
@@ -109,7 +124,10 @@ class DemoModel private constructor(
         printer.println("DemoModel (")
         printer.indent {
             print("boolean_property = "); _boolean_property.print(printer); println()
+            print("bool_array = "); _bool_array.print(printer); println()
             print("scalar = "); _scalar.print(printer); println()
+            print("ubyte = "); _ubyte.print(printer); println()
+            print("ubyte_array = "); _ubyte_array.print(printer); println()
             print("list = "); _list.print(printer); println()
             print("set = "); _set.print(printer); println()
             print("mapLongToString = "); _mapLongToString.print(printer); println()
@@ -253,6 +271,7 @@ data class MyScalar (
     val long: Long,
     val float: Float,
     val double: Double,
+    val unsigned_byte: UByte,
     val unsigned_short: UShort,
     val unsigned_int: UInt,
     val unsigned_long: ULong
@@ -271,10 +290,11 @@ data class MyScalar (
             val long = buffer.readLong()
             val float = buffer.readFloat()
             val double = buffer.readDouble()
+            val unsigned_byte = buffer.readUByte()
             val unsigned_short = buffer.readUShort()
             val unsigned_int = buffer.readUInt()
             val unsigned_long = buffer.readULong()
-            return MyScalar(bool, byte, short, int, long, float, double, unsigned_short, unsigned_int, unsigned_long)
+            return MyScalar(bool, byte, short, int, long, float, double, unsigned_byte, unsigned_short, unsigned_int, unsigned_long)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: MyScalar) {
@@ -285,6 +305,7 @@ data class MyScalar (
             buffer.writeLong(value.long)
             buffer.writeFloat(value.float)
             buffer.writeDouble(value.double)
+            buffer.writeUByte(value.unsigned_byte)
             buffer.writeUShort(value.unsigned_short)
             buffer.writeUInt(value.unsigned_int)
             buffer.writeULong(value.unsigned_long)
@@ -308,6 +329,7 @@ data class MyScalar (
         if (long != other.long) return false
         if (float != other.float) return false
         if (double != other.double) return false
+        if (unsigned_byte != other.unsigned_byte) return false
         if (unsigned_short != other.unsigned_short) return false
         if (unsigned_int != other.unsigned_int) return false
         if (unsigned_long != other.unsigned_long) return false
@@ -324,6 +346,7 @@ data class MyScalar (
         __r = __r*31 + long.hashCode()
         __r = __r*31 + float.hashCode()
         __r = __r*31 + double.hashCode()
+        __r = __r*31 + unsigned_byte.hashCode()
         __r = __r*31 + unsigned_short.hashCode()
         __r = __r*31 + unsigned_int.hashCode()
         __r = __r*31 + unsigned_long.hashCode()
@@ -340,6 +363,7 @@ data class MyScalar (
             print("long = "); long.print(printer); println()
             print("float = "); float.print(printer); println()
             print("double = "); double.print(printer); println()
+            print("unsigned_byte = "); unsigned_byte.print(printer); println()
             print("unsigned_short = "); unsigned_short.print(printer); println()
             print("unsigned_int = "); unsigned_int.print(printer); println()
             print("unsigned_long = "); unsigned_long.print(printer); println()

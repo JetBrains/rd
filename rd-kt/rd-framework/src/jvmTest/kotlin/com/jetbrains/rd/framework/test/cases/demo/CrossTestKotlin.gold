@@ -2,6 +2,9 @@
 extModel.checker:
 kotlin.Unit
 ***
+bool_array:
+"false, true"
+***
 scalar:
 MyScalar (
   bool = false
@@ -11,10 +14,17 @@ MyScalar (
   long = -2000000000000000000
   float = 3.14
   double = -1.2345678901234567E8
+  unsigned_byte = 254
   unsigned_short = 65534
   unsigned_int = 4294967294
   unsigned_long = 18446744073709551614
 )
+***
+ubyte:
+98
+***
+ubyte_array:
+UByteArray(storage=[98, -1])
 ***
 set:
 Add
@@ -30,3 +40,4 @@ polymorphic:
 Derived (
   string = "Cpp instance"
 )
+

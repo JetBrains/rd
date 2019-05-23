@@ -55,9 +55,10 @@ int main() {
 			-2'000'000'000'000'000'000,
 			3.14f,
 			-123456789.012345678,
-			std::numeric_limits<uint16_t>::max() / 2,
-			std::numeric_limits<uint32_t>::max() / 2,
-			std::numeric_limits<uint64_t>::max() / 2
+			std::numeric_limits<uint8_t>::max() - 1,
+			std::numeric_limits<uint16_t>::max() - 1,
+			std::numeric_limits<uint32_t>::max() - 1,
+			std::numeric_limits<uint64_t>::max() - 1
 	};
 
 	//region advise or view

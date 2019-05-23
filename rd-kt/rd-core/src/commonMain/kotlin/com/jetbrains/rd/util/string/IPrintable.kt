@@ -34,6 +34,9 @@ fun Any?.print(printer: PrettyPrinter) {
             printer.print("]")
 
         }
+        is BooleanArray -> {
+            this.joinToString().print(printer)
+        }
         else -> printer.print(toString())
     }
 }

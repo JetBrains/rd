@@ -58,6 +58,7 @@ namespace demo {
         int64_t long_;
         float float_;
         double double_;
+        uint8_t unsigned_byte_;
         uint16_t unsigned_short_;
         uint32_t unsigned_int_;
         uint64_t unsigned_long_;
@@ -69,7 +70,7 @@ namespace demo {
         
         //primary ctor
         public:
-        MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_);
+        MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint8_t unsigned_byte_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_);
         
         //secondary constructor
         
@@ -105,6 +106,7 @@ namespace demo {
         int64_t const & get_long() const;
         float const & get_float() const;
         double const & get_double() const;
+        uint8_t const & get_unsigned_byte() const;
         uint16_t const & get_unsigned_short() const;
         uint32_t const & get_unsigned_int() const;
         uint64_t const & get_unsigned_long() const;

@@ -31,19 +31,22 @@ namespace demo {
     void DemoModel::initialize()
     {
         boolean_property_.optimize_nested = true;
+        bool_array_.optimize_nested = true;
         scalar_.optimize_nested = true;
+        ubyte_.optimize_nested = true;
+        ubyte_array_.optimize_nested = true;
         list_.optimize_nested = true;
         set_.optimize_nested = true;
         mapLongToString_.optimize_nested = true;
         interned_string_.optimize_nested = true;
         polymorphic_.optimize_nested = true;
-        serializationHash = 2414154915191782878L;
+        serializationHash = -3553877242411509036L;
     }
     
     //primary ctor
-    DemoModel::DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_) :
+    DemoModel::DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> bool_array_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_, rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_) :
     rd::RdExtBase()
-    ,boolean_property_(std::move(boolean_property_)), scalar_(std::move(scalar_)), list_(std::move(list_)), set_(std::move(set_)), mapLongToString_(std::move(mapLongToString_)), call_(std::move(call_)), callback_(std::move(callback_)), interned_string_(std::move(interned_string_)), polymorphic_(std::move(polymorphic_))
+    ,boolean_property_(std::move(boolean_property_)), bool_array_(std::move(bool_array_)), scalar_(std::move(scalar_)), ubyte_(std::move(ubyte_)), ubyte_array_(std::move(ubyte_array_)), list_(std::move(list_)), set_(std::move(set_)), mapLongToString_(std::move(mapLongToString_)), call_(std::move(call_)), callback_(std::move(callback_)), interned_string_(std::move(interned_string_)), polymorphic_(std::move(polymorphic_))
     {
         initialize();
     }
@@ -65,7 +68,10 @@ namespace demo {
     {
         rd::RdExtBase::init(lifetime);
         bindPolymorphic(boolean_property_, lifetime, this, "boolean_property");
+        bindPolymorphic(bool_array_, lifetime, this, "bool_array");
         bindPolymorphic(scalar_, lifetime, this, "scalar");
+        bindPolymorphic(ubyte_, lifetime, this, "ubyte");
+        bindPolymorphic(ubyte_array_, lifetime, this, "ubyte_array");
         bindPolymorphic(list_, lifetime, this, "list");
         bindPolymorphic(set_, lifetime, this, "set");
         bindPolymorphic(mapLongToString_, lifetime, this, "mapLongToString");
@@ -80,7 +86,10 @@ namespace demo {
     {
         rd::RdBindableBase::identify(identities, id);
         identifyPolymorphic(boolean_property_, identities, id.mix(".boolean_property"));
+        identifyPolymorphic(bool_array_, identities, id.mix(".bool_array"));
         identifyPolymorphic(scalar_, identities, id.mix(".scalar"));
+        identifyPolymorphic(ubyte_, identities, id.mix(".ubyte"));
+        identifyPolymorphic(ubyte_array_, identities, id.mix(".ubyte_array"));
         identifyPolymorphic(list_, identities, id.mix(".list"));
         identifyPolymorphic(set_, identities, id.mix(".set"));
         identifyPolymorphic(mapLongToString_, identities, id.mix(".mapLongToString"));
@@ -95,9 +104,21 @@ namespace demo {
     {
         return boolean_property_;
     }
+    rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> const & DemoModel::get_bool_array() const
+    {
+        return bool_array_;
+    }
     rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> const & DemoModel::get_scalar() const
     {
         return scalar_;
+    }
+    rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> const & DemoModel::get_ubyte() const
+    {
+        return ubyte_;
+    }
+    rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> const & DemoModel::get_ubyte_array() const
+    {
+        return ubyte_array_;
     }
     rd::RdList<int32_t, rd::Polymorphic<int32_t>> const & DemoModel::get_list() const
     {
@@ -151,7 +172,10 @@ namespace demo {
     {
         std::string res = "DemoModel\n";
         res += "\tboolean_property = " + rd::to_string(boolean_property_) + '\n';
+        res += "\tbool_array = " + rd::to_string(bool_array_) + '\n';
         res += "\tscalar = " + rd::to_string(scalar_) + '\n';
+        res += "\tubyte = " + rd::to_string(ubyte_) + '\n';
+        res += "\tubyte_array = " + rd::to_string(ubyte_array_) + '\n';
         res += "\tlist = " + rd::to_string(list_) + '\n';
         res += "\tset = " + rd::to_string(set_) + '\n';
         res += "\tmapLongToString = " + rd::to_string(mapLongToString_) + '\n';

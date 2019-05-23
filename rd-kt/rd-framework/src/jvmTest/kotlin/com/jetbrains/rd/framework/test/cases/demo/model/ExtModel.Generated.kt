@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE")
+@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")
 package demo
 
 import com.jetbrains.rd.framework.*

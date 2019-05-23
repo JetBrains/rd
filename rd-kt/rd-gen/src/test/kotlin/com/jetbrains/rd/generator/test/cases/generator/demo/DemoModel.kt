@@ -43,7 +43,13 @@ object DemoModel : Ext(DemoRoot) {
     init {
         property("boolean_property", PredefinedType.bool)
 
+        property("bool_array", array(PredefinedType.bool))
+
         property("scalar", MyScalar)
+
+        property("ubyte", PredefinedType.ubyte)
+
+        property("ubyte_array", array(PredefinedType.ubyte))
 
         list("list", PredefinedType.int)
 

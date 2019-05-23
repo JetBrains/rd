@@ -66,8 +66,20 @@ void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &m
 		printIfRemoteChange(printer, model.get_boolean_property(), "boolean_property", it);
 	});
 
+	model.get_bool_array().advise(lifetime, [&](std::vector<bool> const &it) {
+		printIfRemoteChange(printer, model.get_bool_array(), "bool_array", it);
+	});
+
 	model.get_scalar().advise(lifetime, [&](MyScalar const &it) {
 		printIfRemoteChange(printer, model.get_scalar(), "scalar", it);
+	});
+
+	model.get_ubyte().advise(lifetime, [&](uint8_t const &it) {
+		printIfRemoteChange(printer, model.get_ubyte(), "ubyte", it);
+	});
+
+	model.get_ubyte_array().advise(lifetime, [&](std::vector<uint8_t> const &it) {
+		printIfRemoteChange(printer, model.get_ubyte_array(), "ubyte_array", it);
 	});
 
 	model.get_list().advise(lifetime, [&](IViewableList<int32_t>::Event e) {
@@ -110,6 +122,8 @@ void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &m
 void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel &extModel) {
 	model.get_boolean_property().set(false);
 
+	model.get_bool_array().emplace(std::vector<bool>{false, true});
+	
 	auto scalar = MyScalar(false,
 						   98,
 						   32000,
@@ -117,12 +131,16 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 						   -2'000'000'000'000'000'000,
 						   3.14f,
 						   -123456789.012345678,
+						   std::numeric_limits<uint8_t >::max() - 1,
 						   std::numeric_limits<uint16_t>::max() - 1,
 						   std::numeric_limits<uint32_t>::max() - 1,
 						   std::numeric_limits<uint64_t>::max() - 1
 	);
 	model.get_scalar().set(scalar);
 
+	model.get_ubyte().set(98);
+
+	model.get_ubyte_array().emplace(std::vector<uint8_t>{98, static_cast<uint8_t>(-1)});
 	// model.get_list().add(9);
 	// model.get_list().add(8);
 
