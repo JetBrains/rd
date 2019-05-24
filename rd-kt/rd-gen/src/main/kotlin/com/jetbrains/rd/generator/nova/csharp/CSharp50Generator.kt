@@ -4,6 +4,7 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.util.joinToOptString
+import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -12,10 +13,10 @@ import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(
-    val defaultFlowTransform: FlowTransform,
-    val defaultNamespace: String,
-    override val folder : File,
-    val fileName: (Toplevel) -> String = { tl -> tl.name}
+        val defaultFlowTransform: FlowTransform = FlowTransform.AsIs,
+        val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
+        override val folder : File = System.getProperty("rdgen.cs.dir")?.let { File(it) } ?: File("."),
+        val fileName: (Toplevel) -> String = { tl -> tl.name}
 ) : GeneratorBase() {
 
     object Inherits : ISetting<String, Declaration>
