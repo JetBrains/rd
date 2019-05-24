@@ -86,24 +86,6 @@ sealed class PredefinedType : INonNullableScalar {
     class UnsignedIntegral internal constructor(val itemType : NativeIntegral) : PredefinedType() {
         override val name: String get() = "U${itemType.name}"
     }
-    
-    companion object {
-        val ubyte = UnsignedIntegral(byte)
-        val int8 : NativeIntegral get() = byte
-        val uint8 : UnsignedIntegral get() = ubyte
-
-        val ushort = UnsignedIntegral(short)
-        val int16 : NativeIntegral get() = short
-        val uint16 : UnsignedIntegral get() = ushort
-
-        val uint = UnsignedIntegral(int)
-        val int32 : NativeIntegral get() = int
-        val uint32 : UnsignedIntegral get() = uint
-
-        val ulong = UnsignedIntegral(long)
-        val int64 : NativeIntegral get() = long
-        val uint64 : UnsignedIntegral get() = ulong
-    }
 
     /*
         No guarantee for being signed. Generates to "byte" in C#, for instance.
@@ -129,6 +111,25 @@ sealed class PredefinedType : INonNullableScalar {
 
     //rd framework special
     object rdId : PredefinedType()
+
+
+    companion object {
+        val ubyte = UnsignedIntegral(byte)
+        val int8 : NativeIntegral get() = byte
+        val uint8 : UnsignedIntegral get() = ubyte
+
+        val ushort = UnsignedIntegral(short)
+        val int16 : NativeIntegral get() = short
+        val uint16 : UnsignedIntegral get() = ushort
+
+        val uint = UnsignedIntegral(int)
+        val int32 : NativeIntegral get() = int
+        val uint32 : UnsignedIntegral get() = uint
+
+        val ulong = UnsignedIntegral(long)
+        val int64 : NativeIntegral get() = long
+        val uint64 : UnsignedIntegral get() = ulong
+    }
 }
 
 @Suppress("UNCHECKED_CAST")
