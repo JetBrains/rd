@@ -6,7 +6,7 @@ namespace JetBrains.Collections.Viewable
   public enum AddRemove
   {
     Add,
-    Remove,
+    Remove
   }
 
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Synchronized
 {
@@ -10,7 +11,7 @@ namespace JetBrains.Collections.Synchronized
   /// </summary>
   /// <typeparam name="TK"></typeparam>
   /// <typeparam name="TV"></typeparam>
-  public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>
+  [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>
   {
     private readonly IDictionary<TK, TV> myImpl = new Dictionary<TK, TV>();
         

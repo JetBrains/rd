@@ -27,19 +27,19 @@ namespace JetBrains.Serialization
       public UnsafeWriter Writer
       {
         [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-        get { return myWriter; }
+        get => myWriter;
       }
 
       public byte* Data
       {
         [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-        get { return myWriter.Data + myStart; }
+        get => myWriter.Data + myStart;
       }
 
       public int Count
       {
         [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-        get { return myWriter.Count - myStart; }
+        get => myWriter.Count - myStart;
       }
 
       public byte[] CloneData()

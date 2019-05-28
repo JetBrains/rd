@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Synchronized
 {
@@ -21,7 +22,7 @@ namespace JetBrains.Collections.Synchronized
   /// </code>
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  public class SynchronizedSet<T> : ISet<T>, IReadOnlyCollection<T>
+  [PublicAPI] public class SynchronizedSet<T> : ISet<T>, IReadOnlyCollection<T>
   {
     private readonly HashSet<T> mySet;
 

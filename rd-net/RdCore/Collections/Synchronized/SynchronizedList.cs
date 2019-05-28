@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Synchronized
 {
@@ -9,7 +10,7 @@ namespace JetBrains.Collections.Synchronized
   /// you can change collection as you want during enumeration. 
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  public class SynchronizedList<T> : IList<T>
+  [PublicAPI] public class SynchronizedList<T> : IList<T>
   {
     private readonly List<T> myList;
 
