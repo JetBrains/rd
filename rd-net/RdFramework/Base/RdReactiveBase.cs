@@ -63,7 +63,7 @@ namespace JetBrains.Rd.Base
 
     #region Local change
     
-    protected internal bool IsLocalChange;
+    public bool IsLocalChange { get; protected set; }
     
     protected internal struct LocalChangeCookie : IDisposable
     {

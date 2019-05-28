@@ -39,13 +39,13 @@ object DemoModel : Ext(DemoRoot) {
         field("unsigned_long", PredefinedType.ulong)
         field("enum", MyEnum)
 
-        const("const_int", PredefinedType.int, "0")
+        const("const_int", PredefinedType.int, 0)
         const("const_string", PredefinedType.string, "const_string_value")
         const("const_enum", MyEnum, MyEnum.constants[0])
     }
 
     private var Base = basestruct {
-        const("const_base", PredefinedType.char, "B")
+        const("const_base", PredefinedType.char, 'B')
     }
 
     private var Derived = structdef extends Base {
@@ -79,7 +79,7 @@ object DemoModel : Ext(DemoRoot) {
 
         property("enum", MyEnum)
 
-        const("const_toplevel", PredefinedType.bool, "true")
+        const("const_toplevel", PredefinedType.bool, true)
     }
 }
 

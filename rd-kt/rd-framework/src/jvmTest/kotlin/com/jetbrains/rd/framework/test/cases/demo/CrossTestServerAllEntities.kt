@@ -147,7 +147,7 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
 fun fireAll(model: DemoModel, extModel: ExtModel) {
     model.boolean_property.set(false)
 
-    model.boolean_array.set(booleanArrayOf(true, false))
+    model.boolean_array.set(booleanArrayOf(true, false, false))
 
     val scalar = MyScalar(false,
             13,

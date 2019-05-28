@@ -127,7 +127,7 @@ void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &m
 void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel &extModel) {
 	model.get_boolean_property().set(false);
 
-	model.get_boolean_array().emplace(std::vector<bool>{false, true});
+	model.get_boolean_array().emplace(std::vector<bool>{false, false, true});
 	
 	auto scalar = MyScalar(false,
 						   98,
@@ -177,5 +177,5 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 static_assert(DemoModel::const_toplevel, "const_toplevel value is wrong");
 static_assert(MyScalar::const_enum == MyEnum::default_, "const _enum value is wrong");
 //	static_assert(MyScalar::const_string == L"const_string_value", "const_string value is wrong");
-//  std::char_traits::compare is not constexpr until C++17
+//  std::char_traits::compare is not constexpr until C++17 at least in Clang
 static_assert(Base::const_base == 'B', "const_base value is wrong");
