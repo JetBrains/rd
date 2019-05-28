@@ -19,8 +19,23 @@ fun Toplevel.field(name : String, type : Aggregate) = append(Field(name, type))
 fun Declaration.const(name: String, type: PredefinedType.bool, value: Boolean) = appendConst(Member.Const.Integral(name, type, value.toString()))
 fun Declaration.const(name: String, type: PredefinedType.char, value: Char) = appendConst(Member.Const.Integral(name, type, value.toString()))
 fun Declaration.const(name: String, type: PredefinedType.string, value: String) = appendConst(Member.Const.Integral(name, type, value))
-fun Declaration.const(name: String, type: PredefinedType.NativeIntegral, value: Long) = appendConst(Member.Const.Integral(name, type, value.toString()))
 fun Declaration.const(name: String, type: Enum, value: Member.EnumConst) = appendConst(Member.Const.Enum(name, type, value))
+
+fun Declaration.const(name: String, type: PredefinedType.byte, value: Byte) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.short, value: Short) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.int, value: Int) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.long, value: Long) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.ubyte, value: UByte) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.ushort, value: UShort) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.uint, value: UInt) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.ulong, value: ULong) = appendConst(Member.Const.Integral(name, type, value.toString()))
+
+fun Declaration.const(name: String, type: PredefinedType.float, value: Float) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.double, value: Double) = appendConst(Member.Const.Integral(name, type, value.toString()))
 
 fun BindableDeclaration.signal(name : String, valueType : IScalar) = append(Signal(name, valueType))
 fun BindableDeclaration.source(name : String, valueType : IScalar) = append(Signal(name, valueType).write)

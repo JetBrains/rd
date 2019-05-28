@@ -53,9 +53,6 @@ namespace demo {
         
         //constants
         public:
-        static constexpr int32_t const_int = 0;
-        static constexpr rd::wstring_view const_string = L"const_string_value";
-        static constexpr MyEnum const_enum = MyEnum::default_;
         
         //fields
         protected:

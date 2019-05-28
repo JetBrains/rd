@@ -1,4 +1,4 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE","PackageDirectoryMismatch","UnusedImport","unused","LocalVariableName","CanBeVal","PropertyName","EnumEntryName","ClassName","ObjectPropertyName")
+@file:Suppress("EXPERIMENTAL_API_USAGE","EXPERIMENTAL_UNSIGNED_LITERALS","PackageDirectoryMismatch","UnusedImport","unused","LocalVariableName","CanBeVal","PropertyName","EnumEntryName","ClassName","ObjectPropertyName","UnnecessaryVariable")
 package demo
 
 import com.jetbrains.rd.framework.*
@@ -35,6 +35,7 @@ class DemoModel private constructor(
         override fun registerSerializersCore(serializers: ISerializers) {
             serializers.register(MyEnum.marshaller)
             serializers.register(MyScalar)
+            serializers.register(ConstUtil)
             serializers.register(Derived)
             serializers.register(Base_Unknown)
         }
@@ -51,9 +52,9 @@ class DemoModel private constructor(
         
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = -6563454397007024222L
+        const val serializationHash = 1245542962615804696L
         
-        const val const_toplevel = true
+        const val const_toplevel : Boolean = true
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
     override val serializationHash: Long get() = DemoModel.serializationHash
@@ -163,7 +164,7 @@ abstract class Base (
         }
         
         
-        const val const_base = 'B'
+        const val const_base : Char = 'B'
     }
     //fields
     //initializer
@@ -220,6 +221,61 @@ class Base_Unknown (
     }
     
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+}
+
+
+class ConstUtil (
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<ConstUtil> {
+        override val _type: KClass<ConstUtil> = ConstUtil::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ConstUtil {
+            return ConstUtil()
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ConstUtil) {
+        }
+        
+        
+        const val const_byte : Byte = 0
+        const val const_short : Short = 32767
+        const val const_int : Int = 2147483647
+        const val const_long : Long = 9223372036854775807
+        const val const_ubyte : UByte = 255u
+        const val const_ushort : UShort = 65535u
+        const val const_uint : UInt = 4294967295u
+        const val const_ulong : ULong = 18446744073709551615u
+        const val const_float : Float = 0.0f
+        const val const_double : Double = 0.0
+        const val const_string : String = "const_string_value"
+        val const_enum : MyEnum = MyEnum.default
+    }
+    //fields
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as ConstUtil
+        
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int {
+        var __r = 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter) {
+        printer.println("ConstUtil (")
+        printer.print(")")
+    }
 }
 
 
@@ -339,9 +395,6 @@ data class MyScalar (
         }
         
         
-        const val const_int = 0
-        const val const_string = "const_string_value"
-        val const_enum = MyEnum.default
     }
     //fields
     //initializer

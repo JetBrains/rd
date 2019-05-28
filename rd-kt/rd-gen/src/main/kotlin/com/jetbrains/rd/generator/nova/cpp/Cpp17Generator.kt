@@ -1873,6 +1873,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     when (member.type) {
                         is PredefinedType.string -> """L"$value""""
                         is PredefinedType.char -> """L'$value'"""
+                        is PredefinedType.long -> "${value}ll"
+                        is PredefinedType.uint -> "${value}u"
+                        is PredefinedType.ulong -> "${value}ull"
+                        is PredefinedType.float -> "${value}f"
                         is Enum -> "${member.type.name}::${value.sanitize()}"
                         else -> value
                     }

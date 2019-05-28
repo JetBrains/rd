@@ -2,6 +2,7 @@
 
 #include "MyEnum.h"
 #include "MyScalar.h"
+#include "ConstUtil.h"
 #include "Derived.h"
 #include "Base_Unknown.h"
 
@@ -15,6 +16,7 @@ namespace demo {
     void DemoModel::DemoModelSerializersOwner::registerSerializersCore(rd::Serializers const& serializers) const
     {
         serializers.registry<MyScalar>();
+        serializers.registry<ConstUtil>();
         serializers.registry<Derived>();
         serializers.registry<Base_Unknown>();
     }
@@ -42,7 +44,7 @@ namespace demo {
         interned_string_.optimize_nested = true;
         polymorphic_.optimize_nested = true;
         enum_.optimize_nested = true;
-        serializationHash = -6563454397007024222L;
+        serializationHash = 1245542962615804696L;
     }
     
     //primary ctor

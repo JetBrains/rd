@@ -269,7 +269,7 @@ open class Kotlin11Generator(
         }
     }
 
-    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName")
+    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName", "UnnecessaryVariable")
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
         val warnings = suppressWarnings.joinToString(separator = ",") { """"$it"""" }
@@ -405,11 +405,13 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.constantTrait(decl: Declaration) {
         decl.constantMembers.forEach {
+            val name = it.name
+            val type = it.type.substitutedName(decl)
             val value = getDefaultValue(decl, it)
             + if (it.type is Enum) {
-                "val ${it.name} = $value"
+                "val $name : $type = $value"
             } else {
-                "const val ${it.name} = $value"
+                "const val $name : $type = $value"
             }
         }
     }
@@ -532,11 +534,14 @@ open class Kotlin11Generator(
                     else -> null
                 }
                 is Member.Const -> {
+                    val value = member.value
                     when (member.type) {
-                        is PredefinedType.string -> """"${member.value}""""
-                        is PredefinedType.char -> """'${member.value}'"""
-                        is Enum -> "${member.type.substitutedName(containing)}.${member.value}"
-                        else -> member.value
+                        is PredefinedType.string -> """"$value""""
+                        is PredefinedType.char -> """'$value'"""
+                        is PredefinedType.float -> """${value}f"""
+                        is PredefinedType.UnsignedIntegral -> "${value}u"
+                        is Enum -> "${member.type.substitutedName(containing)}.$value"
+                        else -> value
                     }
                 }
 //                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"

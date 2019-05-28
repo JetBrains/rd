@@ -7,12 +7,14 @@ else ()
 endif ()
 add_library(demo_model STATIC DemoModel/MyEnum.cpp
 DemoModel/MyScalar.cpp
+DemoModel/ConstUtil.cpp
 DemoModel/Base.cpp
 DemoModel/Derived.cpp
 DemoModel/DemoModel.cpp
 DemoModel/Base_Unknown.cpp
 DemoModel/MyEnum.h
 DemoModel/MyScalar.h
+DemoModel/ConstUtil.h
 DemoModel/Base.h
 DemoModel/Derived.h
 DemoModel/DemoModel.h

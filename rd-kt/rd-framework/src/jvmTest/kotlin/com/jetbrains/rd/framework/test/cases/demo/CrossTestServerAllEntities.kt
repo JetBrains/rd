@@ -65,8 +65,8 @@ fun main() {
 
 fun checkConstants() {
     assert(DemoModel.const_toplevel)
-    assertEquals(MyScalar.const_enum, MyEnum.default)
-    assertEquals(MyScalar.const_string, "const_string_value")
+    assertEquals(ConstUtil.const_enum, MyEnum.default)
+    assertEquals(ConstUtil.const_string, "const_string_value")
     assertEquals(Base.const_base, 'B')
 }
 

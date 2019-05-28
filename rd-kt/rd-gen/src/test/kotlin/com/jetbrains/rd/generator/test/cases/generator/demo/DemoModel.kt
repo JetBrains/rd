@@ -17,6 +17,7 @@ object DemoRoot : Root(
     }
 }
 
+@ExperimentalUnsignedTypes
 object DemoModel : Ext(DemoRoot) {
     private var MyEnum = enum {
         +"default"
@@ -39,7 +40,19 @@ object DemoModel : Ext(DemoRoot) {
         field("unsigned_long", PredefinedType.ulong)
         field("enum", MyEnum)
 
-        const("const_int", PredefinedType.int, 0)
+    }
+
+    private var ConstUtil  = structdef {
+        const("const_byte", PredefinedType.byte, 0)
+        const("const_short", PredefinedType.short, Short.MAX_VALUE)
+        const("const_int", PredefinedType.int, Int.MAX_VALUE)
+        const("const_long", PredefinedType.long, Long.MAX_VALUE)
+        const("const_ubyte", PredefinedType.ubyte, UByte.MAX_VALUE)
+        const("const_ushort", PredefinedType.ushort, UShort.MAX_VALUE)
+        const("const_uint", PredefinedType.uint, UInt.MAX_VALUE)
+        const("const_ulong", PredefinedType.ulong, ULong.MAX_VALUE)
+        const("const_float", PredefinedType.float, 0f)
+        const("const_double", PredefinedType.double, 0.0)
         const("const_string", PredefinedType.string, "const_string_value")
         const("const_enum", MyEnum, MyEnum.constants[0])
     }
