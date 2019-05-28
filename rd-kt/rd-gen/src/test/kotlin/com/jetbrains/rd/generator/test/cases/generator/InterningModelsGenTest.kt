@@ -12,8 +12,8 @@ import java.io.File
 
 class InterningModelsGenTest {
     companion object {
-        val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
-        val cppGeneratedSourceDir = "../rd-cpp/src/rd_framework_cpp/src/test/util/models"
+        const val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+        const val cppGeneratedSourceDir = "../../rd-cpp/src/rd_framework_cpp/src/test/util/models"
     }
 
     @Suppress("unused")
@@ -89,7 +89,7 @@ class InterningModelsGenTest {
     @Test
     fun test1() {
         val files = generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator"), true)
-        assert(!files.isEmpty()) { "No files generated, bug?" }
+        assert(files.isNotEmpty()) { "No files generated, bug?" }
 
         val rdgen = RdGen()
 

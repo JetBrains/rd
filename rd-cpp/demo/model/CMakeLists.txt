@@ -5,11 +5,13 @@ if (ENABLE_PCH_HEADERS_FOR_demo_model)
 else ()
     set(PCH_CPP_OPT "")
 endif ()
-add_library(demo_model STATIC DemoModel/MyScalar.cpp
+add_library(demo_model STATIC DemoModel/MyEnum.cpp
+DemoModel/MyScalar.cpp
 DemoModel/Base.cpp
 DemoModel/Derived.cpp
 DemoModel/DemoModel.cpp
 DemoModel/Base_Unknown.cpp
+DemoModel/MyEnum.h
 DemoModel/MyScalar.h
 DemoModel/Base.h
 DemoModel/Derived.h

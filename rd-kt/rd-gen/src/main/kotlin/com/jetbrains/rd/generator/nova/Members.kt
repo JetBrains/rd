@@ -38,6 +38,13 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
         internal var usedInEquals = true
     }
 
+    sealed class Const(name : String, val type: IScalar, val value: String) : Member(name, listOf<IType>(type)){
+        class Integral(name : String, type: PredefinedType, value: String) : Const(name, type, value)
+
+        class Enum(name: String, type: com.jetbrains.rd.generator.nova.Enum, value: EnumConst) : Const(name, type, value.name)
+    }
+
+
     data class ExtensionDelegate(
             val klass: KClass<out IGenerator>,
             val flowTransform: FlowTransform?,

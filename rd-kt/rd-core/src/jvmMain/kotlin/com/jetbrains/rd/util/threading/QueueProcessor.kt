@@ -7,6 +7,7 @@ import kotlinx.coroutines.*;
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 
+@ObsoleteCoroutinesApi
 class QueueProcessor<T : Any>(val lifetime: Lifetime, process: suspend (T) -> Unit) {
     private val channel = Channel<T>(UNLIMITED)
 

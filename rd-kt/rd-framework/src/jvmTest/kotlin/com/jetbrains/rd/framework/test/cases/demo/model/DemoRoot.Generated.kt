@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")
+@file:Suppress("EXPERIMENTAL_API_USAGE","PackageDirectoryMismatch","UnusedImport","unused","LocalVariableName","CanBeVal","PropertyName","EnumEntryName","ClassName","ObjectPropertyName")
 package demo
 
 import com.jetbrains.rd.framework.*
@@ -37,6 +37,7 @@ class DemoRoot private constructor(
         
         
         const val serializationHash = 2990580803186469991L
+        
     }
     override val serializersOwner: ISerializersOwner get() = DemoRoot
     override val serializationHash: Long get() = DemoRoot.serializationHash

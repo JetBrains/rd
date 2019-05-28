@@ -1,6 +1,7 @@
 package com.jetbrains.rd.util.threading
 
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.threadLocal
 import java.time.Duration
 
@@ -22,7 +23,7 @@ class SpinWait {
             val s = spin
             val start = System.nanoTime()
             while (!condition()) {
-                if (lifetime.isTerminated || System.nanoTime() - start > duration.toNanos())
+                if (!lifetime.isAlive || System.nanoTime() - start > duration.toNanos())
                     return false
                 s.spinOnce()
             }

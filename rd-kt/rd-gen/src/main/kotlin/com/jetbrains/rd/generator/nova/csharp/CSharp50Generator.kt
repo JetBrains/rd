@@ -60,11 +60,11 @@ open class CSharp50Generator(
         val needQualification =
             namespace != scope.namespace
             || scope.allMembers.map { it.publicName }.contains(name)
-        return needQualification.condstr { namespace + "." } + name
+        return needQualification.condstr { "$namespace." } + name
     }
 
 
-    val keywords = arrayOf("abstract", "as",  "base",	"bool",	"break",
+    private val keywords = arrayOf("abstract", "as",  "base",	"bool",	"break",
     "byte", "case",	"catch",	"char",	"checked",
     "class", "const",	"continue",	"decimal",	"default",
     "delegate", "do",	"double",	"else",	"enum",
@@ -238,6 +238,7 @@ open class CSharp50Generator(
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Const -> type.substitutedName(scope)
     }
 
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration): String =
@@ -247,6 +248,7 @@ open class CSharp50Generator(
     protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false): String = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
+        is Member.Const -> type.substitutedName(scope)
         is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
             if(isPerClientId && !perClientIdRawName) "RdMap<ClientId, $it>" else it
         }
@@ -499,6 +501,32 @@ open class CSharp50Generator(
             registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
             println()
             createMethodTrait(decl)
+        }
+
+        println()
+        +"//constants"
+        constantTrait(decl)
+        println()
+    }
+
+    private fun getDefaultValue(containing: Declaration, member: Member): String? =
+            when (member) {
+                is Member.Const -> {
+                    val value = member.value
+                    when (member.type) {
+                        is PredefinedType.string -> """"$value""""
+                        is PredefinedType.char -> """'$value'"""
+                        is Enum -> "${member.type.substitutedName(containing)}.${sanitize(value)}"
+                        else -> value
+                    }
+                }
+                else -> null
+            }
+
+    protected fun PrettyPrinter.constantTrait(decl: Declaration) {
+        decl.constantMembers.forEach {
+            val value = getDefaultValue(decl, it)
+            +"public const ${it.type.substitutedName(decl)} ${it.name} = $value;"
         }
     }
 
@@ -774,22 +802,24 @@ open class CSharp50Generator(
 
 
         fun PrettyPrinter.defaultValue(member: Member, typeName: String) {
-            if (member is Member.Field)
+            if (member is Member.Field) {
                 member.defaultValue?.let { defaultValue ->
                     p(" = ")
                     when (defaultValue) {
-                        is String -> p (
+                        is String -> p(
                                 if (member.type is Enum) {
                                     if (member.type.flags && defaultValue.isEmpty())
                                         "($typeName)0"
-                                    else "$typeName.$defaultValue"
-                                }
-                                else
+                                    else
+                                        "$typeName.$defaultValue"
+                                } else {
                                     "\"$defaultValue\""
+                                }
                         )
                         else -> p(defaultValue.toString())
                     }
                 }
+            }
         }
 
         val accessModifier = when {

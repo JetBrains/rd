@@ -63,6 +63,9 @@ namespace demo {
         //custom serializers
         private:
         
+        //constants
+        public:
+        
         //fields
         protected:
         rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> checker_;

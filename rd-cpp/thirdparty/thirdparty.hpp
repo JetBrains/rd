@@ -30,6 +30,7 @@ namespace rd {
 	using std::get;
 	using std::visit;
 	using std::string_view;
+	using std::wstring_view;
 	using namespace std::literals;
 }
 
@@ -48,6 +49,7 @@ namespace rd {
 	using mpark::get;
 	using mpark::visit;
 	using nonstd::string_view;
+	using nonstd::wstring_view;
 	using namespace std::literals;
 	using namespace nonstd::literals;
 }

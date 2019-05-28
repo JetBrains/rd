@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")
+@file:Suppress("EXPERIMENTAL_API_USAGE","PackageDirectoryMismatch","UnusedImport","unused","LocalVariableName","CanBeVal","PropertyName","EnumEntryName","ClassName","ObjectPropertyName")
 package demo
 
 import com.jetbrains.rd.framework.*
@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 
 class DemoModel private constructor(
     private val _boolean_property: RdOptionalProperty<Boolean>,
-    private val _bool_array: RdOptionalProperty<BooleanArray>,
+    private val _boolean_array: RdOptionalProperty<BooleanArray>,
     private val _scalar: RdOptionalProperty<MyScalar>,
     private val _ubyte: RdOptionalProperty<UByte>,
     private val _ubyte_array: RdOptionalProperty<UByteArray>,
@@ -25,13 +25,15 @@ class DemoModel private constructor(
     private val _call: RdEndpoint<Char, String>,
     private val _callback: RdCall<String, Int>,
     private val _interned_string: RdOptionalProperty<String>,
-    private val _polymorphic: RdOptionalProperty<Base>
+    private val _polymorphic: RdOptionalProperty<Base>,
+    private val _enum: RdOptionalProperty<MyEnum>
 ) : RdExtBase() {
     //companion
     
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers) {
+            serializers.register(MyEnum.marshaller)
             serializers.register(MyScalar)
             serializers.register(Derived)
             serializers.register(Base_Unknown)
@@ -49,14 +51,16 @@ class DemoModel private constructor(
         
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = -3553877242411509036L
+        const val serializationHash = -6563454397007024222L
+        
+        const val const_toplevel = true
     }
     override val serializersOwner: ISerializersOwner get() = DemoModel
     override val serializationHash: Long get() = DemoModel.serializationHash
     
     //fields
     val boolean_property: IOptProperty<Boolean> get() = _boolean_property
-    val bool_array: IOptProperty<BooleanArray> get() = _bool_array
+    val boolean_array: IOptProperty<BooleanArray> get() = _boolean_array
     val scalar: IOptProperty<MyScalar> get() = _scalar
     val ubyte: IOptProperty<UByte> get() = _ubyte
     val ubyte_array: IOptProperty<UByteArray> get() = _ubyte_array
@@ -67,10 +71,11 @@ class DemoModel private constructor(
     val callback: IRdCall<String, Int> get() = _callback
     val interned_string: IOptProperty<String> get() = _interned_string
     val polymorphic: IOptProperty<Base> get() = _polymorphic
+    val enum: IOptProperty<MyEnum> get() = _enum
     //initializer
     init {
         _boolean_property.optimizeNested = true
-        _bool_array.optimizeNested = true
+        _boolean_array.optimizeNested = true
         _scalar.optimizeNested = true
         _ubyte.optimizeNested = true
         _ubyte_array.optimizeNested = true
@@ -79,6 +84,7 @@ class DemoModel private constructor(
         _mapLongToString.optimizeNested = true
         _interned_string.optimizeNested = true
         _polymorphic.optimizeNested = true
+        _enum.optimizeNested = true
     }
     
     init {
@@ -87,7 +93,7 @@ class DemoModel private constructor(
     
     init {
         bindableChildren.add("boolean_property" to _boolean_property)
-        bindableChildren.add("bool_array" to _bool_array)
+        bindableChildren.add("boolean_array" to _boolean_array)
         bindableChildren.add("scalar" to _scalar)
         bindableChildren.add("ubyte" to _ubyte)
         bindableChildren.add("ubyte_array" to _ubyte_array)
@@ -98,6 +104,7 @@ class DemoModel private constructor(
         bindableChildren.add("callback" to _callback)
         bindableChildren.add("interned_string" to _interned_string)
         bindableChildren.add("polymorphic" to _polymorphic)
+        bindableChildren.add("enum" to _enum)
     }
     
     //secondary constructor
@@ -114,7 +121,8 @@ class DemoModel private constructor(
         RdEndpoint<Char, String>(FrameworkMarshallers.Char, FrameworkMarshallers.String),
         RdCall<String, Int>(FrameworkMarshallers.String, FrameworkMarshallers.Int),
         RdOptionalProperty<String>(__StringInternedAtProtocolSerializer),
-        RdOptionalProperty<Base>(AbstractPolymorphic(Base))
+        RdOptionalProperty<Base>(AbstractPolymorphic(Base)),
+        RdOptionalProperty<MyEnum>(MyEnum.marshaller)
     )
     
     //equals trait
@@ -124,7 +132,7 @@ class DemoModel private constructor(
         printer.println("DemoModel (")
         printer.indent {
             print("boolean_property = "); _boolean_property.print(printer); println()
-            print("bool_array = "); _bool_array.print(printer); println()
+            print("boolean_array = "); _boolean_array.print(printer); println()
             print("scalar = "); _scalar.print(printer); println()
             print("ubyte = "); _ubyte.print(printer); println()
             print("ubyte_array = "); _ubyte_array.print(printer); println()
@@ -135,6 +143,7 @@ class DemoModel private constructor(
             print("callback = "); _callback.print(printer); println()
             print("interned_string = "); _interned_string.print(printer); println()
             print("polymorphic = "); _polymorphic.print(printer); println()
+            print("enum = "); _enum.print(printer); println()
         }
         printer.print(")")
     }
@@ -152,6 +161,9 @@ abstract class Base (
             buffer.readByteArrayRaw(unknownBytes)
             return Base_Unknown(unknownId, unknownBytes)
         }
+        
+        
+        const val const_base = 'B'
     }
     //fields
     //initializer
@@ -180,6 +192,7 @@ class Base_Unknown (
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Base_Unknown) {
             buffer.writeByteArrayRaw(value.unknownBytes)
         }
+        
         
     }
     //fields
@@ -229,6 +242,7 @@ class Derived (
             buffer.writeString(value.string)
         }
         
+        
     }
     //fields
     //initializer
@@ -263,6 +277,16 @@ class Derived (
 }
 
 
+enum class MyEnum {
+    default,
+    kt,
+    net,
+    cpp;
+    
+    companion object { val marshaller = FrameworkMarshallers.enum<MyEnum>() }
+}
+
+
 data class MyScalar (
     val bool: Boolean,
     val byte: Byte,
@@ -274,7 +298,8 @@ data class MyScalar (
     val unsigned_byte: UByte,
     val unsigned_short: UShort,
     val unsigned_int: UInt,
-    val unsigned_long: ULong
+    val unsigned_long: ULong,
+    val enum: MyEnum
 ) : IPrintable {
     //companion
     
@@ -294,7 +319,8 @@ data class MyScalar (
             val unsigned_short = buffer.readUShort()
             val unsigned_int = buffer.readUInt()
             val unsigned_long = buffer.readULong()
-            return MyScalar(bool, byte, short, int, long, float, double, unsigned_byte, unsigned_short, unsigned_int, unsigned_long)
+            val enum = buffer.readEnum<MyEnum>()
+            return MyScalar(bool, byte, short, int, long, float, double, unsigned_byte, unsigned_short, unsigned_int, unsigned_long, enum)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: MyScalar) {
@@ -309,8 +335,13 @@ data class MyScalar (
             buffer.writeUShort(value.unsigned_short)
             buffer.writeUInt(value.unsigned_int)
             buffer.writeULong(value.unsigned_long)
+            buffer.writeEnum(value.enum)
         }
         
+        
+        const val const_int = 0
+        const val const_string = "const_string_value"
+        val const_enum = MyEnum.default
     }
     //fields
     //initializer
@@ -333,6 +364,7 @@ data class MyScalar (
         if (unsigned_short != other.unsigned_short) return false
         if (unsigned_int != other.unsigned_int) return false
         if (unsigned_long != other.unsigned_long) return false
+        if (enum != other.enum) return false
         
         return true
     }
@@ -350,6 +382,7 @@ data class MyScalar (
         __r = __r*31 + unsigned_short.hashCode()
         __r = __r*31 + unsigned_int.hashCode()
         __r = __r*31 + unsigned_long.hashCode()
+        __r = __r*31 + enum.hashCode()
         return __r
     }
     //pretty print
@@ -367,6 +400,7 @@ data class MyScalar (
             print("unsigned_short = "); unsigned_short.print(printer); println()
             print("unsigned_int = "); unsigned_int.print(printer); println()
             print("unsigned_long = "); unsigned_long.print(printer); println()
+            print("enum = "); enum.print(printer); println()
         }
         printer.print(")")
     }

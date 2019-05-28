@@ -13,7 +13,7 @@ import java.io.File
 
 class SimpleModelTest {
     companion object {
-        val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+        const val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
     }
 
     object TestRoot1 : Root(

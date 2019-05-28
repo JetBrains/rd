@@ -50,6 +50,9 @@ namespace demo {
         //custom serializers
         private:
         
+        //constants
+        public:
+        
         //fields
         protected:
         rd::RdId unknownId_;

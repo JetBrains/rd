@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")
+@file:Suppress("EXPERIMENTAL_API_USAGE","PackageDirectoryMismatch","UnusedImport","unused","LocalVariableName","CanBeVal","PropertyName","EnumEntryName","ClassName","ObjectPropertyName")
 package demo
 
 import com.jetbrains.rd.framework.*
@@ -27,6 +27,7 @@ class ExtModel private constructor(
         
         
         const val serializationHash = 2364843396187734L
+        
     }
     override val serializersOwner: ISerializersOwner get() = ExtModel
     override val serializationHash: Long get() = ExtModel.serializationHash

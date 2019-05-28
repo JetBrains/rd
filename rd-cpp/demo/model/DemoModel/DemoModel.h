@@ -34,6 +34,7 @@
 
 #include "MyScalar.h"
 #include "Base.h"
+#include "MyEnum.h"
 
 
 #pragma warning( push )
@@ -65,10 +66,14 @@ namespace demo {
         using __UByteArraySerializer = rd::ArraySerializer<rd::Polymorphic<uint8_t>>;
         using __StringInternedAtProtocolSerializer = rd::InternedSerializer<rd::Polymorphic<std::wstring>, rd::util::getPlatformIndependentHash("Protocol")>;
         
+        //constants
+        public:
+        static constexpr bool const_toplevel = true;
+        
         //fields
         protected:
         rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_;
-        rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> bool_array_;
+        rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> boolean_array_;
         rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_;
         rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_;
         rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_;
@@ -79,6 +84,7 @@ namespace demo {
         rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_;
         rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_;
         rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_;
+        rd::RdProperty<MyEnum, rd::Polymorphic<MyEnum>> enum_;
         
         
         //initializer
@@ -87,7 +93,7 @@ namespace demo {
         
         //primary ctor
         public:
-        DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> bool_array_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_, rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_);
+        DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> boolean_array_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_, rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_, rd::RdProperty<MyEnum, rd::Polymorphic<MyEnum>> enum_);
         
         //secondary constructor
         
@@ -113,7 +119,7 @@ namespace demo {
         
         //getters
         rd::RdProperty<bool, rd::Polymorphic<bool>> const & get_boolean_property() const;
-        rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> const & get_bool_array() const;
+        rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> const & get_boolean_array() const;
         rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> const & get_scalar() const;
         rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> const & get_ubyte() const;
         rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> const & get_ubyte_array() const;
@@ -124,6 +130,7 @@ namespace demo {
         rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> const & get_callback() const;
         rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> const & get_interned_string() const;
         rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> const & get_polymorphic() const;
+        rd::RdProperty<MyEnum, rd::Polymorphic<MyEnum>> const & get_enum() const;
         
         //intern
         

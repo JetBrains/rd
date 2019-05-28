@@ -15,6 +15,8 @@ import com.jetbrains.rd.util.string.println
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import demo.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.test.assertEquals
 
 lateinit var scheduler: IScheduler
 
@@ -24,7 +26,7 @@ fun server(lifetime: Lifetime, port: Int? = null): Protocol {
             SocketWire.Server(lifetime, scheduler, port, "DemoServer"), lifetime)
 }
 
-var finished = false
+var finished = AtomicBoolean(false)
 
 fun main() {
     val lifetimeDef = Lifetime.Eternal.createNested()
@@ -43,6 +45,8 @@ fun main() {
 
     val printer = PrettyPrinter()
 
+    checkConstants()
+
     scheduler.queue {
         val model = DemoModel.create(lifetime, protocol)
         val extModel = model.extModel
@@ -51,12 +55,19 @@ fun main() {
         fireAll(model, extModel)
     }
 
-    spinUntil(10_000) { finished }
+    spinUntil(10_000) { finished.get() }
 
     socketLifetimeDef.terminate()
     lifetimeDef.terminate()
 
     println(printer)
+}
+
+fun checkConstants() {
+    assert(DemoModel.const_toplevel)
+    assertEquals(MyScalar.const_enum, MyEnum.default)
+    assertEquals(MyScalar.const_string, "const_string_value")
+    assertEquals(Base.const_base, 'B')
 }
 
 private fun <T> PrettyPrinter.printIfRemoteChange(entity: ISource<T>, entityName: String, vararg values: Any) {
@@ -75,8 +86,8 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
         printer.printIfRemoteChange(model.boolean_property, "boolean_property", it)
     }
 
-    model.bool_array.advise(lifetime) {
-        printer.printIfRemoteChange(model.bool_array, "bool_array", it)
+    model.boolean_array.advise(lifetime) {
+            printer.printIfRemoteChange(model.boolean_array, "boolean_array", it)
     }
 
     model.scalar.advise(lifetime) {
@@ -117,10 +128,14 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
     }
 
     model.polymorphic.advise(lifetime) {
-        val entity = model.polymorphic;
-        printer.printIfRemoteChange(entity, "polymorphic", it)
+        printer.printIfRemoteChange(model.polymorphic, "polymorphic", it)
+    }
+
+    model.enum.advise(lifetime) {
+        val entity = model.enum
+        printer.printIfRemoteChange(entity, "enum", it)
         if (!entity.isLocalChange) {
-            finished = true
+            finished.set(true)
         }
     }
 
@@ -132,7 +147,7 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
 fun fireAll(model: DemoModel, extModel: ExtModel) {
     model.boolean_property.set(false)
 
-    model.bool_array.set(booleanArrayOf(true, false))
+    model.boolean_array.set(booleanArrayOf(true, false))
 
     val scalar = MyScalar(false,
             13,
@@ -144,7 +159,8 @@ fun fireAll(model: DemoModel, extModel: ExtModel) {
             UByte.MAX_VALUE.minus(1u).toUByte(),
             UShort.MAX_VALUE.minus(1u).toUShort(),
             UInt.MAX_VALUE.minus(1u),
-            ULong.MAX_VALUE.minus(1u)
+            ULong.MAX_VALUE.minus(1u),
+            MyEnum.kt
     )
 
     model.scalar.set(scalar)
@@ -173,6 +189,8 @@ fun fireAll(model: DemoModel, extModel: ExtModel) {
 
     val derived = Derived("Kotlin instance")
     model.polymorphic.set(derived)
+
+    model.enum.set(MyEnum.kt)
 
     extModel.checker.fire()
 }

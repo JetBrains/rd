@@ -32,6 +32,8 @@
 #include "thirdparty.hpp"
 #include "instantiations.h"
 
+#include "MyEnum.h"
+
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
@@ -49,6 +51,12 @@ namespace demo {
         //custom serializers
         private:
         
+        //constants
+        public:
+        static constexpr int32_t const_int = 0;
+        static constexpr rd::wstring_view const_string = L"const_string_value";
+        static constexpr MyEnum const_enum = MyEnum::default_;
+        
         //fields
         protected:
         bool bool_;
@@ -62,6 +70,7 @@ namespace demo {
         uint16_t unsigned_short_;
         uint32_t unsigned_int_;
         uint64_t unsigned_long_;
+        MyEnum enum_;
         
         
         //initializer
@@ -70,7 +79,7 @@ namespace demo {
         
         //primary ctor
         public:
-        MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint8_t unsigned_byte_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_);
+        MyScalar(bool bool_, uint8_t byte_, int16_t short_, int32_t int_, int64_t long_, float float_, double double_, uint8_t unsigned_byte_, uint16_t unsigned_short_, uint32_t unsigned_int_, uint64_t unsigned_long_, MyEnum enum_);
         
         //secondary constructor
         
@@ -110,6 +119,7 @@ namespace demo {
         uint16_t const & get_unsigned_short() const;
         uint32_t const & get_unsigned_int() const;
         uint64_t const & get_unsigned_long() const;
+        MyEnum const & get_enum() const;
         
         //intern
         

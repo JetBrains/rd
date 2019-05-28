@@ -18,6 +18,13 @@ object DemoRoot : Root(
 }
 
 object DemoModel : Ext(DemoRoot) {
+    private var MyEnum = enum {
+        +"default"
+        +"kt"
+        +"net"
+        +"cpp"
+    }
+
     private var MyScalar = structdef {
         field("bool", PredefinedType.bool)
         field("byte", PredefinedType.byte)
@@ -30,10 +37,15 @@ object DemoModel : Ext(DemoRoot) {
         field("unsigned_short", PredefinedType.ushort)
         field("unsigned_int", PredefinedType.uint)
         field("unsigned_long", PredefinedType.ulong)
+        field("enum", MyEnum)
+
+        const("const_int", PredefinedType.int, "0")
+        const("const_string", PredefinedType.string, "const_string_value")
+        const("const_enum", MyEnum, MyEnum.constants[0])
     }
 
     private var Base = basestruct {
-
+        const("const_base", PredefinedType.char, "B")
     }
 
     private var Derived = structdef extends Base {
@@ -43,7 +55,7 @@ object DemoModel : Ext(DemoRoot) {
     init {
         property("boolean_property", PredefinedType.bool)
 
-        property("bool_array", array(PredefinedType.bool))
+        property("boolean_array", array(PredefinedType.bool))
 
         property("scalar", MyScalar)
 
@@ -64,6 +76,10 @@ object DemoModel : Ext(DemoRoot) {
         property("interned_string", PredefinedType.string.interned(ProtocolInternScope))
 
         property("polymorphic", Base)
+
+        property("enum", MyEnum)
+
+        const("const_toplevel", PredefinedType.bool, "true")
     }
 }
 
