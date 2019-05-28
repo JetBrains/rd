@@ -7,6 +7,7 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Annotations;
 using demo;
+using NUnit.Framework;
 
 namespace JetBrains.Rd.Util
 {
@@ -21,9 +22,11 @@ namespace JetBrains.Rd.Util
             var client = new SocketWire.Client(lifetime, ourScheduler, port,
                 "DemoServer");
             return new Protocol("Server", new Serializers(), new Identities(IdKind.Server), ourScheduler,
-                client, lifetime);
+                client, lifetime, new SerializationCtx());
         }
-
+        
+        [Test]
+        [TestCase(null)]
         public static void Main(string[] args)
         {
             var lifetimeDef = Lifetime.Eternal.CreateNested();
@@ -32,7 +35,7 @@ namespace JetBrains.Rd.Util
             var lifetime = lifetimeDef.Lifetime;
             var socketLifetime = socketLifetimeDef.Lifetime;
 
-            var fileStream = File.Create(Path.Combine(Path.GetTempPath(), "rd/port.txt"));
+            var fileStream = File.Open(Path.Combine(Path.GetTempPath(), "rd/port.txt"), FileMode.Open);
             Directory.CreateDirectory(Directory.GetParent(fileStream.Name).Name);
 
             int port;
@@ -74,7 +77,7 @@ namespace JetBrains.Rd.Util
             [NotNull] string entityName,
             [NotNull] params object[] values)
         {
-            if (!(entity.IsLocalChange()))
+            if (!entity.IsLocalChange())
             {
                 "***".PrintEx(printer);
                 (entityName + ":").PrintEx(printer);
