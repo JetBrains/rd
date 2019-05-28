@@ -47,9 +47,6 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="CrossTest\CrossTestClientAllEntities.cs" />
-        <Compile Include="CrossTest\Model\DemoModel.Generated.cs" />
-        <Compile Include="CrossTest\Model\DemoRoot.Generated.cs" />
-        <Compile Include="CrossTest\Model\ExtModel.Generated.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
@@ -64,6 +61,9 @@
     </ItemGroup>
     <ItemGroup>
       <None Include="packages.config" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="CrossTest\Model" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
