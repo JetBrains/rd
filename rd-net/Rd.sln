@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdCore", "RdCore\RdCore.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdFramework", "RdFramework\RdFramework.csproj", "{B5EBF783-7EA5-4E8C-A92A-4CE72D918228}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{6EE90C64-2CF1-4F95-8011-744D6E3FA819}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.RdCore", "Test.RdCore\Test.RdCore.csproj", "{33F11BEE-8B4A-436C-880A-F5DFD567298B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,5 +24,12 @@ Global
 		{B5EBF783-7EA5-4E8C-A92A-4CE72D918228}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5EBF783-7EA5-4E8C-A92A-4CE72D918228}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B5EBF783-7EA5-4E8C-A92A-4CE72D918228}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{33F11BEE-8B4A-436C-880A-F5DFD567298B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33F11BEE-8B4A-436C-880A-F5DFD567298B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33F11BEE-8B4A-436C-880A-F5DFD567298B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33F11BEE-8B4A-436C-880A-F5DFD567298B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{33F11BEE-8B4A-436C-880A-F5DFD567298B} = {6EE90C64-2CF1-4F95-8011-744D6E3FA819}
 	EndGlobalSection
 EndGlobal

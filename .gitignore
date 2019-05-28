@@ -12,4 +12,6 @@ rd-net/RdCore/bin
 rd-net/RdCore/obj
 rd-net/RdFramework/bin
 rd-net/RdFramework/obj
+rd-net/**/bin
+rd-net/**/obj
 /artifacts/
