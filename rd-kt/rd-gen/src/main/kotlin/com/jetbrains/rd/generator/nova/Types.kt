@@ -68,17 +68,18 @@ sealed class PredefinedType : INonNullableScalar {
     //primitive
     object bool : PredefinedType()
 
+
     /**
      * byte, short, int and long that are signed/unsigned based by platform.
      * E.g. byte is signed in java but unsigned in C#
      */
-    open class NativeIntegral : PredefinedType()
+    abstract class NativeIntegral : PredefinedType()
 
     /**
      * float and double that are single and double precision floating point types respectively.
      * Usually IEEE-754 32 and 64 bit.
      */
-    open class NativeFloatingPointType : PredefinedType()
+    abstract class NativeFloatingPointType : PredefinedType()
 
     /**
      * Unsigned versions of primitive integral types on all platforms: java, c#, c++
@@ -88,13 +89,13 @@ sealed class PredefinedType : INonNullableScalar {
     }
 
     /*
-        No guarantee for being signed. Generates to "byte" in C#, for instance.
+     *  No guarantee for being signed. Generates to "byte" in C#, for instance.
      */
     object byte : NativeIntegral()
     object short : NativeIntegral()
     object int : NativeIntegral()
     object long : NativeIntegral()
-  
+
 
     object float : NativeFloatingPointType()
     object double : NativeFloatingPointType()
@@ -190,6 +191,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
         }
     }
 
+    val constantMembers: ArrayList<Member.Const> = ArrayList()
     val ownMembers: ArrayList<Member> = ArrayList()
         get() {
             require(lazyInitializer == null) { "${this._name}: declaration hasn't been initialized" }
@@ -206,6 +208,13 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
 
     fun <T : Member> append(member: T) : T {
         ownMembers.add(member)
+        member.owner = this@Declaration
+
+        return member
+    }
+
+    fun <T : Member.Const> appendConst(member: T) : T {
+        constantMembers.add(member)
         member.owner = this@Declaration
 
         return member

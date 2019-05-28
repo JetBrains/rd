@@ -297,7 +297,7 @@ namespace rd {
 		lifetime->add_action([this]() {
 			logger.info(this->id + ": starts terminating lifetime");
 
-			bool send_buffer_stopped = async_send_buffer.stop(timeout);
+			const bool send_buffer_stopped = async_send_buffer.stop(timeout);
 			logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
 			{

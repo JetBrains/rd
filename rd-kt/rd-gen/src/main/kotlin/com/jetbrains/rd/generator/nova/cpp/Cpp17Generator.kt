@@ -33,9 +33,8 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 
 /**
  * Generate C++ code.
- * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces.
+ * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
- * "a.b.c" to "a::b::c", for instance.
  */
 open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
 
@@ -103,7 +102,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     private object RdExtBase : RdCppLibraryType("rd::RdExtBase")
 
-    //endregion
+    //endregion",
     fun String.isWrapper(): Boolean {
         return startsWith("rd::Wrapper")
     }
@@ -191,6 +190,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         +"private:"
     }
 
+    private fun PrettyPrinter.protected() {
+        +"protected:"
+    }
+
     private fun PrettyPrinter.public() {
         +"public:"
     }
@@ -207,6 +210,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }()
         //don't touch. it works
     }
+
     //endregion
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -363,6 +367,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             implSimpleName + (genericParams.toList().map
             { it.substitutedName(scope, omitNullability = isProperty) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")*/
         }
+        is Member.Const -> type.substitutedName(scope)
     }
 
     protected open fun Member.implTemplateName(scope: Declaration) = when (this) {
@@ -374,6 +379,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             implSimpleName + (genericParams.toList().map
             { it.templateName(scope, isProperty) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")*/
         }
+        is Member.Const -> type.templateName(scope)
     }
 
 
@@ -643,12 +649,10 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         dependenciesDecl(decl)
         println()
 
-        if (decl !is Enum) {
-            VsWarningsDefault?.let {
-                +"#pragma warning( push )"
-                it.forEach {
-                    +"#pragma warning( disable:$it )"
-                }
+        VsWarningsDefault?.let {
+            +"#pragma warning( push )"
+            it.forEach {
+                +"#pragma warning( disable:$it )"
             }
         }
 
@@ -745,8 +749,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 comment("custom serializers")
                 customSerializersTrait(decl)
 
+                comment("constants")
+                public()
+                constantsDecl(decl)
+
                 comment("fields")
-                +"protected:"
+                protected()
                 fieldsDecl(decl)
 
                 comment("initializer")
@@ -828,7 +836,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     protected open fun PrettyPrinter.enum(decl: Enum) {
         titledBlock("enum class ${decl.name}") {
             +decl.constants.joinToString(separator = ",${eolKind.value}") {
-                docComment(it.documentation) + it.name
+                docComment(it.documentation) + it.name.sanitize()
             }
         }
 
@@ -843,7 +851,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         define(enumToStringTraitDecl(decl)) {
             +"""
             |switch(value) {
-            |${decl.constants.joinToString(separator = eol) { """case ${decl.name}::${it.name}: return "${it.name}";""" }}
+            |${decl.constants.joinToString(separator = eol) { """case ${decl.name}::${it.name.sanitize()}: return "${it.name}";""" }}
             |}
             """.trimMargin()
 
@@ -973,9 +981,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     arrayListOf()
                 }
                 is Member.Field -> {
-                    parseType(member.type, false)?.let {
-                        listOf(it.name)
-                    } ?: emptyList()
+                    listOfNotNull(parseType(member.type, false)?.name)
                 }
                 is Member.Reactive -> {
                     if (member is Member.Reactive.Stateful.Extension) {
@@ -989,6 +995,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                         }.map { it.name }
                     }
                 }
+                is Member.Const -> listOfNotNull(parseType(member.type, false)?.name)
             }
         }
 
@@ -1087,7 +1094,18 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         return MemberFunction("""${decl.name} const &""", "getOrCreateExtensionOf(${pointcut.sanitizedName(decl)} & pointcut)", decl.name).static()
     }
 
-    fun PrettyPrinter.fieldsDecl(decl: Declaration) {
+    private fun PrettyPrinter.constantsDecl(decl: Declaration) {
+        decl.constantMembers.forEach {
+            val value = getDefaultValue(decl, it)
+            val type = when (it.type) {
+                is PredefinedType.string -> "rd::wstring_view"
+                else -> it.type.templateName(decl)
+            }
+            +"static constexpr $type ${it.name} = $value;"
+        }
+    }
+
+    private fun PrettyPrinter.fieldsDecl(decl: Declaration) {
         val own = decl.ownMembers.map {
             val initial = getDefaultValue(decl, it)?.let {
                 "{$it}"
@@ -1831,9 +1849,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     protected fun docComment(doc: String?) = (doc != null).condstr {
         "\n" +
-                "/**\n" +
-                " * $doc\n" +
-                " */\n"
+                "/**" + eol
+        " * $doc" + eol
+        " */" + eol
     }
 
     protected fun getDefaultValue(containing: Declaration, member: Member): String? =
@@ -1849,6 +1867,15 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                         }
                     }
                     else -> null
+                }
+                is Member.Const -> {
+                    val value = member.value
+                    when (member.type) {
+                        is PredefinedType.string -> """L"$value""""
+                        is PredefinedType.char -> """L'$value'"""
+                        is Enum -> "${member.type.name}::${value.sanitize()}"
+                        else -> value
+                    }
                 }
 //                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
                 else -> null

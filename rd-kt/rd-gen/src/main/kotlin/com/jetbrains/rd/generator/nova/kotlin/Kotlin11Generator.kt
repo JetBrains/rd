@@ -136,12 +136,14 @@ open class Kotlin11Generator(
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Const -> type.substitutedName(scope)
     }
 
     protected open fun Member.implSubstitutedName(scope: Declaration) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Const -> type.substitutedName(scope)
     }
 
 
@@ -267,8 +269,11 @@ open class Kotlin11Generator(
         }
     }
 
+    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName")
+
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
-        + """@file:Suppress("PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "EXPERIMENTAL_API_USAGE", "PropertyName")"""
+        val warnings = suppressWarnings.joinToString(separator = ",") { """"$it"""" }
+        + """@file:Suppress($warnings)"""
         + "package ${decl.namespace}"
     }
 
@@ -398,12 +403,21 @@ open class Kotlin11Generator(
                 " */\n"
     }
 
+    protected fun PrettyPrinter.constantTrait(decl: Declaration) {
+        decl.constantMembers.forEach {
+            val value = getDefaultValue(decl, it)
+            + if (it.type is Enum) {
+                "val ${it.name} = $value"
+            } else {
+                "const val ${it.name} = $value"
+            }
+        }
+    }
 
     protected fun PrettyPrinter.companionTrait(decl: Declaration) {
         if (decl.isConcrete) {
             println()
-            + "companion object : IMarshaller<${decl.name}> {"
-            indent {
+            block("companion object : IMarshaller<${decl.name}>") {
                 + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
                 println()
                 readerTrait(decl)
@@ -411,21 +425,24 @@ open class Kotlin11Generator(
                 writerTrait(decl)
                 println()
                 customSerializersTrait(decl)
+                println()
+                constantTrait(decl)
             }
-            + "}"
         } //todo root, singleton
         else if (decl.isAbstract) {
             println()
             block("companion object : IAbstractDeclaration<${decl.name}>") {
                 abstractDeclarationTrait(decl)
+                println()
                 customSerializersTrait(decl)
+                println()
+                constantTrait(decl)
             }
         }
 
         if (decl is Toplevel) {
             println()
-            + "companion object : ISerializersOwner {"
-            indent {
+            block("companion object : ISerializersOwner") {
                 println()
                 registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
                 println()
@@ -434,9 +451,10 @@ open class Kotlin11Generator(
                 println()
                 customSerializersTrait(decl)
                 println()
-                + "const val serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L"
+                +"const val serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L"
+                println()
+                constantTrait(decl)
             }
-            + "}"
             + "override val serializersOwner: ISerializersOwner get() = ${decl.name}"
             + "override val serializationHash: Long get() = ${decl.name}.serializationHash"
             println()
@@ -512,6 +530,14 @@ open class Kotlin11Generator(
                     member.defaultValue != null -> member.defaultValue.toString()
                     member.isNullable -> "null"
                     else -> null
+                }
+                is Member.Const -> {
+                    when (member.type) {
+                        is PredefinedType.string -> """"${member.value}""""
+                        is PredefinedType.char -> """'${member.value}'"""
+                        is Enum -> "${member.type.substitutedName(containing)}.${member.value}"
+                        else -> member.value
+                    }
                 }
 //                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
                 else -> null

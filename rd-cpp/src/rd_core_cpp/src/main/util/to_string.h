@@ -74,7 +74,7 @@ namespace rd {
 		template<typename T>
 		std::string to_string(std::vector<T> const &v) {
 			std::string res = "[";
-			for (const auto &item : res) {
+			for (const auto &item : v) {
 				res += to_string(item);
 				res += ",";
 			}

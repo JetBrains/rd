@@ -59,6 +59,9 @@ namespace demo {
         //custom serializers
         private:
         
+        //constants
+        public:
+        
         //fields
         protected:
         

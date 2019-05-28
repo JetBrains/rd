@@ -49,6 +49,10 @@ namespace demo {
         //custom serializers
         private:
         
+        //constants
+        public:
+        static constexpr wchar_t const_base = L'B';
+        
         //fields
         protected:
         

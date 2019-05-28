@@ -1,5 +1,6 @@
 #include "DemoModel.h"
 
+#include "MyEnum.h"
 #include "MyScalar.h"
 #include "Derived.h"
 #include "Base_Unknown.h"
@@ -31,7 +32,7 @@ namespace demo {
     void DemoModel::initialize()
     {
         boolean_property_.optimize_nested = true;
-        bool_array_.optimize_nested = true;
+        boolean_array_.optimize_nested = true;
         scalar_.optimize_nested = true;
         ubyte_.optimize_nested = true;
         ubyte_array_.optimize_nested = true;
@@ -40,13 +41,14 @@ namespace demo {
         mapLongToString_.optimize_nested = true;
         interned_string_.optimize_nested = true;
         polymorphic_.optimize_nested = true;
-        serializationHash = -3553877242411509036L;
+        enum_.optimize_nested = true;
+        serializationHash = -6563454397007024222L;
     }
     
     //primary ctor
-    DemoModel::DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> bool_array_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_, rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_) :
+    DemoModel::DemoModel(rd::RdProperty<bool, rd::Polymorphic<bool>> boolean_property_, rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> boolean_array_, rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> scalar_, rd::RdProperty<uint8_t, rd::Polymorphic<uint8_t>> ubyte_, rd::RdProperty<std::vector<uint8_t>, DemoModel::__UByteArraySerializer> ubyte_array_, rd::RdList<int32_t, rd::Polymorphic<int32_t>> list_, rd::RdSet<int32_t, rd::Polymorphic<int32_t>> set_, rd::RdMap<int64_t, std::wstring, rd::Polymorphic<int64_t>, rd::Polymorphic<std::wstring>> mapLongToString_, rd::RdCall<wchar_t, std::wstring, rd::Polymorphic<wchar_t>, rd::Polymorphic<std::wstring>> call_, rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>> callback_, rd::RdProperty<std::wstring, DemoModel::__StringInternedAtProtocolSerializer> interned_string_, rd::RdProperty<Base, rd::AbstractPolymorphic<Base>> polymorphic_, rd::RdProperty<MyEnum, rd::Polymorphic<MyEnum>> enum_) :
     rd::RdExtBase()
-    ,boolean_property_(std::move(boolean_property_)), bool_array_(std::move(bool_array_)), scalar_(std::move(scalar_)), ubyte_(std::move(ubyte_)), ubyte_array_(std::move(ubyte_array_)), list_(std::move(list_)), set_(std::move(set_)), mapLongToString_(std::move(mapLongToString_)), call_(std::move(call_)), callback_(std::move(callback_)), interned_string_(std::move(interned_string_)), polymorphic_(std::move(polymorphic_))
+    ,boolean_property_(std::move(boolean_property_)), boolean_array_(std::move(boolean_array_)), scalar_(std::move(scalar_)), ubyte_(std::move(ubyte_)), ubyte_array_(std::move(ubyte_array_)), list_(std::move(list_)), set_(std::move(set_)), mapLongToString_(std::move(mapLongToString_)), call_(std::move(call_)), callback_(std::move(callback_)), interned_string_(std::move(interned_string_)), polymorphic_(std::move(polymorphic_)), enum_(std::move(enum_))
     {
         initialize();
     }
@@ -68,7 +70,7 @@ namespace demo {
     {
         rd::RdExtBase::init(lifetime);
         bindPolymorphic(boolean_property_, lifetime, this, "boolean_property");
-        bindPolymorphic(bool_array_, lifetime, this, "bool_array");
+        bindPolymorphic(boolean_array_, lifetime, this, "boolean_array");
         bindPolymorphic(scalar_, lifetime, this, "scalar");
         bindPolymorphic(ubyte_, lifetime, this, "ubyte");
         bindPolymorphic(ubyte_array_, lifetime, this, "ubyte_array");
@@ -79,6 +81,7 @@ namespace demo {
         bindPolymorphic(callback_, lifetime, this, "callback");
         bindPolymorphic(interned_string_, lifetime, this, "interned_string");
         bindPolymorphic(polymorphic_, lifetime, this, "polymorphic");
+        bindPolymorphic(enum_, lifetime, this, "enum");
     }
     
     //identify
@@ -86,7 +89,7 @@ namespace demo {
     {
         rd::RdBindableBase::identify(identities, id);
         identifyPolymorphic(boolean_property_, identities, id.mix(".boolean_property"));
-        identifyPolymorphic(bool_array_, identities, id.mix(".bool_array"));
+        identifyPolymorphic(boolean_array_, identities, id.mix(".boolean_array"));
         identifyPolymorphic(scalar_, identities, id.mix(".scalar"));
         identifyPolymorphic(ubyte_, identities, id.mix(".ubyte"));
         identifyPolymorphic(ubyte_array_, identities, id.mix(".ubyte_array"));
@@ -97,6 +100,7 @@ namespace demo {
         identifyPolymorphic(callback_, identities, id.mix(".callback"));
         identifyPolymorphic(interned_string_, identities, id.mix(".interned_string"));
         identifyPolymorphic(polymorphic_, identities, id.mix(".polymorphic"));
+        identifyPolymorphic(enum_, identities, id.mix(".enum"));
     }
     
     //getters
@@ -104,9 +108,9 @@ namespace demo {
     {
         return boolean_property_;
     }
-    rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> const & DemoModel::get_bool_array() const
+    rd::RdProperty<std::vector<bool>, DemoModel::__BoolArraySerializer> const & DemoModel::get_boolean_array() const
     {
-        return bool_array_;
+        return boolean_array_;
     }
     rd::RdProperty<MyScalar, rd::Polymorphic<MyScalar>> const & DemoModel::get_scalar() const
     {
@@ -148,6 +152,10 @@ namespace demo {
     {
         return polymorphic_;
     }
+    rd::RdProperty<MyEnum, rd::Polymorphic<MyEnum>> const & DemoModel::get_enum() const
+    {
+        return enum_;
+    }
     
     //intern
     
@@ -172,7 +180,7 @@ namespace demo {
     {
         std::string res = "DemoModel\n";
         res += "\tboolean_property = " + rd::to_string(boolean_property_) + '\n';
-        res += "\tbool_array = " + rd::to_string(bool_array_) + '\n';
+        res += "\tboolean_array = " + rd::to_string(boolean_array_) + '\n';
         res += "\tscalar = " + rd::to_string(scalar_) + '\n';
         res += "\tubyte = " + rd::to_string(ubyte_) + '\n';
         res += "\tubyte_array = " + rd::to_string(ubyte_array_) + '\n';
@@ -183,6 +191,7 @@ namespace demo {
         res += "\tcallback = " + rd::to_string(callback_) + '\n';
         res += "\tinterned_string = " + rd::to_string(interned_string_) + '\n';
         res += "\tpolymorphic = " + rd::to_string(polymorphic_) + '\n';
+        res += "\tenum = " + rd::to_string(enum_) + '\n';
         return res;
     }
     

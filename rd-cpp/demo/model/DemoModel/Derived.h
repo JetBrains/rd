@@ -49,6 +49,9 @@ namespace demo {
         //custom serializers
         private:
         
+        //constants
+        public:
+        
         //fields
         protected:
         rd::Wrapper<std::wstring> string_;

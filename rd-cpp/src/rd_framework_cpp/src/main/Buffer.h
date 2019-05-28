@@ -105,8 +105,8 @@ namespace rd {
 		std::vector<value_or_wrapper<T>> read_array(std::function<value_or_wrapper<T>()> reader) {
 			int32_t len = read_integral<int32_t>();
 			std::vector<value_or_wrapper<T>> result(len);
-			for (auto &x : result) {
-				x = std::move(reader());
+			for (int32_t i = 0; i < len; ++i) {
+				result[i] = std::move(reader());
 			}
 			return result;
 		}

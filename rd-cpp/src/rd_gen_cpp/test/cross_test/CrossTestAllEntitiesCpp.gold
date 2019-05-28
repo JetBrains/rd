@@ -2,6 +2,9 @@
 extModel.checker:
 void
 ***
+boolean_array:
+[1,0,]
+***
 scalar:
 MyScalar
         bool = 0
@@ -11,10 +14,18 @@ MyScalar
         long = -2000000000000000000
         float = 3.140000
         double = -123456789.012346
+        unsigned_byte = 254
         unsigned_short = 65534
         unsigned_int = 4294967294
         unsigned_long = 18446744073709551614
+        enum = kt
 
+***
+ubyte:
+242
+***
+ubyte_array:
+[13,255,]
 ***
 list:
 Add 0:1
@@ -34,4 +45,8 @@ Kotlin
 polymorphic:
 Derived
         string = Kotlin instance
+
+***
+enum:
+kt
 
