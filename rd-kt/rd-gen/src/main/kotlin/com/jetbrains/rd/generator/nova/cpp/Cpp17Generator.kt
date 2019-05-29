@@ -1871,8 +1871,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 is Member.Const -> {
                     val value = member.value
                     when (member.type) {
-                        is PredefinedType.string -> """L"$value""""
                         is PredefinedType.char -> """L'$value'"""
+                        is PredefinedType.string -> """L"$value""""
                         is PredefinedType.long -> "${value}ll"
                         is PredefinedType.uint -> "${value}u"
                         is PredefinedType.ulong -> "${value}ull"

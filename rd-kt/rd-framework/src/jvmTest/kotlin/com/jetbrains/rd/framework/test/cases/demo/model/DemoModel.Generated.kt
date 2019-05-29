@@ -243,7 +243,7 @@ class ConstUtil (
         const val const_byte : Byte = 0
         const val const_short : Short = 32767
         const val const_int : Int = 2147483647
-        const val const_long : Long = 9223372036854775807
+        const val const_long : Long = 9223372036854775807L
         const val const_ubyte : UByte = 255u
         const val const_ushort : UShort = 65535u
         const val const_uint : UInt = 4294967295u

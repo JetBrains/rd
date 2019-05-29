@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.jetbrains.rd.generator.test.cases.generator.demo
 
 import com.jetbrains.rd.generator.nova.*
@@ -54,7 +56,7 @@ object DemoModel : Ext(DemoRoot) {
         const("const_float", PredefinedType.float, 0f)
         const("const_double", PredefinedType.double, 0.0)
         const("const_string", PredefinedType.string, "const_string_value")
-        const("const_enum", MyEnum, MyEnum.constants[0])
+        const("const_enum", MyEnum, 0)
     }
 
     private var Base = basestruct {
@@ -96,6 +98,7 @@ object DemoModel : Ext(DemoRoot) {
     }
 }
 
+@ExperimentalUnsignedTypes
 object ExtModel : Ext(DemoModel) {
     init {
         signal("checker", PredefinedType.void)

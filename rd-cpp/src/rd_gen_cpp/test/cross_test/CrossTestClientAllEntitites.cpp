@@ -175,7 +175,7 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 
 
 static_assert(DemoModel::const_toplevel, "const_toplevel value is wrong");
-static_assert(MyScalar::const_enum == MyEnum::default_, "const _enum value is wrong");
+static_assert(ConstU::const_enum == MyEnum::default_, "const _enum value is wrong");
 //	static_assert(MyScalar::const_string == L"const_string_value", "const_string value is wrong");
 //  std::char_traits::compare is not constexpr until C++17 at least in Clang
 static_assert(Base::const_base == 'B', "const_base value is wrong");
