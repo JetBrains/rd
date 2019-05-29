@@ -33,4 +33,4 @@ ${build_dir}/../../../gradlew fatJar
 
 ${build_dir}/.dotnet/dotnet build /p:Configuration=Release ${build_dir}/../../../rd-net/Rd.sln
 
-mono ${build_dir}/nuget.exe pack -Version $nuget_version -Symbols -SymbolPackageFormat snupkg  -OutputDirectory ${build_dir}
+mono ${build_dir}/nuget.exe pack -Version $nuget_version -Symbols -OutputDirectory ${build_dir}
