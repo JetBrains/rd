@@ -103,7 +103,7 @@ class RdGen : Kli() {
             ) + src.map { it.absolutePath }
 
             v("kotlinc " + args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
-            val returnCode = method.invoke(clazz.newInstance(), System.err, args.toTypedArray()) as kotlin.Enum<*>
+            val returnCode = method.invoke(clazz.getDeclaredConstructor().newInstance(), System.err, args.toTypedArray()) as kotlin.Enum<*>
 
 
             return if (returnCode.ordinal == 0) {
@@ -388,7 +388,7 @@ private fun collectTopLevels(
     val toplevels = toplevelClasses.map {
         val kclass = it.kotlin
         if (kclass.constructors.any())
-            it.newInstance()
+            it.getDeclaredConstructor().newInstance()
         else
             kclass.objectInstance
     }.filterIsInstance(Toplevel::class.java).sortedWith(compareBy({ it.root.name }, { it.toString() }))

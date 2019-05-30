@@ -545,7 +545,7 @@ open class Kotlin11Generator(
                         else -> value
                     }
                 }
-//                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
+                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
                 else -> null
             }
 
