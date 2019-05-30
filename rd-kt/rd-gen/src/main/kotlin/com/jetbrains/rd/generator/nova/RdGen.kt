@@ -32,7 +32,7 @@ data class GenerationSpec(
 
 class RdGen : Kli() {
     companion object {
-        const val version = "1.05"
+        const val version = "1.06"
         const val hashFileName = ".rdgen"
     }
 

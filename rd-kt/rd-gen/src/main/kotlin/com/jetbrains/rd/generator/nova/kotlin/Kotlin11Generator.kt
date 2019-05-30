@@ -310,16 +310,7 @@ open class Kotlin11Generator(
         println()
         println()
 
-        if (decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
-            + "/**"
-            if (decl.documentation != null) {
-                + " * ${decl.documentation}"
-            }
-            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
-                + " * @property ${member.name} ${member.documentation}"
-            }
-            + " */"
-        }
+        docTrait(decl)
 
         decl.getSetting(Attributes)?.forEach {
             + "@$it"
@@ -367,6 +358,22 @@ open class Kotlin11Generator(
 
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
+        }
+    }
+
+    protected fun PrettyPrinter.docTrait(decl: Declaration) {
+        if (decl.sourceFileAndLine != null || decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
+            + "/**"
+            if (decl.documentation != null) {
+                + " * ${decl.documentation}"
+            }
+            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
+                + " * @property ${member.name} ${member.documentation}"
+            }
+            if (decl.sourceFileAndLine != null) {
+                + " * Generated from [${decl.sourceFileAndLine}]"
+            }
+            + " */"
         }
     }
 
