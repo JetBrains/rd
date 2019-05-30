@@ -73,7 +73,7 @@ sealed class Lifetime {
     @Deprecated("Use onTermination", ReplaceWith("onTermination(action)"))
     fun add(action: () -> Unit) = onTermination(action)
 
-    @Deprecated("Use !isAlive", ReplaceWith("!isAlive"))
+    @Deprecated("Use !isAlive")
     val isTerminated: Boolean get() = !isAlive
 
     @Deprecated("Use executeIfAlive(action)", ReplaceWith("executeIfAlive(action)"))
