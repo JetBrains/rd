@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Test.RdCore.Collections.Synchronized
 {
     [TestFixture]
-    public class TestSynchronizedDictionary
+    public class TestSynchronizedDictionary : RdCoreTestBase
     {
         public void TestLiveFiltering()
         {
