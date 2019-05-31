@@ -97,6 +97,9 @@ allprojects {
         apply plugin: 'maven-publish'
         apply plugin: 'org.jetbrains.dokka'
 
+        jacoco {
+            toolVersion = "0.8.2"
+        }
 
         task sourceJar(type: Jar) {
             from sourceSets.main.kotlin
