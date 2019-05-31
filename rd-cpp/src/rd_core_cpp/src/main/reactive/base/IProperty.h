@@ -35,6 +35,7 @@ namespace rd {
 		//endregion
 
 		virtual T const &get() const = 0;
+
 	private:
 		void advise0(Lifetime lifetime, std::function<void(T const &)> handler, Signal<T> const &signal) const {
 			if (lifetime->is_terminated()) {
@@ -49,6 +50,7 @@ namespace rd {
 		void advise_before(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			advise0(lifetime, handler, this->before_change);
 		}
+
 	public:
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			advise0(std::move(lifetime), std::move(handler), this->change);

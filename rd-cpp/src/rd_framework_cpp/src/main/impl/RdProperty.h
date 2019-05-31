@@ -40,7 +40,7 @@ namespace rd {
 		virtual ~RdProperty() = default;
 		//endregion
 
-		static RdProperty<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdProperty<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdId id = RdId::read(buffer);
 			bool not_null = buffer.read_bool();//not null/
 			(void) not_null;
@@ -51,13 +51,13 @@ namespace rd {
 			return property;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			this->rdid.write(buffer);
 			buffer.write_bool(true);
 			S::write(ctx, buffer, this->get());
 		}
 
-		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			RdPropertyBase<T, S>::advise(lifetime, std::move(handler));
 		}
 

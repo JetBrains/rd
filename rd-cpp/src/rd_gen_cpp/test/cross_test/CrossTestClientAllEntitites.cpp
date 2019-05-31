@@ -6,16 +6,14 @@
 
 #include "Lifetime.h"
 #include "SocketWire.h"
-#include "Protocol.h"
 #include "SimpleScheduler.h"
-#include "filesystem.h"
 #include "CrossTestClientBase.h"
+#include <ConstUtil.h>
 
 #include <cstdint>
-#include <fstream>
 #include <string>
-#include <climits>
 #include <future>
+
 
 using namespace rd;
 using namespace demo;
@@ -114,7 +112,7 @@ void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &m
 
 	model.get_enum().advise(lifetime, [&](MyEnum const& it){
 		printIfRemoteChange(printer, model.get_enum(), "enum", it);
-		if (!model.get_enum().is_local_change) {
+		if (!is_local_change_of(model.get_enum())) {
 			promise.set_value();
 		}
 	});
@@ -175,7 +173,7 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 
 
 static_assert(DemoModel::const_toplevel, "const_toplevel value is wrong");
-static_assert(ConstU::const_enum == MyEnum::default_, "const _enum value is wrong");
+static_assert(ConstUtil::const_enum == MyEnum::default_, "const _enum value is wrong");
 //	static_assert(MyScalar::const_string == L"const_string_value", "const_string value is wrong");
 //  std::char_traits::compare is not constexpr until C++17 at least in Clang
 static_assert(Base::const_base == 'B', "const_base value is wrong");

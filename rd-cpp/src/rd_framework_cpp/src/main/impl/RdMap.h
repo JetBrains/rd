@@ -68,14 +68,14 @@ namespace rd {
 		virtual ~RdMap() = default;
 		//endregion
 
-		static RdMap<K, V, KS, VS> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdMap<K, V, KS, VS> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdMap<K, V, KS, VS> res;
 			RdId id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -205,7 +205,7 @@ namespace rd {
 			}
 		}
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}

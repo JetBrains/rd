@@ -46,7 +46,7 @@ namespace rd {
 		virtual ~RdList() = default;
 		//endregion
 
-		static RdList<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdList<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdList<T, S> result;
 			int64_t next_version = buffer.read_integral<int64_t>();
 			RdId id = RdId::read(buffer);
@@ -56,7 +56,7 @@ namespace rd {
 			return result;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			buffer.write_integral<int64_t>(next_version);
 			rdid.write(buffer);
 		}
@@ -150,7 +150,7 @@ namespace rd {
 			}
 		}
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}
@@ -201,7 +201,7 @@ namespace rd {
 
 		friend std::string to_string(RdList const &value) {
 			std::string res = "[";
-			for (auto const& p : value) {
+			for (auto const &p : value) {
 				res += to_string(p) + ",";
 			}
 			return res + "]";

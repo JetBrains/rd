@@ -200,7 +200,7 @@ namespace rd {
 
 		//endregion
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			change.advise(lifetime, handler);
 			/*for (auto const &[key, value] : map) {*/
 			for (auto const &it : map) {

@@ -52,7 +52,9 @@ namespace rd {
 	public:
 		virtual ~IViewable() = default;
 
-		virtual void view(Lifetime lifetime, std::function< void(Lifetime, T const &)> handler) const = 0;
+		virtual void view(Lifetime lifetime, std::function< void(Lifetime, T const &)
+
+		> handler) const = 0;
 	};
 
 	/**
@@ -72,7 +74,7 @@ namespace rd {
 		 * \brief @code fire specialisation at T=Void		  
 		 */
 		template<typename U = T>
-		typename std::enable_if_t<util::is_void<U>> fire() const {
+		typename std::enable_if_t<util::is_void < U>> fire() const {
 			fire(Void{});
 		}
 	};

@@ -27,7 +27,7 @@ namespace rd {
 		}
 
 	protected:
-		Signal <T> signal;
+		Signal<T> signal;
 	public:
 		//region ctor/dtor
 
@@ -44,14 +44,14 @@ namespace rd {
 		virtual ~RdSignal() = default;
 		//endregion
 
-		static RdSignal<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdSignal<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdSignal<T, S> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -84,7 +84,7 @@ namespace rd {
 
 		using ISource<T>::advise;
 
-		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}

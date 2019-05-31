@@ -332,6 +332,41 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     //region Member.
     val Member.Reactive.actualFlow: FlowKind get() = flowTransform.transform(flow)
 
+    protected open val Member.Reactive.intfSimpleName: String
+        get () {
+//        val async = this.freeThreaded.condstr { "Async" }
+            return "rd::" + when (this) {
+                is Member.Reactive.Task -> when (actualFlow) {
+                    Sink -> "RdEndpoint"
+                    Source -> "RdCall"
+                    Both -> fail("Unsupported flow direction for tasks")
+                }
+                is Member.Reactive.Signal -> when (actualFlow) {
+                    Sink -> "ISource"
+                    Source, Both -> "ISignal"
+                }
+                is Member.Reactive.Stateful.Property -> when (actualFlow) {
+                    Sink -> "IProperty"
+                    Source, Both -> "IProperty"
+                }
+                is Member.Reactive.Stateful.List -> when (actualFlow) {
+                    Sink -> "IViewableList"
+                    Source, Both -> "IViewableList"
+                }
+                is Member.Reactive.Stateful.Set -> when (actualFlow) {
+                    Sink -> "IViewableSet"
+                    Source, Both -> "IViewableSet"
+                }
+                is Member.Reactive.Stateful.Map -> when (actualFlow) {
+                    Sink -> "IViewableMap"
+                    Source, Both -> "IViewableMap"
+                }
+
+                is Member.Reactive.Stateful.Extension -> implSimpleName
+
+            }
+        }
+
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName: String
         get () = "rd::" + when (this) {
@@ -357,6 +392,12 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             else -> implSimpleName
         }
 
+    protected open fun Member.intfSubstitutedName(scope: Declaration) = when (this) {
+        is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
+        is Member.Field -> type.templateName(scope)
+        is Member.Reactive -> intfSimpleName + (genericParams.toList().map { it.templateName(scope) }).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+        is Member.Const -> type.templateName(scope)
+    }
 
     protected open fun Member.implSubstitutedName(scope: Declaration) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
@@ -1000,7 +1041,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
 
         fun dependencies(decl: Declaration, extHeader: List<String>): List<String> {
-            return decl.ownMembers.asSequence().map { parseMember(it) }.fold(arrayListOf<String>()) { acc, arrayList ->
+            return (decl.ownMembers + decl.constantMembers).asSequence().map { parseMember(it) }.fold(arrayListOf<String>()) { acc, arrayList ->
                 acc += arrayList
                 acc
             }.plus(listOfNotNull(decl.base?.name)).plus(extHeader)
@@ -1217,7 +1258,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     protected fun gettersTraitDecl(decl: Declaration): List<MemberFunction> {
-        return decl.ownMembers.map { member -> MemberFunction("${member.implTemplateName(decl)} const &", "${member.getter()}()", decl.name).const() }
+        return decl.ownMembers.map { member -> MemberFunction("${member.intfSubstitutedName(decl)} const &", "${member.getter()}()", decl.name).const() }
     }
 
     protected fun internTraitDecl(decl: Declaration): MemberFunction? {

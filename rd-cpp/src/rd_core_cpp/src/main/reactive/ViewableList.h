@@ -176,7 +176,7 @@ namespace rd {
 		reverse_iterator rend() const { return reverse_iterator(begin()); }
 		//endregion
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (lifetime->is_terminated()) return;
 			change.advise(std::move(lifetime), handler);
 			for (int32_t i = 0; i < static_cast<int32_t>(size()); ++i) {

@@ -15,19 +15,9 @@
 #include <algorithm>
 
 namespace rd {
-	/**
-	 * \brief A list allowing its contents to be observed.
-	 * \tparam T type of stored values (may be abstract)
-	 */
-	template<typename T>
-	class IViewableList : public IViewable<std::pair<size_t, T const *>> {
-	protected:
-		using WT = value_or_wrapper<T>;
-	public:
-		/**
-		 * \brief Represents an addition, update or removal of an element in the list.
-		 */
-		class Event {
+	namespace detail {
+		template<typename T>
+		class ListEvent {
 		public:
 			class Add {
 			public:
@@ -44,7 +34,7 @@ namespace rd {
 				T const *new_value;
 
 				Update(int32_t index, T const *old_value, T const *new_value) : index(index), old_value(old_value),
-																			   new_value(new_value) {}
+																				new_value(new_value) {}
 			};
 
 			class Remove {
@@ -57,11 +47,11 @@ namespace rd {
 
 			variant<Add, Update, Remove> v;
 
-			Event(Add const &x) : v(x) {}
+			ListEvent(Add x) : v(x) {}
 
-			Event(Update const &x) : v(x) {}
+			ListEvent(Update x) : v(x) {}
 
-			Event(Remove const &x) : v(x) {}
+			ListEvent(Remove x) : v(x) {}
 
 			int32_t get_index() const {
 				return visit(util::make_visitor(
@@ -91,20 +81,20 @@ namespace rd {
 				), v);
 			}
 
-			friend std::string to_string(Event const &e) {
+			friend std::string to_string(ListEvent const &e) {
 				std::string res = visit(util::make_visitor(
-						[](typename Event::Add const &e) {
+						[](typename ListEvent::Add const &e) {
 							return "Add " +
 								   std::to_string(e.index) + ":" +
 								   to_string(*e.new_value);
 						},
-						[](typename Event::Update const &e) {
+						[](typename ListEvent::Update const &e) {
 							return "Update " +
 								   std::to_string(e.index) + ":" +
 								   //                       to_string(e.old_value) + ":" +
 								   to_string(*e.new_value);
 						},
-						[](typename Event::Remove const &e) {
+						[](typename ListEvent::Remove const &e) {
 							return "Remove " +
 								   std::to_string(e.index);
 						}
@@ -112,6 +102,20 @@ namespace rd {
 				return res;
 			}
 		};
+	}
+	/**
+	 * \brief A list allowing its contents to be observed.
+	 * \tparam T type of stored values (may be abstract)
+	 */
+	template<typename T>
+	class IViewableList : public IViewable<std::pair<size_t, T const *>>, public ISource<detail::ListEvent<T>> {
+	protected:
+		using WT = value_or_wrapper<T>;
+	public:
+		/**
+		 * \brief Represents an addition, update or removal of an element in the list.
+		 */
+		using Event = typename detail::ListEvent<T>;
 
 	protected:
 		mutable std::unordered_map<Lifetime, std::vector<LifetimeDefinition>> lifetimes;
@@ -186,7 +190,7 @@ namespace rd {
 			});
 		}
 
-		virtual void advise(Lifetime lifetime, std::function<void(Event)> handler) const = 0;
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override = 0;
 
 		virtual bool add(WT element) const = 0;
 

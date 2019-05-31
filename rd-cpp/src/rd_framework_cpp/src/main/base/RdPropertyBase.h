@@ -99,14 +99,14 @@ namespace rd {
 			Property<T>::set(std::move(v));
 		}
 
-		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}
 			Property<T>::advise(lifetime, handler);
 		}
 
-		void set(value_or_wrapper<T> new_value) const override {
+		void set(value_or_wrapper <T> new_value) const override {
 			this->local_change([this, new_value = std::move(new_value)]() mutable {
 				this->default_value_changed = true;
 				Property<T>::set(std::move(new_value));
