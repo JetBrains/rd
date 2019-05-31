@@ -536,7 +536,7 @@ open class Kotlin11Generator(
                 is Member.Const -> {
                     val value = member.value
                     when (member.type) {
-                        is PredefinedType.char -> """'$value'"""
+                        is PredefinedType.char -> "\'$value\'"
                         is PredefinedType.string -> """"$value""""
                         is PredefinedType.long -> """${value}L"""
                         is PredefinedType.float -> """${value}f"""

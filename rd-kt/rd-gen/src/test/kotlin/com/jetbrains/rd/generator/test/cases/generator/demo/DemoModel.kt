@@ -56,7 +56,6 @@ object DemoModel : Ext(DemoRoot) {
         const("const_float", PredefinedType.float, 0f)
         const("const_double", PredefinedType.double, 0.0)
         const("const_string", PredefinedType.string, "const_string_value")
-        const("const_enum", MyEnum, 0)
     }
 
     private var Base = basestruct {
