@@ -5,11 +5,14 @@
 #include <string>
 
 namespace rd {
+	/**
+	 * \brief Wrapper around time_t to be synchronized with "Date" in Kt and "DateTime" in C#.
+	 */
 	class DateTime {
 	public:
-		std::time_t value;
+		std::time_t seconds;
 
-		explicit DateTime(time_t value);
+		explicit DateTime(time_t seconds);
 
 		friend bool operator<(const DateTime &lhs, const DateTime &rhs);
 
@@ -23,6 +26,7 @@ namespace rd {
 
 		friend bool operator!=(const DateTime &lhs, const DateTime &rhs);
 
+		//"1970-01-01 03:01:38" for example
 		friend std::string to_string(DateTime const &time);
 	};
 }

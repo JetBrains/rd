@@ -153,7 +153,7 @@ void Buffer::writeString(std::string const &value) const {
 	}
 
 	void Buffer::write_date_time(DateTime const &date_time) {
-		uint64_t t = date_time.value * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH;
+		uint64_t t = date_time.seconds * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH;
 		write_integral<int64_t>(t);
 	}
 

@@ -1,13 +1,15 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "DateTime.h"
 
 #include <sstream>
 #include <iomanip>
 
 namespace rd {
-	DateTime::DateTime(time_t value) : value(value) {}
+	DateTime::DateTime(time_t seconds) : seconds(seconds) {}
 
 	bool operator<(const DateTime &lhs, const DateTime &rhs) {
-		return lhs.value < rhs.value;
+		return lhs.seconds < rhs.seconds;
 	}
 
 	bool operator>(const DateTime &lhs, const DateTime &rhs) {
@@ -24,12 +26,12 @@ namespace rd {
 
 	std::string to_string(DateTime const &time) {
 		std::stringstream ss;
-		ss << std::put_time(std::localtime(&time.value), "%F %T");
+		ss << std::put_time(std::localtime(&time.seconds), "%F %T");
 		return ss.str();
 	}
 
 	bool operator==(const DateTime &lhs, const DateTime &rhs) {
-		return lhs.value == rhs.value;
+		return lhs.seconds == rhs.seconds;
 	}
 
 	bool operator!=(const DateTime &lhs, const DateTime &rhs) {
@@ -38,5 +40,5 @@ namespace rd {
 }
 
 inline size_t std::hash<rd::DateTime>::operator()(const rd::DateTime &value) const noexcept {
-	return std::hash<decltype(value.value)>()(value.value);
+	return std::hash<decltype(value.seconds)>()(value.seconds);
 }

@@ -171,7 +171,7 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 	auto derived = Derived(L"Cpp instance");
 	model.get_polymorphic().set(derived);
 
-	const auto date_time = DateTime(std::time_t(0) + 98);//"1970-01-01 03:01:38"
+	const auto date_time = DateTime(std::time_t(0 + 98));//"1970-01-01 03:01:38"
 	model.get_date().set(date_time);
 
 	model.get_enum().set(MyEnum::cpp);

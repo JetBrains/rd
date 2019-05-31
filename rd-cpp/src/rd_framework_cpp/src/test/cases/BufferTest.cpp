@@ -285,7 +285,7 @@ TEST(BufferTest, date_time) {
 	Buffer buffer;
 
 	DateTime time_now{std::time(nullptr)};
-	DateTime start_of_epoch{std::time_t{0}};
+	DateTime start_of_epoch{std::time_t{100'000}};
 
 	buffer.write_date_time(time_now);
 	buffer.write_date_time(start_of_epoch);
