@@ -483,7 +483,10 @@ open class CSharp50Generator(
                     when (member.type) {
                         is PredefinedType.string -> """"$value""""
                         is PredefinedType.char -> """'$value'"""
-                        is PredefinedType.float -> """${value}f"""
+                        is PredefinedType.long -> "${value}l"
+                        is PredefinedType.uint -> "${value}u"
+                        is PredefinedType.ulong -> "${value}ul"
+                        is PredefinedType.float -> "${value}f"
                         is Enum -> "${member.type.substitutedName(containing)}.${sanitize(value)}"
                         else -> value
                     }
