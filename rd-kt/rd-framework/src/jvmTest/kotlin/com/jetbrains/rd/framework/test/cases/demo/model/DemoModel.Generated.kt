@@ -26,6 +26,7 @@ class DemoModel private constructor(
     private val _callback: RdCall<String, Int>,
     private val _interned_string: RdOptionalProperty<String>,
     private val _polymorphic: RdOptionalProperty<Base>,
+    private val _date: RdOptionalProperty<Date>,
     private val _enum: RdOptionalProperty<MyEnum>
 ) : RdExtBase() {
     //companion
@@ -52,7 +53,7 @@ class DemoModel private constructor(
         
         private val __StringInternedAtProtocolSerializer = FrameworkMarshallers.String.interned("Protocol")
         
-        const val serializationHash = 1245542962615804696L
+        const val serializationHash = 3610408371043635855L
         
         const val const_toplevel : Boolean = true
     }
@@ -72,6 +73,7 @@ class DemoModel private constructor(
     val callback: IRdCall<String, Int> get() = _callback
     val interned_string: IOptProperty<String> get() = _interned_string
     val polymorphic: IOptProperty<Base> get() = _polymorphic
+    val date: IOptProperty<Date> get() = _date
     val enum: IOptProperty<MyEnum> get() = _enum
     //initializer
     init {
@@ -85,6 +87,7 @@ class DemoModel private constructor(
         _mapLongToString.optimizeNested = true
         _interned_string.optimizeNested = true
         _polymorphic.optimizeNested = true
+        _date.optimizeNested = true
         _enum.optimizeNested = true
     }
     
@@ -105,6 +108,7 @@ class DemoModel private constructor(
         bindableChildren.add("callback" to _callback)
         bindableChildren.add("interned_string" to _interned_string)
         bindableChildren.add("polymorphic" to _polymorphic)
+        bindableChildren.add("date" to _date)
         bindableChildren.add("enum" to _enum)
     }
     
@@ -123,6 +127,7 @@ class DemoModel private constructor(
         RdCall<String, Int>(FrameworkMarshallers.String, FrameworkMarshallers.Int),
         RdOptionalProperty<String>(__StringInternedAtProtocolSerializer),
         RdOptionalProperty<Base>(AbstractPolymorphic(Base)),
+        RdOptionalProperty<Date>(FrameworkMarshallers.DateTime),
         RdOptionalProperty<MyEnum>(MyEnum.marshaller)
     )
     
@@ -144,6 +149,7 @@ class DemoModel private constructor(
             print("callback = "); _callback.print(printer); println()
             print("interned_string = "); _interned_string.print(printer); println()
             print("polymorphic = "); _polymorphic.print(printer); println()
+            print("date = "); _date.print(printer); println()
             print("enum = "); _enum.print(printer); println()
         }
         printer.print(")")

@@ -5,6 +5,7 @@ package com.jetbrains.rd.framework.test.cases.demo
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.framework.test.util.NetUtils
+import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
@@ -131,6 +132,10 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
         printer.printIfRemoteChange(model.polymorphic, "polymorphic", it)
     }
 
+    model.date.advise(lifetime) {
+        printer.printIfRemoteChange(model.date, "date", it)
+    }
+
     model.enum.advise(lifetime) {
         val entity = model.enum
         printer.printIfRemoteChange(entity, "enum", it)
@@ -189,6 +194,8 @@ fun fireAll(model: DemoModel, extModel: ExtModel) {
 
     val derived = Derived("Kotlin instance")
     model.polymorphic.set(derived)
+
+    model.date.set(Date(13000)) // Thu Jan 01 03:00:13 MSK 1970
 
     model.enum.set(MyEnum.kt)
 

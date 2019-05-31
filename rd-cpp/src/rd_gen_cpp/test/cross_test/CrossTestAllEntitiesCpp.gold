@@ -3,7 +3,7 @@ extModel.checker:
 void
 ***
 boolean_array:
-[1,0,]
+[1,0,0,]
 ***
 scalar:
 MyScalar
@@ -47,6 +47,8 @@ Derived
         string = Kotlin instance
 
 ***
+date:
+1970-01-01 03:00:13
+***
 enum:
 kt
-

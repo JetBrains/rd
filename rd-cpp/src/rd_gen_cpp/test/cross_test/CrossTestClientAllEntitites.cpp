@@ -23,6 +23,7 @@ class CrossTestClientAllEntities : public CrossTestClientBase {
 				   std::promise<void> &promise);
 
 	void fireAll(const DemoModel &model, const ExtModel &extModel);
+
 public:
 	int run() {
 		DemoModel model;
@@ -59,8 +60,9 @@ int main(int argc, char **argv) {
 }
 
 
-void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &model, ExtModel const &extModel, printer_t &printer,
-			   std::promise<void> &promise) {
+void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &model, ExtModel const &extModel,
+										   printer_t &printer,
+										   std::promise<void> &promise) {
 	model.get_boolean_property().advise(lifetime, [&](bool const &it) {
 		printIfRemoteChange(printer, model.get_boolean_property(), "boolean_property", it);
 	});
@@ -107,10 +109,13 @@ void CrossTestClientAllEntities::adviseAll(Lifetime lifetime, DemoModel const &m
 
 	model.get_polymorphic().advise(lifetime, [&](Base const &it) {
 		printIfRemoteChange(printer, model.get_polymorphic(), "polymorphic", it);
-
 	});
 
-	model.get_enum().advise(lifetime, [&](MyEnum const& it){
+	model.get_date().advise(lifetime, [&](rd::DateTime const &it) {
+		printIfRemoteChange(printer, model.get_date(), "date", it);
+	});
+
+	model.get_enum().advise(lifetime, [&](MyEnum const &it) {
 		printIfRemoteChange(printer, model.get_enum(), "enum", it);
 		if (!is_local_change_of(model.get_enum())) {
 			promise.set_value();
@@ -126,7 +131,7 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 	model.get_boolean_property().set(false);
 
 	model.get_boolean_array().emplace(std::vector<bool>{false, false, true});
-	
+
 	auto scalar = MyScalar(false,
 						   98,
 						   32000,
@@ -134,7 +139,7 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 						   -2'000'000'000'000'000'000,
 						   3.14f,
 						   -123456789.012345678,
-						   std::numeric_limits<uint8_t >::max() - 1,
+						   std::numeric_limits<uint8_t>::max() - 1,
 						   std::numeric_limits<uint16_t>::max() - 1,
 						   std::numeric_limits<uint32_t>::max() - 1,
 						   std::numeric_limits<uint64_t>::max() - 1,
@@ -165,6 +170,9 @@ void CrossTestClientAllEntities::fireAll(const DemoModel &model, const ExtModel 
 
 	auto derived = Derived(L"Cpp instance");
 	model.get_polymorphic().set(derived);
+
+	const auto date_time = DateTime(std::time_t(0) + 98);//"1970-01-01 03:01:38"
+	model.get_date().set(date_time);
 
 	model.get_enum().set(MyEnum::cpp);
 

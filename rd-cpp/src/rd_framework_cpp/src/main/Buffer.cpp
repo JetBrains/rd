@@ -143,6 +143,20 @@ void Buffer::writeString(std::string const &value) const {
 		write_wstring(*value);
 	}
 
+	int64_t TICKS_AT_EPOCH = 621355968000000000L;
+	int64_t TICKS_PER_MILLISECOND = 10000000;
+
+	DateTime Buffer::read_date_time() {
+		int64_t time_in_ticks = read_integral<int64_t>();
+		time_t t = static_cast<time_t>((time_in_ticks - TICKS_AT_EPOCH) / TICKS_PER_MILLISECOND);
+		return DateTime{t};
+	}
+
+	void Buffer::write_date_time(DateTime const &date_time) {
+		uint64_t t = date_time.value * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH;
+		write_integral<int64_t>(t);
+	}
+
 	bool Buffer::read_bool() {
 		const auto res = read_integral<uint8_t>();
 		RD_ASSERT_MSG(res == 0 || res == 1, "get byte:" + std::to_string(res) + " instead of 0 or 1");
@@ -167,11 +181,11 @@ void Buffer::writeString(std::string const &value) const {
 		read_byte_array_raw(array);
 	}
 
-	void Buffer::read_byte_array_raw(ByteArray &array)  {
+	void Buffer::read_byte_array_raw(ByteArray &array) {
 		read(array.data(), array.size());
 	}
 
-	void Buffer::write_byte_array_raw(const ByteArray &array)  {
+	void Buffer::write_byte_array_raw(const ByteArray &array) {
 		write(array.data(), array.size());
 	}
 

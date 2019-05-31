@@ -26,15 +26,6 @@ namespace rd {
 			return std::string(val.begin(), val.end());
 		}
 
-		template<typename T>
-		inline std::string to_string(optional<T> const &val) {
-			if (val.has_value()) {
-				return to_string(*val);
-			} else {
-				return "nullopt";
-			}
-		}
-
 		inline std::string to_string(std::thread::id const &id) {
 			std::ostringstream ss;
 			ss << id;
@@ -53,6 +44,15 @@ namespace rd {
 		template<typename T>
 		inline std::string to_string(std::atomic<T> const &value) {
 			return to_string(value.load());
+		}
+
+		template<typename T>
+		inline std::string to_string(optional<T> const &val) {
+			if (val.has_value()) {
+				return to_string(*val);
+			} else {
+				return "nullopt";
+			}
 		}
 
 		template<typename F, typename S>

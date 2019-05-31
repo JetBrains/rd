@@ -1,6 +1,8 @@
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
+#include "DateTime.h"
+
 #include "core_util.h"
 #include "wrapper.h"
 
@@ -156,6 +158,10 @@ namespace rd {
 		void write_wstring(std::wstring const &value);
 
 		void write_wstring(Wrapper<std::wstring> const &value);
+
+		DateTime read_date_time();
+
+		void write_date_time(DateTime const& date_time);
 
 		template<typename T>
 		T read_enum() {

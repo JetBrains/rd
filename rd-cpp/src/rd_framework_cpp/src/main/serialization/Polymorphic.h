@@ -115,6 +115,18 @@ namespace rd {
 	};
 
 	template<>
+	class Polymorphic<DateTime> {
+	public:
+		inline static DateTime read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_date_time();
+		}
+
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, DateTime const &value) {
+			buffer.write_date_time(value);
+		}
+	};
+
+	template<>
 	class Polymorphic<Void> {
 	public:
 		inline static Void read(SerializationCtx  &ctx, Buffer &buffer) {

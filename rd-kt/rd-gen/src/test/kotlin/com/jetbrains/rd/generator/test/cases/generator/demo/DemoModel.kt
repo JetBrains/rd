@@ -92,6 +92,8 @@ object DemoModel : Ext(DemoRoot) {
 
         property("polymorphic", Base)
 
+        property("date", PredefinedType.dateTime)
+
         property("enum", MyEnum)
 
         const("const_toplevel", PredefinedType.bool, true)

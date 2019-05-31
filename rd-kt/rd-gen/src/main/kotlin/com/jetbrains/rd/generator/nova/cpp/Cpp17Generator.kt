@@ -282,7 +282,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 "u" + itemType.substitutedName(scope)
             }
         }
-        is PredefinedType.dateTime -> "Date"
+        is PredefinedType.dateTime -> "rd::DateTime"
         is PredefinedType.guid -> "UUID"
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
@@ -935,7 +935,8 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         val standardHeaders = listOf(
                 "cstring",
                 "cstdint",
-                "vector"
+                "vector",
+                "ctime"
         )
 
 
@@ -945,6 +946,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                 "Identities",
                 "Protocol",
                 "RdId",
+                "DateTime",
                 //impl
                 "RdSignal",
                 "RdProperty",
