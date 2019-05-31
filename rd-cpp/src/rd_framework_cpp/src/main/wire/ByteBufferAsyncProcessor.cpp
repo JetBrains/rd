@@ -58,10 +58,10 @@ namespace rd {
 
 	void ByteBufferAsyncProcessor::add_data(std::vector<Buffer::ByteArray> &&new_data) {
 		std::lock_guard<decltype(queue_lock)> guard(queue_lock);
-		for (auto &&item : new_data) {
-			queue.emplace(std::move(item));
-			//todo bulk
-		}
+		std::move(new_data.begin(), new_data.end(), std::back_inserter(queue));
+//		for (auto &&item : new_data) {
+//			queue.emplace(std::move(item));
+//		}
 	}
 
 	bool ByteBufferAsyncProcessor::reprocess() {
@@ -102,7 +102,7 @@ namespace rd {
 			while (!queue.empty() && processor(queue.front(), max_sent_seqn + 1)) {
 				++max_sent_seqn;
 				pending_queue.push_back(std::move(queue.front()));
-				queue.pop();
+				queue.pop_front();
 			}
 		}
 		processing_cv.notify_all();
