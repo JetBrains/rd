@@ -56,6 +56,7 @@ object DemoModel : Ext(DemoRoot) {
         const("const_float", PredefinedType.float, 0f)
         const("const_double", PredefinedType.double, 0.0)
         const("const_string", PredefinedType.string, "const_string_value")
+        const("const_enum", MyEnum, 0)
     }
 
     private var Base = basestruct {
@@ -65,6 +66,7 @@ object DemoModel : Ext(DemoRoot) {
     private var Derived = structdef extends Base {
         field("string", PredefinedType.string)
     }
+
 
     init {
         property("boolean_property", PredefinedType.bool)
@@ -91,11 +93,15 @@ object DemoModel : Ext(DemoRoot) {
 
         property("polymorphic", Base)
 
-        property("date", PredefinedType.dateTime)
-
         property("enum", MyEnum)
 
+        property("date", PredefinedType.dateTime)
+
         const("const_toplevel", PredefinedType.bool, true)
+
+        val cc = const("const_for_default", PredefinedType.string, "192")
+
+        property("property_with_default", cc)
     }
 }
 

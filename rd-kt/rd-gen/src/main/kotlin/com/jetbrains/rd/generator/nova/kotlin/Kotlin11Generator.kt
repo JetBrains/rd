@@ -272,8 +272,8 @@ open class Kotlin11Generator(
     private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName", "UnnecessaryVariable")
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
-        val warnings = suppressWarnings.joinToString(separator = ",") { """"$it"""" }
-        + """@file:Suppress($warnings)"""
+        val warnings = suppressWarnings.joinToString(separator = ",") { "\"$it\"" }
+        +"@file:Suppress($warnings)"
         + "package ${decl.namespace}"
     }
 
@@ -515,7 +515,7 @@ open class Kotlin11Generator(
 
             + "return ${decl.name}().apply {"
             indent {
-                val quotedName = """"${decl.name}""""
+                val quotedName = "\"${decl.name}\""
                + "identify(protocol.identity, RdId.Null.mix($quotedName))"
                + "bind(lifetime, protocol, $quotedName)"
             }
@@ -529,6 +529,7 @@ open class Kotlin11Generator(
             when (member) {
                 is Member.Reactive.Stateful.Property -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
+                    member.defaultValue is Member.Const -> member.defaultValue.name
                     member.defaultValue != null -> member.defaultValue.toString()
                     member.isNullable -> "null"
                     else -> null
@@ -537,9 +538,9 @@ open class Kotlin11Generator(
                     val value = member.value
                     when (member.type) {
                         is PredefinedType.char -> "\'$value\'"
-                        is PredefinedType.string -> """"$value""""
-                        is PredefinedType.long -> """${value}L"""
-                        is PredefinedType.float -> """${value}f"""
+                        is PredefinedType.string -> "\"$value\""
+                        is PredefinedType.long -> "${value}L"
+                        is PredefinedType.float -> "${value}f"
                         is PredefinedType.UnsignedIntegral -> "${value}u"
                         is Enum -> "${member.type.substitutedName(containing)}.$value"
                         else -> value

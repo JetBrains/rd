@@ -481,8 +481,8 @@ open class CSharp50Generator(
                 is Member.Const -> {
                     val value = member.value
                     when (member.type) {
-                        is PredefinedType.string -> """"$value""""
-                        is PredefinedType.char -> """'$value'"""
+                        is PredefinedType.string -> "\"$value\""
+                        is PredefinedType.char -> "'$value'"
                         is PredefinedType.long -> "${value}l"
                         is PredefinedType.uint -> "${value}u"
                         is PredefinedType.ulong -> "${value}ul"
@@ -813,10 +813,11 @@ open class CSharp50Generator(
 
     private fun Member.defaultValueAsString(): String {
         return if (this is Member.Reactive.Stateful.Property && defaultValue != null) {
-            if (defaultValue is String)
-                ", \"$defaultValue\""
-            else
-                ", $defaultValue"
+            when (defaultValue) {
+                is String -> ", \"$defaultValue\""
+                is Member.Const -> ", ${defaultValue.name}"
+                else -> ", $defaultValue"
+            }
         } else
             ""
     }

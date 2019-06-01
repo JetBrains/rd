@@ -19,7 +19,7 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
         append("{")
         val defaultValue = member.defaultValue
         when (defaultValue) {
-            is String -> append(if (member.type is Enum) "$typeName::$defaultValue" else """L"$defaultValue"""")
+            is String -> append(if (member.type is Enum) "$typeName::$defaultValue" else "L\"$defaultValue\"")
             is Long, is Boolean -> append(defaultValue)
 //            else -> if (member.isOptional) append("nullopt")
         }
@@ -82,7 +82,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     private fun Class.withInternRootsHere(field: String): String {
-        val roots = internRootForScopes/*.map { """rd::util::getPlatformIndependentHash("$it")""" }*/.joinToString { """"$it"""" }
+        val roots = internRootForScopes/*.map { """rd::util::getPlatformIndependentHash("$it")""" }*/.joinToString { "\"$it\"" }
         return "ctx.withInternRootsHere($field, {$roots})"
     }
     //endregion
@@ -128,7 +128,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     }
 
     private fun String.include(extension: String? = "h"): String {
-        return """#include "${this}.$extension""""
+        return "#include \"${this}.$extension\""
     }
 
     private fun Declaration.include(): String {
@@ -729,7 +729,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
         println()
         if (decl is Toplevel) {
-            println("""#include "${decl.root.sanitizedName(decl)}.h"""")
+            println("#include \"${decl.root.sanitizedName(decl)}.h\"")
         }
         if (decl.isAbstract) {
             +(unknown(decl)!!.include())
@@ -1369,6 +1369,9 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             extensionTraitDef(decl as Ext)
         }
 
+        comment("constants")
+        constantsDef(decl)
+
         comment("initializer")
         initializerTraitDef(decl)
 
@@ -1539,7 +1542,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
             println()
 
 //            +"${decl.name} res;"
-            val quotedName = """"${decl.name}""""
+            val quotedName = "\"${decl.name}\""
             +"identify(*(protocol->get_identity()), rd::RdId::Null().mix($quotedName));"
             +"bind(lifetime, protocol, $quotedName);"
 //            +"return res;"
@@ -1716,6 +1719,17 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     |} else {
                     |   throw std::invalid_argument("Attempting to get serialization context too soon for");
                     |}""".trimMargin()
+        }
+    }
+
+    private fun PrettyPrinter.constantsDef(decl: Declaration) {
+        decl.constantMembers.forEach {
+            val value = getDefaultValue(decl, it)
+            val type = when (it.type) {
+                is PredefinedType.string -> "rd::wstring_view"
+                else -> it.type.templateName(decl)
+            }
+            +"constexpr $type ${decl.name}::${it.name};"
         }
     }
 
@@ -1897,36 +1911,46 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         " */" + eol
     }
 
-    protected fun getDefaultValue(containing: Declaration, member: Member): String? =
-            when (member) {
-                is Member.Reactive.Stateful.Property -> when {
-                    member.defaultValue is String -> """L"${member.defaultValue}""""
-                    member.defaultValue != null -> {
-                        val default = member.defaultValue.toString()
-                        if (member.genericParams[0] is PredefinedType.string) {
-                            "L$default"
-                        } else {
-                            default
-                        }
-                    }
-                    else -> null
-                }
-                is Member.Const -> {
-                    val value = member.value
-                    when (member.type) {
-                        is PredefinedType.char -> """L'$value'"""
-                        is PredefinedType.string -> """L"$value""""
-                        is PredefinedType.long -> "${value}ll"
-                        is PredefinedType.uint -> "${value}u"
-                        is PredefinedType.ulong -> "${value}ull"
-                        is PredefinedType.float -> "${value}f"
-                        is Enum -> "${member.type.name}::${value.sanitize()}"
-                        else -> value
+    protected fun getDefaultValue(containing: Declaration, member: Member): String? {
+        fun unwrapConstant(c: Member.Const): String {
+            val name = c.name
+            return when (c.type) {
+                is PredefinedType.string -> "$name.data()"
+                else -> name
+            }
+        }
+
+        return when (member) {
+            is Member.Reactive.Stateful.Property -> when {
+                member.defaultValue is String -> "L\"${member.defaultValue}\""
+                member.defaultValue is Member.Const -> unwrapConstant(member.defaultValue)
+                member.defaultValue != null -> {
+                    val default = member.defaultValue.toString()
+                    if (member.genericParams[0] is PredefinedType.string) {
+                        "L$default"
+                    } else {
+                        default
                     }
                 }
-//                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
                 else -> null
             }
+            is Member.Const -> {
+                val value = member.value
+                when (member.type) {
+                    is PredefinedType.char -> "L'$value'"
+                    is PredefinedType.string -> "L\"$value\""
+                    is PredefinedType.long -> "${value}ll"
+                    is PredefinedType.uint -> "${value}u"
+                    is PredefinedType.ulong -> "${value}ull"
+                    is PredefinedType.float -> "${value}f"
+                    is Enum -> "${member.type.name}::${value.sanitize()}"
+                    else -> value
+                }
+            }
+            //                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
+            else -> null
+        }
+    }
 
 
     override fun toString(): String {

@@ -33,9 +33,8 @@ namespace rd {
 
 		RdProperty &operator=(RdProperty &&) = default;
 
-		explicit RdProperty(T const &value) : RdPropertyBase<T, S>(value) {}
-
-		explicit RdProperty(T &&value) : RdPropertyBase<T, S>(std::move(value)) {}
+		template<typename F>
+		explicit RdProperty(F &&value) : RdPropertyBase<T, S>(std::forward<F>(value)) {}
 
 		virtual ~RdProperty() = default;
 		//endregion

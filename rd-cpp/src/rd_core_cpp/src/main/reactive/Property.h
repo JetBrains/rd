@@ -24,9 +24,8 @@ namespace rd {
 
 		virtual ~Property() = default;
 
-		explicit Property(T const &value) : IProperty<T>(value) {}
-
-		explicit Property(T &&value) : IProperty<T>(std::move(value)) {}
+		template <typename F>
+		explicit Property(F &&value) : IProperty<T>(std::forward<F>(value)) {}
 		//endregion
 
 

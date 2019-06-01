@@ -65,6 +65,7 @@ fun BindableDeclaration.property(name: String, defaultValue: Boolean) = append(P
 fun BindableDeclaration.property(name: String, defaultValue: Int) = append(Property(name, PredefinedType.int, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Double) = append(Property(name, PredefinedType.double, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: String) = append(Property(name, PredefinedType.string, defaultValue))
+fun BindableDeclaration.property(name: String, defaultValue: Member.Const) = append(Property(name, PredefinedType.string, defaultValue))
 
 fun BindableDeclaration.list(name : String, itemType : IType) = append(List(name, itemType))
 fun BindableDeclaration.set(name : String, itemType : INonNullableScalar) = append(Set(name, itemType))

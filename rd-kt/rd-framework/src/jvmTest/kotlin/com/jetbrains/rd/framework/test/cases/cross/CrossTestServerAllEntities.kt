@@ -1,6 +1,6 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
 
-package com.jetbrains.rd.framework.test.cases.demo
+package com.jetbrains.rd.framework.test.cases.cross
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.RdReactiveBase
@@ -9,7 +9,6 @@ import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
-import com.jetbrains.rd.util.reactive.fire
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.println
