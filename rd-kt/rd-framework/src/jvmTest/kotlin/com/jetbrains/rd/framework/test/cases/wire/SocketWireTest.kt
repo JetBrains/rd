@@ -6,7 +6,7 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.cases.interning.InterningNestedTestStringModel
 import com.jetbrains.rd.framework.test.cases.interning.models.PropertyHolderWithInternRoot
-import com.jetbrains.rd.framework.test.util.NetUtils
+import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition

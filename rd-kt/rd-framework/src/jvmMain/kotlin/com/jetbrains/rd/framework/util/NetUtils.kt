@@ -1,4 +1,4 @@
-package com.jetbrains.rd.framework.test.util
+package com.jetbrains.rd.framework.util
 
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -23,8 +23,8 @@ object NetUtils {
             return port
         val socket1 = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
         val result = socket1.localPort
-        socket1.reuseAddress = true;
-        socket1.close();
+        socket1.reuseAddress = true
+        socket1.close()
         return result
     }
 

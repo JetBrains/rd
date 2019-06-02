@@ -17,3 +17,10 @@ task fatJar(type: Jar) {
     with jar
 }
 
+sourceSets {
+    test {
+        kotlin {
+            srcDirs += ["$buildDir/models/demo"]
+        }
+    }
+}
