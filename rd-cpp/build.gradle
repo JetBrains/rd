@@ -1,0 +1,11 @@
+applyKotlinJVM()
+
+dependencies {
+    compile project(':rd-gen:')
+    compile "org.jetbrains.kotlin:kotlin-compiler:1.3.0"
+}
+
+task execute(type:JavaExec) {
+    main = "com.jetbrains.rd.generator.nova.MainKt"
+    classpath = sourceSets.main.runtimeClasspath
+}
