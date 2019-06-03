@@ -284,7 +284,6 @@ namespace JetBrains.Lifetimes
     [Obsolete("Use `OnTermination()` instead")]
     public Lifetime AddAction([NotNull] Action action) => OnTermination(action);
     
-    [Obsolete("Use `OnTermination()` instead")]
     public Lifetime AddDispose([NotNull] IDisposable action) => OnTermination(action);
 
     [Obsolete("For most cases you need `!IsAlive` which means lifetime is terminated or soon will be terminated (somebody called Terminate() on this lifetime or its parent)." +

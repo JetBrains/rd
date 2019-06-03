@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Test.RdCore.Diagnostics
 {
-  public class TextWiterLogTest : RdCoreTestBase
+  public class TextWriterLogTest : RdCoreTestBase
   {
     [Test]
     public void TestHandlers()
@@ -47,7 +47,7 @@ namespace Test.RdCore.Diagnostics
     public void TestInFile()
     {
       var path = Path.GetTempFileName();
-      TestLifetime.AddAction(() => File.Delete(path));
+      TestLifetime.OnTermination(() => File.Delete(path));
       
       Lifetime.Using(lf =>
       {
