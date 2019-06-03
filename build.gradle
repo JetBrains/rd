@@ -97,13 +97,16 @@ allprojects {
         apply plugin: 'maven-publish'
         apply plugin: 'org.jetbrains.dokka'
 
+//        def isParentRd = project?.parent?.name != null && project?.parent?.name != "rd"
+
         jacoco {
             toolVersion = "0.8.2"
         }
 
         task sourceJar(type: Jar) {
             from sourceSets.main.kotlin
-            if (project.parent.name != "rd")
+            def parentIsNotRd = project.parent != null && project.parent.name != "rd"
+            if (parentIsNotRd)
                 from project.parent.sourceSets.main.kotlin
             classifier = "sources"
         }
@@ -287,3 +290,5 @@ allprojects {
         maven { url "https://jitpack.io" }
     }
 }
+
+apply from: 'models.gradle'

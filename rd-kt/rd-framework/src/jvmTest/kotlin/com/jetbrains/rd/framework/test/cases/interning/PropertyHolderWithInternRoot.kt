@@ -1,4 +1,4 @@
-package com.jetbrains.rd.framework.test.cases.interning.models
+package com.jetbrains.rd.framework.test.cases.interning
 
 import com.jetbrains.rd.framework.IIdentities
 import com.jetbrains.rd.framework.RdId

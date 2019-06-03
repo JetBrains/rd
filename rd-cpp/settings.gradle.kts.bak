@@ -1,3 +1,0 @@
-rootProject.name = "rd-cpp"
-//include(":rd-gen")
-//project(":rd-gen").projectDir = File("../rd-kt/rd-gen")

@@ -12,7 +12,7 @@ add_library(rd_framework_cpp_test_util
         SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h)
 
 add_subdirectory(entities)
-add_subdirectory(models)
+add_subdirectory(interning)
 
 target_include_directories(rd_framework_cpp_test_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} entities models test_fixture others)
 

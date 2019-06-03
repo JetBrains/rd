@@ -7,5 +7,12 @@ kotlin {
                 api project(':rd-core')
             }
         }
+        jvmTest {
+            kotlin {
+                srcDirs += ["$buildDir/models/interning"]
+            }
+        }
     }
 }
+
+compileTestKotlinJvm.dependsOn(':generateEverything')

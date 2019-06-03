@@ -1,9 +1,6 @@
-package com.jetbrains.rd.generator.test.cases.generator
+package com.jetbrains.rd.generator.test.cases.compiler
 
 import com.jetbrains.rd.generator.nova.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
-import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
-import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import org.junit.Assert
 import org.junit.Test
@@ -13,14 +10,13 @@ import java.io.File
 class InterningModelsGenTest {
     companion object {
         const val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
-        const val cppGeneratedSourceDir = "../../rd-cpp/src/rd_framework_cpp/src/test/util/models"
     }
 
-    @Suppress("unused")
+    /*@Suppress("unused")
     object InterningRoot1 : Root(
-            Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(kotlinGeneratedSourcesDir)),
+            Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
             CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
-            Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(cppGeneratedSourceDir))
+            Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")))
     ) {
         init {
             setting(Cpp17Generator.TargetName, "interning_test_model")
@@ -82,12 +78,14 @@ class InterningModelsGenTest {
                 property("internedInProtocol", PredefinedType.string.interned(ProtocolInternScope))
             })
         }
-    }
+    }*/
 
     val classloader: ClassLoader = InterningModelsGenTest::class.java.classLoader
 
     @Test
     fun test1() {
+        System.setProperty("model.out.src.kt.dir", kotlinGeneratedSourcesDir)
+
         val files = generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator"), true)
         assert(files.isNotEmpty()) { "No files generated, bug?" }
 

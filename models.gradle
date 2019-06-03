@@ -1,0 +1,56 @@
+applyKotlinJVM()
+
+dependencies {
+    compile project(':rd-gen:')
+}
+
+ext.repoRoot = project.file(".")
+ext.cppRoot = new File(repoRoot, "rd-cpp")
+ext.ktRoot = new File(repoRoot, "rd-kt")
+ext.csRoot = new File(repoRoot, "rd-net")
+
+class GenerateTask extends JavaExec {
+    GenerateTask() {
+        super()
+        group = 'generate'
+        main = "com.jetbrains.rd.generator.nova.MainKt"
+        outputs.upToDateWhen { false }
+    }
+}
+
+task generateDemoModel(type: GenerateTask) {
+//    group = 'generate'
+    classpath = sourceSets.main.runtimeClasspath
+
+    def sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator")
+
+    systemProperties = [
+            "model.out.src.cpp.dir": "$cppRoot/demo",
+            "model.out.src.kt.dir" : "$buildDir/models/demo",
+            "model.out.src.cs.dir" : "$csRoot/Test.RdGen/CrossTest/Model"
+    ]
+
+    args "--source=$sourcesRoot/demo", "--hash-folder=$buildDir/hash)"
+}
+
+task generateInterningTestModel(type: GenerateTask) {
+//    group = 'generate'
+    classpath = sourceSets.main.runtimeClasspath
+
+    def sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator/interning")
+    def buildDir = new File(ktRoot, "rd-framework/build")
+
+    systemProperties = [
+            "model.out.src.cpp.dir": "$cppRoot/src/rd_framework_cpp/src/test/util/interning",
+            "model.out.src.kt.dir" : "$buildDir/models/interning",
+//            "model.out.src.cs.dir" : "$csRoot/"
+    ]
+
+    args "--source=$sourcesRoot", "--hash-folder=$buildDir/hash)"
+}
+
+task generateEverything {
+//    group = 'generate'
+    description = 'Generates protocol models.'
+    dependsOn generateDemoModel, generateInterningTestModel
+}
