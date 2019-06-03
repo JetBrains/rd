@@ -21,11 +21,11 @@ namespace Test.RdCore
 
         protected override string Format(LoggingLevel level, string message, Exception exception)
         {
-            if (exception != null)
+            if (level.IsSeriousError())
             {
                 lock (myMonitor)
                 {
-                    myExceptions.Add(exception);
+                    myExceptions.Add(exception ?? new Exception(message));
                 }
             }
 
@@ -39,13 +39,13 @@ namespace Test.RdCore
         }
 
         [CanBeNull]
-        private AggregateException RecycleLoggedExceptions()
+        private CompoundException RecycleLoggedExceptions()
         {
             lock (myMonitor)
             {
                 if (myExceptions.Count == 0) return null;
                 
-                var exception = new AggregateException(myExceptions);
+                var exception = new CompoundException(myExceptions);
                 myExceptions.Clear();
                 
                 return exception;

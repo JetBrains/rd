@@ -34,7 +34,6 @@ namespace Test.RdCore
             if(field == null)
             {
                 throw new MissingFieldException(type.ToString(), sFieldName);
-                return null;
             }
 
             return field.GetValue(obj);
@@ -68,7 +67,6 @@ namespace Test.RdCore
             if(property == null)
             {
                 throw new MissingMemberException(type.ToString(), propertyName);
-                return null;
             }
 
             return property.GetValue(reflectedObject, new object[0]);
