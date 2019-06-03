@@ -181,12 +181,15 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadBoolArray, WriteBoolArray, 38);
       
       //unsigned
-      serializers.Register(ReadUByte, WriteUByte, 41);
+      
+      //clashes with Byte
+//      serializers.Register(ReadUByte, WriteUByte, 41);
       serializers.Register(ReadUShort, WriteUShort, 42);
       serializers.Register(ReadUInt, WriteUInt, 43);
       serializers.Register(ReadULong, WriteULong, 44);
       
-      serializers.Register(ReadUByteArray, WriteUByteArray, 45);
+      //clashes with ByteArray
+//      serializers.Register(ReadUByteArray, WriteUByteArray, 45);
       serializers.Register(ReadUShortArray, WriteUShortArray, 46);
       serializers.Register(ReadUIntArray, WriteUIntArray, 47);
       serializers.Register(ReadULongArray, WriteULongArray, 48);
