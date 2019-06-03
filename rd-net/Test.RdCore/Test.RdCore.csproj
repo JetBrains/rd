@@ -3,6 +3,8 @@
     <PropertyGroup>
         <TargetFrameworks>net461;net35</TargetFrameworks>
 
+        <DebugType>Full</DebugType>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 

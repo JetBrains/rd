@@ -1,6 +1,7 @@
 .idea
 *.iml
 .vscode
+.vs/
 build
 /.gradle
 .rdgen
