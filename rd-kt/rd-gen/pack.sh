@@ -31,6 +31,8 @@ export JAVA_HOME=${nuget_dir}/DotFiles/jdk/lin
 chmod +x ${JAVA_HOME}/bin/*
 ${build_dir}/../../../gradlew fatJar
 
+export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+
 ${build_dir}/.dotnet/dotnet build /p:Configuration=Release ${build_dir}/../../../rd-net/Rd.sln
 
 mono ${build_dir}/nuget.exe pack -Version $nuget_version -Symbols -OutputDirectory ${build_dir}
