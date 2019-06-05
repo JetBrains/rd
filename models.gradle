@@ -19,11 +19,10 @@ class GenerateTask extends JavaExec {
 }
 
 task generateDemoModel(type: GenerateTask) {
-//    group = 'generate'
     classpath = sourceSets.main.runtimeClasspath
 
     def sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator")
-
+    def buildDir = new File(ktRoot, "rd-gen/build")
     systemProperties = [
             "model.out.src.cpp.dir": "$cppRoot/demo",
             "model.out.src.kt.dir" : "$buildDir/models/demo",
@@ -34,7 +33,6 @@ task generateDemoModel(type: GenerateTask) {
 }
 
 task generateInterningTestModel(type: GenerateTask) {
-//    group = 'generate'
     classpath = sourceSets.main.runtimeClasspath
 
     def sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator/interning")
@@ -50,7 +48,7 @@ task generateInterningTestModel(type: GenerateTask) {
 }
 
 task generateEverything {
-//    group = 'generate'
+    group = 'generate'
     description = 'Generates protocol models.'
     dependsOn generateDemoModel, generateInterningTestModel
 }

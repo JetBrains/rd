@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 class SourceExKtTest : RdTestBase()  {
     @Test
     fun testAdviseUntil() {
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
         val lifetime = def.lifetime
         val signal: ISignal<Int> = Signal()
 
@@ -40,7 +40,7 @@ class SourceExKtTest : RdTestBase()  {
     fun testAdviseNotNull() {
         class Box(val value: Int)
 
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
         val lifetime = def.lifetime
         val signal: ISignal<Box?> = Signal()
 
@@ -68,7 +68,7 @@ class SourceExKtTest : RdTestBase()  {
     fun testAdviseNotNullOnce() {
         class Box(val value: Int)
 
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
         val lifetime = def.lifetime
         val signal = Signal<Box?>()
 
@@ -118,7 +118,7 @@ class SourceExKtTest : RdTestBase()  {
 
     @Test
     fun testFlowInto1() {
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
         val lifetime = def.lifetime
         val signal: ISignal<Int> = Signal()
         val signalDependentA: ISignal<Int> = Signal()
@@ -162,7 +162,7 @@ class SourceExKtTest : RdTestBase()  {
         val newSignal = signal.map { v -> v >= 0 }
         val logBoolean = ArrayList<Boolean>()
 
-        val newDef = Lifetime.create(Lifetime.Eternal)
+        val newDef = Lifetime.Eternal.createNested()
         val newLifetime = newDef.lifetime
 
         newSignal.advise(newLifetime) { v -> logBoolean.add(v) }

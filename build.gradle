@@ -97,8 +97,6 @@ allprojects {
         apply plugin: 'maven-publish'
         apply plugin: 'org.jetbrains.dokka'
 
-//        def isParentRd = project?.parent?.name != null && project?.parent?.name != "rd"
-
         jacoco {
             toolVersion = "0.8.2"
         }
