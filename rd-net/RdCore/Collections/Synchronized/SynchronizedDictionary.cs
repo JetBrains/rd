@@ -14,7 +14,11 @@ namespace JetBrains.Collections.Synchronized
   [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>
   {
     private readonly IDictionary<TK, TV> myImpl = new Dictionary<TK, TV>();
-        
+    
+    /// <summary>
+    /// Copies content of collection: O(n) CPU and memory complexity.
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator<KeyValuePair<TK, TV>> GetEnumerator()
     {
       var copy = new List<KeyValuePair<TK, TV>>();

@@ -11,7 +11,7 @@ namespace JetBrains.Collections.Synchronized
   /// <see cref="GetEnumerator()"/> copies whole content so
   /// you can change collection as you want during enumeration.
   ///
-  /// Useful pattern (in place filtering):
+  /// Useful pattern for filtering):
   /// <code>
   ///   using (en = syncSet.GetEnumerator()) {
   ///     while (en.MoveNext()) {
@@ -50,6 +50,10 @@ namespace JetBrains.Collections.Synchronized
       return clone;
     }
 
+    /// <summary>
+    /// Copies content of collection: O(n) CPU and memory complexity.
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator<T> GetEnumerator()
     {
       T[] clone;

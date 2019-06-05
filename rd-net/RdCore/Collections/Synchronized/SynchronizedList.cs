@@ -21,6 +21,10 @@ namespace JetBrains.Collections.Synchronized
         myList.AddRange(values);
     }
 
+    /// <summary>
+    /// Copies content of collection: O(n) CPU and memory complexity.
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator<T> GetEnumerator()
     {
       IList<T> clone;
