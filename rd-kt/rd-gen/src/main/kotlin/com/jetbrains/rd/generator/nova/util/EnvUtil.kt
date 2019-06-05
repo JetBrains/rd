@@ -8,7 +8,7 @@ import java.util.*
 val InvalidSysproperty = "--INVALID--"
 fun syspropertyOrInvalid(name: String) : String {
     val properties = Statics<Properties>().get() ?: System.getProperties()
-    return properties[name]?.toString() ?: InvalidSysproperty
+    return properties[name]?.toString() ?: "$InvalidSysproperty($name)"
 }
 
 internal fun getSourceFileAndLine() : String? {
