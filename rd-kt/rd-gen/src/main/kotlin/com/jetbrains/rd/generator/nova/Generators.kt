@@ -2,10 +2,14 @@ package com.jetbrains.rd.generator.nova
 
 import java.io.File
 
+
 interface IGenerator {
     val folder: File
     fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
 }
+
+
+
 
 class GeneratorException (msg: String) : RuntimeException(msg)
 
@@ -33,6 +37,7 @@ abstract class GeneratorBase : IGenerator {
             fail("Can't create folder '$folder'")
     }
 
+
     private inline fun retry(action: () -> Boolean) : Boolean {
         if (action()) return true
 
@@ -40,6 +45,7 @@ abstract class GeneratorBase : IGenerator {
 
         return action()
     }
+
 
     protected open fun unknowns(declaredTypes: Iterable<Declaration>): Collection<Declaration> {
         return declaredTypes.mapNotNull {
@@ -57,12 +63,14 @@ abstract class GeneratorBase : IGenerator {
     }
 }
 
+
 val IType.hasEmptyConstructor : Boolean get() = when (this) {
     is Class.Concrete -> allMembers.all { it.hasEmptyConstructor }
     is Aggregate -> true
 
     else -> false
 }
+
 
 val Member.hasEmptyConstructor : Boolean get() = when (this) {
     is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
