@@ -289,4 +289,6 @@ allprojects {
     }
 }
 
+applyKotlinJVM()
 apply from: 'models.gradle'
+apply from: 'cross.gradle'

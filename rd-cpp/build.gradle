@@ -54,7 +54,7 @@ class RunExecTask extends Exec {
     }
 }
 
-task runCrossTestAllEntities(type: RunExecTask, dependsOn: ['buildRdCppTest']) {
+task runCrossTestClientAllEntities(type: RunExecTask, dependsOn: ['buildRdCppTest']) {
     workingDir 'build/src/rd_gen_cpp/test/cross_test/Release/'
     execPath 'cross_test_client_all_entities'
 }

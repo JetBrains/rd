@@ -1,0 +1,15 @@
+dependencies {
+    compile project(':rd-gen:')
+}
+
+task runCrossTestServerAllEntities(type : JavaExec) {
+    main = 'com.jetbrains.rd.generator.test.cases.cross.CrossTestServerAllEntitiesKt'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+
+task runCrossTestAllEntities {
+    /*gradle.taskGraph.afterTask { Task task, TaskState state ->
+
+    }*/
+}

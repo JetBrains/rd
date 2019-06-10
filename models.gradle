@@ -1,20 +1,33 @@
-applyKotlinJVM()
-
 dependencies {
     compile project(':rd-gen:')
 }
-
-ext.repoRoot = project.file(".")
-ext.cppRoot = new File(repoRoot, "rd-cpp")
-ext.ktRoot = new File(repoRoot, "rd-kt")
-ext.csRoot = new File(repoRoot, "rd-net")
+ext {
+    repoRoot = project.file(".")
+    cppRoot = new File(repoRoot, "rd-cpp")
+    ktRoot = new File(repoRoot, "rd-kt")
+    csRoot = new File(repoRoot, "rd-net")
+}
 
 class GenerateTask extends JavaExec {
+    private Copy copy;
     GenerateTask() {
         super()
         group = 'generate'
         main = "com.jetbrains.rd.generator.nova.MainKt"
         outputs.upToDateWhen { false }
+    }
+
+    @Override
+    void exec() {
+        super.exec()
+
+        def output = systemProperties['model.out.src.cpp.dir'] as String
+        if (output != null) {
+            project.copy {
+                from "$project.cppRoot/PrecompiledHeader.cmake"
+                into output
+            }
+        }
     }
 }
 
