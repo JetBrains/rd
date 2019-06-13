@@ -1,25 +1,5 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
-class RunCmdTask extends Exec {
-    String execPath
-
-    @Override
-    protected void exec() {
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            commandLine 'cmd', '/c', execPath
-        } else if (Os.isFamily(Os.FAMILY_UNIX)) {
-            commandLine './' + execPath
-        } else if (Os.isFamily(Os.FAMILY_MAC)) {
-            //todo
-        }
-        super.exec()
-    }
-
-    RunCmdTask() {
-        group = 'cmd'
-//        outputs.upToDateWhen { false }
-    }
-}
+import com.jetbrains.rd.gradle.tasks.RunCmdTask
+import com.jetbrains.rd.gradle.tasks.RunExecTask
 
 task buildRdCpp(type: RunCmdTask) {
     workingDir '.'
@@ -29,31 +9,6 @@ task buildRdCpp(type: RunCmdTask) {
 task buildRdCppTest(type: RunCmdTask, dependsOn: [':generateEverything']) {
     workingDir '.'
     execPath 'buildtest.cmd'
-}
-
-class RunExecTask extends Exec {
-    String execPath
-
-    @Override
-    protected void exec() {
-        println "EXEC"
-        println execPath
-        println args
-
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            commandLine 'cmd', '/c', execPath + '.exe'
-        } else if (Os.isFamily(Os.FAMILY_UNIX)) {
-            commandLine './' + execPath
-        } else if (Os.isFamily(Os.FAMILY_MAC)) {
-            //todo
-        }
-        super.exec()
-    }
-
-    RunExecTask() {
-        group = 'exec'
-        outputs.upToDateWhen { false }
-    }
 }
 
 task runCrossTestClientAllEntities(type: RunExecTask, dependsOn: ['buildRdCppTest']) {
