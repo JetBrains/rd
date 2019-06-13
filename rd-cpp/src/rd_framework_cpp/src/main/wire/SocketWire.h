@@ -43,8 +43,8 @@ namespace rd {
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
 
-			static constexpr size_t RECIEVE_BUFFER_SIZE = 1u << 16;
-			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer{};
+			static constexpr size_t RECEIVE_BUFFER_SIZE = 1u << 16;
+			mutable std::array<Buffer::word_t, RECEIVE_BUFFER_SIZE> receiver_buffer{};
 			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
 			static constexpr size_t SEND_BUFFER_SIZE = 16 * 1024;

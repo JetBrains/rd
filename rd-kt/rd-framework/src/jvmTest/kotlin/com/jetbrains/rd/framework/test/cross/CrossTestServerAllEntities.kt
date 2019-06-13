@@ -1,6 +1,6 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
 
-package com.jetbrains.rd.generator.test.cases.cross
+package com.jetbrains.rd.framework.test.cross
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.RdReactiveBase

@@ -9,10 +9,24 @@ kotlin {
         }
         jvmTest {
             kotlin {
-                srcDirs += ["$buildDir/models/interning"]
+                srcDirs += ["${parent.buildDir}/models/interning"]
+                srcDirs += ["${parent.buildDir}/models/demo"]
             }
         }
     }
+    /*jvm() { //todo all targets
+        compilations.create('integrationTest') {
+            defaultSourceSet {
+                dependencies {
+                    def main = compilations.main
+                    implementation(main.compileDependencyFiles + main.output.classesDirs)
+                    implementation project(':rd-framework:')
+                    kotlin.srcDir('src/integrationTest/kotlin')
+                    kotlin.srcDirs += ["$project.buildDir/models/interning"]
+                }
+            }
+        }
+    }*/
 }
 
 compileTestKotlinJvm.dependsOn(':generateEverything')
