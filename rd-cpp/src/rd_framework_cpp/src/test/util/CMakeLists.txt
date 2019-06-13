@@ -8,7 +8,6 @@ add_library(rd_framework_cpp_test_util
         others/entities_util.cpp others/entities_util.h
         others/ExtProperty.h
 
-        WireUtil.cpp WireUtil.h
         SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h)
 
 add_subdirectory(entities)

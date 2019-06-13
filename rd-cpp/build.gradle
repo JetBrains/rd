@@ -36,7 +36,9 @@ class RunExecTask extends Exec {
 
     @Override
     protected void exec() {
+        println "EXEC"
         println execPath
+        println args
 
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             commandLine 'cmd', '/c', execPath + '.exe'
@@ -57,4 +59,5 @@ class RunExecTask extends Exec {
 task runCrossTestClientAllEntities(type: RunExecTask, dependsOn: ['buildRdCppTest']) {
     workingDir 'build/src/rd_gen_cpp/test/cross_test/Release/'
     execPath 'cross_test_client_all_entities'
+    args "${rootProject.buildDir}/gold/CrossTestClientAllEntitiesKt.tmp"
 }

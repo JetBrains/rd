@@ -1,5 +1,6 @@
 package com.jetbrains.rd.gradle.tasks
 
+import com.jetbrains.rd.gradle.tasks.util.portFile
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
@@ -13,10 +14,6 @@ open class InteropTask : DefaultTask() {
     var workerExecutor: ExecutorService = Executors.newFixedThreadPool(2)
     lateinit var taskServer: Task
     lateinit var taskClient: Task
-
-    private fun submit() {
-        executeTask(taskClient)
-    }
 
     private fun executeTask(task: Task) {
         (task.actions).first().let {
@@ -36,8 +33,11 @@ open class InteropTask : DefaultTask() {
 
     @TaskAction
     internal fun start() {
+        assert(portFile.delete())
         runServer()
         startClient()
-        workerExecutor.awaitTermination(10, TimeUnit.SECONDS)
+
+        workerExecutor.shutdown()
+        workerExecutor.awaitTermination(20, TimeUnit.SECONDS)
     }
 }

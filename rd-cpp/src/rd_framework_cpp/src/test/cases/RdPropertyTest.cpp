@@ -265,8 +265,10 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 
 	int property_id = 1;
 
-	auto client_property = RdProperty<opt>(nullopt);
-	auto server_property = RdProperty<opt>(nullopt);
+	auto client_property = RdProperty<opt>{};
+	auto server_property = RdProperty<opt>{};
+	client_property.set(nullopt);
+	server_property.set(nullopt);
 
 	statics(client_property, (property_id));
 	statics(server_property, (property_id)).slave();

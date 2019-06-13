@@ -46,6 +46,7 @@ add_library(rd_framework_cpp STATIC
         wire/SocketWire.cpp wire/SocketWire.h
         wire/PumpScheduler.cpp wire/PumpScheduler.h
         wire/ByteBufferAsyncProcessor.cpp wire/ByteBufferAsyncProcessor.h
+        wire/WireUtil.cpp wire/WireUtil.h
         #intern
         intern/InternRoot.cpp intern/InternRoot.h
         intern/InternScheduler.cpp intern/InternScheduler.h

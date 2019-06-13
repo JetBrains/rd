@@ -17,10 +17,6 @@ rd-net/RdFramework/obj
 /rd-cpp/doc/
 # Project exclude paths
 /buildSrc/.gradle/
-/rd-cpp/demo/
-/rd-cpp/gradle/
-/rd-cpp/src/
-/rd-cpp/thirdparty/
 /rd-kt/rd-gen/out/
 /rd-kt/rd-gen/out/production/classes/
 /rd-kt/rd-gen/out/test/classes/
@@ -29,4 +25,3 @@ rd-net/RdFramework/obj
 /rd-kt/rd-text/out/
 /rd-kt/rd-text/out/production/classes/
 /rd-kt/rd-text/out/test/classes/
-/rd-net/

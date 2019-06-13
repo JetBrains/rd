@@ -3,12 +3,13 @@
 #include "DemoModel.h"
 #include "ExtModel.h"
 #include "Derived.h"
+#include "ConstUtil.h"
 
 #include "Lifetime.h"
 #include "SocketWire.h"
 #include "SimpleScheduler.h"
 #include "CrossTestClientBase.h"
-#include <ConstUtil.h>
+#include "WireUtil.h"
 
 #include <cstdint>
 #include <string>
@@ -25,7 +26,7 @@ class CrossTestClientAllEntities : public CrossTestClientBase {
 	void fireAll(const DemoModel &model, const ExtModel &extModel);
 
 public:
-	int run() {
+	int run(const std::string& outputFile) {
 		DemoModel model;
 		std::promise<void> promise;
 		std::future<void> f = promise.get_future();
@@ -41,22 +42,33 @@ public:
 		});
 
 		auto status = f.wait_for(std::chrono::seconds(10));
+		util::sleep_this_thread(1'000);
 
 		socket_definition.terminate();
 		definition.terminate();
 
+		std::ofstream out(outputFile);
 		for (const auto &item : printer) {
-			std::cout << item << std::endl;
+			out << item << std::endl;
 		}
-		std::cout << std::endl;
-
+		out << std::endl;
+		out.close();
 		return 0;
 	}
 };
 
+constexpr rd::string_view test_name = "CrossTestClientAllEntities";
+
 int main(int argc, char **argv) {
+	--argc;
+	if (argc != 1) {
+		std::cerr << "Wrong number of arguments for " << test_name << ":" << argc;
+		exit(1);
+	}
+	auto outputFile = std::string(argv[1]);
+	std::cerr << "Test:" << test_name << " started, file=" << outputFile << std::endl;
 	CrossTestClientAllEntities test;
-	return test.run();
+	return test.run(outputFile);
 }
 
 

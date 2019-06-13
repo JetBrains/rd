@@ -9,6 +9,9 @@ kotlin {
         }
         jvmTest {
             kotlin {
+                dependencies {
+
+                }
                 srcDirs += ["${parent.buildDir}/models/interning"]
                 srcDirs += ["${parent.buildDir}/models/demo"]
             }

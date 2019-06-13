@@ -1,7 +1,7 @@
 #ifndef RD_CPP_WIREUTIL_H
 #define RD_CPP_WIREUTIL_H
 
-#include "Host.h"
+#include <cstdint>
 
 namespace rd {
 	namespace util {

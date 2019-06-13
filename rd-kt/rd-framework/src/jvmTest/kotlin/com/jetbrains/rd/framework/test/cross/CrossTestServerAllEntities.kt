@@ -4,6 +4,7 @@ package com.jetbrains.rd.framework.test.cross
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.framework.test.cross.util.portFile
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -14,10 +15,9 @@ import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.println
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
-import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.assertEquals
 import demo.*
+import java.io.File
+import kotlin.test.assertEquals
 
 lateinit var scheduler: IScheduler
 
@@ -27,9 +27,19 @@ fun server(lifetime: Lifetime, port: Int? = null): Protocol {
             SocketWire.Server(lifetime, scheduler, port, "DemoServer"), lifetime)
 }
 
-var finished = AtomicBoolean(false)
+@Volatile
+var finished = false
 
-fun main() {
+const val testName = "CrossTestServerAllEntities"
+
+fun main(args : Array<String>) {
+    if (args.size != 1) {
+        throw IllegalArgumentException("Wrong number of arguments for $testName:${args.size}")
+    }
+    val outputFileName = args[0]
+    val outputFile = File(outputFileName)
+    println("Test:$testName started, file=$outputFileName")
+
     val lifetimeDef = Lifetime.Eternal.createNested()
     val socketLifetimeDef = Lifetime.Eternal.createNested()
 
@@ -37,10 +47,7 @@ fun main() {
     val socketLifetime = socketLifetimeDef.lifetime
 
     val protocol = server(socketLifetime, NetUtils.findFreePort(0))
-    val tmpDir = File(System.getProperty("java.io.tmpdir"))
-    val file = File(tmpDir, "/rd/port.txt")
-    file.parentFile.mkdirs()
-    file.printWriter().use { out ->
+    portFile.printWriter().use { out ->
         out.println((protocol.wire as SocketWire.Server).port)
     }
 
@@ -56,12 +63,15 @@ fun main() {
         fireAll(model, extModel)
     }
 
-    spinUntil(10_000) { finished.get() }
+    spinUntil(10_000) { finished }
+    spinUntil(1_000) { false }
 
     socketLifetimeDef.terminate()
     lifetimeDef.terminate()
-
-    println(printer)
+    outputFile.parentFile.mkdirs()
+    outputFile.printWriter().use { writer ->
+        writer.println(printer)
+    }
 }
 
 fun checkConstants() {
@@ -140,7 +150,7 @@ private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, 
         val entity = model.enum
         printer.printIfRemoteChange(entity, "enum", it)
         if (!entity.isLocalChange) {
-            finished.set(true)
+            finished = true
         }
     }
 
