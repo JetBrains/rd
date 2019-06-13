@@ -19,7 +19,7 @@ open class RunExecTask : Exec() {
         println(args)
 
         when {
-            Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine = listOf("cmd", "/c", "$execPath.exe") + listOf(args)
+            Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine = listOf("cmd", "/c", "$execPath.exe") + args!!.toList()
             Os.isFamily(Os.FAMILY_UNIX) -> commandLine = listOf("./$execPath")
             Os.isFamily(Os.FAMILY_MAC) -> {
                 //todo
