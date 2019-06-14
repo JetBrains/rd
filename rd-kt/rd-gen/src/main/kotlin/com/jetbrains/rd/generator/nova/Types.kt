@@ -386,7 +386,7 @@ abstract class Ext(pointcut : BindableDeclaration, val extName: String? = null) 
 
 val Declaration.isExtension get() = this is Ext && pointcut !is Root
 
-abstract class Root(vararg val generators: IGenerator) : Toplevel(null) {
+abstract class Root(vararg val hardcodedGenerators: IGenerator) : Toplevel(null) {
     internal val singletons = ArrayList<Ext>()
     internal val extensions = ArrayList<Ext>()
 
@@ -432,4 +432,13 @@ abstract class Root(vararg val generators: IGenerator) : Toplevel(null) {
 
 fun Declaration.doc(value: String) {
     documentation = value
+}
+
+val Declaration.isConcrete
+    get() = this is Class.Concrete || this is Struct.Concrete || this is Aggregate
+val IType.hasEmptyConstructor : Boolean get() = when (this) {
+    is Class.Concrete -> allMembers.all { it.hasEmptyConstructor }
+    is Aggregate -> true
+
+    else -> false
 }

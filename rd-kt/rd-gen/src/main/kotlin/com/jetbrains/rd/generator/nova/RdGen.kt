@@ -1,8 +1,6 @@
 package com.jetbrains.rd.generator.nova
 
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
-import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
-import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rd.generator.gradle.GradleGenerationSpec
 import com.jetbrains.rd.generator.nova.util.InvalidSysproperty
 import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
@@ -22,17 +20,17 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.measureTimeMillis
 
-data class GenerationSpec(
-    var language: String = "",
-    var transform: String? = null,
-    var root: String = "",
-    var namespace: String = "",
-    var directory: String = ""
-)
-
 class RdGen : Kli() {
+
     companion object {
-        const val version = "1.06"
+        /**
+         * Moving this field forward you trigger rebuild even if inputs and output of generator hasn't changed.
+         */
+        const val version = "1.07"
+
+        /**
+         * File to store all information for incremental work
+         */
         const val hashFileName = ".rdgen"
     }
 
@@ -60,13 +58,15 @@ class RdGen : Kli() {
     val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp|cpp")
     val verbose =       option_flag(  'v',    "verbose", "Verbose output")
 
+    val gradleGenerationSpecs = mutableListOf<GradleGenerationSpec>()
+
     val hashfile : Path get() = Paths.get(hashFolder.value!!.toString(), hashFileName).normalize()
 
     private fun v(msg: String) { if (verbose.value) println(msg) }
     private fun v(e: Throwable) { if (verbose.value) e.printStackTrace() }
 
-    val generationSpecs = mutableListOf<GenerationSpec>()
-    val sourcePaths = mutableListOf<File>()
+//    val generationSpecs = mutableListOf<GradleGenerationSpec>()
+//    val sourcePaths = mutableListOf<File>()
 
     private fun compile0(src: List<File>, dst: Path) : String? {
 
@@ -175,6 +175,10 @@ class RdGen : Kli() {
 
 
     private val outputFolderKey = "outputFolders"
+
+    /**
+     * Creates special (serializable in file) hash for incremental generation
+      */
     private fun prepareHash(outputFolders: Collection<File>): PersistentHash {
         return PersistentHash().also { res ->
 
@@ -184,9 +188,9 @@ class RdGen : Kli() {
                     res.mixFileRecursively(File(src))
                 }
             }
-            for (sourcePath in sourcePaths) {
-                res.mixFileRecursively(sourcePath)
-            }
+//            for (sourcePath in sourcePaths) {
+//                res.mixFileRecursively(sourcePath)
+//            }
 
             //output
             outputFolders.forEach { res.mixFileRecursively(it) { file -> file.isFile && file.name != hashFileName } } //if you store hashFile in output
@@ -208,8 +212,13 @@ class RdGen : Kli() {
     }
 
 
+    /**
+     * Should we regenerate everything or not? Only applicablr for generation based on source code .kt dsl.
+     * Generation upon classpath is always non-incremental.
+     *
+     */
     private fun changedSinceLastStart(): Boolean {
-        if (sources.value == null && sourcePaths.isEmpty()) return true //no incremental generation from classpath
+        if (sources.value == null) return true //no incremental generation from classpath
 
         v("Reading hash from $hashfile")
         val oldHash = PersistentHash.load(hashfile)
@@ -229,10 +238,16 @@ class RdGen : Kli() {
     }
 
 
+    /**
+     * Main method.
+     * 1. Check something is not up-to-date (if [RdGen.force] is 'true' then always regenerate)
+     * 2. Compile rd model DSL if needed (or use current classloader to find compiled rd model)
+     * 3. Invoke [generateRdModel]
+     */
     fun run(): Boolean {
         if (error != null) return errorAndExit()
 
-        //parsing parameters
+        //0. Parsing generation parameters
         val generatorFilter = try {
             filter.value?.let { Regex(it, RegexOption.IGNORE_CASE) }
         } catch (e: Throwable) {
@@ -242,6 +257,7 @@ class RdGen : Kli() {
         val pkgPrefixes = packages.value!!.split(',', ' ', ':', ';').toTypedArray()
 
 
+        //1. Check whether do we need to generate anything?
         if (!force.value) {
             if (!changedSinceLastStart()) {
                 v("No changes since last start")
@@ -255,10 +271,11 @@ class RdGen : Kli() {
             }
         }
 
+        //2. Compile dsl or take defaultClassloader
         val srcDir = sources.value
         val classloader =
-            if (srcDir != null || sourcePaths.isNotEmpty()) {
-                val sourcePaths = (srcDir?.split(File.pathSeparatorChar)?.map { File(it) } ?: emptyList()) + this.sourcePaths
+            if (srcDir != null) {
+                val sourcePaths = (srcDir.split(File.pathSeparatorChar).map { File(it) })
                 for (sourcePath in sourcePaths) {
                     if (!sourcePath.isDirectory)
                         return errorAndExit("Sources are incorrect. No folder found at '$sourcePath'")
@@ -266,19 +283,22 @@ class RdGen : Kli() {
 
                 compileDsl(sourcePaths) ?: return errorAndExit()
             } else {
-                println("Folder 'source' isn't specified, searching for models in classloader of RdGen class (current java process classpath)")
+                println("Folder 'source' isn't specified, searching for models in classloader of RdGen class (current java process classpath).")
+                println("To see parameters and usages invoke `rdgen -h`")
                 defaultClassloader
             }
 
 
+        //3. Find all rd model classes in classpath and generate code
         val outputFolders = try {
-            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, generationSpecs)
+            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs)
         } catch (e : Throwable) {
             e.printStackTrace()
             return false
         }
 
-        if (srcDir != null || sourcePaths.isNotEmpty()) {
+        //4. Serialize .rdgen hashfile for incremental generation in future
+        if (srcDir != null) {
             val hash = prepareHash(outputFolders)
             v("Storing hash into '$hashfile'")
             hash.store(hashfile)
@@ -290,24 +310,14 @@ class RdGen : Kli() {
     }
 }
 
-//Need to sort generators because we plan to purge generation folders sometimes
-private data class GenPair(val generator: IGenerator, val root: Root) : Comparable<GenPair> {
-    override fun compareTo(other: GenPair): Int {
-        generator.folder.canonicalPath.compareTo(other.generator.folder.canonicalPath).let { if (it != 0) return it}
-        root.name.compareTo(other.root.name).let { if (it != 0) return it }
-        generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
-
-        return 0 //sort is stable so, don't worry much
-    }
-}
-
 fun generateRdModel(
-    classLoader: ClassLoader,
-    namespacePrefixes: Array<String>,
-    verbose: Boolean = false,
-    generatorsFilter: Regex? = null,
-    clearOutputFolderIfExists: Boolean = false,
-    generationSpecs: List<GenerationSpec> = emptyList()
+        classLoader: ClassLoader,
+        namespacePrefixes: Array<String>,
+        verbose: Boolean = false,
+        generatorsFilter: Regex? = null,
+        clearOutputFolderIfExists: Boolean = false,
+
+        gradleGenerationSpecs: List<GradleGenerationSpec> = emptyList()
 ): Set<File> {
     val startTime = System.currentTimeMillis()
 
@@ -317,30 +327,36 @@ fun generateRdModel(
         println()
         println("RdGen model generator started")
         println("Searching classes with namespace prefixes: '${namespacePrefixes.joinToString(", ")}'")
-        println("Generator's filter: '${genfilter.pattern}'")
+        println("Regex for filtering generators: '${genfilter.pattern}'")
+
+        if (gradleGenerationSpecs.isNotEmpty())
+            println("Found ${gradleGenerationSpecs.size} gradle generators")
     }
 
-    val toplevels = collectTopLevels(classLoader, namespacePrefixes, verbose)
+
+    val javaClasses = collectClasses(classLoader, namespacePrefixes, verbose)
+
+    val toplevels = collectTopLevels(javaClasses, verbose)
 
 
     val validationErrors = ArrayList<String>()
 
     val roots = toplevels.map { it.root }.distinct()
     roots.forEach { root ->
-        if (verbose) println("Scanning $root, ${root.generators.size} generators found")
+        if (verbose) println("Scanning $root, ${root.hardcodedGenerators.size} hardcoded generators found")
 
         root.initialize()
         root.validate(validationErrors)
     }
 
-    val generatorsToInvoke = collectGeneratorsToInvoke(roots, genfilter, verbose, generationSpecs)
 
     if (validationErrors.isNotEmpty())
         throw GeneratorException("Model validation fail:" +
             validationErrors.joinToString ("") {"\n\n>> $it"}
         )
 
-    generatorsToInvoke.sort()
+    val generatorsToInvoke = collectSortedGeneratorsToInvoke(roots, javaClasses, genfilter, verbose, gradleGenerationSpecs)
+
     if (verbose) {
         println()
         println("After filtering ${generatorsToInvoke.size} generator(s) to run")
@@ -373,17 +389,26 @@ fun generateRdModel(
     return generatedFolders
 }
 
-private fun collectTopLevels(
-    classLoader: ClassLoader,
-    namespacePrefixes: Array<String>,
-    verbose: Boolean
-): List<Toplevel> {
+
+private fun collectClasses(classLoader: ClassLoader,
+                           namespacePrefixes: Array<String>,
+                           verbose: Boolean) : List<Class<*>> {
+
     val classes = classLoader.scanForClasses(*namespacePrefixes).toList()
     if (verbose) println("${classes.count()} classes found")
+    return classes
+}
+
+
+private fun collectTopLevels(
+    classes: List<Class<*>>,
+    verbose: Boolean
+): List<Toplevel> {
 
     val toplevelClasses = classes.filter { Toplevel::class.java.isAssignableFrom(it) }
         .filter { !(it.isInterface || Modifier.isAbstract(it.modifiers)) }.toList()
     if (verbose) println("${toplevelClasses.size} toplevel class${(toplevelClasses.size != 1).condstr { "es" }} found")
+
 
     val toplevels = toplevelClasses.map {
         val kclass = it.kotlin
@@ -400,44 +425,33 @@ private fun collectTopLevels(
     return toplevels
 }
 
-private fun collectGeneratorsToInvoke(
-    roots: List<Root>,
-    genfilter: Regex,
-    verbose: Boolean,
-    generationSpecs: List<GenerationSpec>
-): MutableList<GenPair> {
-    val generatorsToInvoke = mutableListOf<GenPair>()
-    for (root in roots) {
-        root.generators.forEach { gen ->
-            val shouldGenerate =
-                genfilter.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)
-            if (verbose) println("  $gen: " + if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
-            if (shouldGenerate) generatorsToInvoke.add(GenPair(gen, root))
-        }
-    }
 
-    for (generationSpec in generationSpecs) {
-        val flowTransform = when (generationSpec.transform) {
-            "asis" -> FlowTransform.AsIs
-            "reversed" -> FlowTransform.Reversed
-            "symmetric" -> FlowTransform.Symmetric
-            null -> FlowTransform.AsIs
-            else -> throw GeneratorException("Unknown flow transform type ${generationSpec.transform}, use 'asis', 'reversed' or 'symmetric'")
-        }
-        val generator = when (generationSpec.language) {
-            "kotlin" -> Kotlin11Generator(flowTransform, generationSpec.namespace,
-                File(generationSpec.directory))
-            "csharp" -> CSharp50Generator(flowTransform, generationSpec.namespace,
-                File(generationSpec.directory))
-            "cpp" -> Cpp17Generator(flowTransform, generationSpec.namespace,
-                    File(generationSpec.directory))
-            else -> throw GeneratorException("Unknown language ${generationSpec.language}, use 'kotlin' or 'csharp' or 'cpp'")
-        }
-        val root = roots.find { it.javaClass.canonicalName == generationSpec.root }
-                ?: throw GeneratorException("Can't find root with class name ${generationSpec.root}. Found roots: " +
-                roots.joinToString { it.javaClass.canonicalName })
-        generatorsToInvoke.add(GenPair(generator, root))
-    }
+private fun collectSortedGeneratorsToInvoke(
+        roots: List<Root>,
+        classes: List<Class<*>>,
+        filterByGeneratorClassSimpleName: Regex,
+        verbose: Boolean,
+        gradleGenerationSpecs: List<GradleGenerationSpec>
+): List<IGenerationUnit> {
 
-    return generatorsToInvoke
+    val hardcoded = roots.flatMap { root -> root.hardcodedGenerators.map { GenerationUnit(it, root) } }
+
+    val fromSpec = gradleGenerationSpecs.map { it.toGenerationUnit(roots) }
+
+    val external = classes.filter { IGenerationUnit::class.java.isAssignableFrom(it) }.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<GenerationUnit>()
+
+    if (verbose)
+        println("${external.size} generators found")
+
+    return hardcoded
+            .plus(fromSpec)
+            .plus(external)
+            .filter { (gen, _) ->
+        val shouldGenerate = filterByGeneratorClassSimpleName.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)
+
+        if (verbose)
+            println("  $gen: " + if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
+
+        shouldGenerate
+    }.sorted()
 }

@@ -8,11 +8,40 @@ interface IGenerator {
     fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
 }
 
+/**
+ * Generator and root together
+ */
+interface IGenerationUnit: Comparable<IGenerationUnit> {
+    operator fun component1(): IGenerator = generator
+    operator fun component2(): Root = root
+
+    val generator: IGenerator
+    val root: Root
+
+    //Need to sort generators because we plan to purge generation folders sometimes
+    override fun compareTo(other: IGenerationUnit): Int {
+        generator.folder.canonicalPath.compareTo(other.generator.folder.canonicalPath).let { if (it != 0) return it}
+        root.name.compareTo(other.root.name).let { if (it != 0) return it }
+        generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
+
+        return 0 //sort is stable so, don't worry much
+    }
+}
+
+/**
+ * If you extend this class with object instance it will be collected by [collectSortedGeneratorsToInvoke] during reflection search.
+ */
+open class GenerationUnit(override val generator: IGenerator, override val root: Root) : IGenerationUnit
 
 
-
+/**
+ * This exception arises during generation. Usually thrown by [GeneratorBase.fail] method.
+ */
 class GeneratorException (msg: String) : RuntimeException(msg)
 
+/**
+ * Base class for generators to deduplicate common logic
+ */
 abstract class GeneratorBase : IGenerator {
     protected fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
 
@@ -62,25 +91,6 @@ abstract class GeneratorBase : IGenerator {
         }
     }
 }
-
-
-val IType.hasEmptyConstructor : Boolean get() = when (this) {
-    is Class.Concrete -> allMembers.all { it.hasEmptyConstructor }
-    is Aggregate -> true
-
-    else -> false
-}
-
-
-val Member.hasEmptyConstructor : Boolean get() = when (this) {
-    is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
-    is Member.Reactive -> true
-
-    else -> throw GeneratorException("Unsupported member: $this")
-}
-
-val Declaration.isConcrete
-    get() = this is Class.Concrete || this is Struct.Concrete || this is Aggregate
 
 
 

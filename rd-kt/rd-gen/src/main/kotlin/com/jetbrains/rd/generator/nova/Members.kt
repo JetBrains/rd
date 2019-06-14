@@ -150,3 +150,9 @@ fun Member.doc(value: String) : Member {
 val <T: Member.Reactive> T.write: T get() = apply { flow = FlowKind.Source }
 val <T: Member.Reactive> T.readonly: T get() = apply { flow = FlowKind.Sink }
 val <T: Member.Reactive> T.async  : T get() = apply { freeThreaded = true }
+val Member.hasEmptyConstructor : Boolean get() = when (this) {
+    is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
+    is Member.Reactive -> true
+
+    else -> throw GeneratorException("Unsupported member: $this")
+}
