@@ -343,8 +343,6 @@ fun generateRdModel(
 
     val roots = toplevels.map { it.root }.distinct()
     roots.forEach { root ->
-        if (verbose) println("Scanning $root, ${root.hardcodedGenerators.size} hardcoded generators found")
-
         root.initialize()
         root.validate(validationErrors)
     }
@@ -419,8 +417,9 @@ private fun collectTopLevels(
     }.filterIsInstance(Toplevel::class.java).sortedWith(compareBy({ it.root.name }, { it.toString() }))
 
     if (verbose) {
+        println()
         println("Toplevels to generate:")
-        toplevels.forEach(::println)
+        toplevels.forEach { println("  $it") }
     }
     return toplevels
 }
@@ -440,17 +439,23 @@ private fun collectSortedGeneratorsToInvoke(
 
     val external = classes.filter { IGenerationUnit::class.java.isAssignableFrom(it) }.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<GenerationUnit>()
 
-    if (verbose)
-        println("${external.size} generators found")
+    if (verbose) {
+        println()
+        println("Collecting generators (filtering by regex '$filterByGeneratorClassSimpleName'):")
+        println("  ${hardcoded.size}" + " hardcoded generator(s) -- specified directly in 'Root' constructor")
+        println("  ${fromSpec.size}"  + " gradle generator(s)    -- specified in gradle's rdgen plugin 'rdgen { generator { ...} }' sections")
+        println("  ${external.size}"  + " external generator(s)  -- specified by extending kotlin object from class GenerationUnit")
+        println()
+    }
 
     return hardcoded
             .plus(fromSpec)
             .plus(external)
-            .filter { (gen, _) ->
+            .filter { (gen, root) ->
         val shouldGenerate = filterByGeneratorClassSimpleName.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)
 
         if (verbose)
-            println("  $gen: " + if (shouldGenerate) "matches filter" else "--FILTERED OUT--")
+            println(" '$root' + $gen: " + if (shouldGenerate) "++MATCHED++" else "--FILTERED OUT--")
 
         shouldGenerate
     }.sorted()

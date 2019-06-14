@@ -15,8 +15,8 @@ import java.io.File
 open class CSharp50Generator(
         val defaultFlowTransform: FlowTransform = FlowTransform.AsIs,
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
-        override val folder : File = System.getProperty("rdgen.cs.dir")?.let { File(it) } ?: File("."),
-        val fileName: (Toplevel) -> String = { tl -> tl.name}
+        override val folder : File = File(syspropertyOrInvalid("rdgen.cs.dir")),
+        val fileName: (Toplevel) -> String = { tl -> tl.name }
 ) : GeneratorBase() {
 
     object Inherits : ISetting<String, Declaration>
@@ -1045,7 +1045,7 @@ open class CSharp50Generator(
     }
 
     override fun toString(): String {
-        return "CSharp50Generator(defaultFlowTransform=$defaultFlowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
+        return "CSharp50($defaultFlowTransform, \"$defaultNamespace\", '${folder.canonicalPath}')"
     }
 
 
