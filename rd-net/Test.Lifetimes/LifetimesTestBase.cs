@@ -4,11 +4,11 @@ using JetBrains.Lifetimes;
 using NUnit.Framework;
 
 namespace Test.Lifetimes
-{ 
+{
   public abstract class LifetimesTestBase
   {
     private IDisposable myDisposable;
-    
+
     protected LifetimeDefinition LifetimeDefinition;
     protected Lifetime TestLifetime;
 
@@ -16,20 +16,20 @@ namespace Test.Lifetimes
     public virtual void SetUp()
     {
       myDisposable = Log.UsingLogFactory(TestLogger.Factory);
-      
+
       LifetimeDefinition = Lifetime.Define(Lifetime.Eternal);
       TestLifetime = LifetimeDefinition.Lifetime;
     }
 
     [TearDown]
-    public void TearDown()
+    public virtual void TearDown()
     {
       TearDownInternal();
       LifetimeDefinition.Terminate();
       ThrowLoggedExceptions();
       myDisposable.Dispose();
     }
-    
+
     protected virtual void TearDownInternal() {}
 
     protected void ThrowLoggedExceptions()
