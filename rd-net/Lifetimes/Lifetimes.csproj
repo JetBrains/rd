@@ -2,9 +2,11 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard1.5;net35;net461</TargetFrameworks>
+        <RootNamespace>JetBrains</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PackageId>JetBrains.RdFramework</PackageId>
-        <AssemblyName>JetBrains.RdFramework</AssemblyName>
+        <LangVersion>latest</LangVersion>
+        <PackageId>JetBrains.Lifetimes</PackageId>
+        <AssemblyName>JetBrains.Lifetimes</AssemblyName>
         <PackageVersion Condition="'$(PackageVersionOverride)' != ''">$(PackageVersionOverride)</PackageVersion>
         <PackageVersion Condition="'$(PackageVersionOverride)' == ''">192.0.0-SNAPSHOT</PackageVersion>
     </PropertyGroup>
@@ -18,9 +20,11 @@
         <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.5'">
+        <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
+        <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
+        <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
+        <PackageReference Include="System.Reflection" Version="4.3.0" />
     </ItemGroup>
-   
 
 </Project>
