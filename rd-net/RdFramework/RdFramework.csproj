@@ -21,6 +21,5 @@
     <ItemGroup>
       <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
     </ItemGroup>
-   
 
 </Project>
