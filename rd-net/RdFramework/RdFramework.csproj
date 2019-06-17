@@ -6,7 +6,6 @@
         <PackageId>JetBrains.RdFramework</PackageId>
         <AssemblyName>JetBrains.RdFramework</AssemblyName>
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
-        <PackageVersion Condition="'$(PackageVersionOverride)' != ''">$(PackageVersionOverride)</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

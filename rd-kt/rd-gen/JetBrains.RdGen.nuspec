@@ -12,6 +12,8 @@
         <dependencies>
             <group>
                 <dependency id="JetBrains.Annotations" version="2019.1.1"/>
+                <dependency id="JetBrains.Lifetimes" version="$version$"/>
+                <dependency id="JetBrains.RdFramework" version="$version$"/>
             </group>
             <group targetFramework="net35">
                 <dependency id="AsyncBridge.Net35" version="0.2.0"/>
@@ -23,20 +25,5 @@
         <file src="JetBrains.RdGen.targets" target="build\JetBrains.RdGen.targets"/>
         <file src="build\libs\rd.jar" target="build\rd.jar"/>
         <file src="build\nuget\DotFiles\**\*" target="DotFiles"/>
-
-        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.Lifetimes.dll" target="lib\net35"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.Lifetimes.pdb" target="lib\net35"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.RdFramework.dll " target="lib\net35"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\net35\JetBrains.RdFramework.pdb " target="lib\net35"/>
-
-        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.Lifetimes.dll" target="lib\net461"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.Lifetimes.pdb" target="lib\net461"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.RdFramework.dll" target="lib\net461"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\net461\JetBrains.RdFramework.pdb" target="lib\net461"/>
-
-        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.Lifetimes.dll" target="lib\netstandard1.5"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.Lifetimes.pdb" target="lib\netstandard1.5"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.RdFramework.dll" target="lib\netstandard1.5"/>
-        <file src="..\..\rd-net\RdFramework\bin\Release\netstandard1.5\JetBrains.RdFramework.pdb" target="lib\netstandard1.5"/>
     </files>
 </package>

@@ -19,3 +19,4 @@ rd-net/**/obj
 .DS_Store
 *.nupkg
 *.DotSettings.user
+cache/
