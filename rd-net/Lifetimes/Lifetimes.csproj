@@ -9,7 +9,6 @@
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
         <PackageVersion Condition="'$(PackageVersionOverride)' != ''">$(PackageVersionOverride)</PackageVersion>
-        <PackageVersion Condition="'$(PackageVersionOverride)' == ''">192.0.0-SNAPSHOT</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
