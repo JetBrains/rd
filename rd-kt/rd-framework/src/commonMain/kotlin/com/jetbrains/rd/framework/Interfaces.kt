@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.IRdReactive
+import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -47,7 +48,7 @@ interface IWire {
      * Adds a [handler] for receiving updated values of the object with the given [id]. The handler is removed
      * when the given [lifetime] is terminated.
      */
-    fun advise(lifetime: Lifetime, entity: IRdReactive)
+    fun advise(lifetime: Lifetime, entity: IRdWireable)
 }
 
 /**

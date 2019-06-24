@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.IRdReactive
+import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.blockingPutUnique
 import com.jetbrains.rd.util.getOrCreate
@@ -19,10 +20,10 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
     private val lock = Any()
 
-    private val subscriptions = hashMapOf<RdId, IRdReactive>()
+    private val subscriptions = hashMapOf<RdId, IRdWireable>()
     private val broker = hashMapOf<RdId, Mq>()
 
-    private fun IRdReactive.invoke(msg: AbstractBuffer, sync: Boolean = false) {
+    private fun IRdWireable.invoke(msg: AbstractBuffer, sync: Boolean = false) {
         if (sync) { //todo think about scheduler.isActive()
             onWireReceived(msg) //error handling should process automatically
         } else {
@@ -102,7 +103,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     }
 
     //only on main thread
-    fun adviseOn(lifetime: Lifetime, entity: IRdReactive) {
+    fun adviseOn(lifetime: Lifetime, entity: IRdWireable) {
         require(!entity.rdid.isNull) {"id is null for entity: $entity"}
 
         //advise MUST happen under default scheduler, not custom

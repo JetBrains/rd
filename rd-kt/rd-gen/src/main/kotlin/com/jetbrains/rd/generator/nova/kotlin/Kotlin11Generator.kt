@@ -112,7 +112,7 @@ open class Kotlin11Generator(
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName : String get () = when (this) {
         is Member.Reactive.Task -> when (actualFlow) {
-            Sink -> "RdEndpoint"
+            Sink -> "RdCall"
             Source -> "RdCall"
             Both -> "RdCall" //todo
         }

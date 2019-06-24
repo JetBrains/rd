@@ -22,7 +22,7 @@ class DemoModel private constructor(
     private val _list: RdList<Int>,
     private val _set: RdSet<Int>,
     private val _mapLongToString: RdMap<Long, String>,
-    private val _call: RdEndpoint<Char, String>,
+    private val _call: RdCall<Char, String>,
     private val _callback: RdCall<String, Int>,
     private val _interned_string: RdOptionalProperty<String>,
     private val _polymorphic: RdOptionalProperty<Base>
@@ -63,7 +63,7 @@ class DemoModel private constructor(
     val list: IMutableViewableList<Int> get() = _list
     val set: IMutableViewableSet<Int> get() = _set
     val mapLongToString: IMutableViewableMap<Long, String> get() = _mapLongToString
-    val call: RdEndpoint<Char, String> get() = _call
+    val call: RdCall<Char, String> get() = _call
     val callback: IRdCall<String, Int> get() = _callback
     val interned_string: IOptProperty<String> get() = _interned_string
     val polymorphic: IOptProperty<Base> get() = _polymorphic
@@ -111,7 +111,7 @@ class DemoModel private constructor(
         RdList<Int>(FrameworkMarshallers.Int),
         RdSet<Int>(FrameworkMarshallers.Int),
         RdMap<Long, String>(FrameworkMarshallers.Long, FrameworkMarshallers.String),
-        RdEndpoint<Char, String>(FrameworkMarshallers.Char, FrameworkMarshallers.String),
+        RdCall<Char, String>(FrameworkMarshallers.Char, FrameworkMarshallers.String),
         RdCall<String, Int>(FrameworkMarshallers.String, FrameworkMarshallers.Int),
         RdOptionalProperty<String>(__StringInternedAtProtocolSerializer),
         RdOptionalProperty<Base>(AbstractPolymorphic(Base))

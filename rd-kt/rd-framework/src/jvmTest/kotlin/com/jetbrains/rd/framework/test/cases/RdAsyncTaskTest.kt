@@ -3,7 +3,6 @@ package com.jetbrains.rd.framework.test.cases
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdCall
-import com.jetbrains.rd.framework.impl.RdEndpoint
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
@@ -19,21 +18,21 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
     fun TestDynamic() {
         val property_id = 1
         val client_property = RdOptionalProperty(RdCall as ISerializer<RdCall<Int, String>>).static(property_id)
-        val server_property = RdOptionalProperty(RdEndpoint.Companion as ISerializer<RdEndpoint<Int, String>>).static(property_id).slave()
+        val server_property = RdOptionalProperty(RdCall.Companion as ISerializer<RdCall<Int, String>>).static(property_id).slave()
 
 
         //bound
         clientProtocol.bindStatic(client_property, "top")
         serverProtocol.bindStatic(server_property, "top")
 
-        server_property.set ( RdEndpoint(Int::toString) )
+        server_property.set ( RdCall(Int::toString) )
 
 
         assertEquals("1", client_property.valueOrThrow.sync(1))
 
         val l = Linearization()
         server_property.set (
-            RdEndpoint<Int, String> { _, v ->
+                RdCall<Int, String> { _, v ->
                 RdTask<String>().apply {
                     thread {
                         l.point(1)
