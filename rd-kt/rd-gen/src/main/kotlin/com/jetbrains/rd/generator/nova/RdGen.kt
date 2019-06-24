@@ -455,7 +455,7 @@ private fun collectSortedGeneratorsToInvoke(
         val shouldGenerate = filterByGeneratorClassSimpleName.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)
 
         if (verbose)
-            println(" '$root' + $gen: " + if (shouldGenerate) "++MATCHED++" else "--FILTERED OUT--")
+            println((if (shouldGenerate) "++  MATCHED TO  ++" else "-- FILTERED OUT --") + " '$root' + $gen ")
 
         shouldGenerate
     }.sorted()

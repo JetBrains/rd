@@ -29,9 +29,9 @@
     <Exec Condition="'$(IsLinux)' == 'True' OR '$(IsMacOs)' == 'True'" Command="chmod +x &quot;$(JavaExe)&quot;" />
 
     <Message Text="My home is: $(ProductHomeDir)" Importance="low" />
-    <Message Text="Generator command line: &quot;$(Java)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot;  &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar  &quot;$(MSBuildThisFileDirectory)\rd.jar&quot; -v -s &quot;$(RdModelDir)&quot; -h &quot;$(RdModelOutDir)&quot; $(RdGenAdditionalArgs)" Importance="low" />
+    <Message Text="Generator command line: &quot;$(Java)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot;  &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar  &quot;$(MSBuildThisFileDirectory)\rd.jar&quot; -v -s &quot;$(RdModelDir)&quot;  --filter=csharp -h &quot;$(RdModelOutDir)&quot; $(RdGenAdditionalArgs)" Importance="low" />
 
-    <Exec Command="&quot;$(JavaExe)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot; &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar &quot;$(MSBuildThisFileDirectory)rd.jar&quot; -v -s &quot;$(RdModelDir)&quot; -h &quot;$(RdModelOutDir)&quot; &gt; &quot;$(_RdProtocolGeneratorLogFile)&quot; $(RdGenAdditionalArgs) 2&gt;&amp;1" WorkingDirectory="$(MSBuildThisProjectFileDir)" ContinueOnError="true">
+    <Exec Command="&quot;$(JavaExe)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot; &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar &quot;$(MSBuildThisFileDirectory)rd.jar&quot; -v -s &quot;$(RdModelDir)&quot; --filter=csharp -h &quot;$(RdModelOutDir)&quot; &gt; &quot;$(_RdProtocolGeneratorLogFile)&quot; $(RdGenAdditionalArgs) 2&gt;&amp;1" WorkingDirectory="$(MSBuildThisProjectFileDir)" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
     </Exec>
 
