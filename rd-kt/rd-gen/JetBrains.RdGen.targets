@@ -7,11 +7,16 @@
       <SubType>Code</SubType>
       <Link>src\RdGen\CSharp\Stub</Link>
     </Compile>
+    <AvailableItemName Include="RdModel" />
     <RdModel Include="$(RdModelDir)\**\*.kt">
-      <Private>True</Private>
+      <SubType>Code</SubType>
+      <Link>src\RdGen\Model\Stub</Link>
     </RdModel>
+    <RdGenItemTracker Include="@(RdModel)" />
+    <RdGenItemTracker Include="@(packages.config)" />
+    <RdGenItemTracker Include="$(MSBuildThisFile)" />
   </ItemGroup>
-  <Target Name="RdGenerate" Inputs="@(RdModel)" Outputs="$(RdModelOutDir)\.rdgen" BeforeTargets="PrepareResources">
+  <Target Name="RdGenerate" Inputs="@(RdGenItemTracker)" Outputs="$(RdModelOutDir)\.rdgen" BeforeTargets="PrepareResources">
     <Error Condition="'$(RdModelDir)' == ''" Text="Please define property RdModelDir with path to rd model folder"/>
     <Error Condition="!Exists('$(RdModelDir)')" Text="$(RdModelDir) not exists" />
     <PropertyGroup>
@@ -25,6 +30,9 @@
       <JavaExe Condition="'$(IsWindows)' != 'True'">$(JavaHome)\bin\java</JavaExe>
       <_RdProtocolGeneratorLogFile>$(IntermediateOutputPath)generatorOutput.log</_RdProtocolGeneratorLogFile>
     </PropertyGroup>
+
+    <Message Text="Cleanup output directory: '$(RdModelOutDir)'" />
+    <RemoveDir Directories="$(RdModelOutDir)" />
 
     <Exec Condition="'$(IsLinux)' == 'True' OR '$(IsMacOs)' == 'True'" Command="chmod +x &quot;$(JavaExe)&quot;" />
 
