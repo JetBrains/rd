@@ -8,17 +8,25 @@
       <Link>src\RdGen\CSharp\Stub</Link>
     </Compile>
     <AvailableItemName Include="RdModel" />
-    <RdModel Include="$(RdModelDir)\**\*.kt">
-      <SubType>Code</SubType>
-      <Link>src\RdGen\Model\Stub</Link>
-    </RdModel>
-    <RdGenItemTracker Include="@(RdModel)" />
-    <RdGenItemTracker Include="@(packages.config)" />
-    <RdGenItemTracker Include="$(MSBuildThisFile)" />
   </ItemGroup>
-  <Target Name="RdGenerate" Inputs="@(RdGenItemTracker)" Outputs="$(RdModelOutDir)\.rdgen" BeforeTargets="PrepareResources">
-    <Error Condition="'$(RdModelDir)' == ''" Text="Please define property RdModelDir with path to rd model folder"/>
-    <Error Condition="!Exists('$(RdModelDir)')" Text="$(RdModelDir) not exists" />
+  <Target Name="ExpandRdModel" Inputs="@(RdModelDir)" Outputs="%(RdModelDir.FullPath)">
+    <ItemGroup>
+      <RdModel Include="%(RdModelDir.FullPath)\**\*.kt">
+        <SubType>Code</SubType>
+        <Link>src\RdGen\Model\Stub</Link>
+      </RdModel>
+    </ItemGroup>
+  </Target>
+  <Target Name="PrepareRdGenerateInputs" DependsOnTargets="ExpandRdModel">
+    <ItemGroup>
+      <RdGenGenerateInput Include="@(RdModel)" />
+      <RdGenGenerateInput Include="packages.config" />
+      <RdGenGenerateInput Include="$(MSBuildThisFileFullPath)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="RdGenerate" Inputs="@(RdGenGenerateInput)" Outputs="$(RdModelOutDir)\.rdgen" BeforeTargets="PrepareResources" DependsOnTargets="PrepareRdGenerateInputs">
+    <Error Condition="'@(RdModelDir)' == ''" Text="Please define Item RdModelDir with path to rd model folder"/>
+    <Error Condition="!Exists(%(RdModelDir.FullPath))" Text="Some folders from: '@(RdModelDir)' not exists" />
     <PropertyGroup>
       <IsWindows Condition="'$(OS)'=='Windows_NT'">True</IsWindows>
       <IsLinux Condition="'$(OS)'!='Windows_NT' AND !Exists('/Library/Frameworks')">True</IsLinux>
@@ -37,9 +45,9 @@
     <Exec Condition="'$(IsLinux)' == 'True' OR '$(IsMacOs)' == 'True'" Command="chmod +x &quot;$(JavaExe)&quot;" />
 
     <Message Text="My home is: $(ProductHomeDir)" Importance="low" />
-    <Message Text="Generator command line: &quot;$(Java)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot;  &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar  &quot;$(MSBuildThisFileDirectory)\rd.jar&quot; -v -s &quot;$(RdModelDir)&quot;  --filter=csharp -h &quot;$(RdModelOutDir)&quot; $(RdGenAdditionalArgs)" Importance="low" />
+    <Message Text="Generator command line: &quot;$(Java)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot;  &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar  &quot;$(MSBuildThisFileDirectory)\rd.jar&quot; -v -s &quot;@(RdModelDir)&quot;  --filter=csharp -h &quot;$(RdModelOutDir)&quot; $(RdGenAdditionalArgs)" Importance="low" />
 
-    <Exec Command="&quot;$(JavaExe)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot; &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar &quot;$(MSBuildThisFileDirectory)rd.jar&quot; -v -s &quot;$(RdModelDir)&quot; --filter=csharp -h &quot;$(RdModelOutDir)&quot; &gt; &quot;$(_RdProtocolGeneratorLogFile)&quot; $(RdGenAdditionalArgs) 2&gt;&amp;1" WorkingDirectory="$(MSBuildThisProjectFileDir)" ContinueOnError="true">
+    <Exec Command="&quot;$(JavaExe)&quot; &quot;-Drdgen.cs.namespace=$(RootNamespace)&quot; &quot;-Drdgen.cs.dir=$(RdModelOutDir)&quot; $(RdGenJvmArgs) -jar &quot;$(MSBuildThisFileDirectory)rd.jar&quot; -v -s &quot;@(RdModelDir)&quot; --filter=csharp -h &quot;$(RdModelOutDir)&quot; &gt; &quot;$(_RdProtocolGeneratorLogFile)&quot; $(RdGenAdditionalArgs) 2&gt;&amp;1" WorkingDirectory="$(MSBuildThisProjectFileDir)" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
     </Exec>
 
