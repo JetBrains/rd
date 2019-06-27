@@ -13,6 +13,12 @@ using JetBrains.Util.Util;
 
 namespace JetBrains.Diagnostics
 {
+  /// <summary>
+  /// Logger configuration entry point. 
+  /// If you want see logs from this library to bound in your solution
+  /// you have to bound <see cref="ILog"/> to some logger implementation library (backend) used in your code base (say log4net)
+  /// by implementing <see cref="ILog"/> and <see cref="ILogFactory"/> and setting them as default by <see cref="set_DefaultFactory"/>. 
+  /// </summary>
   public class Log
   {
 
@@ -22,6 +28,10 @@ namespace JetBrains.Diagnostics
     [NotNull]
     private static volatile ILogFactory ourCurrentFactory;
 
+    
+    /// <summary>
+    /// Set's default (lowest priority) <see cref="ILogFactory"/>. If nothing chosen <see cref="ConsoleVerboseFactory"/> is used
+    /// </summary>
     public static ILogFactory DefaultFactory
     {
       get => ourStatics.PeekFirst() ?? ConsoleVerboseFactory;
@@ -57,6 +67,12 @@ namespace JetBrains.Diagnostics
       }
     }
 
+    /// <summary>
+    /// Use this method if you want to set your global log factory (push it to the top of the stack).  
+    /// </summary>
+    /// <param name="factory">Factory to use as global  util returned object is not disposed</param>
+    /// <returns>IDisposable, that should be disposed to return old logger factory. </returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static IDisposable UsingLogFactory([NotNull]ILogFactory factory)
     {
       if (factory == null) throw new ArgumentNullException(nameof(factory));
@@ -72,16 +88,31 @@ namespace JetBrains.Diagnostics
 
     public static readonly ILog Root = GetLog("");
 
+    /// <summary>
+    /// Creates log for <see cref="category"/>. Dots ('.') are separators between subcategories so all loggers form a hierarchy tree.
+    /// </summary>
+    /// <param name="category"></param>
+    /// <returns></returns>
     public static ILog GetLog([NotNull]string category)
     {
       return new SwitchingLog(category);
     }
 
+    /// <summary>
+    /// Creates logger for FQN of <paramref name="type"/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     public static ILog GetLog(Type type)
     {
       return GetLog(type.ToString(withNamespaces:true, withGenericArguments:false));
     }
 
+    /// <summary>
+    /// Creates logger for FQN of type <see cref="T"/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     public static ILog GetLog<T>()
     {
       return GetLog(typeof(T));
@@ -91,6 +122,11 @@ namespace JetBrains.Diagnostics
 
 
     #region Switching log
+    /// <summary>
+    /// This class is used automatically as wrapper when you log something. On each log event it checks whether underlying <see cref="myFactory"/>
+    /// implementation is switched. So you can substitute new log factories by <see cref="Log.UsingLogFactory"/> and every existing <see cref="ILog"/>
+    /// will be reconfigured on the fly. 
+    /// </summary>
     private class SwitchingLog : ILog
     {
 
@@ -145,8 +181,22 @@ namespace JetBrains.Diagnostics
     // ReSharper disable once RedundantArgumentDefaultValue
     public static readonly ILogFactory ConsoleVerboseFactory = new TextWriterLogFactory(Console.Out, LoggingLevel.VERBOSE);
 
-    public const string DefaultDateFormat = "HH:mm:ss.fff"; //don't change it, we have code that do fast formatting according this pattern
+    /// <summary>
+    /// Default format for <see cref="DateTime"/> of logging event.
+    /// WARNING!!! don't change it, we have code that do fast formatting according this pattern
+    /// </summary>
+    public const string DefaultDateFormat = "HH:mm:ss.fff";
 
+    /// <summary>
+    /// Default formatting of logging message
+    /// </summary>
+    /// <param name="date"></param>
+    /// <param name="loggingLevel"></param>
+    /// <param name="category"></param>
+    /// <param name="thread"></param>
+    /// <param name="message"></param>
+    /// <param name="exception"></param>
+    /// <returns></returns>
     public static string DefaultFormat(
       [CanBeNull] DateTime? date,
       LoggingLevel loggingLevel,
@@ -197,6 +247,16 @@ namespace JetBrains.Diagnostics
     }
 
 
+    /// <summary>
+    /// Creates <see cref="ILogFactory"/> that opens file writer. All log messages will be in <see cref="DefaultFormat"/>  
+    /// </summary>
+    /// <param name="lifetime">lifetime of file writer; after lifetime termination file writer will be closed</param>
+    /// <param name="path">path to the file</param>
+    /// <param name="append">append or rewrite file</param>
+    /// <param name="enabledLevel">Filter out all messages with <see cref="LoggingLevel"/> more than this. I.e. enabledLevel == INFO will filter out VERBOSE and TRACE.</param>
+    /// <returns>created factory</returns>
+    /// <exception cref="Exception"></exception>
+    /// <exception cref="IOException"></exception>
     public static TextWriterLogFactory CreateFileLogFactory([NotNull]Lifetime lifetime, [NotNull]string path, bool append = false, LoggingLevel enabledLevel = LoggingLevel.VERBOSE)
     {      
       Assertion.Assert(lifetime.IsAlive, "lifetime.IsTerminated");

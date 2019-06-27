@@ -280,6 +280,11 @@ namespace JetBrains.Diagnostics
 
     #region Catch
        
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == ERROR. Do not throw exception (if any). 
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
 #if !NET35 && !NETSTANDARD     
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
@@ -295,6 +300,11 @@ namespace JetBrains.Diagnostics
       }            
     }
 
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any). 
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
 #if !NET35 && !NETSTANDARD     
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
@@ -310,9 +320,14 @@ namespace JetBrains.Diagnostics
       }            
     }
     
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any). 
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
 #if !NET35 && !NETSTANDARD     
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
+#endif
     public static void CatchWarn(this ILog log, Action action)
     {
       try

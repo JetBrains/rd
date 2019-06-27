@@ -13,16 +13,61 @@ using JetBrains.Threading;
 
 namespace JetBrains.Lifetimes
 {
+  /// <summary>
+  /// Lifetime's lifecycle statuses. Lifetime is created in <see cref="Alive"/> status and eventually becomes <see cref="Terminated"/>.
+  /// Status change is one way road: from lower ordinal to bigger (Alive -> Canceling -> Terminating -> Terminated).  
+  /// </summary>
   public enum LifetimeStatus
   {
+    /// <summary>
+    /// Lifetime is ready to use. Every lifetime's method will work. 
+    /// </summary>
     Alive,
+    
+    /// <summary>
+    /// This status propagates instantly through all lifetime's children graph when <see cref="LifetimeDefinition.Terminate"/> is invoked.
+    /// Lifetime is in consistent state (no resources are terminated) but termination process is already began. All background activities that block
+    /// termination (e.g. started with <see cref="Lifetime.Execute{T}"/>, <see cref="Lifetime.ExecuteAsync"/>) should be interrupted
+    /// as fast as possible. That's why background activities must check <see cref="Lifetime.IsAlive"/> or <see cref="Lifetime.ThrowIfNotAlive"/>
+    /// quite ofter (200 ms is a good reference value).
+    ///
+    /// Some methods in this status still works, e.g. <see cref="Lifetime.OnTermination(System.Action)"/> others do nothing (<see cref="Lifetime.TryExecute{T}"/>)
+    /// or throw <see cref="LifetimeCanceledException"/> (<see cref="Lifetime.Execute{T}"/>, <see cref="Lifetime.Bracket"/>)
+    ///
+    /// Associated <see cref="Lifetime.ToCancellationToken"/> is canceled.
+    /// </summary>
     Canceling,
+    
+    /// <summary>
+    /// Lifetime is in inconsistent state. Destruction begins: some resources are terminated, other not. All method throw exception or do nothing
+    /// (e.g. <see cref="Lifetime.TryOnTermination(System.Action)"/>). 
+    /// </summary>
     Terminating,
+    
+    /// <summary>
+    /// Lifetime is fully terminated, all resources are disposed and method's behavior is the same as in <see cref="Terminating"/> state.
+    /// </summary>
     Terminated
   }
   
   
-  
+  /// <summary>
+  /// Analogue of <see cref="CancellationToken"/> plus inversion of <see cref="IDisposable"/> patten:
+  /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> methods.
+  /// When lifetime is being terminated (it's <see cref="LifetimeDefinition"/> was asked about <see cref="LifetimeDefinition.Terminate"/>) all
+  /// termination resources are being terminated in stack-way LIFO order.
+  ///
+  /// <para>
+  /// Kinds of resources:
+  /// <list type="number">
+  /// <item><see cref="Action"/> - invoked on termination</item>
+  /// <item><see cref="IDisposable"/> - <see cref="IDisposable.Dispose"/> is called on termination</item>
+  /// <item><see cref="ITerminationHandler"/> - <see cref="ITerminationHandler.OnTermination"/> is called on termination</item>
+  /// <item><see cref="LifetimeDefinition"/> - for nested(child) lifetimes created by <see cref="LifetimeDefinition(Lifetime)"/>.
+  /// Child lifetime definition's <see cref="LifetimeDefinition.Terminate"/> method is called.</item>
+  /// </list>
+  /// </para>
+  /// </summary>
   public
     #if !NETSTANDARD
     readonly 

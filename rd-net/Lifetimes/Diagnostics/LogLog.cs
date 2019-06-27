@@ -7,6 +7,9 @@ using JetBrains.Util;
 namespace JetBrains.Diagnostics
 {
 
+  /// <summary>
+  /// log event for <see cref="LogLog"/> 
+  /// </summary>
   public class LogLogRecord
   {
     public LogLogRecord(string category, LoggingLevel severity, [NotNull] string message)
@@ -32,7 +35,7 @@ namespace JetBrains.Diagnostics
   }
 
   /// <summary>
-  /// To record messages and exceptions from logger (and logger referenced code) and don't fall into infinite recursion.
+  /// <see cref="Log"/>'s own diagnostics. To record messages and exceptions from logger (and logger referenced code) and don't fall into infinite recursion.
   /// </summary>
   public static class LogLog
   {

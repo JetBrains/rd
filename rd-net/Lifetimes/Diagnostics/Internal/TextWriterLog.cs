@@ -6,6 +6,9 @@ using JetBrains.Util;
 
 namespace JetBrains.Diagnostics.Internal
 {
+  /// <summary>
+  /// Log that able to write to <see cref="TextWriter"/>
+  /// </summary>
   public class TextWriterLog : LogBase
   {
     public TextWriter Writer { get; }
@@ -32,6 +35,9 @@ namespace JetBrains.Diagnostics.Internal
   }
   
 
+  /// <summary>
+  /// Log factory that create <see cref="TextWriterLog"/>. Could be created for file by <see cref="Log.CreateFileLogFactory"/>
+  /// </summary>
   public class TextWriterLogFactory : LogFactoryBase
   {
     public LoggingLevel EnabledLevel { get; }
