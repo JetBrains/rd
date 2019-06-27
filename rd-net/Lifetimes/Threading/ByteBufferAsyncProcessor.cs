@@ -94,9 +94,8 @@ namespace JetBrains.Threading
 
     private Chunk myChunkToFill;
 
-    private bool myProcessing = false;
+    private bool myProcessing;
     
-    //will became null after processing start
     private volatile Chunk myChunkToProcess;
 
     private Thread myAsyncProcessingThread;
@@ -181,7 +180,11 @@ namespace JetBrains.Threading
 
       var res =  myAsyncProcessingThread.Join(timeoutMs);
 #if !NETSTANDARD
-      if (!res) LogLog.Catch(() => myAsyncProcessingThread.Abort());
+      if (!res)
+      {
+        LogLog.Warn($"Async processor {Id} hasn't finished in ${timeoutMs} ms. Trying to abort thread.");
+        LogLog.Catch(() => myAsyncProcessingThread.Abort());
+      }
 #endif
       
       CleanupInternal();
@@ -305,12 +308,19 @@ namespace JetBrains.Threading
           lock (myLock)
           {
             myProcessing = false;
-            
-            myChunkToProcess.SeqN = seqN;
-            myChunkToProcess = myChunkToProcess.Next;
+
+            if (myChunkToProcess == null)
+            {
+              LogLog.Error($"{nameof(myChunkToProcess)} is null. State: {State}");
+            }
+            else
+            {
+              myChunkToProcess.SeqN = seqN;
+              myChunkToProcess = myChunkToProcess.Next;
 //            Assertion.Assert(myChunkToProcess.IsNotProcessed, "chunkToProcess.IsNotProcessed"); not true in case of reprocessing
-            if (myChunkToProcess.Ptr == 0) 
-              myAllDataProcessed = true;
+              if (myChunkToProcess.Ptr == 0)
+                myAllDataProcessed = true;
+            }
           }
         }
       }
@@ -383,7 +393,7 @@ namespace JetBrains.Threading
 
     private void WaitProcessingFinished()
     {
-      if (Thread.CurrentThread == myAsyncProcessingThread) return; //don;t want to deadlock
+      if (Thread.CurrentThread == myAsyncProcessingThread) return; //don't want to deadlock
       
       while (myProcessing) 
         Monitor.Wait(myLock, 1);
@@ -406,9 +416,9 @@ namespace JetBrains.Threading
     /// <summary>
     /// Graceful stop. Process queue, but doesn't accept new data via <see cref="Put(byte[])"/>. Joins processing thread for given timeout. If timeout elapsed, aborts thread.
     /// </summary>
-    /// <param name="timeoutMs">Timeout to wait. -1 for infinite waiting.</param>
+    /// <param name="timeoutMs">Timeout to wait. <see cref="Timeout.Infinite"/> for infinite waiting.</param>
     /// <returns>'true' if Join(timeoutMs) was successful, false otherwise. Also returns 'false' if thread is already stopped or killed."></returns>
-    public bool Stop(int timeoutMs = -1)
+    public bool Stop(int timeoutMs = Timeout.Infinite)
     {
       return TerminateInternal(timeoutMs, StateKind.Stopping, "STOP");
     }
@@ -418,9 +428,9 @@ namespace JetBrains.Threading
     /// <summary>
     /// Force stop. Doesn't process queue, doesn't accept new data via <see cref="Put(byte[])"/>. Joins processing thread for given timeout. If timeout elapsed, aborts thread.
     /// </summary>
-    /// <param name="timeoutMs">Timeout to wait. -1 for infinite waiting.</param>
+    /// <param name="timeoutMs">Timeout to wait. <see cref="Timeout.Infinite"/> for infinite waiting.</param>
     /// <returns>'true' if Join(timeoutMs) was successful, false otherwise. Also returns 'false' if thread is already stopped or killed."></returns>
-    public bool Terminate(int timeoutMs = -1)
+    public bool Terminate(int timeoutMs = Timeout.Infinite)
     {
       return TerminateInternal(timeoutMs, StateKind.Terminating, "TERMINATE");
     }
