@@ -52,20 +52,25 @@ namespace JetBrains.Lifetimes
   
   
   /// <summary>
-  /// Analogue of <see cref="CancellationToken"/> plus inversion of <see cref="IDisposable"/> patten:
+  /// Analogue of <see cref="CancellationToken"/> + inversion of <see cref="IDisposable"/> pattern (with thread-safety):
   /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> methods.
-  /// When lifetime is being terminated (it's <see cref="LifetimeDefinition"/> was asked about <see cref="LifetimeDefinition.Terminate"/>) all
-  /// termination resources are being terminated in stack-way LIFO order.
+  /// When lifetime is being terminated (i.e. it's <see cref="LifetimeDefinition"/> was asked about <see cref="LifetimeDefinition.Terminate"/>) all
+  /// termination resources are being terminated in stack-way LIFO order. Lifetimes forms a hierarchy with parent-child relations so in single-threaded world child is always
+  /// become <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but it some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
+  /// a directed acyclic graph. 
   ///
   /// <para>
-  /// Kinds of resources:
+  /// Kinds of termination resources:
   /// <list type="number">
-  /// <item><see cref="Action"/> - invoked on termination</item>
+  /// <item><see cref="Action"/> - merely invoked on termination</item>
   /// <item><see cref="IDisposable"/> - <see cref="IDisposable.Dispose"/> is called on termination</item>
   /// <item><see cref="ITerminationHandler"/> - <see cref="ITerminationHandler.OnTermination"/> is called on termination</item>
   /// <item><see cref="LifetimeDefinition"/> - for nested(child) lifetimes created by <see cref="LifetimeDefinition(Lifetime)"/>.
   /// Child lifetime definition's <see cref="LifetimeDefinition.Terminate"/> method is called.</item>
   /// </list>
+  ///
+  /// If some resource thrown an exception during termination, it will be logged by <see cref="ILog"/> with level <see cref="LoggingLevel.ERROR"/> so termination of other resources
+  /// won't be affected. 
   /// </para>
   /// </summary>
   public
@@ -86,7 +91,11 @@ namespace JetBrains.Lifetimes
 
 
     #if !NET35
-    public static AsyncLocal<Lifetime> AsyncLocal = new AsyncLocal<Lifetime>();
+    /// <summary>
+    /// Special "async-static" lifetime that is captured when you execute <see cref="ExecuteAsync"/> or <see cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// and can be used by cooperative cancellation.
+    /// </summary>
+    public static readonly AsyncLocal<Lifetime> AsyncLocal = new AsyncLocal<Lifetime>();
     #endif
 
     /// <summary>
@@ -94,19 +103,80 @@ namespace JetBrains.Lifetimes
     /// <para>Do not call <see cref="Lifetime.AddRef"/> on such a lifetime, because it will not hold your object forever.</para>  
     /// </summary>
     [PublicAPI] public static Lifetime Eternal      => LifetimeDefinition.Eternal.Lifetime;
+    
+    /// <summary>
+    /// Singleton lifetime that is in <see cref="LifetimeStatus.Terminated"/> state by default.  
+    /// </summary>
     [PublicAPI] public static Lifetime Terminated   => LifetimeDefinition.Terminated.Lifetime;
 
+    /// <summary>
+    /// Lifecycle phase of current lifetime. 
+    /// </summary>
     [PublicAPI] public LifetimeStatus Status        => Def.Status;
+    
+    /// <summary>
+    /// Whether current lifetime is equal to <see cref="Eternal"/> and never be terminated
+    /// </summary>
     [PublicAPI] public bool IsEternal               => Def.IsEternal;
+    
+    /// <summary>
+    /// Is <see cref="Status"/> of this lifetime equal to <see cref="LifetimeStatus.Alive"/>
+    /// </summary>
     [PublicAPI] public bool IsAlive                 => Def.Status == LifetimeStatus.Alive;
+    
+    /// <summary>
+    /// Is <see cref="Status"/> of this lifetime not equal to <see cref="LifetimeStatus.Alive"/>: Termination started already (or even finished).
+    /// </summary>
     [PublicAPI] public bool IsNotAlive              => !IsAlive;
 
+    /// <summary>
+    /// Number of background activities started by <see cref="Execute{T}"/>, <see cref="ExecuteAsync"/> or <see cref="StartNested(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// When lifetime became <see cref="LifetimeStatus.Canceling"/> (it happens right after user ask for this lifetime's or ancestor lifetime's definition <see cref="LifetimeDefinition.Terminate"/>) this
+    /// number could only reduce, no new activities can be started.
+    /// When it reach zero, lifetime begins to terminate its resources by changing <see cref="Status"/> to <see cref="LifetimeStatus.Terminating"/>  
+    /// </summary>
     [PublicAPI] public int ExecutingCount          => Def.ExecutingCount; 
 
     
+    /// <summary>
+    /// Add termination resource with <c>kind == Action</c> that will be invoked when lifetime termination start
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called and <see cref="ExecutingCount"/> became zero).
+    /// Resources invocation order: LIFO
+    /// All errors are logger by <see cref="ILog"/>  so termination of each resource is isolated.
+    ///
+    /// Method throws <see cref="InvalidOperationException"/> if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. The reason is that lifetime is in inconsistent partly terminated
+    /// state so your actions   
+    /// </summary>
+    /// <param name="action">Action to invoke on termination</param>
+    /// <exception cref="InvalidOperationException">if lifetime already started destructuring, i.e. <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>  </exception>
+    /// <returns>this lifetime</returns>
     [PublicAPI] public Lifetime OnTermination([NotNull] Action action) { Def.OnTermination(action); return this; }
+    
+    /// <summary>
+    /// Add termination resource <c>kind == IDisposable</c> that will be invoked by calling <see cref="IDisposable.Dispose"/> when lifetime termination start
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called and <see cref="ExecutingCount"/> became zero).
+    /// Resources invocation order: LIFO
+    /// All errors are logged by <see cref="ILog"/> so termination of each resource is isolated.
+    /// </summary>
+    /// <param name="disposable">Disposable whose <see cref="IDisposable.Dispose"/> method is invoked on termination</param>
+    /// <returns>this lifetime</returns>
     [PublicAPI] public Lifetime OnTermination([NotNull] IDisposable disposable) { Def.OnTermination(disposable); return this; }
+    
+    
+    /// <summary>
+    /// Add termination resource <c>kind == ITerminationHandler</c> that will be invoked by calling <see cref="ITerminationHandler.OnTermination"/> when lifetime termination start
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called and <see cref="ExecutingCount"/> became zero).
+    /// Resources invocation order: LIFO
+    /// All errors are logged by <see cref="ILog"/> so termination of each resource is isolated.
+    /// </summary>
+    /// <param name="terminationHandler">termination resources whose <see cref="ITerminationHandler.OnTermination"/> method is invoked on termination</param>
+    /// <returns>this lifetime</returns>
+    [PublicAPI] public Lifetime OnTermination([NotNull] ITerminationHandler terminationHandler) { Def.OnTermination(terminationHandler); return this; }
+    
+
     [PublicAPI]          public bool TryOnTermination([NotNull] Action action)      => Def.TryAdd(action);
+    
+
     [PublicAPI]          public bool TryOnTermination([NotNull] IDisposable disposable) => Def.TryAdd(disposable); 
     [PublicAPI]          public bool TryOnTermination([NotNull] ITerminationHandler disposable) => Def.TryAdd(disposable); 
 
