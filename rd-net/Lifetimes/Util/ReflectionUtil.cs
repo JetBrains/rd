@@ -139,5 +139,45 @@ namespace JetBrains.Util
       foreach (var value in Enum.GetValues(typeof (T)))
         yield return (T) value;
     }
+    
+    
+    /// <summary>
+    /// Evaluates property value available on object or any of the interfaces it implements
+    /// </summary>
+    /// <param name="o">Object to invoke property of</param>
+    /// <param name="propertyName">Name of the property</param>
+    /// <param name="defaultValue">Default value to return if failed</param>
+    /// <typeparam name="T">Expected return type</typeparam>
+    /// <returns>Evaluated property value or default value</returns>
+    public static T GetPropertyValueSafe<T>([NotNull] this object o, string propertyName, T defaultValue = default(T))
+    {
+      T result = defaultValue;
+      try
+      {
+        var type = o.GetType();
+        var propertyInfo = type.OptionalTypeInfo().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        if (propertyInfo == null)
+        {
+          foreach (var @interface in type.OptionalTypeInfo().GetInterfaces())
+          {
+            propertyInfo = @interface.OptionalTypeInfo().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (propertyInfo != null)
+              break;
+          }
+        }
+
+        if (propertyInfo != null)
+        {
+          var value = propertyInfo.GetValue(o, new object[0]);
+          if (value is T)
+            result = (T) value;
+        }
+      }
+      catch (Exception)
+      {
+      }
+
+      return result;
+    }
   }
 }
