@@ -180,7 +180,7 @@ namespace JetBrains.Diagnostics
       }
     }
 
-    [ContractAnnotation("value:null=>void;=>notnull")]
+    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T NotNull<T>(this T value, [NotNull] object debugMessage) where T : class
     {
@@ -192,7 +192,7 @@ namespace JetBrains.Diagnostics
       return value;
     }
 
-    [ContractAnnotation("value:null=>void;=>notnull")]
+    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T NotNull<T>(this T value, [NotNull] string message) where T : class
     {
@@ -204,7 +204,7 @@ namespace JetBrains.Diagnostics
       return value;
     }
 
-    [ContractAnnotation("value:null=>void;=>notnull")]
+    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [StringFormatMethod("args")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T NotNull<T>(this T value, [NotNull] string message, params object[] args) where T : class
@@ -217,7 +217,7 @@ namespace JetBrains.Diagnostics
       return value;
     }
 
-    [ContractAnnotation("value:null=>void;=>notnull")]
+    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T NotNull<T>(this T value) where T : class
     {
@@ -229,7 +229,7 @@ namespace JetBrains.Diagnostics
       return value;
     }
 
-    [ContractAnnotation("value:null=>void")]
+    [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T NotNull<T>(this T? value, [NotNull] string message) where T : struct
     {
@@ -241,7 +241,7 @@ namespace JetBrains.Diagnostics
       return value.GetValueOrDefault();
     }
 
-    [ContractAnnotation("value:null=>void")]
+    [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T NotNull<T>(this T? value) where T : struct
     {
