@@ -98,12 +98,12 @@ namespace Test.RdFramework
 
       serverList.View(Lifetime.Eternal, (lifetime, key, value) =>
       {
-        lifetime.AddAction(() => { itemRemovedServer = true; });
+        lifetime.OnTermination(() => { itemRemovedServer = true; });
       });
 
       clientList.View(Lifetime.Eternal, (lifetime, key, value) =>
       {
-        lifetime.AddAction(() => { itemRemovedClient = true; });
+        lifetime.OnTermination(() => { itemRemovedClient = true; });
       });
 
       serverList.Add("Server value");

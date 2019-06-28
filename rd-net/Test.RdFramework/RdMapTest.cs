@@ -107,12 +107,12 @@ namespace Test.RdFramework
 
       serverMap.View(Lifetime.Eternal, (lifetime, key, value) =>
       {
-        lifetime.AddAction(() => { itemRemovedServer = true; });
+        lifetime.OnTermination(() => { itemRemovedServer = true; });
       });
 
       clientMap.View(Lifetime.Eternal, (lifetime, key, value) =>
       {
-        lifetime.AddAction(() => { itemRemovedClient = true; });
+        lifetime.OnTermination(() => { itemRemovedClient = true; });
       });
 
       serverMap.Add(1, "Server value");
