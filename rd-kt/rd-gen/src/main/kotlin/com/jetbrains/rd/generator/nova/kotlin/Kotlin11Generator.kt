@@ -371,7 +371,7 @@ open class Kotlin11Generator(
                 + " * @property ${member.name} ${member.documentation}"
             }
             if (decl.sourceFileAndLine != null) {
-                + " * Generated from [${decl.sourceFileAndLine}]"
+                + " * #### Generated from [${decl.sourceFileAndLine}]"
             }
             + " */"
         }

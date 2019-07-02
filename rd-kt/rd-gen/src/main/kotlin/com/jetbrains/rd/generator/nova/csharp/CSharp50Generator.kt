@@ -462,7 +462,7 @@ open class CSharp50Generator(
                 + "/// $it"
             }
             decl.sourceFileAndLine?.let {
-                + "/// Generated from: $it"
+                + "/// <p>Generated from: $it</p>"
             }
             + "/// </summary>"
         }
