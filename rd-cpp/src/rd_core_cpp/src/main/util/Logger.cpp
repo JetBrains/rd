@@ -21,7 +21,7 @@ bool SwitchLogger::is_enabled(LogLevel level) {
 
 namespace rd {
 	//namespace log {
-	LogLevel minimum_level_to_log;
+	LogLevel minimum_level_to_log = LogLevel::Trace;
 	//}
 
 	std::mutex Logger::lock;

@@ -259,10 +259,9 @@ namespace rd {
 
 						//https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
 						//HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
+						logger.info(this->id + ": connecting 127.0.0.1:" + std::to_string(this->port));
 						RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
 											this->id + ": failed to open ActiveSocket");
-
-						logger.info(this->id + ": openning 127.0.0.1:" + std::to_string(this->port));
 						{
 							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {

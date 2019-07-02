@@ -30,7 +30,7 @@ fun server(lifetime: Lifetime, port: Int? = null): Protocol {
 @Volatile
 var finished = false
 
-const val testName = "CrossTestServerAllEntities"
+const val testName = "CrossTestKtServerAllEntities"
 
 fun main(args : Array<String>) {
     if (args.size != 1) {

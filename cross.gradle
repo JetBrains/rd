@@ -1,5 +1,6 @@
 import com.jetbrains.rd.gradle.tasks.InteropTask
 import com.jetbrains.rd.gradle.tasks.KotlinExec
+import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.*
 
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
@@ -8,7 +9,7 @@ dependencies {
     implementation gradleApi()
 }
 
-task runCrossTestServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
+task CrossTestKtServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 //    classpath += sourceSets.getByName('rd-framework').runtimeClasspath
@@ -17,12 +18,14 @@ task runCrossTestServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(
 //    classpath += files("${project.rootDir}/rd-kt/rd-framework/build/classes/kotlin/jvm/test")
 //    classpath += files('C:\\Work\\rd\\rd-kt\\rd-framework\\build\\classes\\kotlin\\jvm\\test\\com\\jetbrains\\rd\\framework\\test\\cross')
     classpath += files('rd-kt/rd-framework/build/classes/kotlin/jvm/test')
-    main = 'com.jetbrains.rd.framework.test.cross.CrossTestServerAllEntitiesKt'
-    args "${buildDir}/gold/CrossTestServerAllEntitiesKt.tmp"
+    main = 'com.jetbrains.rd.framework.test.cross.CrossTestKtServerAllEntitiesKt'
+    args getTmpFilePath(it)
 //todo temporary hack
 }
 
-task runCrossTestAllEntities(type: InteropTask) {
-    taskServer = runCrossTestServerAllEntities
-    taskClient = project(':rd-cpp').getTasksByName('runCrossTestClientAllEntities', true).iterator().next()
+task CrossTestKtCppAllEntities(type: InteropTask, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
+    taskServer = CrossTestKtServerAllEntities
+    taskClient = project(':rd-cpp').getTasksByName('CrossTestCppClientAllEntities', true).iterator().next()
+
+    addDependencies()
 }

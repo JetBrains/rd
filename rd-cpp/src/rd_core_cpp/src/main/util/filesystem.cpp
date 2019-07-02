@@ -9,9 +9,10 @@
 namespace rd {
 	std::string filesystem::get_temp_directory() {
 #ifdef _WIN32
-		char path[MAX_PATH];
+		/*char path[MAX_PATH];
 		assert(GetTempPath(MAX_PATH, path));
-		return path;
+		return path;*/
+		return getenv("TEMP");
 #endif
 #ifdef __linux__
 		return "/tmp";

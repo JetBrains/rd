@@ -65,10 +65,10 @@ int main(int argc, char **argv) {
 		std::cerr << "Wrong number of arguments for " << test_name << ":" << argc;
 		exit(1);
 	}
-	auto outputFile = std::string(argv[1]);
-	std::cerr << "Test:" << test_name << " started, file=" << outputFile << std::endl;
+	const auto output_file = std::string(argv[1]);
+	std::cerr << "Test:" << test_name << " started, file=" << output_file << std::endl;
 	CrossTestClientAllEntities test;
-	return test.run(outputFile);
+	return test.run(output_file);
 }
 
 
