@@ -71,26 +71,5 @@ open class InteropTask : DefaultTask() {
 
         workerExecutor.shutdown()
         workerExecutor.awaitTermination(200, TimeUnit.SECONDS)
-
-        compareWithGold()
-    }
-
-    private fun contentEquals(file1: File, file2: File): Boolean {
-        val f1 = Files.readAllBytes(file1.toPath())
-        val f2 = Files.readAllBytes(file2.toPath())
-        return Arrays.equals(f1, f2)
-    }
-
-    private fun assertEqualsFiles(file1: String, file2: String) {
-        if (contentEquals(File(file1), File(file2))) {
-            println("The files $file1 and $file2 are same!")
-        } else {
-            throw StopActionException("The files $file1 and $file2 differ!")
-        }
-    }
-
-    private fun compareWithGold() {
-        assertEqualsFiles(taskServer.goldFilePath, taskServer.tmpFilePath)
-        assertEqualsFiles(taskClient.goldFilePath, taskClient.tmpFilePath)
     }
 }

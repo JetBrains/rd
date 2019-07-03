@@ -1,0 +1,5 @@
+applyKotlinJVM()
+//apply from: 'models.gradle'
+apply from: 'cross.gradle'
+
+test.dependsOn "crossTest"

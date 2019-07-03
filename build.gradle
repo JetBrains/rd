@@ -288,7 +288,3 @@ allprojects {
         maven { url "https://jitpack.io" }
     }
 }
-
-applyKotlinJVM()
-apply from: 'models.gradle'
-apply from: 'cross.gradle'

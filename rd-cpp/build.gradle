@@ -7,13 +7,13 @@ task buildRdCpp(type: RunCmdTask) {
     execPath = 'build.cmd'
 }
 
-task buildRdCppTest(type: RunCmdTask, dependsOn: [':generateEverything']) {
+task buildRdCppTest(type: RunCmdTask, dependsOn: [':rd-gen:generateEverything']) {
     workingDir '.'
     execPath 'buildtest.cmd'
 }
 
 task clean(type: Delete) {
-    delete "$cppRoot/build/"
+    delete "$project.buildDir"
 }
 
 task CrossTestCppClientAllEntities(type: RunExecTask, dependsOn: ['buildRdCppTest']) {

@@ -1,8 +1,5 @@
-dependencies {
-    compile project(':rd-gen:')
-}
 ext {
-    repoRoot = project.file(".")
+    repoRoot = rootProject.file(".")
     cppRoot = new File(repoRoot, "rd-cpp")
     ktRoot = new File(repoRoot, "rd-kt")
     csRoot = new File(repoRoot, "rd-net")

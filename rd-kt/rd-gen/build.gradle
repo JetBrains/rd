@@ -24,3 +24,5 @@ sourceSets {
         }
     }
 }
+
+apply from: 'models.gradle'
