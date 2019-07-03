@@ -128,35 +128,37 @@ namespace JetBrains.Lifetimes
     /// Is <see cref="Status"/> of this lifetime not equal to <see cref="LifetimeStatus.Alive"/>: Termination started already (or even finished).
     /// </summary>
     [PublicAPI] public bool IsNotAlive              => !IsAlive;
+    
 
-    /// <summary>
-    /// Number of background activities started by <see cref="Execute{T}"/>, <see cref="ExecuteAsync"/> or <see cref="StartNested(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
-    /// When lifetime became <see cref="LifetimeStatus.Canceling"/> (it happens right after user ask for this lifetime's or ancestor lifetime's definition <see cref="LifetimeDefinition.Terminate"/>) this
-    /// number could only reduce, no new activities can be started.
-    /// When it reach zero, lifetime begins to terminate its resources by changing <see cref="Status"/> to <see cref="LifetimeStatus.Terminating"/>  
-    /// </summary>
-    [PublicAPI] public int ExecutingCount          => Def.ExecutingCount; 
-
+    
+    
+    #region OnTermination
+    
+    //OnTerminations that fail in case of bad status
     
     /// <summary>
     /// Add termination resource with <c>kind == Action</c> that will be invoked when lifetime termination start
-    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called and <see cref="ExecutingCount"/> became zero).
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called, <see cref="ExecutingCount"/> became zero, so status is set to <see cref="LifetimeStatus.Terminating"/>)..
     /// Resources invocation order: LIFO
     /// All errors are logger by <see cref="ILog"/>  so termination of each resource is isolated.
     ///
-    /// Method throws <see cref="InvalidOperationException"/> if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. The reason is that lifetime is in inconsistent partly terminated
-    /// state so your actions   
+    /// Method throws <see cref="InvalidOperationException"/> if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>.
+    /// The reason is that lifetime is in inconsistent partly terminated or fully terminated state.
     /// </summary>
     /// <param name="action">Action to invoke on termination</param>
     /// <exception cref="InvalidOperationException">if lifetime already started destructuring, i.e. <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>  </exception>
     /// <returns>this lifetime</returns>
     [PublicAPI] public Lifetime OnTermination([NotNull] Action action) { Def.OnTermination(action); return this; }
     
+    
     /// <summary>
     /// Add termination resource <c>kind == IDisposable</c> that will be invoked by calling <see cref="IDisposable.Dispose"/> when lifetime termination start
-    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called and <see cref="ExecutingCount"/> became zero).
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called, <see cref="ExecutingCount"/> became zero, so status is set to <see cref="LifetimeStatus.Terminating"/>)..
     /// Resources invocation order: LIFO
     /// All errors are logged by <see cref="ILog"/> so termination of each resource is isolated.
+    ///
+    /// Method throws <see cref="InvalidOperationException"/> if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>.
+    /// The reason is that lifetime is in inconsistent partly terminated state.
     /// </summary>
     /// <param name="disposable">Disposable whose <see cref="IDisposable.Dispose"/> method is invoked on termination</param>
     /// <returns>this lifetime</returns>
@@ -165,20 +167,72 @@ namespace JetBrains.Lifetimes
     
     /// <summary>
     /// Add termination resource <c>kind == ITerminationHandler</c> that will be invoked by calling <see cref="ITerminationHandler.OnTermination"/> when lifetime termination start
-    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called and <see cref="ExecutingCount"/> became zero).
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called, <see cref="ExecutingCount"/> became zero, so status is set to <see cref="LifetimeStatus.Terminating"/>).
     /// Resources invocation order: LIFO
     /// All errors are logged by <see cref="ILog"/> so termination of each resource is isolated.
+    ///
+    /// Method throws <see cref="InvalidOperationException"/> if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>.
+    /// The reason is that lifetime is in inconsistent partly terminated state.
     /// </summary>
     /// <param name="terminationHandler">termination resources whose <see cref="ITerminationHandler.OnTermination"/> method is invoked on termination</param>
     /// <returns>this lifetime</returns>
     [PublicAPI] public Lifetime OnTermination([NotNull] ITerminationHandler terminationHandler) { Def.OnTermination(terminationHandler); return this; }
     
-
+    
+    //TryOnTermination that do nothing and returns false in case of bad status
+    
+    
+    /// <summary>
+    /// Add termination resource with <c>kind == Action</c> that will be invoked when lifetime termination starts 
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called, <see cref="ExecutingCount"/> became zero, so status is set to <see cref="LifetimeStatus.Terminating"/>).
+    /// Resources invocation order: LIFO
+    /// All errors are logger by <see cref="ILog"/>  so termination of each resource is isolated.
+    ///
+    /// Method returns do nothing and return `false` if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. 
+    /// </summary>
+    /// <param name="action">Action to invoke on termination</param>
+    /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
     [PublicAPI]          public bool TryOnTermination([NotNull] Action action)      => Def.TryAdd(action);
     
+    /// <summary>
+    /// Add termination resource with <c>kind == Dispose</c> that will be invoked when lifetime termination starts 
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called, <see cref="ExecutingCount"/> became zero, so status is set to <see cref="LifetimeStatus.Terminating"/>).
+    /// Resources invocation order: LIFO
+    /// All errors are logger by <see cref="ILog"/>  so termination of each resource is isolated.
+    ///
+    /// Method returns do nothing and return `false` if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. 
+    /// </summary>
+    /// <param name="action">Action to invoke on termination</param>
+    /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
+    [PublicAPI]          public bool TryOnTermination([NotNull] IDisposable disposable) => Def.TryAdd(disposable);
+    
+    
+    /// <summary>
+    /// Add termination resource with <c>kind == ITerminationHandler</c> that will be invoked when lifetime termination starts 
+    /// (i.e. <see cref="LifetimeDefinition.Terminate"/> is called, <see cref="ExecutingCount"/> became zero, so status is set to <see cref="LifetimeStatus.Terminating"/>).
+    /// Resources invocation order: LIFO
+    /// All errors are logger by <see cref="ILog"/>  so termination of each resource is isolated.
+    ///
+    /// Method returns do nothing and return `false` if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. 
+    /// </summary>
+    /// <param name="action">Action to invoke on termination</param>
+    /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
 
-    [PublicAPI]          public bool TryOnTermination([NotNull] IDisposable disposable) => Def.TryAdd(disposable); 
     [PublicAPI]          public bool TryOnTermination([NotNull] ITerminationHandler disposable) => Def.TryAdd(disposable); 
+
+    #endregion
+
+    
+    #region Execute If Alive
+    
+    /// <summary>
+    /// Number of background activities started by <see cref="Execute{T}"/>, <see cref="ExecuteAsync"/> or <see cref="StartNested(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// When lifetime became <see cref="LifetimeStatus.Canceling"/> (it happens right after user ask for this lifetime's or ancestor lifetime's definition <see cref="LifetimeDefinition.Terminate"/>) this
+    /// number could only reduce, no new activities can be started.
+    /// When it reach zero, lifetime begins to terminate its resources by changing <see cref="Status"/> to <see cref="LifetimeStatus.Terminating"/>  
+    /// </summary>
+    [PublicAPI] public int ExecutingCount          => Def.ExecutingCount; 
+    
 
     [PublicAPI] public LifetimeDefinition.AllowTerminationUnderExecutionCookie UsingAllowTerminationUnderExecution() => new LifetimeDefinition.AllowTerminationUnderExecutionCookie(Thread.CurrentThread);
     [PublicAPI] public LifetimeDefinition.ExecuteIfAliveCookie UsingExecuteIfAlive(bool allowTerminationUnderExecution = false) => Def.UsingExecuteIfAlive(allowTerminationUnderExecution);
@@ -187,6 +241,13 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public T Execute<T>([NotNull, InstantHandle] Func<T> action) => Def.Execute(action);    
     [PublicAPI] public void Execute([NotNull, InstantHandle] Action action) => Def.Execute(action);
     
+    
+    #endregion
+    
+    
+    
+    
+    #region Bracket
     
     [PublicAPI] public Result<Unit> TryBracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing, bool wrapExceptions = false) => Def.TryBracket(opening, closing, wrapExceptions);
     
@@ -201,12 +262,19 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing) => Def.Bracket(opening, closing);
     
     
+    #endregion
+    
+    
+    
+    #region Cancellation
 
     [PublicAPI] public CancellationToken ToCancellationToken() => Def.ToCancellationToken();
     [PublicAPI] public static implicit operator CancellationToken(Lifetime lifetime) => lifetime.Def.ToCancellationToken();
     [PublicAPI] public void ThrowIfNotAlive() => Def.ThrowIfNotAlive();
 
-
+    #endregion
+    
+    
     #region Using      
     
     /// <summary>
