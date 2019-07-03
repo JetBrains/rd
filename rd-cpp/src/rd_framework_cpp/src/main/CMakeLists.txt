@@ -30,7 +30,7 @@ add_library(rd_framework_cpp STATIC
         #serialization
         serialization/SerializationCtx.cpp serialization/SerializationCtx.h
         serialization/Serializers.cpp serialization/Serializers.h
-        serialization/Polymorphic.h
+        serialization/Polymorphic.cpp serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
         serialization/ISerializable.cpp serialization/ISerializable.h
@@ -58,7 +58,7 @@ add_library(rd_framework_cpp STATIC
         MessageBroker.cpp MessageBroker.h
         #pch
         ${PCH_CPP_OPT}
-        serialization/Polymorphic.cpp)
+        )
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 

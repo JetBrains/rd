@@ -150,7 +150,7 @@ class SourceExKtTest : RdTestBase()  {
 
     @Test
     fun testMap() {
-        val def = Lifetime.create(Lifetime.Eternal)
+        val def = Lifetime.Eternal.createNested()
         val lifetime = def.lifetime
         val signal: ISignal<Int> = Signal()
 

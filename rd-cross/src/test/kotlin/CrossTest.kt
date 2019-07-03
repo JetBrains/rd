@@ -22,7 +22,6 @@ class CrossTest {
         }
     }
 
-    @Ignore
     @Test
     fun testAllEntities() {
         val buildSrcFolder = File(Paths.get("").toAbsolutePath().toString())

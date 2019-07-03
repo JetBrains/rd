@@ -13,18 +13,18 @@ Reactive Distributed communication framework for .net, kotlin, js, c++. Inspired
 
 or
 
-* gradle buildRdNet
+* gradle :rd-net:build
 
 ## Kotlin
 
 ## Requirements
 
 * Gradle 4.8+
-* Kotlin 1.3.20+
+* Kotlin 1.3.21+
 
 ## Instruction
 
-*
+* gradle :rd-kt:build
 
 ## C++
 
@@ -43,7 +43,7 @@ or
 
 or
 
-* gradle buildRdCpp
+* gradle :rd-cpp:build
 
 # Common build
 

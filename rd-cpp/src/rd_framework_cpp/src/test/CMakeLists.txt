@@ -13,7 +13,16 @@ add_executable(rd_framework_cpp_test
         cases/RdTaskTest.cpp
         cases/DynamicPolymorphicTest.cpp
         cases/InterningTest.cpp
+        #pch
+        ${PCH_CPP_OPT}
         )
+
+message(STATUS "Using pch by rd_framework_test: '${ENABLE_PCH_HEADERS}'")
+
+if (ENABLE_PCH_HEADERS)
+    include(${PROJECT_SOURCE_DIR}/PrecompiledHeader.cmake)
+    add_precompiled_header(rd_framework_cpp_test pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
+endif ()
 
 add_subdirectory(util)
 add_subdirectory(kotlin_interaction)

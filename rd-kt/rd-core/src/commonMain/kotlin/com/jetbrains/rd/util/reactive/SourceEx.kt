@@ -22,9 +22,9 @@ fun <T> ISource<T>.adviseOnce(lifetime: Lifetime, handler: (T) -> Unit) {
 fun <T> ISource<T>.adviseUntil(lifetime: Lifetime, handler: (T) -> Boolean) {
     if (!lifetime.isAlive) return
 
-    Lifetime.define(lifetime) { definition, lt ->
-        this.advise(lt) {
-            if (handler(it)) definition.terminate(true)
+    lifetime.createNested { def ->
+        this.advise(def) {
+            if (handler(it)) def.terminate(true)
         }
     }
 }
@@ -39,8 +39,8 @@ fun <T : Any> ISource<T?>.adviseNotNull(lifetime: Lifetime, handler: (T) -> Unit
  * Executes [handler] exactly once when the source fires an event with a non-null value,
  * then terminates the subscription
  */
-fun <T : Any> ISource<T?>.adviseNotNullOnce(lifetime: Lifetime, handler: (T) -> Unit) = Lifetime.define(lifetime) { def, lt ->
-    this.adviseNotNull(lt) {
+fun <T : Any> ISource<T?>.adviseNotNullOnce(lifetime: Lifetime, handler: (T) -> Unit) = lifetime.createNested { def ->
+    this.adviseNotNull(def) {
         def.terminate(true)
         handler(it)
     }
