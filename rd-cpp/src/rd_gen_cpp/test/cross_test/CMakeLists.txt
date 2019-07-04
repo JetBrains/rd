@@ -10,4 +10,4 @@ add_executable(cross_test_client_all_entities CrossTestClientAllEntitites.cpp)
 add_executable(cross_test_client_big_buffer CrossTestClientBigBuffer.cpp)
 
 target_link_libraries(cross_test_client_all_entities cross_test_lib demo_model)
-target_link_libraries(cross_test_client_big_buffer cross_test_lib)
+target_link_libraries(cross_test_client_big_buffer cross_test_lib demo_model)

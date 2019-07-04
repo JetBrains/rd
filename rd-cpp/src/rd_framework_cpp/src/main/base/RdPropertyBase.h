@@ -39,6 +39,10 @@ namespace rd {
 		virtual ~RdPropertyBase() = default;
 		//endregion
 
+		bool is_default_value_changed() const {
+			return default_value_changed;
+		}
+		
 		void init(Lifetime lifetime) const override {
 			RdReactiveBase::init(lifetime);
 

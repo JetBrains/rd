@@ -21,3 +21,9 @@ task CrossTestCppClientAllEntities(type: RunExecTask, dependsOn: ['buildTests'])
     execPath 'cross_test_client_all_entities'
     args getTmpFilePath(it)
 }
+
+task CrossTestCppClientBigBuffer(type: RunExecTask, dependsOn: ['buildTests']) {
+    workingDir 'build/src/rd_gen_cpp/test/cross_test/Release/'
+    execPath 'cross_test_client_big_buffer'
+    args getTmpFilePath(it)
+}

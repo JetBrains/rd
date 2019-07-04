@@ -3,10 +3,10 @@
 GOTO :CMDSCRIPT
 ::CMDLITERAL
 
-set -euxo pipefail
+set -eux
 ./get_dependencies.cmd
 mkdir -p build
-pushd build
+cd build
 cmake ..
 make
 
@@ -16,7 +16,7 @@ exit 0
 @echo on
 pushd "%~dp0"
 mkdir build
-pushd build
+cd build
 cmake -DENABLE_TESTS_OPTION:BOOL=OFF -G "Visual Studio 16 2019" ..
 cmake --build . --config Release -j 4
 cmake -DENABLE_TESTS_OPTION:BOOL=OFF -DBUILD_TYPE=Release -P cmake_install.cmake -j 4

@@ -1,6 +1,5 @@
-import com.jetbrains.rd.gradle.tasks.*
-
-import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.*
+import com.jetbrains.rd.gradle.tasks.InteropTask
+import com.jetbrains.rd.gradle.tasks.KotlinExec
 
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
@@ -9,22 +8,36 @@ dependencies {
     implementation gradleApi()
 }
 
+def getCppTaskByName(String name) {
+    return project(':rd-cpp').getTasksByName(name, true).iterator().next()
+}
+
 task CrossTestKtServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
-    classpath += files('../rd-kt/rd-framework/build/classes/kotlin/jvm/test')
-    main = 'com.jetbrains.rd.framework.test.cross.CrossTestKtServerAllEntitiesKt'
-    args getTmpFilePath(it)
-//todo temporary hack
-}
-
-task CrossTestKtCppAllEntities(type: InteropTask) {
-    taskServer = CrossTestKtServerAllEntities
-    taskClient = project(':rd-cpp').getTasksByName('CrossTestCppClientAllEntities', true).iterator().next()
 
     addDependencies()
 }
 
+task CrossTestKtServerBigBuffer(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
+    classpath += project.sourceSets.test.runtimeClasspath
+    classpath += project.sourceSets.test.compileClasspath
+
+    addDependencies()
+}
+
+task CrossTestKtCppAllEntities(type: InteropTask) {
+    taskServer = CrossTestKtServerAllEntities
+    taskClient = getCppTaskByName('CrossTestCppClientAllEntities')
+
+    addDependencies()
+}
+
+task CrossTestKtCppBigBuffer(type: InteropTask) {
+    taskServer = CrossTestKtServerBigBuffer
+    taskClient = getCppTaskByName('CrossTestCppClientBigBuffer')
+}
+
 task crossTest() {
-    dependsOn 'CrossTestKtCppAllEntities'
+    dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer'
 }
