@@ -12,7 +12,7 @@ dependencies {
 task CrossTestKtServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
-    classpath += files('rd-kt/rd-framework/build/classes/kotlin/jvm/test')
+    classpath += files('../rd-kt/rd-framework/build/classes/kotlin/jvm/test')
     main = 'com.jetbrains.rd.framework.test.cross.CrossTestKtServerAllEntitiesKt'
     args getTmpFilePath(it)
 //todo temporary hack

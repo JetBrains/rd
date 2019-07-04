@@ -53,4 +53,4 @@ All above ones.
 
 ## Instruction
 
-* gradle build -x test
+* gradle build

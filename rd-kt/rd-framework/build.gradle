@@ -10,7 +10,7 @@ kotlin {
         jvmTest {
             kotlin {
                 dependencies {
-
+//                    compile project(':rd-gen')
                 }
                 srcDirs += ["${parent.buildDir}/models/interning"]
                 srcDirs += ["${parent.buildDir}/models/demo"]

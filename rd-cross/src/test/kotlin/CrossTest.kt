@@ -1,4 +1,3 @@
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.nio.file.Paths
@@ -24,9 +23,10 @@ class CrossTest {
 
     @Test
     fun testAllEntities() {
-        val buildSrcFolder = File(Paths.get("").toAbsolutePath().toString())
-        val goldFolder = File(buildSrcFolder, "build/resources/main/gold")
-        val tmpFolder = File(buildSrcFolder, "build/resources/main/tmp")
+        val rootFolder = File(Paths.get("").toAbsolutePath().toString()).parent
+        print("buildSrcFolder=$rootFolder")
+        val goldFolder = File(rootFolder, "buildSrc/src/main/resources/gold")
+        val tmpFolder = File(rootFolder, "build/src/main/resources/tmp")
         goldFolder.listFiles()!!.forEach {
             println(it.name)
             val candidate = File(tmpFolder, it.nameWithoutExtension + ".tmp")

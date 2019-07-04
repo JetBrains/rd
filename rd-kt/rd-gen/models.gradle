@@ -6,7 +6,6 @@ ext {
 }
 
 class GenerateTask extends JavaExec {
-    private Copy copy;
     GenerateTask() {
         super()
         group = 'generate'
@@ -28,7 +27,7 @@ class GenerateTask extends JavaExec {
     }
 }
 
-def buildDir = project.buildDir
+def buildDir = rootProject.buildDir
 
 task generateDemoModel(type: GenerateTask) {
     classpath = sourceSets.main.runtimeClasspath
