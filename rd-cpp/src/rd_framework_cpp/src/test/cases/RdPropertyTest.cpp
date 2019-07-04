@@ -65,7 +65,9 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
-	client_property.get().get_foo().rdid = server_property.get().get_foo().rdid = RdId(3);
+	dynamic_cast<IRdBindable const &>(client_property.get().get_foo()).rdid =
+	dynamic_cast<IRdBindable const &>(server_property.get().get_foo()).rdid =
+			RdId(3);
 
 	/*DynamicEntity::create(clientProtocol.get());
 	DynamicEntity::create(serverProtocol.get());*/
@@ -188,7 +190,7 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 class ListSerializer {
 	using list = std::vector<DynamicEntity>;
 public:
-	static list read(SerializationCtx  &ctx, Buffer &buffer) {
+	static list read(SerializationCtx &ctx, Buffer &buffer) {
 		int32_t len = buffer.read_integral<int32_t>();
 		list v;
 		for (int i = 0; i < len; ++i) {
@@ -197,7 +199,7 @@ public:
 		return v;
 	}
 
-	static void write(SerializationCtx  &ctx, Buffer &buffer, const list &value) {
+	static void write(SerializationCtx &ctx, Buffer &buffer, const list &value) {
 		buffer.write_integral<int32_t>(value.size());
 		for (const auto &item : value) {
 			item.write(ctx, buffer);

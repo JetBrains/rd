@@ -19,5 +19,5 @@ mkdir build
 pushd build
 cmake -DENABLE_TESTS_OPTION:BOOL=OFF -G "Visual Studio 16 2019" ..
 cmake --build . --config Release -j 4
-cmake -DENABLE_TESTS_OPTION:BOOL=OFF -DBUILD_TYPE=Release -P cmake_install.cmake
+cmake -DENABLE_TESTS_OPTION:BOOL=OFF -DBUILD_TYPE=Release -P cmake_install.cmake -j 4
 popd

@@ -204,7 +204,9 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
-	client_property.get().get_foo().rdid = server_property.get().get_foo().rdid = RdId(3);
+	dynamic_cast<IRdBindable const &>(client_property.get().get_foo()).rdid =
+	dynamic_cast<IRdBindable const &>(server_property.get().get_foo()).rdid
+			= RdId(3);
 
 	/*DynamicEntity::create(&clientProtocol);
 	DynamicEntity::create(&serverProtocol);*/
