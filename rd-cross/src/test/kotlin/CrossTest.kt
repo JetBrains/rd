@@ -27,6 +27,7 @@ class CrossTest {
         print("buildSrcFolder=$rootFolder")
         val goldFolder = File(rootFolder, "buildSrc/src/main/resources/gold")
         val tmpFolder = File(rootFolder, "build/src/main/resources/tmp")
+        assert(tmpFolder.exists()) { "Tmp directory($tmpFolder) was not created" }
         goldFolder.listFiles()!!.forEach {
             println(it.name)
             val candidate = File(tmpFolder, it.nameWithoutExtension + ".tmp")

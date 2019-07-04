@@ -5,7 +5,12 @@ ext {
     csRoot = new File(repoRoot, "rd-net")
 }
 
+def buildDir = rootProject.buildDir
+
 class GenerateTask extends JavaExec {
+    String sourcesRoot
+    String sourcesFolder
+
     GenerateTask() {
         super()
         group = 'generate'
@@ -25,38 +30,57 @@ class GenerateTask extends JavaExec {
             }
         }
     }
-}
 
-def buildDir = rootProject.buildDir
+    void lateInit() {
+        args "--source=$sourcesRoot/$sourcesFolder", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder"
+    }
+}
 
 task generateDemoModel(type: GenerateTask) {
     classpath = sourceSets.main.runtimeClasspath
 
-    def sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator")
+    sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator")
+    sourcesFolder "demo"
+
     systemProperties = [
             "model.out.src.cpp.dir": "$cppRoot/demo",
             "model.out.src.kt.dir" : "$buildDir/models/demo",
             "model.out.src.cs.dir" : "$csRoot/Test.RdGen/CrossTest/Model"
     ]
 
-    args "--source=$sourcesRoot/demo", "--hash-folder=$buildDir/hash/demo"
+    lateInit()
 }
 
 task generateInterningTestModel(type: GenerateTask) {
     classpath = sourceSets.main.runtimeClasspath
 
-    def sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator/interning")
+    sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator")
+    sourcesFolder "interning"
+
     systemProperties = [
             "model.out.src.cpp.dir": "$cppRoot/src/rd_framework_cpp/src/test/util/interning",
             "model.out.src.kt.dir" : "$buildDir/models/interning",
 //            "model.out.src.cs.dir" : "$csRoot/"
     ]
 
-    args "--source=$sourcesRoot", "--hash-folder=$buildDir/hash/interning"
+    lateInit()
+}
+
+task generateCppTestEntities(type: GenerateTask) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    sourcesRoot = new File(ktRoot, "rd-gen/src/test/kotlin/com/jetbrains/rd/generator/test/cases/generator")
+    sourcesFolder "entities"
+
+    systemProperties = [
+            "model.out.src.cpp.dir": "$cppRoot/src/rd_framework_cpp/src/test/util/entities",
+    ]
+
+    lateInit()
 }
 
 task generateEverything {
     group = 'generate'
     description = 'Generates protocol models.'
-    dependsOn generateDemoModel, generateInterningTestModel
+    dependsOn generateDemoModel, generateInterningTestModel, generateCppTestEntities
 }
