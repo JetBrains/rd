@@ -2,21 +2,21 @@ import com.jetbrains.rd.gradle.tasks.RunCmdTask
 import com.jetbrains.rd.gradle.tasks.RunExecTask
 import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.*
 
-task buildRdCpp(type: RunCmdTask) {
+task build(type: RunCmdTask, overwrite: true) {
     workingDir '.'
     execPath = 'build.cmd'
 }
 
-task buildRdCppTest(type: RunCmdTask, dependsOn: [':rd-gen:generateEverything']) {
+task buildTests(type: RunCmdTask, dependsOn: [':rd-gen:generateEverything']) {
     workingDir '.'
     execPath 'buildtest.cmd'
 }
 
-task clean(type: Delete) {
+task clean(type: Delete, overwrite: true) {
     delete "$project.buildDir"
 }
 
-task CrossTestCppClientAllEntities(type: RunExecTask, dependsOn: ['buildRdCppTest']) {
+task CrossTestCppClientAllEntities(type: RunExecTask, dependsOn: ['buildTests']) {
     workingDir 'build/src/rd_gen_cpp/test/cross_test/Release/'
     execPath 'cross_test_client_all_entities'
     args getTmpFilePath(it)
