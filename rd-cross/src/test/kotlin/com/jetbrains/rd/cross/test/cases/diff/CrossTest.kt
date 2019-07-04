@@ -1,3 +1,5 @@
+package com.jetbrains.rd.cross.test.cases.diff
+
 import org.junit.Test
 import java.io.File
 import java.nio.file.Paths

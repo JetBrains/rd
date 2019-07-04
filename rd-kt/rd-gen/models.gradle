@@ -14,7 +14,7 @@ class GenerateTask extends JavaExec {
     GenerateTask() {
         super()
         group = 'generate'
-        main = 'com.jetbrains.rd.generator.nova.MainKt'
+        main = 'com.jetbbrains.rd.generator.nova.MainKt'
 //        outputs.upToDateWhen { false }
     }
 
