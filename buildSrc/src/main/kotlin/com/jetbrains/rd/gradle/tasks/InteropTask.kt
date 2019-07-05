@@ -3,17 +3,23 @@ package com.jetbrains.rd.gradle.tasks
 import com.jetbrains.rd.gradle.tasks.util.portFile
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
 @Suppress("UnstableApiUsage")
 open class InteropTask : DefaultTask() {
     private val workerExecutor: ExecutorService = Executors.newFixedThreadPool(2)
+
+    @Input
     lateinit var taskServer: Task
+
+    @Input
     lateinit var taskClient: Task
 
     fun addDependencies() {

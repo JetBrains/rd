@@ -1,10 +1,10 @@
 applyKotlinJVM()
 
 dependencies {
-    compile project(':rd-core:')
+    compile project(':rd-kt:rd-core:')
     implementation gradleApi()
 //    testRuntime project(':rd-framework:')
-    testCompile project(':rd-framework:')
+    testCompile project(':rd-kt:rd-framework:')
     compile "org.jetbrains.kotlin:kotlin-compiler:$kotlin_version"
 }
 
@@ -20,7 +20,7 @@ task fatJar(type: Jar) {
 sourceSets {
     test {
         kotlin {
-            srcDirs += ["$parent.buildDir/models/demo"]
+            srcDirs += ["$rootProject.buildDir/models/demo"]
         }
     }
 }

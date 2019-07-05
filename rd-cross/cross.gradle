@@ -4,7 +4,7 @@ import com.jetbrains.rd.gradle.tasks.KotlinExec
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
 //    compile project(':rd-framework:').sourceSets.test.output
-    compile project(':rd-framework:')
+    compile project(':rd-kt:rd-framework:')
     implementation gradleApi()
 }
 
@@ -12,14 +12,14 @@ def getCppTaskByName(String name) {
     return project(':rd-cpp').getTasksByName(name, true).iterator().next()
 }
 
-task CrossTestKtServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
+task CrossTestKtServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 
     addDependencies()
 }
 
-task CrossTestKtServerBigBuffer(type: KotlinExec, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
+task CrossTestKtServerBigBuffer(type: KotlinExec, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 

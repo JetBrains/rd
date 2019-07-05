@@ -103,9 +103,6 @@ allprojects {
 
         task sourceJar(type: Jar) {
             from sourceSets.main.kotlin
-            def parentIsNotRd = project.parent != null && project.parent.name != "rd"
-            if (parentIsNotRd)
-                from project.parent.sourceSets.main.kotlin
             classifier = "sources"
         }
 
