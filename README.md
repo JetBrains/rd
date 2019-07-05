@@ -9,11 +9,18 @@ Reactive Distributed communication framework for .net, kotlin, js, c++. Inspired
 
 ## C#
 
-* TODO
+## Requirements
+
+* 
+
+## Instruction
+
+* cd rd-net
+* ./build.cmd
 
 or
 
-* gradle :rd-net:build
+* gradle :rd-net:build (not yet)
 
 ## Kotlin
 
@@ -54,3 +61,13 @@ All above ones.
 ## Instruction
 
 * gradle build
+
+# Generation models
+
+## Instruction
+
+See https://www.jetbrains.com/help/resharper/sdk/Products/Rider.html#protocol-extension for more details
+
+## More examples
+
+See com.jetbrains.rd.generator.test.cases.generator.demo.DemoModel

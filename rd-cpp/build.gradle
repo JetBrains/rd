@@ -7,7 +7,7 @@ task build(type: RunCmdTask, overwrite: true) {
     execPath = 'build.cmd'
 }
 
-task buildTests(type: RunCmdTask, dependsOn: [':rd-gen:generateEverything']) {
+task buildTests(type: RunCmdTask, dependsOn: [':rd-kt:rd-gen:generateEverything']) {
     workingDir '.'
     execPath 'buildtest.cmd'
 }
