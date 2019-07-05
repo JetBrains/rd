@@ -19,10 +19,6 @@ namespace rd {
 	public:
 		using Event = typename IViewableList<T>::Event;
 
-		template<typename V, typename S>
-		friend
-		class RdList;
-
 	private:
 		using data_t = std::vector<Wrapper<T>>;
 		mutable data_t list;

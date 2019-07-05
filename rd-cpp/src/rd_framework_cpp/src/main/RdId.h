@@ -27,10 +27,10 @@ namespace rd {
 	 * \brief An identifier of the object that participates in the object graph.
 	 */
 	class RdId {
+	public:
+		using hash_t = util::hash_t;
 	private:
 		friend struct std::hash<RdId>;
-
-		using hash_t = util::hash_t;
 
 		constexpr static hash_t NULL_ID = 0;
 

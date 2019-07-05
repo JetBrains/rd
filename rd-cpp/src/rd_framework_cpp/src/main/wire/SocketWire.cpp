@@ -30,7 +30,7 @@ namespace rd {
 					break;
 				}
 
-				if (!read_and_dispatch_package()) {
+				if (!read_and_dispatch_message()) {
 					logger.debug(id + ": connection was gracefully shutdown");
 //					async_send_buffer.terminate();
 					break;
@@ -176,47 +176,62 @@ namespace rd {
 		}
 	}
 
-	bool SocketWire::Base::read_and_dispatch_package() const {
+	int32_t SocketWire::Base::read_package() const {
+		receive_pkg.rewind();
+		
 		const auto pair = read_header();
 		if (pair == INVALID_HEADER) {
 			logger.debug(this->id + ": failed to read header");
-			return false;
+			return -1;
 		}
 		const auto len = pair.first;
 		const auto seqn = pair.second;
 
-		Buffer pkg(len);
-		if (!read_data_from_socket(pkg.data(), len)) {
+		logger.debug("read len=%d, seqn=%lld, max_received_seqn=%lld", len, seqn, max_received_seqn);
+
+		receive_pkg.require_available(len);
+		if (!read_data_from_socket(receive_pkg.data(), len)) {
 			logger.debug(this->id + ": failed to read package");
-			return false;
+			return -1;
 		}
 		send_ack(seqn);
 		if (seqn <= max_received_seqn && seqn != 1) {
 			return true;
 		}
 		max_received_seqn = seqn;	
-		
-		int32_t summary_size = 0;
-		while (summary_size < len) {
-			int32_t sz = pkg.read_integral<int32_t>();		
-			logger.info(this->id + ": were received size and %d bytes", sz);
-			Buffer msg(static_cast<size_t>(sz - 8));
-			
-			const RdId rd_id = RdId::read(pkg);
-			
-			pkg.read_byte_array_raw(msg.get_data());
 
-			logger.debug(this->id + ": message received");
-			message_broker.dispatch(rd_id, std::move(msg));
-			logger.debug(this->id + ": message dispatched");
-			
-			summary_size += sz + sizeof(sz);
+		logger.info(this->id + ": was received package, bytes=%d, seqn=%d", len, seqn);
+		return len;
+	}
+
+	bool SocketWire::Base::read_and_dispatch_message() const {
+		message.rewind();
+		int32_t sz = receive_pkg.read_integral<int32_t>();
+		if (sz == -1) {
+			logger.error("sz == -1");
+			return false;
 		}
+		const auto id_ = receive_pkg.read_integral<RdId::hash_t>();
+		if (id_ == -1) {
+			logger.error("id == -1");
+			return false;
+		}
+		logger.trace(this->id + ": message info: sz=%d, id=%d", sz, id_);
+		const RdId rd_id{id_};
+		sz -= 8;//RdId
+		message.require_available(sz);
+		
+		if (!receive_pkg.read(message.data(), sz)) {
+			logger.error(this->id + ": constructing message failed");
+			return false;
+		}
+		
+		logger.debug(this->id + ": message received");
+		message_broker.dispatch(rd_id, std::move(message));
+		logger.debug(this->id + ": message dispatched");
 
-		RD_ASSERT_MSG(summary_size == len, "Broken package")
-
-		// logger.debug("read seqn=%lld, max_received_seqn=%lld", seqn, max_received_seqn);
 		return true;
+//		RD_ASSERT_MSG(summary_size == sz, "Broken message, read:%d bytes, expected:%d bytes", summary_size, sz)
 	}
 
 	CSimpleSocket *SocketWire::Base::get_socket_provider() const {

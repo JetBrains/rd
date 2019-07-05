@@ -89,9 +89,18 @@ namespace rd {
 		return data_.data();
 	}
 
+	Buffer::word_t const *Buffer::current_pointer() const {
+		return data() + offset;
+	}
+
+	Buffer::word_t *Buffer::current_pointer() {
+		return data() + offset;
+	}
+
 	size_t Buffer::size() const {
 		return data_.size();
 	}
+
 
 	/*std::string Buffer::readString() const {
     auto v = readArray<uint8_t>();

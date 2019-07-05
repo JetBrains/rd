@@ -17,6 +17,8 @@ namespace rd {
 	 */
 	class Buffer final {
 	public:
+		friend class PkgInputStream;
+
 		using word_t = uint8_t;
 
 		using Allocator = std::allocator<word_t>;
@@ -33,15 +35,13 @@ namespace rd {
 
 		size_t offset = 0;
 
-		void require_available(size_t size);
-
 		//read
 		void read(word_t *dst, size_t size);
 
 		//write
 		void write(const word_t *src, size_t size);
 
-
+		size_t size() const;
 	public:
 
 		//region ctor/dtor
@@ -66,6 +66,8 @@ namespace rd {
 
 		void set_position(size_t value);
 
+		void require_available(size_t size);
+		
 		void check_available(size_t moreSize) const;
 
 		void rewind();
@@ -239,7 +241,9 @@ namespace rd {
 
 		word_t *data();
 
-		size_t size() const;
+		word_t const *current_pointer() const;
+
+		word_t *current_pointer();
 
 		ByteArray &get_data();
 	};
