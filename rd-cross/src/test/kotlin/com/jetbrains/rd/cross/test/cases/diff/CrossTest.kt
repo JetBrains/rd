@@ -24,7 +24,7 @@ class CrossTest {
     }
 
     @Test
-    fun testAllEntities() {
+    fun testAll() {
         val rootFolder = File(Paths.get("").toAbsolutePath().toString()).parent
         print("buildSrcFolder=$rootFolder")
         val goldFolder = File(rootFolder, "buildSrc/src/main/resources/gold")

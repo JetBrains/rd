@@ -15,11 +15,7 @@ rd-net/RdFramework/obj
 /artifacts/
 # Project exclude paths
 /buildSrc/.gradle/
-/rd-cpp/demo/
-/rd-cpp/doc/
 /rd-cpp/gradle/
-/rd-cpp/src/
-/rd-cpp/thirdparty/
 /rd-cross/out/
 /rd-cross/out/test/classes/
 /rd-kt/rd-gen/out/
@@ -32,3 +28,9 @@ rd-net/RdFramework/obj
 /rd-kt/rd-text/out/test/classes/
 /rd-net/packages/
 /rd-cpp/googletest/
+
+# Project exclude paths
+/rd-cpp/demo/
+/rd-cpp/doc/
+/rd-cpp/src/
+/rd-cpp/thirdparty/
