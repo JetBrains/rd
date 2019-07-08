@@ -22,10 +22,10 @@ abstract class CrossTestBase {
     protected lateinit var scheduler: IScheduler
     protected lateinit var protocol: IProtocol
 
-    private val lifetimeDef = Lifetime.Eternal.createNested()
+    private val modelLifetimeDef = Lifetime.Eternal.createNested()
     private val socketLifetimeDef = Lifetime.Eternal.createNested()
 
-    protected val lifetime = lifetimeDef.lifetime
+    protected val modelLifetime = modelLifetimeDef.lifetime
     protected val socketLifetime = socketLifetimeDef.lifetime
     protected val <T> ISource<T>.isLocalChange
         get() = (this as? RdReactiveBase)?.isLocalChange == true
@@ -44,7 +44,7 @@ abstract class CrossTestBase {
         spinUntil(1_000) { false }
 
         socketLifetimeDef.terminate()
-        lifetimeDef.terminate()
+        modelLifetimeDef.terminate()
         outputFile.parentFile.mkdirs()
         outputFile.printWriter().use { writer ->
             writer.println(printer)

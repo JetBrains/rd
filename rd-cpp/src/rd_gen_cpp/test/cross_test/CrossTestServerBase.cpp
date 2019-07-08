@@ -13,7 +13,7 @@ namespace rd {
 			protocol = std::make_unique<Protocol>(Identities::SERVER, &scheduler, wire, socket_lifetime);
 
 			uint16_t port = ptr->port;
-			std::ofstream file(tmp_directory);
+			std::ofstream file(port_file);
 			file << port;
 		}
 	}

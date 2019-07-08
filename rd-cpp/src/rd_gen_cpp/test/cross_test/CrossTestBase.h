@@ -27,7 +27,7 @@ namespace rd {
 			rd::LifetimeDefinition socket_definition{false};
 			rd::Lifetime socket_lifetime = definition.lifetime;
 
-			static const std::string tmp_directory;
+			static const std::string port_file;
 
 			std::shared_ptr<rd::IWire> wire;
 			std::unique_ptr<rd::IProtocol> protocol;
@@ -66,11 +66,7 @@ namespace rd {
 				for (const auto &item : printer) {
 					out << item << std::endl;
 				}
-				out << std::endl;
 				out.close();
-
-				socket_definition.terminate();
-				definition.terminate();
 			}
 		};
 	}

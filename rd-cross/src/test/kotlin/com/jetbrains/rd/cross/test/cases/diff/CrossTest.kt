@@ -26,7 +26,7 @@ class CrossTest {
     @Test
     fun testAll() {
         val rootFolder = File(Paths.get("").toAbsolutePath().toString()).parent
-        print("buildSrcFolder=$rootFolder")
+        println("rootFolder=$rootFolder")
         val goldFolder = File(rootFolder, "buildSrc/src/main/resources/gold")
         val tmpFolder = File(rootFolder, "build/src/main/resources/tmp")
         assert(tmpFolder.exists()) { "Tmp directory($tmpFolder) was not created" }

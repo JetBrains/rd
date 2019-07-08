@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdCore", "RdCore\RdCore.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdFramework", "RdFramework\RdFramework.csproj", "{B5EBF783-7EA5-4E8C-A92A-4CE72D918228}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.RdGen", "Test.RdGen\Test.RdGen.csproj", "{8EF55382-887F-4E52-933B-AF7E89F175DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.RdCross", "Test.RdCross\Test.RdCross.csproj", "{8EF55382-887F-4E52-933B-AF7E89F175DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

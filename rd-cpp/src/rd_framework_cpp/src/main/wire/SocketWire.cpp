@@ -221,7 +221,7 @@ namespace rd {
 		sz -= 8;//RdId
 		message.require_available(sz);
 		
-		if (!receive_pkg.read(message.data(), sz)) {
+		if (!receive_pkg.read(message.data() + message.get_position(), sz - message.get_position())) {
 			logger.error(this->id + ": constructing message failed");
 			return false;
 		}
@@ -229,6 +229,8 @@ namespace rd {
 		logger.debug(this->id + ": message received");
 		message_broker.dispatch(rd_id, std::move(message));
 		logger.debug(this->id + ": message dispatched");
+
+		message.rewind();
 
 		return true;
 //		RD_ASSERT_MSG(summary_size == sz, "Broken message, read:%d bytes, expected:%d bytes", summary_size, sz)

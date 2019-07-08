@@ -17,16 +17,10 @@ open class RunExecTask : Exec() {
 
     @TaskAction
     override fun exec() {
-        println("EXEC")
-        println(execPath)
-        println(args)
-
         when {
             Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine = listOf("cmd", "/c", "$execPath.exe") + args!!.toList()
             Os.isFamily(Os.FAMILY_UNIX) -> commandLine = listOf("./$execPath")
-            Os.isFamily(Os.FAMILY_MAC) -> {
-                //todo
-            }
+            Os.isFamily(Os.FAMILY_MAC) -> commandLine = listOf("./$execPath")
         }
         super.exec()
     }

@@ -5,7 +5,6 @@ package com.jetbrains.rd.framework.test.cross
 import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
-import com.jetbrains.rd.util.string.PrettyPrinter
 import demo.*
 import kotlin.test.assertEquals
 
@@ -20,10 +19,10 @@ class CrossTestKtServerAllEntities : CrossTestServerBase() {
         checkConstants()
 
         scheduler.queue {
-            val model = DemoModel.create(lifetime, protocol)
+            val model = DemoModel.create(modelLifetime, protocol)
             val extModel = model.extModel
 
-            adviseAll(lifetime, model, extModel, printer)
+            adviseAll(modelLifetime, model, extModel)
             fireAll(model, extModel)
         }
 
@@ -37,7 +36,7 @@ class CrossTestKtServerAllEntities : CrossTestServerBase() {
         assertEquals(Base.const_base, 'B')
     }
 
-    private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel, printer: PrettyPrinter) {
+    private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel) {
         model.boolean_property.advise(lifetime) {
             printer.printIfRemoteChange(model.boolean_property, "boolean_property", it)
         }

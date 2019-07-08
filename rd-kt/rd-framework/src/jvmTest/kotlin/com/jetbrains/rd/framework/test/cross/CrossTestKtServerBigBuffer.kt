@@ -12,11 +12,11 @@ class CrossTestKtServerBigBuffer : CrossTestServerBase() {
         before(args)
 
         scheduler.queue {
-            val model = DemoModel.create(lifetime, protocol)
+            val model = DemoModel.create(modelLifetime, protocol)
 
             val entity = model.property_with_default
 
-            entity.advise(lifetime) {
+            entity.advise(modelLifetime) {
                 if (!entity.isLocalChange && (entity as RdProperty<*>).defaultValueChanged) {
                     printer.printIfRemoteChange(entity, "property_with_default", it)
 
