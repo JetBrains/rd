@@ -95,11 +95,11 @@ open class CSharp50Generator(
         get() =
             this is Enum
                     ||
+                    this is PredefinedType.NativeIntegral
+                    ||
+                    this is PredefinedType.UnsignedIntegral
+                    ||
                     listOf(
-                            PredefinedType.byte,
-                            PredefinedType.short,
-                            PredefinedType.int,
-                            PredefinedType.long,
                             PredefinedType.float,
                             PredefinedType.double,
                             PredefinedType.char,
@@ -172,7 +172,7 @@ open class CSharp50Generator(
     }
 
     //declarations
-    protected val Declaration.hasSecondaryCtor: Boolean get () = (this.isConcrete || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
+    protected val Declaration.hasSecondaryCtor: Boolean get() = (this.isConcrete || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
 
     //members
     val Member.Reactive.actualFlow: FlowKind get() = memberFlowTransform.transform(flow)
@@ -192,7 +192,7 @@ open class CSharp50Generator(
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.intfSimpleName: String
-        get () {
+        get() {
             return when (this) {
                 is Member.Reactive.Task -> when (actualFlow) {
                     Source -> "IRdCall"
@@ -228,7 +228,7 @@ open class CSharp50Generator(
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName: String
-        get () = when (this) {
+        get() = when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
                 Sink -> "RdEndpoint"
                 Source -> "RdCall"
@@ -483,10 +483,10 @@ open class CSharp50Generator(
                     when (member.type) {
                         is PredefinedType.string -> "\"$value\""
                         is PredefinedType.char -> "'$value'"
-                        is PredefinedType.long -> "${value}l"
-                        is PredefinedType.uint -> "${value}u"
-                        is PredefinedType.ulong -> "${value}ul"
-                        is PredefinedType.float -> "${value}f"
+                        is PredefinedType.long -> "${value}L"
+                        is PredefinedType.uint -> "${value}U"
+                        is PredefinedType.ulong -> "${value}UL"
+                        is PredefinedType.float -> "${value}F"
                         is Enum -> "${member.type.substitutedName(containing)}.${sanitize(value)}"
                         else -> value
                     }
