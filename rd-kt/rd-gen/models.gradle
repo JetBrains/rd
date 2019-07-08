@@ -1,8 +1,8 @@
 ext {
-    File repoRoot = rootProject.file(".")
-    File cppRoot = new File(repoRoot, "rd-cpp")
-    File ktRoot = new File(repoRoot, "rd-kt")
-    File csRoot = new File(repoRoot, "rd-net")
+    repoRoot = rootProject.file(".")
+    cppRoot = new File(repoRoot, "rd-cpp")
+    ktRoot = new File(repoRoot, "rd-kt")
+    csRoot = new File(repoRoot, "rd-net")
 }
 
 def buildDir = rootProject.buildDir
@@ -45,7 +45,7 @@ task generateDemoModel(type: GenerateTask) {
     systemProperties = [
             "model.out.src.cpp.dir": "$cppRoot/demo",
             "model.out.src.kt.dir" : "$buildDir/models/demo",
-            "model.out.src.cs.dir" : "$csRoot/Test.RdCross/Model"
+            "model.out.src.cs.dir" : "$csRoot/Cross/Common/Model"
     ]
 
     lateInit()
