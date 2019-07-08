@@ -6,7 +6,7 @@ import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 
-abstract class CrossTestServerBase : CrossTestBase() {
+abstract class CrossTestKtServerBase : CrossTestKtBase() {
     fun server(lifetime: Lifetime, port: Int? = null): IProtocol {
         scheduler = SingleThreadScheduler(lifetime, "SingleThreadScheduler")
         return Protocol(Serializers(), Identities(IdKind.Server), scheduler,

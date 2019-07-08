@@ -5,9 +5,7 @@ package com.jetbrains.rd.framework.test.cross
 import com.jetbrains.rd.framework.impl.RdProperty
 import demo.DemoModel
 
-class CrossTestKtServerBigBuffer : CrossTestServerBase() {
-    override val testName = "CrossTestKtServerBigBuffer"
-
+class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
     override fun run(args: Array<String>) {
         before(args)
 

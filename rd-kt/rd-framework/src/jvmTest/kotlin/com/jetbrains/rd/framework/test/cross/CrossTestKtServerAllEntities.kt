@@ -9,10 +9,7 @@ import demo.*
 import kotlin.test.assertEquals
 
 @Suppress("unused")
-class CrossTestKtServerAllEntities : CrossTestServerBase() {
-    override val testName = "CrossTestKtServerAllEntities"
-
-
+class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
     override fun run(args: Array<String>) {
         before(args)
 

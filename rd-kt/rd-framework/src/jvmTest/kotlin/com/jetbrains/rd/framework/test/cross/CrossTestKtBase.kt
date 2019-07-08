@@ -10,8 +10,8 @@ import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.println
 import java.io.File
 
-abstract class CrossTestBase {
-    protected abstract val testName: String
+abstract class CrossTestKtBase {
+    protected val testName: String = this.javaClass.kotlin.simpleName!!
 
     protected val printer = PrettyPrinter()
     protected lateinit var outputFile: File
