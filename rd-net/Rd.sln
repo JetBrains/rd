@@ -8,9 +8,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test.RdCross", "Test.RdCros
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Cross\Common\Common.csproj", "{C22554C7-F78F-4AD3-9853-B81F73E61E36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestClientAllEntities", "Cross\TestClientAllEntities\TestClientAllEntities.csproj", "{A32C39F2-1174-43B3-9CD6-E6571F2107B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossTestCsClientAllEntities", "Cross\CrossTestCsClientAllEntities\CrossTestCsClientAllEntities.csproj", "{A32C39F2-1174-43B3-9CD6-E6571F2107B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestClientBigBuffer", "Cross\TestBigBuffer\TestClientBigBuffer.csproj", "{7A0D8412-9B4B-4D42-AF92-8503F5019CB4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossTestCsClientBigBuffer", "Cross\CrossTestCsClientBigBuffer\CrossTestCsClientBigBuffer.csproj", "{7A0D8412-9B4B-4D42-AF92-8503F5019CB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,7 +35,7 @@ Global
 		{C22554C7-F78F-4AD3-9853-B81F73E61E36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C22554C7-F78F-4AD3-9853-B81F73E61E36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C22554C7-F78F-4AD3-9853-B81F73E61E36}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C22554C7-F78F-4AD3-9853-B81F73E61E36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C22554C7-F78F-4AD3-9853-B81F73E61E36}1.Release|Any CPU.Build.0 = Release|Any CPU
 		{A32C39F2-1174-43B3-9CD6-E6571F2107B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A32C39F2-1174-43B3-9CD6-E6571F2107B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A32C39F2-1174-43B3-9CD6-E6571F2107B6}.Release|Any CPU.ActiveCfg = Release|Any CPU

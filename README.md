@@ -13,7 +13,7 @@ Or **C++** only, who knows. After that prepare the environment and build needed 
 
 #### Requirements
 
-* TODO
+* .NET Framework >= 3.5
 
 #### Instruction
 

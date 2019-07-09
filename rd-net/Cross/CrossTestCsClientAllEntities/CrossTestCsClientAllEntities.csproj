@@ -7,7 +7,6 @@
         <IsPackable>false</IsPackable>
         <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <RootNamespace>Test.RdCross</RootNamespace>
-        <AssemblyName>TestClientAllEntities</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

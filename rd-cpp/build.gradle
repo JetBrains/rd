@@ -1,14 +1,14 @@
-import com.jetbrains.rd.gradle.tasks.RunCmdTask
+import com.jetbrains.rd.gradle.tasks.CrossTestCppTask
+import com.jetbrains.rd.gradle.tasks.RunScriptTask
 import com.jetbrains.rd.gradle.tasks.RunExecTask
-import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.*
 
-task build(type: RunCmdTask, overwrite: true) {
-    workingDir '.'
+import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFilePath
+
+task build(type: RunScriptTask, overwrite: true) {
     execPath = 'build.cmd'
 }
 
-task buildTests(type: RunCmdTask, dependsOn: [':rd-kt:rd-gen:generateEverything']) {
-    workingDir '.'
+task buildTests(type: RunScriptTask, dependsOn: [':rd-kt:rd-gen:generateEverything']) {
     execPath 'buildtest.cmd'
 }
 
@@ -16,14 +16,6 @@ task clean(type: Delete, overwrite: true) {
     delete "$project.buildDir"
 }
 
-task CrossTestCppClientAllEntities(type: RunExecTask, dependsOn: ['buildTests']) {
-    workingDir 'build/src/rd_gen_cpp/test/cross_test/Release/'
-    execPath 'cross_test_client_all_entities'
-    args getTmpFilePath(it)
-}
+task CrossTestCppClientAllEntities(type: CrossTestCppTask, dependsOn: ['buildTests']) {}
 
-task CrossTestCppClientBigBuffer(type: RunExecTask, dependsOn: ['buildTests']) {
-    workingDir 'build/src/rd_gen_cpp/test/cross_test/Release/'
-    execPath 'cross_test_client_big_buffer'
-    args getTmpFilePath(it)
-}
+task CrossTestCppClientBigBuffer(type: CrossTestCppTask, dependsOn: ['buildTests']) {}

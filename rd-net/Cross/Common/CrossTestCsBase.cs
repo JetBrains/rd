@@ -34,11 +34,13 @@ namespace Test.RdCross
         {
             if (args.Length != 1)
             {
-                throw new ArgumentException($"Wrong number of arguments for {TestName}:{args.Length}");
+                throw new ArgumentException($"Wrong number of arguments for {TestName}:{args.Length}" +
+                                            $"{args}");
             }
 
             var outputFileName = args[0];
-            OutputFile = new StreamWriter(File.OpenWrite(outputFileName));
+            Console.WriteLine($"outputFileName={outputFileName}");
+            OutputFile = new StreamWriter(outputFileName);
             Console.WriteLine($"Test:{TestName} started, file={outputFileName}");
         }
 

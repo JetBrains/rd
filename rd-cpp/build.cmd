@@ -17,7 +17,7 @@ exit 0
 pushd "%~dp0"
 mkdir build
 cd build
-cmake -DENABLE_TESTS_OPTION:BOOL=OFF -G "Visual Studio 15 2017" ..
+cmake -DENABLE_TESTS_OPTION:BOOL=OFF ..
 cmake --build . --config Release -j 4
 cmake -DENABLE_TESTS_OPTION:BOOL=OFF -DBUILD_TYPE=Release -P cmake_install.cmake -j 4
 popd

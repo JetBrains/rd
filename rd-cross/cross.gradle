@@ -1,5 +1,5 @@
+import com.jetbrains.rd.gradle.tasks.CrossTestKtTask
 import com.jetbrains.rd.gradle.tasks.InteropTask
-import com.jetbrains.rd.gradle.tasks.KotlinExec
 
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
@@ -12,20 +12,23 @@ def getCppTaskByName(String name) {
     return project(':rd-cpp').getTasksByName(name, true).iterator().next()
 }
 
-task CrossTestKtServerAllEntities(type: KotlinExec, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
-    classpath += project.sourceSets.test.runtimeClasspath
-    classpath += project.sourceSets.test.compileClasspath
-
-    addDependencies()
+def getCsTaskByName(String name) {
+    return project(':rd-net').getTasksByName(name, true).iterator().next()
 }
 
-task CrossTestKtServerBigBuffer(type: KotlinExec, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+//region Kt
+task CrossTestKtServerAllEntities(type: CrossTestKtTask, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
-
-    addDependencies()
 }
 
+task CrossTestKtServerBigBuffer(type: CrossTestKtTask, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+    classpath += project.sourceSets.test.runtimeClasspath
+    classpath += project.sourceSets.test.compileClasspath
+}
+//endregion
+
+//region KtCpp
 task CrossTestKtCppAllEntities(type: InteropTask) {
     taskServer = CrossTestKtServerAllEntities
     taskClient = getCppTaskByName('CrossTestCppClientAllEntities')
@@ -36,8 +39,27 @@ task CrossTestKtCppAllEntities(type: InteropTask) {
 task CrossTestKtCppBigBuffer(type: InteropTask) {
     taskServer = CrossTestKtServerBigBuffer
     taskClient = getCppTaskByName('CrossTestCppClientBigBuffer')
+
+    addDependencies()
+}
+//endregion
+
+//region KtCs
+task CrossTestKtCsAllEntities(type: InteropTask) {
+    taskServer = CrossTestKtServerAllEntities
+    taskClient = getCsTaskByName('CrossTestCsClientAllEntities')
+
+    addDependencies()
 }
 
+task CrossTestKtCsBigBuffer(type: InteropTask) {
+    taskServer = CrossTestKtServerBigBuffer
+    taskClient = getCsTaskByName('CrossTestCsClientBigBuffer')
+
+    addDependencies()
+}
+//endregion
+
 task crossTest() {
-    dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer'
+    dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer', 'CrossTestKtCsAllEntities'//, 'CrossTestKtCsBigBuffer'
 }

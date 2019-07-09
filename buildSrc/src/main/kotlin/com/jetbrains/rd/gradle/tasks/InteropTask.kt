@@ -41,7 +41,6 @@ open class InteropTask : DefaultTask() {
     }*/
 
     private fun executeTask(task: Task) {
-        println("executeTask")
         (task.actions).first().let {
             workerExecutor.submit {
                 it.execute(task)
