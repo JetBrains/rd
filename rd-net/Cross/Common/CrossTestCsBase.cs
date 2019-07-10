@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using JetBrains.Diagnostics;
+using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Util;
@@ -59,6 +61,15 @@ namespace Test.RdCross
         }
 
 
-        public abstract void Run(string[] args);
+        public void Run(string[] args)
+        {
+            using(Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
+            {
+                Start(args);
+            }
+        }
+        
+        public abstract void Start(string[] args);
+
     }
 }

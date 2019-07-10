@@ -12,7 +12,7 @@ namespace Test.RdCross
             new CrossTestCsClientBigBuffer().Run(args);
         }
 
-        public override void Run(string[] args)
+        public override void Start(string[] args)
         {
             Before(args);
 

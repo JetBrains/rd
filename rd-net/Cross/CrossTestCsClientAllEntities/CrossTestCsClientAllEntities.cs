@@ -110,7 +110,7 @@ namespace Test.RdCross
             extModel.Checker.Fire();
         }
 
-        public override void Run(string[] args)
+        public override void Start(string[] args)
         {
             Before(args);
 
