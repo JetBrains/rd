@@ -269,7 +269,7 @@ TEST_F(SocketWireTestBase, TestEqualChangesRdMap) { //Test pending for ack
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 
 	RdMap<std::wstring, std::wstring> s_map, c_map;
-	s_map.master = true;
+	s_map.is_master = true;
 	init(serverProtocol, clientProtocol, &s_map, &c_map);
 
 	s_map.set(L"A", L"B");
@@ -293,7 +293,7 @@ TEST_F(SocketWireTestBase, TestDifferentChangesRdMap) { //Test pending for ack
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 
 	RdMap<std::wstring, std::wstring> s_map, c_map;
-	s_map.master = true;
+	s_map.is_master = true;
 	init(serverProtocol, clientProtocol, &s_map, &c_map);
 
 	s_map.set(L"A", L"B");
@@ -324,7 +324,7 @@ TEST_F(SocketWireTestBase, TestPingPongRdMap) { //Test pending for ack
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 
 	RdMap<std::wstring, int> s_map, c_map;
-	s_map.master = true;
+	s_map.is_master = true;
 	init(serverProtocol, clientProtocol, &s_map, &c_map);
 
 	std::vector<int> list(STEP);

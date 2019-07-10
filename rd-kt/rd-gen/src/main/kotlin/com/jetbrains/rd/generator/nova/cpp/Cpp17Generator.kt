@@ -36,8 +36,7 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
  * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
-open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
-
+open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
 
@@ -54,6 +53,14 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
     val nestedNamespaces = defaultNamespace.split('.')
 
     object PublicCtors : ISetting<Unit, Declaration>
+
+    object MasterStateful : ISetting<Boolean, Declaration>
+
+    private val Member.Reactive.Stateful.Property.master : Boolean
+        get() = owner.getSetting(Cpp17Generator.MasterStateful) ?: this@Cpp17Generator.master
+
+    private val Member.Reactive.Stateful.Map.master : Boolean
+        get() = owner.getSetting(Cpp17Generator.MasterStateful) ?: this@Cpp17Generator.master
 
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
 
@@ -468,7 +475,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         }
     //endregion
 
-    class FakeDeclaration(val decl: Declaration) : Declaration(null) {
+    private class FakeDeclaration(val decl: Declaration) : Declaration(null) {
         override val _name: String
             get() = decl.name
         override val cl_name: String
@@ -563,7 +570,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
         File(this, "CMakeLists.txt").run {
             printWriter().use {
                 it.apply {
-                    println("cmake_minimum_required(VERSION 3.10.2)")
+                    println("cmake_minimum_required(VERSION 3.7)")
 
                     val pchCppFile = "pch.cpp"
                     val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
@@ -1740,11 +1747,13 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
                     .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } }
                     .println { "${it.encapsulatedName}.optimize_nested = true;" }
 
-            if (flowTransform == FlowTransform.Reversed) {
-                decl.ownMembers
-                        .filterIsInstance<Member.Reactive.Stateful.Map>()
-                        .println { "${it.encapsulatedName}.master = false;" }
-            }
+            decl.ownMembers
+                    .filterIsInstance<Member.Reactive.Stateful.Property>()
+                    .println { "${it.encapsulatedName}.is_master = ${it.master};" }
+
+            decl.ownMembers
+                    .filterIsInstance<Member.Reactive.Stateful.Map>()
+                    .println { "${it.encapsulatedName}.is_master = ${it.master};" }
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive>()

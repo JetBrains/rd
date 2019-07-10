@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova
 import java.io.File
 
 interface IGenerator {
+    val flowTransform : FlowTransform
     val folder: File
     fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
 }
@@ -55,6 +56,8 @@ abstract class GeneratorBase : IGenerator {
             else -> null
         }
     }
+
+    protected val master get() = flowTransform != FlowTransform.Reversed
 }
 
 val IType.hasEmptyConstructor : Boolean get() = when (this) {

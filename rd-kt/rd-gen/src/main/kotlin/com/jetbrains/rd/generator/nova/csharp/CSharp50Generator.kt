@@ -12,7 +12,7 @@ import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(
-        val defaultFlowTransform: FlowTransform = FlowTransform.AsIs,
+        override val flowTransform: FlowTransform = FlowTransform.AsIs,
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
         override val folder: File = System.getProperty("rdgen.cs.dir")?.let { File(it) } ?: File("."),
         val fileName: (Toplevel) -> String = { tl -> tl.name }
@@ -35,8 +35,16 @@ open class CSharp50Generator(
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
 
+    object MasterStateful : ISetting<Boolean, Declaration>
+
+    private val Member.Reactive.Stateful.Property.master : Boolean
+        get() = owner.getSetting(CSharp50Generator.MasterStateful) ?: this@CSharp50Generator.master
+
+    private val Member.Reactive.Stateful.Map.master : Boolean
+        get() = owner.getSetting(CSharp50Generator.MasterStateful) ?: this@CSharp50Generator.master
+
     val Member.Reactive.memberFlowTransform: FlowTransform
-        get() = owner.getSetting(FlowTransformProperty) ?: defaultFlowTransform
+        get() = owner.getSetting(FlowTransformProperty) ?: flowTransform
 
     object AdditionalUsings : ISetting<(CSharp50Generator) -> List<String>, Toplevel>
 
@@ -970,8 +978,17 @@ open class CSharp50Generator(
                     .println { "${it.encapsulatedName}.OptimizeNested = true;" }
 
             decl.ownMembers
+                    .filterIsInstance<Member.Reactive.Stateful.Property>()
+                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
+
+            decl.ownMembers
+                    .filterIsInstance<Member.Reactive.Stateful.Map>()
+                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
+
+            decl.ownMembers
                     .filterIsInstance<Member.Reactive>()
-                    .filter { it.freeThreaded }.println { "${it.encapsulatedName}.Async = true;" }
+                    .filter { it.freeThreaded }
+                    .println { "${it.encapsulatedName}.Async = true;" }
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive>()
@@ -1045,7 +1062,7 @@ open class CSharp50Generator(
     }
 
     override fun toString(): String {
-        return "CSharp50Generator(defaultFlowTransform=$defaultFlowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
+        return "CSharp50Generator(defaultFlowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
     }
 
 

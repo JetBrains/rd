@@ -18,7 +18,7 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 }
 
 open class Kotlin11Generator(
-    val flowTransform: FlowTransform,
+    override val flowTransform: FlowTransform,
     private val defaultNamespace: String,
     override val folder: File
 ) : GeneratorBase() {
@@ -34,6 +34,14 @@ open class Kotlin11Generator(
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
+
+    object MasterStateful : ISetting<Boolean, Declaration>
+
+    private val Member.Reactive.Stateful.Property.master : Boolean
+        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
+
+    private val Member.Reactive.Stateful.Map.master : Boolean
+        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -690,11 +698,14 @@ open class Kotlin11Generator(
             .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable }}
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
 
-        if (flowTransform == FlowTransform.Reversed) {
-            decl.ownMembers
-                .filterIsInstance<Member.Reactive.Stateful.Map>()
-                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = false" }
-        }
+        decl.ownMembers
+                .filterIsInstance<Member.Reactive.Stateful.Property>()
+                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
+
+        decl.ownMembers
+            .filterIsInstance<Member.Reactive.Stateful.Map>()
+            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
+
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive>()

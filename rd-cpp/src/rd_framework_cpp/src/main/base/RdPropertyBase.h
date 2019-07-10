@@ -15,13 +15,14 @@ namespace rd {
 	protected:
 		using WT = typename IProperty<T>::WT;
 		//mastering
-		bool is_master = true;
 		mutable int32_t master_version = 0;
 		mutable bool default_value_changed = false;
 
 		//init
 	public:
 		mutable bool optimize_nested = false;
+
+		bool is_master = false;
 
 		//region ctor/dtor
 
