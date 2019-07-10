@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.7)
 
 project(
         rd_cpp
@@ -33,7 +33,7 @@ endif ()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-option(ENABLE_TESTS_OPTION "Global enable test" ON)
+option(ENABLE_TESTS_OPTION "Global enable test")
 
 set(RD_CORE_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable core tests." FORCE)
 set(RD_FRAMEWORK_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable framework tests." FORCE)
