@@ -1,6 +1,10 @@
 using System;
 using System.IO;
 using System.Threading;
+using demo;
+using JetBrains.Collections.Viewable;
+using JetBrains.Rd;
+using JetBrains.Rd.Impl;
 using Test.RdCross.Util;
 
 namespace Test.RdCross
@@ -19,6 +23,18 @@ namespace Test.RdCross
             }
 
             Console.Error.WriteLine($"Port is {Port}");
+        }
+
+        protected void Queue(Action action)
+        {
+            SingleThreadScheduler.RunOnSeparateThread(SocketLifetime, "Worker", scheduler =>
+            {
+                var client = new SocketWire.Client(ModelLifetime, scheduler, Port, "DemoServer");
+                var serializers = new Serializers();
+                Protocol = new Protocol("Server", serializers, new Identities(IdKind.Server), scheduler,
+                    client, SocketLifetime);
+                scheduler.Queue(action);
+            });
         }
     }
 }

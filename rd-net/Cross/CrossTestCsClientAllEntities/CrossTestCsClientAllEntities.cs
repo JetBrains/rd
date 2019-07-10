@@ -116,20 +116,13 @@ namespace Test.RdCross
 
             CheckConstants();
 
-            SingleThreadScheduler.RunOnSeparateThread(SocketLifetime, "Worker", scheduler =>
+            Queue(() =>
             {
-                var client = new SocketWire.Client(ModelLifetime, scheduler, Port, "DemoServer");
-                var serializers = new Serializers();
-                Protocol = new Protocol("Server", serializers, new Identities(IdKind.Server), scheduler,
-                    client, SocketLifetime);
-                scheduler.Queue(() =>
-                {
-                    var model = new DemoModel(ModelLifetime, Protocol);
-                    var extModel = model.GetExtModel();
+                var model = new DemoModel(ModelLifetime, Protocol);
+                var extModel = model.GetExtModel();
 
-                    AdviseAll(ModelLifetime, model, extModel);
-                    FireAll(model, extModel);
-                });
+                AdviseAll(ModelLifetime, model, extModel);
+                FireAll(model, extModel);
             });
 
             After();

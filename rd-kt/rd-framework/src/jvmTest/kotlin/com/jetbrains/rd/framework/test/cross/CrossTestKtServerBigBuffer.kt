@@ -14,11 +14,15 @@ class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
 
             val entity = model.property_with_default
 
+            var count = 0
+
             entity.advise(modelLifetime) {
                 if (!entity.isLocalChange && (entity as RdProperty<*>).defaultValueChanged) {
                     printer.printIfRemoteChange(entity, "property_with_default", it)
 
-                    finished = true
+                    if (++count == 2) {
+                        finished = true
+                    }
                 }
             }
 

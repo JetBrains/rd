@@ -42,6 +42,10 @@ task CrossTestKtCppBigBuffer(type: InteropTask) {
 
     addDependencies()
 }
+
+task CrossTestKtCpp() {
+    dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer'
+}
 //endregion
 
 //region KtCs
@@ -58,8 +62,12 @@ task CrossTestKtCsBigBuffer(type: InteropTask) {
 
     addDependencies()
 }
+
+task CrossTestKtCs() {
+    dependsOn 'CrossTestKtCsAllEntities' , 'CrossTestKtCsBigBuffer'
+}
 //endregion
 
 task crossTest() {
-    dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer', 'CrossTestKtCsAllEntities'//, 'CrossTestKtCsBigBuffer'
+    dependsOn 'CrossTestKtCpp', 'CrossTestKtCs'//, 'CrossTestKtCsAllEntities', 'CrossTestKtCsBigBuffer'
 }

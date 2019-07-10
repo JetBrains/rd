@@ -59,6 +59,6 @@ open class InteropTask : DefaultTask() {
         startClient()
 
         workerExecutor.shutdown()
-        workerExecutor.awaitTermination(10, TimeUnit.SECONDS)
+        workerExecutor.awaitTermination(20, TimeUnit.SECONDS)
     }
 }

@@ -46,7 +46,7 @@ namespace Test.RdCross
 
         protected void After()
         {
-            SpinWaitEx.SpinUntil(ModelLifetime, 10_000, () => Finished);
+            SpinWaitEx.SpinUntil(ModelLifetime, 100_000, () => Finished);
             SpinWaitEx.SpinUntil(ModelLifetime, 1_000, () => false);
 
             SocketLifetimeDef.Terminate();
