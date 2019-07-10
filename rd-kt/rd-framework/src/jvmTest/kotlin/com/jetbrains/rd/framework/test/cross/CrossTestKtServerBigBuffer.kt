@@ -6,7 +6,7 @@ import com.jetbrains.rd.framework.impl.RdProperty
 import demo.DemoModel
 
 class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
-    override fun run(args: Array<String>) {
+    override fun start(args: Array<String>) {
         before(args)
 
         scheduler.queue {

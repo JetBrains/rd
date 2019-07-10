@@ -2,6 +2,9 @@ package com.jetbrains.rd.framework.test.cross
 
 import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.util.ConsoleLoggerFactory
+import com.jetbrains.rd.util.ILoggerFactory
+import com.jetbrains.rd.util.Statics
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
@@ -59,5 +62,11 @@ abstract class CrossTestKtBase {
         }
     }
 
-    abstract fun run(args: Array<String>)
+    fun run(args: Array<String>) {
+        Statics<ILoggerFactory>().push(ConsoleLoggerFactory).use {
+            start(args)
+        }
+    }
+
+    abstract fun start(args: Array<String>);
 }

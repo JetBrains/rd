@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 
 @Suppress("unused")
 class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
-    override fun run(args: Array<String>) {
+    override fun start(args: Array<String>) {
         before(args)
 
         checkConstants()
