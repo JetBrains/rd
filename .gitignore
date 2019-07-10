@@ -29,8 +29,3 @@ rd-net/RdFramework/obj
 /rd-net/packages/
 /rd-cpp/googletest/
 /rd-kt/.gradle/
-# Project exclude paths
-/rd-cpp/demo/
-/rd-cpp/doc/
-/rd-cpp/src/
-/rd-cpp/thirdparty/

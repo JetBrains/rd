@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using Test.RdCross.Util;
 
 namespace Test.RdCross
@@ -7,18 +8,17 @@ namespace Test.RdCross
     public abstract class CrossTestCsClientBase : CrossTestCsBase
     {
         protected readonly int Port;
-        
+
         protected CrossTestCsClientBase()
         {
-            using (FileSystemWatcher watcher = new FileSystemWatcher(FileSystem.RdTmpDir))
+            SpinWait.SpinUntil(() => FileSystem.IsFileReady(FileSystem.PortFileClosed), 5000);
+
+            using (var stream = new StreamReader(File.OpenRead(FileSystem.PortFile)))
             {
-                watcher.WaitForChanged(WatcherChangeTypes.Created, 5_000);
+                int.TryParse(stream.ReadLine(), out Port);
             }
 
-            var stream = new StreamReader(File.OpenRead(FileSystem.PortFile));
-            int.TryParse(stream.ReadLine(), out Port);
-            
-            Console.Error.WriteLine("Port is " + Port);
+            Console.Error.WriteLine($"Port is {Port}");
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.jetbrains.rd.gradle.tasks
 
 import com.jetbrains.rd.gradle.tasks.util.portFile
+import com.jetbrains.rd.gradle.tasks.util.portFileClosed
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.Input
@@ -27,19 +28,6 @@ open class InteropTask : DefaultTask() {
         dependsOn(taskClient.taskDependencies)
     }
 
-    /*init {
-        println("${taskServer.dependsOn + taskClient.dependsOn}")
-//        println("init getDependsOn:${super.getDependsOn() + taskServer.dependsOn + taskClient.dependsOn}")
-        *//*(taskServer.dependsOn + taskClient.dependsOn).forEach {
-            this.dependsOn(it)
-        }*//*
-    }
-
-    override fun getDependsOn(): Set<Any> {
-        println("getDependsOn:${super.getDependsOn() + taskServer.dependsOn + taskClient.dependsOn}")
-        return super.getDependsOn() + taskServer.dependsOn + taskClient.dependsOn
-    }*/
-
     private fun executeTask(task: Task) {
         (task.actions).first().let {
             workerExecutor.submit {
@@ -58,6 +46,7 @@ open class InteropTask : DefaultTask() {
 
     private fun beforeStart() {
         assert(portFile.delete())
+        assert(portFileClosed.delete())
         assert(File(taskServer.tmpFilePath).delete())
         assert(File(taskClient.tmpFilePath).delete())
     }
@@ -70,6 +59,6 @@ open class InteropTask : DefaultTask() {
         startClient()
 
         workerExecutor.shutdown()
-        workerExecutor.awaitTermination(200, TimeUnit.SECONDS)
+        workerExecutor.awaitTermination(10, TimeUnit.SECONDS)
     }
 }

@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework.test.cross
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.test.cross.util.portFile
+import com.jetbrains.rd.framework.test.cross.util.portFileClosed
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
@@ -19,5 +20,6 @@ abstract class CrossTestKtServerBase : CrossTestKtBase() {
         portFile.printWriter().use { out ->
             out.println((protocol.wire as SocketWire.Server).port)
         }
+        portFileClosed.createNewFile()
     }
 }

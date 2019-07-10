@@ -28,6 +28,7 @@ namespace rd {
 			rd::Lifetime socket_lifetime = definition.lifetime;
 
 			static const std::string port_file;
+			static const std::string port_file_closed;
 
 			std::shared_ptr<rd::IWire> wire;
 			std::unique_ptr<rd::IProtocol> protocol;

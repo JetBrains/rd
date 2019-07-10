@@ -6,8 +6,9 @@ namespace rd {
 	namespace cross {
 		CrossTestClientBase::CrossTestClientBase() : CrossTestBase() {
 			uint16_t port = 0;
-			std::ifstream input(port_file);
-			for (int i = 0; i < 5 && !input.good(); std::this_thread::sleep_for(std::chrono::seconds(1)), ++i) {
+			std::ifstream input;
+			std::ifstream input_label(port_file_closed);
+			for (int i = 0; i < 50 && !input_label.good(); std::this_thread::sleep_for(std::chrono::milliseconds(100)), ++i) {
 				input = std::ifstream(port_file);
 			}
 			RD_ASSERT_MSG(input.good(), "File with port is missing by path:" + port_file);

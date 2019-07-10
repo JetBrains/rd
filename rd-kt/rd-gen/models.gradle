@@ -15,7 +15,7 @@ class GenerateTask extends JavaExec {
         super()
         group = 'generate'
         main = 'com.jetbrains.rd.generator.nova.MainKt'
-//        outputs.upToDateWhen { false }
+        outputs.upToDateWhen { true }
     }
 
     @Override

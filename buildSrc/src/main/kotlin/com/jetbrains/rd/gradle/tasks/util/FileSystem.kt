@@ -13,3 +13,5 @@ val portFile = File(rdTmpDir, "port.txt")
         rdTmpDir.mkdirs()
         return field
     }
+
+val portFileClosed = portFile.resolveSibling("port.txt.closed")

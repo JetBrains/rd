@@ -21,7 +21,6 @@ open class DotnetBuildTask : Exec() {
     }
 
     public override fun exec() {
-        println(commandLine)
         super.exec()
     }
 }
