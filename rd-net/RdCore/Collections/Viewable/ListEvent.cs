@@ -32,5 +32,10 @@ namespace JetBrains.Collections.Viewable
     {
       return new ListEvent<V>(AddUpdateRemove.Remove, index, oldValue, default(V));
     }
+
+    public override string ToString()
+    {
+      return $"{nameof(Kind)}: {Kind}, {nameof(Index)}: {Index}, {nameof(OldValue)}: {OldValue}, {nameof(NewValue)}: {NewValue}";
+    }
   }
 }

@@ -32,5 +32,10 @@ namespace JetBrains.Collections.Viewable
     {
       return new MapEvent<K, V>(AddUpdateRemove.Remove, key, oldValue, default(V));
     }
+
+    public override string ToString()
+    {
+      return $"{nameof(Kind)}: {Kind}, {nameof(Key)}: {Key}, {nameof(OldValue)}: {OldValue}, {nameof(NewValue)}: {NewValue}";
+    }
   }
 }
