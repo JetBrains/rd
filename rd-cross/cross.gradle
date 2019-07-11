@@ -1,5 +1,6 @@
 import com.jetbrains.rd.gradle.tasks.CrossTestKtTask
 import com.jetbrains.rd.gradle.tasks.InteropTask
+import com.jetbrains.rd.gradle.tasks.CrossTest
 
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
@@ -43,7 +44,7 @@ task CrossTestKtCppBigBuffer(type: InteropTask) {
     addDependencies()
 }
 
-task CrossTestKtCpp() {
+task CrossTestKtCpp(type: CrossTest) {
     dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer'
 }
 //endregion
@@ -63,11 +64,11 @@ task CrossTestKtCsBigBuffer(type: InteropTask) {
     addDependencies()
 }
 
-task CrossTestKtCs() {
+task CrossTestKtCs(type: CrossTest) {
     dependsOn 'CrossTestKtCsAllEntities' , 'CrossTestKtCsBigBuffer'
 }
 //endregion
 
 task crossTest() {
-    dependsOn 'CrossTestKtCpp', 'CrossTestKtCs'//, 'CrossTestKtCsAllEntities', 'CrossTestKtCsBigBuffer'
+    dependsOn 'CrossTestKtCpp', 'CrossTestKtCs'
 }

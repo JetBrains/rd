@@ -43,7 +43,7 @@ abstract class CrossTestKtBase {
     }
 
     protected fun after() {
-        spinUntil(100_000) { finished }
+        spinUntil(10_000) { finished }
         spinUntil(1_000) { false }
 
         socketLifetimeDef.terminate()

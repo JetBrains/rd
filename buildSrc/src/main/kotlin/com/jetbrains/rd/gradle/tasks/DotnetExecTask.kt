@@ -7,6 +7,6 @@ open class DotnetExecTask : RunExecTask() {
         group = "dotnet exec"
         workingDir = File(workingDir, "Cross/$name/build/")
         execPath = name
-        args = args?.plus(tmpFilePath)
+        args = args?.plus(tmpFile)
     }
 }

@@ -6,11 +6,9 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 
 @Suppress("UnstableApiUsage")
@@ -47,8 +45,8 @@ open class InteropTask : DefaultTask() {
     private fun beforeStart() {
         assert(portFile.delete())
         assert(portFileClosed.delete())
-        assert(File(taskServer.tmpFilePath).delete())
-        assert(File(taskClient.tmpFilePath).delete())
+        assert(taskServer.tmpFile.delete())
+        assert(taskClient.tmpFile.delete())
     }
 
     @TaskAction

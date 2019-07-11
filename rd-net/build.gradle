@@ -2,7 +2,7 @@ import com.jetbrains.rd.gradle.tasks.DotnetExecTask
 import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
 import com.jetbrains.rd.gradle.tasks.RunScriptTask
 
-import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFilePath
+import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFile
 
 task build(type: RunScriptTask, overwrite: true) {
     execPath = 'build.cmd'

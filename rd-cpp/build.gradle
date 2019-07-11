@@ -2,7 +2,7 @@ import com.jetbrains.rd.gradle.tasks.CrossTestCppTask
 import com.jetbrains.rd.gradle.tasks.RunScriptTask
 import com.jetbrains.rd.gradle.tasks.RunExecTask
 
-import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFilePath
+import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFile
 
 task build(type: RunScriptTask, overwrite: true) {
     execPath = 'build.cmd'
