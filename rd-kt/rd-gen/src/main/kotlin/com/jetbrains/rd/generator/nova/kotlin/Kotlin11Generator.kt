@@ -37,11 +37,14 @@ open class Kotlin11Generator(
 
     object MasterStateful : ISetting<Boolean, Declaration>
 
+    private val Member.Reactive.Stateful.optimizeNested : Boolean
+        get() = this !is Member.Reactive.Stateful.Extension && this.genericParams.none { this is IBindable }
+
     private val Member.Reactive.Stateful.Property.master : Boolean
         get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
 
     private val Member.Reactive.Stateful.Map.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
+        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -694,11 +697,6 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
         decl.ownMembers
-            .filterIsInstance<Member.Reactive.Stateful>()
-            .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable }}
-            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
-
-        decl.ownMembers
                 .filterIsInstance<Member.Reactive.Stateful.Property>()
                 .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
 
@@ -706,6 +704,10 @@ open class Kotlin11Generator(
             .filterIsInstance<Member.Reactive.Stateful.Map>()
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
 
+        decl.ownMembers
+                .filterIsInstance<Member.Reactive.Stateful>()
+                .filter { it.optimizeNested }
+                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive>()
