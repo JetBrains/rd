@@ -6,4 +6,9 @@ open class CrossTest : Test() {
     init {
         systemProperties["CrossTestName"] = name
     }
+
+    fun addDependencies() {
+        useJUnit()
+        setTestNameIncludePatterns(listOf("*$name*"))
+    }
 }

@@ -15,7 +15,7 @@ class CrossTest {
             println("The files $file1 and $file2 are same!")
         } else {
             fail(
-                """
+                    """
                     |The files $file1 and $file2 differ!
                     |$file1:
                     |$t1
@@ -37,10 +37,11 @@ class CrossTest {
         tmpFolder.mkdirs()
     }
 
-    @Test
-    fun testAll() {
+    fun doTest() {
         val goldSubFolder = System.getProperty("CrossTestName")!!
         val goldFolder = File(File(rootFolder, "buildSrc/src/main/resources/gold"), goldSubFolder)
+
+        println("CrossTestName=$goldSubFolder")
 
         assertTrue("Tmp directory($tmpFolder) was not created", tmpFolder.exists())
         assertTrue("Gold directory($goldFolder) was not created", goldFolder.exists())
@@ -52,7 +53,17 @@ class CrossTest {
 
         tmpFolder.listFiles()!!.forEach {
             val candidate = File(goldFolder, it.nameWithoutExtension + ".gold")
-            assertTrue  ("Extra tmp file=$it", candidate.exists())
+            assertTrue("Extra tmp file=$it", candidate.exists())
         }
+    }
+
+    @Test
+    fun testCrossTestKtCpp() {
+        doTest()
+    }
+
+    @Test
+    fun testCrossTestKtCs() {
+        doTest()
     }
 }
