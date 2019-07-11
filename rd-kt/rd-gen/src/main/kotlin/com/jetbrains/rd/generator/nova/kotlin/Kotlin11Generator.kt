@@ -38,7 +38,7 @@ open class Kotlin11Generator(
     object MasterStateful : ISetting<Boolean, Declaration>
 
     private val Member.Reactive.Stateful.optimizeNested : Boolean
-        get() = this !is Member.Reactive.Stateful.Extension && this.genericParams.none { this is IBindable }
+        get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
 
     private val Member.Reactive.Stateful.Property.master : Boolean
         get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
