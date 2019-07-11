@@ -43,7 +43,7 @@ class CrossTest {
         val goldFolder = File(File(rootFolder, "buildSrc/src/main/resources/gold"), goldSubFolder)
 
         assertTrue("Tmp directory($tmpFolder) was not created", tmpFolder.exists())
-        assertTrue("Gold directory($tmpFolder) was not created", goldFolder.exists())
+        assertTrue("Gold directory($goldFolder) was not created", goldFolder.exists())
         goldFolder.listFiles()!!.forEach {
             val candidate = File(tmpFolder, it.nameWithoutExtension + ".tmp")
             assertTrue("File $candidate doesn't exist", candidate.exists())
