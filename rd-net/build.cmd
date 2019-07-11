@@ -5,11 +5,12 @@ GOTO :CMDSCRIPT
 
 set -eux
 PACKAGES_DIR=$(pwd)/../artifacts/nuget
+BUILD_COUNTER=99999
 PACKAGE_VERSION=191.0.$BUILD_COUNTER-prerelease
 
 rm -rf $PACKAGES_DIR
 
-pushd RdCore
+pushd Lifetimes
 dotnet pack -p:Configuration=Release -p:PackageVersion=$PACKAGE_VERSION -o $PACKAGES_DIR --verbosity normal
 
 popd
@@ -26,7 +27,7 @@ set PACKAGE_VERSION=191.0.%BUILD_COUNTER%-prerelease
 
 rmdir /S /Q %PACKAGES_DIR%
 
-pushd RdCore
+pushd Lifetimes
 dotnet pack -p:Configuration=Release -p:PackageVersion=%PACKAGE_VERSION% -o %PACKAGES_DIR% --verbosity normal
 
 popd
