@@ -2,8 +2,9 @@
 using System.Reflection;
 
 namespace System {
+#if !NETSTANDARD2_0
   public class Serializable : Attribute {}
-  
+#endif
   public static class Extensions
   {
     public static bool IsSubclassOf(this Type t, Type t2)
