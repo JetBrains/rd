@@ -1,0 +1,59 @@
+***
+extModel.checker:
+kotlin.Unit
+***
+boolean_array:
+"false, false, true"
+***
+scalar:
+MyScalar (
+  bool = false
+  byte = 98
+  short = 32000
+  int = 1000000000
+  long = -2000000000000000000
+  float = 3.14
+  double = -1.2345678901234567E8
+  unsigned_byte = 254
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
+  enum = cpp
+)
+***
+ubyte:
+98
+***
+ubyte_array:
+UByteArray(storage=[98, -1])
+***
+set:
+Add
+98
+***
+mapLongToString:
+Add 98:Cpp
+***
+interned_string:
+"Cpp"
+***
+interned_string:
+"protocol"
+***
+interned_string:
+"Cpp"
+***
+polymorphic:
+Derived (
+  string = "Cpp instance"
+)
+***
+date:
+Thu Jan 01 03:01:38 MSK 1970
+***
+enum:
+cpp
+***
+extModel.checker:
+kotlin.Unit
+

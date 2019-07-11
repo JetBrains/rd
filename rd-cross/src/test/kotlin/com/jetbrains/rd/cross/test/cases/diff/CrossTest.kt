@@ -37,7 +37,7 @@ class CrossTest {
         tmpFolder.mkdirs()
     }
 
-    fun doTest() {
+    private fun doTest() {
         val goldSubFolder = System.getProperty("CrossTestName")!!
         val goldFolder = File(File(rootFolder, "buildSrc/src/main/resources/gold"), goldSubFolder)
 
