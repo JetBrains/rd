@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Threading;
-using demo;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd;
 using JetBrains.Rd.Impl;

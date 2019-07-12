@@ -1,5 +1,6 @@
 package com.jetbrains.rd.gradle.tasks
 
+import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class DotnetExecTask : RunExecTask() {
@@ -7,6 +8,11 @@ open class DotnetExecTask : RunExecTask() {
         group = "dotnet exec"
         workingDir = File(workingDir, "Cross/$name/build/")
         execPath = name
-        args = args?.plus(tmpFile)
+    }
+
+    @TaskAction
+    override fun exec() {
+        args = args?.plus(tmpFile.absolutePath)
+        super.exec()
     }
 }

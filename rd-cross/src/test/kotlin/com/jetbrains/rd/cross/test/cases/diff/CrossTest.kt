@@ -3,7 +3,9 @@ package com.jetbrains.rd.cross.test.cases.diff
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import java.io.File
 import java.nio.file.Paths
 
@@ -28,20 +30,18 @@ class CrossTest {
 
     companion object {
         val rootFolder = File(Paths.get("").toAbsolutePath().toString()).parentFile
-        val tmpFolder = File(rootFolder, "build/src/main/resources/tmp")
+
     }
 
     @After
     fun tearDown() {
-        tmpFolder.deleteRecursively()
-        tmpFolder.mkdirs()
+//        tmpFolder.deleteRecursively()
+//        tmpFolder.mkdirs()
     }
 
-    private fun doTest() {
-        val goldSubFolder = System.getProperty("CrossTestName")!!
-        val goldFolder = File(File(rootFolder, "buildSrc/src/main/resources/gold"), goldSubFolder)
-
-        println("CrossTestName=$goldSubFolder")
+    private fun doTest(testName: String) {
+        val tmpFolder = File(File(rootFolder, "build/src/main/resources/tmp"), testName)
+        val goldFolder = File(File(rootFolder, "buildSrc/src/main/resources/gold"), testName)
 
         assertTrue("Tmp directory($tmpFolder) was not created", tmpFolder.exists())
         assertTrue("Gold directory($goldFolder) was not created", goldFolder.exists())
@@ -57,13 +57,28 @@ class CrossTest {
         }
     }
 
+    @get:Rule
+    public var name = TestName()
+
+    private val methodName get() = name.methodName.replace("test", "")
+
     @Test
-    fun testCrossTestKtCpp() {
-        doTest()
+    fun testCrossTestKtCppAllEntities() {
+        doTest(methodName)
     }
 
     @Test
-    fun testCrossTestKtCs() {
-        doTest()
+    fun testCrossTestKtCppBigBuffer() {
+        doTest(methodName)
+    }
+
+    @Test
+    fun testCrossTestKtCsAllEntities() {
+        doTest(methodName)
+    }
+
+    @Test
+    fun testCrossTestKtCsBigBuffer() {
+        doTest(methodName)
     }
 }

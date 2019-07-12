@@ -1,6 +1,5 @@
 import com.jetbrains.rd.gradle.tasks.CrossTestKtTask
 import com.jetbrains.rd.gradle.tasks.InteropTask
-import com.jetbrains.rd.gradle.tasks.CrossTest
 
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
@@ -43,12 +42,6 @@ task CrossTestKtCppBigBuffer(type: InteropTask) {
 
     addDependencies()
 }
-
-task CrossTestKtCpp(type: CrossTest) {
-    dependsOn 'CrossTestKtCppAllEntities', 'CrossTestKtCppBigBuffer'
-
-    addDependencies()
-}
 //endregion
 
 //region KtCs
@@ -65,14 +58,22 @@ task CrossTestKtCsBigBuffer(type: InteropTask) {
 
     addDependencies()
 }
-
-task CrossTestKtCs(type: CrossTest) {
-    dependsOn 'CrossTestKtCsAllEntities' , 'CrossTestKtCsBigBuffer'
-
-    addDependencies()
-}
 //endregion
 
+def interopTasks = [CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer]
+
 task crossTest() {
-    dependsOn 'CrossTestKtCpp', 'CrossTestKtCs'
+//    dependsOn interopTasks
 }
+
+interopTasks.each { t ->
+    task "${t.name}Run"(type: Test) {
+        dependsOn t
+
+        useJUnit()
+        testNameIncludePatterns = ["*${t.name}*".toString()]
+    }
+
+    crossTest.dependsOn "${t.name}Run"
+}
+

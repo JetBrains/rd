@@ -1,6 +1,5 @@
 using demo;
 using JetBrains.Rd.Base;
-using NUnit.Framework.Internal;
 using Test.RdCross.Util;
 
 namespace Test.RdCross

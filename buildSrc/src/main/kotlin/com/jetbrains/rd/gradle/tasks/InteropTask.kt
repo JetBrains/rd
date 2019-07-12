@@ -45,8 +45,9 @@ open class InteropTask : DefaultTask() {
     private fun beforeStart() {
         assert(portFile.delete())
         assert(portFileClosed.delete())
-        assert(taskServer.tmpFile.delete())
-        assert(taskClient.tmpFile.delete())
+        System.setProperty("TmpSubDirectory", name)
+        assert(taskServer.tmpFileDirectory.deleteRecursively())
+        assert(taskServer.tmpFileDirectory.mkdirs())
     }
 
     @TaskAction

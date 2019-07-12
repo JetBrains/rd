@@ -1,10 +1,8 @@
 using demo;
 using JetBrains.Collections.Viewable;
+using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
-using JetBrains.Rd;
 using JetBrains.Rd.Base;
-using JetBrains.Rd.Impl;
-using NUnit.Framework;
 using Test.RdCross.Util;
 
 namespace Test.RdCross
@@ -130,10 +128,10 @@ namespace Test.RdCross
 
         private static void CheckConstants()
         {
-            Assert.True(DemoModel.const_toplevel);
-            Assert.AreEqual(ConstUtil.const_enum, MyEnum.@default);
-            Assert.AreEqual(ConstUtil.const_string, "const_string_value");
-            Assert.AreEqual(Base.const_base, 'B');
+            Assertion.Assert(DemoModel.const_toplevel, "DemoModel.const_toplevel");
+            Assertion.Assert(ConstUtil.const_enum == MyEnum.@default, "ConstUtil.const_enum == MyEnum.@default");
+            Assertion.Assert(ConstUtil.const_string == "const_string_value", "ConstUtil.const_string == 'const_string_value'");
+            Assertion.Assert(Base.const_base == 'B', "Base.const_base == 'B'");
         }
     }
 }
