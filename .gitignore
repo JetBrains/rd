@@ -29,3 +29,6 @@ rd-net/RdFramework/obj
 /rd-net/packages/
 /rd-cpp/googletest/
 /rd-kt/.gradle/
+/rd-cpp/demo/
+/rd-cpp/src/rd_framework_cpp/src/test/util/entities/
+/rd-cpp/src/rd_framework_cpp/src/test/util/interning/

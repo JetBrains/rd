@@ -1,0 +1,50 @@
+***
+extModel.checker:
+kotlin.Unit
+***
+boolean_array:
+"false, true, false"
+***
+scalar:
+MyScalar (
+  bool = false
+  byte = 50
+  short = 32000
+  int = 1000000000
+  long = -2000000000000000000
+  float = 3.14
+  double = -1.2345678901234567E8
+  unsigned_byte = 254
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
+  enum = net
+)
+***
+set:
+Add
+50
+***
+mapLongToString:
+Add 50:C#
+***
+interned_string:
+"C#"
+***
+interned_string:
+"protocol"
+***
+interned_string:
+"C#"
+***
+polymorphic:
+Derived (
+  string = "C# instance"
+)
+***
+enum:
+net
+***
+extModel.checker:
+kotlin.Unit
+
