@@ -205,7 +205,6 @@ namespace rd {
 	}
 
 	bool SocketWire::Base::read_and_dispatch_message() const {
-		message.rewind();
 		sz = (sz == -1 ? receive_pkg.read_integral<int32_t>() : sz);
 		if (sz == -1) {
 			logger.error("sz == -1");
@@ -230,10 +229,9 @@ namespace rd {
 		message_broker.dispatch(rd_id, std::move(message));
 		logger.debug(this->id + ": message dispatched");
 
-		message.rewind();
-
 		sz = -1;
 		id_ = -1;
+		message.rewind();
 		return true;
 //		RD_ASSERT_MSG(summary_size == sz, "Broken message, read:%d bytes, expected:%d bytes", summary_size, sz)
 	}

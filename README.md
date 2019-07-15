@@ -96,6 +96,9 @@ rd::SocketWire::Server and *.Client respectively
 
 ## Examples of connections
 
-TODO
+Look at cross tests
+* _com.jetbrains.rd.framework.test.cross_ at Kotlin side
+* _Test.RdCross_ at C# side
+* _rd::cross_ at C++ side
 
  
