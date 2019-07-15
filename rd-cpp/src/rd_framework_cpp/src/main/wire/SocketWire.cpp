@@ -206,12 +206,12 @@ namespace rd {
 
 	bool SocketWire::Base::read_and_dispatch_message() const {
 		message.rewind();
-		int32_t sz = receive_pkg.read_integral<int32_t>();
+		sz = (sz == -1 ? receive_pkg.read_integral<int32_t>() : sz);
 		if (sz == -1) {
 			logger.error("sz == -1");
 			return false;
 		}
-		const auto id_ = receive_pkg.read_integral<RdId::hash_t>();
+		id_ = (id_ == -1 ? receive_pkg.read_integral<RdId::hash_t>() : id_);
 		if (id_ == -1) {
 			logger.error("id == -1");
 			return false;
@@ -232,6 +232,8 @@ namespace rd {
 
 		message.rewind();
 
+		sz = -1;
+		id_ = -1;
 		return true;
 //		RD_ASSERT_MSG(summary_size == sz, "Broken message, read:%d bytes, expected:%d bytes", summary_size, sz)
 	}

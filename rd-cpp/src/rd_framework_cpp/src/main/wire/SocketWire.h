@@ -60,6 +60,8 @@ namespace rd {
 			mutable Buffer send_package_header{PACKAGE_HEADER_LENGTH};
 
 			static constexpr int32_t CHUNK_SIZE = 16370;
+			mutable int32_t sz = -1;
+			mutable RdId::hash_t id_ = -1;
 			mutable PkgInputStream receive_pkg{[this]() -> int32_t { return this->read_package(); }};
 
 			mutable Buffer message{CHUNK_SIZE};

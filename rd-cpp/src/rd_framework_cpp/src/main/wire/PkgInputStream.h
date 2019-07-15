@@ -31,7 +31,7 @@ namespace rd {
 
 		template<typename T>
 		T read_integral() {
-			T x;
+			T x{};
 			if (!read(reinterpret_cast<Buffer::word_t*>(&x), sizeof(T))) {
 				return -1;
 			}

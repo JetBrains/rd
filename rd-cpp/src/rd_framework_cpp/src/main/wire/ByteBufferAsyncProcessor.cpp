@@ -217,7 +217,7 @@ namespace rd {
 		std::lock_guard<decltype(lock)> guard(lock);
 
 		if (seqn > acknowledged_seqn) {
-			logger.trace("New acknowledged seqn: %lld", seqn);
+			logger.trace(this->id + ": new acknowledged seqn: %lld", seqn);
 			acknowledged_seqn = seqn;
 		} else {
 			logger.error("Acknowledge %lld called, while next seqn MUST BE greater than %lld" , seqn, acknowledged_seqn);
