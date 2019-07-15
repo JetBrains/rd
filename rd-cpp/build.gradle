@@ -19,3 +19,5 @@ task clean(type: Delete, overwrite: true) {
 task CrossTestCppClientAllEntities(type: CrossTestCppTask, dependsOn: ['buildTests']) {}
 
 task CrossTestCppClientBigBuffer(type: CrossTestCppTask, dependsOn: ['buildTests']) {}
+
+task CrossTestCppClientRdCall(type: CrossTestCppTask, dependsOn: ['buildTests']) {}

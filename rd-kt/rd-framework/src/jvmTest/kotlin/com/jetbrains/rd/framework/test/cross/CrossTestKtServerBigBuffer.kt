@@ -3,6 +3,7 @@
 package com.jetbrains.rd.framework.test.cross
 
 import com.jetbrains.rd.framework.impl.RdProperty
+import com.jetbrains.rd.framework.test.cross.base.CrossTestKtServerBase
 import demo.DemoModel
 
 class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {

@@ -22,7 +22,7 @@ namespace rd {
 			rd::SimpleScheduler scheduler{};
 
 			rd::LifetimeDefinition definition{false};
-			rd::Lifetime lifetime = definition.lifetime;
+			rd::Lifetime model_lifetime = definition.lifetime;
 
 			rd::LifetimeDefinition socket_definition{false};
 			rd::Lifetime socket_lifetime = definition.lifetime;

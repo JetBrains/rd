@@ -1,4 +1,4 @@
-package com.jetbrains.rd.framework.test.cross
+package com.jetbrains.rd.framework.test.cross.base
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.test.cross.util.portFile

@@ -26,6 +26,11 @@ task CrossTestKtServerBigBuffer(type: CrossTestKtTask, dependsOn: tasks.getByPat
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }
+
+task CrossTestKtServerTask(type: CrossTestKtTask, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+    classpath += project.sourceSets.test.runtimeClasspath
+    classpath += project.sourceSets.test.compileClasspath
+}
 //endregion
 
 //region KtCpp
@@ -40,6 +45,13 @@ task CrossTestKtCppBigBuffer(type: InteropTask) {
     taskServer = CrossTestKtServerBigBuffer
     taskClient = getCppTaskByName('CrossTestCppClientBigBuffer')
 
+    addDependencies()
+}
+
+task CrossTestKtCppRdCall(type: InteropTask) {
+    taskServer = CrossTestKtServerTask
+    taskClient = getCppTaskByName('CrossTestCppClientRdCall')
+    
     addDependencies()
 }
 //endregion
@@ -58,9 +70,17 @@ task CrossTestKtCsBigBuffer(type: InteropTask) {
 
     addDependencies()
 }
+
+task CrossTestKtCsRdCall(type: InteropTask) {
+    taskServer = CrossTestKtServerTask
+    taskClient = getCsTaskByName('CrossTestCsClientRdCall')
+
+    addDependencies()
+}
 //endregion
 
-def interopTasks = [CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer]
+def interopTasks = [CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCppRdCall,
+                    CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer, CrossTestKtCsRdCall]
 
 task crossTest() {
 //    dependsOn interopTasks

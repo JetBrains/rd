@@ -23,7 +23,10 @@ task CrossTestCsClientAllEntities(type: DotnetExecTask) {
 task CrossTestCsClientBigBuffer(type: DotnetExecTask) {
 }
 
-[CrossTestCsClientAllEntities, CrossTestCsClientBigBuffer].each { t ->
+task CrossTestCsClientRdCall(type: DotnetExecTask) {
+}
+
+[CrossTestCsClientAllEntities, CrossTestCsClientBigBuffer, CrossTestCsClientRdCall].each { t ->
     task "${t.name}Build"(type: DotnetBuildTask) {
         projectName = t.name
     }

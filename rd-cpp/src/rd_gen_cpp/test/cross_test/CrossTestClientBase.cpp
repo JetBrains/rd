@@ -16,7 +16,7 @@ namespace rd {
 			std::cerr << "Port is " + std::to_string(port) << std::endl;
 
 			wire = std::make_shared<rd::SocketWire::Client>(socket_lifetime, &scheduler, port, "TestClient");
-			protocol = std::make_unique<rd::Protocol>(rd::Identities::CLIENT, &scheduler, wire, lifetime);
+			protocol = std::make_unique<rd::Protocol>(rd::Identities::CLIENT, &scheduler, wire, model_lifetime);
 		}
 	}
 }

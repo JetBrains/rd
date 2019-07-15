@@ -54,10 +54,14 @@ namespace rd {
 			printIfRemoteChange(printer_t &printer, ISource<T> const &entity, std::string entity_name,
 								Ts &&...args) {
 				if (!is_local_change_of(entity)) {
-					print(printer, "***");
-					print(printer, entity_name + ':');
+					printAnyway(printer, entity_name);
 					printIfRemoteChangeImpl(printer, entity, entity_name, std::forward<Ts>(args)...);
 				}
+			}
+
+			void printAnyway(printer_t &printer, const std::string &entity_name) {
+				print(printer, "***");
+				print(printer, entity_name + ':');
 			}
 
 			/*template<typename T, class... Ts>

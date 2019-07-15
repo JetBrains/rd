@@ -1,4 +1,4 @@
-package com.jetbrains.rd.framework.test.cross
+package com.jetbrains.rd.framework.test.cross.base
 
 import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.base.RdReactiveBase
@@ -56,10 +56,14 @@ abstract class CrossTestKtBase {
 
     protected fun <T> PrettyPrinter.printIfRemoteChange(entity: ISource<T>, entityName: String, vararg values: Any) {
         if (!entity.isLocalChange) {
-            println("***")
-            println("$entityName:")
-            values.forEach { value -> value.println(this) }
+            printAnyway(entityName, values)
         }
+    }
+
+    protected fun PrettyPrinter.printAnyway(entityName: String, vararg values: Any) {
+        println("***")
+        println("$entityName:")
+        values.forEach { value -> value.println(this) }
     }
 
     fun run(args: Array<String>) {

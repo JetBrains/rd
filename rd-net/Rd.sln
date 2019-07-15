@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossTestCsClientAllEntitie
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossTestCsClientBigBuffer", "Cross\CrossTestCsClientBigBuffer\CrossTestCsClientBigBuffer.csproj", "{7A0D8412-9B4B-4D42-AF92-8503F5019CB4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossTestCsClientRdCall", "Cross\CrossTestCsClientRdCall\CrossTestCsClientRdCall.csproj", "{A9DFBE7D-2321-4D86-8516-8D0A2A9CA558}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

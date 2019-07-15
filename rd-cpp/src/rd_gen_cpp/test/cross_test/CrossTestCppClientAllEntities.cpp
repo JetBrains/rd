@@ -33,11 +33,11 @@ namespace rd {
 				DemoModel model;
 
 				scheduler.queue([&]() mutable {
-					model.connect(lifetime, protocol.get());
+					model.connect(model_lifetime, protocol.get());
 					ExtModel const &extModel = ExtModel::getOrCreateExtensionOf(model);
 
 
-					adviseAll(lifetime, model, extModel, printer, promise);
+					adviseAll(model_lifetime, model, extModel, printer, promise);
 					fireAll(model, extModel);
 //
 				});

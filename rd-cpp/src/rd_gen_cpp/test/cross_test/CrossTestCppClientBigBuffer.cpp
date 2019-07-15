@@ -20,12 +20,12 @@ namespace rd {
 				DemoModel model;
 
 				scheduler.queue([&]() mutable {
-					model.connect(lifetime, protocol.get());
+					model.connect(model_lifetime, protocol.get());
 
 					IProperty<std::wstring> const &entity = model.get_property_with_default();
 
 					int count = 0;
-					entity.advise(lifetime, [&](std::wstring const &it) {
+					entity.advise(model_lifetime, [&](std::wstring const &it) {
 						printIfRemoteChange(printer, entity, "property_with_default", it);
 						if (!is_local_change_of(entity) && is_default_value_changed(entity)) {
 							if (++count == 2) {

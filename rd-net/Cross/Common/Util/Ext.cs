@@ -19,15 +19,20 @@ namespace Test.RdCross.Util
         {
             if (!entity.IsLocalChange())
             {
+                printer.PrintAnyway(entityName, values);
+            }
+        }
+
+        public static void PrintAnyway([NotNull] this PrettyPrinter printer, string entityName, params object[] values)
+        {
+            printer.Println();
+            "***".PrintEx(printer);
+            printer.Println();
+            (entityName + ":").PrintEx(printer);
+            foreach (var value in values)
+            {
+                value.PrintEx(printer);
                 printer.Println();
-                "***".PrintEx(printer);
-                printer.Println();
-                (entityName + ":").PrintEx(printer);
-                foreach (var value in values)
-                {
-                    value.PrintEx(printer);
-                    printer.Println();
-                }
             }
         }
     }

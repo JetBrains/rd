@@ -2,6 +2,7 @@
 
 package com.jetbrains.rd.framework.test.cross
 
+import com.jetbrains.rd.framework.test.cross.base.CrossTestKtServerBase
 import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
