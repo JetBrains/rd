@@ -184,7 +184,7 @@ class RdGen : Kli() {
 
             //sources
             sources.value?. let {
-                for (src in it.split(';',':')) {
+                for (src in it.split(';')) {
                     res.mixFileRecursively(File(src))
                 }
             }
