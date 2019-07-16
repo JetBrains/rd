@@ -275,7 +275,7 @@ class RdGen : Kli() {
         val srcDir = sources.value
         val classloader =
             if (srcDir != null) {
-                val sourcePaths = (srcDir.split(';',':').map { File(it) })
+                val sourcePaths = (srcDir.split(';').map { File(it) })
                 for (sourcePath in sourcePaths) {
                     if (!sourcePath.isDirectory)
                         return errorAndExit("Sources are incorrect. No folder found at '$sourcePath'")
