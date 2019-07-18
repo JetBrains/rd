@@ -16,7 +16,7 @@ namespace rd {
 	template<typename T>
 	class IProperty : public IPropertyBase<T> {
 	protected:
-		using WT = value_or_wrapper<T>;
+		using WT = typename IPropertyBase<T>::WT;
 	public:
 
 		//region ctor/dtor
@@ -68,6 +68,12 @@ namespace rd {
 		template<typename ... Args>
 		void emplace(Args &&... args) const {
 			set(value_or_wrapper<T>{std::forward<Args>(args)...});
+		}
+
+		void set_if_empty(WT new_value) const {
+			if (!this->has_value()) {
+				set(std::move(new_value));
+			}
 		}
 	};
 }

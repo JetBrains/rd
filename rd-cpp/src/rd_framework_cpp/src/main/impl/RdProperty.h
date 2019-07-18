@@ -82,7 +82,7 @@ namespace rd {
 		}
 
 		friend std::string to_string(RdProperty const &value) {
-			return value.has_value() ? to_string(value.get()) : "nullptr"s;
+			return to_string(static_cast<Property<T> const &>(value));
 		}
 	};
 }

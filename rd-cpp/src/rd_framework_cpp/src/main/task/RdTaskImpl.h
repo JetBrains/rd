@@ -8,14 +8,20 @@
 
 
 namespace rd {
-	template<typename T, typename S = Polymorphic<T>>
-	class RdTaskImpl {
-		template<typename, typename>
-		friend
-		class RdTask;
+	template<typename, typename>
+	class RdTask;
 
-		mutable Property<RdTaskResult<T, S>> result;
-	};
+	namespace detail {
+		template<typename T, typename S = Polymorphic<T>>
+		class RdTaskImpl {
+		private:
+			mutable Property<RdTaskResult<T, S>> result;
+		public:
+			template<typename, typename>
+			friend
+			class ::rd::RdTask;
+		};
+	}
 }
 
 

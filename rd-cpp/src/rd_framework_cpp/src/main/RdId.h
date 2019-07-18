@@ -78,8 +78,6 @@ namespace rd {
 			return get_hash() == NULL_ID;
 		}
 
-		std::string toString() const;
-
 		RdId notNull() {
 			RD_ASSERT_MSG(!isNull(), "id is null");
 			return *this;
@@ -102,6 +100,8 @@ namespace rd {
 		constexpr RdId mix(int64_t tail) const {
 			return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
 		}
+
+		friend std::string to_string(RdId const& id);
 	};
 }
 

@@ -15,7 +15,7 @@ namespace rd {
 		return *this;
 	}
 
-	const IWire *const RdReactiveBase::get_wire() const {
+	const IWire *RdReactiveBase::get_wire() const {
 		return get_protocol()->get_wire();
 	}
 

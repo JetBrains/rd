@@ -33,9 +33,7 @@ namespace rd {
 			set(std::move(handler));
 		}
 
-		explicit RdEndpoint(std::function<WTRes(TReq const &)
-
-		> handler) {
+		explicit RdEndpoint(std::function<WTRes(TReq const &)> handler) {
 			set(std::move(handler));
 		}
 
@@ -86,7 +84,7 @@ namespace rd {
 			auto taskId = RdId::read(buffer);
 			auto value = ReqSer::read(get_serialization_context(), buffer);
 			logReceived.trace(
-					"endpoint " + location.toString() + " ::" + rdid.toString() + " request = " + to_string(value));
+					"endpoint " + to_string(location) + " ::" + to_string(rdid) + " request = " + to_string(value));
 			if (!handler) {
 				throw std::invalid_argument("handler is empty for RdEndPoint");
 			}
@@ -97,10 +95,9 @@ namespace rd {
 				task.fault(e);
 			}
 			task.advise(*bind_lifetime, [&](RdTaskResult<TRes, ResSer> const &taskResult) {
-				logSend.trace("endpoint " + location.toString() + " ::(" + rdid.toString() +
-							  ") response = ${result.printToString()}");
-				get_wire()->send(rdid, [&](Buffer &inner_buffer) {
-					taskId.write(inner_buffer);
+				logSend.trace("endpoint %s::%s response = %s",
+							  to_string(location).c_str(), to_string(rdid).c_str(), to_string(*task.result).c_str());
+				get_wire()->send(taskId, [&](Buffer &inner_buffer) {
 					taskResult.write(get_serialization_context(), inner_buffer);
 				});
 			});

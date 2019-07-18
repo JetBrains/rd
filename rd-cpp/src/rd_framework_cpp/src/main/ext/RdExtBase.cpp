@@ -76,7 +76,7 @@ namespace rd {
 		if (serializationHash != counterpartSerializationHash) {
 			//need to queue since outOfSyncModels is not synchronized
 //        RdReactiveBase::get_protocol()->scheduler->queue([this](){ RdReactiveBase::get_protocol().outOfSyncModels.add(this) });
-			RD_ASSERT_MSG(false, "serializationHash of ext " + location.toString() +
+			RD_ASSERT_MSG(false, "serializationHash of ext " + to_string(location) +
 								 " doesn't match to counterpart: maybe you forgot to generate models?")
 		}
 	}
@@ -91,7 +91,7 @@ namespace rd {
 	}
 
 	void RdExtBase::traceMe(const Logger &logger, string_view message) const {
-		logger.trace("ext " + location.toString() + " " + rdid.toString() + ":: " + std::string(message));
+		logger.trace("ext " + to_string(location) + " " + to_string(rdid) + ":: " + std::string(message));
 	}
 
 	IScheduler *RdExtBase::get_wire_scheduler() const {

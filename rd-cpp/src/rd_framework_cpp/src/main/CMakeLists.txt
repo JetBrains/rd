@@ -42,6 +42,7 @@ add_library(rd_framework_cpp STATIC
         #task
         task/RdCall.h task/RdTask.h task/RdTaskResult.h task/RdEndpoint.h
         task/RdTaskImpl.h
+        task/WiredRdTaskImpl.h
         #wire
         wire/SocketWire.cpp wire/SocketWire.h
         wire/PumpScheduler.cpp wire/PumpScheduler.h
@@ -59,7 +60,7 @@ add_library(rd_framework_cpp STATIC
         MessageBroker.cpp MessageBroker.h
         #pch
         ${PCH_CPP_OPT}
-        )
+        base/IRdWireable.cpp base/IRdWireable.h task/WiredRdTask.h task/WiredRdTaskImpl.h)
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 

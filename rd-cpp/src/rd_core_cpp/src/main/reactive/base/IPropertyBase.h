@@ -17,6 +17,7 @@ namespace rd {
 
 		Signal<T> change, before_change;
 
+		using WT = value_or_wrapper<T>;
 	public:
 
 		bool has_value() const {

@@ -14,14 +14,14 @@ namespace rd {
 		RName EMPTY(nullptr, "", "");
 	}
 
-	std::string RName::toString() const {
-		optional<std::string> res;
-		if (parent)
-			res = parent->toString();
+	std::string to_string(RName const &value) {
+		optional<std::string> res{};
+		if (value.parent)
+			res = to_string(*(value.parent));
 		if (res && !res->empty()) {
-			return *res + separator + local_name;
+			return *res + value.separator + value.local_name;
 		} else {
-			return local_name;
+			return value.local_name;
 		}
 	}
 

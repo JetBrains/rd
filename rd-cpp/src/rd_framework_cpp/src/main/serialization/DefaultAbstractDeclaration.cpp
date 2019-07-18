@@ -7,7 +7,7 @@ namespace rd {
 	Wrapper<DefaultAbstractDeclaration>
 	DefaultAbstractDeclaration::readUnknownInstance(SerializationCtx  &ctx, Buffer &buffer,
 													RdId const &unknownId, int32_t size) {
-		throw std::invalid_argument("Can't find reader by id: " + unknownId.toString() + not_registered_error_message);
+		throw std::invalid_argument("Can't find reader by id: " + to_string(unknownId) + not_registered_error_message);
 	}
 
 	std::string DefaultAbstractDeclaration::type_name() const {

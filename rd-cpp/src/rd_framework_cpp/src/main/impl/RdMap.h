@@ -32,7 +32,7 @@ namespace rd {
 		mutable ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
 
 		std::string logmsg(Op op, int64_t version, K const *key, V const *value = nullptr) const {
-			return "map " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+			return "map " + to_string(location) + " " + to_string(rdid) + ":: " + to_string(op) +
 				   ":: key = " + to_string(*key) +
 				   ((version > 0) ? " :: version = " +
 									std::to_string(version) : "") +
@@ -195,7 +195,7 @@ namespace rd {
 							});
 					get_wire()->send(rdid, std::move(writer));
 					if (is_master) {
-						logReceived.error("Both ends are masters: %s", location.toString().c_str());
+						logReceived.error("Both ends are masters: %s", to_string(location).c_str());
 					}
 				}
 			}

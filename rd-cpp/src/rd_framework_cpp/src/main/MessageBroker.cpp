@@ -23,7 +23,7 @@ namespace rd {
 				if (exists_id) {
 					that->on_wire_received(std::move(message));
 				} else {
-					logger.trace("Disappeared Handler for Reactive entities with id:" + that->rdid.toString());
+					logger.trace("Disappeared Handler for Reactive entities with id:" + to_string(that->rdid));
 				}
 			};
 			std::function<void()> function = util::make_shared_function(std::move(action));
@@ -64,7 +64,7 @@ namespace rd {
 							invoke(subscription, *std::move(message), subscription->get_wire_scheduler() == default_scheduler);
 						}
 					} else {
-						logger.trace("No handler for id: " + id.toString());
+						logger.trace("No handler for id: " + to_string(id));
 					}
 
 					if (current.default_scheduler_messages.empty()) {

@@ -1,7 +1,6 @@
 #ifndef RD_CPP_RDTASK_H
 #define RD_CPP_RDTASK_H
 
-#include "RdTaskResult.h"
 #include "RdTaskImpl.h"
 #include "Polymorphic.h"
 
@@ -16,17 +15,36 @@ namespace rd {
 	 * \tparam S "SerDes" for value
 	 */
 	template<typename T, typename S = Polymorphic<T> >
-	class RdTask final {
-	private:
+	class RdTask {
+	protected:
 		using WT = value_or_wrapper<T>;
 
 		using TRes = RdTaskResult<T, S>;
 
-		mutable std::shared_ptr<RdTaskImpl<T, S> > ptr{std::make_shared<RdTaskImpl<T, S> >()};
+		mutable std::shared_ptr<detail::RdTaskImpl<T, S> > impl{std::make_shared<detail::RdTaskImpl<T, S>>()};
+
+		Property<RdTaskResult<T, S>> *result{&impl->result};
 	public:
 		using result_type = RdTaskResult<T, S>;
 
-		static RdTask<T, S> from_result(WT value) {
+		template<typename, typename, typename, typename>
+		friend class RdEndpoint;
+		//region ctor/dtor
+
+		RdTask() = default;
+
+		RdTask(RdTask const &other) = default;
+
+		RdTask &operator=(RdTask const &other) = default;
+
+		RdTask(RdTask &&other) = default;
+
+		RdTask &operator=(RdTask &&other) = default;
+
+		virtual ~RdTask() = default;
+		//endregion
+
+		static RdTask from_result(WT value) {
 			RdTask<T, S> res;
 			res.set(std::move(value));
 			return res;
@@ -34,28 +52,32 @@ namespace rd {
 
 		void set(WT value) const {
 			typename TRes::Success t(std::move(value));
-			ptr->result.set(std::move(t));
+			impl->result.set(std::move(t));
 		}
 
 		void set_result(TRes value) const {
-			ptr->result.set(std::move(value));
+			impl->result.set(std::move(value));
+		}
+
+		void set_result_if_empty(TRes value) const {
+			impl->result.set_if_empty(std::move(value));
 		}
 
 		void cancel() const {
-			ptr->result.set(typename TRes::Cancelled());
+			impl->result.set(typename TRes::Cancelled());
 		}
 
 		void fault(std::exception const &e) const {
-			ptr->result.set(typename TRes::Fault(e));
+			impl->result.set(typename TRes::Fault(e));
 		}
 
 		bool has_value() const {
-			return ptr->result.has_value();
+			return impl->result.has_value();
 		}
 
-		const TRes & value_or_throw() const {
-			if (ptr->result.has_value()) {
-				return ptr->result.get();
+		const TRes &value_or_throw() const {
+			if (impl->result.has_value()) {
+				return impl->result.get();
 			} else {
 				throw std::invalid_argument("task is empty");
 			}
@@ -66,12 +88,12 @@ namespace rd {
 		}
 
 		void advise(Lifetime lifetime, std::function<void(TRes const &)> handler) const {
-			ptr->result.advise(lifetime,
-							   [handler = std::move(handler)](optional<TRes> const &opt_value) {
-								   if (opt_value) {
-									   handler(*opt_value);
-								   }
-							   });
+			impl->result.advise(lifetime,
+								[handler = std::move(handler)](optional<TRes> const &opt_value) {
+									if (opt_value) {
+										handler(*opt_value);
+									}
+								});
 		}
 	};
 }

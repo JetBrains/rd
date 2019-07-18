@@ -15,8 +15,6 @@ namespace rd {
 
 		const IProtocol *get_protocol() const override;
 
-		SerializationCtx &get_serialization_context() const override;
-
 		virtual std::string toString() const;
 
 	public:
@@ -39,6 +37,8 @@ namespace rd {
 		void bind(Lifetime lf, IRdDynamic const *parent, string_view name) const override;
 
 		void identify(const Identities &identities, RdId const &id) const override;
+
+		SerializationCtx &get_serialization_context() const override;
 
 		mutable ordered_map<std::string, std::shared_ptr<IRdBindable>> bindable_extensions;//todo concurrency
 		//mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
@@ -75,7 +75,7 @@ namespace rd {
 	//T : RdBindableBase
 	template<typename T>
 	T &withId(T &that, RdId const &id) {
-		RD_ASSERT_MSG(that.rdid == RdId::Null(), "this.id != RdId.NULL_ID, but " + that.rdid.toString());
+		RD_ASSERT_MSG(that.rdid == RdId::Null(), "this.id != RdId.NULL_ID, but " + to_string(that.rdid));
 		RD_ASSERT_MSG((id != RdId::Null()), "id != RdId.NULL_ID");
 
 		that.rdid = id;

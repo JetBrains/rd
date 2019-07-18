@@ -25,7 +25,7 @@ namespace rd {
 		mutable int64_t next_version = 1;
 
 		std::string logmsg(Op op, int64_t version, int32_t key, T const *value = nullptr) const {
-			return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+			return "list " + to_string(location) + " " + to_string(rdid) + ":: " + to_string(op) +
 				   ":: key = " + std::to_string(key) +
 				   ((version > 0) ? " :: version = " + std::to_string(version) : "") +
 				   " :: value = " + (value ? to_string(*value) : "");
@@ -114,7 +114,7 @@ namespace rd {
 			int32_t index = (buffer.read_integral<int32_t>());
 
 			RD_ASSERT_MSG(version == next_version,
-						  ("Version conflict for " + location.toString() + "}. Expected version " +
+						  ("Version conflict for " + to_string(location) + "}. Expected version " +
 						   std::to_string(next_version) +
 						   ", received " +
 						   std::to_string(version) +

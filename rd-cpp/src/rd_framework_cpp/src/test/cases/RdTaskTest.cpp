@@ -19,15 +19,15 @@ TEST_F(RdFrameworkTestBase, testStaticSuccess) {
 	statics(server_entity, entity_id);
 
 	//not bound
-	EXPECT_THROW(client_entity.sync(0), std::exception);
-	EXPECT_THROW(client_entity.start(0), std::exception);
+	EXPECT_THROW(client_entity.sync(0), std::invalid_argument);
+	EXPECT_THROW(client_entity.start(0), std::invalid_argument);
 
 	//bound
 	bindStatic(serverProtocol.get(), server_entity, "top");
 	bindStatic(clientProtocol.get(), client_entity, "top");
 
-	EXPECT_EQ(L"0", client_entity.sync(0));
-	EXPECT_EQ(L"1", client_entity.sync(1));
+	EXPECT_EQ(L"0", client_entity.sync(0).value_or_throw().unwrap());
+	EXPECT_EQ(L"1", client_entity.sync(1).value_or_throw().unwrap());
 
 	auto taskResult = client_entity.start(2).value_or_throw();
 	EXPECT_EQ(L"2", taskResult.unwrap());
@@ -50,7 +50,7 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
 
 	std::wstring source(10'000, '5');
 
-	EXPECT_EQ(std::hash<std::wstring>()(source), client_entity.sync(source));
+	EXPECT_EQ(std::hash<std::wstring>()(source), client_entity.sync(source).value_or_throw().unwrap());
 
 	AfterTest();
 }

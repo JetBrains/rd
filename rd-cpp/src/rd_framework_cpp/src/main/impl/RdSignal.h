@@ -23,7 +23,7 @@ namespace rd {
 		using WT = typename ISignal<T>::WT;
 
 		std::string logmsg(T const &value) const {
-			return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
+			return "signal " + to_string(location) + " " + to_string(rdid) + ":: value = " + to_string(value);
 		}
 
 	protected:

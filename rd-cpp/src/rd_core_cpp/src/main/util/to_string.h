@@ -14,9 +14,6 @@ namespace rd {
 	namespace detail {
 		using std::to_string;
 
-		/*template<typename T>
-		std::string to_string(T const &val);*/
-
 		inline std::string to_string(std::string const &val) {
 			return val;
 		}
@@ -42,6 +39,11 @@ namespace rd {
 		}
 
 		template<typename T>
+		inline std::string to_string(T const *val) {
+			return val ? to_string(*val) : "nullptr";
+		}
+
+		template<typename T>
 		inline std::string to_string(std::atomic<T> const &value) {
 			return to_string(value.load());
 		}
@@ -59,17 +61,6 @@ namespace rd {
 		inline std::string to_string(const std::pair<F, S> p) {
 			return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
 		}
-
-		template<typename F, typename S>
-		inline std::string to_string(const std::pair<F, S *> p) {
-			return "(" + to_string(p.first) + ", " + to_string(*p.second) + ")";
-		}
-
-		template<typename F, typename S>
-		inline std::string to_string(const std::pair<F *, S *> p) {
-			return "(" + to_string(*p.first) + ", " + to_string(*p.second) + ")";
-		}
-
 
 		template<typename T>
 		std::string to_string(std::vector<T> const &v) {

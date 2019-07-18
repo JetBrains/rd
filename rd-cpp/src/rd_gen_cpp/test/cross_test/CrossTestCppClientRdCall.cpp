@@ -12,14 +12,16 @@ namespace rd {
 			int run() override {
 				DemoModel model;
 
-				scheduler.queue([&]() {
+				RdTask<int32_t> task;
+				scheduler.queue([&]() mutable {
 					model.connect(model_lifetime, protocol.get());
 
 					model.get_call().set([](wchar_t c) -> std::wstring {
 						return std::to_wstring(c);
 					});
 
-					model.get_callback().start(L"Cpp").advise(model_lifetime, [&](RdTaskResult<int32_t> const &result) {
+					task = model.get_callback().start(L"Cpp");
+					task.advise(model_lifetime, [&](RdTaskResult<int32_t> const &result) {
 						printAnyway(printer, rd::to_string(result));
 
 						promise.set_value();
