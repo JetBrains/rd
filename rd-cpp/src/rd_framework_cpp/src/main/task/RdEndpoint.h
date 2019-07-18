@@ -17,7 +17,7 @@ namespace rd {
 	 * \tparam ResSer "SerDes" for response
 	 */
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic <TReq>, typename ResSer = Polymorphic <TRes> >
-	class RdEndpoint : public RdReactiveBase, public ISerializable {
+	class RdEndpoint : public virtual RdReactiveBase, public ISerializable {
 		using WTReq = value_or_wrapper<TReq>;
 		using WTRes = value_or_wrapper<TRes>;
 
@@ -75,8 +75,7 @@ namespace rd {
 
 		void init(Lifetime lifetime) const override {
 			RdReactiveBase::init(lifetime);
-			this->bind_lifetime = lifetime;
-
+			bind_lifetime = lifetime;
 			get_wire()->advise(lifetime, this);
 		}
 

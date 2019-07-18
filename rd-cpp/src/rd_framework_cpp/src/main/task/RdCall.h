@@ -22,7 +22,7 @@ namespace rd {
 	 * \tparam ResSer "SerDes" for response
 	 */
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >
-	class RdCall final : public RdReactiveBase, public ISerializable {
+	class RdCall : public virtual RdReactiveBase, public ISerializable {
 		using WTReq = value_or_wrapper<TReq>;
 		using WTRes = value_or_wrapper<TRes>;
 

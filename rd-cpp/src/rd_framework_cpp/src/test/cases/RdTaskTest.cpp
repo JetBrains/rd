@@ -5,6 +5,7 @@
 #include "RdEndpoint.h"
 
 #include <string>
+#include <task/RdSymmetricCall.h>
 
 using namespace rd;
 using namespace test;
@@ -56,13 +57,11 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
 }
 
 TEST_F(RdFrameworkTestBase, testStaticFailure) {
-	int entity_id = 1;
-
 	auto client_entity = RdCall<int, std::wstring>();
 	auto server_entity = RdEndpoint<int, std::wstring>([](int) -> std::wstring { throw std::runtime_error("1234"); });
 
-	statics(client_entity, entity_id);
-	statics(server_entity, entity_id);
+	statics(client_entity, static_entity_id);
+	statics(server_entity, static_entity_id);
 
 	bindStatic(serverProtocol.get(), server_entity, "top");
 	bindStatic(clientProtocol.get(), client_entity, "top");
@@ -74,5 +73,23 @@ TEST_F(RdFrameworkTestBase, testStaticFailure) {
 
 //    EXPECT_EQ("1234", taskResult.error.reasonMessage);
 //    EXPECT_EQ("IllegalStateException", taskResult.error.reasonTypeFqn);
+	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, testSymmetricCall) {
+	RdSymmetricCall<std::wstring, int32_t> server_entity, client_entity;
+
+	statics(client_entity, static_entity_id);
+	statics(server_entity, static_entity_id);
+
+	server_entity.set([](std::wstring const &s) { return +s.length(); });
+	client_entity.set([](std::wstring const &s) { return -s.length(); });
+
+	bindStatic(serverProtocol.get(), server_entity, "top");
+	bindStatic(clientProtocol.get(), client_entity, "top");
+
+	EXPECT_EQ(+2, client_entity.sync(L"ab").value_or_throw().unwrap());
+	EXPECT_EQ(-2, server_entity.sync(L"xy").value_or_throw().unwrap());
+
 	AfterTest();
 }
