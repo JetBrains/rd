@@ -60,7 +60,7 @@ add_library(rd_framework_cpp STATIC
         MessageBroker.cpp MessageBroker.h
         #pch
         ${PCH_CPP_OPT}
-        base/IRdWireable.cpp base/IRdWireable.h task/WiredRdTask.h task/WiredRdTaskImpl.h task/RdSymmetricCall.cpp task/RdSymmetricCall.h)
+        base/IRdWireable.cpp base/IRdWireable.h task/WiredRdTask.h task/WiredRdTaskImpl.h task/RdSymmetricCall.h scheduler/SingleThreadScheduler.cpp scheduler/SingleThreadScheduler.h)
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 

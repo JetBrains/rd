@@ -42,7 +42,7 @@ namespace rd {
 			if (lifetime->is_terminated()) {
 				return;
 			}
-			signal.advise(std::move(lifetime), handler);
+			signal.advise(lifetime, handler);
 			if (this->has_value()) {
 				handler(this->get());
 			}
@@ -54,7 +54,7 @@ namespace rd {
 
 	public:
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
-			advise0(std::move(lifetime), std::move(handler), this->change);
+			advise0(lifetime, std::move(handler), this->change);
 		}
 
 		/**

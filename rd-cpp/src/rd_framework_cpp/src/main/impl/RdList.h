@@ -154,7 +154,7 @@ namespace rd {
 			if (is_bound()) {
 				assert_threading();
 			}
-			list::advise(std::move(lifetime), handler);
+			list::advise(lifetime, handler);
 		}
 
 		bool add(WT element) const override {

@@ -1,6 +1,8 @@
 #ifndef RD_CPP_GUARDS_H
 #define RD_CPP_GUARDS_H
 
+#include <pch.h>
+
 namespace rd {
 	namespace util {
 		template<typename T>

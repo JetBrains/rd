@@ -65,7 +65,9 @@ namespace rd {
 		WiredRdTask<TRes, ResSer> sync(TReq const &request, std::chrono::milliseconds timeout = 200ms) const {
 			try {
 				auto task = start_internal(request, true, &globalSynchronousScheduler);
-				while (!task.has_value() && (*bind_lifetime)->is_terminated()) {
+				auto time_at_start = std::chrono::system_clock::now();
+				while (!task.has_value() && (*bind_lifetime)->is_terminated() &&
+					   (std::chrono::system_clock::now() - time_at_start < timeout)) {
 					std::this_thread::yield();
 				}
 				task.value_or_throw().unwrap();//check for existing value
@@ -118,7 +120,8 @@ namespace rd {
 			get_wire()->send(rdid, [&](Buffer &buffer) {
 				logSend.trace(
 						"call %s::%s send %s request %s : " + to_string(request),
-						to_string(location).c_str(), to_string(rdid).c_str(), (sync ? "SYNC" : "ASYNC"), to_string(task_id).c_str());
+						to_string(location).c_str(), to_string(rdid).c_str(), (sync ? "SYNC" : "ASYNC"),
+						to_string(task_id).c_str());
 				task_id.write(buffer);
 				ReqSer::write(get_serialization_context(), buffer, request);
 			});

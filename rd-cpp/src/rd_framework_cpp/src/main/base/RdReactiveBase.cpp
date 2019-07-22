@@ -1,8 +1,8 @@
 #include "RdReactiveBase.h"
 
 namespace rd {
-	Logger RdReactiveBase::logReceived;
-	Logger RdReactiveBase::logSend;
+	Logger RdReactiveBase::logReceived{};
+	Logger RdReactiveBase::logSend{};
 
 	RdReactiveBase::RdReactiveBase(RdReactiveBase &&other) : RdBindableBase(
 			std::move(other))/*, async(other.async)*/ {

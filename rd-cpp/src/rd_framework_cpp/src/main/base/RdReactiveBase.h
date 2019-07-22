@@ -20,7 +20,7 @@ namespace rd {
 	class Serializers;
 	//endregion
 
-	class RdReactiveBase : public virtual RdBindableBase, public IRdReactive {
+	class RdReactiveBase : public RdBindableBase, public IRdReactive {
 	public:
 		static Logger logReceived;
 		static Logger logSend;

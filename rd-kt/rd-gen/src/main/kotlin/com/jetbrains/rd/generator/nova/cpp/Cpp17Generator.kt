@@ -380,7 +380,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is Member.Reactive.Task -> when (actualFlow) {
                 Sink -> "RdEndpoint"
                 Source -> "RdCall"
-                Both -> "RdCall"
+                Both -> "RdSymmetricCall"
             }
             is Member.Reactive.Signal -> "RdSignal"
             is Member.Reactive.Stateful.Property -> "RdProperty"

@@ -67,12 +67,14 @@ TEST_F(RdFrameworkTestBase, testStaticFailure) {
 	bindStatic(clientProtocol.get(), client_entity, "top");
 
 	auto task = client_entity.start(2);
-	EXPECT_TRUE(task.isFaulted());
+	EXPECT_TRUE(task.is_faulted());
 
-	auto taskResult = task.value_or_throw();
+	RdTaskResult<std::wstring> task_result = task.value_or_throw();
 
-//    EXPECT_EQ("1234", taskResult.error.reasonMessage);
-//    EXPECT_EQ("IllegalStateException", taskResult.error.reasonTypeFqn);
+	task_result.as_faulted([&](typename decltype(task_result)::Fault const &t) {
+		EXPECT_EQ(L"1234", t.reason_message);
+	});
+
 	AfterTest();
 }
 

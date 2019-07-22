@@ -3,6 +3,7 @@ add_subdirectory(ordered-map)
 add_subdirectory(variant)
 add_subdirectory(clsocket)
 add_subdirectory(string-view-lite)
+add_subdirectory(CTPL)
 
 add_library(thirdparty STATIC thirdparty.hpp thirdparty.cpp)
 target_include_directories(thirdparty PUBLIC
@@ -11,6 +12,7 @@ target_include_directories(thirdparty PUBLIC
         ordered-map
         variant
         string-view-lite
+        ctpl
         )
 
 target_link_libraries(thirdparty PUBLIC
@@ -18,4 +20,5 @@ target_link_libraries(thirdparty PUBLIC
         mpark_variant
         tsl::ordered_map
         string_view-lite
+        ctpl
         )

@@ -83,8 +83,8 @@ namespace rd {
 			}
 		}
 
-		bool isFaulted() const {
-			return has_value() && value_or_throw().isFaulted(); //todo atomic
+		bool is_faulted() const {
+			return has_value() && value_or_throw().is_faulted(); //todo atomic
 		}
 
 		void advise(Lifetime lifetime, std::function<void(TRes const &)> handler) const {

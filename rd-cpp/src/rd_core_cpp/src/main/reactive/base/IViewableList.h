@@ -138,7 +138,7 @@ namespace rd {
 		 * \param handler to be called.
 		 */
 		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, size_t, T const &)> handler) const {
-			advise(std::move(lifetime), [handler](Event e) {
+			advise(lifetime, [handler](Event e) {
 				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
 							handler(AddRemove::ADD, e.index, *e.new_value);

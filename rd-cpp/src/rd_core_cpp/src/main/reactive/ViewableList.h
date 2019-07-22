@@ -174,7 +174,7 @@ namespace rd {
 
 		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (lifetime->is_terminated()) return;
-			change.advise(std::move(lifetime), handler);
+			change.advise(lifetime, handler);
 			for (int32_t i = 0; i < static_cast<int32_t>(size()); ++i) {
 				handler(typename Event::Add(i, &(*list[i])));
 			}

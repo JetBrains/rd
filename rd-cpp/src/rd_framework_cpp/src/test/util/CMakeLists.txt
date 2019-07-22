@@ -8,7 +8,7 @@ add_library(rd_framework_cpp_test_util
         others/entities_util.cpp others/entities_util.h
         others/ExtProperty.h
 
-        SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h)
+        SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h test_fixture/RdAsyncTestBase.cpp test_fixture/RdAsyncTestBase.h)
 
 add_subdirectory(entities)
 add_subdirectory(interning)
