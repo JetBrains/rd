@@ -8,7 +8,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 
 abstract class CrossTestKtServerBase : CrossTestKtBase() {
-    fun server(lifetime: Lifetime, port: Int? = null): IProtocol {
+    private fun server(lifetime: Lifetime, port: Int? = null): IProtocol {
         scheduler = SingleThreadScheduler(lifetime, "SingleThreadScheduler")
         return Protocol(Serializers(), Identities(IdKind.Server), scheduler,
                 SocketWire.Server(lifetime, scheduler, port, "DemoServer"), lifetime)

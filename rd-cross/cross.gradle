@@ -1,4 +1,4 @@
-import com.jetbrains.rd.gradle.tasks.CrossTestKtTask
+import com.jetbrains.rd.gradle.tasks.CrossTestKtRdCall
 import com.jetbrains.rd.gradle.tasks.InteropTask
 
 dependencies {
@@ -17,17 +17,17 @@ def getCsTaskByName(String name) {
 }
 
 //region Kt
-task CrossTestKtServerAllEntities(type: CrossTestKtTask, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+task CrossTestKtServerAllEntities(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }
 
-task CrossTestKtServerBigBuffer(type: CrossTestKtTask, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+task CrossTestKtServerBigBuffer(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }
 
-task CrossTestKtServerTask(type: CrossTestKtTask, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+task CrossTestKtServerRdCall(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }
@@ -49,7 +49,7 @@ task CrossTestKtCppBigBuffer(type: InteropTask) {
 }
 
 task CrossTestKtCppRdCall(type: InteropTask) {
-    taskServer = CrossTestKtServerTask
+    taskServer = CrossTestKtServerRdCall
     taskClient = getCppTaskByName('CrossTestCppClientRdCall')
     
     addDependencies()
@@ -72,7 +72,7 @@ task CrossTestKtCsBigBuffer(type: InteropTask) {
 }
 
 task CrossTestKtCsRdCall(type: InteropTask) {
-    taskServer = CrossTestKtServerTask
+    taskServer = CrossTestKtServerRdCall
     taskClient = getCsTaskByName('CrossTestCsClientRdCall')
 
     addDependencies()

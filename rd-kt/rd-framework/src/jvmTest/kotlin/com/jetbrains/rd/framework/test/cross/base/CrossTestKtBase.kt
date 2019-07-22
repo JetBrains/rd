@@ -14,7 +14,7 @@ import com.jetbrains.rd.util.string.println
 import java.io.File
 
 abstract class CrossTestKtBase {
-    protected val testName: String = this.javaClass.kotlin.simpleName!!
+    private val testName: String = this.javaClass.kotlin.simpleName!!
 
     protected val printer = PrettyPrinter()
     protected lateinit var outputFile: File

@@ -81,4 +81,14 @@ class CrossTest {
     fun testCrossTestKtCsBigBuffer() {
         doTest(methodName)
     }
+
+    /*@Test
+    fun testCrossTestKtCppRdCall() {
+        doTest(methodName)
+    }*/
+
+    @Test
+    fun testCrossTestKtCsRdCall() {
+        doTest(methodName)
+    }
 }
