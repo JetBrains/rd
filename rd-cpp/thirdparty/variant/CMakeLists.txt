@@ -39,8 +39,8 @@ export(
   FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/mpark_variant-targets.cmake")
 
 # Install.
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/variant"
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/mpark
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}"
         CONFIGURATIONS Release
         FILES_MATCHING
         PATTERN *.h
