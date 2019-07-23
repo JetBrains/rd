@@ -50,3 +50,11 @@ if(OPTIONAL_ENABLE_DOCS)
                          INPUT tl/optional.hpp)
   endif()
 endif()
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/optional"
+        CONFIGURATIONS Release
+        FILES_MATCHING
+        PATTERN *.h
+        PATTERN *.hpp
+        )

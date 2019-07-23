@@ -102,7 +102,7 @@ write_basic_package_version_file(
 
 # Installation:
 
-install(
+#[[install(
     TARGETS      ${package_name}
     EXPORT       ${package_target}
 #   INCLUDES DESTINATION "${...}"  # already set via target_include_directories()
@@ -123,6 +123,14 @@ install(
 install(
     DIRECTORY   "include/"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-)
+)]]
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/string-view-lite"
+        CONFIGURATIONS Release
+        FILES_MATCHING
+        PATTERN *.h
+        PATTERN *.hpp
+        )
 
 # end of file
