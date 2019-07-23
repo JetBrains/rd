@@ -36,4 +36,6 @@ TEST(BackgroundSchedulerTest, Simple) {
 
 	s.flush();
 	EXPECT_EQ(3, tasks_executed);
+
+	definition.terminate();
 }

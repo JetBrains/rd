@@ -3,9 +3,12 @@
 
 #include "IScheduler.h"
 #include "Lifetime.h"
-#include "ctpl_stl.h"
 
 #include <utility>
+
+namespace ctpl {
+	class thread_pool;
+}
 
 namespace rd {
 	class SingleThreadScheduler : public IScheduler {
@@ -17,57 +20,27 @@ namespace rd {
 
 		std::atomic_uint32_t tasks_executing{0};
 		std::atomic_uint32_t active{0};
-		ctpl::thread_pool pool{1};
+		std::unique_ptr<ctpl::thread_pool> pool;
 
 		class PoolTask {
 			std::function<void()> f;
 			SingleThreadScheduler *scheduler;
 		public:
-			explicit PoolTask(std::function<void()> f, SingleThreadScheduler *scheduler) :
-					f(std::move(f)), scheduler(scheduler) {}
+			explicit PoolTask(std::function<void()> f, SingleThreadScheduler *scheduler);
 
-			void operator()(int id) const {
-				try {
-					f();
-					--scheduler->tasks_executing;
-				} catch (std::exception const &e) {
-					scheduler->log.error(&e, "Background task failed, scheduler=%s, thread_id=%d",
-										 scheduler->name.c_str(), id);
-					--scheduler->tasks_executing;
-				}
-			}
+			void operator()(int id) const;
 		};
 
 	public:
-		SingleThreadScheduler(Lifetime lifetime, std::string name) :
-				lifetime(lifetime), name(std::move(name)) {
-			lifetime->add_action([this]() {
-				try {
-					pool.stop(true);
-				} catch (std::exception const &e) {
-					log.error("Failed to terminate %s", this->name.c_str());
-				}
-			});
-		}
+		SingleThreadScheduler(Lifetime lifetime, std::string name);
 
-		void flush() override {
-			RD_ASSERT_MSG(!is_active(),
-						  "Can't flush this scheduler in a reentrant way: we are inside queued item's execution");
+		virtual ~SingleThreadScheduler();
 
-			while (tasks_executing != 0) {
-				std::this_thread::yield();
-			}
-		};
+		void flush() override;
 
-		void queue(std::function<void()> action) override {
-			++tasks_executing;
-			PoolTask task(action, this);
-			pool.push(std::move(task));
-		};
+		void queue(std::function<void()> action) override;
 
-		bool is_active() const override {
-			return active > 0;
-		};
+		bool is_active() const override;
 	};
 }
 
