@@ -15,6 +15,18 @@ namespace rd {
 		void on_wire_received(Buffer buffer) const override {
 			RdEndpoint<TReq, TRes, ReqSer, ResSer>::on_wire_received(std::move(buffer));
 		}
+
+		friend bool operator==(const RdSymmetricCall &lhs, const RdSymmetricCall &rhs) {
+			return &lhs == &rhs;
+		}
+
+		friend bool operator!=(const RdSymmetricCall &lhs, const RdSymmetricCall &rhs) {
+			return !(rhs == lhs);
+		}
+
+		friend std::string to_string(RdSymmetricCall const &value) {
+			return "RdSymmetricCall";
+		}
 	};
 }
 

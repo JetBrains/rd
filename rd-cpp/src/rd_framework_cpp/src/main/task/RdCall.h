@@ -66,14 +66,16 @@ namespace rd {
 			try {
 				auto task = start_internal(request, true, &globalSynchronousScheduler);
 				auto time_at_start = std::chrono::system_clock::now();
-				while (!task.has_value() && (*bind_lifetime)->is_terminated() &&
-					   (std::chrono::system_clock::now() - time_at_start < timeout)) {
+				while (!task.has_value() && !(*bind_lifetime)->is_terminated() &&
+					   ((std::chrono::system_clock::now() - time_at_start) < timeout)) {
 					std::this_thread::yield();
 				}
+				Logger().debug("Time elapsed:" + to_string(std::chrono::system_clock::now() - time_at_start) +
+							   "has_value=" + to_string(task.has_value()));
 				task.value_or_throw().unwrap();//check for existing value
 				sync_task_id = nullopt;
 				return task;
-			} catch (...) {
+			} catch (std::exception const &e) {
 				throw;
 			}
 		}
@@ -127,6 +129,19 @@ namespace rd {
 			});
 
 			return task;
+		}
+
+	public:
+		friend bool operator==(const RdCall &lhs, const RdCall &rhs) {
+			return &lhs == &rhs;
+		}
+
+		friend bool operator!=(const RdCall &lhs, const RdCall &rhs) {
+			return !(rhs == lhs);
+		}
+
+		friend std::string to_string(RdCall const &value) {
+			return "RdCall";
 		}
 	};
 }

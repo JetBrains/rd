@@ -116,6 +116,10 @@ namespace rd {
 			), v);
 		}
 
+		bool is_succeeded() const {
+			return v.index() == 0;
+		}
+
 		bool is_canceled() const {
 			return v.index() == 1;
 		}

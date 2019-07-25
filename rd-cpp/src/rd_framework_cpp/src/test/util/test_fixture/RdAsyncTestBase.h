@@ -3,11 +3,16 @@
 
 #include "RdFrameworkTestBase.h"
 
+#include "TestSingleThreadScheduler.h"
+
 namespace rd {
 	namespace test {
 		namespace util {
 			class RdAsyncTestBase : public RdFrameworkTestBase {
-
+				TestSingleThreadScheduler clientBgScheduler{"ClientBg"};
+				TestSingleThreadScheduler clientUiScheduler{"ClientUi"};
+				TestSingleThreadScheduler serverBgScheduler{"ServerBg"};
+				TestSingleThreadScheduler serverUiScheduler{"ServerUi"};
 			};
 		}
 	}

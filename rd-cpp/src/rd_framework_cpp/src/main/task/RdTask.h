@@ -28,7 +28,8 @@ namespace rd {
 		using result_type = RdTaskResult<T, S>;
 
 		template<typename, typename, typename, typename>
-		friend class RdEndpoint;
+		friend
+		class RdEndpoint;
 		//region ctor/dtor
 
 		RdTask() = default;
@@ -82,6 +83,14 @@ namespace rd {
 				throw std::invalid_argument("task is empty");
 			}
 		}
+
+		bool is_succeeded() const {
+			return has_value() && value_or_throw().is_succeeded();
+		};
+
+		bool is_canceled() const {
+			return has_value() && value_or_throw().is_canceled();
+		};
 
 		bool is_faulted() const {
 			return has_value() && value_or_throw().is_faulted(); //todo atomic

@@ -949,10 +949,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         val frameworkHeaders = listOf(
                 //root
-                "Buffer",
-                "Identities",
                 "Protocol",
-                "RdId",
                 "DateTime",
                 //impl
                 "RdSignal",
@@ -976,7 +973,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 //task
                 "RdCall",
                 "RdEndpoint",
-                "RdTask",
+                "RdSymmetricCall",
                 //gen
                 "gen_util"
         )

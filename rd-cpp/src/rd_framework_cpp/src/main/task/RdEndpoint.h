@@ -24,6 +24,7 @@ namespace rd {
 		using handler_t = std::function<RdTask<TRes, ResSer>(Lifetime, TReq const &)>;
 		mutable handler_t handler;
 
+		mutable tsl::ordered_map<RdId, RdTask<TRes, ResSer>> awaiting_tasks;
 	public:
 		//region ctor/dtor
 
@@ -33,7 +34,9 @@ namespace rd {
 			set(std::move(handler));
 		}
 
-		explicit RdEndpoint(std::function<WTRes(TReq const &)> handler) {
+		explicit RdEndpoint(std::function<WTRes(TReq const &)
+
+		> handler) {
 			set(std::move(handler));
 		}
 
@@ -44,14 +47,14 @@ namespace rd {
 		virtual ~RdEndpoint() = default;
 		//endregion
 
-		static RdEndpoint<TReq, TRes, ReqSer, ResSer> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdEndpoint<TReq, TRes, ReqSer, ResSer> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdEndpoint<TReq, TRes, ReqSer, ResSer> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -80,26 +83,38 @@ namespace rd {
 		}
 
 		void on_wire_received(Buffer buffer) const override {
-			auto taskId = RdId::read(buffer);
+			auto task_id = RdId::read(buffer);
 			auto value = ReqSer::read(get_serialization_context(), buffer);
-			logReceived.trace(
-					"endpoint " + to_string(location) + " ::" + to_string(rdid) + " request = " + to_string(value));
+			logReceived.trace("endpoint %s::%s request = " + to_string(value), to_string(location).c_str(), to_string(rdid).c_str());
 			if (!handler) {
 				throw std::invalid_argument("handler is empty for RdEndPoint");
 			}
-			RdTask<TRes, ResSer> task;
+			auto & task = awaiting_tasks[task_id] = {};
 			try {
 				task = handler(*bind_lifetime, wrapper::get<TReq>(value));
 			} catch (std::exception const &e) {
 				task.fault(e);
 			}
-			task.advise(*bind_lifetime, [&](RdTaskResult<TRes, ResSer> const &taskResult) {
+			task.advise(*bind_lifetime, [this, task_id, &task](RdTaskResult<TRes, ResSer> const &task_result) {
 				logSend.trace("endpoint %s::%s response = %s",
 							  to_string(location).c_str(), to_string(rdid).c_str(), to_string(*task.result).c_str());
-				get_wire()->send(taskId, [&](Buffer &inner_buffer) {
-					taskResult.write(get_serialization_context(), inner_buffer);
+				get_wire()->send(task_id, [&](Buffer &inner_buffer) {
+					task_result.write(get_serialization_context(), inner_buffer);
 				});
+				//todo remove from awaiting_tasks
 			});
+		}
+
+		friend bool operator==(const RdEndpoint &lhs, const RdEndpoint &rhs) {
+			return &lhs == &rhs;
+		}
+
+		friend bool operator!=(const RdEndpoint &lhs, const RdEndpoint &rhs) {
+			return !(rhs == lhs);
+		}
+
+		friend std::string to_string(RdEndpoint const &value) {
+			return "RdEndpoint";
 		}
 	};
 }

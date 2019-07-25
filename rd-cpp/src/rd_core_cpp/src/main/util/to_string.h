@@ -33,9 +33,9 @@ namespace rd {
 			return std::string(e.what());
 		}
 
-		template<typename T>
-		inline std::string to_string(std::chrono::duration<int64_t, T> const &time) {
-			return std::to_string(time.count());
+		template<typename Rep, typename Period>
+		inline std::string to_string(std::chrono::duration<Rep, Period> const &time) {
+			return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(time).count()) + "ms";
 		}
 
 		template<typename T>

@@ -16,6 +16,7 @@ namespace rd {
 			bool after_test_called = false;
 		public:
 			int static_entity_id = 1;
+			std::string static_name = "top";
 
 			Serializers serializers;
 

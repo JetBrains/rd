@@ -16,7 +16,7 @@ add_executable(rd_framework_cpp_test
         cases/BackgroundSchedulerTest.cpp
         #pch
         ${PCH_CPP_OPT}
-        )
+        cases/RdAsyncTaskTest.cpp cases/RdAsyncSignalTest.cpp)
 
 message(STATUS "Using pch by rd_framework_test: '${ENABLE_PCH_HEADERS}'")
 
