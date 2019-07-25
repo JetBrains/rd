@@ -6,6 +6,8 @@ add_library(rd_core_cpp STATIC
         lifetime/Lifetime.cpp lifetime/Lifetime.h
         lifetime/LifetimeDefinition.cpp lifetime/LifetimeDefinition.h
         lifetime/SequentialLifetimes.cpp lifetime/SequentialLifetimes.h
+        #logger
+        logger/Logger.cpp logger/Logger.h
         #reactive
         reactive/SignalX.h
         reactive/interfaces.h
@@ -18,6 +20,10 @@ add_library(rd_core_cpp STATIC
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
+        #types
+        types/DateTime.cpp types/DateTime.h
+        types/Void.cpp types/Void.h
+        types/wrapper.cpp types/wrapper.h
         #pch
         ${PCH_CPP_OPT}
         )
@@ -35,8 +41,10 @@ add_subdirectory(util)
 target_include_directories(rd_core_cpp PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         lifetime
+        logger
         reactive
         reactive/base
+        types
         util
         )
 

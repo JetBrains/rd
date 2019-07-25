@@ -22,3 +22,8 @@ target_link_libraries(thirdparty PUBLIC
         string_view-lite
         ctpl
         )
+
+install(FILES thirdparty.hpp
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}"
+        CONFIGURATIONS Release
+        )

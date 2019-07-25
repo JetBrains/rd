@@ -2,8 +2,9 @@
 
 #include "PkgInputStream.h"
 
+#include "Logger.h"
+
 #include <algorithm>
-#include <util/Logger.h>
 
 namespace rd {
 	void PkgInputStream::rewind() {

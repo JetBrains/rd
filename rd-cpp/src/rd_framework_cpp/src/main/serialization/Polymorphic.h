@@ -89,7 +89,7 @@ namespace rd {
 	template<>
 	class Polymorphic<wchar_t> {
 	public:
-		inline static bool read(SerializationCtx  &ctx, Buffer &buffer) {
+		inline static wchar_t read(SerializationCtx  &ctx, Buffer &buffer) {
 			return buffer.read_char();
 		}
 

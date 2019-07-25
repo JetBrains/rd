@@ -4,7 +4,7 @@
 #include "Buffer.h"
 #include "hashing.h"
 
-#include "nonstd/string_view.hpp"
+#include "thirdparty.hpp"
 
 #include <cstdint>
 #include <string>

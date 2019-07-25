@@ -7,7 +7,6 @@
 #include "shared_function.h"
 #include "to_string.h"
 #include "wrapper.h"
-#include "Void.h"
 
 #include "thirdparty.hpp"
 
@@ -18,6 +17,7 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+
 
 #define RD_ASSERT_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;assert(expr);}
 #define RD_ASSERT_THROW_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;throw std::runtime_error(msg);}

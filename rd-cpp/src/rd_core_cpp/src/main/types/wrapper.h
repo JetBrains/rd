@@ -148,6 +148,7 @@ namespace rd {
 			return Wrapper<T>(std::dynamic_pointer_cast<T>(std::move(w)));
 		}
 
+		~Wrapper() = default;
 		//endregion
 
 		constexpr bool has_value() const {

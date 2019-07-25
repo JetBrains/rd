@@ -36,9 +36,13 @@ namespace rd {
 
 #else
 
+#pragma warning(push)
+#pragma warning(disable:4583)
+#pragma warning(disable:4582)
 #include "optional.hpp"
 #include "mpark/variant.hpp"
 #include "nonstd/string_view.hpp"
+#pragma warning(pop)
 
 namespace rd {
 	using tl::optional;
