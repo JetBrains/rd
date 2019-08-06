@@ -15,12 +15,20 @@ add_library(rd_framework_cpp_test_util
 
 add_subdirectory(entities)
 add_subdirectory(interning)
+add_subdirectory(countdownlatch)
 
-target_include_directories(rd_framework_cpp_test_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} entities models test_fixture others scheduler)
+target_include_directories(rd_framework_cpp_test_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+        entities
+        models
+        test_fixture
+        others
+        scheduler
+        countdownlatch)
 
 target_link_libraries(rd_framework_cpp_test_util PUBLIC
         gtest gtest_main
         rd_framework_cpp
         rd_core_cpp_test_util
         entities
-        interning_test_model)
+        interning_test_model
+        countdownlatch)

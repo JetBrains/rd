@@ -24,8 +24,8 @@ TEST_F(RdFrameworkTestBase, testStaticSuccess) {
 	EXPECT_THROW(client_entity.start(0), std::invalid_argument);
 
 	//bound
-	bindStatic(serverProtocol.get(), server_entity, "top");
-	bindStatic(clientProtocol.get(), client_entity, "top");
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
 
 	EXPECT_EQ(L"0", client_entity.sync(0).value_or_throw().unwrap());
 	EXPECT_EQ(L"1", client_entity.sync(1).value_or_throw().unwrap());
@@ -46,8 +46,8 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
 	statics(client_entity, entity_id);
 	statics(server_entity, entity_id);
 
-	bindStatic(serverProtocol.get(), server_entity, "top");
-	bindStatic(clientProtocol.get(), client_entity, "top");
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
 
 	std::wstring source(10'000, '5');
 
@@ -63,8 +63,8 @@ TEST_F(RdFrameworkTestBase, testStaticFailure) {
 	statics(client_entity, static_entity_id);
 	statics(server_entity, static_entity_id);
 
-	bindStatic(serverProtocol.get(), server_entity, "top");
-	bindStatic(clientProtocol.get(), client_entity, "top");
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
 
 	auto task = client_entity.start(2);
 	EXPECT_TRUE(task.is_faulted());
@@ -87,8 +87,8 @@ TEST_F(RdFrameworkTestBase, testSymmetricCall) {
 	server_entity.set([](std::wstring const &s) { return +s.length(); });
 	client_entity.set([](std::wstring const &s) { return -s.length(); });
 
-	bindStatic(serverProtocol.get(), server_entity, "top");
-	bindStatic(clientProtocol.get(), client_entity, "top");
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
 
 	EXPECT_EQ(+2, client_entity.sync(L"ab").value_or_throw().unwrap());
 	EXPECT_EQ(-2, server_entity.sync(L"xy").value_or_throw().unwrap());

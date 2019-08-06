@@ -55,7 +55,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestServerWithoutClientWithDelayAndMessa
 
 	RdProperty<int> sp(0);
 	statics(sp, 1);
-	sp.bind(lifetime, &protocol, "top");
+	sp.bind(lifetime, &protocol, static_name);
 
 	sp.set(1);
 
@@ -71,7 +71,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestClientWithoutServerWithDelayAndMessa
 
 	RdProperty<int> cp(0);
 	statics(cp, 1);
-	cp.bind(lifetime, &clientProtocol, "top");
+	cp.bind(lifetime, &clientProtocol, static_name);
 
 	cp.set(1);
 	cp.set(2);
@@ -166,10 +166,10 @@ TEST_F(SocketWireTestBase, TestBigBuffer) {
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
 	statics(sp_string, property_id);
-	sp_string.bind(lifetime, &serverProtocol, "top");
+	sp_string.bind(lifetime, &serverProtocol, static_name);
 
 	statics(cp_string, property_id);
-	cp_string.bind(lifetime, &clientProtocol, "top");
+	cp_string.bind(lifetime, &clientProtocol, static_name);
 
 	cp_string.set(L"1");
 
@@ -212,8 +212,8 @@ TEST_F(SocketWireTestBase, TestComplicatedProperty) {
 	DynamicEntity::create(&serverProtocol);*/
 	//bound
 
-	server_property.bind(lifetime, &serverProtocol, "top");
-	client_property.bind(lifetime, &clientProtocol, "top");
+	server_property.bind(lifetime, &serverProtocol, static_name);
+	client_property.bind(lifetime, &clientProtocol, static_name);
 
 	std::vector<int32_t> clientLog;
 	std::vector<int32_t> serverLog;
@@ -367,7 +367,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	RdProperty<int> sp{0}, cp{0};
 
 	statics(cp, property_id);
-	cp.bind(lifetime, &clientProtocol, "top");
+	cp.bind(lifetime, &clientProtocol, static_name);
 
 	cp.set(1);
 
@@ -376,7 +376,7 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/TestRunWithSlowpokeServer) {
 	auto serverProtocol = server(socketLifetime, port);
 
 	statics(sp, property_id);
-	sp.bind(lifetime, &serverProtocol, "top");
+	sp.bind(lifetime, &serverProtocol, static_name);
 
 	cp.set(4);
 	serverScheduler.pump_one_message();
@@ -402,8 +402,8 @@ TEST_F(SocketWireTestBase, DISABLED_TestFailoverServer) {
 	RdProperty<int> sp{0}, cp{0};
 	statics(cp, property_id);
 	statics(sp, property_id);
-	sp.bind(lifetime, &serverProtocol, "top");
-	cp.bind(lifetime, &clientProtocol, "top");
+	sp.bind(lifetime, &serverProtocol, static_name);
+	cp.bind(lifetime, &clientProtocol, static_name);
 
 	sp.set(1);
 
@@ -421,7 +421,7 @@ TEST_F(SocketWireTestBase, DISABLED_TestFailoverServer) {
 	auto rebornClientProtocol = client(socketLifetime, port);
 	RdProperty<int> np;
 	statics(np, property_id);
-	np.bind(lifetime, &rebornClientProtocol, "top");
+	np.bind(lifetime, &rebornClientProtocol, static_name);
 
 	clientScheduler.pump_one_message(); //send 2
 	EXPECT_EQ(2, np.get());

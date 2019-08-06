@@ -101,6 +101,8 @@ namespace rd {
 		}
 		async_send_buffer.resume();
 
+		connected.set(true);
+
 		receiverProc();
 
 		connected.set(false);
@@ -347,7 +349,7 @@ namespace rd {
 		logger.info(this->id + ": listening 127.0.0.1/" + std::to_string(port));
 		this->port = ss->GetServerPort();
 		RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
-
+		
 		thread = std::thread([this, lifetime]() mutable {
 			while (!lifetime->is_terminated()) {
 				try {
@@ -378,10 +380,11 @@ namespace rd {
 			logger.debug(this->id + ": thread expired");
 		});
 
+		
 		lifetime->add_action([this] {
 			logger.info(this->id + ": start terminating lifetime");
 
-			bool send_buffer_stopped = async_send_buffer.stop(timeout);
+			const bool send_buffer_stopped = async_send_buffer.stop(timeout);
 			logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
 

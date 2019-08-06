@@ -7,7 +7,11 @@ namespace rd {
 	class TestSingleThreadScheduler : public SingleThreadSchedulerBase {
 
 	public:
-		TestSingleThreadScheduler(std::string string);
+		//region ctor/dtor
+		explicit TestSingleThreadScheduler(std::string string);
+
+		virtual ~TestSingleThreadScheduler() = default;
+		//endregion
 	};
 }
 

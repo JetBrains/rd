@@ -23,7 +23,7 @@ namespace rd {
 	}
 
 	void InternRoot::bind(Lifetime lf, IRdDynamic const *parent, string_view name) const {
-		RD_ASSERT_MSG(!is_bound(), "Trying to bound already bound $this to ${parent.location}")
+		RD_ASSERT_MSG(!is_bound(), "Trying to bound already bound "s + to_string(this->location) + " to " + to_string(parent->location))
 
 		lf->bracket([this, parent, &name] {
 			this->parent = parent;

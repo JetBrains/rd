@@ -31,4 +31,5 @@ add_subdirectory(kotlin_interaction)
 target_include_directories(rd_framework_cpp_test PUBLIC cases)
 target_include_directories(rd_framework_cpp_test PUBLIC util)
 
-target_link_libraries(rd_framework_cpp_test gtest gtest_main rd_framework_cpp rd_framework_cpp_test_util rd_core_cpp_test_util)
+target_link_libraries(rd_framework_cpp_test
+        gtest gtest_main rd_framework_cpp rd_framework_cpp_test_util rd_core_cpp_test_util)

@@ -26,6 +26,12 @@ namespace rd {
 			return "signal " + to_string(location) + " " + to_string(rdid) + ":: value = " + to_string(value);
 		}
 
+		mutable IScheduler *wire_scheduler{};
+	private:
+		void set_wire_scheduler(IScheduler *scheduler) const {
+			wire_scheduler = scheduler;
+		}
+
 	protected:
 		Signal<T> signal;
 	public:
@@ -57,7 +63,7 @@ namespace rd {
 
 		void init(Lifetime lifetime) const override {
 			RdReactiveBase::init(lifetime);
-			//        wire_scheduler = get_default_scheduler();
+			set_wire_scheduler(get_default_scheduler());
 			get_wire()->advise(lifetime, this);
 		}
 
@@ -89,6 +95,19 @@ namespace rd {
 				assert_threading();
 			}
 			signal.advise(lifetime, handler);
+		}
+
+		template<typename F>
+		void advise_on(Lifetime lifetime, IScheduler *scheduler, F &&handler) {
+			if (is_bound()) {
+				assert_threading();
+			}
+			set_wire_scheduler(scheduler);
+			signal.advise(lifetime, std::forward<F>(handler));
+		}
+
+		IScheduler *get_wire_scheduler() const override {
+			return wire_scheduler;
 		}
 
 		friend std::string to_string(RdSignal const &value) {

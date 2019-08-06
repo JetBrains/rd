@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework.test.cross
 
 import com.jetbrains.rd.framework.impl.startAndAdviseSuccess
-import com.jetbrains.rd.framework.test.cross.base.CrossTestKtBase
 import com.jetbrains.rd.framework.test.cross.base.CrossTestKtServerBase
 import demo.DemoModel
 

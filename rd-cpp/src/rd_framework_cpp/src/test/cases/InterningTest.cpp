@@ -42,8 +42,8 @@ TEST_F(InterningTestBase, testLateBindOfObjectWithContent) {
 	serverProperty.identify(*serverIdentities, RdId(1L));
 	clientProperty.identify(*clientIdentities, RdId(1L));
 
-	bindStatic(serverProtocol.get(), serverProperty, "top");
-	bindStatic(clientProtocol.get(), clientProperty, "top");
+	bindStatic(serverProtocol.get(), serverProperty, static_name);
+	bindStatic(clientProtocol.get(), clientProperty, static_name);
 
 	auto serverModel = InterningTestModel(L"");
 
@@ -111,8 +111,8 @@ TEST_F(InterningTestBase, testNestedInternedObjects) {
 	auto const &server_property_view = server_property_holder.property;
 	auto const &client_property_view = client_property_holder.property;
 
-	bindStatic(serverProtocol.get(), server_property_holder, "top");
-	bindStatic(clientProtocol.get(), client_property_holder, "top");
+	bindStatic(serverProtocol.get(), server_property_holder, static_name);
+	bindStatic(clientProtocol.get(), client_property_holder, static_name);
 
 	auto testValue = InterningNestedTestModel(L"extremelyLongString",
 	                                          InterningNestedTestModel(L"middle",
@@ -171,8 +171,8 @@ TEST_F(InterningTestBase, testNestedInternedObjectsOnSameData) {
 	auto const &server_property_view = serverPropertyHolder.property;
 	auto const &client_property_view = clientPropertyHolder.property;
 
-	bindStatic(serverProtocol.get(), serverPropertyHolder, "top");
-	bindStatic(clientProtocol.get(), clientPropertyHolder, "top");
+	bindStatic(serverProtocol.get(), serverPropertyHolder, static_name);
+	bindStatic(clientProtocol.get(), clientPropertyHolder, static_name);
 
 	std::wstring sameString = L"thisStringHasANiceLengthThatWillDominateBytesSentCount";
 	auto nested0 = wrapper::make_wrapper<InterningNestedTestStringModel>(

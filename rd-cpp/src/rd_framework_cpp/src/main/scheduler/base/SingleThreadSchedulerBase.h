@@ -30,9 +30,11 @@ namespace rd {
 		};
 
 	public:
+		//region ctor/dtor
 		SingleThreadSchedulerBase(std::string name);
 
 		virtual ~SingleThreadSchedulerBase();
+		//endregion
 
 		void flush() override;
 

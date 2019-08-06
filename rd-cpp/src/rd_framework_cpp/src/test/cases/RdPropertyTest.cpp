@@ -32,8 +32,8 @@ TEST_F(RdFrameworkTestBase, property_statics) {
 	EXPECT_EQ((vi{1}), server_log);
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ((vi{1}), client_log);
 	EXPECT_EQ((vi{1}), server_log);
@@ -72,8 +72,8 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 	/*DynamicEntity::create(clientProtocol.get());
 	DynamicEntity::create(serverProtocol.get());*/
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	std::vector<int32_t> clientLog;
 	std::vector<int32_t> serverLog;
@@ -166,8 +166,8 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 	EXPECT_EQ(0, server_log.size());
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
@@ -237,8 +237,8 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
 	/*DynamicEntity::create(serverProtocol.get());*/
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
@@ -291,8 +291,8 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
 
 		//bound
-		bindStatic(serverProtocol.get(), server_property, "top");
-		bindStatic(clientProtocol.get(), client_property, "top");
+		bindStatic(serverProtocol.get(), server_property, static_name);
+		bindStatic(clientProtocol.get(), client_property, static_name);
 
 		EXPECT_EQ((std::vector<opt>{nullopt}), client_log);
 		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
@@ -352,8 +352,8 @@ TEST_F(RdFrameworkTestBase, property_uninitialized) {
 	EXPECT_TRUE(server_log.empty());
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_TRUE(client_log.empty());
 	EXPECT_TRUE(server_log.empty());
