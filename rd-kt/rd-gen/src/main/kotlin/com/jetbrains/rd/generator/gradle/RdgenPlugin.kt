@@ -73,19 +73,22 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
 
 open class RdgenTask : DefaultTask() {
     private val local: RdgenParams = extensions.create("params", RdgenParams::class.java, this)
-    private val global: RdgenParams get() =  project.extensions.getByType(RdgenParams::class.java)
+    private val global: RdgenParams? = project.extensions.findByType(RdgenParams::class.java)
 
-    fun<T> get(p: KProperty<T>) : T {
-        var res = p.call(local)
-        if (res == null || (res is Collection<*> && res.isEmpty()) || (res is Map<*,*> && res.isEmpty()))
-            res = p.call(global)
-
-        return res
+    fun <T> get(p: KProperty<T>): T {
+        val res = p.call(local)
+        if (global == null) return res
+        return when {
+            res == null -> p.call(global)
+            res is Collection<*> && res.isEmpty() -> p.call(global)
+            res is Map<*, *> && res.isEmpty() -> p.call(global)
+            else -> res
+        }
     }
 
     fun files(p: KProperty<List<*>>) : Set<File> {
         val list = get(p)
-        val res = list.map { if (it is Function0<*>) it.invoke() else it  }
+        val res = list.map { if (it is Function0<*>) it() else it  }
         return project.files(res).files
     }
 
