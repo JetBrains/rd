@@ -1,16 +1,17 @@
 #ifndef RD_CPP_CORE_VIEWABLE_MAP_H
 #define RD_CPP_CORE_VIEWABLE_MAP_H
 
-
 #include "Logger.h"
 #include "IViewableMap.h"
 #include "SignalX.h"
 #include "core_util.h"
 
-#include "tsl/ordered_map.h"
+#include "std/unordered_map.h"
 
 #include <iterator>
 #include <utility>
+
+#include "thirdparty.hpp"
 
 namespace rd {
 	/**

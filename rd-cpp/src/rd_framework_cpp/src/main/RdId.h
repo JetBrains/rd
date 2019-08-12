@@ -3,6 +3,7 @@
 
 #include "Buffer.h"
 #include "hashing.h"
+#include "hash.h"
 
 #include "thirdparty.hpp"
 
@@ -13,16 +14,12 @@
 
 namespace rd {
 	class RdId;
-}
 
-namespace std {
 	template<>
-	struct hash<rd::RdId> {
-		size_t operator()(const rd::RdId &value) const noexcept;
+	struct hash<RdId> {
+		size_t operator()(const RdId &value) const noexcept;
 	};
-}
 
-namespace rd {
 	/**
 	 * \brief An identifier of the object that participates in the object graph.
 	 */
@@ -30,19 +27,15 @@ namespace rd {
 	public:
 		using hash_t = util::hash_t;
 	private:
-		friend struct std::hash<RdId>;
+		friend struct hash<RdId>;
 
 		constexpr static hash_t NULL_ID = 0;
 
 		hash_t hash{NULL_ID};
 	public:
-		friend bool operator==(RdId const &left, RdId const &right) {
-			return left.hash == right.hash;
-		}
+		friend bool operator==(RdId const &left, RdId const &right);
 
-		friend bool operator!=(const RdId &lhs, const RdId &rhs) {
-			return !(rhs == lhs);
-		}
+		friend bool operator!=(const RdId &lhs, const RdId &rhs);
 
 		//region ctor/dtor
 		constexpr RdId() = default;
@@ -103,11 +96,12 @@ namespace rd {
 
 		friend std::string to_string(RdId const& id);
 	};
+
+	inline size_t hash<RdId>::operator()(const RdId &value) const noexcept {
+		return hash<RdId::hash_t>()(value.hash);
+	}
 }
 
 
-inline size_t std::hash<rd::RdId>::operator()(const rd::RdId &value) const noexcept {
-	return std::hash<rd::RdId::hash_t>()(value.hash);
-}
 
 #endif //RD_CPP_FRAMEWORK_RDID_H

@@ -6,9 +6,11 @@
 #include "core_util.h"
 #include "viewable_collections.h"
 
-#include "tsl/ordered_map.h"
+#include "std/unordered_map.h"
 
-#include <unordered_map>
+#include "thirdparty.hpp"
+
+
 
 namespace rd {
 	namespace detail {
@@ -34,9 +36,9 @@ namespace rd {
 	class IViewableSet : public IViewable<T>, public ISource<detail::SetEvent<T>> {
 	protected:
 		using WT = value_or_wrapper<T>;
-		mutable std::unordered_map<
+		mutable rd::unordered_map<
 				Lifetime,
-				ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash <T>, wrapper::TransparentKeyEqual <T>>
+				ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash <T>, wrapper::TransparentKeyEqual<T>>
 		>
 		lifetimes;
 	public:
@@ -64,7 +66,9 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)> handler) const {
+		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)
+
+		> handler) const {
 			this->advise(lifetime, [handler](Event e) {
 				handler(e.kind, *e.value);
 			});

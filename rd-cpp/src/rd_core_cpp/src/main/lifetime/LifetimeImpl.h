@@ -1,7 +1,7 @@
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
 
-#include "thirdparty.hpp"
+#include "hash.h"
 
 #include <functional>
 #include <map>
@@ -9,6 +9,8 @@
 #include <mutex>
 #include <atomic>
 #include <utility>
+
+#include "thirdparty.hpp"
 
 namespace rd {
 	class LifetimeImpl final {
@@ -25,7 +27,7 @@ namespace rd {
 		counter_t id = 0;
 
 		counter_t action_id_in_map = 0;
-		using actions_t = ordered_map<int, std::function<void()>>;
+		using actions_t = ordered_map<int, std::function<void()>, rd::hash<int>>;
 		actions_t actions;
 
 		void terminate();

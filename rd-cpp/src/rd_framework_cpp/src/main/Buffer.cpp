@@ -50,7 +50,7 @@ namespace rd {
 
 	void Buffer::require_available(size_t moreSize) {
 		if (offset + moreSize >= size()) {
-			const size_t new_size = (std::max)(size() * 2, offset + moreSize);
+			const size_t new_size = (std::max) (size() * 2, offset + moreSize);
 			data_.resize(new_size);
 		}
 	}
@@ -133,18 +133,22 @@ void Buffer::writeString(std::string const &value) const {
 	}
 
 	template<int>
-	void write_wstring_spec(Buffer &buffer, std::wstring const &value) {
+	void write_wstring_spec(Buffer &buffer, wstring_view value) {
 		const std::vector<uint16_t> v(value.begin(), value.end());
 		buffer.write_array<uint16_t>(v);
 	}
 
 	template<>
-	void write_wstring_spec<2>(Buffer &buffer, std::wstring const &value) {
+	void write_wstring_spec<2>(Buffer &buffer, wstring_view value) {
 		buffer.write_integral<int32_t>(static_cast<int32_t>(value.size()));
 		buffer.write(reinterpret_cast<Buffer::word_t const *>(value.data()), sizeof(wchar_t) * value.size());
 	}
 
-	void Buffer::write_wstring(std::wstring const &value) {
+	void Buffer::write_wstring(std::wstring const& value) {
+		write_wstring(wstring_view(value));
+	}
+
+	void Buffer::write_wstring(wstring_view value) {
 		write_wstring_spec<sizeof(wchar_t)>(*this, value);
 	}
 

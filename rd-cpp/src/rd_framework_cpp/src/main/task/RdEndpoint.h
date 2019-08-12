@@ -24,7 +24,7 @@ namespace rd {
 		using handler_t = std::function<RdTask<TRes, ResSer>(Lifetime, TReq const &)>;
 		mutable handler_t handler;
 
-		mutable tsl::ordered_map<RdId, RdTask<TRes, ResSer>> awaiting_tasks;
+		mutable tsl::ordered_map<RdId, RdTask<TRes, ResSer>, rd::hash<RdId>> awaiting_tasks;//todo get rid of it
 	public:
 		//region ctor/dtor
 

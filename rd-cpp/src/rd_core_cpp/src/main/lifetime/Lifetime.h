@@ -4,20 +4,18 @@
 
 #include "LifetimeImpl.h"
 
+#include "std/hash.h"
+
 #include <memory>
 
 namespace rd {
 	class Lifetime;
-}
 
-namespace std {
 	template<>
-	struct hash<rd::Lifetime> {
-		size_t operator()(const rd::Lifetime &value) const noexcept;
+	struct hash<Lifetime> {
+		size_t operator()(const Lifetime &value) const noexcept;
 	};
-}
 
-namespace rd {
 	class Lifetime final {
 	private:
 		using Allocator = std::allocator<LifetimeImpl>;
@@ -26,7 +24,7 @@ namespace rd {
 
 		friend class LifetimeDefinition;
 
-		friend struct std::hash<Lifetime>;
+		friend struct hash<Lifetime>;
 
 		std::shared_ptr<LifetimeImpl> ptr;
 	public:
@@ -55,10 +53,11 @@ namespace rd {
 
 		Lifetime create_nested() const;
 	};
+
+	inline size_t hash<Lifetime>::operator()(const Lifetime &value) const noexcept {
+		return hash<std::shared_ptr<LifetimeImpl> >()(value.ptr);
+	}
 }
 
-inline size_t std::hash<rd::Lifetime>::operator()(const rd::Lifetime &value) const noexcept {
-	return std::hash<std::shared_ptr<rd::LifetimeImpl> >()(value.ptr);
-}
 
 #endif //RD_CPP_CORE_LIFETIMEWRAPPER_H

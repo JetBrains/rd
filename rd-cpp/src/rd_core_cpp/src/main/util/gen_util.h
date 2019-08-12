@@ -1,6 +1,8 @@
 #ifndef RD_CPP_GEN_UTIL_H
 #define RD_CPP_GEN_UTIL_H
 
+#include "hash.h"
+
 #include <cstdlib>
 #include <vector>
 
@@ -9,7 +11,7 @@ namespace rd {
 	size_t contentHashCode(std::vector<T> const &list) noexcept {
 		size_t __r = 0;
 		for (auto const &e : list) {
-			__r = __r * 31 + std::hash<T>()(e);
+			__r = __r * 31 + rd::hash<T>()(e);
 		}
 		return __r;
 		//todo faster for integrals
@@ -17,7 +19,7 @@ namespace rd {
 
 	template<typename T>
 	size_t contentDeepHashCode(T const &value) noexcept {
-		return std::hash<T>()(value);
+		return rd::hash<T>()(value);
 	}
 
 	template<typename T>

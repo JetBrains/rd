@@ -1,8 +1,10 @@
 #include "ISerializable.h"
 
+#include "hash.h"
+
 namespace rd {
 	size_t IPolymorphicSerializable::hashCode() const noexcept {
-		return std::hash<void const *>()(static_cast<void const *>(this));
+		return rd::hash<void const *>()(static_cast<void const *>(this));
 	}
 
 	bool operator==(const IPolymorphicSerializable &lhs, const IPolymorphicSerializable &rhs) {

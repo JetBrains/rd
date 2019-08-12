@@ -9,9 +9,10 @@
 #include "RdAny.h"
 #include "DefaultAbstractDeclaration.h"
 
+#include "std/unordered_map.h"
+
 #include <utility>
 #include <iostream>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace rd {
@@ -37,7 +38,7 @@ namespace rd {
 
 		void register_in();
 
-		mutable std::unordered_map<RdId, std::function<InternedAny(SerializationCtx  &, Buffer &)>> readers;
+		mutable rd::unordered_map<RdId, std::function<InternedAny(SerializationCtx  &, Buffer &)>> readers;
 	public:
 		Serializers();
 

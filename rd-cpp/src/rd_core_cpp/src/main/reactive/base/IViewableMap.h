@@ -7,9 +7,9 @@
 #include "viewable_collections.h"
 #include "core_util.h"
 
-#include "thirdparty.hpp"
+#include "unordered_map.h"
 
-#include <unordered_map>
+#include "thirdparty.hpp"
 
 namespace rd {
 	namespace detail {
@@ -127,7 +127,7 @@ namespace rd {
 		using WV = value_or_wrapper<V>;
 		using OV = opt_or_wrapper<V>;
 
-		mutable std::unordered_map<
+		mutable rd::unordered_map<
 				Lifetime,
 				ordered_map<K const *, LifetimeDefinition, wrapper::TransparentHash <K>, wrapper::TransparentKeyEqual <K>>
 		>

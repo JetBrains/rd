@@ -15,5 +15,13 @@ namespace rd {
 	std::string to_string(RdId const &id) {
 		return std::to_string(id.hash);
 	}
+
+	bool operator==(RdId const &left, RdId const &right) {
+		return left.hash == right.hash;
+	}
+
+	bool operator!=(const RdId &lhs, const RdId &rhs) {
+		return !(rhs == lhs);
+	}
 }
 

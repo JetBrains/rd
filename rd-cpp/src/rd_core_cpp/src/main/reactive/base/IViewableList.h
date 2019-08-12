@@ -7,12 +7,13 @@
 #include "viewable_collections.h"
 #include "wrapper.h"
 
-#include "thirdparty.hpp"
+#include "std/unordered_map.h"
 
-#include <unordered_map>
 #include <vector>
 #include <utility>
 #include <algorithm>
+
+#include "thirdparty.hpp"
 
 namespace rd {
 	namespace detail {
@@ -118,7 +119,7 @@ namespace rd {
 		using Event = typename detail::ListEvent<T>;
 
 	protected:
-		mutable std::unordered_map<Lifetime, std::vector<LifetimeDefinition>> lifetimes;
+		mutable rd::unordered_map<Lifetime, std::vector<LifetimeDefinition>> lifetimes;
 	public:
 		//region ctor/dtor
 

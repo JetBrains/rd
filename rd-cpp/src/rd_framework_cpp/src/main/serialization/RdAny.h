@@ -104,24 +104,24 @@ namespace rd {
 			size_t operator()(InternedAny const &value) const noexcept {
 				return visit(util::make_visitor(
 						[](wrapped_super_t const &value) {
-							return std::hash<wrapped_super_t>()(value);
+							return rd::hash<wrapped_super_t>()(value);
 						},
 						[](any::string const &value) {
-							return std::hash<any::string>()(value);
+							return rd::hash<any::string>()(value);
 						}
 				), value);
 			}
 
 			size_t operator()(wrapped_super_t const &value) const noexcept {
-				return std::hash<wrapped_super_t>()(value);
+				return rd::hash<wrapped_super_t>()(value);
 			}
 
 			size_t operator()(super_t const &value) const noexcept {
-				return std::hash<super_t>()(value);
+				return rd::hash<super_t>()(value);
 			}
 
 			size_t operator()(any::string const &value) const noexcept {
-				return std::hash<any::string>()(value);
+				return rd::hash<any::string>()(value);
 			}
 		};
 	}

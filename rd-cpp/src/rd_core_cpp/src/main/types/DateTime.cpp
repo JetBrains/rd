@@ -37,8 +37,9 @@ namespace rd {
 	bool operator!=(const DateTime &lhs, const DateTime &rhs) {
 		return !(rhs == lhs);
 	}
+
+	size_t hash<rd::DateTime>::operator()(const rd::DateTime &value) const noexcept {
+		return rd::hash<decltype(value.seconds)>()(value.seconds);
+	}
 }
 
-inline size_t std::hash<rd::DateTime>::operator()(const rd::DateTime &value) const noexcept {
-	return std::hash<decltype(value.seconds)>()(value.seconds);
-}

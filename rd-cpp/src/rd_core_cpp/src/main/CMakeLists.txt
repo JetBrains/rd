@@ -20,13 +20,16 @@ add_library(rd_core_cpp STATIC
         reactive/base/IViewableMap.h reactive/SignalX.cpp
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
+        #std
+        std/hash.cpp std/hash.h
+        std/to_string.cpp std/to_string.h
         #types
         types/DateTime.cpp types/DateTime.h
         types/Void.cpp types/Void.h
         types/wrapper.cpp types/wrapper.h
         #pch
         ${PCH_CPP_OPT}
-        )
+        std/unordered_map.cpp std/unordered_map.h std/unordered_set.cpp std/unordered_set.h)
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 
@@ -44,6 +47,7 @@ target_include_directories(rd_core_cpp PUBLIC
         logger
         reactive
         reactive/base
+        std
         types
         util
         )

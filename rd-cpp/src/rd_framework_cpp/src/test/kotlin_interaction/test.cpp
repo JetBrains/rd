@@ -29,7 +29,7 @@ int main() {
 
 	RdProperty<optional<int32_t>> property_main{0};
 	property_main.rdid = RdId(1);
-	property_main.bind(lifetime, &clientProtocol, static_name);
+	property_main.bind(lifetime, &clientProtocol, "top");
 
 	RdProperty<optional<int32_t>> property_rx{0};
 	property_rx.rdid = RdId(2);

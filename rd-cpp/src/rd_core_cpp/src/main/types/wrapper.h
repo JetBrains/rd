@@ -2,6 +2,7 @@
 #define RD_CPP_WRAPPER_H
 
 #include "core_traits.h"
+#include "hash.h"
 #include "to_string.h"
 
 #include "thirdparty.hpp"
@@ -248,18 +249,16 @@ namespace rd {
 		/*template<typename T>
 		constexpr Wrapper<T> null_wrapper = Wrapper<T>(nullptr);*/
 	}
-}
 
-static_assert(rd::is_wrapper<rd::Wrapper<std::wstring>>::value, "is wrapper doesn't work");
-
-namespace std {
 	template<typename T>
 	struct hash<rd::Wrapper<T>> {
 		size_t operator()(const rd::Wrapper<T> &value) const noexcept {
-			return std::hash<T>()(*value);
+			return rd::hash<T>()(*value);
 		}
 	};
 }
+
+static_assert(rd::is_wrapper<rd::Wrapper<std::wstring>>::value, "is wrapper doesn't work");
 
 extern template class rd::Wrapper<std::wstring>;
 

@@ -1,6 +1,8 @@
 #ifndef RD_CPP_DATETIME_H
 #define RD_CPP_DATETIME_H
 
+#include "hash.h"
+
 #include <ctime>
 #include <string>
 
@@ -30,7 +32,7 @@ namespace rd {
 		friend std::string to_string(DateTime const &time);
 	};
 }
-namespace std {
+namespace rd {
 	template<>
 	struct hash<rd::DateTime> {
 		size_t operator()(const rd::DateTime &value) const noexcept;
