@@ -12,7 +12,6 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class BackgroundSchedulerTest {
 
@@ -51,6 +50,7 @@ class BackgroundSchedulerTest {
         assertEquals(0, tasksExecuted.get())
 
         s.assertNoExceptions()
+
         assertEquals(2, tasksExecuted.get())
 
         s.queue {
@@ -60,6 +60,7 @@ class BackgroundSchedulerTest {
             tasksExecuted.incrementAndGet()
         }
 
+        assertFails { s.assertNoExceptions() }
         assertEquals(tasksExecuted.get(), 3)
     }
 }

@@ -1,5 +1,4 @@
 include ':rd-core'
-project(":rd-core").projectDir = new File('rd-kt/rd-core')
 
 include ':rd-framework'
 
