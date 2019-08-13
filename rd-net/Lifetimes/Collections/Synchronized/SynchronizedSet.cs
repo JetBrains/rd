@@ -71,12 +71,17 @@ namespace JetBrains.Collections.Synchronized
       return GetEnumerator();
     }
 
-    public void Add(T item)
+    public bool Add(T item)
     {
       lock (mySet)
       {
-        mySet.Add(item);
+        return mySet.Add(item);
       }
+    }
+
+    void ICollection<T>.Add(T item)
+    {
+      Add(item);
     }
 
     public void Clear()
