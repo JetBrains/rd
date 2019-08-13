@@ -45,7 +45,8 @@ namespace JetBrains.Rd.Impl
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
       Scheduler.Queue(() =>
       {
-        root.Bind(lifetime, this, ProtocolInternRootRdId);
+        if (lifetime.IsAlive)
+          root.Bind(lifetime, this, ProtocolInternRootRdId);
       });
       return root;
     }

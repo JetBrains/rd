@@ -3,15 +3,17 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Util;
 
-#if !NET35
+
 namespace JetBrains.Threading
 {
-  
+
+#if !NET35
   public class Actor<T> : ISendChannel<T>
   {
     [PublicAPI] public string Id;
@@ -108,5 +110,30 @@ namespace JetBrains.Threading
       SpinWait.SpinUntil(() => IsEmpty);
     }
   }
-}
+  
+#else
+
+  public class Actor<T>
+  {
+    private readonly Action<T> myProcessor;
+    private readonly SingleThreadScheduler myScheduler;
+    private readonly Task myCompletedTask;
+
+    public Actor(string id, Lifetime lifetime, Action<T> processor)
+    {
+      myProcessor = processor;
+      myScheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, id);
+      myCompletedTask = Task.Factory.ContinueWhenAll(EmptyArray<Task>.Instance, _ => { });
+    }
+
+    public Task SendAsync(T msg) {
+      myScheduler.Queue(() => myProcessor(msg));
+      return myCompletedTask;
+    }
+    
+  }
+
+
+
 #endif
+}

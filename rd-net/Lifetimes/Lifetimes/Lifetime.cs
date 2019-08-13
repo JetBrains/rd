@@ -671,15 +671,17 @@ namespace JetBrains.Lifetimes
     
     
     [PublicAPI, NotNull] public Task Start(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
-    [PublicAPI, NotNull] public Task Start(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
     [PublicAPI, NotNull] public Task<T> Start<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
-    [PublicAPI, NotNull] public Task<T> Start<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
+    
+    [PublicAPI, NotNull] public Task StartAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
+    [PublicAPI, NotNull] public Task<T> StartAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
 
 
-    [PublicAPI, NotNull] public Task StartNested(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options)); 
-    [PublicAPI, NotNull] public Task StartNested(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options));
-    [PublicAPI, NotNull] public Task<T> StartNested<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options));
-    [PublicAPI, NotNull] public Task<T> StartNested<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options));
+    [PublicAPI, NotNull] public Task StartAttached(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options)); 
+    [PublicAPI, NotNull] public Task<T> StartAttached<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options));
+    
+    [PublicAPI, NotNull] public Task StartAttachedAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(StartAsync(scheduler, action, options));
+    [PublicAPI, NotNull] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(StartAsync(scheduler, action, options));
 
     #endregion
     #endif
@@ -771,6 +773,49 @@ namespace JetBrains.Lifetimes
     #endif
       
 
+        
+
+    #endregion
+
+    
+    #region Retry
+
+    public async Task RetryWhileOperationCancellingAsync(Func<Task> task)
+    {
+      while (IsAlive)
+      {  
+        try
+        {
+          await task();
+          return;
+        }
+        catch (OperationCanceledException) 
+        {
+          //retry
+        }
+      }
+      throw new LifetimeCanceledException(this);
+    }
+    
+    
+    public async Task<T> RetryWhileOperationCancellingAsync<T>(Func<Task<T>> task)
+    {
+      while (IsAlive)
+      {  
+        try
+        {
+          return await task();
+        }
+        catch (OperationCanceledException) //use isOCE
+        {
+          //retry
+        }
+      }
+      
+      throw new LifetimeCanceledException(this);
+    }
+    
+    
     #endregion
   }
 }

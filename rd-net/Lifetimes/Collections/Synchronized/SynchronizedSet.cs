@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Synchronized
@@ -225,6 +226,19 @@ namespace JetBrains.Collections.Synchronized
         var elements = CopyToArray();
         mySet.Clear();
         return elements;
+      }
+    }
+    
+    [CanBeNull]
+    public T ExtractOneOrDefault()
+    {
+      lock (mySet)
+      {
+        if (mySet.Count == 0) return default(T);
+
+        var item = mySet.First();
+        mySet.Remove(item);
+        return item;
       }
     }
   }
