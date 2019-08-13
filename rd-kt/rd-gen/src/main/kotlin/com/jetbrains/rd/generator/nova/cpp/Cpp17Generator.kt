@@ -54,6 +54,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             return getSetting(Intrinsic) ?: this.type
         }
 
+    private val Declaration.isIntrinsic: Boolean
+        get() {
+            return getSetting(Intrinsic) != null
+        }
+
     object Intrinsic : ISetting<CppIntrinsicType, Declaration>
 
     object MarshallerHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
@@ -657,7 +662,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         toplevels.sortedBy { it.name }.forEach { tl ->
             val directory = tl.fsPath()
             directory.mkdirs()
-            val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { it.getSetting(Intrinsic) == null }
+            val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { !it.isIntrinsic }
             val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
@@ -1001,10 +1006,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
 //        +INSTANTIATION_FILE_NAME.include("h")
 
-        marshallerHeaders.println { it.include("h") }
+        marshallerHeaders.println()
     }
 
-    fun parseType(type: IType, allowPredefined: Boolean): IType? {
+    private fun Declaration.parseType(type: IType, allowPredefined: Boolean): IType? {
         return when (type) {
             is IArray -> {
                 parseType(type.itemType, allowPredefined)
@@ -1031,29 +1036,45 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
-    fun PrettyPrinter.dependenciesDecl(decl: Declaration) {
+    private fun PrettyPrinter.dependenciesDecl(decl: Declaration) {
         fun parseMember(member: Member): List<String> {
-            return when (member) {
+            val types = when (member) {
                 is Member.EnumConst -> {
                     arrayListOf()
                 }
                 is Member.Field -> {
-                    listOfNotNull(parseType(member.type, false)?.name)
+                    listOfNotNull(decl.parseType(member.type, false))
                 }
                 is Member.Reactive -> {
                     if (member is Member.Reactive.Stateful.Extension) {
-                        arrayListOf(member.fqn(this@Cpp17Generator, flowTransform), parseType(member.delegatedBy, false)!!.name)
+                        listOfNotNull(/*member.fqn(this@Cpp17Generator, flowTransform), */decl.parseType(member.delegatedBy, false))
                     } else {
                         member.genericParams.fold(arrayListOf<IType>()) { acc, iType ->
-                            parseType(iType, false)?.let {
+                            decl.parseType(iType, false)?.let {
                                 acc += it
                             }
                             acc
-                        }.map { it.name }
+                        }
                     }
                 }
-                is Member.Const -> listOfNotNull(parseType(member.type, false)?.name)
+                is Member.Const -> listOfNotNull(decl.parseType(member.type, false))
             }
+            return types.map {
+                when (it) {
+                    is Declaration ->
+                        if (!it.isIntrinsic) {
+                            if (it.pointcut == decl.pointcut)
+                                it.name
+                            else
+                                "../${it.pointcut!!.name}/${it.name}"
+                        } else {
+                            null
+                        }
+                    else -> {
+                        it.name
+                    }
+                }
+            }.filterNotNull()
         }
 
         fun dependentTypes(decl: Declaration, extHeader: List<String>): List<String> {
@@ -1454,7 +1475,6 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.reader(): String = when (this) {
-            is CppIntrinsicType -> "rd::Polymorphic<$name>::read(ctx, buffer)"
             is Enum -> "buffer.read_enum<${templateName(decl)}>()"
             is InternedScalar -> {
                 val lambda = lambda("rd::SerializationCtx &, rd::Buffer &", "return ${itemType.reader()}")
@@ -1465,14 +1485,20 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             is PredefinedType.bool -> "buffer.read_bool()"
             is PredefinedType.char -> "buffer.read_char()"
             is PredefinedType.string -> "buffer.read_wstring()"
+            is PredefinedType.dateTime -> "buffer.read_date_time()"
             is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.read_integral<${templateName(decl)}>()"
             is PredefinedType.NativeFloatingPointType -> "buffer.read_floating_point<${templateName(decl)}>()"
             is PredefinedType -> "buffer.read${name.capitalize()}()"
-            is Declaration ->
-                if (isAbstract)
-                    "ctx.get_serializers().readPolymorphic<${templateName(decl)}>(ctx, buffer)"
-                else
-                    "${templateName(decl)}::read(ctx, buffer)"
+            is Declaration -> {
+                if (isIntrinsic) {
+                    "rd::Polymorphic<$name>::read(ctx, buffer)"
+                } else {
+                    if (isAbstract)
+                        "ctx.get_serializers().readPolymorphic<${templateName(decl)}>(ctx, buffer)"
+                    else
+                        "${templateName(decl)}::read(ctx, buffer)"
+                }
+            }
             is INullable -> {
                 val lambda = lambda(null, "return ${itemType.reader()}")
                 """buffer.read_nullable<${itemType.templateName(decl)}>($lambda)"""
@@ -1626,14 +1652,17 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
+/*
     protected fun IType.nestedOf(decl: Declaration): Boolean {
-        val iType = parseType(this, true)
+        val iType = decl.parseType(this, true)
         return iType?.name == decl.name
     }
+*/
 
     protected fun PrettyPrinter.writerTraitDef(decl: Declaration) {
         fun IType.writer(field: String): String {
             return when (this) {
+                is CppIntrinsicType -> "rd::Polymorphic<$name>::write(ctx, buffer, $field)"
                 is Enum -> "buffer.write_enum($field)"
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx &, rd::Buffer &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
@@ -1643,6 +1672,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 is PredefinedType.bool -> "buffer.write_bool($field)"
                 is PredefinedType.char -> "buffer.write_char($field)"
                 is PredefinedType.string -> "buffer.write_wstring($field)"
+                is PredefinedType.dateTime -> "buffer.write_date_time($field)"
                 is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.write_integral($field)"
                 is PredefinedType.NativeFloatingPointType -> "buffer.write_floating_point($field)"
                 is Declaration ->
