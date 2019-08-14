@@ -285,7 +285,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
-#if !NET35 && !NETSTANDARD     
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
     public static void Catch(this ILog log, Action action)
@@ -305,7 +305,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
-#if !NET35 && !NETSTANDARD     
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
     public static void CatchAndDrop(this ILog log, Action action)
@@ -325,7 +325,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
-#if !NET35 && !NETSTANDARD     
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
     public static void CatchWarn(this ILog log, Action action)

@@ -73,11 +73,7 @@ namespace JetBrains.Lifetimes
   /// won't be affected. 
   /// </para>
   /// </summary>
-  public
-    #if !NETSTANDARD
-    readonly 
-    #endif
-    struct Lifetime : IEquatable<Lifetime>
+  public readonly struct Lifetime : IEquatable<Lifetime>
   {        
     
     [CanBeNull] private readonly LifetimeDefinition myDef;   

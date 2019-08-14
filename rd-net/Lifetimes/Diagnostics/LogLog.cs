@@ -263,7 +263,7 @@ namespace JetBrains.Diagnostics
       Fire(category, msg, LoggingLevel.TRACE);
     }
 
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif    
     
@@ -279,7 +279,7 @@ namespace JetBrains.Diagnostics
       }
     }
 
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
     
@@ -295,7 +295,7 @@ namespace JetBrains.Diagnostics
       }
     }
 
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
     

@@ -35,10 +35,7 @@ namespace JetBrains.Rd.Base
     {
       
       if ( //optimization for memory traffic 
-        #if !NETSTANDARD
-        typeof(T).IsValueType ||
-        #endif
-          ValueCanBeNull || value != null) return;
+        typeof(T).IsValueType || ValueCanBeNull || value != null) return;
 
       Assertion.Fail("Value is defined as not nullable: {0}", this);
     }

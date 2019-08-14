@@ -55,8 +55,6 @@ namespace JetBrains.Util.Util
     {
       string Present(Type type, Type[] genericArguments = null)
       {
-        
-#if !NETSTANDARD
         if (type == null)
           return null;
 
@@ -97,10 +95,6 @@ namespace JetBrains.Util.Util
         return outer == null
           ? (withNamespaces && !string.IsNullOrEmpty(type.Namespace) ? type.Namespace + "." + trait : trait)
           : Present(outer, genericArguments.Take(outerGaCount).ToArray()) + "+" + trait;
-
-#else
-          return type.ToString();
-#endif
       }
 
       return Present(thisType);

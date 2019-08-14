@@ -179,14 +179,13 @@ namespace JetBrains.Threading
       }
 
       var res =  myAsyncProcessingThread.Join(timeoutMs);
-#if !NETSTANDARD
+
       if (!res)
       {
         LogLog.Warn($"Async processor {Id} hasn't finished in ${timeoutMs} ms. Trying to abort thread.");
         LogLog.Catch(() => myAsyncProcessingThread.Abort());
       }
-#endif
-      
+
       CleanupInternal();
       return res;
     }
@@ -195,7 +194,6 @@ namespace JetBrains.Threading
     //since sometimes we terminate thread via Thread.Abort() it's quite normal to catch this abort
     private void ThreadProcCatchAbort()
     {
-#if !NETSTANDARD
       try
       {
         ThreadProc();
@@ -206,10 +204,6 @@ namespace JetBrains.Threading
           
         Thread.ResetAbort();
       }
-#else
-      ThreadProc();
-#endif
-      
     }
     
     #endregion
