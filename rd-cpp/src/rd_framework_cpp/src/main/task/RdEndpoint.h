@@ -99,6 +99,7 @@ namespace rd {
 				logSend.trace("endpoint %s::%s response = %s",
 							  to_string(location).c_str(), to_string(rdid).c_str(), to_string(*task.result).c_str());
 				get_wire()->send(task_id, [&](Buffer &inner_buffer) {
+					task_id.write(inner_buffer);
 					task_result.write(get_serialization_context(), inner_buffer);
 				});
 				//todo remove from awaiting_tasks
