@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternRoot
+import com.jetbrains.rd.framework.impl.RdSet
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -33,4 +34,12 @@ class Protocol(
             it.bind(lifetime, this, "ProtocolInternRoot")
         }
     }))
+
+    override val clientIdSet: RdSet<ClientId> = RdSet(ClientId).also {
+        it.rdid = RdId.Null.mix("ProtocolClientIdSet")
+        it.add(ClientId.localId)
+        scheduler.queue {
+            it.bind(lifetime, this, "ProtocolClientIdSet")
+        }
+    }
 }
