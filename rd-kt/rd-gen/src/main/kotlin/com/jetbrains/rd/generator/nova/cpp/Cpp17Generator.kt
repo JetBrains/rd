@@ -39,7 +39,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
 
-    val Declaration.namespace: String
+    private val Declaration.namespace: String
         get() {
             return if (this is FakeDeclaration) {
                 decl.namespace
@@ -49,9 +49,18 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             }
         }
 
+    private val Declaration.platformTypeName: String
+        get() {
+            return getSetting(Intrinsic)?.name ?: name
+        }
+
     private val Member.Field.platformType: IType
         get() {
-            return getSetting(Intrinsic) ?: this.type
+            return if (type is Declaration) {
+                type.getSetting(Intrinsic) ?: type
+            } else {
+                type
+            }
         }
 
     private val Declaration.isIntrinsic: Boolean
@@ -143,20 +152,26 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     //region PrettyPrinter
 
-    private fun String.include(): String {
+    private fun String.includeQuotes(): String {
+        return """
+            #include "$this"
+            """.trimIndent()
+    }
+
+    private fun String.includeAngleBrackets(): String {
         return "#include <$this>"
     }
 
-    private fun String.include(extension: String? = "h"): String {
+    private fun String.includeWithExtension(extension: String = "h"): String {
         return "#include \"${this}.$extension\""
     }
 
-    private fun Declaration.include(): String {
-        return this.name.include("h")
+    private fun Declaration.includeWithExtension(): String {
+        return this.name.includeWithExtension("h")
     }
 
-    private fun IType.include(): String {
-        return this.name.include("h")
+    private fun IType.includeWithExtension(): String {
+        return this.name.includeWithExtension("h")
     }
 
     private fun PrettyPrinter.carry(): String {
@@ -248,7 +263,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     fun IType.substitutedName(scope: Declaration, rawType: Boolean = false, omitNullability: Boolean = false): String = when (this) {
         is Enum -> sanitizedName(scope)
-//        is Struct.Concrete -> sanitizedName(scope)
+        is Struct.Concrete -> sanitizedName(scope)
         is Declaration -> {
             val fullName = sanitizedName(scope)
             if (rawType) {
@@ -501,7 +516,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             this.withNamespace()
         } else {
             val needQualification = namespace != scope.namespace
-            needQualification.condstr { "$namespace::" } + name
+            needQualification.condstr { "$namespace::" } + platformTypeName
         }
     }
 
@@ -733,7 +748,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     }
 
     fun PrettyPrinter.source(decl: Declaration, dependencies: List<Declaration>) {
-        +decl.include()
+        +decl.includeWithExtension()
 
         println()
 
@@ -746,19 +761,26 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
         if (decl is Toplevel) {
             dependencies.filter { !it.isAbstract }.filterIsInstance<IType>().println {
-                it.include()
+                if (it is Declaration) {
+                    val name = it.name
+                    "../${it.root.name}/$name".includeWithExtension()
+                } else {
+                    it.includeWithExtension()
+                }
             }
         }
         println()
         if (decl is Toplevel) {
-            println("#include \"${decl.root.sanitizedName(decl)}.h\"")
+            val rootName = decl.root.sanitizedName(decl)
+            +"../$rootName/$rootName".includeWithExtension()
         }
         if (decl.isAbstract) {
-            +(unknown(decl)!!.include())
+            +(unknown(decl)!!.includeWithExtension())
         }
         if (decl is Root) {
             decl.toplevels.forEach {
-                +it.include()
+                val name = it.name
+                +"../$name/$name".includeWithExtension()
             }
         }
         if (decl is Toplevel && decl.isLibrary) {
@@ -997,16 +1019,16 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 "gen_util"
         )
 
-        +frameworkHeaders.joinToString(separator = eol) { s -> s.include("h") }
+        +frameworkHeaders.joinToString(separator = eol) { s -> s.includeWithExtension("h") }
         println()
         +standardHeaders.joinToString(separator = eolKind.value, transform = { "#include <$it>" })
         println()
         //third-party
-        +"thirdparty".include("hpp")
+        +"thirdparty".includeWithExtension("hpp")
 
 //        +INSTANTIATION_FILE_NAME.include("h")
 
-        marshallerHeaders.println()
+        marshallerHeaders.forEach { it.includeAngleBrackets() }
     }
 
     private fun Declaration.parseType(type: IType, allowPredefined: Boolean): IType? {
@@ -1059,47 +1081,43 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 }
                 is Member.Const -> listOfNotNull(decl.parseType(member.type, false))
             }
-            return types.map {
+            return types.mapNotNull {
                 when (it) {
+                    is Root -> "../${it.name}/${it.name}.h"
                     is Declaration ->
                         if (!it.isIntrinsic) {
-                            if (it.pointcut == decl.pointcut)
-                                it.name
-                            else
-                                "../${it.pointcut!!.name}/${it.name}"
+                            when {
+                                decl is Root -> "../${it.root.name}/${it.name}.h"
+                                it.pointcut != decl.pointcut -> "../${it.root.name}/${it.name}.h"
+                                else -> it.name
+                            }
                         } else {
-                            null
+                            it.getSetting(Intrinsic)!!.header
                         }
                     else -> {
-                        it.name
+                        "${it.name}.h"
                     }
                 }
-            }.filterNotNull()
+            }
         }
 
-        fun dependentTypes(decl: Declaration, extHeader: List<String>): List<String> {
+        fun dependentTypes(decl: Declaration): List<String> {
             return (decl.ownMembers + decl.constantMembers)
                     .asSequence()
                     .map { parseMember(it) }
                     .fold(arrayListOf<String>()) { acc, arrayList ->
                         acc += arrayList
                         acc
-                    }.plus(listOfNotNull(decl.base?.name)).plus(extHeader)
+                    }.plus(listOfNotNull(decl.base?.name))
                     //                .filter { dependencies.map { it.name }.contains(it) }
                     .distinct().toList()
         }
 
-        fun dependentIntrinsics(decl: Declaration): List<String> {
-            return (decl.ownMembers + decl.constantMembers)
-                    .asSequence()
-                    .map { it.getSetting(Intrinsic)?.header }
-                    .filterNotNull()
-                    .toList()
-        }
+        val extHeaders = listOfNotNull(if (decl.isExtension) decl.pointcut?.name else null)
+        extHeaders.printlnWithBlankLine { it.includeWithExtension("h") }
+        dependentTypes(decl).printlnWithBlankLine { it.includeQuotes() }
 
-        val extHeader = listOfNotNull(if (decl.isExtension) decl.pointcut?.name else null)
-        dependentTypes(decl, extHeader).printlnWithBlankLine { it.include("h") }
-        dependentIntrinsics(decl).println()
+        decl.getSetting(MarshallerHeaders)?.distinct()?.println { it.includeQuotes() }
     }
 
 /*
@@ -1576,9 +1594,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         +"${decl.name}::$serializersOwnerImplName const ${decl.name}::serializersOwner;"
         println()
         define(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner").const().override()) {
-            types.filter { !it.isAbstract }.filterIsInstance<IType>().filterNot { iType -> iType is Enum }.println {
-                "serializers.registry<${it.name}>();"
-            }
+            types.filter { !it.isAbstract }
+                    .filterIsInstance<IType>()
+                    .filterNot { iType -> iType is Enum }
+                    .filterNot { iType -> iType is Declaration && iType.isIntrinsic }
+                    .println {
+                        "serializers.registry<${it.name}>();"
+                    }
 
             if (decl is Root) {
                 decl.toplevels.minus(decl).println {
@@ -1756,8 +1778,8 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 val unwrap = when {
                     member is Member.Reactive -> false
                     member is IBindable -> true
-                    member is Member.Field && member.type is Struct -> true
-                    member is Member.Field && member.type is Class -> true
+                    member is Member.Field && member.type is Struct && !member.type.isIntrinsic -> true
+                    member is Member.Field && member.type is Class && !member.type.isIntrinsic -> true
                     member is Member.Field && member.type is PredefinedType.string -> true
                     member is Member.Field && member.type is InternedScalar && member.type.itemType is PredefinedType.string -> true
                     else -> false

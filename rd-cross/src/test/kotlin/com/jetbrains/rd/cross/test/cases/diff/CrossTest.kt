@@ -3,12 +3,14 @@ package com.jetbrains.rd.cross.test.cases.diff
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.io.File
 import java.nio.file.Paths
 
+@Ignore
 class CrossTest {
     private fun assertEqualFiles(file1: File, file2: File) {
         val t1 = file1.readText(Charsets.UTF_8)
