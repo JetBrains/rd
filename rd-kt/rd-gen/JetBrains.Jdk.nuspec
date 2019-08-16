@@ -11,6 +11,6 @@
         <description>JetBrains Java Runtime</description>
     </metadata>
     <files>
-        <file src="build\nuget\DotFiles\**\*" target="DotFiles"/>
+        <file src="build\nuget\**\*" target="."/>
     </files>
 </package>

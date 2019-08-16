@@ -43,10 +43,10 @@ then
 fi
 
 tar xf ${cache_dir}/jdk.win.tar.gz -C ${nuget_dir}/DotFiles/jdk/win
-rm ${nuget_dir}/DotFiles/jdk/win/src.zip
+rm ${nuget_dir}/jdk/win/src.zip
 tar xf ${cache_dir}/jdk.lin.tar.gz -C ${nuget_dir}/DotFiles/jdk/lin
-rm ${nuget_dir}/DotFiles/jdk/lin/src.zip
+rm ${nuget_dir}/jdk/lin/src.zip
 tar xf ${cache_dir}/jdk.mac.tar.gz -C ${nuget_dir}/DotFiles/jdk/mac
-rm ${nuget_dir}/DotFiles/jdk/mac/jdk/Contents/Home/src.zip
+rm ${nuget_dir}/jdk/mac/jdk/Contents/Home/src.zip
 
 mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} JetBrains.Jdk.nuspec

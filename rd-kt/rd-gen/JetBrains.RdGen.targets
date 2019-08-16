@@ -28,12 +28,13 @@
     <Error Condition="'@(RdModelDir)' == ''" Text="Please define Item RdModelDir with path to rd model folder"/>
     <Error Condition="!Exists(%(RdModelDir.FullPath))" Text="Some folders from: '@(RdModelDir)' not exists" />
     <PropertyGroup>
+      <JetBrainJdkRoot>$(MSBuildThisFileDirectory)..\..\JetBrains.Jdk.1.8.20190816.6\jdk\</JetBrainJdkRoot>
       <IsWindows Condition="'$(OS)'=='Windows_NT'">True</IsWindows>
       <IsLinux Condition="'$(OS)'!='Windows_NT' AND !Exists('/Library/Frameworks')">True</IsLinux>
       <IsMacOs Condition="'$(OS)'!='Windows_NT' AND Exists('/Library/Frameworks')">True</IsMacOs>
-      <JavaHome Condition="'$(IsWindows)' == 'True'">$(MSBuildThisFileDirectory)..\DotFiles\jdk\win</JavaHome>
-      <JavaHome Condition="'$(IsLinux)' == 'True'">$(MSBuildThisFileDirectory)..\DotFiles\jdk\linux</JavaHome>
-      <JavaHome Condition="'$(IsMacOs)' == 'True'">$(MSBuildThisFileDirectory)..\DotFiles\jdk\mac\jdk\Contents\Home</JavaHome>
+      <JavaHome Condition="'$(IsWindows)' == 'True'">$(JetBrainJdkRoot)\win</JavaHome>
+      <JavaHome Condition="'$(IsLinux)' == 'True'">$(JetBrainJdkRoot)\lin</JavaHome>
+      <JavaHome Condition="'$(IsMacOs)' == 'True'">$(JetBrainJdkRoot)\mac\jdk\Contents\Home</JavaHome>
       <JavaExe Condition="'$(IsWindows)' == 'True'">$(JavaHome)\bin\java.exe</JavaExe>
       <JavaExe Condition="'$(IsWindows)' != 'True'">$(JavaHome)\bin\java</JavaExe>
       <_RdProtocolGeneratorLogFile>$(IntermediateOutputPath)generatorOutput.log</_RdProtocolGeneratorLogFile>
