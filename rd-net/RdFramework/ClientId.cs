@@ -4,30 +4,35 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Rd
 {
+    /// <summary>
+    /// ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
+    /// In such systems, each client has their own ClientId.
+    /// 
+    /// The context is automatically propagated across async/await calls using AsyncLocal. The application should take care to preserve and propagate the current value across other kinds of asynchronous calls. 
+    /// </summary>
     public struct ClientId
     {
-        public readonly string Id;
+        public readonly string Value;
 
-        public ClientId(string id)
+        public ClientId(string value)
         {
-            Id = id;
+            Value = value;
         }
 
         public override string ToString()
         {
-            return Id;
+            return Value;
         }
 
         public const string LocalId = "Host";
 
-        private static readonly ThreadLocal<ClientId?> ourCurrentClientId = new ThreadLocal<ClientId?>(() => null);
 #if !NET35
         private static readonly AsyncLocal<ClientId?> ourAsyncLocalClientId = new AsyncLocal<ClientId?>();
 #endif
         
         
         public static readonly CtxReadDelegate<ClientId> ReadDelegate = (ctx, reader) => new ClientId(reader.ReadString());
-        public static readonly CtxWriteDelegate<ClientId> WriteDelegate = (ctx, writer, value) => writer.Write(value.Id);
+        public static readonly CtxWriteDelegate<ClientId> WriteDelegate = (ctx, writer, value) => writer.Write(value.Value);
 
 
         #region Cookie
@@ -47,7 +52,6 @@ namespace JetBrains.Rd
 #if !NET35
                 ourAsyncLocalClientId.Value = newClientId;
 #endif
-                ourCurrentClientId.Value = newClientId;
             }
 
             public void Dispose()
@@ -63,8 +67,9 @@ namespace JetBrains.Rd
         [CanBeNull]
         public static ClientId? CurrentOrNull =>
 #if !NET35
-            ourAsyncLocalClientId.Value ??
+            ourAsyncLocalClientId.Value;
+#else
+            throw new NotSupportedException("No ClientId on NET 3.5");
 #endif
-            ourCurrentClientId.Value;
     }
 }

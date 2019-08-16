@@ -14,7 +14,7 @@ namespace JetBrains.Rd
             Assertion.Assert(currentId.HasValue, "ClientId != null");
             if (map.TryGetValue(currentId.Value, out var value))
                 return value;
-            Assertion.Fail("{0} has no value for ClientId {1}", map.Location, currentId.Value.Id);
+            Assertion.Fail("{0} has no value for ClientId {1}", map.Location, currentId.Value.Value);
             return default;
         }
 
