@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>JetBrains.Jdk</id>
+        <version>$version$</version>
+        <authors>JetBrains</authors>
+        <owners>JetBrains</owners>
+        <license type="expression">Apache-2.0</license>
+        <projectUrl>https://github.com/JetBrains/JetBrainsRuntime</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>JetBrains Java Runtime</description>
+    </metadata>
+    <files>
+        <file src="build\nuget\DotFiles\**\*" target="DotFiles"/>
+    </files>
+</package>
