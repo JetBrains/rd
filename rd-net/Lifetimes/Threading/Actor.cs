@@ -62,7 +62,7 @@ namespace JetBrains.Threading
         }, lifetime, TaskCreationOptions.None, scheduler ?? TaskScheduler.Current);
     }
 
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif    
     

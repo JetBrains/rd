@@ -146,7 +146,7 @@ namespace JetBrains.Core
     /// <param name="f">Function  to execute</param>
     /// <typeparam name="TRes">type argument of returned Result</typeparam>
     /// <returns>Succeed result with <see cref="Result{T}.Value"/> == f() if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>
-    #if !NET35 && !NETSTANDARD
+    #if !NET35
     [HandleProcessCorruptedStateExceptions]
     #endif    
     public static Result<TRes> Wrap<TRes>([NotNull] Func<TRes> f)
@@ -167,7 +167,7 @@ namespace JetBrains.Core
     /// </summary>
     /// <param name="f">Action to execute</param>
     /// <returns>Succeed result with <see cref="Result.Unit"/> if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>
-    #if !NET35 && !NETSTANDARD
+    #if !NET35
     [HandleProcessCorruptedStateExceptions]
     #endif    
     public static Result<Unit> Wrap([NotNull] Action f)
@@ -191,7 +191,7 @@ namespace JetBrains.Core
     /// <param name="param">function argument</param>
     /// <typeparam name="T"><see cref="param"/> type</typeparam>
     /// <returns>Succeed result with <see cref="Result.Unit"/> if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>    
-    #if !NET35 && !NETSTANDARD
+    #if !NET35
       [HandleProcessCorruptedStateExceptions]
     #endif
     public static Result<Unit> Wrap<T>([NotNull] Action<T> f, T param)
@@ -215,7 +215,7 @@ namespace JetBrains.Core
     /// <typeparam name="T"><see cref="param"/> type</typeparam>
     /// <typeparam name="TRes">type argument of returned Result</typeparam>
     /// <returns>Succeed result with <see cref="Result{T}.Value"/> == f(param) if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>    
-    #if !NET35 && !NETSTANDARD
+    #if !NET35
     [HandleProcessCorruptedStateExceptions]
     #endif
     public static Result<TRes> Wrap<T, TRes>([NotNull] Func<T, TRes> f, T param)
@@ -289,11 +289,7 @@ namespace JetBrains.Core
   /// </summary>
   /// <typeparam name="T"></typeparam>
   [PublicAPI]
-  public     
-#if !NETSTANDARD 
-    readonly
-#endif 
-    struct Result<T> : IEquatable<Result<T>>
+  public readonly struct Result<T> : IEquatable<Result<T>>
   {
     /// <summary>
     /// Value in case of <see cref="Succeed"/>, default(T) otherwise
@@ -467,11 +463,7 @@ namespace JetBrains.Core
   /// <typeparam name="TSuccess"></typeparam>
   /// <typeparam name="TFailure"></typeparam>
   [PublicAPI]
-  public
-    #if !NETSTANDARD 
-    readonly
-    #endif 
-    struct Result<TSuccess, TFailure> : IEquatable<Result<TSuccess, TFailure>>
+  public readonly struct Result<TSuccess, TFailure> : IEquatable<Result<TSuccess, TFailure>>
   {
     /// <summary>
     /// Value in case of <see cref="Succeed"/>, default(T) otherwise

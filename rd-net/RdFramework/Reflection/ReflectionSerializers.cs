@@ -649,16 +649,6 @@ namespace JetBrains.Rd.Reflection
   }
 
 
-#if NETSTANDARD
-  public static class NetStandardExtensions
-  {
-    public static string ToString(this TypeInfo typeInfo, bool fqn)
-    {
-      return typeInfo.AsType().ToString(fqn);
-    }
-  }
-#endif
-
 #if NET35
   public static class Net35Extensions
   {

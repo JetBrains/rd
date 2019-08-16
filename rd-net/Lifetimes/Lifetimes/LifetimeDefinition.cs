@@ -141,7 +141,7 @@ namespace JetBrains.Lifetimes
       ExecuteOrTerminateOnFail(atomicAction);
     }
     
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
     private void ExecuteOrTerminateOnFail([CanBeNull] Action<LifetimeDefinition> atomicAction)
@@ -161,7 +161,7 @@ namespace JetBrains.Lifetimes
       }
     }
     
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
     private void ExecuteOrTerminateOnFail([CanBeNull] Action<Lifetime> atomicAction)
@@ -352,7 +352,7 @@ namespace JetBrains.Lifetimes
       }
     }
 
-#if !NET35 && !NETSTANDARD
+#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
     private void Destruct()
