@@ -12,5 +12,6 @@
     </metadata>
     <files>
         <file src="build\nuget\**\*" target="."/>
+        <file src="build\nuget\lib\net\_._" target="lib\net\_._"/>
     </files>
 </package>
