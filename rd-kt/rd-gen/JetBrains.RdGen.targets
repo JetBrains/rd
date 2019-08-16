@@ -28,7 +28,7 @@
     <Error Condition="'@(RdModelDir)' == ''" Text="Please define Item RdModelDir with path to rd model folder"/>
     <Error Condition="!Exists(%(RdModelDir.FullPath))" Text="Some folders from: '@(RdModelDir)' not exists" />
     <PropertyGroup>
-      <JetBrainJdkRoot>$(MSBuildThisFileDirectory)..\..\JetBrains.Jdk.1.8.20190816.10\jdk\</JetBrainJdkRoot>
+      <JetBrainJdkRoot>$(MSBuildThisFileDirectory)..\..\JetBrains.Jdk.1.8.20190816.11\jdk\</JetBrainJdkRoot>
       <IsWindows Condition="'$(OS)'=='Windows_NT'">True</IsWindows>
       <IsLinux Condition="'$(OS)'!='Windows_NT' AND !Exists('/Library/Frameworks')">True</IsLinux>
       <IsMacOs Condition="'$(OS)'!='Windows_NT' AND Exists('/Library/Frameworks')">True</IsMacOs>
