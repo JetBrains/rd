@@ -42,6 +42,9 @@ ${build_dir}/../../../gradlew fatJar
 
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
+mkdir -p ${nuget_dir}/lib/net
+touch ${nuget_dir}/lib/net/_._
+
 ${build_dir}/.dotnet/dotnet build /p:Configuration=Release /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Rd.sln
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=Release /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Lifetimes/Lifetimes.csproj
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=Release /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/RdFramework/RdFramework.csproj
