@@ -32,7 +32,10 @@ then
   wget -O "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz.tmp" https://repo.labs.intellij.net/thirdparty/dotnet-sdk-2.2.300-linux-x64.tar.gz
   mv "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz.tmp" "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz"
 fi
+
+mkdir -p ${build_dir}/jdk
 tar xf ${cache_dir}/jdk.lin.tar.gz -C ${build_dir}/jdk
+
 mkdir -p ${build_dir}/.dotnet
 tar xf ${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz -C ${build_dir}/.dotnet
 
