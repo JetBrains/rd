@@ -49,4 +49,7 @@ rm ${nuget_dir}/jdk/lin/src.zip
 tar xf ${cache_dir}/jdk.mac.tar.gz -C ${nuget_dir}/jdk/mac
 rm ${nuget_dir}/jdk/mac/jdk/Contents/Home/src.zip
 
+mkdir ${nuget_dir}/lib/net
+touch ${nuget_dir}/lib/net/_._
+
 mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} JetBrains.Jdk.nuspec
