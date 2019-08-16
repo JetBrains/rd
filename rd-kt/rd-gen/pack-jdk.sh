@@ -16,9 +16,9 @@ nuget_version="${BUILD_NUMBER:-193.0.0}"
 mkdir -p $cache_dir
 echo $cache_dir
 
-mkdir -p "${nuget_dir}/DotFiles/jdk/win"
-mkdir -p "${nuget_dir}/DotFiles/jdk/lin"
-mkdir -p "${nuget_dir}/DotFiles/jdk/mac"
+mkdir -p "${nuget_dir}/jdk/win"
+mkdir -p "${nuget_dir}/jdk/lin"
+mkdir -p "${nuget_dir}/jdk/mac"
 
 
 if [[ ! -f "${cache_dir}/jdk.win.tar.gz" ]]
@@ -42,11 +42,11 @@ then
   mv "${cache_dir}/nuget.exe.tmp" "${cache_dir}/nuget.exe"
 fi
 
-tar xf ${cache_dir}/jdk.win.tar.gz -C ${nuget_dir}/DotFiles/jdk/win
+tar xf ${cache_dir}/jdk.win.tar.gz -C ${nuget_dir}/jdk/win
 rm ${nuget_dir}/jdk/win/src.zip
-tar xf ${cache_dir}/jdk.lin.tar.gz -C ${nuget_dir}/DotFiles/jdk/lin
+tar xf ${cache_dir}/jdk.lin.tar.gz -C ${nuget_dir}/jdk/lin
 rm ${nuget_dir}/jdk/lin/src.zip
-tar xf ${cache_dir}/jdk.mac.tar.gz -C ${nuget_dir}/DotFiles/jdk/mac
+tar xf ${cache_dir}/jdk.mac.tar.gz -C ${nuget_dir}/jdk/mac
 rm ${nuget_dir}/jdk/mac/jdk/Contents/Home/src.zip
 
 mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} JetBrains.Jdk.nuspec
