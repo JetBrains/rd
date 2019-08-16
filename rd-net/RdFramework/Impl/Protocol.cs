@@ -5,6 +5,7 @@ using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
+using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
@@ -17,6 +18,7 @@ namespace JetBrains.Rd.Impl
     /// Should match textual RdId of protocol intern root in Kotlin/js/cpp counterpart
     /// </summary>
     const string ProtocolInternRootRdId = "ProtocolInternRoot";
+    const string ClientIdSetRdId = "ProtocolClientIdSet";
     
     /// <summary>
     /// Should match whatever is in rd-gen for ProtocolInternScope
@@ -37,16 +39,19 @@ namespace JetBrains.Rd.Impl
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
       SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
       OutOfSyncModels = new ViewableSet<RdExtBase>();
+      ClientIdSet = new RdSet<ClientId>(ClientId.ReadDelegate, ClientId.WriteDelegate);
     }
 
     private InternRoot CreateProtocolInternRoot(Lifetime lifetime)
     {
       var root = new InternRoot();
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
+      ClientIdSet.RdId = RdId.Nil.Mix(ClientIdSetRdId);
       Scheduler.Queue(() =>
       {
-        if (lifetime.IsAlive)
-          root.Bind(lifetime, this, ProtocolInternRootRdId);
+        if (!lifetime.IsAlive) return;
+        root.Bind(lifetime, this, ProtocolInternRootRdId);
+        ClientIdSet.Bind(lifetime, this, ClientIdSetRdId);
       });
       return root;
     }
@@ -59,6 +64,8 @@ namespace JetBrains.Rd.Impl
     public IScheduler Scheduler { get; }
     public SerializationCtx SerializationContext { get; }
     public ViewableSet<RdExtBase> OutOfSyncModels { get; }
+
+    public RdSet<ClientId> ClientIdSet { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     

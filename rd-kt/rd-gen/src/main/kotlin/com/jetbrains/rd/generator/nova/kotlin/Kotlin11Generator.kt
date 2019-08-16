@@ -138,10 +138,17 @@ open class Kotlin11Generator(
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
     }
 
-    protected open fun Member.implSubstitutedName(scope: Declaration) = when (this) {
+    protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration) =
+        "IViewableMap<ClientId, " + intfSubstitutedName(scope) + ">"
+
+
+    protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
-        is Member.Reactive -> implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Reactive ->
+            (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
+                if (isPerClientId && !perClientIdRawName) "RdMap<ClientId, $baseTypeName>" else baseTypeName
+            }
     }
 
 
@@ -193,6 +200,8 @@ open class Kotlin11Generator(
     }
 
     protected fun Member.Reactive.customSerializers(scope: Declaration) : List<String> {
+        if (isPerClientId)
+            return listOf("ClientId", "$implSimpleName as ISerializer<$implSimpleName<${genericParams.joinToString(", ") { it.substitutedName(scope) }}>>")
         return genericParams.asList().map { it.serializerRef(scope) }
     }
 
@@ -647,7 +656,11 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
         for (member in decl.ownMembers.filter { it.isEncapsulated }) {
             p(docComment(member.documentation))
-            + "val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
+            if(member is Member.Reactive && member.isPerClientId) {
+                +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}.getForCurrentClientId()"
+                +"val ${member.publicName}PerClientIdMap: ${member.intfSubstitutedMapName(decl)} get() = ${member.encapsulatedName}"
+            } else
+                +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
         }
 
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
@@ -681,6 +694,12 @@ open class Kotlin11Generator(
         decl.ownMembers
             .filter { it.isBindable }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { """bindableChildren.add("${it.name}" to ${it.encapsulatedName})""" }
+
+        if (flowTransform == FlowTransform.AsIs) {
+            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("override fun init(lifetime: Lifetime) { super.init(lifetime)", "}") {
+                "${it.encapsulatedName}.adviseForProtocolClientIds(lifetime) { ${it.implSubstitutedName(decl, true)}() }"
+            }
+        }
     }
 
 

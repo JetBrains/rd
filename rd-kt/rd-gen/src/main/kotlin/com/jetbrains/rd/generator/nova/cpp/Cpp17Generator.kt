@@ -1089,6 +1089,7 @@ open class Cpp17Generator(val flowTransform: FlowTransform, val defaultNamespace
 
     fun PrettyPrinter.fieldsDecl(decl: Declaration) {
         val own = decl.ownMembers.map {
+            if (it is Member.Reactive && it.isPerClientId) error("C++ protocol does not support per client id members")
             val initial = getDefaultValue(decl, it)?.let {
                 "{$it}"
             } ?: ""

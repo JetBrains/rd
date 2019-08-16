@@ -240,10 +240,16 @@ open class CSharp50Generator(
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
     }
 
-    protected open fun Member.implSubstitutedName(scope: Declaration): String = when (this) {
+    protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration): String =
+        "IViewableMap<ClientId, ${implSubstitutedName(scope, true)}>"
+
+
+    protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false): String = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
-        is Member.Reactive -> implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
+            if(isPerClientId && !perClientIdRawName) "RdMap<ClientId, $it>" else it
+        }
     }
 
 
@@ -268,6 +274,8 @@ open class CSharp50Generator(
     protected open val Member.isEncapsulated : Boolean get() = this is Member.Reactive
 
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean) : String {
+        if(isPerClientId)
+            return "ClientId.ReadDelegate, ClientId.WriteDelegate, ${implSubstitutedName(containing, true)}.Read, ${implSubstitutedName(containing, true)}.Write"
         val res =  genericParams.joinToString { it.readerDelegateRef(containing) + ", " + it.writerDelegateRef(containing) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
     }
@@ -720,8 +728,13 @@ open class CSharp50Generator(
                         val isNotVoid = type != PredefinedType.void
                         +"$prefix void ${member.publicName}(${isNotVoid.condstr { type.substitutedName(decl) + " value" }}) => ${member.encapsulatedName}.Fire(${isNotVoid.condstr { "value" }});"
                     }
-                    else
-                        + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"
+                    else {
+                        if (member.isPerClientId) {
+                            + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName}.GetForCurrentClientId();"
+                            + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerClientIdMap => ${member.encapsulatedName};"
+                        } else
+                            + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"
+                    }
                 is Member.Field ->
                     + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}"
                 else -> fail("Unsupported member: $member")
@@ -745,6 +758,12 @@ open class CSharp50Generator(
     protected fun PrettyPrinter.customBodyTrait(decl: Declaration) {
         if(decl.getSetting(InheritsAutomation) ?: false) {
             +"public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;"
+        }
+
+        if (defaultFlowTransform == FlowTransform.AsIs && decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
+            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("protected override void Init(Lifetime lifetime) { base.Init(lifetime); ", "}") {
+                "${it.encapsulatedName}.AdviseForProtocolClientIds<${it.implSubstitutedName(decl, true)}>(lifetime, () => new ${it.implSubstitutedName(decl, true)}());"
+            }
         }
     }
 
