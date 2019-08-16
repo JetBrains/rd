@@ -89,7 +89,7 @@ namespace rd {
 			if (!handler) {
 				throw std::invalid_argument("handler is empty for RdEndPoint");
 			}
-			auto & task = awaiting_tasks[task_id] = {};
+			auto task = awaiting_tasks[task_id] = {};
 			try {
 				task = handler(*bind_lifetime, wrapper::get<TReq>(value));
 			} catch (std::exception const &e) {
