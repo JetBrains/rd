@@ -35,6 +35,6 @@
     <files>
         <file src="JetBrains.RdGen.targets" target="build\JetBrains.RdGen.targets"/>
         <file src="build\libs\rd.jar" target="build\rd.jar"/>
-        <file src="build\nuget\DotFiles\**\*" target="DotFiles"/>
+        <file src="build\nuget\**\*" target="."/>
     </files>
 </package>
