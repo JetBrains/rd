@@ -16,10 +16,6 @@ nuget_version="${BUILD_NUMBER:-193.0.0}"
 mkdir -p $cache_dir
 echo $cache_dir
 
-mkdir -p "${nuget_dir}/DotFiles/jdk/win"
-mkdir -p "${nuget_dir}/DotFiles/jdk/lin"
-mkdir -p "${nuget_dir}/DotFiles/jdk/mac"
-
 if [[ ! -f "${cache_dir}/jdk.lin.tar.gz" ]]
 then
   wget -O "${cache_dir}/jdk.lin.tar.gz.tmp" https://jetbrains.bintray.com/intellij-jbr/jbrsdk-8u202-linux-x64-b1514.23.tar.gz
@@ -36,12 +32,11 @@ then
   wget -O "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz.tmp" https://repo.labs.intellij.net/thirdparty/dotnet-sdk-2.2.300-linux-x64.tar.gz
   mv "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz.tmp" "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz"
 fi
-tar xf ${cache_dir}/jdk.lin.tar.gz -C ${nuget_dir}/DotFiles/jdk/lin
-rm ${nuget_dir}/DotFiles/jdk/lin/src.zip
+tar xf ${cache_dir}/jdk.lin.tar.gz -C ${build_dir}/jdk
 mkdir -p ${build_dir}/.dotnet
 tar xf ${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz -C ${build_dir}/.dotnet
 
-export JAVA_HOME=${nuget_dir}/DotFiles/jdk/lin
+export JAVA_HOME=${build_dir}/jdk
 chmod +x ${JAVA_HOME}/bin/*
 ${build_dir}/../../../gradlew fatJar
 
