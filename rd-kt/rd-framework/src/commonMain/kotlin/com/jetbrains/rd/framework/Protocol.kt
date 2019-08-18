@@ -15,7 +15,8 @@ class Protocol(
         override val scheduler: IScheduler,
         override val wire: IWire, //to initialize field with circular dependencies
         val lifetime: Lifetime,
-        serializationCtx: SerializationCtx? = null
+        serializationCtx: SerializationCtx? = null,
+        parentClientIdSet : RdSet<ClientId>? = null
 ) : IRdDynamic, IProtocol {
 
     override val location: RName = RName.Empty
@@ -35,7 +36,7 @@ class Protocol(
         }
     }))
 
-    override val clientIdSet: RdSet<ClientId> = RdSet(ClientId).also {
+    override val clientIdSet: RdSet<ClientId> = parentClientIdSet ?: RdSet(ClientId).also {
         it.rdid = RdId.Null.mix("ProtocolClientIdSet")
         it.add(ClientId.localId)
         scheduler.queue {

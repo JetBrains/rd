@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Impl
     
 
     public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null)
+      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] RdSet<ClientId> parentClientIdSet = null)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -37,9 +37,9 @@ namespace JetBrains.Rd.Impl
       Identities = identities ?? throw new ArgumentNullException(nameof(identities));
       Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
+      ClientIdSet = parentClientIdSet ?? new RdSet<ClientId>(ClientId.ReadDelegate, ClientId.WriteDelegate);
       SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
       OutOfSyncModels = new ViewableSet<RdExtBase>();
-      ClientIdSet = new RdSet<ClientId>(ClientId.ReadDelegate, ClientId.WriteDelegate);
     }
 
     private InternRoot CreateProtocolInternRoot(Lifetime lifetime)
