@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.util.threadLocalWithInitial
-import kotlinx.coroutines.Runnable
 import kotlin.jvm.JvmStatic
 
 /**
@@ -59,11 +58,11 @@ class ClientId(val value: String) {
          * Invokes a runnable under the given ClientId
          */
         @JvmStatic
-        fun withClientId(clientId: ClientId?, action: Runnable) {
+        fun withClientId(clientId: ClientId?, action: () -> Unit) {
             val oldClientId = currentClientId.get()
             try {
                 currentClientId.set(clientId)
-                action.run()
+                action()
             } finally {
                 currentClientId.set(oldClientId)
             }
