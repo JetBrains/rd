@@ -11,7 +11,7 @@ import kotlin.jvm.JvmStatic
  *
  * It's up to the application to preserve and propagate the current value across background threads and asynchronous activities.
  */
-class ClientId(val value: String) {
+data class ClientId(val value: String) {
     companion object : ISerializer<ClientId> {
         private val defaultLocalId = ClientId("Host")
 

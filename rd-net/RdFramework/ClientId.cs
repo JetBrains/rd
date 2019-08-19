@@ -10,11 +10,11 @@ namespace JetBrains.Rd
     /// 
     /// The context is automatically propagated across async/await calls using AsyncLocal. The application should take care to preserve and propagate the current value across other kinds of asynchronous calls. 
     /// </summary>
-    public struct ClientId
+    public struct ClientId : IEquatable<ClientId>
     {
-        public readonly string Value;
+        [NotNull] public readonly string Value;
 
-        public ClientId(string value)
+        public ClientId([NotNull] string value)
         {
             Value = value;
         }
@@ -71,5 +71,30 @@ namespace JetBrains.Rd
 #else
             throw new NotSupportedException("No ClientId on NET 3.5");
 #endif
+
+        public bool Equals(ClientId other)
+        {
+            return Value == other.Value;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is ClientId other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
+
+        public static bool operator ==(ClientId left, ClientId right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ClientId left, ClientId right)
+        {
+            return !left.Equals(right);
+        }
     }
 }
