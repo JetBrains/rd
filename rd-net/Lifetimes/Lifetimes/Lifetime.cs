@@ -15,7 +15,7 @@ namespace JetBrains.Lifetimes
 {
   /// <summary>
   /// Lifetime's lifecycle statuses. Lifetime is created in <see cref="Alive"/> status and eventually becomes <see cref="Terminated"/>.
-  /// Status change is one way road: from lower ordinal to bigger (Alive -> Canceling -> Terminating -> Terminated).  
+  /// Status change is one way road: from lower ordinal to higher (<c>Alive -> Canceling -> Terminating -> Terminated </c>).  
   /// </summary>
   public enum LifetimeStatus
   {
@@ -52,11 +52,13 @@ namespace JetBrains.Lifetimes
   
   
   /// <summary>
-  /// Analogue of <see cref="CancellationToken"/> + inversion of <see cref="IDisposable"/> pattern (with thread-safety):
-  /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> methods.
-  /// When lifetime is being terminated (i.e. it's <see cref="LifetimeDefinition"/> was asked about <see cref="LifetimeDefinition.Terminate"/>) all
-  /// termination resources are being terminated in stack-way LIFO order. Lifetimes forms a hierarchy with parent-child relations so in single-threaded world child is always
-  /// become <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but it some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
+  /// Central class in <see cref="JetBrains.Lifetimes"/> package. Has two main function:<br/>
+  /// 1. High performance analogue of <see cref="CancellationToken"/>. Analogue of <see cref="CancellationTokenSource"/> <br/>
+  /// 2. Inversion of <see cref="IDisposable"/> pattern (with thread-safety):
+  /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> (e.g. <see cref="OnTermination(Action)"/>) methods.
+  /// When lifetime is being terminated (i.e. it's <see cref="LifetimeDefinition"/> was called <see cref="LifetimeDefinition.Terminate"/>) all
+  /// previously added termination resources are being terminated in stack-way LIFO order. Lifetimes forms a hierarchy with parent-child relations so in single-threaded world child always
+  /// becomes <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but it some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
   /// a directed acyclic graph. 
   ///
   /// <para>
@@ -69,8 +71,12 @@ namespace JetBrains.Lifetimes
   /// Child lifetime definition's <see cref="LifetimeDefinition.Terminate"/> method is called.</item>
   /// </list>
   ///
-  /// If some resource thrown an exception during termination, it will be logged by <see cref="ILog"/> with level <see cref="LoggingLevel.ERROR"/> so termination of other resources
-  /// won't be affected. 
+  /// If some resource throws an exception during termination, it will be logged by <see cref="ILog"/> with level <see cref="LoggingLevel.ERROR"/> so termination of other resources
+  /// won't be affected.
+  ///
+  /// 
+  /// 
+  /// <c>Lifetime</c> could be converted to <see cref="CancellationToken"/> by implicit cast or by explicit <see cref="ToCancellationToken"/> to use in task based API. You can start
   /// </para>
   /// </summary>
   public
@@ -234,11 +240,46 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public int ExecutingCount          => Def.ExecutingCount; 
     
 
+    /// <summary>
+    /// If you terminate lifetime definition <see cref="LifetimeDefinition.Terminate"/> under <see cref="Execute{T}"/> you'll get exception because 
+    /// it's impossible to keep guarantee that code under <see cref="Execute{T}"/> works with non-terminating livetime.
+    /// However if you know what you are doing (e.g. <c>Terminate</c> is the last call in code under <c>Execute</c>), you can take this cookie and allow this behavior.
+    /// </summary>
+    /// <returns>Disposable that allow to call <see cref="LifetimeDefinition.Terminate"/> under <see cref="Execute{T}"/> </returns>
     [PublicAPI] public LifetimeDefinition.AllowTerminationUnderExecutionCookie UsingAllowTerminationUnderExecution() => new LifetimeDefinition.AllowTerminationUnderExecutionCookie(Thread.CurrentThread);
+    
+    /// <summary>
+    /// This method could be used as non-allocation version of <see cref="Execute{T}"/> or <see cref="TryExecute{T}"/>.
+    /// Typical usage pattern is the following:
+    /// <code>
+    ///   using (val cookie = lifetime.ExecuteIfAliveCookie()) {
+    ///     if (cookie.Succeed) {
+    ///        // you can rely lifetime's resources are alive here (the same as body of Lifetime.Execute, Lifetime.TryExecute).
+    ///     } else {
+    ///       //  lifetime is not alive, return (as TryExecute) or throw OCE (as Execute)
+    ///     }
+    ///   }
+    /// </code>
+    /// </summary>
+    /// <param name="allowTerminationUnderExecution">Automatically takes <see cref="UsingAllowTerminationUnderExecution"/> under cookie</param>
+    /// <returns>Special disposable object. If <see cref="LifetimeDefinition.ExecuteIfAliveCookie.Succeed"/> than until <c>Dispose</c> current lifetime can't
+    /// become <see cref="LifetimeStatus.Terminating"/> and can't start resources destruction. If <c>!Succeed</c> than lifetime is already
+    /// <see cref="LifetimeStatus.Terminating"/> or <see cref="LifetimeStatus.Terminated"/> </returns>
     [PublicAPI] public LifetimeDefinition.ExecuteIfAliveCookie UsingExecuteIfAlive(bool allowTerminationUnderExecution = false) => Def.UsingExecuteIfAlive(allowTerminationUnderExecution);
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="action"></param>
+    /// <param name="wrapExceptions"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI] public Result<T> TryExecute<T>([NotNull, InstantHandle] Func<T> action, bool wrapExceptions = false) => Def.TryExecute(action, wrapExceptions);
+    
     [PublicAPI] public Result<Unit> TryExecute([NotNull, InstantHandle] Action action, bool wrapExceptions = false) => Def.TryExecute(action, wrapExceptions);
-    [PublicAPI] public T Execute<T>([NotNull, InstantHandle] Func<T> action) => Def.Execute(action);    
+    
+    [PublicAPI] public T Execute<T>([NotNull, InstantHandle] Func<T> action) => Def.Execute(action);
+    
     [PublicAPI] public void Execute([NotNull, InstantHandle] Action action) => Def.Execute(action);
     
     
