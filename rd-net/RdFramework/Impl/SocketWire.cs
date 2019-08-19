@@ -52,7 +52,7 @@ namespace JetBrains.Rd.Impl
       [PublicAPI]
       public long WrittenBytesCount;
       
-      
+      private readonly Actor<long> myAcktor;
       const string DisconnectedPauseReason = "Disconnected";
 
       protected Base(string id, Lifetime lifetime, [NotNull] IScheduler scheduler) : base(scheduler)
@@ -60,6 +60,7 @@ namespace JetBrains.Rd.Impl
         Id = id;
         Log = Diagnostics.Log.GetLog(GetType());
         myLifetime = lifetime;
+        myAcktor = new Actor<long>(id+"-ACK", lifetime, (Action<long>)SendAck);
 
         SendBuffer = new ByteBufferAsyncProcessor(id+"-Sender", Send0);
         SendBuffer.Pause(DisconnectedPauseReason);
@@ -161,13 +162,7 @@ namespace JetBrains.Rd.Impl
                   "ERROR! Socket {0} {1} is in invalid state. Probably no more messages will be received. Exception message: '{2}'. " +
                   "Sometimes it happens on Windows 8. Your os: {3}." +
                   "In case this problem arises ask Ivan Paschenko.",
-                  e.GetType().Name, Id, e.Message,
-                  #if !NETSTANDARD
-                    Environment.OSVersion.VersionString
-                  #else
-                    "Unknown"
-                  #endif
-                  );
+                  e.GetType().Name, Id, e.Message, Environment.OSVersion.VersionString);
               }
               
             }
@@ -199,7 +194,7 @@ namespace JetBrains.Rd.Impl
         }
         
         if (myMaxReceivedSeqn > maxSeqnAtStart)
-          SendAck(myMaxReceivedSeqn);
+          myAcktor.SendAsync(myMaxReceivedSeqn);
         
         Receive(msgBuffer.Data);
         ReadBytesCount += len + sizeof(Int32 /*len*/);
@@ -247,7 +242,7 @@ namespace JetBrains.Rd.Impl
                 return sizeToCopy;
               }
               else
-                SendAck(seqN);
+                myAcktor.SendAsync(seqN);
             }
           }
         }
@@ -266,6 +261,10 @@ namespace JetBrains.Rd.Impl
 
           lock (mySocketSendLock)
             Socket.Send(myAckPkgHeader);
+        }
+        catch (ObjectDisposedException)
+        {
+          Log.Verbose($"{Id}: Socket was disposed during ACK, seqn = {seqN}");
         }
         catch (Exception e)
         {

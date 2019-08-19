@@ -152,9 +152,8 @@ namespace JetBrains.Util.Util
     private static int CalculateBitCount()
     {
       var type = typeof(T);
-#if !NETSTANDARD
+
       Assertion.Require(type.IsEnum, "Type must be enum, actual type: {0}", type);
-#endif
 
       var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(CastTo<long>.From).ToList();
       

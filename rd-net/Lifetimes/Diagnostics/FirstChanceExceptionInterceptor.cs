@@ -26,7 +26,7 @@ namespace JetBrains.Diagnostics
     static FirstChanceExceptionInterceptor()
     {
       
-#if !NETSTANDARD && !NET35
+#if !NET35
       AppDomain.CurrentDomain.FirstChanceException += (sender, args) =>
       {
         var info = string.Join("\n -> ", GetThreadLocalDebugInfo());

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
+using JetBrains.Lifetimes;
 using JetBrains.Util.Util;
 
 namespace JetBrains.Util
@@ -179,5 +181,32 @@ namespace JetBrains.Util
 
       return result;
     }
+    
+    
+    
+    #if !NET35
+    public static T SetStaticInstanceProperty<T>(Lifetime lifetime, Type type)
+    {
+      const BindingFlags propertiesFlags = BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static;
+      var members = type
+        .OptionalTypeInfo()
+        .GetProperties(propertiesFlags)
+        .Where(propertyInfo => propertyInfo.PropertyType == type)
+        .ToList();
+      if (members.Count > 1)
+        throw new InvalidOperationException($"{type} has several static public properties declaring instance");
+      if (members.Count == 0)
+        throw new InvalidOperationException($"{type} does not have static public properties declaring instance");
+
+      const BindingFlags creationFlags = 
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
+      var instance = (T) Activator.CreateInstance(type, creationFlags, null, EmptyArray<object>.Instance, null);
+
+      members[0].SetValue(null, instance);
+      lifetime.OnTermination(() => members[0].SetValue(null, null));
+      return instance;
+    }
+    
+    #endif
   }
 }

@@ -58,19 +58,20 @@ open class RdFrameworkTestBase {
         serverLifetimeDef = Lifetime.Eternal.createNested()
 
 
-        clientProtocol = Protocol(serializers,
-                Identities(IdKind.Client),
-            clientScheduler, TestWire(clientScheduler), clientLifetime)
+        val clientTestWire = TestWire(clientScheduler)
+        val serverTestWire = TestWire(serverScheduler)
 
-        serverProtocol = Protocol(serializers,
-                Identities(IdKind.Server),
-            serverScheduler, TestWire(serverScheduler), serverLifetime)
-
-        val (w1, w2) = (clientProtocol.wire as TestWire) to (serverProtocol.wire as TestWire)
+        val (w1, w2) = clientTestWire to serverTestWire
         w1.counterpart = w2
         w2.counterpart = w1
 
+        clientProtocol = Protocol(serializers,
+                Identities(IdKind.Client),
+            clientScheduler, clientTestWire, clientLifetime)
 
+        serverProtocol = Protocol(serializers,
+                Identities(IdKind.Server),
+            serverScheduler, serverTestWire, serverLifetime)
     }
 
     @AfterTest

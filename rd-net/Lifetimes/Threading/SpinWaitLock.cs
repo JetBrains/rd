@@ -49,11 +49,7 @@ namespace JetBrains.Threading
             }
             else
             {
-#if !NETSTANDARD              
               Thread.SpinWait(iterations);
-#else
-              Thread.Sleep(0);
-#endif
               iterations <<= 1;
             }
           } while (!TryEnter(currentThreadId));
@@ -88,7 +84,6 @@ namespace JetBrains.Threading
       int procCount = 0;
       try
       {
-#if !NETSTANDARD  
         unchecked
         {
           long am = Process.GetCurrentProcess().ProcessorAffinity.ToInt64();
@@ -98,9 +93,6 @@ namespace JetBrains.Threading
             am &= (am - 1);
           }
         }
-#else
-        procCount = Environment.ProcessorCount;
-#endif
       }
       catch (Win32Exception)
       {
@@ -130,7 +122,7 @@ namespace JetBrains.Threading
         CalcApprovedProcessorCount();
       }
 
-#if !NETSTANDARD && !NET35 
+#if !NET35
       Thread.Yield();
 #else
       Thread.Sleep(0); // This effectively does a Yield which is still missing from cheap dotnets

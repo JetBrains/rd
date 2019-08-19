@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Base;
+using JetBrains.Rd.Impl;
 
 namespace JetBrains.Rd
 {
@@ -12,5 +13,6 @@ namespace JetBrains.Rd
     [NotNull] IIdentities Identities { get; }
     [NotNull] IScheduler Scheduler { get; }
     [NotNull] IWire Wire { get; }    
+    [NotNull] RdSet<ClientId> ClientIdSet { get; }
   }
 }

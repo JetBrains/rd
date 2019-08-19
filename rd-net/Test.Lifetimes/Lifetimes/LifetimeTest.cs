@@ -894,7 +894,7 @@ namespace Test.Lifetimes.Lifetimes
       {
 
         AutoResetEvent sync = new AutoResetEvent(false);
-        var task = lt.StartNested(TaskScheduler.Default, () => sync.WaitOne());
+        var task = lt.StartAttached(TaskScheduler.Default, () => sync.WaitOne());
         def.Terminate();
         var ex = Assert.Catch(ThrowLoggedExceptions); //first from terminate
         Assert.True(ex.Message.Contains("ExecuteIfAlive"));

@@ -22,12 +22,16 @@ class RdMap<K : Any, V : Any> private constructor(
     private val map: ViewableMap<K, V>
 ) : RdReactiveBase(), IAsyncViewableMap<K, V>, IMutableViewableMap<K, V> by map {
 
-    companion object {
+    companion object : ISerializer<RdMap<*, *>> {
         private enum class Op {Add, Update, Remove, Ack}
 
 //        override val _type : Class<*> get() = throw IllegalStateException("Mustn't be used for polymorphic marshalling")
         fun<K:Any, V:Any> read(ctx: SerializationCtx, buffer: AbstractBuffer, keySzr: ISerializer<K>, valSzr: ISerializer<V>): RdMap<K, V> = RdMap(keySzr, valSzr).withId(RdId.read(buffer))
-        fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdMap<*, *>) = value.rdid.write(buffer)
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdMap<*, *>) = value.rdid.write(buffer)
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdMap<*, *> {
+            return read(ctx, buffer, Polymorphic<Any>(), Polymorphic<Any>())
+        }
 
         const val versionedFlagShift = 8
     }

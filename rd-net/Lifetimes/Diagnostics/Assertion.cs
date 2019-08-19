@@ -305,12 +305,10 @@ namespace JetBrains.Diagnostics
     public class AssertionException : Exception
     {
       public AssertionException(string message) : base(message) { }
-
-#if !NETSTANDARD
+      
       protected AssertionException(SerializationInfo info, StreamingContext context) : base(info, context)
       {
       }
-#endif
     }
   }
 }
