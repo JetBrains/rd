@@ -41,7 +41,7 @@ namespace JetBrains.Rd
         {
             private readonly ClientId? myOldClientId;
 
-            public ClientIdCookie(ClientId newClientId)
+            public ClientIdCookie(ClientId? newClientId)
             {
                 myOldClientId = CurrentOrNull;
                 SetClientId(newClientId);
@@ -62,7 +62,7 @@ namespace JetBrains.Rd
 
         #endregion
 
-        public static ClientIdCookie CreateCookie(ClientId clientId) => new ClientIdCookie(clientId);
+        public static ClientIdCookie CreateCookie(ClientId? clientId) => new ClientIdCookie(clientId);
 
         [CanBeNull]
         public static ClientId? CurrentOrNull =>

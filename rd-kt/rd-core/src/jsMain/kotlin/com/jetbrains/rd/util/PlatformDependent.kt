@@ -111,3 +111,11 @@ actual inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) = require
 actual abstract class EnumSet<T:Enum<T>>(val values: Set<T>)
 actual inline fun <reified T:Enum<T>> enumSetOf(values: Set<T>) : EnumSet<T> = object : EnumSet<T>(values) {}
 actual fun <T: Enum<T>> EnumSet<T>.values() : Set<T> = this.values
+
+actual interface Runnable {
+    actual fun run()
+}
+
+actual interface Callable<T> {
+    actual fun call(): T
+}
