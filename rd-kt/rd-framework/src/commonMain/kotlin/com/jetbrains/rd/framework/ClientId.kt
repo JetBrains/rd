@@ -71,6 +71,20 @@ data class ClientId(val value: String) {
         }
 
         /**
+         * Invokes a lambda under the given ClientId
+         */
+        @JvmStatic
+        fun withClientId(clientId: ClientId?, action: () -> Unit) {
+            val oldClientId = currentClientId.get()
+            try {
+                currentClientId.set(clientId)
+                action()
+            } finally {
+                currentClientId.set(oldClientId)
+            }
+        }
+
+        /**
          * Computes a value under given ClientId
          */
         @JvmStatic
@@ -79,6 +93,20 @@ data class ClientId(val value: String) {
             try {
                 currentClientId.set(clientId)
                 return action.call()
+            } finally {
+                currentClientId.set(oldClientId)
+            }
+        }
+
+        /**
+         * Computes a value under given ClientId
+         */
+        @JvmStatic
+        fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
+            val oldClientId = currentClientId.get()
+            try {
+                currentClientId.set(clientId)
+                return action()
             } finally {
                 currentClientId.set(oldClientId)
             }
