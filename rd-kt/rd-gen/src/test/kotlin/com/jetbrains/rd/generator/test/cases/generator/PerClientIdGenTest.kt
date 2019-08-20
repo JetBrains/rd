@@ -28,6 +28,10 @@ class PerClientIdGenTest {
         init {
             property("aProp", PredefinedType.string).perClientId
             map("aMap", PredefinedType.string, PredefinedType.string).perClientId
+
+            property("innerProp", classdef("InnerClass") {
+                property("someValue", PredefinedType.string.nullable).perClientId
+            })
         }
     }
 
