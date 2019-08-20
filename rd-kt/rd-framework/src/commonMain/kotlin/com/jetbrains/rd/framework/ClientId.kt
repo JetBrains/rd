@@ -12,8 +12,24 @@ import kotlin.jvm.JvmStatic
  * It's up to the application to preserve and propagate the current value across background threads and asynchronous activities.
  */
 data class ClientId(val value: String) {
+    enum class AbsenceBehavior {
+        /**
+         * Return localId if ClientId is not set
+         */
+        RETURN_LOCAL,
+        /**
+         * Throw an exception of ClientId is not set
+         */
+        THROW
+    }
+
     companion object : ISerializer<ClientId> {
         private val defaultLocalId = ClientId("Host")
+
+        /**
+         * Specifies behavior for ClientId.current
+         */
+        var AbsenceBehaviorValue = AbsenceBehavior.RETURN_LOCAL
 
         /**
          * The ID considered local to this process. All other IDs (except for null) are considered remote
@@ -33,10 +49,20 @@ data class ClientId(val value: String) {
         private val currentClientId = threadLocalWithInitial<ClientId?> { null }
 
         /**
+         * Gets the current ClientId. Subject to AbsenceBehaviorValue
+         */
+        @JvmStatic
+        val current: ClientId
+            get() = when(AbsenceBehaviorValue) {
+                AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
+                AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
+            }
+
+        /**
          * Gets the current ClientId. Can be null if non was set.
          */
         @JvmStatic
-        val current: ClientId?
+        val currentOrNull: ClientId?
             get() = currentClientId.get()
 
         /**

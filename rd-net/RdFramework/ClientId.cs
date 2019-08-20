@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using JetBrains.Annotations;
 
@@ -13,11 +14,19 @@ namespace JetBrains.Rd
     public struct ClientId : IEquatable<ClientId>
     {
         [NotNull] public readonly string Value;
-
+        
         public ClientId([NotNull] string value)
         {
             Value = value;
         }
+
+        public enum AbsenceBehavior
+        {
+            RETURN_LOCAL,
+            THROW
+        }
+
+        public static AbsenceBehavior AbsenceBehaviorValue = AbsenceBehavior.RETURN_LOCAL;
 
         public override string ToString()
         {
@@ -64,6 +73,22 @@ namespace JetBrains.Rd
 
         public static ClientIdCookie CreateCookie(ClientId? clientId) => new ClientIdCookie(clientId);
 
+        public static ClientId Current
+        {
+            get
+            {
+                switch (AbsenceBehaviorValue)
+                {
+                    case AbsenceBehavior.RETURN_LOCAL:
+                        return CurrentOrNull ?? new ClientId(LocalId);
+                    case AbsenceBehavior.THROW:
+                        return CurrentOrNull ?? throw new NullReferenceException("ClientId not set");
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(AbsenceBehaviorValue));
+                }
+            }
+        }
+
         [CanBeNull]
         public static ClientId? CurrentOrNull =>
 #if !NET35
@@ -71,6 +96,8 @@ namespace JetBrains.Rd
 #else
             throw new NotSupportedException("No ClientId on NET 3.5");
 #endif
+
+        #region Equality members
 
         public bool Equals(ClientId other)
         {
@@ -96,5 +123,7 @@ namespace JetBrains.Rd
         {
             return !left.Equals(right);
         }
+
+        #endregion
     }
 }
