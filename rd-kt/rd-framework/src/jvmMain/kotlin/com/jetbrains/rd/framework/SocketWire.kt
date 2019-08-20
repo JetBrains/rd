@@ -6,8 +6,7 @@ import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.plusAssign
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.OptProperty
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
 import java.io.EOFException
 import java.io.InputStream
@@ -325,23 +324,28 @@ class SocketWire {
                     lock.notifyAll()
                 }
 
-                logger.debug{"$id: waiting for receiver thread"}
+                logger.debug { "$id: waiting for receiver thread" }
                 thread.join()
-                logger.info{"$id: termination finished"}
+                logger.info { "$id: termination finished" }
             }
 
         }
     }
 
 
-    class Server(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
-        val port : Int
+    class Server(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocket, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
+        val port : Int = ss.localPort
+
+        companion object {
+            internal fun createServerSocket(port : Int?, allowRemoteConnections: Boolean) : ServerSocket {
+                val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
+                return ServerSocket(port?:0, 0, address)
+            }
+        }
+
+        constructor (lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : this(lifetime, scheduler, createServerSocket(port, allowRemoteConnections), optId, allowReconnect = true)
 
         init {
-            val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
-            val ss = ServerSocket(port?:0, 0, address)
-            this.port = ss.localPort
-
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
                 while (lifetime.isAlive) {
@@ -366,12 +370,15 @@ class SocketWire {
                     } catch (ex: Exception) {
                         logger.error("$id closed with exception", ex)
                     }
+
+                    if (!allowReconnect)
+                        break
                 }
 
             }
 
 
-            lifetime += {
+            lifetime.onTerminationIfAlive {
                 logger.info {"$id: start terminating lifetime" }
 
                 val sendBufferStopped = sendBuffer.stop(timeout)
@@ -394,6 +401,32 @@ class SocketWire {
 
             }
         }
+    }
+
+
+    class ServerFactory(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : ISource<Server> {
+
+        private val signal = Signal<Server>()
+        val localPort: Int
+
+        override fun advise(lifetime: Lifetime, handler: (Server) -> Unit) = signal.advise(lifetime, handler)
+
+        init {
+            val ss = Server.createServerSocket(port, allowRemoteConnections)
+            localPort = ss.localPort
+
+            fun rec() {
+                val s = Server(lifetime, scheduler, ss, optId, allowReconnect = false)
+                s.connected.whenTrue(lifetime) {
+                    signal.fire(s)
+                    rec()
+                }
+            }
+
+            rec()
+        }
+
+
     }
 
 }

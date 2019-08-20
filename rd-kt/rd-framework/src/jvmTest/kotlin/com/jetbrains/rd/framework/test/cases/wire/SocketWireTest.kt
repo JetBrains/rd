@@ -285,6 +285,22 @@ class SocketWireTest {
         spinUntil { clientSocket.connected.value }
     }
 
+
+
+    @Test
+    fun testSocketFactory() {
+        val factory = SocketWire.ServerFactory(lifetime, TestScheduler, 0)
+        var serverCount = 0
+        factory.advise(Lifetime.Eternal) {
+            serverCount ++
+        }
+        val clientSocket1 = SocketWire.Client(lifetime, TestScheduler, factory.localPort)
+
+        val clientSocket2 = SocketWire.Client(lifetime, TestScheduler, factory.localPort)
+
+        spinUntil { serverCount == 2 }
+    }
+
 //    @BeforeClass
 //    fun beforeClass() {
 //         setupLogHandler {
