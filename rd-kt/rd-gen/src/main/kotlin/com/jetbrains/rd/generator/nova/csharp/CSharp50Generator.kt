@@ -275,7 +275,7 @@ open class CSharp50Generator(
 
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean) : String {
         if(isPerClientId)
-            return "ClientId.ReadDelegate, ClientId.WriteDelegate, ${implSubstitutedName(containing, true)}.Read, ${implSubstitutedName(containing, true)}.Write"
+            return "${leadingComma.condstr { ", " }}ClientId.ReadDelegate, ClientId.WriteDelegate, ${implSubstitutedName(containing, true)}.Read, ${implSubstitutedName(containing, true)}.Write"
         val res =  genericParams.joinToString { it.readerDelegateRef(containing) + ", " + it.writerDelegateRef(containing) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
     }

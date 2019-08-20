@@ -522,7 +522,9 @@ open class Kotlin11Generator(
     }
 
     private fun getDefaultValue(containing: Declaration, member: Member): String? =
-            if (member is Member.Reactive.Stateful.Property) {
+            if (member is Member.Reactive && member.isPerClientId)
+                null
+            else if (member is Member.Reactive.Stateful.Property) {
                 when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
                     member.defaultValue != null -> member.defaultValue.toString()
@@ -575,7 +577,7 @@ open class Kotlin11Generator(
             is Member.Reactive.Stateful.Extension -> "$ctorSimpleName(${delegatedBy.reader()})"
             is Member.Reactive -> {
                 val params = (listOf("ctx", "buffer") + customSerializers(decl)).joinToString (", ")
-                "$implSimpleName.read($params)"
+                "${if(isPerClientId) "RdMap" else implSimpleName}.read($params)"
             }
             else -> fail("Unknown member: $this")
         }
@@ -631,7 +633,7 @@ open class Kotlin11Generator(
         fun Member.writer() : String = when (this) {
             is Member.Field -> type.writer("value.$encapsulatedName")
             is Member.Reactive.Stateful.Extension -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
-            is Member.Reactive -> "$implSimpleName.write(ctx, buffer, value.$encapsulatedName)"
+            is Member.Reactive -> "${if(isPerClientId) "RdMap" else implSimpleName}.write(ctx, buffer, value.$encapsulatedName)"
 
             else -> fail("Unknown member: $this")
         }
@@ -697,7 +699,7 @@ open class Kotlin11Generator(
 
         if (flowTransform == FlowTransform.AsIs) {
             decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("override fun init(lifetime: Lifetime) { super.init(lifetime)", "}") {
-                "${it.encapsulatedName}.adviseForProtocolClientIds(lifetime) { ${it.implSubstitutedName(decl, true)}() }"
+                "${it.encapsulatedName}.adviseForProtocolClientIds(lifetime) { ${it.implSubstitutedName(decl, true)}(${if (it is Member.Reactive.Stateful.Property && (it.isNullable || it.defaultValue != null)) it.defaultValue.toString() else ""}) }"
             }
         }
     }
