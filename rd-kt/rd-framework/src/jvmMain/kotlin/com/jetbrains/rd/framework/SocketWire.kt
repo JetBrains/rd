@@ -333,7 +333,7 @@ class SocketWire {
     }
 
 
-    class Server(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocket, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
+    class Server internal constructor(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocket, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
         val port : Int = ss.localPort
 
         companion object {
@@ -404,12 +404,13 @@ class SocketWire {
     }
 
 
-    class ServerFactory(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : ISource<Server> {
+    class ServerFactory private constructor(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String?, allowRemoteConnections: Boolean, set: ViewableSet<Server>) : IViewableSet<Server> by set {
 
-        private val signal = Signal<Server>()
+        constructor(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) :
+            this(lifetime, scheduler, port, optId, allowRemoteConnections, ViewableSet<Server>())
+
+
         val localPort: Int
-
-        override fun advise(lifetime: Lifetime, handler: (Server) -> Unit) = signal.advise(lifetime, handler)
 
         init {
             val ss = Server.createServerSocket(port, allowRemoteConnections)
@@ -417,8 +418,8 @@ class SocketWire {
 
             fun rec() {
                 val s = Server(lifetime, scheduler, ss, optId, allowReconnect = false)
-                s.connected.whenTrue(lifetime) {
-                    signal.fire(s)
+                s.connected.whenTrue(lifetime) { lt ->
+                    set.addUnique(lt, s)
                     rec()
                 }
             }

@@ -289,16 +289,25 @@ class SocketWireTest {
 
     @Test
     fun testSocketFactory() {
-        val factory = SocketWire.ServerFactory(lifetime, TestScheduler, 0)
-        var serverCount = 0
-        factory.advise(Lifetime.Eternal) {
-            serverCount ++
-        }
-        val clientSocket1 = SocketWire.Client(lifetime, TestScheduler, factory.localPort)
 
-        val clientSocket2 = SocketWire.Client(lifetime, TestScheduler, factory.localPort)
+        val sLifetime = LifetimeDefinition()
+        val factory = SocketWire.ServerFactory(sLifetime, TestScheduler, 0)
 
-        spinUntil { serverCount == 2 }
+        val lf1 = LifetimeDefinition()
+        val clientSocket1 = SocketWire.Client(lf1, TestScheduler, factory.localPort)
+
+        spinUntil { factory.size == 1 }
+
+        val lf2 = LifetimeDefinition()
+        val clientSocket2 = SocketWire.Client(lf2, TestScheduler, factory.localPort)
+
+        spinUntil { factory.size == 2 }
+
+        lf1.terminate()
+        spinUntil { factory.size == 1 }
+
+        sLifetime.terminate()
+        spinUntil { factory.size == 0 }
     }
 
 //    @BeforeClass
