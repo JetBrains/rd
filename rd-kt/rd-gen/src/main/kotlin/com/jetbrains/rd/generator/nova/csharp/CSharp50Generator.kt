@@ -538,10 +538,10 @@ open class CSharp50Generator(
         + "{"
         indent {
             val internedTypes = declaredAndUnknownTypes.flatMap { it.referencedTypes }.filterIsInstance<InternedScalar>().map { it.itemType }
-
+            val typesUnderPerClientIdMembers = declaredAndUnknownTypes.flatMap { it.ownMembers }.filterIsInstance<Member.Reactive>().filter { it.isPerClientId }.flatMap { it.referencedTypes }
 
             val allTypesForRegistration = declaredAndUnknownTypes.filter{ it.base != null} +
-                    internedTypes.filterIsInstance<Declaration>()
+                    internedTypes.filterIsInstance<Declaration>() + typesUnderPerClientIdMembers.filterIsInstance<Declaration>()
 
             allTypesForRegistration.filter{!it.isAbstract }.distinct().println {
                 if (it is IType)

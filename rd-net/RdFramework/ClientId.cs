@@ -33,7 +33,7 @@ namespace JetBrains.Rd
             return Value;
         }
 
-        public const string LocalId = "Host";
+        public static readonly ClientId LocalId = new ClientId("Host");
 
 #if !NET35
         private static readonly AsyncLocal<ClientId?> ourAsyncLocalClientId = new AsyncLocal<ClientId?>();
@@ -80,7 +80,7 @@ namespace JetBrains.Rd
                 switch (AbsenceBehaviorValue)
                 {
                     case AbsenceBehavior.RETURN_LOCAL:
-                        return CurrentOrNull ?? new ClientId(LocalId);
+                        return CurrentOrNull ?? LocalId;
                     case AbsenceBehavior.THROW:
                         return CurrentOrNull ?? throw new NullReferenceException("ClientId not set");
                     default:
