@@ -1015,7 +1015,7 @@ open class CSharp50Generator(
 
             decl.ownMembers
                 .filterIsInstance<Member.Reactive.Stateful>()
-                .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable }}
+                .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId }
                 .println { "${it.encapsulatedName}.OptimizeNested = true;" }
 
             decl.ownMembers

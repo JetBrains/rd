@@ -704,7 +704,7 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
         decl.ownMembers
             .filterIsInstance<Member.Reactive.Stateful>()
-            .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable }}
+            .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
 
         if (flowTransform == FlowTransform.Reversed) {
