@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.WireBase
-import com.jetbrains.rd.framework.base.identifyPolymorphic
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -404,10 +403,15 @@ class SocketWire {
     }
 
 
-    class ServerFactory private constructor(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String?, allowRemoteConnections: Boolean, set: ViewableSet<Server>) : IViewableSet<Server> by set {
 
-        constructor(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) :
-            this(lifetime, scheduler, port, optId, allowRemoteConnections, ViewableSet<Server>())
+    data class WireParameters(val scheduler: IScheduler, val id: String?)
+    class ServerFactory private constructor(lifetime : Lifetime, wireParametersFactory: () -> WireParameters, port : Int?, allowRemoteConnections: Boolean, set: ViewableSet<Server>) : IViewableSet<Server> by set {
+
+        constructor(lifetime : Lifetime, wireParametersFactory: () -> WireParameters, port : Int?, allowRemoteConnections: Boolean = false) :
+            this(lifetime, wireParametersFactory, port, allowRemoteConnections, ViewableSet<Server>())
+
+        constructor(lifetime : Lifetime, scheduler: IScheduler, port : Int?, allowRemoteConnections: Boolean = false) :
+                this(lifetime, { WireParameters(scheduler, null) }, port, allowRemoteConnections, ViewableSet<Server>())
 
 
         val localPort: Int
@@ -417,6 +421,7 @@ class SocketWire {
             localPort = ss.localPort
 
             fun rec() {
+                val (scheduler, optId) = wireParametersFactory()
                 val s = Server(lifetime, scheduler, ss, optId, allowReconnect = false)
                 s.connected.whenTrue(lifetime) { lt ->
                     set.addUnique(lt, s)
