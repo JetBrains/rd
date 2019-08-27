@@ -4,6 +4,18 @@ using System.Collections.Generic;
 
 namespace JetBrains.Lifetimes
 {
+  
+  /// <summary>
+  /// List for <see cref="Lifetimed{T}"/> entities. Not thread safe but designed to avoid <see cref="InvalidOperationException"/>
+  /// from <see cref="IEnumerator.MoveNext"/> during concurrent modification. So no need to defense copy of internal array.
+  ///
+  /// There are no <see cref="ICollection{T}.Remove"/> method, it's append only. When item's <see cref="Lifetimed{T}.Lifetime"/> becomes
+  /// not alive, item's <see cref="Lifetimed{T}.Value"/> is cleared (to avoid memory leak) and item is fully removed from internal
+  /// <see cref="myItems"/> array after exponential growth phase in <see cref="EnsureCapacity"/>.
+  ///
+  ///  
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public struct LifetimedList<T> : IEnumerable<Lifetimed<T>>
   {
     public struct Enumerator : IEnumerator<Lifetimed<T>>
