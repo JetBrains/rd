@@ -23,7 +23,7 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<PropertiesNullOk> PropertiesNullOk { get; }
       public IViewableProperty<Animal> PolyProperty { get; }
     }
-    
+
     private ReflectionRdActivator myReflectionRdActivator;
     private TestRdTypesCatalog myPolymorphicRdTypesCatalog;
 
@@ -56,7 +56,7 @@ namespace Test.RdFramework.Reflection
       s.EmptyOK.Value = new EmptyOK();
       Assert.IsNotNull(c.EmptyOK.Value);
     }
-    
+
     [Test]
     public void TestPolymorphicProperty()
     {
