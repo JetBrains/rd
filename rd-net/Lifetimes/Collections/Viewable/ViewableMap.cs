@@ -2,29 +2,36 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
-  public class ViewableMap<K, V> : IViewableMap<K, V>
+  public class ViewableMap<TK, TV> : IViewableMap<TK, TV>
   {
-    private readonly IDictionary<K, V> myMap = new Dictionary<K, V>();
-    private readonly Signal<MapEvent<K, V>> myChange = new Signal<MapEvent<K, V>>();
+    [NotNull] private readonly IDictionary<TK, TV> myStorage;
+    [NotNull] private readonly EqualityComparer<TV> myValueComparer;
+    [NotNull] private readonly Signal<MapEvent<TK, TV>> myChange = new Signal<MapEvent<TK, TV>>();
 
-    public ISource<MapEvent<K, V>> Change
+    [NotNull] public ISource<MapEvent<TK, TV>> Change => myChange;
+    
+    [PublicAPI] public ViewableMap() : this(new Dictionary<TK, TV>()) {}
+
+    [PublicAPI] public ViewableMap(EqualityComparer<TV> valueComparer) : this(new Dictionary<TK, TV>()) {}
+
+    [PublicAPI] public ViewableMap([NotNull] IDictionary<TK, TV> storage, [CanBeNull] EqualityComparer<TV> equalityComparer = null)
     {
-      get { return myChange; }
+      myStorage = storage ?? throw new ArgumentNullException(nameof(storage));
+      myValueComparer = equalityComparer ?? EqualityComparer<TV>.Default;
     }
+    
+    
+    
 
-    public ViewableMap(bool isReadonly = false)
+    public IEnumerator<KeyValuePair<TK, TV>> GetEnumerator()
     {
-      IsReadOnly = isReadonly;
-    }
-
-    public IEnumerator<KeyValuePair<K, V>> GetEnumerator()
-    {
-      return myMap.GetEnumerator();
+      return myStorage.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -32,17 +39,17 @@ namespace JetBrains.Collections.Viewable
       return GetEnumerator();
     }
 
-    public void Add(KeyValuePair<K, V> item)
+    public void Add(KeyValuePair<TK, TV> item)
     {
       Add(item.Key, item.Value);
     }
 
     public void Clear()
     {
-      var changes = new List<MapEvent<K, V>>(Count);
-      changes.AddRange(myMap.Select(kv => MapEvent<K, V>.Remove(kv.Key, kv.Value)));
+      var changes = new List<MapEvent<TK, TV>>(Count);
+      changes.AddRange(myStorage.Select(kv => MapEvent<TK, TV>.Remove(kv.Key, kv.Value)));
 
-      myMap.Clear();
+      myStorage.Clear();
 
       foreach (var change in changes)
       {
@@ -50,90 +57,81 @@ namespace JetBrains.Collections.Viewable
       }
     }
 
-    public bool Contains(KeyValuePair<K, V> item)
+    public bool Contains(KeyValuePair<TK, TV> item)
     {
-      return myMap.Contains(item);
+      return myStorage.Contains(item);
     }
 
-    public void CopyTo(KeyValuePair<K, V>[] array, int arrayIndex)
+    public void CopyTo(KeyValuePair<TK, TV>[] array, int arrayIndex)
     {
-      myMap.CopyTo(array, arrayIndex);
+      myStorage.CopyTo(array, arrayIndex);
     }
 
-    public bool Remove(KeyValuePair<K, V> item)
+    public bool Remove(KeyValuePair<TK, TV> item)
     {
       if (!Contains(item)) return false;
       return Remove(item.Key);
     }
 
-    public int Count
+    public int Count => myStorage.Count;
+
+    public bool IsReadOnly => myStorage.IsReadOnly;
+
+    public bool ContainsKey(TK key)
     {
-      get { return myMap.Count; }
+      return myStorage.ContainsKey(key);
     }
 
-    public bool IsReadOnly { get; private set; }
-
-    public bool ContainsKey(K key)
+    public void Add(TK key, TV value)
     {
-      return myMap.ContainsKey(key);
+      myStorage.Add(key, value);
+      myChange.Fire(MapEvent<TK, TV>.Add(key, value));
     }
 
-    public void Add(K key, V value)
+    public bool Remove(TK key)
     {
-      myMap.Add(key, value);
-      myChange.Fire(MapEvent<K, V>.Add(key, value));
-    }
+      if (!myStorage.TryGetValue(key, out var value)) return false;
+      myStorage.Remove(key);
 
-    public bool Remove(K key)
-    {
-      V value;
-      if (!myMap.TryGetValue(key, out value)) return false;
-      myMap.Remove(key);
-
-      myChange.Fire(MapEvent<K, V>.Remove(key, value));
+      myChange.Fire(MapEvent<TK, TV>.Remove(key, value));
 
       return true;
     }
 
-    public bool TryGetValue(K key, out V value)
+    public bool TryGetValue(TK key, out TV value)
     {
-      return myMap.TryGetValue(key, out value);
+      return myStorage.TryGetValue(key, out value);
     }
 
-    public V this[K key]
+    public TV this[TK key]
     {
-      get { return myMap[key]; }
+      get => myStorage[key];
       set
       {
-        V oldval;
-        bool isUpdate = myMap.TryGetValue(key, out oldval);
-        if (isUpdate && Equals(oldval, value)) return;
+        var isUpdate = myStorage.TryGetValue(key, out var oldval);
+        if (isUpdate && myValueComparer.Equals(oldval, value)) return;
 
-        myMap[key] = value;
+        myStorage[key] = value;
 
         // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-        if (isUpdate) myChange.Fire(MapEvent<K, V>.Update(key, oldval, value));
-        else myChange.Fire(MapEvent<K, V>.Add(key, value));
+        if (isUpdate) 
+          myChange.Fire(MapEvent<TK, TV>.Update(key, oldval, value));
+        else 
+          myChange.Fire(MapEvent<TK, TV>.Add(key, value));
       }
     }
 
-    public ICollection<K> Keys
-    {
-      get { return myMap.Keys; }
-    }
+    public ICollection<TK> Keys => myStorage.Keys;
 
-    public ICollection<V> Values
-    {
-      get { return myMap.Values; }
-    }
+    public ICollection<TV> Values => myStorage.Values;
 
-    public void Advise(Lifetime lifetime, Action<MapEvent<K, V>> handler)
+    public void Advise(Lifetime lifetime, Action<MapEvent<TK, TV>> handler)
     {
-      foreach (var kv in this)
+      foreach (var (key, value) in this)
       {
         try
         {
-          handler(MapEvent<K, V>.Add(kv.Key, kv.Value));
+          handler(MapEvent<TK, TV>.Add(key, value));
         }
         catch (Exception e)
         {
