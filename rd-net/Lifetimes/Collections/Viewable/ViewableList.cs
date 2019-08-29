@@ -9,19 +9,20 @@ namespace JetBrains.Collections.Viewable
 {
   public class ViewableList<T> : IViewableList<T>
   {
-    private readonly IList<T> myStorage = new List<T>();
+    private readonly IList<T> myStorage;
     private readonly Signal<ListEvent<T>> myChange = new Signal<ListEvent<T>>();
 
     [PublicAPI]
-    public ISource<ListEvent<T>> Change
-    {
-      get { return myChange; }
-    }
+    public ISource<ListEvent<T>> Change => myChange;
 
-    public ViewableList(bool isReadonly = false)
+
+    public ViewableList() : this(new List<T>()) {}
+
+    public ViewableList(IList<T> list)
     {
-      IsReadOnly = isReadonly;
+      myStorage = list;
     }
+    
 
     public IEnumerator<T> GetEnumerator()
     {
@@ -66,13 +67,9 @@ namespace JetBrains.Collections.Viewable
       return true;
     }
 
-    public int Count
-    {
-      get { return myStorage.Count; }
-    }
+    public int Count => myStorage.Count;
 
-    public bool IsReadOnly { get; private set; }    
-    
+    public bool IsReadOnly => myStorage.IsReadOnly;
 
     public void RemoveAt(int index)
     {
@@ -85,7 +82,7 @@ namespace JetBrains.Collections.Viewable
     [NotNull]
     public T this[int index]
     {
-      get { return myStorage[index]; }
+      get => myStorage[index];
       set
       {
         Assertion.Require(value != null, "value != null");
@@ -122,7 +119,8 @@ namespace JetBrains.Collections.Viewable
     // ReSharper disable once AnnotationConflictInHierarchy
     public void Insert(int index, [NotNull] T item)
     {
-      if (item == null) throw new ArgumentNullException(nameof(item));
+      if (item == null) 
+        throw new ArgumentNullException(nameof(item));
       
       myStorage.Insert(index, item);
       myChange.Fire(ListEvent<T>.Add(index, item));

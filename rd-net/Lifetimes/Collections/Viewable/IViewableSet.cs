@@ -2,10 +2,13 @@ using System.Collections.Generic;
 
 namespace JetBrains.Collections.Viewable
 {
-  public interface IViewableSet<T> : ICollection<T>, ISource<SetEvent<T>>
+  public interface IViewableSet<T> : ISource<SetEvent<T>>,
+    #if NET35
+      ICollection<T>
+    #else
+      ISet<T>
+    #endif
   {
-    new int Count { get; }
-
     ISource<SetEvent<T>> Change { get; }
   }
 }
