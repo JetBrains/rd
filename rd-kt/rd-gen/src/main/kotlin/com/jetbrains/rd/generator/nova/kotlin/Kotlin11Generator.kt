@@ -629,6 +629,9 @@ open class Kotlin11Generator(
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             p(".apply { mySerializationContext = ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }}) }")
         }
+        if (decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
+            p(".apply { myWasReceivedFromRemote = true }")
+        }
         println()
     }
 
@@ -697,6 +700,10 @@ open class Kotlin11Generator(
                 + "get() = mySerializationContext ?: throw IllegalStateException(\"Attempting to get serialization context too soon for \$location\")"
             }
         }
+
+        if (decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
+            + "private var myWasReceivedFromRemote: Boolean = false"
+        }
     }
 
 
@@ -722,10 +729,8 @@ open class Kotlin11Generator(
             .filter { it.isBindable }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { """bindableChildren.add("${it.name}" to ${it.encapsulatedName})""" }
 
-        if (flowTransform == FlowTransform.AsIs) {
-            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("override fun init(lifetime: Lifetime) { super.init(lifetime)", "}") {
-                "${it.encapsulatedName}.adviseForProtocolClientIds(lifetime) { ${it.implSubstitutedName(decl, true)}(${if (it is Member.Reactive.Stateful.Property && (it.isNullable || it.defaultValue != null)) it.defaultValue.toString() else ""}) }"
-            }
+        decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("override fun init(lifetime: Lifetime) { super.init(lifetime); if (!myWasReceivedFromRemote) {", "} }") {
+            "${it.encapsulatedName}.adviseForProtocolClientIds(lifetime) { ${it.implSubstitutedName(decl, true)}(${if (it is Member.Reactive.Stateful.Property && (it.isNullable || it.defaultValue != null)) it.defaultValue.toString() else ""}) }"
         }
     }
 

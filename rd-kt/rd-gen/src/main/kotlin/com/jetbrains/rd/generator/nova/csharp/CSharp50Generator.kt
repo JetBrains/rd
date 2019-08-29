@@ -660,6 +660,9 @@ open class CSharp50Generator(
                 if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
                     +"_result.mySerializationContext = ctx.WithInternRootsHere(_result, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                 }
+                if(decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
+                    +"_result.myWasReceivedFromRemote = true;"
+                }
                 +"return _result;"
             }
             +"};"
@@ -779,6 +782,10 @@ open class CSharp50Generator(
             + "private SerializationCtx mySerializationContext;"
             + "public override SerializationCtx SerializationContext { get { return mySerializationContext; } }"
         }
+
+        if (decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
+           + "private bool myWasReceivedFromRemote = false;"
+        }
     }
 
 
@@ -788,8 +795,8 @@ open class CSharp50Generator(
             +"public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;"
         }
 
-        if (defaultFlowTransform == FlowTransform.AsIs && decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
-            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("protected override void Init(Lifetime lifetime) { base.Init(lifetime); ", "}") {
+        if (decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
+            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("protected override void Init(Lifetime lifetime) { base.Init(lifetime); if(!myWasReceivedFromRemote) { ", "} }") {
                 "${it.encapsulatedName}.AdviseForProtocolClientIds<${it.implSubstitutedName(decl, true)}>(lifetime, () => new ${it.implSubstitutedName(decl, true)}());"
             }
         }
