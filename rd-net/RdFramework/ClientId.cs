@@ -30,7 +30,7 @@ namespace JetBrains.Rd
 
         public override string ToString()
         {
-            return Value;
+            return $"ClientId({Value})";
         }
 
         public static readonly ClientId LocalId = new ClientId("Host");
