@@ -5,6 +5,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PackageId>JetBrains.RdFramework</PackageId>
         <AssemblyName>JetBrains.RdFramework</AssemblyName>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
     </PropertyGroup>
 
