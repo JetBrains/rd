@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard1.5;net35;net461</TargetFrameworks>
         <RootNamespace>JetBrains</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <LangVersion>latest</LangVersion>
         <PackageId>JetBrains.Lifetimes</PackageId>
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
