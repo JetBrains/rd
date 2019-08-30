@@ -7,8 +7,15 @@ namespace Test.RdFramework.Reflection
   [RdExt]
   public sealed class ModelCalls : RdReflectionBindableBase
   {
-    private IRdCall<string, Unit> Rpc1 { get; }
-    private IRdCall<MyEnum, MyEnum> Rpc2 { get; }
-    private IRdCall<Animal, Animal> Rpc3 { get; }
+    public IRdCall<string, Unit> Rpc1 { get; }
+    public IRdCall<MyEnum, MyEnum> Rpc2 { get; }
+
+
+    [RdExt]
+    public class ModelInvalidCalls : RdReflectionBindableBase
+    {
+      // should not be possible!
+      public IRdCall<Animal, Animal> Rpc3 { get; }
+    }
   }
 }
