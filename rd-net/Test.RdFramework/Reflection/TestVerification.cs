@@ -20,6 +20,7 @@ namespace Test.RdFramework.Reflection
     [TestCase(typeof(NoBaseType))]
     [TestCase(typeof(CircularDependencyExtError))]
     [TestCase(typeof(CircularDependencyExt2Error))]
+    [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
     // [TestCase(typeof(CircularDependencyInModelError))]
     public void TestError(Type type)
     {

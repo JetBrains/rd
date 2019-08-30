@@ -41,6 +41,7 @@ namespace JetBrains.Rd.Reflection
      RdProperty ::= RdProperty[FieldType]
      RdSet      ::= RdSet[INonNullableScalar]
      RdMap      ::= RdMap[INonNullableScalar, INonNullable]
+     RdCall     ::= RdCall[IScalar, IScalar]
 
      // C# declarations, [ and ] mean &lt; &gt;.
      FieldDeclaration[T] ::= C#(public readonly? T identifier)
@@ -53,7 +54,7 @@ namespace JetBrains.Rd.Reflection
      // Not supported. No RdGenerator analogue.
      // StructDeclaration ::= C#(struct field* )
 
-     Member ::= RdProperty| RdList| RdSet| RdMap | RdModel
+     Member ::= RdProperty| RdList| RdSet| RdMap | RdModel | RdCall
      Declaration ::= BindableDeclaration | Struct | Enum | RdExtDeclaration
      BindableDeclaration ::= TopLevel | Class
 
@@ -141,22 +142,18 @@ namespace JetBrains.Rd.Reflection
 
     private static bool IsMemberType(TypeInfo typeInfo)
     {
-      var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
-
-      if (hasRdExt)
-        return true;
-
       if (typeInfo.IsGenericType)
       {
         var implementingType = GetImplementingType(typeInfo);
         var genericDefinition = implementingType.GetGenericTypeDefinition();
 
+        var arguments = implementingType.GetGenericArguments();
         return genericDefinition == typeof(RdSignal<>) ||
                genericDefinition == typeof(RdProperty<>) ||
                genericDefinition == typeof(RdList<>) ||
                genericDefinition == typeof(RdSet<>) ||
                genericDefinition == typeof(RdMap<,>) ||
-               genericDefinition == typeof(InprocRpc<,>) ||
+               (genericDefinition == typeof(InprocRpc<,>) && IsScalar(arguments[0]) && IsScalar(arguments[1])) ||
                IsFromRdProperty(typeInfo); // hack to support UProperty in RdExt
 
         bool IsFromRdProperty(TypeInfo tInfo)
@@ -169,7 +166,16 @@ namespace JetBrains.Rd.Reflection
         }
       }
 
+      var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
+      if (hasRdExt)
+        return true;
+
       return false;
+    }
+
+    private static bool IsScalar(Type type)
+    {
+      return !typeof(IRdBindable).IsAssignableFrom(type);
     }
 
     public static void AssertEitherExtModelAttribute(TypeInfo type)
@@ -248,7 +254,7 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(isMember,
         $"Error in {member.DeclaringType?.ToString(true)}: model: member {member.Name} " +
         $"can't be {ReflectionUtil.GetReturnType(member)} type, " +
-        "only RdProperty | RdList | RdSet | RdMap | RdModel allowed in RdModel!");
+        "only RdProperty | RdList | RdSet | RdMap | RdModel | RdCall allowed in RdModel or RdExt!");
     }
 
     public static void AssertValidRdModel([NotNull] TypeInfo type)
