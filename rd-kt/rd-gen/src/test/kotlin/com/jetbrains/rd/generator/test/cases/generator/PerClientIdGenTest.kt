@@ -32,6 +32,7 @@ class PerClientIdGenTest {
             property("innerProp", classdef("InnerClass") {
                 property("someValue", PredefinedType.string.nullable).perClientId
                 property("someClassValue", structdef("PerClientIdStruct") {}).perClientId
+                signal("someClassSignal", structdef("PerClientIdSignal") {}).perClientId
             })
         }
     }

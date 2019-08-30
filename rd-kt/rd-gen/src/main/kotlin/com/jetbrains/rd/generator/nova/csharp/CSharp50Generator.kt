@@ -250,7 +250,7 @@ open class CSharp50Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Const -> type.substitutedName(scope)
         is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
-            if(isPerClientId && !perClientIdRawName) "RdMap<ClientId, $it>" else it
+            if(isPerClientId && !perClientIdRawName) "RdPerClientIdMap<$it>" else it
         }
     }
 
@@ -275,11 +275,16 @@ open class CSharp50Generator(
     protected open val Member.encapsulatedName : String get() = isEncapsulated.condstr { "_" } + publicName
     protected open val Member.isEncapsulated : Boolean get() = this is Member.Reactive
 
-    protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean) : String {
-        if(isPerClientId)
-            return "${leadingComma.condstr { ", " }}ClientId.ReadDelegate, ClientId.WriteDelegate, ${implSubstitutedName(containing, true)}.Read, ${implSubstitutedName(containing, true)}.Write"
+    protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean, ignorePerClientId: Boolean = false) : String {
+        if(isPerClientId && !ignorePerClientId)
+            return leadingComma.condstr { ", " } + perClientIdMapValueFactory(containing)
         val res =  genericParams.joinToString { it.readerDelegateRef(containing) + ", " + it.writerDelegateRef(containing) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
+    }
+
+    protected fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration) : String {
+        require(this.isPerClientId)
+        return "isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
     }
 
 
@@ -660,9 +665,6 @@ open class CSharp50Generator(
                 if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
                     +"_result.mySerializationContext = ctx.WithInternRootsHere(_result, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                 }
-                if(decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
-                    +"_result.myWasReceivedFromRemote = true;"
-                }
                 +"return _result;"
             }
             +"};"
@@ -782,10 +784,6 @@ open class CSharp50Generator(
             + "private SerializationCtx mySerializationContext;"
             + "public override SerializationCtx SerializationContext { get { return mySerializationContext; } }"
         }
-
-        if (decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
-           + "private bool myWasReceivedFromRemote = false;"
-        }
     }
 
 
@@ -793,12 +791,6 @@ open class CSharp50Generator(
     protected fun PrettyPrinter.customBodyTrait(decl: Declaration) {
         if(decl.getSetting(InheritsAutomation) ?: false) {
             +"public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;"
-        }
-
-        if (decl.ownMembers.any { it is Member.Reactive && it.isPerClientId }) {
-            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("protected override void Init(Lifetime lifetime) { base.Init(lifetime); if(!myWasReceivedFromRemote) { ", "} }") {
-                "${it.encapsulatedName}.AdviseForProtocolClientIds<${it.implSubstitutedName(decl, true)}>(lifetime, () => new ${it.implSubstitutedName(decl, true)}());"
-            }
         }
     }
 

@@ -165,8 +165,6 @@ val Member.hasEmptyConstructor : Boolean get() = when (this) {
     else -> throw GeneratorException("Unsupported member: $this")
 }
 
-val Member.Reactive.Stateful.Map.perClientId : Member.Reactive.Stateful.Map
+val Member.Reactive.perClientId : Member.Reactive
     get() = this.apply { isPerClientId = true }
 
-val Member.Reactive.Stateful.Property.perClientId : Member.Reactive.Stateful.Property
-    get() = this.apply { isPerClientId = true }
