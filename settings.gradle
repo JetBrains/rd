@@ -9,7 +9,7 @@ include ':rd-kt:rd-gen'
 include ':rd-kt:rd-text'
 include ':rd-kt:rd-swing'
 
-include ':rd-cpp'
+//include ':rd-cpp'
 
 include ':rd-net'
 

@@ -8,9 +8,11 @@ dependencies {
     implementation gradleApi()
 }
 
+/*
 def getCppTaskByName(String name) {
     return project(':rd-cpp').getTasksByName(name, true).iterator().next()
 }
+*/
 
 def getCsTaskByName(String name) {
     return project(':rd-net').getTasksByName(name, true).iterator().next()
@@ -34,7 +36,7 @@ task CrossTestKtServerRdCall(type: CrossTestKtRdCall, dependsOn: tasks.getByPath
 //endregion
 
 //region KtCpp
-task CrossTestKtCppAllEntities(type: InteropTask) {
+/*task CrossTestKtCppAllEntities(type: InteropTask) {
     taskServer = CrossTestKtServerAllEntities
     taskClient = getCppTaskByName('CrossTestCppClientAllEntities')
 
@@ -53,7 +55,7 @@ task CrossTestKtCppRdCall(type: InteropTask) {
     taskClient = getCppTaskByName('CrossTestCppClientRdCall')
     
     addDependencies()
-}
+}*/
 //endregion
 
 //region KtCs
@@ -79,7 +81,7 @@ task CrossTestKtCsRdCall(type: InteropTask) {
 }
 //endregion
 
-def interopTasks = [CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCppRdCall,
+def interopTasks = [/*CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCppRdCall,*/
                     CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer, CrossTestKtCsRdCall]
 
 task crossTest() {
