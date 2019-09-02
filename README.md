@@ -29,7 +29,7 @@ or
 #### Requirements
 
 * Gradle 4.8
-* Kotlin 1.3.21+
+* Kotlin 1.3.50+
 
 #### Instruction
 
