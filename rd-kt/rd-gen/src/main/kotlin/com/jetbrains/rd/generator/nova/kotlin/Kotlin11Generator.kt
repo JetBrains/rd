@@ -149,7 +149,7 @@ open class Kotlin11Generator(
         is Member.Const -> type.substitutedName(scope)
         is Member.Reactive ->
             (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
-                if (isPerClientId && !perClientIdRawName) "RdMap<ClientId, $baseTypeName>" else baseTypeName
+                if (isPerClientId && !perClientIdRawName) "RdPerClientIdMap<$baseTypeName>" else baseTypeName
             }
     }
 
@@ -201,9 +201,9 @@ open class Kotlin11Generator(
         }.toString()
     }
 
-    protected fun Member.Reactive.customSerializers(scope: Declaration) : List<String> {
-        if (isPerClientId)
-            return listOf("ClientId", "$implSimpleName as ISerializer<$implSimpleName<${genericParams.joinToString(", ") { it.substitutedName(scope) }}>>")
+    protected fun Member.Reactive.customSerializers(scope: Declaration, ignorePerClientId: Boolean = false) : List<String> {
+        if(isPerClientId && !ignorePerClientId)
+            return listOf(perClientIdMapValueFactory(scope))
         return genericParams.asList().map { it.serializerRef(scope) }
     }
 
@@ -539,8 +539,14 @@ open class Kotlin11Generator(
 
     }
 
-    private fun getDefaultValue(containing: Declaration, member: Member): String? =
-            if (member is Member.Reactive && member.isPerClientId)
+    private fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration): String {
+        require(this.isPerClientId)
+        val params = (listOf(getDefaultValue(containing, this, true)) + customSerializers(containing, true)).filterNotNull().joinToString(", ")
+        return "{ ${this.ctorSimpleName}($params)${(this is Member.Reactive.Stateful.Map).condstr { ".apply { master = it }" }} }"
+    }
+
+    private fun getDefaultValue(containing: Declaration, member: Member, ignorePerClientId: Boolean = false): String? =
+            if (!ignorePerClientId && member is Member.Reactive && member.isPerClientId)
                 null
             else
 
@@ -602,7 +608,12 @@ open class Kotlin11Generator(
             is Member.Reactive.Stateful.Extension -> "$ctorSimpleName(${delegatedBy.reader()})"
             is Member.Reactive -> {
                 val params = (listOf("ctx", "buffer") + customSerializers(decl)).joinToString (", ")
-                "${if(isPerClientId) "RdMap" else implSimpleName}.read($params)"
+                if(isPerClientId) {
+                    "RdPerClientIdMap.read(buffer) ${this.perClientIdMapValueFactory(decl)}"
+                } else {
+                    "$implSimpleName.read($params)"
+                }
+
             }
             else -> fail("Unknown member: $this")
         }
@@ -658,7 +669,11 @@ open class Kotlin11Generator(
         fun Member.writer() : String = when (this) {
             is Member.Field -> type.writer("value.$encapsulatedName")
             is Member.Reactive.Stateful.Extension -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
-            is Member.Reactive -> "${if(isPerClientId) "RdMap" else implSimpleName}.write(ctx, buffer, value.$encapsulatedName)"
+            is Member.Reactive -> if(isPerClientId) {
+                "RdPerClientIdMap.write(buffer, value.$encapsulatedName)"
+            } else {
+                "$implSimpleName.write(ctx, buffer, value.$encapsulatedName)"
+            }
 
             else -> fail("Unknown member: $this")
         }
@@ -721,12 +736,6 @@ open class Kotlin11Generator(
         decl.ownMembers
             .filter { it.isBindable }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { """bindableChildren.add("${it.name}" to ${it.encapsulatedName})""" }
-
-        if (flowTransform == FlowTransform.AsIs) {
-            decl.ownMembers.filter { it is Member.Reactive && it.isPerClientId }.printlnWithPrefixSuffixAndIndent("override fun init(lifetime: Lifetime) { super.init(lifetime)", "}") {
-                "${it.encapsulatedName}.adviseForProtocolClientIds(lifetime) { ${it.implSubstitutedName(decl, true)}(${if (it is Member.Reactive.Stateful.Property && (it.isNullable || it.defaultValue != null)) it.defaultValue.toString() else ""}) }"
-            }
-        }
     }
 
 

@@ -1,14 +1,12 @@
-using System;
-using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
-using JetBrains.Lifetimes;
+using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 
 namespace JetBrains.Rd
 {
     public static class PerClientIdEx
     {
-        public static T GetForCurrentClientId<T>(this RdMap<ClientId, T> map)
+        public static T GetForCurrentClientId<T>(this RdPerClientIdMap<T> map) where T : RdBindableBase
         {
             var currentId = ClientId.CurrentOrNull;
             Assertion.Assert(currentId.HasValue, "ClientId != null");
@@ -16,15 +14,6 @@ namespace JetBrains.Rd
                 return value;
             Assertion.Fail("{0} has no value for ClientId {1}", map.Location, currentId.Value.Value);
             return default;
-        }
-
-        public static void AdviseForProtocolClientIds<T>(this RdMap<ClientId, T> map, Lifetime lifetime, Func<T> valueFactory)
-        {
-            map.Proto.ClientIdSet.View(lifetime, (clientIdLifetime, clientId) =>
-            {
-                map.Add(clientId, valueFactory());
-                clientIdLifetime.OnTermination(() => map.Remove(clientId));
-            });
         }
     }
 }
