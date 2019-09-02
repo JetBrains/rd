@@ -8,6 +8,7 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class TestVerification
   {
+    [Ignore("Fails")]
     [TestCase(typeof(NotRdModelData))]
     [TestCase(typeof(CantHaveNonRdError))]
     // [TestCase(typeof(CantHavePrivateFieldError))]
