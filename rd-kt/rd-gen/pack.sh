@@ -12,6 +12,7 @@ rm -f "$cache_dir/*.tmp"
 
 nuget_dir=${build_dir}/nuget
 nuget_version="${BUILD_NUMBER:-193.0.0}"
+build_configuration=${1:-Debug}
 
 mkdir -p $cache_dir
 echo $cache_dir
@@ -48,7 +49,7 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 mkdir -p ${nuget_dir}/lib/net
 touch ${nuget_dir}/lib/net/_._
 
-export BUILD_CONFIGURATION=Debug
+export BUILD_CONFIGURATION=$build_configuration
 
 ${build_dir}/.dotnet/dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Rd.sln
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Lifetimes/Lifetimes.csproj
