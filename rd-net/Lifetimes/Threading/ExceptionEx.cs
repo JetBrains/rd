@@ -12,7 +12,7 @@ namespace JetBrains.Threading
         /// </summary>
         /// <param name="exception">exception to test or null</param>
         /// <returns>if <paramref name="exception"/> is null, returns false. Otherwise tries to run algorithm from the summary.</returns>
-        [PublicAPI] static bool IsOperationCanceled([CanBeNull] this Exception exception)
+        [PublicAPI] public static bool IsOperationCanceled([CanBeNull] this Exception exception)
         {
             switch (exception)
             {

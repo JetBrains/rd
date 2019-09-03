@@ -5,7 +5,8 @@ using JetBrains.Annotations;
 using JetBrains.Lifetimes;
 
 using System.Threading.Tasks;
-
+using JetBrains.Diagnostics;
+using JetBrains.Threading;
 #if !NET35
 using System.Runtime.ExceptionServices;
 #endif
@@ -276,8 +277,25 @@ namespace JetBrains.Core
       else
         return Task.FromCanceled<T>(Lifetime.Terminated);
     }
-    #endif    
+    #endif
 
+
+    /// <summary>
+    /// Wrap completed task's result into <see cref="Result{T}"/> or throw <see cref="InvalidOperationException"/> is task is <c>!</c><see cref="Task.IsCompleted"/> 
+    /// </summary>
+    /// <param name="task">Must be finished (<see cref="Task.IsCompleted"/><c>==true</c>) or <see cref="InvalidOperationException"/> will be throws</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns><see cref="Success{T}"/>(task.<see cref="Task{T}.Result"/>) or <see cref="Fail(System.Exception, bool)"/>(task.<see cref="Task.Exception"/>)</returns>
+    /// <exception cref="InvalidOperationException">in case of <c>!task.</c><see cref="Task.IsCompleted"/></exception>
+    public static Result<T> FromCompletedTask<T>(Task<T> task)
+    {
+      if (!task.IsCompleted)
+        throw new InvalidOperationException($"Task must be completed to convert into result but was in state: {task.Status}");
+
+      return task.Status == TaskStatus.RanToCompletion ? 
+        Success(task.Result) 
+        : Fail(task.Exception.NotNull($"Exception must always exist for task with status: {task.Status}"));
+    }
   }
   
   
@@ -338,12 +356,7 @@ namespace JetBrains.Core
     /// <summary>
     /// Exception has specials type of <see cref="OperationCanceledException"/> or <see cref="AggregateException"/> that has <see cref="OperationCanceledException"/> inside.
     /// </summary>
-    public bool Canceled => 
-      Exception is OperationCanceledException
-      #if !NET35
-      || ((Exception as AggregateException)?.Flatten().InnerExceptions.Any(ex => ex is OperationCanceledException) ?? false)
-      #endif
-    ;
+    public bool Canceled => Exception.IsOperationCanceled();
 
         
     public static implicit operator Result<T>(Result<Nothing> me)

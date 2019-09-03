@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Threading;
 using NUnit.Framework;
 
 namespace Test.Lifetimes.Lifetimes

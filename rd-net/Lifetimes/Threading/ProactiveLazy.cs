@@ -6,20 +6,28 @@ using JetBrains.Lifetimes;
 
 namespace JetBrains.Threading
 {
+    /// <summary>
+    /// Holder that starts evaluation immediately right in the constructor in background. 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class ProactiveLazy<T>
     {
-        [NotNull] private readonly Task<T> myTask;
+        [NotNull] private readonly Task<T> myTask; //todo Not very footprint-friendly. Need to clear task after execution.
 
         public ProactiveLazy(Lifetime lifetime, Func<T> factory, TaskScheduler taskScheduler = null)
         {
             myTask = Task.Factory.StartNew(factory, lifetime, TaskCreationOptions.None, taskScheduler ?? TaskScheduler.Default);
         }
 
-        public T GetOrWait() => myTask.Result;
+        [PublicAPI] public T GetOrWait() => GetOrWait(Lifetime.Eternal);
 
-        public TaskAwaiter<T> GetAwaiter() => myTask.GetAwaiter();
+        [PublicAPI]
+        public T GetOrWait(Lifetime lifetime) => myTask.GetOrWait(lifetime);
 
-        public Task<T> AsTask() => myTask;
+
+        [PublicAPI] public TaskAwaiter<T> GetAwaiter() => myTask.GetAwaiter();
+
+        [PublicAPI] public Task<T> AsTask() => myTask;
     }
     
     

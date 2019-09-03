@@ -15,7 +15,7 @@ namespace JetBrains.Collections
   /// <typeparam name="T"></typeparam>
   public struct CompactList<T> : IEnumerable<T>
   {
-    internal static readonly List<T> SINGLE_MARKER = new List<T>();
+    internal static readonly List<T> SingleMarker = new List<T>();
 
     private T mySingleValue;
     // or or
@@ -30,7 +30,7 @@ namespace JetBrains.Collections
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       get
       {
-        if (myMultipleValues == SINGLE_MARKER) return 1;
+        if (myMultipleValues == SingleMarker) return 1;
         return myMultipleValues?.Count ?? 0;
       } 
     }
@@ -51,7 +51,7 @@ namespace JetBrains.Collections
       {
         case 0:
           mySingleValue = item;
-          myMultipleValues = SINGLE_MARKER;
+          myMultipleValues = SingleMarker;
           break;
         case 1: 
           myMultipleValues = new List<T> { mySingleValue, item };
@@ -98,7 +98,7 @@ namespace JetBrains.Collections
           
         case 2:
           mySingleValue = myMultipleValues[1-index];
-          myMultipleValues = SINGLE_MARKER;
+          myMultipleValues = SingleMarker;
           return true;
             
         default:
@@ -124,7 +124,7 @@ namespace JetBrains.Collections
     {
       get
       {
-        if (myMultipleValues == SINGLE_MARKER)
+        if (myMultipleValues == SingleMarker)
         {
           if (index == 0)
             return mySingleValue;
@@ -164,7 +164,7 @@ namespace JetBrains.Collections
         return false;
 
       myIndex++;
-      if (myMultipleValues == CompactList<T>.SINGLE_MARKER)
+      if (myMultipleValues == CompactList<T>.SingleMarker)
       {
         if (myIndex == 0)
         {
