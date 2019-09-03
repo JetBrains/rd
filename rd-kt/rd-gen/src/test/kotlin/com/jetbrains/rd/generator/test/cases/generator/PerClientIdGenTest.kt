@@ -27,6 +27,8 @@ class PerClientIdGenTest {
     ) {
         init {
             property("aProp", PredefinedType.string).perClientId
+            property("aPropDefault", false).perClientId
+            property("aPropDefault2", true)
             map("aMap", PredefinedType.string, PredefinedType.string).perClientId
 
             property("innerProp", classdef("InnerClass") {
