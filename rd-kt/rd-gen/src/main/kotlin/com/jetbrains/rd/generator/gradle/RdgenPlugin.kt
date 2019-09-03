@@ -96,7 +96,7 @@ open class RdgenTask : DefaultTask() {
     fun run() {
         Statics<Properties>().use(get(RdgenParams::properties)) {
             val rdGen = RdGen().apply {
-                sources *=  files(  RdgenParams::_sources).joinToString(File.pathSeparator)
+                sources *=  files(  RdgenParams::_sources).joinToString(";")
                 hashFolder.parse(   get(    RdgenParams::hashFolder))
                 compiled.parse(     get(    RdgenParams::compiled))
                 classpath.parse(    files(  RdgenParams::_classpath).joinToString(File.pathSeparator) { it.path })
