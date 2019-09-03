@@ -284,7 +284,7 @@ open class CSharp50Generator(
 
     protected fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration) : String {
         require(this.isPerClientId)
-        return "isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
+        return "isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}${defaultValueAsString(true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
     }
 
 
@@ -857,8 +857,8 @@ open class CSharp50Generator(
         + ") {}"
     }
 
-    private fun Member.defaultValueAsString(): String {
-        return if (this is Member.Reactive.Stateful.Property && defaultValue != null) {
+    private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
+        return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (!isPerClientId || ignorePerClientId)) {
             if (defaultValue is String)
                 ", \"$defaultValue\""
             else
