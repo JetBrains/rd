@@ -289,18 +289,6 @@ namespace JetBrains.Diagnostics
       }
     }
 
-    [SourceTemplate, SuppressMessage("ReSharper", "InconsistentNaming")]
-    public static void nn(this object x)
-    {
-      x.NotNull("$x$");
-    }
-
-    [SourceTemplate, SuppressMessage("ReSharper", "InconsistentNaming")]
-    public static void req(this object x)
-    {
-      Require(x != null, "Precondition failed: $x$ == {0}", x);
-    }
-
     [Serializable]
     public class AssertionException : Exception
     {
