@@ -321,7 +321,7 @@ open class Kotlin11Generator(
 
 
     protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
-        if (decl.getSetting(Kotlin11Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
         + "object ${decl.name} : ISerializersOwner {"
         indent {
             registerSerializersTrait(decl, types)
@@ -330,7 +330,7 @@ open class Kotlin11Generator(
     }
 
     protected open fun PrettyPrinter.typedef(decl: Declaration) {
-        if (decl.getSetting(Kotlin11Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
 
         println()
         println()
@@ -736,11 +736,13 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
         decl.ownMembers
-                .filterIsInstance<Member.Reactive.Stateful.Property>()
-                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
+            .filterIsInstance<Member.Reactive.Stateful.Property>()
+            .filter { !it.isPerClientId }
+            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive.Stateful.Map>()
+            .filter { !it.isPerClientId }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
 
         decl.ownMembers
@@ -901,7 +903,7 @@ open class Kotlin11Generator(
         fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
 
         val own = decl.ownMembers.map {
-            val attrs = it.getSetting(Kotlin11Generator.Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
+            val attrs = it.getSetting(Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
             (attrs?:"") + "${ctorParamAccessModifier(it)}val ${it.ctorParam(decl)}"
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }

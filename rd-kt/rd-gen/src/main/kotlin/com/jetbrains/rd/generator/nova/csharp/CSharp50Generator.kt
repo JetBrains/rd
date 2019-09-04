@@ -4,6 +4,7 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.util.joinToOptString
+import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -38,10 +39,10 @@ open class CSharp50Generator(
     object MasterStateful : ISetting<Boolean, Declaration>
 
     private val Member.Reactive.Stateful.Property.master : Boolean
-        get() = owner.getSetting(CSharp50Generator.MasterStateful) ?: this@CSharp50Generator.master
+        get() = owner.getSetting(MasterStateful) ?: this@CSharp50Generator.master
 
     private val Member.Reactive.Stateful.Map.master : Boolean
-        get() = owner.getSetting(CSharp50Generator.MasterStateful) ?: this@CSharp50Generator.master
+        get() = owner.getSetting(MasterStateful) ?: this@CSharp50Generator.master
 
     val Member.Reactive.memberFlowTransform: FlowTransform
         get() = owner.getSetting(FlowTransformProperty) ?: flowTransform
@@ -49,7 +50,7 @@ open class CSharp50Generator(
     object AdditionalUsings : ISetting<(CSharp50Generator) -> List<String>, Toplevel>
 
     val Toplevel.additionalUsings: List<String>
-        get() = getSetting(CSharp50Generator.AdditionalUsings)?.invoke(this@CSharp50Generator) ?: emptyList()
+        get() = getSetting(AdditionalUsings)?.invoke(this@CSharp50Generator) ?: emptyList()
 
     object Intrinsic : SettingWithDefault<CSharpIntrinsicMarshaller, Declaration>(CSharpIntrinsicMarshaller.default)
     object PublicCtors : ISetting<Unit, Declaration>
@@ -412,7 +413,7 @@ open class CSharp50Generator(
 
 
     protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
-        if (decl.getSetting(CSharp50Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
         +"public static class ${decl.name} {"
         indent {
             registerSerializersTrait(decl, types)
@@ -1023,10 +1024,12 @@ open class CSharp50Generator(
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive.Stateful.Property>()
+                    .filter { !it.isPerClientId }
                     .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive.Stateful.Map>()
+                    .filter { !it.isPerClientId }
                     .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 
             decl.ownMembers
