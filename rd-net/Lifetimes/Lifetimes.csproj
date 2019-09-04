@@ -9,6 +9,7 @@
         <PackageId>JetBrains.Lifetimes</PackageId>
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
