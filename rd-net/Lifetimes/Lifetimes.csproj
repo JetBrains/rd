@@ -6,10 +6,23 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <LangVersion>latest</LangVersion>
-        <PackageId>JetBrains.Lifetimes</PackageId>
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
+    </PropertyGroup>
+    
+    <PropertyGroup Label="NuGet">
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageId>JetBrains.Lifetimes</PackageId>
+        <PackageProjectUrl>https://github.com/JetBrains/rd</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/JetBrains/rd</RepositoryUrl>
+<!--        todo <PackageIconUrl></PackageIconUrl>-->
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <RepositoryType>git</RepositoryType>
+        <Authors>JetBrains</Authors>
+        <Copyright>Copyright © JetBrains 2019</Copyright>
+        <PackageTags>rd lifetime reactive viewable</PackageTags>
+        <Description>JetBrains Core library for graceful disposal, concurrency and reactive programming</Description>
+<!--        todo <PackageReleaseNotes></PackageReleaseNotes>-->
     </PropertyGroup>
 
     <ItemGroup>
