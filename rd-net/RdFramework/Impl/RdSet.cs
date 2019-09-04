@@ -158,38 +158,76 @@ namespace JetBrains.Rd.Impl
 
 
     #region Write delegation
-    //todo async!
-
 
     public bool Remove(T item)
     {
       using (UsingLocalChange())
-      {
         return mySet.Remove(item);
-      }
     }
-
-
-    public void Add(T item)
+    
+    // ReSharper disable once AssignNullToNotNullAttribute
+    void ICollection<T>.Add(T item) => Add(item);
+    
+    public bool Add(T item)
     {
       AssertNullability(item);
       using (UsingLocalChange())
-      {
-        mySet.Add(item);
-      }
+        return mySet.Add(item);
     }
 
+    public void ExceptWith(IEnumerable<T> other)
+    {
+      using (UsingLocalChange())
+        mySet.ExceptWith(other);
+    }
+
+    public void IntersectWith(IEnumerable<T> other)
+    {
+      using (UsingLocalChange())
+        mySet.IntersectWith(other);
+    }
+    
+    public void SymmetricExceptWith(IEnumerable<T> other)
+    {
+      using (UsingLocalChange())
+        mySet.SymmetricExceptWith(other);
+    }
+
+    public void UnionWith(IEnumerable<T> other)
+    {
+      using (UsingLocalChange())        
+        mySet.UnionWith(other);
+    }
 
     public void Clear()
     {
-      using (UsingLocalChange())
-      {
+      using (UsingLocalChange()) 
         mySet.Clear();
-      }
     }
+    
+    #endregion
+
+
+
+    #region ISet Read delegation
+
+    
+    public bool IsProperSubsetOf(IEnumerable<T> other) => mySet.IsProperSubsetOf(other);
+
+    public bool IsProperSupersetOf(IEnumerable<T> other) => mySet.IsProperSupersetOf(other);
+
+    public bool IsSubsetOf(IEnumerable<T> other) => mySet.IsSubsetOf(other);
+
+    public bool IsSupersetOf(IEnumerable<T> other) => mySet.IsSupersetOf(other);
+
+    public bool Overlaps(IEnumerable<T> other) => mySet.Overlaps(other);
+
+    public bool SetEquals(IEnumerable<T> other) => mySet.SetEquals(other);
+    
 
     #endregion
 
+    
 
     public void Advise(Lifetime lifetime, Action<SetEvent<T>> handler)
     {

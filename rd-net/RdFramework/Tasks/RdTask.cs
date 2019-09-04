@@ -271,6 +271,11 @@ namespace JetBrains.Rd.Tasks
     {
       return FromResult(RdTaskResult<T>.Faulted(exception));      
     }
+    
+    public static RdTask<T> Cancelled()
+    {
+      return FromResult(RdTaskResult<T>.Cancelled());      
+    }
   }
 
 
@@ -600,6 +605,10 @@ namespace JetBrains.Rd.Tasks
         try
         {
           rdTask = Handler(myBindLifetime, value);
+        }
+        catch (OperationCanceledException)
+        {
+          rdTask = RdTask<TRes>.Cancelled();
         }
         catch (Exception e)
         {

@@ -2,6 +2,7 @@
 
 package com.jetbrains.rd.generator.nova
 
+import com.jetbrains.rd.generator.nova.util.getSourceFileAndLine
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.condstr
 import kotlin.reflect.KProperty
@@ -139,6 +140,7 @@ sealed class PredefinedType : INonNullableScalar {
 abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHolder() {
     abstract val _name: String
     var documentation: String? = null
+    var sourceFileAndLine: String? = null
 
     val name: String by lazy {
         if (_name.isNotEmpty()) return@lazy _name.capitalize()
@@ -250,10 +252,14 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Declaration> append(typedef: T, typedefBody: T.() -> Unit) : T {
+        typedef.sourceFileAndLine = getSourceFileAndLine()
         declaredTypes.add(typedef)
         return typedef.apply { lazyInitializer = typedefBody as Declaration.() -> Unit}
     }
 
+    init {
+        sourceFileAndLine = getSourceFileAndLine()
+    }
 
 
     class Part<T>(val name: String)
@@ -389,7 +395,7 @@ abstract class Ext(pointcut : BindableDeclaration, val extName: String? = null) 
 
 val Declaration.isExtension get() = this is Ext && pointcut !is Root
 
-abstract class Root(vararg val generators: IGenerator) : Toplevel(null) {
+abstract class Root(vararg val hardcodedGenerators: IGenerator) : Toplevel(null) {
     internal val singletons = ArrayList<Ext>()
     internal val extensions = ArrayList<Ext>()
 
@@ -435,4 +441,13 @@ abstract class Root(vararg val generators: IGenerator) : Toplevel(null) {
 
 fun Declaration.doc(value: String) {
     documentation = value
+}
+
+val Declaration.isConcrete
+    get() = this is Class.Concrete || this is Struct.Concrete || this is Aggregate
+val IType.hasEmptyConstructor : Boolean get() = when (this) {
+    is Class.Concrete -> allMembers.all { it.hasEmptyConstructor }
+    is Aggregate -> true
+
+    else -> false
 }

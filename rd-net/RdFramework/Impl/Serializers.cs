@@ -10,10 +10,6 @@ using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
 using JetBrains.Threading;
 
-#if NETSTANDARD
-using System.Reflection;
-#endif
-
 namespace JetBrains.Rd.Impl
 {
 

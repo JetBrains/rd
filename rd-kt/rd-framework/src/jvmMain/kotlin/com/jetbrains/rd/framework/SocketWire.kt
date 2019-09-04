@@ -1,13 +1,11 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.WireBase
-import com.jetbrains.rd.framework.base.identifyPolymorphic
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.plusAssign
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.OptProperty
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
 import java.io.EOFException
 import java.io.InputStream
@@ -325,23 +323,28 @@ class SocketWire {
                     lock.notifyAll()
                 }
 
-                logger.debug{"$id: waiting for receiver thread"}
+                logger.debug { "$id: waiting for receiver thread" }
                 thread.join()
-                logger.info{"$id: termination finished"}
+                logger.info { "$id: termination finished" }
             }
 
         }
     }
 
 
-    class Server(lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
-        val port : Int
+    class Server internal constructor(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocket, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
+        val port : Int = ss.localPort
+
+        companion object {
+            internal fun createServerSocket(port : Int?, allowRemoteConnections: Boolean) : ServerSocket {
+                val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
+                return ServerSocket(port?:0, 0, address)
+            }
+        }
+
+        constructor (lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : this(lifetime, scheduler, createServerSocket(port, allowRemoteConnections), optId, allowReconnect = true)
 
         init {
-            val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
-            val ss = ServerSocket(port?:0, 0, address)
-            this.port = ss.localPort
-
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
                 while (lifetime.isAlive) {
@@ -366,12 +369,15 @@ class SocketWire {
                     } catch (ex: Exception) {
                         logger.error("$id closed with exception", ex)
                     }
+
+                    if (!allowReconnect)
+                        break
                 }
 
             }
 
 
-            lifetime += {
+            lifetime.onTerminationIfAlive {
                 logger.info {"$id: start terminating lifetime" }
 
                 val sendBufferStopped = sendBuffer.stop(timeout)
@@ -394,6 +400,39 @@ class SocketWire {
 
             }
         }
+    }
+
+
+
+    data class WireParameters(val scheduler: IScheduler, val id: String?)
+    class ServerFactory private constructor(lifetime : Lifetime, wireParametersFactory: () -> WireParameters, port : Int?, allowRemoteConnections: Boolean, set: ViewableSet<Server>) : IViewableSet<Server> by set {
+
+        constructor(lifetime : Lifetime, wireParametersFactory: () -> WireParameters, port : Int?, allowRemoteConnections: Boolean = false) :
+            this(lifetime, wireParametersFactory, port, allowRemoteConnections, ViewableSet<Server>())
+
+        constructor(lifetime : Lifetime, scheduler: IScheduler, port : Int?, allowRemoteConnections: Boolean = false) :
+                this(lifetime, { WireParameters(scheduler, null) }, port, allowRemoteConnections, ViewableSet<Server>())
+
+
+        val localPort: Int
+
+        init {
+            val ss = Server.createServerSocket(port, allowRemoteConnections)
+            localPort = ss.localPort
+
+            fun rec() {
+                val (scheduler, optId) = wireParametersFactory()
+                val s = Server(lifetime, scheduler, ss, optId, allowReconnect = false)
+                s.connected.whenTrue(lifetime) { lt ->
+                    set.addUnique(lt, s)
+                    rec()
+                }
+            }
+
+            rec()
+        }
+
+
     }
 
 }

@@ -1,6 +1,5 @@
 package com.jetbrains.rd.generator.gradle
 
-import com.jetbrains.rd.generator.nova.GenerationSpec
 import com.jetbrains.rd.generator.nova.RdGen
 import com.jetbrains.rd.util.Statics
 import groovy.lang.Closure
@@ -52,12 +51,12 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
 
 
     //specify multiple generators
-    internal val generators =  mutableListOf<GenerationSpec>()
-    fun generator(closure: Closure<GenerationSpec>) = GenerationSpec().apply {
+    internal val generators =  mutableListOf<GradleGenerationSpec>()
+    fun generator(closure: Closure<GradleGenerationSpec>) = GradleGenerationSpec().apply {
         project.configure(this, closure)
         generators.add(this)
     }
-    fun generator(closure: GenerationSpec.() -> Unit) = GenerationSpec().apply {
+    fun generator(closure: GradleGenerationSpec.() -> Unit) = GradleGenerationSpec().apply {
         closure()
         generators.add(this)
     }
@@ -97,7 +96,7 @@ open class RdgenTask : DefaultTask() {
     fun run() {
         Statics<Properties>().use(get(RdgenParams::properties)) {
             val rdGen = RdGen().apply {
-                sourcePaths.addAll( files(  RdgenParams::_sources))
+                sources *=  files(  RdgenParams::_sources).joinToString(";")
                 hashFolder.parse(   get(    RdgenParams::hashFolder))
                 compiled.parse(     get(    RdgenParams::compiled))
                 classpath.parse(    files(  RdgenParams::_classpath).joinToString(File.pathSeparator) { it.path })
@@ -109,7 +108,7 @@ open class RdgenTask : DefaultTask() {
                 verbose *=          get(RdgenParams::verbose) ?: false
                 clearOutput *=      get(RdgenParams::clearOutput) ?: false
 
-                generationSpecs.addAll(get(RdgenParams::generators))
+                gradleGenerationSpecs.addAll(get(RdgenParams::generators))
             }
 
 //            print("Press any key to continue: ")

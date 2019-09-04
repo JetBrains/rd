@@ -61,14 +61,14 @@ data class KeyValuePair<K, V>(override val key: K, override val value: V) : Map.
 /**
  * A map allowing its contents to be observed.
  */
-interface IViewableMap<K : Any, V:Any> : Map<K, V>, IViewable<Map.Entry<K, V>>, ISource<IViewableMap.Event<K, V>> {
+interface IViewableMap<K : Any, out V:Any> : Map<K, V>, IViewable<Map.Entry<K, V>>, ISource<IViewableMap.Event<K, V>> {
 
     val change: ISource<IViewableMap.Event<K, V>>
 
     /**
      * Represents an addition, update or removal of an element in the map.
      */
-    sealed class Event<K, V>(val key: K) {
+    sealed class Event<K, out V>(val key: K) {
         class Add<K,V>   (key: K,                   val newValue : V) : Event<K,V>(key) {
             override fun toString() = "Add $key:$newValue"
         }

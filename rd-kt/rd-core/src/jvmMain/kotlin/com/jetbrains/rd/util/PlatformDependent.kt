@@ -76,3 +76,6 @@ actual inline fun spinUntil(timeoutMs: Long, condition: () -> Boolean) = SpinWai
 actual typealias EnumSet<T> = java.util.EnumSet<T>
 actual inline fun <reified T : Enum<T>> enumSetOf(values: Set<T>) : EnumSet<T> = EnumSet.noneOf(T::class.java).apply { addAll(values) }
 actual fun <T: Enum<T>> EnumSet<T>.values() : Set<T> = this
+
+actual typealias Runnable = java.lang.Runnable
+actual typealias Callable<T> = java.util.concurrent.Callable<T>

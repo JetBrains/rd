@@ -71,7 +71,7 @@ namespace JetBrains.Rd.Text.Impl.Ot.Intrinsics
 
     public static CtxWriteDelegate<OtOperation> WriteDelegate = (ctx, writer, value) =>
     {
-      var changes = value.Changes as List<OtChange> ?? value.Changes.ToList(); // todo move AsList() into RdCore
+      var changes = value.Changes as List<OtChange> ?? value.Changes.ToList(); // todo move AsList() into Lifetimes
       writer.WriteList(ourWriteOtChangeDelegate, ctx, changes);
       Serializers.WriteEnum(ctx, writer, value.Origin);
       Serializers.WriteInt(ctx, writer, value.Timestamp);

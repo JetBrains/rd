@@ -16,6 +16,8 @@ val ProtocolInternScope = InternScope(null, "Protocol")
 fun Struct.field(name : String, type : IScalar) = append(Field(name, type))
 fun Class.field(name : String, type : IType) = append(Field(name, type))
 fun Toplevel.field(name : String, type : Aggregate) = append(Field(name, type))
+fun Declaration.const(name: String, type: PredefinedType, value: String) = appendConst(Member.Const.Integral(name, type, value))
+fun Declaration.const(name: String, type: Enum, value: Member.EnumConst) = appendConst(Member.Const.Enum(name, type, value))
 
 fun Declaration.const(name: String, type: PredefinedType.bool, value: Boolean) = appendConst(Member.Const.Integral(name, type, value.toString()))
 fun Declaration.const(name: String, type: PredefinedType.char, value: Char) = appendConst(Member.Const.Integral(name, type, value.toString()))

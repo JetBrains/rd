@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework
 import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
+import com.jetbrains.rd.framework.impl.RdSet
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -30,6 +31,8 @@ interface IProtocol : IRdDynamic {
 
     // Models for which the serialization hash does not match that on the other side
     val outOfSyncModels: ViewableSet<RdExtBase>
+
+    val clientIdSet: RdSet<ClientId>
 }
 
 /**

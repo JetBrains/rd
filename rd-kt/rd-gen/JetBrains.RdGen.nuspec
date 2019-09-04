@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>JetBrains.RdGen</id>
+        <version>$version$</version>
+        <authors>JetBrains</authors>
+        <owners>JetBrains</owners>
+        <license type="expression">Apache-2.0</license>
+        <projectUrl>https://github.com/JetBrains/rd</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>RD Generator</description>
+        <dependencies>
+            <group  targetFramework="net461">
+                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
+                <dependency id="JetBrains.Lifetimes" version="$version$"/>
+                <dependency id="JetBrains.RdFramework" version="$version$"/>
+                <dependency id="JetBrains.Jdk" version="1.8.20190816.11" />
+            </group>
+            <group  targetFramework="netstandard2.0">
+                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
+                <dependency id="JetBrains.Lifetimes" version="$version$"/>
+                <dependency id="JetBrains.RdFramework" version="$version$"/>
+                <dependency id="JetBrains.Jdk" version="1.8.20190816.11" />
+            </group>
+            <group targetFramework="net35">
+                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
+                <dependency id="JetBrains.Lifetimes" version="$version$"/>
+                <dependency id="JetBrains.RdFramework" version="$version$"/>
+                <dependency id="AsyncBridge.Net35" version="0.2.0"/>
+                <dependency id="TaskParallelLibrary" version="1.0.2856.0"/>
+                <dependency id="JetBrains.Jdk" version="1.8.20190816.11" />
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="JetBrains.RdGen.targets" target="build\JetBrains.RdGen.targets"/>
+        <file src="build\libs\rd.jar" target="build\rd.jar"/>
+        <file src="build\nuget\lib\net\_._" target="lib\net\_._"/>
+    </files>
+</package>

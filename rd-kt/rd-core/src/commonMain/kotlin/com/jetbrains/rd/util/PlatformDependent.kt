@@ -20,6 +20,14 @@ expect class ThreadLocal<T> {
     fun set(v: T)
 }
 
+expect interface Runnable {
+    fun run()
+}
+
+expect interface Callable<T> {
+    fun call() : T
+}
+
 expect fun <T> threadLocalWithInitial(initial: () -> T) : ThreadLocal<T>
 
 expect val eol : String

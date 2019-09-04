@@ -285,6 +285,31 @@ class SocketWireTest {
         spinUntil { clientSocket.connected.value }
     }
 
+
+
+    @Test
+    fun testSocketFactory() {
+
+        val sLifetime = LifetimeDefinition()
+        val factory = SocketWire.ServerFactory(sLifetime, TestScheduler, 0)
+
+        val lf1 = LifetimeDefinition()
+        val clientSocket1 = SocketWire.Client(lf1, TestScheduler, factory.localPort)
+
+        spinUntil { factory.size == 1 }
+
+        val lf2 = LifetimeDefinition()
+        val clientSocket2 = SocketWire.Client(lf2, TestScheduler, factory.localPort)
+
+        spinUntil { factory.size == 2 }
+
+        lf1.terminate()
+        spinUntil { factory.size == 1 }
+
+        sLifetime.terminate()
+        spinUntil { factory.size == 0 }
+    }
+
 //    @BeforeClass
 //    fun beforeClass() {
 //         setupLogHandler {

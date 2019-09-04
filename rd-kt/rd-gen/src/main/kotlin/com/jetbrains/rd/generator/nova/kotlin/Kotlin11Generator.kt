@@ -150,11 +150,18 @@ open class Kotlin11Generator(
         is Member.Const -> type.substitutedName(scope)
     }
 
-    protected open fun Member.implSubstitutedName(scope: Declaration) = when (this) {
+    protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration) =
+        "IViewableMap<ClientId, " + intfSubstitutedName(scope) + ">"
+
+
+    protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
-        is Member.Reactive -> implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         is Member.Const -> type.substitutedName(scope)
+        is Member.Reactive ->
+            (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
+                if (isPerClientId && !perClientIdRawName) "RdPerClientIdMap<$baseTypeName>" else baseTypeName
+            }
     }
 
 
@@ -205,7 +212,9 @@ open class Kotlin11Generator(
         }.toString()
     }
 
-    protected fun Member.Reactive.customSerializers(scope: Declaration) : List<String> {
+    protected fun Member.Reactive.customSerializers(scope: Declaration, ignorePerClientId: Boolean = false) : List<String> {
+        if(isPerClientId && !ignorePerClientId)
+            return listOf(perClientIdMapValueFactory(scope))
         return genericParams.asList().map { it.serializerRef(scope) }
     }
 
@@ -326,16 +335,7 @@ open class Kotlin11Generator(
         println()
         println()
 
-        if (decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
-            + "/**"
-            if (decl.documentation != null) {
-                + " * ${decl.documentation}"
-            }
-            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
-                + " * @property ${member.name} ${member.documentation}"
-            }
-            + " */"
-        }
+        docTrait(decl)
 
         decl.getSetting(Attributes)?.forEach {
             + "@$it"
@@ -383,6 +383,22 @@ open class Kotlin11Generator(
 
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
+        }
+    }
+
+    protected fun PrettyPrinter.docTrait(decl: Declaration) {
+        if (decl.sourceFileAndLine != null || decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
+            + "/**"
+            if (decl.documentation != null) {
+                + " * ${decl.documentation}"
+            }
+            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
+                + " * @property ${member.name} ${member.documentation}"
+            }
+            if (decl.sourceFileAndLine != null) {
+                + " * #### Generated from [${decl.sourceFileAndLine}]"
+            }
+            + " */"
         }
     }
 
@@ -536,7 +552,17 @@ open class Kotlin11Generator(
 
     }
 
-    private fun getDefaultValue(containing: Declaration, member: Member): String? =
+    private fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration): String {
+        require(this.isPerClientId)
+        val params = (listOf(getDefaultValue(containing, this, true)) + customSerializers(containing, true)).filterNotNull().joinToString(", ")
+        return "{ ${this.ctorSimpleName}($params)${(this is Member.Reactive.Stateful.Map).condstr { ".apply { master = it }" }} }"
+    }
+
+    private fun getDefaultValue(containing: Declaration, member: Member, ignorePerClientId: Boolean = false): String? =
+            if (!ignorePerClientId && member is Member.Reactive && member.isPerClientId)
+                null
+            else
+
             when (member) {
                 is Member.Reactive.Stateful.Property -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
@@ -600,7 +626,12 @@ open class Kotlin11Generator(
             is Member.Reactive.Stateful.Extension -> "$ctorSimpleName(${delegatedBy.reader()})"
             is Member.Reactive -> {
                 val params = (listOf("ctx", "buffer") + customSerializers(decl)).joinToString (", ")
-                "$implSimpleName.read($params)"
+                if(isPerClientId) {
+                    "RdPerClientIdMap.read(buffer) ${this.perClientIdMapValueFactory(decl)}"
+                } else {
+                    "$implSimpleName.read($params)"
+                }
+
             }
             else -> fail("Unknown member: $this")
         }
@@ -656,7 +687,11 @@ open class Kotlin11Generator(
         fun Member.writer() : String = when (this) {
             is Member.Field -> type.writer("value.$encapsulatedName")
             is Member.Reactive.Stateful.Extension -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
-            is Member.Reactive -> "$implSimpleName.write(ctx, buffer, value.$encapsulatedName)"
+            is Member.Reactive -> if(isPerClientId) {
+                "RdPerClientIdMap.write(buffer, value.$encapsulatedName)"
+            } else {
+                "$implSimpleName.write(ctx, buffer, value.$encapsulatedName)"
+            }
 
             else -> fail("Unknown member: $this")
         }
@@ -681,7 +716,11 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
         for (member in decl.ownMembers.filter { it.isEncapsulated }) {
             p(docComment(member.documentation))
-            + "val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
+            if(member is Member.Reactive && member.isPerClientId) {
+                +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}.getForCurrentClientId()"
+                +"val ${member.publicName}PerClientIdMap: ${member.intfSubstitutedMapName(decl)} get() = ${member.encapsulatedName}"
+            } else
+                +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
         }
 
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
@@ -705,9 +744,9 @@ open class Kotlin11Generator(
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
 
         decl.ownMembers
-                .filterIsInstance<Member.Reactive.Stateful>()
-                .filter { it.optimizeNested }
-                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
+            .filterIsInstance<Member.Reactive.Stateful>()
+            .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId }
+            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive>()
@@ -909,7 +948,7 @@ open class Kotlin11Generator(
     }
 
     override fun toString(): String {
-        return "Kotlin11Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath})"
+        return "Kotlin11($flowTransform, \"$defaultNamespace\", '${folder.canonicalPath}')"
     }
 
 

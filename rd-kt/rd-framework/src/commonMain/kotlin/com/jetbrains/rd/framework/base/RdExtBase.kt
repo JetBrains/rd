@@ -48,7 +48,7 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext) },
+                extProtocol = Protocol(parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.clientIdSet) },
             {
                 extProtocol = null
 //                extScheduler = null
