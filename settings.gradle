@@ -11,6 +11,6 @@ include ':rd-kt:rd-swing'
 
 //include ':rd-cpp'
 
-include ':rd-net'
+//include ':rd-net'
 
-include ':rd-cross'
+//include ':rd-cross'
