@@ -91,7 +91,7 @@ namespace JetBrains.Lifetimes
     /// <param name="action">The code to execute with a temporary lifetime.</param>
     public Task UsingNestedAsync([NotNull] [InstantHandle] Func<Lifetime, Task> action) => myLifetime.UsingNestedAsync(action);
     
-    internal LifetimeDefinition Def => myLifetime.Def;
+    internal LifetimeDefinition Def => myLifetime.Definition;
 
     /// <summary>
     ///   <para>See documentation on an overload which takes a <see cref="Lifetime" />.</para>

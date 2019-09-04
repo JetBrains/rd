@@ -9,7 +9,7 @@ namespace JetBrains.Lifetimes
 
     public LifetimeCanceledException(Lifetime lifetime) : base(
       #if !NET35
-      lifetime.Def.ToCancellationToken(true)
+      lifetime.Definition.ToCancellationToken(true)
       #endif
       )
     {

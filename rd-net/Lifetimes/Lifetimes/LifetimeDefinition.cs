@@ -128,7 +128,7 @@ namespace JetBrains.Lifetimes
     
     public LifetimeDefinition(Lifetime parent) : this()
     {
-      parent.Def.Attach(this);
+      parent.Definition.Attach(this);
     }   
   
     public LifetimeDefinition(Lifetime parent, [CanBeNull, InstantHandle] Action<LifetimeDefinition> atomicAction) : this(parent)

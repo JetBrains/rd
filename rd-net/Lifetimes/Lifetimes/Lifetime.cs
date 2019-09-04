@@ -82,13 +82,13 @@ namespace JetBrains.Lifetimes
   public readonly struct Lifetime : IEquatable<Lifetime>
   {        
     
-    [CanBeNull] private readonly LifetimeDefinition myDef;   
-    [NotNull] internal LifetimeDefinition Def => myDef ?? LifetimeDefinition.Eternal;   
+    [CanBeNull] private readonly LifetimeDefinition myDefinition;   
+    [NotNull] internal LifetimeDefinition Definition => myDefinition ?? LifetimeDefinition.Eternal;   
     
     //ctor
-    internal Lifetime([NotNull] LifetimeDefinition def)
+    internal Lifetime([NotNull] LifetimeDefinition definition)
     {
-      myDef = def;
+      myDefinition = definition;
     }
 
 
@@ -114,17 +114,17 @@ namespace JetBrains.Lifetimes
     /// <summary>
     /// Lifecycle phase of current lifetime. 
     /// </summary>
-    [PublicAPI] public LifetimeStatus Status        => Def.Status;
+    [PublicAPI] public LifetimeStatus Status        => Definition.Status;
     
     /// <summary>
     /// Whether current lifetime is equal to <see cref="Eternal"/> and never be terminated
     /// </summary>
-    [PublicAPI] public bool IsEternal               => Def.IsEternal;
+    [PublicAPI] public bool IsEternal               => Definition.IsEternal;
     
     /// <summary>
     /// Is <see cref="Status"/> of this lifetime equal to <see cref="LifetimeStatus.Alive"/>
     /// </summary>
-    [PublicAPI] public bool IsAlive                 => Def.Status == LifetimeStatus.Alive;
+    [PublicAPI] public bool IsAlive                 => Definition.Status == LifetimeStatus.Alive;
     
     /// <summary>
     /// Is <see cref="Status"/> of this lifetime not equal to <see cref="LifetimeStatus.Alive"/>: Termination started already (or even finished).
@@ -150,7 +150,7 @@ namespace JetBrains.Lifetimes
     /// <param name="action">Action to invoke on termination</param>
     /// <exception cref="InvalidOperationException">if lifetime already started destructuring, i.e. <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>  </exception>
     /// <returns>this lifetime</returns>
-    [PublicAPI] public Lifetime OnTermination([NotNull] Action action) { Def.OnTermination(action); return this; }
+    [PublicAPI] public Lifetime OnTermination([NotNull] Action action) { Definition.OnTermination(action); return this; }
     
     
     /// <summary>
@@ -164,7 +164,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="disposable">Disposable whose <see cref="IDisposable.Dispose"/> method is invoked on termination</param>
     /// <returns>this lifetime</returns>
-    [PublicAPI] public Lifetime OnTermination([NotNull] IDisposable disposable) { Def.OnTermination(disposable); return this; }
+    [PublicAPI] public Lifetime OnTermination([NotNull] IDisposable disposable) { Definition.OnTermination(disposable); return this; }
     
     
     /// <summary>
@@ -178,7 +178,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="terminationHandler">termination resources whose <see cref="ITerminationHandler.OnTermination"/> method is invoked on termination</param>
     /// <returns>this lifetime</returns>
-    [PublicAPI] public Lifetime OnTermination([NotNull] ITerminationHandler terminationHandler) { Def.OnTermination(terminationHandler); return this; }
+    [PublicAPI] public Lifetime OnTermination([NotNull] ITerminationHandler terminationHandler) { Definition.OnTermination(terminationHandler); return this; }
     
     
     //TryOnTermination that do nothing and returns false in case of bad status
@@ -194,7 +194,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="action">Action to invoke on termination</param>
     /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
-    [PublicAPI]          public bool TryOnTermination([NotNull] Action action)      => Def.TryAdd(action);
+    [PublicAPI]          public bool TryOnTermination([NotNull] Action action)      => Definition.TryAdd(action);
     
     /// <summary>
     /// Add termination resource with <c>kind == Dispose</c> that will be invoked when lifetime termination starts 
@@ -204,9 +204,9 @@ namespace JetBrains.Lifetimes
     ///
     /// Method returns do nothing and return `false` if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. 
     /// </summary>
-    /// <param name="action">Action to invoke on termination</param>
+    /// <param name="disposable">Disposable to invoke on termination</param>
     /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
-    [PublicAPI]          public bool TryOnTermination([NotNull] IDisposable disposable) => Def.TryAdd(disposable);
+    [PublicAPI]          public bool TryOnTermination([NotNull] IDisposable disposable) => Definition.TryAdd(disposable);
     
     
     /// <summary>
@@ -220,7 +220,7 @@ namespace JetBrains.Lifetimes
     /// <param name="action">Action to invoke on termination</param>
     /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
 
-    [PublicAPI]          public bool TryOnTermination([NotNull] ITerminationHandler disposable) => Def.TryAdd(disposable); 
+    [PublicAPI]          public bool TryOnTermination([NotNull] ITerminationHandler disposable) => Definition.TryAdd(disposable); 
 
     #endregion
 
@@ -233,7 +233,7 @@ namespace JetBrains.Lifetimes
     /// number could only reduce, no new activities can be started.
     /// When it reach zero, lifetime begins to terminate its resources by changing <see cref="Status"/> to <see cref="LifetimeStatus.Terminating"/>  
     /// </summary>
-    [PublicAPI] public int ExecutingCount          => Def.ExecutingCount; 
+    [PublicAPI] public int ExecutingCount          => Definition.ExecutingCount; 
     
 
     /// <summary>
@@ -261,7 +261,7 @@ namespace JetBrains.Lifetimes
     /// <returns>Special disposable object. If <see cref="LifetimeDefinition.ExecuteIfAliveCookie.Succeed"/> than until <c>Dispose</c> current lifetime can't
     /// become <see cref="LifetimeStatus.Terminating"/> and can't start resources destruction. If <c>!Succeed</c> than lifetime is already
     /// <see cref="LifetimeStatus.Terminating"/> or <see cref="LifetimeStatus.Terminated"/> </returns>
-    [PublicAPI] public LifetimeDefinition.ExecuteIfAliveCookie UsingExecuteIfAlive(bool allowTerminationUnderExecution = false) => Def.UsingExecuteIfAlive(allowTerminationUnderExecution);
+    [PublicAPI] public LifetimeDefinition.ExecuteIfAliveCookie UsingExecuteIfAlive(bool allowTerminationUnderExecution = false) => Definition.UsingExecuteIfAlive(allowTerminationUnderExecution);
     
     /// <summary>
     /// 
@@ -270,13 +270,13 @@ namespace JetBrains.Lifetimes
     /// <param name="wrapExceptions"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    [PublicAPI] public Result<T> TryExecute<T>([NotNull, InstantHandle] Func<T> action, bool wrapExceptions = false) => Def.TryExecute(action, wrapExceptions);
+    [PublicAPI] public Result<T> TryExecute<T>([NotNull, InstantHandle] Func<T> action, bool wrapExceptions = false) => Definition.TryExecute(action, wrapExceptions);
     
-    [PublicAPI] public Result<Unit> TryExecute([NotNull, InstantHandle] Action action, bool wrapExceptions = false) => Def.TryExecute(action, wrapExceptions);
+    [PublicAPI] public Result<Unit> TryExecute([NotNull, InstantHandle] Action action, bool wrapExceptions = false) => Definition.TryExecute(action, wrapExceptions);
     
-    [PublicAPI] public T Execute<T>([NotNull, InstantHandle] Func<T> action) => Def.Execute(action);
+    [PublicAPI] public T Execute<T>([NotNull, InstantHandle] Func<T> action) => Definition.Execute(action);
     
-    [PublicAPI] public void Execute([NotNull, InstantHandle] Action action) => Def.Execute(action);
+    [PublicAPI] public void Execute([NotNull, InstantHandle] Action action) => Definition.Execute(action);
     
     
     #endregion
@@ -286,17 +286,17 @@ namespace JetBrains.Lifetimes
     
     #region Bracket
     
-    [PublicAPI] public Result<Unit> TryBracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing, bool wrapExceptions = false) => Def.TryBracket(opening, closing, wrapExceptions);
+    [PublicAPI] public Result<Unit> TryBracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing, bool wrapExceptions = false) => Definition.TryBracket(opening, closing, wrapExceptions);
     
-    [PublicAPI] public Result<T> TryBracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing, bool wrapExceptions = false) => Def.TryBracket(opening, closing, wrapExceptions);
+    [PublicAPI] public Result<T> TryBracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing, bool wrapExceptions = false) => Definition.TryBracket(opening, closing, wrapExceptions);
     
-    [PublicAPI] public Result<T> TryBracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing, bool wrapExceptions = false) => Def.TryBracket(opening, closing, wrapExceptions);
+    [PublicAPI] public Result<T> TryBracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing, bool wrapExceptions = false) => Definition.TryBracket(opening, closing, wrapExceptions);
     
     
     
-    [PublicAPI] public void Bracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing) => Def.Bracket(opening, closing);
-    [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing) => Def.Bracket(opening, closing);    
-    [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing) => Def.Bracket(opening, closing);
+    [PublicAPI] public void Bracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing) => Definition.Bracket(opening, closing);
+    [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing) => Definition.Bracket(opening, closing);    
+    [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing) => Definition.Bracket(opening, closing);
     
     
     #endregion
@@ -305,9 +305,9 @@ namespace JetBrains.Lifetimes
     
     #region Cancellation
 
-    [PublicAPI] public CancellationToken ToCancellationToken() => Def.ToCancellationToken();
-    [PublicAPI] public static implicit operator CancellationToken(Lifetime lifetime) => lifetime.Def.ToCancellationToken();
-    [PublicAPI] public void ThrowIfNotAlive() => Def.ThrowIfNotAlive();
+    [PublicAPI] public CancellationToken ToCancellationToken() => Definition.ToCancellationToken();
+    [PublicAPI] public static implicit operator CancellationToken(Lifetime lifetime) => lifetime.Definition.ToCancellationToken();
+    [PublicAPI] public void ThrowIfNotAlive() => Definition.ThrowIfNotAlive();
 
     #endregion
     
@@ -506,7 +506,7 @@ namespace JetBrains.Lifetimes
     
     public Lifetime AddDispose([NotNull] IDisposable action) => OnTermination(action);
 
-    [Obsolete("For most cases you need `!IsAlive` which means lifetime is terminated or soon will be terminated (somebody called Terminate() on this lifetime or its parent)." +
+    [Obsolete("For most cases you need `IsNotAlive` which means lifetime is terminated or soon will be terminated (somebody called Terminate() on this lifetime or its parent)." +
               " If your operation makes sense in Canceled status (but must be stopped when resources termination already began) use Status < Terminating ")]
     public bool IsTerminated => Status >= LifetimeStatus.Terminating;
 
@@ -576,8 +576,8 @@ namespace JetBrains.Lifetimes
         return LifetimeDefinition.Terminated;
 
       var res = new LifetimeDefinition();
-      lifetime1.Def.Attach(res);
-      lifetime2.Def.Attach(res);
+      lifetime1.Definition.Attach(res);
+      lifetime2.Definition.Attach(res);
       return res;
     }
     
@@ -591,7 +591,7 @@ namespace JetBrains.Lifetimes
       
       var res = new LifetimeDefinition();
       foreach (var lf in lifetimes)
-        lf.Def.Attach(res);
+        lf.Definition.Attach(res);
 
       return res;
     }
@@ -605,11 +605,11 @@ namespace JetBrains.Lifetimes
 
     [PublicAPI, CanBeNull] public object Id
     {
-      get => Def.Id;
-      set => Def.Id = value;
+      get => Definition.Id;
+      set => Definition.Id = value;
     }
-    [PublicAPI] public void EnableTerminationLogging() => Def.EnableTerminationLogging();
-    public override string ToString() => Def.ToString();
+    [PublicAPI] public void EnableTerminationLogging() => Definition.EnableTerminationLogging();
+    public override string ToString() => Definition.ToString();
     
     #endregion
     
@@ -652,7 +652,7 @@ namespace JetBrains.Lifetimes
       try
       {
         atomicAction?.Invoke(res);
-        lifetime.Def.Attach(res);
+        lifetime.Definition.Attach(res);
         return res;
       }
       catch (Exception)
@@ -673,7 +673,7 @@ namespace JetBrains.Lifetimes
       try
       {
         atomicAction?.Invoke(res.Lifetime);
-        lifetime.Def.Attach(res);
+        lifetime.Definition.Attach(res);
         return res;
       }
       catch (Exception)
@@ -700,11 +700,11 @@ namespace JetBrains.Lifetimes
     [MethodImpl(MethodImplOptions.AggressiveInlining)] private ScopedAsyncLocal<Lifetime> UsingAsyncLocal() => new ScopedAsyncLocal<Lifetime>(AsyncLocal, this);
 
 
-    [PublicAPI, NotNull] public Task ExecuteAsync([NotNull] Func<Task> closure) { using (UsingAsyncLocal()) return Def.ExecuteAsync(closure); }
-    [PublicAPI, NotNull] public Task<T> ExecuteAsync<T>([NotNull] Func<Task<T>> closure)  { using (UsingAsyncLocal()) return Def.ExecuteAsync(closure); }
+    [PublicAPI, NotNull] public Task ExecuteAsync([NotNull] Func<Task> closure) { using (UsingAsyncLocal()) return Definition.ExecuteAsync(closure); }
+    [PublicAPI, NotNull] public Task<T> ExecuteAsync<T>([NotNull] Func<Task<T>> closure)  { using (UsingAsyncLocal()) return Definition.ExecuteAsync(closure); }
 
-    [PublicAPI, NotNull] public Task TryExecuteAsync([NotNull] Func<Task> closure, bool wrapExceptions = false) => Def.TryExecuteAsync(closure, wrapExceptions);
-    [PublicAPI, NotNull] public Task<T> TryExecuteAsync<T>([NotNull] Func<Task<T>> closure, bool wrapExceptions = false) => Def.TryExecuteAsync(closure, wrapExceptions);
+    [PublicAPI, NotNull] public Task TryExecuteAsync([NotNull] Func<Task> closure, bool wrapExceptions = false) => Definition.TryExecuteAsync(closure, wrapExceptions);
+    [PublicAPI, NotNull] public Task<T> TryExecuteAsync<T>([NotNull] Func<Task<T>> closure, bool wrapExceptions = false) => Definition.TryExecuteAsync(closure, wrapExceptions);
     
     
     [PublicAPI, NotNull] public Task Start(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
@@ -714,11 +714,11 @@ namespace JetBrains.Lifetimes
     [PublicAPI, NotNull] public Task<T> StartAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
 
 
-    [PublicAPI, NotNull] public Task StartAttached(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options)); 
-    [PublicAPI, NotNull] public Task<T> StartAttached<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(Start(scheduler, action, options));
+    [PublicAPI, NotNull] public Task StartAttached(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options)); 
+    [PublicAPI, NotNull] public Task<T> StartAttached<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options));
     
-    [PublicAPI, NotNull] public Task StartAttachedAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(StartAsync(scheduler, action, options));
-    [PublicAPI, NotNull] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Def.Attached(StartAsync(scheduler, action, options));
+    [PublicAPI, NotNull] public Task StartAttachedAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
+    [PublicAPI, NotNull] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
 
     #endregion
     #endif
@@ -728,7 +728,7 @@ namespace JetBrains.Lifetimes
     
     public static bool operator ==(Lifetime left, Lifetime right) 
     {
-      return ReferenceEquals(left.Def, right.Def); 
+      return ReferenceEquals(left.Definition, right.Definition); 
     }
 
     public static bool operator !=(Lifetime left, Lifetime right)
@@ -738,7 +738,7 @@ namespace JetBrains.Lifetimes
     
     public bool Equals(Lifetime other)
     {
-      return ReferenceEquals(Def, other.Def);
+      return ReferenceEquals(Definition, other.Definition);
     }
 
     public override bool Equals(object obj)
@@ -749,7 +749,7 @@ namespace JetBrains.Lifetimes
 
     public override int GetHashCode()
     {
-      return Def.GetHashCode();
+      return Definition.GetHashCode();
     }
 
     #endregion
@@ -758,7 +758,7 @@ namespace JetBrains.Lifetimes
     
     #region Performance critical: Boxing/Unboxing
 
-    [PublicAPI] public static object WrapAsObject(Lifetime lifetime) => lifetime.Def;
+    [PublicAPI] public static object WrapAsObject(Lifetime lifetime) => lifetime.Definition;
 
     [PublicAPI] public static bool TryUnwrapAsObject(object obj, out Lifetime lifetime)
     {
@@ -784,7 +784,7 @@ namespace JetBrains.Lifetimes
     /// </remarks>
     public Lifetime AssertEverTerminated(string comment = null)
     {
-      Def.AssertEverTerminated(comment);
+      Definition.AssertEverTerminated(comment);
       return this;
     }
 
