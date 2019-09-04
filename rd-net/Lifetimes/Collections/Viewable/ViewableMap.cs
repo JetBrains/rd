@@ -11,19 +11,19 @@ namespace JetBrains.Collections.Viewable
   public class ViewableMap<TK, TV> : IViewableMap<TK, TV>
   {
     [NotNull] private readonly IDictionary<TK, TV> myStorage;
-    [NotNull] private readonly EqualityComparer<TV> myValueComparer;
+    [NotNull] private readonly IEqualityComparer<TV> myValueComparer;
     [NotNull] private readonly Signal<MapEvent<TK, TV>> myChange = new Signal<MapEvent<TK, TV>>();
 
     [NotNull] public ISource<MapEvent<TK, TV>> Change => myChange;
     
     [PublicAPI] public ViewableMap() : this(new Dictionary<TK, TV>()) {}
 
-    [PublicAPI] public ViewableMap(EqualityComparer<TV> valueComparer) : this(new Dictionary<TK, TV>()) {}
+    [PublicAPI] public ViewableMap(IEqualityComparer<TV> valueComparer) : this(new Dictionary<TK, TV>()) {}
 
-    [PublicAPI] public ViewableMap([NotNull] IDictionary<TK, TV> storage, [CanBeNull] EqualityComparer<TV> equalityComparer = null)
+    [PublicAPI] public ViewableMap([NotNull] IDictionary<TK, TV> storage, [CanBeNull] IEqualityComparer<TV> valueComparer = null)
     {
       myStorage = storage ?? throw new ArgumentNullException(nameof(storage));
-      myValueComparer = equalityComparer ?? EqualityComparer<TV>.Default;
+      myValueComparer = valueComparer ?? EqualityComparer<TV>.Default;
     }
     
     
