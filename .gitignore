@@ -3,20 +3,16 @@
 .vscode
 .vs/
 build
-/.gradle
+.DS_Store
+*.nupkg
+*.DotSettings.user
+cache/
+/**/.gradle
 .rdgen
 *.code-workspace
 cmake-build-*
-rd-net/RdCore/bin
-rd-net/RdCore/obj
-rd-net/RdFramework/bin
-rd-net/RdFramework/obj
-rd-net/**/bin
-rd-net/**/obj
 /artifacts/
 # Project exclude paths
-/buildSrc/.gradle/
-
 /rd-cross/out/
 /rd-cross/out/test/classes/
 
@@ -29,14 +25,9 @@ rd-net/**/obj
 /rd-kt/rd-text/out/
 /rd-kt/rd-text/out/production/classes/
 /rd-kt/rd-text/out/test/classes/
-/rd-kt/.gradle/
 
-/rd-net/RdCore/bin
-/rd-net/RdCore/obj
-/rd-net/RdFramework/bin
-/rd-net/RdFramework/obj
-/rd-net/Cross/**/obj
-/rd-net/Cross/**/bin
+rd-net/**/bin
+rd-net/**/obj
 /rd-net/packages/
 /rd-net/Cross/Common/Model
 /rd-net/Rd.sln.DotSettings.user
@@ -48,7 +39,3 @@ rd-net/**/obj
 /rd-cpp/demo/
 /rd-cpp/src/rd_framework_cpp/src/test/util/entities/
 /rd-cpp/src/rd_framework_cpp/src/test/util/interning/
-.DS_Store
-*.nupkg
-*.DotSettings.user
-cache/
