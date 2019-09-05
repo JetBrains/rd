@@ -23,15 +23,20 @@
         <Copyright>Copyright © JetBrains 2019</Copyright>
         <PackageTags>rd lifetime reactive viewable</PackageTags>
         <Description>JetBrains Core library for graceful disposal, concurrency and reactive programming</Description>
-<!--        todo <PackageReleaseNotes></PackageReleaseNotes>-->
+        <PackageReleaseNotes>Warmup speedup, included xmldocs, symbols and sources</PackageReleaseNotes>
 
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
