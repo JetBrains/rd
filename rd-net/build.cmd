@@ -4,9 +4,9 @@ GOTO :CMDSCRIPT
 ::CMDLITERAL
 
 set -euxo pipefail
-PACKAGES_DIR=$(pwd)/../artifacts/nuget
-BUILD_COUNTER=99999
-PACKAGE_VERSION=191.0.$BUILD_COUNTER-prerelease
+PACKAGES_DIR=$(pwd)/artifacts/nuget
+BUILD_COUNTER=0
+PACKAGE_VERSION=193.0.$BUILD_COUNTER-prerelease
 
 rm -rf $PACKAGES_DIR
 
@@ -21,8 +21,8 @@ exit 0
 :CMDSCRIPT
 @echo on
 pushd "%~dp0"
-set PACKAGES_DIR=%~dp0..\artifacts\nuget
-set BUILD_COUNTER=99999
+set PACKAGES_DIR=%~dp0\artifacts\nuget
+set BUILD_COUNTER=0
 set PACKAGE_VERSION=191.0.%BUILD_COUNTER%-prerelease
 
 rmdir /S /Q %PACKAGES_DIR%

@@ -18,5 +18,6 @@ rd-net/**/obj
 /artifacts/
 .DS_Store
 *.nupkg
+*.snupkg
 *.DotSettings.user
 cache/
