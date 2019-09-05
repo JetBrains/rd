@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.0;net35;net461</TargetFrameworks>
         <RootNamespace>JetBrains</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <NoWarn>1591,1570,1574</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <LangVersion>latest</LangVersion>
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
@@ -23,6 +24,10 @@
         <PackageTags>rd lifetime reactive viewable</PackageTags>
         <Description>JetBrains Core library for graceful disposal, concurrency and reactive programming</Description>
 <!--        todo <PackageReleaseNotes></PackageReleaseNotes>-->
+
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
