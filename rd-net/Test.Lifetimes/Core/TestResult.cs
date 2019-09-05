@@ -110,6 +110,6 @@ namespace Test.Lifetimes.Core
       AssertFail(fail);
       AssertFailForInt((Result<Nothing>)fail);
     }
-    
+
   }
 }

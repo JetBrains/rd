@@ -217,7 +217,7 @@ namespace JetBrains.Lifetimes
     ///
     /// Method returns do nothing and return `false` if <see cref="Status"/> &ge; <see cref="LifetimeStatus.Terminating"/>. 
     /// </summary>
-    /// <param name="action">Action to invoke on termination</param>
+    /// <param name="disposable">Action to invoke on termination</param>
     /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
 
     [PublicAPI]          public bool TryOnTermination([NotNull] ITerminationHandler disposable) => Definition.TryAdd(disposable); 
@@ -228,7 +228,7 @@ namespace JetBrains.Lifetimes
     #region Execute If Alive
     
     /// <summary>
-    /// Number of background activities started by <see cref="Execute{T}"/>, <see cref="ExecuteAsync"/> or <see cref="StartNested(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// Number of background activities started by <see cref="Execute{T}"/>, <see cref="ExecuteAsync"/> or <see cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// When lifetime became <see cref="LifetimeStatus.Canceling"/> (it happens right after user ask for this lifetime's or ancestor lifetime's definition <see cref="LifetimeDefinition.Terminate"/>) this
     /// number could only reduce, no new activities can be started.
     /// When it reach zero, lifetime begins to terminate its resources by changing <see cref="Status"/> to <see cref="LifetimeStatus.Terminating"/>  

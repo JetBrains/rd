@@ -101,7 +101,6 @@ namespace JetBrains.Diagnostics
     /// <summary>
     /// Creates logger for FQN of <paramref name="type"/>
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     public static ILog GetLog(Type type)
     {
