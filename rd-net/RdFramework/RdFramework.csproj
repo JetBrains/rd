@@ -2,14 +2,43 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net35;net461</TargetFrameworks>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PackageId>JetBrains.RdFramework</PackageId>
         <AssemblyName>JetBrains.RdFramework</AssemblyName>
+        <RootNamespace>JetBrains.Rd</RootNamespace>
+        
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>1591,1570,1574</NoWarn>
+
+        <LangVersion>latest</LangVersion>
+        
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
-        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     </PropertyGroup>
 
+
+    <PropertyGroup Label="NuGet">
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageId>JetBrains.RdFramework</PackageId>
+        <PackageProjectUrl>https://github.com/JetBrains/rd</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/JetBrains/rd</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <RepositoryType>git</RepositoryType>
+        <Authors>JetBrains</Authors>
+        <Copyright>Copyright © JetBrains 2019</Copyright>
+        <PackageTags>rd reactive distributed protocol</PackageTags>
+        <Description>JetBrains Networking library for reactive districuted communication</Description>
+
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+        <!--        todo <PackageIconUrl></PackageIconUrl>-->
+        <PackageReleaseNotes>First release</PackageReleaseNotes>
+    </PropertyGroup>
+    
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
     </ItemGroup>

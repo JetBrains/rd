@@ -2,12 +2,16 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net35;net461</TargetFrameworks>
-        <RootNamespace>JetBrains</RootNamespace>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <NoWarn>1591,1570,1574</NoWarn>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <LangVersion>latest</LangVersion>
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
+        <RootNamespace>JetBrains</RootNamespace>
+        
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>1591,1570,1574</NoWarn>
+        
+        <LangVersion>latest</LangVersion>
+        
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
     </PropertyGroup>
     
@@ -16,14 +20,12 @@
         <PackageId>JetBrains.Lifetimes</PackageId>
         <PackageProjectUrl>https://github.com/JetBrains/rd</PackageProjectUrl>
         <RepositoryUrl>https://github.com/JetBrains/rd</RepositoryUrl>
-<!--        todo <PackageIconUrl></PackageIconUrl>-->
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryType>git</RepositoryType>
         <Authors>JetBrains</Authors>
         <Copyright>Copyright © JetBrains 2019</Copyright>
         <PackageTags>rd lifetime reactive viewable</PackageTags>
         <Description>JetBrains Core library for graceful disposal, concurrency and reactive programming</Description>
-        <PackageReleaseNotes>Warmup speedup, included xmldocs, symbols and sources</PackageReleaseNotes>
 
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -32,6 +34,8 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
+<!--        todo <PackageIconUrl></PackageIconUrl>-->
+        <PackageReleaseNotes>Warmup speedup, included xmldocs, symbols and sources</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
