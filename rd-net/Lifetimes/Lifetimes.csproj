@@ -34,7 +34,7 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
-<!--        todo <PackageIconUrl></PackageIconUrl>-->
+        <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
         <PackageReleaseNotes>Warmup speedup, included xmldocs, symbols and sources</PackageReleaseNotes>
     </PropertyGroup>
 

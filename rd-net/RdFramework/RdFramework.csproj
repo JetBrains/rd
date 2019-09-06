@@ -35,7 +35,7 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
-        <!--        todo <PackageIconUrl></PackageIconUrl>-->
+        <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/rd-icon-128.png</PackageIconUrl>
         <PackageReleaseNotes>First release</PackageReleaseNotes>
     </PropertyGroup>
     
