@@ -16,5 +16,7 @@ call dotnet build /p:Configuration=%CONFIGURATION% /p:PackageVersion=%NUGET_VERS
 call dotnet pack --include-symbols /p:Configuration=%CONFIGURATION% /p:PackageVersion=%NUGET_VERSION% %BUILD_DIR%\..\..\..\rd-net\Lifetimes\Lifetimes.csproj
 call dotnet pack --include-symbols /p:Configuration=Release /p:PackageVersion=%NUGET_VERSION% %BUILD_DIR%\..\..\..\rd-net\RdFramework\RdFramework.csproj
 move %BUILD_DIR%\..\..\..\rd-net\RdFramework\bin\Release\*.nupkg %NUGET_LOCAL_SOURCE%
-move %BUILD_DIR%\..\..\..\rd-net\Lifetimes\bin\Release\*.nupkg $build_dir
+move %BUILD_DIR%\..\..\..\rd-net\RdFramework\bin\Release\*.snupkg %NUGET_LOCAL_SOURCE%
+move %BUILD_DIR%\..\..\..\rd-net\Lifetimes\bin\Release\*.nupkg %NUGET_LOCAL_SOURCE%
+move %BUILD_DIR%\..\..\..\rd-net\Lifetimes\bin\Release\*.snupkg %NUGET_LOCAL_SOURCE%
 call nuget pack -Version %NUGET_VERSION% -OutputDirectory %NUGET_LOCAL_SOURCE% JetBrains.RdGen.nuspec

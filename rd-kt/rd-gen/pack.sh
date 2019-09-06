@@ -55,5 +55,7 @@ ${build_dir}/.dotnet/dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:Packa
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Lifetimes/Lifetimes.csproj
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/RdFramework/RdFramework.csproj
 mv ${build_dir}/../../../rd-net/RdFramework/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
+mv ${build_dir}/../../../rd-net/RdFramework/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
 mv ${build_dir}/../../../rd-net/Lifetimes/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
+mv ${build_dir}/../../../rd-net/Lifetimes/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
 mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} JetBrains.RdGen.nuspec
