@@ -16,7 +16,7 @@ namespace JetBrains.Util.Util
     /// <param name="original"></param>
     /// <typeparam name="TFrom"></typeparam>
     /// <returns>(TTo)original</returns>
-    [PublicAPI] internal static unsafe TTo ReinterpretCastFrom<TFrom>(TFrom original)
+    [PublicAPI] internal static unsafe TTo ReinterpretFrom<TFrom>(TFrom original)
     {
       TTo placeholder = default(TTo);
       var trPlaceholder = __makeref(placeholder);
@@ -39,7 +39,7 @@ namespace JetBrains.Util.Util
     /// <summary>
     /// /// https://stackoverflow.com/questions/1189144/c-sharp-non-boxing-conversion-of-generic-enum-to-int/23391746#23391746
     /// Casts <see cref="TFrom"/> to TTo  without boxing for value types. Useful in generic methods.
-    /// The only problem is that this method requires around 50ms on startup to warm up. So for real hardcore see <see cref="ReinterpretCastFrom{TFrom}"/>  
+    /// The only problem is that this method requires around 50ms on startup to warm up. So for real hardcore see <see cref="ReinterpretFrom{TFrom}"/>  
     /// </summary>
     /// <typeparam name="TFrom">Source type to cast from. Usually a generic type.</typeparam>
     public static TTo From<TFrom>(TFrom s)

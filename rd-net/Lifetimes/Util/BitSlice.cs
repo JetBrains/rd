@@ -155,7 +155,7 @@ namespace JetBrains.Util.Util
 
       Assertion.Require(type.IsEnum, "Type must be enum, actual type: {0}", type);
 
-      var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(CastTo<long>.ReinterpretCastFrom).ToList();
+      var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(CastTo<long>.ReinterpretFrom).ToList();
       
       Assertion.Require(values.Count > 0, "Bit slice for enum with no value is meaningless");
       Assertion.Require(values.All(v => v >= 0), "Enums with negative values or values greater than long.MaxValue are unsupported");
@@ -171,10 +171,10 @@ namespace JetBrains.Util.Util
     public override T this[int host]
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      get => CastTo<T>.ReinterpretCastFrom(GetRaw(host));
+      get => CastTo<T>.ReinterpretFrom(GetRaw(host));
     }
 
-    public override int Updated(int host, T value) => UpdatedRaw(host, CastTo<int>.ReinterpretCastFrom(value));
+    public override int Updated(int host, T value) => UpdatedRaw(host, CastTo<int>.ReinterpretFrom(value));
   }
 
 }
