@@ -50,7 +50,7 @@ namespace rd {
 
 	void Buffer::require_available(size_t moreSize) {
 		if (offset + moreSize >= size()) {
-			const size_t new_size = (std::max)(size() * 2, offset + moreSize);
+			const size_t new_size = (std::max) (size() * 2, offset + moreSize);
 			data_.resize(new_size);
 		}
 	}
@@ -89,9 +89,18 @@ namespace rd {
 		return data_.data();
 	}
 
+	Buffer::word_t const *Buffer::current_pointer() const {
+		return data() + offset;
+	}
+
+	Buffer::word_t *Buffer::current_pointer() {
+		return data() + offset;
+	}
+
 	size_t Buffer::size() const {
 		return data_.size();
 	}
+
 
 	/*std::string Buffer::readString() const {
     auto v = readArray<uint8_t>();
@@ -124,23 +133,41 @@ void Buffer::writeString(std::string const &value) const {
 	}
 
 	template<int>
-	void write_wstring_spec(Buffer &buffer, std::wstring const &value) {
+	void write_wstring_spec(Buffer &buffer, wstring_view value) {
 		const std::vector<uint16_t> v(value.begin(), value.end());
 		buffer.write_array<uint16_t>(v);
 	}
 
 	template<>
-	void write_wstring_spec<2>(Buffer &buffer, std::wstring const &value) {
+	void write_wstring_spec<2>(Buffer &buffer, wstring_view value) {
 		buffer.write_integral<int32_t>(static_cast<int32_t>(value.size()));
 		buffer.write(reinterpret_cast<Buffer::word_t const *>(value.data()), sizeof(wchar_t) * value.size());
 	}
 
-	void Buffer::write_wstring(std::wstring const &value) {
+	void Buffer::write_wstring(std::wstring const& value) {
+		write_wstring(wstring_view(value));
+	}
+
+	void Buffer::write_wstring(wstring_view value) {
 		write_wstring_spec<sizeof(wchar_t)>(*this, value);
 	}
 
 	void Buffer::write_wstring(Wrapper<std::wstring> const &value) {
 		write_wstring(*value);
+	}
+
+	int64_t TICKS_AT_EPOCH = 621355968000000000L;
+	int64_t TICKS_PER_MILLISECOND = 10000000;
+
+	DateTime Buffer::read_date_time() {
+		int64_t time_in_ticks = read_integral<int64_t>();
+		time_t t = static_cast<time_t>((time_in_ticks - TICKS_AT_EPOCH) / TICKS_PER_MILLISECOND);
+		return DateTime{t};
+	}
+
+	void Buffer::write_date_time(DateTime const &date_time) {
+		uint64_t t = date_time.seconds * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH;
+		write_integral<int64_t>(t);
 	}
 
 	bool Buffer::read_bool() {
@@ -167,11 +194,11 @@ void Buffer::writeString(std::string const &value) const {
 		read_byte_array_raw(array);
 	}
 
-	void Buffer::read_byte_array_raw(ByteArray &array)  {
+	void Buffer::read_byte_array_raw(ByteArray &array) {
 		read(array.data(), array.size());
 	}
 
-	void Buffer::write_byte_array_raw(const ByteArray &array)  {
+	void Buffer::write_byte_array_raw(const ByteArray &array) {
 		write(array.data(), array.size());
 	}
 

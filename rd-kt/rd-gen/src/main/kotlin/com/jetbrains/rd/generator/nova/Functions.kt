@@ -9,6 +9,7 @@ import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Map
 import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Set
 import com.jetbrains.rd.generator.nova.Member.Reactive.Task
 import com.jetbrains.rd.util.PublicApi
+import java.lang.IllegalArgumentException
 
 val ProtocolInternScope = InternScope(null, "Protocol")
 
@@ -17,6 +18,32 @@ fun Class.field(name : String, type : IType) = append(Field(name, type))
 fun Toplevel.field(name : String, type : Aggregate) = append(Field(name, type))
 fun Declaration.const(name: String, type: PredefinedType, value: String) = appendConst(Member.Const.Integral(name, type, value))
 fun Declaration.const(name: String, type: Enum, value: Member.EnumConst) = appendConst(Member.Const.Enum(name, type, value))
+
+fun Declaration.const(name: String, type: PredefinedType.bool, value: Boolean) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.char, value: Char) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.string, value: String) = appendConst(Member.Const.Integral(name, type, value))
+fun Declaration.const(name: String, type: Enum, value: Int) = appendConst(Member.Const.Enum(name, type, type.constants[value]))
+fun Declaration.const(name: String, type: Enum, value: String) {
+    type.constants.find { it.name == value}?.let {
+        appendConst(Member.Const.Enum(name, type, it))
+    } ?: throw IllegalArgumentException("value:$value is not present in enum:$type")
+}
+
+fun Declaration.const(name: String, type: PredefinedType.byte, value: Byte) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.short, value: Short) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.int, value: Int) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.long, value: Long) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.ubyte, value: UByte) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.ushort, value: UShort) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.uint, value: UInt) = appendConst(Member.Const.Integral(name, type, value.toString()))
+@ExperimentalUnsignedTypes
+fun Declaration.const(name: String, type: PredefinedType.ulong, value: ULong) = appendConst(Member.Const.Integral(name, type, value.toString()))
+
+fun Declaration.const(name: String, type: PredefinedType.float, value: Float) = appendConst(Member.Const.Integral(name, type, value.toString()))
+fun Declaration.const(name: String, type: PredefinedType.double, value: Double) = appendConst(Member.Const.Integral(name, type, value.toString()))
 
 fun BindableDeclaration.signal(name : String, valueType : IScalar) = append(Signal(name, valueType))
 fun BindableDeclaration.source(name : String, valueType : IScalar) = append(Signal(name, valueType).write)
@@ -40,6 +67,7 @@ fun BindableDeclaration.property(name: String, defaultValue: Boolean) = append(P
 fun BindableDeclaration.property(name: String, defaultValue: Int) = append(Property(name, PredefinedType.int, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Double) = append(Property(name, PredefinedType.double, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: String) = append(Property(name, PredefinedType.string, defaultValue))
+fun BindableDeclaration.property(name: String, defaultValue: Member.Const) = append(Property(name, PredefinedType.string, defaultValue))
 
 fun BindableDeclaration.list(name : String, itemType : IType) = append(List(name, itemType))
 fun BindableDeclaration.set(name : String, itemType : INonNullableScalar) = append(Set(name, itemType))

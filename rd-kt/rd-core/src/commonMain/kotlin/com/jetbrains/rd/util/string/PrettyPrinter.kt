@@ -70,13 +70,12 @@ class PrettyPrinter {
     }
 
     operator fun String.unaryPlus() {
-        if (!this.isEmpty()) println(this)
+        if (this.isNotEmpty()) println(this)
     }
 
-    fun <T> Iterable<T>.println(transform: (T) -> String) {
-        val iter = this.iterator()
-        while (iter.hasNext()) println(transform(iter.next()))
-    }
+    fun <T> Iterable<T>.println(transform: (T) -> String) = forEach { println(transform(it)) }
+
+    fun Iterable<String>.println() = forEach { println(it) }
 
     fun <T> Iterable<T>.printlnWithBlankLine(transform: (T) -> String) {
         val iter = this.iterator()

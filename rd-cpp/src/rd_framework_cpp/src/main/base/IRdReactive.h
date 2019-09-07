@@ -4,6 +4,7 @@
 
 #include "IRdBindable.h"
 #include "IScheduler.h"
+#include "IRdWireable.h"
 
 namespace rd {
 	/**

@@ -4,7 +4,8 @@
 #include "Buffer.h"
 #include "RdId.h"
 
-#include <unordered_map>
+#include "std/unordered_map.h"
+
 #include <functional>
 #include <string>
 #include <utility>
@@ -25,7 +26,7 @@ namespace rd {
 	class SerializationCtx {
 		Serializers const *serializers = nullptr;
 	public:
-		using roots_t = std::unordered_map<util::hash_t, InternRoot const *>;
+		using roots_t = rd::unordered_map<util::hash_t, InternRoot const *>;
 
 		roots_t intern_roots{};
 

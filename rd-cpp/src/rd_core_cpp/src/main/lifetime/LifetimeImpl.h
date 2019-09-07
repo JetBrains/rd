@@ -1,7 +1,7 @@
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
 
-#include "thirdparty.hpp"
+#include "hash.h"
 
 #include <functional>
 #include <map>
@@ -10,21 +10,24 @@
 #include <atomic>
 #include <utility>
 
+#include "thirdparty.hpp"
+
 namespace rd {
 	class LifetimeImpl final {
-	private:
+	public:
 		friend class LifetimeDefinition;
 
 		friend class Lifetime;
 
+		using counter_t = int32_t;
+	private:
 		bool eternaled = false;
 		std::atomic<bool> terminated{false};
 
-		using counter_t = int32_t;
 		counter_t id = 0;
 
 		counter_t action_id_in_map = 0;
-		using actions_t = ordered_map<int, std::function<void()>>;
+		using actions_t = ordered_map<int, std::function<void()>, rd::hash<int>>;
 		actions_t actions;
 
 		void terminate();
@@ -55,6 +58,12 @@ namespace rd {
 
 			actions[action_id_in_map] = std::forward<F>(action);
 			return action_id_in_map++;
+		}
+
+		void remove_action(counter_t i) {
+			std::lock_guard<decltype(actions_lock)> guard(actions_lock);
+
+			actions.erase(i);
 		}
 
 #if __cplusplus >= 201703L

@@ -15,6 +15,9 @@ namespace rd {
 		class RdFrameworkTestBase : public ::testing::Test {
 			bool after_test_called = false;
 		public:
+			int static_entity_id = 1;
+			std::string static_name = "top";
+
 			Serializers serializers;
 
 			LifetimeDefinition clientLifetimeDef;
@@ -56,7 +59,7 @@ namespace rd {
 			template<typename T>
 			T &bindStatic(IProtocol *protocol, T &x, int id) const {
 				Lifetime lf = (protocol == clientProtocol.get() ? clientLifetime : serverLifetime);
-				statics(x, id).bind(lf, protocol, "top");
+				statics(x, id).bind(lf, protocol, static_name);
 				return x;
 			}
 

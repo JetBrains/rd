@@ -1,5 +1,6 @@
 package com.jetbrains.rd.util.test.cases
 
+import com.jetbrains.rd.util.AtomicInteger
 import com.jetbrains.rd.util.Closeable
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Statics
@@ -11,7 +12,6 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class BackgroundSchedulerTest {
 
@@ -37,29 +37,31 @@ class BackgroundSchedulerTest {
         assertFalse { s.isActive }
         assertFails { s.assertThread() }
 
-        var tasksExecuted : Int = 0
+
+        val tasksExecuted = AtomicInteger(0)
         s.queue {
             Thread.sleep(100)
-            tasksExecuted++
+            tasksExecuted.incrementAndGet()
         }
         s.queue {
-            tasksExecuted++
+            tasksExecuted.incrementAndGet()
             s.assertThread()
         }
-        assertEquals(0, tasksExecuted)
+        assertEquals(0, tasksExecuted.get())
 
         s.assertNoExceptions()
-        assertEquals(2, tasksExecuted)
+
+        assertEquals(2, tasksExecuted.get())
 
         s.queue {
             throw IllegalStateException()
         }
         s.queue {
-            tasksExecuted++
+            tasksExecuted.incrementAndGet()
         }
 
         assertFails { s.assertNoExceptions() }
-        assertTrue("x == 3", { tasksExecuted == 3 })
+        assertEquals(tasksExecuted.get(), 3)
     }
 }
 

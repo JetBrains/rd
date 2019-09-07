@@ -1,0 +1,7 @@
+applyKotlinJVM()
+//apply from: 'models.gradle'
+apply from: 'cross.gradle'
+
+task test(type: DefaultTask, overwrite: true) {
+    dependsOn "crossTest"
+}

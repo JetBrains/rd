@@ -5,6 +5,7 @@
 #include "WireBase.h"
 #include "Logger.h"
 #include "ByteBufferAsyncProcessor.h"
+#include "PkgInputStream.h"
 
 #include "SimpleSocket.h"
 #include "ActiveSocket.h"
@@ -37,14 +38,15 @@ namespace rd {
 
 			mutable std::condition_variable socket_send_var;
 			mutable ByteBufferAsyncProcessor async_send_buffer{id + "-AsyncSendProcessor",
-															   [this](Buffer::ByteArray const& it, sequence_number_t seqn) -> bool {
+															   [this](Buffer::ByteArray const &it,
+																	  sequence_number_t seqn) -> bool {
 																   return this->send0(it, seqn);
 															   }};
 
 			// mutable Buffer::ByteArray threadLocalSendByteArray;
 
-			static constexpr size_t RECIEVE_BUFFER_SIZE = 1u << 16;
-			mutable std::array<Buffer::word_t, RECIEVE_BUFFER_SIZE> receiver_buffer{};
+			static constexpr size_t RECEIVE_BUFFER_SIZE = 1u << 16;
+			mutable std::array<Buffer::word_t, RECEIVE_BUFFER_SIZE> receiver_buffer{};
 			mutable decltype(receiver_buffer)::iterator lo = receiver_buffer.begin(), hi = receiver_buffer.begin();
 
 			static constexpr size_t SEND_BUFFER_SIZE = 16 * 1024;
@@ -57,6 +59,13 @@ namespace rd {
 			mutable sequence_number_t max_received_seqn = 0;
 			mutable Buffer send_package_header{PACKAGE_HEADER_LENGTH};
 
+			static constexpr int32_t CHUNK_SIZE = 16370;
+			mutable int32_t sz = -1;
+			mutable RdId::hash_t id_ = -1;
+			mutable PkgInputStream receive_pkg{[this]() -> int32_t { return this->read_package(); }};
+
+			mutable Buffer message{CHUNK_SIZE};
+
 			bool read_from_socket(Buffer::word_t *res, int32_t msglen) const;
 
 			template<typename T>
@@ -67,18 +76,22 @@ namespace rd {
 			bool read_data_from_socket(Buffer::word_t *data, size_t len) const {
 				return read_from_socket(reinterpret_cast<Buffer::word_t *>(data), len);
 			}
+
 		public:
 
 			//region ctor/dtor
 
 			Base(std::string id, Lifetime lifetime, IScheduler *scheduler);
+
 			virtual ~Base() = default;
 
 			//endregion
 
 			std::pair<int, sequence_number_t> read_header() const;
 
-			bool read_and_dispatch_package() const;
+			int32_t read_package() const;
+
+			bool read_and_dispatch_message() const;
 
 			void receiverProc() const;
 

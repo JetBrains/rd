@@ -12,7 +12,7 @@ import kotlin.test.Test
 class RdAsyncSignalTest : RdAsyncTestBase() {
 
     @Test
-    fun TestAsyncSignalStatic() {
+    fun testAsyncSignalStatic() {
 
         val acc = AtomicInteger(0)
 
@@ -20,28 +20,28 @@ class RdAsyncSignalTest : RdAsyncTestBase() {
         val evt2 = CountDownLatch(1)
 
         clientUiScheduler.queue {
-            val client_signal = clientProtocol.bindStatic(RdSignal<Unit>().static(1).apply { async = true }, "top")
+            val clientSignal = clientProtocol.bindStatic(RdSignal<Unit>().static(1).apply { async = true }, "top")
 
             evt1.countDown()
             evt1.await()
             clientBgScheduler.queue {
-                client_signal.fire()
+                clientSignal.fire()
                 println("client fired bg")
             }
-            client_signal.fire()
+            clientSignal.fire()
             println("client fired ui")
             evt2.countDown()
         }
 
         serverUiScheduler.queue {
-            val server_signal = serverProtocol.bindStatic(RdSignal<Unit>().static(1).apply { async = true }, "top")
-            Lifetime.using { _ ->
-                server_signal.adviseOn(serverLifetime, serverBgScheduler, {
+            val serverSignal = serverProtocol.bindStatic(RdSignal<Unit>().static(1).apply { async = true }, "top")
+            Lifetime.using {
+                serverSignal.adviseOn(serverLifetime, serverBgScheduler) {
                     println("server received")
                     Thread.sleep(100)
                     serverBgScheduler.assertThread()
                     acc.incrementAndGet()
-                })
+                }
                 println("server advise completed")
                 evt1.countDown()
                 evt1.await()

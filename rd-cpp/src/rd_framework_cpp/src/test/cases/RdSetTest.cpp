@@ -33,8 +33,8 @@ TEST_F(RdFrameworkTestBase, set_statics) {
 
 	EXPECT_EQ(vi(), log);
 
-	bindStatic(serverProtocol.get(), server_set, "top");
-	bindStatic(clientProtocol.get(), client_set, "top");
+	bindStatic(serverProtocol.get(), server_set, static_name);
+	bindStatic(clientProtocol.get(), client_set, static_name);
 	EXPECT_EQ((vi{2, 0, 1, 8}), log);
 
 	client_set.remove(1);

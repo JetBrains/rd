@@ -16,3 +16,11 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.8")
     # Only available since version 3.8
     target_compile_features(tsl_ordered_map INTERFACE cxx_std_11)
 endif()
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}"
+        CONFIGURATIONS Release
+        FILES_MATCHING
+        PATTERN *.h
+        PATTERN *.hpp
+        )

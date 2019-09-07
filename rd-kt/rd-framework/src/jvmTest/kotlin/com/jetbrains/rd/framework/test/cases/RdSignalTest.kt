@@ -8,6 +8,7 @@ import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -164,7 +165,7 @@ class RdSignalTest : RdFrameworkTestBase() {
         server_property.viewNotNull(Lifetime.Eternal) { lf, entity ->
             entity.foo.advise(lf) {
                 acc++
-                lf.add { acc-- }
+                lf.onTermination { acc-- }
             }
         }
 

@@ -6,7 +6,17 @@ add_executable(rd_core_cpp_test
         cases/PropertyTest.cpp
         cases/ViewableSetTest.cpp
         cases/AdviseVsViewTest.cpp
-        cases/ViewableListTest.cpp cases/GeneratorUtilTest.cpp)
+        cases/ViewableListTest.cpp cases/GeneratorUtilTest.cpp
+        #pch
+        ${PCH_CPP_OPT}
+        )
+
+message(STATUS "Using pch by rd_core_test: '${ENABLE_PCH_HEADERS}'")
+
+if (ENABLE_PCH_HEADERS)
+    include(${PROJECT_SOURCE_DIR}/PrecompiledHeader.cmake)
+    add_precompiled_header(rd_core_cpp_test pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
+endif ()
 
 add_subdirectory(util)
 

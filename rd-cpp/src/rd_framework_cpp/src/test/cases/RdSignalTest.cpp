@@ -32,8 +32,8 @@ TEST_F(RdFrameworkTestBase, signal_statics) {
 	EXPECT_THROW(server_signal.fire(2), std::exception);
 
 	//bound
-	bindStatic(serverProtocol.get(), server_signal, "top");
-	bindStatic(clientProtocol.get(), client_signal, "top");
+	bindStatic(serverProtocol.get(), server_signal, static_name);
+	bindStatic(clientProtocol.get(), client_signal, static_name);
 
 	//set from client
 	client_signal.fire(2);
@@ -55,9 +55,9 @@ TEST_F(RdFrameworkTestBase, signal_void_statics) {
 	RdSignal<Void> server_signal;
 
 	bindStatic(clientProtocol.get(), statics(client_signal, signal_id),
-			   "top");
+			   static_name);
 	bindStatic(serverProtocol.get(), statics(server_signal, signal_id),
-			   "top");
+			   static_name);
 
 	int acc = 0;
 	LifetimeDefinition::use([&](Lifetime lt) {
@@ -107,8 +107,8 @@ TEST_F(RdFrameworkTestBase, signal_custom_serializer) {
 	client_signal.advise(Lifetime::Eternal(), [&client_log](int32_t v) { client_log = v; });
 	server_signal.advise(Lifetime::Eternal(), [&server_log](int32_t v) { server_log = v; });
 
-	bindStatic(serverProtocol.get(), server_signal, "top");
-	bindStatic(clientProtocol.get(), client_signal, "top");
+	bindStatic(serverProtocol.get(), server_signal, static_name);
+	bindStatic(clientProtocol.get(), client_signal, static_name);
 
 	//set from client
 	client_signal.fire(2);
@@ -182,8 +182,8 @@ TEST_F(RdFrameworkTestBase, signal_custom_iserializable) {
 	client_signal.advise(Lifetime::Eternal(), [&client_log](FooScalar<wchar_t> const &v) { client_log = v; });
 	server_signal.advise(Lifetime::Eternal(), [&server_log](FooScalar<wchar_t> const &v) { server_log = v; });
 
-	bindStatic(serverProtocol.get(), server_signal, "top");
-	bindStatic(clientProtocol.get(), client_signal, "top");
+	bindStatic(serverProtocol.get(), server_signal, static_name);
+	bindStatic(clientProtocol.get(), client_signal, static_name);
 
 	//set from client
 	client_signal.fire(FooScalar<wchar_t>('2', '0'));
@@ -215,8 +215,8 @@ TEST_F(RdFrameworkTestBase, signal_vector) {
 	client_signal.advise(Lifetime::Eternal(), [&client_log](array v) { client_log = v; });
 	server_signal.advise(Lifetime::Eternal(), [&server_log](array v) { server_log = v; });
 
-	bindStatic(serverProtocol.get(), server_signal, "top");
-	bindStatic(clientProtocol.get(), client_signal, "top");
+	bindStatic(serverProtocol.get(), server_signal, static_name);
+	bindStatic(clientProtocol.get(), client_signal, static_name);
 
 	//set from client
 	array a{2, 0, 1, 8};

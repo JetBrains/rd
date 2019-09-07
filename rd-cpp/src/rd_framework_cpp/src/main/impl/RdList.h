@@ -25,7 +25,7 @@ namespace rd {
 		mutable int64_t next_version = 1;
 
 		std::string logmsg(Op op, int64_t version, int32_t key, T const *value = nullptr) const {
-			return "list " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+			return "list " + to_string(location) + " " + to_string(rdid) + ":: " + to_string(op) +
 				   ":: key = " + std::to_string(key) +
 				   ((version > 0) ? " :: version = " + std::to_string(version) : "") +
 				   " :: value = " + (value ? to_string(*value) : "");
@@ -46,7 +46,7 @@ namespace rd {
 		virtual ~RdList() = default;
 		//endregion
 
-		static RdList<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdList<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdList<T, S> result;
 			int64_t next_version = buffer.read_integral<int64_t>();
 			RdId id = RdId::read(buffer);
@@ -56,7 +56,7 @@ namespace rd {
 			return result;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			buffer.write_integral<int64_t>(next_version);
 			rdid.write(buffer);
 		}
@@ -114,7 +114,7 @@ namespace rd {
 			int32_t index = (buffer.read_integral<int32_t>());
 
 			RD_ASSERT_MSG(version == next_version,
-						  ("Version conflict for " + location.toString() + "}. Expected version " +
+						  ("Version conflict for " + to_string(location) + "}. Expected version " +
 						   std::to_string(next_version) +
 						   ", received " +
 						   std::to_string(version) +
@@ -150,11 +150,11 @@ namespace rd {
 			}
 		}
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}
-			list::advise(std::move(lifetime), handler);
+			list::advise(lifetime, handler);
 		}
 
 		bool add(WT element) const override {
@@ -201,7 +201,7 @@ namespace rd {
 
 		friend std::string to_string(RdList const &value) {
 			std::string res = "[";
-			for (auto const& p : value) {
+			for (auto const &p : value) {
 				res += to_string(p) + ",";
 			}
 			return res + "]";

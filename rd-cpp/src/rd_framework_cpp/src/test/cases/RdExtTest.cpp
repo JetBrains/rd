@@ -67,8 +67,8 @@ using namespace test::util;
 	DynamicEntity::create(&clientProtocol);
 	DynamicEntity::create(&serverProtocol);
 	//bound
-	clientProperty.bind(lifetime, &clientProtocol, "top");
-	serverProperty.bind(lifetime, &serverProtocol, "top");
+	clientProperty.bind(lifetime, &clientProtocol, static_name);
+	serverProperty.bind(lifetime, &serverProtocol, static_name);
 
 	DynamicEntity clientEntity(1);
 	clientProperty.set(std::move(clientEntity));

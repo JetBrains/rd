@@ -1,0 +1,35 @@
+import com.jetbrains.rd.gradle.tasks.DotnetExecTask
+import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
+import com.jetbrains.rd.gradle.tasks.RunScriptTask
+
+import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFile
+
+task build(type: RunScriptTask, overwrite: true) {
+    execPath = 'build.cmd'
+}
+
+task clean(type: Exec, overwrite: true) {
+    executable 'dotnet'
+    args 'clean'
+}
+
+/*task build(type: Exec, overwrite: true) {
+    commandLine 'dotnet build'
+}*/
+
+task CrossTestCsClientAllEntities(type: DotnetExecTask) {
+}
+
+task CrossTestCsClientBigBuffer(type: DotnetExecTask) {
+}
+
+task CrossTestCsClientRdCall(type: DotnetExecTask) {
+}
+
+[CrossTestCsClientAllEntities, CrossTestCsClientBigBuffer, CrossTestCsClientRdCall].each { t ->
+    task "${t.name}Build"(type: DotnetBuildTask) {
+        projectName = t.name
+    }
+
+    t.dependsOn project.tasks.findByName("${t.name}Build")
+}

@@ -1,0 +1,60 @@
+ExtModel:Checker:"Unit"
+"***"
+"Boolean_array:"[
+  True
+  False
+  False
+]
+
+"***"
+"Scalar:"MyScalar (
+  bool = False
+  byte = 13
+  short = 32000
+  int = 1000000000
+  long = -2000000000000000000
+  float = 3.14
+  double = -123456789.012346
+  unsigned_byte = 254
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
+  enum = kt
+)
+
+"***"
+"Ubyte:"242
+
+"***"
+"Ubyte_array:"[
+  13
+  255
+]
+
+"***"
+"List:"Kind: Add, Index: 0, OldValue: 0, NewValue: 1
+
+"***"
+"List:"Kind: Add, Index: 1, OldValue: 0, NewValue: 3
+
+"***"
+"Set:"Kind: Add, Value: 13
+
+"***"
+"MapLongToString:"Kind: Add, Key: 13, OldValue: , NewValue: Kotlin
+
+"***"
+"Interned_string:""Kotlin"
+
+"***"
+"Interned_string:""protocol"
+
+"***"
+"Interned_string:""Kotlin"
+
+"***"
+"Polymorphic:"Derived (  string = "Kotlin instance")
+
+"***"
+"Enum:"kt
+ExtModel:Checker:"Unit"

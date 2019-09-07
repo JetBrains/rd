@@ -1,11 +1,11 @@
 applyKotlinJVM()
 
 dependencies {
-    compile project(':rd-core:')
+    compile project(':rd-kt:rd-core:')
     implementation gradleApi()
 //    testRuntime project(':rd-framework:')
-    testCompile project(':rd-framework:')
-    compile "org.jetbrains.kotlin:kotlin-compiler:1.3.0"
+    testCompile project(':rd-kt:rd-framework:')
+    compile "org.jetbrains.kotlin:kotlin-compiler:$kotlin_version"
 }
 
 task fatJar(type: Jar) {
@@ -16,3 +16,13 @@ task fatJar(type: Jar) {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
+
+sourceSets {
+    test {
+        kotlin {
+            srcDirs += ["$rootProject.buildDir/models/demo"]
+        }
+    }
+}
+
+apply from: 'models.gradle'

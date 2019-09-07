@@ -20,7 +20,7 @@ namespace rd {
 	class Serializers;
 	//endregion
 
-	class RdReactiveBase : public RdBindableBase, public IRdReactive {		
+	class RdReactiveBase : public RdBindableBase, public IRdReactive {
 	public:
 		static Logger logReceived;
 		static Logger logSend;
@@ -36,7 +36,7 @@ namespace rd {
 		virtual ~RdReactiveBase() = default;
 		//endregion
 
-		const IWire *const get_wire() const;
+		const IWire *get_wire() const;
 
 		mutable bool is_local_change = false;
 
@@ -58,7 +58,7 @@ namespace rd {
 				assert_threading();
 			}
 
-			RD_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + rdid.toString());
+			RD_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + to_string(rdid));
 
 			util::bool_guard bool_guard(is_local_change);
 			return action();

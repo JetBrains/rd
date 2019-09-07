@@ -40,12 +40,12 @@ namespace rd {
 										  const RdBindableBase *serverEntity, const RdBindableBase *clientEntity) {
 				if (serverEntity) {
 					statics(*serverEntity, property_id);
-					serverEntity->bind(lifetime, &serverProtocol, "top");
+					serverEntity->bind(lifetime, &serverProtocol, static_name);
 				}
 
 				if (clientEntity) {
 					statics(*clientEntity, property_id);
-					clientEntity->bind(lifetime, &clientProtocol, "top");
+					clientEntity->bind(lifetime, &clientProtocol, static_name);
 				}
 			}
 

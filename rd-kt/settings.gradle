@@ -1,0 +1,9 @@
+include ':rd-core'
+
+include ':rd-framework'
+
+include ':rd-gen'
+
+include ':rd-text'
+
+include ':rd-swing'

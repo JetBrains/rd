@@ -1,6 +1,8 @@
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
+#include "DateTime.h"
+
 #include "core_util.h"
 #include "wrapper.h"
 
@@ -15,6 +17,8 @@ namespace rd {
 	 */
 	class Buffer final {
 	public:
+		friend class PkgInputStream;
+
 		using word_t = uint8_t;
 
 		using Allocator = std::allocator<word_t>;
@@ -25,13 +29,11 @@ namespace rd {
 		friend std::wstring read_wstring_spec(Buffer &);
 
 		template<int>
-		friend void write_wstring_spec(Buffer &, std::wstring const &);
+		friend void write_wstring_spec(Buffer &, wstring_view);
 
 		ByteArray data_;
 
 		size_t offset = 0;
-
-		void require_available(size_t size);
 
 		//read
 		void read(word_t *dst, size_t size);
@@ -39,6 +41,7 @@ namespace rd {
 		//write
 		void write(const word_t *src, size_t size);
 
+		size_t size() const;
 
 	public:
 
@@ -63,6 +66,8 @@ namespace rd {
 		size_t get_position() const;
 
 		void set_position(size_t value);
+
+		void require_available(size_t size);
 
 		void check_available(size_t moreSize) const;
 
@@ -155,7 +160,13 @@ namespace rd {
 
 		void write_wstring(std::wstring const &value);
 
+		void write_wstring(wstring_view value);
+
 		void write_wstring(Wrapper<std::wstring> const &value);
+
+		DateTime read_date_time();
+
+		void write_date_time(DateTime const &date_time);
 
 		template<typename T>
 		T read_enum() {
@@ -190,7 +201,7 @@ namespace rd {
 
 		template<typename T>
 		typename std::enable_if_t<!std::is_abstract<T>::value>
-		write_nullable(optional<T> const &value, std::function<void(T const &)> writer) {
+		write_nullable(optional <T> const &value, std::function<void(T const &)> writer) {
 			if (!value) {
 				write_bool(false);
 			} else {
@@ -233,7 +244,9 @@ namespace rd {
 
 		word_t *data();
 
-		size_t size() const;
+		word_t const *current_pointer() const;
+
+		word_t *current_pointer();
 
 		ByteArray &get_data();
 	};

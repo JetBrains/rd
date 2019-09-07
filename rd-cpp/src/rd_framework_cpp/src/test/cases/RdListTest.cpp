@@ -39,8 +39,8 @@ TEST_F(RdFrameworkTestBase, rd_list_static) {
 	server_list.add(L"Server value 3");
 
 	EXPECT_EQ(0, client_list.size());
-	bindStatic(clientProtocol.get(), client_list, "top");
-	bindStatic(serverProtocol.get(), server_list, "top");
+	bindStatic(clientProtocol.get(), client_list, static_name);
+	bindStatic(serverProtocol.get(), server_list, static_name);
 
 	EXPECT_EQ(client_list.size(), 3);
 	EXPECT_EQ(client_list.get(0), L"Server value 1");
@@ -88,8 +88,8 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 	EXPECT_EQ(0, server_list.size());
 	EXPECT_EQ(0, client_list.size());
 
-	bindStatic(clientProtocol.get(), client_list, "top");
-	bindStatic(serverProtocol.get(), server_list, "top");
+	bindStatic(clientProtocol.get(), client_list, static_name);
+	bindStatic(serverProtocol.get(), server_list, static_name);
 
 	std::vector<std::string> log;
 
@@ -140,8 +140,8 @@ TEST_F(RdFrameworkTestBase, rd_list_of_rd_property) {
 	EXPECT_EQ(0, server_list.size());
 	EXPECT_EQ(0, client_list.size());
 
-	bindStatic(clientProtocol.get(), client_list, "top");
-	bindStatic(serverProtocol.get(), server_list, "top");
+	bindStatic(clientProtocol.get(), client_list, static_name);
+	bindStatic(serverProtocol.get(), server_list, static_name);
 
 	std::vector<std::string> log;
 

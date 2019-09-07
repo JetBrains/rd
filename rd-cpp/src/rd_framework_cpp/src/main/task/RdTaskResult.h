@@ -9,6 +9,7 @@
 #include "thirdparty.hpp"
 
 #include <exception>
+#include <functional>
 
 namespace rd {
 	/**
@@ -30,7 +31,8 @@ namespace rd {
 			explicit Success(WT &&value) : value(std::move(value)) {}
 		};
 
-		class Cancelled {};
+		class Cancelled {
+		};
 
 		class Fault {
 		public:
@@ -38,10 +40,10 @@ namespace rd {
 			std::wstring reason_message;
 			std::wstring reason_as_text;
 
-			Fault(std::wstring reasonTypeFqn, std::wstring reasonMessage, std::wstring reasonAsText) :
-					reason_type_fqn(std::move(reasonTypeFqn)),
-					reason_message(std::move(reasonMessage)),
-					reason_as_text(std::move(reasonAsText)) {}
+			Fault(std::wstring reason_type_fqn, std::wstring reason_message, std::wstring reason_as_text) :
+					reason_type_fqn(std::move(reason_type_fqn)),
+					reason_message(std::move(reason_message)),
+					reason_as_text(std::move(reason_as_text)) {}
 
 			explicit Fault(const std::exception &e) {
 				reason_message = to_wstring(to_string(e));
@@ -62,7 +64,7 @@ namespace rd {
 		virtual ~RdTaskResult() = default;
 		//endregion
 
-		static RdTaskResult<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdTaskResult<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			const int32_t kind = buffer.read_integral<int32_t>();
 			switch (kind) {
 				case 0: {
@@ -82,7 +84,7 @@ namespace rd {
 			}
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			visit(util::make_visitor(
 					[&ctx, &buffer](Success const &value) {
 						buffer.write_integral<int32_t>(0);
@@ -114,8 +116,24 @@ namespace rd {
 			), v);
 		}
 
-		bool isFaulted() const {
+		bool is_succeeded() const {
+			return v.index() == 0;
+		}
+
+		bool is_canceled() const {
+			return v.index() == 1;
+		}
+
+		void as_canceled(std::function<void(Cancelled const &)> f) const {
+			f(rd::get<Cancelled>(v));
+		}
+
+		bool is_faulted() const {
 			return v.index() == 2;
+		}
+
+		void as_faulted(std::function<void(Fault const &)> f) {
+			f(rd::get<Fault>(v));
 		}
 
 		friend bool operator==(const RdTaskResult &lhs, const RdTaskResult &rhs) {

@@ -32,8 +32,8 @@ TEST_F(RdFrameworkTestBase, property_statics) {
 	EXPECT_EQ((vi{1}), server_log);
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ((vi{1}), client_log);
 	EXPECT_EQ((vi{1}), server_log);
@@ -65,13 +65,15 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
-	client_property.get().get_foo().rdid = server_property.get().get_foo().rdid = RdId(3);
+	dynamic_cast<IRdBindable const &>(client_property.get().get_foo()).rdid =
+	dynamic_cast<IRdBindable const &>(server_property.get().get_foo()).rdid =
+			RdId(3);
 
 	/*DynamicEntity::create(clientProtocol.get());
 	DynamicEntity::create(serverProtocol.get());*/
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	std::vector<int32_t> clientLog;
 	std::vector<int32_t> serverLog;
@@ -164,8 +166,8 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 	EXPECT_EQ(0, server_log.size());
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
@@ -188,7 +190,7 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 class ListSerializer {
 	using list = std::vector<DynamicEntity>;
 public:
-	static list read(SerializationCtx  &ctx, Buffer &buffer) {
+	static list read(SerializationCtx &ctx, Buffer &buffer) {
 		int32_t len = buffer.read_integral<int32_t>();
 		list v;
 		for (int i = 0; i < len; ++i) {
@@ -197,7 +199,7 @@ public:
 		return v;
 	}
 
-	static void write(SerializationCtx  &ctx, Buffer &buffer, const list &value) {
+	static void write(SerializationCtx &ctx, Buffer &buffer, const list &value) {
 		buffer.write_integral<int32_t>(value.size());
 		for (const auto &item : value) {
 			item.write(ctx, buffer);
@@ -235,8 +237,8 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
 	/*DynamicEntity::create(serverProtocol.get());*/
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
@@ -265,8 +267,10 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 
 	int property_id = 1;
 
-	auto client_property = RdProperty<opt>(nullopt);
-	auto server_property = RdProperty<opt>(nullopt);
+	auto client_property = RdProperty<opt>{};
+	auto server_property = RdProperty<opt>{};
+	client_property.set(nullopt);
+	server_property.set(nullopt);
 
 	statics(client_property, (property_id));
 	statics(server_property, (property_id)).slave();
@@ -287,8 +291,8 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
 
 		//bound
-		bindStatic(serverProtocol.get(), server_property, "top");
-		bindStatic(clientProtocol.get(), client_property, "top");
+		bindStatic(serverProtocol.get(), server_property, static_name);
+		bindStatic(clientProtocol.get(), client_property, static_name);
 
 		EXPECT_EQ((std::vector<opt>{nullopt}), client_log);
 		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
@@ -348,8 +352,8 @@ TEST_F(RdFrameworkTestBase, property_uninitialized) {
 	EXPECT_TRUE(server_log.empty());
 
 	//bound
-	bindStatic(serverProtocol.get(), server_property, "top");
-	bindStatic(clientProtocol.get(), client_property, "top");
+	bindStatic(serverProtocol.get(), server_property, static_name);
+	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_TRUE(client_log.empty());
 	EXPECT_TRUE(server_log.empty());

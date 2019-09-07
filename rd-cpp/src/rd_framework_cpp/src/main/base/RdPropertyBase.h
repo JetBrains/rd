@@ -15,13 +15,14 @@ namespace rd {
 	protected:
 		using WT = typename IProperty<T>::WT;
 		//mastering
-		bool is_master = true;
 		mutable int32_t master_version = 0;
 		mutable bool default_value_changed = false;
 
 		//init
 	public:
 		mutable bool optimize_nested = false;
+
+		bool is_master = false;
 
 		//region ctor/dtor
 
@@ -33,13 +34,16 @@ namespace rd {
 
 		RdPropertyBase &operator=(RdPropertyBase &&other) = default;
 
-		explicit RdPropertyBase(const T &value) : Property<T>(value) {}
-
-		explicit RdPropertyBase(T &&value) : Property<T>(std::move(value)) {}
+		template <typename F>
+		explicit RdPropertyBase(F &&value) : Property<T>(std::forward<F>(value)) {}
 
 		virtual ~RdPropertyBase() = default;
 		//endregion
 
+		bool is_default_value_changed() const {
+			return default_value_changed;
+		}
+		
 		void init(Lifetime lifetime) const override {
 			RdReactiveBase::init(lifetime);
 
@@ -66,7 +70,7 @@ namespace rd {
 				get_wire()->send(rdid, [this, &v](Buffer &buffer) {
 					buffer.write_integral<int32_t>(master_version);
 					S::write(this->get_serialization_context(), buffer, v);
-					logSend.trace("SEND property " + location.toString() + " + " + rdid.toString() +
+					logSend.trace("SEND property " + to_string(location) + " + " + to_string(rdid) +
 								  ":: ver = " + std::to_string(master_version) +
 								  ", value = " + to_string(v));
 				});
@@ -88,7 +92,7 @@ namespace rd {
 			WT v = S::read(this->get_serialization_context(), buffer);
 
 			bool rejected = is_master && version < master_version;
-			logSend.trace("RECV property " + location.toString() + " " + rdid.toString() +
+			logSend.trace("RECV property " + to_string(location) + " " + to_string(rdid) +
 						  ":: oldver=%d, ver=%d, value = " + to_string(v) + (rejected ? ">> REJECTED" : ""),
 						  master_version, version);
 			if (rejected) {
@@ -99,14 +103,14 @@ namespace rd {
 			Property<T>::set(std::move(v));
 		}
 
-		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}
 			Property<T>::advise(lifetime, handler);
 		}
 
-		void set(value_or_wrapper<T> new_value) const override {
+		void set(value_or_wrapper <T> new_value) const override {
 			this->local_change([this, new_value = std::move(new_value)]() mutable {
 				this->default_value_changed = true;
 				Property<T>::set(std::move(new_value));

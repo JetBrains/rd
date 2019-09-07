@@ -33,7 +33,7 @@ namespace rd {
 
 		RName sub(string_view localName, string_view separator);
 
-		std::string toString() const;
+		friend std::string to_string(RName const& value);
 
 		static RName Empty();
 	};

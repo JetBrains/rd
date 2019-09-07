@@ -1,8 +1,8 @@
 #include "RdReactiveBase.h"
 
 namespace rd {
-	Logger RdReactiveBase::logReceived;
-	Logger RdReactiveBase::logSend;
+	Logger RdReactiveBase::logReceived{};
+	Logger RdReactiveBase::logSend{};
 
 	RdReactiveBase::RdReactiveBase(RdReactiveBase &&other) : RdBindableBase(
 			std::move(other))/*, async(other.async)*/ {
@@ -15,7 +15,7 @@ namespace rd {
 		return *this;
 	}
 
-	const IWire *const RdReactiveBase::get_wire() const {
+	const IWire *RdReactiveBase::get_wire() const {
 		return get_protocol()->get_wire();
 	}
 

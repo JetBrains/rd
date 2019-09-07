@@ -30,7 +30,7 @@ namespace rd {
 					break;
 				}
 
-				if (!read_and_dispatch_package()) {
+				if (!read_and_dispatch_message()) {
 					logger.debug(id + ": connection was gracefully shutdown");
 //					async_send_buffer.terminate();
 					break;
@@ -100,6 +100,8 @@ namespace rd {
 			}
 		}
 		async_send_buffer.resume();
+
+		connected.set(true);
 
 		receiverProc();
 
@@ -176,47 +178,64 @@ namespace rd {
 		}
 	}
 
-	bool SocketWire::Base::read_and_dispatch_package() const {
+	int32_t SocketWire::Base::read_package() const {
+		receive_pkg.rewind();
+		
 		const auto pair = read_header();
 		if (pair == INVALID_HEADER) {
 			logger.debug(this->id + ": failed to read header");
-			return false;
+			return -1;
 		}
 		const auto len = pair.first;
 		const auto seqn = pair.second;
 
-		Buffer pkg(len);
-		if (!read_data_from_socket(pkg.data(), len)) {
+		logger.debug("read len=%d, seqn=%lld, max_received_seqn=%lld", len, seqn, max_received_seqn);
+
+		receive_pkg.require_available(len);
+		if (!read_data_from_socket(receive_pkg.data(), len)) {
 			logger.debug(this->id + ": failed to read package");
-			return false;
+			return -1;
 		}
 		send_ack(seqn);
 		if (seqn <= max_received_seqn && seqn != 1) {
 			return true;
 		}
 		max_received_seqn = seqn;	
-		
-		int32_t summary_size = 0;
-		while (summary_size < len) {
-			int32_t sz = pkg.read_integral<int32_t>();		
-			logger.info(this->id + ": were received size and %d bytes", sz);
-			Buffer msg(static_cast<size_t>(sz - 8));
-			
-			const RdId rd_id = RdId::read(pkg);
-			
-			pkg.read_byte_array_raw(msg.get_data());
 
-			logger.debug(this->id + ": message received");
-			message_broker.dispatch(rd_id, std::move(msg));
-			logger.debug(this->id + ": message dispatched");
-			
-			summary_size += sz + sizeof(sz);
+		logger.info(this->id + ": was received package, bytes=%d, seqn=%d", len, seqn);
+		return len;
+	}
+
+	bool SocketWire::Base::read_and_dispatch_message() const {
+		sz = (sz == -1 ? receive_pkg.read_integral<int32_t>() : sz);
+		if (sz == -1) {
+			logger.error("sz == -1");
+			return false;
 		}
+		id_ = (id_ == -1 ? receive_pkg.read_integral<RdId::hash_t>() : id_);
+		if (id_ == -1) {
+			logger.error("id == -1");
+			return false;
+		}
+		logger.trace(this->id + ": message info: sz=%d, id=%d", sz, id_);
+		const RdId rd_id{id_};
+		sz -= 8;//RdId
+		message.require_available(sz);
+		
+		if (!receive_pkg.read(message.data() + message.get_position(), sz - message.get_position())) {
+			logger.error(this->id + ": constructing message failed");
+			return false;
+		}
+		
+		logger.debug(this->id + ": message received");
+		message_broker.dispatch(rd_id, std::move(message));
+		logger.debug(this->id + ": message dispatched");
 
-		RD_ASSERT_MSG(summary_size == len, "Broken package")
-
-		// logger.debug("read seqn=%lld, max_received_seqn=%lld", seqn, max_received_seqn);
+		sz = -1;
+		id_ = -1;
+		message.rewind();
 		return true;
+//		RD_ASSERT_MSG(summary_size == sz, "Broken message, read:%d bytes, expected:%d bytes", summary_size, sz)
 	}
 
 	CSimpleSocket *SocketWire::Base::get_socket_provider() const {
@@ -259,10 +278,9 @@ namespace rd {
 
 						//https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
 						//HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
+						logger.info(this->id + ": connecting 127.0.0.1:" + std::to_string(this->port));
 						RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
 											this->id + ": failed to open ActiveSocket");
-
-						logger.info(this->id + ": openning 127.0.0.1:" + std::to_string(this->port));
 						{
 							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {
@@ -331,7 +349,7 @@ namespace rd {
 		logger.info(this->id + ": listening 127.0.0.1/" + std::to_string(port));
 		this->port = ss->GetServerPort();
 		RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
-
+		
 		thread = std::thread([this, lifetime]() mutable {
 			while (!lifetime->is_terminated()) {
 				try {
@@ -362,10 +380,11 @@ namespace rd {
 			logger.debug(this->id + ": thread expired");
 		});
 
+		
 		lifetime->add_action([this] {
 			logger.info(this->id + ": start terminating lifetime");
 
-			bool send_buffer_stopped = async_send_buffer.stop(timeout);
+			const bool send_buffer_stopped = async_send_buffer.stop(timeout);
 			logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
 
 

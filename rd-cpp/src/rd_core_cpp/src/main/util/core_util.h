@@ -5,9 +5,9 @@
 #include "gen_util.h"
 #include "overloaded.h"
 #include "shared_function.h"
+#include "hash.h"
 #include "to_string.h"
 #include "wrapper.h"
-#include "Void.h"
 
 #include "thirdparty.hpp"
 
@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+
 
 #define RD_ASSERT_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;assert(expr);}
 #define RD_ASSERT_THROW_MSG(expr, msg) if(!(expr)){std::cerr<<std::endl<<(msg)<<std::endl;throw std::runtime_error(msg);}
@@ -59,15 +60,15 @@ namespace rd {
 			using transparent_key_equal = std::equal_to<>;
 
 			size_t operator()(T const &val) const noexcept {
-				return std::hash<T>()(val);
+				return rd::hash<T>()(val);
 			}
 
 			size_t operator()(Wrapper<T> const &ptr) const noexcept {
-				return std::hash<Wrapper<T>>()(ptr);
+				return rd::hash<Wrapper<T>>()(ptr);
 			}
 
 			size_t operator()(T const *val) const noexcept {
-				return std::hash<T>()(*val);
+				return rd::hash<T>()(*val);
 			}
 		};
 	}

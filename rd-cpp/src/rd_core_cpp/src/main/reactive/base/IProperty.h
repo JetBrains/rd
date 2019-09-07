@@ -16,7 +16,7 @@ namespace rd {
 	template<typename T>
 	class IProperty : public IPropertyBase<T> {
 	protected:
-		using WT = value_or_wrapper<T>;
+		using WT = typename IPropertyBase<T>::WT;
 	public:
 
 		//region ctor/dtor
@@ -29,18 +29,20 @@ namespace rd {
 
 		explicit IProperty(T const &value) : IPropertyBase<T>(value) {}
 
-		explicit IProperty(T &&value) : IPropertyBase<T>(std::move(value)) {}
+		template <typename F>
+		explicit IProperty(F &&value) : IPropertyBase<T>(std::forward<F>(value)) {}
 
 		virtual ~IProperty() = default;
 		//endregion
 
 		virtual T const &get() const = 0;
+
 	private:
 		void advise0(Lifetime lifetime, std::function<void(T const &)> handler, Signal<T> const &signal) const {
 			if (lifetime->is_terminated()) {
 				return;
 			}
-			signal.advise(std::move(lifetime), handler);
+			signal.advise(lifetime, handler);
 			if (this->has_value()) {
 				handler(this->get());
 			}
@@ -49,9 +51,10 @@ namespace rd {
 		void advise_before(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			advise0(lifetime, handler, this->before_change);
 		}
+
 	public:
 		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
-			advise0(std::move(lifetime), std::move(handler), this->change);
+			advise0(lifetime, std::move(handler), this->change);
 		}
 
 		/**
@@ -65,6 +68,12 @@ namespace rd {
 		template<typename ... Args>
 		void emplace(Args &&... args) const {
 			set(value_or_wrapper<T>{std::forward<Args>(args)...});
+		}
+
+		void set_if_empty(WT new_value) const {
+			if (!this->has_value()) {
+				set(std::move(new_value));
+			}
 		}
 	};
 }

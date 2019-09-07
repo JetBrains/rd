@@ -13,6 +13,7 @@ add_library(rd_framework_cpp STATIC
         base/RdPropertyBase.h
         base/ISerializersOwner.cpp
         base/IUnknownInstance.cpp base/IUnknownInstance.h
+        base/IRdWireable.cpp base/IRdWireable.h
         #impl
         impl/RdSignal.h
         impl/RdProperty.h
@@ -24,13 +25,15 @@ add_library(rd_framework_cpp STATIC
         ext/RdExtBase.cpp ext/RdExtBase.h
         ext/ExtWire.cpp ext/ExtWire.h
         #scheduler
-        scheduler/IScheduler.cpp scheduler/IScheduler.h
+        scheduler/base/IScheduler.cpp scheduler/base/IScheduler.h
+        scheduler/base/SingleThreadSchedulerBase.cpp scheduler/base/SingleThreadSchedulerBase.h
+        scheduler/SingleThreadScheduler.cpp scheduler/SingleThreadScheduler.h
         scheduler/SimpleScheduler.cpp scheduler/SimpleScheduler.h
         scheduler/SynchronousScheduler.cpp scheduler/SynchronousScheduler.h
         #serialization
         serialization/SerializationCtx.cpp serialization/SerializationCtx.h
         serialization/Serializers.cpp serialization/Serializers.h
-        serialization/Polymorphic.h
+        serialization/Polymorphic.cpp serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
         serialization/ISerializable.cpp serialization/ISerializable.h
@@ -42,10 +45,15 @@ add_library(rd_framework_cpp STATIC
         #task
         task/RdCall.h task/RdTask.h task/RdTaskResult.h task/RdEndpoint.h
         task/RdTaskImpl.h
+        task/WiredRdTask.h
+        task/WiredRdTaskImpl.h
+        task/RdSymmetricCall.h
         #wire
         wire/SocketWire.cpp wire/SocketWire.h
         wire/PumpScheduler.cpp wire/PumpScheduler.h
         wire/ByteBufferAsyncProcessor.cpp wire/ByteBufferAsyncProcessor.h
+        wire/WireUtil.cpp wire/WireUtil.h
+        wire/PkgInputStream.cpp wire/PkgInputStream.h
         #intern
         intern/InternRoot.cpp intern/InternRoot.h
         intern/InternScheduler.cpp intern/InternScheduler.h
@@ -56,8 +64,7 @@ add_library(rd_framework_cpp STATIC
         Protocol.cpp Protocol.h
         MessageBroker.cpp MessageBroker.h
         #pch
-        ${PCH_CPP_OPT}
-        serialization/Polymorphic.cpp)
+        ${PCH_CPP_OPT})
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 
@@ -76,6 +83,7 @@ target_include_directories(rd_framework_cpp
         impl
         intern
         scheduler
+        scheduler/base
         serialization
         task
         wire

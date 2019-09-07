@@ -23,5 +23,10 @@ namespace JetBrains.Collections.Viewable
     {
       return new SetEvent<T>(AddRemove.Remove, value);
     }
+
+    public override string ToString()
+    {
+      return $"{nameof(Kind)}: {Kind}, {nameof(Value)}: {Value}";
+    }
   }
 }

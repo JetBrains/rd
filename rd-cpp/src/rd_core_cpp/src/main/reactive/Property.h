@@ -13,6 +13,7 @@ namespace rd {
 	 */
 	template<typename T>
 	class Property : public IProperty<T> {
+		using WT = typename IProperty<T>::WT;
 	public:
 		//region ctor/dtor
 
@@ -24,9 +25,8 @@ namespace rd {
 
 		virtual ~Property() = default;
 
-		explicit Property(T const &value) : IProperty<T>(value) {}
-
-		explicit Property(T &&value) : IProperty<T>(std::move(value)) {}
+		template <typename F>
+		explicit Property(F &&value) : IProperty<T>(std::forward<F>(value)) {}
 		//endregion
 
 
@@ -35,7 +35,7 @@ namespace rd {
 			return *(this->value);
 		}
 
-		void set(value_or_wrapper<T> new_value) const override {
+		void set(WT new_value) const override {
 			if (!this->has_value() || (this->get() != wrapper::get<T>(new_value))) {
 				if (this->has_value()) {
 					this->before_change.fire(*(this->value));
@@ -51,6 +51,10 @@ namespace rd {
 
 		friend bool operator!=(const Property &lhs, const Property &rhs) {
 			return !(rhs == lhs);
+		}
+
+		friend std::string to_string(Property const &value) {
+			return value.has_value() ? to_string(value.get()) : "empty property"s;
 		}
 	};
 }

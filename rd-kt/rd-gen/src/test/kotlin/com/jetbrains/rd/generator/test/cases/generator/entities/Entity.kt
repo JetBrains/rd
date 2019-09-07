@@ -33,11 +33,7 @@ object DynamicExt : Ext(EntityRoot) {
         property("foo", PredefinedType.int)
     }
 
-    //    private var DynamicEntity = classdef {
     init {
         property("bar", PredefinedType.string)
     }
-//    }
-
-//    private var DynamicExt =
 }

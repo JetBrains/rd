@@ -4,7 +4,8 @@
 #include "IRdReactive.h"
 #include "Logger.h"
 
-#include <unordered_map>
+#include "std/unordered_map.h"
+
 #include <queue>
 
 namespace rd {
@@ -30,8 +31,8 @@ namespace rd {
 	class MessageBroker final {
 	private:
 		IScheduler *default_scheduler = nullptr;
-		mutable std::unordered_map<RdId, IRdReactive const *> subscriptions;
-		mutable std::unordered_map<RdId, Mq> broker;
+		mutable rd::unordered_map<RdId, IRdReactive const *> subscriptions;
+		mutable rd::unordered_map<RdId, Mq> broker;
 
 		mutable std::recursive_mutex lock;
 

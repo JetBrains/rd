@@ -25,13 +25,11 @@ namespace rd {
 					serverProtocol->serializers->registry<T>();
 					clientProtocol->serializers->registry<T>();
 
-					int entity_id = 1;
+					statics(client_entity, static_entity_id);
+					statics(server_entity, static_entity_id);
 
-					statics(client_entity, entity_id);
-					statics(server_entity, entity_id);
-
-					bindStatic(serverProtocol.get(), server_entity, "top");
-					bindStatic(clientProtocol.get(), client_entity, "top");
+					bindStatic(serverProtocol.get(), server_entity, static_name);
+					bindStatic(clientProtocol.get(), client_entity, static_name);
 				}
 
 				void TearDown() override {

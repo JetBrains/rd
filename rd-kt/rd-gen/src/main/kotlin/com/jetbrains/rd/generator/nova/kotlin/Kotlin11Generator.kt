@@ -18,7 +18,7 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 }
 
 open class Kotlin11Generator(
-    val flowTransform: FlowTransform,
+    override val flowTransform: FlowTransform,
     private val defaultNamespace: String,
     override val folder: File
 ) : GeneratorBase() {
@@ -34,6 +34,17 @@ open class Kotlin11Generator(
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
+
+    object MasterStateful : ISetting<Boolean, Declaration>
+
+    private val Member.Reactive.Stateful.optimizeNested : Boolean
+        get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
+
+    private val Member.Reactive.Stateful.Property.master : Boolean
+        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
+
+    private val Member.Reactive.Stateful.Map.master : Boolean
+        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -278,11 +289,11 @@ open class Kotlin11Generator(
         }
     }
 
-    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName")
+    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName", "UnnecessaryVariable")
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
-        val warnings = suppressWarnings.joinToString(separator = ",") { """"$it"""" }
-        + """@file:Suppress($warnings)"""
+        val warnings = suppressWarnings.joinToString(separator = ",") { "\"$it\"" }
+        +"@file:Suppress($warnings)"
         + "package ${decl.namespace}"
     }
 
@@ -310,7 +321,7 @@ open class Kotlin11Generator(
 
 
     protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
-        if (decl.getSetting(Kotlin11Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
         + "object ${decl.name} : ISerializersOwner {"
         indent {
             registerSerializersTrait(decl, types)
@@ -319,7 +330,7 @@ open class Kotlin11Generator(
     }
 
     protected open fun PrettyPrinter.typedef(decl: Declaration) {
-        if (decl.getSetting(Kotlin11Generator.Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null) return
 
         println()
         println()
@@ -421,11 +432,13 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.constantTrait(decl: Declaration) {
         decl.constantMembers.forEach {
+            val name = it.name
+            val type = it.type.substitutedName(decl)
             val value = getDefaultValue(decl, it)
             + if (it.type is Enum) {
-                "val ${it.name} = $value"
+                "val $name : $type = $value"
             } else {
-                "const val ${it.name} = $value"
+                "const val $name : $type = $value"
             }
         }
     }
@@ -529,7 +542,7 @@ open class Kotlin11Generator(
 
             + "return ${decl.name}().apply {"
             indent {
-                val quotedName = """"${decl.name}""""
+                val quotedName = "\"${decl.name}\""
                + "identify(protocol.identity, RdId.Null.mix($quotedName))"
                + "bind(lifetime, protocol, $quotedName)"
             }
@@ -553,16 +566,21 @@ open class Kotlin11Generator(
             when (member) {
                 is Member.Reactive.Stateful.Property -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
+                    member.defaultValue is Member.Const -> member.defaultValue.name
                     member.defaultValue != null -> member.defaultValue.toString()
                     member.isNullable -> "null"
                     else -> null
                 }
                 is Member.Const -> {
+                    val value = member.value
                     when (member.type) {
-                        is PredefinedType.string -> """"${member.value}""""
-                        is PredefinedType.char -> """'${member.value}'"""
-                        is Enum -> "${member.type.substitutedName(containing)}.${member.value}"
-                        else -> member.value
+                        is PredefinedType.char -> "\'$value\'"
+                        is PredefinedType.string -> "\"$value\""
+                        is PredefinedType.long -> "${value}L"
+                        is PredefinedType.float -> "${value}f"
+                        is PredefinedType.UnsignedIntegral -> "${value}u"
+                        is Enum -> "${member.type.substitutedName(containing)}.$value"
+                        else -> value
                     }
                 }
                 is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
@@ -718,15 +736,19 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
         decl.ownMembers
+            .filterIsInstance<Member.Reactive.Stateful.Property>()
+            .filter { !it.isPerClientId }
+            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
+
+        decl.ownMembers
+            .filterIsInstance<Member.Reactive.Stateful.Map>()
+            .filter { !it.isPerClientId }
+            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
+
+        decl.ownMembers
             .filterIsInstance<Member.Reactive.Stateful>()
             .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
-
-        if (flowTransform == FlowTransform.Reversed) {
-            decl.ownMembers
-                .filterIsInstance<Member.Reactive.Stateful.Map>()
-                .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = false" }
-        }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive>()
@@ -881,7 +903,7 @@ open class Kotlin11Generator(
         fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
 
         val own = decl.ownMembers.map {
-            val attrs = it.getSetting(Kotlin11Generator.Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
+            val attrs = it.getSetting(Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
             (attrs?:"") + "${ctorParamAccessModifier(it)}val ${it.ctorParam(decl)}"
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }

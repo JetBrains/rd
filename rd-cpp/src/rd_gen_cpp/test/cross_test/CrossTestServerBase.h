@@ -4,10 +4,14 @@
 
 #include "CrossTestBase.h"
 
-class CrossTestServerBase : public CrossTestBase {
-public:
-	CrossTestServerBase();
-};
+namespace rd {
+	namespace cross {
+		class CrossTestServerBase : public CrossTestBase {
+		public:
+			CrossTestServerBase();
+		};
+	}
+}
 
 
 #endif //RD_CPP_CROSSTESTSERVERBASE_H

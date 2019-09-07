@@ -280,3 +280,25 @@ TEST(BufferTest, unsigned_types) {
 	EXPECT_EQ(buffer.read_integral<uint32_t>(), val3);
 	EXPECT_EQ(buffer.read_integral<uint64_t>(), val4);
 }
+
+TEST(BufferTest, date_time) {
+	Buffer buffer;
+
+	DateTime time_now{std::time(nullptr)};
+	DateTime start_of_epoch{std::time_t{100'000}};
+
+	buffer.write_date_time(time_now);
+	buffer.write_date_time(start_of_epoch);
+
+	EXPECT_EQ(2 * sizeof(int64_t), buffer.get_position());
+
+	buffer.rewind();
+
+	auto nt1 = buffer.read_date_time();
+	auto nt2 = buffer.read_date_time();
+
+	EXPECT_EQ(time_now, nt1);
+	EXPECT_EQ(start_of_epoch, nt2);
+
+	std::cout << std::endl << to_string(time_now) << std::endl << to_string(start_of_epoch);
+}

@@ -9,9 +9,10 @@
 #include "RdAny.h"
 #include "DefaultAbstractDeclaration.h"
 
+#include "std/unordered_map.h"
+
 #include <utility>
 #include <iostream>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace rd {
@@ -37,7 +38,7 @@ namespace rd {
 
 		void register_in();
 
-		mutable std::unordered_map<RdId, std::function<InternedAny(SerializationCtx  &, Buffer &)>> readers;
+		mutable rd::unordered_map<RdId, std::function<InternedAny(SerializationCtx  &, Buffer &)>> readers;
 	public:
 		Serializers();
 
@@ -68,7 +69,7 @@ namespace rd {
 		util::hash_t h = util::getPlatformIndependentHash(type_name);
 		RdId id(h);
 
-		RD_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + id.toString());
+		RD_ASSERT_MSG(readers.count(id) == 0, "Can't register " + type_name + " with id: " + to_string(id));
 
 		readers[id] = [](SerializationCtx  &ctx, Buffer &buffer) -> Wrapper<IPolymorphicSerializable> {
 			return wrapper::make_wrapper<T>(T::read(ctx, buffer));

@@ -40,8 +40,8 @@ namespace rd {
                 statics(server_property, 1).slave();
                 statics(client_property, 1);
 
-                bindStatic(serverProtocol.get(), server_property, "top");
-                bindStatic(clientProtocol.get(), client_property, "top");
+                bindStatic(serverProtocol.get(), server_property, static_name);
+                bindStatic(clientProtocol.get(), client_property, static_name);
 
                 server_property.set(Model(L""));
                 auto const& server_model_view = server_property.get();

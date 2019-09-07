@@ -6,22 +6,39 @@
 #include "core_util.h"
 #include "viewable_collections.h"
 
-#include "tsl/ordered_map.h"
+#include "std/unordered_map.h"
 
-#include <unordered_map>
+#include "thirdparty.hpp"
+
+
 
 namespace rd {
+	namespace detail {
+		template<typename T>
+		class SetEvent {
+		public:
+			SetEvent(AddRemove kind, T const *value) : kind(kind), value(value) {}
+
+			AddRemove kind;
+			T const *value;
+
+			friend std::string to_string(SetEvent const &e) {
+				return to_string(e.kind) + ":" + to_string(*e.value);
+			}
+		};
+	}
+
 	/**
 	 * \brief A set allowing its contents to be observed. 
 	 * \tparam T type of stored values (may be abstract)
 	 */
 	template<typename T>
-	class IViewableSet : public IViewable<T> {
+	class IViewableSet : public IViewable<T>, public ISource<detail::SetEvent<T>> {
 	protected:
 		using WT = value_or_wrapper<T>;
-		mutable std::unordered_map<
+		mutable rd::unordered_map<
 				Lifetime,
-				ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash <T>, wrapper::TransparentKeyEqual <T>>
+				ordered_map<T const *, LifetimeDefinition, wrapper::TransparentHash <T>, wrapper::TransparentKeyEqual<T>>
 		>
 		lifetimes;
 	public:
@@ -40,17 +57,7 @@ namespace rd {
 		/**
 		 * \brief Represents an addition or removal of an element in the set.
 		 */
-		class Event {
-		public:
-			Event(AddRemove kind, T const *value) : kind(kind), value(value) {}
-
-			AddRemove kind;
-			T const *value;
-
-			friend std::string to_string(Event const &e) {
-				return to_string(e.kind) + ":" + to_string(*e.value);
-			}
-		};
+		using Event = typename detail::SetEvent<T>;
 
 		/**
 		 * \brief Adds a subscription for additions and removals of set elements. When the subscription is initially
@@ -59,7 +66,9 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)> handler) const {
+		void advise(Lifetime lifetime, std::function< void(AddRemove, T const &)
+
+		> handler) const {
 			this->advise(lifetime, [handler](Event e) {
 				handler(e.kind, *e.value);
 			});
@@ -109,7 +118,7 @@ namespace rd {
 		 * \param lifetime lifetime of subscription. 
 		 * \param handler to be called.
 		 */
-		virtual void advise(Lifetime lifetime, std::function<void(Event)> handler) const = 0;
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override = 0;
 
 		virtual bool add(WT) const = 0;
 

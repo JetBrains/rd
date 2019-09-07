@@ -17,6 +17,7 @@ namespace rd {
 
 		Signal<T> change, before_change;
 
+		using WT = value_or_wrapper<T>;
 	public:
 
 		bool has_value() const {
@@ -31,9 +32,8 @@ namespace rd {
 
 		IPropertyBase &operator=(IPropertyBase &&other) = default;
 
-		explicit IPropertyBase(T const &value) : value(value) {}
-
-		explicit IPropertyBase(T &&value) : value(std::move(value)) {}
+		template <typename F>
+		explicit IPropertyBase(F &&value) : value(std::forward<F>(value)) {}
 
 		virtual ~IPropertyBase() = default;
 		//endregion

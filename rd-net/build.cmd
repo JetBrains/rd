@@ -3,7 +3,7 @@
 GOTO :CMDSCRIPT
 ::CMDLITERAL
 
-set -euxo pipefail
+set -eux
 PACKAGES_DIR=$(pwd)/artifacts/nuget
 BUILD_COUNTER=0
 PACKAGE_VERSION=193.0.$BUILD_COUNTER-prerelease

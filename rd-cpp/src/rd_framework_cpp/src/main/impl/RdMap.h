@@ -31,12 +31,8 @@ namespace rd {
 		mutable int64_t next_version = 0;
 		mutable ordered_map<K const *, int64_t, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>> pendingForAck;
 
-		bool is_master() const {
-			return master;
-		}
-
 		std::string logmsg(Op op, int64_t version, K const *key, V const *value = nullptr) const {
-			return "map " + location.toString() + " " + rdid.toString() + ":: " + to_string(op) +
+			return "map " + to_string(location) + " " + to_string(rdid) + ":: " + to_string(op) +
 				   ":: key = " + to_string(*key) +
 				   ((version > 0) ? " :: version = " +
 									std::to_string(version) : "") +
@@ -48,7 +44,7 @@ namespace rd {
 		}
 
 	public:
-		bool master = false;
+		bool is_master = false;
 
 		bool optimize_nested = false;
 
@@ -68,14 +64,14 @@ namespace rd {
 		virtual ~RdMap() = default;
 		//endregion
 
-		static RdMap<K, V, KS, VS> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdMap<K, V, KS, VS> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdMap<K, V, KS, VS> res;
 			RdId id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
@@ -96,14 +92,14 @@ namespace rd {
 					}
 
 					get_wire()->send(rdid, [this, e](Buffer &buffer) {
-						int32_t versionedFlag = ((is_master() ? 1 : 0)) << versionedFlagShift;
+						int32_t versionedFlag = ((is_master ? 1 : 0)) << versionedFlagShift;
 						Op op = static_cast<Op>(e.v.index());
 
 						buffer.write_integral<int32_t>(static_cast<int32_t>(op) | versionedFlag);
 
-						int64_t version = is_master() ? ++next_version : 0L;
+						int64_t version = is_master ? ++next_version : 0L;
 
-						if (is_master()) {
+						if (is_master) {
 							pendingForAck.emplace(e.get_key(), version);
 							buffer.write_integral(version);
 						}
@@ -141,7 +137,7 @@ namespace rd {
 				std::string errmsg;
 				if (!msg_versioned) {
 					errmsg = "Received " + to_string(Op::ACK) + " while msg hasn't versioned flag set";
-				} else if (!is_master()) {
+				} else if (!is_master) {
 					errmsg = "Received " + to_string(Op::ACK) + " when not a Master";
 				} else {
 					if (pendingForAck.count(key) > 0) {
@@ -175,7 +171,7 @@ namespace rd {
 					value = VS::read(this->get_serialization_context(), buffer);
 				}
 
-				if (msg_versioned || !is_master() || pendingForAck.count(key) == 0) {
+				if (msg_versioned || !is_master || pendingForAck.count(key) == 0) {
 					logReceived.trace("RECV" + logmsg(op, version, &(wrapper::get<K>(key)), value));
 					if (value.has_value()) {
 						map::set(std::move(key), *std::move(value));
@@ -198,14 +194,14 @@ namespace rd {
 								// logSend.trace(logmsg(Op::ACK, version, serialized_key));
 							});
 					get_wire()->send(rdid, std::move(writer));
-					if (is_master()) {
-						logReceived.error("Both ends are masters: %s", location.toString().c_str());
+					if (is_master) {
+						logReceived.error("Both ends are masters: %s", to_string(location).c_str());
 					}
 				}
 			}
 		}
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}

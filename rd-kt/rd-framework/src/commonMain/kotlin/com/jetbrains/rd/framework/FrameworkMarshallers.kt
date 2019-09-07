@@ -26,7 +26,6 @@ open class DelegatedMarshaller<TFrom : Any, TTo : Any>(marshaller: IMarshaller<T
     writer = { ctx, stream, value -> marshaller.write(ctx, stream, from(value)) }
 )
 
-@ExperimentalUnsignedTypes
 object FrameworkMarshallers {
     inline fun <reified T : Any> create(crossinline reader: (AbstractBuffer) -> T, crossinline writer: (AbstractBuffer, T) -> Unit, predefinedId: Int? = null): UniversalMarshaller<T> {
         return UniversalMarshaller(T::class, { _, stream -> reader(stream) }, { _, stream, v -> writer(stream, v) }, predefinedId)
@@ -99,14 +98,22 @@ object FrameworkMarshallers {
 
 
     //unsigned
+    @ExperimentalUnsignedTypes
     val UByte : IMarshaller<UByte> = create(AbstractBuffer::readUByte, AbstractBuffer::writeUByte, 41)
+    @ExperimentalUnsignedTypes
     val UShort: IMarshaller<UShort> = create(AbstractBuffer::readUShort, AbstractBuffer::writeUShort, 42)
+    @ExperimentalUnsignedTypes
     val UInt: IMarshaller<UInt> = create(AbstractBuffer::readUInt, AbstractBuffer::writeUInt, 43)
+    @ExperimentalUnsignedTypes
     val ULong: IMarshaller<ULong> = create(AbstractBuffer::readULong, AbstractBuffer::writeULong, 44)
 
+    @ExperimentalUnsignedTypes
     val UByteArray: UniversalMarshaller<UByteArray> = create(AbstractBuffer::readUByteArray, AbstractBuffer::writeUByteArray, 45)
+    @ExperimentalUnsignedTypes
     val UShortArray: UniversalMarshaller<UShortArray> = create(AbstractBuffer::readUShortArray, AbstractBuffer::writeUShortArray, 46)
+    @ExperimentalUnsignedTypes
     val UIntArray: UniversalMarshaller<UIntArray> = create(AbstractBuffer::readUIntArray, AbstractBuffer::writeUIntArray, 47)
+    @ExperimentalUnsignedTypes
     val ULongArray: UniversalMarshaller<ULongArray> = create(AbstractBuffer::readULongArray, AbstractBuffer::writeULongArray, 48)
 
     fun registerIn(serializers: ISerializers) {

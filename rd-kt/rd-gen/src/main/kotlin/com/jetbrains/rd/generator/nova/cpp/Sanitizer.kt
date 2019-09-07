@@ -22,7 +22,7 @@ private val keywords = arrayOf(
         "char8_t",
         "char16_t",
         "char32_t",
-        "class(1)",
+        "class",
         "compl",
         "concept",
         "const",

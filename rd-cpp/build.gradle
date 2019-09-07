@@ -1,11 +1,23 @@
-applyKotlinJVM()
+import com.jetbrains.rd.gradle.tasks.CrossTestCppTask
+import com.jetbrains.rd.gradle.tasks.RunScriptTask
+import com.jetbrains.rd.gradle.tasks.RunExecTask
 
-dependencies {
-    compile project(':rd-gen:')
-    compile "org.jetbrains.kotlin:kotlin-compiler:1.3.0"
+import static com.jetbrains.rd.gradle.tasks.CrossTaskKt.getTmpFile
+
+task build(type: RunScriptTask, overwrite: true) {
+    execPath = 'build.cmd'
 }
 
-task execute(type:JavaExec) {
-    main = "com.jetbrains.rd.generator.nova.MainKt"
-    classpath = sourceSets.main.runtimeClasspath
+task buildTests(type: RunScriptTask, dependsOn: [':rd-kt:rd-gen:generateEverything']) {
+    execPath 'buildtest.cmd'
 }
+
+task clean(type: Delete, overwrite: true) {
+    delete "$project.buildDir"
+}
+
+task CrossTestCppClientAllEntities(type: CrossTestCppTask, dependsOn: ['buildTests']) {}
+
+task CrossTestCppClientBigBuffer(type: CrossTestCppTask, dependsOn: ['buildTests']) {}
+
+task CrossTestCppClientRdCall(type: CrossTestCppTask, dependsOn: ['buildTests']) {}

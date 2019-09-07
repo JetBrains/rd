@@ -35,8 +35,8 @@ TEST_F(RdFrameworkTestBase, rd_map_statics) {
 	server_map.set(3, L"Server value 3");
 
 	EXPECT_EQ(0, client_map.size());
-	bindStatic(clientProtocol.get(), client_map, "top");
-	bindStatic(serverProtocol.get(), server_map, "top");
+	bindStatic(clientProtocol.get(), client_map, static_name);
+	bindStatic(serverProtocol.get(), server_map, static_name);
 
 	EXPECT_EQ(3, client_map.size());
 	EXPECT_EQ(L"Server value 1", *client_map.get(1));
@@ -87,8 +87,8 @@ TEST_F(RdFrameworkTestBase, rd_map_dynamic) {
 	EXPECT_TRUE(server_map.empty());
 	EXPECT_TRUE(client_map.empty());
 
-	bindStatic(clientProtocol.get(), client_map, "top");
-	bindStatic(serverProtocol.get(), server_map, "top");
+	bindStatic(clientProtocol.get(), client_map, static_name);
+	bindStatic(serverProtocol.get(), server_map, static_name);
 
 	std::vector<std::wstring> log;
 	server_map.view(Lifetime::Eternal(), [&](Lifetime lf, int32_t const &k, DynamicEntity const &v) {

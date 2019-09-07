@@ -51,7 +51,7 @@ namespace JetBrains.Rd.Impl
 
     public Serializers()
     {
-      myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", Lifetime.Eternal, r => RegisterToplevelInternal(r));
+      myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", Lifetime.Eternal, RegisterToplevelInternal);
       myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
     }
 #else

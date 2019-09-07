@@ -33,14 +33,13 @@ namespace rd {
 
 		RdProperty &operator=(RdProperty &&) = default;
 
-		explicit RdProperty(T const &value) : RdPropertyBase<T, S>(value) {}
-
-		explicit RdProperty(T &&value) : RdPropertyBase<T, S>(std::move(value)) {}
+		template<typename F>
+		explicit RdProperty(F &&value) : RdPropertyBase<T, S>(std::forward<F>(value)) {}
 
 		virtual ~RdProperty() = default;
 		//endregion
 
-		static RdProperty<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdProperty<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdId id = RdId::read(buffer);
 			bool not_null = buffer.read_bool();//not null/
 			(void) not_null;
@@ -51,13 +50,13 @@ namespace rd {
 			return property;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			this->rdid.write(buffer);
 			buffer.write_bool(true);
 			S::write(ctx, buffer, this->get());
 		}
 
-		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			RdPropertyBase<T, S>::advise(lifetime, std::move(handler));
 		}
 
@@ -83,7 +82,7 @@ namespace rd {
 		}
 
 		friend std::string to_string(RdProperty const &value) {
-			return value.has_value() ? to_string(value.get()) : "nullptr"s;
+			return to_string(static_cast<Property<T> const &>(value));
 		}
 	};
 }

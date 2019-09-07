@@ -64,7 +64,7 @@ namespace rd {
 						S::write(this->get_serialization_context(), buffer, v);
 
 						logSend.trace("SEND"s +
-								"set " + location.toString() + " " + rdid.toString() +
+								"set " + to_string(location) + " " + to_string(rdid) +
 								":: " + to_string(kind) +
 								":: " + to_string(v));
 					});
@@ -114,7 +114,7 @@ namespace rd {
 			return local_change([&] { return set::empty(); });
 		}
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}

@@ -23,11 +23,17 @@ namespace rd {
 		using WT = typename ISignal<T>::WT;
 
 		std::string logmsg(T const &value) const {
-			return "signal " + location.toString() + " " + rdid.toString() + ":: value = " + to_string(value);
+			return "signal " + to_string(location) + " " + to_string(rdid) + ":: value = " + to_string(value);
+		}
+
+		mutable IScheduler *wire_scheduler{};
+	private:
+		void set_wire_scheduler(IScheduler *scheduler) const {
+			wire_scheduler = scheduler;
 		}
 
 	protected:
-		Signal <T> signal;
+		Signal<T> signal;
 	public:
 		//region ctor/dtor
 
@@ -44,20 +50,20 @@ namespace rd {
 		virtual ~RdSignal() = default;
 		//endregion
 
-		static RdSignal<T, S> read(SerializationCtx  &ctx, Buffer &buffer) {
+		static RdSignal<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
 			RdSignal<T, S> res;
 			const RdId &id = RdId::read(buffer);
 			withId(res, id);
 			return res;
 		}
 
-		void write(SerializationCtx  &ctx, Buffer &buffer) const override {
+		void write(SerializationCtx &ctx, Buffer &buffer) const override {
 			rdid.write(buffer);
 		}
 
 		void init(Lifetime lifetime) const override {
 			RdReactiveBase::init(lifetime);
-			//        wire_scheduler = get_default_scheduler();
+			set_wire_scheduler(get_default_scheduler());
 			get_wire()->advise(lifetime, this);
 		}
 
@@ -84,11 +90,24 @@ namespace rd {
 
 		using ISource<T>::advise;
 
-		void advise(Lifetime lifetime, std::function<void(const T &)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
 			if (is_bound()) {
 				assert_threading();
 			}
 			signal.advise(lifetime, handler);
+		}
+
+		template<typename F>
+		void advise_on(Lifetime lifetime, IScheduler *scheduler, F &&handler) {
+			if (is_bound()) {
+				assert_threading();
+			}
+			set_wire_scheduler(scheduler);
+			signal.advise(lifetime, std::forward<F>(handler));
+		}
+
+		IScheduler *get_wire_scheduler() const override {
+			return wire_scheduler;
 		}
 
 		friend std::string to_string(RdSignal const &value) {

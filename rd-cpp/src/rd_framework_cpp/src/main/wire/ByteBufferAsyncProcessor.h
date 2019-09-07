@@ -43,7 +43,7 @@ namespace rd {
 
 		std::vector<Buffer::ByteArray> data;
 		std::mutex queue_lock;
-		std::queue<Buffer::ByteArray> queue{};
+		std::deque<Buffer::ByteArray> queue{};
 		std::deque<Buffer::ByteArray> pending_queue{};
 
 		sequence_number_t max_sent_seqn = 0;

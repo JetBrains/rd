@@ -195,7 +195,7 @@ namespace rd {
 			return true;
 		}
 
-		void advise(Lifetime lifetime, std::function<void(Event)> handler) const override {
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override {
 			for (auto const &x : set) {
 				handler(Event(AddRemove::ADD, &(*x)));
 			}

@@ -26,6 +26,8 @@ namespace rd {
 
 				int property_id = 1;
 
+				std::string static_name = "top";
+
 				Protocol server(Lifetime lifetime, uint16_t port = 0);
 
 				Protocol client(Lifetime lifetime, Protocol const &serverProtocol);

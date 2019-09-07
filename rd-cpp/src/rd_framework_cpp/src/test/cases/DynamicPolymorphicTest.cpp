@@ -223,7 +223,8 @@ TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint) {
 		//todo resolve types
 	});
 	ConcreteEntity value_a{L"Ignored", L"A"};
-	AbstractEntity const &res = client_entity.sync(value_a);
+	auto const &res_task = client_entity.sync(value_a);
+	AbstractEntity const &res = res_task.value_or_throw().unwrap();
 	EXPECT_EQ(res, value_a);
 	EXPECT_EQ(res, value_a);//check twice
 

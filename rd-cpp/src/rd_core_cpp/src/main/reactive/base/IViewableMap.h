@@ -7,34 +7,14 @@
 #include "viewable_collections.h"
 #include "core_util.h"
 
+#include "unordered_map.h"
+
 #include "thirdparty.hpp"
 
-#include <unordered_map>
-
 namespace rd {
-	/**
-	 * \brief A set allowing its contents to be observed.
-	 * \tparam K type of stored keys (may be abstract) 
-	 * \tparam V type of stored values (may be abstract)
-	 */
-	template<typename K, typename V>
-	class IViewableMap
-			: public IViewable<std::pair<K const *, V const *>> {
-	protected:
-		using WK = value_or_wrapper<K>;
-		using WV = value_or_wrapper<V>;
-		using OV = opt_or_wrapper<V>;
-
-		mutable std::unordered_map<
-				Lifetime,
-				ordered_map<K const *, LifetimeDefinition, wrapper::TransparentHash < K>, wrapper::TransparentKeyEqual<K>>
-		>
-		lifetimes;
-	public:
-		/**
-		 * \brief Represents an addition, update or removal of an element in the map.
-		 */
-		class Event {
+	namespace detail {
+		template<typename K, typename V>
+		class MapEvent {
 		public:
 			class Add {
 			public:
@@ -62,23 +42,23 @@ namespace rd {
 				Remove(K const *key, V const *old_value) : key(key), old_value(old_value) {}
 			};
 
-			variant<Add, Update, Remove> v;
+			variant <Add, Update, Remove> v;
 
-			Event(Add const &x) : v(x) {}
+			MapEvent(Add x) : v(x) {}
 
-			Event(Update const &x) : v(x) {}
+			MapEvent(Update x) : v(x) {}
 
-			Event(Remove const &x) : v(x) {}
+			MapEvent(Remove x) : v(x) {}
 
 			K const *get_key() const {
 				return visit(util::make_visitor(
-						[](typename Event::Add const &e) {
+						[](typename MapEvent::Add const &e) {
 							return e.key;
 						},
-						[](typename Event::Update const &e) {
+						[](typename MapEvent::Update const &e) {
 							return e.key;
 						},
-						[](typename Event::Remove const &e) {
+						[](typename MapEvent::Remove const &e) {
 							return e.key;
 						}
 				), v);
@@ -86,13 +66,13 @@ namespace rd {
 
 			V const *get_old_value() const {
 				return visit(util::make_visitor(
-						[](typename Event::Add const &e) {
+						[](typename MapEvent::Add const &e) {
 							return static_cast<V const *>(nullptr);
 						},
-						[](typename Event::Update const &e) {
+						[](typename MapEvent::Update const &e) {
 							return e.old_value;
 						},
-						[](typename Event::Remove const &e) {
+						[](typename MapEvent::Remove const &e) {
 							e.old_value;
 						}
 				), v);
@@ -100,32 +80,32 @@ namespace rd {
 
 			V const *get_new_value() const {
 				return visit(util::make_visitor(
-						[](typename Event::Add const &e) {
+						[](typename MapEvent::Add const &e) {
 							return e.new_value;
 						},
-						[](typename Event::Update const &e) {
+						[](typename MapEvent::Update const &e) {
 							return e.new_value;
 						},
-						[](typename Event::Remove const &e) {
+						[](typename MapEvent::Remove const &e) {
 							return static_cast<V const *>(nullptr);
 						}
 				), v);
 			}
 
-			friend std::string to_string(Event const &e) {
+			friend std::string to_string(MapEvent const &e) {
 				std::string res = visit(util::make_visitor(
-						[](typename Event::Add const &e) -> std::string {
+						[](typename MapEvent::Add const &e) -> std::string {
 							return "Add " +
 								   to_string(*e.key) + ":" +
 								   to_string(*e.new_value);
 						},
-						[](typename Event::Update const &e) -> std::string {
+						[](typename MapEvent::Update const &e) -> std::string {
 							return "Update " +
 								   to_string(*e.key) + ":" +
 								   //                       to_string(e.old_value) + ":" +
 								   to_string(*e.new_value);
 						},
-						[](typename Event::Remove const &e) -> std::string {
+						[](typename MapEvent::Remove const &e) -> std::string {
 							return "Remove " +
 								   to_string(*e.key);
 						}
@@ -133,6 +113,30 @@ namespace rd {
 				return res;
 			}
 		};
+	}
+
+	/**
+	 * \brief A set allowing its contents to be observed.
+	 * \tparam K type of stored keys (may be abstract) 
+	 * \tparam V type of stored values (may be abstract)
+	 */
+	template<typename K, typename V>
+	class IViewableMap : public IViewable<std::pair<K const *, V const *>>, public ISource<detail::MapEvent<K, V>> {
+	protected:
+		using WK = value_or_wrapper<K>;
+		using WV = value_or_wrapper<V>;
+		using OV = opt_or_wrapper<V>;
+
+		mutable rd::unordered_map<
+				Lifetime,
+				ordered_map<K const *, LifetimeDefinition, wrapper::TransparentHash <K>, wrapper::TransparentKeyEqual <K>>
+		>
+		lifetimes;
+	public:
+		/**
+		 * \brief Represents an addition, update or removal of an element in the map.
+		 */
+		using Event = typename detail::MapEvent<K, V>;
 
 		//region ctor/dtor
 
@@ -147,7 +151,9 @@ namespace rd {
 
 		void view(Lifetime lifetime,
 				  std::function< void(Lifetime lifetime,
-				  std::pair<K const *, V const *> const &)> handler) const override {
+				  std::pair<K const *, V const *> const &)
+
+		> handler) const override {
 			advise_add_remove(lifetime, [this, lifetime, handler](AddRemove kind, K const &key, V const &value) {
 				const std::pair<K const *, V const *> entry = std::make_pair(&key, &value);
 				switch (kind) {
@@ -183,7 +189,9 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void advise_add_remove(Lifetime lifetime, std::function<void(AddRemove, K const &, V const &)> handler) const {
+		void advise_add_remove(Lifetime lifetime, std::function< void(AddRemove, K const &, V const &)
+
+		> handler) const {
 			advise(lifetime, [handler](Event e) {
 				visit(util::make_visitor(
 						[handler](typename Event::Add const &e) {
@@ -211,13 +219,15 @@ namespace rd {
 		 * \param lifetime lifetime of subscription.
 		 * \param handler to be called.
 		 */
-		void view(Lifetime lifetime, std::function< void(Lifetime, K const &, V const &)> handler) const {
+		void view(Lifetime lifetime, std::function< void(Lifetime, K const &, V const &)
+
+		> handler) const {
 			view(lifetime, [handler](Lifetime lf, const std::pair<K const *, V const *> entry) {
 				handler(lf, *entry.first, *entry.second);
 			});
 		}
 
-		virtual void advise(Lifetime lifetime, std::function<void(Event)> handler) const = 0;
+		void advise(Lifetime lifetime, std::function<void(Event const &)> handler) const override = 0;
 
 		virtual const V *get(K const &) const = 0;
 

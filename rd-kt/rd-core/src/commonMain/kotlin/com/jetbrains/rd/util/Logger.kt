@@ -46,7 +46,7 @@ class SwitchLogger(category: String) : Logger {
 
 
 object ConsoleLoggerFactory : ILoggerFactory {
-    var minLevelToLog : LogLevel = LogLevel.Debug
+    var minLevelToLog : LogLevel = LogLevel.Trace
     var levelToLogStderr : LogLevel? = LogLevel.Warn
 
     override fun getLogger(category: String) = object : Logger {

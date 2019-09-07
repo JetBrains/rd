@@ -89,7 +89,7 @@ namespace rd {
 	template<>
 	class Polymorphic<wchar_t> {
 	public:
-		inline static bool read(SerializationCtx  &ctx, Buffer &buffer) {
+		inline static wchar_t read(SerializationCtx  &ctx, Buffer &buffer) {
 			return buffer.read_char();
 		}
 
@@ -111,6 +111,18 @@ namespace rd {
 
 		inline static void write(SerializationCtx  &ctx, Buffer &buffer, Wrapper<std::wstring> const &value) {
 			buffer.write_wstring(*value);
+		}
+	};
+
+	template<>
+	class Polymorphic<DateTime> {
+	public:
+		inline static DateTime read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_date_time();
+		}
+
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, DateTime const &value) {
+			buffer.write_date_time(value);
 		}
 	};
 

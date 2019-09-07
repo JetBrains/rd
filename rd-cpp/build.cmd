@@ -3,10 +3,10 @@
 GOTO :CMDSCRIPT
 ::CMDLITERAL
 
-set -euxo pipefail
+set -eux
 ./get_dependencies.cmd
 mkdir -p build
-pushd build
+cd build
 cmake ..
 make
 
@@ -15,10 +15,9 @@ exit 0
 :CMDSCRIPT
 @echo on
 pushd "%~dp0"
-call get_dependencies.cmd
 mkdir build
-pushd build
-cmake -DENABLE_TESTS_OPTION:BOOL=OFF -G "Visual Studio 15 2017 Win64" ..
-cmake --build . --config Release 
-cmake -DENABLE_TESTS_OPTION:BOOL=OFF -DBUILD_TYPE=Release -P cmake_install.cmake
+cd build
+cmake -DENABLE_TESTS_OPTION:BOOL=OFF ..
+cmake --build . --config Release -j 4
+cmake -DENABLE_TESTS_OPTION:BOOL=OFF -DBUILD_TYPE=Release -P cmake_install.cmake -j 4
 popd
