@@ -4,6 +4,7 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.util.joinToOptString
+import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -322,11 +323,9 @@ open class Kotlin11Generator(
 
     protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
         if (decl.getSetting(Intrinsic) != null) return
-        + "object ${decl.name} : ISerializersOwner {"
-        indent {
+        block("object ${decl.name} : ISerializersOwner ") {
             registerSerializersTrait(decl, types)
         }
-        + "}"
     }
 
     protected open fun PrettyPrinter.typedef(decl: Declaration) {
@@ -362,8 +361,7 @@ open class Kotlin11Generator(
             p(", IUnknownInstance")
         }
 
-        + " {"
-        indent {
+        block("") {
             + "//companion"
             companionTrait(decl)
             + "//fields"
@@ -379,7 +377,6 @@ open class Kotlin11Generator(
             + "//pretty print"
             prettyPrintTrait(decl)
         }
-        + "}"
 
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
@@ -509,16 +506,13 @@ open class Kotlin11Generator(
     }
 
     protected fun PrettyPrinter.abstractDeclarationTrait(decl: Declaration) {
-        + "override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): ${decl.name} {"
-        indent {
+        block("override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): ${decl.name} ") {
             readerBodyTrait(unknown(decl)!!)
         }
-        + "}"
     }
 
     protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
-        + "override fun registerSerializersCore(serializers: ISerializers) {"
-        indent {
+        block("override fun registerSerializersCore(serializers: ISerializers) ") {
             types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
                 "serializers.register(${it.serializerRef(decl)})"
             }
@@ -527,7 +521,6 @@ open class Kotlin11Generator(
                 decl.toplevels.println { it.sanitizedName(decl) + ".register(serializers)" }
             }
         }
-        + "}"
     }
 
 
@@ -535,8 +528,7 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (decl.isExtension) return
 
-        + "fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} {"
-        indent {
+        block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
 
@@ -548,7 +540,6 @@ open class Kotlin11Generator(
             }
             +"}"
         }
-        + "}"
 
     }
 
@@ -590,15 +581,13 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.readerTrait(decl: Declaration) {
         + "@Suppress(\"UNCHECKED_CAST\")"
-        + "override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} {"
-        indent {
+        block("override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.name} ") {
             if (isUnknown(decl)) {
                 + "throw NotImplementedError(\"Unknown instances should not be read via serializer\")"
             } else {
                 readerBodyTrait(decl)
             }
         }
-        + "}"
     }
 
     fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
@@ -697,8 +686,7 @@ open class Kotlin11Generator(
         }
 
 
-        + "override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ${decl.name}) {"
-        indent {
+        block("override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ${decl.name}) ") {
             if (decl is Class || decl is Aggregate) {
                 + "value.rdid.write(buffer)"
             }
@@ -710,7 +698,6 @@ open class Kotlin11Generator(
                 + "value.mySerializationContext = ctx.withInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }})"
             }
         }
-        + "}"
     }
 
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
@@ -804,8 +791,7 @@ open class Kotlin11Generator(
         }
 
 
-        + "override fun equals(other: Any?): Boolean {"
-        indent {
+        block("override fun equals(other: Any?): Boolean ") {
             + "if (this === other) return true"
             + "if (other == null || other::class != this::class) return false"
             println()
@@ -824,7 +810,6 @@ open class Kotlin11Generator(
             println()
             + "return true"
         }
-        +"}"
     }
 
 
@@ -841,8 +826,7 @@ open class Kotlin11Generator(
         }
 
 
-        + "override fun hashCode(): Int {"
-        indent {
+        block("override fun hashCode(): Int ") {
             + "var __r = 0"
 
             decl.allMembers.println { m ->
@@ -856,20 +840,17 @@ open class Kotlin11Generator(
 
             + "return __r"
         }
-        +"}"
     }
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
         if (!(decl is Toplevel || decl.isConcrete)) return
 
-        + "override fun print(printer: PrettyPrinter) {"
-        indent {
+        block("override fun print(printer: PrettyPrinter) ") {
             + "printer.println(\"${decl.name} (\")"
             decl.allMembers.printlnWithPrefixSuffixAndIndent("printer.indent {", "}") { "print(\"${it.name} = \"); ${it.encapsulatedName}.print(printer); println()"}
             + "printer.print(\")\")"
         }
-        + "}"
 
         if (decl is Struct.Concrete && decl.base != null) {
             println()
@@ -930,15 +911,17 @@ open class Kotlin11Generator(
 
 
     protected open fun PrettyPrinter.enum(decl: Enum) {
-        + "enum class ${decl.name} {"
-        indent {
-            + decl.constants.joinToString(separator = ",\r\n", postfix = ";") {
+        block("enum class ${decl.name}") {
+            +decl.constants.joinToString(separator = ", $eol", postfix = ";") {
                 docComment(it.documentation) + it.name
             }
             println()
-            + "companion object { val marshaller = FrameworkMarshallers.enum${decl.setOrEmpty}<${decl.name}>() }"
+            block("companion object") {
+                +"val marshaller = FrameworkMarshallers.enum${decl.setOrEmpty}<${decl.name}>()"
+                println()
+                constantTrait(decl)
+            }
         }
-        + "}"
     }
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {
