@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
 import demo.*
+import java.util.*
 import kotlin.test.assertEquals
 
 @Suppress("unused")
@@ -117,7 +118,8 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
                 UShort.MAX_VALUE.minus(1u).toUShort(),
                 UInt.MAX_VALUE.minus(1u),
                 ULong.MAX_VALUE.minus(1u),
-                MyEnum.kt
+                MyEnum.kt,
+                EnumSet.of(Flags.anyFlag, Flags.ktFlag)
         )
 
         model.scalar.set(scalar)

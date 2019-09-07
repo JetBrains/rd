@@ -79,10 +79,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     object MasterStateful : ISetting<Boolean, Declaration>
 
     private val Member.Reactive.Stateful.Property.master: Boolean
-        get() = owner.getSetting(Cpp17Generator.MasterStateful) ?: this@Cpp17Generator.master
+        get() = owner.getSetting(MasterStateful) ?: this@Cpp17Generator.master
 
     private val Member.Reactive.Stateful.Map.master: Boolean
-        get() = owner.getSetting(Cpp17Generator.MasterStateful) ?: this@Cpp17Generator.master
+        get() = owner.getSetting(MasterStateful) ?: this@Cpp17Generator.master
 
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
 
@@ -763,7 +763,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             dependencies.filter { !it.isAbstract }.filterIsInstance<IType>().println {
                 if (it is Declaration) {
                     val name = it.name
-                    "../${it.root.name}/$name".includeWithExtension()
+                    "../${it.pointcut!!.name}/$name".includeWithExtension()
                 } else {
                     it.includeWithExtension()
                 }
@@ -920,9 +920,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected open fun PrettyPrinter.enum(decl: Enum) {
         titledBlock("enum class ${decl.name}") {
-            +decl.constants.joinToString(separator = ",${eolKind.value}") {
-                docComment(it.documentation) + it.name.sanitize()
+            +decl.constants.withIndex().joinToString(separator = ",${eolKind.value}") { (idx, enumConst) ->
+                docComment(enumConst.documentation) + enumConst.name.sanitize() + decl.flags.condstr { " = 1 << $idx" }
             }
+        }
+
+        if (decl.flags) {
+            +"DEFINE_ENUM_FLAG_OPERATORS(${decl.name})"
         }
 
         declare(enumToStringTraitDecl(decl))
@@ -988,7 +992,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 //root
                 "Protocol",
                 //types
-                "DateTime",
+                "types/DateTime",
                 //impl
                 "RdSignal",
                 "RdProperty",
@@ -1013,8 +1017,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                 "RdEndpoint",
                 "RdSymmetricCall",
                 //std stubs
-                "to_string",
-                "hash",
+                "std/to_string",
+                "std/hash",
+                //enum
+                "enum",
                 //gen
                 "gen_util"
         )
@@ -1086,11 +1092,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                     is Root -> "../${it.name}/${it.name}.h"
                     is Declaration ->
                         if (!it.isIntrinsic) {
-                            when {
-                                decl is Root -> "../${it.root.name}/${it.name}.h"
-                                it.pointcut != decl.pointcut -> "../${it.root.name}/${it.name}.h"
-                                else -> it.name
-                            }
+                            "../${it.pointcut!!.name}/${it.name}.h"
                         } else {
                             it.getSetting(Intrinsic)!!.header
                         }
@@ -1102,13 +1104,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
 
         fun dependentTypes(decl: Declaration): List<String> {
+            val bases = listOfNotNull(decl.base?.name).map { "$it.h" }
             return (decl.ownMembers + decl.constantMembers)
                     .asSequence()
                     .map { parseMember(it) }
                     .fold(arrayListOf<String>()) { acc, arrayList ->
                         acc += arrayList
                         acc
-                    }.plus(listOfNotNull(decl.base?.name))
+                    }.plus(bases)
                     //                .filter { dependencies.map { it.name }.contains(it) }
                     .distinct().toList()
         }
@@ -1491,9 +1494,12 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         externalToStringTraitDef(decl)
     }
 
+    private val Enum.underscoreSetOrEmpty
+        get() = flags.condstr { "_set" }
+
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.reader(): String = when (this) {
-            is Enum -> "buffer.read_enum<${templateName(decl)}>()"
+            is Enum -> "buffer.read_enum${underscoreSetOrEmpty}<${templateName(decl)}>()"
             is InternedScalar -> {
                 val lambda = lambda("rd::SerializationCtx &, rd::Buffer &", "return ${itemType.reader()}")
                 """ctx.readInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $lambda)"""
@@ -1660,6 +1666,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
     }
 
+
     protected fun PrettyPrinter.readerTraitDef(decl: Declaration) {
         define(readerTraitDecl(decl)) {
             if (decl.isConcrete) {
@@ -1685,7 +1692,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         fun IType.writer(field: String): String {
             return when (this) {
                 is CppIntrinsicType -> "rd::Polymorphic<$name>::write(ctx, buffer, $field)"
-                is Enum -> "buffer.write_enum($field)"
+                is Enum -> {
+                    "buffer.write_enum${underscoreSetOrEmpty}($field)"
+                }
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx &, rd::Buffer &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
                     """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""
@@ -1988,9 +1997,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     protected fun docComment(doc: String?) = (doc != null).condstr {
         "\n" +
-                "/**" + eol
-        " * $doc" + eol
-        " */" + eol
+                "/**" + eol +
+                " * $doc" + eol +
+                " */" + eol
     }
 
     protected fun getDefaultValue(containing: Declaration, member: Member): String? {

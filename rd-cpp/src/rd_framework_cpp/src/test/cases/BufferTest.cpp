@@ -152,6 +152,34 @@ TEST(BufferTest, Enum) {
 	EXPECT_EQ(Numbers::THREE, three);
 }
 
+TEST(BufferTest, EnumSet) {
+	enum class Flags {
+		ONE = 1 << 0,
+		TWO = 1 << 1,
+		THREE = 1 << 2
+	};
+
+	Buffer buffer;
+
+	buffer.write_enum_set<Flags>(Flags::ONE);
+	buffer.write_enum_set<Flags>(Flags::TWO);
+	buffer.write_enum_set<Flags>(Flags::THREE);
+
+	EXPECT_EQ(buffer.get_position(), (
+			3 * 4 //3 - quantity,  4 - enum size
+	));
+
+	buffer.rewind();
+
+	const auto one = buffer.read_enum<Flags>();
+	const auto two = buffer.read_enum<Flags>();
+	const auto three = buffer.read_enum<Flags>();
+
+	EXPECT_EQ(Flags::ONE, one);
+	EXPECT_EQ(Flags::TWO, two);
+	EXPECT_EQ(Flags::THREE, three);
+}
+
 TEST(BufferTest, NullableSerializer) {
 	Buffer buffer;
 

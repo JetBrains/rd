@@ -149,7 +149,7 @@ namespace rd {
 	};
 
 	template<typename T>
-	class Polymorphic<T, typename std::enable_if_t<std::is_enum<T>::value>> {
+	class Polymorphic<T, typename std::enable_if_t<util::is_enum_v<T>>> {
 	public:
 		inline static T read(SerializationCtx  &ctx, Buffer &buffer) {
 			return buffer.read_enum<T>();

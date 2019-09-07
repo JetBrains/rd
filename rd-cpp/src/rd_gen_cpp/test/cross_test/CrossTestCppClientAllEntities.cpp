@@ -1,9 +1,11 @@
 #define NOMINMAX
 
-#include "DemoModel.h"
-#include "ExtModel.h"
-#include "Derived.h"
-#include "ConstUtil.h"
+#include "DemoModel/DemoModel.h"
+#include "ExtModel/ExtModel.h"
+#include "DemoModel/Derived.h"
+#include "DemoModel/ConstUtil.h"
+#include "DemoModel/MyEnum.h"
+#include "DemoModel/Flags.h"
 
 #include "Lifetime.h"
 #include "SocketWire.h"
@@ -130,7 +132,8 @@ namespace rd {
 								   std::numeric_limits<uint16_t>::max() - 1,
 								   std::numeric_limits<uint32_t>::max() - 1,
 								   std::numeric_limits<uint64_t>::max() - 1,
-								   MyEnum::cpp
+								   MyEnum::cpp,
+								   Flags::anyFlag | Flags::cppFlag
 			);
 			model.get_scalar().set(scalar);
 

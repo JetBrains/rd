@@ -23,13 +23,13 @@ namespace rd {
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_integral<T>::value, size_t>::type
+	typename std::enable_if_t<std::is_integral<T>::value, size_t>
 	contentDeepHashCode(std::vector<T> const &value) noexcept {
 		return contentHashCode(value);
 	}
 
 	template<typename T>
-	typename std::enable_if<!std::is_integral<T>::value, size_t>::type
+	typename std::enable_if_t<!std::is_integral<T>::value, size_t>
 	contentDeepHashCode(std::vector<T> const &value) noexcept {
 		size_t result = 1;
 		for (auto const &x : value) {

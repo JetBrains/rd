@@ -70,6 +70,8 @@ namespace rd {
 		template<class F, class... Ts>
 		constexpr bool is_invocable_v = is_invocable<F, Ts...>::value;
 
+		template <typename T>
+		constexpr bool is_enum_v = std::is_enum<T>::value;
 		//endregion
 
 		template<typename T>

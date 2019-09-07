@@ -25,10 +25,19 @@ object DemoRoot : Root(
 @ExperimentalUnsignedTypes
 object DemoModel : Ext(DemoRoot) {
     private var MyEnum = enum {
-        +"default"
+        (+"default").doc("Dummy field with keyword-like name")
         +"kt"
         +"net"
         +"cpp"
+
+        const("All", PredefinedType.int, 0)
+    }
+
+    private var Flags = flags {
+        +"anyFlag"
+        +"ktFlag"
+        +"netFlag"
+        +"cppFlag"
     }
 
     private var MyScalar = structdef {
@@ -44,7 +53,7 @@ object DemoModel : Ext(DemoRoot) {
         field("unsigned_int", PredefinedType.uint)
         field("unsigned_long", PredefinedType.ulong)
         field("enum", MyEnum)
-
+        field("flags", Flags)
     }
 
     private var ConstUtil  = structdef {

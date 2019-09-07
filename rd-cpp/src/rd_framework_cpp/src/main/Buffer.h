@@ -168,14 +168,25 @@ namespace rd {
 
 		void write_date_time(DateTime const &date_time);
 
-		template<typename T>
+		template<typename T, typename = typename std::enable_if_t<util::is_enum_v<T>>>
 		T read_enum() {
 			int32_t x = read_integral<int32_t>();
 			return static_cast<T>(x);
 		}
 
-		template<typename T>
+		template<typename T, typename = typename std::enable_if_t<util::is_enum_v<T>>>
 		void write_enum(T const &x) {
+			write_integral<int32_t>(static_cast<int32_t>(x));
+		}
+
+		template<typename T, typename = typename std::enable_if_t<util::is_enum_v<T>>>
+		T read_enum_set() {
+			int32_t x = read_integral<int32_t>();
+			return static_cast<T>(x);
+		}
+
+		template<typename T, typename = typename std::enable_if_t<util::is_enum_v<T>>>
+		void write_enum_set(T const &x) {
 			write_integral<int32_t>(static_cast<int32_t>(x));
 		}
 

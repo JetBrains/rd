@@ -83,7 +83,8 @@ namespace Test.RdCross
                 ushort.MaxValue - 1,
                 uint.MaxValue - 1,
                 ulong.MaxValue - 1,
-                MyEnum.net
+                MyEnum.net,
+                Flags.anyFlag | Flags.netFlag
             );
             model.Scalar.Set(scalar);
 
