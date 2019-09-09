@@ -19,10 +19,6 @@
         <ProjectReference Include="..\Test.Lifetimes\Test.Lifetimes.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
-    </ItemGroup>
-
     <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
       <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     </ItemGroup>

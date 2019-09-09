@@ -35,12 +35,11 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>Warmup speedup, included xmldocs, symbols and sources</PackageReleaseNotes>
+        <PackageReleaseNotes>Removed all dependencies</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
