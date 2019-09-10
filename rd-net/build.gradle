@@ -1,4 +1,4 @@
-import com.jetbrains.rd.gradle.tasks.DotnetExecTask
+import com.jetbrains.rd.gradle.tasks.DotnetRunTask
 import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
 import com.jetbrains.rd.gradle.tasks.RunScriptTask
 
@@ -17,19 +17,20 @@ task clean(type: Exec, overwrite: true) {
     commandLine 'dotnet build'
 }*/
 
-task CrossTestCsClientAllEntities(type: DotnetExecTask) {
+task CrossTestCsClientAllEntities(type: DotnetRunTask) {
 }
 
-task CrossTestCsClientBigBuffer(type: DotnetExecTask) {
+task CrossTestCsClientBigBuffer(type: DotnetRunTask) {
 }
 
-task CrossTestCsClientRdCall(type: DotnetExecTask) {
+task CrossTestCsClientRdCall(type: DotnetRunTask) {
 }
 
+/*
 [CrossTestCsClientAllEntities, CrossTestCsClientBigBuffer, CrossTestCsClientRdCall].each { t ->
     task "${t.name}Build"(type: DotnetBuildTask) {
         projectName = t.name
     }
 
     t.dependsOn project.tasks.findByName("${t.name}Build")
-}
+}*/

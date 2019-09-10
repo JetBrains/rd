@@ -33,7 +33,7 @@ or
 
 #### Instruction
 
-* gradle :rd-kt:build -x test
+* gradle :build -x test
 
 ### C++
 
@@ -67,7 +67,7 @@ All above ones.
 # Second step(Generation models)
 
 Further generate models in each language you have chosen. 
-For this purpose project _:rd-kt:rd-gen_ must be built.
+For this purpose project _:rd-gen_ must be built.
   
 ## Instruction
 
