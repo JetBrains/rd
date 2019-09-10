@@ -155,10 +155,10 @@ namespace JetBrains.Util.Util
 
       Assertion.Require(type.IsEnum, "Type must be enum, actual type: {0}", type);
 
-      var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(CastTo<long>.ReinterpretFrom).ToList();
+      var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(CastTo<int>.ReinterpretFrom).ToList();
       
       Assertion.Require(values.Count > 0, "Bit slice for enum with no value is meaningless");
-      Assertion.Require(values.All(v => v >= 0), "Enums with negative values or values greater than long.MaxValue are unsupported");
+      Assertion.Require(values.All(v => v >= 0), "Enums with negative values or values greater than int.MaxValue are unsupported");
 
       var count = values.Max() + 1;            
       var res = BitHacks.Log2Ceil(count);
