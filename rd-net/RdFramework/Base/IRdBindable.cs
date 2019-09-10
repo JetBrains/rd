@@ -107,7 +107,7 @@ namespace JetBrains.Rd.Base
       if (value != null) value.Identify(ids, id);
     }
 
-    //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just beleive me
+    //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just believe me
     public static void IdentifyEx<T>([CanBeNull] this List<T> items, IIdentities ids, RdId id) where T : IRdBindable
     {
       items.Identify0(ids, id);

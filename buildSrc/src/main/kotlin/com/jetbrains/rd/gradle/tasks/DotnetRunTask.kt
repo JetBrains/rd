@@ -3,11 +3,11 @@ package com.jetbrains.rd.gradle.tasks
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-open class DotnetExecTask : RunExecTask() {
+open class DotnetRunTask : RunExecTask() {
     init {
-        group = "dotnet exec"
-        workingDir = File(workingDir, "Cross/$name/build/")
-        execPath = name
+        executable = "dotnet"
+        workingDir = File(workingDir, "Cross")
+        args = listOf("run", "-c:Configuration=Release", name)
     }
 
     @TaskAction

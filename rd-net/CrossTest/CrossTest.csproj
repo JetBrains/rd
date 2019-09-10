@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        
         <TargetFrameworks>net461</TargetFrameworks>
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
@@ -14,9 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\RdCore\RdCore.csproj" />
+        <ProjectReference Include="..\..\Lifetimes\Lifetimes.csproj" />
         <ProjectReference Include="..\..\RdFramework\RdFramework.csproj" />
-        <ProjectReference Include="..\Common\Common.csproj" />
     </ItemGroup>
 
     <ItemGroup>

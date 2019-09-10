@@ -45,7 +45,7 @@ task generateDemoModel(type: GenerateTask) {
     systemProperties = [
             "model.out.src.cpp.dir": "$cppRoot/demo",
             "model.out.src.kt.dir" : "$buildDir/models/demo",
-            "model.out.src.cs.dir" : "$csRoot/Cross/Common/Model"
+            "model.out.src.cs.dir" : "$csRoot/CrossTest/Model"
     ]
 
     lateInit()

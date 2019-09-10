@@ -6,11 +6,6 @@ namespace Test.RdCross
 {
     public class CrossTestCsClientBigBuffer : CrossTestCsClientBase
     {
-        public static void Main(string[] args)
-        {
-            new CrossTestCsClientBigBuffer().Run(args);
-        }
-
         public override void Start(string[] args)
         {
             Before(args);

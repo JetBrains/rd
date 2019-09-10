@@ -9,11 +9,6 @@ namespace Test.RdCross
 {
     public class CrossTestCsClientAllEntities : CrossTestCsClientBase
     {
-        public static void Main(string[] args)
-        {
-            new CrossTestCsClientAllEntities().Run(args);
-        }
-
         private void AdviseAll(Lifetime lifetime, DemoModel model, ExtModel extModel)
         {
             model.Boolean_property.Advise(lifetime,

@@ -1,16 +1,10 @@
 ﻿using demo;
-using JetBrains.Rd.Tasks;
 using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
     internal class CrossTestCsClientTask : CrossTestCsClientBase
     {
-        public static void Main(string[] args)
-        {
-            new CrossTestCsClientTask().Run(args);
-        }
-
         public override void Start(string[] args)
         {
             Before(args);
