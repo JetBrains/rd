@@ -4,7 +4,7 @@ import com.jetbrains.rd.gradle.tasks.InteropTask
 dependencies {
 //    testCompileOnly files { project(':rd-framework:').sourceSets.test.kotlin.srcDirs }
 //    compile project(':rd-framework:').sourceSets.test.output
-    compile project(':rd-kt:rd-framework:')
+    compile project(':rd-framework:')
     implementation gradleApi()
 }
 
@@ -19,17 +19,17 @@ def getCsTaskByName(String name) {
 }
 
 //region Kt
-task CrossTestKtServerAllEntities(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+task CrossTestKtServerAllEntities(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }
 
-task CrossTestKtServerBigBuffer(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+task CrossTestKtServerBigBuffer(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }
 
-task CrossTestKtServerRdCall(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-kt:rd-framework:jvmTestClasses')) {
+task CrossTestKtServerRdCall(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(':rd-framework:jvmTestClasses')) {
     classpath += project.sourceSets.test.runtimeClasspath
     classpath += project.sourceSets.test.compileClasspath
 }

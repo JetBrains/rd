@@ -1,5 +1,5 @@
 applyKotlinJVM()
 
 dependencies {
-    compile project(':rd-kt:rd-core')
+    compile project(':rd-core')
 }

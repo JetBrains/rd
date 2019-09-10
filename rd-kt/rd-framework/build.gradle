@@ -4,13 +4,13 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api project(':rd-kt:rd-core')
+                api project(':rd-core')
             }
         }
         jvmTest {
             kotlin {
                 dependencies {
-//                    compile project(':rd-kt:rd-gen')
+//                    compile project(':rd-gen')
                 }
                 srcDirs += ["${rootProject.buildDir}/models/interning"]
                 srcDirs += ["${rootProject.buildDir}/models/demo"]
@@ -19,4 +19,4 @@ kotlin {
     }
 }
 
-compileTestKotlinJvm.dependsOn(':rd-kt:rd-gen:generateEverything')
+compileTestKotlinJvm.dependsOn(':rd-gen:generateEverything')
