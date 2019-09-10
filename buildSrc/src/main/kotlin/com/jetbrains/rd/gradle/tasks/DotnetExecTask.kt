@@ -12,7 +12,7 @@ open class DotnetExecTask : RunExecTask() {
 
     @TaskAction
     override fun exec() {
-        args = args?.plus(tmpFile.absolutePath)
+        setArgs(args?.plus(tmpFile.absolutePath))
         super.exec()
     }
 }
