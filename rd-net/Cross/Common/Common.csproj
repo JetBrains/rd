@@ -8,6 +8,8 @@
         <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <RootNamespace>Test.RdCross</RootNamespace>
         <AssemblyName>Test_RdCross_Common</AssemblyName>
+        <Configurations>Debug;Release;CrossTests</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

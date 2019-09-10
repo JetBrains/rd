@@ -13,6 +13,10 @@
         <LangVersion>latest</LangVersion>
         
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
+        
+        <Configurations>Debug;Release;CrossTests</Configurations>
+        
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">

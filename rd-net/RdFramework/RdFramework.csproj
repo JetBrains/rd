@@ -13,6 +13,10 @@
         <LangVersion>latest</LangVersion>
         
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
+        
+        <Configurations>Debug;Release;CrossTests</Configurations>
+        
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
 
@@ -40,7 +44,7 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">

@@ -7,6 +7,8 @@
     <IsPackable>false</IsPackable>
     <DefineConstants>JET_MODE_ASSERT</DefineConstants>
     <RootNamespace>Test.RdCross</RootNamespace>
+    <Configurations>Debug;Release;CrossTests</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
