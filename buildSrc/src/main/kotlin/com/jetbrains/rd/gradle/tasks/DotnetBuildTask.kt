@@ -12,7 +12,7 @@ open class DotnetBuildTask : Exec() {
             _projectName = value
             executable = "dotnet"
             workingDir = File(workingDir, "Cross")
-            args = listOf("build", projectName, "-p:Configuration=Release", "--output=build")
+            setArgs(listOf("build", projectName, "-p:Configuration=Release", "--output=build"))
         }
 
 
