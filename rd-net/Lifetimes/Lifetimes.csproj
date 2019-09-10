@@ -40,11 +40,11 @@
         
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
         <PackageReleaseNotes>Removed all external NuGet dependencies</PackageReleaseNotes>
-        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
     
-    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        
+    
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
 
     <ItemGroup>
