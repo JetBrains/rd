@@ -7,16 +7,16 @@ kotlin {
                 api project(':rd-core')
             }
         }
-        jvmTest {
-            kotlin {
-                dependencies {
-//                    compile project(':rd-gen')
-                }
-                srcDirs += ["${rootProject.buildDir}/models/interning"]
-                srcDirs += ["${rootProject.buildDir}/models/demo"]
-            }
-        }
+//        jvmTest {
+//            kotlin {
+//                dependencies {
+////                    compile project(':rd-gen')
+//                }
+//                srcDirs += ["${rootProject.buildDir}/models/interning"]
+//                srcDirs += ["${rootProject.buildDir}/models/demo"]
+//            }
+//        }
     }
 }
 
-compileTestKotlinJvm.dependsOn(':rd-gen:generateEverything')
+//compileTestKotlinJvm.dependsOn(':rd-gen:generateEverything')
