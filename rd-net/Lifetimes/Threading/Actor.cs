@@ -30,6 +30,10 @@ namespace JetBrains.Threading
 
     [PublicAPI]
     public bool IsEmpty => myTotalMessagesProcessed == myChannel.TotalMessagesSent;
+    
+    [PublicAPI]
+    public bool IsNotEmpty => !IsEmpty;
+
 
     public bool IsInsideProcessing => myInsideProcessingFlow.Value != null;
 
