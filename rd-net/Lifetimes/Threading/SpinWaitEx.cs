@@ -17,7 +17,7 @@ namespace JetBrains.Threading
     /// </summary>
     /// <param name="lifetime">Stops spinning and return <c>false</c> when lifetime is no more alive</param>
     /// <param name="condition">Stops spinning and return <c>false</c> when condition is true</param>
-    /// <returns><c>false</c> if <paramref name="lifetime"/> is not alive or canceled during spinning, <paramref name="timeout"/> is zero or elapsed during spinning.
+    /// <returns><c>false</c> if <paramref name="lifetime"/> is not alive or canceled during spinning.
     /// Otherwise <c>true</c> (when <paramref name="condition"/> returns true)</returns>
     [PublicAPI]
     public static bool SpinUntil(Lifetime lifetime, Func<bool> condition)
