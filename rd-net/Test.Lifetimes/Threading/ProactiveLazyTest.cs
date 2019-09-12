@@ -24,6 +24,7 @@ namespace Test.Lifetimes.Threading
             Assert.AreEqual(expected, lazy.GetOrWait());
         }
         
+        
         [Test]
         public void TestOceOnTerminatedLifetime()
         {
@@ -40,8 +41,8 @@ namespace Test.Lifetimes.Threading
             try
             {
                 //canceled before wait started
-                Assert.Throws<OperationCanceledException>(() => lazy.GetOrWait(Lifetime.Terminated));
-                
+                Assert.That(() => lazy.GetOrWait(Lifetime.Terminated), Throws.InstanceOf<OperationCanceledException>());
+
                 //canceled after wait started
                 var ld = new LifetimeDefinition();
                 ThreadPool.QueueUserWorkItem(_ =>
@@ -49,7 +50,7 @@ namespace Test.Lifetimes.Threading
                     Thread.Sleep(100);
                     ld.Terminate();
                 });
-                Assert.Throws<OperationCanceledException>(() => lazy.GetOrWait(ld.Lifetime));
+                Assert.That(() => lazy.GetOrWait(Lifetime.Terminated), Throws.InstanceOf<OperationCanceledException>());
             }
             finally
             {
