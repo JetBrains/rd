@@ -25,17 +25,37 @@ namespace Test.Lifetimes.Threading
         }
         
         [Test]
-        public void TestOce()
+        public void TestOceOnTerminatedLifetime()
         {
             var n = 100_000_000L;
             long expected = n * (n - 1) / 2;
+
+            bool flag = false;
             var lazy = new ProactiveLazy<long>(Lifetime.Eternal, () =>
             {
-                Thread.Sleep(500);
+                SpinWait.SpinUntil(() => flag);
                 return 42;
             });
 
-            Assert.Throws<OperationCanceledException>(() => lazy.GetOrWait(Lifetime.Terminated));
+            try
+            {
+                //canceled before wait started
+                Assert.Throws<OperationCanceledException>(() => lazy.GetOrWait(Lifetime.Terminated));
+                
+                //canceled after wait started
+                var ld = new LifetimeDefinition();
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    Thread.Sleep(100);
+                    ld.Terminate();
+                });
+                Assert.Throws<OperationCanceledException>(() => lazy.GetOrWait(ld.Lifetime));
+            }
+            finally
+            {
+                flag = true;
+            }
+
         }
     }
 }
