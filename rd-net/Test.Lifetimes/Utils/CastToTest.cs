@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using JetBrains.Collections.Viewable;
 using JetBrains.Util.Util;
 using NUnit.Framework;
@@ -26,6 +27,20 @@ namespace Test.Lifetimes.Utils
             
             Assert.AreEqual(AddUpdateRemove.Update, CastTo<AddUpdateRemove>.From(updateOrdinal));
             Assert.AreEqual(AddUpdateRemove.Remove, CastTo<AddUpdateRemove>.From(removeOrdinal));
+        }
+
+
+        [Test]
+        public void CastEnum32Test()
+        {
+            int updateOrdinal = (int) AddUpdateRemove.Update;
+            int removeOrdinal = (int) AddUpdateRemove.Remove;
+            
+            Assert.AreEqual(AddUpdateRemove.Update, Cast32BitEnum<AddUpdateRemove>.FromInt(updateOrdinal));
+            Assert.AreEqual(AddUpdateRemove.Remove, Cast32BitEnum<AddUpdateRemove>.FromInt(removeOrdinal));
+            
+            Assert.AreEqual(AddUpdateRemove.Update, Cast32BitEnum<AddUpdateRemove>.FromUInt((uint)updateOrdinal));
+            Assert.AreEqual(AddUpdateRemove.Remove, Cast32BitEnum<AddUpdateRemove>.FromUInt((uint)removeOrdinal));
         }
         
         

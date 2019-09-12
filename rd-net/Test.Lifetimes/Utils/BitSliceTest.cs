@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Diagnostics;
 using JetBrains.Util.Util;
 using NUnit.Framework;
@@ -8,10 +9,11 @@ namespace Test.Lifetimes.Utils
   {
     private enum E0 {}
     private enum EMinus { Single = -1}
-    private enum EUlong : ulong{ Single = ulong.MaxValue}
+    private enum EUint : uint { Single = uint.MaxValue}
+    private enum ELong : long { Single = long.MaxValue}
     
     private enum E1 { Single }
-    private enum E4 : long { Zero, One, Two, Three }
+    private enum E4 : uint { Zero, One, Two, Three }
     
     private BitSlice<int> mySliceInt;
     private BitSlice<bool> mySliceBool;
@@ -31,9 +33,12 @@ namespace Test.Lifetimes.Utils
     public void TestBadEnums()
     {
       Assert.Throws<Assertion.AssertionException>(() => BitSlice.Enum<EMinus>());
+      Assert.Throws<Assertion.AssertionException>(() => BitSlice.Enum<EUint>());
+      
       Assert.Throws<Assertion.AssertionException>(() => BitSlice.Enum<E0>());
-      Assert.Throws<Assertion.AssertionException>(() => BitSlice.Enum<EUlong>());
+      Assert.Throws<TypeInitializationException>(() => BitSlice.Enum<ELong>());
     }
+    
 
     [Test]
     public void TestZero()

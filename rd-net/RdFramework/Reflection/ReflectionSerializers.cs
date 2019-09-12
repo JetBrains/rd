@@ -638,7 +638,7 @@ namespace JetBrains.Rd.Reflection
         myStore[typeof(T)] = new SerializerPair(reader, writer);
       }
 
-      public void RegisterEnum<T>()
+      public void RegisterEnum<T>() where T: unmanaged, Enum
       {
       }
 
