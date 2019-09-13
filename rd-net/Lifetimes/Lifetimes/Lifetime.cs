@@ -720,6 +720,23 @@ namespace JetBrains.Lifetimes
     [PublicAPI, NotNull] public Task StartAttachedAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
     [PublicAPI, NotNull] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
 
+
+
+    /// <summary>
+    /// Creates new <see cref="TaskCompletionSource{TResult}"/> that translate <see cref="Task.Status"/> into canceled if this lifetime becomes terminates (and task wasn't completed before).
+    /// </summary>
+    /// <param name="options">to pass into <see cref="TaskCompletionSource{TResult}.ctor"/></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns>New <see cref="TaskCompletionSource{TResult}"/>. Possibly with already canceled <see cref="TaskCompletionSource{TResult}.Task"/> if this lifetime already terminated</returns>
+    [PublicAPI, NotNull] public TaskCompletionSource<T> CreateTaskCompletionSource<T>(TaskCreationOptions options = TaskCreationOptions.None)
+    {
+      var res = new TaskCompletionSource<T>(options);
+      
+      //Nested definition is better that just adding termination action because it prevents memory leak
+      CreateNested().SynchronizeWith(res);
+      return res;
+    } 
+    
     #endregion
     #endif
 
