@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -11,6 +12,7 @@ namespace JetBrains.Diagnostics
   {
     private static readonly ILog ourLogger = Log.GetLog(nameof(ProcessWatchdog));
     private const int DELAY_BEFORE_RETRY = 1000;
+    private const int ERROR_INVALID_PARAMETER = 87;
 
     public static void StartWatchdogForPidEnvironmentVariable(string envVarName)
     {
@@ -89,9 +91,14 @@ namespace JetBrains.Diagnostics
       {
         handle = Kernel32.OpenProcess(ProcessAccessRights.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
         if (handle == IntPtr.Zero)
-          return false;
+        {
+          var errorCode = Marshal.GetLastWin32Error();
+          return errorCode == ERROR_INVALID_PARAMETER ? false : throw new Win32Exception(errorCode); // ERROR_INVALID_PARAMETER means that process doesn't exist
+        }
 
-        return Kernel32.GetExitCodeProcess(handle, out var exitCode) && exitCode == ProcessExitCode.STILL_ALIVE;
+        return Kernel32.GetExitCodeProcess(handle, out var exitCode)
+          ? exitCode == ProcessExitCode.STILL_ALIVE
+          : throw new Win32Exception();
       }
       finally
       {
