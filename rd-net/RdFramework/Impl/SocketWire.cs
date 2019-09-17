@@ -98,7 +98,7 @@ namespace JetBrains.Rd.Impl
         });
       }
 
-      protected void CloseSocket([CanBeNull] Socket socket)
+      internal void CloseSocket([CanBeNull] Socket socket)
       {
         if (socket == null)
         {
