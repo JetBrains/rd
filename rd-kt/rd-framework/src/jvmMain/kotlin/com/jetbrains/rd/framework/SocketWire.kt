@@ -191,7 +191,7 @@ class SocketWire {
 
         private fun sendAck(seqn: Long) {
             try {
-                ackPkgHeader.rewind()
+                ackPkgHeader.reset()
                 ackPkgHeader.writeInt(ack_msg_len)
                 ackPkgHeader.writeLong(seqn)
 
@@ -216,7 +216,7 @@ class SocketWire {
                     chunk.seqn = ++sentSeqn
 
 
-                sendPkgHeader.rewind()
+                sendPkgHeader.reset()
                 sendPkgHeader.writeInt(chunk.ptr)
                 sendPkgHeader.writeLong(chunk.seqn)
 
@@ -250,7 +250,10 @@ class SocketWire {
                 val bytes = unsafeBuffer.getArray()
                 sendBuffer.put(bytes, initialPosition, len)
             } finally {
-                unsafeBuffer.position = initialPosition
+                if (initialPosition == 0)
+                    unsafeBuffer.reset() // apply shrinking logic
+                else
+                    unsafeBuffer.position = initialPosition
             }
         }
     }
