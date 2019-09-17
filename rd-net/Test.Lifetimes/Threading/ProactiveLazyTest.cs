@@ -1,3 +1,4 @@
+#if !NET35
 using System;
 using System.Threading;
 using JetBrains.Lifetimes;
@@ -24,7 +25,6 @@ namespace Test.Lifetimes.Threading
             Assert.AreEqual(expected, lazy.GetOrWait());
         }
         
-        
         [Test]
         public void TestOceOnTerminatedLifetime()
         {
@@ -34,7 +34,7 @@ namespace Test.Lifetimes.Threading
             bool flag = false;
             var lazy = new ProactiveLazy<long>(Lifetime.Eternal, () =>
             {
-                SpinWait.SpinUntil(() => flag);
+                SpinWaitEx.SpinUntil(() => flag);
                 return 42;
             });
 
@@ -60,3 +60,4 @@ namespace Test.Lifetimes.Threading
         }
     }
 }
+#endif

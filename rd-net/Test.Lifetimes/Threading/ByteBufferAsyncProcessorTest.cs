@@ -60,11 +60,11 @@ namespace Test.Lifetimes.Threading
         }
         if (i > 0 && i % 50 == 0)
         {
-          SpinWait.SpinUntil(() => buffer.AllDataProcessed); //give it to process
+          SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed); //give it to process
         }
       }
 
-      SpinWait.SpinUntil(() => buffer.AllDataProcessed); //give it to process
+      SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed); //give it to process
 
       Assert.AreEqual(toProcess, processed);
       Assert.True(buffer.Stop(1000));
@@ -88,7 +88,7 @@ namespace Test.Lifetimes.Threading
       buffer.Start();
       buffer.Put(new byte[]{1, 2, 3});
 
-      SpinWait.SpinUntil(() => buffer.AllDataProcessed);
+      SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed);
       Assert.AreEqual(6, x);
     }
     
@@ -117,7 +117,7 @@ namespace Test.Lifetimes.Threading
       Assert.True(buffer.Resume(reason2));
       Assert.False(buffer.Resume(reason2));
       Assert.False(buffer.Resume(reason2));
-      SpinWait.SpinUntil(() => buffer.AllDataProcessed);
+      SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed);
       Assert.AreEqual(6, x);
     }
 
@@ -230,7 +230,7 @@ namespace Test.Lifetimes.Threading
       PutLong(buffer, 3);
       PutLong(buffer, 4);
 
-      SpinWait.SpinUntil(() => buffer.AllDataProcessed);
+      SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed);
       Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
       
       buffer.Acknowledge(2);
@@ -238,12 +238,12 @@ namespace Test.Lifetimes.Threading
       buffer.ReprocessUnacknowledged();
       
       PutLong(buffer, 5);
-      SpinWait.SpinUntil(() => buffer.AllDataProcessed);
+      SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed);
       Assert.AreEqual(new List<int> {1, 2, 3, 4, 3, 4, 5}, log);
       
       buffer.Acknowledge(5);
       buffer.ReprocessUnacknowledged();
-      SpinWait.SpinUntil(() => buffer.AllDataProcessed);
+      SpinWaitEx.SpinUntil(() => buffer.AllDataProcessed);
       Assert.AreEqual(new List<int> {1, 2, 3, 4, 3, 4, 5}, log);
     }
 

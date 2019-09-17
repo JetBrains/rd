@@ -111,7 +111,7 @@ namespace JetBrains.Threading
       if (IsEmpty)
         return;
 
-      SpinWait.SpinUntil(() => IsEmpty);
+      SpinWaitEx.SpinUntil(() => IsEmpty);
     }
   }
   
