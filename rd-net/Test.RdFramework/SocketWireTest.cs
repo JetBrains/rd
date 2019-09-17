@@ -10,6 +10,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
+using JetBrains.Util;
 using NUnit.Framework;
 using Test.Lifetimes;
 
@@ -277,12 +278,14 @@ namespace Test.RdFramework
         SpinWait.SpinUntil(() => log.Count == 2);
         Assert.AreEqual(new List<int> {1, 2}, log);
         
+        (clientProtocol.Wire as SocketWire.Base)?.Socket.Shutdown(SocketShutdown.Both);
         (clientProtocol.Wire as SocketWire.Base)?.Socket.Close();
         cp.Fire(3);
         cp.Fire(4);
         SpinWait.SpinUntil(() => log.Count == 4);
         Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
         
+        (serverProtocol.Wire as SocketWire.Base)?.Socket.Shutdown(SocketShutdown.Both);
         (serverProtocol.Wire as SocketWire.Base)?.Socket.Close();
         cp.Fire(5);
         cp.Fire(6);
