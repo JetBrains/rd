@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using JetBrains.Interop;
 using JetBrains.Util;
 
 namespace JetBrains.Diagnostics
@@ -60,7 +61,7 @@ namespace JetBrains.Diagnostics
     }
 
     [DllImport("libc", SetLastError = true)]
-    public static extern int kill(int pid, int sig);
+    private static extern int kill(int pid, int sig);
 
     private static bool ProcessExists(int pid)
     {
@@ -72,12 +73,30 @@ namespace JetBrains.Diagnostics
           return kill(pid, 0) == 0;
         }
 
-        var process = Process.GetProcessById(pid);
-        return !process.HasExited;
+        return ProcessExists_Windows(pid);
       }
-      catch
+      catch (Exception e)
       {
+        ourLogger.Error(e);
         return false;
+      }
+    }
+
+    private static bool ProcessExists_Windows(int pid)
+    {
+      var handle = IntPtr.Zero;
+      try
+      {
+        handle = Kernel32.OpenProcess(ProcessAccessRights.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (handle == IntPtr.Zero)
+          return false;
+
+        return Kernel32.GetExitCodeProcess(handle, out var exitCode) && exitCode == ProcessExitCode.STILL_ALIVE;
+      }
+      finally
+      {
+        if (handle != IntPtr.Zero)
+          Kernel32.CloseHandle(handle);
       }
     }
   }
