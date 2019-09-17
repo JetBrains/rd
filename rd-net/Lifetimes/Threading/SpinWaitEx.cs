@@ -11,6 +11,16 @@ namespace JetBrains.Threading
   /// </summary>
   public static class SpinWaitEx
   {
+    
+    /// <summary>
+    /// Spins while <paramref name="condition"/> is false.     
+    /// </summary>
+    /// <param name="condition">Stops spinning when condition is true</param>
+    [PublicAPI]
+    public static void SpinUntil(Func<bool> condition)
+    {
+      SpinUntil(Lifetime.Eternal, TimeSpan.MaxValue, condition);
+    }
 
     /// <summary>
     /// Spins while <paramref name="lifetime"/> is alive and <paramref name="condition"/> is false.     
@@ -52,7 +62,9 @@ namespace JetBrains.Threading
     [PublicAPI]
     public static bool SpinUntil(Lifetime lifetime, long timeoutMs, Func<bool> condition)
     {
+#if !NET35
       var s = new SpinWait();
+#endif
       var start = Environment.TickCount;
 
       while (true)
@@ -63,7 +75,11 @@ namespace JetBrains.Threading
         if (condition())
           return true;
         
+#if !NET35
         s.SpinOnce();
+#else
+        Thread.Sleep(0);
+#endif
       }      
     }
 

@@ -321,7 +321,7 @@ namespace JetBrains.Lifetimes
       Diagnostics(nameof(LifetimeStatus.Terminating));
       //Now status is 'Terminating' and we have to wait for all resource modifications to complete. No mutex acquire is possible beyond this point.
       if (ourMutexSlice[myState]) //optimization
-        SpinWait.SpinUntil(() => !ourMutexSlice[myState]);
+        SpinWaitEx.SpinUntil(() => !ourMutexSlice[myState]);
       
       Destruct();      
       Assertion.Assert(Status == LifetimeStatus.Terminated, "{0}: bad status for termination finish", this);

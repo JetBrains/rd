@@ -107,7 +107,7 @@ namespace Test.Lifetimes.Lifetimes
           lin.Point(0);
           log.Add(1);
 
-          SpinWait.SpinUntil(() => def.Status == LifetimeStatus.Canceling);
+          SpinWaitEx.SpinUntil(() => def.Status == LifetimeStatus.Canceling);
           Assert.False(lt.IsAlive);                    
         });
         
