@@ -100,4 +100,43 @@ class UnsafeBufferTest {
 
         assertEquals(array.toString(), buf.readUIntArray().toString())
     }
+
+    @Test
+    fun testShrinking1() {
+        val initialSize = 2 * 1024 * 1024
+        val buf = UnsafeBuffer(initialSize.toLong())
+
+        buf.rewind()
+        assertEquals(initialSize, buf.allocated)
+
+        buf.reset()
+        assertEquals(1024 * 1024, buf.allocated)
+
+        buf.reset()
+        assertEquals(1024 * 1024, buf.allocated)
+    }
+
+    @Test
+    fun testShrinking2() {
+        val initialSize = 2 * 1024 * 1024
+        val buf = UnsafeBuffer(initialSize.toLong())
+
+        buf.writeByteArray(ByteArray(initialSize - 16))
+        assertEquals(initialSize, buf.allocated)
+
+        buf.reset()
+        assertEquals(1024 * 1024, buf.allocated)
+    }
+
+    @Test
+    fun testShrinking3() {
+        val initialSize = 65536
+        val buf = UnsafeBuffer(initialSize.toLong())
+
+        buf.writeByteArray(ByteArray(2 * 1024 * 1024))
+        assert(buf.allocated >= 2 * 1024 * 1024)
+
+        buf.reset()
+        assertEquals(1024 * 1024, buf.allocated)
+    }
 }

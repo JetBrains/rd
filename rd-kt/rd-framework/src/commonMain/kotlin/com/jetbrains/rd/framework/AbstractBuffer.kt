@@ -64,6 +64,14 @@ abstract class AbstractBuffer {
 
     abstract fun checkAvailable(moreSize: Int)
 
+    open fun reset() {
+        position = 0
+    }
+
+    fun rewind() {
+        position = 0
+    }
+
     //unsigned types
     @ExperimentalUnsignedTypes
     open fun readUByte() = readByte().toUByte()
@@ -120,7 +128,3 @@ abstract class AbstractBuffer {
 }
 
 expect fun createAbstractBuffer(): AbstractBuffer
-
-fun AbstractBuffer.rewind() {
-    this.position = 0
-}

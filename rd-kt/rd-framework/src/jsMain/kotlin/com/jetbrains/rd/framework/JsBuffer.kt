@@ -9,6 +9,7 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
             @Suppress("unused")
             val NONSTANDARD_allowLegacyEncoding = true
         })
+        private const val maximumSizeBeforeShrink = 1024 * 1024 // 1M
     }
 
     private var dataView: DataView = DataView(buffer)
@@ -314,8 +315,11 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
             1
     )
 
-    fun rewind() {
-        position = 0
+    override fun reset() {
+        offset = 0
+        if (buffer.byteLength > maximumSizeBeforeShrink) {
+            resizeBuffer(maximumSizeBeforeShrink)
+        }
     }
 
     fun getFirstBytes(length: Int): DataView {
