@@ -8,8 +8,9 @@ namespace JetBrains.Util
   {
     [CanBeNull]
     public static Version CurrentMonoVersion;
-    public static bool IsRunningOnMono; 
+    public static readonly bool IsRunningOnMono; 
     public static readonly bool IsRunningUnderWindows;
+    public static readonly bool IsRunningOnCore;
 
     static RuntimeInfo()
     {
@@ -18,6 +19,11 @@ namespace JetBrains.Util
         Environment.OSVersion.Platform == PlatformID.Win32S ||
         Environment.OSVersion.Platform == PlatformID.Win32Windows ||
         Environment.OSVersion.Platform == PlatformID.WinCE;
+      
+      IsRunningOnCore = string.Equals(
+        typeof(string).Assembly.GetName().Name,
+        "System.Private.CoreLib",
+        StringComparison.Ordinal);
 
       var monoRuntimeType = Type.GetType("Mono.Runtime");
       if (monoRuntimeType != null)
@@ -43,7 +49,7 @@ namespace JetBrains.Util
         IsRunningOnMono = false;
       }
     }
-    
+
 #if NET35
     private static bool TryParseVersion(string input, out Version version)
     {
