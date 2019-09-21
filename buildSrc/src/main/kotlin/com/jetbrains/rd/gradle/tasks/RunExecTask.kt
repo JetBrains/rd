@@ -1,13 +1,14 @@
-package com.jetbrains.rd.gradle.tasks;
+package com.jetbrains.rd.gradle.tasks
 
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.tasks.Exec;
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
 open class RunExecTask : Exec() {
-
+    @Input
     lateinit var execPath: String
 
     init {

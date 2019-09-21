@@ -3,6 +3,7 @@ using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
+    // ReSharper disable once UnusedMember.Global
     internal class CrossTestCsClientTask : CrossTestCsClientBase
     {
         public override void Start(string[] args)

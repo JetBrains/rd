@@ -14,7 +14,7 @@ namespace Test.RdCross
         private string TestName => GetType().Name;
 
         protected readonly PrettyPrinter Printer = new PrettyPrinter();
-        private StreamWriter OutputFile;
+        private StreamWriter myOutputFile;
         
         protected volatile bool Finished;
         
@@ -42,7 +42,7 @@ namespace Test.RdCross
 
             var outputFileName = args[0];
             Console.WriteLine($"outputFileName={outputFileName}");
-            OutputFile = new StreamWriter(outputFileName);
+            myOutputFile = new StreamWriter(outputFileName);
             Console.WriteLine($"Test:{TestName} started, file={outputFileName}");
         }
 
@@ -54,9 +54,9 @@ namespace Test.RdCross
             SocketLifetimeDef.Terminate();
             ModelLifetimeDef.Terminate();
 
-            using (OutputFile)
+            using (myOutputFile)
             {
-                OutputFile.Write(Printer.ToString());
+                myOutputFile.Write(Printer.ToString());
             }
         }
 

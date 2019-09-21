@@ -13,8 +13,7 @@ namespace Test.RdCross
             }
             var type = Type.GetType($"Test.RdCross.{args[0]}") ??
                        throw new ArgumentException($"Wrong class name={args[0]})");
-            var instance = Activator.CreateInstance(type);
-            if (instance is CrossTestCsBase testCsBase)
+            if (Activator.CreateInstance(type) is CrossTestCsBase testCsBase)
             {
                 testCsBase.Run(args.Skip(1).ToArray());
             }

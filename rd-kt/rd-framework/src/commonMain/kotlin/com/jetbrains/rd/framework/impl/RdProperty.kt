@@ -32,7 +32,10 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
     var isMaster = true
     protected var masterVersion = 0
 
-    internal var defaultValueChanged : Boolean = false
+    var defaultValueChanged : Boolean = false
+        internal set(value) {
+            field = value
+        }
     //init
     var optimizeNested: Boolean = false
 

@@ -7,6 +7,7 @@ using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
+    // ReSharper disable once UnusedMember.Global
     public class CrossTestCsClientAllEntities : CrossTestCsClientBase
     {
         private void AdviseAll(Lifetime lifetime, DemoModel model, ExtModel extModel)

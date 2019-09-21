@@ -134,12 +134,12 @@ namespace JetBrains.Rd.Base
       if (printable != null) printable.Print(printer);
       else if (thIs == null) printer.Print("<null>");
       else if (thIs is string) printer.Print("\"" + thIs + "\"");
-      else if (thIs is IEnumerable)
+      else if (thIs is IEnumerable enumerable)
       {
         printer.Print("[");        
         using (printer.IndentCookie())
         {
-          var en = ((IEnumerable) thIs).GetEnumerator();
+          var en = enumerable.GetEnumerator();
           var count = 0;
           var maxPrint = printer.CollectionMaxLength;
           while (en.MoveNext())

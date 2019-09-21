@@ -4,6 +4,7 @@ using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
+    // ReSharper disable once UnusedMember.Global
     public class CrossTestCsClientBigBuffer : CrossTestCsClientBase
     {
         public override void Start(string[] args)

@@ -1,13 +1,11 @@
 package com.jetbrains.rd.gradle.tasks
 
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
-open class DotnetRunTask : RunExecTask() {
+open class CrossTestKtRdTask : KotlinExec() {
     init {
-        executable = "dotnet"
-        workingDir = File(workingDir, "Cross")
-        setArgs(listOf("run", "-c:Configuration=Release", name))
+        classpath += project.rootProject.files("rd-kt/rd-framework/build/classes/kotlin/jvm/test")
+        main = "com.jetbrains.rd.framework.test.cross.${name}Kt"
     }
 
     @TaskAction

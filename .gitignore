@@ -15,8 +15,8 @@ cmake-build-*
 *.DotSettings.user
 cache/
 # Project exclude paths
-/rd-cross/out/
-/rd-cross/out/test/classes/
+/rd-kt/rd-cross/out/
+/rd-kt/rd-cross/out/test/classes/
 
 /rd-kt/gradle
 /rd-kt/rd-gen/out/
