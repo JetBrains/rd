@@ -1,7 +1,7 @@
+import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
-typealias applyingConfiguration = Project.() -> Unit
-extra["applyKotlinJVM"].cast<applyingConfiguration>().invoke(project)
+applyKotlinJVM()
 
 plugins {
     kotlin("jvm")

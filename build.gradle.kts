@@ -94,6 +94,7 @@ allprojects {
 
 
 
+/*
     ext["applyKotlinJVM"] = { project: Project ->
         project.also {
             apply(plugin = "java")
@@ -183,6 +184,7 @@ allprojects {
             }
         }
     }
+*/
 
     ext["configureNodePlugin"] = {
         apply(plugin = "com.moowork.node")

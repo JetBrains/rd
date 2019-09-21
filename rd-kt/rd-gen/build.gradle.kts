@@ -1,12 +1,12 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
+import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask
 import com.jetbrains.rd.gradle.tasks.util.*
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import javax.inject.Inject
 
-typealias applyingConfiguration = Project.() -> Unit
-extra["applyKotlinJVM"].cast<applyingConfiguration>().invoke(project)
+applyKotlinJVM()
 
 plugins {
     kotlin("jvm")

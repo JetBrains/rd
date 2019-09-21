@@ -11,7 +11,7 @@ repositories {
 
 plugins {
     `kotlin-dsl`
-    `java`
+    jacoco
     id("org.jetbrains.dokka") version "0.9.18"
     kotlin("multiplatform") version "1.3.50" apply false
     kotlin("jvm") version "1.3.50"
@@ -26,5 +26,6 @@ dependencies {
 //    implementation("org.jetbrains.dokka:dokka-gradle-plugin")
     implementation("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
     compile("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
-
+    implementation("org.gradle.kotlin:plugins:1.3.1")
+    compile("org.gradle.kotlin:plugins:1.3.1")
 }
