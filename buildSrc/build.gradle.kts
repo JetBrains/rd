@@ -11,11 +11,20 @@ repositories {
 
 plugins {
     `kotlin-dsl`
-//    kotlin("multiplatform") version "1.3.50"
+    `java`
+    id("org.jetbrains.dokka") version "0.9.18"
+    kotlin("multiplatform") version "1.3.50" apply false
+    kotlin("jvm") version "1.3.50"
 }
 
 dependencies {
     implementation(gradleApi())
-    compileOnly(gradleApi())
-    runtimeOnly(gradleApi())
+    compile(gradleApi())
+//    runtimeOnly(gradleApi())
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
+    compile("org.jetbrains.kotlin:kotlin-gradle-plugin")
+//    implementation("org.jetbrains.dokka:dokka-gradle-plugin")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
+    compile("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
+
 }

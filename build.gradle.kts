@@ -34,13 +34,13 @@ repositories {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.3.50"
+    kotlin("multiplatform")/* version "1.3.50"*/
     id("com.moowork.node") version "1.3.1"
 //    `kotlin-dsl`
     `java-gradle-plugin`
     java
     jacoco/* apply false*/ //> Plugin 'org.gradle.jacoco' is a core Gradle plugin, which is already on the classpath.
-    id("org.jetbrains.dokka") version "0.9.17" apply false
+    id("org.jetbrains.dokka")/* version "0.9.18" */apply false
 }
 
 
@@ -213,6 +213,7 @@ allprojects {
         }
     }
 
+/*
     ext["applyMultiplatform"] = { project: Project ->
         project.also {
             group = "com.jetbrains.rd"
@@ -312,6 +313,7 @@ allprojects {
             }
         }
     }
+*/
 
     configurations.all {
         resolutionStrategy {

@@ -1,4 +1,4 @@
-import Build_gradle.applyingConfiguration
+import com.jetbrains.rd.gradle.plugins.applyMultiplatform
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -9,9 +9,7 @@ plugins {
     java
 }
 
-typealias applyingConfiguration = Project.() -> Unit
-extra["applyMultiplatform"].cast<applyingConfiguration>().invoke(project)
-
+applyMultiplatform()
 
 lateinit var crossTest: SourceSet
 
@@ -35,27 +33,27 @@ kotlin.sourceSets.forEach {
 
 sourceSets {
     crossTest = create("crossTest") {
-//        compiledBy("testCopySources")
 //        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
 //        runtimeClasspath += output + compileClasspath
     }
 }
 
-val testCopySources = task<CopySourcesTask>("testCopySources") {
+val testCopySources by tasks.creating(CopySourcesTask::class) {
     println("CERR:TASK")
     dependsOn(":rd-gen:generateEverything")
-//    currentSourceSet = kotlin.sourceSets.commonTest
-    //todo
+    currentSourceSet = kotlin.sourceSets.commonTest.get()
     currentProject = project
     generativeSourceSet = evaluationDependsOn(":rd-gen").sourceSets["models"]
+
+    lateInit()
 }
 
 kotlin.sourceSets.commonTest.get().kotlin.srcDirs("C:\\Work\\rd\\rd-kt\\rd-framework\\build\\generated\\interning",
         "C:\\Work\\rd\\rd-kt\\rd-framework\\build\\generated\\demo")
-/*testCopySources.outputs.files.forEach {
+testCopySources.outputs.files.forEach {
     println("FILE:$it")
 }
-kotlin.sourceSets["commonTest"].kotlin.srcDirs(testCopySources.outputs.files)*/
+//kotlin.sourceSets["commonTest"].kotlin.srcDirs(testCopySources.outputs.files)
 
 tasks.named("compileTestKotlinJvm") {
     dependsOn(testCopySources)

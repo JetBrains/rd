@@ -48,14 +48,16 @@ sourceSets {
         }
     }
     test {
-        compiledBy("testCopySources")
+
     }
 }
 
 val testCopySources by tasks.creating(CopySourcesTask::class) {
-    currentSourceSet = sourceSets.test.get()
+    currentSourceSet = kotlin.sourceSets.test.get()
     currentProject = project
     generativeSourceSet = models
+
+    lateInit()
 }
 
 tasks.named("compileTestKotlin") {

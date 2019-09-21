@@ -1,4 +1,5 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
+import com.jetbrains.rd.gradle.plugins.applyMultiplatform
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.gradle.kotlin.dsl.kotlin
 
@@ -6,8 +7,7 @@ plugins {
     kotlin("multiplatform")
 }
 
-typealias applyingConfiguration = Project.() -> Unit
-extra["applyMultiplatform"].cast<applyingConfiguration>().invoke(project)
+applyMultiplatform()
 
 kotlin {
     sourceSets {
