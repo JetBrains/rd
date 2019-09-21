@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun Project.applyMultiplatform() = apply<MultiplatformPlugin>()
 
+@Suppress("UNUSED_VARIABLE")
 open class MultiplatformPlugin : Plugin<Project> {
     override fun apply(target: Project) = target.run {
         group = "com.jetbrains.rd"

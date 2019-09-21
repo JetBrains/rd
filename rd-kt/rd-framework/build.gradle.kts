@@ -27,10 +27,6 @@ kotlin {
     }
 }
 
-kotlin.sourceSets.forEach {
-    println("CERR:${it.name}")
-}
-
 sourceSets {
     crossTest = create("crossTest") {
 //        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
@@ -39,7 +35,6 @@ sourceSets {
 }
 
 val testCopySources by tasks.creating(CopySourcesTask::class) {
-    println("CERR:TASK")
     dependsOn(":rd-gen:generateEverything")
     currentSourceSet = kotlin.sourceSets.commonTest.get()
     currentProject = project
@@ -47,13 +42,6 @@ val testCopySources by tasks.creating(CopySourcesTask::class) {
 
     lateInit()
 }
-
-kotlin.sourceSets.commonTest.get().kotlin.srcDirs("C:\\Work\\rd\\rd-kt\\rd-framework\\build\\generated\\interning",
-        "C:\\Work\\rd\\rd-kt\\rd-framework\\build\\generated\\demo")
-testCopySources.outputs.files.forEach {
-    println("FILE:$it")
-}
-//kotlin.sourceSets["commonTest"].kotlin.srcDirs(testCopySources.outputs.files)
 
 tasks.named("compileTestKotlinJvm") {
     dependsOn(testCopySources)
