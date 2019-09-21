@@ -47,6 +47,7 @@ plugins {
 allprojects {
     plugins.apply("maven-publish")
 
+/*
     ext["applyKotlinJS"] = { project: Project ->
         project.also {
             apply(plugin = "kotlin-platform-js")
@@ -91,6 +92,7 @@ allprojects {
             }
         }
     }
+*/
 
 
 
