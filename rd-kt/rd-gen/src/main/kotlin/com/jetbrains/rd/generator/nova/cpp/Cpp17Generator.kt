@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
+import org.gradle.util.VersionNumber
 import java.io.File
 
 
@@ -35,7 +36,20 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
  * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
-open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
+open class Cpp17Generator(override val flowTransform: FlowTransform,
+                          val defaultNamespace: String,
+                          override val folder: File,
+                          val usingPrecompiledHeaders: Boolean = false,
+                          override val languageVersion: VersionNumber = `C++11`
+) : GeneratorBase() {
+    companion object {
+//        private const val INSTANTIATION_FILE_NAME = "instantiations"
+        val `C++11` : VersionNumber = VersionNumber(11, 0, 0, null)
+        val `C++14` : VersionNumber = VersionNumber(14, 0, 0, null)
+        val `C++17` : VersionNumber = VersionNumber(17, 0, 0, null)
+        val `C++20` : VersionNumber = VersionNumber(20, 0, 0, null)
+    }
+
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
 
@@ -2046,9 +2060,5 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     override fun toString(): String {
         return "Cpp17Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath}, usingPrecompiledHeaders=$usingPrecompiledHeaders)"
-    }
-
-    companion object {
-//        private const val INSTANTIATION_FILE_NAME = "instantiations"
     }
 }
