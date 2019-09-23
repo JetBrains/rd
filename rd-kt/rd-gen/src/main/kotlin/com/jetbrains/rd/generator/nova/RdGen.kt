@@ -368,8 +368,8 @@ fun generateRdModel(
                 .asSequence()
                 .map { it.generator }
                 .takeWhile { it != gen }
-                .map {it.folder.canonicalPath}
-                .none { gen.folder.canonicalPath.run { this == it || this.startsWith(it + File.separator)} }
+                .map { it.canonicalPaths }.flatten()
+                .none { path -> gen.canonicalPaths.any { it == path || it.startsWith(path + File.separator)} }
 
         //Here is the real part
         if (verbose) println("Invoke $gen on $root, clearFolder=$shouldClear")
@@ -378,7 +378,7 @@ fun generateRdModel(
             gen.generate(root, shouldClear, toplevels.filter { it.root == root })
         }
 
-        generatedFolders.add(gen.folder)
+        generatedFolders.addAll(gen.folders)
     }
 
     val endTime = System.currentTimeMillis()
@@ -452,7 +452,7 @@ private fun collectSortedGeneratorsToInvoke(
             .plus(fromSpec)
             .plus(external)
             .filter { (gen, root) ->
-        val shouldGenerate = filterByGeneratorClassSimpleName.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)
+        val shouldGenerate = filterByGeneratorClassSimpleName.containsMatchIn(gen.javaClass.simpleName) && gen.folders.none { it.toString().contains(InvalidSysproperty) }
 
         if (verbose)
             println((if (shouldGenerate) "++  MATCHED TO  ++" else "-- FILTERED OUT --") + " '$root' + $gen ")

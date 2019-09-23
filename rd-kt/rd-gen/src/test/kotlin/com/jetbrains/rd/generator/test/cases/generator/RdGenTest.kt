@@ -1,3 +1,5 @@
+@file:Suppress("MoveVariableDeclarationIntoWhen")
+
 package com.jetbrains.rd.generator.test.cases.generator
 
 import com.jetbrains.rd.generator.nova.RdGen

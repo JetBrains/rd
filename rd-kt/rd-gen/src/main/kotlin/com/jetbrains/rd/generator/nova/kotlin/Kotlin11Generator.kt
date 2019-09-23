@@ -21,8 +21,9 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 open class Kotlin11Generator(
     override val flowTransform: FlowTransform,
     private val defaultNamespace: String,
-    override val folder: File
-) : GeneratorBase() {
+    folder: File,
+    multipleFolders : List<File> = emptyList()
+) : GeneratorBase(multipleFolders + folder) {
 
     //language specific properties
     object Namespace : ISetting<String, Declaration>
@@ -33,8 +34,30 @@ open class Kotlin11Generator(
     object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors: ISetting<Unit, Declaration>
 
+    /**
+     * Exact file name where to store source
+     */
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
-    protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
+    object FsPaths : ISetting<(Kotlin11Generator) -> List<File>, Toplevel>
+
+    private val Toplevel.predefinedFiles : List<File>
+        get() {
+            val file = getSetting(FsPath)?.invoke(this@Kotlin11Generator)
+            val files = getSetting(FsPaths)?.invoke(this@Kotlin11Generator)
+            return (files.orEmpty() + file)
+                    .filterNotNull()
+                    .map { f -> f.apply { parentFile.mkdirs() } }
+        }
+
+    protected open val Toplevel.fsPaths: List<File>
+        get() =
+            predefinedFiles.let { fileSettings ->
+                return if (fileSettings.isEmpty()) {
+                    folders.map { File(it, "$name.Generated.kt") }
+                } else {
+                    fileSettings
+                }
+            }
 
     object MasterStateful : ISetting<Boolean, Declaration>
 
@@ -249,18 +272,16 @@ open class Kotlin11Generator(
 
     //generation
     override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
+        prepareGenerationFolders(folders, clearFolderIfExists)
 
         toplevels.sortedBy { it.name }.forEach { tl ->
-            tl.fsPath.bufferedWriter().use { writer ->
-                PrettyPrinter().apply {
+            tl.fsPaths.forEach { file ->
+                file.writeContent {
                     eolKind = Eol.osSpecified
                     step = 4
 
                     //actual generation
                     file(tl)
-
-                    writer.write(toString())
                 }
             }
         }
@@ -933,7 +954,7 @@ open class Kotlin11Generator(
     }
 
     override fun toString(): String {
-        return "Kotlin11($flowTransform, \"$defaultNamespace\", '${folder.canonicalPath}')"
+        return "Kotlin11($flowTransform, \"$defaultNamespace\", '${canonicalPaths}')"
     }
 
 

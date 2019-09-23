@@ -1,12 +1,6 @@
-package com.jetbrains.rd.generator.test.cases.generator
+package com.jetbrains.rd.generator.test.cases.generator.pci
 
-import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.IMarshaller
-import com.jetbrains.rd.framework.ISerializer
-import com.jetbrains.rd.framework.impl.RdMap
-import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.generator.nova.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
@@ -17,7 +11,8 @@ import java.io.File
 
 class PerClientIdGenTest {
     companion object {
-        val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+        const val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+        val classloader: ClassLoader = PerClientIdGenTest::class.java.classLoader
     }
 
     @Suppress("unused")
@@ -39,12 +34,13 @@ class PerClientIdGenTest {
         }
     }
 
-    val classloader: ClassLoader = PerClientIdGenTest::class.java.classLoader
-
     @Test
     fun test1() {
-        val files = generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator"), true)
-        assert(!files.isEmpty()) { "No files generated, bug?" }
+        val files = generateRdModel(classloader,
+                arrayOf("com.jetbrains.rd.generator.test.cases.generator.pci"),
+                true,
+                clearOutputFolderIfExists = true)
+        assert(files.isNotEmpty()) { "No files generated, bug?" }
 
         val rdgen = RdGen()
 

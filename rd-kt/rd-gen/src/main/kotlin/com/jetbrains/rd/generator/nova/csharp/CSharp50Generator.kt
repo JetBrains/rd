@@ -15,9 +15,10 @@ import java.io.File
 open class CSharp50Generator(
         override val flowTransform: FlowTransform = FlowTransform.AsIs,
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
-        override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir")),
-        val fileName: (Toplevel) -> String = { tl -> tl.name }
-) : GeneratorBase() {
+        folder: File = File(syspropertyOrInvalid("rdgen.cs.dir")),
+        val fileName: (Toplevel) -> String = { tl -> tl.name },
+        multipleFolders : List<File> = emptyList()
+) : GeneratorBase(multipleFolders + folder) {
 
     object Inherits : ISetting<String, Declaration>
     object InheritsAutomation : ISetting<Boolean, Declaration>
@@ -29,10 +30,30 @@ open class CSharp50Generator(
 
     val Declaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
 
+    /**
+     * Exact file name where to store source
+     */
     object FsPath : ISetting<(CSharp50Generator) -> File, Toplevel>
+    object FsPaths : ISetting<(CSharp50Generator) -> List<File>, Toplevel>
 
-    val Toplevel.fsPath: File
-        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${fileName(this)}.Generated.cs")
+    private val Toplevel.predefinedFiles : List<File>
+        get() {
+            val file = getSetting(FsPath)?.invoke(this@CSharp50Generator)
+            val files = getSetting(FsPaths)?.invoke(this@CSharp50Generator)
+            return (files.orEmpty() + file)
+                    .filterNotNull()
+                    .map { f -> f.apply { parentFile.mkdirs() } }
+        }
+
+    val Toplevel.fsPaths: List<File>
+        get() =
+            predefinedFiles.let { fileSettings ->
+                return if (fileSettings.isEmpty()) {
+                    folders.map { File(it, "${fileName(this)}.Generated.cs") }
+                } else {
+                    fileSettings
+                }
+            }
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
 
@@ -313,18 +334,15 @@ open class CSharp50Generator(
     //generation
 
     override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
-
+        prepareGenerationFolders(folders, clearFolderIfExists)
         toplevels.sortedBy { it.name }.forEach { tl ->
-            tl.fsPath.bufferedWriter().use { writer ->
-                PrettyPrinter().apply {
+            tl.fsPaths.forEach { file ->
+                file.writeContent {
                     eolKind = Eol.osSpecified
                     step = 2
 
                     //actual generation
                     file(tl)
-
-                    writer.write(toString())
                 }
             }
         }
@@ -1109,7 +1127,7 @@ open class CSharp50Generator(
     }
 
     override fun toString(): String {
-        return "CSharp50($flowTransform, \"$defaultNamespace\", '${folder.canonicalPath}')"
+        return "CSharp50($flowTransform, \"$defaultNamespace\", '${canonicalPaths}')"
     }
 
 

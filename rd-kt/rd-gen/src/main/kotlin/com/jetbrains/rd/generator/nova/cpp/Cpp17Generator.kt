@@ -35,7 +35,10 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
  * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
-open class Cpp17Generator(override val flowTransform: FlowTransform, val defaultNamespace: String, override val folder: File, val usingPrecompiledHeaders: Boolean = false) : GeneratorBase() {
+open class Cpp17Generator(override val flowTransform: FlowTransform,
+                          val defaultNamespace: String, folder: File,
+                          val usingPrecompiledHeaders: Boolean = false,
+                          multipleFolders: List<File> = emptyList()) : GeneratorBase(multipleFolders + folder) {
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
 
@@ -84,19 +87,46 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     private val Member.Reactive.Stateful.Map.master: Boolean
         get() = owner.getSetting(MasterStateful) ?: this@Cpp17Generator.master
 
+    /**
+     * Directory where to store sources files
+     */
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
+    object FsPaths : ISetting<(Cpp17Generator) -> List<File>, Toplevel>
 
+    /**
+     * Presents target name in terms of C++ build system
+     */
     object TargetName : ISetting<String, Toplevel>
 
     private fun Declaration.fsName(isDefinition: Boolean) =
             "$name.${if (isDefinition) "cpp" else "h"}"
 
-    protected open fun Toplevel.fsPath(): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
-            ?: File(folder, this.name)
+    private val Declaration.predefinedFiles: List<File>
+        get() {
+            val file = getSetting(FsPath)?.invoke(this@Cpp17Generator)
+            val files = getSetting(FsPaths)?.invoke(this@Cpp17Generator)
+            return (files.orEmpty() + file).filterNotNull().map { it.also { it.mkdirs() } }
+        }
+
+    protected open val Toplevel.fsPaths: List<File>
+        get() =
+            predefinedFiles.let { fileSettings ->
+                return if (fileSettings.isEmpty()) {
+                    folders.map { File(it, this.name) }
+                } else {
+                    fileSettings
+                }
+            }
 
 
-    protected open fun Declaration.fsPath(tl: Toplevel, isDefinition: Boolean): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
-            ?: File(tl.fsPath(), fsName(isDefinition))
+    protected open fun Declaration.fsPaths(toplevelFile: File, isDefinition: Boolean): List<File> =
+            predefinedFiles.let { fileSettings ->
+                return if (fileSettings.isEmpty()) {
+                    listOf(File(toplevelFile, fsName(isDefinition)))
+                } else {
+                    fileSettings.map { File(it, fsName(isDefinition)) }
+                }
+            }
 
     private fun Root.targetName(): String {
         return getSetting(TargetName) ?: this.name
@@ -670,24 +700,22 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 */
 
     override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
+        prepareGenerationFolders(folders, clearFolderIfExists)
 
         val allFilePaths = emptyList<String>().toMutableList()
 
         toplevels.sortedBy { it.name }.forEach { tl ->
-            val directory = tl.fsPath()
-            directory.mkdirs()
             val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { !it.isIntrinsic }
             val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
             val marshallerHeaders = tl.getSetting(MarshallerHeaders) ?: listOf()
-//            directory.cmakeLists(tl.name, fileNames)
-            for (type in types) {
-                listOf(false, true).forEach { isDefinition ->
-                    type.fsPath(tl, isDefinition).run {
-                        bufferedWriter().use { writer ->
-                            PrettyPrinter().apply {
+            tl.fsPaths.forEach { file ->
+                file.cmakeLists(root.targetName(), allFilePaths, toplevels)
+                for (type in types) {
+                    listOf(false, true).forEach { isDefinition ->
+                        type.fsPaths(file, isDefinition).forEach {
+                            it.writeContent {
                                 eolKind = Eol.osSpecified
                                 step = 4
 
@@ -698,20 +726,13 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
                                 } else {
                                     header(type, marshallerHeaders)
                                 }
-
-                                writer.write(toString())
                             }
                         }
                     }
                 }
-
             }
-
-
+//            folder.templateInstantiate()
         }
-
-        folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
-//        folder.templateInstantiate()
     }
 
 
@@ -2045,7 +2066,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
 
     override fun toString(): String {
-        return "Cpp17Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath}, usingPrecompiledHeaders=$usingPrecompiledHeaders)"
+        return "Cpp17Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folders=${canonicalPaths}, usingPrecompiledHeaders=$usingPrecompiledHeaders)"
     }
 
     companion object {
