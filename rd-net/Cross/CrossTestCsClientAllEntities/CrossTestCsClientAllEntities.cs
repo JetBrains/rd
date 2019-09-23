@@ -16,6 +16,9 @@ namespace Test.RdCross
 
         private void AdviseAll(Lifetime lifetime, DemoModel model, ExtModel extModel)
         {
+            var (property, array, _, _, _, _, _, _, _, _, _, _, _, _, _) = model;
+            var (checker) = extModel;
+            
             model.Boolean_property.Advise(lifetime,
                 it => { Printer.PrintIfRemoteChange(model.Boolean_property, "Boolean_property", it); });
 
@@ -72,7 +75,8 @@ namespace Test.RdCross
 
             model.Boolean_array.Set(new[] {false, true, false});
 
-            var scalar = new MyScalar(false,
+            var scalar = new MyScalar(
+                false,
                 50,
                 32000,
                 1000000000,
@@ -86,14 +90,18 @@ namespace Test.RdCross
                 MyEnum.net,
                 Flags.anyFlag | Flags.netFlag
             );
+
+            var (_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, unsigned_short, _unsigned_int,
+                _unsigned_long, _my_enum, _flags) = scalar;
+
             model.Scalar.Set(scalar);
 
             model.Set.Add(50);
 
             model.MapLongToString.Add(50, "C#");
 
-            var valA = "C#";
-            var valB = "protocol";
+            const string valA = "C#";
+            const string valB = "protocol";
 
             // var res = model.get_call().sync(L'c');
 
@@ -131,7 +139,8 @@ namespace Test.RdCross
         {
             Assertion.Assert(DemoModel.const_toplevel, "DemoModel.const_toplevel");
             Assertion.Assert(ConstUtil.const_enum == MyEnum.@default, "ConstUtil.const_enum == MyEnum.@default");
-            Assertion.Assert(ConstUtil.const_string == "const_string_value", "ConstUtil.const_string == 'const_string_value'");
+            Assertion.Assert(ConstUtil.const_string == "const_string_value",
+                "ConstUtil.const_string == 'const_string_value'");
             Assertion.Assert(Base.const_base == 'B', "Base.const_base == 'B'");
         }
     }

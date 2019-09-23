@@ -10,14 +10,21 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
+import org.gradle.util.VersionNumber
 import java.io.File
 
 open class CSharp50Generator(
         override val flowTransform: FlowTransform = FlowTransform.AsIs,
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
         override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir")),
-        val fileName: (Toplevel) -> String = { tl -> tl.name }
+        val fileName: (Toplevel) -> String = { tl -> tl.name },
+        override val languageVersion: VersionNumber = `C#4`
 ) : GeneratorBase() {
+    companion object {
+        val `C#4` : VersionNumber = VersionNumber(4, 0, 0, null)
+        val `C#7` : VersionNumber = VersionNumber(7, 0, 0, null)
+        val `C#8` : VersionNumber = VersionNumber(8, 0, 0, null)
+    }
 
     object Inherits : ISetting<String, Declaration>
     object InheritsAutomation : ISetting<Boolean, Declaration>
@@ -459,6 +466,9 @@ open class CSharp50Generator(
             +"//secondary constructor"
             secondaryConstructorTrait(decl)
 
+            +"//deconstruct"
+            deconstructTrait(decl)
+
             +"//statics"
             staticsTrait(decl)
 
@@ -864,6 +874,21 @@ open class CSharp50Generator(
         +") {}"
     }
 
+    private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
+        if (languageVersion >= `C#7`) {
+            if (/*decl is Struct.Concrete && */decl.base == null && decl.allMembers.isNotEmpty()) {
+                val params = decl.ownMembers.joinToString {
+                    "${it.nullAttr(false)}out ${it.implSubstitutedName(decl)} ${sanitize(it.name)}"
+                }
+                +"public void Deconstruct($params)"
+                +"{"
+                indent {
+                    decl.ownMembers.println { "${sanitize(it.name)} = ${it.encapsulatedName};" }
+                }
+                +"}"
+            }
+        }
+    }
     private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
         return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (!isPerClientId || ignorePerClientId)) {
             when (defaultValue) {

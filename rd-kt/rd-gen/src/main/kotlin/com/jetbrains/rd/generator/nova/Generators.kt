@@ -1,7 +1,7 @@
 package com.jetbrains.rd.generator.nova
 
 import java.io.File
-
+import org.gradle.util.VersionNumber
 
 interface IGenerator {
     val flowTransform : FlowTransform
@@ -93,6 +93,8 @@ abstract class GeneratorBase : IGenerator {
     }
 
     protected val master get() = flowTransform != FlowTransform.Reversed
+
+    abstract val languageVersion: VersionNumber
 }
 
 

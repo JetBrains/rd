@@ -10,6 +10,7 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
+import org.gradle.util.VersionNumber
 import java.io.File
 
 fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
@@ -21,8 +22,14 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 open class Kotlin11Generator(
     override val flowTransform: FlowTransform,
     private val defaultNamespace: String,
-    override val folder: File
+    override val folder: File,
+    override val languageVersion: VersionNumber = `Kotlin 1'1`
 ) : GeneratorBase() {
+    companion object {
+        val `Kotlin 1'1` : VersionNumber = VersionNumber(1, 1, 0, null)
+        val `Kotlin 1'2` : VersionNumber = VersionNumber(1, 2, 0, null)
+        val `Kotlin 1'3` : VersionNumber = VersionNumber(1, 3, 0, null)
+    }
 
     //language specific properties
     object Namespace : ISetting<String, Declaration>
