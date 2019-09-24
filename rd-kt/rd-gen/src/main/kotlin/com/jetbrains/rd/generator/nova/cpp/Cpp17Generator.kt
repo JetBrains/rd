@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova.cpp
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
+import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.Features.__cpp_structured_bindings
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
 import com.jetbrains.rd.generator.nova.util.VersionNumber
@@ -44,11 +45,15 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
                           override val languageVersion: VersionNumber = `C++11`
 ) : GeneratorBase() {
     companion object {
-//        private const val INSTANTIATION_FILE_NAME = "instantiations"
-        val `C++11` : VersionNumber = VersionNumber(11, 0, 0)
-        val `C++14` : VersionNumber = VersionNumber(14, 0, 0)
-        val `C++17` : VersionNumber = VersionNumber(17, 0, 0)
-        val `C++20` : VersionNumber = VersionNumber(20, 0, 0)
+        //        private const val INSTANTIATION_FILE_NAME = "instantiations"
+        val `C++11`: VersionNumber = VersionNumber(11, 0, 0)
+        val `C++14`: VersionNumber = VersionNumber(14, 0, 0)
+        val `C++17`: VersionNumber = VersionNumber(17, 0, 0)
+        val `C++20`: VersionNumber = VersionNumber(20, 0, 0)
+
+        object Features {
+            const val `__cpp_structured_bindings` = "__cpp_structured_bindings"
+        }
     }
 
     //region language specific properties
@@ -278,7 +283,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 
     fun IType.substitutedName(scope: Declaration, rawType: Boolean = false, omitNullability: Boolean = false): String = when (this) {
         is Enum -> sanitizedName(scope)
-        is Struct.Concrete -> sanitizedName(scope)
+//        is Struct.Concrete -> sanitizedName(scope)
         is Declaration -> {
             val fullName = sanitizedName(scope)
             if (rawType) {
@@ -869,6 +874,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
                 comment("secondary constructor")
                 declare(secondaryConstructorTraitDecl(decl))
 
+                ifDef(`__cpp_structured_bindings`) {
+                    comment("deconstruct trait")
+                    deconstructTrait(decl)
+                }
+
                 comment("default ctors and dtors")
                 defaultCtorsDtorsDecl(decl)
 
@@ -931,6 +941,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 
         comment("hash code trait")
         hashSpecialization(decl)
+
+        ifDef(`__cpp_structured_bindings`) {
+            comment("tuple trait")
+            tupleSpecialization(decl)
+        }
     }
 
     protected open fun PrettyPrinter.enum(decl: Enum) {
@@ -1229,7 +1244,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
                 is PredefinedType.string -> "rd::wstring_view"
                 else -> it.type.templateName(decl)
             }
-            +"static constexpr $type ${it.name} = $value;"
+            +"static constexpr $type ${it.name}{$value};"
         }
     }
 
@@ -1275,6 +1290,24 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
         val arguments = secondaryCtorParams(decl)
         return Constructor.Secondary(this, decl, arguments)
     }
+
+
+    private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
+        if (shouldGenerateDeconstruct(decl)) {
+            +"template <size_t I>"
+            define(MemberFunction("decltype(auto)", "get()", null).const()) {
+                val n = decl.ownMembers.size
+                val condition = "I < 0 || I >= $n"
+                +"if constexpr ($condition) static_assert ($condition, \"$condition\");"
+                decl.ownMembers.forEachIndexed { index, member ->
+                    +"else if constexpr (I==$index)  return static_cast<const ${member.implTemplateName(decl)}&>(${member.getter()}());"
+                }
+            }
+        }
+    }
+
+    private fun shouldGenerateDeconstruct(decl: Declaration) =
+            (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct)))
 
     fun Declaration.defaultCtor(): Constructor.Default? {
         return if (allMembers.asSequence().filter { !it.hasEmptyConstructor }.toList().isEmpty()) {
@@ -1438,7 +1471,24 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
         }
     }
 
-//endregion
+    private fun PrettyPrinter.tupleSpecialization(decl: Declaration) {
+        if (shouldGenerateDeconstruct(decl)) {
+            val n = decl.ownMembers.size
+            titledBlock("namespace std") {
+                +"template<>"
+                +"class tuple_size<${decl.withNamespace()}> : public integral_constant<size_t, $n> {};"
+                println()
+                +"""
+                    |template<size_t I>
+                    |class std::tuple_element<I, ${decl.withNamespace()}> {
+                    |public:
+                    |    using type = decltype (declval<${decl.withNamespace()}>().get<I>());
+                    |};""".trimMargin()
+            }
+        }
+    }
+
+    //endregion
 
     //region definition
     protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
@@ -2044,7 +2094,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
                 val value = member.value
                 when (member.type) {
                     is PredefinedType.char -> "L'$value'"
-                    is PredefinedType.string -> "L\"$value\""
+                    is PredefinedType.string -> "L\"$value\", ${value.length}"
                     is PredefinedType.long -> "${value}ll"
                     is PredefinedType.uint -> "${value}u"
                     is PredefinedType.ulong -> "${value}ull"
@@ -2058,6 +2108,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
         }
     }
 
+    private fun PrettyPrinter.ifDef(feature: String, printer: PrettyPrinter.() -> Unit) {
+        +"#ifdef $feature"
+        indent(printer)
+        +"#endif"
+    }
 
     override fun toString(): String {
         return "Cpp17Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath}, usingPrecompiledHeaders=$usingPrecompiledHeaders)"
