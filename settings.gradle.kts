@@ -1,5 +1,7 @@
 rootProject.name = "rd"
 
+enableFeaturePreview("GRADLE_METADATA")
+
 // Application agnostic common code (aka utils, shared, common, misc)
 
 include(":rd-core")

@@ -12,6 +12,10 @@ plugins {
     kotlin("jvm")
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     compile(project(":rd-core:"))
     implementation(gradleApi())

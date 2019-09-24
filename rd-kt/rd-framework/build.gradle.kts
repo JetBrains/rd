@@ -1,12 +1,13 @@
 import com.jetbrains.rd.gradle.plugins.applyMultiplatform
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 plugins {
     kotlin("multiplatform")
     java
+}
+
+repositories {
+
 }
 
 applyMultiplatform()
