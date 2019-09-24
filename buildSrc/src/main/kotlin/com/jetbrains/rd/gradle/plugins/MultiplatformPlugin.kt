@@ -84,7 +84,9 @@ open class MultiplatformPlugin : Plugin<Project> {
             val dokka by getting(DokkaTask::class) {
                 outputFormat = "html"
                 outputDirectory = "$buildDir/javadoc"
-//                    kotlinTasks { }
+                kotlinTasks {
+                    emptyList()
+                }
                 sourceDirs = files("src/commonMain/kotlin", "src/jvmMain/kotlin")
             }
 

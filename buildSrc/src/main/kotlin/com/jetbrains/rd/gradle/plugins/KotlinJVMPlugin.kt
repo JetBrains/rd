@@ -9,8 +9,6 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
-import org.gradle.process.internal.JvmOptions
-import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -31,32 +29,37 @@ open class KotlinJVMPlugin : Plugin<Project> {
         }
 
         configure<KotlinJvmProjectExtension> {
-            val sourceJar = tasks.create<Jar>("sourceJar") {
-                from(sourceSets["main"])
+            val sourceJar by tasks.creating(Jar::class) {
+                from(sourceSets["main"].kotlin.sourceDirectories)
                 archiveClassifier.set("sources")
             }
 
             val dokka by tasks.getting(DokkaTask::class) {
                 outputFormat = "html"
                 outputDirectory = "$buildDir/javadoc"
+                kotlinTasks {
+                    emptyList()
+                }
+                sourceDirs = files("src/main/kotlin")
             }
 
-
-            val packageJavadoc = tasks.create<Jar>("packageJavadoc") {
+            val packageJavadoc by tasks.creating(Jar::class) {
                 dependsOn(dokka)
                 from("$buildDir/javadoc")
                 archiveClassifier.set("javadoc")
             }
 
-            tasks.named<KotlinCompile>("compileKotlin") {
-                kotlinOptions {
-                    jvmTarget = "1.8"
+            tasks {
+                named<KotlinCompile>("compileKotlin") {
+                    kotlinOptions {
+                        jvmTarget = "1.8"
+                    }
                 }
-            }
 
-            tasks.named<KotlinCompile>("compileTestKotlin") {
-                kotlinOptions {
-                    jvmTarget = "1.8"
+                named<KotlinCompile>("compileTestKotlin") {
+                    kotlinOptions {
+                        jvmTarget = "1.8"
+                    }
                 }
             }
 
@@ -73,7 +76,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                         artifactId = mvnId
                         version = System.getenv("RELEASE_VERSION_NUMBER") ?: "SNAPSHOT"
 
-                        from(components["java"])
+                        from(components["kotlin"])
 
                         artifact(sourceJar)
                         artifact(packageJavadoc)

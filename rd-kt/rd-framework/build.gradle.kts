@@ -3,7 +3,6 @@ import com.jetbrains.rd.gradle.tasks.CopySourcesTask
 
 plugins {
     kotlin("multiplatform")
-    java
 }
 
 repositories {
