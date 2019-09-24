@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova.csharp
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
+import com.jetbrains.rd.generator.nova.util.VersionNumber
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -10,7 +11,6 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
-import org.gradle.util.VersionNumber
 import java.io.File
 
 open class CSharp50Generator(
@@ -21,9 +21,9 @@ open class CSharp50Generator(
         override val languageVersion: VersionNumber = `C#4`
 ) : GeneratorBase() {
     companion object {
-        val `C#4` : VersionNumber = VersionNumber(4, 0, 0, null)
-        val `C#7` : VersionNumber = VersionNumber(7, 0, 0, null)
-        val `C#8` : VersionNumber = VersionNumber(8, 0, 0, null)
+        val `C#4` : VersionNumber = VersionNumber(4, 0, 0)
+        val `C#7` : VersionNumber = VersionNumber(7, 0, 0)
+        val `C#8` : VersionNumber = VersionNumber(8, 0, 0)
     }
 
     object Inherits : ISetting<String, Declaration>

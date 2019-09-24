@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova.kotlin
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
+import com.jetbrains.rd.generator.nova.util.VersionNumber
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -10,7 +11,7 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
-import org.gradle.util.VersionNumber
+
 import java.io.File
 
 fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
@@ -26,9 +27,9 @@ open class Kotlin11Generator(
     override val languageVersion: VersionNumber = `Kotlin 1'1`
 ) : GeneratorBase() {
     companion object {
-        val `Kotlin 1'1` : VersionNumber = VersionNumber(1, 1, 0, null)
-        val `Kotlin 1'2` : VersionNumber = VersionNumber(1, 2, 0, null)
-        val `Kotlin 1'3` : VersionNumber = VersionNumber(1, 3, 0, null)
+        val `Kotlin 1'1` : VersionNumber = VersionNumber(1, 1, 0)
+        val `Kotlin 1'2` : VersionNumber = VersionNumber(1, 2, 0)
+        val `Kotlin 1'3` : VersionNumber = VersionNumber(1, 3, 0)
     }
 
     //language specific properties
@@ -377,8 +378,6 @@ open class Kotlin11Generator(
             initializerTrait(decl)
             + "//secondary constructor"
             secondaryConstructorTrait(decl)
-            +"//deconstruct trait"
-            deconstructTrait(decl)
             + "//equals trait"
             equalsTrait(decl)
             + "//hash code trait"
@@ -785,16 +784,6 @@ open class Kotlin11Generator(
         }
         + ")"
         println()
-    }
-
-    private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
-        if (decl.hasSetting(AllowDeconstruct)) {
-            if (!decl.isDataClass && decl.base == null && decl.isConcrete) {
-                decl.ownMembers.mapIndexed { index, member ->
-                    +"operator fun component$index() = ${member.encapsulatedName}"
-                }
-            }
-        }
     }
 
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {

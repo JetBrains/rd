@@ -16,9 +16,6 @@ namespace Test.RdCross
 
         private void AdviseAll(Lifetime lifetime, DemoModel model, ExtModel extModel)
         {
-            var (property, array, _, _, _, _, _, _, _, _, _, _, _, _, _) = model;
-            var (checker) = extModel;
-            
             model.Boolean_property.Advise(lifetime,
                 it => { Printer.PrintIfRemoteChange(model.Boolean_property, "Boolean_property", it); });
 
@@ -91,9 +88,9 @@ namespace Test.RdCross
                 Flags.anyFlag | Flags.netFlag
             );
 
-            var (_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, unsigned_short, _unsigned_int,
-                _unsigned_long, _my_enum, _flags) = scalar;
-
+            (var _bool, var _byte, var _short, var _int, var _long, var _float, var _double, var _unsigned_byte, var unsigned_short, var _unsigned_int, var _unsigned_long, var _my_enum, var _flags) = scalar;
+            (var first, var second) = new ComplicatedPair(new Derived("First"), new Derived("Second"));
+            
             model.Scalar.Set(scalar);
 
             model.Set.Add(50);

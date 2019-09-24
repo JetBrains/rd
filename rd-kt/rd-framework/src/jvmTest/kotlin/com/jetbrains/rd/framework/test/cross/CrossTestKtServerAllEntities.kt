@@ -122,6 +122,9 @@
 //                EnumSet.of(Flags.anyFlag, Flags.ktFlag)
 //        )
 //
+//        val (bool, byte, short, int, long, float, double, unsigned_byte, unsigned_short, unsigned_int, unsigned_long, enum, flags) = scalar
+//        val (first, second) = ComplicatedPair(Derived("first"), Derived("second"))
+//
 //        model.scalar.set(scalar)
 //
 //        model.ubyte.set(UByte.MAX_VALUE.minus(13u).toUByte())

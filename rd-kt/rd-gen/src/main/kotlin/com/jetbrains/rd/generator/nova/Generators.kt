@@ -1,7 +1,8 @@
 package com.jetbrains.rd.generator.nova
 
+import com.jetbrains.rd.generator.nova.util.VersionNumber
 import java.io.File
-import org.gradle.util.VersionNumber
+
 
 interface IGenerator {
     val flowTransform : FlowTransform
