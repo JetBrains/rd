@@ -82,6 +82,12 @@ object DemoModel : Ext(DemoRoot) {
         field("string", PredefinedType.string)
     }
 
+    private var complicatedPair = structdef {
+        field("first", Derived)
+        field("second", Derived)
+    }.apply {
+        setting(GeneratorBase.AllowDeconstruct)
+    }
 
     init {
         property("boolean_property", PredefinedType.bool)

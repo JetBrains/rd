@@ -353,7 +353,7 @@ open class Kotlin11Generator(
         }
 
         if (decl.isAbstract) p("abstract ")
-        if (decl is Struct.Concrete && decl.base == null && decl.allMembers.isNotEmpty()) p("data ")
+        if (decl.isDataClass) p("data ")
 
 
         + "class ${decl.name} ${decl.primaryCtorVisibility}("
@@ -377,6 +377,8 @@ open class Kotlin11Generator(
             initializerTrait(decl)
             + "//secondary constructor"
             secondaryConstructorTrait(decl)
+            +"//deconstruct trait"
+            deconstructTrait(decl)
             + "//equals trait"
             equalsTrait(decl)
             + "//hash code trait"
@@ -785,7 +787,15 @@ open class Kotlin11Generator(
         println()
     }
 
-
+    private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
+        if (decl.hasSetting(AllowDeconstruct)) {
+            if (!decl.isDataClass && decl.base == null && decl.isConcrete) {
+                decl.ownMembers.mapIndexed { index, member ->
+                    +"operator fun component$index() = ${member.encapsulatedName}"
+                }
+            }
+        }
+    }
 
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return

@@ -466,7 +466,7 @@ open class CSharp50Generator(
             +"//secondary constructor"
             secondaryConstructorTrait(decl)
 
-            +"//deconstruct"
+            +"//deconstruct trait"
             deconstructTrait(decl)
 
             +"//statics"
@@ -875,20 +875,19 @@ open class CSharp50Generator(
     }
 
     private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
-        if (languageVersion >= `C#7`) {
-            if (/*decl is Struct.Concrete && */decl.base == null && decl.allMembers.isNotEmpty()) {
-                val params = decl.ownMembers.joinToString {
-                    "${it.nullAttr(false)}out ${it.implSubstitutedName(decl)} ${sanitize(it.name)}"
-                }
-                +"public void Deconstruct($params)"
-                +"{"
-                indent {
-                    decl.ownMembers.println { "${sanitize(it.name)} = ${it.encapsulatedName};" }
-                }
-                +"}"
+        if (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct))) {
+            val params = decl.ownMembers.joinToString {
+                "${it.nullAttr(false)}out ${it.implSubstitutedName(decl)} ${sanitize(it.name)}"
             }
+            +"public void Deconstruct($params)"
+            +"{"
+            indent {
+                decl.ownMembers.println { "${sanitize(it.name)} = ${it.encapsulatedName};" }
+            }
+            +"}"
         }
     }
+
     private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
         return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (!isPerClientId || ignorePerClientId)) {
             when (defaultValue) {
