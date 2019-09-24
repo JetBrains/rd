@@ -6,7 +6,6 @@ import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.Features.__cpp_structured_bindings
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
-import com.jetbrains.rd.generator.nova.util.VersionNumber
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -41,18 +40,20 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 open class Cpp17Generator(override val flowTransform: FlowTransform,
                           val defaultNamespace: String,
                           override val folder: File,
-                          val usingPrecompiledHeaders: Boolean = false,
-                          override val languageVersion: VersionNumber = `C++11`
+                          val usingPrecompiledHeaders: Boolean = false
 ) : GeneratorBase() {
+    @Suppress("ObjectPropertyName")
     companion object {
         //        private const val INSTANTIATION_FILE_NAME = "instantiations"
-        val `C++11`: VersionNumber = VersionNumber(11, 0, 0)
-        val `C++14`: VersionNumber = VersionNumber(14, 0, 0)
-        val `C++17`: VersionNumber = VersionNumber(17, 0, 0)
-        val `C++20`: VersionNumber = VersionNumber(20, 0, 0)
+        object LanguageVersion {
+            const val `C++11` = "201103L"
+            const val `C++14` = "201402L"
+            const val `C++17` = "201703L"
+            const val `C++20` = "202000L"
+        }
 
         object Features {
-            const val `__cpp_structured_bindings` = "__cpp_structured_bindings"
+            const val __cpp_structured_bindings = "__cpp_structured_bindings"
         }
     }
 
@@ -874,7 +875,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
                 comment("secondary constructor")
                 declare(secondaryConstructorTraitDecl(decl))
 
-                ifDef(`__cpp_structured_bindings`) {
+                ifDefDirective(__cpp_structured_bindings) {
                     comment("deconstruct trait")
                     deconstructTrait(decl)
                 }
@@ -942,7 +943,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
         comment("hash code trait")
         hashSpecialization(decl)
 
-        ifDef(`__cpp_structured_bindings`) {
+        ifDefDirective(__cpp_structured_bindings) {
             comment("tuple trait")
             tupleSpecialization(decl)
         }
@@ -2108,10 +2109,20 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
         }
     }
 
-    private fun PrettyPrinter.ifDef(feature: String, printer: PrettyPrinter.() -> Unit) {
+    private fun PrettyPrinter.ifDefDirective(feature: String, printer: PrettyPrinter.() -> Unit) {
         +"#ifdef $feature"
         indent(printer)
         +"#endif"
+    }
+
+    private fun PrettyPrinter.ifDirective(feature: String, printer: PrettyPrinter.() -> Unit) {
+        +"#if $feature"
+        indent(printer)
+        +"#endif"
+    }
+
+    private fun PrettyPrinter.ifDefLanguageVersionAtLeast(version: String, printer: PrettyPrinter.() -> Unit) {
+        ifDirective("__cplusplus >= $version", printer)
     }
 
     override fun toString(): String {

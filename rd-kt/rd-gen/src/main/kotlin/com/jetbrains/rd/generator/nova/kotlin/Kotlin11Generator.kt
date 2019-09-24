@@ -24,7 +24,7 @@ open class Kotlin11Generator(
     override val flowTransform: FlowTransform,
     private val defaultNamespace: String,
     override val folder: File,
-    override val languageVersion: VersionNumber = `Kotlin 1'1`
+    val languageVersion: VersionNumber = `Kotlin 1'1`
 ) : GeneratorBase() {
     companion object {
         val `Kotlin 1'1` : VersionNumber = VersionNumber(1, 1, 0)

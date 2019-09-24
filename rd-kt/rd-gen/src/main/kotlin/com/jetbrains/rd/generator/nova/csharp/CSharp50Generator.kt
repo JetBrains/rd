@@ -18,7 +18,7 @@ open class CSharp50Generator(
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
         override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir")),
         val fileName: (Toplevel) -> String = { tl -> tl.name },
-        override val languageVersion: VersionNumber = `C#4`
+        val languageVersion: VersionNumber = `C#4`
 ) : GeneratorBase() {
     companion object {
         val `C#4` : VersionNumber = VersionNumber(4, 0, 0)

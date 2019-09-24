@@ -97,8 +97,6 @@ abstract class GeneratorBase : IGenerator {
 
     protected val master get() = flowTransform != FlowTransform.Reversed
 
-    abstract val languageVersion: VersionNumber
-
     protected val Declaration.isDataClass: Boolean
         get() = this is Struct.Concrete && base == null && allMembers.isNotEmpty()
 }
