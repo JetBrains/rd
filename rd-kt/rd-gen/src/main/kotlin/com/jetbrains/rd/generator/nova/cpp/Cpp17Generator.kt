@@ -5,13 +5,14 @@ import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
+import com.jetbrains.rd.generator.nova.util.VersionNumber
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
-import org.gradle.util.VersionNumber
+
 import java.io.File
 
 
@@ -44,10 +45,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 ) : GeneratorBase() {
     companion object {
 //        private const val INSTANTIATION_FILE_NAME = "instantiations"
-        val `C++11` : VersionNumber = VersionNumber(11, 0, 0, null)
-        val `C++14` : VersionNumber = VersionNumber(14, 0, 0, null)
-        val `C++17` : VersionNumber = VersionNumber(17, 0, 0, null)
-        val `C++20` : VersionNumber = VersionNumber(20, 0, 0, null)
+        val `C++11` : VersionNumber = VersionNumber(11, 0, 0)
+        val `C++14` : VersionNumber = VersionNumber(14, 0, 0)
+        val `C++17` : VersionNumber = VersionNumber(17, 0, 0)
+        val `C++20` : VersionNumber = VersionNumber(20, 0, 0)
     }
 
     //region language specific properties
