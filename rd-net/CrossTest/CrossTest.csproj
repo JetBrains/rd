@@ -14,8 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Lifetimes\Lifetimes.csproj" />
-        <ProjectReference Include="..\..\RdFramework\RdFramework.csproj" />
+        <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
+        <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-      <PackageReference Include="System.ValueTuple" Version="4.5.0" />      
+
     </ItemGroup>
 
 </Project>

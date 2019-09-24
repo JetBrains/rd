@@ -1,4 +1,4 @@
-using demo;
+/*using demo;
 using JetBrains.Rd.Base;
 using Test.RdCross.Util;
 
@@ -39,4 +39,4 @@ namespace Test.RdCross
             After();
         }
     }
-}
+}*/
