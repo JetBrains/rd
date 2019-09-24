@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -8,6 +9,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Serialization;
 using JetBrains.Threading;
+using JetBrains.Util;
 
 namespace JetBrains.Rd.Impl
 {
@@ -91,19 +93,18 @@ namespace JetBrains.Rd.Impl
 
             SendBuffer.Pause(DisconnectedPauseReason);
             
-            Log.CatchAndDrop(socket.Close);
+            CloseSocket(socket);
           }          
         });
       }
 
-      protected void CloseSocket([CanBeNull] Socket socket)
+      internal void CloseSocket([CanBeNull] Socket socket)
       {
         if (socket == null)
         {
           Log.Verbose("{0}: socket is null", Id);
           return;
-        }        
-        
+        }
         
         Log.CatchAndDrop(() => socket.Shutdown(SocketShutdown.Both));
         Log.CatchAndDrop(socket.Close);
@@ -468,7 +469,8 @@ namespace JetBrains.Rd.Impl
         lifetime.OnTermination(() =>
         {
           Log.Verbose("{0}: closing server socket", Id);
-          Log.Catch(() => serverSocket.Close());
+
+          CloseSocket(serverSocket);
         });
       }
 

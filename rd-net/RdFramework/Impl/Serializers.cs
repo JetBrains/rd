@@ -9,6 +9,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
 using JetBrains.Threading;
+using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Impl
 {
@@ -191,30 +192,20 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadULongArray, WriteULongArray, 48);
     }
 
-    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader)
+    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T: unmanaged, Enum
     {
       Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
-      return (T) Enum.ToObject(typeof(T), reader.ReadInt()); //memory traffic
+      return Cast32BitEnum<T>.FromInt(reader.ReadInt());
     }
 
-    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value)
+    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T: unmanaged, Enum
     {
-      Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
-      writer.Write(Convert.ToInt32(value));
+      writer.Write(Cast32BitEnum<T>.ToInt(value));
     }
 
-    public void RegisterEnum<T>() 
+    public void RegisterEnum<T>() where T: unmanaged, Enum
     {
-      var readerParameter = Expression.Parameter(typeof(int), "reader");
-      var readerConvert = Expression.ConvertChecked(readerParameter, typeof(T));
-      var readerCaster = Expression.Lambda<Func<int, T>>(readerConvert, readerParameter).Compile();
-
-      var writerParameter = Expression.Parameter(typeof(T), "writer");
-      var writerConvert = Expression.ConvertChecked(writerParameter, typeof(int));
-      var writerCaster = Expression.Lambda<Func<T, int>>(writerConvert, writerParameter).Compile();
-
-      Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
-      Register((ctx, reader) => readerCaster(reader.ReadInt()), (ctx, w, o) => w.Write(writerCaster(o)));
+      Register(ReadEnum<T>, WriteEnum<T>);
     }
 
     public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, int? predefinedId = null)

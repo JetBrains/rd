@@ -321,7 +321,7 @@ namespace JetBrains.Lifetimes
       Diagnostics(nameof(LifetimeStatus.Terminating));
       //Now status is 'Terminating' and we have to wait for all resource modifications to complete. No mutex acquire is possible beyond this point.
       if (ourMutexSlice[myState]) //optimization
-        SpinWait.SpinUntil(() => !ourMutexSlice[myState]);
+        SpinWaitEx.SpinUntil(() => !ourMutexSlice[myState]);
       
       Destruct();      
       Assertion.Assert(Status == LifetimeStatus.Terminated, "{0}: bad status for termination finish", this);
@@ -898,6 +898,32 @@ namespace JetBrains.Lifetimes
     }
     
 
+    #endregion
+    
+    
+    
+    #region Task API
+
+    [PublicAPI] public void SynchronizeWith<T>([NotNull] TaskCompletionSource<T> taskCompletionSource)
+    {
+      if (taskCompletionSource == null) throw new ArgumentNullException(nameof(taskCompletionSource));
+
+      var task = taskCompletionSource.Task;
+      using (var cookie = UsingExecuteIfAlive(true))
+      {
+        if (!cookie.Succeed)
+          taskCompletionSource.TrySetCanceled();
+        else
+          if (task.IsCompleted)
+            Terminate();
+          else
+          {
+            //lifetime is guaranteed alive and task is probably alive (but race could happen and task already completed).
+            Lifetime.OnTermination(() => taskCompletionSource.TrySetCanceled(/*ToCancellationToken()*/));
+            task.ContinueWith(_ => Terminate(), TaskContinuationOptions.ExecuteSynchronously);
+          }
+      }
+    }
     #endregion
   }
 }

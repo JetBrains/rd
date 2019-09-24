@@ -13,6 +13,10 @@
         <LangVersion>latest</LangVersion>
         
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
+        
+        <Configurations>Debug;Release;CrossTests</Configurations>
+        
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
 
@@ -26,7 +30,7 @@
         <Authors>JetBrains</Authors>
         <Copyright>Copyright © JetBrains 2019</Copyright>
         <PackageTags>rd reactive distributed protocol</PackageTags>
-        <Description>JetBrains Networking library for reactive districuted communication</Description>
+        <Description>JetBrains Networking library for reactive distributed communication</Description>
 
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -36,12 +40,15 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/rd-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>First release</PackageReleaseNotes>
+        <PackageReleaseNotes>Removed all external NuGet dependencies</PackageReleaseNotes>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">

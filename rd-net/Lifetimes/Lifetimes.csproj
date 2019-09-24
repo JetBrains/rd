@@ -13,6 +13,10 @@
         <LangVersion>latest</LangVersion>
         
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
+        
+        <Configurations>Debug;Release;CrossTests</Configurations>
+        
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">
@@ -35,24 +39,21 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>Warmup speedup, included xmldocs, symbols and sources</PackageReleaseNotes>
+        <PackageReleaseNotes>Removed all external NuGet dependencies</PackageReleaseNotes>
+    </PropertyGroup>
+    
+    
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
         <PackageReference Include="AsyncBridge.Net35" Version="0.2.0" />
         <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.5'">
-        <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
-        <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
-        <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
-        <PackageReference Include="System.Reflection" Version="4.3.0" />
     </ItemGroup>
 
 </Project>

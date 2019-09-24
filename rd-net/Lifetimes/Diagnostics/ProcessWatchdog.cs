@@ -1,7 +1,9 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using JetBrains.Interop;
 using JetBrains.Util;
 
 namespace JetBrains.Diagnostics
@@ -10,6 +12,7 @@ namespace JetBrains.Diagnostics
   {
     private static readonly ILog ourLogger = Log.GetLog(nameof(ProcessWatchdog));
     private const int DELAY_BEFORE_RETRY = 1000;
+    private const int ERROR_INVALID_PARAMETER = 87;
 
     public static void StartWatchdogForPidEnvironmentVariable(string envVarName)
     {
@@ -60,7 +63,7 @@ namespace JetBrains.Diagnostics
     }
 
     [DllImport("libc", SetLastError = true)]
-    public static extern int kill(int pid, int sig);
+    private static extern int kill(int pid, int sig);
 
     private static bool ProcessExists(int pid)
     {
@@ -72,12 +75,35 @@ namespace JetBrains.Diagnostics
           return kill(pid, 0) == 0;
         }
 
-        var process = Process.GetProcessById(pid);
-        return !process.HasExited;
+        return ProcessExists_Windows(pid);
       }
-      catch
+      catch (Exception e)
       {
+        ourLogger.Error(e);
         return false;
+      }
+    }
+
+    private static bool ProcessExists_Windows(int pid)
+    {
+      var handle = IntPtr.Zero;
+      try
+      {
+        handle = Kernel32.OpenProcess(ProcessAccessRights.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (handle == IntPtr.Zero)
+        {
+          var errorCode = Marshal.GetLastWin32Error();
+          return errorCode == ERROR_INVALID_PARAMETER ? false : throw new Win32Exception(errorCode); // ERROR_INVALID_PARAMETER means that process doesn't exist
+        }
+
+        return Kernel32.GetExitCodeProcess(handle, out var exitCode)
+          ? exitCode == ProcessExitCode.STILL_ALIVE
+          : throw new Win32Exception();
+      }
+      finally
+      {
+        if (handle != IntPtr.Zero)
+          Kernel32.CloseHandle(handle);
       }
     }
   }

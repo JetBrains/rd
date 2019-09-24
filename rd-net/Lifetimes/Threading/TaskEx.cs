@@ -49,6 +49,13 @@ namespace JetBrains.Threading
         }
 
 
+        /// <summary>
+        /// Get exception 
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="lifetime"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static T GetOrWait<T>([NotNull] this Task<T> task, Lifetime lifetime)
         {
             task.Wait(lifetime);

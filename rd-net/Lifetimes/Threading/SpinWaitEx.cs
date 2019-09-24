@@ -11,7 +11,31 @@ namespace JetBrains.Threading
   /// </summary>
   public static class SpinWaitEx
   {
+    
+    /// <summary>
+    /// Spins while <paramref name="condition"/> is false.     
+    /// </summary>
+    /// <param name="condition">Stops spinning when condition is true</param>
+    [PublicAPI]
+    public static void SpinUntil(Func<bool> condition)
+    {
+      SpinUntil(Lifetime.Eternal, TimeSpan.MaxValue, condition);
+    }
 
+    /// <summary>
+    /// Spins while <paramref name="lifetime"/> is alive and <paramref name="condition"/> is false.     
+    /// </summary>
+    /// <param name="lifetime">Stops spinning and return <c>false</c> when lifetime is no more alive</param>
+    /// <param name="condition">Stops spinning and return <c>false</c> when condition is true</param>
+    /// <returns><c>false</c> if <paramref name="lifetime"/> is not alive or canceled during spinning.
+    /// Otherwise <c>true</c> (when <paramref name="condition"/> returns true)</returns>
+    [PublicAPI]
+    public static bool SpinUntil(Lifetime lifetime, Func<bool> condition)
+    {
+      return SpinUntil(lifetime, TimeSpan.MaxValue, condition);
+    }
+    
+    
     /// <summary>
     /// Spins while <paramref name="lifetime"/> is alive, <paramref name="timeout"/> is not elapsed and <paramref name="condition"/> is false.     
     /// </summary>
@@ -26,6 +50,7 @@ namespace JetBrains.Threading
       return SpinUntil(lifetime, (long)timeout.TotalMilliseconds, condition);
     }
     
+    
     /// <summary>
     /// Spins while <paramref name="lifetime"/> is alive, <paramref name="timeoutMs"/> is not elapsed and <paramref name="condition"/> is false.     
     /// </summary>
@@ -37,7 +62,9 @@ namespace JetBrains.Threading
     [PublicAPI]
     public static bool SpinUntil(Lifetime lifetime, long timeoutMs, Func<bool> condition)
     {
+#if !NET35
       var s = new SpinWait();
+#endif
       var start = Environment.TickCount;
 
       while (true)
@@ -48,10 +75,15 @@ namespace JetBrains.Threading
         if (condition())
           return true;
         
+#if !NET35
         s.SpinOnce();
+#else
+        Thread.Sleep(0);
+#endif
       }      
     }
 
+    
 #if !NET35
     /// <summary>
     /// Spins in ASYNC manner (not consuming thread or CPU resources) while <paramref name="lifetime"/> is alive, <paramref name="timeoutMs"/> is not elapsed and <paramref name="condition"/> is false.

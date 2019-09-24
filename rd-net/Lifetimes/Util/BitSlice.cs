@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -87,9 +89,9 @@ namespace JetBrains.Util.Util
       return new BoolBitSlice(NextSliceLoBit(previousSlice), 1);
     }
     
-    public static EnumBitSlice<T> Enum<T>([CanBeNull] BitSlice previousSlice = null) where T:struct
+    public static Enum32BitSlice<T> Enum<T>([CanBeNull] BitSlice previousSlice = null) where T : unmanaged, Enum
     {
-      return new EnumBitSlice<T>(NextSliceLoBit(previousSlice));
+      return new Enum32BitSlice<T>(NextSliceLoBit(previousSlice));
     }
     
 
@@ -147,34 +149,32 @@ namespace JetBrains.Util.Util
     public override int Updated(int host, bool value) => UpdatedRaw(host, value ? 1 : 0);
   }
   
-  public class EnumBitSlice<T> : BitSlice<T> where T:struct
+  public class Enum32BitSlice<T> : BitSlice<T> where T: unmanaged, Enum
   {
     private static int CalculateBitCount()
     {
-      var type = typeof(T);
-
-      Assertion.Require(type.IsEnum, "Type must be enum, actual type: {0}", type);
-
-      var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(CastTo<long>.ReinterpretFrom).ToList();
+      var values = ((T[]) System.Enum.GetValues(typeof(T))).Select(Cast32BitEnum<T>.ToUInt).ToArray();
       
-      Assertion.Require(values.Count > 0, "Bit slice for enum with no value is meaningless");
-      Assertion.Require(values.All(v => v >= 0), "Enums with negative values or values greater than long.MaxValue are unsupported");
-
-      var count = values.Max() + 1;            
+      Assertion.Require(values.Length > 0, "Bit slice for enum {0} with no values is meaningless", typeof(T));
+      
+      var max = values.Max();
+      Assertion.Require(max <= int.MaxValue, "Values in enum must {0} must be in range [0..int.MaxValue]", typeof(T));
+      
+      var count = max + 1L;            
       var res = BitHacks.Log2Ceil(count);
       if (res == 0) res++; //for enums with one value
 
       return res;
     }
     
-    public EnumBitSlice(int loBit) : base(loBit, CalculateBitCount()){}
+    public Enum32BitSlice(int loBit) : base(loBit, CalculateBitCount()){}
     public override T this[int host]
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      get => CastTo<T>.ReinterpretFrom(GetRaw(host));
+      get => Cast32BitEnum<T>.FromInt(GetRaw(host));
     }
 
-    public override int Updated(int host, T value) => UpdatedRaw(host, CastTo<int>.ReinterpretFrom(value));
+    public override int Updated(int host, T value) => UpdatedRaw(host, Cast32BitEnum<T>.ToInt(value));
   }
 
 }

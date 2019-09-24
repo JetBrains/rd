@@ -107,7 +107,7 @@ namespace Test.Lifetimes.Lifetimes
           lin.Point(0);
           log.Add(1);
 
-          SpinWait.SpinUntil(() => def.Status == LifetimeStatus.Canceling);
+          SpinWaitEx.SpinUntil(() => def.Status == LifetimeStatus.Canceling);
           Assert.False(lt.IsAlive);                    
         });
         
@@ -1048,6 +1048,62 @@ namespace Test.Lifetimes.Lifetimes
       
       Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
+
+    [Test]
+    public void TestCreateTaskCompletionSource()
+    {
+      Assert.True(Lifetime.Terminated.CreateTaskCompletionSource<Unit>().Task.IsCanceled);
+
+      
+      
+      var t = lt.CreateTaskCompletionSource<Unit>().Task;
+      Assert.False(t.IsCompleted);
+      
+      def.Terminate();
+      Assert.True(t.IsCanceled);
+    }
+    
+    
+    
+    [Test]
+    public void TestSynchronizeTaskCompletionSource()
+    {
+      //lifetime terminated
+      var tcs = new TaskCompletionSource<Unit>();
+      Lifetime.Terminated.CreateNested().SynchronizeWith(tcs);
+      Assert.True(tcs.Task.IsCanceled);
+      
+      
+      //tcs completed
+      tcs = new TaskCompletionSource<Unit>();
+      tcs.SetResult(Unit.Instance);
+      
+      Lifetime.Terminated.CreateNested().SynchronizeWith(tcs); //nothing
+      Lifetime.Eternal.CreateNested().SynchronizeWith(tcs); //nothing
+      
+      def.SynchronizeWith(tcs);
+      Assert.True(lt.Status == LifetimeStatus.Terminated);
+      
+      
+      //lifetime terminates first
+      tcs = new TaskCompletionSource<Unit>();
+      var d = new LifetimeDefinition();
+      d.SynchronizeWith(tcs);
+      Assert.True(d.Lifetime.IsAlive);
+      Assert.False(tcs.Task.IsCompleted);
+      
+      d.Terminate();
+      Assert.True(tcs.Task.IsCanceled);
+      
+      //tcs terminates first
+      tcs = new TaskCompletionSource<Unit>();
+      d = new LifetimeDefinition();
+      d.SynchronizeWith(tcs);
+      
+      tcs.SetCanceled();
+      Assert.True(d.Lifetime.Status == LifetimeStatus.Terminated);
+    }
+    
 #endif
   }
 }

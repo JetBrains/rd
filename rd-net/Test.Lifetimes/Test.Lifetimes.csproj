@@ -1,22 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net461;net35</TargetFrameworks>
+        <TargetFrameworks>net461;net35;netcoreapp2.1</TargetFrameworks>
         <DebugType>Full</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
         <LangVersion>latest</LangVersion>
         <RootNamespace>Test.Lifetimes</RootNamespace>
+        <Configurations>Debug;Release;CrossTests</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="nunit" Version="3.11.0" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
     </ItemGroup>
 
     <ItemGroup>

@@ -10,6 +10,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
+using JetBrains.Util;
 using NUnit.Framework;
 using Test.Lifetimes;
 
@@ -262,31 +263,32 @@ namespace Test.RdFramework
         SynchronousScheduler.Instance.SetActive(lifetime);
         var serverProtocol = Server(lifetime, null);
         var clientProtocol = Client(lifetime, serverProtocol);
-        
+
         var sp = new RdSignal<int>().Static(1);
         sp.Bind(lifetime, serverProtocol, Top);
-        
+
         var cp = new RdSignal<int>().Static(1);
         cp.Bind(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
         sp.Advise(lifetime, i => log.Add(i));
-        
+
         cp.Fire(1);
         cp.Fire(2);
         SpinWait.SpinUntil(() => log.Count == 2);
         Assert.AreEqual(new List<int> {1, 2}, log);
-        
-        (clientProtocol.Wire as SocketWire.Base)?.Socket.Close();
+
+        CloseSocket(clientProtocol);
         cp.Fire(3);
         cp.Fire(4);
+
         SpinWait.SpinUntil(() => log.Count == 4);
         Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
-        
-        (serverProtocol.Wire as SocketWire.Base)?.Socket.Close();
+
+        CloseSocket(serverProtocol);
         cp.Fire(5);
         cp.Fire(6);
-        
+
         SpinWait.SpinUntil(() => log.Count == 6);
         Assert.AreEqual(new List<int> {1, 2, 3, 4, 5, 6}, log);
       });
@@ -351,6 +353,12 @@ namespace Test.RdFramework
 
         });
       
+    }
+
+    private static void CloseSocket(IProtocol protocol)
+    {
+      var wireBase = protocol.Wire as SocketWire.Base;
+      wireBase?.CloseSocket(wireBase.Socket);
     }
   }
 }

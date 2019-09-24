@@ -16,6 +16,9 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
         get() = offset.toInt()
         set(value) { offset = value.toLong() }
 
+    val allocated: Int
+        get() = size.toInt()
+
     constructor(initialSize: Long): this() {
         memory = unsafe.allocateMemory(initialSize)
         byteBufferMemoryBase = null
@@ -34,19 +37,23 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
 
     override fun getArray(): ByteArray {
-        return byteBufferMemoryBase?: error("This unsafe buffer is on top of unsage memory")
+        return byteBufferMemoryBase?: error("This unsafe buffer is on top of unsafe memory")
     }
 
     private fun requireAvailable(moreSize: Long) {
         if (offset + moreSize > size) {
             val newSize = Math.max(size * 2, offset + moreSize)
-            if (byteBufferMemoryBase == null) {
-                memory = unsafe.reallocateMemory(memory, newSize)
-            } else {
-                byteBufferMemoryBase = Arrays.copyOf(byteBufferMemoryBase, newSize.toInt())
-            }
-            size = newSize
+            reallocateMemory(newSize)
         }
+    }
+
+    private fun reallocateMemory(newSize: Long) {
+        if (byteBufferMemoryBase == null) {
+            memory = unsafe.reallocateMemory(memory, newSize)
+        } else {
+            byteBufferMemoryBase = Arrays.copyOf(byteBufferMemoryBase, newSize.toInt())
+        }
+        size = newSize
     }
 
     @Suppress("unused")
@@ -173,8 +180,11 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
 
 
 
-    fun rewind() {
+    override fun reset() {
         offset = 0
+        if (size > maximumSizeBeforeShrink) {
+            reallocateMemory(maximumSizeBeforeShrink.toLong())
+        }
     }
 
     override fun close() {
@@ -192,6 +202,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
 
     companion object {
         private val unsafe: Unsafe
+        private const val maximumSizeBeforeShrink = 1024 * 1024 // 1M
 
         init {
             val field = Unsafe::class.java.getDeclaredField("theUnsafe")

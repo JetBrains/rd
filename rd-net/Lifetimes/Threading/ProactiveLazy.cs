@@ -24,7 +24,6 @@ namespace JetBrains.Threading
         [PublicAPI]
         public T GetOrWait(Lifetime lifetime) => myTask.GetOrWait(lifetime);
 
-
         [PublicAPI] public TaskAwaiter<T> GetAwaiter() => myTask.GetAwaiter();
 
         [PublicAPI] public Task<T> AsTask() => myTask;
