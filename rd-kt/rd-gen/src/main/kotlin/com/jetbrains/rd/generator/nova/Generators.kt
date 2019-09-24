@@ -44,6 +44,8 @@ class GeneratorException (msg: String) : RuntimeException(msg)
  * Base class for generators to deduplicate common logic
  */
 abstract class GeneratorBase : IGenerator {
+    object AllowDeconstruct: ISetting<Unit, Declaration>
+
     protected fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
 
 
@@ -95,6 +97,9 @@ abstract class GeneratorBase : IGenerator {
     protected val master get() = flowTransform != FlowTransform.Reversed
 
     abstract val languageVersion: VersionNumber
+
+    protected val Declaration.isDataClass: Boolean
+        get() = this is Struct.Concrete && base == null && allMembers.isNotEmpty()
 }
 
 
