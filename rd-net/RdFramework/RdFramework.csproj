@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard1.5;net35;net461</TargetFrameworks>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>JetBrains.Rd</RootNamespace>
         <PackageId>JetBrains.RdFramework</PackageId>
         <AssemblyName>JetBrains.RdFramework</AssemblyName>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
