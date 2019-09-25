@@ -1,13 +1,16 @@
 using System;
+using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
+using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 using Test.Lifetimes;
 using Test.RdFramework.Components;
+using Test.RdFramework.Reflection;
 
 namespace Test.RdFramework
 { 
@@ -26,18 +29,25 @@ namespace Test.RdFramework
       
       var identities = new Identities(IdKind.Server);
 
-      var dispatcher = SynchronousScheduler.Instance;
-      dispatcher.SetActive(LifetimeDefinition.Lifetime);
+      var serverDispatcher = CreateScheduler(true);
+      var clientDispatcher = CreateScheduler(false);
       var serverR = "Server (R#)";
-      ServerProtocol = new Protocol(serverR, CreateSerializers(true), identities, dispatcher, new TestWire(dispatcher, serverR, true), LifetimeDefinition.Lifetime);
+      ServerProtocol = new Protocol(serverR, CreateSerializers(true), identities, serverDispatcher, new TestWire(serverDispatcher, serverR, true), LifetimeDefinition.Lifetime);
       var clientIdea = "Client (IDEA)";
-      ClientProtocol = new Protocol(clientIdea, CreateSerializers(false), identities, dispatcher, new TestWire(dispatcher, clientIdea, false), LifetimeDefinition.Lifetime);
+      ClientProtocol = new Protocol(clientIdea, CreateSerializers(false), identities, clientDispatcher, new TestWire(clientDispatcher, clientIdea, false), LifetimeDefinition.Lifetime);
 
       ServerWire = (ServerProtocol.Wire as TestWire).NotNull();
       ClientWire = (ClientProtocol.Wire as TestWire).NotNull();
 
       ServerWire.Connection = ClientWire;
       ClientWire.Connection = ServerWire;
+    }
+
+    protected virtual IScheduler CreateScheduler(bool isServer)
+    {
+      var dispatcher = SynchronousScheduler.Instance;
+      dispatcher.SetActive(LifetimeDefinition.Lifetime);
+      return dispatcher;
     }
 
     protected virtual Serializers CreateSerializers(bool isServer)

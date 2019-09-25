@@ -22,12 +22,28 @@ namespace JetBrains.Rd.Reflection
   [BaseTypeRequired(typeof(RdReflectionBindableBase))]
   public class RdExtAttribute : Attribute { }
 
+  /// <summary>
+  /// Mark implementing interface of RdExt by this attribute to indicate intent to use this interface for proxy generation
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Interface), MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
+  public class RdRpcAttribute : Attribute { }
+
   [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
   [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
+  // [BaseTypeRequired(typeof(RdBindableBase))] // todo: should RdModel only exits for live models?
   public class RdModelAttribute : Attribute { }
 
   [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
   public class RdAsyncAttribute : Attribute { }
+
+  /// <summary>
+  /// Marker interface for proxy types.
+  /// Used to distinguish between proxy-implemented methods, for which we should only initialize RdCall fields and other reactive properties
+  /// and real methods in types, for which we should Bind appropriate RdEndpoint.
+  /// </summary>
+  public interface IProxyTypeMarker
+  {
+  }
 
   /// <summary>
   /// Creates and provides access to Reflection-generated serializers for Rd, thread safe
@@ -128,18 +144,39 @@ namespace JetBrains.Rd.Reflection
       return serializerPair;
     }
 
+    public static Type GetRpcInterface(TypeInfo typeInfo)
+    {
+      foreach (var @interface in typeInfo.GetInterfaces())
+        if (@interface.IsDefined(typeof(RdRpcAttribute), false))
+          return @interface;
+
+      return null;
+    }
+
     [NotNull]
     internal static MemberInfo[] GetBindableMembers(TypeInfo typeInfo)
     {
       ReflectionSerializerVerifier.AssertEitherExtModelAttribute(typeInfo);
 
-      var list = new List<MemberInfo>();
-      foreach (var mi in typeInfo.GetMembers(BindingFlags.Public | BindingFlags.Instance))
+/*
+      var rpcInterface = GetRpcInterface();
+      if (rpcInterface != null)
       {
-        if ((mi.MemberType == MemberTypes.Property && ReflectionUtil.TryGetSetter(mi) != null) ||
-            mi.MemberType == MemberTypes.Field)
+        var rpcInterfaceMap = typeInfo.GetInterfaceMap(rpcInterface);
+        //members = rpcInterfaceMap.TargetMethods;
+      }
+*/
+
+      IEnumerable<MemberInfo> members;
+      members = typeInfo.GetMembers(BindingFlags.Public | BindingFlags.Instance);
+
+      var list = new List<MemberInfo>();
+      foreach (var mi in members)
+      {
+        if (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(typeof(RdReflectionBindableBase)))
         {
-          if (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(typeof(RdReflectionBindableBase)))
+          if ((mi.MemberType == MemberTypes.Property && ReflectionUtil.TryGetSetter(mi) != null) ||
+              mi.MemberType == MemberTypes.Field)
           {
             list.Add(mi);
           }

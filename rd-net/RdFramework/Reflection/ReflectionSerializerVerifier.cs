@@ -42,6 +42,7 @@ namespace JetBrains.Rd.Reflection
      RdSet      ::= RdSet[INonNullableScalar]
      RdMap      ::= RdMap[INonNullableScalar, INonNullable]
      RdCall     ::= RdCall[IScalar, IScalar]
+     RdSignal   ::= RdSignal[IScalar]
 
      // C# declarations, [ and ] mean &lt; &gt;.
      FieldDeclaration[T] ::= C#(public readonly? T identifier)
@@ -54,7 +55,7 @@ namespace JetBrains.Rd.Reflection
      // Not supported. No RdGenerator analogue.
      // StructDeclaration ::= C#(struct field* )
 
-     Member ::= RdProperty| RdList| RdSet| RdMap | RdModel | RdCall
+     Member ::= RdSignal | RdProperty| RdList | RdSet | RdMap | RdModel | RdCall
      Declaration ::= BindableDeclaration | Struct | Enum | RdExtDeclaration
      BindableDeclaration ::= TopLevel | Class
 
@@ -153,7 +154,7 @@ namespace JetBrains.Rd.Reflection
                genericDefinition == typeof(RdList<>) ||
                genericDefinition == typeof(RdSet<>) ||
                genericDefinition == typeof(RdMap<,>) ||
-               (genericDefinition == typeof(InprocRpc<,>) && IsScalar(arguments[0]) && IsScalar(arguments[1])) ||
+               (genericDefinition == typeof(RdCall<,>) && IsScalar(arguments[0]) && IsScalar(arguments[1])) ||
                IsFromRdProperty(typeInfo); // hack to support UProperty in RdExt
 
         bool IsFromRdProperty(TypeInfo tInfo)
@@ -326,7 +327,7 @@ namespace JetBrains.Rd.Reflection
 
       if (genericDefinition == typeof(IViewableMap<,>)) return typeof(RdMap<,>).MakeGenericType(typeInfo.GetGenericArguments());
 
-      if (genericDefinition == typeof(IRdCall<,>)) return typeof(InprocRpc<,>).MakeGenericType(typeInfo.GetGenericArguments());
+      if (genericDefinition == typeof(IRdCall<,>)) return typeof(RdCall<,>).MakeGenericType(typeInfo.GetGenericArguments());
 
       return typeInfo.AsType();
     }

@@ -62,6 +62,7 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     public virtual void OnActivated()
     {
+      EnsureBindableChildren();
     }
 
     protected override void InitBindableFields(Lifetime lifetime)
@@ -74,22 +75,6 @@ namespace JetBrains.Rd.Reflection
     {
       EnsureBindableChildren();
       base.Identify(identities, id);
-    }
-
-    public void BindCall<TReq, TRes>(IRdCall<TReq, TRes> call, Func<TReq, TRes> handler)
-    {
-      EnsureBindableChildren();
-      // todo: support for real protocol
-      var inProcRpc = (call as InprocRpc<TReq, TRes>).NotNull(nameof(call) + " != null");
-      inProcRpc.SetHandler(handler);
-    }
-
-    public void BindCall<TReq, TRes>(IRdCall<TReq, TRes> call, Func<Lifetime, TReq, RdTask<TRes>> handler)
-    {
-      EnsureBindableChildren();
-      // todo: support for real protocol
-      var inProcRpc = (call as InprocRpc<TReq, TRes>).NotNull(nameof(call) + " != null");
-      inProcRpc.SetHandler(handler);
     }
 
     public override string ToString()
