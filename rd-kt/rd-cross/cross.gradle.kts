@@ -1,101 +1,100 @@
+/*
+@file:Suppress("LocalVariableName", "UNUSED_VARIABLE")
+
 import com.jetbrains.rd.gradle.tasks.CrossTestKtRdTask
 import com.jetbrains.rd.gradle.tasks.InteropTask
 
+plugins {
+    kotlin("jvm")
+}
+
 dependencies {
-//    testCompileOnly files { project(":rd-framework:").sourceSets.test.kotlin.srcDirs }
-//    compile project(":rd-framework:").sourceSets.test.output
-    compile(project(":rd-framework:"))
+    compile(project(":rd-framework"))
+    implementation(project(":rd-cpp"))
+    implementation(project(":rd-net"))
     implementation(gradleApi())
 }
 
-/*
-def getCppTaskByName(String name) {
-    return project(":rd-cpp").getTasksByName(name, true).iterator().next()
-}
-*/
-
-/*fun getCsTaskByName(name : String): Task {
-    return project(":rd-net").getTasksByName(name, true).iterator().next()
-}*/
-
-//region Kt
-/*task CrossTestKtServerAllEntities(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(":rd-framework:jvmTestClasses")) {
-    classpath += project.sourceSets.test.runtimeClasspath
-    classpath += project.sourceSets.test.compileClasspath
+fun getCppTaskByName(name: String): Task {
+    return project(":rd-cpp").tasks.getByName(name)
 }
 
-task CrossTestKtServerBigBuffer(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(":rd-framework:jvmTestClasses")) {
-    classpath += project.sourceSets.test.runtimeClasspath
-    classpath += project.sourceSets.test.compileClasspath
+fun getCsTaskByName(name: String): Task {
+    return project(":rd-net").tasks.getByName(name)
 }
 
-task CrossTestKtServerRdCall(type: CrossTestKtRdCall, dependsOn: tasks.getByPath(":rd-framework:jvmTestClasses")) {
-    classpath += project.sourceSets.test.runtimeClasspath
-    classpath += project.sourceSets.test.compileClasspath
-}*/
+tasks {
+    //region Kt
+
+    fun CrossTestKtRdTask.initialize() {
+        dependsOn(":rd-framework:jvmTestClasses")
+        classpath += project.sourceSets.test.get().runtimeClasspath
+        classpath += project.sourceSets.test.get().compileClasspath
+    }
+
+    val CrossTestKtServerAllEntities by creating(CrossTestKtRdTask::class) {
+        initialize()
+    }
+
+    val CrossTestKtServerBigBuffer by creating(CrossTestKtRdTask::class) {
+        dependsOn(":rd-framework:jvmTestClasses")
+        classpath += project.sourceSets.test.get().runtimeClasspath
+        classpath += project.sourceSets.test.get().compileClasspath
+    }
+
+    val CrossTestKtServerRdCall by creating(CrossTestKtRdTask::class) {
+        dependsOn(":rd-framework:jvmTestClasses")
+        classpath += project.sourceSets.test.get().runtimeClasspath
+        classpath += project.sourceSets.test.get().compileClasspath
+    }
 //endregion
 
 //region KtCpp
-/*task CrossTestKtCppAllEntities(type: InteropTask) {
-    taskServer = CrossTestKtServerAllEntities
-    taskClient = getCppTaskByName("CrossTestCppClientAllEntities")
+    val CrossTestKtCppAllEntities by creating(InteropTask::class) {
+        taskServer = CrossTestKtServerAllEntities
+        taskClient = getCppTaskByName("CrossTestCppClientAllEntities")
 
-    addDependencies()
-}
+        addDependencies()
+    }
 
-task CrossTestKtCppBigBuffer(type: InteropTask) {
-    taskServer = CrossTestKtServerBigBuffer
-    taskClient = getCppTaskByName("CrossTestCppClientBigBuffer")
+    val CrossTestKtCppBigBuffer by creating(InteropTask::class) {
+        taskServer = CrossTestKtServerBigBuffer
+        taskClient = getCppTaskByName("CrossTestCppClientBigBuffer")
 
-    addDependencies()
-}
+        addDependencies()
+    }
 
-task CrossTestKtCppRdCall(type: InteropTask) {
-    taskServer = CrossTestKtServerRdCall
-    taskClient = getCppTaskByName("CrossTestCppClientRdCall")
-    
-    addDependencies()
-}*/
+    val CrossTestKtCppRdCall by creating(InteropTask::class) {
+        taskServer = CrossTestKtServerRdCall
+        taskClient = getCppTaskByName("CrossTestCppClientRdCall")
+
+        addDependencies()
+    }
 //endregion
 
 //region KtCs
-/*task CrossTestKtCsAllEntities(type: InteropTask) {
-    taskServer = CrossTestKtServerAllEntities
-    taskClient = getCsTaskByName("CrossTestCsClientAllEntities")
+    val CrossTestKtCsAllEntities by creating(InteropTask::class) {
+        taskServer = CrossTestKtServerAllEntities
+        taskClient = getCsTaskByName("CrossTestCsClientAllEntities")
 
-    addDependencies()
-}
-
-task CrossTestKtCsBigBuffer(type: InteropTask) {
-    taskServer = CrossTestKtServerBigBuffer
-    taskClient = getCsTaskByName("CrossTestCsClientBigBuffer")
-
-    addDependencies()
-}
-
-task CrossTestKtCsRdCall(type: InteropTask) {
-    taskServer = CrossTestKtServerRdCall
-    taskClient = getCsTaskByName("CrossTestCsClientRdCall")
-
-    addDependencies()
-}*/
-//endregion
-
-//val interopTasks = listOf(/*CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCppRdCall,*/
-//                    CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer, CrossTestKtCsRdCall)
-
-//task crossTest() {
-//    dependsOn interopTasks
-//}
-
-/*interopTasks.each { t ->
-    task "${t.name}Run"(type: Test) {
-        dependsOn t
-
-        useJUnit()
-        testNameIncludePatterns = ["*${t.name}*".toString()]
+        addDependencies()
     }
 
-    crossTest.dependsOn "${t.name}Run"
-}*/
+    val CrossTestKtCsBigBuffer by creating(InteropTask::class) {
+        taskServer = CrossTestKtServerBigBuffer
+        taskClient = getCsTaskByName("CrossTestCsClientBigBuffer")
 
+        addDependencies()
+    }
+
+    val CrossTestKtCsRdCall by creating(InteropTask::class) {
+        taskServer = CrossTestKtServerRdCall
+        taskClient = getCsTaskByName("CrossTestCsClientRdCall")
+
+        addDependencies()
+    }
+//endregion
+
+    val interopTasks = listOf(CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCppRdCall,
+            CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer, CrossTestKtCsRdCall)
+}*/

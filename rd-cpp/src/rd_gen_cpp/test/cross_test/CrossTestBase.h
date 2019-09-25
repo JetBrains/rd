@@ -40,10 +40,11 @@ namespace rd {
 		public:
 			CrossTestBase();
 
-			int main(int argc, char **argv, const std::string& test_name) {
+			int main(int argc, char **argv, const std::string &test_name) {
 				--argc;
 				if (argc != 1) {
-					std::cerr << "Wrong number of arguments for " << test_name << ":" << argc;
+					std::cerr << "Wrong number of arguments for " << test_name << ":" << argc << ", expected = 1. "
+																								 "main([\"CrossTestClientAllEntities\"]) for example.)";
 					exit(1);
 				}
 				const auto output_file = std::string(argv[1]);

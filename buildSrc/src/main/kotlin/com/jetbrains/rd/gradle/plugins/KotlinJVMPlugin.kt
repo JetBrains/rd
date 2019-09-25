@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun Project.applyKotlinJVM() = apply<KotlinJVMPlugin>()
 
+@Suppress("UNUSED_VARIABLE")
 open class KotlinJVMPlugin : Plugin<Project> {
     override fun apply(target: Project) = target.run {
         apply(plugin = "java")

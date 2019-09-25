@@ -150,8 +150,6 @@ namespace rd {
 			auto valA = L"Cpp";
 			auto valB = L"protocol";
 
-			// auto res = model.get_call().sync(L'c');
-
 			model.get_interned_string().set(valA);
 			model.get_interned_string().set(valA);
 			model.get_interned_string().set(valB);

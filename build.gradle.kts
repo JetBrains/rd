@@ -3,7 +3,13 @@ import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 version = System.getenv("RELEASE_VERSION_NUMBER") ?: "SNAPSHOT"
 
 buildscript {
-
+    project.extra.apply {
+        val repoRoot = rootProject.projectDir
+        set("repoRoot", repoRoot)
+        set("cppRoot", File(repoRoot, "rd-cpp"))
+        set("ktRoot", File(repoRoot, "rd-kt"))
+        set("csRoot", File(repoRoot, "rd-net"))
+    }
 }
 
 repositories {

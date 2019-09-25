@@ -35,8 +35,8 @@ abstract class CrossTestKtBase {
         get() = (this as? RdReactiveBase)?.isLocalChange == true
 
     protected fun before(args: Array<String>) {
-        if (args.size != 1) {
-            throw IllegalArgumentException("Wrong number of arguments for $testName:${args.size}")
+        check(args.size == 1) {
+            "Wrong number of arguments for $testName:${args.size}, expected 1. main([\"CrossTestKtServerAllEntities\"]) for example.")
         }
         val outputFileName = args[0]
         outputFile = File(outputFileName)

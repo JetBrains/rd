@@ -9,7 +9,8 @@ namespace Test.RdCross
         {
             if (args.Length < 1)
             {
-                throw new ArgumentException($"Wrong number of arguments:${args.Length}");
+                throw new ArgumentException($"Wrong number of arguments:${args.Length}, expected = 1." +
+                                            $"Main([\"CrossTestCsClientAllEntities\"]) for example.)");
             }
             var type = Type.GetType($"Test.RdCross.{args[0]}") ??
                        throw new ArgumentException($"Wrong class name={args[0]})");
@@ -19,7 +20,7 @@ namespace Test.RdCross
             }
             else
             {
-                throw new ArgumentException(" ");
+                throw new ArgumentException($"{type} is not an inheritor of CrossTestCsBase");
             }
         }
     }

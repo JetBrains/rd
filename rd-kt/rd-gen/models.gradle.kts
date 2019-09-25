@@ -1,7 +1,7 @@
-val repoRoot: File = parent!!.projectDir
-val cppRoot = repoRoot.resolve( "rd-cpp")
-val ktRoot = repoRoot.resolve( "rd-kt")
-val csRoot = repoRoot.resolve( "rd-net")
+val repoRoot: File by rootProject.extra.properties
+val cppRoot : File by rootProject.extra.properties
+val ktRoot : File by rootProject.extra.properties
+val csRoot : File by rootProject.extra.properties
 
 val BUILD_DIR = parent!!.buildDir
 

@@ -91,8 +91,6 @@ namespace Test.RdCross
             var valA = "C#";
             var valB = "protocol";
 
-            // var res = model.get_call().sync(L'c');
-
             model.Interned_string.Set(valA);
             model.Interned_string.Set(valA);
             model.Interned_string.Set(valB);

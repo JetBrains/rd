@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 
 fun Project.applyKotlinJS() = apply<KotlinJSPlugin>()
 
+@Suppress("UNUSED_VARIABLE")
 class KotlinJSPlugin : Plugin<Project> {
     override fun apply(target: Project) = target.run {
         apply(plugin = "kotlin-platform-js")

@@ -68,15 +68,6 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
             printer.printIfRemoteChange(model.mapLongToString, "mapLongToString", it)
         }
 
-/*
-    model.call.set { c ->
-        printer.print("RdTask:")
-        c.print(printer)
-
-        c.toUpperCase().toString()
-    }
-*/
-
         model.interned_string.advise(lifetime) {
             printer.printIfRemoteChange(model.interned_string, "interned_string", it)
         }
