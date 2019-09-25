@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
+using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Util;
-
 #if NET35
 using TypeInfo = System.Type;
 #endif
@@ -19,7 +22,6 @@ namespace JetBrains.Rd.Reflection
 {
   /// <summary>
 	/// To get maximal performance of  Rd framework you should directly provide serializers to every Model and Property.
-	/// Also, to maintain compability with Kotlin DSL you should not add any additional logic to your models.
 	///
 	/// Creating models by hand with this approach is tedious and error-prone.  The main idea behind <see
 	/// cref="ReflectionRdActivator" /> is to automatically create RdExt and initialize fields and properties with
@@ -29,7 +31,17 @@ namespace JetBrains.Rd.Reflection
   public class ReflectionRdActivator
   {
     [NotNull] private readonly ReflectionSerializers mySerializers;
+    [NotNull] private readonly ProxyGenerator myProxyGenerator;
     [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicTypesCatalog;
+
+    [NotNull]
+    public ReflectionSerializers Serializers => mySerializers;
+
+    [NotNull]
+    public ProxyGenerator Generator => myProxyGenerator;
+
+    [CanBeNull]
+    public IPolymorphicTypesCatalog TypesCatalog => myPolymorphicTypesCatalog;
 
 #if JET_MODE_ASSERT
     /// <summary>
@@ -41,10 +53,16 @@ namespace JetBrains.Rd.Reflection
     private static Queue<Type> myCurrentActivationChain;
 #endif
 
-    public ReflectionRdActivator(ReflectionSerializers serializers, [CanBeNull] IPolymorphicTypesCatalog polymorphicTypesCatalog)
+    public ReflectionRdActivator([NotNull] ReflectionSerializers serializers, [CanBeNull] IPolymorphicTypesCatalog polymorphicTypesCatalog) 
+      : this(serializers, new ProxyGenerator(), polymorphicTypesCatalog)
+    {
+    }
+
+    public ReflectionRdActivator([NotNull] ReflectionSerializers serializers, [NotNull] ProxyGenerator proxyGenerator, [CanBeNull] IPolymorphicTypesCatalog polymorphicTypesCatalog)
     {
       mySerializers = serializers;
       myPolymorphicTypesCatalog = polymorphicTypesCatalog;
+      myProxyGenerator = proxyGenerator;
     }
 
     /// <summary>
@@ -63,6 +81,24 @@ namespace JetBrains.Rd.Reflection
 
       return instance;
     }
+
+    /// <summary>
+    /// Create and bind class with <see cref="RdExtAttribute"/>
+    /// </summary>
+    /// <returns></returns>
+    [NotNull, PublicAPI]
+    public RdBindableBase ActivateBind(Type type, Lifetime lifetime, [NotNull] IProtocol protocol)
+    {
+      var instance = ActivateRdExt(type);
+
+      var typename = type.Name;
+      var bindable = (RdBindableBase) instance;
+      bindable.Identify(protocol.Identities, RdId.Root.Mix(typename));
+      bindable.Bind(lifetime, protocol, typename);
+
+      return bindable;
+    }
+
 
     /// <summary>
     /// Create and initialize RdModel root and its members (including nested RdModels)
@@ -123,7 +159,48 @@ namespace JetBrains.Rd.Reflection
           memberSetter(instance, currentValue);
         }
       }
-#if JET_MODE_ASSERT
+
+      // Add RdEndpoint for Impl class (counterpart of Proxy)
+      var interfaces = implementingTypeInfo.GetInterfaces();
+      bool isProxy = interfaces.Contains(typeof(IProxyTypeMarker));
+      var rpcInterface = ReflectionSerializers.GetRpcInterface(typeInfo);
+      if (!isProxy && rpcInterface != null)
+      {
+        var fieldInfo = implementingTypeInfo.GetField("BindableChildren", BindingFlags.Instance | BindingFlags.NonPublic).NotNull("BindableChildren not found");
+        var bindableChildren = (List<KeyValuePair<string, object>>) fieldInfo.GetValue(instance);
+
+        var implementingMethods = typeInfo.GetInterfaceMap(rpcInterface).TargetMethods;
+        var adapters = myProxyGenerator.CreateAdapter(implementingType, implementingMethods);
+
+        for (var i = 0; i < implementingMethods.Length; i++)
+        {
+          var implMethod = implementingMethods[i];
+          var name = implMethod.Name + "_proxy";
+          var requestType = ProxyGenerator.GetRequstType(implMethod)[0];
+          var responseNonTaskType = ProxyGenerator.GetResponseType(implMethod, unwrapTask: true);
+          var endPointType = typeof(RdEndpoint<,>).MakeGenericType(requestType, responseNonTaskType);
+          var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
+
+          if (ProxyGenerator.IsSync(implMethod))
+          {
+            var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(RdTask<>).MakeGenericType(responseNonTaskType));
+            var @delegate = adapters[i].CreateDelegate(delType, instance);
+            var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandler)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
+            methodInfo.Invoke(null, new[] {endpoint, @delegate});
+          }
+          else
+          {
+            var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(Task<>).MakeGenericType(responseNonTaskType));
+            var @delegate = adapters[i].CreateDelegate(delType, instance);
+            var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandlerTask)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
+            methodInfo.Invoke(null, new[] {endpoint, @delegate});
+          }
+
+          bindableChildren.Add(new KeyValuePair<string, object>(name, endpoint));
+        }
+      }
+
+      #if JET_MODE_ASSERT
       myCurrentActivationChain.Dequeue();
 #endif
       // Allow initialize to setup bindings to composite properties.
@@ -135,6 +212,22 @@ namespace JetBrains.Rd.Reflection
       return instance;
     }
 
+    /// <summary>
+    ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
+    /// </summary>
+    public static void SetHandlerTask<TReq, TRes>(RdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
+    {
+      endpoint.Set(handler);
+    }
+
+    /// <summary>
+    ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
+    /// </summary>
+    public static void SetHandler<TReq, TRes>(RdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, RdTask<TRes>> handler)
+    {
+      endpoint.Set(handler);
+    }
+    
     private object ActivateRdExtMember(MemberInfo mi)
     {
       var returnType = ReflectionUtil.GetReturnType(mi);
@@ -198,10 +291,14 @@ namespace JetBrains.Rd.Reflection
 
       if (genericDefinition == typeof(RdProperty<>) ||
           genericDefinition == typeof(RdSignal<>) ||
-          genericDefinition == typeof(RdList<>) ||
           genericDefinition == typeof(RdSet<>))
       {
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer);
+      }
+
+      if (genericDefinition == typeof(RdList<>))
+      {
+        return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
       }
 
       if (genericDefinition == typeof(RdMap<,>))
@@ -211,7 +308,7 @@ namespace JetBrains.Rd.Reflection
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
       }
 
-      if (genericDefinition == typeof(InprocRpc<,>))
+      if (genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdEndpoint<,>) || genericDefinition == typeof(RdCall<,>))
       {
         var rpcResultType = genericArguments[1];
         GetProperSerializer(rpcResultType);

@@ -8,6 +8,7 @@ namespace Test.RdFramework.Components
 {
   public class TestWire : WireBase
   {
+    private readonly IScheduler myScheduler;
     private readonly string myName;
     private readonly bool myIsMaster;
     private readonly Queue<Message> myOutgoingMessages;
@@ -16,6 +17,7 @@ namespace Test.RdFramework.Components
 
     public TestWire(IScheduler scheduler, string name, bool isMaster) : base(scheduler)
     {
+      myScheduler = scheduler;
       myName = name;
       myIsMaster = isMaster;
       myOutgoingMessages = new Queue<Message>();
@@ -35,14 +37,20 @@ namespace Test.RdFramework.Components
 
     public void TransmitOneMessage()
     {
-      var message = myOutgoingMessages.Dequeue();
-      Connection.Receive(message.Data);
+      myScheduler.InvokeOrQueue(() =>
+      {
+        var message = myOutgoingMessages.Dequeue();
+        Connection.Receive(message.Data);
+      });
     }
 
     public void TransmitAllMessages()
     {
-      while (myOutgoingMessages.Count > 0)
-        TransmitOneMessage();
+      myScheduler.InvokeOrQueue(() =>
+      {
+        while (myOutgoingMessages.Count > 0)
+          TransmitOneMessage();
+      });
     }
 
     public void MissOneMessage()

@@ -56,6 +56,11 @@
         <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' != 'net461'">
+        <Compile Remove="Reflection\**\*.cs" />
+        <None Include="Reflection\**\*.cs" />
+    </ItemGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
     </ItemGroup>
