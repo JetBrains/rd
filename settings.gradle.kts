@@ -22,5 +22,3 @@ project(":rd-swing").projectDir = File("rd-kt/rd-swing")
 //include(":rd-cpp")
 
 //include(":rd-net")
-
-//include ":rd-cross"

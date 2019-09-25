@@ -11,8 +11,6 @@ repositories {
 
 applyMultiplatform()
 
-lateinit var crossTest: SourceSet
-
 kotlin {
     sourceSets {
         commonMain {
@@ -24,11 +22,6 @@ kotlin {
 
         }
 
-    }
-}
-
-sourceSets {
-    crossTest = create("crossTest") {
     }
 }
 
