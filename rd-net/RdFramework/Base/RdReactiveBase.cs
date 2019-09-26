@@ -9,8 +9,8 @@ namespace JetBrains.Rd.Base
 {
   public abstract class RdReactiveBase : RdBindableBase, IRdReactive
   {    
-    protected static readonly ILog LogReceived = Protocol.TraceLogger.GetSublogger("RECV");
-    protected static readonly ILog LogSend = Protocol.TraceLogger.GetSublogger("SEND");
+    internal static readonly ILog LogReceived = Protocol.TraceLogger.GetSublogger("RECV");
+    internal static readonly ILog LogSend = Protocol.TraceLogger.GetSublogger("SEND");
 
 
     #region Identification
@@ -54,9 +54,10 @@ namespace JetBrains.Rd.Base
 
     #region Delegation
 
-    protected ISerializers Serializers { get { return Proto.Serializers; }}
-    protected IWire Wire { get { return Proto.Wire; } }
-    protected IScheduler DefaultScheduler {get { return Proto.Scheduler; }}
+    protected ISerializers Serializers => Proto.Serializers;
+    
+    internal IWire Wire => Proto.Wire;
+    protected IScheduler DefaultScheduler => Proto.Scheduler;
 
     #endregion
 

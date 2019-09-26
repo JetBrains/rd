@@ -32,6 +32,8 @@ namespace JetBrains.Rd.Tasks
   public static class RdTasksEx
   {
     public static bool IsSuceedeed<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Success;
+    public static bool IsCanceled<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Canceled;
+    public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
 
     public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout) => SpinWaitEx.SpinUntil(Lifetime.Eternal, timeout, () => task.Result.HasValue());
     
@@ -129,10 +131,7 @@ namespace JetBrains.Rd.Tasks
   {
     internal readonly WriteOnceProperty<RdTaskResult<T>> ResultInternal = new WriteOnceProperty<RdTaskResult<T>>();
 
-    public IReadonlyProperty<RdTaskResult<T>> Result
-    {
-      get { return ResultInternal; }
-    }
+    public IReadonlyProperty<RdTaskResult<T>> Result => ResultInternal;
 
     public void Set(T value)
     {
@@ -169,19 +168,54 @@ namespace JetBrains.Rd.Tasks
   }
 
 
-
-  public interface IRdRpc
+  class WiredRdTask<TReq, TRes> : RdTask<TRes>, IRdWireable
   {
+    private readonly RdCall<TReq, TRes> myCall;
+    public RdId RdId { get; }
+    public IScheduler Scheduler { get; }
+    public IScheduler WireScheduler { get; }
     
+    public WiredRdTask(Lifetime lifetime, RdCall<TReq, TRes> call, RdId rdId, IScheduler scheduler)
+    {
+      myCall = call;
+      RdId = rdId;
+      Scheduler = scheduler;
+      call.Wire.Advise(lifetime, this);
+      lifetime.TryOnTermination(() => { ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()); });
+    }
+
+
+    //received response from wire
+    public void OnWireReceived(UnsafeReader reader)
+    {
+      var resultFromWire = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, myCall.SerializationContext, reader);
+      
+      if (RdReactiveBase.LogReceived.IsTraceEnabled())
+        RdReactiveBase.LogReceived.Trace($"call {myCall.Location} ({myCall.RdId}) received response for task '{RdId}' : {resultFromWire.PrintToString()}");
+      
+      Scheduler.Queue(() =>
+      {
+        if (ResultInternal.SetIfEmpty(resultFromWire)) return;
+        
+        //trace
+        if (RdReactiveBase.LogReceived.IsTraceEnabled())
+          RdReactiveBase.LogReceived.Trace($"call {myCall.Location} ({myCall.RdId}) response for task '{RdId}' was dropped, because task already has result: {Result.Value}");
+      });
+    }
   }
+  
+
+  
 
 
 
-  public interface IRdCall<in TReq, TRes> : IRdRpc
+  public interface IRdCall<in TReq, TRes>
   {
     TRes Sync(TReq request, RpcTimeouts timeouts = null);
     IRdTask<TRes> Start(TReq request, IScheduler responseScheduler = null);
   }
+  
+  
 #if !NET35
   public static class RdCallEx
   {
@@ -288,7 +322,7 @@ namespace JetBrains.Rd.Tasks
     
 
     public override IScheduler WireScheduler => SynchronousScheduler.Instance;
-
+//    public IWire Wire => Proto.Wire;
 
     protected override void Init(Lifetime lifetime)
     {

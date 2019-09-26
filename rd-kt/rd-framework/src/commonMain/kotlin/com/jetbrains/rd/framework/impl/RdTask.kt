@@ -47,7 +47,7 @@ class WiredRdTask<T>(lifetime: Lifetime, val call: RdCall<*,*>, override val rdi
         //todo don't write anything if request is dropped
 
         val resultFromWire = RdTaskResult.read(call.serializationContext, buffer, call.responseSzr) as RdTaskResult<T>
-        RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) received response '$rdid' : ${result.printToString()} " }
+        RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) received response for task'$rdid' : ${resultFromWire.printToString()} " }
 
         scheduler.queue {
             if (result.hasValue) {

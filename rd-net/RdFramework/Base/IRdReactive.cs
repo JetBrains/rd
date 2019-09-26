@@ -4,13 +4,10 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Base
 {
-  public interface IRdReactive : IRdBindable
+  
+  public interface IRdReactive : IRdBindable, IRdWireable
   {
     bool Async { get; set; }
-    
-    IScheduler WireScheduler { get; }
-
-    void OnWireReceived(UnsafeReader reader);
   }
 
 
