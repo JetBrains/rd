@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
-using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
@@ -16,6 +12,8 @@ using JetBrains.Rd.Tasks;
 using JetBrains.Util;
 #if NET35
 using TypeInfo = System.Type;
+#else
+using System.Threading.Tasks;
 #endif
 
 namespace JetBrains.Rd.Reflection
@@ -190,17 +188,21 @@ namespace JetBrains.Rd.Reflection
           }
           else
           {
+#if NET35
+            throw new NotSupportedException("Async methods not supported in NET35");
+#else
             var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(Task<>).MakeGenericType(responseNonTaskType));
             var @delegate = adapters[i].CreateDelegate(delType, instance);
             var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandlerTask)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
             methodInfo.Invoke(null, new[] {endpoint, @delegate});
+#endif
           }
 
           bindableChildren.Add(new KeyValuePair<string, object>(name, endpoint));
         }
       }
 
-      #if JET_MODE_ASSERT
+#if JET_MODE_ASSERT
       myCurrentActivationChain.Dequeue();
 #endif
       // Allow initialize to setup bindings to composite properties.
@@ -212,6 +214,7 @@ namespace JetBrains.Rd.Reflection
       return instance;
     }
 
+#if !NET35
     /// <summary>
     ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
     /// </summary>
@@ -219,6 +222,7 @@ namespace JetBrains.Rd.Reflection
     {
       endpoint.Set(handler);
     }
+#endif
 
     /// <summary>
     ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
@@ -43,6 +44,9 @@ namespace Test.RdFramework.Reflection
 
     protected void SaveGeneratedAssembly()
     {
+#if NET35 || NETCOREAPP
+      throw new NotSupportedException();
+#else
       var generator = ReflectionRdActivator.Generator;
       var modulePath = generator.ModuleBuilder.FullyQualifiedName;
       var proxyName = Path.GetFileName(modulePath);
@@ -54,6 +58,8 @@ namespace Test.RdFramework.Reflection
         File.Delete(tempPath);
       File.Move(modulePath, tempPath);
       Console.WriteLine("Proxy module saved to: " + tempPath);
+
+#endif
     }
   }
 }

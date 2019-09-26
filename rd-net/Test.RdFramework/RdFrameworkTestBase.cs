@@ -1,16 +1,13 @@
 using System;
-using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
-using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 using Test.Lifetimes;
 using Test.RdFramework.Components;
-using Test.RdFramework.Reflection;
 
 namespace Test.RdFramework
 { 
