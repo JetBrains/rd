@@ -91,7 +91,7 @@ namespace JetBrains.Rd.Reflection
     public ProxyGenerator(bool allowSave = false)
     {
       myAllowSave = allowSave;
-#if NET35
+#if NET35 || NETCOREAPP
       myModule = new Lazy<ModuleBuilder>(() => AssemblyBuilder.DefineDynamicModule("ProxyGenerator"));
       myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => (AssemblyBuilder) myModule.Value.Assembly);
 #else
@@ -281,19 +281,19 @@ namespace JetBrains.Rd.Reflection
 
       var field = typebuilder.DefineField(propertyInfo.Name, type, FieldAttributes.Public);
 
-      if (propertyInfo.SetMethod != null)
+      if (propertyInfo.GetSetMethod() != null)
       {
         throw new Exception("Setter for properties in proxy interface is prohibited due to unclear semantic");
       }
 
-      if (propertyInfo.GetMethod != null)
+      if (propertyInfo.GetGetMethod() != null)
       {
-        var getMethod = typebuilder.DefineMethod(propertyInfo.GetMethod.Name, MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.Private, type, EmptyArray<Type>.Instance);
+        var getMethod = typebuilder.DefineMethod(propertyInfo.GetGetMethod().Name, MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.Private, type, EmptyArray<Type>.Instance);
         var il = getMethod.GetILGenerator();
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldfld, field);
         il.Emit(OpCodes.Ret);
-        typebuilder.DefineMethodOverride(getMethod, propertyInfo.GetMethod);
+        typebuilder.DefineMethodOverride(getMethod, propertyInfo.GetGetMethod());
       }
     }
 
