@@ -253,7 +253,7 @@ namespace JetBrains.Rd.Reflection
         case MemberTypes.Constructor:
           throw new NotSupportedException("Unexpected constructor member in an interface.");
         case MemberTypes.Event:
-          throw new NotImplementedException("Events delegation not supported yet.");
+          throw new NotSupportedException("Events delegation not supported yet.");
         case MemberTypes.Field:
           throw new NotSupportedException("Unexpected field member in an interface.");
         case MemberTypes.Method:
