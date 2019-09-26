@@ -717,8 +717,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
 
     //region files
     fun PrettyPrinter.header(decl: Declaration, marshallerHeaders: List<String>) {
-        +"#ifndef ${decl.name}_H"
-        +"#define ${decl.name}_H"
+        val includeGuardMacro = "${decl.name.toUpperCase()}_H"
+        +"#ifndef $includeGuardMacro"
+        +"#define $includeGuardMacro"
         println()
 
         includesDecl(marshallerHeaders)
@@ -744,7 +745,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
         }
         println()
 
-        +"#endif // ${decl.name}_H"
+        +"#endif // $includeGuardMacro"
     }
 
     fun PrettyPrinter.source(decl: Declaration, dependencies: List<Declaration>) {
@@ -1172,7 +1173,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
     protected fun PrettyPrinter.registerSerializersTraitDecl(decl: Declaration) {
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
         public()
-        block("struct $serializersOwnerImplName : public rd::ISerializersOwner {", "};") {
+        block("struct $serializersOwnerImplName final : public rd::ISerializersOwner {", "};") {
             declare(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", decl.name).const().override())
         }
         println()
@@ -1950,7 +1951,9 @@ open class Cpp17Generator(override val flowTransform: FlowTransform, val default
             define(function) {
                 +"""std::string res = "${decl.name}\n";"""
                 decl.allMembers.forEach { member ->
-                    println("""res += "\t${member.name} = " + rd::to_string(${member.encapsulatedName}) + '\n';""")
+                    println("""res += "\t${member.name} = ";""")
+                    println("""res += rd::to_string(${member.encapsulatedName});""")
+                    println("""res += '\n';""")
                 }
                 +"return res;"
             }
