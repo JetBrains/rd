@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using JetBrains.Collections;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -54,65 +52,22 @@ namespace JetBrains.Rd.Tasks
       return rdTask;
     }
 
-    public static void Set<TReq, TRes>(this RdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
+    public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask(lt));
     }
 #endif
 
-    public static void SetAndLogErrors<TReq, TRes>(this RdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, ILog logger)
+    public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler)
     {
-      endpoint.Set(req =>
-      {
-        try
-        {
-          return handler(req);
-        }
-        catch (Exception ex)
-        {
-          logger.Error(ex);
-          throw;
-        }
-      });
+      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)));
     }
     
-    public static void SetAndLogErrors<TReq, TRes>(this RdEndpoint<TReq, TRes> endpoint, Action<TReq, RdTask<TRes>> handler, ILog logger)
-    {
-      endpoint.Set((lifetime, req) =>
-      {
-        try
-        {
-          var task = new RdTask<TRes>();
-          handler(req, task);
-          return task;
-        }
-        catch (Exception ex)
-        {
-          logger.Error(ex);
-          throw;
-        }
-      });
-    }
-
-    public static void SetVoid<TReq>(this RdEndpoint<TReq, Unit> endpoint, Action<TReq> handler)
+    public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler)
     {
       endpoint.Set(req =>
       {
         handler(req);
-        return Unit.Instance;
-      });
-    }
-
-    public static void SetVoid<TRes>(this RdEndpoint<Unit, TRes> endpoint, Func<TRes> handler)
-    {
-      endpoint.Set(req => handler());
-    }
-
-    public static void SetVoid(this RdEndpoint<Unit, Unit> endpoint, Action handler)
-    {
-      endpoint.Set(req =>
-      {
-        handler();
         return Unit.Instance;
       });
     }
@@ -170,18 +125,21 @@ namespace JetBrains.Rd.Tasks
 
   class WiredRdTask<TReq, TRes> : RdTask<TRes>, IRdWireable
   {
+    private readonly LifetimeDefinition myLifetimeDef;
     private readonly RdCall<TReq, TRes> myCall;
     public RdId RdId { get; }
     public IScheduler Scheduler { get; }
-    public IScheduler WireScheduler { get; }
+    public IScheduler WireScheduler { get; } = SynchronousScheduler.Instance; 
     
-    public WiredRdTask(Lifetime lifetime, RdCall<TReq, TRes> call, RdId rdId, IScheduler scheduler)
+    public WiredRdTask(LifetimeDefinition lifetimeDef, RdCall<TReq, TRes> call, RdId rdId, IScheduler scheduler)
     {
+      myLifetimeDef = lifetimeDef;
       myCall = call;
       RdId = rdId;
       Scheduler = scheduler;
-      call.Wire.Advise(lifetime, this);
-      lifetime.TryOnTermination(() => { ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()); });
+      
+      call.Wire.Advise(lifetimeDef.Lifetime, this);
+      lifetimeDef.Lifetime.TryOnTermination(() => { ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()); });
     }
 
 
@@ -195,19 +153,29 @@ namespace JetBrains.Rd.Tasks
       
       Scheduler.Queue(() =>
       {
-        if (ResultInternal.SetIfEmpty(resultFromWire)) return;
-        
+        using (myCall.UsingDebugInfo())
+        {
+          if (ResultInternal.SetIfEmpty(resultFromWire)) return;
+        }
+
         //trace
         if (RdReactiveBase.LogReceived.IsTraceEnabled())
           RdReactiveBase.LogReceived.Trace($"call {myCall.Location} ({myCall.RdId}) response for task '{RdId}' was dropped, because task already has result: {Result.Value}");
+        
+        myLifetimeDef.Terminate();
       });
     }
   }
-  
-
-  
 
 
+
+
+
+
+  public interface IRdEndpoint<TReq, TRes>
+  {
+    void Set(Func<Lifetime, TReq, RdTask<TRes>> handler);
+  }
 
   public interface IRdCall<in TReq, TRes>
   {
@@ -294,15 +262,27 @@ namespace JetBrains.Rd.Tasks
 
   public class RdCall<TReq, TRes> : RdReactiveBase, IRdCall<TReq, TRes>
   {
-//    private readonly IDictionary<RdId, KeyValuePair<IScheduler, RdTask<TRes>>> myRequests = new ConcurrentDictionary<RdId, KeyValuePair<IScheduler, RdTask<TRes>>>();
-    private readonly IDictionary<RdId, KeyValuePair<IScheduler, RdTask<TRes>>> myRequests
-#if NET35
-      = new JetBrains.Collections.Synchronized.SynchronizedDictionary<RdId, KeyValuePair<IScheduler, RdTask<TRes>>>  ();
-      #else
-      = new System.Collections.Concurrent.ConcurrentDictionary<RdId, KeyValuePair<IScheduler, RdTask<TRes>>>();
-      #endif
+    
 
-    public RdCall() :this(Polymorphic<TReq>.Read, Polymorphic<TReq>.Write, Polymorphic<TRes>.Read, Polymorphic<TRes>.Write) {}
+    [PublicAPI] public CtxReadDelegate<TReq> ReadRequestDelegate { get; }
+    [PublicAPI] public CtxWriteDelegate<TReq> WriteRequestDelegate { get; }
+
+    [PublicAPI] public CtxReadDelegate<TRes> ReadResponseDelegate { get; }
+    [PublicAPI] public CtxWriteDelegate<TRes> WriteResponseDelegate { get; }
+
+    //set in init
+    internal new SerializationCtx SerializationContext;
+    
+    //set via Set method
+    public Func<Lifetime, TReq, RdTask<TRes>> Handler { get; private set; }
+
+    
+    
+    
+    
+    private Lifetime myBindLifetime;
+    
+    public override IScheduler WireScheduler => SynchronousScheduler.Instance;
 
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
@@ -311,80 +291,74 @@ namespace JetBrains.Rd.Tasks
       ReadResponseDelegate = readResponse;
       WriteResponseDelegate = writeResponse;
     }
-
-    public CtxReadDelegate<TReq> ReadRequestDelegate { get; private set; }
-    public CtxWriteDelegate<TReq> WriteRequestDelegate { get; private set; }
-
-    public CtxReadDelegate<TRes> ReadResponseDelegate { get; private set; }
-    public CtxWriteDelegate<TRes> WriteResponseDelegate { get; private set; }
-
-    public new SerializationCtx SerializationContext { get; private set; }
     
-
-    public override IScheduler WireScheduler => SynchronousScheduler.Instance;
-//    public IWire Wire => Proto.Wire;
-
+    public RdCall() : this(Polymorphic<TReq>.Read, Polymorphic<TReq>.Write, Polymorphic<TRes>.Read, Polymorphic<TRes>.Write) {}
+    
+    
     protected override void Init(Lifetime lifetime)
     {
       base.Init(lifetime);
 
-      SerializationContext = base.SerializationContext; //caching context because of we could listen on 
+      myBindLifetime = lifetime;
       
+      //because we advise synchronous scheduler
+      SerializationContext = base.SerializationContext;
 
       Wire.Advise(lifetime, this);
-
-      lifetime.OnTermination(() =>
-      {
-        foreach (var request in myRequests)
-        {
-          var task = request.Value.Value;
-
-          //todo race condition
-          if (!task.ResultInternal.HasValue())
-          {
-            task.ResultInternal.SetValue(RdTaskResult<TRes>.Cancelled());
-          }
-        }
-
-        myRequests.Clear();
-      });
     }
 
-    public override void OnWireReceived(UnsafeReader stream)
+    
+    [PublicAPI] public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler)
     {
-      var taskId = stream.ReadRdId();
-      KeyValuePair<IScheduler, RdTask<TRes>> request;
+      Handler = handler;
+    }
 
-      if (!myRequests.TryGetValue(taskId, out request))
+    [PublicAPI] public void Set(Func<TReq, TRes> handler)
+    {
+      Set((lf, req) => RdTask<TRes>.Successful(handler(req)));
+    }
+    
+    [PublicAPI] public override void OnWireReceived(UnsafeReader reader)
+    {
+      var taskId = RdId.Read(reader);
+      var value = ReadRequestDelegate(SerializationContext, reader);
+      if (LogReceived.IsTraceEnabled()) LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
+
+
+      RdTask<TRes> rdTask;
+      using (UsingDebugInfo()) //now supports only sync handlers
       {
-        if (LogReceived.IsTraceEnabled()) LogReceived.Trace("call `{0}` ({1}) received response '{2}' but it was dropped", Location, RdId, taskId);
-
+        try
+        {
+          rdTask = Handler(myBindLifetime, value);
+        }
+        catch (Exception e)
+        {
+          rdTask = RdTask<TRes>.Faulted(e);
+        }
       }
-      else
+                
+      rdTask.Result.Advise(myBindLifetime, result =>
       {
-        var result = RdTaskResult<TRes>.Read(ReadResponseDelegate, SerializationContext, stream);
-        if (LogReceived.IsTraceEnabled()) LogReceived.Trace("call `{0}` ({1}) received response '{2}' : {3}", Location, RdId, taskId, result.PrintToString());
+        if (LogSend.IsTraceEnabled()) LogSend.Trace("endpoint `{0}`::({1}), taskId={2}, response = {3}", Location, RdId, taskId, result.PrintToString());
 
-          request.Key.Queue(() =>
-          {
-            var task = request.Value;
-            if (task.Result.HasValue())
-            {
-              if (LogReceived.IsTraceEnabled()) LogReceived.Trace("call `{0}` ({1}) response was dropped, task result is {2} ", Location, RdId, task.Result.Value.Status);
-              if (IsBound && DefaultScheduler.IsActive && myRequests.ContainsKey(taskId))
-                Log.Root.Error($"Request for task `{taskId}` should be already removed");
-            }
-            else
-            {
-              //todo race condition
-              
-            using (UsingDebugInfo())
-              task.ResultInternal.SetValue(result);
+        RdTaskResult<TRes> validatedResult;
+        try
+        {
+          if (result.Status == RdTaskStatus.Success) AssertNullability(result.Result);
+          validatedResult = result;
+        }
+        catch (Exception e)
+        {
+          LogSend.Error(e);
+          validatedResult = RdTaskResult<TRes>.Faulted(e);
+        }
 
-            myRequests.Remove(taskId);
-          }
+        Wire.Send(taskId, (writer) =>
+        {
+          RdTaskResult<TRes>.Write(WriteResponseDelegate, SerializationContext, writer, validatedResult);
         });
-      }
+      });
     }
 
     public TRes Sync(TReq request, RpcTimeouts timeouts = null)
@@ -431,9 +405,8 @@ namespace JetBrains.Rd.Tasks
       AssertNullability(request);
 
       var taskId = Proto.Identities.Next(RdId.Nil);
-      var task = new RdTask<TRes>();
-      myRequests[taskId] = JetKeyValuePair.Of(scheduler, task);
-
+      var def = myBindLifetime.CreateNested(); //for arbitrary lifetimes
+      var task = new WiredRdTask<TReq,TRes>(def, this, taskId, scheduler);
       Wire.Send(RdId, (writer) =>
       {
         if (LogSend.IsTraceEnabled()) 
@@ -454,7 +427,6 @@ namespace JetBrains.Rd.Tasks
     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdCall<TReq, TRes> value)
     {
       value.RdId.Write(writer);
-      //throw new InvalidOperationException("Serialization of RdCall ("+value.RdId+") is not allowed. The only valid option is to deserialize RdEndpoint.");
     }
   }
 
@@ -462,116 +434,116 @@ namespace JetBrains.Rd.Tasks
 
 
 
-  public class RdEndpoint<TReq, TRes> : RdReactiveBase, IRdRpc
-  {
-
-    private Lifetime myBindLifetime;
-
-    public CtxReadDelegate<TReq> ReadRequestDelegate { get; private set; }
-    public CtxWriteDelegate<TReq> WriteRequestDelegate { get; private set; }
-
-    public CtxReadDelegate<TRes> ReadResponseDelegate { get; private set; }
-    public CtxWriteDelegate<TRes> WriteResponseDelegate { get; private set; }
-
-    public Func<Lifetime, TReq, RdTask<TRes>> Handler { get; private set; }
-
-    public RdEndpoint() : this(Polymorphic<TReq>.Read, Polymorphic<TReq>.Write, Polymorphic<TRes>.Read, Polymorphic<TRes>.Write) {}
-    public RdEndpoint(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
-    {
-      ReadRequestDelegate = readRequest;
-      WriteRequestDelegate = writeRequest;
-      ReadResponseDelegate = readResponse;
-      WriteResponseDelegate = writeResponse;
-    }
-
-    public RdEndpoint(Func<Lifetime, TReq, RdTask<TRes>> handler) : this()
-    {
-      Set(handler);
-    }
-
-    public RdEndpoint(Func<TReq, TRes> handler) : this((lf, req) => RdTask<TRes>.Successful(handler(req)))
-    {}
-
-    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler)
-    {
-      Assertion.Require(Handler == null, "Handler is set already");
-      Handler = handler;
-    }
-
-    public void Reset(Func<Lifetime, TReq, RdTask<TRes>> handler)
-    {
-      Handler = handler;
-    }
-
-    public void Set(Func<TReq, TRes> handler)
-    {
-      Set((lf, req) => RdTask<TRes>.Successful(handler(req)));
-    }
-
-    protected override void Init(Lifetime lifetime)
-    {
-      base.Init(lifetime);
-      myBindLifetime = lifetime;
-
-      Wire.Advise(lifetime, this);
-    }
-
-    public override void OnWireReceived(UnsafeReader reader)
-    {
-      var taskId = RdId.Read(reader);
-      var value = ReadRequestDelegate(SerializationContext, reader);
-      if (LogReceived.IsTraceEnabled()) LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
-
-
-      RdTask<TRes> rdTask;
-      using (UsingDebugInfo()) //now supports only sync handlers
-      {
-        try
-        {
-          rdTask = Handler(myBindLifetime, value);
-        }
-        catch (Exception e)
-        {
-          rdTask = RdTask<TRes>.Faulted(e);
-        }
-      }
-                
-      rdTask.Result.Advise(myBindLifetime, result =>
-      {
-        if (LogSend.IsTraceEnabled()) LogSend.Trace("endpoint `{0}`::({1}), taskId={2}, response = {3}", Location, RdId, taskId, result.PrintToString());
-
-        RdTaskResult<TRes> validatedResult;
-        try
-        {
-          if (result.Status == RdTaskStatus.Success) AssertNullability(result.Result);
-          validatedResult = result;
-        }
-        catch (Exception e)
-        {
-          LogSend.Error(e);
-          validatedResult = RdTaskResult<TRes>.Faulted(e);
-        }
-
-        Wire.Send(RdId, (writer) =>
-        {
-          taskId.Write(writer);
-          RdTaskResult<TRes>.Write(WriteResponseDelegate, SerializationContext, writer, validatedResult);
-        });
-      });
-    }
-
-
-    public static RdEndpoint<TReq, TRes> Read(SerializationCtx ctx, UnsafeReader reader, CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
-    {
-      var id = reader.ReadRdId();
-      return new RdEndpoint<TReq, TRes>(readRequest, writeRequest, readResponse, writeResponse).WithId(id);
-//      throw new InvalidOperationException("Deserialization of RdEndpoint is not allowed, the only valid option is to create RdEndpoint with constructor.");
-    }
-
-    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdEndpoint<TReq, TRes> value)
-    {
-      RdId.Write(writer, value.RdId);
-    }
-  }
+//  public class RdEndpoint<TReq, TRes> : RdReactiveBase, IRdRpc
+//  {
+//
+//    private Lifetime myBindLifetime;
+//
+//    public CtxReadDelegate<TReq> ReadRequestDelegate { get; private set; }
+//    public CtxWriteDelegate<TReq> WriteRequestDelegate { get; private set; }
+//
+//    public CtxReadDelegate<TRes> ReadResponseDelegate { get; private set; }
+//    public CtxWriteDelegate<TRes> WriteResponseDelegate { get; private set; }
+//
+//    public Func<Lifetime, TReq, RdTask<TRes>> Handler { get; private set; }
+//
+//    public RdEndpoint() : this(Polymorphic<TReq>.Read, Polymorphic<TReq>.Write, Polymorphic<TRes>.Read, Polymorphic<TRes>.Write) {}
+//    public RdEndpoint(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
+//    {
+//      ReadRequestDelegate = readRequest;
+//      WriteRequestDelegate = writeRequest;
+//      ReadResponseDelegate = readResponse;
+//      WriteResponseDelegate = writeResponse;
+//    }
+//
+//    public RdEndpoint(Func<Lifetime, TReq, RdTask<TRes>> handler) : this()
+//    {
+//      Set(handler);
+//    }
+//
+//    public RdEndpoint(Func<TReq, TRes> handler) : this((lf, req) => RdTask<TRes>.Successful(handler(req)))
+//    {}
+//
+//    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler)
+//    {
+//      Assertion.Require(Handler == null, "Handler is set already");
+//      Handler = handler;
+//    }
+//
+//    public void Reset(Func<Lifetime, TReq, RdTask<TRes>> handler)
+//    {
+//      Handler = handler;
+//    }
+//
+//    public void Set(Func<TReq, TRes> handler)
+//    {
+//      Set((lf, req) => RdTask<TRes>.Successful(handler(req)));
+//    }
+//
+//    protected override void Init(Lifetime lifetime)
+//    {
+//      base.Init(lifetime);
+//      myBindLifetime = lifetime;
+//
+//      Wire.Advise(lifetime, this);
+//    }
+//
+//    public override void OnWireReceived(UnsafeReader reader)
+//    {
+//      var taskId = RdId.Read(reader);
+//      var value = ReadRequestDelegate(SerializationContext, reader);
+//      if (LogReceived.IsTraceEnabled()) LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
+//
+//
+//      RdTask<TRes> rdTask;
+//      using (UsingDebugInfo()) //now supports only sync handlers
+//      {
+//        try
+//        {
+//          rdTask = Handler(myBindLifetime, value);
+//        }
+//        catch (Exception e)
+//        {
+//          rdTask = RdTask<TRes>.Faulted(e);
+//        }
+//      }
+//                
+//      rdTask.Result.Advise(myBindLifetime, result =>
+//      {
+//        if (LogSend.IsTraceEnabled()) LogSend.Trace("endpoint `{0}`::({1}), taskId={2}, response = {3}", Location, RdId, taskId, result.PrintToString());
+//
+//        RdTaskResult<TRes> validatedResult;
+//        try
+//        {
+//          if (result.Status == RdTaskStatus.Success) AssertNullability(result.Result);
+//          validatedResult = result;
+//        }
+//        catch (Exception e)
+//        {
+//          LogSend.Error(e);
+//          validatedResult = RdTaskResult<TRes>.Faulted(e);
+//        }
+//
+//        Wire.Send(RdId, (writer) =>
+//        {
+//          taskId.Write(writer);
+//          RdTaskResult<TRes>.Write(WriteResponseDelegate, SerializationContext, writer, validatedResult);
+//        });
+//      });
+//    }
+//
+//
+//    public static RdEndpoint<TReq, TRes> Read(SerializationCtx ctx, UnsafeReader reader, CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
+//    {
+//      var id = reader.ReadRdId();
+//      return new RdEndpoint<TReq, TRes>(readRequest, writeRequest, readResponse, writeResponse).WithId(id);
+////      throw new InvalidOperationException("Deserialization of RdEndpoint is not allowed, the only valid option is to create RdEndpoint with constructor.");
+//    }
+//
+//    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdEndpoint<TReq, TRes> value)
+//    {
+//      RdId.Write(writer, value.RdId);
+//    }
+//  }
 
 }

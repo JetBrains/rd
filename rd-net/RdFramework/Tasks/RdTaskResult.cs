@@ -52,7 +52,7 @@ namespace JetBrains.Rd.Tasks
                 case RdTaskStatus.Canceled:  return Cancelled();
                 case RdTaskStatus.Faulted:   return Faulted(RdFault.Read(ctx, reader));
                 default:
-                    throw new ArgumentOutOfRangeException(status + "");
+                    throw new ArgumentOutOfRangeException($"Unknown status of {nameof(RdTaskStatus)}: {status}");
             }
         }
 

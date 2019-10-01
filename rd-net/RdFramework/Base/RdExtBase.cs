@@ -208,7 +208,7 @@ namespace JetBrains.Rd.Base
       RealWire.Send(id, context, writer);
     }
 
-    public void Advise(Lifetime lifetime, IRdReactive entity)
+    public void Advise(Lifetime lifetime, IRdWireable entity)
     {
       RealWire.Advise(lifetime, entity);
     }

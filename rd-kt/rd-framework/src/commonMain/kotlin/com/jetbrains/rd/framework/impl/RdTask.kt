@@ -4,6 +4,7 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.hasValue
@@ -34,13 +35,13 @@ open class RdTask<T> : IRdTask<T> {
 }
 
 
-class WiredRdTask<T>(lifetime: Lifetime, val call: RdCall<*,*>, override val rdid: RdId, val scheduler: IScheduler) : RdTask<T>(), IRdWireable {
+class WiredRdTask<T>(val lifetimeDef: LifetimeDefinition, val call: RdCall<*,*>, override val rdid: RdId, val scheduler: IScheduler) : RdTask<T>(), IRdWireable {
 
     override val wireScheduler: IScheduler get() = SynchronousScheduler
 
     init {
-        call.wire.advise(lifetime, this)
-        lifetime.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
+        call.wire.advise(lifetimeDef.lifetime, this)
+        lifetimeDef.lifetime.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
     }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
@@ -58,6 +59,7 @@ class WiredRdTask<T>(lifetime: Lifetime, val call: RdCall<*,*>, override val rdi
                 //todo but now we could start task on any scheduler - need interlocks in property
                 result.setIfEmpty(resultFromWire)
             }
+            lifetimeDef.terminate()
         }
 
     }
@@ -143,7 +145,9 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         if (!async) assertThreading()
 
         val taskId = protocol.identity.next(rdid)
-        val task = WiredRdTask<TRes>(bindLifetime, this, taskId, scheduler)
+
+        //todo bindLifetime -> arbitrary lifetime
+        val task = WiredRdTask<TRes>(bindLifetime.createNested(), this, taskId, scheduler)
 
         wire.send(rdid) { buffer ->
             logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
