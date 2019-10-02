@@ -15,6 +15,7 @@ import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
 
+@Suppress("UNUSED_PARAMETER")
 class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private val list: ViewableList<V>, private var nextVersion: Long = 1L)
     : RdReactiveBase(), IMutableViewableList<V> by list {
 

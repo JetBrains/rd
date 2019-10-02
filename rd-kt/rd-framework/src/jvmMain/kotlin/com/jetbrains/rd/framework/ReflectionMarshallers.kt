@@ -6,6 +6,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.full.*
 
+@Suppress("UNCHECKED_CAST")
 class ReflectionMarshaller<T : Any>(override val _type: KClass<T>) : IMarshaller<T> {
 
     val membersSerializers = mutableMapOf<KProperty1<T, *>, ISerializer<*>>()

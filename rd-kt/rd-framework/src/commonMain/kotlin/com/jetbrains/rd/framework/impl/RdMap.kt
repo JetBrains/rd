@@ -16,6 +16,7 @@ import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
 
+@Suppress("UNUSED_PARAMETER")
 class RdMap<K : Any, V : Any> private constructor(
     val keySzr: ISerializer<K>,
     val valSzr: ISerializer<V>,

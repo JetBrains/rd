@@ -35,6 +35,7 @@ open class RdTask<T> : IRdTask<T> {
 }
 
 
+@Suppress("UNCHECKED_CAST")
 class WiredRdTask<T>(val lifetimeDef: LifetimeDefinition, val call: RdCall<*,*>, override val rdid: RdId, val scheduler: IScheduler) : RdTask<T>(), IRdWireable {
 
     override val wireScheduler: IScheduler get() = SynchronousScheduler
@@ -79,7 +80,7 @@ class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
 
 
 
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 //Can't be constructed by constructor, only by deserializing counterpart: RdEndpoint
 class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
                          internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes> {

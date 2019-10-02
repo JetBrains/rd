@@ -48,7 +48,7 @@ class InternRoot: IInternRoot {
 
     override var async: Boolean
         get() = true
-        set(value) = error("Intern Roots are always async")
+        set(_) = error("Intern Roots are always async")
 
     override val wireScheduler: IScheduler = InternScheduler()
 

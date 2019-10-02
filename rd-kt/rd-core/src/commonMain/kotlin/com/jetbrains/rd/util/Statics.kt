@@ -14,7 +14,7 @@ class Statics<T: Any> private constructor(val kclass: KClass<T>){
 
         @Suppress("UNCHECKED_CAST")
         fun <T:Any> of(kclass: KClass<T>) : Statics<T> {
-            synchronized(map) {
+            Sync.lock(map) {
                 return map.getOrCreate(kclass) { Statics<T>(kclass) } as Statics<T>
             }
         }

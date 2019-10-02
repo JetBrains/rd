@@ -85,7 +85,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
         return arr
     }
 
-    @Suppress("unused")
+    @Suppress("unused", "NOTHING_TO_INLINE")
     private inline fun writeArray(arrayBase: Int, arrayStride: Int, array: Any, len: Int) {
         writeInt(len)
 

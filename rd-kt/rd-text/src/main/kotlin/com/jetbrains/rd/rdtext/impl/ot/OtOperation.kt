@@ -126,6 +126,7 @@ fun RdTextChange.toOperation(origin: RdChangeOrigin, ts: Int): OtOperation {
             RdTextChangeKind.Remove -> add(DeleteText(old))
             RdTextChangeKind.Replace -> { add(InsertText(new)); add(DeleteText(old)) }
             RdTextChangeKind.Reset -> add(InsertText(new))
+            else -> error("Illegal operation: ${this@toOperation.kind}")
         }
 
         val currentOffset = this.sumBy(OtChange::getTextLengthAfter)

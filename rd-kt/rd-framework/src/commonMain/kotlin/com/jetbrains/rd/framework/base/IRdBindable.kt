@@ -1,3 +1,5 @@
+@file:Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.IIdentities

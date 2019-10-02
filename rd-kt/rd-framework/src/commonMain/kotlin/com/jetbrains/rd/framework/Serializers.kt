@@ -222,11 +222,11 @@ fun AbstractBuffer.writeRdId(value: RdId) {
     value.write(this)
 }
 
-inline fun AbstractBuffer.writeBool(value: Boolean) = writeBoolean(value)
-inline fun AbstractBuffer.readBool() = readBoolean()
+fun AbstractBuffer.writeBool(value: Boolean) = writeBoolean(value)
+fun AbstractBuffer.readBool() = readBoolean()
 
 fun AbstractBuffer.readVoid() = Unit
-fun AbstractBuffer.writeVoid(void: Unit) = Unit
+fun AbstractBuffer.writeVoid() = Unit
 
 fun AbstractBuffer.readSecureString() = RdSecureString(readString())
 fun AbstractBuffer.writeSecureString(string: RdSecureString) = writeString(string.contents)

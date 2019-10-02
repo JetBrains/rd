@@ -13,11 +13,11 @@ import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
 
+@Suppress("UNUSED_PARAMETER")
 class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, private val set: ViewableSet<T>)
 : RdReactiveBase(), IMutableViewableSet<T> by set {
 
     companion object {
-//        override val _type : Class<*> get() = throw IllegalStateException("Mustn't be used for polymorphic marshalling")
         fun<T: Any> read(ctx: SerializationCtx, stream: AbstractBuffer, valueSerializer: ISerializer<T>): RdSet<T> = RdSet(valueSerializer).withId(RdId.read(stream))
         fun<T: Any> write(ctx: SerializationCtx, stream: AbstractBuffer, value: RdSet<T>) = value.rdid.write(stream)
     }
@@ -52,7 +52,6 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
         when (kind) {
             AddRemove.Add -> set.add(v)
             AddRemove.Remove -> set.remove(v)
-            else -> throw IllegalStateException(kind.toString())
         }
     }
 

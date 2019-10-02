@@ -294,12 +294,12 @@ class SocketWireTest {
         val factory = SocketWire.ServerFactory(sLifetime, TestScheduler, 0)
 
         val lf1 = LifetimeDefinition()
-        val clientSocket1 = SocketWire.Client(lf1, TestScheduler, factory.localPort)
+        SocketWire.Client(lf1, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 1 }
 
         val lf2 = LifetimeDefinition()
-        val clientSocket2 = SocketWire.Client(lf2, TestScheduler, factory.localPort)
+        SocketWire.Client(lf2, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 2 }
 

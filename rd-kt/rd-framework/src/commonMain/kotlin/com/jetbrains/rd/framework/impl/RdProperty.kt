@@ -90,6 +90,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
 
 
 
+@Suppress("UNCHECKED_CAST")
 class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic())
     : RdPropertyBase<T>(valueSerializer), IOptProperty<T> {
 
@@ -134,10 +135,10 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
         }
     }
 
-    override fun identify(ids: IIdentities, id: RdId) {
-        super.identify(ids, id)
+    override fun identify(identities: IIdentities, id: RdId) {
+        super.identify(identities, id)
         if (!optimizeNested)
-            valueOrNull?.identifyPolymorphic(ids, ids.next(id))
+            valueOrNull?.identifyPolymorphic(identities, identities.next(id))
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
@@ -159,6 +160,7 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic())
     : RdPropertyBase<T>(valueSerializer), IProperty<T> {
 
@@ -195,10 +197,10 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
         value = newValue
     }
 
-    override fun identify(ids: IIdentities, id: RdId) {
-        super.identify(ids, id)
+    override fun identify(identities: IIdentities, id: RdId) {
+        super.identify(identities, id)
         if (!optimizeNested)
-            value?.identifyPolymorphic(ids, ids.next(id))
+            value?.identifyPolymorphic(identities, identities.next(id))
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {

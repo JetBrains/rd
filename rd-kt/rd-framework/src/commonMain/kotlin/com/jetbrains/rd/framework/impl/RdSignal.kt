@@ -12,6 +12,7 @@ import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
+@Suppress("UNUSED_PARAMETER")
 class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdReactiveBase(), IAsyncSignal<T> {
 
     companion object : ISerializer<RdSignal<*>>{

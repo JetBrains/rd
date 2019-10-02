@@ -24,7 +24,7 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
             }
 
             val renderMessage = defaultLogFormat(category, level, message, throwable)
-            synchronized(this) {
+            Sync.lock(this) {
                 errors.add(renderMessage)
             }
         }

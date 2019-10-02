@@ -640,7 +640,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 
                     println("add_library($targetName STATIC ${targetFiles.joinToString(separator = eol)})")
                     val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = eol) { it.name }
-                    val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { name }
+//                    val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { name }
                     println(subdirectories.joinToString(separator = eol) { s -> "add_subdirectory($s)" })
                     println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
                     println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
@@ -1234,14 +1234,14 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 
     private fun extensionTraitDecl(decl: Ext): MemberFunction? {
         val pointcut = decl.pointcut ?: return null
-        val lowerName = decl.name.decapitalize()
-        val extName = decl.extName ?: lowerName
+//        val lowerName = decl.name.decapitalize()
+//        val extName = decl.extName ?: lowerName
         return MemberFunction("""${decl.name} const &""", "getOrCreateExtensionOf(${pointcut.sanitizedName(decl)} & pointcut)", decl.name).static()
     }
 
     private fun PrettyPrinter.constantsDecl(decl: Declaration) {
         decl.constantMembers.forEach {
-            val value = getDefaultValue(decl, it)
+            val value = getDefaultValue(it)
             val type = when (it.type) {
                 is PredefinedType.string -> "rd::wstring_view"
                 else -> it.type.templateName(decl)
@@ -1252,7 +1252,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 
     private fun PrettyPrinter.fieldsDecl(decl: Declaration) {
         val own = decl.ownMembers.map {
-            val initial = getDefaultValue(decl, it)?.let {
+            val initial = getDefaultValue(it)?.let {
                 "{$it}"
             } ?: ""
             "${ctorParam(it, decl, true)}$initial"
@@ -2071,7 +2071,7 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
                 " */" + eol
     }
 
-    protected fun getDefaultValue(containing: Declaration, member: Member): String? {
+    protected fun getDefaultValue(member: Member): String? {
         fun unwrapConstant(c: Member.Const): String {
             val name = c.name
             return when (c.type) {
