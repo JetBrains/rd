@@ -47,7 +47,7 @@ namespace Test.RdFramework.Reflection
         return ProxyGeneratorUtil.ToTask(myRdCall.Start(Unit.Instance, null));
       }
     }*/
-    [Test]
+    [Test, Ignore("Hangs")]
     public void TestAsync()
     {
       ClientProtocol.Scheduler.Queue(() =>

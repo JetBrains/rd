@@ -19,6 +19,7 @@ namespace Test.RdFramework
       return res;
     }
     
+    
     [Test]
     public void TestStatic()
     {
@@ -35,6 +36,7 @@ namespace Test.RdFramework
       var task = serverEntity.Start(0);
       Assert.AreEqual(RdTaskStatus.Success, task.Result.Value.Status);
     }
+    
 
     [Test]
     public void TestNullability()
@@ -46,7 +48,10 @@ namespace Test.RdFramework
       var clientEntity = BindToClient(LifetimeDefinition.Lifetime, CreateEndpoint<string, string>(x => x.ToString()), ourKey);
       clientEntity.Set((lf, req) => RdTask<string>.Successful(req == null ? "NULL" : null));
 
-      Assert.Throws<Assertion.AssertionException>(() => { serverEntity.Sync(null); });
+      Assert.Throws<Assertion.AssertionException>(() =>
+      {
+        serverEntity.Sync(null);
+      });
 
       Assert.Throws<Assertion.AssertionException>(() =>
       {

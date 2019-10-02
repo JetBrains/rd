@@ -176,7 +176,7 @@ namespace JetBrains.Rd.Reflection
           var name = implMethod.Name + "_proxy";
           var requestType = ProxyGenerator.GetRequstType(implMethod)[0];
           var responseNonTaskType = ProxyGenerator.GetResponseType(implMethod, unwrapTask: true);
-          var endPointType = typeof(RdEndpoint<,>).MakeGenericType(requestType, responseNonTaskType);
+          var endPointType = typeof(RdCall<,>).MakeGenericType(requestType, responseNonTaskType);
           var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
 
           if (ProxyGenerator.IsSync(implMethod))
@@ -218,7 +218,7 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
     /// </summary>
-    public static void SetHandlerTask<TReq, TRes>(RdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
+    public static void SetHandlerTask<TReq, TRes>(RdCall<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
     {
       endpoint.Set(handler);
     }
@@ -227,7 +227,7 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
     /// </summary>
-    public static void SetHandler<TReq, TRes>(RdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, RdTask<TRes>> handler)
+    public static void SetHandler<TReq, TRes>(RdCall<TReq, TRes> endpoint, Func<Lifetime, TReq, RdTask<TRes>> handler)
     {
       endpoint.Set(handler);
     }
@@ -312,7 +312,7 @@ namespace JetBrains.Rd.Reflection
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
       }
 
-      if (genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdEndpoint<,>) || genericDefinition == typeof(RdCall<,>))
+      if (genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
       {
         var rpcResultType = genericArguments[1];
         GetProperSerializer(rpcResultType);

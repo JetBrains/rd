@@ -4,14 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
-using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
-using JetBrains.Threading;
 
 #if !NET35
 
@@ -25,52 +23,6 @@ namespace JetBrains.Rd.Tasks
   [PublicAPI] public interface IRdTask<T>
   {
     IReadonlyProperty<RdTaskResult<T>> Result { get; }
-  }
-
-  public static class RdTasksEx
-  {
-    public static bool IsSuceedeed<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Success;
-    public static bool IsCanceled<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Canceled;
-    public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
-
-    public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout) => SpinWaitEx.SpinUntil(Lifetime.Eternal, timeout, () => task.Result.HasValue());
-    
-#if !NET35
-    public static RdTask<T> ToRdTask<T>(this Task<T> task, CancellationToken token, TaskContinuationOptions continuationOptions = TaskContinuationOptions.None, TaskScheduler scheduler = null)
-    {
-      var rdTask = new RdTask<T>();
-      task.ContinueWith((tsk, rdTaskObject) =>
-      {
-        var rdTask1 = (RdTask<T>) rdTaskObject;
-        if (tsk.IsCanceled)
-          rdTask1.SetCancelled();
-        else if (tsk.IsFaulted)
-          rdTask1.Set(tsk.Exception?.Flatten().GetBaseException());
-        else
-          rdTask1.Set(tsk.Result);
-      }, rdTask, token, continuationOptions, scheduler ?? TaskScheduler.Current);
-      return rdTask;
-    }
-
-    public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
-    {
-      endpoint.Set((lt, req) => handler(lt, req).ToRdTask(lt));
-    }
-#endif
-
-    public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler)
-    {
-      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)));
-    }
-    
-    public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler)
-    {
-      endpoint.Set(req =>
-      {
-        handler(req);
-        return Unit.Instance;
-      });
-    }
   }
 
 
@@ -260,10 +212,8 @@ namespace JetBrains.Rd.Tasks
   }
 
 
-  public class RdCall<TReq, TRes> : RdReactiveBase, IRdCall<TReq, TRes>
+  public class RdCall<TReq, TRes> : RdReactiveBase, IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes>
   {
-    
-
     [PublicAPI] public CtxReadDelegate<TReq> ReadRequestDelegate { get; }
     [PublicAPI] public CtxWriteDelegate<TReq> WriteRequestDelegate { get; }
 
@@ -313,11 +263,6 @@ namespace JetBrains.Rd.Tasks
       Handler = handler;
     }
 
-    [PublicAPI] public void Set(Func<TReq, TRes> handler)
-    {
-      Set((lf, req) => RdTask<TRes>.Successful(handler(req)));
-    }
-    
     [PublicAPI] public override void OnWireReceived(UnsafeReader reader)
     {
       var taskId = RdId.Read(reader);
