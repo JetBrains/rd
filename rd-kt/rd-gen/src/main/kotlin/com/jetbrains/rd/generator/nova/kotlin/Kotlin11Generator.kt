@@ -98,9 +98,9 @@ open class Kotlin11Generator(
         val async = this.freeThreaded.condstr { "Async" }
         return when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
-                Sink -> "RdEndpoint"
+                Sink -> "IRdEndpoint"
                 Source -> "IRdCall"
-                Both -> fail("Unsupported flow direction for tasks")
+                Both -> "RdCall"
             }
             is Member.Reactive.Signal -> when (actualFlow) {
                 Sink -> "I${async}Source"
@@ -131,11 +131,7 @@ open class Kotlin11Generator(
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName : String get () = when (this) {
-        is Member.Reactive.Task -> when (actualFlow) {
-            Sink -> "RdCall"
-            Source -> "RdCall"
-            Both -> "RdCall" //todo
-        }
+        is Member.Reactive.Task -> "RdCall"
         is Member.Reactive.Signal -> "RdSignal"
         is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
         is Member.Reactive.Stateful.List -> "RdList"

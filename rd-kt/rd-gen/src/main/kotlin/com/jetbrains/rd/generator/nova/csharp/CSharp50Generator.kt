@@ -212,8 +212,8 @@ open class CSharp50Generator(
             return when (this) {
                 is Member.Reactive.Task -> when (actualFlow) {
                     Source -> "IRdCall"
-                    Sink -> "RdEndpoint"
-                    Both -> "IRdRpc" //todo
+                    Sink -> "IRdEndpoint"
+                    Both -> "RdCall"
                 }
                 is Member.Reactive.Signal -> when (actualFlow) {
                     Sink -> if (freeThreaded) "ISignal" else "ISource"
@@ -245,11 +245,7 @@ open class CSharp50Generator(
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName: String
         get() = when (this) {
-            is Member.Reactive.Task -> when (actualFlow) {
-                Sink -> "RdEndpoint"
-                Source -> "RdCall"
-                Both -> "RdCall" //todo
-            }
+            is Member.Reactive.Task -> "RdCall"
             is Member.Reactive.Signal -> "RdSignal"
             is Member.Reactive.Stateful.Property -> "RdProperty"
             is Member.Reactive.Stateful.List -> "RdList"

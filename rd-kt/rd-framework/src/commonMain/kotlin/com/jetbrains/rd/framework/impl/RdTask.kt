@@ -82,7 +82,7 @@ class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
 @Suppress("UNCHECKED_CAST")
 //Can't be constructed by constructor, only by deserializing counterpart: RdEndpoint
 class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
-                         internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes> {
+                         internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes> {
 
     companion object : ISerializer<RdCall<*,*>>{
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdCall<*, *> = read(ctx, buffer, Polymorphic<Any?>(), Polymorphic<Any?>())
@@ -161,18 +161,13 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     /**
      * Assigns a handler that executes the API asynchronously.
      */
-    fun set(handler: (Lifetime, TReq) -> RdTask<TRes>) {
-        require(this.handler == null) {"handler is set already"}
-        this.handler = handler
-    }
+    override fun set(handler: (Lifetime, TReq) -> RdTask<TRes>) { this.handler = handler }
     constructor(handler:(Lifetime, TReq) -> RdTask<TRes>) : this() { set(handler) }
 
     /**
      * Assigns a handler that executes the API synchronously.
      */
-    fun set(handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
-
-    constructor(handler: (TReq) -> TRes) : this () {set(handler)}
+    constructor(handler: (TReq) -> TRes) : this () { set(handler) }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val taskId = RdId.read(buffer)
