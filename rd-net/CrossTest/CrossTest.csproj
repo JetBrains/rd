@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        
+        <TargetFrameworks>net461</TargetFrameworks>
+        <DebugType>Full</DebugType>
+        <IsPackable>false</IsPackable>
+        <DefineConstants>JET_MODE_ASSERT</DefineConstants>
+        <RootNamespace>Test.RdCross</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
+        <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+
+    </ItemGroup>
+
+</Project>

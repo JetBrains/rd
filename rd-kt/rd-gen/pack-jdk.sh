@@ -52,4 +52,4 @@ rm ${nuget_dir}/jdk/mac/jdk/Contents/Home/src.zip
 mkdir -p ${nuget_dir}/lib/net
 touch ${nuget_dir}/lib/net/_._
 
-mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} JetBrains.Jdk.nuspec
+mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} ${base_dir}/JetBrains.Jdk.nuspec

@@ -1,6 +1,0 @@
-ext.kotlin_version='1.3.50'
-
-ext.dokka_version='0.9.17'
-
-ext.junit_version='4.12'
-ext.sl4j_version='1.7.12'

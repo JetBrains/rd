@@ -113,8 +113,7 @@ open class RdgenTask : DefaultTask() {
 
 //            print("Press any key to continue: ")
 //            System.`in`.read()
-            if (!rdGen.run())
-                throw IllegalStateException("Rd Generation failed!")
+            check(rdGen.run()) { "Rd Generation failed!" }
         }
     }
 }

@@ -118,7 +118,7 @@ namespace JetBrains.Rd.Base
       if (value != null) value.Identify(ids, id);
     }
 
-    //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just beleive me
+    //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just believe me
     public static void IdentifyEx<T>([CanBeNull] this List<T> items, IIdentities ids, RdId id) where T : IRdBindable
     {
       items.Identify0(ids, id);
@@ -145,12 +145,12 @@ namespace JetBrains.Rd.Base
       if (printable != null) printable.Print(printer);
       else if (thIs == null) printer.Print("<null>");
       else if (thIs is string) printer.Print("\"" + thIs + "\"");
-      else if (thIs is IEnumerable)
+      else if (thIs is IEnumerable enumerable)
       {
         printer.Print("[");        
         using (printer.IndentCookie())
         {
-          var en = ((IEnumerable) thIs).GetEnumerator();
+          var en = enumerable.GetEnumerator();
           var count = 0;
           var maxPrint = printer.CollectionMaxLength;
           while (en.MoveNext())
