@@ -55,5 +55,16 @@ namespace JetBrains.Collections.Viewable
         }
       }
     }
+
+    
+    //todo make interlocked
+    public bool SetIfEmpty(T value)
+    {
+      if (Maybe.HasValue)
+        return false;
+      
+      Maybe = new Maybe<T>(value);
+      return true;
+    }
   }
 }

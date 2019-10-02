@@ -16,7 +16,7 @@ namespace JetBrains.Rd.Tasks
     public Func<Lifetime, TReq, RdTask<TRes>> myHandler;
     private Lifetime myBindLifetime;
 
-    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdEndpoint<TReq, TRes> value)
+    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdCall<TReq, TRes> value)
     {
       RdId.Write(writer, value.RdId);
     }

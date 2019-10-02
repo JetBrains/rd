@@ -33,6 +33,12 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
         _change.fire(newValue)
     }
 
+    //make it interlocked
+    fun setIfEmpty(newValue: T) {
+        if (_value == null)
+            _value = newValue
+    }
+
     protected var _value: T? = null
 
     override val valueOrNull: T?

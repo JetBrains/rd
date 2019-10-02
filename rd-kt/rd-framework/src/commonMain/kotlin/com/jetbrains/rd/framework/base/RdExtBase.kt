@@ -159,14 +159,13 @@ class ExtScheduler(private val parentScheduler: IScheduler) : IScheduler {
 
 }
 
+
 //todo multithreading
 class ExtWire : IWire {
 
     internal lateinit var realWire : IWire
 
-    override fun advise(lifetime: Lifetime, entity: IRdReactive) {
-        realWire.advise(lifetime, entity)
-    }
+    override fun advise(lifetime: Lifetime, entity: IRdWireable) = realWire.advise(lifetime, entity)
 
 
     data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray)

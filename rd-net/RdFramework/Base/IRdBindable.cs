@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Util;
+using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Base
 {
@@ -21,6 +23,15 @@ namespace JetBrains.Rd.Base
     void Print(PrettyPrinter printer);
   }
 
+
+  public interface IRdWireable
+  {
+    RdId RdId { get; }
+
+    IScheduler WireScheduler { get; }
+
+    void OnWireReceived(UnsafeReader reader);    
+  }
 
   public interface IRdBindable : IRdDynamic, IPrintable
   {

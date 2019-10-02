@@ -4,7 +4,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
 {
-  public class RdFault : Exception
+  [PublicAPI] public class RdFault : Exception
   {
     public string ReasonTypeFqn { get; private set; }
     public string ReasonText { get; private set; }
