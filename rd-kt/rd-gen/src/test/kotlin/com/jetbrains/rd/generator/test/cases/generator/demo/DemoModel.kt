@@ -4,8 +4,6 @@ package com.jetbrains.rd.generator.test.cases.generator.demo
 
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.`C++14`
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.`C++17`
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator.Companion.`C#7`
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
@@ -15,7 +13,7 @@ import java.io.File
 
 object DemoRoot : Root(
         Kotlin11Generator(FlowTransform.AsIs, "demo", File(syspropertyOrInvalid("model.out.src.kt.dir")), languageVersion = `Kotlin 1'3`),
-        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir")), languageVersion = `C++14`),
+        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir"))),
         CSharp50Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cs.dir")), languageVersion = `C#7`)
 ) {
     init {
