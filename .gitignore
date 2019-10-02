@@ -1,5 +1,6 @@
 .idea
 *.iml
+*.Generated.cs
 .vscode
 .vs/
 build
