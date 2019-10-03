@@ -21,7 +21,7 @@ namespace Test.RdCross
                 int.TryParse(stream.ReadLine(), out Port);
             }
 
-            Console.Error.WriteLine($"Port is {Port}");
+            Console.WriteLine($"Port is {Port}");
         }
 
         protected void Queue(Action action)

@@ -11,8 +11,6 @@ repositories {
 
 applyMultiplatform()
 
-lateinit var crossTest: SourceSet
-
 kotlin {
     sourceSets {
         commonMain {
@@ -27,10 +25,6 @@ kotlin {
     }
 }
 
-sourceSets {
-    crossTest = create("crossTest") {
-    }
-}
 
 val testCopySources by tasks.creating(CopySourcesTask::class) {
     dependsOn(":rd-gen:generateEverything")

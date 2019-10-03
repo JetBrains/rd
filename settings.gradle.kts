@@ -19,8 +19,11 @@ project(":rd-text").projectDir = File("rd-kt/rd-text")
 include(":rd-swing")
 project(":rd-swing").projectDir = File("rd-kt/rd-swing")
 
+include(":rd-net")
+project(":rd-net").projectDir = File("rd-net")
+
+include(":rd-cross")
+project(":rd-cross").projectDir = File("rd-kt/rd-cross")
+
 //include(":rd-cpp")
 
-//include(":rd-net")
-
-//include ":rd-cross"

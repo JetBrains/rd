@@ -36,7 +36,7 @@ abstract class CrossTestKtBase {
 
     protected fun before(args: Array<String>) {
         check(args.size == 1) {
-            "Wrong number of arguments for $testName:${args.size}, expected 1. main([\"CrossTestKtServerAllEntities\"]) for example.")
+            "Wrong number of arguments for $testName:${args.size}, expected 1. main([\"CrossTestKtServerAllEntities\"]) for example."
         }
         val outputFileName = args[0]
         outputFile = File(outputFileName)

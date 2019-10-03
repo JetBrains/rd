@@ -1,4 +1,4 @@
-/*using demo;
+using demo;
 using JetBrains.Rd.Base;
 using Test.RdCross.Util;
 
@@ -7,7 +7,7 @@ namespace Test.RdCross
     // ReSharper disable once UnusedMember.Global
     public class CrossTestCsClientBigBuffer : CrossTestCsClientBase
     {
-        public override void Start(string[] args)
+        protected override void Start(string[] args)
         {
             Before(args);
 
@@ -39,4 +39,4 @@ namespace Test.RdCross
             After();
         }
     }
-}*/
+}

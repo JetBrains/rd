@@ -7,10 +7,10 @@ namespace Test.RdCross
     {
         public static void Main(string[] args)
         {
-            if (args.Length < 1)
+            if (args.Length <= 1)
             {
-                throw new ArgumentException($"Wrong number of arguments:${args.Length}, expected = 1." +
-                                            $"Main([\"CrossTestCsClientAllEntities\"]) for example.)");
+                throw new ArgumentException($"Wrong number of arguments:{args.Length}, expected = 2." +
+                                            "Main([\"CrossTestCsClientAllEntities\", ]) for example.)");
             }
             var type = Type.GetType($"Test.RdCross.{args[0]}") ??
                        throw new ArgumentException($"Wrong class name={args[0]})");

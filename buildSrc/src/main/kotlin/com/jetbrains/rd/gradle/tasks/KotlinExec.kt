@@ -4,5 +4,4 @@ import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.TaskAction
 
 
-open class KotlinExec : JavaExec() {
-}
+open class KotlinExec : JavaExec()

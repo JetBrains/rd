@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
@@ -34,6 +35,7 @@ namespace Test.RdCross
 
         protected void Before(string[] args)
         {
+            Debugger.Launch();
             if (args.Length != 1)
             {
                 throw new ArgumentException($"Wrong number of arguments for {TestName}:{args.Length}" +
@@ -68,8 +70,8 @@ namespace Test.RdCross
                 Start(args);
             }
         }
-        
-        public abstract void Start(string[] args);
+
+        protected abstract void Start(string[] args);
 
     }
 }

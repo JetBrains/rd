@@ -10,7 +10,6 @@ import org.junit.rules.TestName
 import java.io.File
 import java.nio.file.Paths
 
-@Ignore
 class CrossTest {
     private fun assertEqualFiles(file1: File, file2: File) {
         val t1 = file1.readText(Charsets.UTF_8)
@@ -31,7 +30,7 @@ class CrossTest {
     }
 
     companion object {
-        val rootFolder = File(Paths.get("").toAbsolutePath().toString()).parentFile
+        val rootFolder: File = File(Paths.get("").toAbsolutePath().toString()).parentFile.parentFile
 
     }
 

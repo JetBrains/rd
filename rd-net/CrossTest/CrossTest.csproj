@@ -2,11 +2,12 @@
 
     <PropertyGroup>
         
-        <TargetFrameworks>net461</TargetFrameworks>
+        <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
         <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <RootNamespace>Test.RdCross</RootNamespace>
+        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
     <ItemGroup>

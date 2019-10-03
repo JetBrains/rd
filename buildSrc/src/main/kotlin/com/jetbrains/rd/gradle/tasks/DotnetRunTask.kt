@@ -1,18 +1,21 @@
 package com.jetbrains.rd.gradle.tasks
 
 import org.gradle.api.tasks.TaskAction
-import java.io.File
+import org.gradle.process.BaseExecSpec
 
-open class DotnetRunTask : RunExecTask() {
-    init {
-        executable = "dotnet"
-        workingDir = File(workingDir, "Cross")
-        setArgs(listOf("run", "-c:Configuration=Release", name))
+@Suppress("UsePropertyAccessSyntax", "LeakingThis")
+open class DotnetRunTask : RunExecTask(), MarkedExecTask {
+    override val commandLineWithArgs: String
+        get() = ((this as BaseExecSpec).getCommandLine() + tmpFile.absolutePath).joinToString(separator = " ")
+
+    companion object {
+        private const val netCoreAppVersion = 2.0
     }
 
-    @TaskAction
-    override fun exec() {
-        setArgs(args?.plus(tmpFile.absolutePath))
-        super.exec()
+    init {
+        executable = "dotnet"
+        workingDir = workingDir.resolve("CrossTest")
+
+        setArgs(listOf("run", "--framework=netcoreapp$netCoreAppVersion", name))
     }
 }

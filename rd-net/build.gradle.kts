@@ -1,8 +1,10 @@
+@file:Suppress("UNUSED_VARIABLE", "LocalVariableName")
+
 import com.jetbrains.rd.gradle.tasks.DotnetRunTask
 import com.jetbrains.rd.gradle.tasks.RunScriptTask
 
 
-/*tasks {
+tasks {
     val build by creating(RunScriptTask::class) {
         execPath = "build.cmd"
     }
@@ -17,4 +19,4 @@ import com.jetbrains.rd.gradle.tasks.RunScriptTask
     val CrossTestCsClientBigBuffer by creating(DotnetRunTask::class)
 
     val CrossTestCsClientRdCall by creating(DotnetRunTask::class)
-}*/
+}

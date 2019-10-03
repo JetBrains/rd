@@ -1,4 +1,4 @@
-/*using demo;
+using demo;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -38,7 +38,7 @@ namespace Test.RdCross
                 Printer.Print(s);
 
                 return 50;
-            });#1#
+            });*/
 
             model.Interned_string.Advise(lifetime,
                 it => { Printer.PrintIfRemoteChange(model.Interned_string, "Interned_string", it); });
@@ -103,7 +103,7 @@ namespace Test.RdCross
             extModel.Checker.Fire();
         }
 
-        public override void Start(string[] args)
+        protected override void Start(string[] args)
         {
             Before(args);
 
@@ -129,4 +129,4 @@ namespace Test.RdCross
             Assertion.Assert(Base.const_base == 'B', "Base.const_base == 'B'");
         }
     }
-}*/
+}

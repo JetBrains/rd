@@ -8,7 +8,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
 import demo.*
 import java.util.*
-import kotlin.test.assertEquals
 
 @Suppress("unused")
 class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
@@ -29,10 +28,10 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
     }
 
     private fun checkConstants() {
-        assert(DemoModel.const_toplevel)
-        assertEquals(ConstUtil.const_enum, MyEnum.default)
-        assertEquals(ConstUtil.const_string, "const_string_value")
-        assertEquals(Base.const_base, 'B')
+        assert(DemoModel.const_toplevel) { "DemoModel.const_toplevel" }
+        assert(ConstUtil.const_enum == MyEnum.default) { "ConstUtil.const_enum == MyEnum.default" }
+        assert(ConstUtil.const_string == "const_string_value") { "ConstUtil.const_string == \"const_string_value\"" }
+        assert(Base.const_base == 'B') { "ConstUtil.const_string == \"const_string_value\"" }
     }
 
     private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel) {
