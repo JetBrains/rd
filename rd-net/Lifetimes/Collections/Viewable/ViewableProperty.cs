@@ -62,8 +62,8 @@ namespace JetBrains.Collections.Viewable
     {
       if (Maybe.HasValue)
         return false;
-      
-      Maybe = new Maybe<T>(value);
+
+      Value = value;
       return true;
     }
   }

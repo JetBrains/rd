@@ -158,7 +158,8 @@ namespace JetBrains.Rd.Impl
     {
       Assertion.Require(!reactive.RdId.IsNil, "!id.IsNil: {0}", reactive);
 
-      myScheduler.AssertThread(reactive);
+      //todo commented because of WiredRdTask
+//      myScheduler.AssertThread(reactive);
 
       // ReSharper disable once InconsistentlySynchronizedField
       mySubscriptions.BlockingAddUnique(lifetime, myLock, reactive.RdId, reactive);

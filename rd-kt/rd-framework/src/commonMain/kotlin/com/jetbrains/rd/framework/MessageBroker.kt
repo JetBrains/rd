@@ -104,7 +104,8 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
         require(!entity.rdid.isNull) {"id is null for entity: $entity"}
 
         //advise MUST happen under default scheduler, not custom
-        defaultScheduler.assertThread(entity)
+        //todo commented because of wiredRdTask
+//        defaultScheduler.assertThread(entity)
 
         //if (lifetime.isTerminated) return
         subscriptions.blockingPutUnique(lifetime, lock, entity.rdid, entity)

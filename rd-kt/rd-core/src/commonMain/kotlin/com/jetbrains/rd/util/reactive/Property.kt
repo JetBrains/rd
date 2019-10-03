@@ -36,7 +36,7 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
     //make it interlocked
     fun setIfEmpty(newValue: T) {
         if (_value == null)
-            _value = newValue
+            set(newValue)
     }
 
     protected var _value: T? = null

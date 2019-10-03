@@ -226,7 +226,8 @@ fun AbstractBuffer.writeBool(value: Boolean) = writeBoolean(value)
 fun AbstractBuffer.readBool() = readBoolean()
 
 fun AbstractBuffer.readVoid() = Unit
-fun AbstractBuffer.writeVoid() = Unit
+@Suppress("UNUSED_PARAMETER")
+fun AbstractBuffer.writeVoid(void: Unit) = Unit
 
 fun AbstractBuffer.readSecureString() = RdSecureString(readString())
 fun AbstractBuffer.writeSecureString(string: RdSecureString) = writeString(string.contents)

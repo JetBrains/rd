@@ -99,7 +99,6 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     }
 
     override lateinit var serializationContext : SerializationCtx
-    override val wireScheduler: IScheduler get() = SynchronousScheduler
 
     private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
 

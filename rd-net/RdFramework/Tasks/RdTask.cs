@@ -231,8 +231,6 @@ namespace JetBrains.Rd.Tasks
     
     
     private Lifetime myBindLifetime;
-    
-    public override IScheduler WireScheduler => SynchronousScheduler.Instance;
 
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
