@@ -3,7 +3,6 @@ package com.jetbrains.rd.generator.nova.csharp
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
-import com.jetbrains.rd.generator.nova.util.VersionNumber
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -14,17 +13,10 @@ import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(
-        override val flowTransform: FlowTransform = FlowTransform.AsIs,
+        flowTransform: FlowTransform = FlowTransform.AsIs,
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
-        override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir")),
-        val fileName: (Toplevel) -> String = { tl -> tl.name },
-        val languageVersion: VersionNumber = `C#4`
-) : GeneratorBase() {
-    companion object {
-        val `C#4` : VersionNumber = VersionNumber(4, 0, 0)
-        val `C#7` : VersionNumber = VersionNumber(7, 0, 0)
-        val `C#8` : VersionNumber = VersionNumber(8, 0, 0)
-    }
+        override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir"))
+) : GeneratorBase(flowTransform) {
 
     object Inherits : ISetting<String, Declaration>
     object InheritsAutomation : ISetting<Boolean, Declaration>
@@ -39,7 +31,7 @@ open class CSharp50Generator(
     object FsPath : ISetting<(CSharp50Generator) -> File, Toplevel>
 
     val Toplevel.fsPath: File
-        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${fileName(this)}.Generated.cs")
+        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${this.name}.Generated.cs")
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
 
@@ -315,10 +307,8 @@ open class CSharp50Generator(
 
     //generation
 
-    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
-
-        toplevels.sortedBy { it.name }.forEach { tl ->
+    override fun realGenerate(toplevels: List<Toplevel>) {
+        toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
                     eolKind = Eol.osSpecified

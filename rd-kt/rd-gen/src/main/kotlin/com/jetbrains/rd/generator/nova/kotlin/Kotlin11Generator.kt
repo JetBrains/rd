@@ -21,16 +21,11 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 }
 
 open class Kotlin11Generator(
-    override val flowTransform: FlowTransform,
+    flowTransform: FlowTransform,
     private val defaultNamespace: String,
-    override val folder: File,
-    val languageVersion: VersionNumber = `Kotlin 1'1`
-) : GeneratorBase() {
-    companion object {
-        val `Kotlin 1'1` : VersionNumber = VersionNumber(1, 1, 0)
-        val `Kotlin 1'2` : VersionNumber = VersionNumber(1, 2, 0)
-        val `Kotlin 1'3` : VersionNumber = VersionNumber(1, 3, 0)
-    }
+    override val folder: File
+) : GeneratorBase(flowTransform) {
+
 
     //language specific properties
     object Namespace : ISetting<String, Declaration>
@@ -252,10 +247,8 @@ open class Kotlin11Generator(
 
 
     //generation
-    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
-
-        toplevels.sortedBy { it.name }.forEach { tl ->
+    override fun realGenerate(toplevels: List<Toplevel>) {
+        toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
                     eolKind = Eol.osSpecified

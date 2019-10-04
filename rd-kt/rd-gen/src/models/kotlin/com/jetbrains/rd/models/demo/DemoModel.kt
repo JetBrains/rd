@@ -5,16 +5,14 @@ package com.jetbrains.rd.models.demo
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
-import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator.Companion.`C#7`
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator.Companion.`Kotlin 1'3`
 import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import java.io.File
 
 object DemoRoot : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "demo", File(syspropertyOrInvalid("model.out.src.kt.dir")), languageVersion = `Kotlin 1'3`),
+        Kotlin11Generator(FlowTransform.AsIs, "demo", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
         Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir"))),
-        CSharp50Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cs.dir")), languageVersion = `C#7`)
+        CSharp50Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cs.dir")))
 ) {
     init {
         setting(Cpp17Generator.TargetName, "demo_model")

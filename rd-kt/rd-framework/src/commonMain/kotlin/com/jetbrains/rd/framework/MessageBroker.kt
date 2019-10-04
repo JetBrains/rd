@@ -1,6 +1,5 @@
 package com.jetbrains.rd.framework
 
-import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -43,7 +42,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     }
 
     //only on poller thread
-    fun dispatch(id: RdId, message: AbstractBuffer) {
+    fun dispatch(id: RdId, buffer: AbstractBuffer) {
         require(!id.isNull) { "id mustn't be null" }
 
         Sync.lock(lock) {
@@ -52,7 +51,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
             if (s == null) {
                 val currentIdBroker = broker.getOrCreate(id) { Mq() }
 
-                currentIdBroker.defaultSchedulerMessages.add(message)
+                currentIdBroker.defaultSchedulerMessages.add(buffer)
                 defaultScheduler.queue {
                     val subscription = subscriptions[id] //no lock because can be changed only under default scheduler
 
@@ -85,13 +84,13 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
             } else {
 
                 if (s.wireScheduler == defaultScheduler || s.wireScheduler.outOfOrderExecution) {
-                    s.invoke(message)
+                    s.invoke(buffer)
                 } else {
                     val mq = broker[id]
                     if (mq != null) {
-                        mq.customSchedulerMessages.add(message)
+                        mq.customSchedulerMessages.add(buffer)
                     } else {
-                        s.invoke(message)
+                        s.invoke(buffer)
                     }
                 }
             }

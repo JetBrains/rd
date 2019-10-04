@@ -37,11 +37,11 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
  * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
-open class Cpp17Generator(override val flowTransform: FlowTransform,
+open class Cpp17Generator(flowTransform: FlowTransform,
                           val defaultNamespace: String,
                           override val folder: File,
                           val usingPrecompiledHeaders: Boolean = false
-) : GeneratorBase() {
+) : GeneratorBase(flowTransform) {
     @Suppress("ObjectPropertyName")
     companion object {
         //        private const val INSTANTIATION_FILE_NAME = "instantiations"
@@ -690,12 +690,10 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
     }
 */
 
-    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
-
+    override fun realGenerate(toplevels: List<Toplevel>) {
         val allFilePaths = emptyList<String>().toMutableList()
 
-        toplevels.sortedBy { it.name }.forEach { tl ->
+        toplevels.forEach { tl ->
             val directory = tl.fsPath()
             directory.mkdirs()
             val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { !it.isIntrinsic }
@@ -731,7 +729,11 @@ open class Cpp17Generator(override val flowTransform: FlowTransform,
 
         }
 
-        folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
+
+        if (toplevels.isNotEmpty()) {
+            val root = toplevels.first().root
+            folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
+        }
 //        folder.templateInstantiate()
     }
 

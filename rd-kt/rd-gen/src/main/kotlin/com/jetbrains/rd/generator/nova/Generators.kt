@@ -4,9 +4,8 @@ import java.io.File
 
 
 interface IGenerator {
-    val flowTransform : FlowTransform
     val folder: File
-    fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
+    fun generate(toplevels: List<Toplevel>)
 }
 
 /**
@@ -40,44 +39,29 @@ open class ExternalGenerator(override val generator: IGenerator, override val ro
  */
 class GeneratorException (msg: String) : RuntimeException(msg)
 
+fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
+
 /**
  * Base class for generators to deduplicate common logic
  */
-abstract class GeneratorBase : IGenerator {
+abstract class GeneratorBase(protected open val flowTransform: FlowTransform) : IGenerator {
     object AllowDeconstruct: ISetting<Unit, Declaration>
 
-    protected fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
+    /**
+     * Allows to filter out some generators for toplevel
+     */
+    object AcceptsGenerator: ISetting<(IGenerator) -> Boolean, Toplevel>
 
 
-    protected fun prepareGenerationFolder(folder: File, removeIfExists: Boolean) {
-        //safety net to avoid 'c:\' removal or spoiling by occasion
-        if (folder.toPath().nameCount == 0)
-            fail("Can't use root folder '$folder' as output")
+    protected abstract fun realGenerate(toplevels: List<Toplevel>)
 
+    override fun generate(toplevels: List<Toplevel>) {
+        val preparedToplevels = toplevels
+            .filter { it.getSetting(AcceptsGenerator)?.invoke(this) ?: true }
+            .sortedBy { it.name }
 
-        if (removeIfExists && folder.exists() && ! retry { folder.deleteRecursively() }
-                && /* if delete failed (held by external process) but directory cleared it's ok */ !folder.list().isNullOrEmpty())
-        {
-            fail("Can't clear '$folder'")
-        }
-
-
-        if (folder.exists()) {
-            if (!folder.isDirectory) fail("Not a folder: '$folder'")
-        }
-        else if (! retry { folder.mkdirs() })
-            fail("Can't create folder '$folder'")
+        realGenerate(preparedToplevels)
     }
-
-
-    private inline fun retry(action: () -> Boolean) : Boolean {
-        if (action()) return true
-
-        Thread.sleep(100)
-
-        return action()
-    }
-
 
     protected open fun unknowns(declaredTypes: Iterable<Declaration>): Collection<Declaration> {
         return declaredTypes.mapNotNull {
