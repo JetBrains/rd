@@ -26,7 +26,7 @@ class KotlinJSPlugin : Plugin<Project> {
         val projectName = name
         configure<KotlinMultiplatformExtension> {
             tasks {
-                val sourcesJar = create<Jar>("sourcesJar") {
+                val sourcesJar by creating(Jar::class) {
                     from(sourceSets["main"].kotlin.files)
                 }
 
