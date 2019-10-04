@@ -35,20 +35,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 archiveClassifier.set("sources")
             }
 
-            val dokka by tasks.getting(DokkaTask::class) {
-                outputFormat = "html"
-                outputDirectory = "$buildDir/javadoc"
-                kotlinTasks {
-                    emptyList()
-                }
-                sourceDirs = files("src/main/kotlin")
-            }
-
-            val packageJavadoc by tasks.creating(Jar::class) {
-                dependsOn(dokka)
-                from("$buildDir/javadoc")
-                archiveClassifier.set("javadoc")
-            }
+            val packageJavadoc = createPackageJavaDoc(files("src/main/kotlin"))
 
             tasks {
                 named<KotlinCompile>("compileKotlin") {
@@ -72,10 +59,10 @@ open class KotlinJVMPlugin : Plugin<Project> {
                     else if (mvnId.endsWith("-core") || mvnId.endsWith("-framework"))
                         mvnId = "$mvnId-common"
 
-                    register("maven", MavenPublication::class.java) {
+                    register("pluginMaven", MavenPublication::class.java) {
                         groupId = "com.jetbrains.rd"
                         artifactId = mvnId
-                        version = System.getenv("RELEASE_VERSION_NUMBER") ?: "SNAPSHOT"
+                        version = rootProject.version as String
 
                         from(components["kotlin"])
 
@@ -83,15 +70,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                         artifact(packageJavadoc)
                     }
 
-                    repositories {
-                        maven {
-                            setUrl("https://www.myget.org/F/rd-snapshots/maven/")
-                            credentials {
-                                username = System.getenv("MYGET_USERNAME")
-                                password = System.getenv("MYGET_PASSWORD")
-                            }
-                        }
-                    }
+                    setRemoteRepositories()
                 }
             }
 

@@ -5,9 +5,9 @@ import com.jetbrains.rd.gradle.dependencies.kotlinxCoroutinesVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun Project.applyMultiplatform() = apply<MultiplatformPlugin>()
@@ -16,29 +16,18 @@ fun Project.applyMultiplatform() = apply<MultiplatformPlugin>()
 open class MultiplatformPlugin : Plugin<Project> {
     override fun apply(target: Project) = target.run {
         group = "com.jetbrains.rd"
-        version = System.getenv("RELEASE_VERSION_NUMBER") ?: "SNAPSHOT"
+        version = rootProject.version
 
         apply(plugin = "org.jetbrains.kotlin.multiplatform")
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
 
         configure<KotlinMultiplatformExtension> {
-            jvm {
-                mavenPublication {
-                    artifactId = project.name
-                }
-            }
+            val packageJavadoc = createPackageJavaDoc(files("src/commonMain/kotlin", "src/jvmMain/kotlin"))
 
-            js {
-
-            }
-
-            metadata {
-                mavenPublication {
-                    artifactId = project.name + "-common"
-                }
-            }
-
+            jvm {}
+            js {}
+            metadata {}
 
             sourceSets {
                 val commonMain by getting {
@@ -78,36 +67,30 @@ open class MultiplatformPlugin : Plugin<Project> {
                     }
                 }
             }
-        }
 
-        tasks {
-            val dokka by getting(DokkaTask::class) {
-                outputFormat = "html"
-                outputDirectory = "$buildDir/javadoc"
-                kotlinTasks {
-                    emptyList()
+            tasks.withType<AbstractPublishToMaven>()
+                .matching {
+                    it.name.startsWith("publishKotlinMultiplatformPublication")
                 }
-                sourceDirs = files("src/commonMain/kotlin", "src/jvmMain/kotlin")
-            }
+                .all {
+                    enabled = false
+                }
 
-            val packageJavadoc = create<Jar>("packageJavadoc") {
-                dependsOn(dokka)
-                from("$buildDir/javadoc")
-                archiveClassifier.set("javadoc")
-            }
-        }
+            configure<PublishingExtension> {
+                publications.withType<MavenPublication>().apply {
+                    val jvm by getting {
+                        artifactId = project.name
 
-        configure<PublishingExtension> {
-            publications {
-                repositories {
-                    maven {
-                        setUrl("https://www.myget.org/F/rd-snapshots/maven/")
-                        credentials {
-                            username = System.getenv("MYGET_USERNAME")
-                            password = System.getenv("MYGET_PASSWORD")
-                        }
+                        artifact(packageJavadoc)
+                    }
+                    val metadata by getting {
+                        artifactId = project.name + "-common"
+
+                        artifact(packageJavadoc)
                     }
                 }
+
+                setRemoteRepositories()
             }
         }
     }
