@@ -1,6 +1,5 @@
 package com.jetbrains.rd.generator.nova
 
-import com.jetbrains.rd.generator.nova.util.VersionNumber
 import java.io.File
 
 
@@ -13,7 +12,7 @@ interface IGenerator {
 /**
  * Generator and root together
  */
-interface IGenerationUnit: Comparable<IGenerationUnit> {
+interface IGeneratorAndRoot: Comparable<IGeneratorAndRoot> {
     operator fun component1(): IGenerator = generator
     operator fun component2(): Root = root
 
@@ -21,7 +20,7 @@ interface IGenerationUnit: Comparable<IGenerationUnit> {
     val root: Root
 
     //Need to sort generators because we plan to purge generation folders sometimes
-    override fun compareTo(other: IGenerationUnit): Int {
+    override fun compareTo(other: IGeneratorAndRoot): Int {
         generator.folder.canonicalPath.compareTo(other.generator.folder.canonicalPath).let { if (it != 0) return it}
         root.name.compareTo(other.root.name).let { if (it != 0) return it }
         generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
@@ -33,7 +32,7 @@ interface IGenerationUnit: Comparable<IGenerationUnit> {
 /**
  * If you extend this class with object instance it will be collected by [collectSortedGeneratorsToInvoke] during reflection search.
  */
-open class GenerationUnit(override val generator: IGenerator, override val root: Root) : IGenerationUnit
+open class ExternalGenerator(override val generator: IGenerator, override val root: Root) : IGeneratorAndRoot
 
 
 /**

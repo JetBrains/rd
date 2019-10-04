@@ -431,25 +431,25 @@ private fun collectSortedGeneratorsToInvoke(
         filterByGeneratorClassSimpleName: Regex,
         verbose: Boolean,
         gradleGenerationSpecs: List<GradleGenerationSpec>
-): List<IGenerationUnit> {
+): List<IGeneratorAndRoot> {
 
-    val hardcoded = roots.flatMap { root -> root.hardcodedGenerators.map { GenerationUnit(it, root) } }
+    val hardcoded = roots.flatMap { root -> root.hardcodedGenerators.map { ExternalGenerator(it, root) } }
 
-    val fromSpec = gradleGenerationSpecs.map { it.toGenerationUnit(roots) }
+    val gradle = gradleGenerationSpecs.map { it.toGeneratorAndRoot(roots) }
 
-    val external = classes.filter { IGenerationUnit::class.java.isAssignableFrom(it) }.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<GenerationUnit>()
+    val external = classes.filter { IGeneratorAndRoot::class.java.isAssignableFrom(it) }.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<ExternalGenerator>()
 
     if (verbose) {
         println()
         println("Collecting generators (filtering by regex '$filterByGeneratorClassSimpleName'):")
         println("  ${hardcoded.size}" + " hardcoded generator(s) -- specified directly in 'Root' constructor")
-        println("  ${fromSpec.size}"  + " gradle generator(s)    -- specified in gradle's rdgen plugin 'rdgen { generator { ...} }' sections")
+        println("  ${gradle.size}"  + " gradle generator(s)    -- specified in gradle's rdgen plugin 'rdgen { generator { ...} }' sections")
         println("  ${external.size}"  + " external generator(s)  -- specified by extending kotlin object from class GenerationUnit")
         println()
     }
 
     return hardcoded
-            .plus(fromSpec)
+            .plus(gradle)
             .plus(external)
             .filter { (gen, root) ->
         val shouldGenerate = filterByGeneratorClassSimpleName.containsMatchIn(gen.javaClass.simpleName) && !gen.folder.toString().contains(InvalidSysproperty)

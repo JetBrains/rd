@@ -14,7 +14,7 @@ data class GradleGenerationSpec(
         var directory: String = ""
 ) {
 
-    fun toGenerationUnit(availableRoots: List<Root>) : IGenerationUnit {
+    fun toGeneratorAndRoot(availableRoots: List<Root>) : IGeneratorAndRoot {
             val flowTransform = when (transform) {
                 "asis" -> FlowTransform.AsIs
                 "reversed" -> FlowTransform.Reversed
@@ -33,6 +33,6 @@ data class GradleGenerationSpec(
                     ?: throw GeneratorException("Can't find root with class name ${root}. Found roots: " +
                             availableRoots.joinToString { it.javaClass.canonicalName })
 
-            return GenerationUnit(generator, root)
+            return ExternalGenerator(generator, root)
     }
 }
