@@ -105,9 +105,27 @@ interface IIdentities {
     fun next(parent: RdId): RdId
 }
 
+/**
+ * Interns values sent over protocol
+ */
 interface IInternRoot: IRdReactive {
+    /**
+     * Returns an ID for a value. Returns -1 if the value was not interned
+     */
     fun tryGetInterned(value: Any): Int
+
+    /**
+     * Interns a value and returns an ID for it
+     */
     fun internValue(value: Any): Int
+
+    /**
+     * Gets a value from interned ID.
+     */
     fun <T : Any> unInternValue(id: Int): T
-    fun setInternedCorrespondence(id: Int, value: Any)
+
+    /**
+     * Removes interned value. Any future attempts to un-intern IDs previously associated with this value will fail.
+     */
+    fun removeValue(value: Any)
 }

@@ -14,6 +14,11 @@ namespace Test.RdFramework.Interning
   [Apartment(System.Threading.ApartmentState.STA)]
   public class InterningTest : RdFrameworkTestBase
   {
+    [Datapoint]
+    public static bool TrueDataPoint = true;
+    [Datapoint]
+    public static bool FalseDataPoint = false;
+    
     [SetUp]
     public void BeforeMethod()
     {
@@ -196,6 +201,35 @@ namespace Test.RdFramework.Interning
       Assertion.Assert(secondSendBytes == thirdSendBytes,
         "Sending a single interned object should take the same amount of bytes");
       Assertion.Assert(thirdSendBytes <= firstSendBytes - SumLengths(testValue), "Interning should save data");
+    }
+
+    [Theory]
+    public void TestRemovals(bool firstSendServer, bool secondSendServer, bool removeServer, bool thirdSendServer)
+    {
+      var rootServer = new InternRoot().Static(1);
+      rootServer.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top");
+      var rootClient = new InternRoot().Static(1);
+      rootClient.Bind(LifetimeDefinition.Lifetime, ClientProtocol, "top");
+
+      var stringToSend = "This string is nice and long enough to overshadow any interning overheads";
+
+      IProtocol Proto(bool server) => server ? ServerProtocol : ClientProtocol;
+      InternRoot Root(bool server) => server ? rootServer : rootClient;
+
+      var firstSendBytes = MeasureBytes(Proto(firstSendServer), () => { Root(firstSendServer).Intern(stringToSend); });
+
+      var secondSendBytes =
+        MeasureBytes(Proto(secondSendServer), () => { Root(secondSendServer).Intern(stringToSend); });
+
+      Assert.AreEqual(0, secondSendBytes, "Re-interning a value should not resend it");
+
+      var removalSendBytes = MeasureBytes(Proto(removeServer), () => { Root(removeServer).Remove(stringToSend); });
+
+      var thirdSendBytes = MeasureBytes(Proto(thirdSendServer), () => { Root(thirdSendServer).Intern(stringToSend); });
+
+      Assert.AreEqual(thirdSendBytes, firstSendBytes, "Re-sending removed value uses different amount of bytes, bug?");
+
+      Console.WriteLine($"Removal sent {removalSendBytes}");
     }
   }
 }

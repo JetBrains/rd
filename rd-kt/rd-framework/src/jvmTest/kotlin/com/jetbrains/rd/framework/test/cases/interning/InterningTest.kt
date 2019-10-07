@@ -279,8 +279,9 @@ class InterningTest: RdFrameworkTestBase() {
             assertEquals(testValue, clientProperty.valueOrThrow, "Received value should be the same as sent one")
         }
 
-        // expected send: string + 4 bytes length + 4 bytes id + 8+4 bytes polymorphic write, 3 bytes nullability, 3x 4byte ids, 4 bytes property version
-        val sendTarget = sameString.length * 2 + 4 + 4 + 8 + 4 + 3 + 4 * 3 + 4
+        // expected send: string + 4 bytes length + 4 bytes id + 8+4 bytes polymorphic write, 3 bytes nullability, 3x 4byte ids, 4 bytes property version, 1 byte msg type
+        // expected send confirmation: 4 bytes id, 1 byte msg type, 4 bytes id
+        val sendTarget = sameString.length * 2 + 4 + 4 + 8 + 4 + 3 + 4 * 3 + 4 + 10
         assert(firstSendBytes <= sendTarget) { "Sent $firstSendBytes, expected $sendTarget" }
     }
 

@@ -15,36 +15,67 @@ namespace JetBrains.Rd.Impl
 {
   public class InternRoot : IInternRoot
   {
-    private readonly List<object> myInternedObjects = new List<object>();
+    private readonly ConcurrentDictionary<int, object> myInternedObjects = new ConcurrentDictionary<int, object>();
     private readonly ConcurrentDictionary<int, object> myOtherSideInternedObjects = new ConcurrentDictionary<int, object>();
-    private readonly ConcurrentDictionary<object, int> myInverseMap = new ConcurrentDictionary<object, int>();
+    private readonly ConcurrentDictionary<object, IdPair> myInverseMap = new ConcurrentDictionary<object, IdPair>();
 
     public bool TryGetInterned(object value, out int result)
     {
-      return myInverseMap.TryGetValue(value, out result);
+      var hasValue = myInverseMap.TryGetValue(value, out var pair);
+      result = hasValue ? pair.Id : default;
+      return hasValue;
     }
 
     public int Intern(object value)
     {
-      int result;
-      if (myInverseMap.TryGetValue(value, out result))
-        return result;
+      IdPair pair;
+      if (myInverseMap.TryGetValue(value, out pair))
+        return pair.Id;
       
       Proto.Wire.Send(RdId, writer =>
       {
+        writer.Write((byte) MessageType.SetIntern);
         Polymorphic<object>.Write(SerializationContext, writer, value);
+        int allocatedId;
         lock (myInternedObjects)
         {
-          result = myInternedObjects.Count * 2;
-          myInternedObjects.Add(value);          
+          allocatedId = myInternedObjects.Count * 2;
+          myInternedObjects[allocatedId / 2] = value;          
         }
-        writer.Write(result);
+
+        pair.Id = allocatedId;
+        pair.ExtraId = -1;
+        writer.Write(allocatedId);
       });
-      
-      if (!myInverseMap.TryAdd(value, result)) 
-        result = myInverseMap[value];
-      
-      return result;
+
+      if (myInverseMap.TryAdd(value, pair))
+        SendConfirmIndex(pair.Id);
+      else
+      {
+        SendEraseIndex(pair.Id);
+        pair = myInverseMap[value];
+      }
+
+      return pair.Id;
+    }
+
+    private void SendConfirmIndex(int index)
+    {
+      Proto.Wire.Send(RdId, writer =>
+      {
+        writer.Write((byte) MessageType.ConfirmIndex);
+        writer.Write(index);
+      });
+    }
+
+    private void SendEraseIndex(int index)
+    {
+      Proto.Wire.Send(RdId, writer =>
+      {
+        writer.Write((byte) MessageType.ResetIndex);
+        writer.Write(index);
+      });
+      myInternedObjects.TryRemove(index, out _);
     }
 
     private bool IsIndexOwned(int idx)
@@ -52,17 +83,107 @@ namespace JetBrains.Rd.Impl
       return (idx & 1) == 0;
     }
 
+    private object TryGetValue(int id)
+    {
+      object value;
+      if (IsIndexOwned(id))
+        myInternedObjects.TryGetValue(id / 2, out value);
+      else
+        myOtherSideInternedObjects.TryGetValue(id / 2, out value);
+      return value;
+    }
+
+    public void Remove(object value)
+    {
+      if (myInverseMap.TryRemove(value, out var pair))
+      {
+        Proto.Wire.Send(RdId, writer =>
+        {
+          writer.Write((byte) MessageType.RequestRemoval);
+          writer.Write(pair.Id);
+          writer.Write(pair.ExtraId);
+        });
+      }
+    }
+
     public T UnIntern<T>(int id)
     {
       return (T) (IsIndexOwned(id) ? myInternedObjects[id / 2] : myOtherSideInternedObjects[id / 2]);
     }
-
-    public void SetInternedCorrespondence(int id, object value)
+    
+    private void HandleSetIntern(UnsafeReader reader)
     {
-      Assertion.Assert(!IsIndexOwned(id), "Setting interned correspondence for object that we should have written, bug?");
-      
+      var value = Polymorphic<object>.Read(SerializationContext, reader);
+      var id = reader.ReadInt();
+      Assertion.Require((id & 1) == 0, "Other side sent us id of our own side?");
       myOtherSideInternedObjects[id / 2] = value;
-      myInverseMap[value] = id;
+    }
+
+    private void EraseIndex(int index)
+    {
+      if (IsIndexOwned(index))
+        myInternedObjects.TryRemove(index / 2, out _);
+      else
+        myOtherSideInternedObjects.TryRemove(index / 2, out _);
+    }
+    
+    private void HandleAckRemoval(UnsafeReader reader)
+    {
+      var id1 = reader.ReadInt();
+      var id2 = reader.ReadInt();
+      
+      EraseIndex(id1 ^ 1);
+      if(id2 != -1) EraseIndex(id2 ^ 1);
+    }
+
+    private void HandleRequestRemoval(UnsafeReader reader)
+    {
+      var id1 = reader.ReadInt() ^ 1;
+      var id2r = reader.ReadInt();
+      var id2 = id2r ^ 1;
+
+      var value = TryGetValue(id1);
+      if (value != null)
+      {
+        if (myInverseMap.TryRemove(value, out var oldPair))
+        {
+          Assertion.Assert(oldPair.Id == id1 || oldPair.Id == id2, "oldPair.Id == id1 || oldPair.Id == id2");
+          Assertion.Assert(oldPair.ExtraId == -1 || oldPair.ExtraId == id1 || oldPair.ExtraId == id2, "oldPair.ExtraId == -1 || oldPair.ExtraId == id1 || oldPair.ExtraId == id2");
+        }
+        EraseIndex(id1);
+        if(id2r != -1) EraseIndex(id2);
+      }
+
+      SendAckRemoval(id1, id2r == -1 ? -1 : id2);
+    }
+
+    private void SendAckRemoval(int id1, int id2)
+    {
+      Proto.Wire.Send(RdId, writer =>
+      {
+        writer.Write((byte) MessageType.AckRemoval);
+        writer.Write(id1);
+        writer.Write(id2);
+      });
+    }
+
+    private void HandleConfirmIndex(UnsafeReader reader)
+    {
+      var id = reader.ReadInt() ^ 1;
+      var pair = new IdPair() { Id = id, ExtraId = -1 };
+      var value = myOtherSideInternedObjects[id / 2];
+      if (myInverseMap.TryAdd(value, pair)) 
+        return;
+      
+      pair = myInverseMap[value];
+      pair.ExtraId = id;
+      myInverseMap[value] = pair;
+    }
+
+    private void HandleResetIndex(UnsafeReader reader)
+    {
+      var id = reader.ReadInt();
+      myOtherSideInternedObjects.TryRemove(id / 2, out _);
     }
 
     [CanBeNull] private IRdDynamic myParent;
@@ -122,10 +243,41 @@ namespace JetBrains.Rd.Impl
     public IScheduler WireScheduler => InternRootScheduler.Instance;
     public void OnWireReceived(UnsafeReader reader)
     {
-      var value = Polymorphic<object>.Read(SerializationContext, reader);
-      var id = reader.ReadInt();
-      Assertion.Require((id & 1) == 0, "Other side sent us id of our own side?");
-      SetInternedCorrespondence(id ^ 1, value);
+      var messageType = (MessageType) reader.ReadByte();
+      switch (messageType)
+      {
+        case MessageType.SetIntern:
+          HandleSetIntern(reader);
+          break;
+        case MessageType.ResetIndex:
+          HandleResetIndex(reader);
+          break;
+        case MessageType.ConfirmIndex:
+          HandleConfirmIndex(reader);
+          break;
+        case MessageType.RequestRemoval:
+          HandleRequestRemoval(reader);
+          break;
+        case MessageType.AckRemoval:
+          HandleAckRemoval(reader);
+          break;
+        default:
+          throw new ArgumentOutOfRangeException();
+      }
+    }
+
+    private enum MessageType : byte {
+      SetIntern,
+      ResetIndex,
+      ConfirmIndex,
+      RequestRemoval,
+      AckRemoval,
+    }
+
+    private struct IdPair
+    {
+      public int Id;
+      public int ExtraId;
     }
   }
 
