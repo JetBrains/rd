@@ -1,6 +1,6 @@
 set BUILD_DIR=%~dp0\build
 set NUGET_DIR=%BUILD_DIR%\nuget
-set NUGET_VERSION="193.0.%DATE:~-4%%DATE:~-10,2%%DATE:~-7,2%.%TIME:~-12,2%%TIME:~-8,2%%TIME:~-5,2%-local"
+set NUGET_VERSION="193.0.999-local"
 set CONFIGURATION=Debug
 set NUGET_LOCAL_SOURCE=%BUILD_DIR%\NuGetLocalSource
 
