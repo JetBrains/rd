@@ -23,6 +23,11 @@ interface IRdBindable : IRdDynamic {
      * Assigns IDs to this node and its child nodes in the graph.
      */
     fun identify(identities: IIdentities, id: RdId)
+
+    /**
+     * Creates a clone of this IRdBindable not bound to any protocol
+     */
+    fun deepClone() : IRdBindable
 }
 
 //generator comprehension methods
@@ -53,5 +58,14 @@ internal fun Any.bindPolymorphic(lf: Lifetime, parent: IRdDynamic, name: String)
         (this as? Array<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.bind(lf,parent, "$name[$i]")}
         (this as? List<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.bind(lf,parent, "$name[$i]")}
     }
+}
 
+@Suppress("UNCHECKED_CAST")
+fun <T:Any?> T.deepClonePolymorphic() : T {
+    return when (this) {
+        is IRdBindable -> deepClone() as T
+        is Array<*> -> Array(size) {i -> this[i].deepClonePolymorphic()} as T
+        is List<*> -> List(size) {i -> this[i].deepClonePolymorphic()} as T
+        else -> this
+    }
 }

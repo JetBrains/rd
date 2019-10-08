@@ -34,6 +34,8 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
         const val versionedFlagShift = 2 // update when changing Op
     }
 
+    override fun deepClone(): IRdBindable = RdList(valSzr).also { for (elem in list) { it.add(elem.deepClonePolymorphic()) } }
+
     var optimizeNested: Boolean = false
 
 
@@ -146,4 +148,6 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
         if (isBound) assertThreading()
         list.advise(lifetime) { e -> scheduler.invokeOrQueue { handler(e) }}
     }
+
+
 }

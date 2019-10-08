@@ -1,10 +1,9 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.base.bindPolymorphic
 import com.jetbrains.rd.framework.base.identifyPolymorphic
-import com.jetbrains.rd.framework.base.withId
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -94,6 +93,8 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
 class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic())
     : RdPropertyBase<T>(valueSerializer), IOptProperty<T> {
 
+    override fun deepClone(): RdOptionalProperty<T> = RdOptionalProperty(valueSerializer).also { if (hasValue) it.set(valueOrThrow.deepClonePolymorphic()) }
+
     //constructor
     constructor(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic()) : this(valueSerializer) {
         set(defaultValue)
@@ -163,6 +164,8 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
 @Suppress("UNCHECKED_CAST")
 class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic())
     : RdPropertyBase<T>(valueSerializer), IProperty<T> {
+
+    override fun deepClone(): RdProperty<T> = RdProperty(value.deepClonePolymorphic(), valueSerializer)
 
     //serializers
     companion object : ISerializer<RdProperty<*>> {

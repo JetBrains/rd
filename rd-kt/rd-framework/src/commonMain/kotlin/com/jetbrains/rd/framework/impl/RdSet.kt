@@ -22,6 +22,8 @@ class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, pr
         fun<T: Any> write(ctx: SerializationCtx, stream: AbstractBuffer, value: RdSet<T>) = value.rdid.write(stream)
     }
 
+    override fun deepClone(): IRdBindable = RdSet(valueSerializer).also { for (elem in set) { it.add(elem.deepClonePolymorphic()) } }
+
     var optimizeNested : Boolean = false
 
     override fun init(lifetime: Lifetime) {

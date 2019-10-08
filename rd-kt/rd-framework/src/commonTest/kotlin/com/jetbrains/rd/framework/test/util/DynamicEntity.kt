@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.util
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -9,6 +10,10 @@ import kotlin.reflect.KClass
 
 
 class DynamicEntity<T>(val _foo: RdProperty<T>) : RdBindableBase() {
+    override fun deepClone(): IRdBindable {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     val foo: IProperty<T> = _foo
 
     companion object : IMarshaller<DynamicEntity<*> > {

@@ -54,4 +54,10 @@ class RdTaskTest : RdFrameworkTestBase() {
     }
 }
 
+open class A(open val a:Any) {}
+
+class B (override val a: String) : A(a) {}
+
+
+
 

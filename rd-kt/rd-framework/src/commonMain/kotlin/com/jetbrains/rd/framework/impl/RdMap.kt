@@ -1,10 +1,9 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.base.bindPolymorphic
 import com.jetbrains.rd.framework.base.identifyPolymorphic
-import com.jetbrains.rd.framework.base.withId
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.parseFromOrdinal
@@ -36,6 +35,8 @@ class RdMap<K : Any, V : Any> private constructor(
 
         const val versionedFlagShift = 8
     }
+
+    override fun deepClone(): IRdBindable = RdMap(keySzr, valSzr).also { for ((k,v) in map) { it[k] = v.deepClonePolymorphic() } }
 
     private var nextVersion = 0L
     private val pendingForAck = mutableMapOf<K, Long>()

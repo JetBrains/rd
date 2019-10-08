@@ -1,6 +1,7 @@
 package com.jetbrains.rd.rdtext.impl.ot.intrinsics
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.base.withId
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
@@ -19,6 +20,9 @@ class RdOtState private constructor(
     private val _assertedMasterText : RdOptionalProperty<com.jetbrains.rd.rdtext.impl.intrinsics.RdAssertion>,
     private val _assertedSlaveText : RdOptionalProperty<com.jetbrains.rd.rdtext.impl.intrinsics.RdAssertion>
 ) : RdBindableBase() {
+    override fun deepClone(): IRdBindable {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
     //companion
 
     companion object : IMarshaller<RdOtState> {

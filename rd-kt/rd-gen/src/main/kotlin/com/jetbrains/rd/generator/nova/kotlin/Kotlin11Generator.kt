@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
+import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
 
 import java.io.File
 
@@ -35,6 +36,8 @@ open class Kotlin11Generator(
 
     object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors: ISetting<Unit, Declaration>
+
+    object RefineFieldType: ISetting<Pair<String, IType>, SettingsHolder>
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
@@ -373,6 +376,8 @@ open class Kotlin11Generator(
             hashCodeTrait(decl)
             + "//pretty print"
             prettyPrintTrait(decl)
+            + "//deepClone"
+            deepCloneTrait(decl)
         }
 
         if (decl.isExtension) {
@@ -852,6 +857,31 @@ open class Kotlin11Generator(
             + "override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()"
         }
     }
+
+
+    private fun PrettyPrinter.deepCloneTrait(decl: Declaration) {
+
+        if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
+
+        block("override fun deepClone(): ${decl.name}  ") {
+
+            + "return ${decl.name}("
+            indent {
+                + decl.allMembers
+                    .asSequence()
+                    .map {
+                        it.encapsulatedName + it.isBindable.condstr {".deepClonePolymorphic()" }
+                    }.plus(unknownMemberNames(decl)).joinToString(",\n")
+            }
+            + ")"
+        }
+
+        if (decl is Struct.Concrete && decl.base != null) {
+            println()
+            + "override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()"
+        }
+    }
+
 
 
     private val Declaration.primaryCtorVisibility : String get() {

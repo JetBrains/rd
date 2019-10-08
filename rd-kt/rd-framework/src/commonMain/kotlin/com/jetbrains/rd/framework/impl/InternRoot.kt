@@ -6,8 +6,13 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.framework.IInternRoot
+import com.jetbrains.rd.framework.base.IRdBindable
 
 class InternRoot: IInternRoot {
+    override fun deepClone(): IRdBindable {
+        error("Should never be called")
+    }
+
     private val myItemsList = ArrayList<Any>()
     private val otherItemsList = ConcurrentHashMap<Int, Any>()
     private val inverseMap = ConcurrentHashMap<Any, Int>()

@@ -85,6 +85,8 @@ class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
 class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
                          internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes> {
 
+    override fun deepClone(): IRdBindable = RdCall(requestSzr, responseSzr)
+
     companion object : ISerializer<RdCall<*,*>>{
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdCall<*, *> = read(ctx, buffer, Polymorphic<Any?>(), Polymorphic<Any?>())
 
