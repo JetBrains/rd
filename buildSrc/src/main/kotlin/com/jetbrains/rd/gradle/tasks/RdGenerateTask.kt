@@ -1,10 +1,13 @@
+package com.jetbrains.rd.gradle.tasks
+
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.JavaExec
-import org.gradle.kotlin.dsl.extra
 import java.io.File
-import kotlin.let
 
-open class GenerateTask : JavaExec() {
+/**
+ * Uses compiled RdGen for generating prepared models
+ */
+open class RdGenerateTask : JavaExec() {
     @Input
     lateinit var sourcesRoot: File
     @Input
@@ -13,7 +16,6 @@ open class GenerateTask : JavaExec() {
     init {
         group = "generate"
         main = "com.jetbrains.rd.generator.nova.MainKt"
-        outputs.upToDateWhen { true }
     }
 
     override fun exec() {
@@ -24,12 +26,8 @@ open class GenerateTask : JavaExec() {
         println("Finishing GenerateTask sourcesRoot=$sourcesRoot, sourcesFolder=$sourcesFolder")
     }
 
-    fun lateInit() {
-        args = listOf("--source=$sourcesRoot/$sourcesFolder", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder", "-v")
-    }
-
-    override fun setSystemProperties(properties: MutableMap<String, *>) {
-        super.setSystemProperties(properties)
+    fun addSourcesDirectories(properties: Map<String, String>) {
+        systemProperties(properties)
 
         outputs.dirs(properties.values.toList())
     }

@@ -1,10 +1,9 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask
-import com.jetbrains.rd.gradle.tasks.util.*
+import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.kotlin.utils.addToStdlib.cast
-import javax.inject.Inject
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 applyKotlinJVM()
 
@@ -41,19 +40,11 @@ sourceSets {
         kotlin {
             compileClasspath += main.get().output
 
-            output.dir(rootProject.buildDir
-                    .resolve("models")
-                    .resolve("interning")
-            )
-            output.dir(rootProject.buildDir
-                    .resolve("models")
-                    .resolve("demo")
-            )
-
-            output.dir(rootProject.buildDir
-                    .resolve("models")
-                    .resolve("test")
-            )
+            listOf("interning", "demo", "test").map {
+                rootProject.buildDir.resolve("models").resolve(it)
+            }.forEach {
+                output.dir(it)
+            }
 
             compiledBy("generateEverything")
         }
@@ -63,13 +54,7 @@ sourceSets {
     }
 }
 
-val testCopySources by tasks.creating(CopySourcesTask::class) {
-    currentSourceSet = kotlin.sourceSets.test.get()
-    currentProject = project
-    generativeSourceSet = models
-
-    lateInit()
-}
+val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.test, models)
 
 tasks.named("compileTestKotlin") {
     dependsOn(testCopySources)
@@ -78,8 +63,6 @@ tasks.named("compileTestKotlin") {
 val modelsImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
 }
-
-//configurations["modelsCompileOnly"].extendsFrom(configurations.compileOnly.get())
 
 dependencies {
     testCompile(sourceSets["models"].output)
