@@ -11,11 +11,11 @@ val csRoot: File by rootProject.extra.properties
 val BUILD_DIR = parent!!.buildDir
 
 tasks {
-    fun creatingGenerateTask(properties: Map<String, String>) = creating(RdGenerateTask::class) {
+    fun creatingGenerateTask(properties: Map<String, String>, sourcesFolderParam: String) = creating(RdGenerateTask::class) {
         classpath = project.the<SourceSetContainer>()["main"]!!.runtimeClasspath
 
         sourcesRoot = ktRoot.resolve("rd-gen/src/models/kotlin/com/jetbrains/rd/models")
-        sourcesFolder = "demo"
+        sourcesFolder = sourcesFolderParam
 
         addSourcesDirectories(properties)
 
@@ -26,20 +26,20 @@ tasks {
             cppDirectorySystemPropertyKey to "${cppRoot}/demo",
             ktDirectorySystemPropertyKey to "${BUILD_DIR}/models/demo",
             csDirectorySystemPropertyKey to "${csRoot}/CrossTest/Model"
-    ))
+    ), "demo")
 
     val generateInterningTestModel by creatingGenerateTask(mapOf(
             cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/interning",
             ktDirectorySystemPropertyKey to "$BUILD_DIR/models/interning"
-    ))
+    ), "interning")
 
     val generateTestModel by creatingGenerateTask(mapOf(
             ktDirectorySystemPropertyKey to "$BUILD_DIR/models/test"
-    ))
+    ), "test")
 
     val generateCppTestEntities by creatingGenerateTask(mapOf(
             cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/entities"
-    ))
+    ), "entities")
 
     @Suppress("UNUSED_VARIABLE")
     val generateEverything by creating(DefaultTask::class) {
