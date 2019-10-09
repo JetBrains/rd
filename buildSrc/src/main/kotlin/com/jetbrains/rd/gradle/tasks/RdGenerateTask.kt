@@ -8,8 +8,14 @@ import java.io.File
  * Uses compiled RdGen for generating prepared models
  */
 open class RdGenerateTask : JavaExec() {
+    /**
+     * Directory's parent where sources are placed
+     */
     @Input
     lateinit var sourcesRoot: File
+    /**
+     * Name of directory where sources are placed
+     */
     @Input
     lateinit var sourcesFolder: String
 
@@ -26,7 +32,7 @@ open class RdGenerateTask : JavaExec() {
         println("Finishing GenerateTask sourcesRoot=$sourcesRoot, sourcesFolder=$sourcesFolder")
     }
 
-    fun addSourcesDirectories(properties: Map<String, String>) {
+    fun addOutputDirectories(properties: Map<String, String>) {
         systemProperties(properties)
 
         outputs.dirs(properties.values.toList())

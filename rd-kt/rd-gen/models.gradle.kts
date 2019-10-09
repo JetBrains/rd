@@ -16,10 +16,11 @@ tasks {
 
         sourcesRoot = ktRoot.resolve("rd-gen/src/models/kotlin/com/jetbrains/rd/models")
         sourcesFolder = sourcesFolderParam
+        val sourcesDirectory = sourcesRoot.resolve(sourcesFolder)
+        inputs.dir(sourcesDirectory)
+        addOutputDirectories(properties)
 
-        addSourcesDirectories(properties)
-
-        args = listOf("--source=$sourcesRoot/$sourcesFolder", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder", "-v")
+        args = listOf("--source=$sourcesDirectory", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder", "-v")
     }
 
     val generateDemoModel by creatingGenerateTask(mapOf(
