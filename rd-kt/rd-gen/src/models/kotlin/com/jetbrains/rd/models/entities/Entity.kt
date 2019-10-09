@@ -8,7 +8,7 @@ import java.io.File
 
 object EntityRoot : Root(
         Kotlin11Generator(FlowTransform.Reversed, "org.example", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")))
+        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true)
 //    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
 ) {
     init {

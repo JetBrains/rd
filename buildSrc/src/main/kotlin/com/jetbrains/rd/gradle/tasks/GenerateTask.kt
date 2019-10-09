@@ -21,15 +21,6 @@ open class GenerateTask : JavaExec() {
 
         super.exec()
 
-        val cppOutputDirectory = systemProperties["model.out.src.cpp.dir"] as? String
-        cppOutputDirectory?.let { output ->
-//            project.copy {
-//                val cppRoot : File by project.rootProject.extra.properties
-//                from("$cppRoot/PrecompiledHeader.cmake")
-//                into(output)
-//            }
-        } ?: println("Property \"model.out.src.cpp.dir\" is missing")
-
         println("Finishing GenerateTask sourcesRoot=$sourcesRoot, sourcesFolder=$sourcesFolder")
     }
 
@@ -40,7 +31,6 @@ open class GenerateTask : JavaExec() {
 
     override fun setSystemProperties(properties: MutableMap<String, *>) {
         super.setSystemProperties(properties)
-
 
         outputs.dirs(properties.values.toList())
     }

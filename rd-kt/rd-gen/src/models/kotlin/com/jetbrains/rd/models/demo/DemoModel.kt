@@ -11,7 +11,7 @@ import java.io.File
 
 object DemoRoot : Root(
         Kotlin11Generator(FlowTransform.AsIs, "demo", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir"))),
+        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true),
         CSharp50Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cs.dir")))
 ) {
     init {
