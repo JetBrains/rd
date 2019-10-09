@@ -719,7 +719,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (toplevels.isNotEmpty()) {
             val root = toplevels.first().root
             folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
-            folder.precompiledHeaderCmake()
+// todo           folder.precompiledHeaderCmake()
         }
 //        folder.templateInstantiate()
     }
