@@ -22,6 +22,8 @@ class Protocol(
     override val location: RName = RName.Empty
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet()
 
+    override val isMaster: Boolean = identity.dynamicKind == IdKind.Client
+
     companion object {
         val logCategory = "protocol"
         fun sublogger(subcategory: String) = getLogger("$logCategory.$subcategory")

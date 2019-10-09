@@ -16,8 +16,8 @@ object DemoRoot : Root(
 ) {
     init {
         setting(Cpp17Generator.TargetName, "demo_model")
-        setting(Kotlin11Generator.MasterStateful, false)
-        setting(CSharp50Generator.MasterStateful, false)
+//        setting(Kotlin11Generator.MasterStateful, false)
+//        setting(CSharp50Generator.MasterStateful, false)
         setting(Cpp17Generator.MasterStateful, false)
     }
 }

@@ -35,14 +35,6 @@ open class CSharp50Generator(
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
 
-    object MasterStateful : ISetting<Boolean, Declaration>
-
-    private val Member.Reactive.Stateful.Property.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@CSharp50Generator.master
-
-    private val Member.Reactive.Stateful.Map.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@CSharp50Generator.master
-
     val Member.Reactive.memberFlowTransform: FlowTransform
         get() = owner.getSetting(FlowTransformProperty) ?: flowTransform
 
@@ -1032,15 +1024,15 @@ open class CSharp50Generator(
                     .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId}
                     .println { "${it.encapsulatedName}.OptimizeNested = true;" }
 
-            decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful.Property>()
-                    .filter { !it.isPerClientId }
-                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
-
-            decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful.Map>()
-                    .filter { !it.isPerClientId }
-                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
+//            decl.ownMembers
+//                    .filterIsInstance<Member.Reactive.Stateful.Property>()
+//                    .filter { !it.isPerClientId }
+//                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
+//
+//            decl.ownMembers
+//                    .filterIsInstance<Member.Reactive.Stateful.Map>()
+//                    .filter { !it.isPerClientId }
+//                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive>()

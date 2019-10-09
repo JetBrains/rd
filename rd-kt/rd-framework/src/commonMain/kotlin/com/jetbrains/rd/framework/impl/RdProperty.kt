@@ -27,7 +27,6 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
     }
 
     //mastering
-    var isMaster = true
     protected var masterVersion = 0
 
     var defaultValueChanged : Boolean = false
@@ -53,7 +52,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
 
         advise(lifetime) lambda@{ v ->
             if (!isLocalChange) return@lambda
-            if (isMaster) masterVersion++
+            if (master) masterVersion++
 
             wire.send(rdid) { buffer ->
                 buffer.writeInt(masterVersion)
@@ -72,7 +71,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
         val version = buffer.readInt()
         val v = valueSerializer.read(serializationContext, buffer)
 
-        val rejected = isMaster && version < masterVersion
+        val rejected = master && version < masterVersion
         logReceived.trace {"property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
 
         if (rejected) return
@@ -118,7 +117,7 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
     }
 
     fun slave() : RdOptionalProperty<T> {
-        isMaster = false
+        master = false
         return this
     }
 
@@ -181,7 +180,7 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
     }
 
     fun slave() : RdProperty<T> {
-        isMaster = false
+        master = false
         return this
     }
 

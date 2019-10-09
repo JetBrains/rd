@@ -13,6 +13,11 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
         val logAssert = getLogger<RdReactiveBase>()
     }
 
+    private var masterOverriden : Boolean? = null
+    var master : Boolean
+        get() = masterOverriden ?: protocol.isMaster
+        set(value) { masterOverriden = value }
+
     val wire get() = protocol.wire
 
     //assertion

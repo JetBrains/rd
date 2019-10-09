@@ -41,8 +41,6 @@ class RdMap<K : Any, V : Any> private constructor(
     private var nextVersion = 0L
     private val pendingForAck = mutableMapOf<K, Long>()
 
-    var master: Boolean = true
-
     var optimizeNested: Boolean = false
         set(value) {
             field = value

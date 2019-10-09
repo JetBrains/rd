@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.spinUntil
 import org.junit.Test
+import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import java.lang.management.ManagementFactory
 import kotlin.test.AfterTest
@@ -24,7 +25,7 @@ class TestTwoClients {
     lateinit var s1: SyncModelRoot
     lateinit var s2: SyncModelRoot
 
-    private val isUnderDebug = ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-Xdebug")
+    private val isUnderDebug = ManagementFactory.getRuntimeMXBean().getInputArguments().any { it.contains("jdwp") }
     val timeout = if (isUnderDebug) 10_000L else 1000L
 
     fun wait(condition: () -> Boolean) {
@@ -73,16 +74,36 @@ class TestTwoClients {
 
     @Test
     fun testNotnullableScalarProperty() {
-        val c = "abc"
-        c1.aggregate.notnullableScalar.set(c)
-        wait { c2.aggregate.notnullableScalar.valueOrNull == c }
+        c1.aggregate.nonNullableScalarProperty.set("a")
+        wait { c2.aggregate.nonNullableScalarProperty.valueOrNull == "a" }
+
+        c2.aggregate.nonNullableScalarProperty.set("b")
+        wait { c1.aggregate.nonNullableScalarProperty.valueOrNull == "b" }
     }
+
 
     @Test
     fun testNullableScalarProperty() {
-        val c = "abc"
-        c1.aggregate.nullableScalar.set(c)
-        wait { c2.aggregate.nullableScalar.valueOrNull == c }
+        c1.aggregate.nullableScalarProperty.set("a")
+        wait { c2.aggregate.nullableScalarProperty.value == "a" }
+
+        c2.aggregate.nullableScalarProperty.set("b")
+        wait { c1.aggregate.nullableScalarProperty.value == "b" }
+
+        c2.aggregate.nullableScalarProperty.set(null)
+        wait { c1.aggregate.nullableScalarProperty.value == null }
+    }
+
+    @Test
+    fun testList() {
+        c1.list.add(Clazz(1))
+        wait { c2.list.size == 1 }
+        assert(c2.list[0].f == 1)
+
+        c1.list[0].p.set(2)
+        wait { s1.list[0].p.value == 2 }
+        wait { s2.list[0].p.value == 2 }
+        wait { c2.list[0].p.value == 2 }
     }
 
 }

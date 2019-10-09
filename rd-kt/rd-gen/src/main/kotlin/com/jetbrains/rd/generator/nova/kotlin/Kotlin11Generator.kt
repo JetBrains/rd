@@ -42,16 +42,16 @@ open class Kotlin11Generator(
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
 
-    object MasterStateful : ISetting<Boolean, Declaration>
 
     private val Member.Reactive.Stateful.optimizeNested : Boolean
         get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
 
-    private val Member.Reactive.Stateful.Property.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
-
-    private val Member.Reactive.Stateful.Map.master : Boolean
-        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
+//    object MasterStateful : ISetting<Boolean, Declaration>
+//    private val Member.Reactive.Stateful.Property.master : Boolean
+//        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
+//
+//    private val Member.Reactive.Stateful.Map.master : Boolean
+//        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -724,15 +724,15 @@ open class Kotlin11Generator(
 
 
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
-        decl.ownMembers
-            .filterIsInstance<Member.Reactive.Stateful.Property>()
-            .filter { !it.isPerClientId }
-            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
-
-        decl.ownMembers
-            .filterIsInstance<Member.Reactive.Stateful.Map>()
-            .filter { !it.isPerClientId }
-            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
+//        decl.ownMembers
+//            .filterIsInstance<Member.Reactive.Stateful.Property>()
+//            .filter { !it.isPerClientId }
+//            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
+//
+//        decl.ownMembers
+//            .filterIsInstance<Member.Reactive.Stateful.Map>()
+//            .filter { !it.isPerClientId }
+//            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive.Stateful>()

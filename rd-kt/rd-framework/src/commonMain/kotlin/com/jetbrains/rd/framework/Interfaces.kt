@@ -29,6 +29,7 @@ interface IProtocol : IRdDynamic {
     val identity: IIdentities
     val scheduler: IScheduler
     val wire: IWire
+    val isMaster : Boolean
 
     // Models for which the serialization hash does not match that on the other side
     val outOfSyncModels: ViewableSet<RdExtBase>
@@ -96,6 +97,7 @@ interface ISerializers {
  * Generates unique identifiers for objects in an object graph.
  */
 interface IIdentities {
+    val dynamicKind : IdKind
     /**
      * Generates the next unique identifier.
      */

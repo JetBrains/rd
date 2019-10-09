@@ -78,6 +78,7 @@ abstract class GeneratorBase(protected open val flowTransform: FlowTransform) : 
         }
     }
 
+    //@Deprecated
     protected val master get() = flowTransform != FlowTransform.Reversed
 
     protected val Declaration.isDataClass: Boolean
