@@ -23,11 +23,11 @@ open class GenerateTask : JavaExec() {
 
         val cppOutputDirectory = systemProperties["model.out.src.cpp.dir"] as? String
         cppOutputDirectory?.let { output ->
-            project.copy {
-                val cppRoot : File by project.rootProject.extra.properties
-                from("$cppRoot/PrecompiledHeader.cmake")
-                into(output)
-            }
+//            project.copy {
+//                val cppRoot : File by project.rootProject.extra.properties
+//                from("$cppRoot/PrecompiledHeader.cmake")
+//                into(output)
+//            }
         } ?: println("Property \"model.out.src.cpp.dir\" is missing")
 
         println("Finishing GenerateTask sourcesRoot=$sourcesRoot, sourcesFolder=$sourcesFolder")

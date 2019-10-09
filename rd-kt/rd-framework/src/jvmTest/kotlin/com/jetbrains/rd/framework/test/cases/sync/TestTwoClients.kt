@@ -75,9 +75,6 @@ class TestTwoClients {
     fun testNotnullableScalarProperty() {
         val c = "abc"
         c1.aggregate.notnullableScalar.set(c)
-        wait { s1.aggregate.notnullableScalar.valueOrNull == c }
-        wait { s2.aggregate.notnullableScalar.valueOrNull == c }
-
         wait { c2.aggregate.notnullableScalar.valueOrNull == c }
     }
 
@@ -85,13 +82,7 @@ class TestTwoClients {
     fun testNullableScalarProperty() {
         val c = "abc"
         c1.aggregate.nullableScalar.set(c)
-        wait { s1.aggregate.nullableScalar.valueOrNull == c }
-        wait { s2.aggregate.nullableScalar.valueOrNull == c }
-
         wait { c2.aggregate.nullableScalar.valueOrNull == c }
     }
-
-
-
 
 }
