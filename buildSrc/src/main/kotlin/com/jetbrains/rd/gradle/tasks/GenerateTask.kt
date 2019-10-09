@@ -36,4 +36,10 @@ open class GenerateTask : JavaExec() {
     fun lateInit() {
         args = listOf("--source=$sourcesRoot/$sourcesFolder", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder")
     }
+
+    override fun setSystemProperties(properties: MutableMap<String, *>) {
+        super.setSystemProperties(properties)
+
+        outputs.dirs(properties.values.toList())
+    }
 }
