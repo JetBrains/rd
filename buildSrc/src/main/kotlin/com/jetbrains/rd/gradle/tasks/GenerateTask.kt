@@ -25,7 +25,7 @@ open class GenerateTask : JavaExec() {
     }
 
     fun lateInit() {
-        args = listOf("--source=$sourcesRoot/$sourcesFolder", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder")
+        args = listOf("--source=$sourcesRoot/$sourcesFolder", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder", "-v")
     }
 
     override fun setSystemProperties(properties: MutableMap<String, *>) {

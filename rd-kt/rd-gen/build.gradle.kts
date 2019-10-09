@@ -47,7 +47,14 @@ sourceSets {
             )
             output.dir(rootProject.buildDir
                     .resolve("models")
-                    .resolve("demo"))
+                    .resolve("demo")
+            )
+
+            output.dir(rootProject.buildDir
+                    .resolve("models")
+                    .resolve("test")
+            )
+
             compiledBy("generateEverything")
         }
     }

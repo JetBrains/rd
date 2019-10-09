@@ -56,21 +56,19 @@ fun <T : Any?> ISource<T>.adviseWithPrev(lifetime: Lifetime, handler: (prev: May
 
 /**
  * Whenever a change happens in this source, fires a change in the [target] signal obtained
- * by running the given [converter] function.
+ * by running the given [tf] function.
  */
-fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: ISignal<TTarget>, converter: (TSource) -> TTarget) {
-    advise(lifetime) { target.fire(converter(it)) }
+fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: ISignal<TTarget>, tf: (TSource) -> TTarget) {
+    advise(lifetime) {
+        if (!target.changing) //forbids recursion
+            target.fire(tf(it))
+    }
 }
 
 /**
  * Whenever a change happens in this source, fires a change in the [target] signal of the same type.
  */
-fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>) {
-    advise(lifetime) { value ->
-        if (!target.changing) //forbids recursion
-            target.fire(value)
-    }
-}
+fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>)  = flowInto(lifetime, target) {it}
 
 /**
  * Whenever a change happens in this source, changes the [target] property of the same type.
@@ -79,30 +77,30 @@ fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<T>)
     advise(lifetime) { target.set(it) }
 }
 
-fun <T:Any> IViewableSet<T>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<T>) {
+fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {
     advise(lifetime) { addRemove, v ->
         when (addRemove) {
-            AddRemove.Add -> target.add(v)
-            AddRemove.Remove -> target.remove(v)
+            AddRemove.Add -> target.add(tf(v))
+            AddRemove.Remove -> target.remove(tf(v))
         }
     }
 }
 
-fun <T:Any> ISource<IViewableList.Event<T>>.flowInto(lifetime: Lifetime, target: IMutableViewableList<T>) {
+fun <TSrc:Any, TDst:Any> ISource<IViewableList.Event<TSrc>>.flowInto(lifetime: Lifetime, target: IMutableViewableList<TDst>, tf: (TSrc) -> TDst ) {
     advise(lifetime) { evt ->
         when (evt) {
-            is IViewableList.Event.Add -> target.add(evt.index, evt.newValue)
-            is IViewableList.Event.Update -> target[evt.index] = evt.newValue
+            is IViewableList.Event.Add -> target.add(evt.index, tf(evt.newValue))
+            is IViewableList.Event.Update -> target[evt.index] = tf(evt.newValue)
             is IViewableList.Event.Remove -> target.removeAt(evt.index)
         }
     }
 }
 
-fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>) {
+fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>, tf: (TValue) -> TValue) {
     advise(lifetime) { evt ->
         when (evt) {
-            is IViewableMap.Event.Add -> target[evt.key] = evt.newValue
-            is IViewableMap.Event.Update -> target[evt.key] = evt.newValue
+            is IViewableMap.Event.Add -> target[evt.key] = tf(evt.newValue)
+            is IViewableMap.Event.Update -> target[evt.key] = tf(evt.newValue)
             is IViewableMap.Event.Remove -> target.remove(evt.key)
         }
     }
