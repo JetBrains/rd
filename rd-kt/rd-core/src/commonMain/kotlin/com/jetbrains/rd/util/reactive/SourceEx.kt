@@ -88,6 +88,7 @@ fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target:
 
 fun <TSrc:Any, TDst:Any> ISource<IViewableList.Event<TSrc>>.flowInto(lifetime: Lifetime, target: IMutableViewableList<TDst>, tf: (TSrc) -> TDst ) {
     advise(lifetime) { evt ->
+
         when (evt) {
             is IViewableList.Event.Add -> target.add(evt.index, tf(evt.newValue))
             is IViewableList.Event.Update -> target[evt.index] = tf(evt.newValue)

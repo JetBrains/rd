@@ -15,8 +15,8 @@ private fun<T> synchronize(lifetime: Lifetime, a: IMutablePropertyBase<T>, b: IM
 }
 
 private fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableSet<T>, b: IMutableViewableSet<T>) {
-    a.flowInto(lifetime, b) { it.deepClonePolymorphic() }
-    b.flowInto(lifetime, a) { it.deepClonePolymorphic() }
+    a.flowInto(lifetime, b) { it }
+    b.flowInto(lifetime, a) { it }
 }
 
 private fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableMap<K, V>, b: IMutableViewableMap<K, V>) {
@@ -27,8 +27,8 @@ private fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableM
 private fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableList<T>, b: IMutableViewableList<T>) {
     synchronizeImmutableLists(lifetime, a, b)
 
-    a.change.flowInto(lifetime, b) { it.deepClonePolymorphic() }
-    b.change.flowInto(lifetime, a) { it.deepClonePolymorphic() }
+    a.change.flowInto(lifetime, b) { x -> x.deepClonePolymorphic().also { synchronizePolymorphic(lifetime, x, it) } }
+    b.change.flowInto(lifetime, a) { x -> x.deepClonePolymorphic().also { synchronizePolymorphic(lifetime, x, it) } }
 }
 
 private fun<T: Any> synchronizeImmutableLists(lifetime: Lifetime, a: List<T>, b: List<T>) {
