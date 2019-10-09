@@ -24,7 +24,6 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
                 buffer.writeBool(false)
             }
         }
-
     }
 
     //mastering

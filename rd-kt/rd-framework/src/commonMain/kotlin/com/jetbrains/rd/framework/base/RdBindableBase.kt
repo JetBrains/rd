@@ -143,33 +143,32 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     operator fun <T : List<IRdBindable?>> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
 
 
-    fun synchronizeWith(otherBindable: RdBindableBase) {
+    fun synchronizeWith(lifetime: Lifetime, otherBindable: RdBindableBase) {
         require (otherBindable::class == this::class) { "Can't synchronize ${this::class} with ${otherBindable::class}" }
 
         //todo so the trick is that exts can appear in different order and sometimes
-        val synchronized = hashSetOf<String>()
+        val alreadySynchronized = hashSetOf<String>()
 
 
-        fun doOneWay(me: RdBindableBase, counterpart: RdBindableBase) {
-            me.bindableChildren.adviseAddRemove(Lifetime.Eternal) {addRemove, idx, (name, value) ->
+        fun doOneWay(lifetime: Lifetime, me: RdBindableBase, counterpart: RdBindableBase) {
+            me.bindableChildren.adviseAddRemove(lifetime) {addRemove, idx, (name, value) ->
                 require (addRemove == AddRemove.Add) {"No delete events for bindableChildren are permitted: ${this}"}
                 if (value == null)
                     return@adviseAddRemove
 
-                if (synchronized.contains(name)) //already synchronized
+                if (!alreadySynchronized.add(name)) //already synchronized
                     return@adviseAddRemove
 
                 val other = counterpart.bindableChildren.getOrNull(idx) //by index must be faster
                     ?.takeIf { it.first == name } //value by index has the same name. Class will be checked when we try to synchronize
                     ?: counterpart.getOrCreateExtension(name) { value.deepClonePolymorphic() }
 
-                synchronized.add(name)
-                synchronize(value, other)
+                synchronizePolymorphic(lifetime, value, other)
             }
         }
 
-        doOneWay(this, otherBindable)
-        doOneWay(otherBindable, this)
+        doOneWay(lifetime, this, otherBindable)
+        doOneWay(lifetime, otherBindable, this)
     }
 }
 

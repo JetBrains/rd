@@ -67,7 +67,8 @@ fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: ISi
  */
 fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>) {
     advise(lifetime) { value ->
-        target.fire(value)
+        if (!target.changing) //forbids recursion
+            target.fire(value)
     }
 }
 
@@ -76,6 +77,35 @@ fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>) {
  */
 fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<T>) {
     advise(lifetime) { target.set(it) }
+}
+
+fun <T:Any> IViewableSet<T>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<T>) {
+    advise(lifetime) { addRemove, v ->
+        when (addRemove) {
+            AddRemove.Add -> target.add(v)
+            AddRemove.Remove -> target.remove(v)
+        }
+    }
+}
+
+fun <T:Any> ISource<IViewableList.Event<T>>.flowInto(lifetime: Lifetime, target: IMutableViewableList<T>) {
+    advise(lifetime) { evt ->
+        when (evt) {
+            is IViewableList.Event.Add -> target.add(evt.index, evt.newValue)
+            is IViewableList.Event.Update -> target[evt.index] = evt.newValue
+            is IViewableList.Event.Remove -> target.removeAt(evt.index)
+        }
+    }
+}
+
+fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>) {
+    advise(lifetime) { evt ->
+        when (evt) {
+            is IViewableMap.Event.Add -> target[evt.key] = evt.newValue
+            is IViewableMap.Event.Update -> target[evt.key] = evt.newValue
+            is IViewableMap.Event.Remove -> target.remove(evt.key)
+        }
+    }
 }
 
 /**
