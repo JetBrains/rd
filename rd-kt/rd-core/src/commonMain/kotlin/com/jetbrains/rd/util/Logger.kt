@@ -1,6 +1,7 @@
 package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
@@ -16,6 +17,12 @@ enum class LogLevel {
 interface Logger {
     companion object {
         val root = getLogger("")
+
+        fun set(lifetime: Lifetime, logger: ILoggerFactory) {
+            lifetime.onTermination (
+                Statics<ILoggerFactory>().push(logger)
+            )
+        }
     }
     fun log(level: LogLevel, message: Any?, throwable: Throwable?)
     fun isEnabled(level: LogLevel): Boolean
