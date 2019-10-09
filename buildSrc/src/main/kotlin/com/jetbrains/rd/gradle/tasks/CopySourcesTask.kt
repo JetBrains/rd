@@ -47,6 +47,8 @@ open class CopySourcesTask @Inject constructor() : Exec() {
 
 fun Project.creatingCopySourcesTask(currentSourceSet: NamedDomainObjectProvider<KotlinSourceSet>, generativeSourceSet: SourceSet) =
     tasks.creating(CopySourcesTask::class) {
+        dependsOn(generativeSourceSet.output)
+
         this@creating.currentSourceSet = currentSourceSet.get()
         currentProject = this@creatingCopySourcesTask
         this@creating.generativeSourceSet = generativeSourceSet
