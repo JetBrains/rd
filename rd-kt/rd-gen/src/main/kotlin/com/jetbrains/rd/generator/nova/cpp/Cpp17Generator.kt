@@ -55,6 +55,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         object Features {
             const val __cpp_structured_bindings = "__cpp_structured_bindings"
         }
+
+        object Files {
+            const val PrecompiledHeaderCmake = """PrecompiledHeader.cmake"""
+        }
     }
 
     //region language specific properties
@@ -132,7 +136,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     private fun Class.withInternRootsHere(field: String): String {
-        val roots = internRootForScopes/*.map { """rd::util::getPlatformIndependentHash("$it")""" }*/.joinToString { "\"$it\"" }
+        val roots = internRootForScopes.joinToString { "\"$it\"" }
         return "ctx.withInternRootsHere($field, {$roots})"
     }
     //endregion
@@ -460,9 +464,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> {
             implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
-            /*val isProperty = (this is Member.Reactive.Stateful.Property)
-            implSimpleName + (genericParams.toList().map
-            { it.substitutedName(scope, omitNullability = isProperty) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")*/
         }
         is Member.Const -> type.substitutedName(scope)
     }
@@ -472,9 +473,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         is Member.Field -> type.templateName(scope)
         is Member.Reactive -> {
             implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
-            /*val isProperty = (this is Member.Reactive.Stateful.Property)
-            implSimpleName + (genericParams.toList().map
-            { it.templateName(scope, isProperty) } + customSerializers(scope)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")*/
         }
         is Member.Const -> type.templateName(scope)
     }
@@ -553,46 +551,29 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     internal fun bases(declaration: Declaration): MutableList<BaseClass> {
         val baseName = declaration.baseNames()
         return if (declaration.base == null) {
-            val result = mutableListOf<BaseClass>()
-            if (declaration !is Toplevel) {
-//                result.add("rd::IPolymorphicSerializable" + withMembers.condstr { "()" })
-                result.add(BaseClass(IPolymorphicSerializable, emptyList()))
+            mutableListOf<BaseClass>().apply {
+                if (declaration !is Toplevel) {
+                    add(BaseClass(IPolymorphicSerializable, emptyList()))
+                }
+                addAll(baseName)
             }
-//            baseName?.let { result.add(it) }
-            result.addAll(baseName)
-            result
         } else {
-            val result = baseName.toMutableList()
-            if (isUnknown(declaration)) {
-//                result.add("rd::IUnknownInstance" + withMembers.condstr { "(std::move(unknownId))" })
-                result.add(BaseClass(IUnknownInstance, listOf(Member.Field("unknownId", RdId))))
+            baseName.toMutableList().apply {
+                if (isUnknown(declaration)) {
+                    add(BaseClass(IUnknownInstance, listOf(Member.Field("unknownId", RdId))))
+                }
             }
-            result
         }
-//        return listOf("ISerializable" + withMembers.condstr { "()" }) + (baseName?.let { listOf(it) } ?: emptyList())
     }
 
     protected fun Declaration.baseNames(): List<BaseClass> {
-        /*return this.base?.let {
-            it.sanitizedName(this) + withMembers.condstr {
-                "(${it.allMembers.joinToString(", ") { member -> "std::move(${member.encapsulatedName})" }})"
-            }
-        } ?: (
-                (if (this is Toplevel) "rd::RdExtBase"
-                else if (this is Class || this is Aggregate || this is Toplevel) "rd::RdBindableBase"
-//            else if (decl is Struct) p(" : IPrintable")
-                else null)?.plus(withMembers.condstr { "()" }))*/
         return this.base?.let {
             mutableListOf(BaseClass(it as IType, it.allMembers))
-            /*it.sanitizedName(this) + withMembers.condstr {
-                "(${it.allMembers.joinToString(", ") { member -> "std::move(${member.encapsulatedName})" }})"
-            }*/
         } ?: (
                 if (this is Toplevel)
                     listOf(BaseClass(RdExtBase, emptyList()))
                 else if (this is Class || this is Aggregate || this is Toplevel)
                     listOf(BaseClass(RdBindableBase, emptyList()))
-//                else if (decl is Struct) p(" : IPrintable")
                 else listOf()
                 )
     }
@@ -647,7 +628,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 //                println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
                     println("""
                             |if ($conditionalVariable)
-                            |    include(PrecompiledHeader.cmake)
+                            |    include(${Files.PrecompiledHeaderCmake})
                             |    add_precompiled_header(${targetName} pch.h SOURCE_CXX ${pchCppFile} FORCEINCLUDE)
                             |endif ()""".trimMargin()
                     )
@@ -656,6 +637,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
     }
 
+    private fun File.precompiledHeaderCmake() {
+        if (usingPrecompiledHeaders) {
+            val file = File("./src/main/resources/cpp/${Files.PrecompiledHeaderCmake}")
+            file.copyTo(this.resolve(Files.PrecompiledHeaderCmake), overwrite = true)
+        }
+    }
 /*
     private fun File.templateInstantiate() {
         val classes = listOf(
@@ -701,7 +688,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
             val marshallerHeaders = tl.getSetting(MarshallerHeaders) ?: listOf()
-//            directory.cmakeLists(tl.name, fileNames)
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     type.fsPath(tl, isDefinition).run {
@@ -733,6 +719,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (toplevels.isNotEmpty()) {
             val root = toplevels.first().root
             folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
+            folder.precompiledHeaderCmake()
         }
 //        folder.templateInstantiate()
     }
@@ -1236,8 +1223,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     private fun extensionTraitDecl(decl: Ext): MemberFunction? {
         val pointcut = decl.pointcut ?: return null
-//        val lowerName = decl.name.decapitalize()
-//        val extName = decl.extName ?: lowerName
         return MemberFunction("""${decl.name} const &""", "getOrCreateExtensionOf(${pointcut.sanitizedName(decl)} & pointcut)", decl.name).static()
     }
 
@@ -1290,7 +1275,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (members.count() == 0) {
             return null
         }
-//        +"explicit ${decl.name}"
         val arguments = secondaryCtorParams(decl)
         return Constructor.Secondary(this, decl, arguments)
     }
@@ -1394,22 +1378,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     protected fun equalsTraitDecl(decl: Declaration): MemberFunction? {
-//        val signature = MemberFunction("bool", "equals(${decl.name} const& other)", decl.name).const()
         val signature = MemberFunction("bool", "equals(rd::ISerializable const& object)", decl.name).const()
         return if (decl is Toplevel || decl.isAbstract) {
             null
         } else {
             signature.override()
         }
-        /*return if (decl.isAbstract) {
-            signature.abstract(decl)
-        } else {
-            if (decl is Toplevel) {
-                signature
-            } else {
-                signature.override()
-            }
-        }*/
     }
 
     protected fun PrettyPrinter.equalityOperatorsDecl(decl: Declaration) {
@@ -1864,9 +1838,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 }
                 val star = unwrap.condstr { "*" }
                 +"return $star${member.encapsulatedName};"
-                /*if (member is Member.Field) {
-                    +"return wrapper::get<${member.implTemplateName(decl)}>(${member.encapsulatedName});"
-                }*/
             }
         }
     }
@@ -1910,10 +1881,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     .filterIsInstance<Member.Reactive>()
                     .filter { it.freeThreaded }
                     .println { "${it.encapsulatedName}.async = true;" }
-
-            /*decl.ownMembers
-                    .filter { it.isBindable }
-                    .println { """bindable_children.emplace_back("${it.name}", &${it.encapsulatedName});""" }*/
 
             if (decl is Toplevel) {
                 +"serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L;"
