@@ -160,7 +160,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                     return@adviseAddRemove
 
                 val other = counterpart.bindableChildren.getOrNull(idx) //by index must be faster
-                    ?.takeIf { it.first == name } //value by index has the same name. Class will be checked when we try to synchronize
+                    ?.takeIf { it.first == name } ?.second //value by index has the same name. Class will be checked when we try to synchronize
                     ?: counterpart.getOrCreateExtension(name) { value.deepClonePolymorphic() }
 
                 synchronizePolymorphic(lifetime, value, other)
@@ -173,7 +173,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 }
 
 fun <T : RdBindableBase> T.withId(id: RdId) : T {
-    require(this.rdid == RdId.Null) {"this.id != RdId.Null, but ${this.rdid}"}
+    require(this.rdid == RdId.Null) { "this.id != RdId.Null, but ${this.rdid}" }
     require(id != RdId.Null) {"id != RdId.Null"}
 
     return this.apply { this.rdid = id }
