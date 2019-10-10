@@ -14,6 +14,7 @@ import com.jetbrains.rd.util.reactive.ViewableMap
 class RdPerClientIdMap<V : RdBindableBase> private constructor(val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<ClientId, V>) : RdReactiveBase(), IViewableMap<ClientId, V> by myInternalMap {
     constructor(valueFactory: (Boolean) -> V) : this(valueFactory, ViewableMap())
 
+    val changing = myInternalMap.changing
     var optimizeNested: Boolean = false
 
     override fun deepClone(): IRdBindable = RdPerClientIdMap(valueFactory).also { for ((k,v) in myInternalMap) { it.myInternalMap[k] = v.deepClonePolymorphic() } }

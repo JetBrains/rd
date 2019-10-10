@@ -1,5 +1,6 @@
 package com.jetbrains.rd.framework.base
 
+import com.jetbrains.rd.framework.impl.RdPerClientIdMap
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 
@@ -46,12 +47,29 @@ fun<T: Any> synchronizeImmutableArrays(lifetime: Lifetime, a: Array<T>, b: Array
     }
 }
 
+fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b: RdPerClientIdMap<T>) {
+    a.view(lifetime) { lt, (key, value) ->
+        if (b.changing || !b.isBound)
+            return@view
+
+        b[key]?.let { otherValue -> value.synchronizeWith(lt, otherValue) }
+    }
+
+    b.view(lifetime) { lt, (key, value) ->
+        if (a.changing || !a.isBound)
+            return@view
+
+        a[key]?.let { otherValue -> value.synchronizeWith(lt, otherValue) }
+    }
+
+}
+
+
 @Suppress("UNCHECKED_CAST")
 internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any?) {
 
     if (first == second)
         return
-
     else if (first is ISignal<*> && second is ISignal<*>) {
         synchronize(lifetime, first as ISignal<Any>, second as ISignal<Any>)
 
@@ -66,6 +84,12 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
 
     } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
         synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)
+
+    } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
+        synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)
+
+    } else if (first is RdPerClientIdMap<*> && second is RdPerClientIdMap<*>) {
+        synchronize(lifetime, first as RdPerClientIdMap<RdBindableBase>, second as RdPerClientIdMap<RdBindableBase>)
 
     } else if (first is RdBindableBase && second is RdBindableBase) {
         first.synchronizeWith(lifetime, second)
