@@ -13,4 +13,10 @@ tasks {
         executable = "dotnet"
         args = listOf("clean")
     }
+
+    val CrossTestCsClientAllEntities by creating(DotnetRunTask::class)
+
+    val CrossTestCsClientBigBuffer by creating(DotnetRunTask::class)
+
+    val CrossTestCsClientRdCall by creating(DotnetRunTask::class)
 }

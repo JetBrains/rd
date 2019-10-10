@@ -10,7 +10,7 @@ import com.jetbrains.rd.util.threading.SingleThreadScheduler
 abstract class CrossTestKtServerBase : CrossTestKtBase() {
     private fun server(lifetime: Lifetime, port: Int? = null): IProtocol {
         scheduler = SingleThreadScheduler(lifetime, "SingleThreadScheduler")
-        return Protocol(Serializers(), Identities(IdKind.Server), scheduler,
+        return Protocol("DemoServer", Serializers(), Identities(IdKind.Server), scheduler,
                 SocketWire.Server(lifetime, scheduler, port, "DemoServer"), lifetime)
     }
 
