@@ -52,8 +52,8 @@ namespace JetBrains.Lifetimes
   
   
   /// <summary>
-  /// Central class in <see cref="JetBrains.Lifetimes"/> package. Has two main function:<br/>
-  /// 1. High performance analogue of <see cref="CancellationToken"/>. Analogue of <see cref="CancellationTokenSource"/> <br/>
+  /// Central class in <see cref="JetBrains.Lifetimes"/> package. Has two main functions:<br/>
+  /// 1. High performance analogue of <see cref="CancellationToken"/>. <see cref="LifetimeDefinition"/> is analogue of <see cref="CancellationTokenSource"/> <br/>
   /// 2. Inversion of <see cref="IDisposable"/> pattern (with thread-safety):
   /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> (e.g. <see cref="OnTermination(Action)"/>) methods.
   /// When lifetime is being terminated (i.e. it's <see cref="LifetimeDefinition"/> was called <see cref="LifetimeDefinition.Terminate"/>) all
