@@ -40,7 +40,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/rd-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>Removed all external NuGet dependencies</PackageReleaseNotes>
+        <PackageReleaseNotes>Reflection package support tasks now, RdCall design revised</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
