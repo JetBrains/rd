@@ -82,7 +82,7 @@ fun <TSrc, TDst> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutableProp
     }
 }
 
-//fun <TSrc> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TSrc>) = flowInto(lifetime, target) {it}
+fun <TSrc> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TSrc>) = flowInto(lifetime, target) {it}
 
 
 fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {

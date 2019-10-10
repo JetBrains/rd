@@ -52,7 +52,7 @@ sourceSets {
 
             output.dir(rootProject.buildDir
                     .resolve("models")
-                    .resolve("test")
+                    .resolve("sync")
             )
 
             compiledBy("generateEverything")
