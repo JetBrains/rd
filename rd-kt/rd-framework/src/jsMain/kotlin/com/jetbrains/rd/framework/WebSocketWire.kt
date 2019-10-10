@@ -44,7 +44,7 @@ class WebSocketWire {
 
                 s.onmessage = {
                     try {
-                        val messageEvent = it as MessageEvent
+                        val messageEvent = it
                         val data = messageEvent.data as ArrayBuffer
                         bytesReceived += data.byteLength
                         val buffer = JsBuffer(data)

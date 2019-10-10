@@ -5,36 +5,39 @@
         <version>$version$</version>
         <authors>JetBrains</authors>
         <owners>JetBrains</owners>
-        <license type="expression">Apache-2.0</license>
-        <projectUrl>https://github.com/JetBrains/rd</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>RD Generator</description>
+        <license type="expression">Apache-2.0</license>
+        <licenseUrl>https://licenses.nuget.org/Apache-2.0</licenseUrl>
+        <projectUrl>https://github.com/JetBrains/rd</projectUrl>
+        <description>Rd Generator: generates C# classes by Kotlin dsl model</description>
+        <releaseNotes>First public version of RdGen</releaseNotes>
+        <copyright>Copyright © JetBrains 2019</copyright>
+        <tags>rd reactive distributed protocol</tags>
+        <repository type="git" url="https://github.com/JetBrains/rd"/>
+
         <dependencies>
-            <group  targetFramework="net461">
-                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
-                <dependency id="JetBrains.Lifetimes" version="$version$"/>
-                <dependency id="JetBrains.RdFramework" version="$version$"/>
-                <dependency id="JetBrains.Jdk" version="1.8.20190816.11" />
+            <group targetFramework=".NETFramework3.5">
+                <dependency id="JetBrains.Lifetimes" version="$version$" exclude="Build,Analyzers"/>
+                <dependency id="JetBrains.RdFramework" version="$version$" exclude="Build,Analyzers"/>
+                <dependency id="AsyncBridge.Net35" version="0.2.0" exclude="Build,Analyzers"/>
+                <dependency id="TaskParallelLibrary" version="1.0.2856" exclude="Build,Analyzers"/>
             </group>
-            <group  targetFramework="netstandard2.0">
-                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
-                <dependency id="JetBrains.Lifetimes" version="$version$"/>
-                <dependency id="JetBrains.RdFramework" version="$version$"/>
-                <dependency id="JetBrains.Jdk" version="1.8.20190816.11" />
+            <group targetFramework=".NETFramework4.6.1">
+                <dependency id="JetBrains.Lifetimes" version="$version$" exclude="Build,Analyzers"/>
+                <dependency id="JetBrains.RdFramework" version="$version$" exclude="Build,Analyzers"/>
             </group>
-            <group targetFramework="net35">
-                <dependency id="JetBrains.Annotations" version="2019.1.1"/>
-                <dependency id="JetBrains.Lifetimes" version="$version$"/>
-                <dependency id="JetBrains.RdFramework" version="$version$"/>
-                <dependency id="AsyncBridge.Net35" version="0.2.0"/>
-                <dependency id="TaskParallelLibrary" version="1.0.2856.0"/>
-                <dependency id="JetBrains.Jdk" version="1.8.20190816.11" />
+            <group targetFramework=".NETStandard2.0">
+                <dependency id="JetBrains.Lifetimes" version="$version$" exclude="Build,Analyzers"/>
+                <dependency id="JetBrains.RdFramework" version="$version$" exclude="Build,Analyzers"/>
             </group>
         </dependencies>
+
     </metadata>
     <files>
         <file src="JetBrains.RdGen.targets" target="build\JetBrains.RdGen.targets"/>
         <file src="build\libs\rd.jar" target="build\rd.jar"/>
+
+        <!-- Special marker for library-less NuGet (it must contain "net" word inside) -->
         <file src="build\nuget\lib\net\_._" target="lib\net\_._"/>
     </files>
 </package>

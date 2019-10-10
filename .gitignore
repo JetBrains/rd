@@ -1,5 +1,6 @@
 .idea
 *.iml
+*.Generated.cs
 .vscode
 .vs/
 build
@@ -13,7 +14,6 @@ cmake-build-*
 *.nupkg
 *.snupkg
 *.DotSettings.user
-cache/
 # Project exclude paths
 /rd-kt/rd-cross/out/
 /rd-kt/rd-cross/out/test/classes/

@@ -33,7 +33,7 @@ private class AWTEventSource(eventMask: Long) : ISource<AWTEvent> {
             rdSet.forEach { it(event) }
         }
 
-        rdSet.advise(Lifetime.Eternal.createNested()) { addRemove, function ->
+        rdSet.advise(Lifetime.Eternal.createNested()) { addRemove, _ ->
             if (rdSet.isEmpty() && addRemove == AddRemove.Remove) {
                 Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
             } else if (rdSet.size == 1 && addRemove == AddRemove.Add) {
@@ -247,7 +247,7 @@ fun <T> JComboBox<T>.selectedItemProperty(): IPropertyView<T?> {
     fun getValue(): T? = this@selectedItemProperty.selectedItem as T?
 
     return proxyProperty(getValue()) { lifetime, set ->
-        val ls = ActionListener { e ->
+        val ls = ActionListener { _ ->
             set(getValue())
         }
 

@@ -1,11 +1,10 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.RdReactiveBase
-import com.jetbrains.rd.framework.base.withId
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.plusAssign
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.hasValue
@@ -13,7 +12,6 @@ import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
-import kotlin.jvm.Volatile
 
 fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(request: TReq, onSuccess: (TRes) -> Unit) {
     startAndAdviseSuccess(Lifetime.Eternal, request, onSuccess)
@@ -26,14 +24,46 @@ fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(lifetime: Lifetime, re
 }
 
 
-class RdTask<T> : IRdTask<T> {
+open class RdTask<T> : IRdTask<T> {
+    override val result = OptProperty<RdTaskResult<T>>()
+    fun set(v : T) = result.set(RdTaskResult.Success(v))
+
     companion object {
         fun<T> faulted(error: Throwable) = RdTask<T>().apply { this.result.set(RdTaskResult.Fault(error)) }
         fun<T> fromResult(value: T) = RdTask<T>().apply { this.set(value) }
     }
+}
 
-    override val result = OptProperty<RdTaskResult<T>>()
-    fun set(v : T) = result.set(RdTaskResult.Success(v))
+
+@Suppress("UNCHECKED_CAST")
+class WiredRdTask<T>(val lifetimeDef: LifetimeDefinition, val call: RdCall<*,*>, override val rdid: RdId, val scheduler: IScheduler) : RdTask<T>(), IRdWireable {
+
+    override val wireScheduler: IScheduler get() = SynchronousScheduler
+
+    init {
+        call.wire.advise(lifetimeDef.lifetime, this)
+        lifetimeDef.lifetime.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
+    }
+
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        //todo don't write anything if request is dropped
+
+        val resultFromWire = RdTaskResult.read(call.serializationContext, buffer, call.responseSzr) as RdTaskResult<T>
+        RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) received response for task'$rdid' : ${resultFromWire.printToString()} " }
+
+        scheduler.queue {
+            if (result.hasValue) {
+                RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
+//              if (isBound && defaultScheduler.isActive && requests.containsKey(taskId)) RdReactiveBase.logAssert.error { "MainThread: ${defaultScheduler.isActive}, taskId=$taskId " }
+            } else {
+                //todo could be race condition in sync mode in case of Timeout, but it's not really valid case
+                //todo but now we could start task on any scheduler - need interlocks in property
+                result.setIfEmpty(resultFromWire)
+            }
+            lifetimeDef.terminate()
+        }
+
+    }
 }
 
 class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
@@ -45,10 +75,17 @@ class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
     }
 }
 
-@Suppress("UNCHECKED_CAST")
+
+
+
+
+
+@Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 //Can't be constructed by constructor, only by deserializing counterpart: RdEndpoint
-class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
-                         private val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes> {
+class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
+                         internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes> {
+
+    override fun deepClone(): IRdBindable = RdCall(requestSzr, responseSzr)
 
     companion object : ISerializer<RdCall<*,*>>{
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdCall<*, *> = read(ctx, buffer, Polymorphic<Any?>(), Polymorphic<Any?>())
@@ -58,87 +95,44 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         }
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdCall<*, *>) {
             buffer.writeRdId(value.rdid)
-//            throw IllegalStateException("Serialization of RdCall (${value.id}) is not allowed. The only valid option is to deserialize RdEndpoint.")
         }
 
         var respectSyncCallTimeouts = true
     }
 
-    private val requests = concurrentMapOf<RdId, Pair<IScheduler, RdTask<TRes>>>()
-
-    @Volatile
-    private var syncTaskId: RdId? = null
     override lateinit var serializationContext : SerializationCtx
-    override val wireScheduler: IScheduler get() = SynchronousScheduler
+
+    private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
+
+    lateinit var bindLifetime : Lifetime
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
+        bindLifetime = lifetime
 
         //Because we advise on Synchronous Scheduler: RIDER-10986
         serializationContext = super.serializationContext
         wire.advise(lifetime, this)
-
-        lifetime += {
-            for (req in requests) {
-
-                val task = req.value.second
-                if (!task.result.hasValue) //todo race
-                    task.result.set(RdTaskResult.Cancelled())
-            }
-
-            requests.clear()
-        }
-        //todo clear requests
-    }
-
-    override fun onWireReceived(buffer: AbstractBuffer) {
-        val taskId = buffer.readRdId()
-        val request = requests[taskId]
-
-        if (request == null) {
-            logReceived.trace { "call `$location` ($rdid) received response '$taskId' but it was dropped" }
-
-        } else {
-            val result = RdTaskResult.read(serializationContext, buffer, responseSzr)
-            logReceived.trace { "call `$location` ($rdid) received response '$taskId' : ${result.printToString()} " }
-
-            val (scheduler, task) = request
-            scheduler.queue {
-                if (task.result.hasValue) {
-                    logReceived.trace { "call `$location` ($rdid) response was dropped, task result is: ${task.result.valueOrNull}" }
-                    if (isBound && defaultScheduler.isActive && requests.containsKey(taskId)) logAssert.error { "MainThread: ${defaultScheduler.isActive}, taskId=$taskId " }
-                } else {
-                    //todo could be race condition in sync mode in case of Timeout, but it's not really valid case
-                    //todo but now we could start task on any scheduler - need interlocks in property
-                    task.result.set(result)
-                    requests.remove(taskId)
-                }
-            }
-        }
     }
 
     override fun sync(request: TReq, timeouts: RpcTimeouts?) : TRes {
-        try {
-            val task = startInternal(request, true, SynchronousScheduler)
 
-            val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.infinite
+        val task = startInternal(request, true, SynchronousScheduler)
 
-            val freezeTime = measureTimeMillis {
-                if (!task.wait(effectiveTimeouts.errorAwaitTime) {
-                        if (protocol.scheduler.isActive)
-                            containingExt?.pumpScheduler()
-                    }
-                )
-                    throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTime} ms")
-            }
-            if (freezeTime > effectiveTimeouts.warnAwaitTime) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
-            return task.result.valueOrThrow.unwrap()
-        } finally {
-            syncTaskId = null
+        val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.infinite
+
+        val freezeTime = measureTimeMillis {
+            if (!task.wait(effectiveTimeouts.errorAwaitTime) {
+                    if (protocol.scheduler.isActive)
+                        containingExt?.pumpScheduler()
+                }
+            )
+                throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTime} ms")
         }
+        if (freezeTime > effectiveTimeouts.warnAwaitTime) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
+        return task.result.valueOrThrow.unwrap()
+
     }
-
-
 
 
     override fun start(request: TReq, responseScheduler: IScheduler?) : IRdTask<TRes> {
@@ -153,12 +147,9 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
         if (!async) assertThreading()
 
         val taskId = protocol.identity.next(rdid)
-        val task = RdTask<TRes>()
-        requests.putUnique(taskId, scheduler to task)
-        if (sync) {
-            if (syncTaskId != null) throw IllegalStateException("Already exists sync task for call `$location`, taskId = $syncTaskId")
-            syncTaskId = taskId
-        }
+
+        //todo bindLifetime -> arbitrary lifetime
+        val task = WiredRdTask<TRes>(bindLifetime.createNested(), this, taskId, scheduler)
 
         wire.send(rdid) { buffer ->
             logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
@@ -168,67 +159,30 @@ class RdCall<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic
 
         return task
     }
-}
-
-/**
- * An API that is exposed to the remote process and can be invoked over the protocol.
- */
-class RdEndpoint<TReq, TRes>(private val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
-                             private val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase() {
-
-    companion object : ISerializer<RdEndpoint<*,*>>{
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdEndpoint<*, *> = read(ctx, buffer, Polymorphic<Any?>(), Polymorphic<Any?>())
-
-        fun <TReq, TRes> read(ctx: SerializationCtx, buffer: AbstractBuffer, requestSzr: ISerializer<TReq>, responseSzr: ISerializer<TRes>): RdEndpoint<TReq, TRes> {
-            val id = RdId.read(buffer)
-            return RdEndpoint<TReq, TRes>(requestSzr, responseSzr).withId(id)
-        }
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdEndpoint<*, *>) = buffer.writeRdId(value.rdid)
-    }
-
-    private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
 
     /**
      * Assigns a handler that executes the API asynchronously.
      */
-    fun set(handler: (Lifetime, TReq) -> RdTask<TRes>) {
-        require(this.handler == null) {"handler is set already"}
-        this.handler = handler
-    }
+    override fun set(handler: (Lifetime, TReq) -> RdTask<TRes>) { this.handler = handler }
     constructor(handler:(Lifetime, TReq) -> RdTask<TRes>) : this() { set(handler) }
 
     /**
      * Assigns a handler that executes the API synchronously.
      */
-    fun set(handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
-
-    constructor(handler: (TReq) -> TRes) : this () {set(handler)}
-
-
-    override lateinit var serializationContext: SerializationCtx
-    lateinit var bindLifetime: Lifetime
-
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
-
-        serializationContext = super.serializationContext
-        this.bindLifetime = lifetime
-
-        wire.advise(lifetime, this)
-    }
+    constructor(handler: (TReq) -> TRes) : this () { set(handler) }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val taskId = RdId.read(buffer)
-        val value = requestSzr.read(serializationContext, buffer)
-        logReceived.trace {"endpoint `$location`::($rdid) request = ${value.printToString()}"}
+        val request : TReq = requestSzr.read(serializationContext, buffer)
+
+        logReceived.trace {"endpoint `$location`::($rdid) taskId=($taskId) request = ${request.printToString()}" + (handler == null).condstr { " BUT handler is NULL" }}
 
         //little bit monadic programming here
-        Result.wrap { handler!!(bindLifetime, value) }
+        Result.wrap { handler!!(bindLifetime, request) }
                 .transform( {it}, { RdTask.faulted(it) })
                 .result.advise(bindLifetime) { result ->
-            logSend.trace { "endpoint `$location`::($rdid) response = ${result.printToString()}" }
-            wire.send(rdid) { buffer ->
-                taskId.write(buffer)
+            logSend.trace { "endpoint `$location`::($rdid) taskId=($taskId) response = ${result.printToString()}" }
+            wire.send(taskId) { buffer ->
                 RdTaskResult.write(serializationContext, buffer, result, responseSzr)
             }
         }

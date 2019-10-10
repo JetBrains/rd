@@ -2,6 +2,7 @@ package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.threading.QueueProcessor
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -9,6 +10,7 @@ import kotlin.test.assertEquals
 @ObsoleteCoroutinesApi
 class QueueProcessorTest {
 
+    @ExperimentalCoroutinesApi
     @Test
     fun test1() {
         val lt = LifetimeDefinition()

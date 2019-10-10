@@ -4,6 +4,7 @@ import com.jetbrains.rd.framework.ISerializer
 import com.jetbrains.rd.framework.Polymorphic
 import com.jetbrains.rd.framework.SerializationCtx
 import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.framework.base.withId
 import com.jetbrains.rd.framework.readRdId
@@ -12,13 +13,18 @@ import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
+@Suppress("UNUSED_PARAMETER")
 class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdReactiveBase(), IAsyncSignal<T> {
+
+
 
     companion object : ISerializer<RdSignal<*>>{
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdSignal<*> = read(ctx, buffer, Polymorphic<Any?>())
         fun<T> read(ctx: SerializationCtx, buffer: AbstractBuffer, valueSerializer: ISerializer<T>): RdSignal<T> = RdSignal(valueSerializer).withId(buffer.readRdId())
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdSignal<*>) = value.rdid.write(buffer)
     }
+
+    override fun deepClone(): IRdBindable = RdSignal(valueSerializer)
 
     private val signal = Signal<T>()
     override val changing: Boolean get() = signal.changing

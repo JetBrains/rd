@@ -11,12 +11,12 @@ import java.io.File
 object InterningRoot1 : Root(
         Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
         CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
-        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")))
+        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true)
 ) {
     init {
         setting(Cpp17Generator.TargetName, "interning_test_model")
-        setting(Kotlin11Generator.MasterStateful, false)
-        setting(CSharp50Generator.MasterStateful, false)
+//        setting(Kotlin11Generator.MasterStateful, false)
+//        setting(CSharp50Generator.MasterStateful, false)
         setting(Cpp17Generator.MasterStateful, false)
     }
     val TestInternScope = /*InterningModelsGenTest.InterningRoot1.*/internScope()

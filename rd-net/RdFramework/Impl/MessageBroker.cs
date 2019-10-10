@@ -22,7 +22,7 @@ namespace JetBrains.Rd.Impl
 
     private readonly IScheduler myScheduler;
     private readonly object myLock = new object();
-    private readonly Dictionary<RdId, IRdReactive> mySubscriptions = new Dictionary<RdId, IRdReactive>();
+    private readonly Dictionary<RdId, IRdWireable> mySubscriptions = new Dictionary<RdId, IRdWireable>();
     private readonly Dictionary<RdId, Mq> myBroker = new Dictionary<RdId, Mq>();
 
     public MessageBroker(IScheduler scheduler)
@@ -31,7 +31,7 @@ namespace JetBrains.Rd.Impl
     }
 
 
-    private void Invoke(IRdReactive reactive, byte[] msg, bool sync = false)
+    private void Invoke(IRdWireable reactive, byte[] msg, bool sync = false)
     {
       if (sync)
       {
@@ -54,7 +54,7 @@ namespace JetBrains.Rd.Impl
       });
     }
     
-    private static unsafe void Execute(IRdReactive reactive, byte[] msg)
+    private static unsafe void Execute(IRdWireable reactive, byte[] msg)
     {
       fixed (byte* p = msg)
       {
@@ -154,11 +154,12 @@ namespace JetBrains.Rd.Impl
 
 
     
-    public void Advise(Lifetime lifetime, IRdReactive reactive)
+    public void Advise(Lifetime lifetime, IRdWireable reactive)
     {
       Assertion.Require(!reactive.RdId.IsNil, "!id.IsNil: {0}", reactive);
 
-      myScheduler.AssertThread(reactive);
+      //todo commented because of WiredRdTask
+//      myScheduler.AssertThread(reactive);
 
       // ReSharper disable once InconsistentlySynchronizedField
       mySubscriptions.BlockingAddUnique(lifetime, myLock, reactive.RdId, reactive);

@@ -1,7 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace JetBrains.Rd.Reflection
+namespace JetBrains.Rd
 {
   public interface IPolymorphicTypesCatalog
   {

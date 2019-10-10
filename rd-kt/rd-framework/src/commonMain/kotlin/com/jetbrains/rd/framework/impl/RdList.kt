@@ -15,6 +15,7 @@ import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
 
+@Suppress("UNUSED_PARAMETER")
 class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private val list: ViewableList<V>, private var nextVersion: Long = 1L)
     : RdReactiveBase(), IMutableViewableList<V> by list {
 
@@ -32,6 +33,8 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
         const val versionedFlagShift = 2 // update when changing Op
     }
+
+    override fun deepClone(): IRdBindable = RdList(valSzr).also { for (elem in list) { it.add(elem.deepClonePolymorphic()) } }
 
     var optimizeNested: Boolean = false
 
@@ -145,4 +148,6 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
         if (isBound) assertThreading()
         list.advise(lifetime) { e -> scheduler.invokeOrQueue { handler(e) }}
     }
+
+
 }

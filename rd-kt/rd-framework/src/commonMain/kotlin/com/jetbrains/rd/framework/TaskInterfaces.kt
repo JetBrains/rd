@@ -1,7 +1,9 @@
 package com.jetbrains.rd.framework
 
+import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.impl.RpcTimeouts
 import com.jetbrains.rd.util.CancellationException
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IOptPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.RdFault
@@ -98,4 +100,20 @@ interface IRdCall<in TReq, out TRes> {
      * The returned task will have its result value assigned through the given [responseScheduler].
      */
     fun start(request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
+}
+
+/**
+ * Counterpart of IRdCall.
+ */
+interface IRdEndpoint<TReq, TRes> {
+
+    /**
+     * Assigns a handler that executes the API asynchronously.
+     */
+    fun set(handler: (Lifetime, TReq) -> RdTask<TRes>)
+
+    /**
+     * Assigns a handler that executes the API synchronously.
+     */
+    fun set(handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
 }

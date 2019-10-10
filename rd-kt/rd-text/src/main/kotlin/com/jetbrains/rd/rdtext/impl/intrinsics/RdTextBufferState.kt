@@ -15,6 +15,10 @@ class RdTextBufferState private constructor(
     private val _assertedMasterText: RdOptionalProperty<RdAssertion>,
     private val _assertedSlaveText: RdOptionalProperty<RdAssertion>
 ) : RdBindableBase() {
+
+    override fun deepClone(): IRdBindable {
+        return RdTextBufferState(_changes.deepClone(), _versionBeforeTypingSession.deepClone(), _assertedMasterText.deepClone(), _assertedSlaveText.deepClone())
+    }
     //companion
 
     companion object : IMarshaller<RdTextBufferState> {

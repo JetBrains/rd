@@ -33,11 +33,11 @@ fun <K, V> MutableMap<K, V>.put(lf: Lifetime, key: K, value: V) {
 
 fun <K, V> MutableMap<K, V>.blockingPutUnique(lf: Lifetime, lock: Any, key: K, value: V) {
     lf.executeIfAlive {
-        synchronized(lock) {
+        Sync.lock(lock) {
             this[key]?. let {throw IllegalStateException("Value $it already exist for key $key") }
             this[key] = value
             lf += {
-                synchronized(lock) {
+                Sync.lock(lock) {
                     this.remove(key) ?: let { throw IllegalStateException("No value removed for key $key") }
                 }
             }

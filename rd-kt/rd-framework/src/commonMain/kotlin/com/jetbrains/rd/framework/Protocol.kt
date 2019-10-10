@@ -10,6 +10,7 @@ import com.jetbrains.rd.util.reactive.ViewableSet
 import com.jetbrains.rd.util.string.RName
 
 class Protocol(
+        override val name: String,
         override val serializers: ISerializers,
         override val identity: IIdentities,
         override val scheduler: IScheduler,
@@ -19,8 +20,11 @@ class Protocol(
         parentClientIdSet : RdSet<ClientId>? = null
 ) : IRdDynamic, IProtocol {
 
-    override val location: RName = RName.Empty
+
+    override val location: RName = RName(name)
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet()
+
+    override val isMaster: Boolean = identity.dynamicKind == IdKind.Client
 
     companion object {
         val logCategory = "protocol"

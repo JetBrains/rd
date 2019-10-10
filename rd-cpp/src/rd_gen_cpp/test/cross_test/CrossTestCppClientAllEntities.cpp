@@ -6,6 +6,7 @@
 #include "DemoModel/ConstUtil.h"
 #include "DemoModel/MyEnum.h"
 #include "DemoModel/Flags.h"
+#include "DemoModel/ComplicatedPair.h"
 
 #include "Lifetime.h"
 #include "SocketWire.h"
@@ -135,6 +136,12 @@ namespace rd {
 								   MyEnum::cpp,
 								   Flags::anyFlag | Flags::cppFlag
 			);
+#ifdef __cpp_structured_bindings
+			auto[_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, _unsigned_short, _unsigned_int, _unsigned_long, _enum, _flags] = scalar;
+			auto const &[__bool, __byte, __short, __int, __long, __float, __double, __unsigned__byte, __unsigned__short, __unsigned__int, __unsigned__long, __enum, __flags] = scalar;
+			auto[first, second] = ComplicatedPair(Derived(L"first"), Derived(L"second"));
+#endif
+
 			model.get_scalar().set(scalar);
 
 			model.get_ubyte().set(98);

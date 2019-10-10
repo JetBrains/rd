@@ -3,7 +3,9 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.Signal
+import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.RName
@@ -31,7 +33,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     override val protocol : IProtocol get() = parent?.protocol?: nb()
 
-    protected val bindableChildren = mutableListOf<Pair<String, Any?>>()
+    protected val bindableChildren = ViewableList<Pair<String, Any?>>()
 
     override val serializationContext: SerializationCtx get() = parent?.serializationContext ?: nb()
 
@@ -139,10 +141,39 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     operator fun <T : IRdBindable?> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
     operator fun <T : List<IRdBindable?>> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
+
+
+    fun synchronizeWith(lifetime: Lifetime, otherBindable: RdBindableBase) {
+        require (otherBindable::class == this::class) { "Can't synchronize ${this::class} with ${otherBindable::class}" }
+
+        //todo so the trick is that exts can appear in different order and sometimes
+        val alreadySynchronized = hashSetOf<String>()
+
+
+        fun doOneWay(lifetime: Lifetime, me: RdBindableBase, counterpart: RdBindableBase) {
+            me.bindableChildren.adviseAddRemove(lifetime) {addRemove, idx, (name, value) ->
+                require (addRemove == AddRemove.Add) {"No delete events for bindableChildren are permitted: ${this}"}
+                if (value == null)
+                    return@adviseAddRemove
+
+                if (!alreadySynchronized.add(name)) //already synchronized
+                    return@adviseAddRemove
+
+                val other = counterpart.bindableChildren.getOrNull(idx) //by index must be faster
+                    ?.takeIf { it.first == name } ?.second //value by index has the same name. Class will be checked when we try to synchronize
+                    ?: counterpart.getOrCreateExtension(name) { value.deepClonePolymorphic() }
+
+                synchronizePolymorphic(lifetime, value, other)
+            }
+        }
+
+        doOneWay(lifetime, this, otherBindable)
+        doOneWay(lifetime, otherBindable, this)
+    }
 }
 
 fun <T : RdBindableBase> T.withId(id: RdId) : T {
-    require(this.rdid == RdId.Null) {"this.id != RdId.Null, but ${this.rdid}"}
+    require(this.rdid == RdId.Null) { "this.id != RdId.Null, but ${this.rdid}" }
     require(id != RdId.Null) {"id != RdId.Null"}
 
     return this.apply { this.rdid = id }

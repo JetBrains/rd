@@ -18,6 +18,7 @@ object Polymorphic : ISerializer<Any?> {
         ctx.serializers.writePolymorphicNullable(ctx, buffer, value)
 }
 
+@Suppress("UNCHECKED_CAST")
 class AbstractPolymorphic<T>(val declaration: IAbstractDeclaration<T>) : ISerializer<T> {
     @Suppress("UNCHECKED_CAST")
     operator fun <T> invoke() : ISerializer<T> = this as ISerializer<T>

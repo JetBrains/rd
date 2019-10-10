@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.ClientId

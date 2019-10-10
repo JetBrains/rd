@@ -20,7 +20,7 @@ open class SequentialLifetimes(private val parentLifetime: Lifetime) {
 
     open fun defineNext(fNext: (LifetimeDefinition, Lifetime) -> Unit) {
         setCurrentLifetime(LifetimeDefinition.Terminated)
-        setCurrentLifetime(Lifetime.define(parentLifetime, fNext))
+        setCurrentLifetime(parentLifetime.createNested { ld -> fNext(ld, ld.lifetime) })
     }
 
     protected fun setCurrentLifetime(newDef: LifetimeDefinition) {

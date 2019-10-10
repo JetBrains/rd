@@ -28,7 +28,6 @@ class ByteBufferAsyncProcessorTest {
 
     @Test
     fun testOneProducer() {
-        var processed = 0
         var prev = -1
         val buffer = ByteBufferAsyncProcessor("TestAsyncProcessor", 4) {
             assert(it.ptr > 0)

@@ -3,7 +3,6 @@ package com.jetbrains.rd.framework.test.cases
 import com.jetbrains.rd.framework.RdTaskResult
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdCall
-import com.jetbrains.rd.framework.impl.RdEndpoint
 import com.jetbrains.rd.framework.isFaulted
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.reactive.valueOrThrow
@@ -18,7 +17,7 @@ class RdTaskTest : RdFrameworkTestBase() {
         val entity_id = 1
 
         val client_entity = RdCall<Int, String>().static(entity_id)
-        val server_entity = RdEndpoint(Int::toString).static(entity_id)
+        val server_entity = RdCall(Int::toString).static(entity_id)
 
         //not bound
         assertFails { client_entity.sync(0) }
@@ -39,7 +38,7 @@ class RdTaskTest : RdFrameworkTestBase() {
         val entity_id = 1
 
         val client_entity = RdCall<Int, String>().static(entity_id)
-        val server_entity = RdEndpoint<Int, String>({ _ -> throw IllegalStateException("1234")}).static(entity_id)
+        val server_entity = RdCall<Int, String> { _ -> throw IllegalStateException("1234")}.static(entity_id)
 
 
         clientProtocol.bindStatic(client_entity, "top")
@@ -54,5 +53,11 @@ class RdTaskTest : RdFrameworkTestBase() {
 
     }
 }
+
+open class A(open val a:Any) {}
+
+class B (override val a: String) : A(a) {}
+
+
 
 

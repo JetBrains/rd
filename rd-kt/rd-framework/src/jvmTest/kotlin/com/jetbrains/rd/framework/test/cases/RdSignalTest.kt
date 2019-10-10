@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdProperty
@@ -100,6 +101,10 @@ class RdSignalTest : RdFrameworkTestBase() {
 
     @Suppress("UNCHECKED_CAST")
     private class DynamicEntity(val _foo: RdSignal<String?>) : RdBindableBase() {
+        override fun deepClone(): IRdBindable {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
         val foo: ISignal<String?> = _foo
 
         companion object : IMarshaller<DynamicEntity> {
@@ -219,6 +224,10 @@ class RdSignalTest : RdFrameworkTestBase() {
     }
 
     private class VoidSignalEntity(private val _foo: RdSignal<Unit>) : RdBindableBase() {
+        override fun deepClone(): IRdBindable {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
         val foo: RdSignal<Unit> get() = _foo
 
         companion object : IMarshaller<VoidSignalEntity> {

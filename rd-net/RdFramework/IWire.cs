@@ -12,13 +12,14 @@ namespace JetBrains.Rd
   public interface IWire
   {
     void Send<TContext>(RdId id, TContext context, [NotNull, InstantHandle] Action<TContext, UnsafeWriter> writer);
-    void Advise([NotNull] Lifetime lifetime, [NotNull] IRdReactive entity);
+    void Advise([NotNull] Lifetime lifetime, [NotNull] IRdWireable entity);
   }
 
   public abstract class WireBase : IWire
   {    
     protected readonly MessageBroker MessageBroker;
     private IScheduler myScheduler;
+
 
     protected WireBase([NotNull] IScheduler scheduler)
     {
@@ -66,7 +67,7 @@ namespace JetBrains.Rd
       }
     }
 
-    public void Advise(Lifetime lifetime, IRdReactive reactive)
+    public void Advise(Lifetime lifetime, IRdWireable reactive)
     {
       MessageBroker.Advise(lifetime, reactive);
     }    

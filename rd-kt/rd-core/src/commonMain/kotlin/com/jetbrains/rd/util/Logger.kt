@@ -1,6 +1,7 @@
 package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
@@ -16,6 +17,12 @@ enum class LogLevel {
 interface Logger {
     companion object {
         val root = getLogger("")
+
+        fun set(lifetime: Lifetime, logger: ILoggerFactory) {
+            lifetime.onTermination ( //careful - this executes instantly and returns disposable which is added by onTermination
+                Statics<ILoggerFactory>().push(logger)
+            )
+        }
     }
     fun log(level: LogLevel, message: Any?, throwable: Throwable?)
     fun isEnabled(level: LogLevel): Boolean
@@ -46,10 +53,13 @@ class SwitchLogger(category: String) : Logger {
 
 
 object ConsoleLoggerFactory : ILoggerFactory {
-    var minLevelToLog : LogLevel = LogLevel.Trace
+    var minLevelToLog : LogLevel = LogLevel.Debug
     var levelToLogStderr : LogLevel? = LogLevel.Warn
 
+    var traceCategories = mutableSetOf<String>()
+
     override fun getLogger(category: String) = object : Logger {
+
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
             if (!isEnabled(level)) return
 
@@ -60,8 +70,8 @@ object ConsoleLoggerFactory : ILoggerFactory {
                 println(msg)
         }
 
-        override fun isEnabled(level: LogLevel): Boolean = level >= this@ConsoleLoggerFactory.minLevelToLog
-
+        override fun isEnabled(level: LogLevel): Boolean = level >=  this@ConsoleLoggerFactory.minLevelToLog ||
+            traceCategories.contains(category) || traceCategories.contains(category.substringBefore('.'))
     }
 }
 

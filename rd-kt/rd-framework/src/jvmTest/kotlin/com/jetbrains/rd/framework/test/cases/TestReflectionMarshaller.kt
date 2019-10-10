@@ -29,7 +29,7 @@ class TestReflectionMarshaller {
     }
 
 
-    val ctx = SerializationCtx(Protocol(Serializers(),
+    val ctx = SerializationCtx(Protocol("TestReflection", Serializers(),
             Identities(IdKind.Client),
             SynchronousScheduler,
             TestWire(SynchronousScheduler), lifetimeDef.lifetime)
@@ -42,7 +42,7 @@ class TestReflectionMarshaller {
     }
 
     private inline fun <reified T:Any> assertRdEquals(orig: T, new: T) {
-        val cl = orig::class as KClass<T>
+        @Suppress("UNCHECKED_CAST") val cl = orig::class as KClass<T>
         for (p in cl.memberProperties) {
             val (o, n) = p.get(orig) to p.get(new)
             if (o is IRdReactive && n is IRdReactive) {

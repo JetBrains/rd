@@ -139,4 +139,12 @@ class UnsafeBufferTest {
         buf.reset()
         assertEquals(1024 * 1024, buf.allocated)
     }
+
+
+    @Test
+    fun testInheritance() {
+        val b = B("a")
+        val x = (b as A).a
+        assertEquals("a", x)
+    }
 }

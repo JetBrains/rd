@@ -13,11 +13,10 @@ import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(
-        override val flowTransform: FlowTransform = FlowTransform.AsIs,
+        flowTransform: FlowTransform = FlowTransform.AsIs,
         val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
-        override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir")),
-        val fileName: (Toplevel) -> String = { tl -> tl.name }
-) : GeneratorBase() {
+        override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir"))
+) : GeneratorBase(flowTransform) {
 
     object Inherits : ISetting<String, Declaration>
     object InheritsAutomation : ISetting<Boolean, Declaration>
@@ -32,17 +31,9 @@ open class CSharp50Generator(
     object FsPath : ISetting<(CSharp50Generator) -> File, Toplevel>
 
     val Toplevel.fsPath: File
-        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${fileName(this)}.Generated.cs")
+        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${this.name}.Generated.cs")
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
-
-    object MasterStateful : ISetting<Boolean, Declaration>
-
-    private val Member.Reactive.Stateful.Property.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@CSharp50Generator.master
-
-    private val Member.Reactive.Stateful.Map.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@CSharp50Generator.master
 
     val Member.Reactive.memberFlowTransform: FlowTransform
         get() = owner.getSetting(FlowTransformProperty) ?: flowTransform
@@ -205,8 +196,8 @@ open class CSharp50Generator(
             return when (this) {
                 is Member.Reactive.Task -> when (actualFlow) {
                     Source -> "IRdCall"
-                    Sink -> "RdEndpoint"
-                    Both -> "IRdRpc" //todo
+                    Sink -> "IRdEndpoint"
+                    Both -> "RdCall"
                 }
                 is Member.Reactive.Signal -> when (actualFlow) {
                     Sink -> if (freeThreaded) "ISignal" else "ISource"
@@ -238,11 +229,7 @@ open class CSharp50Generator(
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName: String
         get() = when (this) {
-            is Member.Reactive.Task -> when (actualFlow) {
-                Sink -> "RdEndpoint"
-                Source -> "RdCall"
-                Both -> "RdCall" //todo
-            }
+            is Member.Reactive.Task -> "RdCall"
             is Member.Reactive.Signal -> "RdSignal"
             is Member.Reactive.Stateful.Property -> "RdProperty"
             is Member.Reactive.Stateful.List -> "RdList"
@@ -312,10 +299,8 @@ open class CSharp50Generator(
 
     //generation
 
-    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
-
-        toplevels.sortedBy { it.name }.forEach { tl ->
+    override fun realGenerate(toplevels: List<Toplevel>) {
+        toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
                     eolKind = Eol.osSpecified
@@ -458,6 +443,9 @@ open class CSharp50Generator(
             primaryConstructor(decl)
             +"//secondary constructor"
             secondaryConstructorTrait(decl)
+
+            +"//deconstruct trait"
+            deconstructTrait(decl)
 
             +"//statics"
             staticsTrait(decl)
@@ -864,6 +852,20 @@ open class CSharp50Generator(
         +") {}"
     }
 
+    private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
+        if (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct))) {
+            val params = decl.ownMembers.joinToString {
+                "${it.nullAttr(false)}out ${it.implSubstitutedName(decl)} ${sanitize(it.name)}"
+            }
+            +"public void Deconstruct($params)"
+            +"{"
+            indent {
+                decl.ownMembers.println { "${sanitize(it.name)} = ${it.encapsulatedName};" }
+            }
+            +"}"
+        }
+    }
+
     private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
         return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (!isPerClientId || ignorePerClientId)) {
             when (defaultValue) {
@@ -1022,15 +1024,15 @@ open class CSharp50Generator(
                     .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId}
                     .println { "${it.encapsulatedName}.OptimizeNested = true;" }
 
-            decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful.Property>()
-                    .filter { !it.isPerClientId }
-                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
-
-            decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful.Map>()
-                    .filter { !it.isPerClientId }
-                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
+//            decl.ownMembers
+//                    .filterIsInstance<Member.Reactive.Stateful.Property>()
+//                    .filter { !it.isPerClientId }
+//                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
+//
+//            decl.ownMembers
+//                    .filterIsInstance<Member.Reactive.Stateful.Map>()
+//                    .filter { !it.isPerClientId }
+//                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive>()

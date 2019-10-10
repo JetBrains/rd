@@ -1,10 +1,9 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.base.bindPolymorphic
 import com.jetbrains.rd.framework.base.identifyPolymorphic
-import com.jetbrains.rd.framework.base.withId
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -25,11 +24,9 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
                 buffer.writeBool(false)
             }
         }
-
     }
 
     //mastering
-    var isMaster = true
     protected var masterVersion = 0
 
     var defaultValueChanged : Boolean = false
@@ -55,7 +52,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
 
         advise(lifetime) lambda@{ v ->
             if (!isLocalChange) return@lambda
-            if (isMaster) masterVersion++
+            if (master) masterVersion++
 
             wire.send(rdid) { buffer ->
                 buffer.writeInt(masterVersion)
@@ -74,7 +71,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
         val version = buffer.readInt()
         val v = valueSerializer.read(serializationContext, buffer)
 
-        val rejected = isMaster && version < masterVersion
+        val rejected = master && version < masterVersion
         logReceived.trace {"property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
 
         if (rejected) return
@@ -90,8 +87,11 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
 
 
 
+@Suppress("UNCHECKED_CAST")
 class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic())
     : RdPropertyBase<T>(valueSerializer), IOptProperty<T> {
+
+    override fun deepClone(): RdOptionalProperty<T> = RdOptionalProperty(valueSerializer).also { if (hasValue) it.set(valueOrThrow.deepClonePolymorphic()) }
 
     //constructor
     constructor(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic()) : this(valueSerializer) {
@@ -117,7 +117,7 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
     }
 
     fun slave() : RdOptionalProperty<T> {
-        isMaster = false
+        master = false
         return this
     }
 
@@ -134,10 +134,10 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
         }
     }
 
-    override fun identify(ids: IIdentities, id: RdId) {
-        super.identify(ids, id)
+    override fun identify(identities: IIdentities, id: RdId) {
+        super.identify(identities, id)
         if (!optimizeNested)
-            valueOrNull?.identifyPolymorphic(ids, ids.next(id))
+            valueOrNull?.identifyPolymorphic(identities, identities.next(id))
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
@@ -159,8 +159,11 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic())
     : RdPropertyBase<T>(valueSerializer), IProperty<T> {
+
+    override fun deepClone(): RdProperty<T> = RdProperty(value.deepClonePolymorphic(), valueSerializer)
 
     //serializers
     companion object : ISerializer<RdProperty<*>> {
@@ -177,7 +180,7 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
     }
 
     fun slave() : RdProperty<T> {
-        isMaster = false
+        master = false
         return this
     }
 
@@ -195,10 +198,10 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
         value = newValue
     }
 
-    override fun identify(ids: IIdentities, id: RdId) {
-        super.identify(ids, id)
+    override fun identify(identities: IIdentities, id: RdId) {
+        super.identify(identities, id)
         if (!optimizeNested)
-            value?.identifyPolymorphic(ids, ids.next(id))
+            value?.identifyPolymorphic(identities, identities.next(id))
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {

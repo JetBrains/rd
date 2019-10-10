@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.base.static
@@ -62,6 +63,10 @@ class RdExtTest : RdFrameworkTestBase() {
     }
 
     private class DynamicExt(val _bar: RdProperty<String>, private val debugName: String) : RdExtBase(), ISerializersOwner {
+        override fun deepClone(): IRdBindable {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
         override fun registerSerializersCore(serializers: ISerializers) {}
 
         override val serializersOwner: ISerializersOwner get() = this

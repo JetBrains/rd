@@ -68,7 +68,8 @@ namespace Test.RdCross
 
             model.Boolean_array.Set(new[] {false, true, false});
 
-            var scalar = new MyScalar(false,
+            var scalar = new MyScalar(
+                false,
                 50,
                 32000,
                 1000000000,
@@ -82,14 +83,18 @@ namespace Test.RdCross
                 MyEnum.net,
                 Flags.anyFlag | Flags.netFlag
             );
+
+            (var _bool, var _byte, var _short, var _int, var _long, var _float, var _double, var _unsigned_byte, var unsigned_short, var _unsigned_int, var _unsigned_long, var _my_enum, var _flags) = scalar;
+            (var first, var second) = new ComplicatedPair(new Derived("First"), new Derived("Second"));
+            
             model.Scalar.Set(scalar);
 
             model.Set.Add(50);
 
             model.MapLongToString.Add(50, "C#");
 
-            var valA = "C#";
-            var valB = "protocol";
+            const string valA = "C#";
+            const string valB = "protocol";
 
             model.Interned_string.Set(valA);
             model.Interned_string.Set(valA);
@@ -125,7 +130,8 @@ namespace Test.RdCross
         {
             Assertion.Assert(DemoModel.const_toplevel, "DemoModel.const_toplevel");
             Assertion.Assert(ConstUtil.const_enum == MyEnum.@default, "ConstUtil.const_enum == MyEnum.@default");
-            Assertion.Assert(ConstUtil.const_string == "const_string_value", "ConstUtil.const_string == 'const_string_value'");
+            Assertion.Assert(ConstUtil.const_string == "const_string_value",
+                "ConstUtil.const_string == 'const_string_value'");
             Assertion.Assert(Base.const_base == 'B', "Base.const_base == 'B'");
         }
     }

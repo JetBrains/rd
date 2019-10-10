@@ -32,21 +32,21 @@ class SocketWireTest {
     }
 
     private fun server(lifetime: Lifetime, port: Int? = null): Protocol {
-        return Protocol(Serializers(), Identities(IdKind.Server), TestScheduler,
+        return Protocol("Server", Serializers(), Identities(IdKind.Server), TestScheduler,
                 SocketWire.Server(lifetime, TestScheduler, port, "TestServer"), lifetime
         )
     }
 
 
     private fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
-        return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
+        return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime,
                         TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient"), lifetime
         )
     }
 
     private fun client(lifetime: Lifetime, port: Int): Protocol {
-        return Protocol(Serializers(), Identities(IdKind.Client), TestScheduler,
+        return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime, TestScheduler, port, "TestClient"), lifetime
         )
     }
@@ -294,12 +294,12 @@ class SocketWireTest {
         val factory = SocketWire.ServerFactory(sLifetime, TestScheduler, 0)
 
         val lf1 = LifetimeDefinition()
-        val clientSocket1 = SocketWire.Client(lf1, TestScheduler, factory.localPort)
+        SocketWire.Client(lf1, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 1 }
 
         val lf2 = LifetimeDefinition()
-        val clientSocket2 = SocketWire.Client(lf2, TestScheduler, factory.localPort)
+        SocketWire.Client(lf2, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 2 }
 

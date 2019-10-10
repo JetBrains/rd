@@ -11,13 +11,13 @@ import java.io.File
 
 object DemoRoot : Root(
         Kotlin11Generator(FlowTransform.AsIs, "demo", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir"))),
+        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true),
         CSharp50Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cs.dir")))
 ) {
     init {
         setting(Cpp17Generator.TargetName, "demo_model")
-        setting(Kotlin11Generator.MasterStateful, false)
-        setting(CSharp50Generator.MasterStateful, false)
+//        setting(Kotlin11Generator.MasterStateful, false)
+//        setting(CSharp50Generator.MasterStateful, false)
         setting(Cpp17Generator.MasterStateful, false)
     }
 }
@@ -79,6 +79,12 @@ object DemoModel : Ext(DemoRoot) {
         field("string", PredefinedType.string)
     }
 
+    private var complicatedPair = structdef {
+        field("first", Derived)
+        field("second", Derived)
+    }.apply {
+        setting(GeneratorBase.AllowDeconstruct)
+    }
 
     init {
         property("boolean_property", PredefinedType.bool)

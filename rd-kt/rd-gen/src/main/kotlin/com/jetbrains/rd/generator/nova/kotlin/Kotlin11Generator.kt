@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova.kotlin
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
+import com.jetbrains.rd.generator.nova.util.VersionNumber
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -10,6 +11,8 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
+import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
+
 import java.io.File
 
 fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
@@ -19,10 +22,11 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 }
 
 open class Kotlin11Generator(
-    override val flowTransform: FlowTransform,
+    flowTransform: FlowTransform,
     private val defaultNamespace: String,
     override val folder: File
-) : GeneratorBase() {
+) : GeneratorBase(flowTransform) {
+
 
     //language specific properties
     object Namespace : ISetting<String, Declaration>
@@ -33,19 +37,21 @@ open class Kotlin11Generator(
     object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors: ISetting<Unit, Declaration>
 
+    object RefineFieldType: ISetting<Pair<String, IType>, SettingsHolder>
+
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
 
-    object MasterStateful : ISetting<Boolean, Declaration>
 
     private val Member.Reactive.Stateful.optimizeNested : Boolean
         get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
 
-    private val Member.Reactive.Stateful.Property.master : Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
-
-    private val Member.Reactive.Stateful.Map.master : Boolean
-        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
+//    object MasterStateful : ISetting<Boolean, Declaration>
+//    private val Member.Reactive.Stateful.Property.master : Boolean
+//        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
+//
+//    private val Member.Reactive.Stateful.Map.master : Boolean
+//        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -90,9 +96,9 @@ open class Kotlin11Generator(
         val async = this.freeThreaded.condstr { "Async" }
         return when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
-                Sink -> "RdEndpoint"
+                Sink -> "IRdEndpoint"
                 Source -> "IRdCall"
-                Both -> fail("Unsupported flow direction for tasks")
+                Both -> "RdCall"
             }
             is Member.Reactive.Signal -> when (actualFlow) {
                 Sink -> "I${async}Source"
@@ -123,11 +129,7 @@ open class Kotlin11Generator(
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName : String get () = when (this) {
-        is Member.Reactive.Task -> when (actualFlow) {
-            Sink -> "RdEndpoint"
-            Source -> "RdCall"
-            Both -> "RdCall" //todo
-        }
+        is Member.Reactive.Task -> "RdCall"
         is Member.Reactive.Signal -> "RdSignal"
         is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
         is Member.Reactive.Stateful.List -> "RdList"
@@ -248,10 +250,8 @@ open class Kotlin11Generator(
 
 
     //generation
-    override fun generate(root: Root, clearFolderIfExists: Boolean, toplevels: List<Toplevel>) {
-        prepareGenerationFolder(folder, clearFolderIfExists)
-
-        toplevels.sortedBy { it.name }.forEach { tl ->
+    override fun realGenerate(toplevels: List<Toplevel>) {
+        toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
                     eolKind = Eol.osSpecified
@@ -346,7 +346,7 @@ open class Kotlin11Generator(
         }
 
         if (decl.isAbstract) p("abstract ")
-        if (decl is Struct.Concrete && decl.base == null && decl.allMembers.isNotEmpty()) p("data ")
+        if (decl.isDataClass) p("data ")
 
 
         + "class ${decl.name} ${decl.primaryCtorVisibility}("
@@ -376,6 +376,8 @@ open class Kotlin11Generator(
             hashCodeTrait(decl)
             + "//pretty print"
             prettyPrintTrait(decl)
+            + "//deepClone"
+            deepCloneTrait(decl)
         }
 
         if (decl.isExtension) {
@@ -722,15 +724,15 @@ open class Kotlin11Generator(
 
 
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
-        decl.ownMembers
-            .filterIsInstance<Member.Reactive.Stateful.Property>()
-            .filter { !it.isPerClientId }
-            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
-
-        decl.ownMembers
-            .filterIsInstance<Member.Reactive.Stateful.Map>()
-            .filter { !it.isPerClientId }
-            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
+//        decl.ownMembers
+//            .filterIsInstance<Member.Reactive.Stateful.Property>()
+//            .filter { !it.isPerClientId }
+//            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
+//
+//        decl.ownMembers
+//            .filterIsInstance<Member.Reactive.Stateful.Map>()
+//            .filter { !it.isPerClientId }
+//            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive.Stateful>()
@@ -777,8 +779,6 @@ open class Kotlin11Generator(
         + ")"
         println()
     }
-
-
 
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
@@ -857,6 +857,31 @@ open class Kotlin11Generator(
             + "override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()"
         }
     }
+
+
+    private fun PrettyPrinter.deepCloneTrait(decl: Declaration) {
+
+        if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
+
+        block("override fun deepClone(): ${decl.name}  ") {
+
+            + "return ${decl.name}("
+            indent {
+                + decl.allMembers
+                    .asSequence()
+                    .map {
+                        it.encapsulatedName + it.isBindable.condstr {".deepClonePolymorphic()" }
+                    }.plus(unknownMemberNames(decl)).joinToString(",\n")
+            }
+            + ")"
+        }
+
+        if (decl is Struct.Concrete && decl.base != null) {
+            println()
+            + "override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()"
+        }
+    }
+
 
 
     private val Declaration.primaryCtorVisibility : String get() {

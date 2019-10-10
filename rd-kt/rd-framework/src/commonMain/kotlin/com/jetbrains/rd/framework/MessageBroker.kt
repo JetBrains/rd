@@ -1,15 +1,12 @@
 package com.jetbrains.rd.framework
 
-import com.jetbrains.rd.framework.base.IRdReactive
-import com.jetbrains.rd.util.assert
-import com.jetbrains.rd.util.blockingPutUnique
-import com.jetbrains.rd.util.getOrCreate
+import com.jetbrains.rd.framework.base.IRdWireable
+import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
-import com.jetbrains.rd.util.trace
 
 class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
@@ -19,15 +16,15 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
     private val lock = Any()
 
-    private val subscriptions = hashMapOf<RdId, IRdReactive>()
+    private val subscriptions = hashMapOf<RdId, IRdWireable>()
     private val broker = hashMapOf<RdId, Mq>()
 
-    private fun IRdReactive.invoke(msg: AbstractBuffer, sync: Boolean = false) {
+    private fun IRdWireable.invoke(msg: AbstractBuffer, sync: Boolean = false) {
         if (sync) { //todo think about scheduler.isActive()
             onWireReceived(msg) //error handling should process automatically
         } else {
             wireScheduler.queue {
-                if (synchronized(lock) { subscriptions.containsKey(rdid) }) {
+                if (Sync.lock(lock) { subscriptions.containsKey(rdid) }) {
                     onWireReceived(msg)
                 } else {
                     log.trace { "Handler for $this dissapeared" }
@@ -45,20 +42,20 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     }
 
     //only on poller thread
-    fun dispatch(id: RdId, message: AbstractBuffer) {
+    fun dispatch(id: RdId, buffer: AbstractBuffer) {
         require(!id.isNull) { "id mustn't be null" }
 
-        synchronized(lock) {
+        Sync.lock(lock) {
 
             val s = subscriptions[id]
             if (s == null) {
                 val currentIdBroker = broker.getOrCreate(id) { Mq() }
 
-                currentIdBroker.defaultSchedulerMessages.add(message)
+                currentIdBroker.defaultSchedulerMessages.add(buffer)
                 defaultScheduler.queue {
                     val subscription = subscriptions[id] //no lock because can be changed only under default scheduler
 
-                    val message = synchronized(lock) {
+                    val message = Sync.lock(lock) {
                         if (currentIdBroker.defaultSchedulerMessages.isNotEmpty())
                             currentIdBroker.defaultSchedulerMessages.removeAt(0)
                         else // messages could have been consumed by adviseOn
@@ -74,7 +71,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
                         subscription.invoke(message, sync = subscription.wireScheduler == defaultScheduler)
                     }
 
-                    synchronized(lock) {
+                    Sync.lock(lock) {
                         if (currentIdBroker.defaultSchedulerMessages.isEmpty())
                             broker.remove(id)?.customSchedulerMessages?.forEach { // use result of remove for reentrancy cases
                                 subscription?.apply {
@@ -87,13 +84,13 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
             } else {
 
                 if (s.wireScheduler == defaultScheduler || s.wireScheduler.outOfOrderExecution) {
-                    s.invoke(message)
+                    s.invoke(buffer)
                 } else {
                     val mq = broker[id]
                     if (mq != null) {
-                        mq.customSchedulerMessages.add(message)
+                        mq.customSchedulerMessages.add(buffer)
                     } else {
-                        s.invoke(message)
+                        s.invoke(buffer)
                     }
                 }
             }
@@ -102,18 +99,19 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     }
 
     //only on main thread
-    fun adviseOn(lifetime: Lifetime, entity: IRdReactive) {
+    fun adviseOn(lifetime: Lifetime, entity: IRdWireable) {
         require(!entity.rdid.isNull) {"id is null for entity: $entity"}
 
         //advise MUST happen under default scheduler, not custom
-        defaultScheduler.assertThread(entity)
+        //todo commented because of wiredRdTask
+//        defaultScheduler.assertThread(entity)
 
         //if (lifetime.isTerminated) return
         subscriptions.blockingPutUnique(lifetime, lock, entity.rdid, entity)
 
         if (entity.wireScheduler.outOfOrderExecution)
             lifetime.executeIfAlive {
-                synchronized(lock) {
+                Sync.lock(lock) {
                     broker.remove(entity.rdid)?.let { mq ->
                         mq.defaultSchedulerMessages.forEach { msg ->
                             entity.invoke(msg)
@@ -127,7 +125,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     }
 
     override fun print(printer: PrettyPrinter) {
-        synchronized(lock) {
+        Sync.lock(lock) {
             printer.println("MessageBroker Dump")
 
             printer.println()

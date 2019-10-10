@@ -2,9 +2,7 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.AbstractBuffer
 import com.jetbrains.rd.framework.ClientId
-import com.jetbrains.rd.framework.base.RdBindableBase
-import com.jetbrains.rd.framework.base.RdReactiveBase
-import com.jetbrains.rd.framework.base.withId
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.readRdId
 import com.jetbrains.rd.framework.writeRdId
 import com.jetbrains.rd.util.addUnique
@@ -16,8 +14,10 @@ import com.jetbrains.rd.util.reactive.ViewableMap
 class RdPerClientIdMap<V : RdBindableBase> private constructor(val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<ClientId, V>) : RdReactiveBase(), IViewableMap<ClientId, V> by myInternalMap {
     constructor(valueFactory: (Boolean) -> V) : this(valueFactory, ViewableMap())
 
-    public var master: Boolean = true
-    public var optimizeNested: Boolean = false
+    val changing = myInternalMap.changing
+    var optimizeNested: Boolean = false
+
+    override fun deepClone(): IRdBindable = RdPerClientIdMap(valueFactory).also { for ((k,v) in myInternalMap) { it.myInternalMap[k] = v.deepClonePolymorphic() } }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         // this entity has no own messages

@@ -54,36 +54,70 @@ fun <T : Any?> ISource<T>.adviseWithPrev(lifetime: Lifetime, handler: (prev: May
     }
 }
 
+
 /**
  * Whenever a change happens in this source, fires a change in the [target] signal obtained
- * by running the given [converter] function.
+ * by running the given [tf] function.
  */
-fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: ISignal<TTarget>, converter: (TSource) -> TTarget) {
-    advise(lifetime) { target.fire(converter(it)) }
+fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: ISignal<TTarget>, tf: (TSource) -> TTarget) {
+    advise(lifetime) {
+        if (!target.changing) //forbids recursion
+            target.fire(tf(it))
+    }
 }
 
 /**
  * Whenever a change happens in this source, fires a change in the [target] signal of the same type.
  */
-fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>) {
-    advise(lifetime) { value ->
-        target.fire(value)
-    }
-}
+fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>)  = flowInto(lifetime, target) {it}
 
 /**
  * Whenever a change happens in this source, changes the [target] property of the same type.
  */
-fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<T>) {
-    advise(lifetime) { target.set(it) }
+fun <TSrc, TDst> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TDst>, tf: (TSrc) -> TDst) {
+    advise(lifetime) {
+        if (target.changing) return@advise
+
+        target.set(tf(it))
+    }
 }
 
-/**
- * Whenever a change happens in this source, fires a change in the [target] signal obtained
- * by running the given [converter] function.
- */
-fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TTarget>, converter: (TSource) -> TTarget) {
-    advise(lifetime) { target.set(converter(it)) }
+fun <TSrc> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TSrc>) = flowInto(lifetime, target) {it}
+
+
+fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {
+    advise(lifetime) { addRemove, v ->
+        if (target.changing) return@advise
+
+        when (addRemove) {
+            AddRemove.Add -> target.add(tf(v))
+            AddRemove.Remove -> target.remove(tf(v))
+        }
+    }
+}
+
+fun <TSrc:Any, TDst:Any> ISource<IViewableList.Event<TSrc>>.flowInto(lifetime: Lifetime, target: IMutableViewableList<TDst>, tf: (TSrc) -> TDst ) {
+    advise(lifetime) { evt ->
+        if (target.changing) return@advise
+
+        when (evt) {
+            is IViewableList.Event.Add -> target.add(evt.index, tf(evt.newValue))
+            is IViewableList.Event.Update -> target[evt.index] = tf(evt.newValue)
+            is IViewableList.Event.Remove -> target.removeAt(evt.index)
+        }
+    }
+}
+
+fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>, tf: (TValue) -> TValue) {
+    advise(lifetime) { evt ->
+        if (target.changing) return@advise
+
+        when (evt) {
+            is IViewableMap.Event.Add -> target[evt.key] = tf(evt.newValue)
+            is IViewableMap.Event.Update -> target[evt.key] = tf(evt.newValue)
+            is IViewableMap.Event.Remove -> target.remove(evt.key)
+        }
+    }
 }
 
 /**

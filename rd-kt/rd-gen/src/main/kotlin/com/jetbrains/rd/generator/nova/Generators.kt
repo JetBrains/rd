@@ -4,15 +4,14 @@ import java.io.File
 
 
 interface IGenerator {
-    val flowTransform : FlowTransform
     val folder: File
-    fun generate(root: Root, clearFolderIfExists: Boolean = false, toplevels: List<Toplevel>)
+    fun generate(toplevels: List<Toplevel>)
 }
 
 /**
  * Generator and root together
  */
-interface IGenerationUnit: Comparable<IGenerationUnit> {
+interface IGeneratorAndRoot: Comparable<IGeneratorAndRoot> {
     operator fun component1(): IGenerator = generator
     operator fun component2(): Root = root
 
@@ -20,7 +19,7 @@ interface IGenerationUnit: Comparable<IGenerationUnit> {
     val root: Root
 
     //Need to sort generators because we plan to purge generation folders sometimes
-    override fun compareTo(other: IGenerationUnit): Int {
+    override fun compareTo(other: IGeneratorAndRoot): Int {
         generator.folder.canonicalPath.compareTo(other.generator.folder.canonicalPath).let { if (it != 0) return it}
         root.name.compareTo(other.root.name).let { if (it != 0) return it }
         generator.javaClass.name.compareTo(other.generator.javaClass.name).let { if (it != 0) return it }
@@ -32,7 +31,7 @@ interface IGenerationUnit: Comparable<IGenerationUnit> {
 /**
  * If you extend this class with object instance it will be collected by [collectSortedGeneratorsToInvoke] during reflection search.
  */
-open class GenerationUnit(override val generator: IGenerator, override val root: Root) : IGenerationUnit
+open class ExternalGenerator(override val generator: IGenerator, override val root: Root) : IGeneratorAndRoot
 
 
 /**
@@ -40,42 +39,29 @@ open class GenerationUnit(override val generator: IGenerator, override val root:
  */
 class GeneratorException (msg: String) : RuntimeException(msg)
 
+fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
+
 /**
  * Base class for generators to deduplicate common logic
  */
-abstract class GeneratorBase : IGenerator {
-    protected fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
+abstract class GeneratorBase(protected open val flowTransform: FlowTransform) : IGenerator {
+    object AllowDeconstruct: ISetting<Unit, Declaration>
+
+    /**
+     * Allows to filter out some generators for toplevel
+     */
+    object AcceptsGenerator: ISetting<(IGenerator) -> Boolean, Toplevel>
 
 
-    protected fun prepareGenerationFolder(folder: File, removeIfExists: Boolean) {
-        //safety net to avoid 'c:\' removal or spoiling by occasion
-        if (folder.toPath().nameCount == 0)
-            fail("Can't use root folder '$folder' as output")
+    protected abstract fun realGenerate(toplevels: List<Toplevel>)
 
+    override fun generate(toplevels: List<Toplevel>) {
+        val preparedToplevels = toplevels
+            .filter { it.getSetting(AcceptsGenerator)?.invoke(this) ?: true }
+            .sortedBy { it.name }
 
-        if (removeIfExists && folder.exists() && ! retry { folder.deleteRecursively() }
-                && /* if delete failed (held by external process) but directory cleared it's ok */ !folder.list().isNullOrEmpty())
-        {
-            fail("Can't clear '$folder'")
-        }
-
-
-        if (folder.exists()) {
-            if (!folder.isDirectory) fail("Not a folder: '$folder'")
-        }
-        else if (! retry { folder.mkdirs() })
-            fail("Can't create folder '$folder'")
+        realGenerate(preparedToplevels)
     }
-
-
-    private inline fun retry(action: () -> Boolean) : Boolean {
-        if (action()) return true
-
-        Thread.sleep(100)
-
-        return action()
-    }
-
 
     protected open fun unknowns(declaredTypes: Iterable<Declaration>): Collection<Declaration> {
         return declaredTypes.mapNotNull {
@@ -92,7 +78,11 @@ abstract class GeneratorBase : IGenerator {
         }
     }
 
+    //@Deprecated
     protected val master get() = flowTransform != FlowTransform.Reversed
+
+    protected val Declaration.isDataClass: Boolean
+        get() = this is Struct.Concrete && base == null && allMembers.isNotEmpty()
 }
 
 
