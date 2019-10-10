@@ -5,7 +5,7 @@ import com.jetbrains.rd.util.reactive.*
 
 private fun <T> cloneAndSync(lf: Lifetime, x: T) : T = x.deepClonePolymorphic().also { synchronizePolymorphic(lf, x, it) }
 
-private fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
+fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
     a.flowInto(lifetime, b)
     b.flowInto(lifetime, a)
 }
