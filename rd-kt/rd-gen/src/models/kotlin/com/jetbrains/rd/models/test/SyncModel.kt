@@ -4,6 +4,7 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.*
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
+import com.jetbrains.rd.models.test.SyncModelRoot.Clazz
 import java.io.File
 
 object SyncModelRoot : Root(
@@ -32,11 +33,20 @@ object SyncModelRoot : Root(
 }
 
 
-object ExtToClazz : Ext(SyncModelRoot.Clazz) {
+object OtherRoot : Root(
+    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization.otherRoot", File(syspropertyOrInvalid("model.out.src.kt.dir")))
+) {
     init {
-        list("list", SyncModelRoot.Clazz)
-        set("set", int)
-        map("map", int, SyncModelRoot.Clazz)
+        SyncModelRoot.initialize()
+    }
+
+    val Clazz1 = classdef extends SyncModelRoot.Baseclazz {
+        property("p", int.nullable)
+    }
+
+    init {
+        Clazz.root.setting(Kotlin11Generator.Namespace, "test.synchronization")
+        list("clazz", Clazz)
+        list("clazz1", Clazz1)
     }
 }
-
