@@ -33,20 +33,20 @@ object SyncModelRoot : Root(
 }
 
 
-object OtherRoot : Root(
-    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization.otherRoot", File(syspropertyOrInvalid("model.out.src.kt.dir")))
-) {
-    init {
-        SyncModelRoot.initialize()
-    }
-
-    val Clazz1 = classdef extends SyncModelRoot.Baseclazz {
-        property("p", int.nullable)
-    }
-
-    init {
-        Clazz.root.setting(Kotlin11Generator.Namespace, "test.synchronization")
-        list("clazz", Clazz)
-        list("clazz1", Clazz1)
-    }
-}
+//object OtherRoot : Root(
+//    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization.otherRoot", File(syspropertyOrInvalid("model.out.src.kt.dir")))
+//) {
+////    init {
+////        SyncModelRoot.initialize()
+////    }
+////
+////    val Clazz1 = classdef extends SyncModelRoot.Baseclazz {
+////        property("p", int.nullable)
+////    }
+//
+//    init {
+//        Clazz.root.setting(Kotlin11Generator.Namespace, "test.synchronization")
+//        list("clazz", Clazz)
+////        list("clazz1", Clazz1)
+//    }
+//}

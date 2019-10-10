@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 
+private fun <T> cloneAndSync(lf: Lifetime, x: T) : T = x.deepClonePolymorphic().also { synchronizePolymorphic(lf, x, it) }
 
 private fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
     a.flowInto(lifetime, b)
@@ -10,25 +11,25 @@ private fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
 }
 
 private fun<T> synchronize(lifetime: Lifetime, a: IMutablePropertyBase<T>, b: IMutablePropertyBase<T>) {
-    a.map { it.deepClonePolymorphic() }. flowInto(lifetime, b)
-    b.flowInto(lifetime, a)
+    a.flowIntoProperty(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.flowIntoProperty(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 private fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableSet<T>, b: IMutableViewableSet<T>) {
-    a.flowInto(lifetime, b) { it }
-    b.flowInto(lifetime, a) { it }
+    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 private fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableMap<K, V>, b: IMutableViewableMap<K, V>) {
-    a.flowInto(lifetime, b) { it.deepClonePolymorphic() }
-    b.flowInto(lifetime, a) { it.deepClonePolymorphic() }
+    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 private fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableList<T>, b: IMutableViewableList<T>) {
     synchronizeImmutableLists(lifetime, a, b)
 
-    a.change.flowInto(lifetime, b) { x -> x.deepClonePolymorphic().also { synchronizePolymorphic(lifetime, x, it) } }
-    b.change.flowInto(lifetime, a) { x -> x.deepClonePolymorphic().also { synchronizePolymorphic(lifetime, x, it) } }
+    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 private fun<T: Any> synchronizeImmutableLists(lifetime: Lifetime, a: List<T>, b: List<T>) {
@@ -48,7 +49,10 @@ private fun<T: Any> synchronizeImmutableArrays(lifetime: Lifetime, a: Array<T>, 
 @Suppress("UNCHECKED_CAST")
 internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any?) {
 
-    if (first is ISignal<*> && second is ISignal<*>) {
+    if (first == second)
+        return
+
+    else if (first is ISignal<*> && second is ISignal<*>) {
         synchronize(lifetime, first as ISignal<Any>, second as ISignal<Any>)
 
     } else if (first is IMutablePropertyBase<*> && second is IMutablePropertyBase<*>) {

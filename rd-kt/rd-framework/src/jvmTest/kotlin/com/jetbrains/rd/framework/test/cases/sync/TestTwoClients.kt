@@ -100,7 +100,7 @@ class TestTwoClients {
         wait { c2.list.size == 1 }
         assert(c2.list[0].f == 1)
 
-        wait { s2.list[0].p.value == 2 }
+        c1.list[0].p.value = 2
         wait { c2.list[0].p.value == 2 }
     }
 

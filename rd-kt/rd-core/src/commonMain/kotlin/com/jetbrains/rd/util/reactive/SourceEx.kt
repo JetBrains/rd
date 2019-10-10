@@ -54,6 +54,7 @@ fun <T : Any?> ISource<T>.adviseWithPrev(lifetime: Lifetime, handler: (prev: May
     }
 }
 
+
 /**
  * Whenever a change happens in this source, fires a change in the [target] signal obtained
  * by running the given [tf] function.
@@ -73,13 +74,16 @@ fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>)  = flowInto(
 /**
  * Whenever a change happens in this source, changes the [target] property of the same type.
  */
-fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<T>) {
+fun <TSrc, TDst> ISource<TSrc>.flowIntoProperty(lifetime: Lifetime, target: IMutablePropertyBase<TDst>, tf: (TSrc) -> TDst) {
     advise(lifetime) {
         if (target.changing) return@advise
 
-        target.set(it)
+        target.set(tf(it))
     }
 }
+
+//fun <TSrc> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TSrc>) = flowInto(lifetime, target) {it}
+
 
 fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {
     advise(lifetime) { addRemove, v ->
@@ -114,14 +118,6 @@ fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifeti
             is IViewableMap.Event.Remove -> target.remove(evt.key)
         }
     }
-}
-
-/**
- * Whenever a change happens in this source, fires a change in the [target] signal obtained
- * by running the given [converter] function.
- */
-fun <TSource, TTarget> ISource<TSource>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TTarget>, converter: (TSource) -> TTarget) {
-    advise(lifetime) { target.set(converter(it)) }
 }
 
 /**
