@@ -94,24 +94,14 @@ class TestTwoClients {
         wait { c1.aggregate.nullableScalarProperty.value == null }
     }
 
-//    @Test
-//    fun testList() {
-//        c1.list.add(Clazz(1))
-//        wait { c2.list.size == 1 }
-//        assert(c2.list[0].f == 1)
-//
-//
-//        s1.list[0].p.advise(Lifetime.Eternal) {
-//            println(it)
-//        }
-//        c1.list[0].p.set(2)
-//
-//
-//        wait { s1.list[0].p.value == 2 }
-//
-//
-//        wait { s2.list[0].p.value == 2 }
-//        wait { c2.list[0].p.value == 2 }
-//    }
+    @Test
+    fun testList() {
+        c1.list.add(Clazz(1))
+        wait { c2.list.size == 1 }
+        assert(c2.list[0].f == 1)
+
+        wait { s2.list[0].p.value == 2 }
+        wait { c2.list[0].p.value == 2 }
+    }
 
 }

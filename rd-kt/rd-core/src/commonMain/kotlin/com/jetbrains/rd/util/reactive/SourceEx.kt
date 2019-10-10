@@ -74,11 +74,17 @@ fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>)  = flowInto(
  * Whenever a change happens in this source, changes the [target] property of the same type.
  */
 fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<T>) {
-    advise(lifetime) { target.set(it) }
+    advise(lifetime) {
+        if (target.changing) return@advise
+
+        target.set(it)
+    }
 }
 
 fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {
     advise(lifetime) { addRemove, v ->
+        if (target.changing) return@advise
+
         when (addRemove) {
             AddRemove.Add -> target.add(tf(v))
             AddRemove.Remove -> target.remove(tf(v))
@@ -88,6 +94,7 @@ fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target:
 
 fun <TSrc:Any, TDst:Any> ISource<IViewableList.Event<TSrc>>.flowInto(lifetime: Lifetime, target: IMutableViewableList<TDst>, tf: (TSrc) -> TDst ) {
     advise(lifetime) { evt ->
+        if (target.changing) return@advise
 
         when (evt) {
             is IViewableList.Event.Add -> target.add(evt.index, tf(evt.newValue))
@@ -99,6 +106,8 @@ fun <TSrc:Any, TDst:Any> ISource<IViewableList.Event<TSrc>>.flowInto(lifetime: L
 
 fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>, tf: (TValue) -> TValue) {
     advise(lifetime) { evt ->
+        if (target.changing) return@advise
+
         when (evt) {
             is IViewableMap.Event.Add -> target[evt.key] = tf(evt.newValue)
             is IViewableMap.Event.Update -> target[evt.key] = tf(evt.newValue)
