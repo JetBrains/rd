@@ -4,14 +4,18 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
+import com.jetbrains.rd.util.paths.cppDirectorySystemPropertyKey
+import com.jetbrains.rd.util.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.util.paths.*
 import java.io.File
+
+const val folder = "interning"
 
 @Suppress("unused")
 object InterningRoot1 : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
-        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true)
+    Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", outputDirectory(ktDirectorySystemPropertyKey, folder)),
+    CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
+    Cpp17Generator(FlowTransform.AsIs, "rd.test.util", outputDirectory(cppDirectorySystemPropertyKey, folder), true)
 ) {
     init {
         setting(Cpp17Generator.TargetName, "interning_test_model")
@@ -19,6 +23,7 @@ object InterningRoot1 : Root(
 //        setting(CSharp50Generator.MasterStateful, false)
         setting(Cpp17Generator.MasterStateful, false)
     }
+
     val TestInternScope = /*InterningModelsGenTest.InterningRoot1.*/internScope()
 
     val InterningTestModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {

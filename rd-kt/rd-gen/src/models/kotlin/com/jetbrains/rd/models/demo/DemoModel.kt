@@ -6,14 +6,19 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
-import java.io.File
+import com.jetbrains.rd.util.paths.cppDirectorySystemPropertyKey
+import com.jetbrains.rd.util.paths.csDirectorySystemPropertyKey
+import com.jetbrains.rd.util.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.util.paths.*
+
+const val folder = "demo"
 
 object DemoRoot : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "demo", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true),
-        CSharp50Generator(FlowTransform.Reversed, "demo", File(syspropertyOrInvalid("model.out.src.cs.dir")))
+    Kotlin11Generator(FlowTransform.AsIs, "demo", outputDirectory(ktDirectorySystemPropertyKey, folder)),
+    Cpp17Generator(FlowTransform.Reversed, "demo", outputDirectory(cppDirectorySystemPropertyKey, folder), true),
+    CSharp50Generator(FlowTransform.Reversed, "demo", outputDirectory(csDirectorySystemPropertyKey, folder))
 ) {
+
     init {
         setting(Cpp17Generator.TargetName, "demo_model")
 //        setting(Kotlin11Generator.MasterStateful, false)
@@ -56,7 +61,7 @@ object DemoModel : Ext(DemoRoot) {
         field("flags", Flags)
     }
 
-    private var ConstUtil  = structdef {
+    private var ConstUtil = structdef {
         const("const_byte", PredefinedType.byte, 0)
         const("const_short", PredefinedType.short, Short.MAX_VALUE)
         const("const_int", PredefinedType.int, Int.MAX_VALUE)

@@ -1,14 +1,18 @@
 package com.jetbrains.rd.gradle.tasks
 
+import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.SourceSet
-import javax.inject.Inject
-import org.jetbrains.kotlin.gradle.plugin.*
+import org.gradle.kotlin.dsl.creating
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import java.io.File
+import javax.inject.Inject
 
+/**
+ * Copy sources from {generativeSourceSet.output} to {currentProject.buildDir.resolve("generated")}
+ */
 open class CopySourcesTask @Inject constructor() : Exec() {
     @Input
     lateinit var currentSourceSet: KotlinSourceSet
@@ -40,3 +44,14 @@ open class CopySourcesTask @Inject constructor() : Exec() {
         }
     }
 }
+
+fun Project.creatingCopySourcesTask(currentSourceSet: NamedDomainObjectProvider<KotlinSourceSet>, generativeSourceSet: SourceSet) =
+    tasks.creating(CopySourcesTask::class) {
+        dependsOn(generativeSourceSet.output)
+
+        this@creating.currentSourceSet = currentSourceSet.get()
+        currentProject = this@creatingCopySourcesTask
+        this@creating.generativeSourceSet = generativeSourceSet
+
+        lateInit()
+    }
