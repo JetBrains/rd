@@ -26,12 +26,21 @@ object SyncModelRoot : Root(
         )
 
 
+        property("property", Clazz)
         list("list", Clazz)
         set("set", int)
         map("map", int, Clazz)
     }
 }
 
+object ExtToClazz : Ext(SyncModelRoot.Clazz) {
+    init {
+        property("property", Clazz)
+        list("list", SyncModelRoot.Clazz)
+        set("set", int)
+        map("map", int, SyncModelRoot.Clazz)
+    }
+}
 
 //object OtherRoot : Root(
 //    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization.otherRoot", File(syspropertyOrInvalid("model.out.src.kt.dir")))

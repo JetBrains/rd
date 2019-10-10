@@ -3,6 +3,7 @@ package com.jetbrains.rd.util.log
 import com.jetbrains.rd.util.*
 
 object ErrorAccumulatorLoggerFactory : ILoggerFactory {
+
     var warnAsErrors = false
 
     val errors = mutableListOf<String>()
@@ -14,7 +15,7 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
 
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
 
-            if (!isEnabled(level)) {
+            if (!shouldBeLoggedAsError(level)) {
                 consoleLogger.log(level, message, throwable)
                 return
             }
@@ -29,7 +30,9 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
             }
         }
 
-        override fun isEnabled(level: LogLevel): Boolean {
+        override fun isEnabled(level: LogLevel): Boolean = consoleLogger.isEnabled(level)
+
+        fun shouldBeLoggedAsError(level: LogLevel): Boolean {
             return level == LogLevel.Fatal || level == LogLevel.Error || (warnAsErrors && level == LogLevel.Warn)
         }
     }

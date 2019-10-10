@@ -2,16 +2,18 @@ package com.jetbrains.rd.framework.test.cases.sync
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.test.util.TestScheduler
-import com.jetbrains.rd.util.Logger
-import com.jetbrains.rd.util.addUnique
+import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
-import com.jetbrains.rd.util.spinUntil
+import com.jetbrains.rd.util.reactive.hasValue
+import com.jetbrains.rd.util.reactive.valueOrThrow
 import org.junit.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
+import test.synchronization.extToClazz
 import java.lang.management.ManagementFactory
+import kotlin.assert
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
@@ -106,4 +108,49 @@ class TestTwoClients {
         wait { c1.list[0].p.value == 2 }
     }
 
+    @Test
+    fun testDict() {
+        c0.map.put(0, Clazz(1))
+        wait { c1.map.size == 1 }
+        assert(c1.map[0]?.f == 1)
+
+        c0.map[0]?.p?.value = 2
+        wait { c1.map[0]?.p?.value == 2 }
+    }
+
+    @Test
+    fun testProperty() {
+        c0.property.set(Clazz(1))
+        wait { c1.property.hasValue }
+
+        c0.property.valueOrThrow.p.value = 2
+        wait { c1.property.valueOrThrow.p.value == 2 }
+    }
+
+
+    @Test
+    fun testExt() {
+        c0.property.set(Clazz(1))
+        wait { c1.property.hasValue }
+
+        val myLogger = getLogger<TestTwoClients>()
+        ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
+
+
+        myLogger.trace {"1------------------------------------------------------------------"}
+        c0.property.valueOrThrow.extToClazz.map[0] = Clazz(2)
+
+        myLogger.trace {"2------------------------------------------------------------------"}
+        s0.property.valueOrThrow.extToClazz //just create
+
+        myLogger.trace {"3------------------------------------------------------------------"}
+        //s1.property.valueOrThrow.extToClazz must be created automatically
+        wait { c1.property.valueOrThrow.extToClazz.map[0]?.f == 2 }
+
+        myLogger.trace {"4------------------------------------------------------------------"}
+        c1.property.valueOrThrow.extToClazz.map[0]?.p?.value = 3
+        wait { c1.property.valueOrThrow.extToClazz.map[0]?.p?.value == 3 }
+
+
+    }
 }
