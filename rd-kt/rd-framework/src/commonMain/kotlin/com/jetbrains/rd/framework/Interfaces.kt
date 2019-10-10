@@ -25,6 +25,7 @@ interface IRdDynamic {
  * A root node in an object graph which can be synchronized with its remote copy over a network or a similar connection.
  */
 interface IProtocol : IRdDynamic {
+    val name: String
     val serializers: ISerializers
     val identity: IIdentities
     val scheduler: IScheduler

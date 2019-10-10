@@ -20,10 +20,10 @@ class TestTwoClients {
     private lateinit var lifetimeDef : LifetimeDefinition
     private val lifetime : Lifetime get() = lifetimeDef.lifetime
 
+    lateinit var c0: SyncModelRoot
     lateinit var c1: SyncModelRoot
-    lateinit var c2: SyncModelRoot
+    lateinit var s0: SyncModelRoot
     lateinit var s1: SyncModelRoot
-    lateinit var s2: SyncModelRoot
 
     private val isUnderDebug = ManagementFactory.getRuntimeMXBean().getInputArguments().any { it.contains("jdwp") }
     val timeout = if (isUnderDebug) 10_000L else 1000L
@@ -43,13 +43,15 @@ class TestTwoClients {
         val port = wireFactory.localPort
 
         val sp = mutableListOf<Protocol>()
+        var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol(Serializers(), Identities(IdKind.Server), sc, wire, lf)
+            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf)
             sp.addUnique(lf, protocol)
         }
 
 
-        val cpFunc = { Protocol(Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime) }
+        var cpIdx = 0
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())
@@ -57,13 +59,13 @@ class TestTwoClients {
 
         wait { sp.size  == 2 }
 
-        c1 = SyncModelRoot.create(lifetime, cp[0])
-        c2 = SyncModelRoot.create(lifetime, cp[1])
+        c0 = SyncModelRoot.create(lifetime, cp[0])
+        c1 = SyncModelRoot.create(lifetime, cp[1])
 
-        s1 = SyncModelRoot.create(lifetime, sp[0])
-        s2 = SyncModelRoot.create(lifetime, sp[1])
+        s0 = SyncModelRoot.create(lifetime, sp[0])
+        s1 = SyncModelRoot.create(lifetime, sp[1])
 
-        s1.synchronizeWith(lifetime, s2)
+        s0.synchronizeWith(lifetime, s1)
     }
 
     @AfterTest
@@ -74,34 +76,34 @@ class TestTwoClients {
 
     @Test
     fun testNotnullableScalarProperty() {
-        c1.aggregate.nonNullableScalarProperty.set("a")
-        wait { c2.aggregate.nonNullableScalarProperty.valueOrNull == "a" }
+        c0.aggregate.nonNullableScalarProperty.set("a")
+        wait { c1.aggregate.nonNullableScalarProperty.valueOrNull == "a" }
 
-        c2.aggregate.nonNullableScalarProperty.set("b")
-        wait { c1.aggregate.nonNullableScalarProperty.valueOrNull == "b" }
+        c1.aggregate.nonNullableScalarProperty.set("b")
+        wait { c0.aggregate.nonNullableScalarProperty.valueOrNull == "b" }
     }
 
 
     @Test
     fun testNullableScalarProperty() {
-        c1.aggregate.nullableScalarProperty.set("a")
-        wait { c2.aggregate.nullableScalarProperty.value == "a" }
+        c0.aggregate.nullableScalarProperty.set("a")
+        wait { c1.aggregate.nullableScalarProperty.value == "a" }
 
-        c2.aggregate.nullableScalarProperty.set("b")
-        wait { c1.aggregate.nullableScalarProperty.value == "b" }
+        c1.aggregate.nullableScalarProperty.set("b")
+        wait { c0.aggregate.nullableScalarProperty.value == "b" }
 
-        c2.aggregate.nullableScalarProperty.set(null)
-        wait { c1.aggregate.nullableScalarProperty.value == null }
+        c1.aggregate.nullableScalarProperty.set(null)
+        wait { c0.aggregate.nullableScalarProperty.value == null }
     }
 
     @Test
     fun testList() {
-        c1.list.add(Clazz(1))
-        wait { c2.list.size == 1 }
-        assert(c2.list[0].f == 1)
+        c0.list.add(Clazz(1))
+        wait { c1.list.size == 1 }
+        assert(c1.list[0].f == 1)
 
-        c1.list[0].p.value = 2
-        wait { c2.list[0].p.value == 2 }
+        c0.list[0].p.value = 2
+        wait { c1.list[0].p.value == 2 }
     }
 
 }

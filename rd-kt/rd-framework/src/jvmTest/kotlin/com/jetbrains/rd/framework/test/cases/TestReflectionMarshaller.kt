@@ -29,7 +29,7 @@ class TestReflectionMarshaller {
     }
 
 
-    val ctx = SerializationCtx(Protocol(Serializers(),
+    val ctx = SerializationCtx(Protocol("TestReflection", Serializers(),
             Identities(IdKind.Client),
             SynchronousScheduler,
             TestWire(SynchronousScheduler), lifetimeDef.lifetime)
