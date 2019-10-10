@@ -1,6 +1,5 @@
 package com.jetbrains.rd.gradle.tasks
 
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.JavaExec
 import java.io.File
 
@@ -8,16 +7,7 @@ import java.io.File
  * Uses compiled RdGen for generating prepared models
  */
 open class RdGenerateTask : JavaExec() {
-    /**
-     * Directory's parent where sources are placed
-     */
-    @Input
-    lateinit var sourcesRoot: File
-    /**
-     * Name of directory where sources are placed
-     */
-    @Input
-    lateinit var sourcesFolder: String
+    val sourceDirectories = mutableListOf<File>()
 
     init {
         group = "generate"
@@ -25,16 +15,20 @@ open class RdGenerateTask : JavaExec() {
     }
 
     override fun exec() {
-        println("Starting GenerateTask sourcesRoot=$sourcesRoot, sourcesFolder=$sourcesFolder")
+        println("Starting GenerateTask args=${args}")
 
         super.exec()
 
-        println("Finishing GenerateTask sourcesRoot=$sourcesRoot, sourcesFolder=$sourcesFolder")
+        println("Finishing GenerateTask args=${args}")
+    }
+
+    fun addSourceDirectory(file: File) {
+        sourceDirectories.add(file)
+        inputs.dir(file)
     }
 
     fun addOutputDirectories(properties: Map<String, String>) {
         systemProperties(properties)
-
         outputs.dirs(properties.values.toList())
     }
 }

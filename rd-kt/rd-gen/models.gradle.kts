@@ -11,41 +11,41 @@ val csRoot: File by rootProject.extra.properties
 val BUILD_DIR = parent!!.buildDir
 
 tasks {
-    fun creatingGenerateTask(properties: Map<String, String>, sourcesFolderParam: String) = creating(RdGenerateTask::class) {
-        classpath = project.the<SourceSetContainer>()["main"]!!.runtimeClasspath
+    val sourcesRoot = ktRoot.resolve("rd-gen/src/models/kotlin/com/jetbrains/rd/models")
 
-        sourcesRoot = ktRoot.resolve("rd-gen/src/models/kotlin/com/jetbrains/rd/models")
-        sourcesFolder = sourcesFolderParam
-        val sourcesDirectory = sourcesRoot.resolve(sourcesFolder)
-        inputs.dir(sourcesDirectory)
-        addOutputDirectories(properties)
+    fun RdGenerateTask.collectSources() {
+        fun addSources(properties: Map<String, String>, sourcesFolder: String) {
+            addSourceDirectory(sourcesRoot.resolve(sourcesFolder))
+            addOutputDirectories(properties.mapKeys { "${it.key}.$sourcesFolder" })
+        }
 
-        args = listOf("--source=$sourcesDirectory", "--hash-folder=${project.rootProject.buildDir}/hash/$sourcesFolder", "-v")
+        addSources(mapOf(
+                cppDirectorySystemPropertyKey to "${cppRoot}/demo",
+                ktDirectorySystemPropertyKey to "${BUILD_DIR}/models/demo",
+                csDirectorySystemPropertyKey to "${csRoot}/CrossTest/Model"
+        ), "demo")
+
+        addSources(mapOf(
+                cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/interning",
+                ktDirectorySystemPropertyKey to "$BUILD_DIR/models/interning"
+        ), "interning")
+
+        addSources(mapOf(
+                ktDirectorySystemPropertyKey to "$BUILD_DIR/models/test"
+        ), "test")
+
+        addSources(mapOf(
+                cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/entities"
+        ), "entities")
     }
 
-    val generateDemoModel by creatingGenerateTask(mapOf(
-            cppDirectorySystemPropertyKey to "${cppRoot}/demo",
-            ktDirectorySystemPropertyKey to "${BUILD_DIR}/models/demo",
-            csDirectorySystemPropertyKey to "${csRoot}/CrossTest/Model"
-    ), "demo")
-
-    val generateInterningTestModel by creatingGenerateTask(mapOf(
-            cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/interning",
-            ktDirectorySystemPropertyKey to "$BUILD_DIR/models/interning"
-    ), "interning")
-
-    val generateTestModel by creatingGenerateTask(mapOf(
-            ktDirectorySystemPropertyKey to "$BUILD_DIR/models/test"
-    ), "test")
-
-    val generateCppTestEntities by creatingGenerateTask(mapOf(
-            cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/entities"
-    ), "entities")
-
     @Suppress("UNUSED_VARIABLE")
-    val generateEverything by creating(DefaultTask::class) {
-        group = "generate"
-        description = "Generates protocol models."
-        dependsOn(generateDemoModel, generateInterningTestModel, generateCppTestEntities, generateTestModel)
+    val generateEverything by creating(RdGenerateTask::class) {
+        classpath = project.the<SourceSetContainer>()["main"]!!.runtimeClasspath
+
+        collectSources()
+
+        val sourceFiles = sourceDirectories.joinToString(separator = ";") { it.absolutePath }
+        args = listOf("--source=$sourceFiles;", "--hash-folder=${project.rootProject.buildDir}/hash/models", "-v")
     }
 }
