@@ -10,36 +10,36 @@ private fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
     b.flowInto(lifetime, a)
 }
 
-private fun<T> synchronize(lifetime: Lifetime, a: IMutablePropertyBase<T>, b: IMutablePropertyBase<T>) {
-    a.flowIntoProperty(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowIntoProperty(lifetime, a) { cloneAndSync(lifetime, it)}
-}
-
-private fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableSet<T>, b: IMutableViewableSet<T>) {
+fun<T> synchronize(lifetime: Lifetime, a: IMutablePropertyBase<T>, b: IMutablePropertyBase<T>) {
     a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
     b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
-private fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableMap<K, V>, b: IMutableViewableMap<K, V>) {
+fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableSet<T>, b: IMutableViewableSet<T>) {
     a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
     b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
-private fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableList<T>, b: IMutableViewableList<T>) {
+fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableMap<K, V>, b: IMutableViewableMap<K, V>) {
+    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+}
+
+fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableList<T>, b: IMutableViewableList<T>) {
     synchronizeImmutableLists(lifetime, a, b)
 
     a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
     b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
-private fun<T: Any> synchronizeImmutableLists(lifetime: Lifetime, a: List<T>, b: List<T>) {
+fun<T: Any> synchronizeImmutableLists(lifetime: Lifetime, a: List<T>, b: List<T>) {
     require(a.size == b.size) { "Collection initial sizes must be equal, but sizes are different: ${a.size} != ${b.size}" }
     for (i in 0..a.lastIndex) {
         synchronizePolymorphic(lifetime, a[i], b[i])
     }
 }
 
-private fun<T: Any> synchronizeImmutableArrays(lifetime: Lifetime, a: Array<T>, b: Array<T>) {
+fun<T: Any> synchronizeImmutableArrays(lifetime: Lifetime, a: Array<T>, b: Array<T>) {
     require(a.size == b.size) { "Collection initial sizes must be equal, but sizes are different: ${a.size} != ${b.size}" }
     for (i in 0..a.lastIndex) {
         synchronizePolymorphic(lifetime, a[i], b[i])

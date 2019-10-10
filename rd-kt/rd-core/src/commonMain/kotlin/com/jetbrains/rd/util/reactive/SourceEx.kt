@@ -74,7 +74,7 @@ fun <T> ISource<T>.flowInto(lifetime: Lifetime, target: ISignal<T>)  = flowInto(
 /**
  * Whenever a change happens in this source, changes the [target] property of the same type.
  */
-fun <TSrc, TDst> ISource<TSrc>.flowIntoProperty(lifetime: Lifetime, target: IMutablePropertyBase<TDst>, tf: (TSrc) -> TDst) {
+fun <TSrc, TDst> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TDst>, tf: (TSrc) -> TDst) {
     advise(lifetime) {
         if (target.changing) return@advise
 
