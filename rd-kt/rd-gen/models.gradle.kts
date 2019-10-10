@@ -38,14 +38,14 @@ tasks {
         lateInit()
     }
 
-    val generateTestModel by creating(GenerateTask::class) {
+    val generateSyncModel by creating(GenerateTask::class) {
         initializeClasspath()
 
         sourcesRoot = ktRoot.resolve(modelsRelativePath)
-        sourcesFolder = "test"
+        sourcesFolder = "sync"
 
         systemProperties = mapOf(
-                "model.out.src.kt.dir" to "$BUILD_DIR/models/test"
+                "model.out.src.kt.dir" to "$BUILD_DIR/models/sync"
         )
 
         lateInit()
@@ -67,7 +67,7 @@ tasks {
     val generateEverything by creating(DefaultTask::class) {
         group = "generate"
         description = "Generates protocol models."
-        dependsOn(generateDemoModel, generateInterningTestModel, generateCppTestEntities, generateTestModel)
+        dependsOn(generateDemoModel, generateInterningTestModel, generateCppTestEntities, generateSyncModel)
     }
 }
 

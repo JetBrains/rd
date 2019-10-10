@@ -1,10 +1,10 @@
-package com.jetbrains.rd.models.test
+package com.jetbrains.rd.models.sync
 
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.*
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
-import com.jetbrains.rd.models.test.SyncModelRoot.Clazz
+import com.jetbrains.rd.models.sync.SyncModelRoot.Clazz
 import java.io.File
 
 object SyncModelRoot : Root(
