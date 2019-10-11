@@ -10,6 +10,8 @@ expect class AtomicReference<T> (initial: T) {
     fun getAndUpdate(f : (T) -> T) : T
 }
 
+expect class CopyOnWriteArrayList<E>(): MutableList<E>
+
 expect class CancellationException() : IllegalStateException {
     constructor(message: String)
 }

@@ -18,7 +18,7 @@ namespace JetBrains.Rd.Impl
     /// Should match textual RdId of protocol intern root in Kotlin/js/cpp counterpart
     /// </summary>
     const string ProtocolInternRootRdId = "ProtocolInternRoot";
-    const string ClientIdSetRdId = "ProtocolClientIdSet";
+    const string ContextHandlerRdId = "ProtocolContextHandler";
     
     /// <summary>
     /// Should match whatever is in rd-gen for ProtocolInternScope
@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Impl
     
 
     public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] RdSet<ClientId> parentClientIdSet = null)
+      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContextHandler parentContextHandler = null)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -37,21 +37,24 @@ namespace JetBrains.Rd.Impl
       Identities = identities ?? throw new ArgumentNullException(nameof(identities));
       Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
-      ClientIdSet = parentClientIdSet ?? new RdSet<ClientId>(ClientId.ReadDelegate, ClientId.WriteDelegate);
+      ContextHandler = parentContextHandler ?? new ProtocolContextHandler();
       SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
       OutOfSyncModels = new ViewableSet<RdExtBase>();
+
+      if (wire is IContextAwareWire contextAwareWire)
+        contextAwareWire.ContextHandler = ContextHandler;
     }
 
     private InternRoot CreateProtocolInternRoot(Lifetime lifetime)
     {
       var root = new InternRoot();
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
-      ClientIdSet.RdId = RdId.Nil.Mix(ClientIdSetRdId);
+      ContextHandler.RdId = RdId.Nil.Mix(ContextHandlerRdId);
       Scheduler.InvokeOrQueue(() =>
       {
         if (!lifetime.IsAlive) return;
         root.Bind(lifetime, this, ProtocolInternRootRdId);
-        ClientIdSet.Bind(lifetime, this, ClientIdSetRdId);
+        ContextHandler.Bind(lifetime, this, ContextHandlerRdId);
       });
       return root;
     }
@@ -65,7 +68,7 @@ namespace JetBrains.Rd.Impl
     public SerializationCtx SerializationContext { get; }
     public ViewableSet<RdExtBase> OutOfSyncModels { get; }
 
-    public RdSet<ClientId> ClientIdSet { get; }
+    public ProtocolContextHandler ContextHandler { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     

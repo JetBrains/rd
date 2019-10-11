@@ -16,6 +16,7 @@ class Serializers : ISerializers {
     val types = hashMapOf<RdId, KClass<*>>()
     val readers = hashMapOf<RdId, (SerializationCtx, AbstractBuffer) -> Any>()
     val writers = hashMapOf<KClass<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
+    val marshallers = hashMapOf<RdId, IMarshaller<*>>()
 
     init {
         @Suppress("LeakingThis")
@@ -35,8 +36,13 @@ class Serializers : ISerializers {
             types[id] = t
         }
 
+        marshallers[id] = serializer
         readers[id] = serializer::read
         writers[t] = Pair(id, serializer::write) as Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>
+    }
+
+    override fun get(id: RdId): IMarshaller<*>? {
+        return marshallers[id]
     }
 
     override fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>?): T? {

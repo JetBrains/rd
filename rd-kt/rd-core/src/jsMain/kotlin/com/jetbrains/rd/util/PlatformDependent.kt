@@ -119,3 +119,5 @@ actual interface Runnable {
 actual interface Callable<T> {
     actual fun call(): T
 }
+
+actual typealias CopyOnWriteArrayList<T> = ArrayList<T>

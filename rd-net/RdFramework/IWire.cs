@@ -15,10 +15,17 @@ namespace JetBrains.Rd
     void Advise([NotNull] Lifetime lifetime, [NotNull] IRdWireable entity);
   }
 
-  public abstract class WireBase : IWire
+  public interface IContextAwareWire : IWire
+  {
+    [CanBeNull] ProtocolContextHandler ContextHandler { get; set; }
+  }
+
+  public abstract class WireBase : IContextAwareWire
   {    
     protected readonly MessageBroker MessageBroker;
     private IScheduler myScheduler;
+    
+    public ProtocolContextHandler ContextHandler { get; set; }
 
 
     protected WireBase([NotNull] IScheduler scheduler)
@@ -60,6 +67,7 @@ namespace JetBrains.Rd
         cookie.Writer.Write(0); //placeholder for length
 
         id.Write(cookie.Writer);
+        this.WriteContext(cookie.Writer);
         writer(context, cookie.Writer);
         cookie.WriteIntLengthToCookieStart();
 
@@ -70,6 +78,6 @@ namespace JetBrains.Rd
     public void Advise(Lifetime lifetime, IRdWireable reactive)
     {
       MessageBroker.Advise(lifetime, reactive);
-    }    
+    }
   }
 }

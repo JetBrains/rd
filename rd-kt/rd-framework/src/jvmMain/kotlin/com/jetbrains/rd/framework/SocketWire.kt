@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.WireBase
+import com.jetbrains.rd.framework.impl.ProtocolContextHandler
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -253,6 +254,7 @@ class SocketWire {
                 unsafeBuffer.writeInt(0) //placeholder for length
 
                 id.write(unsafeBuffer) //write id
+                writeContext(unsafeBuffer)
                 writer(unsafeBuffer) //write rest
 
                 val len = unsafeBuffer.position - initialPosition

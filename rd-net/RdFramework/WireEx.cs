@@ -18,5 +18,14 @@ namespace JetBrains.Rd
     {
       wire.Send(id, (object)null, (_, w) => writer(w));
     }
+
+    public static void WriteContext(this IContextAwareWire wire, UnsafeWriter writer)
+    {
+      var contextHandler = wire.ContextHandler;
+      if(contextHandler == null)
+        ProtocolContextHandler.WriteContextStub(writer);
+      else
+        contextHandler.WriteContext(writer);
+    }
   }
 }

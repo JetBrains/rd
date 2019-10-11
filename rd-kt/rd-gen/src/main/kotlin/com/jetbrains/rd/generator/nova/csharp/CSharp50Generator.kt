@@ -249,7 +249,7 @@ open class CSharp50Generator(
     }
 
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration): String =
-        "IViewableMap<ClientId, ${implSubstitutedName(scope, true)}>"
+        "IPerContextMap<${perContextKey!!.type.substitutedName(scope)}, ${implSubstitutedName(scope, true)}>"
 
 
     protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false): String = when (this) {
@@ -257,7 +257,7 @@ open class CSharp50Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Const -> type.substitutedName(scope)
         is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
-            if(isPerClientId && !perClientIdRawName) "RdPerClientIdMap<$it>" else it
+            if(perContextKey != null && !perClientIdRawName) "RdPerContextMap<${perContextKey!!.type.substitutedName(scope)}, $it>" else it
         }
     }
 
@@ -285,15 +285,19 @@ open class CSharp50Generator(
     protected open val Member.isEncapsulated: Boolean get() = this is Member.Reactive
 
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean, ignorePerClientId: Boolean = false): String {
-        if(isPerClientId && !ignorePerClientId)
+        if(perContextKey != null && !ignorePerClientId)
             return leadingComma.condstr { ", " } + perClientIdMapValueFactory(containing)
         val res = genericParams.joinToString { it.readerDelegateRef(containing) + ", " + it.writerDelegateRef(containing) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
     }
 
     protected fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration) : String {
-        require(this.isPerClientId)
-        return "isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}${defaultValueAsString(true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
+        require(this.perContextKey != null)
+        return "${perContextKey!!.longRef(containing)}, isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}${defaultValueAsString(true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
+    }
+
+    protected fun ContextKey.longRef(scope: Declaration): String {
+        return pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope)
     }
 
 
@@ -410,7 +414,7 @@ open class CSharp50Generator(
 
 
     protected open fun PrettyPrinter.typedef(decl: Declaration) {
-        if (decl.getSetting(Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null || decl is ContextKey) return
 
         println()
         println()
@@ -536,6 +540,14 @@ open class CSharp50Generator(
             val value = getDefaultValue(decl, it)
             +"public const ${it.type.substitutedName(decl)} ${it.name} = $value;"
         }
+        if(decl is Toplevel) {
+            decl.declaredTypes.forEach {
+                if(it is ContextKey) {
+                    val keyTypeName = "RdContextKey<${it.type.substitutedName(decl)}>"
+                    +"public static $keyTypeName ${it.keyName} = new ${keyTypeName}(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)});"
+                }
+            }
+        }
     }
 
     protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, declaredAndUnknownTypes: List<Declaration>) {
@@ -546,7 +558,7 @@ open class CSharp50Generator(
         +"{"
         indent {
             val internedTypes = declaredAndUnknownTypes.flatMap { it.referencedTypes }.filterIsInstance<InternedScalar>().map { it.itemType }
-            val typesUnderPerClientIdMembers = declaredAndUnknownTypes.flatMap { it.ownMembers }.filterIsInstance<Member.Reactive>().filter { it.isPerClientId }.flatMap { it.referencedTypes }
+            val typesUnderPerClientIdMembers = declaredAndUnknownTypes.flatMap { it.ownMembers }.filterIsInstance<Member.Reactive>().filter { it.perContextKey != null }.flatMap { it.referencedTypes }
 
             val allTypesForRegistration = declaredAndUnknownTypes.filter { it.base != null } +
                     internedTypes.filterIsInstance<Declaration>() + typesUnderPerClientIdMembers.filterIsInstance<Declaration>()
@@ -759,9 +771,9 @@ open class CSharp50Generator(
                         val isNotVoid = type != PredefinedType.void
                         +"$prefix void ${member.publicName}(${isNotVoid.condstr { type.substitutedName(decl) + " value" }}) => ${member.encapsulatedName}.Fire(${isNotVoid.condstr { "value" }});"
                     }else {
-                        if (member.isPerClientId) {
-                            + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName}.GetForCurrentClientId();"
-                            + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerClientIdMap => ${member.encapsulatedName};"
+                        if (member.perContextKey != null) {
+                            + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName}.GetForCurrentContext();"
+                            + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerContextMap => ${member.encapsulatedName};"
                         } else
                         +"$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"}
                 is Member.Field ->
@@ -867,7 +879,7 @@ open class CSharp50Generator(
     }
 
     private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
-        return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (!isPerClientId || ignorePerClientId)) {
+        return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (perContextKey == null || ignorePerClientId)) {
             when (defaultValue) {
                 is String -> ", \"$defaultValue\""
                 is Member.Const -> ", ${defaultValue.name}"
@@ -1021,17 +1033,17 @@ open class CSharp50Generator(
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive.Stateful>()
-                    .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId}
+                    .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && it.perContextKey == null}
                     .println { "${it.encapsulatedName}.OptimizeNested = true;" }
 
 //            decl.ownMembers
 //                    .filterIsInstance<Member.Reactive.Stateful.Property>()
-//                    .filter { !it.isPerClientId }
+//                    .filter { it.perContextKey == null }
 //                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 //
 //            decl.ownMembers
 //                    .filterIsInstance<Member.Reactive.Stateful.Map>()
-//                    .filter { !it.isPerClientId }
+//                    .filter { it.perContextKey == null }
 //                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 
             decl.ownMembers

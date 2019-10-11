@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.util.reactive.IScheduler
 
@@ -19,7 +20,7 @@ interface IRdReactive : IRdBindable, IRdWireable {
 /**
  * Entity that could receive messages from wire
  */
-interface IRdWireable {
+interface IRdWireable: IRdDynamic {
 
     val rdid: RdId
 

@@ -94,7 +94,7 @@ class InternRoot: IInternRoot {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> unInternValue(id: Int): T {
         val value = getValue(id)
-        assert(value != this) { "Value for id $id has been removed" }
+        assert(value != null) { "Value for id $id has been removed" }
         return value as T
     }
 

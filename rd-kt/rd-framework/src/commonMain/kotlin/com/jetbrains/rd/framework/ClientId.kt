@@ -2,7 +2,6 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.util.Callable
 import com.jetbrains.rd.util.Runnable
-import com.jetbrains.rd.util.threadLocalWithInitial
 import kotlin.jvm.JvmStatic
 
 /**
@@ -25,6 +24,7 @@ data class ClientId(val value: String) {
 
     companion object : ISerializer<ClientId> {
         private val defaultLocalId = ClientId("Host")
+        val contextKey = RdContextKey("ClientId", true, FrameworkMarshallers.String)
 
         /**
          * Specifies behavior for ClientId.current
@@ -46,8 +46,6 @@ data class ClientId(val value: String) {
         val isCurrentlyUnderLocalId: Boolean
             get() = isLocalId(current)
 
-        private val currentClientId = threadLocalWithInitial<ClientId?> { null }
-
         /**
          * Gets the current ClientId. Subject to AbsenceBehaviorValue
          */
@@ -63,7 +61,7 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         val currentOrNull: ClientId?
-            get() = currentClientId.get()
+            get() = contextKey.value?.let(::ClientId)
 
         /**
          * Overrides the ID that is considered to be local to this process. Can be only invoked once.
@@ -87,12 +85,12 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         fun withClientId(clientId: ClientId?, action: Runnable) {
-            val oldClientId = currentClientId.get()
+            val oldClientId = contextKey.value
             try {
-                currentClientId.set(clientId)
+                contextKey.value = clientId?.value
                 action.run()
             } finally {
-                currentClientId.set(oldClientId)
+                contextKey.value = oldClientId
             }
         }
 
@@ -101,12 +99,12 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         fun withClientId(clientId: ClientId?, action: () -> Unit) {
-            val oldClientId = currentClientId.get()
+            val oldClientId = contextKey.value
             try {
-                currentClientId.set(clientId)
+                contextKey.value = clientId?.value
                 action()
             } finally {
-                currentClientId.set(oldClientId)
+                contextKey.value = oldClientId
             }
         }
 
@@ -115,12 +113,12 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T {
-            val oldClientId = currentClientId.get()
+            val oldClientId = contextKey.value
             try {
-                currentClientId.set(clientId)
+                contextKey.value = clientId?.value
                 return action.call()
             } finally {
-                currentClientId.set(oldClientId)
+                contextKey.value = oldClientId
             }
         }
 
@@ -129,12 +127,12 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-            val oldClientId = currentClientId.get()
+            val oldClientId = contextKey.value
             try {
-                currentClientId.set(clientId)
+                contextKey.value = clientId?.value
                 return action()
             } finally {
-                currentClientId.set(oldClientId)
+                contextKey.value = oldClientId
             }
         }
 

@@ -1,7 +1,6 @@
 using System;
-using System.Diagnostics;
-using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Rd.Impl;
 
 namespace JetBrains.Rd
 {
@@ -34,12 +33,9 @@ namespace JetBrains.Rd
         }
 
         public static readonly ClientId LocalId = new ClientId("Host");
+        
+        private static readonly RdContextKey<string> ourContextKey = new RdContextKey<string>("ClientId", true, Serializers.ReadString, Serializers.WriteString);
 
-#if !NET35
-        private static readonly AsyncLocal<ClientId?> ourAsyncLocalClientId = new AsyncLocal<ClientId?>();
-#endif
-        
-        
         public static readonly CtxReadDelegate<ClientId> ReadDelegate = (ctx, reader) => new ClientId(reader.ReadString());
         public static readonly CtxWriteDelegate<ClientId> WriteDelegate = (ctx, writer, value) => writer.Write(value.Value);
 
@@ -58,9 +54,7 @@ namespace JetBrains.Rd
 
             private static void SetClientId(ClientId? newClientId)
             {
-#if !NET35
-                ourAsyncLocalClientId.Value = newClientId;
-#endif
+              ourContextKey.Value = newClientId?.Value;
             }
 
             public void Dispose()
@@ -90,12 +84,16 @@ namespace JetBrains.Rd
         }
 
         [CanBeNull]
-        public static ClientId? CurrentOrNull =>
-#if !NET35
-            ourAsyncLocalClientId.Value;
-#else
-            throw new NotSupportedException("No ClientId on NET 3.5");
-#endif
+        public static ClientId? CurrentOrNull
+        {
+          get
+          {
+            var contextKeyValue = ourContextKey.Value;
+            if (contextKeyValue == null)
+              return null;
+            return new ClientId(contextKeyValue);
+          }
+        }
 
         #region Equality members
 

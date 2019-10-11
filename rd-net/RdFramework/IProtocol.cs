@@ -13,6 +13,6 @@ namespace JetBrains.Rd
     [NotNull] IIdentities Identities { get; }
     [NotNull] IScheduler Scheduler { get; }
     [NotNull] IWire Wire { get; }    
-    [NotNull] RdSet<ClientId> ClientIdSet { get; }
+    [NotNull] ProtocolContextHandler ContextHandler { get; }
   }
 }

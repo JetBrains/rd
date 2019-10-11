@@ -2,7 +2,7 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternRoot
-import com.jetbrains.rd.framework.impl.RdSet
+import com.jetbrains.rd.framework.impl.ProtocolContextHandler
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -17,7 +17,7 @@ class Protocol(
         override val wire: IWire, //to initialize field with circular dependencies
         val lifetime: Lifetime,
         serializationCtx: SerializationCtx? = null,
-        parentClientIdSet : RdSet<ClientId>? = null
+        parentContextHandler: ProtocolContextHandler? = null
 ) : IRdDynamic, IProtocol {
 
 
@@ -40,11 +40,15 @@ class Protocol(
         }
     }))
 
-    override val clientIdSet: RdSet<ClientId> = parentClientIdSet ?: RdSet(ClientId).also {
-        it.rdid = RdId.Null.mix("ProtocolClientIdSet")
-        it.add(ClientId.localId)
+    override val contextHandler: ProtocolContextHandler = parentContextHandler ?: ProtocolContextHandler(serializationContext).also {
+        it.rdid = RdId.Null.mix("ProtocolContextHandler")
         scheduler.invokeOrQueue {
-            it.bind(lifetime, this, "ProtocolClientIdSet")
+            it.bind(lifetime, this, "ProtocolContextHandler")
         }
+    }
+
+    init {
+        if (wire is IContextAwareWire)
+            wire.contextHandler = contextHandler
     }
 }

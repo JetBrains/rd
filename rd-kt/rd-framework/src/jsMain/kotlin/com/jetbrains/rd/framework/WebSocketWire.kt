@@ -82,6 +82,7 @@ class WebSocketWire {
                 unsafeBuffer.writeInt(0) //placeholder for length
 
                 id.write(unsafeBuffer) //write id
+                writeContext(unsafeBuffer)
                 writer(unsafeBuffer) //write rest
 
                 val length = unsafeBuffer.position

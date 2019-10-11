@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
@@ -37,6 +38,12 @@ open class RdTask<T> : IRdTask<T> {
 
 @Suppress("UNCHECKED_CAST")
 class WiredRdTask<T>(val lifetimeDef: LifetimeDefinition, val call: RdCall<*,*>, override val rdid: RdId, val scheduler: IScheduler) : RdTask<T>(), IRdWireable {
+
+    override val protocol: IProtocol
+        get() = call.protocol
+    override val serializationContext: SerializationCtx
+        get() = call.serializationContext
+    override val location: RName = call.location.sub(rdid.toString(), ".")
 
     override val wireScheduler: IScheduler get() = SynchronousScheduler
 

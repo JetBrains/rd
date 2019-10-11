@@ -28,8 +28,10 @@ namespace JetBrains.Rd.Impl
   public class Serializers : ISerializers
   {
     private readonly Dictionary<Type, RdId> myTypeMapping = new Dictionary<Type, RdId>();
-    private readonly Dictionary<RdId, CtxReadDelegate<object>> myReaders = new Dictionary<RdId, CtxReadDelegate<object>>();
+    private readonly Dictionary<RdId, Type> myInverseTypeMapping = new Dictionary<RdId, Type>();
+    private readonly Dictionary<RdId, Delegate> myReaders = new Dictionary<RdId, Delegate>();
     private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
+    private readonly Dictionary<RdId, Delegate> myRawWriters = new Dictionary<RdId, Delegate>();
 
     [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicCatalog;
 
@@ -233,8 +235,10 @@ namespace JetBrains.Rd.Impl
         Protocol.InitializationLogger.Trace("Registering type {0}, id={1}", typeof(T).Name, typeId);
         
         myTypeMapping[typeof(T)] = typeId;
-        myReaders[typeId] = (ctx, unsafeReader) => reader(ctx, unsafeReader);
-        myWriters[typeId] = (ctx, unsafeWriter, value) => writer(ctx, unsafeWriter, (T)value);
+        myInverseTypeMapping[typeId] = typeof(T);
+        myReaders[typeId] = reader;
+        myWriters[typeId] = (ctx, buffer, value) => writer(ctx, buffer, (T) value);
+        myRawWriters[typeId] = writer;
       }
 
     }
@@ -250,13 +254,13 @@ namespace JetBrains.Rd.Impl
         return default(T);
       var size = reader.ReadInt();
 
-      CtxReadDelegate<object> ctxReadDelegate;
-      if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
+      Delegate ctxReadDelegateRaw;
+      if (!myReaders.TryGetValue(typeId, out ctxReadDelegateRaw))
       {
         if (unknownInstanceReader == null)
         {
           myPolymorphicCatalog?.TryDiscoverRegister(typeId, this);
-          if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
+          if (!myReaders.TryGetValue(typeId, out ctxReadDelegateRaw))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed
             throw new KeyNotFoundException(string.Format("There is no readers found. Requested type '{0}'. Real type {1}", typeof(T).FullName, realType));
@@ -272,9 +276,10 @@ namespace JetBrains.Rd.Impl
         }
       }
 
-      var uncasted = ctxReadDelegate(ctx, reader);
-      Assertion.Assert(uncasted is T, "Bad cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(T).Name, uncasted.GetType().Name);
-      return (T)uncasted;
+      var ctxReadDelegate = ctxReadDelegateRaw as CtxReadDelegate<T>;
+      Assertion.Assert(ctxReadDelegate != null, "Bad delegate cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(CtxReadDelegate<T>).Name, ctxReadDelegateRaw.GetType().Name);
+
+      return ctxReadDelegate(ctx, reader);
     }
 
     public void Write<T>(SerializationCtx ctx, UnsafeWriter writer, T value)
@@ -331,6 +336,38 @@ namespace JetBrains.Rd.Impl
       Protocol.InitializationLogger.Trace("REGISTER serializers for {0}", r.Type.Name);
 
       r.Action(this);
+    }
+
+    public Type GetTypeForId(RdId id)
+    {
+#if !NET35
+      myBackgroundRegistrar.WaitForEmpty();
+#endif
+      return myInverseTypeMapping[id];
+    }
+
+    public CtxReadDelegate<T> GetReaderForId<T>(RdId id)
+    {
+#if !NET35
+      myBackgroundRegistrar.WaitForEmpty();
+#endif
+      return (CtxReadDelegate<T>) myReaders[id];
+    }
+
+    public CtxWriteDelegate<T> GetWriterForId<T>(RdId id)
+    {
+#if !NET35
+      myBackgroundRegistrar.WaitForEmpty();
+#endif
+      return (CtxWriteDelegate<T>) myRawWriters[id];
+    }
+    
+    public RdId GetIdForType(Type type)
+    {
+#if !NET35
+      myBackgroundRegistrar.WaitForEmpty();
+#endif
+      return myTypeMapping[type];
     }
   }
 }

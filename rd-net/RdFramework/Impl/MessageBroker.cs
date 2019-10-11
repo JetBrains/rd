@@ -62,7 +62,8 @@ namespace JetBrains.Rd.Impl
         var rdid0 = RdId.Read(reader);
         Assertion.Assert(reactive.RdId.Equals(rdid0), "Not equals: {0}, {1}", reactive.RdId, rdid0);
 
-        reactive.OnWireReceived(reader);
+        using (reactive.Proto.ContextHandler.ReadContextIntoCookie(reader))
+          reactive.OnWireReceived(reader);
       }
     }
     

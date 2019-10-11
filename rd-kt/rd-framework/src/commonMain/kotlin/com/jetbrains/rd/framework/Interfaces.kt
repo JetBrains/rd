@@ -4,7 +4,7 @@ import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
-import com.jetbrains.rd.framework.impl.RdSet
+import com.jetbrains.rd.framework.impl.ProtocolContextHandler
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -35,7 +35,7 @@ interface IProtocol : IRdDynamic {
     // Models for which the serialization hash does not match that on the other side
     val outOfSyncModels: ViewableSet<RdExtBase>
 
-    val clientIdSet: RdSet<ClientId>
+    val contextHandler : ProtocolContextHandler
 }
 
 /**
@@ -54,6 +54,19 @@ interface IWire {
      * when the given [lifetime] is terminated.
      */
     fun advise(lifetime: Lifetime, entity: IRdWireable)
+}
+
+interface IContextAwareWire : IWire {
+    var contextHandler: ProtocolContextHandler?
+
+    fun writeContext(buffer: AbstractBuffer) {
+        contextHandler.let { handler ->
+            if(handler == null)
+                ProtocolContextHandler.writeContextStub(buffer)
+            else
+                handler.writeCurrentMessageContext(buffer)
+        }
+    }
 }
 
 /**
@@ -88,6 +101,7 @@ interface ISerializers {
     val toplevels : MutableSet<KClass<out ISerializersOwner>>
 
     fun <T : Any> register(serializer: IMarshaller<T>)
+    fun get(id: RdId): IMarshaller<*>?
     fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T?
     fun <T> writePolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, value: T)
     fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T

@@ -1,12 +1,6 @@
 package com.jetbrains.rd.generator.test.cases.generator
 
-import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.IMarshaller
-import com.jetbrains.rd.framework.ISerializer
-import com.jetbrains.rd.framework.impl.RdMap
-import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.generator.nova.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
@@ -25,16 +19,19 @@ class PerClientIdGenTest {
             Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.perClientId", File(kotlinGeneratedSourcesDir)),
             CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.PerClientId", File("build/testOutputCSharp"))
     ) {
+
+        val key = contextKey("key", PredefinedType.string)
+        val lightKey = contextKey("lightKey", PredefinedType.int).light
         init {
-            property("aProp", PredefinedType.string).perClientId
-            property("aPropDefault", false).perClientId
+            property("aProp", PredefinedType.string).perContext(key)
+            property("aPropDefault", false).perContext(key)
             property("aPropDefault2", true)
-            map("aMap", PredefinedType.string, PredefinedType.string).perClientId
+            map("aMap", PredefinedType.string, PredefinedType.string).perContext(key)
 
             property("innerProp", classdef("InnerClass") {
-                property("someValue", PredefinedType.string.nullable).perClientId
-                property("someClassValue", structdef("PerClientIdStruct") {}).perClientId
-                signal("someClassSignal", structdef("PerClientIdSignal") {}).perClientId
+                property("someValue", PredefinedType.string.nullable).perContext(key)
+                property("someClassValue", structdef("PerClientIdStruct") {}).perContext(key)
+                signal("someClassSignal", structdef("PerClientIdSignal") {}).perContext(key)
             })
         }
     }

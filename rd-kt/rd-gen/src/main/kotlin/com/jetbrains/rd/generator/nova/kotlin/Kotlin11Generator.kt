@@ -154,16 +154,16 @@ open class Kotlin11Generator(
     }
 
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration) =
-        "IViewableMap<ClientId, " + intfSubstitutedName(scope) + ">"
+        "IPerContextMap<${perContextKey!!.type.substitutedName(scope)}, " + intfSubstitutedName(scope) + ">"
 
 
-    protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false) = when (this) {
+    protected open fun Member.implSubstitutedName(scope: Declaration, perContextRawName: Boolean = false) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Const -> type.substitutedName(scope)
         is Member.Reactive ->
             (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
-                if (isPerClientId && !perClientIdRawName) "RdPerClientIdMap<$baseTypeName>" else baseTypeName
+                if (perContextKey != null && !perContextRawName) "RdPerContextMap<${perContextKey!!.type.substitutedName(scope)}, $baseTypeName>" else baseTypeName
             }
     }
 
@@ -215,9 +215,13 @@ open class Kotlin11Generator(
         }.toString()
     }
 
+    protected fun ContextKey.longRef(scope: Declaration): String {
+        return pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope)
+    }
+
     protected fun Member.Reactive.customSerializers(scope: Declaration, ignorePerClientId: Boolean = false) : List<String> {
-        if(isPerClientId && !ignorePerClientId)
-            return listOf(perClientIdMapValueFactory(scope))
+        if (perContextKey != null && !ignorePerClientId)
+            return listOf(perContextKey!!.longRef(scope), perClientIdMapValueFactory(scope))
         return genericParams.asList().map { it.serializerRef(scope) }
     }
 
@@ -329,7 +333,7 @@ open class Kotlin11Generator(
     }
 
     protected open fun PrettyPrinter.typedef(decl: Declaration) {
-        if (decl.getSetting(Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null || decl is ContextKey) return
 
         println()
         println()
@@ -440,6 +444,12 @@ open class Kotlin11Generator(
                 "const val $name : $type = $value"
             }
         }
+        if(decl is Toplevel) {
+            decl.declaredTypes.forEach {
+                if(it is ContextKey)
+                    +"val ${it.keyName} = RdContextKey<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl)})"
+            }
+        }
     }
 
     protected fun PrettyPrinter.companionTrait(decl: Declaration) {
@@ -526,6 +536,12 @@ open class Kotlin11Generator(
     }
 
 
+    private fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration): String {
+        require(this.perContextKey != null)
+        val params = (listOf(getDefaultValue(containing, this, true)) + customSerializers(containing, true)).filterNotNull().joinToString(", ")
+        return "{ ${this.ctorSimpleName}($params)${(this is Member.Reactive.Stateful.Map).condstr { ".apply { master = it }" }} }"
+    }
+
     //only for toplevel Exts
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (decl.isExtension) return
@@ -545,14 +561,8 @@ open class Kotlin11Generator(
 
     }
 
-    private fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration): String {
-        require(this.isPerClientId)
-        val params = (listOf(getDefaultValue(containing, this, true)) + customSerializers(containing, true)).filterNotNull().joinToString(", ")
-        return "{ ${this.ctorSimpleName}($params)${(this is Member.Reactive.Stateful.Map).condstr { ".apply { master = it }" }} }"
-    }
-
     private fun getDefaultValue(containing: Declaration, member: Member, ignorePerClientId: Boolean = false): String? =
-            if (!ignorePerClientId && member is Member.Reactive && member.isPerClientId)
+            if (!ignorePerClientId && member is Member.Reactive && member.perContextKey != null)
                 null
             else
 
@@ -617,8 +627,8 @@ open class Kotlin11Generator(
             is Member.Reactive.Stateful.Extension -> "$ctorSimpleName(${delegatedBy.reader()})"
             is Member.Reactive -> {
                 val params = (listOf("ctx", "buffer") + customSerializers(decl)).joinToString (", ")
-                if(isPerClientId) {
-                    "RdPerClientIdMap.read(buffer) ${this.perClientIdMapValueFactory(decl)}"
+                if(perContextKey != null) {
+                    "RdPerContextMap.read(${perContextKey!!.longRef(decl)}, buffer) ${this.perClientIdMapValueFactory(decl)}"
                 } else {
                     "$implSimpleName.read($params)"
                 }
@@ -678,8 +688,8 @@ open class Kotlin11Generator(
         fun Member.writer() : String = when (this) {
             is Member.Field -> type.writer("value.$encapsulatedName")
             is Member.Reactive.Stateful.Extension -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
-            is Member.Reactive -> if(isPerClientId) {
-                "RdPerClientIdMap.write(buffer, value.$encapsulatedName)"
+            is Member.Reactive -> if(perContextKey != null) {
+                "RdPerContextMap.write(buffer, value.$encapsulatedName)"
             } else {
                 "$implSimpleName.write(ctx, buffer, value.$encapsulatedName)"
             }
@@ -705,9 +715,9 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
         for (member in decl.ownMembers.filter { it.isEncapsulated }) {
             p(docComment(member.documentation))
-            if(member is Member.Reactive && member.isPerClientId) {
-                +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}.getForCurrentClientId()"
-                +"val ${member.publicName}PerClientIdMap: ${member.intfSubstitutedMapName(decl)} get() = ${member.encapsulatedName}"
+            if(member is Member.Reactive && member.perContextKey != null) {
+                +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}.getForCurrentContext()"
+                +"val ${member.publicName}PerContextMap: ${member.intfSubstitutedMapName(decl)} get() = ${member.encapsulatedName}"
             } else
                 +"val ${member.publicName}: ${member.intfSubstitutedName(decl)} get() = ${member.encapsulatedName}"
         }
@@ -726,17 +736,17 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
 //        decl.ownMembers
 //            .filterIsInstance<Member.Reactive.Stateful.Property>()
-//            .filter { !it.isPerClientId }
+//            .filter { it.perContextKey == null }
 //            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.isMaster = ${it.master}" }
 //
 //        decl.ownMembers
 //            .filterIsInstance<Member.Reactive.Stateful.Map>()
-//            .filter { !it.isPerClientId }
+//            .filter { it.perContextKey == null }
 //            .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.master = ${it.master}" }
 
         decl.ownMembers
             .filterIsInstance<Member.Reactive.Stateful>()
-            .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId }
+            .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && it.perContextKey == null }
             .printlnWithPrefixSuffixAndIndent("init {", "}\n") { "${it.encapsulatedName}.optimizeNested = true" }
 
         decl.ownMembers
