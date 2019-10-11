@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.AbstractBuffer
 import com.jetbrains.rd.framework.RdContextKey
 import com.jetbrains.rd.framework.SerializationCtx
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.ISingleKeyProtocolContextHandler
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.util.ConcurrentHashMap
@@ -32,6 +33,10 @@ internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdCon
                 }
             }
         }
+
+    override fun deepClone(): IRdBindable {
+        error("This may not be cloned")
+    }
 
     private var isWritingOwnMessages by threadLocal { false }
     private inline fun withWriteOwnMessages(block: () -> Unit) {

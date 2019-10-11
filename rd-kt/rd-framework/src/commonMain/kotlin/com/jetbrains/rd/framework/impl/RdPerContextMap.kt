@@ -1,10 +1,7 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.IPerContextMap
-import com.jetbrains.rd.framework.base.RdBindableBase
-import com.jetbrains.rd.framework.base.RdReactiveBase
-import com.jetbrains.rd.framework.base.withId
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.addUnique
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
@@ -12,7 +9,11 @@ import com.jetbrains.rd.util.reactive.*
 class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val key: RdContextKey<K>, val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V> {
     constructor(key: RdContextKey<K>, valueFactory: (Boolean) -> V) : this(key, valueFactory, ViewableMap())
 
-    public var master: Boolean = true
+    override fun deepClone(): IRdBindable {
+        return RdPerContextMap(key, valueFactory)
+    }
+
+    public val changing = myInternalMap.changing
     public var optimizeNested: Boolean = false
 
     override fun onWireReceived(buffer: AbstractBuffer) {

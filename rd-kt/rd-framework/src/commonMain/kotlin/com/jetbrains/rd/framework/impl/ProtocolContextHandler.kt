@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.ISingleKeyProtocolContextHandler
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.util.ConcurrentHashMap
@@ -34,6 +35,10 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
     private val myKeyHandlers = ConcurrentHashMap<String, ISingleKeyProtocolContextHandler<*>>()
     private var myBindLifetime: Lifetime? = null
     private val myOrderingsLock = Any()
+
+    override fun deepClone(): IRdBindable {
+        error("This may not be cloned")
+    }
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
