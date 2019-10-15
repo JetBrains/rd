@@ -28,7 +28,7 @@ class RdPerClientIdMap<V : RdBindableBase> private constructor(val valueFactory:
         super.init(lifetime)
         protocol.clientIdSet.view(lifetime) { clientIdLt, clientId ->
             val newEntity = valueFactory(master).withId(rdid.mix(clientId.value))
-            newEntity.bind(clientIdLt, this, "$[{clientId.value}]")
+            newEntity.bind(clientIdLt, this, "[${clientId.value}]")
             myInternalMap.addUnique(clientIdLt, clientId, newEntity)
         }
     }
