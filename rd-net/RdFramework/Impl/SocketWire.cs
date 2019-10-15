@@ -161,8 +161,7 @@ namespace JetBrains.Rd.Impl
               {
                 Log.Error(
                   "ERROR! Socket {0} {1} is in invalid state. Probably no more messages will be received. Exception message: '{2}'. " +
-                  "Sometimes it happens on Windows 8. Your os: {3}." +
-                  "In case this problem arises ask Ivan Paschenko.",
+                  "Sometimes it happens because of Timeout property on socket. Your os: {3}.",
                   e.GetType().Name, Id, e.Message, Environment.OSVersion.VersionString);
               }
               
