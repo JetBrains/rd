@@ -14,6 +14,8 @@ namespace Test.RdFramework.Contexts
       base.SetUp();
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
+      
+      new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString).Value = null;
     }
 
     [Test]

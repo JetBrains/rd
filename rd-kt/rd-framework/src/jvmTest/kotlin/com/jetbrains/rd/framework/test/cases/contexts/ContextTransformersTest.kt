@@ -134,7 +134,7 @@ class ContextTransformersTest : RdFrameworkTestBase() {
             v.fire(k)
         }
 
-        assert(receives == 3)
+        Assert.assertEquals(3, receives)
     }
 
     @Test

@@ -16,12 +16,34 @@ namespace JetBrains.Rd.Impl
         private readonly Func<Boolean, V> myValueFactory;
         private readonly IViewableMap<K, V> myMap;
 
+        private readonly IViewableSet<K> myLocalValueSet = new ViewableSet<K>();
+        private readonly SwitchingViewableSet<K> mySwitchingValueSet;
+        private readonly SequentialLifetimes myUnboundLifetimes = new SequentialLifetimes(Lifetime.Eternal);
+        private readonly IDictionary<K, V> myUnboundValues = new Dictionary<K, V>();
+
 
         public RdPerContextMap(RdContextKey<K> key, Func<bool, V> valueFactory)
         {
             myValueFactory = valueFactory;
             myKey = key;
             myMap = new ViewableMap<K, V>();
+
+            mySwitchingValueSet = new SwitchingViewableSet<K>(Lifetime.Eternal, myLocalValueSet);
+
+            BindToUnbounds();
+        }
+
+        private void BindToUnbounds()
+        {
+          var unboundLt = myUnboundLifetimes.Next();
+          using (Signal.PriorityAdviseCookie.Create())
+          {
+            myLocalValueSet.View(unboundLt, (localKeyLt, localKey) =>
+            {
+              myUnboundValues[localKey] = myValueFactory(IsMaster);
+              localKeyLt.OnTermination(() => myUnboundValues.Remove(localKey));
+            });
+          }
         }
 
         public bool IsMaster;
@@ -35,12 +57,24 @@ namespace JetBrains.Rd.Impl
         protected override void Init(Lifetime lifetime)
         {
             base.Init(lifetime);
-            Proto.ContextHandler.GetProtocolValueSet(myKey).View(lifetime, (contextValueLifetime, contextValue) =>
+            mySwitchingValueSet.ChangeBackingSet(Proto.ContextHandler.GetValueSet(myKey), true);
+            var currentKeyValue = myKey.Value;
+            var protocolValueSet = Proto.ContextHandler.GetProtocolValueSet(myKey);
+            if(currentKeyValue != null)
+              Assertion.Assert(protocolValueSet.Contains(currentKeyValue), "RdPerContextMap is getting bound in non-present context {0}", currentKeyValue);
+            protocolValueSet.View(lifetime, (contextValueLifetime, contextValue) =>
             {
-                var value = myValueFactory(IsMaster).WithId(RdId.Mix(contextValue.ToString()));
+                myUnboundValues.TryGetValue(Proto.ContextHandler.GetHandlerForKey(myKey).TransformFromProtocol(contextValue), out var previousUnboundValue);
+                var value = (previousUnboundValue ?? myValueFactory(IsMaster)).WithId(RdId.Mix(contextValue.ToString()));
                 value.Bind(contextValueLifetime, this, $"[{contextValue.ToString()}]");
                 myMap.Add(contextValue, value);
                 contextValueLifetime.OnTermination(() => { myMap.Remove(contextValue); });
+            });
+            myUnboundLifetimes.TerminateCurrent();
+            lifetime.OnTermination(() =>
+            {
+              mySwitchingValueSet.ChangeBackingSet(myLocalValueSet, false);
+              BindToUnbounds();
             });
         }
         
@@ -57,22 +91,43 @@ namespace JetBrains.Rd.Impl
 
         public void View(Lifetime lifetime, Action<Lifetime, KeyValuePair<K, V>> handler)
         {
-          Proto.ContextHandler.GetValueSet(myKey).View(lifetime,
+          mySwitchingValueSet.View(lifetime,
             (keyLt, key) => handler(keyLt, new KeyValuePair<K, V>(key, this[key])));
         }
         
         public void View(Lifetime lifetime, Action<Lifetime, K, V> handler)
         {
-          Proto.ContextHandler.GetValueSet(myKey).View(lifetime, (keyLt, key) => handler(keyLt, key, this[key]));
+          mySwitchingValueSet.View(lifetime, (keyLt, key) => handler(keyLt, key, this[key]));
         }
 
         public V this[K key]
         {
-            get => myMap[Proto.ContextHandler.GetHandlerForKey(myKey).TransformToProtocol(key)];
+          get
+          {
+            if (!IsBound)
+            {
+              if(!myLocalValueSet.Contains(key))
+                myLocalValueSet.Add(key);
+
+              return myUnboundValues[key];
+            }
+            return myMap[Proto.ContextHandler.GetHandlerForKey(myKey).TransformToProtocol(key)];
+          }
         }
-        public bool TryGetValue(K key, out V value) => myMap.TryGetValue(Proto.ContextHandler.GetHandlerForKey(myKey).TransformToProtocol(key), out value);
-        
-        
+
+        public bool TryGetValue(K key, out V value)
+        {
+          if (!IsBound)
+          {
+            if(!myLocalValueSet.Contains(key))
+              myLocalValueSet.Add(key); // todo: should we force creation here?
+
+            return myUnboundValues.TryGetValue(key, out value);
+          }
+          return myMap.TryGetValue(Proto.ContextHandler.GetHandlerForKey(myKey).TransformToProtocol(key), out value);
+        }
+
+
         public static void Write(SerializationCtx context, UnsafeWriter writer, RdPerContextMap<K, V> value)
         {
             RdId.Write(writer, value.RdId);
