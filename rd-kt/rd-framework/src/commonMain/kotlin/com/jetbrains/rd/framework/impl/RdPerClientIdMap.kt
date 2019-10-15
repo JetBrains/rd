@@ -17,7 +17,7 @@ class RdPerClientIdMap<V : RdBindableBase> private constructor(val valueFactory:
     val changing = myInternalMap.changing
     var optimizeNested: Boolean = false
 
-    override fun deepClone(): IRdBindable = RdPerClientIdMap(valueFactory).also { for ((k,v) in myInternalMap) { it.myInternalMap[k] = v.deepClonePolymorphic() } }
+    override fun deepClone(): IRdBindable = RdPerClientIdMap(valueFactory)
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         // this entity has no own messages
@@ -28,7 +28,7 @@ class RdPerClientIdMap<V : RdBindableBase> private constructor(val valueFactory:
         super.init(lifetime)
         protocol.clientIdSet.view(lifetime) { clientIdLt, clientId ->
             val newEntity = valueFactory(master).withId(rdid.mix(clientId.value))
-            newEntity.bind(clientIdLt, this, "$[{clientId.value}]")
+            newEntity.bind(clientIdLt, this, "[${clientId.value}]")
             myInternalMap.addUnique(clientIdLt, clientId, newEntity)
         }
     }
