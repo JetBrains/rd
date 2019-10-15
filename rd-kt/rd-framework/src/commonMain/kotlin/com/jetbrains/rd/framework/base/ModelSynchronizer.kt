@@ -49,17 +49,17 @@ fun<T: Any> synchronizeImmutableArrays(lifetime: Lifetime, a: Array<T>, b: Array
 
 fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b: RdPerClientIdMap<T>) {
     a.view(lifetime) { lt, (key, value) ->
-        if (b.changing || !b.isBound)
+        if (b.changing)
             return@view
 
-        b[key]?.let { otherValue -> value.synchronizeWith(lt, otherValue) }
+        b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
     b.view(lifetime) { lt, (key, value) ->
-        if (a.changing || !a.isBound)
+        if (a.changing)
             return@view
 
-        a[key]?.let { otherValue -> value.synchronizeWith(lt, otherValue) }
+        a[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
 }

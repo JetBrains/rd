@@ -128,6 +128,13 @@ class TestTwoClients {
         wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
     }
 
+
+    @Test
+    fun testPerClientIdProperty() {
+        c0.propPerClientId.set(1)
+        wait { c1.propPerClientId.valueOrNull == 1 }
+    }
+
     @Test
     fun testProperty() {
         c0.property.set(Clazz(1))
@@ -138,7 +145,6 @@ class TestTwoClients {
     }
 
 
-    @Ignore("todo fix")
     @Test
     fun testExt() {
         c0.property.set(Clazz(1))

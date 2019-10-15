@@ -31,6 +31,7 @@ object SyncModelRoot : Root(
         list("list", Clazz)
         set("set", int)
         map("map", int, Clazz)
+        property("propPerClientId", int).perClientId
     }
 }
 
