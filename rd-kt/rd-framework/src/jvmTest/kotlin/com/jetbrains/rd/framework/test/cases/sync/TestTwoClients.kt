@@ -8,6 +8,7 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import org.junit.Ignore
 import org.junit.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
@@ -116,6 +117,22 @@ class TestTwoClients {
 
         c0.map[0]?.p?.value = 2
         wait { c1.map[0]?.p?.value == 2 }
+    }
+
+    @Test
+    fun testPerClientIdMap() {
+        c0.property.set(Clazz(1))
+        wait { c1.property.hasValue }
+
+        c0.property.valueOrThrow.mapPerClientId[1] = 1
+        wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
+    }
+
+
+    @Test
+    fun testPerClientIdProperty() {
+        c0.propPerClientId.set(1)
+        wait { c1.propPerClientId.valueOrNull == 1 }
     }
 
     @Test
