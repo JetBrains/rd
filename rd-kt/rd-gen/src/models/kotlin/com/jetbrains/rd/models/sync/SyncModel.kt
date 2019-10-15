@@ -15,6 +15,7 @@ object SyncModelRoot : Root(
     }
     val Clazz = classdef extends Baseclazz {
         property("p", int.nullable)
+        map("mapPerClientId", int, int).perClientId
     }
 
     init {

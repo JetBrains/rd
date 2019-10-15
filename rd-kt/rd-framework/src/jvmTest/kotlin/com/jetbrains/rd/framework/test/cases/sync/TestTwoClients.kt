@@ -120,6 +120,15 @@ class TestTwoClients {
     }
 
     @Test
+    fun testPerClientIdMap() {
+        c0.property.set(Clazz(1))
+        wait { c1.property.hasValue }
+
+        c0.property.valueOrThrow.mapPerClientId[1] = 1
+        wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
+    }
+
+    @Test
     fun testProperty() {
         c0.property.set(Clazz(1))
         wait { c1.property.hasValue }
