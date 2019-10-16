@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.sync
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.test.util.TestScheduler
+import com.jetbrains.rd.framework.test.util.SequentialPumpingScheduler
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
@@ -32,7 +32,10 @@ class TestTwoClients {
     val timeout = if (isUnderDebug) 10_000L else 1000L
 
     fun wait(condition: () -> Boolean) {
-        require (spinUntil(timeout, condition))
+        require (spinUntil(timeout) {
+            SequentialPumpingScheduler.flush()
+            condition()
+        })
     }
 
     @BeforeTest
@@ -40,7 +43,7 @@ class TestTwoClients {
         lifetimeDef = LifetimeDefinition()
         Logger.set(lifetime, ErrorAccumulatorLoggerFactory)
 
-        val sc = TestScheduler
+        val sc = SequentialPumpingScheduler
 
         val wireFactory = SocketWire.ServerFactory(lifetime, sc, null, false)
         val port = wireFactory.localPort

@@ -85,7 +85,6 @@ class RdMap<K : Any, V : Any> private constructor(
             }
         }}
 
-        logSend.trace { "Advise $rdid: $location" }
         wire.advise(lifetime, this)
 
         if (!optimizeNested)
