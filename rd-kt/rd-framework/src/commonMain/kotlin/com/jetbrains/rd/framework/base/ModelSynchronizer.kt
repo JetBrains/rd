@@ -70,7 +70,10 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
 
     if (first == second)
         return
-    else if (first is ISignal<*> && second is ISignal<*>) {
+    else if (first is RdDelegateBase<*> && second is RdDelegateBase<*>) {
+        first.delegatedBy.synchronizeWith(lifetime, second.delegatedBy)
+
+    } else if (first is ISignal<*> && second is ISignal<*>) {
         synchronize(lifetime, first as ISignal<Any>, second as ISignal<Any>)
 
     } else if (first is IMutablePropertyBase<*> && second is IMutablePropertyBase<*>) {
@@ -81,9 +84,6 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
 
     } else if (first is IMutableViewableSet<*> && second is IMutableViewableSet<*>) {
         synchronize(lifetime, first as IMutableViewableSet<Any>, second as IMutableViewableSet<Any>)
-
-    } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
-        synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)
 
     } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
         synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)

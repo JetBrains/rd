@@ -1,6 +1,8 @@
 package com.jetbrains.rd.rdtext.impl
 
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.framework.base.deepClonePolymorphic
 import com.jetbrains.rd.rdtext.IDeferrableITextBuffer
 import com.jetbrains.rd.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rd.rdtext.intrinsics.RdTextChangeKind
@@ -59,6 +61,10 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
     }
 
     override val isQueueEmpty get() = queue.isEmpty()
+
+    override fun deepClone(): IRdBindable {
+        return RdDeferrableTextBuffer(delegatedBy.deepClonePolymorphic(), isMaster)
+    }
 }
 
 @Deprecated("Use normal buffer as backend counterpart", ReplaceWith("rdSlaveTextBuffer(delegate)"))
