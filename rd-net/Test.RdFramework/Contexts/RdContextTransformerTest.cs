@@ -51,6 +51,7 @@ namespace Test.RdFramework.Contexts
     public void TestWithContextMap()
     {
       var key = new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      key.Value = null;
       
       ServerProtocol.ContextHandler.RegisterKey(key);
       

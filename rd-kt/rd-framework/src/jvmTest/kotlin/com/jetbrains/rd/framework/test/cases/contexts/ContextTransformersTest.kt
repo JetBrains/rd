@@ -102,6 +102,7 @@ class ContextTransformersTest : RdFrameworkTestBase() {
     @Test
     fun testWithContextMap() {
         val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        key.value = null
 
         serverProtocol.contextHandler.registerKey(key)
         clientProtocol.contextHandler.registerKey(key)
