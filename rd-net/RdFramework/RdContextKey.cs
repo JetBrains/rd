@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
@@ -19,11 +20,13 @@ namespace JetBrains.Rd
       ReadDelegate = readDelegate;
       WriteDelegate = writeDelegate;
     }
+    
+    private static readonly ThreadLocal<Dictionary<string, Stack<T>>> ourContextStacks = new ThreadLocal<Dictionary<string, Stack<T>>>(() => new Dictionary<string, Stack<T>>());
 
 #if NET35
-    private static readonly ThreadLocal<Dictionary<string, Stack<T>>> ourValues = new ThreadLocal<Dictionary<string, Stack<T>>>();
+    private static readonly ConcurrentDictionary<string, ThreadLocal<T>> ourValues = new ConcurrentDictionary<string, ThreadLocal<T>>();
 #else
-    private static readonly AsyncLocal<Dictionary<string, Stack<T>>> ourValues = new AsyncLocal<Dictionary<string, Stack<T>>>();
+    private static readonly ConcurrentDictionary<string, AsyncLocal<T>> ourValues = new ConcurrentDictionary<string, AsyncLocal<T>>();
 #endif
     
 
@@ -31,38 +34,32 @@ namespace JetBrains.Rd
     {
       get
       {
-        var valuesDict = ourValues.Value;
-        if (valuesDict != null && valuesDict.TryGetValue(Key, out var value))
-          return value.Count == 0 ? default : value.Peek();
-        return default;
+        return ourValues.TryGetValue(Key, out var asyncLocal) ? asyncLocal.Value : default;
       }
       set
       {
-        var valuesDict = ourValues.Value;
-        if (valuesDict == null)
-          ourValues.Value = valuesDict = new Dictionary<string, Stack<T>>();
-        ReplaceTopOrPush(valuesDict.GetOrCreate(Key, () => new Stack<T>()), value);
+        if (!ourValues.ContainsKey(Key))
+        {
+          #if NET35
+          ourValues.TryAdd(Key, new ThreadLocal<T>());
+          #else
+          ourValues.TryAdd(Key, new AsyncLocal<T>());
+          #endif
+        }
+
+        ourValues[Key].Value = value;
       }
     }
 
     public void PushContext(T value)
     {
-      var valuesDict = ourValues.Value;
-      if (valuesDict == null)
-        ourValues.Value = valuesDict = new Dictionary<string, Stack<T>>();
-      valuesDict.GetOrCreate(Key, () => new Stack<T>()).Push(value);
+      ourContextStacks.Value.GetOrCreate(Key, () => new Stack<T>()).Push(Value);
+      Value = value;
     }
 
     public void PopContext()
     {
-      ourValues.Value[Key].Pop();
-    }
-
-    private static void ReplaceTopOrPush(Stack<T> stack, T value)
-    {
-      if (stack.Count != 0) 
-        stack.Pop();
-      stack.Push(value);
+      Value = ourContextStacks.Value[Key].Pop();
     }
   }
 }
