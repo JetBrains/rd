@@ -177,7 +177,7 @@ class SocketWire {
                         pos = 0
                         stream.readByteArray(pkg)
 
-                        if (seqn > maxReceivedSeqn) {
+                        if (seqn > maxReceivedSeqn || seqn == 1L /*todo special temporary hack for new client after reconnect. It means connection was closed intentionally from other side.*/)   {
                             maxReceivedSeqn = seqn
                             return pkg[pos++].toInt() and 0xff
                         } else
