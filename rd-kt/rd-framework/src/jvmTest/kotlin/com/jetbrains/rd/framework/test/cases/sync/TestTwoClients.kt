@@ -145,6 +145,7 @@ class TestTwoClients {
     }
 
 
+    @Ignore("blinking on build server")
     @Test
     fun testExt() {
         c0.property.set(Clazz(1))
