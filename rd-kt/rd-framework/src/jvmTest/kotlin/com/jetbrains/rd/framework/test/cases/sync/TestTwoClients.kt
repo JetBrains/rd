@@ -154,20 +154,20 @@ class TestTwoClients {
         ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
 
 
-        myLogger.trace {"1------------------------------------------------------------------"}
+        myLogger.trace {"\nSTART---------------------------------------------------------------"}
         c0.property.valueOrThrow.extToClazz.map[0] = Clazz(2)
 
-        myLogger.trace {"2------------------------------------------------------------------"}
+        myLogger.trace {"\n1------------------------------------------------------------------"}
         s0.property.valueOrThrow.extToClazz //just create
 
-        myLogger.trace {"3------------------------------------------------------------------"}
+        myLogger.trace {"\n2------------------------------------------------------------------"}
         //s1.property.valueOrThrow.extToClazz must be created automatically
         wait { c1.property.valueOrThrow.extToClazz.map[0]?.f == 2 }
 
-        myLogger.trace {"4------------------------------------------------------------------"}
+        myLogger.trace {"\n3------------------------------------------------------------------"}
         c1.property.valueOrThrow.extToClazz.map[0]?.p?.value = 3
         wait { c1.property.valueOrThrow.extToClazz.map[0]?.p?.value == 3 }
 
-
+        myLogger.trace {"\nFINISH---------------------------------------------------------------"}
     }
 }
