@@ -7,13 +7,10 @@ import com.jetbrains.rd.rdtext.*
 import com.jetbrains.rd.rdtext.impl.RdDeferrableTextBuffer
 import com.jetbrains.rd.rdtext.impl.intrinsics.RdChangeOrigin
 import com.jetbrains.rd.rdtext.impl.intrinsics.RdTextBufferState
-import com.jetbrains.rd.rdtext.impl.ot.RdDeferrableOtBasedText
-import com.jetbrains.rd.rdtext.impl.ot.intrinsics.RdOtState
 import com.jetbrains.rd.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rd.rdtext.intrinsics.RdTextChangeKind
 import com.jetbrains.rd.rdtext.intrinsics.delta
 import com.jetbrains.rd.rdtext.test.util.*
-import com.jetbrains.rd.util.Closeable
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Statics
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -184,13 +181,6 @@ class TextBufferTest {
             serverLifetimeDef.terminate()
             ErrorAccumulatorLoggerFactory.throwAndClear()
         }
-    }
-
-    @Test
-    fun convergenceForOtBasedText() {
-        PropertyChecker.customized()
-                .withIterationCount(100)
-                .checkScenarios { RandomTextChanges({ RdDeferrableOtBasedText(RdOtState(), it) }) }
     }
 
     @Test
