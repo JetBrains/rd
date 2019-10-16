@@ -40,15 +40,19 @@ class Protocol(
         }
     }))
 
-    override val contextHandler: ProtocolContextHandler = parentContextHandler ?: ProtocolContextHandler(serializationContext).also {
-        it.rdid = RdId.Null.mix("ProtocolContextHandler")
-        scheduler.invokeOrQueue {
-            it.bind(lifetime, this, "ProtocolContextHandler")
-        }
-    }
+    override val contextHandler: ProtocolContextHandler = parentContextHandler ?: ProtocolContextHandler(serializationContext)
 
     init {
         if (wire is IContextAwareWire)
             wire.contextHandler = contextHandler
+
+        if (parentContextHandler == null) {
+            contextHandler.also {
+                it.rdid = RdId.Null.mix("ProtocolContextHandler")
+                scheduler.invokeOrQueue {
+                    it.bind(lifetime, this, "ProtocolContextHandler")
+                }
+            }
+        }
     }
 }
