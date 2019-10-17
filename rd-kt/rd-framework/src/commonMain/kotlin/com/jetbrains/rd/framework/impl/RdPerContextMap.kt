@@ -44,7 +44,6 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        mySwitchingValueSet.changeBackingSet(protocol.contextHandler.getValueSet(key), true) // protocol set takes precedence
         val protocolValueSet = protocol.contextHandler.getProtocolValueSet(key)
         val keyHandler = protocol.contextHandler.getKeyHandler(key)
         assert(keyHandler.getValueTransformed().let { it == null || protocolValueSet.contains(it) }) { "RdPerContextMap is getting bound in non-present context ${key.value}" }
@@ -54,6 +53,7 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
             newEntity.bind(keyLt, this, "[${key}]")
             myInternalMap.addUnique(keyLt, key, newEntity)
         }
+        mySwitchingValueSet.changeBackingSet(protocol.contextHandler.getValueSet(key), true) // protocol set takes precedence
         myUnboundLifetimes.terminateCurrent() // also clears local set and unbound map
         lifetime.onTermination {
             mySwitchingValueSet.changeBackingSet(myLocalValueSet, false)

@@ -57,7 +57,6 @@ namespace JetBrains.Rd.Impl
         protected override void Init(Lifetime lifetime)
         {
             base.Init(lifetime);
-            mySwitchingValueSet.ChangeBackingSet(Proto.ContextHandler.GetValueSet(myKey), true);
             var currentKeyValue = myKey.Value;
             var protocolValueSet = Proto.ContextHandler.GetProtocolValueSet(myKey);
             if(currentKeyValue != null)
@@ -70,6 +69,7 @@ namespace JetBrains.Rd.Impl
                 myMap.Add(contextValue, value);
                 contextValueLifetime.OnTermination(() => { myMap.Remove(contextValue); });
             });
+            mySwitchingValueSet.ChangeBackingSet(Proto.ContextHandler.GetValueSet(myKey), true);
             myUnboundLifetimes.TerminateCurrent();
             lifetime.OnTermination(() =>
             {

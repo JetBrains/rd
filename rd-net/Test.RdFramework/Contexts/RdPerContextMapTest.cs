@@ -167,5 +167,36 @@ namespace Test.RdFramework.Contexts
       
       Assert.AreEqual(new []{"Add " + server1Cid, "Add " + client1Cid, "Remove " + client1Cid}, log);
     }
+    
+    [Test]
+    public void TestLateBind05()
+    {
+      var key = new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+
+      var server1Cid = "Server-1";
+
+      ServerProtocol.ContextHandler.RegisterKey(key);
+      ClientProtocol.ContextHandler.RegisterKey(key);
+      
+      var log = new List<string>();
+      
+      serverMap.View(LifetimeDefinition.Lifetime, (lifetime, s, _) =>
+      {
+        log.Add("Add " + s);
+        lifetime.OnTermination(() => log.Add("Remove " + s));
+      });
+      
+      ServerProtocol.ContextHandler.GetValueSet(key).Add(server1Cid);
+
+      BindToClient(LifetimeDefinition.Lifetime, clientMap, 1);
+      BindToServer(LifetimeDefinition.Lifetime, serverMap, 1);
+      
+      serverMap[server1Cid][1] = "test";
+      
+      Assert.AreEqual(new []{"Add " + server1Cid}, log);
+    }
   }
 }
