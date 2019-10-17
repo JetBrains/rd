@@ -25,9 +25,4 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
       <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-        <Compile Remove="Reflection\**\*.cs" />
-        <None Include="Reflection\**\*.cs" />
-    </ItemGroup>
 </Project>

@@ -91,7 +91,7 @@ namespace JetBrains.Rd.Reflection
     public ProxyGenerator(bool allowSave = false)
     {
       myAllowSave = allowSave;
-#if NET35 || NETCOREAPP
+#if NET35 || NETSTANDARD
       myModule = new Lazy<ModuleBuilder>(() => AssemblyBuilder.DefineDynamicModule("ProxyGenerator"));
       myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => (AssemblyBuilder) myModule.Value.Assembly);
 #else
@@ -133,8 +133,11 @@ namespace JetBrains.Rd.Reflection
       {
         ImplementMember<TInterface>(typebuilder, member);
       }
-
+#if NET35
       return typebuilder.CreateType();
+#else
+      return typebuilder.CreateTypeInfo();
+#endif
     }
 
 
