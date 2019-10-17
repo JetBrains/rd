@@ -28,8 +28,8 @@ class TestTwoClients {
     lateinit var s0: SyncModelRoot
     lateinit var s1: SyncModelRoot
 
-    private val isUnderDebug = ManagementFactory.getRuntimeMXBean().getInputArguments().any { it.contains("jdwp") }
-    val timeout = if (isUnderDebug) 10_000L else 1000L
+//    private val isUnderDebug = ManagementFactory.getRuntimeMXBean().getInputArguments().any { it.contains("jdwp") }
+    val timeout = 2000L
 
     fun wait(condition: () -> Boolean) {
         require (spinUntil(timeout) {
@@ -155,7 +155,8 @@ class TestTwoClients {
         wait { c1.property.hasValue }
 
         val myLogger = getLogger<TestTwoClients>()
-        ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
+        ConsoleLoggerFactory.minLevelToLog = LogLevel.Trace
+//        ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
 
 
         myLogger.trace {"\nSTART---------------------------------------------------------------"}

@@ -136,12 +136,12 @@ class ByteBufferAsyncProcessor(val id : String,
         val t = asyncProcessingThread?: return true
 
         t.join(timeout.toMillis())
-        val res = t.isAlive
+        val threadStopped = !t.isAlive
 
-        if (!res) catch { @Suppress("DEPRECATION") t.stop()}
+        if (!threadStopped) catch { @Suppress("DEPRECATION") t.stop()}
         cleanup0()
 
-        return res
+        return threadStopped
     }
 
     fun acknowledge(seqn: Long) {
@@ -150,7 +150,7 @@ class ByteBufferAsyncProcessor(val id : String,
                 log.trace { "New acknowledged seqn: $seqn" }
                 acknowledgedSeqn = seqn
             } else
-                throw IllegalStateException("Acknowledge({$seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
+                throw IllegalStateException("Acknowledge($seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
         }
     }
 
