@@ -26,12 +26,12 @@ open class TestBase {
 
     @JvmField
     @Rule
-    var globalTimeout = Timeout.seconds(10)
+    var globalTimeout = Timeout.seconds(30)
 
     @BeforeTest
     fun setupLogger() {
-        assert (ErrorAccumulatorLoggerFactory.errors.isEmpty()) {"${ErrorAccumulatorLoggerFactory::class.simpleName}.${::errors.name} are not clear from previous tests"}
-        assert (SequentialPumpingScheduler.isEmpty) { "SequentialPumpingScheduler is not empty" }
+        errors.clear()
+        SequentialPumpingScheduler.flush()
 
         lifetimeDef = LifetimeDefinition()
         Logger.set(lifetime, ErrorAccumulatorLoggerFactory)
@@ -41,6 +41,7 @@ open class TestBase {
     fun teardownLogger() {
         SequentialPumpingScheduler.flush()
         lifetimeDef.terminate()
+        SequentialPumpingScheduler.flush()
 
         ErrorAccumulatorLoggerFactory.throwAndClear()
     }

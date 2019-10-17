@@ -14,10 +14,7 @@ object SequentialPumpingScheduler : IScheduler {
     private val q = LinkedBlockingDeque<() -> Unit>()
 
     override fun queue(action: () -> Unit) {
-        if (isExecuting)
-            q.add(action)
-        else
-            action()
+        q.add(action)
     }
 
 
