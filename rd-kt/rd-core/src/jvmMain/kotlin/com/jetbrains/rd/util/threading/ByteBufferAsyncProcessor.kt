@@ -243,6 +243,15 @@ class ByteBufferAsyncProcessor(val id : String,
         chunkToProcess = chunkToFill
     }
 
+    //must be executed under `synchronized(lock)`
+    private fun waitProcessingFinished() {
+        if (Thread.currentThread() == asyncProcessingThread) //don't want to deadlock
+            return
+
+        while (processing)
+            lock.wait(1)
+    }
+
     fun clear() {
         require(Thread.currentThread() != asyncProcessingThread) {"Thread.currentThread() != asyncProcessingThread"}
 
@@ -251,7 +260,7 @@ class ByteBufferAsyncProcessor(val id : String,
             if (state >= StateKind.Stopping)
                 return
 
-            while (processing) lock.wait(1)
+            waitProcessingFinished()
 
             reset()
             allDataProcessed = true
@@ -261,10 +270,12 @@ class ByteBufferAsyncProcessor(val id : String,
 
     fun pause(reason: String) {
         synchronized(lock) {
+            if (state >= StateKind.Stopping)
+                return
+
             val alreadyHadReason = !pauseReasons.add(reason)
-            log.debug { "PAUSE ('$reason') ${alreadyHadReason.condstr { "<already had this pause reason> " }}:: {id = $id, state = '$state'}" }
-            if (Thread.currentThread() != asyncProcessingThread)
-                while (processing) lock.wait(1)
+            log.debug { "PAUSE ('$reason') ${alreadyHadReason.condstr { "<already has this pause reason> " }}:: {id = $id, state = '$state'}" }
+            waitProcessingFinished()
         }
     }
 
