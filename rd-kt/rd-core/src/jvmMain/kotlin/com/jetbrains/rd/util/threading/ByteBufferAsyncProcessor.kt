@@ -1,6 +1,7 @@
 package com.jetbrains.rd.util.threading
 
 import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.time.InfiniteDuration
 import java.time.Duration
 
@@ -9,7 +10,7 @@ import java.time.Duration
 
 
 class ByteBufferAsyncProcessor(val id : String,
-                               val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize,
+                               val chunkSize: Int = DefaultChunkSize,
                                val processor: (Chunk) -> Unit) {
 
     enum class StateKind {
@@ -260,8 +261,8 @@ class ByteBufferAsyncProcessor(val id : String,
 
     fun pause(reason: String) {
         synchronized(lock) {
-            log.debug { "Pausing, reason=$reason, state=$state" }
-            pauseReasons.add(reason)
+            val alreadyHadReason = !pauseReasons.add(reason)
+            log.debug { "PAUSE ('$reason') ${alreadyHadReason.condstr { "<already had this pause reason> " }}:: {id = $id, state = '$state'}" }
             if (Thread.currentThread() != asyncProcessingThread)
                 while (processing) lock.wait(1)
         }
@@ -270,7 +271,8 @@ class ByteBufferAsyncProcessor(val id : String,
     fun resume(reason: String) {
         synchronized(lock) {
             pauseReasons.remove(reason)
-            log.debug { "Resuming... pause reason=$reason, state=$state, unpaused=${pauseReasons.size > 0}" }
+            val unpaused = pauseReasons.size == 0
+            log.debug { (if (unpaused) "RESUME" else "Remove pause reason") + "('$reason') :: {id = $id, state = '$state'}" }
             lock.notifyAll()
         }
     }

@@ -58,7 +58,7 @@ class SocketWire {
         val timeout: Duration = Duration.ofMillis(500)
         private const val ack_msg_len: Int = -1
         private const val pkg_header_len = 12
-        const val disconnectedPauseReason = "Disconnected"
+        const val disconnectedPauseReason = "Socket not connected"
 
     }
 
