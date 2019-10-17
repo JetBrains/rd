@@ -11,6 +11,7 @@
   </ItemGroup>
   <Target Name="ExpandRdModel" Inputs="@(RdModelDir)" Outputs="%(RdModelDir.FullPath)">
     <ItemGroup>
+      <AvailableItemName Include="RdModel" />
       <RdModel Include="%(RdModelDir.FullPath)\**\*.kt">
         <SubType>Code</SubType>
         <Link>src\RdGen\Model\Stub</Link>
