@@ -78,7 +78,12 @@ class SocketWire {
 
         private val threadLocalBufferArray = ThreadLocal.withInitial { UnsafeBuffer(ByteArray(16384)) }
 
-        val acktor = Executors.newSingleThreadExecutor()
+        val acktor: ExecutorService = Executors.newSingleThreadExecutor()
+        private fun sendAck(seqn: Long) {
+            catchAndDrop { acktor.execute { sendAck0(seqn) } }
+        }
+
+
         protected val lock = Object()
 
         private var maxReceivedSeqn : Long = 0
@@ -149,7 +154,7 @@ class SocketWire {
 
             if (maxReceivedSeqn > seqnAtStart) {
                 val responseSeqn = maxReceivedSeqn
-                acktor.execute { sendAck(responseSeqn) }
+                sendAck(responseSeqn)
             }
 
             val unsafeBuffer = UnsafeBuffer(data)
@@ -187,7 +192,7 @@ class SocketWire {
                             maxReceivedSeqn = seqn
                             return pkg[pos++].toInt() and 0xff
                         } else
-                            acktor.execute {sendAck(seqn)}
+                            sendAck(seqn)
                     }
 
                 }
@@ -195,7 +200,7 @@ class SocketWire {
 
         }
 
-        private fun sendAck(seqn: Long) {
+        private fun sendAck0(seqn: Long) {
             try {
                 ackPkgHeader.reset()
                 ackPkgHeader.writeInt(ack_msg_len)
