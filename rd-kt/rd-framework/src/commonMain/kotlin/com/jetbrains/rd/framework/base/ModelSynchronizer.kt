@@ -1,10 +1,14 @@
 package com.jetbrains.rd.framework.base
 
+import com.jetbrains.rd.framework.Protocol
 import com.jetbrains.rd.framework.impl.RdPerClientIdMap
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.trace
 
 private fun <T> cloneAndSync(lf: Lifetime, x: T) : T = x.deepClonePolymorphic().also { synchronizePolymorphic(lf, x, it) }
+
+private val logger = Protocol.sublogger("SYNC")
 
 fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
     a.flowInto(lifetime, b)
@@ -70,7 +74,11 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
 
     if (first == second)
         return
-    else if (first is ISignal<*> && second is ISignal<*>) {
+
+    else if (first is RdDelegateBase<*> && second is RdDelegateBase<*>) {
+        first.delegatedBy.synchronizeWith(lifetime, second.delegatedBy)
+
+    } else if (first is ISignal<*> && second is ISignal<*>) {
         synchronize(lifetime, first as ISignal<Any>, second as ISignal<Any>)
 
     } else if (first is IMutablePropertyBase<*> && second is IMutablePropertyBase<*>) {
@@ -81,9 +89,6 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
 
     } else if (first is IMutableViewableSet<*> && second is IMutableViewableSet<*>) {
         synchronize(lifetime, first as IMutableViewableSet<Any>, second as IMutableViewableSet<Any>)
-
-    } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
-        synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)
 
     } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
         synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)
@@ -103,4 +108,6 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
 
     } else
         error("Objects are not mutually synchronizable: 1) $first   2) $second")
+
+    logger.trace { "synchronized 1) $first   2) $second" }
 }

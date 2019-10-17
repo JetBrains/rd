@@ -1,6 +1,7 @@
 package com.jetbrains.rd.util.threading
 
 import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.time.InfiniteDuration
 import java.time.Duration
 
@@ -9,7 +10,7 @@ import java.time.Duration
 
 
 class ByteBufferAsyncProcessor(val id : String,
-                               val chunkSize: Int = ByteBufferAsyncProcessor.DefaultChunkSize,
+                               val chunkSize: Int = DefaultChunkSize,
                                val processor: (Chunk) -> Unit) {
 
     enum class StateKind {
@@ -78,6 +79,7 @@ class ByteBufferAsyncProcessor(val id : String,
     var allDataProcessed : Boolean = true
         private set
 
+    @Volatile
     var acknowledgedSeqn : Long = 0
         private set
 
@@ -135,21 +137,23 @@ class ByteBufferAsyncProcessor(val id : String,
         val t = asyncProcessingThread?: return true
 
         t.join(timeout.toMillis())
-        val res = t.isAlive
+        val threadStopped = !t.isAlive
 
-        if (!res) catch { @Suppress("DEPRECATION") t.stop()}
+        if (!threadStopped) catch { @Suppress("DEPRECATION") t.stop()}
         cleanup0()
 
-        return res
+        return threadStopped
     }
 
     fun acknowledge(seqn: Long) {
         synchronized(lock) {
+            log.trace { "New acknowledged seqn received: $seqn" }
             if (seqn > acknowledgedSeqn) {
-                log.trace { "New acknowledged seqn: $seqn" }
                 acknowledgedSeqn = seqn
-            } else
-                throw IllegalStateException("Acknowledge({$seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
+            } else {
+//                throw IllegalStateException("Acknowledge($seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
+                //it's ok ack came 2 times for same package, because if connection lost/resume client resend package with lower number and could receive packages with lower numbers
+            }
         }
     }
 
@@ -242,6 +246,15 @@ class ByteBufferAsyncProcessor(val id : String,
         chunkToProcess = chunkToFill
     }
 
+    //must be executed under `synchronized(lock)`
+    private fun waitProcessingFinished() {
+        if (Thread.currentThread() == asyncProcessingThread) //don't want to deadlock
+            return
+
+        while (processing)
+            lock.wait(1)
+    }
+
     fun clear() {
         require(Thread.currentThread() != asyncProcessingThread) {"Thread.currentThread() != asyncProcessingThread"}
 
@@ -250,7 +263,7 @@ class ByteBufferAsyncProcessor(val id : String,
             if (state >= StateKind.Stopping)
                 return
 
-            while (processing) lock.wait(1)
+            waitProcessingFinished()
 
             reset()
             allDataProcessed = true
@@ -260,17 +273,20 @@ class ByteBufferAsyncProcessor(val id : String,
 
     fun pause(reason: String) {
         synchronized(lock) {
-            log.debug { "Pausing, reason=$reason, state=$state" }
-            pauseReasons.add(reason)
-            if (Thread.currentThread() != asyncProcessingThread)
-                while (processing) lock.wait(1)
+            if (state >= StateKind.Stopping)
+                return
+
+            val alreadyHadReason = !pauseReasons.add(reason)
+            log.debug { "PAUSE ('$reason') ${alreadyHadReason.condstr { "<already has this pause reason> " }}:: {id = $id, state = '$state'}" }
+            waitProcessingFinished()
         }
     }
 
     fun resume(reason: String) {
         synchronized(lock) {
             pauseReasons.remove(reason)
-            log.debug { "Resuming... pause reason=$reason, state=$state, unpaused=${pauseReasons.size > 0}" }
+            val unpaused = pauseReasons.size == 0
+            log.debug { (if (unpaused) "RESUME" else "Remove pause reason('$reason')") + " :: {id = $id, state = '$state'}" }
             lock.notifyAll()
         }
     }

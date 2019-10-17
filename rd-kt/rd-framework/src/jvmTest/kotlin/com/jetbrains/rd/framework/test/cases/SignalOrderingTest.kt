@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.test.cases
 import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
+import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 

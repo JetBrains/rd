@@ -1,6 +1,8 @@
-package com.jetbrains.rd.framework.test.cases
+package com.jetbrains.rd.framework.test.cases.serialization
 
 import com.jetbrains.rd.framework.UnsafeBuffer
+import com.jetbrains.rd.framework.test.cases.A
+import com.jetbrains.rd.framework.test.cases.B
 import org.junit.Test
 import org.junit.experimental.theories.DataPoint
 import org.junit.experimental.theories.Theories

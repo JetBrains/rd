@@ -8,4 +8,6 @@ abstract class RdDelegateBase<out T : RdBindableBase>(val delegatedBy: T) : IRdB
         printer.print("${this::class.simpleName} delegated by ")
         delegatedBy.print(printer)
     }
+
+    abstract override fun deepClone(): IRdBindable
 }

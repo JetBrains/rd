@@ -4,8 +4,7 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdSignal
-//import com.jetbrains.rd.framework.test.cases.interning.InterningNestedTestStringModel
-//import com.jetbrains.rd.framework.test.cases.interning.PropertyHolderWithInternRoot
+import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -13,21 +12,22 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.Timeout
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 
 
-class SocketWireTest {
+class SocketWireTest : TestBase() {
 
     private fun <T : Any> RdOptionalProperty<T>.waitAndAssert(expected: T, prev: T? = null) {
         val start = System.currentTimeMillis()
-        val timeout = 5000
-        while ((System.currentTimeMillis() - start) < timeout && valueOrNull != expected) Thread.sleep(100)
+        while ((System.currentTimeMillis() - start) < timeoutToWaitConditionMs && valueOrNull != expected) Thread.sleep(100)
 
-        if (valueOrNull == prev) throw TimeoutException("Timeout $timeout ms while waiting value '$expected'")
+        if (valueOrNull == prev) throw TimeoutException("Timeout $timeoutToWaitConditionMs ms while waiting value '$expected'")
         assertEquals(expected, valueOrNull)
     }
 
@@ -51,23 +51,12 @@ class SocketWireTest {
         )
     }
 
-    private lateinit var lifetimeDef: LifetimeDefinition
-    private lateinit var socketLifetimeDef: LifetimeDefinition
-
-    val lifetime: Lifetime get() = lifetimeDef.lifetime
-    val socketLifetime: Lifetime get() = socketLifetimeDef.lifetime
+    lateinit var socketLifetime: Lifetime
 
     @Before
     fun setUp() {
-        lifetimeDef = Lifetime.Eternal.createNested()
-        socketLifetimeDef = Lifetime.Eternal.createNested()
-    }
-
-
-    @After
-    fun tearDown() {
-        socketLifetimeDef.terminate()
-        lifetimeDef.terminate()
+        socketLifetime = lifetime.createNested().lifetime
+//        ConsoleLoggerFactory.minLevelToLog = LogLevel.Trace
     }
 
 
@@ -107,7 +96,7 @@ class SocketWireTest {
     }
 
 
-    @Test
+    @Test()
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
@@ -144,6 +133,7 @@ class SocketWireTest {
         (protocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
     }
 
+
     @Test
     fun TestDdos() {
         val serverProtocol = server(socketLifetime)
@@ -157,7 +147,7 @@ class SocketWireTest {
             assertEquals(count + 1, it)
             ++count
         }
-        val C = 500
+        val C = 50
         for (i in 1..C) {
             cp.fire(i)
             if (i == C / 2) {

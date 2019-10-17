@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
+import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
 import java.util.concurrent.CountDownLatch

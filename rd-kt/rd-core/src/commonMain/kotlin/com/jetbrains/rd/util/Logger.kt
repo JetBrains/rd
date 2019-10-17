@@ -78,7 +78,7 @@ object ConsoleLoggerFactory : ILoggerFactory {
 //This could be changed via Statics or similar plugin technique
 fun defaultLogFormat(category: String, level: LogLevel, message: Any?, throwable: Throwable?) : String {
     val throwableToPrint = if (level < LogLevel.Error) throwable  else throwable ?: Exception() //to print stacktrace
-    return "$level | $category | ${currentThreadName()} | ${message?.toString()?:""} ${throwableToPrint?.getThrowableText()?.let { "| $it" }?:""}"
+    return "${level.toString().padEnd(5)} | ${category.substringAfterLast('.').padEnd(25)} | ${currentThreadName().padEnd(15)} | ${message?.toString()?:""} ${throwableToPrint?.getThrowableText()?.let { "| $it" }?:""}"
 }
 
 fun getLogger(category: String) = SwitchLogger(category)

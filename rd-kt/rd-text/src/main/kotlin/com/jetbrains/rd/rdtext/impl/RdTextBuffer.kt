@@ -1,8 +1,10 @@
 package com.jetbrains.rd.rdtext.impl
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdDelegateBase
 import com.jetbrains.rd.framework.base.RdReactiveBase.Companion.logReceived
+import com.jetbrains.rd.framework.base.deepClonePolymorphic
 import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.rdtext.*
 import com.jetbrains.rd.rdtext.impl.intrinsics.*
@@ -188,5 +190,9 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
         for (change in changesToApply) {
             receiveChange(change)
         }
+    }
+
+    override fun deepClone(): IRdBindable {
+        return RdTextBuffer(delegatedBy.deepClonePolymorphic(), isMaster)
     }
 }

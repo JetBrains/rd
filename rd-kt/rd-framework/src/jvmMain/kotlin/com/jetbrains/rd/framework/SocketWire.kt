@@ -8,10 +8,13 @@ import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
 import java.io.EOFException
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.*
 import java.time.Duration
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 
 private fun InputStream.readByteArray(a : ByteArray): Boolean {
@@ -58,7 +61,7 @@ class SocketWire {
         val timeout: Duration = Duration.ofMillis(500)
         private const val ack_msg_len: Int = -1
         private const val pkg_header_len = 12
-        const val disconnectedPauseReason = "Disconnected"
+        const val disconnectedPauseReason = "Socket not connected"
 
     }
 
@@ -71,9 +74,15 @@ class SocketWire {
         private lateinit var socketInput : InputStream
         private lateinit var pkgInput : InputStream
 
-        protected val sendBuffer = ByteBufferAsyncProcessor("$id-AsyncSendProcessor", processor = ::send0)
+        protected val sendBuffer = ByteBufferAsyncProcessor("$id/Sender", processor = ::send0)
 
         private val threadLocalBufferArray = ThreadLocal.withInitial { UnsafeBuffer(ByteArray(16384)) }
+
+        val acktor: ExecutorService = Executors.newSingleThreadExecutor()
+        private fun sendAck(seqn: Long) {
+            catchAndDrop { acktor.execute { sendAck0(seqn) } }
+        }
+
 
         protected val lock = Object()
 
@@ -122,7 +131,7 @@ class SocketWire {
                     }
                 } catch (ex: Throwable) {
                     when (ex) {
-                        is SocketException, is EOFException -> logger.debug {"Exception in SocketWire.Receive:  $id: $ex" }
+                        is SocketException, is EOFException, is IOException -> logger.debug {"Exception in SocketWire.Receive:  $id: $ex" }
                         else -> logger.error("$id caught processing", ex)
                     }
 
@@ -143,8 +152,10 @@ class SocketWire {
             if (!pkgInput.readByteArray(data))
                 return false
 
-            if (maxReceivedSeqn > seqnAtStart)
-                sendAck(maxReceivedSeqn)
+            if (maxReceivedSeqn > seqnAtStart) {
+                val responseSeqn = maxReceivedSeqn
+                sendAck(responseSeqn)
+            }
 
             val unsafeBuffer = UnsafeBuffer(data)
             val id = RdId.read(unsafeBuffer)
@@ -189,7 +200,7 @@ class SocketWire {
 
         }
 
-        private fun sendAck(seqn: Long) {
+        private fun sendAck0(seqn: Long) {
             try {
                 ackPkgHeader.reset()
                 ackPkgHeader.writeInt(ack_msg_len)
@@ -221,6 +232,7 @@ class SocketWire {
                 sendPkgHeader.writeLong(chunk.seqn)
 
                 synchronized(socketSendLock) {
+                    logger.trace { "Send package with seqn ${chunk.seqn}" }
                     output.write(sendPkgHeader.getArray(), 0, pkg_header_len)
                     output.write(chunk.data, 0, chunk.ptr)
                 }
@@ -317,6 +329,9 @@ class SocketWire {
             lifetime += {
                 logger.info {"$id: start terminating lifetime"}
 
+                logger.debug {"$id: shutting down ack sending executor"}
+                acktor.shutdown()
+
                 val sendBufferStopped = sendBuffer.stop(timeout)
                 logger.debug{"$id: send buffer stopped, success: $sendBufferStopped"}
 
@@ -327,7 +342,7 @@ class SocketWire {
                 }
 
                 logger.debug { "$id: waiting for receiver thread" }
-                thread.join()
+                catch { thread.join(timeout.toMillis()) }
                 logger.info { "$id: termination finished" }
             }
 
@@ -383,6 +398,9 @@ class SocketWire {
             lifetime.onTerminationIfAlive {
                 logger.info {"$id: start terminating lifetime" }
 
+                logger.debug {"$id: shutting down ack sending executor"}
+                acktor.shutdown()
+
                 val sendBufferStopped = sendBuffer.stop(timeout)
                 logger.debug {"$id: send buffer stopped, success: $sendBufferStopped"}
 
@@ -397,8 +415,7 @@ class SocketWire {
                     }
                 }
 
-                logger.debug {"$id: waiting for receiver thread"}
-                thread.join()
+                catch { thread.join(timeout.toMillis()) }
                 logger.info{"$id: termination finished"}
 
             }

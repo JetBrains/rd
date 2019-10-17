@@ -214,13 +214,16 @@ namespace JetBrains.Threading
     {
       lock (myLock)
       {
+        LogLog.Trace(LogCategory, "New acknowledged seqN: {0}", seqNumber);
         if (seqNumber > AcknowledgedSeqN)
         {
-          LogLog.Trace(LogCategory, "New acknowledged seqN: {0}", seqNumber);
           AcknowledgedSeqN = seqNumber;
         }
         else
-          throw new InvalidOperationException($"Acknowledge({seqNumber}) called, while next {nameof(seqNumber)} MUST BE greater than `{AcknowledgedSeqN}`");
+        {
+          //it's ok ack came 2 times for same package, because if connection lost/resume client resend package with lower number and could receive packages with lower numbers
+          //throw new InvalidOperationException($"Acknowledge({seqNumber}) called, while next {nameof(seqNumber)} MUST BE greater than `{AcknowledgedSeqN}`");
+        }
       }
     }
 
@@ -376,12 +379,13 @@ namespace JetBrains.Threading
       
       lock (myLock)
       {        
-        myLog.Verbose("Pausing, reason={0}, state={1}", reason, State);
         if (State >= StateKind.Stopping) return false;
         
-        var res = myPauseReasons.Add(reason);
+        var newReasonAdded = myPauseReasons.Add(reason);
+        myLog.Verbose("PAUSE ('{0}') {1}:: state={2}", reason, newReasonAdded ? "": "<already has this pause reason>", State);
+        
         WaitProcessingFinished();
-        return res;
+        return newReasonAdded;
       }
     }
 
@@ -400,8 +404,9 @@ namespace JetBrains.Threading
       lock (myLock)
       {
         var present = myPauseReasons.Remove(reason);
+        var unpaused = myPauseReasons.Count == 0;
         
-        myLog.Verbose("Resuming... pause reason={0}(reason {2}found in pause reasons), state={1}, unpaused={3}", reason, State, present ? "NOT ": "", myPauseReasons.Count == 0);
+        myLog.Verbose((unpaused ? "RESUME" : $"Remove pause reason('{reason}')") + $" :: state={State}");
         Monitor.PulseAll(myLock);
         return present;
       }
