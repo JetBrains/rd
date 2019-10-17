@@ -272,7 +272,7 @@ class ByteBufferAsyncProcessor(val id : String,
         synchronized(lock) {
             pauseReasons.remove(reason)
             val unpaused = pauseReasons.size == 0
-            log.debug { (if (unpaused) "RESUME" else "Remove pause reason") + "('$reason') :: {id = $id, state = '$state'}" }
+            log.debug { (if (unpaused) "RESUME" else "Remove pause reason('$reason')") + " :: {id = $id, state = '$state'}" }
             lock.notifyAll()
         }
     }

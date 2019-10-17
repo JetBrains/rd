@@ -12,6 +12,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.*
 import java.time.Duration
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 
 private fun InputStream.readByteArray(a : ByteArray): Boolean {
@@ -71,10 +73,11 @@ class SocketWire {
         private lateinit var socketInput : InputStream
         private lateinit var pkgInput : InputStream
 
-        protected val sendBuffer = ByteBufferAsyncProcessor("$id-AsyncSendProcessor", processor = ::send0)
+        protected val sendBuffer = ByteBufferAsyncProcessor("$id/Sender", processor = ::send0)
 
         private val threadLocalBufferArray = ThreadLocal.withInitial { UnsafeBuffer(ByteArray(16384)) }
 
+        val acktor = Executors.newSingleThreadExecutor()
         protected val lock = Object()
 
         private var maxReceivedSeqn : Long = 0
@@ -144,7 +147,7 @@ class SocketWire {
                 return false
 
             if (maxReceivedSeqn > seqnAtStart)
-                sendAck(maxReceivedSeqn)
+                acktor.execute {sendAck(maxReceivedSeqn)}
 
             val unsafeBuffer = UnsafeBuffer(data)
             val id = RdId.read(unsafeBuffer)
@@ -177,11 +180,11 @@ class SocketWire {
                         pos = 0
                         stream.readByteArray(pkg)
 
-                        if (seqn > maxReceivedSeqn || seqn == 1L /*todo special temporary hack for new client after reconnect. It means connection was closed intentionally from other side.*/)   {
+                        if (seqn > maxReceivedSeqn) {
                             maxReceivedSeqn = seqn
                             return pkg[pos++].toInt() and 0xff
                         } else
-                            sendAck(seqn)
+                            acktor.execute {sendAck(seqn)}
                     }
 
                 }
@@ -317,6 +320,9 @@ class SocketWire {
             lifetime += {
                 logger.info {"$id: start terminating lifetime"}
 
+                logger.debug {"$id: shutting down ack sending executor"}
+                acktor.shutdown()
+
                 val sendBufferStopped = sendBuffer.stop(timeout)
                 logger.debug{"$id: send buffer stopped, success: $sendBufferStopped"}
 
@@ -327,7 +333,7 @@ class SocketWire {
                 }
 
                 logger.debug { "$id: waiting for receiver thread" }
-                thread.join()
+                catch { thread.join(timeout.toMillis()) }
                 logger.info { "$id: termination finished" }
             }
 
@@ -383,6 +389,9 @@ class SocketWire {
             lifetime.onTerminationIfAlive {
                 logger.info {"$id: start terminating lifetime" }
 
+                logger.debug {"$id: shutting down ack sending executor"}
+                acktor.shutdown()
+
                 val sendBufferStopped = sendBuffer.stop(timeout)
                 logger.debug {"$id: send buffer stopped, success: $sendBufferStopped"}
 
@@ -397,8 +406,7 @@ class SocketWire {
                     }
                 }
 
-                logger.debug {"$id: waiting for receiver thread"}
-                thread.join()
+                catch { thread.join(timeout.toMillis()) }
                 logger.info{"$id: termination finished"}
 
             }

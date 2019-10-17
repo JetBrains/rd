@@ -33,7 +33,7 @@ class SpinWait {
     }
 
     fun spinOnce() {
-        //do a little spin
+        //todo need to rewrite it with exponential backoff, yield, sleep(0) and sleep(1)
         Thread.yield()
     }
 }

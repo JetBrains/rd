@@ -13,7 +13,9 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.Timeout
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
@@ -21,6 +23,10 @@ import kotlin.test.assertEquals
 
 
 class SocketWireTest {
+
+    @JvmField
+    @Rule
+    var globalTimeout = Timeout.seconds(10)
 
     private fun <T : Any> RdOptionalProperty<T>.waitAndAssert(expected: T, prev: T? = null) {
         val start = System.currentTimeMillis()
@@ -59,8 +65,8 @@ class SocketWireTest {
 
     @Before
     fun setUp() {
-        lifetimeDef = Lifetime.Eternal.createNested()
-        socketLifetimeDef = Lifetime.Eternal.createNested()
+        lifetimeDef = LifetimeDefinition()
+        socketLifetimeDef = LifetimeDefinition()
     }
 
 
@@ -107,7 +113,7 @@ class SocketWireTest {
     }
 
 
-    @Test
+    @Test()
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
