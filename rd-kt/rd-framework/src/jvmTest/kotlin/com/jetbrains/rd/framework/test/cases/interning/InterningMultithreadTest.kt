@@ -2,7 +2,7 @@ package com.jetbrains.rd.framework.test.cases.interning
 
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
-import com.jetbrains.rd.framework.test.cases.RdAsyncTestBase
+import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import org.junit.Test
 import java.util.concurrent.CountDownLatch

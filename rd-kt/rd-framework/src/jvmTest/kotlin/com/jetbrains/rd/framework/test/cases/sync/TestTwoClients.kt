@@ -2,12 +2,11 @@ package com.jetbrains.rd.framework.test.cases.sync
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.test.util.SequentialPumpingScheduler
+import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.util.*
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import org.junit.After
 import org.junit.Ignore
 import org.junit.Test
 import test.synchronization.Clazz
@@ -18,30 +17,17 @@ import kotlin.assert
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
-class TestTwoClients {
+class TestTwoClients : TestBase() {
 
-    private lateinit var lifetimeDef : LifetimeDefinition
-    private val lifetime : Lifetime get() = lifetimeDef.lifetime
 
     lateinit var c0: SyncModelRoot
     lateinit var c1: SyncModelRoot
     lateinit var s0: SyncModelRoot
     lateinit var s1: SyncModelRoot
 
-//    private val isUnderDebug = ManagementFactory.getRuntimeMXBean().getInputArguments().any { it.contains("jdwp") }
-    val timeout = 2000L
-
-    fun wait(condition: () -> Boolean) {
-        require (spinUntil(timeout) {
-            SequentialPumpingScheduler.flush()
-            condition()
-        })
-    }
-
     @BeforeTest
     fun setup() {
-        lifetimeDef = LifetimeDefinition()
-        Logger.set(lifetime, ErrorAccumulatorLoggerFactory)
+        ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
 
         val sc = SequentialPumpingScheduler
 
@@ -74,10 +60,9 @@ class TestTwoClients {
         s0.synchronizeWith(lifetime, s1)
     }
 
-    @AfterTest
+    @After
     fun teardown() {
-        lifetimeDef.terminate()
-        ErrorAccumulatorLoggerFactory.throwAndClear()
+        ConsoleLoggerFactory.traceCategories.clear()
     }
 
     @Test
@@ -148,16 +133,12 @@ class TestTwoClients {
     }
 
 
-//    @Ignore("blinking on build server")
     @Test
     fun testExt() {
         c0.property.set(Clazz(1))
         wait { c1.property.hasValue }
 
         val myLogger = getLogger<TestTwoClients>()
-        ConsoleLoggerFactory.minLevelToLog = LogLevel.Trace
-//        ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
-
 
         myLogger.trace {"\nSTART---------------------------------------------------------------"}
         c0.property.valueOrThrow.extToClazz.map[0] = Clazz(2)

@@ -6,8 +6,13 @@ import com.jetbrains.rd.util.info
 import com.jetbrains.rd.util.reactive.IScheduler
 import java.util.concurrent.LinkedBlockingDeque
 
+/**
+ * Scheduler executes queued actions sequentially when one call [flush] (on a thread where [flush] invoked).
+ */
 object SequentialPumpingScheduler : IScheduler {
+
     private val q = LinkedBlockingDeque<() -> Unit>()
+
     override fun queue(action: () -> Unit) {
         if (isExecuting)
             q.add(action)
@@ -41,4 +46,5 @@ object SequentialPumpingScheduler : IScheduler {
         }
     }
 
+    val isEmpty: Boolean get() = q.size == 0
 }

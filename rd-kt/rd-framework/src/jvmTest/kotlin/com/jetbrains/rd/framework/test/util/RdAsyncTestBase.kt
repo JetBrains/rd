@@ -1,6 +1,5 @@
-package com.jetbrains.rd.framework.test.cases
+package com.jetbrains.rd.framework.test.util
 
-import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler

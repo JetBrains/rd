@@ -8,6 +8,7 @@ import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
 import java.io.EOFException
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.*
@@ -125,7 +126,7 @@ class SocketWire {
                     }
                 } catch (ex: Throwable) {
                     when (ex) {
-                        is SocketException, is EOFException -> logger.debug {"Exception in SocketWire.Receive:  $id: $ex" }
+                        is SocketException, is EOFException, is IOException -> logger.debug {"Exception in SocketWire.Receive:  $id: $ex" }
                         else -> logger.error("$id caught processing", ex)
                     }
 
@@ -146,8 +147,10 @@ class SocketWire {
             if (!pkgInput.readByteArray(data))
                 return false
 
-            if (maxReceivedSeqn > seqnAtStart)
-                acktor.execute {sendAck(maxReceivedSeqn)}
+            if (maxReceivedSeqn > seqnAtStart) {
+                val responseSeqn = maxReceivedSeqn
+                acktor.execute { sendAck(responseSeqn) }
+            }
 
             val unsafeBuffer = UnsafeBuffer(data)
             val id = RdId.read(unsafeBuffer)
@@ -198,6 +201,7 @@ class SocketWire {
                 ackPkgHeader.writeInt(ack_msg_len)
                 ackPkgHeader.writeLong(seqn)
 
+                logger.debug { "send ack $seqn" }
                 synchronized(socketSendLock) {
                     output.write(ackPkgHeader.getArray(), 0, pkg_header_len)
                 }
@@ -224,6 +228,7 @@ class SocketWire {
                 sendPkgHeader.writeLong(chunk.seqn)
 
                 synchronized(socketSendLock) {
+                    logger.trace { "Send package with seqn ${chunk.seqn}" }
                     output.write(sendPkgHeader.getArray(), 0, pkg_header_len)
                     output.write(chunk.data, 0, chunk.ptr)
                 }

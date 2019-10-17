@@ -2,7 +2,7 @@ package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
-import org.junit.Test
+import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 

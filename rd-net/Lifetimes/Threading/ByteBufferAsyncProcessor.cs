@@ -214,13 +214,16 @@ namespace JetBrains.Threading
     {
       lock (myLock)
       {
+        LogLog.Trace(LogCategory, "New acknowledged seqN: {0}", seqNumber);
         if (seqNumber > AcknowledgedSeqN)
         {
-          LogLog.Trace(LogCategory, "New acknowledged seqN: {0}", seqNumber);
           AcknowledgedSeqN = seqNumber;
         }
         else
-          throw new InvalidOperationException($"Acknowledge({seqNumber}) called, while next {nameof(seqNumber)} MUST BE greater than `{AcknowledgedSeqN}`");
+        {
+          //it's ok ack came 2 times for same package, because if connection lost/resume client resend package with lower number and could receive packages with lower numbers
+          //throw new InvalidOperationException($"Acknowledge({seqNumber}) called, while next {nameof(seqNumber)} MUST BE greater than `{AcknowledgedSeqN}`");
+        }
       }
     }
 
@@ -403,7 +406,7 @@ namespace JetBrains.Threading
         var present = myPauseReasons.Remove(reason);
         var unpaused = myPauseReasons.Count == 0;
         
-        myLog.Verbose(unpaused ? "RESUME" : $"Remove pause reason('{reason}')" + $" :: state={State}");
+        myLog.Verbose((unpaused ? "RESUME" : $"Remove pause reason('{reason}')") + $" :: state={State}");
         Monitor.PulseAll(myLock);
         return present;
       }

@@ -79,6 +79,7 @@ class ByteBufferAsyncProcessor(val id : String,
     var allDataProcessed : Boolean = true
         private set
 
+    @Volatile
     var acknowledgedSeqn : Long = 0
         private set
 
@@ -146,11 +147,13 @@ class ByteBufferAsyncProcessor(val id : String,
 
     fun acknowledge(seqn: Long) {
         synchronized(lock) {
+            log.trace { "New acknowledged seqn received: $seqn" }
             if (seqn > acknowledgedSeqn) {
-                log.trace { "New acknowledged seqn: $seqn" }
                 acknowledgedSeqn = seqn
-            } else
-                throw IllegalStateException("Acknowledge($seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
+            } else {
+//                throw IllegalStateException("Acknowledge($seqn) called, while next seqn MUST BE greater than `$acknowledgedSeqn`")
+                //it's ok ack came 2 times for same package, because if connection lost/resume client resend package with lower number and could receive packages with lower numbers
+            }
         }
     }
 

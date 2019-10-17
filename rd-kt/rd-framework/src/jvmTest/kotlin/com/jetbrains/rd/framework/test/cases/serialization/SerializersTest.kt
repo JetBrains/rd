@@ -1,11 +1,9 @@
-package com.jetbrains.rd.framework.test.util
+package com.jetbrains.rd.framework.test.cases.serialization
 
 import com.jetbrains.rd.framework.UnsafeBuffer
 import com.jetbrains.rd.framework.readArray
 import com.jetbrains.rd.framework.writeArray
-import com.jetbrains.rd.util.assert
 import org.junit.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SerializersTest {
