@@ -201,7 +201,6 @@ class SocketWire {
                 ackPkgHeader.writeInt(ack_msg_len)
                 ackPkgHeader.writeLong(seqn)
 
-                logger.debug { "send ack $seqn" }
                 synchronized(socketSendLock) {
                     output.write(ackPkgHeader.getArray(), 0, pkg_header_len)
                 }

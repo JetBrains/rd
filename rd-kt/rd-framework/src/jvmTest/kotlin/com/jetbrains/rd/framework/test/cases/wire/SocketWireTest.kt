@@ -147,7 +147,7 @@ class SocketWireTest : TestBase() {
             assertEquals(count + 1, it)
             ++count
         }
-        val C = 5000
+        val C = 50
         for (i in 1..C) {
             cp.fire(i)
             if (i == C / 2) {
