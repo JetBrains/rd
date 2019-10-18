@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -9,7 +8,6 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Serialization;
 using JetBrains.Threading;
-using JetBrains.Util;
 
 namespace JetBrains.Rd.Impl
 {
@@ -379,101 +377,9 @@ namespace JetBrains.Rd.Impl
         );
       }
 
-      protected void StartServerSocket(Lifetime lifetime, [CanBeNull] IPEndPoint endPoint)
-      {
-        Log.Verbose("{0} : started", Id);
+      
 
-        Socket serverSocket = null;
-        var serverSocketReady = new ManualResetEvent(false);
-
-        var thread = new Thread(() =>
-        {
-          try
-          {
-            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            SetSocketOptions(serverSocket);
-            serverSocket.Bind(endPoint ?? new IPEndPoint(IPAddress.Loopback, 0));
-
-            if (serverSocket.LocalEndPoint is IPEndPoint ipEndPoint)
-              Port = ipEndPoint.Port;
-
-            serverSocket.Listen(1);
-            Log.Verbose("{0} : listening", Id);
-          }
-          catch (Exception e)
-          {
-            Log.Error(Id + " : Failed to listen server socket", e);
-            return;
-          }
-          finally
-          {
-            serverSocketReady.Set();
-          }
-
-          while (lifetime.IsAlive)
-          {
-            try
-            {
-              var s = serverSocket.Accept();
-              lock (Lock)
-              {
-                if (!lifetime.IsAlive)
-                {
-                  Log.Verbose("{0} : connected, but lifetime is already canceled, closing socket", Id);
-                  CloseSocket(s);
-                  return;
-                }
-                else
-                {
-                  Log.Verbose("{0} : accepted", Id);
-                  if (!AcceptHandshake(s))
-                    continue;
-                  Socket = s;
-                  Log.Verbose("{0} : connected", Id);
-                }
-              }
-
-              SocketProvider.Value = s;
-            }
-            catch (SocketException e)
-            {
-              var errcode = e.SocketErrorCode;
-              if (errcode == SocketError.TimedOut || errcode == SocketError.WouldBlock) continue; //expected, Linux
-
-              Log.Verbose("{0}: SocketException with message {1}", Id, e.Message);
-            }
-            catch (ObjectDisposedException e)
-            {
-              Log.Verbose("{0}: ObjectDisposedException with message {1}", Id, e.Message);
-            }
-            catch (Exception e)
-            {
-              Log.Error(e, Id);
-            }
-          }
-        }) {Name = Id + "-Receiver", IsBackground = true};
-
-        thread.Start();
-
-
-        serverSocketReady.WaitOne();
-        Log.Verbose("{0}: finished synchronous wait for server socket listening, port={1}, serverSocket initialized: {2}", Id, Port,
-          serverSocket != null);
-        if (serverSocket == null) return;
-
-
-        AddTerminationActions(thread);
-
-        //order is critical: we need to close server socket first and the terminate other stuff and wait for thread 
-        lifetime.OnTermination(() =>
-        {
-          Log.Verbose("{0}: closing server socket", Id);
-
-          CloseSocket(serverSocket);
-        });
-      }
-
-      public int Port { get; private set; }
+      public int Port { get; protected set; }
 
 
       protected virtual bool AcceptHandshake(Socket socket)
@@ -557,12 +463,154 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null)
-        : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
-      {
+      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(endPoint), optId)
+      {}
         
-        StartServerSocket(lifetime, endPoint);
+      
+      internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
+      {
+        Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
+        
+        StartServerSocket(lifetime, serverSocket);
       }
+
+      internal static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
+      {
+        Protocol.InitializationLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
+        var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        SetSocketOptions(serverSocket);
+
+        endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
+        serverSocket.Bind(endPoint);
+        serverSocket.Listen(1);
+        Protocol.InitializationLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+
+        return serverSocket;
+      }
+
+      private void StartServerSocket(Lifetime lifetime, [NotNull] Socket serverSocket)
+      {
+        if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
+        Log.Verbose("{0} : started, port: {1}", Id, Port);
+
+        var thread = new Thread(() =>
+        {
+
+          while (lifetime.IsAlive)
+          {
+            try
+            {
+              Log.Verbose("{0} : accepting, port: {1}", Id, Port);
+              var s = serverSocket.Accept();
+              lock (Lock)
+              {
+                if (!lifetime.IsAlive)
+                {
+                  Log.Verbose("{0} : connected, but lifetime is already canceled, closing socket", Id);
+                  CloseSocket(s);
+                  return;
+                }
+                else
+                {
+                  Log.Verbose("{0} : accepted", Id);
+                  if (!AcceptHandshake(s))
+                    continue;
+                  Socket = s;
+                  Log.Verbose("{0} : connected", Id);
+                }
+              }
+
+              SocketProvider.Value = s;
+            }
+            catch (SocketException e)
+            {
+              var errcode = e.SocketErrorCode;
+              if (errcode == SocketError.TimedOut || errcode == SocketError.WouldBlock) continue; //expected, Linux
+
+              Log.Verbose("{0}: SocketException with message {1}", Id, e.Message);
+            }
+            catch (ObjectDisposedException e)
+            {
+              Log.Verbose("{0}: ObjectDisposedException with message {1}", Id, e.Message);
+            }
+            catch (Exception e)
+            {
+              Log.Error(e, Id);
+            }
+          }
+        }) {Name = Id + "-Receiver", IsBackground = true};
+
+        thread.Start();
+
+        AddTerminationActions(thread);
+
+        //order is critical: we need to close server socket first and the terminate other stuff and wait for thread 
+        lifetime.OnTermination(() =>
+        {
+          Log.Verbose("{0}: closing server socket", Id);
+
+          CloseSocket(serverSocket);
+        });
+      }
+    }
+    
+    
+    public struct WireParameters
+    {
+      public readonly IScheduler Scheduler;
+      public readonly string Id;
+
+      public WireParameters([NotNull] IScheduler scheduler, [CanBeNull] string id)
+      {
+        Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
+        Id = id;
+      }
+
+      public void Deconstruct(out IScheduler scheduler, out string id)
+      {
+        scheduler = Scheduler;
+        id = Id;
+      }
+    }
+
+    
+
+    
+    public class ServerFactory
+    {
+      [PublicAPI] public readonly int LocalPort;
+      [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
+
+      
+      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint endpoint = null) 
+        : this(lifetime, () => new WireParameters(scheduler, null), endpoint) {}
+
+
+      public ServerFactory(
+        Lifetime lifetime,
+        [NotNull] Func<WireParameters> wireParametersFactory,
+        IPEndPoint endpoint = null
+      )
+      {
+        var serverSocket = Server.CreateServerSocket(endpoint);
+        LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port; 
+        
+        void Rec()
+        {
+          var (scheduler, id) = wireParametersFactory();
+          var s = new Server(lifetime, scheduler, serverSocket, id);
+          s.Connected.WhenTrue(lifetime, lt =>
+          {
+            Connected.AddLifetimed(lt, s);
+            Rec();
+          });
+        }
+
+
+
+        Rec();
+      }
+      
     }
   }
 }
