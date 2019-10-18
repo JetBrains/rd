@@ -37,7 +37,7 @@ namespace JetBrains.Rd.Reflection
       if (fillBindableFields == null)
       {
         var t = GetType();
-        var bindableMembers = ReflectionSerializers.GetBindableMembers(t.GetTypeInfo()).ToArray();
+        var bindableMembers = ReflectionSerializersFactory.GetBindableMembers(t.GetTypeInfo()).ToArray();
         var getters = bindableMembers.Select(ReflectionUtil.GetGetter).ToArray();
 
         fillBindableFields = (obj) =>
@@ -97,7 +97,7 @@ namespace JetBrains.Rd.Reflection
       {
         var t = GetType();
         var header = t.Name + " (";
-        var bindableMembers = ReflectionSerializers.GetBindableMembers(t.GetTypeInfo());
+        var bindableMembers = ReflectionSerializersFactory.GetBindableMembers(t.GetTypeInfo());
         var getters = bindableMembers.Select(ReflectionUtil.GetGetter).ToArray();
         var intros = bindableMembers.Select(mi => $"{mi.Name} = ").ToArray();
 

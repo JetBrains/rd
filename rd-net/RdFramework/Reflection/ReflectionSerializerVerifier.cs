@@ -76,6 +76,8 @@ namespace JetBrains.Rd.Reflection
       typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(char), typeof(bool), typeof(Unit), typeof(string), typeof(Guid), typeof(DateTime), typeof(Uri), typeof(RdId), typeof(RdSecureString), typeof(byte[]), typeof(short[]), typeof(int[]), typeof(long[]), typeof(float[]), typeof(double[]), typeof(char[]), typeof(bool[])
     };
 
+    private static readonly string ourFakeTupleFullName = typeof(ProxyGenerator.FakeTuple<>).FullName.NotNull().TrimEnd('1');
+
     public static bool IsPrimitive(Type typeInfo)
     {
       return ourPrimitiveTypes.Contains(typeInfo);
@@ -174,7 +176,7 @@ namespace JetBrains.Rd.Reflection
       return false;
     }
 
-    private static bool IsScalar(Type type)
+    public static bool IsScalar(Type type)
     {
       return !typeof(IRdBindable).IsAssignableFrom(type);
     }
@@ -182,7 +184,7 @@ namespace JetBrains.Rd.Reflection
     public static void AssertEitherExtModelAttribute(TypeInfo type)
     {
       /*Assertion.Assert((HasRdExtAttribute(type) || HasRdModelAttribute(type)), $"Invalid RdModel: expected to have either {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)} ({type.ToString(true)}).");*/
-      Assertion.Assert((HasRdExtAttribute(type) ^ HasRdModelAttribute(type)), $"Invalid RdModel: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
+      Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
     }
 
     public static void AssertRoot(TypeInfo type)
@@ -212,7 +214,10 @@ namespace JetBrains.Rd.Reflection
 
     public static bool IsValueTuple(TypeInfo type)
     {
-      return type.IsGenericType && type.FullName.NotNull().StartsWith("System.ValueTuple`");
+      if (!type.IsGenericType)
+        return false;
+      var fullName = type.FullName.NotNull();
+      return fullName.StartsWith("System.ValueTuple`") || fullName.StartsWith(ourFakeTupleFullName);
     }
 
     public static bool HasRdExtAttribute(TypeInfo type)
@@ -234,7 +239,7 @@ namespace JetBrains.Rd.Reflection
       // commented sealed check to avoid annoying colleagues.
       // Assertion.Assert(type.IsSealed, $"Error in {type.ToString(true)} model: RdModels must be sealed.");
 
-      foreach (var member in ReflectionSerializers.GetBindableMembers(type))
+      foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
       {
         if (member is PropertyInfo || member is FieldInfo)
         {
@@ -269,7 +274,7 @@ namespace JetBrains.Rd.Reflection
       if (HasIntrinsicMethods(type))
         return;
 
-      foreach (var member in ReflectionSerializers.GetBindableMembers(type))
+      foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
       {
         if (member is PropertyInfo || member is FieldInfo)
         {

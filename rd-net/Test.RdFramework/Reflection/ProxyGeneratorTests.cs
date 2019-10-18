@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
@@ -14,14 +13,14 @@ namespace Test.RdFramework.Reflection
   public class ProxyGeneratorTestBase : RdFrameworkTestBase
   {
     protected ReflectionRdActivator ReflectionRdActivator;
-    protected ReflectionSerializers ReflectionSerializers;
-    protected TestRdTypesCatalog TestRdTypesCatalog;
+    protected ReflectionSerializersFactory ReflectionSerializersFactory;
+    protected SimpleTypesCatalog TestRdTypesCatalog;
 
     public override void SetUp()
     {
-      ReflectionSerializers = new ReflectionSerializers();
-      ReflectionRdActivator = new ReflectionRdActivator(ReflectionSerializers, new ProxyGenerator(true), null);
-      TestRdTypesCatalog = new TestRdTypesCatalog(ReflectionSerializers);
+      ReflectionSerializersFactory = new ReflectionSerializersFactory();
+      TestRdTypesCatalog = new SimpleTypesCatalog(ReflectionSerializersFactory);
+      ReflectionRdActivator = new ReflectionRdActivator(ReflectionSerializersFactory, new ProxyGenerator(true), TestRdTypesCatalog);
 
       base.SetUp();
       ServerWire.AutoTransmitMode = true;
@@ -45,13 +44,13 @@ namespace Test.RdFramework.Reflection
     protected void SaveGeneratedAssembly()
     {
 #if NET35 || NETCOREAPP
-      throw new NotSupportedException();
+      // throw new NotSupportedException();
 #else
       var generator = ReflectionRdActivator.Generator;
-      var modulePath = generator.ModuleBuilder.FullyQualifiedName;
+      var modulePath = generator.DynamicModule.FullyQualifiedName;
       var proxyName = Path.GetFileName(modulePath);
 
-      generator.AssemblyBuilder.Save(generator.AssemblyBuilder.FullName);
+      generator.DynamicAssembly.Save(generator.DynamicAssembly.FullName);
 
       var tempPath = Path.Combine(Path.GetTempPath(), proxyName);
       if (File.Exists(tempPath))

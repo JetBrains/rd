@@ -26,7 +26,7 @@ namespace Test.RdFramework.Reflection
     }
 
     private ReflectionRdActivator myReflectionRdActivator;
-    private TestRdTypesCatalog myPolymorphicRdTypesCatalog;
+    private SimpleTypesCatalog myPolymorphicRdTypesCatalog;
 
     protected override Serializers CreateSerializers(bool isServer)
     {
@@ -35,8 +35,8 @@ namespace Test.RdFramework.Reflection
 
     public override void SetUp()
     {
-      var reflectionSerializers = new ReflectionSerializers();
-      myPolymorphicRdTypesCatalog = new TestRdTypesCatalog(reflectionSerializers);
+      var reflectionSerializers = new ReflectionSerializersFactory();
+      myPolymorphicRdTypesCatalog = new SimpleTypesCatalog(reflectionSerializers);
       myPolymorphicRdTypesCatalog.Register<Animal>();
       myPolymorphicRdTypesCatalog.Register<Bear>();
       myPolymorphicRdTypesCatalog.Register<EmptyOK>();
