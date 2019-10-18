@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CodeDom;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -51,7 +52,7 @@ namespace JetBrains.Rd.Reflection
       public FakeTuple(T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, TRest rest) { Item1 = item1; Item2 = item2; Item3 = item3; Item4 = item4; Item5 = item5; Item6 = item6; Item7 = item7; Rest = rest; }
     }
 
-    private static readonly Type[] ourValueTuples = new[]
+    public static readonly Type[] ValueTuples = new[]
     {
       typeof(FakeTuple<>),
       typeof(FakeTuple<,>),
@@ -68,14 +69,14 @@ namespace JetBrains.Rd.Reflection
     static ProxyGenerator()
     {
       var names = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6", "Item7", "Rest" };
-      ourValueTuplesFields = new FieldInfo[ourValueTuples.Length][];
-      for (int i = 0; i < ourValueTuples.Length; i++)
+      ourValueTuplesFields = new FieldInfo[ValueTuples.Length][];
+      for (int i = 0; i < ValueTuples.Length; i++)
       {
         var pCount = i + 1;
         var fieldInfos = new FieldInfo[pCount];
         for (int f = 0; f < pCount; f++)
         {
-          fieldInfos[f] = ourValueTuples[i].GetField(names[f]);
+          fieldInfos[f] = ValueTuples[i].GetField(names[f]);
         }
 
         ourValueTuplesFields[i] = fieldInfos;
@@ -83,23 +84,23 @@ namespace JetBrains.Rd.Reflection
     }
 
     private readonly Lazy<AssemblyBuilder> myAssemblyBuilder;
-    private readonly Lazy<ModuleBuilder> myModule;
+    private readonly Lazy<ModuleBuilder> myModuleBuilder;
 
-    public AssemblyBuilder AssemblyBuilder => myAssemblyBuilder.Value;
-    public ModuleBuilder ModuleBuilder => myModule.Value;
+    public AssemblyBuilder DynamicAssembly => myAssemblyBuilder.Value;
+    public ModuleBuilder DynamicModule => myModuleBuilder.Value;
 
     public ProxyGenerator(bool allowSave = false)
     {
       myAllowSave = allowSave;
-#if NET35 || NETSTANDARD
-      myModule = new Lazy<ModuleBuilder>(() => AssemblyBuilder.DefineDynamicModule("ProxyGenerator"));
-      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => (AssemblyBuilder) myModule.Value.Assembly);
+#if NETSTANDARD
+     myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
+     myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
 #else
-      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), allowSave ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run));
+      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), allowSave ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run));
       if (allowSave)
-        myModule = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator", "RdProxy.dll"));
+        myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator", "RdProxy.dll"));
       else
-        myModule = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
+        myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
 #endif
     }
 
@@ -108,7 +109,7 @@ namespace JetBrains.Rd.Reflection
       if (!typeof(TInterface).IsInterface)
         throw new ArgumentException("Only interfaces are supported.");
 
-      var moduleBuilder = myModule.Value;
+      var moduleBuilder = myModuleBuilder.Value;
       // prefix names used to achieve same RdExt for both Proxy & Impl types.
       // TODO: Horrible hack to determine implementation name. 
       var className = typeof(TInterface).Name.Substring(1);
@@ -180,24 +181,25 @@ namespace JetBrains.Rd.Reflection
           returnType = responseType;
         }
         
-        var methodBuilder = new DynamicMethod(impl.Name, returnType, new[] { selfType, typeof(Lifetime), requestType[0] }, ModuleBuilder);
+        var methodBuilder = new DynamicMethod(impl.Name, returnType, new[] { selfType, typeof(Lifetime), requestType[0] }, DynamicModule);
         var il = methodBuilder.GetILGenerator();
         
         // Invoke adapter method
         il.Emit(OpCodes.Ldarg_0); // this/self
-        FieldInfo[] fields;
+        IEnumerable<FieldInfo> fields;
         if (requestType[0] == typeof(Unit))
         {
           fields = new FieldInfo[0];
         }
         else
         {
-          fields = ourValueTuplesFields[Array.IndexOf(ourValueTuples, requestType[0].GetGenericTypeDefinition())];
+          fields = requestType[0].GetFields().OrderBy(f => f.Name);
         }
-        for (int j = 0; j < impl.GetParameters().Length; j++)
+        //for (int j = 0; j < impl.GetParameters().Length; j++)
+        foreach(var field in fields)
         {
-          il.Emit(OpCodes.Ldarg_1); // value tuple
-          il.Emit(OpCodes.Ldfld, fields[j]);
+          il.Emit(OpCodes.Ldarg_2); // value tuple
+          il.Emit(OpCodes.Ldfld, field);
         }
         
         // call wrapped method
@@ -212,7 +214,7 @@ namespace JetBrains.Rd.Reflection
         if (IsSync(impl))
         {
           // Create RdTask
-          il.Emit(OpCodes.Call, returnType.GetMethod(nameof(RdTask<Nothing>.Successful)).NotNull("RdTask<Unit>.Successful not found"));
+          il.Emit(OpCodes.Call, returnType.GetMethod(nameof(RdTask<int>.Successful)).NotNull("RdTask<Unit>.Successful not found"));
         }
         else
         {
@@ -246,7 +248,7 @@ namespace JetBrains.Rd.Reflection
     public static bool IsSync(MethodInfo impl)
     {
       var returnType = impl.ReturnType;
-      return !returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(Task<>);
+      return (returnType != typeof(Task)) && (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(Task<>));
     }
 
     private void ImplementMember<TInterface>(TypeBuilder typebuilder, MemberInfo member)
@@ -308,16 +310,19 @@ namespace JetBrains.Rd.Reflection
         return new[] {typeof(Unit)};
 
       Assertion.Assert(parameters.Length <= 7, "parameters.Length <= 7");
-      return new[] {ourValueTuples[parameters.Length - 1].MakeGenericType(parameters.Select(p => p.ParameterType).ToArray()) };
+      return new[] {ValueTuples[parameters.Length - 1].MakeGenericType(parameters.Select(p => p.ParameterType).ToArray()) };
     }
 
     public static Type GetResponseType(MethodInfo method, bool unwrapTask = false)
     {
-      if (method.ReturnType == typeof(void)) 
+      if (method.ReturnType == typeof(void))
         return typeof(Unit);
 
       if (unwrapTask && !IsSync(method))
       {
+        if (method.ReturnType == typeof(Task))
+          return typeof(Unit);
+
         var arguments = method.ReturnType.GetGenericArguments();
         if (arguments.Length == 1)
           return arguments[0];
@@ -398,10 +403,15 @@ namespace JetBrains.Rd.Reflection
           .GetMethod(nameof(ProxyGeneratorUtil.ToTask)).NotNull("No ToTask method").MakeGenericMethod(responseType));
       }
 
-      // if (method.ReturnType != typeof(void))
-      // {
-      //   ilgen.Emit(OpCodes.Ldnull);
-      // }
+      if (method.ReturnType == typeof(void))
+      {
+        ilgen.Emit(OpCodes.Pop);
+      }
+      else
+      {
+        // ilgen.Emit(OpCodes.Ldnull);
+      }
+
       ilgen.Emit(OpCodes.Ret);
 
       typebuilder.DefineMethodOverride(methodbuilder, method);

@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -15,6 +16,7 @@ namespace Test.RdFramework.Reflection
     public interface IAsyncCallsTest
     {
       Task<string> GetStringAsync();
+      Task RunSomething();
     }
 
     [RdExt]
@@ -23,6 +25,11 @@ namespace Test.RdFramework.Reflection
       public Task<string> GetStringAsync()
       {
         return Task.FromResult("result");
+      }
+
+      public Task RunSomething()
+      {
+        return Task.CompletedTask;
       }
     }
 
@@ -47,8 +54,28 @@ namespace Test.RdFramework.Reflection
         return ProxyGeneratorUtil.ToTask(myRdCall.Start(Unit.Instance, null));
       }
     }*/
+
     [Test]
     public void TestAsync()
+    {
+      string result = null;
+      TestTemplate(model =>
+      {
+        Assertion.Assert(((RdReflectionBindableBase) model).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+        model.GetStringAsync().ContinueWith(t => result = t.Result, TaskContinuationOptions.ExecuteSynchronously);
+      });
+      Assert.AreEqual(result, "result");
+    }
+
+
+    [Test]
+    public void TestAsyncVoid()
+    {
+      // todo: really check long running task result
+      TestTemplate(model => { model.RunSomething(); });
+    }
+
+    private void TestTemplate(Action<IAsyncCallsTest> runTest)
     {
       ClientProtocol.Scheduler.Queue(() =>
       {
@@ -60,16 +87,12 @@ namespace Test.RdFramework.Reflection
 
       WaitMessages();
 
-      string proxyResult = null;
-      ServerProtocol.Scheduler.Queue(() =>
-      {
-        Assertion.Assert(((RdReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
-        proxy.GetStringAsync().ContinueWith(t => proxyResult = t.Result, TaskContinuationOptions.ExecuteSynchronously);
-      });
+      using var barrier = new ManualResetEvent(false);
+      ServerProtocol.Scheduler.Queue(() => runTest(proxy));
+      ServerProtocol.Scheduler.Queue(() => barrier.Set());
 
       WaitMessages();
-      SpinWait.SpinUntil(() => proxyResult != null);
-      Assert.AreEqual(proxyResult, "result");
+      barrier.WaitOne();
     }
 
     private void WaitMessages()

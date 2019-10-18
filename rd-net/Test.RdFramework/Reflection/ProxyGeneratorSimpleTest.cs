@@ -12,16 +12,22 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestSimple()
     {
+      var proxy = CreateServerProxy<ISimpleCalls>();
       SaveGeneratedAssembly();
 
       var client = ReflectionRdActivator.ActivateBind<SimpleCalls>(TestLifetime, ClientProtocol);
       // typeof(Reflection.SimpleCalls);//
-      var proxy = CreateServerProxy<ISimpleCalls>();
       Assertion.Assert(((RdReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
+      proxy.M();
       Assert.AreEqual(client.GetString(), proxy.GetString());
       Assert.AreEqual(client.GetInt(), proxy.GetInt());
       Assert.AreEqual(client.GetLong(), proxy.GetLong());
+      Assert.AreEqual(client.ReverseString("test"), proxy.ReverseString("test"));
+
+      Assert.AreEqual(null, proxy.GetStoredString());
+      proxy.StoreString("test");
+      Assert.AreEqual("test", proxy.GetStoredString());
     }
 
     [RdRpc]
@@ -32,16 +38,30 @@ namespace Test.RdFramework.Reflection
       string ReverseString(string input);
       int GetInt();
       long GetLong();
+      void StoreString(string input);
+      string GetStoredString();
     }
 
     [RdExt]
     public class SimpleCalls : RdReflectionBindableBase, ISimpleCalls
     {
+      private string myString;
       public void M() { }
 
       public string GetString() => "Hello world!";
       public int GetInt() => 28000;
       public long GetLong() => 14000;
+
+      public void StoreString(string input)
+      {
+        myString = input;
+      }
+
+      public string GetStoredString()
+      {
+        return myString;
+      }
+
       public string ReverseString(string input) => new string(input.Reverse().ToArray());
     }
 

@@ -48,10 +48,10 @@ namespace JetBrains.Rd.Reflection
   /// <summary>
   /// Creates and provides access to Reflection-generated serializers for Rd, thread safe
   /// </summary>
-  public class ReflectionSerializers
+  public class ReflectionSerializersFactory
   {
-    private static readonly MethodInfo ConvertTypedCtxRead = typeof(ReflectionSerializers).GetTypeInfo().GetMethod(nameof(CtxReadTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
-    private static readonly MethodInfo ConvertTypedCtxWrite = typeof(ReflectionSerializers).GetTypeInfo().GetMethod(nameof(CtxWriteTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
+    private static readonly MethodInfo ConvertTypedCtxRead = typeof(ReflectionSerializersFactory).GetTypeInfo().GetMethod(nameof(CtxReadTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
+    private static readonly MethodInfo ConvertTypedCtxWrite = typeof(ReflectionSerializersFactory).GetTypeInfo().GetMethod(nameof(CtxWriteTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
 
     /// <summary>
     /// Collection true type to non-polymorphic serializer
@@ -77,7 +77,7 @@ namespace JetBrains.Rd.Reflection
     private readonly Queue<Type> myCurrentSerializersChain = new Queue<Type>();
 #endif
 
-    public ReflectionSerializers()
+    public ReflectionSerializersFactory()
     {
       Serializers.RegisterFrameworkMarshallers(new SerializersContainer(mySerializers));
     }
@@ -156,8 +156,6 @@ namespace JetBrains.Rd.Reflection
     [NotNull]
     internal static MemberInfo[] GetBindableMembers(TypeInfo typeInfo)
     {
-      ReflectionSerializerVerifier.AssertEitherExtModelAttribute(typeInfo);
-
 /*
       var rpcInterface = GetRpcInterface();
       if (rpcInterface != null)
@@ -196,7 +194,7 @@ namespace JetBrains.Rd.Reflection
 
       TypeInfo typeInfo = typeof(T).GetTypeInfo();
       ReflectionSerializerVerifier.AssertRoot(typeInfo);
-      bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
+      bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || ReflectionSerializerVerifier.IsScalar(typeInfo);
 
       var intrinsicSerializer = TryGetIntrinsicSerializer(typeInfo);
       if (intrinsicSerializer != null)
@@ -582,7 +580,7 @@ namespace JetBrains.Rd.Reflection
     {
       private readonly object myReader;
       private readonly object myWriter;
-      
+
       public object Reader => myReader;
 
       public object Writer => myWriter;

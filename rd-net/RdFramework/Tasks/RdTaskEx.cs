@@ -33,6 +33,22 @@ namespace JetBrains.Rd.Tasks
       return res;
     }
 
+    public static RdTask<Unit> ToRdTask(this Task task)
+    {
+      var res = new RdTask<Unit>();
+      task.ContinueWith(t =>
+      {
+        if (t.IsCanceled)
+          res.SetCancelled();
+        else if (t.IsFaulted)
+          res.Set(t.Exception?.Flatten().GetBaseException());
+        else
+          res.Set(Unit.Instance);
+      }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+      return res;
+    }
+
+
     [PublicAPI]public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
