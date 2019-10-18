@@ -131,7 +131,8 @@ namespace JetBrains.Rd.Impl
 
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
-      var value = this.GetTransformedValue();
+      var originalValue = Key.Value;
+      var value = this.TransformToProtocol(originalValue);
       if (value == null || myIsWritingOwnMessages.Value)
       {
         writer.Write(-1);
@@ -144,7 +145,8 @@ namespace JetBrains.Rd.Impl
           {
             if (Proto.Scheduler.IsActive)
             {
-              myProtocolValueSet.Add(value);
+              Assertion.AssertNotNull(originalValue, "Can't perform an implicit add with null local context value for key {0}", Key.Key);
+              myLocalValueSet.Add(originalValue);
             } else Assertion.Fail($"Attempting to use previously unused context value {value} on a background thread");
           }
           writer.Write(myInternRoot.Intern(value));

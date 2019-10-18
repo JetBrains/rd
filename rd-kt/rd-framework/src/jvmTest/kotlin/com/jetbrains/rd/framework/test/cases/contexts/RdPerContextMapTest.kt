@@ -4,6 +4,7 @@ package com.jetbrains.rd.framework.test.cases.contexts
 import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.ISerializer
 import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdPerContextMap
@@ -219,6 +220,41 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
+
+        serverMap[server1Cid]!![1] = DynamicEntity("test")
+
+        Assert.assertEquals(listOf("Add $server1Cid"), log)
+    }
+
+    @Test
+    fun testLateBind06() {
+        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+
+        val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
+        val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
+
+        val server1Cid = "Server-1"
+
+        val log = ArrayList<String>()
+
+        serverMap.view(serverLifetime) { entryLt, k, _ ->
+            log.add("Add $k")
+            entryLt.onTermination {
+                log.add("Remove $k")
+            }
+        }
+
+        serverProtocol.contextHandler.registerKey(key)
+        clientProtocol.contextHandler.registerKey(key)
+
+        clientMap.bind(clientLifetime, clientProtocol, "map")
+        serverMap.bind(serverLifetime, serverProtocol, "map")
+
+        key.value = server1Cid
+        serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
+        key.value = null
+
+        Assert.assertTrue(serverProtocol.contextHandler.getValueSet(key).contains(server1Cid))
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 

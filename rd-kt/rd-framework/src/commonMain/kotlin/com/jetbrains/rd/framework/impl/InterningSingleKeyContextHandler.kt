@@ -125,15 +125,16 @@ internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdCon
 
     @Suppress("UNCHECKED_CAST")
     override fun writeValue(ctx: SerializationCtx, writer: AbstractBuffer) {
-        val value = getValueTransformed()
+        val originalValue = key.value
+        val value = transformValueToProtocol(originalValue)
         if(value == null || isWritingOwnMessages)
             writer.writeInt(-1)
         else {
             withWriteOwnMessages {
                 if (!myValueConcurrentSet.containsKey(value)) {
                     if (protocol.scheduler.isActive) {
-                        myProtocolValueSet.add(value)
-                    } else error("Attempting to use previously unused context value $value on a background thread")
+                        myLocalValueSet.add(originalValue ?: error("Can't perform an implicit add with null local context value for key ${key.key}"))
+                    } else error("Attempting to use previously unused context value $value on a background thread for key ${key.key}")
                 }
                 writer.writeInt(myInternRoot.internValue(value))
             }
