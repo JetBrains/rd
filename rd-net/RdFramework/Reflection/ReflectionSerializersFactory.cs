@@ -33,7 +33,8 @@ namespace JetBrains.Rd.Reflection
   // [BaseTypeRequired(typeof(RdBindableBase))] // todo: should RdModel only exits for live models?
   public class RdModelAttribute : Attribute { }
 
-  [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+  [Obsolete("RdAsync enabled by default for everything")]
+  [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
   public class RdAsyncAttribute : Attribute { }
 
   /// <summary>
