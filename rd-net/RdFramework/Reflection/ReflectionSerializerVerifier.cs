@@ -73,7 +73,35 @@ namespace JetBrains.Rd.Reflection
   {
     private static readonly HashSet<Type> ourPrimitiveTypes = new HashSet<Type>()
     {
-      typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(char), typeof(bool), typeof(Unit), typeof(string), typeof(Guid), typeof(DateTime), typeof(Uri), typeof(RdId), typeof(RdSecureString), typeof(byte[]), typeof(short[]), typeof(int[]), typeof(long[]), typeof(float[]), typeof(double[]), typeof(char[]), typeof(bool[])
+      typeof(byte),              // serializers.Register(ReadByte, WriteByte, 1);
+      typeof(short),             // serializers.Register(ReadShort, WriteShort, 2);
+      typeof(int),               // serializers.Register(ReadInt, WriteInt, 3);
+      typeof(long),              // serializers.Register(ReadLong, WriteLong, 4);
+      typeof(float),             // serializers.Register(ReadFloat, WriteFloat, 5);
+      typeof(double),            // serializers.Register(ReadDouble, WriteDouble, 6);
+      typeof(char),              // serializers.Register(ReadChar, WriteChar, 7);
+      typeof(bool),              // serializers.Register(ReadBool, WriteBool, 8);
+      typeof(Unit),              // serializers.Register(ReadVoid, WriteVoid, 9);
+      typeof(string),            // serializers.Register(ReadString, WriteString, 10);
+      typeof(Guid),              // serializers.Register(ReadGuid, WriteGuid, 11);
+      typeof(DateTime),          // serializers.Register(ReadDateTime, WriteDateTime, 12);
+      typeof(Uri),               // serializers.Register(ReadUri, WriteUri, 13);
+      typeof(RdId),              // serializers.Register(ReadRdId, WriteRdId, 14);
+      typeof(RdSecureString),    // serializers.Register(ReadSecureString, WriteSecureString, 15)
+      typeof(byte[]),            // serializers.Register(ReadByteArray, WriteByteArray, 31);
+      typeof(short[]),           // serializers.Register(ReadShortArray, WriteShortArray, 32);
+      typeof(int[]),             // serializers.Register(ReadIntArray, WriteIntArray, 33);
+      typeof(long[]),            // serializers.Register(ReadLongArray, WriteLongArray, 34);
+      typeof(float[]),           // serializers.Register(ReadFloatArray, WriteFloatArray, 35);
+      typeof(double[]),          // serializers.Register(ReadDoubleArray, WriteDoubleArray, 36);
+      typeof(char[]),            // serializers.Register(ReadCharArray, WriteCharArray, 37);
+      typeof(bool[]),            // serializers.Register(ReadBoolArray, WriteBoolArray, 38);
+      typeof(ushort),            // serializers.Register(ReadUShort, WriteUShort, 42);
+      typeof(uint),              // serializers.Register(ReadUInt, WriteUInt, 43);
+      typeof(ulong),             // serializers.Register(ReadULong, WriteULong, 44);
+      typeof(ushort[]),          // serializers.Register(ReadUShortArray, WriteUShortArray, 46);
+      typeof(uint[]),            // serializers.Register(ReadUIntArray, WriteUIntArray, 47);
+      typeof(ulong[]),           // serializers.Register(ReadULongArray, WriteULongArray, 48);
     };
 
     private static readonly string ourFakeTupleFullName = typeof(ProxyGenerator.FakeTuple<>).FullName.NotNull().TrimEnd('1');

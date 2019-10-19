@@ -304,7 +304,7 @@ namespace JetBrains.Rd.Reflection
 
     private bool CanBePolymorphic(TypeInfo typeInfo)
     {
-      return !typeInfo.IsSealed || typeInfo.BaseType != typeof(RdBindableBase);
+      return !typeInfo.IsSealed && typeInfo.BaseType != typeof(RdBindableBase);
     }
 
     private ReflectionSerializersFactory.SerializerPair GetPolymorphic(Type argument)
@@ -350,20 +350,13 @@ namespace JetBrains.Rd.Reflection
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
       }
 
-      if (genericDefinition == typeof(RdMap<,>))
+      if (genericDefinition == typeof(RdMap<,>) || genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
       {
         var argument2 = genericArguments[1];
         var serializerPair2 = GetProperSerializer(argument2);
-        return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
-      }
-
-      if (genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
-      {
-        var rpcResultType = genericArguments[1];
-        GetProperSerializer(rpcResultType);
-        var rdCallInstance = Activator.CreateInstance(implementingType);
-        implementingType.GetProperty(nameof(RdCall<int, int>.ValueCanBeNull)).NotNull().SetValue(rdCallInstance, true, null);
-        return rdCallInstance;
+        var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
+        ((RdReactiveBase) instance).ValueCanBeNull = true;
+        return instance;
       }
 
       if (genericDefinition == typeof(Nullable<>))
