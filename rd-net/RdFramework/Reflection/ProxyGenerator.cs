@@ -129,9 +129,14 @@ namespace JetBrains.Rd.Reflection
       var rdExtConstructor = typeof(RdExtAttribute).GetConstructors()[0];
       typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[0]));
 
+      var memberNames = new HashSet<string>(StringComparer.Ordinal);
       var members = typeof(TInterface).GetMembers(BindingFlags.Instance | BindingFlags.Public);
       foreach (var member in members)
       {
+        if (!memberNames.Add(member.Name))
+        {
+          throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
+        }
         ImplementMember<TInterface>(typebuilder, member);
       }
 #if NET35
@@ -337,7 +342,7 @@ namespace JetBrains.Rd.Reflection
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
       var fieldType = typeof(IRdCall<,>).MakeGenericType(requestType, responseType);
-      var field = typebuilder.DefineField(method.Name + "_proxy", fieldType , FieldAttributes.Public);
+      var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);
 
       var isSyncCall = !typeof(IAsyncResult).IsAssignableFrom(method.ReturnType);
 
@@ -415,6 +420,11 @@ namespace JetBrains.Rd.Reflection
       ilgen.Emit(OpCodes.Ret);
 
       typebuilder.DefineMethodOverride(methodbuilder, method);
+    }
+
+    public static string ProxyFieldName(MethodInfo method)
+    {
+      return method.Name + "_proxy";
     }
 
     /// <summary>

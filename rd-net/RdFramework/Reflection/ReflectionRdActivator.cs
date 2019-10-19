@@ -175,7 +175,7 @@ namespace JetBrains.Rd.Reflection
         for (var i = 0; i < implementingMethods.Length; i++)
         {
           var implMethod = implementingMethods[i];
-          var name = implMethod.Name + "_proxy";
+          var name = ProxyGenerator.ProxyFieldName(implMethod);
           var requestType = ProxyGenerator.GetRequstType(implMethod)[0];
           EnsureFakeTupleRegistered(requestType);
 
