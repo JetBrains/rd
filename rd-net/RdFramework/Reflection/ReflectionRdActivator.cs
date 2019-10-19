@@ -183,7 +183,9 @@ namespace JetBrains.Rd.Reflection
           var responseType = ProxyGenerator.GetResponseType(implMethod, unwrapTask: false);
           var endPointType = typeof(RdCall<,>).MakeGenericType(requestType, responseNonTaskType);
           var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
-          endPointType.GetProperty(nameof(RdCall<int, int>.ValueCanBeNull)).NotNull().SetValue(endpoint, true, null);
+          SetAsync(implMethod, endpoint);
+          if (endpoint is RdReactiveBase reactiveBase)
+            reactiveBase.ValueCanBeNull = true;
           if (ProxyGenerator.IsSync(implMethod))
           {
             var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(RdTask<>).MakeGenericType(responseNonTaskType));
@@ -286,13 +288,18 @@ namespace JetBrains.Rd.Reflection
         result = ActivateRd(returnType);
       }
 
-      if (result is IRdReactive activatedBindable)
-      {
-        foreach (var _ in mi.GetCustomAttributes(typeof(RdAsyncAttribute), false))
-          activatedBindable.Async = true;
-      }
+      SetAsync(mi, result);
 
       return result;
+    }
+
+    private static void SetAsync(MemberInfo mi, object result)
+    {
+      if (result is IRdReactive activatedBindable)
+      {
+        //foreach (var _ in mi.GetCustomAttributes(typeof(RdAsyncAttribute), false))
+        activatedBindable.Async = true;
+      }
     }
 
     private bool CanBePolymorphic(TypeInfo typeInfo)
