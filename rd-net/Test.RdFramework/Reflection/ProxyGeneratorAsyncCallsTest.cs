@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
+using JetBrains.Rd;
 using JetBrains.Rd.Base;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -57,6 +60,26 @@ namespace Test.RdFramework.Reflection
       public Task<byte> bSum(byte a, byte b) => Task.FromResult(unchecked((byte) (a + b)));
     }
 
+    [RdRpc]
+    public interface ISyncCallsTest
+    {
+      RdList<string> History { get; }
+      string Concat(string a, string b, string c);
+    }
+
+    [RdExt]
+    public class SyncCallsTest : RdReflectionBindableBase, ISyncCallsTest
+    {
+      public RdList<string> History { get; }
+
+      public string Concat(string a, string b, string c)
+      {
+        var result = string.Concat(a, b, c);
+        History.Add(result);
+        return result;
+      }
+    }
+
     [Test]
     public void TestAsync()
     {
@@ -83,7 +106,20 @@ namespace Test.RdFramework.Reflection
     [Test] public void TestAsyncSum6() => TestAsyncCalls(model => Assert.AreEqual(model.ulSum(ulong.MaxValue, 0).Result, ulong.MaxValue));
     [Test] public void TestAsyncSum7() => TestAsyncCalls(model => Assert.AreEqual(model.bSum(byte.MaxValue, 1).Result, 0));
 
+    [Test, Description("Sync call in and asynchonous enviroment")]
+    public void TestSyncCall()
+    {
+      TestSyncCalls(m =>
+      {
+        CollectionAssert.IsEmpty(m.History);
+        m.Concat("1", "2", "3");
+        CollectionAssert.AreEqual(m.History, new[] {"123"});
+      });
+    }
+
+
     private void TestAsyncCalls(Action<IAsyncCallsTest> run) => TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
+    private void TestSyncCalls(Action<ISyncCallsTest> run) => TestTemplate<SyncCallsTest, ISyncCallsTest>(run);
 
     private void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
     {
