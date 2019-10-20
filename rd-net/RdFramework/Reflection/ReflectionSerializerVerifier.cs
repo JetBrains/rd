@@ -260,7 +260,7 @@ namespace JetBrains.Rd.Reflection
       var isRdModel = HasRdExtAttribute(type);
       Assertion.Assert(isRdModel, $"Error in {type.ToString(true)} model: no {nameof(RdExtAttribute)} attribute specified");
       Assertion.Assert(!type.IsValueType, $"Error in {type.ToString(true)} model: can't be ValueType");
-      Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
+      Assertion.Assert(typeof(RdExtReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdExtReflectionBindableBase)}");
 
       // actually, it is possible, but error-prone.
       // you may have non-rdmodel base class and several sealed derivatives from it.
@@ -295,8 +295,7 @@ namespace JetBrains.Rd.Reflection
     {
       var isDataModel = HasRdModelAttribute(type);
       Assertion.Assert(isDataModel, $"Error in {type.ToString(true)} model: no {nameof(RdModelAttribute)} attribute specified");
-
-      Assertion.Assert(!type.IsValueType, $"Error in {type.ToString(true)} model: data model can't be ValueType");
+      Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
 
       // No way to prevent serialization errors for intrinsic serializers, just skip for now
       if (HasIntrinsicMethods(type))

@@ -117,7 +117,7 @@ namespace JetBrains.Rd.Reflection
       var typebuilder = moduleBuilder.DefineType(
         proxyTypeName,
         TypeAttributes.NotPublic | TypeAttributes.Class | TypeAttributes.Sealed,
-        typeof(RdReflectionBindableBase));
+        typeof(RdExtReflectionBindableBase));
 
       // Implement interface
       typebuilder.AddInterfaceImplementation(typeof(TInterface));

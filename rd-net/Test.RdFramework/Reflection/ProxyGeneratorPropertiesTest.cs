@@ -21,7 +21,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class PropertiesTest : RdReflectionBindableBase, IPropertiesTest
+    public class PropertiesTest : RdExtReflectionBindableBase, IPropertiesTest
     {
       public IViewableProperty<string> RdProperty { get; private set; }
 
@@ -49,7 +49,7 @@ namespace Test.RdFramework.Reflection
 
       var client = ReflectionRdActivator.ActivateBind<PropertiesTest>(TestLifetime, ClientProtocol);
       var proxy = CreateServerProxy<IPropertiesTest>();
-      Assertion.Assert(((RdReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
       TestRdTypesCatalog.AddType(typeof(LifeModel));
       // test signals

@@ -5,7 +5,7 @@ using JetBrains.Rd.Reflection;
 namespace Test.RdFramework.Reflection
 {
   [RdExt]
-  public sealed class NestedModel : RdReflectionBindableBase
+  public sealed class NestedModel : RdExtReflectionBindableBase
   {
     public RdProperty<string> SomeProperty { get; }
     public IViewableProperty<string> IPropertyAlsoFine { get; }

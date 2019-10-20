@@ -4,7 +4,7 @@ using JetBrains.Rd.Reflection;
 namespace Test.RdFramework.Reflection
 {
   [RdModel]
-  public sealed class FieldsNullableOk
+  public sealed class FieldsNullableOk : RdReflectionBindableBase
   {
     [CanBeNull] public string FieldOne;
     public MyEnum? MaybeEnum;

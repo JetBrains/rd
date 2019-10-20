@@ -3,7 +3,7 @@
 namespace Test.RdFramework.Reflection
 {
   [RdExt]
-  public class ModelCantHaveNullableError : RdReflectionBindableBase {
+  public class ModelCantHaveNullableError : RdExtReflectionBindableBase {
     public string SomeString;
   }
 }

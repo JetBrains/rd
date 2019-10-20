@@ -39,7 +39,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class AsyncCallsTest : RdReflectionBindableBase, IAsyncCallsTest
+    public class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
     {
       public Task<string> GetStringAsync()
       {
@@ -68,7 +68,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class SyncCallsTest : RdReflectionBindableBase, ISyncCallsTest
+    public class SyncCallsTest : RdExtReflectionBindableBase, ISyncCallsTest
     {
       public RdList<string> History { get; }
 
@@ -136,7 +136,7 @@ namespace Test.RdFramework.Reflection
       using (var barrier = new ManualResetEvent(false))
       {
         ServerProtocol.Scheduler.Queue(() =>
-          Assertion.Assert((proxy as RdReflectionBindableBase).NotNull().Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value"));
+          Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value"));
         runTest(proxy);
         ServerProtocol.Scheduler.Queue(() => barrier.Set());
 

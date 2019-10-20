@@ -4,7 +4,7 @@ using JetBrains.Rd.Reflection;
 namespace Test.RdFramework.Reflection
 {
   [RdModel]
-  public class PropertiesNotNullOk
+  public class PropertiesNotNullOk : RdReflectionBindableBase
   {
     [NotNull] public string First { get; private set; }
     public string Second { get; private set; } // NotNull by default

@@ -3,7 +3,7 @@
 namespace Test.RdFramework.Reflection
 {
   [RdModel]
-  public class CantHaveNonRdError
+  public class CantHaveNonRdError : RdReflectionBindableBase
   {
     public NotRdModelData Model;
   }

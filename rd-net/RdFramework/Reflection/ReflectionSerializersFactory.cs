@@ -19,7 +19,7 @@ using TypeInfo = System.Type;
 namespace JetBrains.Rd.Reflection
 {
   [AttributeUsage(AttributeTargets.Class, Inherited = false), MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-  [BaseTypeRequired(typeof(RdReflectionBindableBase))]
+  [BaseTypeRequired(typeof(RdExtReflectionBindableBase))]
   public class RdExtAttribute : Attribute { }
 
   /// <summary>
@@ -30,7 +30,7 @@ namespace JetBrains.Rd.Reflection
 
   [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
   [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
-  // [BaseTypeRequired(typeof(RdBindableBase))] // todo: should RdModel only exits for live models?
+  [BaseTypeRequired(typeof(RdReflectionBindableBase))]
   public class RdModelAttribute : Attribute { }
 
   [Obsolete("RdAsync enabled by default for everything")]
@@ -154,6 +154,10 @@ namespace JetBrains.Rd.Reflection
       return null;
     }
 
+    /// <summary>
+    /// Get lists of members which take part in object serialization.
+    /// Can be used for RdExt, RdModel and any RdScalar.
+    /// </summary>
     [NotNull]
     internal static MemberInfo[] GetBindableMembers(TypeInfo typeInfo)
     {
@@ -165,20 +169,24 @@ namespace JetBrains.Rd.Reflection
         //members = rpcInterfaceMap.TargetMethods;
       }
 */
+      Type baseType;
+      if (ReflectionSerializerVerifier.HasRdExtAttribute(typeInfo))
+        baseType = typeof(RdExtReflectionBindableBase);
+      else if (ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo))
+        baseType = typeof(RdReflectionBindableBase);
+      else
+        baseType = typeof(RdBindableBase);
 
-      IEnumerable<MemberInfo> members;
-      members = typeInfo.GetMembers(BindingFlags.Public | BindingFlags.Instance);
-
+      var members = typeInfo.GetMembers(BindingFlags.Public | BindingFlags.Instance);
       var list = new List<MemberInfo>();
       foreach (var mi in members)
       {
-        if (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(typeof(RdReflectionBindableBase)))
+        if (
+          (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(baseType)) &&
+          ((mi.MemberType == MemberTypes.Property && ReflectionUtil.TryGetSetter(mi) != null) || mi.MemberType == MemberTypes.Field) &&
+          mi.GetCustomAttribute<NonSerializedAttribute>() == null)
         {
-          if ((mi.MemberType == MemberTypes.Property && ReflectionUtil.TryGetSetter(mi) != null) ||
-              mi.MemberType == MemberTypes.Field)
-          {
-            list.Add(mi);
-          }
+          list.Add(mi);
         }
       }
 

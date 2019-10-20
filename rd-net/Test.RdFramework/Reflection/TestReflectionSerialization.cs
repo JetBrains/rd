@@ -12,7 +12,7 @@ namespace Test.RdFramework.Reflection
   public class TestReflectionSerialization : RdReflectionTestBase
   {
     [RdExt]
-    public sealed class RootModel : RdReflectionBindableBase
+    public sealed class RootModel : RdExtReflectionBindableBase
     {
       // public NestedModel Nested { get; }
 
@@ -58,7 +58,6 @@ namespace Test.RdFramework.Reflection
 
       var requestBear = ReflectionRdActivator.ActivateRdExt<Bear>();
       requestBear.arrays = new string[] {"test", "test2"};
-      requestBear.lists = new RdList<FieldsNotNullOk>();
 
       c.PolyProperty.Value = requestBear; // (nameof(Bear), requestBear);
       var result = s.PolyProperty.Value;

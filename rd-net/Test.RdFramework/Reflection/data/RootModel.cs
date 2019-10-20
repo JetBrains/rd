@@ -4,7 +4,7 @@ using JetBrains.Rd.Reflection;
 namespace Test.RdFramework.Reflection
 {
   [RdExt]
-  public sealed class RootModel : RdReflectionBindableBase
+  public sealed class RootModel : RdExtReflectionBindableBase
   {
     public NestedModel Nested { get; }
 
