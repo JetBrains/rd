@@ -366,20 +366,21 @@ namespace JetBrains.Rd.Reflection
       
       if (isSyncCall)
       {
-        ilgen.Emit(OpCodes.Ldsfld, typeof(SynchronousScheduler).GetField(nameof(SynchronousScheduler.Instance))); // ResponseScheduler
-        ilgen.Emit(OpCodes.Callvirt, startMethod.NotNull("fieldType.GetMethod(Start) != null"));
-        ilgen.Emit(OpCodes.Callvirt, (typeof(RdTask<>)).MakeGenericType(responseType)
-          .GetProperty(nameof(IRdTask<int>.Result))
-          .NotNull("NoResult Property")
-          .GetGetMethod(false));
-        ilgen.Emit(OpCodes.Callvirt, (typeof(IReadonlyProperty<>)).MakeGenericType(typeof(RdTaskResult<>).MakeGenericType(responseType))
-          .GetProperty(nameof(IReadonlyProperty<int>.Value))
-          .NotNull("no Value Property")
-          .GetGetMethod(false));
-        ilgen.Emit(OpCodes.Call, (typeof(RdTaskResult<>)).MakeGenericType(responseType)
-          .GetProperty(nameof(RdTaskResult<int>.Result))
-          .NotNull("no ResultValue Property")
-          .GetGetMethod(false));
+        //ilgen.Emit(OpCodes.Ldsfld, typeof(SynchronousScheduler).GetField(nameof(SynchronousScheduler.Instance))); // ResponseScheduler
+        ilgen.Emit(OpCodes.Ldnull); // RpcTimeouts
+        ilgen.Emit(OpCodes.Callvirt, fieldType.GetMethod(nameof(IRdCall<int,int>.Sync)).NotNull("fieldType.GetMethod(Sync) != null"));
+        // ilgen.Emit(OpCodes.Callvirt, (typeof(RdTask<>)).MakeGenericType(responseType)
+        //   .GetProperty(nameof(IRdTask<int>.Result))
+        //   .NotNull("NoResult Property")
+        //   .GetGetMethod(false));
+        // ilgen.Emit(OpCodes.Callvirt, (typeof(IReadonlyProperty<>)).MakeGenericType(typeof(RdTaskResult<>).MakeGenericType(responseType))
+        //   .GetProperty(nameof(IReadonlyProperty<int>.Value))
+        //   .NotNull("no Value Property")
+        //   .GetGetMethod(false));
+        // ilgen.Emit(OpCodes.Call, (typeof(RdTaskResult<>)).MakeGenericType(responseType)
+        //   .GetProperty(nameof(RdTaskResult<int>.Result))
+        //   .NotNull("no ResultValue Property")
+        //   .GetGetMethod(false));
       }
       else
       {

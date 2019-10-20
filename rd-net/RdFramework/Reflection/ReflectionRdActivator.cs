@@ -315,7 +315,7 @@ namespace JetBrains.Rd.Reflection
 
     private bool CanBePolymorphic(TypeInfo typeInfo)
     {
-      return !typeInfo.IsSealed && typeInfo.BaseType == typeof(RdBindableBase);
+      return !typeInfo.IsSealed && typeInfo.BaseType == typeof(RdBindableBase) && ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
     }
 
     private ReflectionSerializersFactory.SerializerPair GetPolymorphic(Type argument)
@@ -328,6 +328,7 @@ namespace JetBrains.Rd.Reflection
 
     private ReflectionSerializersFactory.SerializerPair GetProperSerializer(Type type)
     {
+      // registration for all statically known types
       myPolymorphicTypesCatalog?.AddType(type);
 
       if (CanBePolymorphic(type.GetTypeInfo()))
