@@ -2,6 +2,7 @@
 using System.IO;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
+using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
@@ -30,6 +31,13 @@ namespace Test.RdFramework.Reflection
     protected override Serializers CreateSerializers(bool isServer)
     {
       return new Serializers(TestRdTypesCatalog);
+    }
+
+    protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase
+    {
+      var c = ReflectionRdActivator.ActivateBind<T>(TestLifetime, ClientProtocol);
+      var s = ReflectionRdActivator.ActivateBind<T>(TestLifetime, ServerProtocol);
+      run(c, s);
     }
 
     [NotNull]

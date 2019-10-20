@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
@@ -32,6 +33,13 @@ namespace JetBrains.Rd.Reflection
   [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
   [BaseTypeRequired(typeof(RdReflectionBindableBase))]
   public class RdModelAttribute : Attribute { }
+
+  /// <summary>
+  /// It has no special semantic. Used only to tell ReSharper about ImplicitUse.
+  /// </summary>
+  [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
+  [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Struct, Inherited = false)]
+  public class RdScalarAttribute : Attribute { }
 
   [Obsolete("RdAsync enabled by default for everything")]
   [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
@@ -120,12 +128,20 @@ namespace JetBrains.Rd.Reflection
       return serializerPair;
     }
 
-    private SerializerPair GetOrCreateMemberSerializer([NotNull] MemberInfo mi, [NotNull] Type serializerType, bool allowNullable)
+    private SerializerPair GetOrCreateMemberSerializer([NotNull] MemberInfo mi, [NotNull] Type serializerType, bool allowNullable, bool inScalar = false)
     {
-      if (!allowNullable)
-        ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
+      if (inScalar)
+      {
+        Assertion.Assert(!typeof(IRdBindable).IsAssignableFrom(serializerType),
+          $"Invalid scalar type: {serializerType.ToString(true)}. Scalar type cannot contains bindable fields and properties.");
+      }
       else
-        ReflectionSerializerVerifier.AssertDataMemberDeclaration(mi);
+      {
+        if (!allowNullable)
+          ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
+        else
+          ReflectionSerializerVerifier.AssertDataMemberDeclaration(mi);
+      }
 
       if (!mySerializers.TryGetValue(serializerType, out var serializerPair))
       {
@@ -203,7 +219,8 @@ namespace JetBrains.Rd.Reflection
 
       TypeInfo typeInfo = typeof(T).GetTypeInfo();
       ReflectionSerializerVerifier.AssertRoot(typeInfo);
-      bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || ReflectionSerializerVerifier.IsScalar(typeInfo);
+      var isScalar = ReflectionSerializerVerifier.IsScalar(typeInfo);
+      bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || isScalar;
 
       var intrinsicSerializer = TryGetIntrinsicSerializer(typeInfo);
       if (intrinsicSerializer != null)
@@ -223,7 +240,7 @@ namespace JetBrains.Rd.Reflection
       {
         var mi = memberInfos[index];
         var returnType = ReflectionUtil.GetReturnType(mi);
-        var serPair = GetOrCreateMemberSerializer(mi, serializerType: returnType, allowNullable: allowNullable);
+        var serPair = GetOrCreateMemberSerializer(mi, serializerType: returnType, allowNullable: allowNullable, isScalar);
         memberDeserializers[index] = ConvertReader(returnType, serPair.Reader);
         memberSerializers[index] = ConvertWriter(returnType, serPair.Writer);
       }

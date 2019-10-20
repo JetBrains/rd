@@ -31,9 +31,6 @@ namespace Test.RdFramework.Reflection
       TestRdTypesCatalog.Register<Animal>();
       TestRdTypesCatalog.Register<Bear>();
       TestRdTypesCatalog.Register<EmptyOK>();
-
-      ServerWire.AutoTransmitMode = true;
-      ClientWire.AutoTransmitMode = true;
     }
 
     [Test]
