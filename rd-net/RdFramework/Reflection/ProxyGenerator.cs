@@ -156,80 +156,66 @@ namespace JetBrains.Rd.Reflection
     /// (this, Lifetime, TReq) → Task{TRes}
     /// </summary>
     /// <returns></returns>
-    public DynamicMethod[] CreateAdapter(Type selfType, MethodInfo[] methods)
+    public DynamicMethod CreateAdapter(Type selfType, MethodInfo method)
     {
-      foreach (var method in methods)
-      {
-        Assertion.Assert(!method.IsGenericMethod, "generics are not supported");
-        Assertion.Assert(!method.IsStatic, "only instance methods are supported");
-      }
-
-      if (methods.Length == 0)
-        return new DynamicMethod[0];
+      Assertion.Assert(!method.IsGenericMethod, "generics are not supported");
+      Assertion.Assert(!method.IsStatic, "only instance methods are supported");
 
       // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter", 
       //   TypeAttributes.Public & TypeAttributes.Sealed & TypeAttributes.Abstract & TypeAttributes.BeforeFieldInit);
-
-      var result = new DynamicMethod[methods.Length];
-      for (int i = 0; i < methods.Length; i++)
+      var requestType = GetRequstType(method);
+      var responseType = GetResponseType(method, unwrapTask: false);
+      Type returnType;
+      if (IsSync(method))
       {
-        var impl = methods[i];
-        var requestType = GetRequstType(impl);
-        var responseType = GetResponseType(impl, unwrapTask: false);
-        Type returnType;
-        if (IsSync(impl))
-        {
-          returnType = typeof(RdTask<>).MakeGenericType(responseType);
-        }
-        else
-        {
-          returnType = responseType;
-        }
-        
-        var methodBuilder = new DynamicMethod(impl.Name, returnType, new[] { selfType, typeof(Lifetime), requestType[0] }, DynamicModule);
-        var il = methodBuilder.GetILGenerator();
-        
-        // Invoke adapter method
-        il.Emit(OpCodes.Ldarg_0); // this/self
-        IEnumerable<FieldInfo> fields;
-        if (requestType[0] == typeof(Unit))
-        {
-          fields = new FieldInfo[0];
-        }
-        else
-        {
-          fields = requestType[0].GetFields().OrderBy(f => f.Name);
-        }
-        //for (int j = 0; j < impl.GetParameters().Length; j++)
-        foreach(var field in fields)
-        {
-          il.Emit(OpCodes.Ldarg_2); // value tuple
-          il.Emit(OpCodes.Ldfld, field);
-        }
-        
-        // call wrapped method
-        il.Emit(OpCodes.Call, impl); 
-
-        // load Unit result if necessary
-        if (impl.ReturnType == typeof(void) && IsSync(impl))
-        {
-          il.Emit(OpCodes.Ldsfld, typeof(Unit).GetField(nameof(Unit.Instance)));
-        }
-
-        if (IsSync(impl))
-        {
-          // Create RdTask
-          il.Emit(OpCodes.Call, returnType.GetMethod(nameof(RdTask<int>.Successful)).NotNull("RdTask<Unit>.Successful not found"));
-        }
-        else
-        {
-          // regular task already on stack
-        }
-
-        il.Emit(OpCodes.Ret);
-
-        result[i] = methodBuilder;
+        returnType = typeof(RdTask<>).MakeGenericType(responseType);
       }
+      else
+      {
+        returnType = responseType;
+      }
+
+      var methodBuilder = new DynamicMethod(method.Name, returnType, new[] { selfType, typeof(Lifetime), requestType[0] }, DynamicModule);
+      var il = methodBuilder.GetILGenerator();
+
+      // Invoke adapter method
+      il.Emit(OpCodes.Ldarg_0); // this/self
+      IEnumerable<FieldInfo> fields;
+      if (requestType[0] == typeof(Unit))
+      {
+        fields = new FieldInfo[0];
+      }
+      else
+      {
+        fields = requestType[0].GetFields().OrderBy(f => f.Name);
+      }
+      //for (int j = 0; j < impl.GetParameters().Length; j++)
+      foreach(var field in fields)
+      {
+        il.Emit(OpCodes.Ldarg_2); // value tuple
+        il.Emit(OpCodes.Ldfld, field);
+      }
+
+      // call wrapped method
+      il.Emit(OpCodes.Call, method);
+
+      // load Unit result if necessary
+      if (method.ReturnType == typeof(void) && IsSync(method))
+      {
+        il.Emit(OpCodes.Ldsfld, typeof(Unit).GetField(nameof(Unit.Instance)));
+      }
+
+      if (IsSync(method))
+      {
+        // Create RdTask
+        il.Emit(OpCodes.Call, returnType.GetMethod(nameof(RdTask<int>.Successful)).NotNull("RdTask<Unit>.Successful not found"));
+      }
+      else
+      {
+        // regular task already on stack
+      }
+
+      il.Emit(OpCodes.Ret);
 
 #if !NET35
 /*      if (myAllowSave)
@@ -247,7 +233,7 @@ namespace JetBrains.Rd.Reflection
       }*/
 #endif
 
-      return result;
+      return methodBuilder;
     }
 
     public static bool IsSync(MethodInfo impl)
