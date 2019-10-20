@@ -4,7 +4,7 @@ using JetBrains.Rd.Reflection;
 namespace Test.RdFramework.Reflection
 {
   [RdExt]
-  public class CircularDependencyInModelError : RdReflectionBindableBase
+  public class CircularDependencyInModelError : RdExtReflectionBindableBase
   {
     public IViewableProperty<CircularDependencyModelError> ParentRef { get; }
   }

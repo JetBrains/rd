@@ -17,7 +17,7 @@ namespace Test.RdFramework.Reflection
 
       var client = ReflectionRdActivator.ActivateBind<SimpleCalls>(TestLifetime, ClientProtocol);
       // typeof(Reflection.SimpleCalls);//
-      Assertion.Assert(((RdReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
       proxy.M();
       Assert.AreEqual(client.GetString(), proxy.GetString());
@@ -43,7 +43,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class SimpleCalls : RdReflectionBindableBase, ISimpleCalls
+    public class SimpleCalls : RdExtReflectionBindableBase, ISimpleCalls
     {
       private string myString;
       public void M() { }

@@ -19,7 +19,7 @@ namespace SampleGame
   }
 
   [RdExt]
-  public class RootExt : RdReflectionBindableBase, IRootExt
+  public class RootExt : RdExtReflectionBindableBase, IRootExt
   {
     [RdAsync] public ISignal<char> OnChar { get; }
 

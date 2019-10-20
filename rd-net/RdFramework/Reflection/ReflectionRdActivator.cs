@@ -139,10 +139,10 @@ namespace JetBrains.Rd.Reflection
 #endif
 
       var typeInfo = type.GetTypeInfo();
-      ReflectionSerializerVerifier.AssertValidRdExt(typeInfo);
+      ReflectionSerializerVerifier.AssertEitherExtModelAttribute(typeInfo);
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
-      Assertion.Assert(typeof(IRdBindable).GetTypeInfo().IsAssignableFrom(implementingType),
-        $"Unable to activate {type.FullName}: type should be {nameof(IRdBindable)}");
+      Assertion.Assert(typeof(RdBindableBase).GetTypeInfo().IsAssignableFrom(implementingType),
+        $"Unable to activate {type.FullName}: type should be {nameof(RdBindableBase)}");
 
       var instance = Activator.CreateInstance(implementingType);
       var implementingTypeInfo = implementingType.GetTypeInfo();
@@ -243,7 +243,7 @@ namespace JetBrains.Rd.Reflection
       myCurrentActivationChain.Dequeue();
 #endif
       // Allow initialize to setup bindings to composite properties.
-      if (instance is RdReflectionBindableBase reflectionBindable)
+      if (instance is IReflectionBindable reflectionBindable)
       {
         reflectionBindable.OnActivated();
       }
@@ -315,7 +315,7 @@ namespace JetBrains.Rd.Reflection
 
     private bool CanBePolymorphic(TypeInfo typeInfo)
     {
-      return !typeInfo.IsSealed && typeInfo.BaseType == typeof(RdBindableBase) && ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
+      return !typeInfo.IsSealed && typeInfo.BaseType == typeof(RdReflectionBindableBase) && ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
     }
 
     private ReflectionSerializersFactory.SerializerPair GetPolymorphic(Type argument)
