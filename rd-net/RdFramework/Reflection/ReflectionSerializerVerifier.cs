@@ -231,9 +231,9 @@ namespace JetBrains.Rd.Reflection
         return;
       }
 
-      if (IsValueTuple(type))
+      if (IsScalar(type))
       {
-        AssertValidTuple(type);
+        AssertValidScalar(type);
         return;
       }
 
@@ -324,16 +324,20 @@ namespace JetBrains.Rd.Reflection
       return isDataModel;
     }
 
-    private static void AssertValidTuple(TypeInfo type)
+    private static void AssertValidScalar(TypeInfo type)
     {
-      var genericArguments = type.GetGenericArguments();
-      Assertion.Assert(genericArguments.Length <= 7, "Value tuples can only have no more than 7 arguments: {0}", type.ToString(true));
-      foreach (var tupleArgument in genericArguments)
+      if (HasRdModelAttribute(type) || HasRdExtAttribute(type))
       {
-        var argumentTypeInfo = tupleArgument.GetTypeInfo();
+        Assertion.Fail($"Scalar type {type.ToString(true)} is invalid. {nameof(RdExtAttribute)} and {nameof(RdModelAttribute)} are not applicable to scalars since they can't be bound to the protocol.");
+      }
+      var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+      foreach (var field in fields)
+      {
         Assertion.Assert(
-          IsFieldType(argumentTypeInfo, true) || HasRdModelAttribute(argumentTypeInfo),
-          $"Invalid value tuple model: {type.ToString(true)}, argument {tupleArgument.ToString(true)} is not valid field type. Check requirements in {nameof(ReflectionSerializerVerifier)}.{nameof(IsFieldType)}");
+          IsScalar(field.FieldType),
+          $"Expected to be scalar field: {type.ToString(true)}.{field.Name}." +
+          "Scalar types cannot be bindable and have a bindable fields (type { " +
+          $" Check requirements in {nameof(ReflectionSerializerVerifier)}.{nameof(IsFieldType)}");
       }
     }
 

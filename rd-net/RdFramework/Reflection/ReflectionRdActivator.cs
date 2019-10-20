@@ -169,12 +169,24 @@ namespace JetBrains.Rd.Reflection
         var fieldInfo = implementingTypeInfo.GetField("BindableChildren", BindingFlags.Instance | BindingFlags.NonPublic).NotNull("BindableChildren not found");
         var bindableChildren = (List<KeyValuePair<string, object>>) fieldInfo.GetValue(instance);
 
-        var implementingMethods = typeInfo.GetInterfaceMap(rpcInterface).TargetMethods;
-        var adapters = myProxyGenerator.CreateAdapter(implementingType, implementingMethods);
+        var interfaceMap = typeInfo.GetInterfaceMap(rpcInterface);
+        var implementingMethods = interfaceMap.TargetMethods;
 
-        for (var i = 0; i < implementingMethods.Length; i++)
+        // Dynamic adapters for Properties are not required, so skip them
+        var ignoreMethods = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var propertyInfo in rpcInterface.GetProperties(BindingFlags.Instance | BindingFlags.Public))
         {
-          var implMethod = implementingMethods[i];
+          ignoreMethods.Add(propertyInfo.GetSetMethod()?.Name);
+          ignoreMethods.Add(propertyInfo.GetGetMethod()?.Name);
+        }
+
+        foreach (var implMethod in implementingMethods)
+        {
+          if (ignoreMethods.Contains(implMethod.Name))
+            continue;
+
+          var adapter = myProxyGenerator.CreateAdapter(implementingType, implMethod);
+
           var name = ProxyGenerator.ProxyFieldName(implMethod);
           var requestType = ProxyGenerator.GetRequstType(implMethod)[0];
           EnsureFakeTupleRegistered(requestType);
@@ -189,7 +201,7 @@ namespace JetBrains.Rd.Reflection
           if (ProxyGenerator.IsSync(implMethod))
           {
             var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(RdTask<>).MakeGenericType(responseNonTaskType));
-            var @delegate = adapters[i].CreateDelegate(delType, instance);
+            var @delegate = adapter.CreateDelegate(delType, instance);
             var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandler)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
             methodInfo.Invoke(null, new[] {endpoint, @delegate});
           }
@@ -201,16 +213,15 @@ namespace JetBrains.Rd.Reflection
             if (responseType == typeof(Task))
             {
               var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(Task));
-              var @delegate = adapters[i].CreateDelegate(delType, instance);
+              var @delegate = adapter.CreateDelegate(delType, instance);
               var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandlerTaskVoid)).NotNull().MakeGenericMethod(requestType);
               methodInfo.Invoke(null, new[] {endpoint, @delegate});
             }
             else
             {
               var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(Task<>).MakeGenericType(responseNonTaskType));
-              var @delegate = adapters[i].CreateDelegate(delType, instance);
-              MethodInfo methodInfo;
-              methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandlerTask)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
+              var @delegate = adapter.CreateDelegate(delType, instance);
+              var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandlerTask)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
               methodInfo.Invoke(null, new[] {endpoint, @delegate});
             }
 #endif
@@ -304,7 +315,7 @@ namespace JetBrains.Rd.Reflection
 
     private bool CanBePolymorphic(TypeInfo typeInfo)
     {
-      return !typeInfo.IsSealed && typeInfo.BaseType != typeof(RdBindableBase);
+      return !typeInfo.IsSealed && typeInfo.BaseType == typeof(RdBindableBase);
     }
 
     private ReflectionSerializersFactory.SerializerPair GetPolymorphic(Type argument)
