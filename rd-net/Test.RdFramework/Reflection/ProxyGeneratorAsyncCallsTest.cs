@@ -13,7 +13,7 @@ using NUnit.Framework;
 namespace Test.RdFramework.Reflection
 {
   [TestFixture]
-  public class ProxyGeneratorAsyncCallsTest : ProxyGeneratorTestBase
+  public class ProxyGeneratorAsyncCallsTest : RdReflectionTestBase
   {
     public class AsyncTestFixture<T>
     {

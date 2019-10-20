@@ -7,7 +7,7 @@ namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
-  public class ProxyGeneratorSimpleTest : ProxyGeneratorTestBase
+  public class ProxyGeneratorSimpleTest : RdReflectionTestBase
   {
     [Test]
     public void TestSimple()
