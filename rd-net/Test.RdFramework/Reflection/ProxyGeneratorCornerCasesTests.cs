@@ -6,7 +6,7 @@ namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
-  public class ProxyGeneratorCornerCasesTests : ProxyGeneratorTestBase
+  public class ProxyGeneratorCornerCasesTests : RdReflectionTestBase
   {
     [RdRpc] public interface IInvalid1 { void M(ref int refx); }
     [RdRpc] public interface IInvalid2 { void M(out int refx); }

@@ -10,7 +10,7 @@ namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
-  public class ProxyGeneratorTestBase : RdFrameworkTestBase
+  public class RdReflectionTestBase : RdFrameworkTestBase
   {
     protected ReflectionRdActivator ReflectionRdActivator;
     protected ReflectionSerializersFactory ReflectionSerializersFactory;

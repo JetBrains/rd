@@ -9,7 +9,7 @@ namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
-  public class TestReflectionSerialization : RdFrameworkTestBase
+  public class TestReflectionSerialization : RdReflectionTestBase
   {
     [RdExt]
     public sealed class RootModel : RdReflectionBindableBase
@@ -25,25 +25,13 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<Animal> PolyProperty { get; }
     }
 
-    private ReflectionRdActivator myReflectionRdActivator;
-    private SimpleTypesCatalog myPolymorphicRdTypesCatalog;
-
-    protected override Serializers CreateSerializers(bool isServer)
-    {
-      return new Serializers(myPolymorphicRdTypesCatalog);
-    }
-
     public override void SetUp()
     {
-      var reflectionSerializers = new ReflectionSerializersFactory();
-      myPolymorphicRdTypesCatalog = new SimpleTypesCatalog(reflectionSerializers);
-      myPolymorphicRdTypesCatalog.Register<Animal>();
-      myPolymorphicRdTypesCatalog.Register<Bear>();
-      myPolymorphicRdTypesCatalog.Register<EmptyOK>();
-
-      myReflectionRdActivator = new ReflectionRdActivator(reflectionSerializers, myPolymorphicRdTypesCatalog as IPolymorphicTypesCatalog);
-
       base.SetUp();
+      TestRdTypesCatalog.Register<Animal>();
+      TestRdTypesCatalog.Register<Bear>();
+      TestRdTypesCatalog.Register<EmptyOK>();
+
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
     }
@@ -51,8 +39,8 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void Test1()
     {
-      var s = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
-      var c = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
+      var s = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
+      var c = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
 
       s.EmptyOK.Value = new EmptyOK();
       Assert.IsNotNull(c.EmptyOK.Value);
@@ -61,21 +49,16 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestPolymorphicProperty()
     {
-      var s = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
-      var c = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
-
-      // s.BindCall(s.RdCall, req => (req.model.GetType().Name, req.model));
+      var s = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
+      var c = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
 
       s.Primitive.Value = true;
       c.Primitive.Value = false;
       Assert.AreEqual(s.Primitive.Value, c.Primitive.Value);
 
-      var requestBear = new Bear()
-      {
-        arrays = new string[]{"test", "test2"},
-        lists = new RdList<FieldsNotNullOk>()
-      };
-      requestBear.PublicMorozov.Add(new KeyValuePair<string, object>("lists", requestBear.lists));
+      var requestBear = ReflectionRdActivator.ActivateRdExt<Bear>();
+      requestBear.arrays = new string[] {"test", "test2"};
+      requestBear.lists = new RdList<FieldsNotNullOk>();
 
       c.PolyProperty.Value = requestBear; // (nameof(Bear), requestBear);
       var result = s.PolyProperty.Value;
