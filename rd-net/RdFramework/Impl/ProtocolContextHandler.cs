@@ -11,14 +11,23 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
+  /// <summary>
+  /// A callback to transform values between protocol and local values. Must be a bijection (one-to-one map)
+  /// </summary>
   public delegate T ContextValueTransformer<T>(T value, ContextValueTransformerDirection direction);
 
+  /// <summary>
+  /// Indicates transformation direction for a value transformer
+  /// </summary>
   public enum ContextValueTransformerDirection
   {
     WriteToProtocol,
     ReadFromProtocol
   }
   
+  /// <summary>
+  /// This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
+  /// </summary>
   public class ProtocolContextHandler : RdReactiveBase
   {
     private readonly CopyOnWriteList<string> myOtherSideKeys = new CopyOnWriteList<string>();
@@ -147,6 +156,9 @@ namespace JetBrains.Rd.Impl
         DoAddHandler(key, new SimpleProtocolContextHandler<T>(key));
     }
 
+    /// <summary>
+    /// Get a value set for a given key. The values are local relative to transform
+    /// </summary>
     public IViewableSet<T> GetValueSet<T>(RdContextKey<T> key)
     {
       Assertion.Assert(key.IsHeavy, "Only heavy keys have value sets, key {0} is light", key.Key);
@@ -159,11 +171,17 @@ namespace JetBrains.Rd.Impl
       return ((InterningProtocolContextHandler<T>) GetHandlerForKey(key)).ProtocolValueSet;
     }
 
+    /// <summary>
+    /// Sets a transform for a given key. The transform must be a bijection (one-to-one map). This will regenerate the local value set based on the protocol value set
+    /// </summary>
     public void SetTransformerForKey<T>(RdContextKey<T> key, ContextValueTransformer<T> transformer)
     {
       GetHandlerForKey(key).ValueTransformer = transformer;
     }
 
+    /// <summary>
+    /// Registers a context key to be used with this context handler. Must be invoked on protocol's scheduler
+    /// </summary>
     public void RegisterKey<T>(RdContextKey<T> key)
     {
       if (myKeyHandlers.ContainsKey(key.Key)) return;
@@ -196,6 +214,9 @@ namespace JetBrains.Rd.Impl
       lifetime.OnTermination(() => myBindLifetime = null);
     }
 
+    /// <summary>
+    /// Reads context values from a message, sets current context to them, and returns a cookie to restore previous context
+    /// </summary>
     public MessageContextCookie ReadContextIntoCookie(UnsafeReader reader)
     {
       var numContextValues = reader.ReadShort();
@@ -223,6 +244,9 @@ namespace JetBrains.Rd.Impl
       }
     }
 
+    /// <summary>
+    /// Writes the current context values
+    /// </summary>
     [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "sync is for atomicity of write/send pairs, not access")]
     public void WriteContext(UnsafeWriter writer)
     {
@@ -238,6 +262,9 @@ namespace JetBrains.Rd.Impl
         myKeyHandlerOrdering[i].WriteValue(SerializationContext, writer);
     }
 
+    /// <summary>
+    /// Writes an empty context
+    /// </summary>
     public static void WriteContextStub(UnsafeWriter writer)
     {
       writer.Write((short) 0);

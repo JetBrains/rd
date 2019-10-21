@@ -6,6 +6,11 @@ using JetBrains.Rd.Util;
 
 namespace JetBrains.Rd
 {
+  /// <summary>
+  /// Describes a context key. RdContextLocals with matching registered keys will be synchronized via protocol.
+  /// A heavy key maintains a value set and interns values. A light key sends values as-is and does not maintain a value set.
+  /// </summary>
+  /// <typeparam name="T">The type of value stored by this key</typeparam>
   public class RdContextKey<T>
   {
     [NotNull] public readonly string Key;
@@ -29,7 +34,9 @@ namespace JetBrains.Rd
     private static readonly ConcurrentDictionary<string, AsyncLocal<T>> ourValues = new ConcurrentDictionary<string, AsyncLocal<T>>();
 #endif
     
-
+     /// <summary>
+     /// Current (thread- or async-local) value for this key
+     /// </summary>
     public T Value
     {
       get
@@ -51,12 +58,18 @@ namespace JetBrains.Rd
       }
     }
 
-    public void PushContext(T value)
+     /// <summary>
+     /// Pushes current context value to a thread-local stack and sets new value
+     /// </summary>
+     public void PushContext(T value)
     {
       ourContextStacks.Value.GetOrCreate(Key, () => new Stack<T>()).Push(Value);
       Value = value;
     }
 
+     /// <summary>
+     /// Restores previous context value from a thread-local stack
+     /// </summary>
     public void PopContext()
     {
       Value = ourContextStacks.Value[Key].Pop();

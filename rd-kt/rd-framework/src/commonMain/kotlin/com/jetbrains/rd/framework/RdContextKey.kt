@@ -22,6 +22,9 @@ data class RdContextKey<T : Any>(val key: String, val heavy: Boolean, val lightS
         }
     }
 
+    /**
+     * The current (thread-local) value for this key
+     */
     @Suppress("UNCHECKED_CAST")
     var value: T?
         get() = unsafeGet(key) as T?
