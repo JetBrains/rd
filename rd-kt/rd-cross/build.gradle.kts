@@ -33,6 +33,4 @@ tasks {
     withType<KotlinCompile> {
         dependsOn(testCopySources)
     }
-
-//    test { onlyIf { !project.hasProperty("TEAMCITY_VERSION") } }
 }
