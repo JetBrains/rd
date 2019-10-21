@@ -36,8 +36,8 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void Test1()
     {
-      var s = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
-      var c = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
+      var s = new RootModel().InitBind(ReflectionRdActivator, TestLifetime, ClientProtocol);;
+      var c = new RootModel().InitBind(ReflectionRdActivator, TestLifetime, ServerProtocol);
 
       s.EmptyOK.Value = new EmptyOK();
       Assert.IsNotNull(c.EmptyOK.Value);
