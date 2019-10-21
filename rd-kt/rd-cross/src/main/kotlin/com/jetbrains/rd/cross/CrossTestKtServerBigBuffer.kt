@@ -10,7 +10,7 @@ class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
     override fun start(args: Array<String>) {
         before(args)
 
-        scheduler.queue {
+        queue {
             val model = DemoModel.create(modelLifetime, protocol)
 
             val entity = model.property_with_default

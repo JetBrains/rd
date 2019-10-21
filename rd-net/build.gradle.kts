@@ -5,8 +5,11 @@ import com.jetbrains.rd.gradle.tasks.RunScriptTask
 
 
 tasks {
-    val build by creating(RunScriptTask::class) {
-        execPath = "build.cmd"
+    val build by creating(Exec::class) {
+        dependsOn(":rd-gen:generateEverything")
+
+        executable = "dotnet"
+        args = listOf("build")
     }
 
     val clean by creating(Exec::class) {

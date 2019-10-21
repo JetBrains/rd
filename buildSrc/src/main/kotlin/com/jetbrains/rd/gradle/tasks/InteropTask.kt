@@ -7,6 +7,7 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.nio.file.Paths
+import java.time.LocalTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -81,6 +82,8 @@ open class InteropTask : DefaultTask() {
             }
         }
         countDownLatch.await()
+
+        println("At ${LocalTime.now()}: countDownLatch awaited")
 
         processes.forEach { p ->
             println("$p error stream:")

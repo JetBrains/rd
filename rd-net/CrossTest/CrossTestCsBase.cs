@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
@@ -7,6 +6,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Util;
 using JetBrains.Threading;
+using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
@@ -20,8 +20,8 @@ namespace Test.RdCross
         protected volatile bool Finished;
         
         protected IProtocol Protocol { get; set; }
-        protected LifetimeDefinition ModelLifetimeDef { get; } = Lifetime.Eternal.CreateNested();
-        protected LifetimeDefinition SocketLifetimeDef { get; } = Lifetime.Eternal.CreateNested();
+        private LifetimeDefinition ModelLifetimeDef { get; } = Lifetime.Eternal.CreateNested();
+        private LifetimeDefinition SocketLifetimeDef { get; } = Lifetime.Eternal.CreateNested();
 
         protected Lifetime ModelLifetime { get; }
         protected Lifetime SocketLifetime { get; }
@@ -35,7 +35,6 @@ namespace Test.RdCross
 
         protected void Before(string[] args)
         {
-            Debugger.Launch();
             if (args.Length != 1)
             {
                 throw new ArgumentException($"Wrong number of arguments for {TestName}:{args.Length}" +
@@ -50,8 +49,10 @@ namespace Test.RdCross
 
         protected void After()
         {
+            Logging.LogWithTime("Spinning started");
             SpinWaitEx.SpinUntil(ModelLifetime, 10_000, () => Finished);
             SpinWaitEx.SpinUntil(ModelLifetime, 1_000, () => false);
+            Logging.LogWithTime($"Spinning finished, Finished={Finished}");
 
             SocketLifetimeDef.Terminate();
             ModelLifetimeDef.Terminate();
@@ -65,6 +66,7 @@ namespace Test.RdCross
 
         public void Run(string[] args)
         {
+            Console.WriteLine($"Current time:{DateTime.Now:G}");
             using(Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
             {
                 Start(args);

@@ -1,7 +1,18 @@
+import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import com.jetbrains.rd.gradle.plugins.applyCrossTest
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.50")
+    }
+}
 
 applyKotlinJVM()
 applyCrossTest()

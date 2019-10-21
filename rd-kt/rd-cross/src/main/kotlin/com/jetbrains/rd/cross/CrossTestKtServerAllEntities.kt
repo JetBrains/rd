@@ -3,10 +3,14 @@
 package com.jetbrains.rd.cross
 
 import com.jetbrains.rd.cross.base.CrossTestKtServerBase
+import com.jetbrains.rd.cross.util.LoggingCookie
+import com.jetbrains.rd.cross.util.logWithTime
+import com.jetbrains.rd.cross.util.trackAction
 import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
 import demo.*
+import java.time.LocalTime
 import java.util.*
 
 @Suppress("unused")
@@ -14,14 +18,26 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
     override fun start(args: Array<String>) {
         before(args)
 
-        checkConstants()
+        trackAction("Checking constant") {
+            checkConstants()
+        }
 
-        scheduler.queue {
-            val model = DemoModel.create(modelLifetime, protocol)
-            val extModel = model.extModel
+        queue {
+            val model = trackAction("Creating DemoModel") {
+                DemoModel.create(modelLifetime, protocol)
+            }
 
-            adviseAll(modelLifetime, model, extModel)
-            fireAll(model, extModel)
+            val extModel = trackAction("Creating ExtModel") {
+                model.extModel
+            }
+
+            trackAction("Advising started") {
+                adviseAll(modelLifetime, model, extModel)
+            }
+
+            trackAction("Firing started") {
+                fireAll(model, extModel)
+            }
         }
 
         after()
@@ -98,18 +114,18 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
         model.boolean_array.set(booleanArrayOf(true, false, false))
 
         val scalar = MyScalar(false,
-                13,
-                32000,
-                1_000_000_000,
-                -2_000_000_000_000_000_000,
-                3.14f,
-                -123456789.012345678,
-                UByte.MAX_VALUE.minus(1u).toUByte(),
-                UShort.MAX_VALUE.minus(1u).toUShort(),
-                UInt.MAX_VALUE.minus(1u),
-                ULong.MAX_VALUE.minus(1u),
-                MyEnum.kt,
-                EnumSet.of(Flags.anyFlag, Flags.ktFlag)
+            13,
+            32000,
+            1_000_000_000,
+            -2_000_000_000_000_000_000,
+            3.14f,
+            -123456789.012345678,
+            UByte.MAX_VALUE.minus(1u).toUByte(),
+            UShort.MAX_VALUE.minus(1u).toUShort(),
+            UInt.MAX_VALUE.minus(1u),
+            ULong.MAX_VALUE.minus(1u),
+            MyEnum.kt,
+            EnumSet.of(Flags.anyFlag, Flags.ktFlag)
         )
 
         model.scalar.set(scalar)

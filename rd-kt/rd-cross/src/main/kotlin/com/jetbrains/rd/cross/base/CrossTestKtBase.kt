@@ -1,24 +1,24 @@
 package com.jetbrains.rd.cross.base
 
+import com.jetbrains.rd.cross.util.logWithTime
 import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.base.RdReactiveBase
-import com.jetbrains.rd.util.ConsoleLoggerFactory
-import com.jetbrains.rd.util.ILoggerFactory
-import com.jetbrains.rd.util.Statics
+import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
-import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.println
 import java.io.File
-import kotlin.jvm.Volatile
+import java.time.LocalDateTime
+import java.time.LocalTime
+import kotlin.io.use
 
 abstract class CrossTestKtBase {
     private val testName: String = this.javaClass.kotlin.simpleName!!
 
     protected val printer = PrettyPrinter()
-    protected lateinit var outputFile: File
+    private lateinit var outputFile: File
 
     @Volatile
     protected var finished = false
@@ -44,8 +44,10 @@ abstract class CrossTestKtBase {
     }
 
     protected fun after() {
+        logWithTime("Spinning started")
         spinUntil(10_000) { finished }
         spinUntil(1_000) { false }
+        logWithTime("Spinning finished, finished=${finished}")
 
         socketLifetimeDef.terminate()
         modelLifetimeDef.terminate()
@@ -57,7 +59,7 @@ abstract class CrossTestKtBase {
 
     protected fun <T> PrettyPrinter.printIfRemoteChange(entity: ISource<T>, entityName: String, vararg values: Any) {
         if (!entity.isLocalChange) {
-            printAnyway(entityName, values)
+            printAnyway(entityName, *values)
         }
     }
 
@@ -68,10 +70,14 @@ abstract class CrossTestKtBase {
     }
 
     fun run(args: Array<String>) {
-        Statics<ILoggerFactory>().push(ConsoleLoggerFactory).use {
+        logWithTime("Test run")
+
+        Statics<ILoggerFactory>().push(ConsoleLoggerFactory.apply {
+            minLevelToLog = LogLevel.Trace
+        }).use {
             start(args)
         }
     }
 
-    abstract fun start(args: Array<String>);
+    abstract fun start(args: Array<String>)
 }

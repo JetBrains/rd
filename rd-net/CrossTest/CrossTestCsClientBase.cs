@@ -14,6 +14,8 @@ namespace Test.RdCross
 
         protected CrossTestCsClientBase()
         {
+            Console.WriteLine($"Waiting for port being written in file={FileSystem.PortFile}");
+            
             SpinWait.SpinUntil(() => FileSystem.IsFileReady(FileSystem.PortFileClosed), 5000);
 
             using (var stream = new StreamReader(File.OpenRead(FileSystem.PortFile)))
@@ -28,7 +30,7 @@ namespace Test.RdCross
         {
             SingleThreadScheduler.RunOnSeparateThread(SocketLifetime, "Worker", scheduler =>
             {
-                var client = new SocketWire.Client(ModelLifetime, scheduler, Port, "DemoServer");
+                var client = new SocketWire.Client(ModelLifetime, scheduler, Port, "DemoClient");
                 var serializers = new Serializers();
                 Protocol = new Protocol("Server", serializers, new Identities(IdKind.Server), scheduler,
                     client, SocketLifetime);

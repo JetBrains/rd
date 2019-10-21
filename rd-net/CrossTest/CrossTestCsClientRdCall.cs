@@ -1,10 +1,11 @@
 ﻿using demo;
+using JetBrains.Rd.Tasks;
 using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
     // ReSharper disable once UnusedMember.Global
-    internal class CrossTestCsClientTask : CrossTestCsClientBase
+    internal class CrossTestCsClientRdCall : CrossTestCsClientBase
     {
         protected override void Start(string[] args)
         {
@@ -14,7 +15,7 @@ namespace Test.RdCross
             {
                 var demoModel = new DemoModel(ModelLifetime, Protocol);
                 
-                demoModel.Call.Set(c => c.ToString());
+                demoModel.Call.Set((lifetime, c) => RdTask<string>.Successful(c.ToString()));
                 
                 demoModel.Callback.Start("Csharp").Result.Advise(ModelLifetime, 
                     result =>

@@ -63,11 +63,13 @@ class CrossTest {
 
     private val methodName get() = name.methodName.replace("test", "")
 
+    @Ignore
     @Test
     fun testCrossTestKtCppAllEntities() {
         doTest(methodName)
     }
 
+    @Ignore
     @Test
     fun testCrossTestKtCppBigBuffer() {
         doTest(methodName)

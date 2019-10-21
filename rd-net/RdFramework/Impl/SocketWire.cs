@@ -362,7 +362,7 @@ namespace JetBrains.Rd.Impl
           {
             Log.Verbose("{0}: start termination of lifetime", Id);
 
-            var sendBufferStopped = SendBuffer.Stop(5000);
+            var sendBufferStopped = SendBuffer.Stop(5_000);
             Log.Verbose("{0}: send buffer stopped, success: {1}", Id, sendBufferStopped);
 
             lock (Lock)

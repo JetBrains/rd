@@ -31,10 +31,6 @@ tasks {
         ), "interning")
 
         addSources(mapOf(
-                ktDirectorySystemPropertyKey to "$BUILD_DIR/models/test"
-        ), "test")
-
-        addSources(mapOf(
                 cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/entities"
         ), "entities")
 

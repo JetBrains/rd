@@ -8,7 +8,7 @@ class CrossKtServerRdCall : CrossTestKtServerBase() {
     override fun start(args: Array<String>) {
         before(args)
 
-        scheduler.queue {
+        queue {
             val model = DemoModel.create(modelLifetime, protocol)
 
             model.callback.set {

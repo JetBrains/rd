@@ -24,35 +24,35 @@ object InterningRoot1 : Root(
         setting(Cpp17Generator.MasterStateful, false)
     }
 
-    val TestInternScope = /*InterningModelsGenTest.InterningRoot1.*/internScope()
+    val TestInternScope = internScope()
 
-    val InterningTestModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InterningTestModel = classdef {
         internRoot(TestInternScope)
 
         field("searchLabel", PredefinedType.string)
-        map("issues", PredefinedType.int, /*InterningModelsGenTest.InterningRoot1.*/structdef("WrappedStringModel") {
+        map("issues", PredefinedType.int, structdef("WrappedStringModel") {
             field("text", PredefinedType.string.interned(TestInternScope))
         })
     }
 
-    val InterningNestedTestModel = /*InterningModelsGenTest.InterningRoot1.*/structdef {
+    val InterningNestedTestModel = structdef {
         field("value", PredefinedType.string)
         field("inner", this.interned(TestInternScope).nullable)
     }
 
-    val InterningNestedTestStringModel = /*InterningModelsGenTest.InterningRoot1.*/structdef {
+    val InterningNestedTestStringModel = structdef {
         field("value", PredefinedType.string.interned(TestInternScope))
         field("inner", this.nullable)
     }
 
-    val InterningProtocolLevelModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InterningProtocolLevelModel = classdef {
         field("searchLabel", PredefinedType.string)
-        map("issues", PredefinedType.int, /*InterningModelsGenTest.InterningRoot1.*/structdef("ProtocolWrappedStringModel") {
+        map("issues", PredefinedType.int, structdef("ProtocolWrappedStringModel") {
             field("text", PredefinedType.string.interned(ProtocolInternScope))
         })
     }
 
-    val InterningMtModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InterningMtModel = classdef {
         internRoot(TestInternScope)
 
         field("searchLabel", PredefinedType.string)
@@ -60,8 +60,8 @@ object InterningRoot1 : Root(
         signal("signaller2", PredefinedType.string.interned(TestInternScope)).async
     }
 
-    val InternScopeOutOfExt = /*InterningModelsGenTest.InterningRoot1.*/internScope()
-    val InterningExtensionHolder = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InternScopeOutOfExt = internScope()
+    val InterningExtensionHolder = classdef {
         internRoot(InternScopeOutOfExt)
     }
 
@@ -70,10 +70,10 @@ object InterningRoot1 : Root(
 
 @Suppress("Unused")
 object InterningExt : Ext(InterningRoot1.InterningExtensionHolder) {
-    val InternScopeInExt = /*InterningModelsGenTest.InterningExt.*/internScope()
+    val InternScopeInExt = internScope()
 
     init {
-        property("root", /*InterningModelsGenTest.InterningExt.*/classdef("InterningExtRootModel") {
+        property("root", classdef("InterningExtRootModel") {
             internRoot(InternScopeInExt)
 
             property("internedLocally", PredefinedType.string.interned(InternScopeInExt))
