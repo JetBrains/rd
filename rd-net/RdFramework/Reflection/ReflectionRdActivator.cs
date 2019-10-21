@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
@@ -145,6 +146,7 @@ namespace JetBrains.Rd.Reflection
         $"Unable to activate {type.FullName}: type should be {nameof(RdBindableBase)}");
 
       var instance = Activator.CreateInstance(implementingType);
+
       ReflectionInit(instance);
 #if JET_MODE_ASSERT
       myCurrentActivationChain.Dequeue();
@@ -319,34 +321,12 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    private bool CanBePolymorphic(TypeInfo typeInfo)
-    {
-      return (typeInfo.IsClass && !typeInfo.IsSealed);
-      //&& typeof(RdReflectionBindableBase).IsAssignableFrom(typeInfo);
-      //&& ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
-    }
-
-    private ReflectionSerializersFactory.SerializerPair GetPolymorphic(Type argument)
-    {
-      var polymorphicClass = typeof(Polymorphic<>).MakeGenericType(argument);
-      var reader = polymorphicClass.GetTypeInfo().GetField("Read", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
-      var writer = polymorphicClass.GetTypeInfo().GetField("Write", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
-      return new ReflectionSerializersFactory.SerializerPair(reader, writer);
-    }
-
     private ReflectionSerializersFactory.SerializerPair GetProperSerializer(Type type)
     {
       // registration for all statically known types
       myPolymorphicTypesCatalog?.AddType(type);
 
-      if (CanBePolymorphic(type.GetTypeInfo()))
-      {
-        return GetPolymorphic(type);
-      }
-      else
-      {
-        return mySerializersFactory.GetOrRegisterSerializerPair(type);
-      }
+      return mySerializersFactory.GetProperSerializer(type);
     }
 
     private object ActivateGenericMember(string memberName, TypeInfo memberType)

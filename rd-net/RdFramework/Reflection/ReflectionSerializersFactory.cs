@@ -379,26 +379,7 @@ namespace JetBrains.Rd.Reflection
         return CreateGenericSerializer(member, typeInfo, implementingType, implementingTypeInfo);
       }
 
-      if (typeInfo.IsEnum)
-      {
-        var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), typeInfo.AsType());
-        return (SerializerPair) serializer;
-      }
-
-      if (typeInfo.IsArray)
-      {
-        var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), typeInfo.GetElementType());
-        return (SerializerPair) serializer;
-      }
-
-      if (hasRdAttribute)
-      {
-        return GetOrRegisterSerializerInternal(typeInfo.AsType());
-      }
-
-      Assertion.Fail($"Unable to serialize member: {member.DeclaringType?.ToString(true)}.{member.Name} of type {typeInfo.ToString(true)}");
-
-      return null;
+      return GetProperSerializer(typeInfo.AsType());
     }
 
     private SerializerPair CreateEnumSerializer<T>()
@@ -422,15 +403,9 @@ namespace JetBrains.Rd.Reflection
       return result;
     }
 
-    private SerializerPair GetPrimitiveSerializer<T>()
-    {
-      Assertion.Assert(ReflectionSerializerVerifier.IsPrimitive(typeof(T)), $"{typeof(T).ToString(true)} expected to be primitive type");
-      return mySerializers[typeof(T)];
-    }
-
     private SerializerPair CreateArraySerializer<T>()
     {
-      var primitiveSerializer = GetPrimitiveSerializer<T>();
+      var primitiveSerializer = GetProperSerializer(typeof(T));
       var valueReader = primitiveSerializer.GetReader<T>();
       var valueWriter = primitiveSerializer.GetWriter<T>();
 
@@ -705,6 +680,45 @@ namespace JetBrains.Rd.Reflection
 
       public void RegisterToplevelOnce(Type toplevelType, Action<ISerializers> registerDeclaredTypesSerializers)
       {
+      }
+    }
+
+    private static bool CanBePolymorphic(TypeInfo typeInfo)
+    {
+      return (typeInfo.IsClass && !typeInfo.IsSealed) || typeInfo.IsInterface;
+      //&& typeof(RdReflectionBindableBase).IsAssignableFrom(typeInfo);
+      //&& ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
+    }
+
+    private static SerializerPair GetPolymorphic(Type argument)
+    {
+      var polymorphicClass = typeof(Polymorphic<>).MakeGenericType(argument);
+      var reader = polymorphicClass.GetTypeInfo().GetField("Read", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
+      var writer = polymorphicClass.GetTypeInfo().GetField("Write", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
+      return new SerializerPair(reader, writer);
+    }
+
+    public SerializerPair GetProperSerializer(Type type)
+    {
+      lock (myLock)
+      {
+        if (CanBePolymorphic(type.GetTypeInfo()))
+        {
+          return GetPolymorphic(type);
+        }
+        else if (type.IsArray)
+        {
+          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), type.GetElementType());
+        }
+        else if (type.IsEnum)
+        {
+          var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), type);
+          return (SerializerPair) serializer;
+        }
+        else
+        {
+          return GetOrRegisterSerializerInternal(type);
+        }
       }
     }
   }
