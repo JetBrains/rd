@@ -145,9 +145,18 @@ namespace JetBrains.Rd.Reflection
         $"Unable to activate {type.FullName}: type should be {nameof(RdBindableBase)}");
 
       var instance = Activator.CreateInstance(implementingType);
-      var implementingTypeInfo = implementingType.GetTypeInfo();
+      ReflectionInit(instance);
+#if JET_MODE_ASSERT
+      myCurrentActivationChain.Dequeue();
+#endif
+      return instance;
+    }
 
-      foreach (var mi in ReflectionSerializersFactory.GetBindableMembers(implementingTypeInfo))
+    public object ReflectionInit(object instance)
+    {
+      var typeInfo = instance.GetType().GetTypeInfo();
+
+      foreach (var mi in ReflectionSerializersFactory.GetBindableMembers(typeInfo))
       {
         ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
         var currentValue = ReflectionUtil.GetGetter(mi)(instance);
@@ -161,12 +170,12 @@ namespace JetBrains.Rd.Reflection
       }
 
       // Add RdEndpoint for Impl class (counterpart of Proxy)
-      var interfaces = implementingTypeInfo.GetInterfaces();
+      var interfaces = typeInfo.GetInterfaces();
       bool isProxy = interfaces.Contains(typeof(IProxyTypeMarker));
       var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(typeInfo);
       if (!isProxy && rpcInterface != null)
       {
-        var fieldInfo = implementingTypeInfo.GetField("BindableChildren", BindingFlags.Instance | BindingFlags.NonPublic).NotNull("BindableChildren not found");
+        var fieldInfo = typeInfo.GetField("BindableChildren", BindingFlags.Instance | BindingFlags.NonPublic).NotNull("BindableChildren not found");
         var bindableChildren = (List<KeyValuePair<string, object>>) fieldInfo.GetValue(instance);
 
         var interfaceMap = typeInfo.GetInterfaceMap(rpcInterface);
@@ -185,7 +194,7 @@ namespace JetBrains.Rd.Reflection
           if (ignoreMethods.Contains(implMethod.Name))
             continue;
 
-          var adapter = myProxyGenerator.CreateAdapter(implementingType, implMethod);
+          var adapter = myProxyGenerator.CreateAdapter(typeInfo, implMethod);
 
           var name = ProxyGenerator.ProxyFieldName(implMethod);
           var requestType = ProxyGenerator.GetRequstType(implMethod)[0];
@@ -239,9 +248,6 @@ namespace JetBrains.Rd.Reflection
         }
       }
 
-#if JET_MODE_ASSERT
-      myCurrentActivationChain.Dequeue();
-#endif
       // Allow initialize to setup bindings to composite properties.
       if (instance is IReflectionBindable reflectionBindable)
       {
