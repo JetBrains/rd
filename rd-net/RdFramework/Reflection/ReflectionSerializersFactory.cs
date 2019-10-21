@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
@@ -153,7 +154,7 @@ namespace JetBrains.Rd.Reflection
       if (serializerPair == null)
       {
 #if JET_MODE_ASSERT
-        Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {string.Join(" -> ", myCurrentSerializersChain.Select(t => Types.ToString(t, true)).ToArray())}");
+        Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => Types.ToString(t, true)).ToArray())}");
 #endif
         throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}");
       }
@@ -193,13 +194,13 @@ namespace JetBrains.Rd.Reflection
       else
         baseType = typeof(RdBindableBase);
 
-      var members = typeInfo.GetMembers(BindingFlags.Public | BindingFlags.Instance);
+      var members = GetFields(typeInfo, baseType);
       var list = new List<MemberInfo>();
       foreach (var mi in members)
       {
         if (
+          mi.MemberType == MemberTypes.Field &&
           (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(baseType)) &&
-          ((mi.MemberType == MemberTypes.Property && ReflectionUtil.TryGetSetter(mi) != null) || mi.MemberType == MemberTypes.Field) &&
           mi.GetCustomAttribute<NonSerializedAttribute>() == null)
         {
           list.Add(mi);
@@ -207,6 +208,21 @@ namespace JetBrains.Rd.Reflection
       }
 
       return list.ToArray();
+    }
+
+    private static IEnumerable<FieldInfo> GetFields(Type type, Type baseType)
+    {
+      foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
+        yield return field;
+
+      // private fields only being returned for the current type
+      while ((type = type.BaseType) != baseType && type != null)
+      {
+        // but protected fields are returned in first step
+        foreach (var baseField in type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+          if (baseField.IsPrivate)
+            yield return baseField;
+      }
     }
 
     /// <summary>
@@ -246,10 +262,18 @@ namespace JetBrains.Rd.Reflection
       }
 
       var type = typeInfo.AsType();
+
       CtxReadDelegate<T> readerDelegate = (ctx, unsafeReader) =>
       {
-        // todo: support non-default constructors
-        var instance = Activator.CreateInstance(type);
+        object instance;
+        if (isScalar)
+        {
+          instance = FormatterServices.GetUninitializedObject(type);
+        }
+        else
+        {
+          instance = Activator.CreateInstance(type);
+        }
 
         var bindableInstance = instance as IRdBindable;
         RdId id = default(RdId);
@@ -552,7 +576,7 @@ namespace JetBrains.Rd.Reflection
 
       if (methodInfo == null)
       {
-        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Read({string.Join(", ", types.Select(t=>t.ToString(true)).ToArray())})");
+        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Read({String.Join(", ", types.Select(t=>t.ToString(true)).ToArray())})");
       }
 
       return methodInfo;
@@ -571,7 +595,7 @@ namespace JetBrains.Rd.Reflection
 
       if (methodInfo == null)
       {
-        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Write({string.Join(", ", types.Select(t => t.ToString(true)).ToArray())})");
+        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Write({String.Join(", ", types.Select(t => t.ToString(true)).ToArray())})");
       }
 
       return methodInfo;
