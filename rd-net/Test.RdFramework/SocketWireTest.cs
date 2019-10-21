@@ -10,6 +10,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
+using JetBrains.Threading;
 using JetBrains.Util;
 using NUnit.Framework;
 using Test.Lifetimes;
@@ -354,6 +355,32 @@ namespace Test.RdFramework
         });
       
     }
+
+
+
+    [Test]
+    public void TestSocketFactory()
+    {
+      var sLifetime = new LifetimeDefinition();
+      var factory = new SocketWire.ServerFactory(sLifetime.Lifetime, SynchronousScheduler.Instance);
+      
+      var lf1 = new LifetimeDefinition();
+      new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, factory.LocalPort);
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
+      
+      var lf2 = new LifetimeDefinition();
+      new SocketWire.Client(lf2.Lifetime, SynchronousScheduler.Instance, factory.LocalPort);
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 2);
+      
+      
+      lf1.Terminate();
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
+      
+      sLifetime.Terminate();
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 0);
+    }
+      
+      
 
     private static void CloseSocket(IProtocol protocol)
     {

@@ -15,6 +15,11 @@ namespace JetBrains.Collections.Viewable
       me.Fire(Unit.Instance);
     }
 
+    public static void AddLifetimed<T>(this ICollection<T> me, Lifetime lifetime, T item)
+    {
+      lifetime.Bracket(() => me.Add(item), () => me.Remove(item));
+    }
+
     public static void Advise(this ISource<Unit> me, Lifetime lifetime, Action handler)
     {
       me.Advise(lifetime, _ => { handler(); });

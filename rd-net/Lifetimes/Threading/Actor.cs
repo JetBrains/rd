@@ -127,7 +127,7 @@ namespace JetBrains.Threading
     {
       myProcessor = processor;
       myScheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, id);
-      myCompletedTask = Task.Factory.ContinueWhenAll(EmptyArray<Task>.Instance, _ => { });
+      myCompletedTask = Task.Factory.StartNew(() => {}, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
     }
 
     public Task SendAsync(T msg) {
