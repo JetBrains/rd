@@ -46,7 +46,6 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
         super.init(lifetime)
         val protocolValueSet = protocol.contextHandler.getProtocolValueSet(key)
         val keyHandler = protocol.contextHandler.getKeyHandler(key)
-        assert(keyHandler.getValueTransformed().let { it == null || protocolValueSet.contains(it) }) { "RdPerContextMap is getting bound in non-present context ${key.value}" }
         protocolValueSet.view(lifetime) { keyLt, key ->
             val previousUnboundValue = myUnboundValues[keyHandler.transformValueFromProtocol(key)]
             val newEntity = (previousUnboundValue ?: valueFactory(master)).withId(rdid.mix(key.toString()))

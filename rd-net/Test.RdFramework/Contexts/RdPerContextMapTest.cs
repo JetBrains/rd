@@ -231,5 +231,51 @@ namespace Test.RdFramework.Contexts
       
       Assert.AreEqual(new []{"Add " + server1Cid}, log);
     }
+    
+    [Test]
+    public void TestValueSetChangesInContext()
+    {
+      var key1 = new RdContextKey<string>("test-key1", true, Serializers.ReadString, Serializers.WriteString);
+      var key2 = new RdContextKey<string>("test-key2", true, Serializers.ReadString, Serializers.WriteString);
+
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());
+
+      var server1Cid = "Server-1";
+      var server2Cid = "Server-2";
+      var server3Cid = "Server-3";
+      var server4Cid = "Server-4";
+
+      var log = new List<string>();
+      
+      serverMap.View(LifetimeDefinition.Lifetime, (lifetime, s, _) =>
+      {
+        log.Add("Add " + s);
+        lifetime.OnTermination(() => log.Add("Remove " + s));
+      });
+      
+      key1.Value = server1Cid;
+      key2.Value = server1Cid;
+      
+      ServerProtocol.ContextHandler.RegisterKey(key1);
+      ServerProtocol.ContextHandler.RegisterKey(key2);
+      ClientProtocol.ContextHandler.RegisterKey(key1);
+
+      BindToClient(LifetimeDefinition.Lifetime, clientMap, 1);
+      BindToServer(LifetimeDefinition.Lifetime, serverMap, 1);
+
+      ServerProtocol.ContextHandler.GetValueSet(key1).Add(server2Cid);
+      key1.Value = server4Cid;
+      ServerProtocol.ContextHandler.GetValueSet(key1).Add(server3Cid);
+      
+      
+      key1.Value = null;
+      key2.Value = null;
+      
+      Assert.False(ServerProtocol.ContextHandler.GetValueSet(key1).Contains(server1Cid));
+      Assert.False(ServerProtocol.ContextHandler.GetValueSet(key2).Contains(server1Cid));
+      
+      Assert.AreEqual(new []{"Add " + server2Cid, "Add " + server3Cid}, log);
+    }
   }
 }

@@ -12,6 +12,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.IMutableViewableSet
 import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.reflection.threadLocal
 
 /**
  * A callback to transform values between protocol and local values. Must be a bijection (one-to-one map)
@@ -35,6 +36,17 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
     private val myKeyHandlers = ConcurrentHashMap<String, ISingleKeyProtocolContextHandler<*>>()
     private var myBindLifetime: Lifetime? = null
     private val myOrderingsLock = Any()
+
+    internal var isWritingOwnMessages by threadLocal { false }
+    internal inline fun withWriteOwnMessages(block: () -> Unit) {
+        val oldValue = isWritingOwnMessages
+        isWritingOwnMessages = true
+        try {
+            block()
+        } finally {
+            isWritingOwnMessages = oldValue
+        }
+    }
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
@@ -96,7 +108,7 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
         if (!myKeyHandlers.containsKey(key.key)) {
             doAddHandler(key.key) {
                 if(key.heavy)
-                    InterningSingleKeyContextHandler(key)
+                    InterningSingleKeyContextHandler(key, this)
                 else
                     SimpleSingleKeyContextHandler(key, key.lightSerializer)
             }
@@ -107,7 +119,9 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
         if (handler !is InterningSingleKeyContextHandler<*>) return
         handler.rdid = rdid.mix(key)
         protocol.scheduler.invokeOrQueue {
-            handler.bind(it, this, key)
+            withWriteOwnMessages {
+                handler.bind(it, this, key)
+            }
         }
     }
 
@@ -155,10 +169,12 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
     }
 
     private fun sendKeyToRemote(key: RdContextKey<*>) {
-        wire.send(rdid) { writer ->
-            writer.writeString(key.key) // todo: send id for validation?
-            writer.writeBoolean(key.heavy)
-            writer.writeRdId(key.lightSerializer.id)
+        withWriteOwnMessages {
+            wire.send(rdid) { writer ->
+                writer.writeString(key.key) // todo: send id for validation?
+                writer.writeBoolean(key.heavy)
+                writer.writeRdId(key.lightSerializer.id)
+            }
         }
     }
 
@@ -166,6 +182,8 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
      * Writes the current context values to the given buffer
      */
     fun writeCurrentMessageContext(writer: AbstractBuffer) {
+        if (isWritingOwnMessages) return writeContextStub(writer)
+
         val writtenSize = myKeyHandlerOrdering.size
         writer.writeShort(writtenSize.toShort())
         for(i in 0 until writtenSize) {

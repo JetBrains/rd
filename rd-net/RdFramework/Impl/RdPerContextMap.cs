@@ -57,10 +57,7 @@ namespace JetBrains.Rd.Impl
         protected override void Init(Lifetime lifetime)
         {
             base.Init(lifetime);
-            var currentKeyValue = myKey.Value;
             var protocolValueSet = Proto.ContextHandler.GetProtocolValueSet(myKey);
-            if(currentKeyValue != null)
-              Assertion.Assert(protocolValueSet.Contains(currentKeyValue), "RdPerContextMap is getting bound in non-present context {0}", currentKeyValue);
             protocolValueSet.View(lifetime, (contextValueLifetime, contextValue) =>
             {
                 myUnboundValues.TryGetValue(Proto.ContextHandler.GetHandlerForKey(myKey).TransformFromProtocol(contextValue), out var previousUnboundValue);

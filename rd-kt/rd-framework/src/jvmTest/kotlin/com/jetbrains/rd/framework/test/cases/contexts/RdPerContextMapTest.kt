@@ -12,6 +12,7 @@ import com.jetbrains.rd.framework.test.util.DynamicEntity
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.onTermination
+import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
@@ -19,6 +20,7 @@ import org.junit.Test
 class RdPerContextMapTest : RdFrameworkTestBase() {
     companion object {
         @BeforeClass
+        @AfterClass
         @JvmStatic
         fun resetContext() {
             RdContextKey<String>("test-key", true, FrameworkMarshallers.String).value = null
@@ -259,5 +261,48 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
         Assert.assertEquals(listOf("Add $server1Cid"), log)
+    }
+
+    @Test
+    fun testValueSetChangesInContext() {
+        val key1 = RdContextKey<String>("test-key1", true, FrameworkMarshallers.String)
+        val key2 = RdContextKey<String>("test-key2", true, FrameworkMarshallers.String)
+
+        val serverMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
+        val clientMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
+
+        val server1Cid = "Server-1"
+        val server2Cid = "Server-2"
+        val server3Cid = "Server-3"
+        val server4Cid = "Server-4"
+
+        val log = ArrayList<String>()
+
+        serverMap.view(serverLifetime) { entryLt, k, _ ->
+            log.add("Add $k")
+            entryLt.onTermination {
+                log.add("Remove $k")
+            }
+        }
+
+        key1.value = server1Cid
+        key2.value = server1Cid
+
+        serverProtocol.contextHandler.registerKey(key1)
+        serverProtocol.contextHandler.registerKey(key2)
+        clientProtocol.contextHandler.registerKey(key1)
+
+        clientMap.bind(clientLifetime, clientProtocol, "map")
+        serverMap.bind(serverLifetime, serverProtocol, "map")
+
+        serverProtocol.contextHandler.getValueSet(key1).add(server2Cid)
+        key1.value = server4Cid
+        serverProtocol.contextHandler.getValueSet(key1).add(server3Cid)
+        key1.value = null
+        key2.value = null
+
+        Assert.assertFalse(serverProtocol.contextHandler.getValueSet(key1).contains(server1Cid))
+        Assert.assertFalse(serverProtocol.contextHandler.getValueSet(key2).contains(server1Cid))
+        Assert.assertEquals(listOf("Add $server2Cid", "Add $server3Cid"), log)
     }
 }

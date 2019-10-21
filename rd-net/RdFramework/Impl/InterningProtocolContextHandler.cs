@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Concurrent;
-using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -11,36 +9,21 @@ namespace JetBrains.Rd.Impl
 {
   internal class InterningProtocolContextHandler<T> : RdReactiveBase, ISingleKeyProtocolContextHandler<T>
   {
+    private readonly ProtocolContextHandler myHandler;
     private readonly InternRoot myInternRoot = new InternRoot();
     private readonly RdSet<T> myProtocolValueSet = new RdSet<T>();
     private readonly ViewableSet<T> myLocalValueSet = new ViewableSet<T>();
     private ContextValueTransformer<T> myValueTransformer;
-    private readonly ThreadLocal<bool> myIsWritingOwnMessages = new ThreadLocal<bool>(() => false);
+    
     private readonly ConcurrentDictionary<T, T> myValuesConcurrentSet = new ConcurrentDictionary<T, T>();
 
-    private struct OwnMessagesCookie : IDisposable
-    {
-      private readonly InterningProtocolContextHandler<T> myHandler;
-      private readonly bool myPrevValue;
-
-      public OwnMessagesCookie(InterningProtocolContextHandler<T> handler)
-      {
-        myHandler = handler;
-        myPrevValue = handler.myIsWritingOwnMessages.Value;
-        handler.myIsWritingOwnMessages.Value = true;
-      }
-
-      public void Dispose()
-      {
-        myHandler.myIsWritingOwnMessages.Value = myPrevValue;
-      }
-    }
 
     internal IViewableSet<T> LocalValueSet => myLocalValueSet;
     internal IViewableSet<T> ProtocolValueSet => myProtocolValueSet;
 
-    public InterningProtocolContextHandler(RdContextKey<T> key)
+    public InterningProtocolContextHandler(RdContextKey<T> key, ProtocolContextHandler handler)
     {
+      myHandler = handler;
       Key = key;
     }
 
@@ -74,7 +57,7 @@ namespace JetBrains.Rd.Impl
     {
       base.Init(lifetime);
 
-      using (new OwnMessagesCookie(this))
+      using (myHandler.CreateOwnMessageCookie())
       {
         myInternRoot.RdId = RdId.Mix("InternRoot");
         myProtocolValueSet.RdId = RdId.Mix("ValueSet");
@@ -94,7 +77,7 @@ namespace JetBrains.Rd.Impl
       
       var newValue = myValueTransformer == null ? obj.Value : myValueTransformer(obj.Value, ContextValueTransformerDirection.WriteToProtocol);
       if (newValue == null) return;
-      using(new OwnMessagesCookie(this))
+      using(myHandler.CreateOwnMessageCookie())
         if (obj.Kind == AddRemove.Add)
         {
           if (!myProtocolValueSet.Contains(newValue))
@@ -111,7 +94,7 @@ namespace JetBrains.Rd.Impl
     {
       var value = obj.Value;
       var newValue = myValueTransformer == null ? obj.Value : myValueTransformer(obj.Value, ContextValueTransformerDirection.ReadFromProtocol);
-      using(new OwnMessagesCookie(this))
+      using(myHandler.CreateOwnMessageCookie())
         if (obj.Kind == AddRemove.Add)
         {
           myValuesConcurrentSet.TryAdd(value, value);
@@ -131,15 +114,16 @@ namespace JetBrains.Rd.Impl
 
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
+      Assertion.Assert(!myHandler.IsWritingOwnMessages, "!myHandler.IsWritingOwnMessages");
       var originalValue = Key.Value;
       var value = this.TransformToProtocol(originalValue);
-      if (value == null || myIsWritingOwnMessages.Value)
+      if (value == null)
       {
         writer.Write(-1);
       }
       else
       {
-        using (new OwnMessagesCookie(this))
+        using (myHandler.CreateOwnMessageCookie())
         {
           if (!myValuesConcurrentSet.ContainsKey(value))
           {

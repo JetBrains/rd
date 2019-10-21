@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using JetBrains.Collections;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -25,8 +26,30 @@ namespace JetBrains.Rd.Impl
     private readonly ConcurrentDictionary<string, ISingleKeyProtocolContextHandler> myKeyHandlers = new ConcurrentDictionary<string, ISingleKeyProtocolContextHandler>();
     private Lifetime? myBindLifetime;
     private readonly object myOrderingLock = new object();
+    private readonly ThreadLocal<bool> myIsWritingOwnMessages = new ThreadLocal<bool>(() => false);
     
     
+    internal struct OwnMessagesCookie : IDisposable
+    {
+      private readonly ProtocolContextHandler myHandler;
+      private readonly bool myPrevValue;
+
+      public OwnMessagesCookie(ProtocolContextHandler handler)
+      {
+        myHandler = handler;
+        myPrevValue = handler.myIsWritingOwnMessages.Value;
+        handler.myIsWritingOwnMessages.Value = true;
+      }
+
+      public void Dispose()
+      {
+        myHandler.myIsWritingOwnMessages.Value = myPrevValue;
+      }
+    }
+
+    internal OwnMessagesCookie CreateOwnMessageCookie() => new OwnMessagesCookie(this);
+    public bool IsWritingOwnMessages => myIsWritingOwnMessages.Value; 
+
     public ProtocolContextHandler()
     {
       Async = true;
@@ -85,18 +108,23 @@ namespace JetBrains.Rd.Impl
       if (handler is RdBindableBase bindableHandler)
       {
         bindableHandler.RdId = RdId.Mix(key);
-        Proto.Scheduler.InvokeOrQueue(lifetime, () => bindableHandler.Bind(lifetime, this, key));
+        Proto.Scheduler.InvokeOrQueue(lifetime, () =>
+        {
+          using(CreateOwnMessageCookie())
+            bindableHandler.Bind(lifetime, this, key);
+        });
       }
     }
 
     private void SendKeyToRemote<T>(RdContextKey<T> key)
     {
-      Wire.Send(RdId, writer =>
-      {
-        writer.Write(key.Key);
-        writer.Write(key.IsHeavy);
-        writer.Write(Proto.Serializers.GetIdForType(typeof(T)));
-      });
+      using(CreateOwnMessageCookie())
+        Wire.Send(RdId, writer =>
+        {
+          writer.Write(key.Key);
+          writer.Write(key.IsHeavy);
+          writer.Write(Proto.Serializers.GetIdForType(typeof(T)));
+        });
     }
 
     private void EnsureHeavyKeyHandlerExists<T>(string keyId)
@@ -109,7 +137,7 @@ namespace JetBrains.Rd.Impl
     {
       Assertion.Assert(key.IsHeavy, "key.IsHeavy");
       if (!myKeyHandlers.TryGetValue(key.Key, out _)) 
-        DoAddHandler(key, new InterningProtocolContextHandler<T>(key));
+        DoAddHandler(key, new InterningProtocolContextHandler<T>(key, this));
     }
     
     private void EnsureLightKeyHandlerExists<T>(RdContextKey<T> key)
@@ -198,6 +226,12 @@ namespace JetBrains.Rd.Impl
     [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "sync is for atomicity of write/send pairs, not access")]
     public void WriteContext(UnsafeWriter writer)
     {
+      if (IsWritingOwnMessages)
+      {
+        WriteContextStub(writer);
+        return;
+      }
+      
       var count = myKeyHandlerOrdering.Count;
       writer.Write((short) count);
       for (var i = 0; i < count; i++) 

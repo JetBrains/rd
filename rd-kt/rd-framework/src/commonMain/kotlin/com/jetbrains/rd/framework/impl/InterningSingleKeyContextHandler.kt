@@ -7,13 +7,13 @@ import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.ISingleKeyProtocolContextHandler
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.util.ConcurrentHashMap
+import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.IMutableViewableSet
 import com.jetbrains.rd.util.reactive.ViewableSet
-import com.jetbrains.rd.util.reflection.threadLocal
 
-internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdContextKey<T>) : RdReactiveBase(), ISingleKeyProtocolContextHandler<T> {
+internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdContextKey<T>, private val contextHandler: ProtocolContextHandler) : RdReactiveBase(), ISingleKeyProtocolContextHandler<T> {
     private val myProtocolValueSet = RdSet<T>()
     private val myLocalValueSet = ViewableSet<T>()
     private val myValueConcurrentSet = ConcurrentHashMap<T, T>()
@@ -38,15 +38,8 @@ internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdCon
         error("This may not be cloned")
     }
 
-    private var isWritingOwnMessages by threadLocal { false }
     private inline fun withWriteOwnMessages(block: () -> Unit) {
-        val oldValue = isWritingOwnMessages
-        isWritingOwnMessages = true
-        try {
-            block()
-        } finally {
-            isWritingOwnMessages = oldValue
-        }
+        contextHandler.withWriteOwnMessages(block)
     }
 
     private val myInternRoot = InternRoot()
@@ -125,9 +118,10 @@ internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdCon
 
     @Suppress("UNCHECKED_CAST")
     override fun writeValue(ctx: SerializationCtx, writer: AbstractBuffer) {
+        assert(!contextHandler.isWritingOwnMessages) { "Trying to write context with a context-related message, key ${key.key}"}
         val originalValue = key.value
         val value = transformValueToProtocol(originalValue)
-        if(value == null || isWritingOwnMessages)
+        if(value == null)
             writer.writeInt(-1)
         else {
             withWriteOwnMessages {
