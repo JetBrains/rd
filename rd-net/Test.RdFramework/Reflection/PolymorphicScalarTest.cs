@@ -37,7 +37,7 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<TestExt>((c, s) =>
       {
-        c.Interface.Value = new ProjectItemDescriptor("ProjectItem");
+        c.Interface.Value = new ProjectFileDescriptor("ProjectItem");
         Assert.AreEqual(c.Interface.Value.GetType(), s.Interface.Value.GetType());
         Assert.AreEqual(c.Interface.Value.Name, s.Interface.Value.Name);
         Assert.AreNotSame(c.Interface.Value, s.Interface.Value);
@@ -57,8 +57,11 @@ namespace Test.RdFramework.Reflection
     public class TestExt : RdExtReflectionBindableBase
     {
       public RdProperty<IProjectItemDescriptor> Interface { get; }
-      public RdProperty<ProjectItemDescriptor> Class { get; }
+      internal RdProperty<ProjectItemDescriptor> Class { get; }
+      public RdProperty<ProjectItemDescriptor[]> Array { get; }
     }
+
+
 
     [RdScalar] // not required
     public interface IProjectItemDescriptor
@@ -67,9 +70,9 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdScalar] // not required
-    public class ProjectItemDescriptor : IProjectItemDescriptor
+    public abstract class ProjectItemDescriptor : IProjectItemDescriptor
     {
-      public ProjectItemDescriptor(string name)
+      protected ProjectItemDescriptor(string name)
       {
         Name = name;
       }
@@ -80,10 +83,6 @@ namespace Test.RdFramework.Reflection
     [RdScalar] // not required
     public class ProjectFileDescriptor : ProjectItemDescriptor
     {
-      public ProjectFileDescriptor() : base(null)
-      {
-      }
-
       public ProjectFileDescriptor(string name) : base(name)
       {
       }
@@ -92,10 +91,6 @@ namespace Test.RdFramework.Reflection
     [RdScalar] // not required
     public class ProjectFolderDescriptor : ProjectItemDescriptor
     {
-      public ProjectFolderDescriptor() : base(null)
-      {
-      }
-
       public ProjectFolderDescriptor(string name) : base(name)
       {
       }

@@ -269,13 +269,19 @@ namespace JetBrains.Rd.Reflection
 
     private void ImplementProperty<TInterface>(TypeBuilder typebuilder, PropertyInfo propertyInfo)
     {
+      string MakeBackingFieldName(string propertyName)
+      {
+        // Debug.Assert((char)GeneratedNameKind.AutoPropertyBackingField == 'k');
+        return "<" + propertyName + ">k__BackingField";
+      }
+
       var type = propertyInfo.PropertyType;
 
       var property = typebuilder.DefineProperty(propertyInfo.Name, PropertyAttributes.HasDefault, type, EmptyArray<Type>.Instance);
 
       // backing field should be public to be listed in BindableMembers
 
-      var field = typebuilder.DefineField(propertyInfo.Name, type, FieldAttributes.Public);
+      var field = typebuilder.DefineField(MakeBackingFieldName(propertyInfo.Name), type, FieldAttributes.Public);
 
       if (propertyInfo.GetSetMethod() != null)
       {

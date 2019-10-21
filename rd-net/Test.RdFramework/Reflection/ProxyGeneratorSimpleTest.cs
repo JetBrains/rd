@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
@@ -45,7 +46,9 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     public class SimpleCalls : RdExtReflectionBindableBase, ISimpleCalls
     {
+      [NonSerialized]
       private string myString;
+
       public void M() { }
 
       public string GetString() => "Hello world!";
