@@ -53,7 +53,7 @@ namespace Test.RdFramework.Reflection
       c.Primitive.Value = false;
       Assert.AreEqual(s.Primitive.Value, c.Primitive.Value);
 
-      var requestBear = ReflectionRdActivator.ActivateRdExt<Bear>();
+      var requestBear = ReflectionRdActivator.Activate<Bear>();
       requestBear.arrays = new string[] {"test", "test2"};
 
       c.PolyProperty.Value = requestBear; // (nameof(Bear), requestBear);

@@ -73,7 +73,7 @@ namespace JetBrains.Rd.Reflection
     [NotNull]
     public T ActivateBind<T>(Lifetime lifetime, [NotNull] IProtocol protocol) where T : RdBindableBase
     {
-      var instance = ActivateRdExt<T>();
+      var instance = Activate<T>();
 
       var typename = typeof(T).Name;
       instance.Identify(protocol.Identities, RdId.Root.Mix(typename));
@@ -89,7 +89,7 @@ namespace JetBrains.Rd.Reflection
     [NotNull, PublicAPI]
     public RdBindableBase ActivateBind(Type type, Lifetime lifetime, [NotNull] IProtocol protocol)
     {
-      var instance = ActivateRdExt(type);
+      var instance = Activate(type);
 
       var typename = type.Name;
       var bindable = (RdBindableBase) instance;
@@ -105,9 +105,9 @@ namespace JetBrains.Rd.Reflection
     ///
     /// It doesn't bind model to Protocol. You may want to use <see cref="ActivateBind{T}"/>
     /// </summary>
-    public T ActivateRdExt<T>() where T : RdBindableBase
+    public T Activate<T>() where T : RdBindableBase
     {
-      return (T) ActivateRdExt(typeof(T));
+      return (T) Activate(typeof(T));
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ namespace JetBrains.Rd.Reflection
     /// <param name="type"></param>
     /// <returns></returns>
     [NotNull]
-    public object ActivateRdExt(Type type)
+    public object Activate(Type type)
     {
       #if JET_MODE_ASSERT
       myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();

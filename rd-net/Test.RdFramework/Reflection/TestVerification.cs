@@ -26,7 +26,7 @@ namespace Test.RdFramework.Reflection
     {
       var serializer = new ReflectionSerializersFactory();
       var activator = new ReflectionRdActivator(serializer, null);
-      var exception = Assert.Throws<Assertion.AssertionException>(() => activator.ActivateRdExt(type));
+      var exception = Assert.Throws<Assertion.AssertionException>(() => activator.Activate(type));
 
       Console.WriteLine(exception);
     }
@@ -37,7 +37,7 @@ namespace Test.RdFramework.Reflection
     {
       var serializer = new ReflectionSerializersFactory();
       var activator = new ReflectionRdActivator(serializer, null);
-      var activateRdModel = activator.ActivateRdExt(type);
+      var activateRdModel = activator.Activate(type);
     }
   }
 }
