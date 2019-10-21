@@ -14,7 +14,7 @@ namespace JetBrains.Rd.Tasks
     {
       ReasonTypeFqn = inner.GetType().FullName;
       ReasonMessage = inner.Message;
-      ReasonText = inner.ToString(); //todo Use system capatibilities, stack traces, etc
+      ReasonText = inner.ToString(); //todo Use system capabilities, stack traces, etc
     }
 
     

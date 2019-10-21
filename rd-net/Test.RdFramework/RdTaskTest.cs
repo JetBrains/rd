@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Core;
 using JetBrains.Diagnostics;
+using JetBrains.Lifetimes;
 using JetBrains.Rd.Tasks;
+using JetBrains.Threading;
 using NUnit.Framework;
 
 namespace Test.RdFramework
@@ -62,5 +67,69 @@ namespace Test.RdFramework
         }
       });
     }
+
+
+    [Test]
+    public void TestCancellation()
+    {
+      ClientWire.AutoTransmitMode = true;
+      ServerWire.AutoTransmitMode = true;
+      
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, new RdCall<Unit, string>(), ourKey);
+      var clientEntity = BindToClient(LifetimeDefinition.Lifetime, CreateEndpoint<Unit, string>(x => x.ToString()), ourKey);
+
+      bool handlerFinished = false; 
+      bool handlerCompletedSuccessfully = false; 
+      clientEntity.Set(async (lf, req) =>
+      {
+        try
+        {
+          await Task.Delay(500, lf);
+          handlerCompletedSuccessfully = true;
+        }
+        finally
+        {
+          handlerFinished = true;
+        }
+
+        return "";
+      });
+
+      //1. explicit cancellation
+      var ld = new LifetimeDefinition();
+      var task = serverEntity.Start(ld.Lifetime, Unit.Instance).AsTask();
+      ld.Terminate();
+
+      SpinWaitEx.SpinUntil(() => task.IsCompleted);
+      Assert.True(task.IsOperationCanceled());
+      
+      SpinWaitEx.SpinUntil(() => handlerFinished);
+      Assert.False(handlerCompletedSuccessfully);
+      
+      
+      //2. no cancellation
+      handlerFinished = false;
+      handlerCompletedSuccessfully = false;
+      task = serverEntity.Start(new LifetimeDefinition().Lifetime, Unit.Instance).AsTask();
+      SpinWaitEx.SpinUntil(() => task.IsCompleted);
+      Assert.False(task.IsOperationCanceled());
+      
+      SpinWaitEx.SpinUntil(() => handlerFinished);
+      Assert.True(handlerCompletedSuccessfully);
+      
+      
+      //3. cancellation from parent lifetime
+      handlerFinished = false;
+      handlerCompletedSuccessfully = false;
+      task = serverEntity.Start(new LifetimeDefinition().Lifetime, Unit.Instance).AsTask();
+      LifetimeDefinition.Terminate();
+      
+      SpinWaitEx.SpinUntil(() => task.IsCompleted);
+      Assert.True(task.IsOperationCanceled());
+      
+      SpinWaitEx.SpinUntil(() => handlerFinished);
+      Assert.False(handlerCompletedSuccessfully);
+    }
+    
   }
 }

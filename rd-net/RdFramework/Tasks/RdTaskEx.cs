@@ -11,13 +11,13 @@ namespace JetBrains.Rd.Tasks
 {
   public static class RdTaskEx
   {
-    public static bool IsSuceedeed<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Success;
+    public static bool IsSucceed<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Success;
     public static bool IsCanceled<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Canceled;
     public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
 
     public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout) => SpinWaitEx.SpinUntil(Lifetime.Eternal, timeout, () => task.Result.HasValue());
     
-#if !NET35
+
     public static RdTask<T> ToRdTask<T>(this Task<T> task)
     {
       var res = new RdTask<T>();
@@ -38,7 +38,7 @@ namespace JetBrains.Rd.Tasks
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
     }
 
-#endif
+
 
     
     
@@ -55,5 +55,34 @@ namespace JetBrains.Rd.Tasks
         return Unit.Instance;
       });
     }
+    
+#if !NET35
+    [PublicAPI]
+    public static Task<T> AsTask<T>([NotNull] this IRdTask<T> task)
+    {
+      if (task == null) throw new ArgumentNullException(nameof(task));
+      var tcs = new TaskCompletionSource<T>();
+      task.Result.AdviseOnce(Lifetime.Eternal, result =>
+      {
+        switch (result.Status)
+        {
+          case RdTaskStatus.Success:
+            tcs.SetResult(result.Result);
+            break;
+          case RdTaskStatus.Canceled:
+            tcs.SetCanceled();
+            break;
+          case RdTaskStatus.Faulted:
+            tcs.SetException(result.Error);
+            break;
+          default:
+            throw new ArgumentOutOfRangeException(result.Status.ToString());
+        }
+      });
+      return tcs.Task;
+    }   
+
+
+#endif
   }
 }

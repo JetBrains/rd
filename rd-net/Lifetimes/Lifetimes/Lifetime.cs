@@ -575,6 +575,9 @@ namespace JetBrains.Lifetimes
       if (lifetime1.Status >= LifetimeStatus.Terminating || lifetime2.Status >= LifetimeStatus.Terminating)
         return LifetimeDefinition.Terminated;
 
+      if (lifetime1 == lifetime2)
+        return lifetime1.CreateNested();
+
       var res = new LifetimeDefinition();
       lifetime1.Definition.Attach(res);
       lifetime2.Definition.Attach(res);
@@ -588,7 +591,7 @@ namespace JetBrains.Lifetimes
     public static LifetimeDefinition DefineIntersection([NotNull] params Lifetime[] lifetimes)
     {
       if (lifetimes == null) throw new ArgumentNullException(nameof(lifetimes));
-      
+
       var res = new LifetimeDefinition();
       foreach (var lf in lifetimes)
         lf.Definition.Attach(res);
