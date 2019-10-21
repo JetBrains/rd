@@ -45,7 +45,7 @@ abstract class CrossTestKtBase {
 
     protected fun after() {
         logWithTime("Spinning started")
-        spinUntil(10_000) { finished }
+        spinUntil(20_000) { finished }
         spinUntil(1_000) { false }
         logWithTime("Spinning finished, finished=${finished}")
 

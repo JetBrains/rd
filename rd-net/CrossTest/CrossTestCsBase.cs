@@ -50,7 +50,7 @@ namespace Test.RdCross
         protected void After()
         {
             Logging.LogWithTime("Spinning started");
-            SpinWaitEx.SpinUntil(ModelLifetime, 10_000, () => Finished);
+            SpinWaitEx.SpinUntil(ModelLifetime, 2000_000, () => Finished);
             SpinWaitEx.SpinUntil(ModelLifetime, 1_000, () => false);
             Logging.LogWithTime($"Spinning finished, Finished={Finished}");
 

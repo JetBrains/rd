@@ -46,6 +46,10 @@ tasks {
         collectSources()
 
         val sourceFiles = sourceDirectories.joinToString(separator = ";") { it.absolutePath }
-        args = listOf("--source=$sourceFiles;", "--hash-folder=${project.rootProject.buildDir}/hash/models", "-v")
+        val hashFolder = project.rootProject.buildDir
+                .resolve("hash")
+                .resolve("models")
+        outputs.dirs(hashFolder)
+        args = listOf("--source=$sourceFiles;", "--hash-folder=$hashFolder", "-v")
     }
 }

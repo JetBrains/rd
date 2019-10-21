@@ -14,11 +14,11 @@ import javax.inject.Inject
  * Copy sources from {generativeSourceSet.output} to {currentProject.buildDir.resolve("generated")}
  */
 open class CopySourcesTask @Inject constructor() : Exec() {
-    @Input
+//    @Input
     lateinit var currentSourceSet: KotlinSourceSet
-    @Input
+//    @Input
     lateinit var currentProject: Project
-    @Input
+//    @Input
     lateinit var generativeSourceSet: SourceSet
 
     private lateinit var generatedDir: File
@@ -29,11 +29,14 @@ open class CopySourcesTask @Inject constructor() : Exec() {
 
     fun lateInit() {
         generatedDir = currentProject.buildDir.resolve("generated")
+
+        generativeSourceSet.output.dirs.forEach { inputs.dir(it) }
+        outputs.dirs(generatedDir)
+
         currentSourceSet.kotlin.srcDirs(generatedDir.absolutePath)
     }
 
     public override fun exec() {
-        println("CopySourcesTask")
         copyGeneratedSources()
     }
 
@@ -45,13 +48,14 @@ open class CopySourcesTask @Inject constructor() : Exec() {
     }
 }
 
-fun Project.creatingCopySourcesTask(currentSourceSet: NamedDomainObjectProvider<KotlinSourceSet>, generativeSourceSet: SourceSet) =
+fun Project.creatingCopySourcesTask(currentSourceSet: NamedDomainObjectProvider<KotlinSourceSet>,
+                                    generativeSourceSet: SourceSet) =
     tasks.creating(CopySourcesTask::class) {
         dependsOn(generativeSourceSet.output)
 
-        this@creating.currentSourceSet = currentSourceSet.get()
+        this.currentSourceSet = currentSourceSet.get()
         currentProject = this@creatingCopySourcesTask
-        this@creating.generativeSourceSet = generativeSourceSet
+        this.generativeSourceSet = generativeSourceSet
 
         lateInit()
     }

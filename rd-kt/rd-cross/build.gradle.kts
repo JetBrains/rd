@@ -1,4 +1,3 @@
-import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import com.jetbrains.rd.gradle.plugins.applyCrossTest
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask

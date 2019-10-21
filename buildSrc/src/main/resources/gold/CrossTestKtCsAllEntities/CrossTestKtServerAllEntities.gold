@@ -19,6 +19,7 @@ MyScalar (
   unsigned_int = 4294967294
   unsigned_long = 18446744073709551614
   enum = net
+  flags = [anyFlag, netFlag]
 )
 ***
 set:

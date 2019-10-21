@@ -16,7 +16,7 @@ repositories {
 }
 
 plugins {
-
+    base
 }
 
 allprojects {
@@ -39,4 +39,8 @@ allprojects {
         jcenter()
         maven { setUrl("https://jitpack.io") }
     }
+}
+
+val clean by tasks.getting(Delete::class) {
+    delete(rootProject.buildDir)
 }

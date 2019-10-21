@@ -6,27 +6,28 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import java.nio.file.Paths
 import java.time.LocalTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
+const val PROCESS_WAIT_TIMEOUT = 20L
 
 @Suppress("UnstableApiUsage")
 open class InteropTask : DefaultTask() {
-    @Input
+//    @Input
     lateinit var taskServer: MarkedExecTask
-    @Input
+//    @Input
     lateinit var taskClient: MarkedExecTask
 
     private val serverRunningCommand by lazy { taskServer.commandLineWithArgs }
     private val clientRunningCommand by lazy { taskClient.commandLineWithArgs }
 
-    private val processes: MutableList<Process> = mutableListOf()
+    private val processes: MutableList<ProcessBuilder> = mutableListOf()
 
     init {
         group = "interop"
+        outputs.upToDateWhen { false }
     }
 
     fun lateInit() {
@@ -34,15 +35,22 @@ open class InteropTask : DefaultTask() {
         dependsOn((taskClient as Task).taskDependencies)
     }
 
-    private fun executeTask(task: MarkedExecTask, command: String) {
+    private fun executeTask(task: MarkedExecTask, command: List<String>) {
         println("Interop task: async running task=$task, " +
-                "command=${command}, " +
-                "working dir=${task.getWorkingDir()}")
+            "command=${command}, " +
+            "working dir=${task.getWorkingDir()}")
         try {
-            val process = Runtime.getRuntime().exec(command, null, task.getWorkingDir()) //only JVM
+            val outputFile = createTempFile(suffix = ".txt")
+            val errorFile = createTempFile(suffix = ".txt")
+            println("outputFile=${outputFile}, errorFile=${errorFile}")
+            val process = ProcessBuilder(command).apply {
+                directory(task.getWorkingDir())
+            }
+                .redirectOutput(outputFile)
+                .redirectError(errorFile)
             processes.add(process)
         } catch (e: Exception) {
-            println("Error occurred while starting async $task, ${e.stackTrace}")
+            println("Error occurred while building process by async task=$task, ${e.stackTrace}")
         } finally {
         }
     }
@@ -71,30 +79,25 @@ open class InteropTask : DefaultTask() {
         startClient()
 
         val countDownLatch = CountDownLatch(2)
-        processes.forEach { p ->
+        processes.forEach { pb ->
             thread {
-                val exitStatus = p.waitFor(20, TimeUnit.SECONDS)
-                if (!exitStatus) {
-                    println("$p exit with status=$exitStatus")
+                try {
+                    val p = pb.start()
+                    val exitStatus = p.waitFor(PROCESS_WAIT_TIMEOUT, TimeUnit.SECONDS)
+                    if (!exitStatus) {
+                        println("$p exit with status=$exitStatus")
+                    }
+                    p.destroyForcibly()
+                } catch (e: Exception) {
+                    println("Error occurred while process executing:")
+                    e.printStackTrace()
+                } finally {
+                    countDownLatch.countDown()
                 }
-                p.destroyForcibly()
-                countDownLatch.countDown()
             }
         }
         countDownLatch.await()
 
         println("At ${LocalTime.now()}: countDownLatch awaited")
-
-        processes.forEach { p ->
-            println("$p error stream:")
-            p.errorStream.bufferedReader().forEachLine { line ->
-                println(line)
-            }
-
-            println("$p output stream:")
-            p.inputStream.bufferedReader().forEachLine { line ->
-                println(line)
-            }
-        }
     }
 }

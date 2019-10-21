@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using demo;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -116,7 +117,7 @@ namespace Test.RdCross
             Before(args);
 
             Logging.TrackAction("Checking constant", CheckConstants);
-
+            
             Queue(() =>
             {
                 var model = Logging.TrackAction("Creating DemoModel", () => new DemoModel(ModelLifetime, Protocol));

@@ -1,9 +1,7 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
-import com.jetbrains.rd.gradle.tasks.CopySourcesTask
 import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 applyKotlinJVM()
 
