@@ -62,5 +62,17 @@ namespace Test.RdFramework.Reflection
       Assert.AreEqual(nameof(Bear), result.GetType().Name);
       Assert.AreNotSame(requestBear, result);
     }
+
+    [Test]
+    public void TestEnum()
+    {
+      WithExts<RootModel>((c, s) =>
+      {
+        c.PropertiesNotNullOk.Value = new PropertiesNotNullOk("First", "Second", MyEnum.Second);
+        Assert.AreEqual(s.PropertiesNotNullOk.Value.First, "First");
+        Assert.AreEqual(s.PropertiesNotNullOk.Value.Second, "Second");
+        Assert.AreEqual(s.PropertiesNotNullOk.Value.Enum, MyEnum.Second);
+      });
+    }
   }
 }

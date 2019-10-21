@@ -73,7 +73,7 @@ namespace Test.RdFramework.Reflection
       });
     }
 
-    [Test, Explicit("TODO:")]
+    [Test]
     public void TestArrays2()
     {
       WithExts<ArraysExt>((c, s) =>
@@ -83,7 +83,7 @@ namespace Test.RdFramework.Reflection
       });
     }
 
-    [Test, Explicit("TODO:")]
+    [Test]
     public void TestArrays3()
     {
       WithExts<ArraysExt>((c, s) =>
@@ -92,7 +92,6 @@ namespace Test.RdFramework.Reflection
         CollectionAssert.AreEqual(s.ValueTupleArray.Value, c.ValueTupleArray.Value);
       });
     }
-
 
     [RdExt]
     public class ArraysExt : RdExtReflectionBindableBase

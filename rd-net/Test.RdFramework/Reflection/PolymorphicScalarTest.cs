@@ -19,7 +19,20 @@ namespace Test.RdFramework.Reflection
       });
     }
 
-    [Test, Explicit("TODO:")]
+    [Test]
+    public void TestArrays()
+    {
+      WithExts<TestExt>((c, s) =>
+      {
+        c.Array.Value = new ProjectItemDescriptor[]{ new ProjectFolderDescriptor("ProjectFolder"), new ProjectFileDescriptor("ProjectFile") };
+        Assert.AreEqual(c.Array.Value[0].GetType(), s.Array.Value[0].GetType());
+        Assert.AreEqual(c.Array.Value[0].Name, s.Array.Value[0].Name);
+        Assert.AreEqual(c.Array.Value[1].Name, s.Array.Value[1].Name);
+        Assert.AreNotSame(c.Array.Value, s.Array.Value);
+      });
+    }
+
+    [Test]
     public void TestInterface()
     {
       WithExts<TestExt>((c, s) =>
