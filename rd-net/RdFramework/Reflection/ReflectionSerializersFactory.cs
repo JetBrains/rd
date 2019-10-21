@@ -38,7 +38,7 @@ namespace JetBrains.Rd.Reflection
   /// It has no special semantic. Used only to tell ReSharper about ImplicitUse.
   /// </summary>
   [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-  [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Struct, Inherited = false)]
+  [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Struct | AttributeTargets.Interface, Inherited = false)]
   public class RdScalarAttribute : Attribute { }
 
   [Obsolete("RdAsync enabled by default for everything")]
