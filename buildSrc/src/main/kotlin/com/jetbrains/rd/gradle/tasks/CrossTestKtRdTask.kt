@@ -4,7 +4,9 @@ import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
-@Suppress("LeakingThis", "LeakingThis")
+/**
+ * Provides command line arguments for running Kotlin crosstest part
+ */
 open class CrossTestKtRdTask : KotlinExec(), MarkedExecTask {
     override val commandLineWithArgs: List<String>
         get() = (super.getCommandLine() + tmpFile.absolutePath)

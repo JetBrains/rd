@@ -7,7 +7,6 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
-import java.time.LocalTime
 
 abstract class CrossTestKtServerBase : CrossTestKtBase() {
     private fun server(lifetime: Lifetime, port: Int? = null): IProtocol {

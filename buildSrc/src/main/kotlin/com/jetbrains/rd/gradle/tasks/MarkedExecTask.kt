@@ -9,5 +9,7 @@ interface MarkedExecTask/* : Task*/ {
     val commandLineWithArgs: List<String>
 
     fun getWorkingDir(): File
+
+    fun getName(): String
 }
 

@@ -7,12 +7,14 @@ import org.gradle.api.GradleException
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
 import java.time.LocalTime
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 const val PROCESS_WAIT_TIMEOUT = 20L
 
+/**
+ * Executes two native processes provided by taskServer and taskClient,
+ * that present server and client respectively.
+ */
 open class InteropTask : DefaultTask() {
     lateinit var taskServer: MarkedExecTask
     lateinit var taskClient: MarkedExecTask
@@ -20,7 +22,9 @@ open class InteropTask : DefaultTask() {
     private val serverRunningCommand by lazy { taskServer.commandLineWithArgs }
     private val clientRunningCommand by lazy { taskClient.commandLineWithArgs }
 
-    private val processes: MutableList<ProcessBuilder> = mutableListOf()
+    data class NamedProcess(val builder: ProcessBuilder, val name: String)
+
+    private val processes: MutableList<NamedProcess> = mutableListOf()
 
     private fun outputTmpDirectory() = (taskServer as Task).tmpFileDirectory
 
@@ -37,23 +41,18 @@ open class InteropTask : DefaultTask() {
     }
 
     private fun executeTask(task: MarkedExecTask, command: List<String>) {
-        println("Interop task: async running task=$task, " +
-            "command=${command}, " +
+        val taskName = task.getName()
+        println("Interop task: async running task=$taskName, " +
+            "command=${command.joinToString(separator = "")}, " +
             "working dir=${task.getWorkingDir()}")
-        try {
-            val outputFile = createTempFile(suffix = ".txt")
-            val errorFile = createTempFile(suffix = ".txt")
-            println("outputFile=${outputFile}, errorFile=${errorFile}")
-            val process = ProcessBuilder(command).apply {
-                directory(task.getWorkingDir())
-            }
-                .redirectOutput(outputFile)
-                .redirectError(errorFile)
-            processes.add(process)
-        } catch (e: Exception) {
-            println("Error occurred while building process by async task=$task, ${e.stackTrace}")
-        } finally {
+        val outputFile = createTempFile(suffix = "$taskName.out")
+        println("outputFile=${outputFile}")
+        val process = ProcessBuilder(command).apply {
+            directory(task.getWorkingDir())
         }
+            .redirectOutput(outputFile)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+        processes.add(NamedProcess(process, taskName))
     }
 
     private fun runServer() {
@@ -75,38 +74,44 @@ open class InteropTask : DefaultTask() {
 
     @TaskAction
     internal fun start() {
-        beforeStart()
-
-        runServer()
-        startClient()
-
         var taskFailed = false
 
-        val countDownLatch = CountDownLatch(2)
-        processes.forEach { pb ->
-            thread {
-                try {
-                    val p = pb.start()
-                    val exitStatus = p.waitFor(PROCESS_WAIT_TIMEOUT, TimeUnit.SECONDS)
-                    if (!exitStatus) {
-                        taskFailed = true
-                        println("$p exited with status=$exitStatus")
-                    }
-                    p.destroyForcibly()
-                } catch (e: Exception) {
-                    println("Error occurred while process executing:")
-                    e.printStackTrace()
-                } finally {
-                    countDownLatch.countDown()
-                }
-            }
+        try {
+            beforeStart()
+            runServer()
+            startClient()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            taskFailed = true
         }
-        countDownLatch.await()
-
-        println("At ${LocalTime.now()}: countDownLatch's awaited")
 
         if (taskFailed) {
-            throw GradleException("Task $name failed")
+            throw GradleException("Task $name failed before starting processes")
+        }
+
+        processes
+            .map { (builder, name) ->
+                return@map Pair(builder.start(), name)
+            }
+            .forEach { (process, name) ->
+                try {
+                    val exitStatus = process.waitFor(PROCESS_WAIT_TIMEOUT, TimeUnit.SECONDS)
+                    if (!exitStatus) {
+                        taskFailed = true
+                        println("$name exited with status=$exitStatus")
+                    }
+                    process.destroyForcibly()
+                } catch (e: Throwable) {
+                    println("Error occurred while process $name executing:")
+                    e.printStackTrace()
+                    taskFailed = true
+                }
+            }
+
+        println("At ${LocalTime.now()}: processes're awaited")
+
+        if (taskFailed) {
+            throw GradleException("Task $name failed due to executing processes")
         }
     }
 }
