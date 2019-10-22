@@ -21,7 +21,7 @@ namespace SampleGame
   [RdExt]
   public class RootExt : RdExtReflectionBindableBase, IRootExt
   {
-    [RdAsync] public ISignal<char> OnChar { get; }
+    public ISignal<char> OnChar { get; }
 
     public Task Greet(string name)
     {

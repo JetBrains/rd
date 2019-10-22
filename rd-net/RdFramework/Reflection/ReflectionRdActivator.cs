@@ -326,7 +326,7 @@ namespace JetBrains.Rd.Reflection
       // registration for all statically known types
       myPolymorphicTypesCatalog?.AddType(type);
 
-      return mySerializersFactory.GetProperSerializer(type);
+      return mySerializersFactory.GetInstanceSerializer(type);
     }
 
     private object ActivateGenericMember(string memberName, TypeInfo memberType)

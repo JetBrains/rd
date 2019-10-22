@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
@@ -31,6 +32,17 @@ namespace Test.RdFramework.Reflection
       Assert.AreEqual("test", proxy.GetStoredString());
     }
 
+    [Test]
+    public void TestSimple2()
+    {
+      var proxy = CreateServerProxy<IUnitTestRemoteAgent>();
+
+      var client = ReflectionRdActivator.ActivateBind<UnitTestRemoteAgent>(TestLifetime, ClientProtocol);
+      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+
+      proxy.RunTests(new TestRunRequest());
+    }
+
     [RdRpc]
     public interface ISimpleCalls
     {
@@ -41,6 +53,21 @@ namespace Test.RdFramework.Reflection
       long GetLong();
       void StoreString(string input);
       string GetStoredString();
+    }
+
+    [RdRpc]
+    public interface IUnitTestRemoteAgent
+    {
+      Task RunTests(TestRunRequest request);
+    }
+
+    [RdExt]
+    public class UnitTestRemoteAgent : RdExtReflectionBindableBase, IUnitTestRemoteAgent
+    {
+      public Task RunTests(TestRunRequest request) => Task.CompletedTask;
+    }
+    public class TestRunRequest
+    {
     }
 
     [RdExt]
