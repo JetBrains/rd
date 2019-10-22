@@ -61,7 +61,3 @@ tasks.named("compileTestKotlin") {
 val modelsImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
 }
-
-dependencies {
-    testCompile(sourceSets["models"].output)
-}
