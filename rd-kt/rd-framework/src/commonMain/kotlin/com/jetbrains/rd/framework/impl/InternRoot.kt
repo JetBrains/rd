@@ -13,17 +13,19 @@ class InternRoot: IInternRoot {
         error("Should never be called")
     }
 
-    private val myItemsList = ConcurrentHashMap<Int, Any>()
-    private val otherItemsList = ConcurrentHashMap<Int, Any>()
+    private val internedByMe = ConcurrentHashMap<Int, Any>()
+    private val internedByCounterpart = ConcurrentHashMap<Int, Any>()
     private val inverseMap = ConcurrentHashMap<Any, InverseMapValue>()
 
     companion object {
-        private fun <E : Enum<E>> AbstractBuffer.writeEnumCheap(value: Enum<E>) {
-            writeByte(value.ordinal.toByte())
+        @ExperimentalUnsignedTypes
+        private fun <E : Enum<E>> AbstractBuffer.writeEnumAsByte(value: Enum<E>) {
+            writeUByte(value.ordinal.toUByte())
         }
 
-        private inline fun <reified E : Enum<E>> AbstractBuffer.readEnumCheap() : E {
-            return parseFromOrdinal(readByte().toInt())
+        @ExperimentalUnsignedTypes
+        private inline fun <reified E : Enum<E>> AbstractBuffer.readEnumAsByte() : E {
+            return parseFromOrdinal(readUByte().toInt())
         }
     }
 
@@ -35,11 +37,11 @@ class InternRoot: IInternRoot {
         return inverseMap[value]?.id ?: run {
             var idx = 0
             protocol.wire.send(rdid) { writer ->
-                writer.writeEnumCheap(MessageType.SetIntern)
+                writer.writeEnumAsByte(MessageType.SetIntern)
                 Polymorphic.write(serializationContext, writer, value)
-                Sync.lock(myItemsList) {
-                    idx = myItemsList.size * 2
-                    myItemsList[idx / 2] = value
+                Sync.lock(internedByMe) {
+                    idx = internedByMe.size * 2
+                    internedByMe[idx / 2] = value
                 }
                 writer.writeInt(idx)
             }
@@ -57,39 +59,39 @@ class InternRoot: IInternRoot {
     private fun sendEraseIndex(index: Int) {
         require(isIndexOwned(index))
         protocol.wire.send(rdid) { writer ->
-            writer.writeEnumCheap(MessageType.ResetIndex)
+            writer.writeEnumAsByte(MessageType.ResetIndex)
             writer.writeInt(index)
         }
-        myItemsList.remove(index / 2)
+        internedByMe.remove(index / 2)
     }
 
     private fun sendConfirmIndex(index: Int) {
         require(isIndexOwned(index))
         protocol.wire.send(rdid) { writer ->
-            writer.writeEnumCheap(MessageType.ConfirmIndex)
+            writer.writeEnumAsByte(MessageType.ConfirmIndex)
             writer.writeInt(index)
         }
     }
 
     private fun eraseIndex(idx: Int) {
         if (isIndexOwned(idx))
-            myItemsList.remove(idx / 2)
+            internedByMe.remove(idx / 2)
         else
-            otherItemsList.remove(idx / 2)
+            internedByCounterpart.remove(idx / 2)
     }
 
     override fun removeValue(value: Any) {
         val localValue = inverseMap.remove(value)
         if (localValue != null) {
             protocol.wire.send(rdid) { writer ->
-                writer.writeEnumCheap(MessageType.RequestRemoval)
+                writer.writeEnumAsByte(MessageType.RequestRemoval)
                 writer.writeInt(localValue.id)
                 writer.writeInt(localValue.extraId)
             }
         }
     }
 
-    private fun getValue(id: Int) = if (isIndexOwned(id)) myItemsList[id / 2] else otherItemsList[id / 2]
+    private fun getValue(id: Int) = if (isIndexOwned(id)) internedByMe[id / 2] else internedByCounterpart[id / 2]
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> unInternValue(id: Int): T {
@@ -107,7 +109,7 @@ class InternRoot: IInternRoot {
     override val wireScheduler: IScheduler = InternScheduler()
 
     override fun onWireReceived(buffer: AbstractBuffer) {
-        val messageType = buffer.readEnumCheap<MessageType>()
+        val messageType = buffer.readEnumAsByte<MessageType>()
         return when(messageType) {
             MessageType.SetIntern -> handleSetInternMessage(buffer)
             MessageType.RequestRemoval -> handleRequestRemoval(buffer)
@@ -144,7 +146,7 @@ class InternRoot: IInternRoot {
 
     private fun sendRemovalAck(id1: Int, id2: Int) {
         protocol.wire.send(rdid) { writer ->
-            writer.writeEnumCheap(MessageType.AckRemoval)
+            writer.writeEnumAsByte(MessageType.AckRemoval)
             writer.writeInt(id1)
             writer.writeInt(id2)
         }
@@ -153,13 +155,13 @@ class InternRoot: IInternRoot {
     private fun handleResetIndexMessage(buffer: AbstractBuffer) {
         val remoteId = buffer.readInt()
         require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        otherItemsList.remove(remoteId / 2)
+        internedByCounterpart.remove(remoteId / 2)
     }
 
     private fun handleConfirmIndexMessage(buffer: AbstractBuffer) {
         val remoteId = buffer.readInt()
         require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        val value = otherItemsList[remoteId / 2] ?: return // there's a chance that this ID was already removed on the other side before it could confirm it - ignore such cases
+        val value = internedByCounterpart[remoteId / 2] ?: return // there's a chance that this ID was already removed on the other side before it could confirm it - ignore such cases
         inverseMap.putIfAbsent(value, InverseMapValue(remoteId xor 1, -1))?.let {
             assert(it.extraId == -1) { "extraId already set for entity $value with ids ${it.id}/${it.extraId}"}
             it.extraId = remoteId xor 1
@@ -170,7 +172,7 @@ class InternRoot: IInternRoot {
         val value = Polymorphic.read(serializationContext, buffer) ?: return
         val remoteId = buffer.readInt()
         require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        otherItemsList[remoteId / 2] = value
+        internedByCounterpart[remoteId / 2] = value
     }
 
     private enum class MessageType {
@@ -199,8 +201,8 @@ class InternRoot: IInternRoot {
             rdid = RdId.Null
         })
 
-        myItemsList.clear()
-        otherItemsList.clear()
+        internedByMe.clear()
+        internedByCounterpart.clear()
         inverseMap.clear()
 
         protocol.wire.advise(lf, this)

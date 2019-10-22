@@ -110,7 +110,7 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
                 if(key.heavy)
                     InterningSingleKeyContextHandler(key, this)
                 else
-                    SimpleSingleKeyContextHandler(key, key.lightSerializer)
+                    SimpleSingleKeyContextHandler(key, key.serializer)
             }
         }
     }
@@ -173,7 +173,7 @@ class ProtocolContextHandler(val serializationCtx: SerializationCtx) : RdReactiv
             wire.send(rdid) { writer ->
                 writer.writeString(key.key) // todo: send id for validation?
                 writer.writeBoolean(key.heavy)
-                writer.writeRdId(key.lightSerializer.id)
+                writer.writeRdId(key.serializer.id)
             }
         }
     }

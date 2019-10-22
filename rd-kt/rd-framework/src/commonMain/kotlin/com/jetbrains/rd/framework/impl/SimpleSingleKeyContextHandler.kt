@@ -13,19 +13,19 @@ internal class SimpleSingleKeyContextHandler<T: Any>(override val key: RdContext
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun writeValue(ctx: SerializationCtx, writer: AbstractBuffer) {
+    override fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer) {
         val value = getValueTransformed()
         if(value == null)
-            writer.writeBoolean(false)
+            buffer.writeBoolean(false)
         else {
-            writer.writeBoolean(true)
-            serializer.write(ctx, writer, value)
+            buffer.writeBoolean(true)
+            serializer.write(ctx, buffer, value)
         }
     }
 
-    override fun readValue(ctx: SerializationCtx, reader: AbstractBuffer): T? {
-        val hasValue = reader.readBoolean()
+    override fun readValue(ctx: SerializationCtx, buffer: AbstractBuffer): T? {
+        val hasValue = buffer.readBoolean()
         if(!hasValue) return null
-        return transformValueFromProtocol(serializer.read(ctx, reader))
+        return transformValueFromProtocol(serializer.read(ctx, buffer))
     }
 }

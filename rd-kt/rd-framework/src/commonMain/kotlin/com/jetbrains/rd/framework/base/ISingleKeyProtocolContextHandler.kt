@@ -12,9 +12,9 @@ internal interface ISingleKeyProtocolContextHandler<T: Any> {
     var myValueTransformer : ContextValueTransformer<T>?
 
     @Suppress("UNCHECKED_CAST")
-    fun writeValue(ctx: SerializationCtx, writer: AbstractBuffer)
+    fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer)
 
-    fun readValue(ctx: SerializationCtx, reader: AbstractBuffer): T?
+    fun readValue(ctx: SerializationCtx, buffer: AbstractBuffer): T?
 
     @Suppress("UNCHECKED_CAST")
     fun getValueTransformed(): T? {

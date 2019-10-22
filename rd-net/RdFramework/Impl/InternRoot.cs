@@ -15,8 +15,8 @@ namespace JetBrains.Rd.Impl
 {
   public class InternRoot : IInternRoot
   {
-    private readonly ConcurrentDictionary<int, object> myInternedObjects = new ConcurrentDictionary<int, object>();
-    private readonly ConcurrentDictionary<int, object> myOtherSideInternedObjects = new ConcurrentDictionary<int, object>();
+    private readonly ConcurrentDictionary<int, object> myInternedByMe = new ConcurrentDictionary<int, object>();
+    private readonly ConcurrentDictionary<int, object> myInternedByCounterpart = new ConcurrentDictionary<int, object>();
     private readonly ConcurrentDictionary<object, IdPair> myInverseMap = new ConcurrentDictionary<object, IdPair>();
 
     public bool TryGetInterned(object value, out int result)
@@ -37,10 +37,10 @@ namespace JetBrains.Rd.Impl
         writer.Write((byte) MessageType.SetIntern);
         Polymorphic<object>.Write(SerializationContext, writer, value);
         int allocatedId;
-        lock (myInternedObjects)
+        lock (myInternedByMe)
         {
-          allocatedId = myInternedObjects.Count * 2;
-          myInternedObjects[allocatedId / 2] = value;          
+          allocatedId = myInternedByMe.Count * 2;
+          myInternedByMe[allocatedId / 2] = value;          
         }
 
         pair.Id = allocatedId;
@@ -75,7 +75,7 @@ namespace JetBrains.Rd.Impl
         writer.Write((byte) MessageType.ResetIndex);
         writer.Write(index);
       });
-      myInternedObjects.TryRemove(index, out _);
+      myInternedByMe.TryRemove(index, out _);
     }
 
     private bool IsIndexOwned(int idx)
@@ -87,9 +87,9 @@ namespace JetBrains.Rd.Impl
     {
       object value;
       if (IsIndexOwned(id))
-        myInternedObjects.TryGetValue(id / 2, out value);
+        myInternedByMe.TryGetValue(id / 2, out value);
       else
-        myOtherSideInternedObjects.TryGetValue(id / 2, out value);
+        myInternedByCounterpart.TryGetValue(id / 2, out value);
       return value;
     }
 
@@ -108,7 +108,7 @@ namespace JetBrains.Rd.Impl
 
     public T UnIntern<T>(int id)
     {
-      return (T) (IsIndexOwned(id) ? myInternedObjects[id / 2] : myOtherSideInternedObjects[id / 2]);
+      return (T) (IsIndexOwned(id) ? myInternedByMe[id / 2] : myInternedByCounterpart[id / 2]);
     }
     
     private void HandleSetIntern(UnsafeReader reader)
@@ -116,15 +116,15 @@ namespace JetBrains.Rd.Impl
       var value = Polymorphic<object>.Read(SerializationContext, reader);
       var id = reader.ReadInt();
       Assertion.Require((id & 1) == 0, "Other side sent us id of our own side?");
-      myOtherSideInternedObjects[id / 2] = value;
+      myInternedByCounterpart[id / 2] = value;
     }
 
     private void EraseIndex(int index)
     {
       if (IsIndexOwned(index))
-        myInternedObjects.TryRemove(index / 2, out _);
+        myInternedByMe.TryRemove(index / 2, out _);
       else
-        myOtherSideInternedObjects.TryRemove(index / 2, out _);
+        myInternedByCounterpart.TryRemove(index / 2, out _);
     }
     
     private void HandleAckRemoval(UnsafeReader reader)
@@ -171,7 +171,7 @@ namespace JetBrains.Rd.Impl
     {
       var id = reader.ReadInt() ^ 1;
       var pair = new IdPair() { Id = id, ExtraId = -1 };
-      var value = myOtherSideInternedObjects[id / 2];
+      var value = myInternedByCounterpart[id / 2];
       if (myInverseMap.TryAdd(value, pair)) 
         return;
       
@@ -183,7 +183,7 @@ namespace JetBrains.Rd.Impl
     private void HandleResetIndex(UnsafeReader reader)
     {
       var id = reader.ReadInt();
-      myOtherSideInternedObjects.TryRemove(id / 2, out _);
+      myInternedByCounterpart.TryRemove(id / 2, out _);
     }
 
     [CanBeNull] private IRdDynamic myParent;

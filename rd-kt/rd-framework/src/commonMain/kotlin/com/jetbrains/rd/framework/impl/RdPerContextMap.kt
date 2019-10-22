@@ -83,10 +83,9 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
         return myInternalMap[protocolkey]
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun getForCurrentContext(): V {
         val currentId = key.value ?: error("No ${key.key} set for getting value for it")
-        return this[currentId as K] ?: error("No value in ${this.location} for ${key.key} = $currentId")
+        return this[currentId] ?: error("No value in ${this.location} for ${key.key} = $currentId")
     }
 
     companion object {
