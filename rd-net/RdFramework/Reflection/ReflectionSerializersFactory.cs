@@ -68,6 +68,11 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     private readonly Dictionary<Type, SerializerPair> mySerializers = new Dictionary<Type, SerializerPair>();
 
+    /// <summary>
+    /// Collection instance-specific serializers (polymorphic possible)
+    /// </summary>
+    private readonly Dictionary<Type, SerializerPair> myInstanceSerializers = new Dictionary<Type, SerializerPair>();
+
     private readonly object myLock = new object();
 
     public bool KnownType(Type type)
@@ -100,11 +105,11 @@ namespace JetBrains.Rd.Reflection
 #if JET_MODE_ASSERT
         myCurrentSerializersChain.Clear();
 #endif
-        return GetOrRegisterSerializerInternal(type);
+        return GetOrRegisterStaticSerializerInternal(type);
       }
     }
 
-    private SerializerPair GetOrRegisterSerializerInternal(Type type)
+    private SerializerPair GetOrRegisterStaticSerializerInternal(Type type)
     {
       if (!mySerializers.TryGetValue(type, out var serializerPair))
       {
@@ -146,7 +151,7 @@ namespace JetBrains.Rd.Reflection
 
       if (!mySerializers.TryGetValue(serializerType, out var serializerPair))
       {
-        serializerPair = GetMemberSerializer(mi, serializerType.GetTypeInfo());
+        serializerPair = GetStaticTypeSerializer(mi, serializerType.GetTypeInfo());
         Assertion.AssertNotNull(serializerPair != null, $"Unable to Create serializer for type {serializerType.ToString(true)}");
         mySerializers[serializerType] = serializerPair;
       }
@@ -320,7 +325,7 @@ namespace JetBrains.Rd.Reflection
         var argument = genericArguments[0];
         var staticRead = GetReadStaticSerializer(typeInfo, argument);
         var staticWrite = GetWriteStaticDeserializer(typeInfo);
-        return SerializerPair.CreateFromMethods(staticRead, staticWrite, GetOrRegisterSerializerInternal(argument));
+        return SerializerPair.CreateFromMethods(staticRead, staticWrite, GetOrRegisterStaticSerializerInternal(argument));
       }
 
       if (genericArguments.Length == 0)
@@ -350,7 +355,7 @@ namespace JetBrains.Rd.Reflection
       for (var index = 0; index < argumentTypes.Length; index++)
       {
         var argumentType = argumentTypes[index];
-        var serPair = GetOrRegisterSerializerInternal(argumentType);
+        var serPair = GetOrRegisterStaticSerializerInternal(argumentType);
         memberDeserializers[index] = ConvertReader(argumentType, serPair.Reader);
         memberSerializers[index] = ConvertWriter(argumentType, serPair.Writer);
       }
@@ -382,7 +387,7 @@ namespace JetBrains.Rd.Reflection
       return new SerializerPair(readerDelegate, writerDelegate);
     }
 
-    private SerializerPair GetMemberSerializer(MemberInfo member, TypeInfo typeInfo)
+    private SerializerPair GetStaticTypeSerializer(MemberInfo member, TypeInfo typeInfo)
     {
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
       var implementingTypeInfo = implementingType.GetTypeInfo();
@@ -403,7 +408,20 @@ namespace JetBrains.Rd.Reflection
         return CreateGenericSerializer(member, typeInfo, implementingType, implementingTypeInfo);
       }
 
-      return GetProperSerializer(typeInfo.AsType());
+      var type = typeInfo.AsType();
+      if (type.IsArray)
+      {
+        return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), type.GetElementType());
+      }
+      else if (type.IsEnum)
+      {
+        var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), type);
+        return (SerializerPair) serializer;
+      }
+      else
+      {
+        return GetOrRegisterStaticSerializerInternal(type);
+      }
     }
 
     private SerializerPair CreateEnumSerializer<T>()
@@ -429,9 +447,9 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair CreateArraySerializer<T>()
     {
-      var primitiveSerializer = GetProperSerializer(typeof(T));
-      var valueReader = primitiveSerializer.GetReader<T>();
-      var valueWriter = primitiveSerializer.GetWriter<T>();
+      var serializer = GetInstanceSerializer(typeof(T));
+      var valueReader = serializer.GetReader<T>();
+      var valueWriter = serializer.GetWriter<T>();
 
       CtxReadDelegate<T[]> reader = (ctx, unsafeReader) => unsafeReader.ReadArray(valueReader, ctx);
       CtxWriteDelegate<T[]> writer = (ctx, unsafeWriter, value) => unsafeWriter.WriteArray(valueWriter, ctx, value);
@@ -473,7 +491,7 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair RegisterNullable<T>() where T : struct
     {
-      var serPair = GetMemberSerializer(null, typeof(T).GetTypeInfo());
+      var serPair = GetStaticTypeSerializer(null, typeof(T).GetTypeInfo());
       var ctxReadDelegate = serPair.GetReader<T>();
       var ctxWriteDelegate = serPair.GetWriter<T>();
       return new SerializerPair(ctxReadDelegate.NullableStruct(), ctxWriteDelegate.NullableStruct());
@@ -722,26 +740,43 @@ namespace JetBrains.Rd.Reflection
       return new SerializerPair(reader, writer);
     }
 
-    public SerializerPair GetProperSerializer(Type type)
+    /// <summary>
+    /// Return serializers for type (polymorphic if necessary)
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public SerializerPair GetInstanceSerializer(Type type)
     {
       lock (myLock)
       {
-        if (CanBePolymorphic(type.GetTypeInfo()))
+        if (myInstanceSerializers.TryGetValue(type, out var pair))
         {
-          return GetPolymorphic(type);
+          return pair;
         }
-        else if (type.IsArray)
+
+        var result = CreateInstanceSerializer(type);
+        myInstanceSerializers[type] = result;
+        return result;
+      }
+
+      SerializerPair CreateInstanceSerializer(Type t)
+      {
+        if (CanBePolymorphic(t.GetTypeInfo()))
         {
-          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), type.GetElementType());
+          return GetPolymorphic(t);
         }
-        else if (type.IsEnum)
+        else if (t.IsArray)
         {
-          var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), type);
+          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), t.GetElementType());
+        }
+        else if (t.IsEnum)
+        {
+          var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), t);
           return (SerializerPair) serializer;
         }
         else
         {
-          return GetOrRegisterSerializerInternal(type);
+          return GetOrRegisterStaticSerializerInternal(t);
         }
       }
     }
