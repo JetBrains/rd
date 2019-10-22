@@ -1862,14 +1862,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     .println { "${it.encapsulatedName}.optimize_nested = true;" }
 
             decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful.Property>()
-                    .println { "${it.encapsulatedName}.is_master = ${it.master};" }
-
-            decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful.Map>()
-                    .println { "${it.encapsulatedName}.is_master = ${it.master};" }
-
-            decl.ownMembers
                     .filterIsInstance<Member.Reactive>()
                     .filter { it.freeThreaded }
                     .println { "${it.encapsulatedName}.async = true;" }
