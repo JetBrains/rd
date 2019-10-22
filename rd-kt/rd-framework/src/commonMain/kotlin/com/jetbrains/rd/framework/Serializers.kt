@@ -14,7 +14,6 @@ class Serializers : ISerializers {
     override val toplevels: MutableSet<KClass<out ISerializersOwner>> = HashSet()
 
     val types = hashMapOf<RdId, KClass<*>>()
-    val readers = hashMapOf<RdId, (SerializationCtx, AbstractBuffer) -> Any>()
     val writers = hashMapOf<KClass<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
     val marshallers = hashMapOf<RdId, IMarshaller<*>>()
 
@@ -37,7 +36,6 @@ class Serializers : ISerializers {
         }
 
         marshallers[id] = serializer
-        readers[id] = serializer::read
         writers[t] = Pair(id, serializer::write) as Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>
     }
 
@@ -51,7 +49,7 @@ class Serializers : ISerializers {
         val size = stream.readInt()
         stream.checkAvailable(size)
 
-        val reader = readers[id]
+        val reader = marshallers[id]
         if (reader == null) {
             if (abstractDeclaration == null) {
                 throw IllegalStateException("Can't find reader by id: $id. $notRegisteredErrorMessage")
@@ -60,7 +58,7 @@ class Serializers : ISerializers {
             return abstractDeclaration.readUnknownInstance(ctx, stream, id, size)
         }
 
-        return reader.invoke(ctx, stream) as T
+        return reader.read(ctx, stream) as T
     }
 
     override fun <T> writePolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
