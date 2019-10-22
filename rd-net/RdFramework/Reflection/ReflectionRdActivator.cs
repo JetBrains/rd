@@ -177,8 +177,7 @@ namespace JetBrains.Rd.Reflection
       var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(typeInfo);
       if (!isProxy && rpcInterface != null)
       {
-        var fieldInfo = typeInfo.GetField("BindableChildren", BindingFlags.Instance | BindingFlags.NonPublic).NotNull("BindableChildren not found");
-        var bindableChildren = (List<KeyValuePair<string, object>>) fieldInfo.GetValue(instance);
+        var bindableChildren = ((IReflectionBindable) instance).BindableChildren;
 
         var interfaceMap = typeInfo.GetInterfaceMap(rpcInterface);
         var implementingMethods = interfaceMap.TargetMethods;
