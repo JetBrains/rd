@@ -1,22 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net461</TargetFrameworks>
-        <DebugType>Full</DebugType>
-        <IsPackable>false</IsPackable>
-        <DefineConstants>JET_MODE_ASSERT</DefineConstants>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
         <RootNamespace>Test.RdCross</RootNamespace>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
     </ItemGroup>
+    
     
 
 </Project>
