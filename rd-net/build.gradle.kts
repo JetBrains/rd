@@ -1,15 +1,13 @@
 @file:Suppress("UNUSED_VARIABLE", "LocalVariableName")
 
+import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
 import com.jetbrains.rd.gradle.tasks.DotnetRunTask
 import com.jetbrains.rd.gradle.tasks.RunScriptTask
 
 
 tasks {
-    val build by creating(Exec::class) {
+    val build by creating(DotnetBuildTask::class) {
         dependsOn(":rd-gen:generateEverything")
-
-        executable = "dotnet"
-        args = listOf("build")
     }
 
     val clean by creating(Exec::class) {
@@ -17,9 +15,14 @@ tasks {
         args = listOf("clean")
     }
 
-    val CrossTestCsClientAllEntities by creating(DotnetRunTask::class)
+    fun creatingCrossTestTask() = creating(DotnetRunTask::class) {
+        dependsOn(build)
+        workingDir = workingDir.resolve("CrossTest")
+    }
 
-    val CrossTestCsClientBigBuffer by creating(DotnetRunTask::class)
+    val CrossTestCsClientAllEntities by creatingCrossTestTask()
 
-    val CrossTestCsClientRdCall by creating(DotnetRunTask::class)
+    val CrossTestCsClientBigBuffer by creatingCrossTestTask()
+
+    val CrossTestCsClientRdCall by creatingCrossTestTask()
 }

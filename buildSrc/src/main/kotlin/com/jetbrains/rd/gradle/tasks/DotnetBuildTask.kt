@@ -9,10 +9,40 @@ open class DotnetBuildTask : Exec(), MarkedExecTask {
     override val commandLineWithArgs: List<String>
         get() = ((this as BaseExecSpec).getCommandLine() + tmpFile.absolutePath)
 
+
+    override fun exec() {
+        inputs.files.forEach {
+            println("INPUT_FILE:${it}")
+        }
+
+        outputs.files.forEach {
+            println("OUTPUT_FILE:${it}")
+        }
+        super.exec()
+    }
+
     init {
         executable = "dotnet"
-        workingDir = workingDir.resolve("CrossTest")
 
-        setArgs(listOf("build", "--framework=netcoreapp$netCoreAppVersion"))
+        setArgs(listOf("build"/*, "--framework=netcoreapp$netCoreAppVersion"*/))
+
+        addInputs()
+        addOutputs()
+    }
+
+    private fun addInputs() {
+        val blackListFolder = listOf(".idea", "bin", "obj", "packages", "artifacts")
+        val whiteListExtensions = listOf("cs", "csproj", "fs")
+        val search = workingDir.walk()
+                .onEnter { a -> a.name !in blackListFolder }
+                .filter { a -> a.isFile && a.extension in whiteListExtensions }
+        search.forEach { inputs.file(it) }
+    }
+
+    private fun addOutputs() {
+        val whiteListExtensions = listOf("dll", "exe")
+        val search = workingDir.walk()
+            .filter { a -> a.isFile && a.extension in whiteListExtensions }
+        search.forEach { outputs.file(it) }
     }
 }

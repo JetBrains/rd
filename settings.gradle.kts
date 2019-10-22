@@ -25,9 +25,12 @@ if (!onTeamcity()) {
     include(":rd-net")
     project(":rd-net").projectDir = File("rd-net")
 
+//    include(":rd-cpp")
+//    project(":rd-cpp").projectDir = File("rd-cpp")
+
     include(":rd-cross")
     project(":rd-cross").projectDir = File("rd-kt/rd-cross")
 }
 
-//include(":rd-cpp")
+
 

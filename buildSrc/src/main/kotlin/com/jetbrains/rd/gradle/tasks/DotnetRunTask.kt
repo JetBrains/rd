@@ -11,9 +11,7 @@ open class DotnetRunTask : Exec(), MarkedExecTask {
         get() = ((this as BaseExecSpec).getCommandLine() + tmpFile.absolutePath)
 
     init {
-        dependsOn(project.tasks.create<DotnetBuildTask>("${name}Build"))
         executable = "dotnet"
-        workingDir = workingDir.resolve("CrossTest")
 
         setArgs(listOf("run", "--framework=netcoreapp$netCoreAppVersion", name))
     }

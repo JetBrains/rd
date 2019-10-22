@@ -11,7 +11,7 @@ open class RunScriptTask : Exec() {
 
     init {
         group = "cmd"
-        outputs.upToDateWhen { true }
+        outputs.upToDateWhen { false }
     }
 
     @TaskAction

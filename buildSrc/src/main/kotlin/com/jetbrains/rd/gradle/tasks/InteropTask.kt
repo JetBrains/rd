@@ -27,7 +27,6 @@ open class InteropTask : DefaultTask() {
 
     init {
         group = "interop"
-        outputs.upToDateWhen { false }
     }
 
     fun lateInit() {
