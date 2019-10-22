@@ -119,9 +119,9 @@ namespace JetBrains.Rd.Reflection
       return IsFieldType(typeInfo) || IsMemberType(typeInfo);
     }
 
-    public static bool CanBeNull(MemberInfo memberInfo)
+    public static bool CanBeNull(Type type)
     {
-      var returnType = ReflectionUtil.GetReturnType(memberInfo);
+      var returnType = type;
 
       var returnTypeInfo = returnType.GetTypeInfo();
       if (IsNullable(returnTypeInfo, _ => true))
@@ -129,13 +129,13 @@ namespace JetBrains.Rd.Reflection
 
       if (returnTypeInfo.IsValueType)
         return false;
-
+/*
       foreach (var attribute in memberInfo.GetCustomAttributes(false))
         if (attribute is CanBeNullAttribute)
           return true;
+*/
 
-      // NotNull by default for any reference type
-      return false;
+      return true;
     }
 
     private static bool IsFieldType(TypeInfo typeInfo, bool canBeArray = true)

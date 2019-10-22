@@ -288,7 +288,7 @@ namespace JetBrains.Rd.Reflection
       TypeInfo typeInfo = typeof(T).GetTypeInfo();
       ReflectionSerializerVerifier.AssertRoot(typeInfo);
       var isScalar = ReflectionSerializerVerifier.IsScalar(typeInfo);
-      bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || isScalar;
+      bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || (isScalar && ReflectionSerializerVerifier.CanBeNull(typeInfo));
 
       var intrinsicSerializer = TryGetIntrinsicSerializer(typeInfo);
       if (intrinsicSerializer != null)
@@ -317,6 +317,9 @@ namespace JetBrains.Rd.Reflection
 
       CtxReadDelegate<T> readerDelegate = (ctx, unsafeReader) =>
       {
+        if (allowNullable && !unsafeReader.ReadNullness())
+          return default;
+
         object instance;
         if (isScalar)
         {
@@ -345,6 +348,13 @@ namespace JetBrains.Rd.Reflection
 
       CtxWriteDelegate<T> writerDelegate = (ctx, unsafeWriter, value) =>
       {
+        if (allowNullable)
+        {
+          unsafeWriter.Write(value != null);
+          if (value == null)
+            return;
+        }
+
         if (value is IRdBindable bindableInstance)
         {
           unsafeWriter.Write(bindableInstance.RdId);

@@ -44,6 +44,20 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+    [Test]
+    public void TestNestedNull()
+    {
+      WithExts<TestExt>((c, s) =>
+      {
+        c.Interface.Value = new ProjectFileDescriptor("ProjectItem");
+        Assert.AreEqual(c.Interface.Value.GetType(), s.Interface.Value.GetType());
+        Assert.AreEqual(c.Interface.Value.Name, s.Interface.Value.Name);
+        Assert.AreNotSame(c.Interface.Value, s.Interface.Value);
+      });
+    }
+
+
+
     public override void SetUp()
     {
       base.SetUp();
@@ -80,9 +94,17 @@ namespace Test.RdFramework.Reflection
       public string Name { get; }
     }
 
+    [RdScalar]
+    public class ProjectInfo
+    {
+      public string Name;
+      public string Path;
+    }
+
     [RdScalar] // not required
     public class ProjectFileDescriptor : ProjectItemDescriptor
     {
+      public ProjectInfo ProjectInfo;
       public ProjectFileDescriptor(string name) : base(name)
       {
       }
