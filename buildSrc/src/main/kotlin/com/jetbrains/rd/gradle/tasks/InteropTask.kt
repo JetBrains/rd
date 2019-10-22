@@ -4,7 +4,6 @@ import com.jetbrains.rd.gradle.tasks.util.portFile
 import com.jetbrains.rd.gradle.tasks.util.portFileClosed
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.time.LocalTime
 import java.util.concurrent.CountDownLatch
@@ -25,6 +24,8 @@ open class InteropTask : DefaultTask() {
 
     private val processes: MutableList<ProcessBuilder> = mutableListOf()
 
+    private fun outputTmpDirectory() = (taskServer as Task).tmpFileDirectory
+
     init {
         group = "interop"
     }
@@ -32,6 +33,9 @@ open class InteropTask : DefaultTask() {
     fun lateInit() {
         dependsOn((taskServer as Task).taskDependencies)
         dependsOn((taskClient as Task).taskDependencies)
+
+        System.setProperty("TmpSubDirectory", name)
+        outputs.dirs(outputTmpDirectory())
     }
 
     private fun executeTask(task: MarkedExecTask, command: List<String>) {
@@ -62,12 +66,13 @@ open class InteropTask : DefaultTask() {
         executeTask(taskClient, clientRunningCommand)
     }
 
+
     private fun beforeStart() {
         assert(portFile.delete())
         assert(portFileClosed.delete())
         System.setProperty("TmpSubDirectory", name)
-        assert((taskServer as Task).tmpFileDirectory.deleteRecursively())
-        assert((taskServer as Task).tmpFileDirectory.mkdirs())
+        assert(outputTmpDirectory().deleteRecursively())
+        assert(outputTmpDirectory().mkdirs())
     }
 
     @TaskAction

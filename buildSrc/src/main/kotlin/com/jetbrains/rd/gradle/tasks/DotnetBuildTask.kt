@@ -9,18 +9,6 @@ open class DotnetBuildTask : Exec(), MarkedExecTask {
     override val commandLineWithArgs: List<String>
         get() = ((this as BaseExecSpec).getCommandLine() + tmpFile.absolutePath)
 
-
-    override fun exec() {
-        inputs.files.forEach {
-            println("INPUT_FILE:${it}")
-        }
-
-        outputs.files.forEach {
-            println("OUTPUT_FILE:${it}")
-        }
-        super.exec()
-    }
-
     init {
         executable = "dotnet"
 
