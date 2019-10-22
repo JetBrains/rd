@@ -337,6 +337,7 @@ fun Lifetime.throwIfNotAlive() { if (status != Alive) throw CancellationExceptio
 fun Lifetime.assertAlive() { assert(status == Alive) { "Not alive: $status" } }
 
 val Lifetime.isAlive : Boolean get() = status == Alive
+val Lifetime.isNotAlive : Boolean get() = status != Alive
 val Lifetime.isEternal : Boolean get() = this === Lifetime.Eternal
 
 

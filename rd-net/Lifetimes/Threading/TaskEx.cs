@@ -44,22 +44,52 @@ namespace JetBrains.Threading
             }, TaskContinuationOptions.ExecuteSynchronously);
 
             return res;
-
-            
         }
 
 
         /// <summary>
-        /// Get exception 
+        /// Waits for result of given task or throw <see cref="OperationCanceledException"/> 
         /// </summary>
-        /// <param name="task"></param>
-        /// <param name="lifetime"></param>
+        /// <param name="task">Task to wait</param>
+        /// <param name="lifetime">Cancellation token for </param>
         /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        /// <returns><see cref="Task.Result"/> of <paramref name="task"/></returns>
         public static T GetOrWait<T>([NotNull] this Task<T> task, Lifetime lifetime)
         {
             task.Wait(lifetime);
             return task.Result;
+        }
+
+        
+        /// <summary>
+        /// Return true only if task finished and finished with exception that is or consists only from <see cref="OperationCanceledException"/>.
+        /// Allow to dive through all <see cref="AggregateException"/> and Inner exceptions.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns>true only if task finished and resulting exception matches <see cref="ExceptionEx.IsOperationCanceled"/></returns>
+        public static bool IsOperationCanceled([NotNull] this Task task)
+        {
+          return task.IsCanceled || task.Exception.IsOperationCanceled();
+        }
+
+
+        /// <summary>
+        /// Transform result of original task right after it finished (with <see cref="Task.ConfigureAwait"/> == false).
+        /// If task is not successfully finished then throw original exception. 
+        /// </summary>
+        /// <param name="task">original task</param>
+        /// <param name="selector">transform function from original type to destination one</param>
+        /// <typeparam name="TSrc">original type</typeparam>
+        /// <typeparam name="TDst">destination type</typeparam>
+        /// <returns>new task that is considered completed right after original task completes</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        [PublicAPI] public static async Task<TDst> Select<TSrc, TDst>([NotNull] this Task<TSrc> task, Func<TSrc, TDst> selector)
+        {
+          if (task == null) 
+            throw new ArgumentNullException(nameof(task));
+
+          var res = await task.ConfigureAwait(false);
+          return selector(res);
         }
     }
 }

@@ -49,5 +49,10 @@ namespace JetBrains.Rd.Tasks
     {
       return myHandler(myBindLifetime, request);
     }
+
+    public IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler responseScheduler = null)
+    {
+      return myHandler(myBindLifetime.Intersect(lifetime), request);
+    }
   }
 }

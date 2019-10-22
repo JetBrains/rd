@@ -363,10 +363,12 @@ namespace JetBrains.Rd.Reflection
       }
 
 
+      var startMethod = fieldType.GetMethods().Single(info => info.Name == nameof(IRdCall<int, int>.Start) && info.GetParameters().Length == 2);
+      
       if (isSyncCall)
       {
         ilgen.Emit(OpCodes.Ldsfld, typeof(SynchronousScheduler).GetField(nameof(SynchronousScheduler.Instance))); // ResponseScheduler
-        ilgen.Emit(OpCodes.Callvirt, fieldType.GetMethod(nameof(IRdCall<int,int>.Start)).NotNull("fieldType.GetMethod(Sync) != null"));
+        ilgen.Emit(OpCodes.Callvirt, startMethod.NotNull("fieldType.GetMethod(Start) != null"));
         ilgen.Emit(OpCodes.Callvirt, (typeof(RdTask<>)).MakeGenericType(responseType)
           .GetProperty(nameof(IRdTask<int>.Result))
           .NotNull("NoResult Property")
@@ -384,7 +386,7 @@ namespace JetBrains.Rd.Reflection
       {
         // async
         ilgen.Emit(OpCodes.Ldnull); // ResponseScheduler
-        ilgen.Emit(OpCodes.Callvirt, fieldType.GetMethod(nameof(IRdCall<int,int>.Start)).NotNull("fieldType.GetMethod(Sync) != null"));
+        ilgen.Emit(OpCodes.Callvirt, startMethod.NotNull("fieldType.GetMethod(Start) != null"));
 /*        ilgen.Emit(OpCodes.Callvirt, (typeof(IReadonlyProperty<>)).MakeGenericType(typeof(RdTaskResult<>).MakeGenericType(responseType))
           .GetProperty(nameof(IReadonlyProperty<int>.Value))
           .NotNull("no Value Property")
