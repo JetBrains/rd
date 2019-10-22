@@ -17,7 +17,7 @@ tasks {
 
     fun creatingCrossTestTask() = creating(DotnetRunTask::class) {
         dependsOn(build)
-        workingDir = workingDir.resolve("CrossTest")
+        workingDir = workingDir.resolve("Test.Cross")
     }
 
     val CrossTestCsClientAllEntities by creatingCrossTestTask()

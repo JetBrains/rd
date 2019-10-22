@@ -22,7 +22,7 @@ tasks {
         addSources(mapOf(
                 cppDirectorySystemPropertyKey to "${cppRoot}/demo",
                 ktDirectorySystemPropertyKey to "${BUILD_DIR}/models/demo",
-                csDirectorySystemPropertyKey to "${csRoot}/CrossTest/Model"
+                csDirectorySystemPropertyKey to "${csRoot}/Test.Cross/Model"
         ), "demo")
 
         addSources(mapOf(
