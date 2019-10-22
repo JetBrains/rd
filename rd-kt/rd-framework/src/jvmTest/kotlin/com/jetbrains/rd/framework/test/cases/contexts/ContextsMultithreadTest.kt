@@ -3,7 +3,7 @@ package com.jetbrains.rd.framework.test.cases.contexts
 import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.RdContextKey
 import com.jetbrains.rd.framework.impl.RdSignal
-import com.jetbrains.rd.framework.test.cases.RdAsyncTestBase
+import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import org.junit.Assert
 import org.junit.Test
 import java.util.concurrent.CountDownLatch

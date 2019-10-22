@@ -10,12 +10,13 @@ import java.io.File
 object SyncModelRoot : Root(
     Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", File(syspropertyOrInvalid("model.out.src.kt.dir")))
 ) {
+    val ClientId = contextKey("ClientId", string)
     val Baseclazz = baseclass {
         field("f", int)
     }
     val Clazz = classdef extends Baseclazz {
         property("p", int.nullable)
-        map("mapPerClientId", int, int).perClientId
+        map("mapPerClientId", int, int).perContext(ClientId)
     }
 
     init {
@@ -31,7 +32,7 @@ object SyncModelRoot : Root(
         list("list", Clazz)
         set("set", int)
         map("map", int, Clazz)
-        property("propPerClientId", int).perClientId
+        property("propPerClientId", int).perContext(ClientId)
     }
 }
 

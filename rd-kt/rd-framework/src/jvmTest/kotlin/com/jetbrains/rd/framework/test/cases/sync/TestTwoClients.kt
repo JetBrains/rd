@@ -51,6 +51,14 @@ class TestTwoClients : TestBase() {
 
         wait { sp.size  == 2 }
 
+        SyncModelRoot.ClientId.value = "Host"
+
+        cp[0].contextHandler.registerKey(SyncModelRoot.ClientId)
+        cp[1].contextHandler.registerKey(SyncModelRoot.ClientId)
+
+        sp[0].contextHandler.registerKey(SyncModelRoot.ClientId)
+        sp[1].contextHandler.registerKey(SyncModelRoot.ClientId)
+
         c0 = SyncModelRoot.create(lifetime, cp[0])
         c1 = SyncModelRoot.create(lifetime, cp[1])
 
@@ -63,6 +71,7 @@ class TestTwoClients : TestBase() {
     @After
     fun teardown() {
         ConsoleLoggerFactory.traceCategories.clear()
+        SyncModelRoot.ClientId.value = null
     }
 
     @Test
