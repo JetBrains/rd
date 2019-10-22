@@ -109,6 +109,47 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
+    /// <summary>
+    /// Return serializers for type (polymorphic if necessary)
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public SerializerPair GetInstanceSerializer(Type type)
+    {
+      lock (myLock)
+      {
+        if (myInstanceSerializers.TryGetValue(type, out var pair))
+        {
+          return pair;
+        }
+
+        var result = CreateInstanceSerializer(type);
+        myInstanceSerializers[type] = result;
+        return result;
+      }
+
+      SerializerPair CreateInstanceSerializer(Type t)
+      {
+        if (CanBePolymorphic(t.GetTypeInfo()))
+        {
+          return GetPolymorphic(t);
+        }
+        else if (t.IsArray)
+        {
+          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), t.GetElementType());
+        }
+        else if (t.IsEnum)
+        {
+          var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), t);
+          return (SerializerPair) serializer;
+        }
+        else
+        {
+          return GetOrRegisterStaticSerializerInternal(t);
+        }
+      }
+    }
+
     private SerializerPair GetOrRegisterStaticSerializerInternal(Type type)
     {
       if (!mySerializers.TryGetValue(type, out var serializerPair))
@@ -181,7 +222,7 @@ namespace JetBrains.Rd.Reflection
     /// Can be used for RdExt, RdModel and any RdScalar.
     /// </summary>
     [NotNull]
-    internal static MemberInfo[] GetBindableMembers(TypeInfo typeInfo)
+    internal static FieldInfo[] GetBindableMembers(TypeInfo typeInfo)
     {
 /*
       var rpcInterface = GetRpcInterface();
@@ -199,14 +240,20 @@ namespace JetBrains.Rd.Reflection
       else
         baseType = typeof(RdBindableBase);
 
+      bool isRdExt = baseType == typeof(RdExtReflectionBindableBase);
+
       var members = GetFields(typeInfo, baseType);
-      var list = new List<MemberInfo>();
+      var list = new List<FieldInfo>();
       foreach (var mi in members)
       {
         if (
           mi.MemberType == MemberTypes.Field &&
           (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(baseType)) &&
-          mi.GetCustomAttribute<NonSerializedAttribute>() == null)
+          mi.GetCustomAttribute<NonSerializedAttribute>() == null &&
+
+          // arbitrary data is allowed in RdExt since they don't have to be serializable
+          !(isRdExt && ReflectionSerializerVerifier.IsScalar(ReflectionSerializerVerifier.GetImplementingType(mi.FieldType.GetTypeInfo())))
+          )
         {
           list.Add(mi);
         }
@@ -738,47 +785,6 @@ namespace JetBrains.Rd.Reflection
       var reader = polymorphicClass.GetTypeInfo().GetField("Read", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
       var writer = polymorphicClass.GetTypeInfo().GetField("Write", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
       return new SerializerPair(reader, writer);
-    }
-
-    /// <summary>
-    /// Return serializers for type (polymorphic if necessary)
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public SerializerPair GetInstanceSerializer(Type type)
-    {
-      lock (myLock)
-      {
-        if (myInstanceSerializers.TryGetValue(type, out var pair))
-        {
-          return pair;
-        }
-
-        var result = CreateInstanceSerializer(type);
-        myInstanceSerializers[type] = result;
-        return result;
-      }
-
-      SerializerPair CreateInstanceSerializer(Type t)
-      {
-        if (CanBePolymorphic(t.GetTypeInfo()))
-        {
-          return GetPolymorphic(t);
-        }
-        else if (t.IsArray)
-        {
-          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), t.GetElementType());
-        }
-        else if (t.IsEnum)
-        {
-          var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), t);
-          return (SerializerPair) serializer;
-        }
-        else
-        {
-          return GetOrRegisterStaticSerializerInternal(t);
-        }
-      }
     }
   }
 

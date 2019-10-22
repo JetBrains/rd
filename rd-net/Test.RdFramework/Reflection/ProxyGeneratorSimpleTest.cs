@@ -73,7 +73,8 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     public class SimpleCalls : RdExtReflectionBindableBase, ISimpleCalls
     {
-      [NonSerialized]
+      // Non Serialized not required in RdExt
+      // [NonSerialized]
       private string myString;
 
       public void M() { }

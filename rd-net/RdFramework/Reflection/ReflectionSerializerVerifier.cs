@@ -269,16 +269,7 @@ namespace JetBrains.Rd.Reflection
 
       foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
       {
-        if (member is PropertyInfo || member is FieldInfo)
-        {
-          AssertMemberDeclaration(member);
-        }
-
-        if (member is TypeInfo)
-        {
-          // out scope for current validation
-        }
-        // methods and events are allowed in model
+        AssertMemberDeclaration(member);
       }
     }
 
@@ -303,16 +294,7 @@ namespace JetBrains.Rd.Reflection
 
       foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
       {
-        if (member is PropertyInfo || member is FieldInfo)
-        {
-          AssertDataMemberDeclaration(member);
-        }
-
-        if (member is TypeInfo)
-        {
-          // out scope for current validation
-        }
-        // methods events are allowed in model
+        AssertDataMemberDeclaration(member);
       }
     }
 
