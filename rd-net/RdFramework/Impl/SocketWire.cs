@@ -463,7 +463,7 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(endPoint), optId)
+      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(lifetime, endPoint), optId)
       {}
         
       
@@ -474,18 +474,29 @@ namespace JetBrains.Rd.Impl
         StartServerSocket(lifetime, serverSocket);
       }
 
-      internal static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
+      internal static Socket CreateServerSocket(Lifetime lifetime, [CanBeNull] IPEndPoint endPoint)
       {
         Protocol.InitializationLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
-        var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        SetSocketOptions(serverSocket);
 
-        endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
-        serverSocket.Bind(endPoint);
-        serverSocket.Listen(1);
-        Protocol.InitializationLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+        return lifetime.Bracket(() =>
+          {
+            var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            SetSocketOptions(serverSocket);
 
-        return serverSocket;
+            endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
+            serverSocket.Bind(endPoint);
+            serverSocket.Listen(1);
+            Protocol.InitializationLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+
+            return serverSocket;
+          },
+          socket =>
+          {
+            JetBrains.Diagnostics.Log.GetLog<Server>().Verbose("closing server socket");
+            socket.Close();
+          }
+          );
+
       }
 
       private void StartServerSocket(Lifetime lifetime, [NotNull] Socket serverSocket)
@@ -543,14 +554,6 @@ namespace JetBrains.Rd.Impl
         thread.Start();
 
         AddTerminationActions(thread);
-
-        //order is critical: we need to close server socket first and the terminate other stuff and wait for thread 
-        lifetime.OnTermination(() =>
-        {
-          Log.Verbose("{0}: closing server socket", Id);
-
-          CloseSocket(serverSocket);
-        });
       }
     }
     
@@ -592,17 +595,20 @@ namespace JetBrains.Rd.Impl
         IPEndPoint endpoint = null
       )
       {
-        var serverSocket = Server.CreateServerSocket(endpoint);
+        var serverSocket = Server.CreateServerSocket(lifetime, endpoint);
         LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port; 
         
         void Rec()
         {
-          var (scheduler, id) = wireParametersFactory();
-          var s = new Server(lifetime, scheduler, serverSocket, id);
-          s.Connected.WhenTrue(lifetime, lt =>
+          lifetime.TryExecute(() =>
           {
-            Connected.AddLifetimed(lt, s);
-            Rec();
+            var (scheduler, id) = wireParametersFactory();
+            var s = new Server(lifetime, scheduler, serverSocket, id);
+            s.Connected.WhenTrue(lifetime, lt =>
+            {
+              Connected.AddLifetimed(lt, s);
+              Rec();
+            });
           });
         }
 
