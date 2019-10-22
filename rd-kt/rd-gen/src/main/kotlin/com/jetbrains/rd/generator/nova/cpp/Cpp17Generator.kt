@@ -101,14 +101,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     object PublicCtors : ISetting<Unit, Declaration>
 
-    object MasterStateful : ISetting<Boolean, Declaration>
-
-    private val Member.Reactive.Stateful.Property.master: Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@Cpp17Generator.master
-
-    private val Member.Reactive.Stateful.Map.master: Boolean
-        get() = owner.getSetting(MasterStateful) ?: this@Cpp17Generator.master
-
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
 
     object TargetName : ISetting<String, Toplevel>
