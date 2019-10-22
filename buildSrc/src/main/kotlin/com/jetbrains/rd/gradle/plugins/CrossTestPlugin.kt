@@ -12,6 +12,7 @@ import org.gradle.kotlin.dsl.*
 
 fun Project.applyCrossTest() = apply<CrossTestPlugin>()
 
+@Suppress("UNUSED_VARIABLE")
 class CrossTestPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = target.run {
         applyKotlinJVM()
@@ -26,7 +27,6 @@ class CrossTestPlugin : Plugin<Project> {
         dependencies {
             `compile`(`rd-framework`)
             `implementation`(gradleApi())
-
         }
 
         /*fun getCppTaskByName(name: String): RunScriptTask {
@@ -51,17 +51,16 @@ class CrossTestPlugin : Plugin<Project> {
                 classpath += configurations["runtimeClasspath"]
             }
 
-            val CrossTestKtServerAllEntities by creating(CrossTestKtRdTask::class) {
-                initialize()
-            }
+            fun creatingKtServerTask() =
+                creating(CrossTestKtRdTask::class) {
+                    initialize()
+                }
 
-            val CrossTestKtServerBigBuffer by creating(CrossTestKtRdTask::class) {
-                initialize()
-            }
+            val CrossTestKtServerAllEntities by creatingKtServerTask()
 
-            val CrossTestKtServerRdCall by creating(CrossTestKtRdTask::class) {
-                initialize()
-            }
+            val CrossTestKtServerBigBuffer by creatingKtServerTask()
+
+            val CrossTestKtServerRdCall by creatingKtServerTask()
 //endregion
 
 //region KtCpp
@@ -110,11 +109,8 @@ class CrossTestPlugin : Plugin<Project> {
             }
 //endregion
 
-            val interopTasks = listOf(/*CrossTestKtCppAllEntities, CrossTestKtCppBigBuffer, CrossTestKtCppRdCall,*/
-                    CrossTestKtCsAllEntities, CrossTestKtCsBigBuffer, CrossTestKtCsRdCall)
-
             withType(Test::class) {
-                dependsOn(interopTasks)
+                dependsOn(withType(InteropTask::class))
             }
         }
     }

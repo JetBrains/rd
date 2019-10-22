@@ -3,6 +3,7 @@ package com.jetbrains.rd.gradle.tasks
 import com.jetbrains.rd.gradle.tasks.util.portFile
 import com.jetbrains.rd.gradle.tasks.util.portFileClosed
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
 import java.time.LocalTime
@@ -12,11 +13,8 @@ import kotlin.concurrent.thread
 
 const val PROCESS_WAIT_TIMEOUT = 20L
 
-@Suppress("UnstableApiUsage")
 open class InteropTask : DefaultTask() {
-//    @Input
     lateinit var taskServer: MarkedExecTask
-//    @Input
     lateinit var taskClient: MarkedExecTask
 
     private val serverRunningCommand by lazy { taskServer.commandLineWithArgs }
@@ -82,6 +80,8 @@ open class InteropTask : DefaultTask() {
         runServer()
         startClient()
 
+        var taskFailed = false
+
         val countDownLatch = CountDownLatch(2)
         processes.forEach { pb ->
             thread {
@@ -89,7 +89,8 @@ open class InteropTask : DefaultTask() {
                     val p = pb.start()
                     val exitStatus = p.waitFor(PROCESS_WAIT_TIMEOUT, TimeUnit.SECONDS)
                     if (!exitStatus) {
-                        println("$p exit with status=$exitStatus")
+                        taskFailed = true
+                        println("$p exited with status=$exitStatus")
                     }
                     p.destroyForcibly()
                 } catch (e: Exception) {
@@ -102,6 +103,10 @@ open class InteropTask : DefaultTask() {
         }
         countDownLatch.await()
 
-        println("At ${LocalTime.now()}: countDownLatch awaited")
+        println("At ${LocalTime.now()}: countDownLatch's awaited")
+
+        if (taskFailed) {
+            throw GradleException("Task $name failed")
+        }
     }
 }

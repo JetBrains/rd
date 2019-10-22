@@ -5,14 +5,11 @@ import org.gradle.api.tasks.Exec
 import org.gradle.process.BaseExecSpec
 
 @Suppress("UsePropertyAccessSyntax", "LeakingThis")
-open class DotnetBuildTask : Exec(), MarkedExecTask {
-    override val commandLineWithArgs: List<String>
-        get() = ((this as BaseExecSpec).getCommandLine() + tmpFile.absolutePath)
-
+open class DotnetBuildTask : Exec() {
     init {
         executable = "dotnet"
 
-        setArgs(listOf("build"/*, "--framework=netcoreapp$netCoreAppVersion"*/))
+        setArgs(listOf("build"))
 
         addInputs()
         addOutputs()

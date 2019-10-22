@@ -14,11 +14,8 @@ import javax.inject.Inject
  * Copy sources from {generativeSourceSet.output} to {currentProject.buildDir.resolve("generated")}
  */
 open class CopySourcesTask @Inject constructor() : Exec() {
-//    @Input
     lateinit var currentSourceSet: KotlinSourceSet
-//    @Input
     lateinit var currentProject: Project
-//    @Input
     lateinit var generativeSourceSet: SourceSet
 
     private lateinit var generatedDir: File

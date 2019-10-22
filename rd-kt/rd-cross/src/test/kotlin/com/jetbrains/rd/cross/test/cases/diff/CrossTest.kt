@@ -85,10 +85,11 @@ class CrossTest {
         doTest(methodName)
     }
 
-    /*@Test
+    @Ignore
+    @Test
     fun testCrossTestKtCppRdCall() {
         doTest(methodName)
-    }*/
+    }
 
     @Test
     fun testCrossTestKtCsRdCall() {
