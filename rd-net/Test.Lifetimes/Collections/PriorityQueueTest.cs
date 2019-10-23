@@ -161,11 +161,11 @@ namespace Test.Lifetimes.Collections
     [Test]
     public void TestQueueDifferentSizes()
     {
-      for (var size = 0; size <= 239; size++)
+      for (var size = 0; size <= 20; size++)
       {
         var queue = new JetPriorityQueue<int>(size);
 
-        for (var seed = 0; seed < 100; seed++)
+        for (var seed = 0; seed < 10; seed++)
         {
           var random = new Random(seed);
 
