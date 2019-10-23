@@ -13,7 +13,4 @@
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
         <Compile Include="obj\DemoModel\*.cs" />
     </ItemGroup>
-
-
-
 </Project>
