@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IOptPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.RdFault
+import com.jetbrains.rd.util.string.printToString
 
 /**
  * The result of asynchronously executing a task.
@@ -70,6 +71,8 @@ sealed class RdTaskResult<out T> {
             is Fault -> throw error
         }
     }
+
+    override fun toString(): String = this.printToString()
 }
 
 /**
