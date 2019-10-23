@@ -4,6 +4,7 @@ import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
@@ -354,13 +355,17 @@ class SocketWire {
         val port : Int = ss.localPort
 
         companion object {
-            internal fun createServerSocket(port : Int?, allowRemoteConnections: Boolean) : ServerSocket {
+            internal fun createServerSocket(lifetime: Lifetime, port : Int?, allowRemoteConnections: Boolean) : ServerSocket {
                 val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
-                return ServerSocket(port?:0, 0, address)
+                val res = ServerSocket(port?:0, 0, address)
+                lifetime.onTermination {
+                    res.close()
+                }
+                return res
             }
         }
 
-        constructor (lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : this(lifetime, scheduler, createServerSocket(port, allowRemoteConnections), optId, allowReconnect = true)
+        constructor (lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : this(lifetime, scheduler, createServerSocket(lifetime, port, allowRemoteConnections), optId, allowReconnect = true)
 
         init {
             var socket : Socket? = null
@@ -405,10 +410,6 @@ class SocketWire {
                 logger.debug {"$id: send buffer stopped, success: $sendBufferStopped"}
 
                 catch {
-                    logger.debug {"$id: closing server socket"}
-                    ss.close()
-                }
-                catch {
                     synchronized(lock) {
                         logger.debug {"$id: closing socket"}
                         socket?.close()
@@ -437,15 +438,17 @@ class SocketWire {
         val localPort: Int
 
         init {
-            val ss = Server.createServerSocket(port, allowRemoteConnections)
+            val ss = Server.createServerSocket(lifetime, port, allowRemoteConnections)
             localPort = ss.localPort
 
             fun rec() {
-                val (scheduler, optId) = wireParametersFactory()
-                val s = Server(lifetime, scheduler, ss, optId, allowReconnect = false)
-                s.connected.whenTrue(lifetime) { lt ->
-                    set.addUnique(lt, s)
-                    rec()
+                lifetime.executeIfAlive {
+                    val (scheduler, optId) = wireParametersFactory()
+                    val s = Server(lifetime, scheduler, ss, optId, allowReconnect = false)
+                    s.connected.whenTrue(lifetime) { lt ->
+                        set.addUnique(lt, s)
+                        rec()
+                    }
                 }
             }
 

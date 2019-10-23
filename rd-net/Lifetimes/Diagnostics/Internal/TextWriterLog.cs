@@ -11,7 +11,7 @@ namespace JetBrains.Diagnostics.Internal
   /// </summary>
   public class TextWriterLog : LogBase
   {
-    public TextWriter Writer { get; }
+    [PublicAPI] public TextWriter Writer { get; }
 
     protected override string Format(LoggingLevel level, string message, Exception exception)
     {
@@ -20,17 +20,14 @@ namespace JetBrains.Diagnostics.Internal
                
     public TextWriterLog([NotNull] TextWriter writer, [NotNull] string category, LoggingLevel enabledLevel = LoggingLevel.VERBOSE) : base(category, enabledLevel)
     {
-      Writer = writer ?? throw new ArgumentNullException(nameof(writer));
+      Writer = TextWriter.Synchronized(writer ?? throw new ArgumentNullException(nameof(writer)));
       Handlers += WriteMessage;
     }
 
     private void WriteMessage(LeveledMessage msg)
     {
-      lock (Writer) //Can't use TextWriter.Synchronized in NetCore 1.1
-      {
-        Writer.Write(msg.FormattedMessage);
-        Writer.Flush();
-      }
+      Writer.Write(msg.FormattedMessage);
+      Writer.Flush();
     }
   }
   

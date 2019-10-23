@@ -59,11 +59,10 @@ fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b
         b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
-    b.view(lifetime) { lt, (key, value) ->
-        if (a.changing)
-            return@view
-
-        a[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
+    b.change.advise(lifetime) { evt ->
+        evt.newValueOpt?.let {
+            synchronizePolymorphic(lifetime, a[evt.key], it)
+        }
     }
 
 }

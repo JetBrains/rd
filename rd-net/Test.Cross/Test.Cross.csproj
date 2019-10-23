@@ -1,15 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
-        <OutputType>Exe</OutputType>
-        <DebugType>Full</DebugType>
-        <IsPackable>false</IsPackable>
-        <LangVersion>latest</LangVersion>
-        <DefineConstants>JET_MODE_ASSERT</DefineConstants>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
         <RootNamespace>Test.RdCross</RootNamespace>
         <Configurations>CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,12 +14,6 @@
         <Compile Include="obj\DemoModel\*.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
-    </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-
-    </ItemGroup>
 
 </Project>
