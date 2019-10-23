@@ -140,6 +140,7 @@ interface IInternRoot: IRdReactive {
 
     /**
      * Removes interned value. Any future attempts to un-intern IDs previously associated with this value will fail.
+     * Not thread-safe. It's up to user to ensure that the value being removed is not being used in messages written on background threads.
      */
     fun removeValue(value: Any)
 }
