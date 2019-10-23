@@ -88,5 +88,7 @@ namespace JetBrains.Rd.Tasks
         }
       }
     }
+
+    public override string ToString() => this.PrintToString();
   }
 }

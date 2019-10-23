@@ -79,7 +79,7 @@ class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
 
 
 
-
+typealias RdEndpoint<TReq, TRes> = RdCall<TReq, TRes>
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 //Can't be constructed by constructor, only by deserializing counterpart: RdEndpoint
 class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
