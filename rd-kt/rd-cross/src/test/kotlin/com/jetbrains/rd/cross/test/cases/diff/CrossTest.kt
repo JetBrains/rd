@@ -17,15 +17,7 @@ class CrossTest {
         if (t1 == t2) {
             println("The files $file1 and $file2 are same!")
         } else {
-            fail(
-                    """
-                    |The files $file1 and $file2 differ!
-                    |$file1:
-                    |$t1
-                    |$file2:
-                    |$t2
-                """.trimMargin()
-            )
+            fail("The files $file1 and $file2 differ!")
         }
     }
 

@@ -1,3 +1,11 @@
-
-"***"
-"Callback:"Success :: 6
+T| protocol.SEND                  | ext `Server.DemoModel` (60875354825446) :: Ready
+T| protocol.SEND                  | property `Server.DemoModel.property_with_default` (17233417105262153962):: ver = 0, value = "192"
+T| protocol.SEND                  | call `Server.DemoModel.callback`::(16030252428258153037) send request '1000004' : "Csharp"
+T| protocol.SEND                  | Set `Server.ProtocolClientIdSet` (1172832244162654820) :: Add :: ClientId(Host)
+T| protocol.RECV                  | ext `Server.DemoModel` (60875354825446) :: remote: Ready
+T| protocol.SEND                  | ext `Server.DemoModel` (60875354825446) :: ReceivedCounterPart
+T| protocol.RECV                  | ext `Server.DemoModel` (60875354825446) :: remote: ReceivedCounterPart
+T| protocol.RECV                  | endpoint `Server.DemoModel.call`::(8815782547619852390), taskId=15034841944282701468, request = K
+T| protocol.SEND                  | endpoint `Server.DemoModel.call`::(8815782547619852390), taskId=15034841944282701468, response = Success :: "K"
+T| protocol.RECV                  | call Server.DemoModel.callback (16030252428258153037) received response for task '1000004' : Success :: 6
+T| protocol.SEND                  | ext `Server.DemoModel` (60875354825446) :: Disconnected

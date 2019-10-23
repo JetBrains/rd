@@ -1,6 +1,5 @@
 ﻿using demo;
 using JetBrains.Rd.Tasks;
-using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
@@ -16,14 +15,8 @@ namespace Test.RdCross
                 var demoModel = new DemoModel(ModelLifetime, Protocol);
                 
                 demoModel.Call.Set((lifetime, c) => RdTask<string>.Successful(c.ToString()));
-                
-                demoModel.Callback.Start("Csharp").Result.Advise(ModelLifetime, 
-                    result =>
-                    {
-                        Printer.PrintAnyway(nameof(demoModel.Callback), result);
 
-                        Finished = true;
-                    });
+                demoModel.Callback.Start("Csharp");
             });
             
             After();

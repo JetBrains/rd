@@ -12,59 +12,7 @@ namespace Test.RdCross
     // ReSharper disable once UnusedMember.Global
     public class CrossTestCsClientAllEntities : CrossTestCsClientBase
     {
-        private void AdviseAll(Lifetime lifetime, DemoModel model, ExtModel extModel)
-        {
-            model.Boolean_property.Advise(lifetime,
-                it => { Printer.PrintIfRemoteChange(model.Boolean_property, "Boolean_property", it); });
-
-            model.Boolean_array.Advise(lifetime,
-                it => { Printer.PrintIfRemoteChange(model.Boolean_array, "Boolean_array", it); });
-
-            model.Scalar.Advise(lifetime, it => { Printer.PrintIfRemoteChange(model.Scalar, "Scalar", it); });
-
-            model.Ubyte.Advise(lifetime, it => { Printer.PrintIfRemoteChange(model.Ubyte, "Ubyte", it); });
-
-            model.Ubyte_array.Advise(lifetime,
-                it => { Printer.PrintIfRemoteChange(model.Ubyte_array, "Ubyte_array", it); });
-
-            model.List.Advise(lifetime, e => { Printer.PrintIfRemoteChange(model.List, "List", e); });
-
-            model.Set.Advise(lifetime, e => { Printer.PrintIfRemoteChange(model.Set, "Set", e); });
-
-            model.MapLongToString.Advise(lifetime,
-                e => { Printer.PrintIfRemoteChange(model.MapLongToString, "MapLongToString", e); });
-
-            /*model.Callback.Set(s =>
-            {
-                Printer.Print("RdTask:");
-                Printer.Print(s);
-
-                return 50;
-            });*/
-
-            model.Interned_string.Advise(lifetime,
-                it => { Printer.PrintIfRemoteChange(model.Interned_string, "Interned_string", it); });
-
-            model.Polymorphic.Advise(lifetime,
-                it => { Printer.PrintIfRemoteChange(model.Polymorphic, "Polymorphic", it); });
-
-            model.Enum.Advise(lifetime, it =>
-            {
-                Printer.PrintIfRemoteChange(model.Enum, "Enum", it);
-                if (!model.Enum.IsLocalChange())
-                {
-                    Finished = true;
-                }
-            });
-
-            extModel.Checker.Advise(lifetime, () =>
-            {
-                Printer.Print("ExtModel:Checker:");
-                "Unit".PrintEx(Printer);
-            });
-        }
-
-        static void FireAll(DemoModel model, ExtModel extModel)
+      static void FireAll(DemoModel model, ExtModel extModel)
         {
             model.Boolean_property.Set(false);
 
@@ -122,12 +70,8 @@ namespace Test.RdCross
             {
                 var model = Logging.TrackAction("Creating DemoModel", () => new DemoModel(ModelLifetime, Protocol));
                 var extModel = Logging.TrackAction("Creating ExtModel", () => model.GetExtModel());
-
-                Logging.TrackAction("Advising started", () =>
-                  AdviseAll(ModelLifetime, model, extModel)
-                );
-
-                Logging.TrackAction("Firing started", () => 
+                
+                Logging.TrackAction("Firing", () => 
                   FireAll(model, extModel)
                 );
             });

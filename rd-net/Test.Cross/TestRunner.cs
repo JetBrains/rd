@@ -7,7 +7,7 @@ namespace Test.RdCross
     {
         public static void Main(string[] args)
         {
-            if (args.Length <= 1)
+            if (args.Length != 2 )
             {
                 throw new ArgumentException($"Wrong number of arguments:{args.Length}, expected = 2." +
                                             "Main([" +
