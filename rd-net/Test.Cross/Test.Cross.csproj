@@ -15,6 +15,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
+        <Compile Include="obj\DemoModel\*.cs"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -35,5 +35,6 @@ open class DotnetBuildTask : Exec() {
         val search = workingDir.walk()
             .filter { a -> a.isFile && a.extension in includedExtensions }
         search.forEach { outputs.file(it) }
+
     }
 }

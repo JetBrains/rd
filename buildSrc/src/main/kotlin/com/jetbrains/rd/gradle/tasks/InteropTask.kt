@@ -91,7 +91,7 @@ open class InteropTask : DefaultTask() {
 
         processes
             .map { (builder, name) ->
-                return@map Pair(builder.start(), name)
+                Pair(builder.start(), name)
             }
             .forEach { (process, name) ->
                 try {
