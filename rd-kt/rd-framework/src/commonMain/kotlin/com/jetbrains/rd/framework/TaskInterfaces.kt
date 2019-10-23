@@ -7,11 +7,14 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IOptPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.RdFault
+import com.jetbrains.rd.util.string.IPrintable
+import com.jetbrains.rd.util.string.PrettyPrinter
+import com.jetbrains.rd.util.string.print
 
 /**
  * The result of asynchronously executing a task.
  */
-sealed class RdTaskResult<out T> {
+sealed class RdTaskResult<out T> : IPrintable {
     companion object {
         fun <T> read(ctx: SerializationCtx, buffer: AbstractBuffer, serializer: ISerializer<T>): RdTaskResult<T> {
             val kind = buffer.readInt()
@@ -68,6 +71,20 @@ sealed class RdTaskResult<out T> {
             is Success -> value
             is Cancelled -> throw CancellationException("Task finished in Cancelled state")
             is Fault -> throw error
+        }
+    }
+
+    override fun print(printer: PrettyPrinter) {
+        printer.print(this::class.simpleName!!)
+        when (this) {
+            is Success -> {
+                printer.print(" :: ")
+                value.print(printer)
+            }
+            is Fault -> {
+                printer.print(" :: ")
+                error.print(printer)
+            }
         }
     }
 }

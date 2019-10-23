@@ -2,5 +2,5 @@ T| protocol.SEND                  | property `Server.DemoModel.property_with_def
 T| protocol.SEND                  | call `Server.DemoModel.callback`::  : "Csharp"
 T| protocol.SEND                  | Set `Server.ProtocolClientIdSet`  :: Add :: ClientId(Host)
 T| protocol.RECV                  | endpoint `Server.DemoModel.call`::, , request = K
-T| protocol.SEND                  | endpoint `Server.DemoModel.call`::, , response = Success :: "K"
 T| protocol.RECV                  | call Server.DemoModel.callback  received response for  : Success :: 6
+T| protocol.SEND                  | endpoint `Server.DemoModel.call`::, , response = Success :: "K"
