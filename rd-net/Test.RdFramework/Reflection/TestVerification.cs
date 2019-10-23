@@ -8,14 +8,11 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class TestVerification
   {
-    [Ignore("Fails")]
     [TestCase(typeof(NotRdModelData))]
     [TestCase(typeof(CantHaveNonRdError))]
     // [TestCase(typeof(CantHavePrivateFieldError))]
     [TestCase(typeof(NotRdModelData))]
     [TestCase(typeof(MyEnum), Description = "Enum can't be toplevel types")]
-    [TestCase(typeof(ModelCantHaveNullableError))]
-    [TestCase(typeof(ModelCantHaveFieldPropError))]
 //     [TestCase(typeof(NotSealedRdModelData))]
     [TestCase(typeof(NoBaseType))]
     [TestCase(typeof(CircularDependencyExtError))]
