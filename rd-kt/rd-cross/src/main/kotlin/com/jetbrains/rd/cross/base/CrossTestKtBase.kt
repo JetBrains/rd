@@ -1,5 +1,6 @@
 package com.jetbrains.rd.cross.base
 
+import com.jetbrains.rd.cross.util.CrossTestsLoggerFactory
 import com.jetbrains.rd.cross.util.logWithTime
 import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.base.RdReactiveBase
@@ -10,18 +11,15 @@ import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.println
 import java.io.File
-import java.time.LocalDateTime
-import java.time.LocalTime
 import kotlin.io.use
+
+private const val SPINNING_TIMEOUT = 10_000L
 
 abstract class CrossTestKtBase {
     private val testName: String = this.javaClass.kotlin.simpleName!!
 
     protected val printer = PrettyPrinter()
     private lateinit var outputFile: File
-
-    @Volatile
-    protected var finished = false
 
     protected lateinit var scheduler: IScheduler
     protected lateinit var protocol: IProtocol
@@ -45,9 +43,8 @@ abstract class CrossTestKtBase {
 
     protected fun after() {
         logWithTime("Spinning started")
-        spinUntil(20_000) { finished }
-        spinUntil(1_000) { false }
-        logWithTime("Spinning finished, finished=${finished}")
+        spinUntil(SPINNING_TIMEOUT) { false }
+        logWithTime("Spinning finished")
 
         socketLifetimeDef.terminate()
         modelLifetimeDef.terminate()
@@ -72,10 +69,24 @@ abstract class CrossTestKtBase {
     fun run(args: Array<String>) {
         logWithTime("Test run")
 
-        Statics<ILoggerFactory>().push(ConsoleLoggerFactory.apply {
-            minLevelToLog = LogLevel.Trace
-        }).use {
-            start(args)
+        Statics<ILoggerFactory>().apply {
+            use(ConsoleLoggerFactory.apply {
+                minLevelToLog = LogLevel.Trace
+            }) {
+                val factory = CrossTestsLoggerFactory()
+                use(factory) {
+                    try {
+                        start(args)
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                        throw e
+                    } finally {
+                        if (::outputFile.isInitialized) {
+                            outputFile.writeText(factory.toString())
+                        }
+                    }
+                }
+            }
         }
     }
 

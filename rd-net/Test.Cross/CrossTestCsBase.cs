@@ -77,7 +77,7 @@ namespace Test.RdCross
                 {
                   using (myOutputFile)
                   {
-                    myOutputFile.Write(myStringWriter.ToString());                  
+                    myOutputFile?.Write(myStringWriter.ToString());                  
                   }
                 }
               }

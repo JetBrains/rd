@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
+using JetBrains.Rd.Base;
 
 namespace Test.RdCross.Util
 {
@@ -54,7 +56,7 @@ namespace Test.RdCross.Util
     public TextWriter Writer { get; }
 
     private static readonly string[] ourIncludedCategories = {"protocol.SEND", "protocol.RECV"};
-    
+
     protected override string Format(LoggingLevel level, string message, Exception exception)
     {
       return JetBrains.Diagnostics.Log.DefaultFormat(null, level, Category, null, message, exception);
@@ -66,14 +68,26 @@ namespace Test.RdCross.Util
       Handlers += WriteMessage;
     }
 
+    private readonly Regex myExcludedRegex = new Regex(string.Join("|", Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>()));
+    private readonly Regex myRdIdRegex = new Regex(@"\(\d+\)|(taskId=\d+)|(send request '\d+')|(task '\d+')");
+    
+    private string ProcessMessage(string message)
+    {
+      return !myExcludedRegex.IsMatch(message) ? myRdIdRegex.Replace(message, "") : null;
+    }
+
     private void WriteMessage(LeveledMessage msg)
     {
       if (ourIncludedCategories.Contains(Category))
       {
-        lock (Writer) //Can't use TextWriter.Synchronized in NetCore 1.1
+        var processedMessage = ProcessMessage(msg.FormattedMessage);
+        if (processedMessage != null)
         {
-          Writer.Write(msg.FormattedMessage);
-          Writer.Flush();
+          lock (Writer) //Can't use TextWriter.Synchronized in NetCore 1.1
+          {
+            Writer.Write(processedMessage);
+            Writer.Flush();
+          }          
         }
       }
     }

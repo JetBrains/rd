@@ -3,17 +3,10 @@
 package com.jetbrains.rd.cross
 
 import com.jetbrains.rd.cross.base.CrossTestKtServerBase
-import com.jetbrains.rd.cross.util.LoggingCookie
-import com.jetbrains.rd.cross.util.logWithTime
 import com.jetbrains.rd.cross.util.trackAction
 import com.jetbrains.rd.util.Date
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.fire
 import demo.*
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
-import java.time.LocalTime
 import java.util.*
 
 @Suppress("unused")
@@ -34,10 +27,6 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
                 model.extModel
             }
 
-            trackAction("Advising started") {
-                adviseAll(modelLifetime, model, extModel)
-            }
-
             trackAction("Firing started") {
                 fireAll(model, extModel)
             }
@@ -51,64 +40,6 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
         assert(ConstUtil.const_enum == MyEnum.default) { "ConstUtil.const_enum == MyEnum.default" }
         assert(ConstUtil.const_string == "const_string_value") { "ConstUtil.const_string == \"const_string_value\"" }
         assert(Base.const_base == 'B') { "ConstUtil.const_string == \"const_string_value\"" }
-    }
-
-    private fun adviseAll(lifetime: Lifetime, model: DemoModel, extModel: ExtModel) {
-        model.boolean_property.advise(lifetime) {
-            printer.printIfRemoteChange(model.boolean_property, "boolean_property", it)
-        }
-
-        model.boolean_array.advise(lifetime) {
-            printer.printIfRemoteChange(model.boolean_array, "boolean_array", it)
-        }
-
-        model.scalar.advise(lifetime) {
-            printer.printIfRemoteChange(model.scalar, "scalar", it)
-        }
-
-        model.ubyte.advise(lifetime) {
-            printer.printIfRemoteChange(model.ubyte, "ubyte", it)
-        }
-
-        model.ubyte_array.advise(lifetime) {
-            printer.printIfRemoteChange(model.ubyte_array, "ubyte_array", it)
-        }
-
-        model.list.advise(lifetime) {
-            printer.printIfRemoteChange(model.list, "list", it)
-        }
-
-        model.set.advise(lifetime) { e, x ->
-            printer.printIfRemoteChange(model.set, "set", e, x)
-        }
-
-        model.mapLongToString.advise(lifetime) {
-            printer.printIfRemoteChange(model.mapLongToString, "mapLongToString", it)
-        }
-
-        model.interned_string.advise(lifetime) {
-            printer.printIfRemoteChange(model.interned_string, "interned_string", it)
-        }
-
-        model.polymorphic.advise(lifetime) {
-            printer.printIfRemoteChange(model.polymorphic, "polymorphic", it)
-        }
-
-        model.date.advise(lifetime) {
-            printer.printIfRemoteChange(model.date, "date", it)
-        }
-
-        model.enum.advise(lifetime) {
-            val entity = model.enum
-            printer.printIfRemoteChange(entity, "enum", it)
-            if (!entity.isLocalChange) {
-                finished = true
-            }
-        }
-
-        extModel.checker.advise(lifetime) {
-            printer.printIfRemoteChange(extModel.checker, "extModel.checker", it)
-        }
     }
 
     private fun fireAll(model: DemoModel, extModel: ExtModel) {
@@ -146,8 +77,6 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
 
         val valA = "Kotlin"
         val valB = "protocol"
-
-//    val sync = model.callback.sync("Unknown")
 
         model.interned_string.set(valA)
         model.interned_string.set(valA)

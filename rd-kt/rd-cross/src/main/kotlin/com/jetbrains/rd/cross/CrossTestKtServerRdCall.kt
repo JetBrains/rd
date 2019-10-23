@@ -1,6 +1,5 @@
 package com.jetbrains.rd.cross
 
-import com.jetbrains.rd.framework.impl.startAndAdviseSuccess
 import com.jetbrains.rd.cross.base.CrossTestKtServerBase
 import demo.DemoModel
 
@@ -15,11 +14,7 @@ class CrossKtServerRdCall : CrossTestKtServerBase() {
                 s -> s.length
             }
 
-            model.call.startAndAdviseSuccess('K') {
-                printer.printAnyway("call", it)
-
-                finished = true
-            }
+            model.call.start('K')
         }
 
         after()
