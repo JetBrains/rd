@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
@@ -91,6 +92,25 @@ namespace Test.RdFramework.Reflection
         s.ValueTupleArray.Value = new[] { ("key", "value"), ("key", "value")};
         CollectionAssert.AreEqual(s.ValueTupleArray.Value, c.ValueTupleArray.Value);
       });
+    }
+
+    [Test]
+    public void TestList()
+    {
+      WithExts<ListExt>((c, s) =>
+      {
+        s.ListNullable.Value = new List<ColorFields>() { new ColorFields(1,2,3) };
+        s.ListSimple.Value = Enumerable.Range(0,100).ToList();
+        CollectionAssert.AreEqual(s.ListNullable.Value, c.ListNullable.Value);
+        CollectionAssert.AreEqual(s.ListSimple.Value, c.ListSimple.Value);
+      });
+    }
+
+    [RdExt]
+    public class ListExt : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<List<int>> ListSimple { get; }
+      public IViewableProperty<List<ColorFields>> ListNullable { get; }
     }
 
     [RdExt]
