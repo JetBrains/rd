@@ -12,7 +12,7 @@ namespace JetBrains.Rd.Reflection
       return instance;
     }
 
-    public static T Bind<T>(this T instance, Lifetime lifetime, IProtocol protocol)
+    internal static T Bind<T>(this T instance, Lifetime lifetime, IProtocol protocol)
       where T : RdReflectionBindableBase
     {
       var typename = instance.GetType().Name;
@@ -32,7 +32,7 @@ namespace JetBrains.Rd.Reflection
       return instance;
     }
 
-    public static T Bind<T>(this T instance, Lifetime lifetime, IProtocol protocol)
+    internal static T Bind<T>(this T instance, Lifetime lifetime, IProtocol protocol)
       where T : RdExtReflectionBindableBase
     {
       var typename = instance.GetType().Name;
