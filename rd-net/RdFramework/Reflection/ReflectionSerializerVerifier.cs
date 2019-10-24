@@ -289,7 +289,7 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
 
       // No way to prevent serialization errors for intrinsic serializers, just skip for now
-      if (HasIntrinsicMethods(type))
+      if (HasIntrinsic(type))
         return;
 
       foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
@@ -350,11 +350,42 @@ namespace JetBrains.Rd.Reflection
       return typeInfo.AsType();
     }
 
+
+    public static bool HasIntrinsic(TypeInfo t)
+    {
+      return HasIntrinsicMethods(t) || HasIntrinsicFields(t) || HasRdExtAttribute(t);
+    }
+
+    public static bool HasIntrinsicAttribute(TypeInfo t)
+    {
+      var rdScalar = t.GetCustomAttribute<RdScalarAttribute>();
+      return rdScalar != null && rdScalar.Marshaller != null;
+    }
+
+    public static bool HasIntrinsicFields(TypeInfo t)
+    {
+      foreach (var member in t.GetFields(BindingFlags.Static | BindingFlags.Public))
+      {
+        if (member.Name == "Read" || member.Name == "Write")
+        {
+          return true;
+        }
+      }
+
+      return false;
+
+    }
+
     public static bool HasIntrinsicMethods(TypeInfo t)
     {
-      if (t.GetMethods(BindingFlags.Public | BindingFlags.Static)
-        .Any(m => m.Name == "Read" || m.Name == "Write"))
-        return true;
+      foreach (var member in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
+      {
+        if (member.Name == "Read" || member.Name == "Write")
+        {
+          return true;
+        }
+      }
+
       return false;
     }
   }
