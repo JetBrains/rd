@@ -3,7 +3,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Base
 {
-  internal interface ISingleKeyProtocolContextHandler
+  internal interface ISingleContextHandler
   {
     void ReadValueAndPush(SerializationCtx context, UnsafeReader reader);
     void PopValue();
@@ -11,9 +11,9 @@ namespace JetBrains.Rd.Base
     void WriteValue(SerializationCtx context, UnsafeWriter writer);
   }
   
-  internal interface ISingleKeyProtocolContextHandler<T> : ISingleKeyProtocolContextHandler
+  internal interface ISingleContextHandler<T> : ISingleContextHandler
   {
-    RdContextKey<T> Key { get; }
+    RdContext<T> Context { get; }
     ContextValueTransformer<T> ValueTransformer { get; set; }
 
     T ReadValue(SerializationCtx context, UnsafeReader reader);

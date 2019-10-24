@@ -543,7 +543,7 @@ open class CSharp50Generator(
         if(decl is Toplevel) {
             decl.declaredTypes.forEach {
                 if(it is ContextKey) {
-                    val keyTypeName = "RdContextKey<${it.type.substitutedName(decl)}>"
+                    val keyTypeName = "RdContext<${it.type.substitutedName(decl)}>"
                     +"public static $keyTypeName ${it.keyName} = new ${keyTypeName}(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)});"
                 }
             }

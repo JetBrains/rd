@@ -2,7 +2,7 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternRoot
-import com.jetbrains.rd.framework.impl.ProtocolContextHandler
+import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -10,14 +10,14 @@ import com.jetbrains.rd.util.reactive.ViewableSet
 import com.jetbrains.rd.util.string.RName
 
 class Protocol(
-        override val name: String,
-        override val serializers: ISerializers,
-        override val identity: IIdentities,
-        override val scheduler: IScheduler,
-        override val wire: IWire, //to initialize field with circular dependencies
-        val lifetime: Lifetime,
-        serializationCtx: SerializationCtx? = null,
-        parentContextHandler: ProtocolContextHandler? = null
+    override val name: String,
+    override val serializers: ISerializers,
+    override val identity: IIdentities,
+    override val scheduler: IScheduler,
+    override val wire: IWire, //to initialize field with circular dependencies
+    val lifetime: Lifetime,
+    serializationCtx: SerializationCtx? = null,
+    parentContexts: ProtocolContexts? = null
 ) : IRdDynamic, IProtocol {
 
 
@@ -40,14 +40,14 @@ class Protocol(
         }
     }))
 
-    override val contextHandler: ProtocolContextHandler = parentContextHandler ?: ProtocolContextHandler(serializationContext)
+    override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
     init {
         if (wire is IContextAwareWire)
-            wire.contextHandler = contextHandler
+            wire.contexts = contexts
 
-        if (parentContextHandler == null) {
-            contextHandler.also {
+        if (parentContexts == null) {
+            contexts.also {
                 it.rdid = RdId.Null.mix("ProtocolContextHandler")
                 scheduler.invokeOrQueue {
                     it.bind(lifetime, this, "ProtocolContextHandler")

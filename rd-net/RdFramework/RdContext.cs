@@ -1,11 +1,42 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
+using JetBrains.Serialization;
 
 namespace JetBrains.Rd
 {
+  public class RdContextBase
+  {
+    [NotNull] public readonly string Key;
+    public readonly bool IsHeavy;
+
+    public RdContextBase(string key, bool isHeavy)
+    {
+      Key = key;
+      IsHeavy = isHeavy;
+    }
+
+    public static RdContextBase Read(SerializationCtx ctx, UnsafeReader reader)
+    {
+      var keyId = reader.ReadString();
+      var isHeavy = reader.ReadBoolean();
+      var serializerId = RdId.Read(reader);
+      var actualType = ctx.Serializers.GetTypeForId(serializerId);
+
+      return (RdContextBase) (new Func<string, bool, ISerializers, RdId, RdContextBase>(CreateContext<object>)).Method
+        .GetGenericMethodDefinition().MakeGenericMethod(actualType)
+        .Invoke(null, new object[] {keyId, isHeavy, ctx.Serializers, serializerId});
+    }
+
+    private static RdContext<T> CreateContext<T>(string key, bool isHeavy, ISerializers serializers, RdId typeId)
+    {
+      return new RdContext<T>(key, isHeavy, serializers.GetReaderForId<T>(typeId), serializers.GetWriterForId<T>(typeId));
+    }
+  }
   /// <summary>
   /// Describes a context key and provides access to value associated with this key.
   /// The associated value is thread-local and synchronized between send/advise pairs on <see cref="IWire"/>. The associated value will be the same in handler method in <see cref="IWire.Advise"/> as it was in <see cref="IWire.Send"/>.
@@ -13,10 +44,8 @@ namespace JetBrains.Rd
   /// Best practice is to declare context keys in toplevel entities in protocol model using <c>Toplevel.contextKey</c>. Manual declaration is also possible.
   /// </summary>
   /// <typeparam name="T">The type of value stored by this key</typeparam>
-  public class RdContextKey<T>
+  public class RdContext<T> : RdContextBase
   {
-    [NotNull] public readonly string Key;
-    public readonly bool IsHeavy;
     [CanBeNull] public readonly CtxReadDelegate<T> ReadDelegate;
     [CanBeNull] public readonly CtxWriteDelegate<T> WriteDelegate;
 
@@ -27,10 +56,8 @@ namespace JetBrains.Rd
     /// <param name="isHeavy">Whether or not this key is heavy. A heavy key maintains a value set and interns values. A light key sends values as-is and does not maintain a value set.</param>
     /// <param name="readDelegate">Serializer to be used with this key.</param>
     /// <param name="writeDelegate">Serializer to be used with this key.</param>
-    public RdContextKey(string key, bool isHeavy, [CanBeNull] CtxReadDelegate<T> readDelegate, [CanBeNull] CtxWriteDelegate<T> writeDelegate)
+    public RdContext(string key, bool isHeavy, [CanBeNull] CtxReadDelegate<T> readDelegate, [CanBeNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy)
     {
-      Key = key;
-      IsHeavy = isHeavy;
       ReadDelegate = readDelegate;
       WriteDelegate = writeDelegate;
     }
@@ -83,5 +110,12 @@ namespace JetBrains.Rd
     {
       Value = ourContextStacks.Value[Key].Pop();
     }
+
+     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdContext<T> value)
+     {
+       writer.Write(value.Key);
+       writer.Write(value.IsHeavy);
+       RdId.Write(writer, ctx.Serializers.GetIdForType(typeof(T)));
+     }
   }
 }

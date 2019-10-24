@@ -4,7 +4,7 @@ import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
-import com.jetbrains.rd.framework.impl.ProtocolContextHandler
+import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -35,7 +35,7 @@ interface IProtocol : IRdDynamic {
     // Models for which the serialization hash does not match that on the other side
     val outOfSyncModels: ViewableSet<RdExtBase>
 
-    val contextHandler : ProtocolContextHandler
+    val contexts : ProtocolContexts
 }
 
 /**
@@ -57,12 +57,12 @@ interface IWire {
 }
 
 interface IContextAwareWire : IWire {
-    var contextHandler: ProtocolContextHandler?
+    var contexts: ProtocolContexts?
 
     fun writeContext(buffer: AbstractBuffer) {
-        contextHandler.let { handler ->
+        contexts.let { handler ->
             if(handler == null)
-                ProtocolContextHandler.writeContextStub(buffer)
+                ProtocolContexts.writeContextStub(buffer)
             else
                 handler.writeCurrentMessageContext(buffer)
         }

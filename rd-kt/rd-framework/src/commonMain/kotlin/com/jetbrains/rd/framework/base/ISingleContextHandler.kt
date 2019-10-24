@@ -1,13 +1,13 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.AbstractBuffer
-import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.SerializationCtx
 import com.jetbrains.rd.framework.impl.ContextValueTransformer
 import com.jetbrains.rd.framework.impl.ContextValueTransformerDirection
 
-internal interface ISingleKeyProtocolContextHandler<T: Any> {
-    val key: RdContextKey<T>
+internal interface ISingleContextHandler<T: Any> {
+    val key: RdContext<T>
 
     var myValueTransformer : ContextValueTransformer<T>?
 

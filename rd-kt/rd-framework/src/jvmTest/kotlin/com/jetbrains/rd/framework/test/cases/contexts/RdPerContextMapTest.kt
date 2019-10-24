@@ -3,7 +3,7 @@ package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.ISerializer
-import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdMap
@@ -23,13 +23,13 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         @AfterClass
         @JvmStatic
         fun resetContext() {
-            RdContextKey<String>("test-key", true, FrameworkMarshallers.String).value = null
+            RdContext<String>("test-key", true, FrameworkMarshallers.String).value = null
         }
     }
 
     @Test
     fun testOnStructMap() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, FrameworkMarshallers.String).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, FrameworkMarshallers.String).apply { master = it } }.static(1).apply { master = false }
@@ -37,10 +37,10 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         val server1Cid = "Server-1"
         val client1Cid = "Client-1"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
-        serverProtocol.contextHandler.getValueSet(key).add(server1Cid)
+        serverProtocol.contexts.getValueSet(key).add(server1Cid)
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
@@ -48,7 +48,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         assert(clientMap[server1Cid]!![1] == "test")
 
-        clientProtocol.contextHandler.getValueSet(key).add(client1Cid)
+        clientProtocol.contexts.getValueSet(key).add(client1Cid)
 
         assert(serverMap[client1Cid] != null)
         assert(serverMap[client1Cid]!![1] == null)
@@ -56,7 +56,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testOnDynamicMap() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -64,10 +64,10 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         val server1Cid = "Server-1"
         val client1Cid = "Client-1"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
-        serverProtocol.contextHandler.getValueSet(key).add(server1Cid)
+        serverProtocol.contexts.getValueSet(key).add(server1Cid)
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
@@ -75,7 +75,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         assert(clientMap[server1Cid]!![1]!!.foo.value == "test")
 
-        clientProtocol.contextHandler.getValueSet(key).add(client1Cid)
+        clientProtocol.contexts.getValueSet(key).add(client1Cid)
 
         assert(serverMap[client1Cid] != null)
         assert(serverMap[client1Cid]!![1] == null)
@@ -83,7 +83,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind01() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -91,13 +91,13 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         val server1Cid = "Server-1"
         val client1Cid = "Client-1"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
-        serverProtocol.contextHandler.getValueSet(key).add(server1Cid)
+        serverProtocol.contexts.getValueSet(key).add(server1Cid)
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
-        clientProtocol.contextHandler.getValueSet(key).add(client1Cid)
+        clientProtocol.contexts.getValueSet(key).add(client1Cid)
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
@@ -110,15 +110,15 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind02() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
 
         val server1Cid = "Server-1"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
         // no protocol value set value - pre-bind value will be lost
 
@@ -133,7 +133,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind03() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -141,10 +141,10 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         val server1Cid = "Server-1"
         val server2Cid = "Server-2"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
-        serverProtocol.contextHandler.getValueSet(key).addAll(setOf(server1Cid, server2Cid))
+        serverProtocol.contexts.getValueSet(key).addAll(setOf(server1Cid, server2Cid))
 
         val log = ArrayList<String>()
 
@@ -166,7 +166,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind04() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -174,10 +174,10 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         val server1Cid = "Server-1"
         val server2Cid = "Server-2"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
-        serverProtocol.contextHandler.getValueSet(key).addAll(setOf(server1Cid))
+        serverProtocol.contexts.getValueSet(key).addAll(setOf(server1Cid))
 
         val log = ArrayList<String>()
 
@@ -199,15 +199,15 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind05() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
 
         val server1Cid = "Server-1"
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
         val log = ArrayList<String>()
 
@@ -218,7 +218,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
             }
         }
 
-        serverProtocol.contextHandler.getValueSet(key).addAll(setOf(server1Cid))
+        serverProtocol.contexts.getValueSet(key).addAll(setOf(server1Cid))
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
@@ -230,7 +230,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind06() {
-        val key = RdContextKey<String>("test-key", true, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -246,8 +246,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
             }
         }
 
-        serverProtocol.contextHandler.registerKey(key)
-        clientProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
+        clientProtocol.contexts.registerContext(key)
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
@@ -256,7 +256,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
         key.value = null
 
-        Assert.assertTrue(serverProtocol.contextHandler.getValueSet(key).contains(server1Cid))
+        Assert.assertTrue(serverProtocol.contexts.getValueSet(key).contains(server1Cid))
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
@@ -265,8 +265,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testValueSetChangesInContext() {
-        val key1 = RdContextKey<String>("test-key1", true, FrameworkMarshallers.String)
-        val key2 = RdContextKey<String>("test-key2", true, FrameworkMarshallers.String)
+        val key1 = RdContext<String>("test-key1", true, FrameworkMarshallers.String)
+        val key2 = RdContext<String>("test-key2", true, FrameworkMarshallers.String)
 
         val serverMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -288,21 +288,21 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         key1.value = server1Cid
         key2.value = server1Cid
 
-        serverProtocol.contextHandler.registerKey(key1)
-        serverProtocol.contextHandler.registerKey(key2)
-        clientProtocol.contextHandler.registerKey(key1)
+        serverProtocol.contexts.registerContext(key1)
+        serverProtocol.contexts.registerContext(key2)
+        clientProtocol.contexts.registerContext(key1)
 
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
 
-        serverProtocol.contextHandler.getValueSet(key1).add(server2Cid)
+        serverProtocol.contexts.getValueSet(key1).add(server2Cid)
         key1.value = server4Cid
-        serverProtocol.contextHandler.getValueSet(key1).add(server3Cid)
+        serverProtocol.contexts.getValueSet(key1).add(server3Cid)
         key1.value = null
         key2.value = null
 
-        Assert.assertFalse(serverProtocol.contextHandler.getValueSet(key1).contains(server1Cid))
-        Assert.assertFalse(serverProtocol.contextHandler.getValueSet(key2).contains(server1Cid))
+        Assert.assertFalse(serverProtocol.contexts.getValueSet(key1).contains(server1Cid))
+        Assert.assertFalse(serverProtocol.contexts.getValueSet(key2).contains(server1Cid))
         Assert.assertEquals(listOf("Add $server2Cid", "Add $server3Cid"), log)
     }
 }

@@ -11,8 +11,8 @@ namespace JetBrains.Rd.Impl
 {
     public class RdPerContextMap<K, V> : RdReactiveBase, IPerContextMap<K, V> where V : RdBindableBase
     {
-        public RdContextKey<K> Key => myKey;
-        private readonly RdContextKey<K> myKey;
+        public RdContext<K> Key => myKey;
+        private readonly RdContext<K> myKey;
         private readonly Func<Boolean, V> myValueFactory;
         private readonly IViewableMap<K, V> myMap;
 
@@ -22,7 +22,7 @@ namespace JetBrains.Rd.Impl
         private readonly IDictionary<K, V> myUnboundValues = new Dictionary<K, V>();
 
 
-        public RdPerContextMap(RdContextKey<K> key, Func<bool, V> valueFactory)
+        public RdPerContextMap(RdContext<K> key, Func<bool, V> valueFactory)
         {
             myValueFactory = valueFactory;
             myKey = key;
@@ -57,16 +57,16 @@ namespace JetBrains.Rd.Impl
         protected override void Init(Lifetime lifetime)
         {
             base.Init(lifetime);
-            var protocolValueSet = Proto.ContextHandler.GetProtocolValueSet(myKey);
+            var protocolValueSet = Proto.Contexts.GetProtocolValueSet(myKey);
             protocolValueSet.View(lifetime, (contextValueLifetime, contextValue) =>
             {
-                myUnboundValues.TryGetValue(Proto.ContextHandler.GetHandlerForKey(myKey).TransformFromProtocol(contextValue), out var previousUnboundValue);
+                myUnboundValues.TryGetValue(Proto.Contexts.GetHandlerForContext(myKey).TransformFromProtocol(contextValue), out var previousUnboundValue);
                 var value = (previousUnboundValue ?? myValueFactory(IsMaster)).WithId(RdId.Mix(contextValue.ToString()));
                 value.Bind(contextValueLifetime, this, $"[{contextValue.ToString()}]");
                 myMap.Add(contextValue, value);
                 contextValueLifetime.OnTermination(() => { myMap.Remove(contextValue); });
             });
-            mySwitchingValueSet.ChangeBackingSet(Proto.ContextHandler.GetValueSet(myKey), true);
+            mySwitchingValueSet.ChangeBackingSet(Proto.Contexts.GetValueSet(myKey), true);
             myUnboundLifetimes.TerminateCurrent();
             lifetime.OnTermination(() =>
             {
@@ -108,7 +108,7 @@ namespace JetBrains.Rd.Impl
 
               return myUnboundValues[key];
             }
-            return myMap[Proto.ContextHandler.GetHandlerForKey(myKey).TransformToProtocol(key)];
+            return myMap[Proto.Contexts.GetHandlerForContext(myKey).TransformToProtocol(key)];
           }
         }
 
@@ -121,7 +121,7 @@ namespace JetBrains.Rd.Impl
 
             return myUnboundValues.TryGetValue(key, out value);
           }
-          return myMap.TryGetValue(Proto.ContextHandler.GetHandlerForKey(myKey).TransformToProtocol(key), out value);
+          return myMap.TryGetValue(Proto.Contexts.GetHandlerForContext(myKey).TransformToProtocol(key), out value);
         }
 
 
@@ -130,7 +130,7 @@ namespace JetBrains.Rd.Impl
             RdId.Write(writer, value.RdId);
         }
 
-        public static RdPerContextMap<K, V> Read(SerializationCtx context, UnsafeReader reader, RdContextKey<K> key, Func<bool, V> func)
+        public static RdPerContextMap<K, V> Read(SerializationCtx context, UnsafeReader reader, RdContext<K> key, Func<bool, V> func)
         {
             var id = RdId.Read(reader);
             return new RdPerContextMap<K, V>(key, func).WithId(id);

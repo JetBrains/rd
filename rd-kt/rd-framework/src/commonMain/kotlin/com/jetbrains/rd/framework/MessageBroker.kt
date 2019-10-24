@@ -21,13 +21,13 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
 
     private fun IRdWireable.invoke(msg: AbstractBuffer, sync: Boolean = false) {
         if (sync) { //todo think about scheduler.isActive()
-            protocol.contextHandler.readMessageContextAndInvoke(msg) {
+            protocol.contexts.readMessageContextAndInvoke(msg) {
                 onWireReceived(msg) //error handling should process automatically
             }
         } else {
             wireScheduler.queue {
                 if (Sync.lock(lock) { subscriptions.containsKey(rdid) }) {
-                    protocol.contextHandler.readMessageContextAndInvoke(msg) {
+                    protocol.contexts.readMessageContextAndInvoke(msg) {
                         onWireReceived(msg)
                     }
                 } else {

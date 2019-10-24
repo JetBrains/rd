@@ -15,21 +15,21 @@ namespace Test.RdFramework.Contexts
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
       
-      new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString).Value = null;
+      new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString).Value = null;
     }
 
     [Test]
     public void TestLateSet()
     {
-      var key = new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
       
-      ClientProtocol.ContextHandler.RegisterKey(key);
+      ClientProtocol.Contexts.RegisterContext(key);
       
-      foreach (var s in new []{"1","2","3"}) ServerProtocol.ContextHandler.GetValueSet(key).Add(s);
+      foreach (var s in new []{"1","2","3"}) ServerProtocol.Contexts.GetValueSet(key).Add(s);
       
-      AssertSetsEqual(new []{"1", "2", "3"}, ClientProtocol.ContextHandler.GetValueSet(key));
+      AssertSetsEqual(new []{"1", "2", "3"}, ClientProtocol.Contexts.GetValueSet(key));
       
-      ServerProtocol.ContextHandler.SetTransformerForKey(key, (value, direction) =>
+      ServerProtocol.Contexts.SetTransformerForContext(key, (value, direction) =>
       {
         if (value == null) return null;
         switch (direction)
@@ -43,17 +43,17 @@ namespace Test.RdFramework.Contexts
         }
       });
       
-      AssertSetsEqual(new []{"1", "2", "3"}, ClientProtocol.ContextHandler.GetValueSet(key));
-      AssertSetsEqual(new []{"-2", "-1", "0"}, ServerProtocol.ContextHandler.GetValueSet(key));
+      AssertSetsEqual(new []{"1", "2", "3"}, ClientProtocol.Contexts.GetValueSet(key));
+      AssertSetsEqual(new []{"-2", "-1", "0"}, ServerProtocol.Contexts.GetValueSet(key));
     }
 
     [Test]
     public void TestWithContextMap()
     {
-      var key = new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
       key.Value = null;
       
-      ServerProtocol.ContextHandler.RegisterKey(key);
+      ServerProtocol.Contexts.RegisterContext(key);
       
       var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdPerContextMap<string, RdSignal<string>>(key, _ => new RdSignal<string>()), 1);
       var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdPerContextMap<string, RdSignal<string>>(key, _ => new RdSignal<string>()), 1);
@@ -72,9 +72,9 @@ namespace Test.RdFramework.Contexts
         }
       }
 
-      ServerProtocol.ContextHandler.SetTransformerForKey(key, Transformer);
+      ServerProtocol.Contexts.SetTransformerForContext(key, Transformer);
       
-      foreach (var s in new []{"1","2","3"}) ServerProtocol.ContextHandler.GetValueSet(key).Add(s);
+      foreach (var s in new []{"1","2","3"}) ServerProtocol.Contexts.GetValueSet(key).Add(s);
 
       var receives = 0;
       clientMap.View(LifetimeDefinition.Lifetime, (elt, k, v) => v.Advise(elt, s =>
@@ -91,16 +91,16 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestWithTwoKeys()
     {
-      var key1 = new RdContextKey<string>("test-key1", true, Serializers.ReadString, Serializers.WriteString);
-      var key2 = new RdContextKey<string>("test-key2", true, Serializers.ReadString, Serializers.WriteString);
+      var key1 = new RdContext<string>("test-key1", true, Serializers.ReadString, Serializers.WriteString);
+      var key2 = new RdContext<string>("test-key2", true, Serializers.ReadString, Serializers.WriteString);
       
-      ServerProtocol.ContextHandler.RegisterKey(key1);
-      ServerProtocol.ContextHandler.RegisterKey(key2);
+      ServerProtocol.Contexts.RegisterContext(key1);
+      ServerProtocol.Contexts.RegisterContext(key2);
       
-      ClientProtocol.ContextHandler.RegisterKey(key1);
-      ClientProtocol.ContextHandler.RegisterKey(key2);
+      ClientProtocol.Contexts.RegisterContext(key1);
+      ClientProtocol.Contexts.RegisterContext(key2);
       
-      ServerProtocol.ContextHandler.SetTransformerForKey(key1, (value, direction) =>
+      ServerProtocol.Contexts.SetTransformerForContext(key1, (value, direction) =>
       {
         if (value == null) return null;
         switch (direction)
@@ -114,7 +114,7 @@ namespace Test.RdFramework.Contexts
         }
       });
       
-      ServerProtocol.ContextHandler.SetTransformerForKey(key2, (value, direction) =>
+      ServerProtocol.Contexts.SetTransformerForContext(key2, (value, direction) =>
       {
         if (value == null) return null;
         switch (direction)
@@ -131,20 +131,20 @@ namespace Test.RdFramework.Contexts
       key1.Value = "1";
       key2.Value = "2";
       
-      foreach (var s in new []{"1","2","3"}) ServerProtocol.ContextHandler.GetValueSet(key1).Add(s);
-      AssertSetsEqual(new[] {"4", "5", "6"}, ClientProtocol.ContextHandler.GetValueSet(key1));
+      foreach (var s in new []{"1","2","3"}) ServerProtocol.Contexts.GetValueSet(key1).Add(s);
+      AssertSetsEqual(new[] {"4", "5", "6"}, ClientProtocol.Contexts.GetValueSet(key1));
 
-      foreach (var s in new []{"1","2","3"}) ServerProtocol.ContextHandler.GetValueSet(key2).Add(s);
-      AssertSetsEqual(new[] {"11", "12", "13"}, ClientProtocol.ContextHandler.GetValueSet(key2));
+      foreach (var s in new []{"1","2","3"}) ServerProtocol.Contexts.GetValueSet(key2).Add(s);
+      AssertSetsEqual(new[] {"11", "12", "13"}, ClientProtocol.Contexts.GetValueSet(key2));
       
-      foreach (var s in new []{"9","10","11"}) ServerProtocol.ContextHandler.GetValueSet(key1).Add(s);
-      AssertSetsEqual(new[] {"4", "5", "6", "12", "13", "14"}, ClientProtocol.ContextHandler.GetValueSet(key1));
+      foreach (var s in new []{"9","10","11"}) ServerProtocol.Contexts.GetValueSet(key1).Add(s);
+      AssertSetsEqual(new[] {"4", "5", "6", "12", "13", "14"}, ClientProtocol.Contexts.GetValueSet(key1));
       
-      foreach (var s in new []{"9","10","11"}) ServerProtocol.ContextHandler.GetValueSet(key2).Add(s);
-      AssertSetsEqual(new[] {"11", "12", "13", "19", "20", "21"}, ClientProtocol.ContextHandler.GetValueSet(key2));
+      foreach (var s in new []{"9","10","11"}) ServerProtocol.Contexts.GetValueSet(key2).Add(s);
+      AssertSetsEqual(new[] {"11", "12", "13", "19", "20", "21"}, ClientProtocol.Contexts.GetValueSet(key2));
 
-      ServerProtocol.ContextHandler.GetValueSet(key1).Clear();
-      AssertSetsEqual(Array.Empty<string>(), ClientProtocol.ContextHandler.GetValueSet(key1));
+      ServerProtocol.Contexts.GetValueSet(key1).Clear();
+      AssertSetsEqual(Array.Empty<string>(), ClientProtocol.Contexts.GetValueSet(key1));
     }
 
     private void AssertSetsEqual<T>(ICollection<T> expected, ICollection<T> actual)

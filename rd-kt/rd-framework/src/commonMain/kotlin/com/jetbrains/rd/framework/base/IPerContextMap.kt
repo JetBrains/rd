@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.IRdDynamic
-import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.util.lifetime.Lifetime
 
 /**
@@ -11,13 +11,13 @@ import com.jetbrains.rd.util.lifetime.Lifetime
  * As context key value sets are protocol-specific, this map will behave differently depending on whether or not it's bound to a [com.jetbrains.rd.framework.IProtocol]
  * An unbound map will automatically create mappings for all context values it's accessed with. When a map is bound later, all values not present in protocol value set will be silently dropped.
  *
- * @see [com.jetbrains.rd.framework.impl.ProtocolContextHandler.getValueSet]
+ * @see [com.jetbrains.rd.framework.impl.ProtocolContexts.getValueSet]
  */
 interface IPerContextMap<K : Any, out V: Any>: IRdDynamic {
     /**
      * The context key that is used by this map. Must be heavy.
      */
-    val key: RdContextKey<K>
+    val key: RdContext<K>
 
     /**
      * Adds a subscription to changes of the contents of the map.

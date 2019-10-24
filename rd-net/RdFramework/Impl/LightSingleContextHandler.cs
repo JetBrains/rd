@@ -3,16 +3,16 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
-  internal class SimpleProtocolContextHandler<T> : ISingleKeyProtocolContextHandler<T>
+  internal class LightSingleContextHandler<T> : ISingleContextHandler<T>
   {
-    public RdContextKey<T> Key { get; }
+    public RdContext<T> Context { get; }
     public ContextValueTransformer<T> ValueTransformer { get; set; }
     private readonly CtxReadDelegate<T> myReadDelegate;
     private readonly CtxWriteDelegate<T> myWriteDelegate;
 
-    public SimpleProtocolContextHandler(RdContextKey<T> key)
+    public LightSingleContextHandler(RdContext<T> key)
     {
-      Key = key;
+      Context = key;
       myReadDelegate = key.ReadDelegate;
       myWriteDelegate = key.WriteDelegate;
     }
@@ -36,12 +36,12 @@ namespace JetBrains.Rd.Impl
 
     public void ReadValueAndPush(SerializationCtx context, UnsafeReader reader)
     {
-      Key.PushContext(ReadValue(context, reader));
+      Context.PushContext(ReadValue(context, reader));
     }
 
     public void PopValue()
     {
-      Key.PopContext();
+      Context.PopContext();
     }
   }
 }

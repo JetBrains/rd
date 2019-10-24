@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Lifetimes;
+using JetBrains.Rd.Impl;
 
 namespace JetBrains.Rd.Base
 {
@@ -15,13 +16,13 @@ namespace JetBrains.Rd.Base
   /// An unbound map will automatically create mappings for all context values it's accessed with. When a map is bound later, all values not present in protocol value set will be silently dropped.
   /// </para>
   /// </summary>
-  /// <seealso cref="Impl.ProtocolContextHandler.GetValueSet"/>
+  /// <seealso cref="ProtocolContexts.GetValueSet"/>
   public interface IPerContextMap<K, V> : IRdDynamic
   {
     /// <summary>
     /// The context key that is used by this map. Must be heavy.
     /// </summary>
-    RdContextKey<K> Key { get; }
+    RdContext<K> Key { get; }
     
     /// <summary>
     /// Gets the value associated with current context value, equivalent to this[Key.Value].

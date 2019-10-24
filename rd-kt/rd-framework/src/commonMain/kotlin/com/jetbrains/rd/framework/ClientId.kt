@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.util.Callable
 import com.jetbrains.rd.util.Runnable
+import com.jetbrains.rd.util.reflection.usingValue
 import kotlin.jvm.JvmStatic
 
 /**
@@ -24,7 +25,7 @@ data class ClientId(val value: String) {
 
     companion object : ISerializer<ClientId> {
         private val defaultLocalId = ClientId("Host")
-        val contextKey = RdContextKey("ClientId", true, FrameworkMarshallers.String)
+        val contextKey = RdContext("ClientId", true, FrameworkMarshallers.String)
 
         /**
          * Specifies behavior for ClientId.current
@@ -84,57 +85,19 @@ data class ClientId(val value: String) {
          * Invokes a runnable under the given ClientId
          */
         @JvmStatic
-        fun withClientId(clientId: ClientId?, action: Runnable) {
-            val oldClientId = contextKey.value
-            try {
-                contextKey.value = clientId?.value
-                action.run()
-            } finally {
-                contextKey.value = oldClientId
-            }
-        }
-
-        /**
-         * Invokes a lambda under the given ClientId
-         */
-        @JvmStatic
-        fun withClientId(clientId: ClientId?, action: () -> Unit) {
-            val oldClientId = contextKey.value
-            try {
-                contextKey.value = clientId?.value
-                action()
-            } finally {
-                contextKey.value = oldClientId
-            }
-        }
+        fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(clientId) { action.run() }
 
         /**
          * Computes a value under given ClientId
          */
         @JvmStatic
-        fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T {
-            val oldClientId = contextKey.value
-            try {
-                contextKey.value = clientId?.value
-                return action.call()
-            } finally {
-                contextKey.value = oldClientId
-            }
-        }
+        fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
 
         /**
          * Computes a value under given ClientId
          */
         @JvmStatic
-        fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-            val oldClientId = contextKey.value
-            try {
-                contextKey.value = clientId?.value
-                return action()
-            } finally {
-                contextKey.value = oldClientId
-            }
-        }
+        inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T = contextKey::value.usingValue(clientId?.value, action)
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ClientId {
             return ClientId(buffer.readString())

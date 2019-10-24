@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.impl.ContextValueTransformerDirection
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
@@ -25,7 +25,7 @@ class ContextsTest : RdFrameworkTestBase() {
     @Theory
     fun testLateAdd(heavy: Boolean) {
         println("Heavy: $heavy")
-        val key = RdContextKey("test-key", heavy, FrameworkMarshallers.String)
+        val key = RdContext("test-key", heavy, FrameworkMarshallers.String)
 
         val serverSignal = RdSignal<String>()
         val clientSignal = RdSignal<String>()
@@ -33,13 +33,13 @@ class ContextsTest : RdFrameworkTestBase() {
         serverProtocol.bindStatic(serverSignal, 1)
         clientProtocol.bindStatic(clientSignal, 1)
 
-        serverProtocol.contextHandler.registerKey(key)
+        serverProtocol.contexts.registerContext(key)
 
-        serverProtocol.contextHandler.setTransformerForKey(key) { value, dir ->
-            value ?: return@setTransformerForKey null
+        serverProtocol.contexts.setTransformerForContext(key) { value, dir ->
+            value ?: return@setTransformerForContext null
             if (dir == ContextValueTransformerDirection.ReadFromProtocol)
-                return@setTransformerForKey (value.toInt() - 3).toString()
-            return@setTransformerForKey (value.toInt() + 3).toString()
+                return@setTransformerForContext (value.toInt() - 3).toString()
+            return@setTransformerForContext (value.toInt() + 3).toString()
         }
 
         key.value = "1"
@@ -55,7 +55,7 @@ class ContextsTest : RdFrameworkTestBase() {
             assert(fired)
         }
 
-        clientProtocol.contextHandler.registerKey(key)
+        clientProtocol.contexts.registerContext(key)
 
         Lifetime.using { lt ->
             var fired = false

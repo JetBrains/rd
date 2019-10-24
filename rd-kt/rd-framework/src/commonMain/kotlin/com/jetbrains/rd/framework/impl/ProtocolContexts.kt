@@ -1,0 +1,222 @@
+package com.jetbrains.rd.framework.impl
+
+import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.IRdBindable
+import com.jetbrains.rd.framework.base.ISingleContextHandler
+import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.util.ConcurrentHashMap
+import com.jetbrains.rd.util.CopyOnWriteArrayList
+import com.jetbrains.rd.util.Sync
+import com.jetbrains.rd.util.assert
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.reactive.IMutableViewableSet
+import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.reflection.threadLocal
+import com.jetbrains.rd.util.reflection.usingValue
+
+/**
+ * A callback to transform values between protocol and local values. Must be a bijection (one-to-one map)
+ */
+typealias ContextValueTransformer<T> = (value: T?, fromProtocol: ContextValueTransformerDirection) -> T?
+
+/**
+ * Indicates transformation direction for a value transformer
+ */
+enum class ContextValueTransformerDirection {
+    WriteToProtocol,
+    ReadFromProtocol
+}
+
+/**
+ * This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
+ */
+class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase() {
+    private val otherSideKeys = CopyOnWriteArrayList<String>()
+    private val myKeyHandlerOrder = CopyOnWriteArrayList<ISingleContextHandler<*>>()
+    private val myKeyHandlers = ConcurrentHashMap<String, ISingleContextHandler<*>>()
+    private var myBindLifetime: Lifetime? = null
+    private val myOrderingsLock = Any()
+
+    internal var isWritingOwnMessages by threadLocal { false }
+    internal inline fun withWriteOwnMessages(block: () -> Unit) = this::isWritingOwnMessages.usingValue(true, block)
+
+    override fun deepClone(): IRdBindable {
+        error("This may not be cloned")
+    }
+
+    override fun init(lifetime: Lifetime) {
+        super.init(lifetime)
+        wire.advise(lifetime, this)
+        Sync.lock(myOrderingsLock) {
+            myKeyHandlerOrder.forEach {
+                bindHandler(lifetime, it, it.key.key)
+                sendContextToRemote(it.key)
+            }
+        }
+
+        myBindLifetime = lifetime
+        lifetime.onTermination {
+            myBindLifetime = null
+        }
+    }
+
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        assertWireThread()
+        val context = RdContext.read(serializationCtx, buffer)
+        otherSideKeys.add(context.key)
+        if(context.heavy) {
+            ensureContextHandlerExists(context)
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            createLightHandler(context as RdContext<Any>)
+        }
+    }
+
+    private inline fun doAddHandler(key: String, factory: () -> ISingleContextHandler<*>) {
+        assert(wireScheduler.isActive || protocol.scheduler.isActive)
+        val value = factory()
+        val prevValue = myKeyHandlers.putIfAbsent(key, value)
+        if (prevValue == null) { // null or stub
+            Sync.lock(this) {
+                sendContextToRemote(value.key)
+                myKeyHandlerOrder.add(value)
+            }
+            myBindLifetime?.let {
+                bindHandler(it, value, key)
+            }
+        }
+    }
+
+    private fun createLightHandler(context: RdContext<Any>) {
+        assertWireThread() // can only happen on wire thread
+        if (!myKeyHandlers.containsKey(context.key)) {
+            doAddHandler(context.key) { LightSingleContextHandler(context, context.serializer) }
+        }
+    }
+
+    private fun <T : Any> ensureContextHandlerExists(context: RdContext<T>) {
+        if (!myKeyHandlers.containsKey(context.key)) {
+            doAddHandler(context.key) {
+                if(context.heavy)
+                    HeavySingleContextHandler(context, this)
+                else
+                    LightSingleContextHandler(context, context.serializer)
+            }
+        }
+    }
+
+    private fun bindHandler(it: Lifetime, handler: ISingleContextHandler<*>, key: String) {
+        if (handler !is HeavySingleContextHandler<*>) return
+        handler.rdid = rdid.mix(key)
+        protocol.scheduler.invokeOrQueue {
+            withWriteOwnMessages {
+                handler.bind(it, this, key)
+            }
+        }
+    }
+
+    private fun assertWireThread() {
+        assert(wireScheduler.isActive) { "Must handle this on protocol thread" }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    internal fun <T : Any> getContextHandler(context: RdContext<T>) : ISingleContextHandler<T> {
+        return myKeyHandlers[context.key] as ISingleContextHandler<T>
+    }
+
+    /**
+     * Get a value set for a given context. The values are local relative to transform
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> getValueSet(context: RdContext<T>) : IMutableViewableSet<T> {
+        assert(context.heavy) { "Only heavy contexts have value sets, ${context.key} is not heavy" }
+        return (getContextHandler(context) as HeavySingleContextHandler<T>).valueSet
+    }
+
+    /**
+     * Gets a value set for a given context. The values are what actually exists on protocol level
+     */
+    @Suppress("UNCHECKED_CAST")
+    internal fun <T : Any> getProtocolValueSet(context: RdContext<T>) : IMutableViewableSet<T> {
+        assert(context.heavy) { "Only heavy contexts have value sets, ${context.key} is not heavy" }
+        return (getContextHandler(context) as HeavySingleContextHandler<T>).protocolValueSet
+    }
+
+    /**
+     * Registers a context to be used with this protocol. Must be invoked on protocol's scheduler
+     */
+    fun <T : Any> registerContext(context: RdContext<T>) {
+        protocol.scheduler.assertThread()
+        ensureContextHandlerExists(context)
+    }
+
+    /**
+     * Sets a transform for a given context. The transform must be a bijection (one-to-one map). This will regenerate the local value set based on the protocol value set
+     */
+    fun <T:Any> setTransformerForContext(context: RdContext<T>, transformer: ContextValueTransformer<T>?) {
+        getContextHandler(context).myValueTransformer = transformer
+    }
+
+    private fun sendContextToRemote(context: RdContext<*>) {
+        withWriteOwnMessages {
+            wire.send(rdid) { buffer ->
+                RdContext.write(serializationCtx, buffer, context)
+            }
+        }
+    }
+
+    /**
+     * Writes the current context values to the given buffer
+     */
+    fun writeCurrentMessageContext(buffer: AbstractBuffer) {
+        if (isWritingOwnMessages) return writeContextStub(buffer)
+
+        val writtenSize = myKeyHandlerOrder.size
+        buffer.writeShort(writtenSize.toShort())
+        for(i in 0 until writtenSize) {
+            myKeyHandlerOrder[i].writeValue(serializationCtx, buffer)
+        }
+    }
+
+    /**
+     * Reads a context from a given buffer and invokes the provided action in it
+     */
+    fun readMessageContextAndInvoke(buffer: AbstractBuffer, action: () -> Unit) {
+        val numContextValues = buffer.readShort().toInt()
+        assert(otherSideKeys.size >= numContextValues) { "We know of ${otherSideKeys.size} remote keys, received $numContextValues instead" }
+        val oldValues = ArrayList<Any?>(numContextValues)
+        for (i in 0 until numContextValues) {
+            val key = otherSideKeys[i]
+            oldValues.add(RdContext.unsafeGet(key))
+
+            val value = myKeyHandlers[key]!!.readValue(serializationCtx, buffer)
+            RdContext.unsafeSet(key, value)
+        }
+
+        try {
+            action()
+        } finally {
+            for(i in 0 until numContextValues) {
+                val value = oldValues[i]
+                RdContext.unsafeSet(otherSideKeys[i], value)
+            }
+        }
+    }
+
+    companion object {
+        /**
+         * Writes an empty context
+         */
+        fun writeContextStub(buffer: AbstractBuffer) {
+            buffer.writeShort(0)
+        }
+    }
+
+
+    override var async: Boolean
+        get() = true
+        set(value) = error("ProtocolContextHandler is always async")
+
+    override val wireScheduler: IScheduler = InternScheduler()
+}

@@ -4,7 +4,7 @@ import com.jetbrains.rd.framework.AbstractBuffer
 import com.jetbrains.rd.framework.IContextAwareWire
 import com.jetbrains.rd.framework.MessageBroker
 import com.jetbrains.rd.framework.RdId
-import com.jetbrains.rd.framework.impl.ProtocolContextHandler
+import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Property
@@ -19,7 +19,7 @@ abstract class WireBase(val scheduler: IScheduler) : IContextAwareWire {
 
     fun dumpToString() = messageBroker.printToString()
 
-    override var contextHandler: ProtocolContextHandler? = null
+    override var contexts: ProtocolContexts? = null
         set(value) {
             require(field == null) { "Can't replace ProtocolContextHandler in IContextAwareWire"}
             field = value

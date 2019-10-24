@@ -7,9 +7,9 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
-  internal class InterningProtocolContextHandler<T> : RdReactiveBase, ISingleKeyProtocolContextHandler<T>
+  internal class HeavySingleContextHandler<T> : RdReactiveBase, ISingleContextHandler<T>
   {
-    private readonly ProtocolContextHandler myHandler;
+    private readonly ProtocolContexts myHandler;
     private readonly InternRoot myInternRoot = new InternRoot();
     private readonly RdSet<T> myProtocolValueSet = new RdSet<T>();
     private readonly ViewableSet<T> myLocalValueSet = new ViewableSet<T>();
@@ -21,13 +21,13 @@ namespace JetBrains.Rd.Impl
     internal IViewableSet<T> LocalValueSet => myLocalValueSet;
     internal IViewableSet<T> ProtocolValueSet => myProtocolValueSet;
 
-    public InterningProtocolContextHandler(RdContextKey<T> key, ProtocolContextHandler handler)
+    public HeavySingleContextHandler(RdContext<T> key, ProtocolContexts handler)
     {
       myHandler = handler;
-      Key = key;
+      Context = key;
     }
 
-    public RdContextKey<T> Key { get; }
+    public RdContext<T> Context { get; }
 
     public ContextValueTransformer<T> ValueTransformer
     {
@@ -115,7 +115,7 @@ namespace JetBrains.Rd.Impl
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
       Assertion.Assert(!myHandler.IsWritingOwnMessages, "!myHandler.IsWritingOwnMessages");
-      var originalValue = Key.Value;
+      var originalValue = Context.Value;
       var value = this.TransformToProtocol(originalValue);
       if (value == null)
       {
@@ -129,7 +129,7 @@ namespace JetBrains.Rd.Impl
           {
             if (Proto.Scheduler.IsActive)
             {
-              Assertion.AssertNotNull(originalValue, "Can't perform an implicit add with null local context value for key {0}", Key.Key);
+              Assertion.AssertNotNull(originalValue, "Can't perform an implicit add with null local context value for key {0}", Context.Key);
               myLocalValueSet.Add(originalValue);
             } else Assertion.Fail($"Attempting to use previously unused context value {value} on a background thread");
           }
@@ -153,12 +153,12 @@ namespace JetBrains.Rd.Impl
 
     public void ReadValueAndPush(SerializationCtx context, UnsafeReader reader)
     {
-      Key.PushContext(ReadValue(context, reader));
+      Context.PushContext(ReadValue(context, reader));
     }
 
     public void PopValue()
     {
-      Key.PopContext();
+      Context.PopContext();
     }
   }
 }

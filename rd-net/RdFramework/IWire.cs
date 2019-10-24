@@ -17,7 +17,7 @@ namespace JetBrains.Rd
 
   public interface IContextAwareWire : IWire
   {
-    [CanBeNull] ProtocolContextHandler ContextHandler { get; set; }
+    [CanBeNull] ProtocolContexts Contexts { get; set; }
   }
 
   public abstract class WireBase : IContextAwareWire
@@ -25,7 +25,7 @@ namespace JetBrains.Rd
     protected readonly MessageBroker MessageBroker;
     private IScheduler myScheduler;
     
-    public ProtocolContextHandler ContextHandler { get; set; }
+    public ProtocolContexts Contexts { get; set; }
 
 
     protected WireBase([NotNull] IScheduler scheduler)

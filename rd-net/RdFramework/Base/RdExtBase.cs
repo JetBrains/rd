@@ -49,7 +49,7 @@ namespace JetBrains.Rd.Base
       //todo ExtScheduler
       myExtWire.RealWire = parentWire;
       lifetime.Bracket(
-        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.ContextHandler); },
+        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.Contexts); },
         () => { myExtProtocol = null; }
         );
         

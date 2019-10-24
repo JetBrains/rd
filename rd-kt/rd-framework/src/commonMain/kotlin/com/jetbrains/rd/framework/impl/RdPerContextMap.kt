@@ -3,14 +3,13 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.addUnique
-import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
 
-class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val key: RdContextKey<K>, val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V> {
-    constructor(key: RdContextKey<K>, valueFactory: (Boolean) -> V) : this(key, valueFactory, ViewableMap())
+class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val key: RdContext<K>, val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V> {
+    constructor(key: RdContext<K>, valueFactory: (Boolean) -> V) : this(key, valueFactory, ViewableMap())
 
     override fun deepClone(): IRdBindable {
         return RdPerContextMap(key, valueFactory)
@@ -44,15 +43,15 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        val protocolValueSet = protocol.contextHandler.getProtocolValueSet(key)
-        val keyHandler = protocol.contextHandler.getKeyHandler(key)
+        val protocolValueSet = protocol.contexts.getProtocolValueSet(key)
+        val keyHandler = protocol.contexts.getContextHandler(key)
         protocolValueSet.view(lifetime) { keyLt, key ->
             val previousUnboundValue = myUnboundValues[keyHandler.transformValueFromProtocol(key)]
             val newEntity = (previousUnboundValue ?: valueFactory(master)).withId(rdid.mix(key.toString()))
             newEntity.bind(keyLt, this, "[${key}]")
             myInternalMap.addUnique(keyLt, key, newEntity)
         }
-        mySwitchingValueSet.changeBackingSet(protocol.contextHandler.getValueSet(key), true) // protocol set takes precedence
+        mySwitchingValueSet.changeBackingSet(protocol.contexts.getValueSet(key), true) // protocol set takes precedence
         myUnboundLifetimes.terminateCurrent() // also clears local set and unbound map
         lifetime.onTermination {
             mySwitchingValueSet.changeBackingSet(myLocalValueSet, false)
@@ -79,7 +78,7 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
 
             return myUnboundValues[key]
         }
-        val protocolkey = protocol.contextHandler.getKeyHandler(this.key).transformValueToProtocol(key) ?: return null
+        val protocolkey = protocol.contexts.getContextHandler(this.key).transformValueToProtocol(key) ?: return null
         return myInternalMap[protocolkey]
     }
 
@@ -89,7 +88,7 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
     }
 
     companion object {
-        fun <K: Any, V : RdBindableBase> read(key: RdContextKey<K>, buffer: AbstractBuffer, valueFactory : (Boolean) -> V) : RdPerContextMap<K, V> {
+        fun <K: Any, V : RdBindableBase> read(key: RdContext<K>, buffer: AbstractBuffer, valueFactory : (Boolean) -> V) : RdPerContextMap<K, V> {
             val id = buffer.readRdId()
             return RdPerContextMap(key, valueFactory).withId(id)
         }

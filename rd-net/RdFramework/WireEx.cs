@@ -21,9 +21,9 @@ namespace JetBrains.Rd
 
     public static void WriteContext(this IContextAwareWire wire, UnsafeWriter writer)
     {
-      var contextHandler = wire.ContextHandler;
+      var contextHandler = wire.Contexts;
       if(contextHandler == null)
-        ProtocolContextHandler.WriteContextStub(writer);
+        ProtocolContexts.WriteContextStub(writer);
       else
         contextHandler.WriteContext(writer);
     }

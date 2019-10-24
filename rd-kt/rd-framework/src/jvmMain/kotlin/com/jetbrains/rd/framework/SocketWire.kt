@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.WireBase
-import com.jetbrains.rd.framework.impl.ProtocolContextHandler
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive

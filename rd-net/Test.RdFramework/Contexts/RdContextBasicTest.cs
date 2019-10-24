@@ -24,14 +24,14 @@ namespace Test.RdFramework.Contexts
     [Theory]
     public void TestLateAdd(bool heavy)
     {
-      var key = new RdContextKey<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
       
       var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
       var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
 
-      ServerProtocol.ContextHandler.RegisterKey(key);
+      ServerProtocol.Contexts.RegisterContext(key);
       
-      ServerProtocol.ContextHandler.SetTransformerForKey(key, (value, direction) =>
+      ServerProtocol.Contexts.SetTransformerForContext(key, (value, direction) =>
       {
         if (value == null) return null;
         switch (direction)
@@ -59,7 +59,7 @@ namespace Test.RdFramework.Contexts
         Assert.True(fired, "fired");
       });
       
-      ClientProtocol.ContextHandler.RegisterKey(key);
+      ClientProtocol.Contexts.RegisterContext(key);
       
       Lifetime.Using(lt =>
       {

@@ -7,14 +7,11 @@ import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import org.junit.After
-import org.junit.Ignore
 import org.junit.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import test.synchronization.extToClazz
-import java.lang.management.ManagementFactory
 import kotlin.assert
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
 class TestTwoClients : TestBase() {
@@ -53,11 +50,11 @@ class TestTwoClients : TestBase() {
 
         SyncModelRoot.ClientId.value = "Host"
 
-        cp[0].contextHandler.registerKey(SyncModelRoot.ClientId)
-        cp[1].contextHandler.registerKey(SyncModelRoot.ClientId)
+        cp[0].contexts.registerContext(SyncModelRoot.ClientId)
+        cp[1].contexts.registerContext(SyncModelRoot.ClientId)
 
-        sp[0].contextHandler.registerKey(SyncModelRoot.ClientId)
-        sp[1].contextHandler.registerKey(SyncModelRoot.ClientId)
+        sp[0].contexts.registerContext(SyncModelRoot.ClientId)
+        sp[1].contexts.registerContext(SyncModelRoot.ClientId)
 
         c0 = SyncModelRoot.create(lifetime, cp[0])
         c1 = SyncModelRoot.create(lifetime, cp[1])

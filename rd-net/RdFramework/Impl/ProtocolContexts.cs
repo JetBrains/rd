@@ -28,11 +28,11 @@ namespace JetBrains.Rd.Impl
   /// <summary>
   /// This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
   /// </summary>
-  public class ProtocolContextHandler : RdReactiveBase
+  public class ProtocolContexts : RdReactiveBase
   {
     private readonly CopyOnWriteList<string> myOtherSideKeys = new CopyOnWriteList<string>();
-    private readonly CopyOnWriteList<ISingleKeyProtocolContextHandler> myKeyHandlerOrdering = new CopyOnWriteList<ISingleKeyProtocolContextHandler>();
-    private readonly ConcurrentDictionary<string, ISingleKeyProtocolContextHandler> myKeyHandlers = new ConcurrentDictionary<string, ISingleKeyProtocolContextHandler>();
+    private readonly CopyOnWriteList<ISingleContextHandler> myKeyHandlerOrder = new CopyOnWriteList<ISingleContextHandler>();
+    private readonly ConcurrentDictionary<string, ISingleContextHandler> myKeyHandlers = new ConcurrentDictionary<string, ISingleContextHandler>();
     private Lifetime? myBindLifetime;
     private readonly object myOrderingLock = new object();
     private readonly ThreadLocal<bool> myIsWritingOwnMessages = new ThreadLocal<bool>(() => false);
@@ -40,10 +40,10 @@ namespace JetBrains.Rd.Impl
     
     internal struct OwnMessagesCookie : IDisposable
     {
-      private readonly ProtocolContextHandler myHandler;
+      private readonly ProtocolContexts myHandler;
       private readonly bool myPrevValue;
 
-      public OwnMessagesCookie(ProtocolContextHandler handler)
+      public OwnMessagesCookie(ProtocolContexts handler)
       {
         myHandler = handler;
         myPrevValue = handler.myIsWritingOwnMessages.Value;
@@ -59,60 +59,42 @@ namespace JetBrains.Rd.Impl
     internal OwnMessagesCookie CreateOwnMessageCookie() => new OwnMessagesCookie(this);
     public bool IsWritingOwnMessages => myIsWritingOwnMessages.Value; 
 
-    public ProtocolContextHandler()
+    public ProtocolContexts()
     {
       Async = true;
     }
 
-    internal ISingleKeyProtocolContextHandler<T> GetHandlerForKey<T>(RdContextKey<T> key)
+    internal ISingleContextHandler<T> GetHandlerForContext<T>(RdContext<T> context)
     {
-      return (ISingleKeyProtocolContextHandler<T>) myKeyHandlers[key.Key];
+      return (ISingleContextHandler<T>) myKeyHandlers[context.Key];
     }
     
     public override void OnWireReceived(UnsafeReader reader)
     {
-      var keyId = reader.ReadString();
-      var isHeavy = reader.ReadBoolean();
-      myOtherSideKeys.Add(keyId);
-      var serializerId = reader.ReadRdId();
-      var actualType = Proto.Serializers.GetTypeForId(serializerId);
-      if (isHeavy)
-      {
-        new Action<string>(EnsureHeavyKeyHandlerExists<object>).Method.GetGenericMethodDefinition().MakeGenericMethod(actualType).Invoke(this, new []{ keyId });
-      }
-      else
-      {
-        new Action<string, RdId>(CreateSimpleHandlerWithTypeId<object>).Method.GetGenericMethodDefinition()
-          .MakeGenericMethod(actualType).Invoke(this, new object[] {keyId, serializerId});
-      }
+      var contextBase = RdContextBase.Read(SerializationContext, reader);
+      myOtherSideKeys.Add(contextBase.Key);
+
+      new Action<RdContext<object>>(RegisterContext).Method.GetGenericMethodDefinition()
+        .MakeGenericMethod(contextBase.GetType().GetGenericArguments()[0]).Invoke(this, new[] {contextBase});
     }
 
-    private void CreateSimpleHandlerWithTypeId<T>(string keyId, RdId serializerId)
+    private void DoAddHandler<T>(RdContext<T> context, ISingleContextHandler<T> handler)
     {
-      if (!myKeyHandlers.ContainsKey(keyId))
-      {
-        var key = new RdContextKey<T>(keyId, false, Proto.Serializers.GetReaderForId<T>(serializerId), Proto.Serializers.GetWriterForId<T>(serializerId));
-        DoAddHandler(key, new SimpleProtocolContextHandler<T>(key));
-      }
-    }
-
-    private void DoAddHandler<T>(RdContextKey<T> key, ISingleKeyProtocolContextHandler<T> handler)
-    {
-      if (myKeyHandlers.TryAdd(key.Key, handler))
+      if (myKeyHandlers.TryAdd(context.Key, handler))
       {
         lock (myOrderingLock)
         {
-          SendKeyToRemote(key);
-          myKeyHandlerOrdering.Add(handler);
+          SendContextToRemote(context);
+          myKeyHandlerOrder.Add(handler);
         }
 
         var lifetime = myBindLifetime;
         if (lifetime != null) 
-          BindHandler(lifetime.Value, key.Key, handler);
+          BindHandler(lifetime.Value, context.Key, handler);
       }
     }
 
-    private void BindHandler(Lifetime lifetime, string key, ISingleKeyProtocolContextHandler handler)
+    private void BindHandler(Lifetime lifetime, string key, ISingleContextHandler handler)
     {
       if (handler is RdBindableBase bindableHandler)
       {
@@ -125,70 +107,62 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    private void SendKeyToRemote<T>(RdContextKey<T> key)
+    private void SendContextToRemote<T>(RdContext<T> context)
     {
       using(CreateOwnMessageCookie())
         Wire.Send(RdId, writer =>
         {
-          writer.Write(key.Key);
-          writer.Write(key.IsHeavy);
-          writer.Write(Proto.Serializers.GetIdForType(typeof(T)));
+          RdContext<T>.Write(SerializationContext, writer, context);
         });
     }
-
-    private void EnsureHeavyKeyHandlerExists<T>(string keyId)
+    
+    private void EnsureHeavyHandlerExists<T>(RdContext<T> context)
     {
-      var key = new RdContextKey<T>(keyId, true, null, null);
-      EnsureHeavyKeyHandlerExists<T>(key);
-    }
-
-    private void EnsureHeavyKeyHandlerExists<T>(RdContextKey<T> key)
-    {
-      Assertion.Assert(key.IsHeavy, "key.IsHeavy");
-      if (!myKeyHandlers.TryGetValue(key.Key, out _)) 
-        DoAddHandler(key, new InterningProtocolContextHandler<T>(key, this));
+      Assertion.Assert(context.IsHeavy, "key.IsHeavy");
+      if (!myKeyHandlers.ContainsKey(context.Key)) 
+        DoAddHandler(context, new HeavySingleContextHandler<T>(context, this));
     }
     
-    private void EnsureLightKeyHandlerExists<T>(RdContextKey<T> key)
+    private void EnsureLightHandlerExists<T>(RdContext<T> context)
     {
-      Assertion.Assert(!key.IsHeavy, "!key.IsHeavy");
-      if (!myKeyHandlers.TryGetValue(key.Key, out _)) 
-        DoAddHandler(key, new SimpleProtocolContextHandler<T>(key));
+      Assertion.Assert(!context.IsHeavy, "!key.IsHeavy");
+      if (!myKeyHandlers.ContainsKey(context.Key)) 
+        DoAddHandler(context, new LightSingleContextHandler<T>(context));
     }
 
     /// <summary>
     /// Get a value set for a given key. The values are local relative to transform
     /// </summary>
-    public IViewableSet<T> GetValueSet<T>(RdContextKey<T> key)
+    public IViewableSet<T> GetValueSet<T>(RdContext<T> context)
     {
-      Assertion.Assert(key.IsHeavy, "Only heavy keys have value sets, key {0} is light", key.Key);
-      return ((InterningProtocolContextHandler<T>) GetHandlerForKey(key)).LocalValueSet;
+      Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
+      return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).LocalValueSet;
     }
 
-    internal IViewableSet<T> GetProtocolValueSet<T>(RdContextKey<T> key)
+    internal IViewableSet<T> GetProtocolValueSet<T>(RdContext<T> context)
     {
-      Assertion.Assert(key.IsHeavy, "Only heavy keys have value sets, key {0} is light", key.Key);
-      return ((InterningProtocolContextHandler<T>) GetHandlerForKey(key)).ProtocolValueSet;
+      Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
+      return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).ProtocolValueSet;
     }
 
     /// <summary>
     /// Sets a transform for a given key. The transform must be a bijection (one-to-one map). This will regenerate the local value set based on the protocol value set
     /// </summary>
-    public void SetTransformerForKey<T>(RdContextKey<T> key, ContextValueTransformer<T> transformer)
+    public void SetTransformerForContext<T>(RdContext<T> context, ContextValueTransformer<T> transformer)
     {
-      GetHandlerForKey(key).ValueTransformer = transformer;
+      GetHandlerForContext(context).ValueTransformer = transformer;
     }
 
     /// <summary>
     /// Registers a context key to be used with this context handler. Must be invoked on protocol's scheduler
     /// </summary>
-    public void RegisterKey<T>(RdContextKey<T> key)
+    public void RegisterContext<T>(RdContext<T> context)
     {
-      if (myKeyHandlers.ContainsKey(key.Key)) return;
-      if(key.IsHeavy)
-        EnsureHeavyKeyHandlerExists(key);
+      if (myKeyHandlers.ContainsKey(context.Key)) return;
+      if(context.IsHeavy)
+        EnsureHeavyHandlerExists(context);
       else
-        EnsureLightKeyHandlerExists(key);
+        EnsureLightHandlerExists(context);
     }
     
 
@@ -202,9 +176,9 @@ namespace JetBrains.Rd.Impl
 
       lock (myOrderingLock)
       {
-        foreach (var handler in myKeyHandlerOrdering)
+        foreach (var handler in myKeyHandlerOrder)
         {
-          new Action<Lifetime, ISingleKeyProtocolContextHandler<object>>(BindAndSendHandler).Method
+          new Action<Lifetime, ISingleContextHandler<object>>(BindAndSendHandler).Method
             .GetGenericMethodDefinition().MakeGenericMethod(handler.GetType().GetGenericArguments()[0])
             .Invoke(this, new object[] { lifetime, handler });
         }
@@ -228,10 +202,10 @@ namespace JetBrains.Rd.Impl
 
     public struct MessageContextCookie : IDisposable
     {
-      private readonly ProtocolContextHandler myHandler;
+      private readonly ProtocolContexts myHandler;
       private readonly int myNumContextValues;
 
-      public MessageContextCookie(ProtocolContextHandler handler, int numContextValues)
+      public MessageContextCookie(ProtocolContexts handler, int numContextValues)
       {
         myHandler = handler;
         myNumContextValues = numContextValues;
@@ -256,10 +230,10 @@ namespace JetBrains.Rd.Impl
         return;
       }
       
-      var count = myKeyHandlerOrdering.Count;
+      var count = myKeyHandlerOrder.Count;
       writer.Write((short) count);
       for (var i = 0; i < count; i++) 
-        myKeyHandlerOrdering[i].WriteValue(SerializationContext, writer);
+        myKeyHandlerOrder[i].WriteValue(SerializationContext, writer);
     }
 
     /// <summary>
@@ -270,10 +244,10 @@ namespace JetBrains.Rd.Impl
       writer.Write((short) 0);
     } 
 
-    private void BindAndSendHandler<T>(Lifetime lifetime, ISingleKeyProtocolContextHandler<T> handler)
+    private void BindAndSendHandler<T>(Lifetime lifetime, ISingleContextHandler<T> handler)
     {
-      BindHandler(lifetime, handler.Key.Key, handler);
-      SendKeyToRemote(handler.Key);
+      BindHandler(lifetime, handler.Context.Key, handler);
+      SendContextToRemote(handler.Context);
     }
   }
 }

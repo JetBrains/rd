@@ -1,10 +1,10 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.AbstractBuffer
-import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.SerializationCtx
 import com.jetbrains.rd.framework.base.IRdBindable
-import com.jetbrains.rd.framework.base.ISingleKeyProtocolContextHandler
+import com.jetbrains.rd.framework.base.ISingleContextHandler
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.assert
@@ -13,7 +13,7 @@ import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.IMutableViewableSet
 import com.jetbrains.rd.util.reactive.ViewableSet
 
-internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdContextKey<T>, private val contextHandler: ProtocolContextHandler) : RdReactiveBase(), ISingleKeyProtocolContextHandler<T> {
+internal class HeavySingleContextHandler<T : Any>(override val key: RdContext<T>, private val contexts: ProtocolContexts) : RdReactiveBase(), ISingleContextHandler<T> {
     private val myProtocolValueSet = RdSet<T>()
     private val myLocalValueSet = ViewableSet<T>()
     private val myValueConcurrentSet = ConcurrentHashMap<T, T>()
@@ -39,7 +39,7 @@ internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdCon
     }
 
     private inline fun withWriteOwnMessages(block: () -> Unit) {
-        contextHandler.withWriteOwnMessages(block)
+        contexts.withWriteOwnMessages(block)
     }
 
     private val myInternRoot = InternRoot()
@@ -118,7 +118,7 @@ internal class InterningSingleKeyContextHandler<T : Any>(override val key: RdCon
 
     @Suppress("UNCHECKED_CAST")
     override fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer) {
-        assert(!contextHandler.isWritingOwnMessages) { "Trying to write context with a context-related message, key ${key.key}"}
+        assert(!contexts.isWritingOwnMessages) { "Trying to write context with a context-related message, key ${key.key}"}
         val originalValue = key.value
         val value = transformValueToProtocol(originalValue)
         if(value == null)

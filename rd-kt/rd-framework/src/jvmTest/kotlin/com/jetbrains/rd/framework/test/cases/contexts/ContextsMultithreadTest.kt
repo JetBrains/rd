@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.RdContextKey
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import org.junit.Assert
@@ -11,7 +11,7 @@ import java.util.concurrent.CountDownLatch
 class ContextsMultithreadTest : RdAsyncTestBase() {
     @Test
     fun testBasic() {
-        val key = RdContextKey<String>("test-key", false, FrameworkMarshallers.String)
+        val key = RdContext<String>("test-key", false, FrameworkMarshallers.String)
 
         val serverSignal = RdSignal<String>().also { it.async = true }
         val clientSignal = RdSignal<String>()
@@ -23,7 +23,7 @@ class ContextsMultithreadTest : RdAsyncTestBase() {
 
         serverUiScheduler.queue {
             serverProtocol.bindStatic(serverSignal, 1)
-            serverProtocol.contextHandler.registerKey(key)
+            serverProtocol.contexts.registerContext(key)
 
             serverBgScheduler.queue {
                 latch1.countDown()

@@ -447,7 +447,7 @@ open class Kotlin11Generator(
         if(decl is Toplevel) {
             decl.declaredTypes.forEach {
                 if(it is ContextKey)
-                    +"val ${it.keyName} = RdContextKey<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl)})"
+                    +"val ${it.keyName} = RdContext<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl)})"
             }
         }
     }

@@ -2,10 +2,10 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.IRdBindable
-import com.jetbrains.rd.framework.base.ISingleKeyProtocolContextHandler
+import com.jetbrains.rd.framework.base.ISingleContextHandler
 import com.jetbrains.rd.framework.base.RdBindableBase
 
-internal class SimpleSingleKeyContextHandler<T: Any>(override val key: RdContextKey<T>, val serializer: ISerializer<T>) : RdBindableBase(), ISingleKeyProtocolContextHandler<T> {
+internal class LightSingleContextHandler<T: Any>(override val key: RdContext<T>, val serializer: ISerializer<T>) : RdBindableBase(), ISingleContextHandler<T> {
     override var myValueTransformer : ContextValueTransformer<T>? = null
 
     override fun deepClone(): IRdBindable {

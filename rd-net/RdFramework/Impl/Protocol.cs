@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Impl
     
 
     public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContextHandler parentContextHandler = null)
+      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -37,24 +37,24 @@ namespace JetBrains.Rd.Impl
       Identities = identities ?? throw new ArgumentNullException(nameof(identities));
       Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
-      ContextHandler = parentContextHandler ?? new ProtocolContextHandler();
+      Contexts = parentContexts ?? new ProtocolContexts();
       SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
       OutOfSyncModels = new ViewableSet<RdExtBase>();
 
       if (wire is IContextAwareWire contextAwareWire)
-        contextAwareWire.ContextHandler = ContextHandler;
+        contextAwareWire.Contexts = Contexts;
     }
 
     private InternRoot CreateProtocolInternRoot(Lifetime lifetime)
     {
       var root = new InternRoot();
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
-      ContextHandler.RdId = RdId.Nil.Mix(ContextHandlerRdId);
+      Contexts.RdId = RdId.Nil.Mix(ContextHandlerRdId);
       Scheduler.InvokeOrQueue(() =>
       {
         if (!lifetime.IsAlive) return;
         root.Bind(lifetime, this, ProtocolInternRootRdId);
-        ContextHandler.Bind(lifetime, this, ContextHandlerRdId);
+        Contexts.Bind(lifetime, this, ContextHandlerRdId);
       });
       return root;
     }
@@ -68,7 +68,7 @@ namespace JetBrains.Rd.Impl
     public SerializationCtx SerializationContext { get; }
     public ViewableSet<RdExtBase> OutOfSyncModels { get; }
 
-    public ProtocolContextHandler ContextHandler { get; }
+    public ProtocolContexts Contexts { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     
