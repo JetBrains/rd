@@ -52,6 +52,13 @@ class RdTaskTest : RdFrameworkTestBase() {
         assertEquals("IllegalStateException", taskResult.error.reasonTypeFqn)
 
     }
+
+    @Test
+    fun testToString() {
+        assertEquals("Success :: 1", RdTaskResult.Success(1).toString())
+        assertEquals("Cancelled", RdTaskResult.Cancelled<Int>().toString())
+        assertEquals("Fault :: com.jetbrains.rd.util.reactive.RdFault: error", RdTaskResult.Fault<Int>(Error("error")).toString())
+    }
 }
 
 open class A(open val a:Any) {}
