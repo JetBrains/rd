@@ -71,6 +71,7 @@ namespace Test.RdCross
               {
                 Before(args);
                 Start(args);
+                After();
               }
               catch (Exception e)
               {
@@ -79,10 +80,12 @@ namespace Test.RdCross
               }
               finally
               {
-                After();
-                using (myOutputFile)
+                if (myOutputFile != null)
                 {
-                  myOutputFile?.Write(myStringWriter.ToString());
+                  using (myOutputFile)
+                  {
+                    myOutputFile?.Write(myStringWriter.ToString());
+                  }
                 }
               }
             }

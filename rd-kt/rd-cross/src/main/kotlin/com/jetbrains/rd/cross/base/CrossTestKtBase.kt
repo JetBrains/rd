@@ -57,6 +57,7 @@ abstract class CrossTestKtBase {
             try {
                 before(args)
                 start(args)
+                after()
             } catch (e: Throwable) {
                 e.printStackTrace()
                 throw e
@@ -69,7 +70,6 @@ abstract class CrossTestKtBase {
                         }
                     }
                 }
-                after()
             }
         }
     }

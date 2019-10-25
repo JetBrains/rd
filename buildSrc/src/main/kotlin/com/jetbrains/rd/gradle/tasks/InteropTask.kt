@@ -74,20 +74,15 @@ open class InteropTask : DefaultTask() {
 
     @TaskAction
     internal fun start() {
-        var taskFailed = false
-
         try {
             beforeStart()
             runServer()
             startClient()
         } catch (e: Throwable) {
-            e.printStackTrace()
-            taskFailed = true
+            throw GradleException("Task $name failed before starting processes", e)
         }
 
-        if (taskFailed) {
-            throw GradleException("Task $name failed before starting processes")
-        }
+        var taskFailed = false
 
         processes
             .map { (builder, name) ->
