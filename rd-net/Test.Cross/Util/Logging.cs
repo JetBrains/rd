@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
-using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 
 namespace Test.RdCross.Util
@@ -68,9 +67,11 @@ namespace Test.RdCross.Util
       Handlers += WriteMessage;
     }
 
-    private readonly Regex myExcludedRegex = new Regex(string.Join("|", Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>()));
+    private readonly Regex myExcludedRegex =
+      new Regex(string.Join("|", Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>()));
+
     private readonly Regex myRdIdRegex = new Regex(@"\(\d+\)|(taskId=\d+)|(send request '\d+')|(task '\d+')");
-    
+
     private string ProcessMessage(string message)
     {
       return !myExcludedRegex.IsMatch(message) ? myRdIdRegex.Replace(message, "") : null;
@@ -87,7 +88,7 @@ namespace Test.RdCross.Util
           {
             Writer.Write(processedMessage);
             Writer.Flush();
-          }          
+          }
         }
       }
     }
@@ -108,5 +109,42 @@ namespace Test.RdCross.Util
     {
       return new CrossTestsLog(Writer, category);
     }
+  }
+
+  /// <summary>
+  /// Combine provided loggers. Execute <see cref="Log"/> each of <see cref="myLogs"/> on every event.
+  /// </summary>
+  public class CombinatorLog : LogBase
+  {
+    private readonly List<LogBase> myLogs;
+
+    public CombinatorLog(string category, List<LogBase> logs) : base(category, logs.Max(log => log.EnabledLevel))
+    {
+      myLogs = logs;
+    }
+
+    protected override string Format(LoggingLevel level, string message, Exception exception)
+    {
+      throw new NotSupportedException();
+    }
+
+    public override void Log(LoggingLevel level, string message, Exception exception = null)
+    {
+      foreach (var log in myLogs)
+        log.Log(level, message, exception);
+    }
+  }
+
+  public class CombinatorLogFactory : LogFactoryBase
+  {
+    private readonly List<ILogFactory> myFactories;
+
+    public CombinatorLogFactory(IEnumerable<ILogFactory> factories)
+    {
+      myFactories = factories.ToList();
+    }
+
+    protected override LogBase GetLogBase(string category) =>
+      new CombinatorLog(category, myFactories.Select(factory => factory.GetLog(category)).Cast<LogBase>().ToList());
   }
 }

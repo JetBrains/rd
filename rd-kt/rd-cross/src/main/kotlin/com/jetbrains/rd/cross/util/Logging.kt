@@ -26,8 +26,7 @@ inline fun <T> trackAction(message: String, action: () -> T): T {
     }
 }
 
-class CrossTestsLoggerFactory : ILoggerFactory {
-    val buffer = mutableListOf<String>()
+class CrossTestsLoggerFactory(val buffer: MutableList<String>) : ILoggerFactory {
 
     companion object {
         private val includedCategories = arrayOf("protocol.SEND", "protocol.RECV")
@@ -41,9 +40,12 @@ class CrossTestsLoggerFactory : ILoggerFactory {
     }
 
     /**
-     * Drop messages related to RdExtBase and replace all RdId to empty string
+     * Drop messages related to RdExtBase and replace all RdId occurrences to empty string
      */
-    fun processMessage(message: Any?): String? = message?.toString()?.takeIf { !it.contains(excludedRegex) }?.replace(Regex("\\(\\d+\\)|(taskId=\\d+)|(send request '\\d+')|(task '\\d+')"), "")
+    fun processMessage(message: Any?): String? {
+        val prohibitedPatterns = listOf("\\(\\d+\\)", "taskId=\\d+", "send request '\\d+'", "task '\\d+'").joinToString(separator = "|") { "($it)" }
+        return message?.toString()?.takeIf { !it.contains(excludedRegex) }?.replace(Regex(prohibitedPatterns), "")
+    }
 
     override fun getLogger(category: String) = object : Logger {
         override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {

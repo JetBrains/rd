@@ -8,8 +8,6 @@ namespace Test.RdCross
     {
         protected override void Start(string[] args)
         {
-            Before(args);
-            
             Queue(() =>
             {
                 var demoModel = new DemoModel(ModelLifetime, Protocol);
@@ -18,8 +16,6 @@ namespace Test.RdCross
 
                 demoModel.Callback.Start("Csharp");
             });
-            
-            After();
         }
     }
 }

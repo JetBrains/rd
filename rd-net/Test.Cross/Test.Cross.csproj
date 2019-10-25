@@ -3,6 +3,8 @@
     <PropertyGroup>
         <TargetFramework>netcoreapp2.1</TargetFramework>
         <RootNamespace>Test.RdCross</RootNamespace>
+        <LangVersion>latest</LangVersion>
+        <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <Configurations>CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
         <OutputType>Exe</OutputType>

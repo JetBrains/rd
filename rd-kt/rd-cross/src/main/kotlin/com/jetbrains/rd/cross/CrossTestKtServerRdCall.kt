@@ -5,8 +5,6 @@ import demo.DemoModel
 
 class CrossKtServerRdCall : CrossTestKtServerBase() {
     override fun start(args: Array<String>) {
-        before(args)
-
         queue {
             val model = DemoModel.create(modelLifetime, protocol)
 
@@ -16,8 +14,6 @@ class CrossKtServerRdCall : CrossTestKtServerBase() {
 
             model.call.start('K')
         }
-
-        after()
     }
 }
 

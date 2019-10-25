@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
@@ -32,7 +33,7 @@ namespace Test.RdCross
             ModelLifetime = ModelLifetimeDef.Lifetime;
         }
 
-        protected void Before(string[] args)
+        private void Before(string[] args)
         {
             if (args.Length != 1)
             {
@@ -46,7 +47,7 @@ namespace Test.RdCross
             Console.WriteLine($"Test:{TestName} started, file={outputFileName}");
         }
 
-        protected void After()
+        private void After()
         {
             Logging.LogWithTime("Spinning started");
             SpinWaitEx.SpinUntil(ModelLifetime, SpinningTimeout, () => false);
@@ -60,25 +61,28 @@ namespace Test.RdCross
         public void Run(string[] args)
         {
             Console.WriteLine($"Current time:{DateTime.Now:G}");
-            using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
+            using (Log.UsingLogFactory(new CombinatorLogFactory(new LogFactoryBase[]
             {
-              using (Log.UsingLogFactory(new CrossTestsLogFactory(myStringWriter)))
+              new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE),
+              new CrossTestsLogFactory(myStringWriter),
+            }))) 
+            {
+              try
               {
-                try
+                Before(args);
+                Start(args);
+              }
+              catch (Exception e)
+              {
+                Console.WriteLine(e);
+                throw;
+              }
+              finally
+              {
+                After();
+                using (myOutputFile)
                 {
-                  Start(args);
-                }
-                catch (Exception e)
-                {
-                  Console.WriteLine(e);
-                  throw;
-                }
-                finally
-                {
-                  using (myOutputFile)
-                  {
-                    myOutputFile?.Write(myStringWriter.ToString());                  
-                  }
+                  myOutputFile?.Write(myStringWriter.ToString());
                 }
               }
             }

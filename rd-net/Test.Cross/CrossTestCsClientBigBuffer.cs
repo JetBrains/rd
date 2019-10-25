@@ -8,8 +8,6 @@ namespace Test.RdCross
     {
         protected override void Start(string[] args)
         {
-            Before(args);
-
             Queue(() =>
             {
                 var demoModel = new DemoModel(ModelLifetime, Protocol);
@@ -19,8 +17,6 @@ namespace Test.RdCross
                 entity.Set(new string('5', 100_000));
                 entity.Set(new string('0', 100_000));
             });
-
-            After();
         }
     }
 }

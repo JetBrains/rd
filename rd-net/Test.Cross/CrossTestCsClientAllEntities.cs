@@ -62,9 +62,7 @@ namespace Test.RdCross
 
         protected override void Start(string[] args)
         {
-            Before(args);
-
-            Logging.TrackAction("Checking constant", CheckConstants);
+          Logging.TrackAction("Checking constant", CheckConstants);
             
             Queue(() =>
             {
@@ -75,8 +73,6 @@ namespace Test.RdCross
                   FireAll(model, extModel)
                 );
             });
-
-            After();
         }
 
         private static void CheckConstants()

@@ -7,8 +7,6 @@ import demo.DemoModel
 
 class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
     override fun start(args: Array<String>) {
-        before(args)
-
         queue {
             val model = DemoModel.create(modelLifetime, protocol)
 
@@ -17,8 +15,6 @@ class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
             entity.set("".padStart(100000, '1'))
             entity.set("".padStart(100000, '3'))
         }
-
-        after()
     }
 }
 

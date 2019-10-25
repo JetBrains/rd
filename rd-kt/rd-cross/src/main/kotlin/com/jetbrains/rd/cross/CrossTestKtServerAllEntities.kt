@@ -12,8 +12,6 @@ import java.util.*
 @Suppress("unused")
 class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
     override fun start(args: Array<String>) {
-        before(args)
-
         trackAction("Checking constant") {
             checkConstants()
         }
@@ -31,8 +29,6 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
                 fireAll(model, extModel)
             }
         }
-
-        after()
     }
 
     private fun checkConstants() {

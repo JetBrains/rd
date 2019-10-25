@@ -1,6 +1,5 @@
 using System;
 using JetBrains.Annotations;
-using JetBrains.Util;
 
 namespace JetBrains.Diagnostics.Internal
 {
@@ -36,7 +35,7 @@ namespace JetBrains.Diagnostics.Internal
 
     protected abstract string Format(LoggingLevel level, string message, Exception exception);
 
-    public void Log(LoggingLevel level, string message, Exception exception = null)
+    public virtual void Log(LoggingLevel level, string message, Exception exception = null)
     {
       if (!IsEnabled(level))
         return;
