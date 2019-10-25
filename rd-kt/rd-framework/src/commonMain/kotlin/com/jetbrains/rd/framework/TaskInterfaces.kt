@@ -7,6 +7,8 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IOptPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.RdFault
+import com.jetbrains.rd.util.string.PrettyPrinter
+import com.jetbrains.rd.util.string.print
 import com.jetbrains.rd.util.string.printToString
 
 /**
@@ -72,7 +74,12 @@ sealed class RdTaskResult<out T> {
         }
     }
 
-    override fun toString(): String = this.printToString()
+    override fun toString() : String =
+        this::class.simpleName!! + when (this) {
+            is Success -> " :: $value"
+            is Cancelled -> ""
+            is Fault -> " :: $error"
+        }
 }
 
 /**
