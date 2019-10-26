@@ -56,4 +56,4 @@ Trace | RECV                      | property `DemoServer.DemoModel.polymorphic` 
   string = "C# instance"
 ) 
 Trace | RECV                      | property `DemoServer.DemoModel.enum` :: oldver = 0, newver = 0, value = net 
-Trace | RECV                      | signal `DemoServer.DemoModel.extModel.checker` :: value = kotlin.Unit
+Trace | RECV                      | signal `DemoServer.DemoModel.extModel.checker` :: value = kotlin.Unit 

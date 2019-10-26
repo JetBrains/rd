@@ -67,8 +67,10 @@ namespace Test.RdCross.Util
       Handlers += WriteMessage;
     }
 
+    private static readonly string[] ourProtocolConstNames = {"ProtocolInternRootRdId", "ProtocolClientIdSet"};
+      
     private readonly Regex myExcludedRegex =
-      new Regex(string.Join("|", Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>()));
+      new Regex(string.Join("|", Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>().Select(state => state.ToString()).Concat(ourProtocolConstNames)));
 
     private readonly Regex myRdIdRegex = new Regex(@"\(\d+\)|(taskId=\d+)|(send request '\d+')|(task '\d+')");
 

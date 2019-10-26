@@ -30,7 +30,9 @@ class CrossTestsLoggerFactory(val buffer: MutableList<String>) : ILoggerFactory 
 
     companion object {
         private val includedCategories = arrayOf("protocol.SEND", "protocol.RECV")
-        private val excludedRegex = Regex(RdExtBase.ExtState.values().joinToString(separator = "|", transform = RdExtBase.ExtState::toString))
+        private val protocolConstNames = arrayOf("ProtocolInternRootRdId", "ProtocolClientIdSet")
+        private val excludedRegex = Regex(
+            (RdExtBase.ExtState.values().map(RdExtBase.ExtState::toString) + protocolConstNames).joinToString(separator = "|"))
     }
 
     fun logFormat(category: String, level: LogLevel, message: Any?, throwable: Throwable?): String {
@@ -43,7 +45,7 @@ class CrossTestsLoggerFactory(val buffer: MutableList<String>) : ILoggerFactory 
      * Drop messages related to RdExtBase and replace all RdId occurrences to empty string
      */
     fun processMessage(message: Any?): String? {
-        val prohibitedPatterns = listOf("\\(\\d+\\)", "taskId=\\d+", "send request '\\d+'", "task '\\d+'").joinToString(separator = "|") { "($it)" }
+        val prohibitedPatterns = listOf("taskId=\\d+", "send request '\\d+'", "task '\\d+'", "\\(\\d+\\)").joinToString(separator = "|") { "($it)" }
         return message?.toString()?.takeIf { !it.contains(excludedRegex) }?.replace(Regex(prohibitedPatterns), "")
     }
 
@@ -60,9 +62,5 @@ class CrossTestsLoggerFactory(val buffer: MutableList<String>) : ILoggerFactory 
         }
 
         override fun isEnabled(level: LogLevel) = true
-    }
-
-    override fun toString(): String {
-        return buffer.joinToString(separator = eol)
     }
 }
