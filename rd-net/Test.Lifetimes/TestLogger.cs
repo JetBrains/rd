@@ -39,13 +39,14 @@ namespace Test.Lifetimes
         }
 
         [CanBeNull]
-        private AggregateException RecycleLoggedExceptions()
+        private Exception RecycleLoggedExceptions()
         {
             lock (myMonitor)
             {
                 if (myExceptions.Count == 0) return null;
+                
 
-                var exception = new AggregateException(myExceptions.ToArray());
+                var exception = myExceptions.Count == 1 ? myExceptions[0] : new AggregateException(myExceptions.ToArray());
                 myExceptions.Clear();
                 
                 return exception;
