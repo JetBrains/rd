@@ -103,10 +103,7 @@ namespace JetBrains.Rd.Reflection
       return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  &&
              (generic == typeof(List<>) ||
               generic == typeof(IList<>) || generic == typeof(ICollection<>)
-#if !NET35
-              || generic == typeof(IReadOnlyList<>)
-#endif
-              );
+             );
     }
 
     public bool CanBePolymorphic(Type type)
