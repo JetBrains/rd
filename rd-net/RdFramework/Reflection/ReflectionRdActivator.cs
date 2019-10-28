@@ -32,7 +32,7 @@ namespace JetBrains.Rd.Reflection
   {
     [NotNull] private readonly ReflectionSerializersFactory mySerializersFactory;
     [NotNull] private readonly ProxyGenerator myProxyGenerator;
-    [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicTypesCatalog;
+    [CanBeNull] private readonly ITypesCatalog myTypesCatalog;
 
     [NotNull]
     public ReflectionSerializersFactory SerializersFactory => mySerializersFactory;
@@ -41,7 +41,7 @@ namespace JetBrains.Rd.Reflection
     public ProxyGenerator Generator => myProxyGenerator;
 
     [CanBeNull]
-    public IPolymorphicTypesCatalog TypesCatalog => myPolymorphicTypesCatalog;
+    public ITypesCatalog TypesCatalog => myTypesCatalog;
 
 #if JET_MODE_ASSERT
     /// <summary>
@@ -54,15 +54,15 @@ namespace JetBrains.Rd.Reflection
 
 #endif
 
-    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [CanBeNull] IPolymorphicTypesCatalog polymorphicTypesCatalog)
-      : this(serializersFactory, new ProxyGenerator(), polymorphicTypesCatalog)
+    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [CanBeNull] ITypesCatalog typesCatalog)
+      : this(serializersFactory, new ProxyGenerator(), typesCatalog)
     {
     }
 
-    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [NotNull] ProxyGenerator proxyGenerator, [CanBeNull] IPolymorphicTypesCatalog polymorphicTypesCatalog)
+    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [NotNull] ProxyGenerator proxyGenerator, [CanBeNull] ITypesCatalog typesCatalog)
     {
       mySerializersFactory = serializersFactory;
-      myPolymorphicTypesCatalog = polymorphicTypesCatalog;
+      myTypesCatalog = typesCatalog;
       myProxyGenerator = proxyGenerator;
     }
 
@@ -126,7 +126,7 @@ namespace JetBrains.Rd.Reflection
       #endif
 
       // We should register serializer for current type and all of it members to have possibility to get valid serializers for arguments.
-      myPolymorphicTypesCatalog?.AddType(type);
+      myTypesCatalog?.AddType(type);
 
       return ActivateRd(type);
     }
@@ -260,8 +260,8 @@ namespace JetBrains.Rd.Reflection
 
     private void EnsureFakeTupleRegistered(Type type)
     {
-      Assertion.AssertNotNull(myPolymorphicTypesCatalog, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
-      myPolymorphicTypesCatalog.AddType(type);
+      Assertion.AssertNotNull(myTypesCatalog, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
+      myTypesCatalog.AddType(type);
     }
 
 #if !NET35
@@ -323,7 +323,7 @@ namespace JetBrains.Rd.Reflection
     private SerializerPair GetProperSerializer(Type type)
     {
       // registration for all statically known types
-      myPolymorphicTypesCatalog?.AddType(type);
+      myTypesCatalog?.AddType(type);
 
       return mySerializersFactory.GetOrRegisterSerializerPair(type, true);
     }

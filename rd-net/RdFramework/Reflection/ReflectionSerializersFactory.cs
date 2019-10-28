@@ -82,13 +82,6 @@ namespace JetBrains.Rd.Reflection
 
     private readonly object myLock = new object();
 
-    public bool KnownType(Type type)
-    {
-      lock (myLock)
-      {
-        return mySerializers.ContainsKey(type);
-      }
-    }
 
 #if JET_MODE_ASSERT
     /// <summary>
@@ -102,9 +95,9 @@ namespace JetBrains.Rd.Reflection
 
     public ISerializersContainer Cache { get; }
 
-    public ReflectionSerializersFactory(IScalarSerializers scalars = null)
+    public ReflectionSerializersFactory(ITypesCatalog typeCatalog, IScalarSerializers scalars = null)
     {
-      myScalars = scalars ?? new ScalarSerializer();
+      myScalars = scalars ?? new ScalarSerializer(typeCatalog);
       Cache = new SerializersContainer(mySerializers);
       Serializers.RegisterFrameworkMarshallers(Cache);
     }

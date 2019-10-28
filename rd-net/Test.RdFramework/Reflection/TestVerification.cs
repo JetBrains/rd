@@ -21,7 +21,7 @@ namespace Test.RdFramework.Reflection
     // [TestCase(typeof(CircularDependencyInModelError))]
     public void TestError(Type type)
     {
-      var serializer = new ReflectionSerializersFactory();
+      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
       var exception = Assert.Throws<Assertion.AssertionException>(() => activator.Activate(type));
 
@@ -32,7 +32,7 @@ namespace Test.RdFramework.Reflection
     [TestCase(typeof(ModelCalls))]
     public void TestActivation(Type type)
     {
-      var serializer = new ReflectionSerializersFactory();
+      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
       var activateRdModel = activator.Activate(type);
     }

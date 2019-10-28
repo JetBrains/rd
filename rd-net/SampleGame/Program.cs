@@ -48,10 +48,11 @@ namespace SampleGame
     {
       var lifetime = lifetimeDefinition.Lifetime;
 
-      var reflectionSerializers = new ReflectionSerializersFactory();
-      var polymorphicTypesCatalog = new SimpleTypesCatalog(reflectionSerializers);
+      var typeCatalog = new SimpleTypesCatalog();
+      var reflectionSerializers = new ReflectionSerializersFactory(typeCatalog);
+      var polymorphicTypesCatalog = new TypesRegistrar(typeCatalog, reflectionSerializers);
       var serializers = new Serializers(polymorphicTypesCatalog);
-      var activator = new ReflectionRdActivator(reflectionSerializers, new ProxyGenerator(false), polymorphicTypesCatalog);
+      var activator = new ReflectionRdActivator(reflectionSerializers, new ProxyGenerator(false), typeCatalog);
 
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, "Scheduler");
       Protocol protocol;
