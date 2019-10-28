@@ -31,20 +31,6 @@ namespace Test.RdFramework.Contexts
 
       ServerProtocol.Contexts.RegisterContext(key);
       
-      ServerProtocol.Contexts.SetTransformerForContext(key, (value, direction) =>
-      {
-        if (value == null) return null;
-        switch (direction)
-        {
-          case ContextValueTransformerDirection.WriteToProtocol:
-            return (int.Parse(value) + 3).ToString();
-          case ContextValueTransformerDirection.ReadFromProtocol:
-            return (int.Parse(value) - 3).ToString();
-          default:
-            throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
-        }
-      });
-
       key.Value = "1";
 
       Lifetime.Using(lt =>
@@ -52,7 +38,7 @@ namespace Test.RdFramework.Contexts
         var fired = false;
         clientSignal.Advise(lt, s =>
         {
-          Assert.AreEqual("4", key.Value);
+          Assert.AreEqual("1", key.Value);
           fired = true;
         });
         serverSignal.Fire("");
@@ -66,7 +52,7 @@ namespace Test.RdFramework.Contexts
         var fired = false;
         clientSignal.Advise(lt, s =>
         {
-          Assert.AreEqual("4", key.Value);
+          Assert.AreEqual("1", key.Value);
           fired = true;
         });
         serverSignal.Fire("");
@@ -80,7 +66,7 @@ namespace Test.RdFramework.Contexts
         var fired = false;
         serverSignal.Advise(lt, s =>
         {
-          Assert.AreEqual("-2", key.Value);
+          Assert.AreEqual("1", key.Value);
           fired = true;
         });
         clientSignal.Fire("");

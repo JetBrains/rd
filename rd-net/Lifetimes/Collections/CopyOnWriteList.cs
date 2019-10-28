@@ -33,7 +33,7 @@ namespace JetBrains.Collections
       return GetEnumerator();
     }
 
-    private void Modify<A>(A param, Func<T[], A, T[]> action)
+    private void Modify<TParam>(TParam param, Func<T[], TParam, T[]> action)
     {
       while (true)
       {

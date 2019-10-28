@@ -8,7 +8,7 @@ import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
 
-class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val key: RdContext<K>, val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V> {
+class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val key: RdContext<K>, val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V>, IViewableMap<K, V> by myInternalMap {
     constructor(key: RdContext<K>, valueFactory: (Boolean) -> V) : this(key, valueFactory, ViewableMap())
 
     override fun deepClone(): IRdBindable {
@@ -43,15 +43,14 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        val protocolValueSet = protocol.contexts.getProtocolValueSet(key)
-        val keyHandler = protocol.contexts.getContextHandler(key)
+        val protocolValueSet = protocol.contexts.getValueSet(key)
         protocolValueSet.view(lifetime) { keyLt, key ->
-            val previousUnboundValue = myUnboundValues[keyHandler.transformValueFromProtocol(key)]
+            val previousUnboundValue = myUnboundValues[key]
             val newEntity = (previousUnboundValue ?: valueFactory(master)).withId(rdid.mix(key.toString()))
             newEntity.bind(keyLt, this, "[${key}]")
             myInternalMap.addUnique(keyLt, key, newEntity)
         }
-        mySwitchingValueSet.changeBackingSet(protocol.contexts.getValueSet(key), true) // protocol set takes precedence
+        mySwitchingValueSet.changeBackingSet(protocolValueSet, true) // protocol set takes precedence
         myUnboundLifetimes.terminateCurrent() // also clears local set and unbound map
         lifetime.onTermination {
             mySwitchingValueSet.changeBackingSet(myLocalValueSet, false)
@@ -71,6 +70,15 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
         }
     }
 
+    override fun advise(lifetime: Lifetime, handler: (IViewableMap.Event<K, V>) -> Unit) {
+        view(lifetime) { lt, key, value ->
+            handler(IViewableMap.Event.Add(key, value))
+            lt.onTermination {
+                handler(IViewableMap.Event.Remove(key, value))
+            }
+        }
+    }
+
     override operator fun get(key: K): V? {
         if(!isBound) {
             if(!myLocalValueSet.contains(key))
@@ -78,8 +86,7 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
 
             return myUnboundValues[key]
         }
-        val protocolkey = protocol.contexts.getContextHandler(this.key).transformValueToProtocol(key) ?: return null
-        return myInternalMap[protocolkey]
+        return myInternalMap[key]
     }
 
     override fun getForCurrentContext(): V {

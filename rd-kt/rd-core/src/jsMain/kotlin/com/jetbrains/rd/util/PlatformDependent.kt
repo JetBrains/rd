@@ -87,6 +87,8 @@ actual class AtomicInteger actual constructor(var v: Int) {
 
     actual fun get(): Int = v
 
+    actual fun set(value: Int) { v = value }
+
     actual fun incrementAndGet(): Int = ++v
 
     actual fun decrementAndGet(): Int = --v

@@ -95,3 +95,9 @@ inline fun <T> Array<out T>.forEachReversed(action: (T) -> Unit) {
 }
 
 fun <T> List<T>?.restOrNull(): List<T>? = if (this == null || this.isEmpty() || this.size == 1) null else this.subList(1, size)
+
+fun <K, V> MutableMap<K, V>.keySet(value: V) = object : MutableSet<K> by keys {
+    override fun add(element: K): Boolean {
+        return put(element, value) == null
+    }
+}

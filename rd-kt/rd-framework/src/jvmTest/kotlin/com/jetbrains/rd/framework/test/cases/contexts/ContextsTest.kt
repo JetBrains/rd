@@ -2,7 +2,6 @@ package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.RdContext
-import com.jetbrains.rd.framework.impl.ContextValueTransformerDirection
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -35,19 +34,12 @@ class ContextsTest : RdFrameworkTestBase() {
 
         serverProtocol.contexts.registerContext(key)
 
-        serverProtocol.contexts.setTransformerForContext(key) { value, dir ->
-            value ?: return@setTransformerForContext null
-            if (dir == ContextValueTransformerDirection.ReadFromProtocol)
-                return@setTransformerForContext (value.toInt() - 3).toString()
-            return@setTransformerForContext (value.toInt() + 3).toString()
-        }
-
         key.value = "1"
 
         Lifetime.using { lt ->
             var fired = false
             clientSignal.advise(lt) {
-                assert(key.value == "4")
+                assert(key.value == "1")
                 fired = true
             }
 
@@ -60,7 +52,7 @@ class ContextsTest : RdFrameworkTestBase() {
         Lifetime.using { lt ->
             var fired = false
             clientSignal.advise(lt) {
-                assert(key.value == "4")
+                assert(key.value == "1")
                 fired = true
             }
 
@@ -73,7 +65,7 @@ class ContextsTest : RdFrameworkTestBase() {
         Lifetime.using { lt ->
             var fired = false
             serverSignal.advise(lt) {
-                assert(key.value == "-2")
+                assert(key.value == "1")
                 fired = true
             }
 

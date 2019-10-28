@@ -21,8 +21,8 @@ class InterningRemovalsTest : RdFrameworkTestBase() {
     }
 
     @Theory
-    fun doTest(firstSendServer: Boolean, secondSendServer: Boolean, removeServer: Boolean, thirdSendServer: Boolean) {
-        println("First: $firstSendServer second: $secondSendServer remove: $removeServer third: $thirdSendServer")
+    fun doTest(firstSendServer: Boolean, secondSendServer: Boolean, thirdSendServer: Boolean) {
+        println("First: $firstSendServer second: $secondSendServer third: $thirdSendServer")
         val rootServer = InternRoot().bindStatic(serverProtocol,"top")
         val rootClient = InternRoot().bindStatic(clientProtocol, "top")
 
@@ -41,9 +41,11 @@ class InterningRemovalsTest : RdFrameworkTestBase() {
 
         assert(secondSendBytes == 0L) { "Re-interning a value should not resend it" }
 
-        val removalSendBytes = measureBytes(proto(removeServer)) {
-            root(removeServer).removeValue(stringToSend)
+        val removalSendBytes = measureBytes(proto(false)) {
+            root(false).removeValue(stringToSend)
+            root(true).removeValue(stringToSend)
         }
+        assert(removalSendBytes == 0L) { "Removal should not send anything" }
 
         val thirdSendBytes = measureBytes(proto(thirdSendServer)) {
             root(thirdSendServer).internValue(stringToSend)

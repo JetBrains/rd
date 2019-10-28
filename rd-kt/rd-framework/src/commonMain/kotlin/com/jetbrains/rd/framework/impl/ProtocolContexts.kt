@@ -16,19 +16,6 @@ import com.jetbrains.rd.util.reflection.threadLocal
 import com.jetbrains.rd.util.reflection.usingValue
 
 /**
- * A callback to transform values between protocol and local values. Must be a bijection (one-to-one map)
- */
-typealias ContextValueTransformer<T> = (value: T?, fromProtocol: ContextValueTransformerDirection) -> T?
-
-/**
- * Indicates transformation direction for a value transformer
- */
-enum class ContextValueTransformerDirection {
-    WriteToProtocol,
-    ReadFromProtocol
-}
-
-/**
  * This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
  */
 class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase() {
@@ -50,8 +37,8 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         wire.advise(lifetime, this)
         Sync.lock(myOrderingsLock) {
             myKeyHandlerOrder.forEach {
-                bindHandler(lifetime, it, it.key.key)
-                sendContextToRemote(it.key)
+                bindHandler(lifetime, it, it.context.key)
+                sendContextToRemote(it.context)
             }
         }
 
@@ -79,7 +66,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         val prevValue = myKeyHandlers.putIfAbsent(key, value)
         if (prevValue == null) { // null or stub
             Sync.lock(this) {
-                sendContextToRemote(value.key)
+                sendContextToRemote(value.context)
                 myKeyHandlerOrder.add(value)
             }
             myBindLifetime?.let {
@@ -135,27 +122,11 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     }
 
     /**
-     * Gets a value set for a given context. The values are what actually exists on protocol level
-     */
-    @Suppress("UNCHECKED_CAST")
-    internal fun <T : Any> getProtocolValueSet(context: RdContext<T>) : IMutableViewableSet<T> {
-        assert(context.heavy) { "Only heavy contexts have value sets, ${context.key} is not heavy" }
-        return (getContextHandler(context) as HeavySingleContextHandler<T>).protocolValueSet
-    }
-
-    /**
      * Registers a context to be used with this protocol. Must be invoked on protocol's scheduler
      */
     fun <T : Any> registerContext(context: RdContext<T>) {
         protocol.scheduler.assertThread()
         ensureContextHandlerExists(context)
-    }
-
-    /**
-     * Sets a transform for a given context. The transform must be a bijection (one-to-one map). This will regenerate the local value set based on the protocol value set
-     */
-    fun <T:Any> setTransformerForContext(context: RdContext<T>, transformer: ContextValueTransformer<T>?) {
-        getContextHandler(context).myValueTransformer = transformer
     }
 
     private fun sendContextToRemote(context: RdContext<*>) {

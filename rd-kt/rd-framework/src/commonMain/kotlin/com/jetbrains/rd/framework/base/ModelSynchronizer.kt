@@ -59,7 +59,7 @@ fun <K : Any, T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerContextM
         b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
-    b.change.advise(lifetime) { evt ->
+    b.advise(lifetime) { evt ->
         evt.newValueOpt?.let {
             synchronizePolymorphic(lifetime, a[evt.key], it)
         }

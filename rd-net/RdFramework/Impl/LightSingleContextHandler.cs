@@ -6,7 +6,6 @@ namespace JetBrains.Rd.Impl
   internal class LightSingleContextHandler<T> : ISingleContextHandler<T>
   {
     public RdContext<T> Context { get; }
-    public ContextValueTransformer<T> ValueTransformer { get; set; }
     private readonly CtxReadDelegate<T> myReadDelegate;
     private readonly CtxWriteDelegate<T> myWriteDelegate;
 
@@ -20,7 +19,7 @@ namespace JetBrains.Rd.Impl
     
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
-      var value = this.GetTransformedValue();
+      var value = Context.Value;
       writer.Write(value != null);
       if (value != null)
         myWriteDelegate(context, writer, value);
@@ -31,7 +30,7 @@ namespace JetBrains.Rd.Impl
       var hasValue = reader.ReadBool();
       if (!hasValue)
         return default;
-      return this.TransformFromProtocol(myReadDelegate(context, reader));
+      return myReadDelegate(context, reader);
     }
 
     public void ReadValueAndPush(SerializationCtx context, UnsafeReader reader)

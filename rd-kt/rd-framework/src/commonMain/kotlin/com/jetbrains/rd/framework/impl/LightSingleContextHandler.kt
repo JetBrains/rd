@@ -5,16 +5,14 @@ import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.ISingleContextHandler
 import com.jetbrains.rd.framework.base.RdBindableBase
 
-internal class LightSingleContextHandler<T: Any>(override val key: RdContext<T>, val serializer: ISerializer<T>) : RdBindableBase(), ISingleContextHandler<T> {
-    override var myValueTransformer : ContextValueTransformer<T>? = null
-
+internal class LightSingleContextHandler<T: Any>(override val context: RdContext<T>, val serializer: ISerializer<T>) : RdBindableBase(), ISingleContextHandler<T> {
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer) {
-        val value = getValueTransformed()
+        val value = context.value
         if(value == null)
             buffer.writeBoolean(false)
         else {
@@ -26,6 +24,6 @@ internal class LightSingleContextHandler<T: Any>(override val key: RdContext<T>,
     override fun readValue(ctx: SerializationCtx, buffer: AbstractBuffer): T? {
         val hasValue = buffer.readBoolean()
         if(!hasValue) return null
-        return transformValueFromProtocol(serializer.read(ctx, buffer))
+        return serializer.read(ctx, buffer)
     }
 }

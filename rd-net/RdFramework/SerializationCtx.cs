@@ -37,8 +37,11 @@ namespace JetBrains.Rd
     {
       if (!InternRoots.TryGetValue(internKey, out var interningRoot))
         return readValueDelegate(this, stream);
-       
-      return interningRoot.UnIntern<T>(stream.ReadInt() ^ 1);
+
+      var id = InterningId.Read(stream);
+      if (id.IsValid)
+        return interningRoot.UnIntern<T>(id);
+      return readValueDelegate(this, stream);
     }
 
     public void WriteInterned<T>(UnsafeWriter stream, T value, string internKey, CtxWriteDelegate<T> writeValueDelegate)
@@ -49,7 +52,10 @@ namespace JetBrains.Rd
         return;
       }
 
-      stream.Write(interningRoot.Intern(value));
+      var id = interningRoot.Intern(value);
+      InterningId.Write(stream, id);
+      if (!id.IsValid)
+        writeValueDelegate(this, stream, value);
     }
   }
 }

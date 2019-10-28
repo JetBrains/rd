@@ -13,94 +13,58 @@ class InternRoot: IInternRoot {
         error("Should never be called")
     }
 
-    private val internedByMe = ConcurrentHashMap<Int, Any>()
-    private val internedByCounterpart = ConcurrentHashMap<Int, Any>()
+    private val internedValueIndices = AtomicInteger()
+    private val directMap = ConcurrentHashMap<InterningId, Any>()
     private val inverseMap = ConcurrentHashMap<Any, InverseMapValue>()
 
-    companion object {
-        @ExperimentalUnsignedTypes
-        private fun <E : Enum<E>> AbstractBuffer.writeEnumAsByte(value: Enum<E>) {
-            writeUByte(value.ordinal.toUByte())
-        }
-
-        @ExperimentalUnsignedTypes
-        private inline fun <reified E : Enum<E>> AbstractBuffer.readEnumAsByte() : E {
-            return parseFromOrdinal(readUByte().toInt())
-        }
+    override fun tryGetInterned(value: Any): InterningId {
+        return inverseMap[value]?.id ?: InterningId.invalid
     }
 
-    override fun tryGetInterned(value: Any): Int {
-        return inverseMap[value]?.id ?: -1
-    }
-
-    override fun internValue(value: Any): Int {
+    override fun internValue(value: Any): InterningId {
         return inverseMap[value]?.id ?: run {
-            var idx = 0
-            protocol.wire.send(rdid) { writer ->
-                writer.writeEnumAsByte(MessageType.SetIntern)
-                Polymorphic.write(serializationContext, writer, value)
-                Sync.lock(internedByMe) {
-                    idx = internedByMe.size * 2
-                    internedByMe[idx / 2] = value
-                }
-                writer.writeInt(idx)
-            }
-            val newValue = InverseMapValue(idx, -1)
+            val idx = InterningId(internedValueIndices.incrementAndGet() * 2)
+            assert(idx.isLocal)
+            val newValue = InverseMapValue(InterningId.invalid, InterningId.invalid)
             val oldValue = inverseMap.putIfAbsent(value, newValue)
-            if (oldValue != null) { // if there was a value, then currently allocated index was extraneously sent to remote
-                sendEraseIndex(idx) // tell the remote to disregard that
-            } else { // otherwise, tell the remote that current index is the one that will be used for writes on this side
-                sendConfirmIndex(idx)
+            if (oldValue != null) { // someone already allocated inverse mapping for this value
+                oldValue.id
+            } else { // we've succeeded at allocating this value - send it
+                directMap[idx] = value
+                protocol.wire.send(rdid) { writer ->
+                    Polymorphic.write(serializationContext, writer, value)
+                    writer.writeInterningId(idx)
+                }
+                newValue.id = idx
+                idx
             }
-            oldValue?.id ?: idx
         }
-    }
-
-    private fun sendEraseIndex(index: Int) {
-        require(isIndexOwned(index))
-        protocol.wire.send(rdid) { writer ->
-            writer.writeEnumAsByte(MessageType.ResetIndex)
-            writer.writeInt(index)
-        }
-        internedByMe.remove(index / 2)
-    }
-
-    private fun sendConfirmIndex(index: Int) {
-        require(isIndexOwned(index))
-        protocol.wire.send(rdid) { writer ->
-            writer.writeEnumAsByte(MessageType.ConfirmIndex)
-            writer.writeInt(index)
-        }
-    }
-
-    private fun eraseIndex(idx: Int) {
-        if (isIndexOwned(idx))
-            internedByMe.remove(idx / 2)
-        else
-            internedByCounterpart.remove(idx / 2)
     }
 
     override fun removeValue(value: Any) {
         val localValue = inverseMap.remove(value)
         if (localValue != null) {
-            protocol.wire.send(rdid) { writer ->
-                writer.writeEnumAsByte(MessageType.RequestRemoval)
-                writer.writeInt(localValue.id)
-                writer.writeInt(localValue.extraId)
-            }
+            directMap.remove(localValue.id)
+            directMap.remove(localValue.extraId)
         }
     }
 
-    private fun getValue(id: Int) = if (isIndexOwned(id)) internedByMe[id / 2] else internedByCounterpart[id / 2]
+    private fun getValue(id: InterningId): Any? {
+        assert(id.isValid)
+        return directMap[id]
+    }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> unInternValue(id: Int): T {
+    override fun <T : Any> unInternValue(id: InterningId): T {
         val value = getValue(id)
-        assert(value != null) { "Value for id $id has been removed" }
+        require(value != null) { "Value for id $id has been removed" }
         return value as T
     }
 
-    private fun isIndexOwned(id: Int) = (id and 1 == 0)
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> tryUnInternValue(id: InterningId): T? {
+        return getValue(id) as T?
+    }
 
     override var async: Boolean
         get() = true
@@ -109,82 +73,19 @@ class InternRoot: IInternRoot {
     override val wireScheduler: IScheduler = InternScheduler()
 
     override fun onWireReceived(buffer: AbstractBuffer) {
-        val messageType = buffer.readEnumAsByte<MessageType>()
-        return when(messageType) {
-            MessageType.SetIntern -> handleSetInternMessage(buffer)
-            MessageType.RequestRemoval -> handleRequestRemoval(buffer)
-            MessageType.AckRemoval -> handleAckRemoval(buffer)
-            MessageType.ResetIndex -> handleResetIndexMessage(buffer)
-            MessageType.ConfirmIndex -> handleConfirmIndexMessage(buffer)
-        }
-    }
-
-    private fun handleAckRemoval(buffer: AbstractBuffer) {
-        val id1 = buffer.readInt() xor 1
-        val id2 = buffer.readInt()
-        eraseIndex(id1)
-        if (id2 != -1) eraseIndex(id2 xor 1)
-    }
-
-    private fun handleRequestRemoval(buffer: AbstractBuffer) {
-        val remoteId = buffer.readInt() xor 1
-        val remoteExtraIdRaw = buffer.readInt()
-        val remoteExtraId = remoteExtraIdRaw xor 1
-
-        val value = getValue(remoteId)
-        if (value != null) {
-            val oldValue = inverseMap.remove(value)
-            if (oldValue != null) {
-                assert(oldValue.id == remoteId || oldValue.id == remoteExtraId)
-                assert(oldValue.extraId == remoteId || oldValue.extraId == -1 || oldValue.extraId == remoteExtraId)
-            }
-            eraseIndex(remoteId)
-            if(remoteExtraIdRaw != -1) eraseIndex(remoteExtraId)
-        }
-        sendRemovalAck(remoteId, if(remoteExtraIdRaw == -1) -1 else remoteExtraId)
-    }
-
-    private fun sendRemovalAck(id1: Int, id2: Int) {
-        protocol.wire.send(rdid) { writer ->
-            writer.writeEnumAsByte(MessageType.AckRemoval)
-            writer.writeInt(id1)
-            writer.writeInt(id2)
-        }
-    }
-
-    private fun handleResetIndexMessage(buffer: AbstractBuffer) {
-        val remoteId = buffer.readInt()
-        require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        internedByCounterpart.remove(remoteId / 2)
-    }
-
-    private fun handleConfirmIndexMessage(buffer: AbstractBuffer) {
-        val remoteId = buffer.readInt()
-        require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        val value = internedByCounterpart[remoteId / 2] ?: return // there's a chance that this ID was already removed on the other side before it could confirm it - ignore such cases
-        inverseMap.putIfAbsent(value, InverseMapValue(remoteId xor 1, -1))?.let {
-            assert(it.extraId == -1) { "extraId already set for entity $value with ids ${it.id}/${it.extraId}"}
-            it.extraId = remoteId xor 1
-        }
-    }
-
-    private fun handleSetInternMessage(buffer: AbstractBuffer) {
         val value = Polymorphic.read(serializationContext, buffer) ?: return
-        val remoteId = buffer.readInt()
-        require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        internedByCounterpart[remoteId / 2] = value
+        val remoteId = buffer.readInterningId()
+        assert(!remoteId.isLocal) { "Remote sent local InterningId, bug?" }
+        assert(remoteId.isValid)
+        directMap[remoteId] = value
+        val newInverseMapValue = InverseMapValue(remoteId, InterningId.invalid)
+        val oldValue = inverseMap.putIfAbsent(value, newInverseMapValue)
+        if (oldValue != null) {
+            oldValue.extraId = remoteId
+        }
     }
 
-    private enum class MessageType {
-        SetIntern,
-        ResetIndex,
-        ConfirmIndex,
-        RequestRemoval,
-        AckRemoval,
-    }
-
-    private data class InverseMapValue(val id: Int, var extraId: Int)
-
+    private data class InverseMapValue(/*@Volatile*/ var id: InterningId, var extraId: InterningId) // @Volatile is broken when compiling js, actual/expected with it breaks when compiling jvm
 
     override var rdid: RdId = RdId.Null
         internal set
@@ -201,8 +102,8 @@ class InternRoot: IInternRoot {
             rdid = RdId.Null
         })
 
-        internedByMe.clear()
-        internedByCounterpart.clear()
+        internedValueIndices.set(0)
+        directMap.clear()
         inverseMap.clear()
 
         protocol.wire.advise(lf, this)
@@ -224,14 +125,26 @@ class InternRoot: IInternRoot {
         get() = parent?.serializationContext ?: error("Not bound: $location")
 
     override var location: RName = RName("<<not bound>>")
+}
 
-    /**
-     * Removal procedure:
-     * remove() is invoked on local end. A removal request is sent, containing all known IDs for this value. Value is removed from inverse map and future interns use a new ID.
-     * (at this point an in-progress message on a background thread could still contain the to-be-removed ID. It's users's fault that they removed an actively used value)
-     * Remote end receives removal request. It removes the value from its own inverse map, its direct maps, and acknowledges removal
-     * Local end receives ack and removes local values
-     */
+inline class InterningId(val value: Int) {
+    val isValid: Boolean
+        get() = value != -1
+
+    val isLocal: Boolean
+        get() = (value and 1) == 0
+
+    companion object {
+        val invalid = InterningId(-1)
+    }
+}
+
+fun AbstractBuffer.readInterningId(): InterningId {
+    return InterningId(readInt())
+}
+
+fun AbstractBuffer.writeInterningId(id: InterningId) {
+    writeInt(if(id.value == -1) id.value else id.value xor 1)
 }
 
 class InternScheduler : IScheduler {

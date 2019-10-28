@@ -204,7 +204,7 @@ namespace Test.RdFramework.Interning
     }
 
     [Theory]
-    public void TestRemovals(bool firstSendServer, bool secondSendServer, bool removeServer, bool thirdSendServer)
+    public void TestRemovals(bool firstSendServer, bool secondSendServer, bool thirdSendServer)
     {
       var rootServer = new InternRoot().Static(1);
       rootServer.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top");
@@ -223,7 +223,11 @@ namespace Test.RdFramework.Interning
 
       Assert.AreEqual(0, secondSendBytes, "Re-interning a value should not resend it");
 
-      var removalSendBytes = MeasureBytes(Proto(removeServer), () => { Root(removeServer).Remove(stringToSend); });
+      var removalSendBytes = MeasureBytes(Proto(true), () =>
+      {
+        Root(true).Remove(stringToSend);
+        Root(false).Remove(stringToSend);
+      });
 
       var thirdSendBytes = MeasureBytes(Proto(thirdSendServer), () => { Root(thirdSendServer).Intern(stringToSend); });
 

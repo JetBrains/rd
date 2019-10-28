@@ -12,20 +12,6 @@ using JetBrains.Serialization;
 namespace JetBrains.Rd.Impl
 {
   /// <summary>
-  /// A callback to transform values between protocol and local values. Must be a bijection (one-to-one map)
-  /// </summary>
-  public delegate T ContextValueTransformer<T>(T value, ContextValueTransformerDirection direction);
-
-  /// <summary>
-  /// Indicates transformation direction for a value transformer
-  /// </summary>
-  public enum ContextValueTransformerDirection
-  {
-    WriteToProtocol,
-    ReadFromProtocol
-  }
-  
-  /// <summary>
   /// This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
   /// </summary>
   public class ProtocolContexts : RdReactiveBase
@@ -75,7 +61,7 @@ namespace JetBrains.Rd.Impl
       myOtherSideKeys.Add(contextBase.Key);
 
       new Action<RdContext<object>>(RegisterContext).Method.GetGenericMethodDefinition()
-        .MakeGenericMethod(contextBase.GetType().GetGenericArguments()[0]).Invoke(this, new[] {contextBase});
+        .MakeGenericMethod(contextBase.GetType().GetGenericArguments()[0]).Invoke(this, new object[] {contextBase});
     }
 
     private void DoAddHandler<T>(RdContext<T> context, ISingleContextHandler<T> handler)
@@ -137,20 +123,6 @@ namespace JetBrains.Rd.Impl
     {
       Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
       return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).LocalValueSet;
-    }
-
-    internal IViewableSet<T> GetProtocolValueSet<T>(RdContext<T> context)
-    {
-      Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
-      return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).ProtocolValueSet;
-    }
-
-    /// <summary>
-    /// Sets a transform for a given key. The transform must be a bijection (one-to-one map). This will regenerate the local value set based on the protocol value set
-    /// </summary>
-    public void SetTransformerForContext<T>(RdContext<T> context, ContextValueTransformer<T> transformer)
-    {
-      GetHandlerForContext(context).ValueTransformer = transformer;
     }
 
     /// <summary>

@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
-using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
@@ -46,8 +45,8 @@ namespace JetBrains.Rd
   /// <typeparam name="T">The type of value stored by this key</typeparam>
   public class RdContext<T> : RdContextBase
   {
-    [CanBeNull] public readonly CtxReadDelegate<T> ReadDelegate;
-    [CanBeNull] public readonly CtxWriteDelegate<T> WriteDelegate;
+    [NotNull] public readonly CtxReadDelegate<T> ReadDelegate;
+    [NotNull] public readonly CtxWriteDelegate<T> WriteDelegate;
 
     /// <summary>
     /// 
@@ -56,7 +55,7 @@ namespace JetBrains.Rd
     /// <param name="isHeavy">Whether or not this key is heavy. A heavy key maintains a value set and interns values. A light key sends values as-is and does not maintain a value set.</param>
     /// <param name="readDelegate">Serializer to be used with this key.</param>
     /// <param name="writeDelegate">Serializer to be used with this key.</param>
-    public RdContext(string key, bool isHeavy, [CanBeNull] CtxReadDelegate<T> readDelegate, [CanBeNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy)
+    public RdContext(string key, bool isHeavy, [NotNull] CtxReadDelegate<T> readDelegate, [NotNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy)
     {
       ReadDelegate = readDelegate;
       WriteDelegate = writeDelegate;

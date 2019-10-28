@@ -12,27 +12,12 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.IMutableViewableSet
 import com.jetbrains.rd.util.reactive.ViewableSet
+import com.jetbrains.rd.util.collections.ModificationCookieViewableSet
+import com.jetbrains.rd.util.keySet
 
-internal class HeavySingleContextHandler<T : Any>(override val key: RdContext<T>, private val contexts: ProtocolContexts) : RdReactiveBase(), ISingleContextHandler<T> {
-    private val myProtocolValueSet = RdSet<T>()
-    private val myLocalValueSet = ViewableSet<T>()
-    private val myValueConcurrentSet = ConcurrentHashMap<T, T>()
-    private var _myValueTransformer: ContextValueTransformer<T>? = null
-    override var myValueTransformer : ContextValueTransformer<T>?
-        get() = _myValueTransformer
-        set(value) {
-            _myValueTransformer = value
-            localChange {
-                myLocalValueSet.clear()
-                if (value != null) {
-                    myProtocolValueSet.forEach { setValue ->
-                        value(setValue, ContextValueTransformerDirection.ReadFromProtocol)?.let { myLocalValueSet.add(it) }
-                    }
-                } else {
-                    myLocalValueSet.addAll(myProtocolValueSet)
-                }
-            }
-        }
+internal class HeavySingleContextHandler<T : Any>(override val context: RdContext<T>, private val contexts: ProtocolContexts) : RdReactiveBase(), ISingleContextHandler<T> {
+    private val myProtocolValueSet = RdSet(context.serializer, ViewableSet(ConcurrentHashMap<T, Boolean>().keySet(true)))
+    private val myProtocolValueSetWithCookie = ModificationCookieViewableSet(myProtocolValueSet, contexts::isWritingOwnMessages)
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
@@ -45,10 +30,7 @@ internal class HeavySingleContextHandler<T : Any>(override val key: RdContext<T>
     private val myInternRoot = InternRoot()
 
     val valueSet : IMutableViewableSet<T>
-        get() = myLocalValueSet
-
-    internal val protocolValueSet : IMutableViewableSet<T>
-        get() = myProtocolValueSet
+        get() = myProtocolValueSetWithCookie
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
@@ -64,50 +46,14 @@ internal class HeavySingleContextHandler<T : Any>(override val key: RdContext<T>
         myProtocolValueSet.advise(lifetime) { addRemove, value ->
             handleValueAddedToProtocolSet(addRemove, value)
         }
-
-        myLocalValueSet.advise(lifetime) { addRemove, value ->
-            if (isLocalChange)
-                return@advise
-            handleValueAddedToLocalSet(addRemove, value)
-        }
-    }
-
-    private fun handleValueAddedToLocalSet(addRemove: AddRemove, value: T) {
-        val transformer = myValueTransformer
-        val newValue = if (transformer != null) {
-            transformer(value, ContextValueTransformerDirection.WriteToProtocol)
-        } else {
-            value
-        } ?: return
-        withWriteOwnMessages {
-            if (addRemove == AddRemove.Add && !myProtocolValueSet.contains(newValue)) {
-                myProtocolValueSet.add(newValue)
-            } else if (addRemove == AddRemove.Remove && myProtocolValueSet.contains(newValue)) {
-                myProtocolValueSet.remove(newValue)
-            }
-        }
     }
 
     private fun handleValueAddedToProtocolSet(addRemove: AddRemove, value: T) {
-        val transformer = myValueTransformer
-        val newValue = if(transformer != null) {
-            transformer(value, ContextValueTransformerDirection.ReadFromProtocol)
-        } else {
-            value
-        }
-
         withWriteOwnMessages {
             if (addRemove == AddRemove.Add) {
-                myValueConcurrentSet[value] = value
                 myInternRoot.internValue(value)
-                if (newValue != null)
-                    myLocalValueSet.add(newValue)
             } else if (addRemove == AddRemove.Remove) {
                 myInternRoot.removeValue(value)
-                myValueConcurrentSet.remove(value)
-
-                if (newValue != null)
-                    myLocalValueSet.remove(newValue)
             }
         }
     }
@@ -118,28 +64,39 @@ internal class HeavySingleContextHandler<T : Any>(override val key: RdContext<T>
 
     @Suppress("UNCHECKED_CAST")
     override fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer) {
-        assert(!contexts.isWritingOwnMessages) { "Trying to write context with a context-related message, key ${key.key}"}
-        val originalValue = key.value
-        val value = transformValueToProtocol(originalValue)
-        if(value == null)
-            buffer.writeInt(-1)
-        else {
+        assert(!contexts.isWritingOwnMessages) { "Trying to write context with a context-related message, key ${context.key}"}
+        val value = context.value
+        if(value == null) {
+            buffer.writeInterningId(InterningId.invalid)
+            buffer.writeBoolean(false)
+        } else {
             withWriteOwnMessages {
-                if (!myValueConcurrentSet.containsKey(value)) {
+                if (!myProtocolValueSet.contains(value)) {
                     if (protocol.scheduler.isActive) {
-                        myLocalValueSet.add(originalValue ?: error("Can't perform an implicit add with null local context value for key ${key.key}"))
-                    } else error("Attempting to use previously unused context value $value on a background thread for key ${key.key}")
+                        myProtocolValueSet.add(value)
+                    } else error("Attempting to use previously unused context value $value on a background thread for key ${context.key}")
                 }
-                buffer.writeInt(myInternRoot.internValue(value))
+
+                val internedId = myInternRoot.internValue(value)
+                buffer.writeInterningId(internedId)
+                if (!internedId.isValid) {
+                    buffer.writeBoolean(true)
+                    context.serializer.write(ctx, buffer, value)
+                }
             }
         }
     }
 
     override fun readValue(ctx: SerializationCtx, buffer: AbstractBuffer): T? {
-        val id = buffer.readInt()
-        if (id == -1)
-            return null
-        return transformValueFromProtocol(myInternRoot.unInternValue(id xor 1))
+        val id = buffer.readInterningId()
+        return if (!id.isValid) {
+            val hasValue = buffer.readBoolean()
+            if(hasValue)
+                context.serializer.read(ctx, buffer)
+            else
+                null
+        } else
+            myInternRoot.tryUnInternValue(id)
     }
 
     override var async: Boolean

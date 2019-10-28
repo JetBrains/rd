@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -57,10 +56,10 @@ namespace JetBrains.Rd.Impl
         protected override void Init(Lifetime lifetime)
         {
             base.Init(lifetime);
-            var protocolValueSet = Proto.Contexts.GetProtocolValueSet(myKey);
+            var protocolValueSet = Proto.Contexts.GetValueSet(myKey);
             protocolValueSet.View(lifetime, (contextValueLifetime, contextValue) =>
             {
-                myUnboundValues.TryGetValue(Proto.Contexts.GetHandlerForContext(myKey).TransformFromProtocol(contextValue), out var previousUnboundValue);
+                myUnboundValues.TryGetValue(contextValue, out var previousUnboundValue);
                 var value = (previousUnboundValue ?? myValueFactory(IsMaster)).WithId(RdId.Mix(contextValue.ToString()));
                 value.Bind(contextValueLifetime, this, $"[{contextValue.ToString()}]");
                 myMap.Add(contextValue, value);
@@ -108,7 +107,7 @@ namespace JetBrains.Rd.Impl
 
               return myUnboundValues[key];
             }
-            return myMap[Proto.Contexts.GetHandlerForContext(myKey).TransformToProtocol(key)];
+            return myMap[key];
           }
         }
 
@@ -121,7 +120,7 @@ namespace JetBrains.Rd.Impl
 
             return myUnboundValues.TryGetValue(key, out value);
           }
-          return myMap.TryGetValue(Proto.Contexts.GetHandlerForContext(myKey).TransformToProtocol(key), out value);
+          return myMap.TryGetValue(key, out value);
         }
 
 

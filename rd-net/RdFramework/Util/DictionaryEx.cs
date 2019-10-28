@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using JetBrains.Collections;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 
@@ -55,5 +57,7 @@ namespace JetBrains.Rd.Util
       }
       
     }
+    
+    public static SetOnDictionaryKeys<K, V> MutableKeySet<K, V>(this IDictionary<K, V> dictionary, V stubValue) => new SetOnDictionaryKeys<K, V>(dictionary, stubValue);
   }
 }

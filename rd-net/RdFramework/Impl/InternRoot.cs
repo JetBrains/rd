@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
@@ -15,175 +14,81 @@ namespace JetBrains.Rd.Impl
 {
   public class InternRoot : IInternRoot
   {
-    private readonly ConcurrentDictionary<int, object> myInternedByMe = new ConcurrentDictionary<int, object>();
-    private readonly ConcurrentDictionary<int, object> myInternedByCounterpart = new ConcurrentDictionary<int, object>();
-    private readonly ConcurrentDictionary<object, IdPair> myInverseMap = new ConcurrentDictionary<object, IdPair>();
+    private readonly ConcurrentDictionary<InterningId, object> myDirectMap =
+      new ConcurrentDictionary<InterningId, object>();
 
-    public bool TryGetInterned(object value, out int result)
+    private readonly ConcurrentDictionary<object, IdPair> myInverseMap = new ConcurrentDictionary<object, IdPair>();
+    private int myInternedIdCounter;
+
+    public bool TryGetInterned(object value, out InterningId result)
     {
       var hasValue = myInverseMap.TryGetValue(value, out var pair);
       result = hasValue ? pair.Id : default;
       return hasValue;
     }
 
-    public int Intern(object value)
+    public InterningId Intern(object value)
     {
       IdPair pair;
       if (myInverseMap.TryGetValue(value, out pair))
         return pair.Id;
-      
-      Proto.Wire.Send(RdId, writer =>
-      {
-        writer.Write((byte) MessageType.SetIntern);
-        Polymorphic<object>.Write(SerializationContext, writer, value);
-        int allocatedId;
-        lock (myInternedByMe)
-        {
-          allocatedId = myInternedByMe.Count * 2;
-          myInternedByMe[allocatedId / 2] = value;          
-        }
 
-        pair.Id = allocatedId;
-        pair.ExtraId = -1;
-        writer.Write(allocatedId);
-      });
+      pair.Id = pair.ExtraId = InterningId.Invalid;
+
+      InterningId allocatedId = new InterningId(Interlocked.Increment(ref myInternedIdCounter) * 2);
 
       if (myInverseMap.TryAdd(value, pair))
-        SendConfirmIndex(pair.Id);
-      else
       {
-        SendEraseIndex(pair.Id);
-        pair = myInverseMap[value];
+        myDirectMap[allocatedId] = value;
+        Proto.Wire.Send(RdId, writer =>
+        {
+          Polymorphic<object>.Write(SerializationContext, writer, value);
+          InterningId.Write(writer, allocatedId);
+        });
+
+        while (true)
+        {
+          var oldPair = myInverseMap[value];
+          var modifiedPair = oldPair;
+          modifiedPair.Id = allocatedId;
+          if (myInverseMap.TryUpdate(value, modifiedPair, oldPair)) break;
+        }
       }
 
-      return pair.Id;
+      return myInverseMap[value].Id;
     }
 
-    private void SendConfirmIndex(int index)
+    private object TryGetValue(InterningId id)
     {
-      Proto.Wire.Send(RdId, writer =>
-      {
-        writer.Write((byte) MessageType.ConfirmIndex);
-        writer.Write(index);
-      });
-    }
-
-    private void SendEraseIndex(int index)
-    {
-      Proto.Wire.Send(RdId, writer =>
-      {
-        writer.Write((byte) MessageType.ResetIndex);
-        writer.Write(index);
-      });
-      myInternedByMe.TryRemove(index, out _);
-    }
-
-    private bool IsIndexOwned(int idx)
-    {
-      return (idx & 1) == 0;
-    }
-
-    private object TryGetValue(int id)
-    {
-      object value;
-      if (IsIndexOwned(id))
-        myInternedByMe.TryGetValue(id / 2, out value);
-      else
-        myInternedByCounterpart.TryGetValue(id / 2, out value);
+      myDirectMap.TryGetValue(id, out var value);
       return value;
+    }
+
+    public bool TryUnIntern<T>(InterningId id, out T result)
+    {
+      var value = TryGetValue(id);
+      if (value != null)
+      {
+        result = (T) value;
+        return true;
+      }
+
+      result = default;
+      return false;
     }
 
     public void Remove(object value)
     {
       if (myInverseMap.TryRemove(value, out var pair))
       {
-        Proto.Wire.Send(RdId, writer =>
-        {
-          writer.Write((byte) MessageType.RequestRemoval);
-          writer.Write(pair.Id);
-          writer.Write(pair.ExtraId);
-        });
+        myDirectMap.TryRemove(pair.Id, out _);
+        myDirectMap.TryRemove(pair.ExtraId, out _);
       }
     }
 
-    public T UnIntern<T>(int id)
+    public T UnIntern<T>(InterningId id)
     {
-      return (T) (IsIndexOwned(id) ? myInternedByMe[id / 2] : myInternedByCounterpart[id / 2]);
-    }
-    
-    private void HandleSetIntern(UnsafeReader reader)
-    {
-      var value = Polymorphic<object>.Read(SerializationContext, reader);
-      var id = reader.ReadInt();
-      Assertion.Require((id & 1) == 0, "Other side sent us id of our own side?");
-      myInternedByCounterpart[id / 2] = value;
-    }
-
-    private void EraseIndex(int index)
-    {
-      if (IsIndexOwned(index))
-        myInternedByMe.TryRemove(index / 2, out _);
-      else
-        myInternedByCounterpart.TryRemove(index / 2, out _);
-    }
-    
-    private void HandleAckRemoval(UnsafeReader reader)
-    {
-      var id1 = reader.ReadInt();
-      var id2 = reader.ReadInt();
-      
-      EraseIndex(id1 ^ 1);
-      if(id2 != -1) EraseIndex(id2 ^ 1);
-    }
-
-    private void HandleRequestRemoval(UnsafeReader reader)
-    {
-      var id1 = reader.ReadInt() ^ 1;
-      var id2r = reader.ReadInt();
-      var id2 = id2r ^ 1;
-
-      var value = TryGetValue(id1);
-      if (value != null)
-      {
-        if (myInverseMap.TryRemove(value, out var oldPair))
-        {
-          Assertion.Assert(oldPair.Id == id1 || oldPair.Id == id2, "oldPair.Id == id1 || oldPair.Id == id2");
-          Assertion.Assert(oldPair.ExtraId == -1 || oldPair.ExtraId == id1 || oldPair.ExtraId == id2, "oldPair.ExtraId == -1 || oldPair.ExtraId == id1 || oldPair.ExtraId == id2");
-        }
-        EraseIndex(id1);
-        if(id2r != -1) EraseIndex(id2);
-      }
-
-      SendAckRemoval(id1, id2r == -1 ? -1 : id2);
-    }
-
-    private void SendAckRemoval(int id1, int id2)
-    {
-      Proto.Wire.Send(RdId, writer =>
-      {
-        writer.Write((byte) MessageType.AckRemoval);
-        writer.Write(id1);
-        writer.Write(id2);
-      });
-    }
-
-    private void HandleConfirmIndex(UnsafeReader reader)
-    {
-      var id = reader.ReadInt() ^ 1;
-      var pair = new IdPair() { Id = id, ExtraId = -1 };
-      var value = myInternedByCounterpart[id / 2];
-      if (myInverseMap.TryAdd(value, pair)) 
-        return;
-      
-      pair = myInverseMap[value];
-      pair.ExtraId = id;
-      myInverseMap[value] = pair;
-    }
-
-    private void HandleResetIndex(UnsafeReader reader)
-    {
-      var id = reader.ReadInt();
-      myInternedByCounterpart.TryRemove(id / 2, out _);
+      return (T) TryGetValue(id);
     }
 
     [CanBeNull] private IRdDynamic myParent;
@@ -191,6 +96,7 @@ namespace JetBrains.Rd.Impl
     public IProtocol Proto => myParent.NotNull(this).Proto;
     public SerializationCtx SerializationContext => myParent.NotNull(this).SerializationContext;
     public RName Location { get; private set; } = new RName("<<not bound>>");
+
     public void Print(PrettyPrinter printer)
     {
       printer.Print(ToString());
@@ -198,14 +104,14 @@ namespace JetBrains.Rd.Impl
       printer.Print(RdId.ToString());
       printer.Print(")");
     }
-    
+
     public override string ToString()
     {
-      return GetType().ToString(false, true) + ": `" + Location+"`";
+      return GetType().ToString(false, true) + ": `" + Location + "`";
     }
 
     public RdId RdId { get; set; }
-    
+
     public void Bind(Lifetime lf, IRdDynamic parent, string name)
     {
       if (myParent != null)
@@ -239,45 +145,65 @@ namespace JetBrains.Rd.Impl
       RdId = id;
     }
 
-    public bool Async { get => true; set => throw new NotSupportedException("Intern Roots are always async"); }
+    public bool Async
+    {
+      get => true;
+      set => throw new NotSupportedException("Intern Roots are always async");
+    }
+
     public IScheduler WireScheduler => InternRootScheduler.Instance;
+
     public void OnWireReceived(UnsafeReader reader)
     {
-      var messageType = (MessageType) reader.ReadByte();
-      switch (messageType)
+      var value = Polymorphic<object>.Read(SerializationContext, reader);
+      var id = InterningId.Read(reader);
+      Assertion.Require(!id.IsLocal, "Other side sent us id of our own side?");
+      myDirectMap[id] = value;
+      var pair = new IdPair() { Id = id, ExtraId = InterningId.Invalid };
+      if (!myInverseMap.TryAdd(value, pair))
       {
-        case MessageType.SetIntern:
-          HandleSetIntern(reader);
-          break;
-        case MessageType.ResetIndex:
-          HandleResetIndex(reader);
-          break;
-        case MessageType.ConfirmIndex:
-          HandleConfirmIndex(reader);
-          break;
-        case MessageType.RequestRemoval:
-          HandleRequestRemoval(reader);
-          break;
-        case MessageType.AckRemoval:
-          HandleAckRemoval(reader);
-          break;
-        default:
-          throw new ArgumentOutOfRangeException();
+        while (true)
+        {
+          var oldPair = myInverseMap[value];
+          var modifiedPair = oldPair;
+          modifiedPair.ExtraId = id;
+          if (myInverseMap.TryUpdate(value, modifiedPair, oldPair)) break;
+        }
       }
     }
 
-    private enum MessageType : byte {
-      SetIntern,
-      ResetIndex,
-      ConfirmIndex,
-      RequestRemoval,
-      AckRemoval,
-    }
-
-    private struct IdPair
+    private struct IdPair : IEquatable<IdPair>
     {
-      public int Id;
-      public int ExtraId;
+      public InterningId Id;
+      public InterningId ExtraId;
+
+      public bool Equals(IdPair other)
+      {
+        return Id.Equals(other.Id) && ExtraId.Equals(other.ExtraId);
+      }
+
+      public override bool Equals(object obj)
+      {
+        return obj is IdPair other && Equals(other);
+      }
+
+      public override int GetHashCode()
+      {
+        unchecked
+        {
+          return (Id.GetHashCode() * 397) ^ ExtraId.GetHashCode();
+        }
+      }
+
+      public static bool operator ==(IdPair left, IdPair right)
+      {
+        return left.Equals(right);
+      }
+
+      public static bool operator !=(IdPair left, IdPair right)
+      {
+        return !left.Equals(right);
+      }
     }
   }
 

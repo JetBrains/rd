@@ -3,6 +3,7 @@ using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
+using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
@@ -11,47 +12,20 @@ namespace JetBrains.Rd.Impl
   {
     private readonly ProtocolContexts myHandler;
     private readonly InternRoot myInternRoot = new InternRoot();
-    private readonly RdSet<T> myProtocolValueSet = new RdSet<T>();
-    private readonly ViewableSet<T> myLocalValueSet = new ViewableSet<T>();
-    private ContextValueTransformer<T> myValueTransformer;
-    
-    private readonly ConcurrentDictionary<T, T> myValuesConcurrentSet = new ConcurrentDictionary<T, T>();
+    private readonly RdSet<T> myProtocolValueSet;
+    private readonly ModificationCookieViewableSet<T, ProtocolContexts.OwnMessagesCookie> myModificationCookieValueSet;
 
-
-    internal IViewableSet<T> LocalValueSet => myLocalValueSet;
-    internal IViewableSet<T> ProtocolValueSet => myProtocolValueSet;
+    internal IViewableSet<T> LocalValueSet => myModificationCookieValueSet;
 
     public HeavySingleContextHandler(RdContext<T> key, ProtocolContexts handler)
     {
       myHandler = handler;
       Context = key;
+      myProtocolValueSet = new RdSet<T>(key.ReadDelegate, key.WriteDelegate, new ViewableSet<T>(new ConcurrentDictionary<T, bool>().MutableKeySet(false)));
+      myModificationCookieValueSet = new ModificationCookieViewableSet<T, ProtocolContexts.OwnMessagesCookie>(myHandler.CreateOwnMessageCookie, myProtocolValueSet);
     }
 
     public RdContext<T> Context { get; }
-
-    public ContextValueTransformer<T> ValueTransformer
-    {
-      get => myValueTransformer;
-      set
-      {
-        myValueTransformer = value;
-        using (new LocalChangeCookie(this))
-        {
-          myLocalValueSet.Clear();
-          if (value != null)
-          {
-            foreach (var protocolValue in myProtocolValueSet)
-            {
-              var transformedValue = value(protocolValue, ContextValueTransformerDirection.ReadFromProtocol);
-              if (transformedValue != null) myLocalValueSet.Add(transformedValue);
-            }
-          } else
-          {
-            foreach (var protocolValue in myProtocolValueSet) myLocalValueSet.Add(protocolValue);
-          }
-        }
-      }
-    }
 
     protected override void Init(Lifetime lifetime)
     {
@@ -67,83 +41,63 @@ namespace JetBrains.Rd.Impl
       }
 
       myProtocolValueSet.Advise(lifetime, HandleProtocolSetEvent);
-      myLocalValueSet.Advise(lifetime, HandleLocalSetEvent);
-    }
-
-    private void HandleLocalSetEvent(SetEvent<T> obj)
-    {
-      if (IsLocalChange)
-        return;
-      
-      var newValue = myValueTransformer == null ? obj.Value : myValueTransformer(obj.Value, ContextValueTransformerDirection.WriteToProtocol);
-      if (newValue == null) return;
-      using(myHandler.CreateOwnMessageCookie())
-        if (obj.Kind == AddRemove.Add)
-        {
-          if (!myProtocolValueSet.Contains(newValue))
-            myProtocolValueSet.Add(newValue);
-        }
-        else
-        {
-          if (myProtocolValueSet.Contains(newValue))
-            myProtocolValueSet.Remove(newValue);
-        }
     }
 
     private void HandleProtocolSetEvent(SetEvent<T> obj)
     {
       var value = obj.Value;
-      var newValue = myValueTransformer == null ? obj.Value : myValueTransformer(obj.Value, ContextValueTransformerDirection.ReadFromProtocol);
       using(myHandler.CreateOwnMessageCookie())
         if (obj.Kind == AddRemove.Add)
-        {
-          myValuesConcurrentSet.TryAdd(value, value);
           myInternRoot.Intern(value);
-          if (newValue != null)
-            myLocalValueSet.Add(newValue);
-        }
         else
-        {
-          myValuesConcurrentSet.TryRemove(value, out _);
           myInternRoot.Remove(value);
-          if (newValue != null)
-            myLocalValueSet.Remove(newValue);
-        }
     }
 
 
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
       Assertion.Assert(!myHandler.IsWritingOwnMessages, "!myHandler.IsWritingOwnMessages");
-      var originalValue = Context.Value;
-      var value = this.TransformToProtocol(originalValue);
+      var value = Context.Value;
       if (value == null)
       {
         writer.Write(-1);
+        writer.Write(false);
       }
       else
       {
         using (myHandler.CreateOwnMessageCookie())
         {
-          if (!myValuesConcurrentSet.ContainsKey(value))
+          if (!myProtocolValueSet.Contains(value))
           {
             if (Proto.Scheduler.IsActive)
             {
-              Assertion.AssertNotNull(originalValue, "Can't perform an implicit add with null local context value for key {0}", Context.Key);
-              myLocalValueSet.Add(originalValue);
+              Assertion.AssertNotNull(Context.Value, "Can't perform an implicit add with null local context value for key {0}", Context.Key);
+              myProtocolValueSet.Add(Context.Value);
             } else Assertion.Fail($"Attempting to use previously unused context value {value} on a background thread");
           }
-          writer.Write(myInternRoot.Intern(value));
+
+          var internedId = myInternRoot.Intern(value);
+          InterningId.Write(writer, internedId);
+          if (!internedId.IsValid)
+          {
+            writer.Write(true);
+            Context.WriteDelegate(context, writer, value);
+          }
         }
       }
     }
 
     public T ReadValue(SerializationCtx context, UnsafeReader reader)
     {
-      var id = reader.ReadInt();
-      if (id == -1)
+      var id = InterningId.Read(reader);
+      if (!id.IsValid)
+      {
+        var hasValue = reader.ReadBool();
+        if (hasValue)
+          return Context.ReadDelegate(context, reader);
         return default;
-      return this.TransformFromProtocol(myInternRoot.UnIntern<T>(id ^ 1));
+      }
+      return myInternRoot.UnIntern<T>(id);
     }
 
     public override void OnWireReceived(UnsafeReader reader)

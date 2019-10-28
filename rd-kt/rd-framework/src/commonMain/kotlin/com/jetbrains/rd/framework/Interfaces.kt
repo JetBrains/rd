@@ -4,6 +4,7 @@ import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
+import com.jetbrains.rd.framework.impl.InterningId
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
@@ -124,19 +125,24 @@ interface IIdentities {
  */
 interface IInternRoot: IRdReactive {
     /**
-     * Returns an ID for a value. Returns -1 if the value was not interned
+     * Returns an ID for a value. Returns invalid ID if the value was not interned
      */
-    fun tryGetInterned(value: Any): Int
+    fun tryGetInterned(value: Any): InterningId
 
     /**
-     * Interns a value and returns an ID for it
+     * Interns a value and returns an ID for it. May return invalid ID if the value can't be interned due to multithreaded conflicts
      */
-    fun internValue(value: Any): Int
+    fun internValue(value: Any): InterningId
 
     /**
-     * Gets a value from interned ID.
+     * Gets a value from interned ID. Throws an exception if no value matches the given ID
      */
-    fun <T : Any> unInternValue(id: Int): T
+    fun <T : Any> unInternValue(id: InterningId): T
+
+    /**
+     * Gets a valie from interned ID, returns null if no value matches the given ID
+     */
+    fun <T : Any> tryUnInternValue(id: InterningId): T?
 
     /**
      * Removes interned value. Any future attempts to un-intern IDs previously associated with this value will fail.

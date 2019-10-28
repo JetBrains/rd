@@ -77,6 +77,7 @@ expect class UUID(hi: Long, lo: Long) {
 
 expect class AtomicInteger constructor(v: Int = 0){
     fun get() : Int
+    fun set(value: Int)
     fun getAndAdd(v: Int) : Int
     fun incrementAndGet() : Int
     fun decrementAndGet() : Int
