@@ -132,6 +132,45 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+    [Test]
+    public void TestListInterface()
+    {
+      WithExts<ListInterfacesExt>((c, s) =>
+      {
+        c.Objects.Value = new ListInterfacesExt.ListOwner1()
+        {
+          InterfaceListOfInts = new List<int>() {1, 2, 3},
+          ListOfInts = new List<int>() {1, 2, 3},
+          CollectionOfInts = new List<int>() {1, 2, 3},
+          // ReadonlyListInts = new List<int>() {1, 2, 3},
+          // EnumerableInts = new List<int>() {1, 2, 3},
+        };
+
+        CollectionAssert.AreEqual(c.Objects.Value.InterfaceListOfInts , s.Objects.Value.InterfaceListOfInts );
+        CollectionAssert.AreEqual(c.Objects.Value.ListOfInts          , s.Objects.Value.ListOfInts          );
+        CollectionAssert.AreEqual(c.Objects.Value.CollectionOfInts    , s.Objects.Value.CollectionOfInts    );
+        // CollectionAssert.AreEqual(c.Objects.Value.ReadonlyListInts    , s.Objects.Value.ReadonlyListInts    );
+        // CollectionAssert.AreEqual(c.Objects.Value.EnumerableInts      , s.Objects.Value.EnumerableInts      );
+      });
+    }
+
+
+    [RdExt]
+    public class ListInterfacesExt : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<ListOwner1> Objects { get; }
+
+      public class ListOwner1
+      {
+        public IList<int> InterfaceListOfInts;
+        public List<int> ListOfInts;
+        public IList<int> CollectionOfInts;
+        // not supported
+        // public IReadOnlyList<int> ReadonlyListInts;
+        // public IEnumerable<int> EnumerableInts;
+      }
+    }
+
     [RdExt]
     public class ListObjectsExt : RdExtReflectionBindableBase
     {
@@ -139,12 +178,12 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdScalar] // not required
-    public class ListOwner
-    {
-      public List<ColorFields> Polymorphic;
-      public List<ColorFields[]> PolymorphicArray;
-      public List<int> Ints;
-    }
+      public class ListOwner
+      {
+        public List<ColorFields> Polymorphic;
+        public List<ColorFields[]> PolymorphicArray;
+        public List<int> Ints;
+      }
 
     [RdExt]
     public class ArraysExt : RdExtReflectionBindableBase
@@ -179,57 +218,57 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdScalar] // not required
-    public struct ColorClass
-    {
-      public int Red { get; set; }
-      public int Green { get; set; }
-      public int Blue { get; set; }
-    }
+      public struct ColorClass
+      {
+        public int Red { get; set; }
+        public int Green { get; set; }
+        public int Blue { get; set; }
+      }
 
     [RdScalar] // not required
-    public struct ColorStruct
-    {
-      public int Red { get; set; }
-      public int Green { get; set; }
-      public int Blue { get; set; }
-    }
+      public struct ColorStruct
+      {
+        public int Red { get; set; }
+        public int Green { get; set; }
+        public int Blue { get; set; }
+      }
 
     [RdScalar] // not required
-    public class ColorFields
-    {
-      public int Red { get; }
-      public int Green { get; }
-      public int Blue { get; }
-
-      public ColorFields(int red, int green, int blue)
+      public class ColorFields
       {
-        Red = red;
-        Green = green;
-        Blue = blue;
-      }
+        public int Red { get; }
+        public int Green { get; }
+        public int Blue { get; }
 
-      public ColorFields()
-      {
-      }
+        public ColorFields(int red, int green, int blue)
+        {
+          Red = red;
+          Green = green;
+          Blue = blue;
+        }
 
-      protected bool Equals(ColorFields other)
-      {
-        return Red == other.Red;
-      }
+        public ColorFields()
+        {
+        }
 
-      public override bool Equals(object obj)
-      {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((ColorFields) obj);
-      }
+        protected bool Equals(ColorFields other)
+        {
+          return Red == other.Red;
+        }
 
-      public override int GetHashCode()
-      {
-        return Red;
+        public override bool Equals(object obj)
+        {
+          if (ReferenceEquals(null, obj)) return false;
+          if (ReferenceEquals(this, obj)) return true;
+          if (obj.GetType() != GetType()) return false;
+          return Equals((ColorFields) obj);
+        }
+
+        public override int GetHashCode()
+        {
+          return Red;
+        }
       }
-    }
 
     public class Scalar1
     {
