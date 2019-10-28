@@ -129,7 +129,7 @@ namespace Test.RdFramework.Reflection
       });
 
       TInterface proxy = null;
-      ServerProtocol.Scheduler.Queue(() => { proxy = CreateServerProxy<TInterface>(); });
+      ServerProtocol.Scheduler.Queue(() => { proxy = Facade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol); });
 
       WaitMessages();
 

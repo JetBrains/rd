@@ -110,7 +110,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestList2()
     {
-      TestRdTypesCatalog.Register<ColorFields>();
+      TestRdTypesCatalog.AddType(typeof(ColorFields));
       WithExts<ListObjectsExt>((c, s) =>
       {
         s.Objects.Value = new ListOwner()

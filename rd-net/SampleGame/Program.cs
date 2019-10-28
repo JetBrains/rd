@@ -48,11 +48,8 @@ namespace SampleGame
     {
       var lifetime = lifetimeDefinition.Lifetime;
 
-      var typeCatalog = new SimpleTypesCatalog();
-      var reflectionSerializers = new ReflectionSerializersFactory(typeCatalog);
-      var polymorphicTypesCatalog = new TypesRegistrar(typeCatalog, reflectionSerializers);
-      var serializers = new Serializers(polymorphicTypesCatalog);
-      var activator = new ReflectionRdActivator(reflectionSerializers, new ProxyGenerator(false), typeCatalog);
+      var reflectionSerializers = new ReflectionSerializersFacade();
+      var serializers = new Serializers(reflectionSerializers.Registrar);
 
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, "Scheduler");
       Protocol protocol;
@@ -71,7 +68,7 @@ namespace SampleGame
         protocol = new Protocol("Client", serializers, new Identities(IdKind.Client), scheduler, wire, lifetime);
       }
 
-      scheduler.Queue(() => RunApplication(isServer, activator, lifetime, protocol));
+      scheduler.Queue(() => RunApplication(isServer, reflectionSerializers, lifetime, protocol));
 
       wire.Connected.Change.Advise(lifetime, value =>
       {
@@ -94,17 +91,16 @@ namespace SampleGame
       }
     }
 
-    private static void RunApplication(bool isServer, ReflectionRdActivator activator, Lifetime lifetime, Protocol protocol)
+    private static void RunApplication(bool isServer, ReflectionSerializersFacade facade, Lifetime lifetime, Protocol protocol)
     {
       IRootExt root;
       if (isServer)
       {
-        var type = activator.Generator.CreateType<IRootExt>();
-        root = (IRootExt) activator.ActivateBind(type, lifetime, protocol);
+        root = facade.ActivateProxy<IRootExt>(lifetime, protocol);
       }
       else
       {
-        root = activator.ActivateBind<RootExt>(lifetime, protocol);
+        root = facade.InitBind(new RootExt(), lifetime, protocol);
       }
 
       root.OnChar.Advise(lifetime, Console.Write);

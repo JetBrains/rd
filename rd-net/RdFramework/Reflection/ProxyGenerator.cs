@@ -1,12 +1,9 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -15,10 +12,14 @@ using JetBrains.Util;
 
 namespace JetBrains.Rd.Reflection
 {
-  public class ProxyGenerator
+  public class ProxyGenerator : IProxyGenerator
   {
     private readonly bool myAllowSave;
+    private readonly ITypesCatalog myCatalog;
 
+    /*
+     * ValueTuple package does not exist for net35
+     */
     public struct FakeTuple<T1> {
       public T1 Item1;
       public FakeTuple(T1 item1) { Item1 = item1; }
@@ -89,9 +90,10 @@ namespace JetBrains.Rd.Reflection
     public AssemblyBuilder DynamicAssembly => myAssemblyBuilder.Value;
     public ModuleBuilder DynamicModule => myModuleBuilder.Value;
 
-    public ProxyGenerator(bool allowSave = false)
+    public ProxyGenerator(ITypesCatalog catalog, bool allowSave = false)
     {
       myAllowSave = allowSave;
+      myCatalog = catalog;
 #if NETSTANDARD
      myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
@@ -333,6 +335,9 @@ namespace JetBrains.Rd.Reflection
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
+      myCatalog.AddType(requestType);
+      myCatalog.AddType(responseType);
+
       var fieldType = typeof(IRdCall<,>).MakeGenericType(requestType, responseType);
       var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);
 

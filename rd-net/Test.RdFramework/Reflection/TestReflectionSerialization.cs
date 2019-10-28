@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using JetBrains.Collections.Viewable;
-using JetBrains.Rd;
-using JetBrains.Rd.Impl;
+﻿using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -28,16 +25,16 @@ namespace Test.RdFramework.Reflection
     public override void SetUp()
     {
       base.SetUp();
-      TestRdTypesCatalog.Register<Animal>();
-      TestRdTypesCatalog.Register<Bear>();
-      TestRdTypesCatalog.Register<EmptyOK>();
+      TestRdTypesCatalog.AddType(typeof(Animal));
+      TestRdTypesCatalog.AddType(typeof(Bear));
+      TestRdTypesCatalog.AddType(typeof(EmptyOK));
     }
 
     [Test]
     public void Test1()
     {
-      var s = new RootModel().InitBind(ReflectionRdActivator, TestLifetime, ClientProtocol);;
-      var c = new RootModel().InitBind(ReflectionRdActivator, TestLifetime, ServerProtocol);
+      var s =  Facade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = Facade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
 
       s.EmptyOK.Value = new EmptyOK();
       Assert.IsNotNull(c.EmptyOK.Value);
