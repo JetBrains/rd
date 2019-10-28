@@ -2,4 +2,4 @@ Trace | SEND                      | call `DemoServer.DemoModel.call`::  : K
 Trace | RECV                      | property `DemoServer.DemoModel.property_with_default` :: oldver = 0, newver = 0, value = "192" 
 Trace | RECV                      | endpoint `DemoServer.DemoModel.callback`:: taskId= request = "Csharp" 
 Trace | SEND                      | endpoint `DemoServer.DemoModel.callback`:: taskId= response = Success :: 6 
-Trace | RECV                      | call `DemoServer.DemoModel.call`  received response for task'15034841944282701468' : Success :: K  
+Trace | RECV                      | call `DemoServer.DemoModel.call`  received response for  : Success :: K  

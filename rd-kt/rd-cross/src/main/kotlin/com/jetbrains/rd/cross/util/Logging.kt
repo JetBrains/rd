@@ -45,7 +45,7 @@ class CrossTestsLoggerFactory(val buffer: MutableList<String>) : ILoggerFactory 
      * Drop messages related to RdExtBase and replace all RdId occurrences to empty string
      */
     fun processMessage(message: Any?): String? {
-        val prohibitedPatterns = listOf("taskId=\\d+", "send request '\\d+'", "task '\\d+'", "\\(\\d+\\)").joinToString(separator = "|") { "($it)" }
+        val prohibitedPatterns = listOf("taskId=(\\d+)", "send request '\\d+'", "task '\\d+'", "\\(\\d+\\)").joinToString(separator = "|") { "($it)" }
         return message?.toString()?.takeIf { !it.contains(excludedRegex) }?.replace(Regex(prohibitedPatterns), "")
     }
 
