@@ -23,14 +23,14 @@ namespace JetBrains.Rd.Reflection
     /// Types catalog required for providing information about statically discovered types during concrete serializer
     /// construction for sake of possibility for Rd serializers to lookup real type by representing RdId
     /// </summary>
-    private readonly IPolymorphicTypesCatalog myTypesCatalog;
+    private readonly ITypesCatalog myTypesCatalog;
 
     /// <summary>
     /// Collection instance-specific serializers (polymorphic possible)
     /// </summary>
     private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
 
-    public ScalarSerializer([NotNull] IPolymorphicTypesCatalog typesCatalog)
+    public ScalarSerializer([NotNull] ITypesCatalog typesCatalog)
     {
       myTypesCatalog = typesCatalog ?? throw new ArgumentNullException(nameof(typesCatalog));
       Serializers.RegisterFrameworkMarshallers(this);
@@ -101,7 +101,12 @@ namespace JetBrains.Rd.Reflection
     private static bool IsList(Type t)
     {
       return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  &&
-             (generic == typeof(List<>) || generic == typeof(IReadOnlyList<>) || generic == typeof(IList<>) || generic == typeof(ICollection<>));
+             (generic == typeof(List<>) ||
+              generic == typeof(IList<>) || generic == typeof(ICollection<>)
+#if !NET35
+              || generic == typeof(IReadOnlyList<>)
+#endif
+              );
     }
 
     public bool CanBePolymorphic(Type type)

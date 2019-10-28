@@ -19,8 +19,8 @@ namespace Test.RdFramework.Reflection
 
     public override void SetUp()
     {
-      ReflectionSerializersFactory = new ReflectionSerializersFactory();
-      TestRdTypesCatalog = new SimpleTypesCatalog(ReflectionSerializersFactory);
+      TestRdTypesCatalog = new SimpleTypesCatalog();
+      ReflectionSerializersFactory = new ReflectionSerializersFactory(TestRdTypesCatalog);
       ReflectionRdActivator = new ReflectionRdActivator(ReflectionSerializersFactory, new ProxyGenerator(true), TestRdTypesCatalog);
 
       base.SetUp();
@@ -30,7 +30,7 @@ namespace Test.RdFramework.Reflection
 
     protected override Serializers CreateSerializers(bool isServer)
     {
-      return new Serializers(TestRdTypesCatalog);
+      return new Serializers(new TypesRegistrar(TestRdTypesCatalog, ReflectionSerializersFactory));
     }
 
     protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase
