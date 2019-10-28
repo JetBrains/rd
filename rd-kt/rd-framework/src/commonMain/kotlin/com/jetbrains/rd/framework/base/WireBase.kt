@@ -21,7 +21,7 @@ abstract class WireBase(val scheduler: IScheduler) : IContextAwareWire {
 
     override var contexts: ProtocolContexts? = null
         set(value) {
-            require(field == null) { "Can't replace ProtocolContextHandler in IContextAwareWire"}
+            require(field == null) { "Can't replace ProtocolContexts in IContextAwareWire"}
             field = value
         }
 

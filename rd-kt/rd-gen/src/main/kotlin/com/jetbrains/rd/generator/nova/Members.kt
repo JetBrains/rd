@@ -55,7 +55,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
     sealed class Reactive(name: String, vararg val genericParams: IType) : Member(name, genericParams.toList()) {
         var flow  : FlowKind = FlowKind.Both
         var freeThreaded : Boolean = false
-        var perContextKey : ContextKey? = null
+        var context : Context? = null
 
 
         class Task  (name : String, paramType : IScalar, resultType: IScalar) : Reactive(name, paramType, resultType)
@@ -165,9 +165,9 @@ val Member.hasEmptyConstructor : Boolean get() = when (this) {
     else -> throw GeneratorException("Unsupported member: $this")
 }
 
-fun Member.Reactive.perContext(key: ContextKey) : Member.Reactive {
+fun Member.Reactive.perContext(key: Context) : Member.Reactive {
     require(key.isHeavyKey) { "Only non-light keys can be used for per-context entities" }
-    perContextKey = key
+    context = key
     return this
 }
 

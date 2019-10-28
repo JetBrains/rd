@@ -14,34 +14,35 @@ class InternRoot: IInternRoot {
     }
 
     private val internedValueIndices = AtomicInteger()
-    private val directMap = ConcurrentHashMap<InterningId, Any>()
+    private val directMap = ConcurrentHashMap<InternId, Any>()
     private val inverseMap = ConcurrentHashMap<Any, InverseMapValue>()
 
-    override fun tryGetInterned(value: Any): InterningId {
-        return inverseMap[value]?.id ?: InterningId.invalid
+    override fun tryGetInterned(value: Any): InternId {
+        return inverseMap[value]?.id ?: InternId.invalid
     }
 
-    override fun internValue(value: Any): InterningId {
+    override fun intern(value: Any): InternId {
         return inverseMap[value]?.id ?: run {
-            val idx = InterningId(internedValueIndices.incrementAndGet() * 2)
-            assert(idx.isLocal)
-            val newValue = InverseMapValue(InterningId.invalid, InterningId.invalid)
-            val oldValue = inverseMap.putIfAbsent(value, newValue)
-            if (oldValue != null) { // someone already allocated inverse mapping for this value
-                oldValue.id
+            val newMapping = InverseMapValue(InternId.invalid, InternId.invalid)
+            val oldMapping = inverseMap.putIfAbsent(value, newMapping)
+            if (oldMapping != null) { // someone already allocated inverse mapping for this value
+                oldMapping.id
             } else { // we've succeeded at allocating this value - send it
+                val idx = InternId(internedValueIndices.incrementAndGet() * 2)
+                assert(idx.isLocal)
+
                 directMap[idx] = value
                 protocol.wire.send(rdid) { writer ->
                     Polymorphic.write(serializationContext, writer, value)
-                    writer.writeInterningId(idx)
+                    writer.writeInternId(idx)
                 }
-                newValue.id = idx
+                newMapping.id = idx
                 idx
             }
         }
     }
 
-    override fun removeValue(value: Any) {
+    override fun remove(value: Any) {
         val localValue = inverseMap.remove(value)
         if (localValue != null) {
             directMap.remove(localValue.id)
@@ -49,21 +50,21 @@ class InternRoot: IInternRoot {
         }
     }
 
-    private fun getValue(id: InterningId): Any? {
+    private fun get(id: InternId): Any? {
         assert(id.isValid)
         return directMap[id]
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> unInternValue(id: InterningId): T {
-        val value = getValue(id)
+    override fun <T : Any> unIntern(id: InternId): T {
+        val value = get(id)
         require(value != null) { "Value for id $id has been removed" }
         return value as T
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> tryUnInternValue(id: InterningId): T? {
-        return getValue(id) as T?
+    override fun <T : Any> tryUnIntern(id: InternId): T? {
+        return get(id) as T?
     }
 
     override var async: Boolean
@@ -74,18 +75,19 @@ class InternRoot: IInternRoot {
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val value = Polymorphic.read(serializationContext, buffer) ?: return
-        val remoteId = buffer.readInterningId()
+        val remoteId = buffer.readInternId()
         assert(!remoteId.isLocal) { "Remote sent local InterningId, bug?" }
-        assert(remoteId.isValid)
+        assert(remoteId.isValid) { "Remote sent invalid InterningId, bug?" }
         directMap[remoteId] = value
-        val newInverseMapValue = InverseMapValue(remoteId, InterningId.invalid)
+        val newInverseMapValue = InverseMapValue(remoteId, InternId.invalid)
         val oldValue = inverseMap.putIfAbsent(value, newInverseMapValue)
         if (oldValue != null) {
+            assert(!oldValue.extraId.isValid) { "Remote send duplicate IDs for value $value" }
             oldValue.extraId = remoteId
         }
     }
 
-    private data class InverseMapValue(/*@Volatile*/ var id: InterningId, var extraId: InterningId) // @Volatile is broken when compiling js, actual/expected with it breaks when compiling jvm
+    private data class InverseMapValue(/*@Volatile*/ var id: InternId, var extraId: InternId) // @Volatile is broken when compiling js, actual/expected with it breaks when compiling jvm
 
     override var rdid: RdId = RdId.Null
         internal set
@@ -102,7 +104,6 @@ class InternRoot: IInternRoot {
             rdid = RdId.Null
         })
 
-        internedValueIndices.set(0)
         directMap.clear()
         inverseMap.clear()
 
@@ -127,23 +128,32 @@ class InternRoot: IInternRoot {
     override var location: RName = RName("<<not bound>>")
 }
 
-inline class InterningId(val value: Int) {
+/**
+ * An ID representing an interned value
+ */
+inline class InternId(val value: Int) {
+    /**
+     * True if this ID represents an actual interned value. False indicates a failed interning operation or unset value
+     */
     val isValid: Boolean
         get() = value != -1
 
+    /**
+     * True if this ID represents a value interned by local InternRoot
+     */
     val isLocal: Boolean
         get() = (value and 1) == 0
 
     companion object {
-        val invalid = InterningId(-1)
+        val invalid = InternId(-1)
     }
 }
 
-fun AbstractBuffer.readInterningId(): InterningId {
-    return InterningId(readInt())
+fun AbstractBuffer.readInternId(): InternId {
+    return InternId(readInt())
 }
 
-fun AbstractBuffer.writeInterningId(id: InterningId) {
+fun AbstractBuffer.writeInternId(id: InternId) {
     writeInt(if(id.value == -1) id.value else id.value xor 1)
 }
 

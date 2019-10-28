@@ -34,7 +34,7 @@ namespace JetBrains.Rd
 
         public static readonly ClientId LocalId = new ClientId("Host");
         
-        private static readonly RdContext<string> ourContext = new RdContext<string>("ClientId", true, Serializers.ReadString, Serializers.WriteString);
+        public static readonly RdContext<string> Context = new RdContext<string>("ClientId", true, Serializers.ReadString, Serializers.WriteString);
 
         public static readonly CtxReadDelegate<ClientId> ReadDelegate = (ctx, reader) => new ClientId(reader.ReadString());
         public static readonly CtxWriteDelegate<ClientId> WriteDelegate = (ctx, writer, value) => writer.Write(value.Value);
@@ -54,7 +54,7 @@ namespace JetBrains.Rd
 
             private static void SetClientId(ClientId? newClientId)
             {
-              ourContext.Value = newClientId?.Value;
+              Context.Value = newClientId?.Value;
             }
 
             public void Dispose()
@@ -88,10 +88,10 @@ namespace JetBrains.Rd
         {
           get
           {
-            var contextKeyValue = ourContext.Value;
-            if (contextKeyValue == null)
+            var contextValue = Context.Value;
+            if (contextValue == null)
               return null;
-            return new ClientId(contextKeyValue);
+            return new ClientId(contextValue);
           }
         }
 

@@ -60,9 +60,9 @@ class InternScope(pointcut: BindableDeclaration?, override val _name: String = "
         get() = javaClass.simpleName
 }
 
-class ContextKey(pointcut: Toplevel, override val _name: String = "", val type: INonNullableScalar, var isHeavyKey: Boolean = true) : Declaration(pointcut) {
+class Context(pointcut: Toplevel, override val _name: String = "", val type: INonNullableScalar, var isHeavyKey: Boolean = true) : Declaration(pointcut) {
     val keyName: String
-        get() = name.also { assert(it != "") { "No name specified for context key and no name can be derived for key in $pointcut" } }
+        get() = name.also { assert(it != "") { "No name specified for context and no name can be derived for key in $pointcut" } }
 
     override val cl_name: String
         get() = javaClass.simpleName
@@ -327,7 +327,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun flags(body: Enum.() -> Unit) = enum( body).apply { flags = true }
 
     fun internScope(name: String = "") = InternScope(this, name)
-    fun contextKey(name: String = "", type: INonNullableScalar) = append(ContextKey(this, name, type)) {}
+    fun context(type: INonNullableScalar) = append(Context(this, "", type)) {}
 }
 
 

@@ -20,8 +20,8 @@ class PerClientIdGenTest {
             CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.PerClientId", File("build/testOutputCSharp"))
     ) {
 
-        val key = contextKey("key", PredefinedType.string)
-        val lightKey = contextKey("lightKey", PredefinedType.int).light
+        val key = context(PredefinedType.string)
+        val lightKey = context(PredefinedType.int).light
         init {
             property("aProp", PredefinedType.string).perContext(key)
             property("aPropDefault", false).perContext(key)

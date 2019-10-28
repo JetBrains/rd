@@ -67,12 +67,12 @@ namespace JetBrains.Rd
     }
   }
   /// <summary>
-  /// Describes a context key and provides access to value associated with this key.
+  /// Describes a context and provides access to value associated with this context.
   /// The associated value is thread-local and synchronized between send/advise pairs on <see cref="IWire"/>. The associated value will be the same in handler method in <see cref="IWire.Advise"/> as it was in <see cref="IWire.Send"/>.
-  /// Instances of this class with the same [key] will share the associated value.
-  /// Best practice is to declare context keys in toplevel entities in protocol model using <c>Toplevel.contextKey</c>. Manual declaration is also possible.
+  /// Instances of this class with the same <see cref="RdContext.Key"/> will share the associated value.
+  /// Best practice is to declare contexts in toplevel entities in protocol model using <c>Toplevel.context</c>. Manual declaration is also possible.
   /// </summary>
-  /// <typeparam name="T">The type of value stored by this key</typeparam>
+  /// <typeparam name="T">The type of value stored by this context</typeparam>
   public class RdContext<T> : RdContextBase
   {
     [NotNull] public readonly CtxReadDelegate<T> ReadDelegate;
@@ -81,10 +81,10 @@ namespace JetBrains.Rd
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="key">Textual name of this key. This is used to match this with protocol counterparts</param>
-    /// <param name="isHeavy">Whether or not this key is heavy. A heavy key maintains a value set and interns values. A light key sends values as-is and does not maintain a value set.</param>
-    /// <param name="readDelegate">Serializer to be used with this key.</param>
-    /// <param name="writeDelegate">Serializer to be used with this key.</param>
+    /// <param name="key">Textual name of this context. This is used to match this with protocol counterparts</param>
+    /// <param name="isHeavy">Whether or not this context is heavy. A heavy context maintains a value set and interns values. A light context sends values as-is and does not maintain a value set.</param>
+    /// <param name="readDelegate">Serializer to be used with this context.</param>
+    /// <param name="writeDelegate">Serializer to be used with this context.</param>
     public RdContext(string key, bool isHeavy, [NotNull] CtxReadDelegate<T> readDelegate, [NotNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy)
     {
       ReadDelegate = readDelegate;
@@ -100,7 +100,7 @@ namespace JetBrains.Rd
 #endif
     
      /// <summary>
-     /// Current (thread- or async-local) value for this key
+     /// Current (thread- or async-local) value for this context
      /// </summary>
     public T Value
     {

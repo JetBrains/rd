@@ -12,7 +12,7 @@ using JetBrains.Serialization;
 namespace JetBrains.Rd.Impl
 {
   /// <summary>
-  /// This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
+  /// This class handles RdContext on protocol level. It tracks existing contexts and allows access to their value sets (when present)
   /// </summary>
   public class ProtocolContexts : RdReactiveBase
   {
@@ -119,7 +119,7 @@ namespace JetBrains.Rd.Impl
     }
 
     /// <summary>
-    /// Registers a context key to be used with this context handler. Must be invoked on protocol's scheduler
+    /// Registers a context to be used with this context handler. Must be invoked on protocol's scheduler
     /// </summary>
     public void RegisterContext<T>(RdContext<T> context)
     {
@@ -137,8 +137,6 @@ namespace JetBrains.Rd.Impl
     {
       base.Init(lifetime);
 
-      Wire.Advise(lifetime, this);
-
       lock (myOrderingLock)
       {
         myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
@@ -148,6 +146,8 @@ namespace JetBrains.Rd.Impl
             .Invoke(this, new object[] { handlerLt, handler });
         });
       }
+      
+      Wire.Advise(lifetime, this);
     }
 
     /// <summary>

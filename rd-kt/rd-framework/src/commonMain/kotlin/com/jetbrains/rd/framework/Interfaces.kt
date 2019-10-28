@@ -4,7 +4,7 @@ import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
-import com.jetbrains.rd.framework.impl.InterningId
+import com.jetbrains.rd.framework.impl.InternId
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
@@ -127,26 +127,26 @@ interface IInternRoot: IRdReactive {
     /**
      * Returns an ID for a value. Returns invalid ID if the value was not interned
      */
-    fun tryGetInterned(value: Any): InterningId
+    fun tryGetInterned(value: Any): InternId
 
     /**
      * Interns a value and returns an ID for it. May return invalid ID if the value can't be interned due to multithreaded conflicts
      */
-    fun internValue(value: Any): InterningId
+    fun intern(value: Any): InternId
 
     /**
      * Gets a value from interned ID. Throws an exception if no value matches the given ID
      */
-    fun <T : Any> unInternValue(id: InterningId): T
+    fun <T : Any> unIntern(id: InternId): T
 
     /**
      * Gets a valie from interned ID, returns null if no value matches the given ID
      */
-    fun <T : Any> tryUnInternValue(id: InterningId): T?
+    fun <T : Any> tryUnIntern(id: InternId): T?
 
     /**
      * Removes interned value. Any future attempts to un-intern IDs previously associated with this value will fail.
      * Not thread-safe. It's up to user to ensure that the value being removed is not being used in messages written on background threads.
      */
-    fun removeValue(value: Any)
+    fun remove(value: Any)
 }

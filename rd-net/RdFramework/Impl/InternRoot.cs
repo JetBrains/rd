@@ -14,36 +14,38 @@ namespace JetBrains.Rd.Impl
 {
   public class InternRoot : IInternRoot
   {
-    private readonly ConcurrentDictionary<InterningId, object> myDirectMap =
-      new ConcurrentDictionary<InterningId, object>();
+    private readonly ConcurrentDictionary<InternId, object> myDirectMap =
+      new ConcurrentDictionary<InternId, object>();
 
     private readonly ConcurrentDictionary<object, IdPair> myInverseMap = new ConcurrentDictionary<object, IdPair>();
     private int myInternedIdCounter;
 
-    public bool TryGetInterned(object value, out InterningId result)
+    public bool TryGetInterned(object value, out InternId result)
     {
       var hasValue = myInverseMap.TryGetValue(value, out var pair);
       result = hasValue ? pair.Id : default;
       return hasValue;
     }
 
-    public InterningId Intern(object value)
+    public InternId Intern(object value)
     {
       IdPair pair;
       if (myInverseMap.TryGetValue(value, out pair))
         return pair.Id;
 
-      pair.Id = pair.ExtraId = InterningId.Invalid;
-
-      InterningId allocatedId = new InterningId(Interlocked.Increment(ref myInternedIdCounter) * 2);
+      pair.Id = pair.ExtraId = InternId.Invalid;
 
       if (myInverseMap.TryAdd(value, pair))
       {
+        InternId allocatedId = new InternId(Interlocked.Increment(ref myInternedIdCounter) * 2);
+        
+        Assertion.Assert(allocatedId.IsLocal, "Newly allocated ID must be local");
+        
         myDirectMap[allocatedId] = value;
         Proto.Wire.Send(RdId, writer =>
         {
           Polymorphic<object>.Write(SerializationContext, writer, value);
-          InterningId.Write(writer, allocatedId);
+          InternId.Write(writer, allocatedId);
         });
 
         while (true)
@@ -58,13 +60,13 @@ namespace JetBrains.Rd.Impl
       return myInverseMap[value].Id;
     }
 
-    private object TryGetValue(InterningId id)
+    private object TryGetValue(InternId id)
     {
       myDirectMap.TryGetValue(id, out var value);
       return value;
     }
 
-    public bool TryUnIntern<T>(InterningId id, out T result)
+    public bool TryUnIntern<T>(InternId id, out T result)
     {
       var value = TryGetValue(id);
       if (value != null)
@@ -86,7 +88,7 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    public T UnIntern<T>(InterningId id)
+    public T UnIntern<T>(InternId id)
     {
       return (T) TryGetValue(id);
     }
@@ -134,6 +136,9 @@ namespace JetBrains.Rd.Impl
         }
       );
       
+      myDirectMap.Clear();
+      myInverseMap.Clear();
+
       Proto.Wire.Advise(lf, this);
     }
 
@@ -156,15 +161,17 @@ namespace JetBrains.Rd.Impl
     public void OnWireReceived(UnsafeReader reader)
     {
       var value = Polymorphic<object>.Read(SerializationContext, reader);
-      var id = InterningId.Read(reader);
+      var id = InternId.Read(reader);
       Assertion.Require(!id.IsLocal, "Other side sent us id of our own side?");
+      Assertion.Require(id.IsValid, "Other side sent us invalid id?");
       myDirectMap[id] = value;
-      var pair = new IdPair() { Id = id, ExtraId = InterningId.Invalid };
+      var pair = new IdPair() { Id = id, ExtraId = InternId.Invalid };
       if (!myInverseMap.TryAdd(value, pair))
       {
         while (true)
         {
           var oldPair = myInverseMap[value];
+          Assertion.Assert(!oldPair.ExtraId.IsValid, "Remote send duplicated IDs for value {0}", value);
           var modifiedPair = oldPair;
           modifiedPair.ExtraId = id;
           if (myInverseMap.TryUpdate(value, modifiedPair, oldPair)) break;
@@ -174,8 +181,8 @@ namespace JetBrains.Rd.Impl
 
     private struct IdPair : IEquatable<IdPair>
     {
-      public InterningId Id;
-      public InterningId ExtraId;
+      public InternId Id;
+      public InternId ExtraId;
 
       public bool Equals(IdPair other)
       {

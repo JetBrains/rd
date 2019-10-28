@@ -16,7 +16,7 @@ import com.jetbrains.rd.util.reflection.threadLocal
 import com.jetbrains.rd.util.reflection.usingValue
 
 /**
- * This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
+ * This class handles RdContext on protocol level. It tracks existing contexts and allows access to their value sets (when present)
  */
 class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase() {
     private val counterpartHandlers = CopyOnWriteArrayList<ISingleContextHandler<*>>()
@@ -33,24 +33,19 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        wire.advise(lifetime, this)
         Sync.lock(myOrderingsLock) {
             myHandlerOrder.view(lifetime) { handlerLifetime, _, handler ->
                 bindHandler(handlerLifetime, handler, handler.context.key)
                 sendContextToRemote(handler.context)
             }
         }
+        wire.advise(lifetime, this)
     }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         assertWireThread()
         val context = RdContext.read(serializationCtx, buffer)
-        if(context.heavy) {
-            ensureContextHandlerExists(context)
-        } else {
-            @Suppress("UNCHECKED_CAST")
-            createLightHandler(context as RdContext<Any>)
-        }
+        ensureContextHandlerExists(context)
         counterpartHandlers.add(handlersMap[context]!!)
     }
 
@@ -65,20 +60,13 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         }
     }
 
-    private fun createLightHandler(context: RdContext<Any>) {
-        assertWireThread() // can only happen on wire thread
-        if (!handlersMap.containsKey(context)) {
-            doAddHandler(context) { LightSingleContextHandler(context, context.serializer) }
-        }
-    }
-
     private fun <T : Any> ensureContextHandlerExists(context: RdContext<T>) {
         if (!handlersMap.containsKey(context)) {
             doAddHandler(context) {
                 if(context.heavy)
                     HeavySingleContextHandler(context, this)
                 else
-                    LightSingleContextHandler(context, context.serializer)
+                    LightSingleContextHandler(context)
             }
         }
     }
@@ -103,7 +91,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     }
 
     /**
-     * Get a value set for a given context. The values are local relative to transform
+     * Get a value set for a given context
      */
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> getValueSet(context: RdContext<T>) : IMutableViewableSet<T> {

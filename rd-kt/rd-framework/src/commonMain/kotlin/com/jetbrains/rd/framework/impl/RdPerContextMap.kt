@@ -2,25 +2,19 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.util.addUnique
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IViewableMap
+import com.jetbrains.rd.util.reactive.ViewableMap
 
-class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val key: RdContext<K>, val valueFactory: (Boolean) -> V, private val myInternalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V>, IViewableMap<K, V> by myInternalMap {
-    constructor(key: RdContext<K>, valueFactory: (Boolean) -> V) : this(key, valueFactory, ViewableMap())
+class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val context: RdContext<K>, val valueFactory: (Boolean) -> V, private val internalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V>, IViewableMap<K, V> by internalMap {
+    constructor(context: RdContext<K>, valueFactory: (Boolean) -> V) : this(context, valueFactory, ViewableMap())
 
     override fun deepClone(): IRdBindable {
-        return RdPerContextMap(key, valueFactory)
+        return RdPerContextMap(context, valueFactory)
     }
 
-    private val myLocalValueSet = ViewableSet<K>()
-    private val mySwitchingValueSet = SwitchingViewableSet(Lifetime.Eternal, myLocalValueSet)
-    private val myUnboundLifetimes = SequentialLifetimes(Lifetime.Eternal)
-    private val myUnboundValues = HashMap<K, V>()
-
-    public val changing = myInternalMap.changing
+    public val changing = internalMap.changing
     public var optimizeNested: Boolean = false
 
     override fun onWireReceived(buffer: AbstractBuffer) {
@@ -28,70 +22,33 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
         error("RdPerContextMap at $location received a message" )
     }
 
-    init {
-        bindToUnbounds()
-    }
-
-    private fun bindToUnbounds() {
-        val unboundLt = myUnboundLifetimes.next()
-        Signal.priorityAdviseSection {
-            myLocalValueSet.view(unboundLt) { localKeyLt, localKey ->
-                myUnboundValues.addUnique(localKeyLt, localKey, valueFactory(false))
-            }
-        }
-    }
-
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        val protocolValueSet = protocol.contexts.getValueSet(key)
+        val protocolValueSet = protocol.contexts.getValueSet(context)
+        internalMap.keys.filter { !protocolValueSet.contains(it) }.forEach { internalMap.remove(it) }
         protocolValueSet.view(lifetime) { keyLt, key ->
-            val previousUnboundValue = myUnboundValues[key]
-            val newEntity = (previousUnboundValue ?: valueFactory(master)).withId(rdid.mix(key.toString()))
+            val oldValue = internalMap[key]
+            val newEntity = (oldValue ?: valueFactory(master)).withId(rdid.mix(key.toString()))
             newEntity.bind(keyLt, this, "[${key}]")
-            myInternalMap.addUnique(keyLt, key, newEntity)
-        }
-        mySwitchingValueSet.changeBackingSet(protocolValueSet, true) // protocol set takes precedence
-        myUnboundLifetimes.terminateCurrent() // also clears local set and unbound map
-        lifetime.onTermination {
-            mySwitchingValueSet.changeBackingSet(myLocalValueSet, false)
-            bindToUnbounds() // re-create unbound entities (unlikely to happen)
-        }
-    }
-
-    override fun view(lifetime: Lifetime, handler: (Lifetime, Map.Entry<K, V>) -> Unit) {
-        mySwitchingValueSet.view(lifetime) { keyLt, localKey ->
-            handler(keyLt, KeyValuePair(localKey, get(localKey)!!))
-        }
-    }
-
-    override fun view(lifetime: Lifetime, handler: (Lifetime, K, V) -> Unit) {
-        view(lifetime) { entryLt, entry ->
-            handler(entryLt, entry.key, entry.value)
-        }
-    }
-
-    override fun advise(lifetime: Lifetime, handler: (IViewableMap.Event<K, V>) -> Unit) {
-        view(lifetime) { lt, key, value ->
-            handler(IViewableMap.Event.Add(key, value))
-            lt.onTermination {
-                handler(IViewableMap.Event.Remove(key, value))
+            if (oldValue == null)
+                internalMap[key] = newEntity
+            keyLt.onTermination {
+                newEntity.rdid = RdId.Null
             }
         }
     }
 
     override operator fun get(key: K): V? {
         if(!isBound) {
-            if(!myLocalValueSet.contains(key))
-                myLocalValueSet.add(key) // assume that all keys accessed before bind exist
-
-            return myUnboundValues[key]
+            if (!internalMap.containsKey(key))
+                internalMap[key] = valueFactory(false)
         }
-        return myInternalMap[key]
+        return internalMap[key]
     }
 
     override fun getForCurrentContext(): V {
-        val currentId = key.value ?: error("No ${key.key} set for getting value for it")
-        return this[currentId] ?: error("No value in ${this.location} for ${key.key} = $currentId")
+        val currentId = context.value ?: error("No ${context.key} set for getting value for it")
+        return this[currentId] ?: error("No value in ${this.location} for ${context.key} = $currentId")
     }
 
     companion object {

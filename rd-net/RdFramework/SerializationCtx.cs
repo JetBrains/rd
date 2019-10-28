@@ -38,7 +38,7 @@ namespace JetBrains.Rd
       if (!InternRoots.TryGetValue(internKey, out var interningRoot))
         return readValueDelegate(this, stream);
 
-      var id = InterningId.Read(stream);
+      var id = InternId.Read(stream);
       if (id.IsValid)
         return interningRoot.UnIntern<T>(id);
       return readValueDelegate(this, stream);
@@ -53,7 +53,7 @@ namespace JetBrains.Rd
       }
 
       var id = interningRoot.Intern(value);
-      InterningId.Write(stream, id);
+      InternId.Write(stream, id);
       if (!id.IsValid)
         writeValueDelegate(this, stream, value);
     }

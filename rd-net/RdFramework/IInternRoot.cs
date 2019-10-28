@@ -12,22 +12,22 @@ namespace JetBrains.Rd
     /// <summary>
     /// Tries to get an ID for a value. Doesn't intern it if it's not interned.
     /// </summary>
-    bool TryGetInterned(object value, out InterningId result);
+    bool TryGetInterned(object value, out InternId result);
     
     /// <summary>
     /// Interns a value and returns an ID for it. May return invalid ID in case of multithreaded contention.
     /// </summary>
-    InterningId Intern(object value);
+    InternId Intern(object value);
     
     /// <summary>
     /// Gets a value from an interned ID. Throws an exception if the ID doesn't correspond to a value
     /// </summary>
-    T UnIntern<T>(InterningId id);
+    T UnIntern<T>(InternId id);
     
     /// <summary>
     /// Gets a value from an interned ID. Returns true if successful, false otherwise
     /// </summary>
-    bool TryUnIntern<T>(InterningId id, out T result);
+    bool TryUnIntern<T>(InternId id, out T result);
     
     /// <summary>
     /// Removes an interned value. Any future attempts to un-intern IDs previously associated with this value will fail.
@@ -36,38 +36,48 @@ namespace JetBrains.Rd
     void Remove(object value);
   }
   
-  public readonly struct InterningId : IEquatable<InterningId>
+  /// <summary>
+  /// An ID representing an interned value
+  /// </summary>
+  public readonly struct InternId : IEquatable<InternId>
   {
     public readonly int Value;
 
-    public InterningId(int value)
+    public InternId(int value)
     {
       Value = value;
     }
 
+    /// <summary>
+    /// True if this ID represents an actual interned value. False indicates a failed interning operation or unset value
+    /// </summary>
     public bool IsValid => Value != -1;
+    
+    /// <summary>
+    /// True if this ID represents a value interned by local InternRoot 
+    /// </summary>
     public bool IsLocal => (Value & 1) == 0;
     
-    public static InterningId Invalid = new InterningId(-1);
+    public static InternId Invalid = new InternId(-1);
 
-    public static InterningId Read(UnsafeReader reader)
+    public static InternId Read(UnsafeReader reader)
     {
-      return new InterningId(reader.ReadInt());
+      return new InternId(reader.ReadInt());
     }
 
-    public static void Write(UnsafeWriter writer, InterningId value)
+    public static void Write(UnsafeWriter writer, InternId value)
     {
       writer.Write(value.Value == -1 ? value.Value : value.Value ^ 1);
     }
 
-    public bool Equals(InterningId other)
+    public bool Equals(InternId other)
     {
       return Value == other.Value;
     }
 
     public override bool Equals(object obj)
     {
-      return obj is InterningId other && Equals(other);
+      return obj is InternId other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -75,12 +85,12 @@ namespace JetBrains.Rd
       return Value;
     }
 
-    public static bool operator ==(InterningId left, InterningId right)
+    public static bool operator ==(InternId left, InternId right)
     {
       return left.Equals(right);
     }
 
-    public static bool operator !=(InterningId left, InterningId right)
+    public static bool operator !=(InternId left, InternId right)
     {
       return !left.Equals(right);
     }

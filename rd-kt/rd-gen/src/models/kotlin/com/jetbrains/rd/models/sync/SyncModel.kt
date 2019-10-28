@@ -10,7 +10,7 @@ import java.io.File
 object SyncModelRoot : Root(
     Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", File(syspropertyOrInvalid("model.out.src.kt.dir")))
 ) {
-    val ClientId = contextKey("ClientId", string)
+    val ClientId = context(string)
     val Baseclazz = baseclass {
         field("f", int)
     }

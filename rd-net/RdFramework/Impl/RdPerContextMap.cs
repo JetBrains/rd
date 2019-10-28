@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -10,39 +11,15 @@ namespace JetBrains.Rd.Impl
 {
     public class RdPerContextMap<K, V> : RdReactiveBase, IPerContextMap<K, V> where V : RdBindableBase
     {
-        public RdContext<K> Key => myKey;
-        private readonly RdContext<K> myKey;
+        public RdContext<K> Context { get; }
         private readonly Func<Boolean, V> myValueFactory;
         private readonly IViewableMap<K, V> myMap;
 
-        private readonly IViewableSet<K> myLocalValueSet = new ViewableSet<K>();
-        private readonly SwitchingViewableSet<K> mySwitchingValueSet;
-        private readonly SequentialLifetimes myUnboundLifetimes = new SequentialLifetimes(Lifetime.Eternal);
-        private readonly IDictionary<K, V> myUnboundValues = new Dictionary<K, V>();
-
-
-        public RdPerContextMap(RdContext<K> key, Func<bool, V> valueFactory)
+        public RdPerContextMap(RdContext<K> context, Func<bool, V> valueFactory)
         {
             myValueFactory = valueFactory;
-            myKey = key;
+            Context = context;
             myMap = new ViewableMap<K, V>();
-
-            mySwitchingValueSet = new SwitchingViewableSet<K>(Lifetime.Eternal, myLocalValueSet);
-
-            BindToUnbounds();
-        }
-
-        private void BindToUnbounds()
-        {
-          var unboundLt = myUnboundLifetimes.Next();
-          using (Signal.PriorityAdviseCookie.Create())
-          {
-            myLocalValueSet.View(unboundLt, (localKeyLt, localKey) =>
-            {
-              myUnboundValues[localKey] = myValueFactory(IsMaster);
-              localKeyLt.OnTermination(() => myUnboundValues.Remove(localKey));
-            });
-          }
         }
 
         public bool IsMaster;
@@ -56,45 +33,36 @@ namespace JetBrains.Rd.Impl
         protected override void Init(Lifetime lifetime)
         {
             base.Init(lifetime);
-            var protocolValueSet = Proto.Contexts.GetValueSet(myKey);
+            var protocolValueSet = Proto.Contexts.GetValueSet(Context);
+            myMap.Keys.Where(it => !protocolValueSet.Contains(it)).ToList().ForEach(it => myMap.Remove(it));
             protocolValueSet.View(lifetime, (contextValueLifetime, contextValue) =>
             {
-                myUnboundValues.TryGetValue(contextValue, out var previousUnboundValue);
-                var value = (previousUnboundValue ?? myValueFactory(IsMaster)).WithId(RdId.Mix(contextValue.ToString()));
+                myMap.TryGetValue(contextValue, out var oldValue);
+                var value = (oldValue ?? myValueFactory(IsMaster)).WithId(RdId.Mix(contextValue.ToString()));
                 value.Bind(contextValueLifetime, this, $"[{contextValue.ToString()}]");
-                myMap.Add(contextValue, value);
-                contextValueLifetime.OnTermination(() => { myMap.Remove(contextValue); });
-            });
-            mySwitchingValueSet.ChangeBackingSet(Proto.Contexts.GetValueSet(myKey), true);
-            myUnboundLifetimes.TerminateCurrent();
-            lifetime.OnTermination(() =>
-            {
-              mySwitchingValueSet.ChangeBackingSet(myLocalValueSet, false);
-              BindToUnbounds();
+                if (oldValue == null)
+                  myMap.Add(contextValue, value);
+                contextValueLifetime.OnTermination(() =>
+                {
+                  value.RdId = RdId.Nil;
+                });
             });
         }
         
         public V GetForCurrentContext()
         {
-          var currentId = myKey.Value;
-          Assertion.Assert(currentId != null, "No value set for key {0}", myKey.Key);
+          var currentId = Context.Value;
+          Assertion.Assert(currentId != null, "No value set for key {0}", Context.Key);
           if (TryGetValue(currentId, out var value))
             return value;
-          Assertion.Fail("{0} has no value for ContextKey {1} = {2}", Location, myKey.Key, currentId);
+          Assertion.Fail("{0} has no value for Context {1} = {2}", Location, Context.Key, currentId);
           return default;
         }
         
 
-        public void View(Lifetime lifetime, Action<Lifetime, KeyValuePair<K, V>> handler)
-        {
-          mySwitchingValueSet.View(lifetime,
-            (keyLt, key) => handler(keyLt, new KeyValuePair<K, V>(key, this[key])));
-        }
-        
-        public void View(Lifetime lifetime, Action<Lifetime, K, V> handler)
-        {
-          mySwitchingValueSet.View(lifetime, (keyLt, key) => handler(keyLt, key, this[key]));
-        }
+        public void View(Lifetime lifetime, Action<Lifetime, KeyValuePair<K, V>> handler) => myMap.View(lifetime, handler);
+
+        public void View(Lifetime lifetime, Action<Lifetime, K, V> handler) => myMap.View(lifetime, handler);
 
         public V this[K key]
         {
@@ -102,10 +70,8 @@ namespace JetBrains.Rd.Impl
           {
             if (!IsBound)
             {
-              if(!myLocalValueSet.Contains(key))
-                myLocalValueSet.Add(key);
-
-              return myUnboundValues[key];
+              if (!myMap.ContainsKey(key))
+                myMap[key] = myValueFactory(IsMaster);
             }
             return myMap[key];
           }
@@ -115,10 +81,8 @@ namespace JetBrains.Rd.Impl
         {
           if (!IsBound)
           {
-            if(!myLocalValueSet.Contains(key))
-              myLocalValueSet.Add(key); // todo: should we force creation here?
-
-            return myUnboundValues.TryGetValue(key, out value);
+            if (!myMap.ContainsKey(key))
+              myMap[key] = myValueFactory(IsMaster);
           }
           return myMap.TryGetValue(key, out value);
         }

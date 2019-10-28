@@ -32,23 +32,23 @@ class InterningRemovalsTest : RdFrameworkTestBase() {
         fun root(server: Boolean) = if(server) rootServer else rootClient
 
         val firstSendBytes = measureBytes(proto(firstSendServer)) {
-            root(firstSendServer).internValue(stringToSend)
+            root(firstSendServer).intern(stringToSend)
         }
 
         val secondSendBytes = measureBytes(proto(secondSendServer)) {
-            root(secondSendServer).internValue(stringToSend)
+            root(secondSendServer).intern(stringToSend)
         }
 
         assert(secondSendBytes == 0L) { "Re-interning a value should not resend it" }
 
         val removalSendBytes = measureBytes(proto(false)) {
-            root(false).removeValue(stringToSend)
-            root(true).removeValue(stringToSend)
+            root(false).remove(stringToSend)
+            root(true).remove(stringToSend)
         }
         assert(removalSendBytes == 0L) { "Removal should not send anything" }
 
         val thirdSendBytes = measureBytes(proto(thirdSendServer)) {
-            root(thirdSendServer).internValue(stringToSend)
+            root(thirdSendServer).intern(stringToSend)
         }
 
         assert(thirdSendBytes == firstSendBytes) { "Re-sending removed value uses different amount of bytes, bug? Expected $firstSendBytes, got $thirdSendBytes" }

@@ -25,7 +25,7 @@ data class ClientId(val value: String) {
 
     companion object : ISerializer<ClientId> {
         private val defaultLocalId = ClientId("Host")
-        val contextKey = RdContext("ClientId", true, FrameworkMarshallers.String)
+        val context = RdContext("ClientId", true, FrameworkMarshallers.String)
 
         /**
          * Specifies behavior for ClientId.current
@@ -62,7 +62,7 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         val currentOrNull: ClientId?
-            get() = contextKey.value?.let(::ClientId)
+            get() = context.value?.let(::ClientId)
 
         /**
          * Overrides the ID that is considered to be local to this process. Can be only invoked once.
@@ -97,7 +97,7 @@ data class ClientId(val value: String) {
          * Computes a value under given ClientId
          */
         @JvmStatic
-        inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T = contextKey::value.usingValue(clientId?.value, action)
+        inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T = context::value.usingValue(clientId?.value, action)
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ClientId {
             return ClientId(buffer.readString())

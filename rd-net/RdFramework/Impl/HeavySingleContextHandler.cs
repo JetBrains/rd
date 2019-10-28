@@ -69,15 +69,13 @@ namespace JetBrains.Rd.Impl
         {
           if (!myProtocolValueSet.Contains(value))
           {
-            if (Proto.Scheduler.IsActive)
-            {
-              Assertion.AssertNotNull(Context.Value, "Can't perform an implicit add with null local context value for key {0}", Context.Key);
-              myProtocolValueSet.Add(Context.Value);
-            } else Assertion.Fail($"Attempting to use previously unused context value {value} on a background thread");
+            Assertion.Require(Proto.Scheduler.IsActive, "Attempting to use previously unused context value {0} on a background thread for key {1}", value, Context.Key);
+            Assertion.AssertNotNull(Context.Value, "Can't perform an implicit add with null local context value for key {0}", Context.Key);
+            myProtocolValueSet.Add(Context.Value);
           }
 
           var internedId = myInternRoot.Intern(value);
-          InterningId.Write(writer, internedId);
+          InternId.Write(writer, internedId);
           if (!internedId.IsValid)
           {
             writer.Write(true);
@@ -89,7 +87,7 @@ namespace JetBrains.Rd.Impl
 
     public T ReadValue(SerializationCtx context, UnsafeReader reader)
     {
-      var id = InterningId.Read(reader);
+      var id = InternId.Read(reader);
       if (!id.IsValid)
       {
         var hasValue = reader.ReadBool();

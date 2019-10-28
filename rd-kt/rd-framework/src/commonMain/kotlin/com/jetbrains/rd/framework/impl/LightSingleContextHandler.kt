@@ -5,7 +5,7 @@ import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.ISingleContextHandler
 import com.jetbrains.rd.framework.base.RdBindableBase
 
-internal class LightSingleContextHandler<T: Any>(override val context: RdContext<T>, val serializer: ISerializer<T>) : RdBindableBase(), ISingleContextHandler<T> {
+internal class LightSingleContextHandler<T: Any>(override val context: RdContext<T>) : RdBindableBase(), ISingleContextHandler<T> {
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
     }
@@ -17,13 +17,13 @@ internal class LightSingleContextHandler<T: Any>(override val context: RdContext
             buffer.writeBoolean(false)
         else {
             buffer.writeBoolean(true)
-            serializer.write(ctx, buffer, value)
+            context.serializer.write(ctx, buffer, value)
         }
     }
 
     override fun readValue(ctx: SerializationCtx, buffer: AbstractBuffer): T? {
         val hasValue = buffer.readBoolean()
         if(!hasValue) return null
-        return serializer.read(ctx, buffer)
+        return context.serializer.read(ctx, buffer)
     }
 }
