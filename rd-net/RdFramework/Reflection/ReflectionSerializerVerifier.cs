@@ -267,7 +267,7 @@ namespace JetBrains.Rd.Reflection
       // commented sealed check to avoid annoying colleagues.
       // Assertion.Assert(type.IsSealed, $"Error in {type.ToString(true)} model: RdModels must be sealed.");
 
-      foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
+      foreach (var member in SerializerReflectionUtil.GetBindableMembers(type))
       {
         AssertMemberDeclaration(member);
       }
@@ -292,7 +292,7 @@ namespace JetBrains.Rd.Reflection
       if (HasIntrinsic(type))
         return;
 
-      foreach (var member in ReflectionSerializersFactory.GetBindableMembers(type))
+      foreach (var member in SerializerReflectionUtil.GetBindableMembers(type))
       {
         AssertDataMemberDeclaration(member);
       }
