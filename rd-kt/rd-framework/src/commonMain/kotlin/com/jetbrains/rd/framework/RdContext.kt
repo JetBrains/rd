@@ -13,7 +13,7 @@ import com.jetbrains.rd.util.threadLocalWithInitial
  * @param heavy Whether or not this key is heavy. A heavy key maintains a value set and interns values. A light key sends values as-is and does not maintain a value set.
  * @param serializer Serializer to be used with this key.
  */
-data class RdContext<T : Any>(val key: String, val heavy: Boolean, val serializer: IMarshaller<T>) {
+class RdContext<T : Any>(val key: String, val heavy: Boolean, val serializer: IMarshaller<T>) {
     companion object : ISerializer<RdContext<*>> {
         private val myValues = threadLocalWithInitial { HashMap<String, Any>() }
 
@@ -51,4 +51,21 @@ data class RdContext<T : Any>(val key: String, val heavy: Boolean, val serialize
     var value: T?
         get() = unsafeGet(key) as T?
         set(value) = unsafeSet(key, value)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if(other == null)
+            return false
+        if (this::class != other::class) return false
+
+        other as RdContext<*>
+
+        if (key != other.key) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return key.hashCode()
+    }
 }

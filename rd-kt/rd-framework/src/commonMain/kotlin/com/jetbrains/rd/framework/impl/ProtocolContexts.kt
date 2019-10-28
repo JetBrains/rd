@@ -9,9 +9,9 @@ import com.jetbrains.rd.util.CopyOnWriteArrayList
 import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.IMutableViewableSet
 import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.reflection.threadLocal
 import com.jetbrains.rd.util.reflection.usingValue
 
@@ -19,11 +19,10 @@ import com.jetbrains.rd.util.reflection.usingValue
  * This class handles RdContext on protocol level. It tracks existing context keys and allows access to their value sets (when present)
  */
 class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase() {
-    private val otherSideKeys = CopyOnWriteArrayList<String>()
-    private val myKeyHandlerOrder = CopyOnWriteArrayList<ISingleContextHandler<*>>()
-    private val myKeyHandlers = ConcurrentHashMap<String, ISingleContextHandler<*>>()
-    private var myBindLifetime: Lifetime? = null
-    private val myOrderingsLock = Any()
+    private val counterpartHandlers = CopyOnWriteArrayList<ISingleContextHandler<*>>()
+    private val myHandlerOrder = ViewableList(CopyOnWriteArrayList<ISingleContextHandler<*>>())
+    private val handlersMap = ConcurrentHashMap<RdContext<*>, ISingleContextHandler<*>>()
+    private val myOrderingsLock = Any() // used to protect writes to myKeyHandlersOrder
 
     internal var isWritingOwnMessages by threadLocal { false }
     internal inline fun withWriteOwnMessages(block: () -> Unit) = this::isWritingOwnMessages.usingValue(true, block)
@@ -36,55 +35,46 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         super.init(lifetime)
         wire.advise(lifetime, this)
         Sync.lock(myOrderingsLock) {
-            myKeyHandlerOrder.forEach {
-                bindHandler(lifetime, it, it.context.key)
-                sendContextToRemote(it.context)
+            myHandlerOrder.view(lifetime) { handlerLifetime, _, handler ->
+                bindHandler(handlerLifetime, handler, handler.context.key)
+                sendContextToRemote(handler.context)
             }
-        }
-
-        myBindLifetime = lifetime
-        lifetime.onTermination {
-            myBindLifetime = null
         }
     }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         assertWireThread()
         val context = RdContext.read(serializationCtx, buffer)
-        otherSideKeys.add(context.key)
         if(context.heavy) {
             ensureContextHandlerExists(context)
         } else {
             @Suppress("UNCHECKED_CAST")
             createLightHandler(context as RdContext<Any>)
         }
+        counterpartHandlers.add(handlersMap[context]!!)
     }
 
-    private inline fun doAddHandler(key: String, factory: () -> ISingleContextHandler<*>) {
+    private inline fun doAddHandler(context: RdContext<*>, factory: () -> ISingleContextHandler<*>) {
         assert(wireScheduler.isActive || protocol.scheduler.isActive)
         val value = factory()
-        val prevValue = myKeyHandlers.putIfAbsent(key, value)
-        if (prevValue == null) { // null or stub
-            Sync.lock(this) {
-                sendContextToRemote(value.context)
-                myKeyHandlerOrder.add(value)
-            }
-            myBindLifetime?.let {
-                bindHandler(it, value, key)
+        val prevValue = handlersMap.putIfAbsent(context, value)
+        if (prevValue == null) {
+            Sync.lock(myOrderingsLock) {
+                myHandlerOrder.add(value)
             }
         }
     }
 
     private fun createLightHandler(context: RdContext<Any>) {
         assertWireThread() // can only happen on wire thread
-        if (!myKeyHandlers.containsKey(context.key)) {
-            doAddHandler(context.key) { LightSingleContextHandler(context, context.serializer) }
+        if (!handlersMap.containsKey(context)) {
+            doAddHandler(context) { LightSingleContextHandler(context, context.serializer) }
         }
     }
 
     private fun <T : Any> ensureContextHandlerExists(context: RdContext<T>) {
-        if (!myKeyHandlers.containsKey(context.key)) {
-            doAddHandler(context.key) {
+        if (!handlersMap.containsKey(context)) {
+            doAddHandler(context) {
                 if(context.heavy)
                     HeavySingleContextHandler(context, this)
                 else
@@ -109,7 +99,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
 
     @Suppress("UNCHECKED_CAST")
     internal fun <T : Any> getContextHandler(context: RdContext<T>) : ISingleContextHandler<T> {
-        return myKeyHandlers[context.key] as ISingleContextHandler<T>
+        return handlersMap[context] as ISingleContextHandler<T>
     }
 
     /**
@@ -143,10 +133,10 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     fun writeCurrentMessageContext(buffer: AbstractBuffer) {
         if (isWritingOwnMessages) return writeContextStub(buffer)
 
-        val writtenSize = myKeyHandlerOrder.size
+        val writtenSize = myHandlerOrder.size
         buffer.writeShort(writtenSize.toShort())
         for(i in 0 until writtenSize) {
-            myKeyHandlerOrder[i].writeValue(serializationCtx, buffer)
+            myHandlerOrder[i].writeValue(serializationCtx, buffer)
         }
     }
 
@@ -155,14 +145,14 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
      */
     fun readMessageContextAndInvoke(buffer: AbstractBuffer, action: () -> Unit) {
         val numContextValues = buffer.readShort().toInt()
-        assert(otherSideKeys.size >= numContextValues) { "We know of ${otherSideKeys.size} remote keys, received $numContextValues instead" }
+        assert(counterpartHandlers.size >= numContextValues) { "We know of ${counterpartHandlers.size} remote keys, received $numContextValues instead" }
         val oldValues = ArrayList<Any?>(numContextValues)
         for (i in 0 until numContextValues) {
-            val key = otherSideKeys[i]
-            oldValues.add(RdContext.unsafeGet(key))
+            val otherSideHandler = counterpartHandlers[i]
+            oldValues.add(otherSideHandler.context.value)
 
-            val value = myKeyHandlers[key]!!.readValue(serializationCtx, buffer)
-            RdContext.unsafeSet(key, value)
+            val value = otherSideHandler.readValue(serializationCtx, buffer)
+            RdContext.unsafeSet(otherSideHandler.context.key, value)
         }
 
         try {
@@ -170,7 +160,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         } finally {
             for(i in 0 until numContextValues) {
                 val value = oldValues[i]
-                RdContext.unsafeSet(otherSideKeys[i], value)
+                RdContext.unsafeSet(counterpartHandlers[i].context.key, value)
             }
         }
     }

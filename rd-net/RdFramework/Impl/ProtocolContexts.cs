@@ -16,10 +16,9 @@ namespace JetBrains.Rd.Impl
   /// </summary>
   public class ProtocolContexts : RdReactiveBase
   {
-    private readonly CopyOnWriteList<string> myOtherSideKeys = new CopyOnWriteList<string>();
-    private readonly CopyOnWriteList<ISingleContextHandler> myKeyHandlerOrder = new CopyOnWriteList<ISingleContextHandler>();
-    private readonly ConcurrentDictionary<string, ISingleContextHandler> myKeyHandlers = new ConcurrentDictionary<string, ISingleContextHandler>();
-    private Lifetime? myBindLifetime;
+    private readonly CopyOnWriteList<ISingleContextHandler> myCounterpartHandlers = new CopyOnWriteList<ISingleContextHandler>();
+    private readonly IViewableList<ISingleContextHandler> myHandlerOrder = new ViewableList<ISingleContextHandler>(new CopyOnWriteList<ISingleContextHandler>());
+    private readonly ConcurrentDictionary<RdContextBase, ISingleContextHandler> myHandlersMap = new ConcurrentDictionary<RdContextBase, ISingleContextHandler>();
     private readonly object myOrderingLock = new object();
     private readonly ThreadLocal<bool> myIsWritingOwnMessages = new ThreadLocal<bool>(() => false);
     
@@ -52,31 +51,25 @@ namespace JetBrains.Rd.Impl
 
     internal ISingleContextHandler<T> GetHandlerForContext<T>(RdContext<T> context)
     {
-      return (ISingleContextHandler<T>) myKeyHandlers[context.Key];
+      return (ISingleContextHandler<T>) myHandlersMap[context];
     }
     
     public override void OnWireReceived(UnsafeReader reader)
     {
       var contextBase = RdContextBase.Read(SerializationContext, reader);
-      myOtherSideKeys.Add(contextBase.Key);
 
       new Action<RdContext<object>>(RegisterContext).Method.GetGenericMethodDefinition()
         .MakeGenericMethod(contextBase.GetType().GetGenericArguments()[0]).Invoke(this, new object[] {contextBase});
+      
+      myCounterpartHandlers.Add(myHandlersMap[contextBase]);
     }
 
     private void DoAddHandler<T>(RdContext<T> context, ISingleContextHandler<T> handler)
     {
-      if (myKeyHandlers.TryAdd(context.Key, handler))
+      if (myHandlersMap.TryAdd(context, handler))
       {
-        lock (myOrderingLock)
-        {
-          SendContextToRemote(context);
-          myKeyHandlerOrder.Add(handler);
-        }
-
-        var lifetime = myBindLifetime;
-        if (lifetime != null) 
-          BindHandler(lifetime.Value, context.Key, handler);
+        lock (myOrderingLock) 
+          myHandlerOrder.Add(handler);
       }
     }
 
@@ -105,14 +98,14 @@ namespace JetBrains.Rd.Impl
     private void EnsureHeavyHandlerExists<T>(RdContext<T> context)
     {
       Assertion.Assert(context.IsHeavy, "key.IsHeavy");
-      if (!myKeyHandlers.ContainsKey(context.Key)) 
+      if (!myHandlersMap.ContainsKey(context)) 
         DoAddHandler(context, new HeavySingleContextHandler<T>(context, this));
     }
     
     private void EnsureLightHandlerExists<T>(RdContext<T> context)
     {
       Assertion.Assert(!context.IsHeavy, "!key.IsHeavy");
-      if (!myKeyHandlers.ContainsKey(context.Key)) 
+      if (!myHandlersMap.ContainsKey(context)) 
         DoAddHandler(context, new LightSingleContextHandler<T>(context));
     }
 
@@ -130,7 +123,7 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     public void RegisterContext<T>(RdContext<T> context)
     {
-      if (myKeyHandlers.ContainsKey(context.Key)) return;
+      if (myHandlersMap.ContainsKey(context)) return;
       if(context.IsHeavy)
         EnsureHeavyHandlerExists(context);
       else
@@ -148,16 +141,13 @@ namespace JetBrains.Rd.Impl
 
       lock (myOrderingLock)
       {
-        foreach (var handler in myKeyHandlerOrder)
+        myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
         {
           new Action<Lifetime, ISingleContextHandler<object>>(BindAndSendHandler).Method
             .GetGenericMethodDefinition().MakeGenericMethod(handler.GetType().GetGenericArguments()[0])
-            .Invoke(this, new object[] { lifetime, handler });
-        }
+            .Invoke(this, new object[] { handlerLt, handler });
+        });
       }
-      
-      myBindLifetime = lifetime;
-      lifetime.OnTermination(() => myBindLifetime = null);
     }
 
     /// <summary>
@@ -166,9 +156,9 @@ namespace JetBrains.Rd.Impl
     public MessageContextCookie ReadContextIntoCookie(UnsafeReader reader)
     {
       var numContextValues = reader.ReadShort();
-      Assertion.Assert(numContextValues <= myOtherSideKeys.Count, "We know of {0} other side keys, received {1} instead", myOtherSideKeys.Count, numContextValues);
+      Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
       for (var i = 0; i < numContextValues; i++)
-        myKeyHandlers[myOtherSideKeys[i]].ReadValueAndPush(SerializationContext, reader);
+        myCounterpartHandlers[i].ReadValueAndPush(SerializationContext, reader);
       return new MessageContextCookie(this, numContextValues);
     }
 
@@ -186,7 +176,7 @@ namespace JetBrains.Rd.Impl
       public void Dispose()
       {
         for(var i = 0; i < myNumContextValues; i++)
-          myHandler.myKeyHandlers[myHandler.myOtherSideKeys[i]].PopValue();
+          myHandler.myCounterpartHandlers[i].PopValue();
       }
     }
 
@@ -202,10 +192,10 @@ namespace JetBrains.Rd.Impl
         return;
       }
       
-      var count = myKeyHandlerOrder.Count;
+      var count = myHandlerOrder.Count;
       writer.Write((short) count);
       for (var i = 0; i < count; i++) 
-        myKeyHandlerOrder[i].WriteValue(SerializationContext, writer);
+        myHandlerOrder[i].WriteValue(SerializationContext, writer);
     }
 
     /// <summary>

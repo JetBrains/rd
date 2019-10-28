@@ -8,7 +8,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd
 {
-  public class RdContextBase
+  public class RdContextBase : IEquatable<RdContextBase>
   {
     [NotNull] public readonly string Key;
     public readonly bool IsHeavy;
@@ -34,6 +34,36 @@ namespace JetBrains.Rd
     private static RdContext<T> CreateContext<T>(string key, bool isHeavy, ISerializers serializers, RdId typeId)
     {
       return new RdContext<T>(key, isHeavy, serializers.GetReaderForId<T>(typeId), serializers.GetWriterForId<T>(typeId));
+    }
+
+    public bool Equals(RdContextBase other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return Key == other.Key;
+    }
+
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != this.GetType()) return false;
+      return Equals((RdContextBase) obj);
+    }
+
+    public override int GetHashCode()
+    {
+      return Key.GetHashCode();
+    }
+
+    public static bool operator ==(RdContextBase left, RdContextBase right)
+    {
+      return Equals(left, right);
+    }
+
+    public static bool operator !=(RdContextBase left, RdContextBase right)
+    {
+      return !Equals(left, right);
     }
   }
   /// <summary>
