@@ -158,7 +158,7 @@ namespace JetBrains.Rd.Reflection
     {
       var typeInfo = instance.GetType().GetTypeInfo();
 
-      foreach (var mi in ReflectionSerializersFactory.GetBindableMembers(typeInfo))
+      foreach (var mi in SerializerReflectionUtil.GetBindableMembers(typeInfo))
       {
         ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
         var currentValue = ReflectionUtil.GetGetter(mi)(instance);
@@ -320,12 +320,12 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    private ReflectionSerializersFactory.SerializerPair GetProperSerializer(Type type)
+    private SerializerPair GetProperSerializer(Type type)
     {
       // registration for all statically known types
       myPolymorphicTypesCatalog?.AddType(type);
 
-      return mySerializersFactory.GetInstanceSerializer(type);
+      return mySerializersFactory.GetOrRegisterSerializerPair(type, true);
     }
 
     private object ActivateGenericMember(string memberName, TypeInfo memberType)

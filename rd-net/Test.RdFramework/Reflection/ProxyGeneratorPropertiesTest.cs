@@ -38,7 +38,7 @@ namespace Test.RdFramework.Reflection
 
       public LifeModel()
       {
-        StrProperty = new RdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString);
+        StrProperty = new RdProperty<string>(Serializers.ReadString, Serializers.WriteString);
       }
     }
 

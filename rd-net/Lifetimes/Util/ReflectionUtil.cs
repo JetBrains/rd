@@ -124,7 +124,6 @@ namespace JetBrains.Util
     }
 
 
-
     [CanBeNull]
     public static object TryGetNonStaticField(object ownerObject, string memberName)
     {

@@ -15,8 +15,8 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<ColorsExt>((c, s) =>
       {
-        c.Map.Add(new ColorFields(100,100,100), long.MaxValue);
-        Assert.AreEqual(s.Map[new ColorFields(100,100,100)], c.Map.Values.First());
+        c.Map.Add(new ColorFields(100, 100, 100), long.MaxValue);
+        Assert.AreEqual(s.Map[new ColorFields(100, 100, 100)], c.Map.Values.First());
       });
     }
 
@@ -25,7 +25,7 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<ColorsExt>((c, s) =>
       {
-        c.List.Add(new ColorStruct() { Blue = 1, Green = 2, Red = 3 });
+        c.List.Add(new ColorStruct() {Blue = 1, Green = 2, Red = 3});
         c.List.Add(new ColorStruct());
         CollectionAssert.AreEqual(s.List, c.List);
       });
@@ -36,7 +36,7 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<ColorsExt>((c, s) =>
       {
-        c.List.Add(new ColorStruct() { Blue = 1, Green = 2, Red = 3 });
+        c.List.Add(new ColorStruct() {Blue = 1, Green = 2, Red = 3});
         c.List.Add(new ColorStruct());
         CollectionAssert.AreEqual(s.List, c.List);
       });
@@ -69,7 +69,7 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<ArraysExt>((c, s) =>
       {
-        s.IntArray.Value = new[]{1,2,3};
+        s.IntArray.Value = new[] {1, 2, 3};
         CollectionAssert.AreEqual(s.IntArray.Value, c.IntArray.Value);
       });
     }
@@ -89,28 +89,61 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<ArraysExt>((c, s) =>
       {
-        s.ValueTupleArray.Value = new[] { ("key", "value"), ("key", "value")};
+        s.ValueTupleArray.Value = new[] {("key", "value"), ("key", "value")};
         CollectionAssert.AreEqual(s.ValueTupleArray.Value, c.ValueTupleArray.Value);
       });
     }
 
     [Test]
-    public void TestList()
+    public void TestArraysClass()
     {
-      WithExts<ListExt>((c, s) =>
+      WithExts<ArraysExt2>((c, s) =>
       {
-        s.ListNullable.Value = new List<ColorFields>() { new ColorFields(1,2,3) };
-        s.ListSimple.Value = Enumerable.Range(0,100).ToList();
-        CollectionAssert.AreEqual(s.ListNullable.Value, c.ListNullable.Value);
-        CollectionAssert.AreEqual(s.ListSimple.Value, c.ListSimple.Value);
+        s.Property.Value = new ColorFields(1, 1, 1);
+        s.PropertyArray.Value = new[] {new ColorFields(2, 2, 2)};
+
+        Assert.AreEqual(s.Property.Value, c.Property.Value);
+        CollectionAssert.AreEqual(s.PropertyArray.Value, c.PropertyArray.Value);
+      });
+    }
+
+    [Test]
+    public void TestList2()
+    {
+      TestRdTypesCatalog.Register<ColorFields>();
+      WithExts<ListObjectsExt>((c, s) =>
+      {
+        s.Objects.Value = new ListOwner()
+        {
+          Ints = new List<int>() {1, 2, 3},
+          Polymorphic = new List<ColorFields>()
+          {
+            new ColorFields(1, 2, 3)
+          },
+          PolymorphicArray = new List<ColorFields[]>()
+          {
+            new ColorFields[30]
+          }
+        };
+
+        CollectionAssert.AreEqual(s.Objects.Value.Ints, c.Objects.Value.Ints);
+        Assert.AreEqual(s.Objects.Value.Polymorphic[0].Blue, s.Objects.Value.Polymorphic[0].Blue);
+        Assert.AreEqual(s.Objects.Value.PolymorphicArray[0].Length, s.Objects.Value.PolymorphicArray[0].Length);
       });
     }
 
     [RdExt]
-    public class ListExt : RdExtReflectionBindableBase
+    public class ListObjectsExt : RdExtReflectionBindableBase
     {
-      public IViewableProperty<List<int>> ListSimple { get; }
-      public IViewableProperty<List<ColorFields>> ListNullable { get; }
+      public IViewableProperty<ListOwner> Objects { get; }
+    }
+
+    [RdScalar] // not required
+    public class ListOwner
+    {
+      public List<ColorFields> Polymorphic;
+      public List<ColorFields[]> PolymorphicArray;
+      public List<int> Ints;
     }
 
     [RdExt]
@@ -121,6 +154,13 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<(string, string)[]> ValueTupleArray { get; }
     }
 
+    [RdExt]
+    public class ArraysExt2 : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<ColorFields> Property { get; }
+      public IViewableProperty<ColorFields[]> PropertyArray { get; }
+    }
+
 
     [RdExt]
     public class ValueTuplesExt : RdExtReflectionBindableBase
@@ -128,7 +168,6 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<(string, string)> SimpleTuple { get; }
       public IViewableProperty<(int, int, int, int, int, int, int, int, int, int, int, int, int)> NestedTuple { get; }
     }
-
 
 
     [RdExt]
@@ -158,7 +197,7 @@ namespace Test.RdFramework.Reflection
     [RdScalar] // not required
     public class ColorFields
     {
-      public int Red { get;  }
+      public int Red { get; }
       public int Green { get; }
       public int Blue { get; }
 
@@ -182,7 +221,7 @@ namespace Test.RdFramework.Reflection
       {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
+        if (obj.GetType() != GetType()) return false;
         return Equals((ColorFields) obj);
       }
 
@@ -208,12 +247,6 @@ namespace Test.RdFramework.Reflection
 
       public long Value { get; set; }
       public int SetOnly { get; }
-
-
     }
-
-
-
   }
-
 }
