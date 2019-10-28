@@ -22,7 +22,7 @@ namespace Test.RdFramework.Reflection
 
     [SetUp]
     public void TestSetup(){
-      myProxyGenerator = new ProxyGenerator();
+      myProxyGenerator = new ProxyGenerator(TestRdTypesCatalog);
     }
 
     [Test] public void TestInvalid1() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid1>(); }); }

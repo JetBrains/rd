@@ -31,14 +31,14 @@ namespace JetBrains.Rd.Reflection
   public class ReflectionRdActivator
   {
     [NotNull] private readonly ReflectionSerializersFactory mySerializersFactory;
-    [NotNull] private readonly ProxyGenerator myProxyGenerator;
+    [NotNull] private readonly IProxyGenerator myProxyGenerator;
     [CanBeNull] private readonly ITypesCatalog myTypesCatalog;
 
     [NotNull]
     public ReflectionSerializersFactory SerializersFactory => mySerializersFactory;
 
     [NotNull]
-    public ProxyGenerator Generator => myProxyGenerator;
+    public IProxyGenerator Generator => myProxyGenerator;
 
     [CanBeNull]
     public ITypesCatalog TypesCatalog => myTypesCatalog;
@@ -55,11 +55,11 @@ namespace JetBrains.Rd.Reflection
 #endif
 
     public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [CanBeNull] ITypesCatalog typesCatalog)
-      : this(serializersFactory, new ProxyGenerator(), typesCatalog)
+      : this(serializersFactory, new ProxyGenerator(typesCatalog), typesCatalog)
     {
     }
 
-    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [NotNull] ProxyGenerator proxyGenerator, [CanBeNull] ITypesCatalog typesCatalog)
+    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [NotNull] IProxyGenerator proxyGenerator, [CanBeNull] ITypesCatalog typesCatalog)
     {
       mySerializersFactory = serializersFactory;
       myTypesCatalog = typesCatalog;
@@ -88,12 +88,12 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     /// <returns></returns>
     [NotNull, PublicAPI]
-    public RdBindableBase ActivateBind(Type type, Lifetime lifetime, [NotNull] IProtocol protocol)
+    public RdExtReflectionBindableBase ActivateBind(Type type, Lifetime lifetime, [NotNull] IProtocol protocol)
     {
       var instance = Activate(type);
 
       var typename = type.Name;
-      var bindable = (RdBindableBase) instance;
+      var bindable = (RdExtReflectionBindableBase) instance;
       bindable.Identify(protocol.Identities, RdId.Root.Mix(typename));
       bindable.Bind(lifetime, protocol, typename);
 

@@ -95,7 +95,7 @@ namespace JetBrains.Rd.Reflection
 
     public ISerializersContainer Cache { get; }
 
-    public ReflectionSerializersFactory(ITypesCatalog typeCatalog, IScalarSerializers scalars = null)
+    public ReflectionSerializersFactory([NotNull] ITypesCatalog typeCatalog, IScalarSerializers scalars = null)
     {
       myScalars = scalars ?? new ScalarSerializer(typeCatalog);
       Cache = new SerializersContainer(mySerializers);

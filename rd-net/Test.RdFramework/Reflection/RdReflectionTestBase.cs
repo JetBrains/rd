@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using JetBrains.Annotations;
-using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
@@ -13,15 +11,14 @@ namespace Test.RdFramework.Reflection
   [Apartment(System.Threading.ApartmentState.STA)]
   public class RdReflectionTestBase : RdFrameworkTestBase
   {
-    protected ReflectionRdActivator ReflectionRdActivator;
-    protected ReflectionSerializersFactory ReflectionSerializersFactory;
-    protected SimpleTypesCatalog TestRdTypesCatalog;
+    protected ReflectionRdActivator ReflectionRdActivator => Facade.Activator;
+    protected ReflectionSerializersFactory ReflectionSerializersFactory => Facade.SerializersFactory;
+    protected ITypesCatalog TestRdTypesCatalog => new SimpleTypesCatalog();
+    protected ReflectionSerializersFacade Facade;
 
     public override void SetUp()
     {
-      TestRdTypesCatalog = new SimpleTypesCatalog();
-      ReflectionSerializersFactory = new ReflectionSerializersFactory(TestRdTypesCatalog);
-      ReflectionRdActivator = new ReflectionRdActivator(ReflectionSerializersFactory, new ProxyGenerator(true), TestRdTypesCatalog);
+      Facade = new ReflectionSerializersFacade(TestRdTypesCatalog,  proxyGenerator: new ProxyGenerator(TestRdTypesCatalog, true));
 
       base.SetUp();
       ServerWire.AutoTransmitMode = true;
@@ -30,7 +27,7 @@ namespace Test.RdFramework.Reflection
 
     protected override Serializers CreateSerializers(bool isServer)
     {
-      return new Serializers(new TypesRegistrar(TestRdTypesCatalog, ReflectionSerializersFactory));
+      return new Serializers(Facade.Registrar);
     }
 
     protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase
@@ -40,21 +37,12 @@ namespace Test.RdFramework.Reflection
       run(c, s);
     }
 
-    [NotNull]
-    protected T CreateServerProxy<T>() where T : class
-    {
-      var proxyType = ReflectionRdActivator.Generator.CreateType<T>();
-      var proxy = ReflectionRdActivator.ActivateBind(proxyType, TestLifetime, ServerProtocol) as T;
-      Assertion.AssertNotNull(proxy, "proxy != null");
-      return proxy;
-    }
-
     protected void SaveGeneratedAssembly()
     {
 #if NET35 || NETCOREAPP
       // throw new NotSupportedException();
 #else
-      var generator = ReflectionRdActivator.Generator;
+      var generator = ReflectionRdActivator.Generator as ProxyGenerator;
       var modulePath = generator.DynamicModule.FullyQualifiedName;
       var proxyName = Path.GetFileName(modulePath);
 
