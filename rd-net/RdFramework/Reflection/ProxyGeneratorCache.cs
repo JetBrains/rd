@@ -11,6 +11,7 @@ namespace JetBrains.Rd.Reflection
     private readonly ProxyGenerator myGenerator;
     private readonly ConcurrentDictionary<Type, Type> myTypesCache = new ConcurrentDictionary<Type, Type>();
     private readonly ConcurrentDictionary<Type, SortedList<MethodInfo, DynamicMethod>> myAdaptersCache = new ConcurrentDictionary<Type, SortedList<MethodInfo, DynamicMethod>>();
+    private static readonly Comparer<MethodInfo> ourMethodComparer = Comparer<MethodInfo>.Create((x,y) => StringComparer.Ordinal.Compare(x.Name, y.Name));
 
     public ProxyGeneratorCache(ProxyGenerator generator)
     {
@@ -24,7 +25,7 @@ namespace JetBrains.Rd.Reflection
 
     public DynamicMethod CreateAdapter(Type selfType, MethodInfo method)
     {
-      var methods = myAdaptersCache.GetOrAdd(selfType, type => new SortedList<MethodInfo, DynamicMethod>());
+      var methods = myAdaptersCache.GetOrAdd(selfType, type => new SortedList<MethodInfo, DynamicMethod>(ourMethodComparer));
       lock (methods)
       {
         if (methods.TryGetValue(method, out var adapter))
