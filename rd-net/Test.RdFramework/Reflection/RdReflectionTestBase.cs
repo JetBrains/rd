@@ -4,6 +4,7 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
+using Test.Lifetimes;
 
 namespace Test.RdFramework.Reflection
 {
@@ -11,29 +12,34 @@ namespace Test.RdFramework.Reflection
   [Apartment(System.Threading.ApartmentState.STA)]
   public class RdReflectionTestBase : RdFrameworkTestBase
   {
-    protected ReflectionRdActivator ReflectionRdActivator => Facade.Activator;
-    protected ReflectionSerializersFactory ReflectionSerializersFactory => Facade.SerializersFactory;
-    protected ITypesCatalog TestRdTypesCatalog => new SimpleTypesCatalog();
-    protected ReflectionSerializersFacade Facade;
+    protected ReflectionSerializersFacade CFacade;
+    protected ReflectionSerializersFacade SFacade;
 
     public override void SetUp()
     {
-      Facade = new ReflectionSerializersFacade(TestRdTypesCatalog,  proxyGenerator: new ProxyGenerator(TestRdTypesCatalog, true));
+      CFacade = new ReflectionSerializersFacade(allowSave: true);
+      SFacade = new ReflectionSerializersFacade(allowSave: true);
 
       base.SetUp();
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
     }
 
+    protected void AddType(Type type)
+    {
+      CFacade.TypesCatalog.AddType(type);
+      SFacade.TypesCatalog.AddType(type);
+    }
+
     protected override Serializers CreateSerializers(bool isServer)
     {
-      return new Serializers(Facade.Registrar);
+      return new Serializers(isServer ? SFacade.Registrar : CFacade.Registrar);
     }
 
     protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase
     {
-      var c = ReflectionRdActivator.ActivateBind<T>(TestLifetime, ClientProtocol);
-      var s = ReflectionRdActivator.ActivateBind<T>(TestLifetime, ServerProtocol);
+      var c = CFacade.Activator.ActivateBind<T>(TestLifetime, ClientProtocol);
+      var s = SFacade.Activator.ActivateBind<T>(TestLifetime, ServerProtocol);
       run(c, s);
     }
 
@@ -42,7 +48,9 @@ namespace Test.RdFramework.Reflection
 #if NET35 || NETCOREAPP
       // throw new NotSupportedException();
 #else
-      var generator = ReflectionRdActivator.Generator as ProxyGenerator;
+      var generatorCache = SFacade.ProxyGenerator as ProxyGeneratorCache;
+      var generator = generatorCache.GetDynamicField("myGenerator") as ProxyGenerator;
+
       var modulePath = generator.DynamicModule.FullyQualifiedName;
       var proxyName = Path.GetFileName(modulePath);
 

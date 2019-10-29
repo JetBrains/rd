@@ -55,7 +55,7 @@ namespace JetBrains.Rd.Reflection
 #endif
 
     public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [CanBeNull] ITypesCatalog typesCatalog)
-      : this(serializersFactory, new ProxyGenerator(typesCatalog), typesCatalog)
+      : this(serializersFactory, new ProxyGenerator(serializersFactory.Scalars), typesCatalog)
     {
     }
 

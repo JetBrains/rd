@@ -18,21 +18,14 @@ namespace Test.RdFramework.Reflection
     [RdRpc] public interface IInvalid8 { string X { set; } }
     [RdRpc] public interface IInvalid9 { string X { get; set; } }
 
-    private ProxyGenerator myProxyGenerator;
-
-    [SetUp]
-    public void TestSetup(){
-      myProxyGenerator = new ProxyGenerator(TestRdTypesCatalog);
-    }
-
-    [Test] public void TestInvalid1() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid1>(); }); }
-    [Test] public void TestInvalid2() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid2>(); }); }
-    [Test] public void TestInvalid3() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid3>(); }); }
-    [Test] public void TestInvalid4() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid4<int>>(); }); }
-    [Test] public void TestInvalid5() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid5>(); }); }
+    [Test] public void TestInvalid1() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid1>(); }); }
+    [Test] public void TestInvalid2() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid2>(); }); }
+    [Test] public void TestInvalid3() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid3>(); }); }
+    [Test] public void TestInvalid4() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid4<int>>(); }); }
+    [Test] public void TestInvalid5() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid5>(); }); }
     //[Test] public void TestInvalid6() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid6>(); }); }
-    [Test] public void TestInvalid7() { Assert.Throws<NotSupportedException>(() => { myProxyGenerator.CreateType<IInvalid7>(); }); }
-    [Test] public void TestInvalid8() { Assert.Throws<Exception>(() => { myProxyGenerator.CreateType<IInvalid8>(); }); }
-    [Test] public void TestInvalid9() { Assert.Throws<Exception>(() => { myProxyGenerator.CreateType<IInvalid9>(); }); }
+    [Test] public void TestInvalid7() { Assert.Throws<NotSupportedException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid7>(); }); }
+    [Test] public void TestInvalid8() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid8>(); }); }
+    [Test] public void TestInvalid9() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid9>(); }); }
   }
 }

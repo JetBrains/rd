@@ -61,9 +61,9 @@ namespace Test.RdFramework.Reflection
     public override void SetUp()
     {
       base.SetUp();
-      TestRdTypesCatalog.AddType(typeof(ProjectItemDescriptor));
-      TestRdTypesCatalog.AddType(typeof(ProjectFileDescriptor));
-      TestRdTypesCatalog.AddType(typeof(ProjectFolderDescriptor));
+      AddType(typeof(ProjectItemDescriptor));
+      AddType(typeof(ProjectFileDescriptor));
+      AddType(typeof(ProjectFolderDescriptor));
     }
 
 

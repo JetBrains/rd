@@ -93,6 +93,9 @@ namespace JetBrains.Rd.Reflection
 
 #endif
 
+    [NotNull]
+    public IScalarSerializers Scalars => myScalars;
+
     public ISerializersContainer Cache { get; }
 
     public ReflectionSerializersFactory([NotNull] ITypesCatalog typeCatalog, IScalarSerializers scalars = null)
@@ -220,7 +223,7 @@ namespace JetBrains.Rd.Reflection
 
     private void RegisterScalar<T>()
     {
-      myScalars.Create<T>(out var reader, out var writer);
+      myScalars.GetOrCreate<T>(out var reader, out var writer);
       mySerializers.Add(typeof(T), new SerializerPair(reader, writer));
     }
 
@@ -517,7 +520,13 @@ namespace JetBrains.Rd.Reflection
 
   public interface IScalarSerializers
   {
-    void Create<T>(out CtxReadDelegate<T> reader, out CtxWriteDelegate<T> writer);
+    /// <summary>
+    /// Return static serializers for type
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    SerializerPair GetOrCreate(Type type);
+    void GetOrCreate<T>(out CtxReadDelegate<T> reader, out CtxWriteDelegate<T> writer);
     bool CanBePolymorphic(Type type);
   }
 

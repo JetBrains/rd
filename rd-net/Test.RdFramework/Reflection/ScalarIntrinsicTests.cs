@@ -48,13 +48,20 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestExternalSerialization()
     {
-      ReflectionSerializersFactory.Cache.Register(
-        (ctx, reader) => new ScalarTests.ColorFields(0, reader.ReadByte(), reader.ReadByte()),
-        (ctx, writer, value) =>
-        {
-          writer.Write((byte) value.Green);
-          writer.Write((byte) value.Blue);
-        });
+      void Reg(ISerializersContainer cache)
+      {
+        cache.Register(
+          (ctx, reader) => new ScalarTests.ColorFields(0, reader.ReadByte(), reader.ReadByte()),
+          (ctx, writer, value) =>
+          {
+            writer.Write((byte) value.Green);
+            writer.Write((byte) value.Blue);
+          });
+      }
+
+      Reg(CFacade.SerializersFactory.Cache);
+      Reg(SFacade.SerializersFactory.Cache);
+
       WithExts<IntrinsicExt4>((c, s) =>
       {
         c.Simple.Value = new ScalarTests.ColorFields(1,1,1);
