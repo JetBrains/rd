@@ -230,7 +230,6 @@ namespace Test.RdFramework.Reflection
       IScheduler result = null;
 
       var thread = new Thread(() => SingleThreadScheduler.RunInCurrentStackframe(TestLifetime, name, s => result = s)) { Name = name };
-      thread.SetApartmentState(ApartmentState.STA);
       thread.Start();
       SpinWait.SpinUntil(() => result != null);
       return result;
