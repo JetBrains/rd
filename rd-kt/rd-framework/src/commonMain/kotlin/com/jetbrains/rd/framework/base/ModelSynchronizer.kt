@@ -59,12 +59,11 @@ fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b
         b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
-    // todo uncomment this after the branch with `protocol contexts` will be merged
-    /*b.change.advise(lifetime) { evt ->
+    b.change.advise(lifetime) { evt ->
         evt.newValueOpt?.let {
             synchronizePolymorphic(lifetime, a[evt.key], it)
         }
-    }*/
+    }
 
 }
 
