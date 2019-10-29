@@ -28,13 +28,13 @@ namespace JetBrains.Rd.Reflection
     {
     }
 
-    public ReflectionSerializersFacade([CanBeNull] ITypesCatalog typesCatalog = null, [CanBeNull] IScalarSerializers scalarSerializers = null, [CanBeNull] ReflectionSerializersFactory reflectionSerializers = null, [CanBeNull] IProxyGenerator proxyGenerator = null, [CanBeNull] ReflectionRdActivator activator = null, [CanBeNull] TypesRegistrar registrar = null)
+    public ReflectionSerializersFacade([CanBeNull] ITypesCatalog typesCatalog = null, [CanBeNull] IScalarSerializers scalarSerializers = null, [CanBeNull] ReflectionSerializersFactory reflectionSerializers = null, [CanBeNull] IProxyGenerator proxyGenerator = null, [CanBeNull] ReflectionRdActivator activator = null, [CanBeNull] TypesRegistrar registrar = null, bool allowSave = false)
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
       ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog);
       SerializersFactory = reflectionSerializers ?? new ReflectionSerializersFactory(TypesCatalog, ScalarSerializers);
 
-      ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(TypesCatalog, false));
+      ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(ScalarSerializers, allowSave));
       Activator = activator ?? new ReflectionRdActivator(SerializersFactory, ProxyGenerator, TypesCatalog);
       Registrar = registrar ?? new TypesRegistrar(TypesCatalog, SerializersFactory);
     }

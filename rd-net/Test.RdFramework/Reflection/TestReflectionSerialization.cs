@@ -25,16 +25,16 @@ namespace Test.RdFramework.Reflection
     public override void SetUp()
     {
       base.SetUp();
-      TestRdTypesCatalog.AddType(typeof(Animal));
-      TestRdTypesCatalog.AddType(typeof(Bear));
-      TestRdTypesCatalog.AddType(typeof(EmptyOK));
+      AddType(typeof(Animal));
+      AddType(typeof(Bear));
+      AddType(typeof(EmptyOK));
     }
 
     [Test]
     public void Test1()
     {
-      var s =  Facade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
-      var c = Facade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
 
       s.EmptyOK.Value = new EmptyOK();
       Assert.IsNotNull(c.EmptyOK.Value);
@@ -43,14 +43,14 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestPolymorphicProperty()
     {
-      var s = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
-      var c = ReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
+      var s = SFacade.Activator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
+      var c = CFacade.Activator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
 
       s.Primitive.Value = true;
       c.Primitive.Value = false;
       Assert.AreEqual(s.Primitive.Value, c.Primitive.Value);
 
-      var requestBear = ReflectionRdActivator.Activate<Bear>();
+      var requestBear = CFacade.Activator.Activate<Bear>();
 
       c.PolyProperty.Value = requestBear; // (nameof(Bear), requestBear);
       var result = s.PolyProperty.Value;

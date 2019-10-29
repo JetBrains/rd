@@ -14,8 +14,8 @@ namespace JetBrains.Rd.Reflection
 {
   public class ProxyGenerator : IProxyGenerator
   {
+    private readonly IScalarSerializers myScalarSerializers;
     private readonly bool myAllowSave;
-    private readonly ITypesCatalog myCatalog;
 
     /*
      * ValueTuple package does not exist for net35
@@ -90,10 +90,10 @@ namespace JetBrains.Rd.Reflection
     public AssemblyBuilder DynamicAssembly => myAssemblyBuilder.Value;
     public ModuleBuilder DynamicModule => myModuleBuilder.Value;
 
-    public ProxyGenerator(ITypesCatalog catalog, bool allowSave = false)
+    public ProxyGenerator(IScalarSerializers scalarSerializers, bool allowSave = false)
     {
+      myScalarSerializers = scalarSerializers;
       myAllowSave = allowSave;
-      myCatalog = catalog;
 #if NETSTANDARD
      myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
@@ -335,8 +335,8 @@ namespace JetBrains.Rd.Reflection
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
-      myCatalog.AddType(requestType);
-      myCatalog.AddType(responseType);
+      myScalarSerializers.GetOrCreate(responseType);
+      myScalarSerializers.GetOrCreate(requestType);
 
       var fieldType = typeof(IRdCall<,>).MakeGenericType(requestType, responseType);
       var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);

@@ -47,11 +47,11 @@ namespace Test.RdFramework.Reflection
     {
       SaveGeneratedAssembly();
 
-      var client = ReflectionRdActivator.ActivateBind<PropertiesTest>(TestLifetime, ClientProtocol);
-      var proxy = Facade.ActivateProxy<IPropertiesTest>(TestLifetime, ServerProtocol);
+      var client = CFacade.Activator.ActivateBind<PropertiesTest>(TestLifetime, ClientProtocol);
+      var proxy = SFacade.ActivateProxy<IPropertiesTest>(TestLifetime, ServerProtocol);
       Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
-      TestRdTypesCatalog.AddType(typeof(LifeModel));
+      AddType(typeof(LifeModel));
       // test signals
       bool raised = false;
       proxy.Signal.Advise(TestLifetime, s => raised = true);

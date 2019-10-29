@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
+using JetBrains.Serialization;
 using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
@@ -61,6 +63,64 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdRpc]
+    public interface IAsyncModelsTest
+    {
+      Task<AColor> QueryColor();
+      void SetPath(AsyncModelsTest.FileSystemPath animal);
+    }
+
+    [RdExt]
+    public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTest
+    {
+      public Task<AColor> QueryColor()
+      {
+        return Task.FromResult(new AColor(10, 10, 10));
+      }
+
+      public void SetPath(FileSystemPath animal)
+      {
+        Assert.True(!animal.Path.Any(char.IsUpper), "!animal.Path.Any(char.IsUpper)");
+      }
+
+      [RdScalar]
+      public class FileSystemPath
+      {
+        private string myPath;
+
+        public string Path => myPath;
+
+        public FileSystemPath(string path)
+        {
+          myPath = path;
+        }
+
+        public static FileSystemPath Read(SerializationCtx ctx, UnsafeReader reader)
+        {
+          return new FileSystemPath(reader.ReadString());
+        }
+
+        public static void Write(SerializationCtx ctx, UnsafeWriter writer, FileSystemPath value)
+        {
+          writer.Write(value.myPath.ToLowerInvariant());
+        }
+      }
+    }
+
+    [RdScalar] // not required
+    public class AColor
+    {
+      public AColor(int r, int g, int b)
+      {
+        R = r;
+        G = g;
+        B = b;
+      }
+      public int R;
+      public int G;
+      public int B;
+    }
+
+    [RdRpc]
     public interface ISyncCallsTest
     {
       RdList<string> History { get; }
@@ -98,6 +158,19 @@ namespace Test.RdFramework.Reflection
       TestAsyncCalls(model => { model.RunSomething(); });
     }
 
+    [Test]
+    public void TestAsyncModels()
+    {
+      TestTemplate<AsyncModelsTest, IAsyncModelsTest>(proxy =>
+      {
+        proxy.SetPath(new AsyncModelsTest.FileSystemPath("C:\\hello"));
+        var queryColor = proxy.QueryColor();
+        Assert.AreEqual(queryColor.Result.R, 10);
+        Assert.AreEqual(queryColor.Result.G, 10);
+        Assert.AreEqual(queryColor.Result.B, 10);
+      });
+    }
+
     [Test] public void TestAsyncSum1() => TestAsyncCalls(model => Assert.AreEqual(model.iSum(100, -150).Result, -50));
     [Test] public void TestAsyncSum2() => TestAsyncCalls(model => Assert.AreEqual(model.uiSum(uint.MaxValue, 0).Result, uint.MaxValue));
     [Test] public void TestAsyncSum3() => TestAsyncCalls(model => Assert.AreEqual(model.sSum(100, -150).Result, -50));
@@ -125,11 +198,11 @@ namespace Test.RdFramework.Reflection
     {
       ClientProtocol.Scheduler.Queue(() =>
       {
-        var client = ReflectionRdActivator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
+        var client = CFacade.Activator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
       });
 
       TInterface proxy = null;
-      ServerProtocol.Scheduler.Queue(() => { proxy = Facade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol); });
+      ServerProtocol.Scheduler.Queue(() => { proxy = SFacade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol); });
 
       WaitMessages();
 
@@ -163,4 +236,5 @@ namespace Test.RdFramework.Reflection
       return result;
     }
   }
+
 }

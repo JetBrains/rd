@@ -14,10 +14,10 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestSimple()
     {
-      var proxy = Facade.ActivateProxy<ISimpleCalls>(TestLifetime, ServerProtocol);
+      var proxy = SFacade.ActivateProxy<ISimpleCalls>(TestLifetime, ServerProtocol);
       SaveGeneratedAssembly();
 
-      var client = ReflectionRdActivator.ActivateBind<SimpleCalls>(TestLifetime, ClientProtocol);
+      var client = CFacade.Activator.ActivateBind<SimpleCalls>(TestLifetime, ClientProtocol);
       // typeof(Reflection.SimpleCalls);//
       Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
@@ -35,9 +35,9 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestSimple2()
     {
-      var proxy = Facade.ActivateProxy<IUnitTestRemoteAgent>(TestLifetime, ServerProtocol);
+      var proxy = SFacade.ActivateProxy<IUnitTestRemoteAgent>(TestLifetime, ServerProtocol);
 
-      var client = ReflectionRdActivator.ActivateBind<UnitTestRemoteAgent>(TestLifetime, ClientProtocol);
+      var client = CFacade.Activator.ActivateBind<UnitTestRemoteAgent>(TestLifetime, ClientProtocol);
       Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
       proxy.RunTests(new TestRunRequest());

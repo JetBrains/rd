@@ -41,7 +41,7 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    private SerializerPair GetScalarSerializer(Type type)
+    public SerializerPair GetOrCreate(Type type)
     {
       if (myStaticSerializers.TryGetValue(type, out var pair))
       {
@@ -212,7 +212,7 @@ namespace JetBrains.Rd.Reflection
       }
       else
       {
-        var serializer = GetScalarSerializer(typeof(T));
+        var serializer = GetOrCreate(typeof(T));
         reader = serializer.GetReader<T>();
         writer = serializer.GetWriter<T>();
       }
@@ -222,18 +222,19 @@ namespace JetBrains.Rd.Reflection
     {
       if (CanBePolymorphic(t))
       {
+        myTypesCatalog.AddType(t);
         return SerializerPair.Polymorphic(t);
       }
       else
       {
-        return GetScalarSerializer(t);
+        return GetOrCreate(t);
       }
     }
 
     private SerializerPair RegisterNullable<T>() where T : struct
     {
       // nullable can be only for value tuple, no need to aks for polymorphic serializer here
-      var serPair = GetScalarSerializer(typeof(T));
+      var serPair = GetOrCreate(typeof(T));
       var ctxReadDelegate = serPair.GetReader<T>();
       var ctxWriteDelegate = serPair.GetWriter<T>();
       return new SerializerPair(ctxReadDelegate.NullableStruct(), ctxWriteDelegate.NullableStruct());
@@ -334,9 +335,9 @@ namespace JetBrains.Rd.Reflection
       return new SerializerPair(readerDelegate, writerDelegate);
     }
 
-    public void Create<T>(out CtxReadDelegate<T> reader, out CtxWriteDelegate<T> writer)
+    public void GetOrCreate<T>(out CtxReadDelegate<T> reader, out CtxWriteDelegate<T> writer)
     {
-      var scalarSerializer = GetScalarSerializer(typeof(T));
+      var scalarSerializer = GetOrCreate(typeof(T));
       reader = scalarSerializer.GetReader<T>();
       writer = scalarSerializer.GetWriter<T>();
     }
