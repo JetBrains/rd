@@ -89,7 +89,11 @@ namespace JetBrains.Util.Util
       return new BoolBitSlice(NextSliceLoBit(previousSlice), 1);
     }
     
-    public static Enum32BitSlice<T> Enum<T>([CanBeNull] BitSlice previousSlice = null) where T : unmanaged, Enum
+    public static Enum32BitSlice<T> Enum<T>([CanBeNull] BitSlice previousSlice = null) where T  :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       return new Enum32BitSlice<T>(NextSliceLoBit(previousSlice));
     }
@@ -149,7 +153,11 @@ namespace JetBrains.Util.Util
     public override int Updated(int host, bool value) => UpdatedRaw(host, value ? 1 : 0);
   }
   
-  public class Enum32BitSlice<T> : BitSlice<T> where T: unmanaged, Enum
+  public class Enum32BitSlice<T> : BitSlice<T> where T :
+#if !NET35
+    unmanaged, 
+#endif
+    Enum
   {
     private static int CalculateBitCount()
     {

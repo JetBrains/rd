@@ -191,18 +191,30 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadULongArray, WriteULongArray, 48);
     }
 
-    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T: unmanaged, Enum
+    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
       return Cast32BitEnum<T>.FromInt(reader.ReadInt());
     }
 
-    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T: unmanaged, Enum
+    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       writer.Write(Cast32BitEnum<T>.ToInt(value));
     }
 
-    public void RegisterEnum<T>() where T: unmanaged, Enum
+    public void RegisterEnum<T>() where T :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       Register(ReadEnum<T>, WriteEnum<T>);
     }

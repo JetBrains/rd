@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Util.Util
 {
+  #if !NET35
   /// <summary>
   /// For converting generic enum based on 32bit integer into in or uint.
   /// Will throw <see cref="InvalidOperationException"/> in static ctor if <c>Enum.GetUnderlyingType(typeof(T)) </c> is not int or uint.
@@ -49,7 +50,7 @@ namespace JetBrains.Util.Util
   /// Will throw <see cref="InvalidOperationException"/> in static ctor if <c>Enum.GetUnderlyingType(typeof(T)) </c> is not long or ulong.
   /// </summary>
   /// <typeparam name="T">Enum that is based on long or ulong</typeparam>
-  public static class Cast64BitEnum<T> where T : unmanaged, Enum
+  public static class Cast64BitEnum<T> where T : unmanaged,  Enum
   {
     static Cast64BitEnum()
     {
@@ -84,7 +85,29 @@ namespace JetBrains.Util.Util
   }
   
   
+
+#else
+
   
+  
+    
+  //unmanaged constraint lead to Assembly.Load failure on Unity .Net 3.5 
+  public static class Cast32BitEnum<T> where T : Enum
+  {
+
+    [PublicAPI] public static T FromInt(int source) => (T)Enum.ToObject(typeof(T), source);
+
+    [PublicAPI] public static int ToInt(T source) => Convert.ToInt32(source);
+    
+
+    [PublicAPI] public static T FromUInt(uint source) => (T)Enum.ToObject(typeof(T), source);
+
+    [PublicAPI] public static uint ToUInt(T source) => Convert.ToUInt32(source);
+  }
+  
+  
+  
+#endif
 
   /// <summary>
   /// !!! Use it with caution. Main purpose is enum to/from int casting without boxing !!!
@@ -115,4 +138,5 @@ namespace JetBrains.Util.Util
       }
     }
   }
+  
 }
