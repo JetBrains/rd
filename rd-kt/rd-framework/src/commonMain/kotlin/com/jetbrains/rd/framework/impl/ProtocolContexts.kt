@@ -24,8 +24,8 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     private val handlersMap = ConcurrentHashMap<RdContext<*>, ISingleContextHandler<*>>()
     private val myOrderingsLock = Any() // used to protect writes to myKeyHandlersOrder
 
-    internal var isWritingOwnMessages by threadLocal { false }
-    internal inline fun withWriteOwnMessages(block: () -> Unit) = this::isWritingOwnMessages.usingValue(true, block)
+    internal var isSendWithoutContexts by threadLocal { false }
+    internal inline fun sendWithoutContexts(block: () -> Unit) = this::isSendWithoutContexts.usingValue(true, block)
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
@@ -75,7 +75,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         if (handler !is HeavySingleContextHandler<*>) return
         handler.rdid = rdid.mix(key)
         protocol.scheduler.invokeOrQueue {
-            withWriteOwnMessages {
+            sendWithoutContexts {
                 handler.bind(it, this, key)
             }
         }
@@ -108,7 +108,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     }
 
     private fun sendContextToRemote(context: RdContext<*>) {
-        withWriteOwnMessages {
+        sendWithoutContexts {
             wire.send(rdid) { buffer ->
                 RdContext.write(serializationCtx, buffer, context)
             }
@@ -119,7 +119,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
      * Writes the current context values to the given buffer
      */
     fun writeCurrentMessageContext(buffer: AbstractBuffer) {
-        if (isWritingOwnMessages) return writeContextStub(buffer)
+        if (isSendWithoutContexts) return writeContextStub(buffer)
 
         val writtenSize = myHandlerOrder.size
         buffer.writeShort(writtenSize.toShort())

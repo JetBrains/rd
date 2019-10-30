@@ -17,15 +17,15 @@ import com.jetbrains.rd.util.keySet
 
 internal class HeavySingleContextHandler<T : Any>(override val context: RdContext<T>, private val contexts: ProtocolContexts) : RdReactiveBase(), ISingleContextHandler<T> {
     private val protocolValueSet = RdSet(context.serializer, ViewableSet(ConcurrentHashMap<T, Boolean>().keySet(true)))
-    private val protocolValueSetWithCookie = ModificationCookieViewableSet(protocolValueSet, contexts::isWritingOwnMessages)
+    private val protocolValueSetWithCookie = ModificationCookieViewableSet(protocolValueSet, contexts::isSendWithoutContexts)
     private val internRoot = InternRoot()
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
     }
 
-    private inline fun withWriteOwnMessages(block: () -> Unit) {
-        contexts.withWriteOwnMessages(block)
+    private inline fun sendWithoutContexts(block: () -> Unit) {
+        contexts.sendWithoutContexts(block)
     }
 
     val valueSet : IMutableViewableSet<T>
@@ -34,7 +34,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
-        withWriteOwnMessages {
+        sendWithoutContexts {
             protocolValueSet.rdid = rdid.mix("ValueSet")
             protocolValueSet.bind(lifetime, this, "ValueSet")
 
@@ -48,7 +48,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
     }
 
     private fun handleValueAddedToProtocolSet(addRemove: AddRemove, value: T) {
-        withWriteOwnMessages {
+        sendWithoutContexts {
             if (addRemove == AddRemove.Add) {
                 internRoot.intern(value)
             } else if (addRemove == AddRemove.Remove) {
@@ -63,13 +63,13 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
 
     @Suppress("UNCHECKED_CAST")
     override fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer) {
-        assert(!contexts.isWritingOwnMessages) { "Trying to write context with a context-related message, key ${context.key}"}
+        assert(!contexts.isSendWithoutContexts) { "Trying to write context with a context-related message, key ${context.key}"}
         val value = context.value
         if(value == null) {
             buffer.writeInternId(InternId.invalid)
             buffer.writeBoolean(false)
         } else {
-            withWriteOwnMessages {
+            sendWithoutContexts {
                 if (!protocolValueSet.contains(value)) {
                     require(protocol.scheduler.isActive) { "Attempting to use previously unused context value $value on a background thread for key ${context.key}" }
                     protocolValueSet.add(value)

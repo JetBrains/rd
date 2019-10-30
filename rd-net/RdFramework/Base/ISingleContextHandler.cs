@@ -8,6 +8,8 @@ namespace JetBrains.Rd.Base
     void PopValue();
     
     void WriteValue(SerializationCtx context, UnsafeWriter writer);
+    
+    RdContextBase ContextBase { get; }
   }
   
   internal interface ISingleContextHandler<T> : ISingleContextHandler

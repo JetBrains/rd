@@ -20,29 +20,29 @@ namespace JetBrains.Rd.Impl
     private readonly IViewableList<ISingleContextHandler> myHandlerOrder = new ViewableList<ISingleContextHandler>(new CopyOnWriteList<ISingleContextHandler>());
     private readonly ConcurrentDictionary<RdContextBase, ISingleContextHandler> myHandlersMap = new ConcurrentDictionary<RdContextBase, ISingleContextHandler>();
     private readonly object myOrderingLock = new object();
-    private readonly ThreadLocal<bool> myIsWritingOwnMessages = new ThreadLocal<bool>(() => false);
+    private readonly ThreadLocal<bool> mySendWithoutContexts = new ThreadLocal<bool>(() => false);
     
     
-    internal struct OwnMessagesCookie : IDisposable
+    internal struct SendWithoutContextsCookie : IDisposable
     {
       private readonly ProtocolContexts myHandler;
       private readonly bool myPrevValue;
 
-      public OwnMessagesCookie(ProtocolContexts handler)
+      public SendWithoutContextsCookie(ProtocolContexts handler)
       {
         myHandler = handler;
-        myPrevValue = handler.myIsWritingOwnMessages.Value;
-        handler.myIsWritingOwnMessages.Value = true;
+        myPrevValue = handler.mySendWithoutContexts.Value;
+        handler.mySendWithoutContexts.Value = true;
       }
 
       public void Dispose()
       {
-        myHandler.myIsWritingOwnMessages.Value = myPrevValue;
+        myHandler.mySendWithoutContexts.Value = myPrevValue;
       }
     }
 
-    internal OwnMessagesCookie CreateOwnMessageCookie() => new OwnMessagesCookie(this);
-    public bool IsWritingOwnMessages => myIsWritingOwnMessages.Value; 
+    internal SendWithoutContextsCookie CreateSendWithoutContextsCookie() => new SendWithoutContextsCookie(this);
+    public bool IsSendWithoutContexts => mySendWithoutContexts.Value; 
 
     public ProtocolContexts()
     {
@@ -58,8 +58,7 @@ namespace JetBrains.Rd.Impl
     {
       var contextBase = RdContextBase.Read(SerializationContext, reader);
 
-      new Action<RdContext<object>>(RegisterContext).Method.GetGenericMethodDefinition()
-        .MakeGenericMethod(contextBase.GetType().GetGenericArguments()[0]).Invoke(this, new object[] {contextBase});
+      contextBase.RegisterOn(this);
       
       myCounterpartHandlers.Add(myHandlersMap[contextBase]);
     }
@@ -80,18 +79,18 @@ namespace JetBrains.Rd.Impl
         bindableHandler.RdId = RdId.Mix(key);
         Proto.Scheduler.InvokeOrQueue(lifetime, () =>
         {
-          using(CreateOwnMessageCookie())
+          using(CreateSendWithoutContextsCookie())
             bindableHandler.Bind(lifetime, this, key);
         });
       }
     }
 
-    private void SendContextToRemote<T>(RdContext<T> context)
+    private void SendContextToRemote(RdContextBase context)
     {
-      using(CreateOwnMessageCookie())
+      using(CreateSendWithoutContextsCookie())
         Wire.Send(RdId, writer =>
         {
-          RdContext<T>.Write(SerializationContext, writer, context);
+          RdContextBase.Write(SerializationContext, writer, context);
         });
     }
     
@@ -141,9 +140,7 @@ namespace JetBrains.Rd.Impl
       {
         myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
         {
-          new Action<Lifetime, ISingleContextHandler<object>>(BindAndSendHandler).Method
-            .GetGenericMethodDefinition().MakeGenericMethod(handler.GetType().GetGenericArguments()[0])
-            .Invoke(this, new object[] { handlerLt, handler });
+          BindAndSendHandler(handlerLt, handler);
         });
       }
       
@@ -186,7 +183,7 @@ namespace JetBrains.Rd.Impl
     [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "sync is for atomicity of write/send pairs, not access")]
     public void WriteContext(UnsafeWriter writer)
     {
-      if (IsWritingOwnMessages)
+      if (IsSendWithoutContexts)
       {
         WriteContextStub(writer);
         return;
@@ -206,10 +203,10 @@ namespace JetBrains.Rd.Impl
       writer.Write((short) 0);
     } 
 
-    private void BindAndSendHandler<T>(Lifetime lifetime, ISingleContextHandler<T> handler)
+    private void BindAndSendHandler(Lifetime lifetime, ISingleContextHandler handler)
     {
-      BindHandler(lifetime, handler.Context.Key, handler);
-      SendContextToRemote(handler.Context);
+      BindHandler(lifetime, handler.ContextBase.Key, handler);
+      SendContextToRemote(handler.ContextBase);
     }
   }
 }

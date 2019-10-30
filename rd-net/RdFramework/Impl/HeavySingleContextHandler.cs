@@ -13,17 +13,19 @@ namespace JetBrains.Rd.Impl
     private readonly ProtocolContexts myHandler;
     private readonly InternRoot myInternRoot = new InternRoot();
     private readonly RdSet<T> myProtocolValueSet;
-    private readonly ModificationCookieViewableSet<T, ProtocolContexts.OwnMessagesCookie> myModificationCookieValueSet;
+    private readonly ModificationCookieViewableSet<T, ProtocolContexts.SendWithoutContextsCookie> myModificationCookieValueSet;
 
     internal IViewableSet<T> LocalValueSet => myModificationCookieValueSet;
 
-    public HeavySingleContextHandler(RdContext<T> key, ProtocolContexts handler)
+    public HeavySingleContextHandler(RdContext<T> context, ProtocolContexts handler)
     {
       myHandler = handler;
-      Context = key;
-      myProtocolValueSet = new RdSet<T>(key.ReadDelegate, key.WriteDelegate, new ViewableSet<T>(new ConcurrentDictionary<T, bool>().MutableKeySet(false)));
-      myModificationCookieValueSet = new ModificationCookieViewableSet<T, ProtocolContexts.OwnMessagesCookie>(myHandler.CreateOwnMessageCookie, myProtocolValueSet);
+      Context = context;
+      myProtocolValueSet = new RdSet<T>(context.ReadDelegate, context.WriteDelegate, new ViewableSet<T>(new ConcurrentDictionary<T, bool>().MutableKeySet(false)));
+      myModificationCookieValueSet = new ModificationCookieViewableSet<T, ProtocolContexts.SendWithoutContextsCookie>(myHandler.CreateSendWithoutContextsCookie, myProtocolValueSet);
     }
+
+    public RdContextBase ContextBase => Context;
 
     public RdContext<T> Context { get; }
 
@@ -31,7 +33,7 @@ namespace JetBrains.Rd.Impl
     {
       base.Init(lifetime);
 
-      using (myHandler.CreateOwnMessageCookie())
+      using (myHandler.CreateSendWithoutContextsCookie())
       {
         myInternRoot.RdId = RdId.Mix("InternRoot");
         myProtocolValueSet.RdId = RdId.Mix("ValueSet");
@@ -46,7 +48,7 @@ namespace JetBrains.Rd.Impl
     private void HandleProtocolSetEvent(SetEvent<T> obj)
     {
       var value = obj.Value;
-      using(myHandler.CreateOwnMessageCookie())
+      using(myHandler.CreateSendWithoutContextsCookie())
         if (obj.Kind == AddRemove.Add)
           myInternRoot.Intern(value);
         else
@@ -56,21 +58,20 @@ namespace JetBrains.Rd.Impl
 
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
-      Assertion.Assert(!myHandler.IsWritingOwnMessages, "!myHandler.IsWritingOwnMessages");
+      Assertion.Assert(!myHandler.IsSendWithoutContexts, "!myHandler.IsWritingOwnMessages");
       var value = Context.Value;
       if (value == null)
       {
-        writer.Write(-1);
+        InternId.Write(writer, InternId.Invalid);
         writer.Write(false);
       }
       else
       {
-        using (myHandler.CreateOwnMessageCookie())
+        using (myHandler.CreateSendWithoutContextsCookie())
         {
           if (!myProtocolValueSet.Contains(value))
           {
             Assertion.Require(Proto.Scheduler.IsActive, "Attempting to use previously unused context value {0} on a background thread for key {1}", value, Context.Key);
-            Assertion.AssertNotNull(Context.Value, "Can't perform an implicit add with null local context value for key {0}", Context.Key);
             myProtocolValueSet.Add(Context.Value);
           }
 
@@ -100,7 +101,7 @@ namespace JetBrains.Rd.Impl
 
     public override void OnWireReceived(UnsafeReader reader)
     {
-      Assertion.Fail("InterningProtocolContextHandler can't receive messages");
+      Assertion.Fail("HeavySingleContextHandler can't receive messages");
     }
 
     public void ReadValueAndPush(SerializationCtx context, UnsafeReader reader)

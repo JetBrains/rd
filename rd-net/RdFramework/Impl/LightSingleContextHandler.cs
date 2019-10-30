@@ -6,10 +6,11 @@ namespace JetBrains.Rd.Impl
   internal class LightSingleContextHandler<T> : ISingleContextHandler<T>
   {
     public RdContext<T> Context { get; }
+    public RdContextBase ContextBase => Context;
 
-    public LightSingleContextHandler(RdContext<T> key)
+    public LightSingleContextHandler(RdContext<T> context)
     {
-      Context = key;
+      Context = context;
     }
 
     

@@ -3,12 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd
 {
-  public class RdContextBase : IEquatable<RdContextBase>
+  public abstract class RdContextBase : IEquatable<RdContextBase>
   {
     [NotNull] public readonly string Key;
     public readonly bool IsHeavy;
@@ -65,6 +66,14 @@ namespace JetBrains.Rd
     {
       return !Equals(left, right);
     }
+
+    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdContextBase value)
+    {
+      value.Write(ctx, writer);
+    }
+
+    protected abstract void Write(SerializationCtx ctx, UnsafeWriter writer);
+    public abstract void RegisterOn(ProtocolContexts contexts);
   }
   /// <summary>
   /// Describes a context and provides access to value associated with this context.
@@ -140,11 +149,16 @@ namespace JetBrains.Rd
       Value = ourContextStacks.Value[Key].Pop();
     }
 
-     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdContext<T> value)
+     protected override void Write(SerializationCtx ctx, UnsafeWriter writer)
      {
-       writer.Write(value.Key);
-       writer.Write(value.IsHeavy);
+       writer.Write(Key);
+       writer.Write(IsHeavy);
        RdId.Write(writer, ctx.Serializers.GetIdForType(typeof(T)));
+     }
+
+     public override void RegisterOn(ProtocolContexts contexts)
+     {
+       contexts.RegisterContext(this);
      }
   }
 }
