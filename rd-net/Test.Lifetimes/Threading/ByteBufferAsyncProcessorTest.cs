@@ -11,19 +11,7 @@ namespace Test.Lifetimes.Threading
 {
   [TestFixture]
   public class ByteBufferAsyncProcessorTest : LifetimesTestBase
-  {          
-
-    protected override void TearDownInternal()
-    {
-      foreach (var rec in LogLog.StoredRecords)
-      {
-        if (rec.Severity == LoggingLevel.ERROR || rec.Severity == LoggingLevel.FATAL)
-        {
-          throw new Exception(rec.Format(false));
-        }
-      }
-    }
-
+  {
     [Test]
     public void TestOneProducer()
     {
