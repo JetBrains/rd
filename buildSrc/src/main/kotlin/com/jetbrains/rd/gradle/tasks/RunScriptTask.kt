@@ -5,23 +5,28 @@ import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
+@Suppress("LeakingThis")
 open class RunScriptTask : Exec() {
-    @Input
-    lateinit var execPath: String
+    fun execPath(value : String) {
+       args(value)
+    }
 
     init {
         group = "cmd"
-        outputs.upToDateWhen { false }
-    }
 
-    @TaskAction
-    override fun exec() {
-        val iterable = args as Iterable<*>
         when {
-            Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine = listOfNotNull("cmd", "/c", execPath) + iterable
-            Os.isFamily(Os.FAMILY_UNIX) -> commandLine = listOfNotNull("bash", execPath, "-c") + iterable
-            Os.isFamily(Os.FAMILY_MAC) -> commandLine = listOfNotNull("bash", execPath, "-c") + iterable
+            Os.isFamily(Os.FAMILY_WINDOWS) -> {
+                executable = "cmd"
+                args("/c")
+            }
+            Os.isFamily(Os.FAMILY_UNIX) -> {
+                executable = "bash"
+                args("-c")
+            }
+            Os.isFamily(Os.FAMILY_MAC) -> {
+                executable = "bash"
+                args("-c")
+            }
         }
-        super.exec()
     }
 }

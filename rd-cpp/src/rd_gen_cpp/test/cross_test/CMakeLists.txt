@@ -10,6 +10,12 @@ add_executable(CrossTestCppClientAllEntities CrossTestCppClientAllEntities.cpp)
 add_executable(CrossTestCppClientBigBuffer CrossTestCppClientBigBuffer.cpp)
 add_executable(CrossTestCppClientRdCall CrossTestCppClientRdCall.cpp)
 
-target_link_libraries(CrossTestCppClientAllEntities cross_test_lib demo_model)
-target_link_libraries(CrossTestCppClientBigBuffer cross_test_lib demo_model)
-target_link_libraries(CrossTestCppClientRdCall cross_test_lib demo_model)
+add_executable(CrossTestCppServerAllEntities CrossTestCppServerAllEntities.cpp)
+add_executable(CrossTestCppServerBigBuffer CrossTestCppServerBigBuffer.cpp)
+add_executable(CrossTestCppServerRdCall CrossTestCppServerRdCall.cpp)
+
+foreach(test_target CrossTestCppClientAllEntities CrossTestCppClientBigBuffer CrossTestCppClientRdCall
+                    CrossTestCppServerAllEntities CrossTestCppServerBigBuffer CrossTestCppServerRdCall
+)
+        target_link_libraries("${test_target}" cross_test_lib demo_model)
+endforeach()

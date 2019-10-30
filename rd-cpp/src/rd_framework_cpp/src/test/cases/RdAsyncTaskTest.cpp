@@ -12,7 +12,7 @@ using namespace rd;
 using namespace rd::util;
 using namespace test;
 
-TEST_F(RdFrameworkTestBase, TestDynamic) {
+TEST_F(RdFrameworkTestBase, DISABLED_TestDynamic) {
 	RdProperty<RdCall<int32_t, std::wstring> > client_property;
 	RdProperty<RdEndpoint<int32_t, std::wstring> > server_property;
 

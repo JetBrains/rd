@@ -10,7 +10,7 @@ namespace Test.RdCross
 {
     public abstract class CrossTestCsClientBase : CrossTestCsBase
     {
-        protected readonly int Port;
+      private readonly int Port;
 
         protected CrossTestCsClientBase()
         {
@@ -32,7 +32,7 @@ namespace Test.RdCross
             {
                 var client = new SocketWire.Client(ModelLifetime, scheduler, Port, "DemoClient");
                 var serializers = new Serializers();
-                Protocol = new Protocol("Server", serializers, new Identities(IdKind.Server), scheduler,
+                Protocol = new Protocol("Server", serializers, new Identities(IdKind.Client), scheduler,
                     client, SocketLifetime);
                 scheduler.Queue(action);
             });

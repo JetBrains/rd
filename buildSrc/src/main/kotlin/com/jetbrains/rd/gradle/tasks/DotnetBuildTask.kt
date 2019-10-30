@@ -22,7 +22,7 @@ open class DotnetBuildTask : Exec() {
     }
 
     private fun addInputs() {
-        val excludedFolder = listOf(".idea", "bin", "obj", "packages", "artifacts")
+        val excludedFolder = listOf(".idea", ".gradle", "bin", "obj", "packages", "artifacts")
         val includedExtensions = listOf("cs", "csproj", "fs")
         val search = workingDir.walk()
             .onEnter { a -> a.name !in excludedFolder }
@@ -35,6 +35,5 @@ open class DotnetBuildTask : Exec() {
         val search = workingDir.walk()
             .filter { a -> a.isFile && a.extension in includedExtensions }
         search.forEach { outputs.file(it) }
-
     }
 }

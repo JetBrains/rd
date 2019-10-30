@@ -14,6 +14,7 @@ import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 
 import java.io.File
+import java.nio.charset.Charset
 
 
 private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
@@ -587,14 +588,34 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private val Declaration.hasSecondaryCtor: Boolean get() = (this is Toplevel || this.isConcrete) && this.allMembers.any { it.hasEmptyConstructor }
 //endregion
 
+    private fun pchFileName(targetName: String) = "pch_$targetName"
+
+    private fun File.createPchHeader(pchHeaderFile: String) {
+        val p = PrettyPrinter().apply {
+            withIncludeGuard("${pchHeaderFile.substringBeforeLast(".").toUpperCase()}_H") {
+                +"#include \"pch.h\""
+            }
+        }
+        File(this, pchHeaderFile).writeText(p.toString())
+    }
+
+    private fun File.createPchSource(pchCppFile: String, pchHeaderFile: String) {
+        File(this, pchCppFile).writeText("#include \"${pchHeaderFile}\"")
+    }
+
     private fun File.cmakeLists(targetName: String, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList(), subdirectories: List<String> = emptyList()) {
         mkdirs()
+        val pchHeaderFile = "${pchFileName(targetName)}.h"
+        val pchCppFile = "${pchFileName(targetName)}.cpp"
+
+        createPchHeader(pchHeaderFile)
+        createPchSource(pchCppFile, pchHeaderFile)
+
         File(this, "CMakeLists.txt").run {
             printWriter().use {
                 it.apply {
                     println("cmake_minimum_required(VERSION 3.7)")
 
-                    val pchCppFile = "pch.cpp"
                     val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
                     val conditionalVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
 
@@ -621,7 +642,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     println("""
                             |if ($conditionalVariable)
                             |    include(${Files.PrecompiledHeaderCmake})
-                            |    add_precompiled_header(${targetName} pch.h SOURCE_CXX ${pchCppFile} FORCEINCLUDE)
+                            |    add_precompiled_header(${targetName} $pchHeaderFile SOURCE_CXX ${pchCppFile} FORCEINCLUDE)
                             |endif ()""".trimMargin()
                     )
                 }
@@ -711,43 +732,53 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (toplevels.isNotEmpty()) {
             val root = toplevels.first().root
             folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
-// todo           folder.precompiledHeaderCmake()
+            folder.precompiledHeaderCmake()
         }
 //        folder.templateInstantiate()
     }
 
+    private fun PrettyPrinter.withIncludeGuard(includeGuardMacro: String, action: PrettyPrinter.() -> Unit) {
+        +"#ifndef $includeGuardMacro"
+        +"#define $includeGuardMacro"
+
+        println()
+
+        action()
+
+        println()
+
+        +"#endif // $includeGuardMacro"
+    }
 
     //region files
     fun PrettyPrinter.header(decl: Declaration, marshallerHeaders: List<String>) {
         val includeGuardMacro = "${decl.name.toUpperCase()}_H"
-        +"#ifndef $includeGuardMacro"
-        +"#define $includeGuardMacro"
-        println()
+        withIncludeGuard(includeGuardMacro) {
+            println()
 
-        includesDecl(marshallerHeaders)
-        println()
+            includesDecl(marshallerHeaders)
+            println()
 
-        dependenciesDecl(decl)
-        println()
+            dependenciesDecl(decl)
+            println()
 
-        VsWarningsDefault?.let {
-            +"#pragma warning( push )"
-            it.forEach {
-                +"#pragma warning( disable:$it )"
+            VsWarningsDefault?.let {
+                +"#pragma warning( push )"
+                it.forEach {
+                    +"#pragma warning( disable:$it )"
+                }
             }
-        }
 
-        if (decl is Toplevel && decl.isLibrary) {
-            comment("library")
-            surroundWithNamespaces {
-                libdecl(decl)
+            if (decl is Toplevel && decl.isLibrary) {
+                comment("library")
+                surroundWithNamespaces {
+                    libdecl(decl)
+                }
+            } else {
+                typedecl(decl)
             }
-        } else {
-            typedecl(decl)
+            println()
         }
-        println()
-
-        +"#endif // $includeGuardMacro"
     }
 
     fun PrettyPrinter.source(decl: Declaration, dependencies: List<Declaration>) {
@@ -954,6 +985,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             +"""
             |switch(value) {
             |${decl.constants.joinToString(separator = eol) { """case ${decl.name}::${it.name.sanitize()}: return "${it.name}";""" }}
+            |default: return std::to_string(static_cast<int32_t>(value));
             |}
             """.trimMargin()
 

@@ -11,7 +11,7 @@ using namespace rd::test;
 using namespace rd::test::util;
 
 
-TEST_F(RdAsyncTestBase, asyncSignalStatic) {
+TEST_F(RdAsyncTestBase, DISABLED_asyncSignalStatic) {
 	std::atomic_int32_t acc{0};
 
 	clatch::countdownlatch evt1(3);

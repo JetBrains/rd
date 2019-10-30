@@ -34,6 +34,7 @@ endif ()
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 option(ENABLE_TESTS_OPTION "Global enable test" ON)
+option(INSTALL_GTEST OFF)
 
 set(RD_CORE_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable core tests." FORCE)
 set(RD_FRAMEWORK_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable framework tests." FORCE)

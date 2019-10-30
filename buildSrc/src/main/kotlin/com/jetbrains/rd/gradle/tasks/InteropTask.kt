@@ -6,6 +6,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.internal.DefaultExecAction
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
@@ -43,17 +44,20 @@ open class InteropTask : DefaultTask() {
     private fun executeTask(task: MarkedExecTask, command: List<String>) {
         val taskName = task.getName()
         println("Interop task: async running task=$taskName, " +
-            "command=${command.joinToString(separator = "")}, " +
+            "command=${command.joinToString(separator = " ")}, " +
             "working dir=${task.getWorkingDir()}")
         val outputFile = createTempFile(suffix = "$taskName.out")
         println("outputFile=${outputFile}")
         val process = ProcessBuilder(command).apply {
             directory(task.getWorkingDir())
         }
-            .redirectOutput(outputFile)
+            .redirectErrorStream(true)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .redirectOutput(outputFile)
+
         processes.add(NamedProcess(process, taskName))
     }
+
 
     private fun runServer() {
         executeTask(taskServer, serverRunningCommand)

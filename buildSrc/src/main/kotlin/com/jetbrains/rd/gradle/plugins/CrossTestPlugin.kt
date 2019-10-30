@@ -2,9 +2,7 @@
 
 package com.jetbrains.rd.gradle.plugins
 
-import com.jetbrains.rd.gradle.tasks.CrossTestKtRdTask
-import com.jetbrains.rd.gradle.tasks.DotnetRunTask
-import com.jetbrains.rd.gradle.tasks.InteropTask
+import com.jetbrains.rd.gradle.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
@@ -18,20 +16,20 @@ class CrossTestPlugin : Plugin<Project> {
         applyKotlinJVM()
 
         val `rd-net` = rootProject.project(":rd-net")
-//        val `rd-cpp` = rootProject.project(":rd-cpp")
+        val `rd-cpp` = rootProject.project(":rd-cpp")
         val `rd-framework` = project(":rd-framework")
 
         evaluationDependsOn(`rd-net`.path)
-//        evaluationDependsOn(`rd-cpp`.path)
+        evaluationDependsOn(`rd-cpp`.path)
 
         dependencies {
             `compile`(`rd-framework`)
             `implementation`(gradleApi())
         }
 
-        /*fun getCppTaskByName(name: String): RunScriptTask {
-            return `rd-cpp`.tasks.getByName(name)
-        }*/
+        fun getCppTaskByName(name: String): CrossTestCppTask {
+            return `rd-cpp`.tasks.getByName<CrossTestCppTask>(name)
+        }
 
         fun getCsTaskByName(name: String): DotnetRunTask {
             return `rd-net`.tasks.getByName<DotnetRunTask>(name)
@@ -64,26 +62,26 @@ class CrossTestPlugin : Plugin<Project> {
 //endregion
 
 //region KtCpp
-            /*val CrossTestKtCppAllEntities by creating(InteropTask::class) {
+            val CrossTestKtCppAllEntities by creating(InteropTask::class) {
                 taskServer = CrossTestKtServerAllEntities
                 taskClient = getCppTaskByName("CrossTestCppClientAllEntities")
 
-                addDependencies()
+                lateInit()
             }
 
             val CrossTestKtCppBigBuffer by creating(InteropTask::class) {
                 taskServer = CrossTestKtServerBigBuffer
                 taskClient = getCppTaskByName("CrossTestCppClientBigBuffer")
 
-                addDependencies()
+                lateInit()
             }
 
             val CrossTestKtCppRdCall by creating(InteropTask::class) {
                 taskServer = CrossTestKtServerRdCall
                 taskClient = getCppTaskByName("CrossTestCppClientRdCall")
 
-                addDependencies()
-            }*/
+                lateInit()
+            }
 //endregion
 
 //region KtCs
