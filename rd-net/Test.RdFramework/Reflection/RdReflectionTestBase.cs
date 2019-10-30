@@ -3,6 +3,7 @@ using System.IO;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
+using JetBrains.Rd.Tasks;
 using NUnit.Framework;
 using Test.Lifetimes;
 
@@ -14,15 +15,25 @@ namespace Test.RdFramework.Reflection
   {
     protected ReflectionSerializersFacade CFacade;
     protected ReflectionSerializersFacade SFacade;
+    private bool myRespectRpcTimeouts;
 
     public override void SetUp()
     {
+      // increase timeouts to balance unpredictable agent performance
+      myRespectRpcTimeouts = RpcTimeouts.RespectRpcTimeouts;
+      RpcTimeouts.RespectRpcTimeouts = false;
       CFacade = new ReflectionSerializersFacade(allowSave: true);
       SFacade = new ReflectionSerializersFacade(allowSave: true);
 
       base.SetUp();
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
+    }
+
+    public override void TearDown()
+    {
+      RpcTimeouts.RespectRpcTimeouts = myRespectRpcTimeouts;
+      base.TearDown();
     }
 
     protected void AddType(Type type)
