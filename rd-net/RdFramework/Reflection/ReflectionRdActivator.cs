@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
@@ -15,7 +15,6 @@ using JetBrains.Util;
 #if NET35
 using TypeInfo = System.Type;
 #else
-using System.Threading.Tasks;
 #endif
 
 namespace JetBrains.Rd.Reflection
@@ -217,9 +216,6 @@ namespace JetBrains.Rd.Reflection
           }
           else
           {
-#if NET35
-            throw new NotSupportedException("Async methods not supported in NET35");
-#else
             if (responseType == typeof(Task))
             {
               var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(Task));
@@ -234,7 +230,6 @@ namespace JetBrains.Rd.Reflection
               var methodInfo = typeof(ReflectionRdActivator).GetMethod(nameof(SetHandlerTask)).NotNull().MakeGenericMethod(requestType, responseNonTaskType);
               methodInfo.Invoke(null, new[] {endpoint, @delegate});
             }
-#endif
           }
 
           bindableChildren.Add(new KeyValuePair<string, object>(name, endpoint));
@@ -264,7 +259,6 @@ namespace JetBrains.Rd.Reflection
       myTypesCatalog.AddType(type);
     }
 
-#if !NET35
     /// <summary>
     ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
     /// </summary>
@@ -280,7 +274,6 @@ namespace JetBrains.Rd.Reflection
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
     }
-#endif
 
     /// <summary>
     ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint

@@ -53,10 +53,8 @@ namespace JetBrains.Rd.Tasks
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
     }
-
-
-
     
+
     
     [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler)
     {
@@ -72,7 +70,6 @@ namespace JetBrains.Rd.Tasks
       });
     }
     
-#if !NET35
     [PublicAPI]
     public static Task<T> AsTask<T>([NotNull] this IRdTask<T> task)
     {
@@ -97,8 +94,5 @@ namespace JetBrains.Rd.Tasks
       });
       return tcs.Task;
     }   
-
-
-#endif
   }
 }
