@@ -37,6 +37,23 @@ namespace JetBrains.Rd.Impl
       }
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static void WriteCollection<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, ICollection<T> value)
+    {
+      if (value == null)
+      {
+        writer.Write(-1);
+        return;
+      }
+
+      writer.Write(value.Count);
+      foreach (var item in value)
+      {
+        itemWriter(ctx, writer, item);
+      }
+    }
+
+
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T[] ReadArray<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx)

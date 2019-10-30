@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Rd
 {
-  public interface IPolymorphicTypesCatalog
+  public interface ITypesRegistrar
   {
     /// <summary>
     /// Tries to discovery type with specific <see cref="RdId"/>.
@@ -11,9 +11,7 @@ namespace JetBrains.Rd
     /// </summary>
     /// <param name="id"></param>
     /// <param name="serializers"></param>
-    void TryDiscoverRegister(RdId id, [NotNull] ISerializers serializers);
-    void TryDiscoverRegister([NotNull] Type clrType, [NotNull] ISerializers serializers);
-
-    void AddType([NotNull] Type type);
+    void TryRegister(RdId id, [NotNull] ISerializers serializers);
+    void TryRegister([NotNull] Type clrType, [NotNull] ISerializers serializers);
   }
 }

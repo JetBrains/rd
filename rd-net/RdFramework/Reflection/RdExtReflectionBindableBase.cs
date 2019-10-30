@@ -1,15 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 
 namespace JetBrains.Rd.Reflection
 {
-  public class RdReflectionBindableBase : RdBindableBase, IReflectionBindable
+  public class RdExtReflectionBindableBase : RdExtBase, IReflectionBindable
   {
     List<KeyValuePair<string, object>> IReflectionBindable.BindableChildren => BindableChildren;
 
     private bool bindableChildrenFilled = false;
+    protected override Action<ISerializers> Register { get; } = s => { };
+
     protected void EnsureBindableChildren()
     {
       if (bindableChildrenFilled) return;

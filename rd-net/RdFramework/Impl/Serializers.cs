@@ -31,7 +31,7 @@ namespace JetBrains.Rd.Impl
     private readonly Dictionary<RdId, CtxReadDelegate<object>> myReaders = new Dictionary<RdId, CtxReadDelegate<object>>();
     private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
 
-    [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicCatalog;
+    [CanBeNull] private readonly ITypesRegistrar myRegistrar;
 
     struct ToplevelRegistration
     {
@@ -58,10 +58,10 @@ namespace JetBrains.Rd.Impl
     public Serializers() => RegisterFrameworkMarshallers(this);
 #endif
 
-    public Serializers([CanBeNull] IPolymorphicTypesCatalog polymorphicCatalog)
+    public Serializers([CanBeNull] ITypesRegistrar registrar)
       : this()
     {
-      myPolymorphicCatalog = polymorphicCatalog;
+      myRegistrar = registrar;
     }
 
     //readers
@@ -267,7 +267,7 @@ namespace JetBrains.Rd.Impl
       {
         if (unknownInstanceReader == null)
         {
-          myPolymorphicCatalog?.TryDiscoverRegister(typeId, this);
+          myRegistrar?.TryRegister(typeId, this);
           if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed
@@ -306,7 +306,7 @@ namespace JetBrains.Rd.Impl
       var type = value.GetType();
       if (!myTypeMapping.TryGetValue(type, out typeId))
       {
-        myPolymorphicCatalog?.TryDiscoverRegister(type, this);
+        myRegistrar?.TryRegister(type, this);
         if (!myTypeMapping.TryGetValue(type, out typeId))
         {
           throw new KeyNotFoundException($"Type {type.FullName} have not registered");
