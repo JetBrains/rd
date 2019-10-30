@@ -155,6 +155,11 @@ namespace Test.RdFramework.Reflection
       {
         model.GetStringAsync().ContinueWith(t => result = t.Result, TaskContinuationOptions.ExecuteSynchronously);
       });
+
+#if NET35
+      // it seems like ExecuteSynchronously does not work in NET35
+      SpinWait.SpinUntil(() => result != null, 1000);
+#endif
       Assert.AreEqual(result, "result");
     }
 
