@@ -16,20 +16,20 @@ class CrossTestPlugin : Plugin<Project> {
         applyKotlinJVM()
 
         val `rd-net` = rootProject.project(":rd-net")
-        val `rd-cpp` = rootProject.project(":rd-cpp")
+//        val `rd-cpp` = rootProject.project(":rd-cpp")
         val `rd-framework` = project(":rd-framework")
 
         evaluationDependsOn(`rd-net`.path)
-        evaluationDependsOn(`rd-cpp`.path)
+//        evaluationDependsOn(`rd-cpp`.path)
 
         dependencies {
             `compile`(`rd-framework`)
             `implementation`(gradleApi())
         }
 
-        fun getCppTaskByName(name: String): CrossTestCppTask {
-            return `rd-cpp`.tasks.getByName<CrossTestCppTask>(name)
-        }
+//        fun getCppTaskByName(name: String): CrossTestCppTask {
+//            return `rd-cpp`.tasks.getByName<CrossTestCppTask>(name)
+//        }
 
         fun getCsTaskByName(name: String): DotnetRunTask {
             return `rd-net`.tasks.getByName<DotnetRunTask>(name)
@@ -64,7 +64,7 @@ class CrossTestPlugin : Plugin<Project> {
 //endregion
 
 //region KtCpp
-            val CrossTestKtCppAllEntities by creating(InteropTask::class) {
+            /*val CrossTestKtCppAllEntities by creating(InteropTask::class) {
                 taskServer = CrossTestKtServerAllEntities
                 taskClient = getCppTaskByName("CrossTestCppClientAllEntities")
 
@@ -83,7 +83,7 @@ class CrossTestPlugin : Plugin<Project> {
                 taskClient = getCppTaskByName("CrossTestCppClientRdCall")
 
                 lateInit()
-            }
+            }*/
 //endregion
 
 //region KtCs
