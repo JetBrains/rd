@@ -347,7 +347,11 @@ namespace JetBrains.Rd.Reflection
       myStaticSerializers[typeof(T)] = new SerializerPair(reader, writer);
     }
 
-    public void RegisterEnum<T>() where T : unmanaged, Enum
+    public void RegisterEnum<T>() where T :
+#if !NET35
+    unmanaged, 
+#endif
+      Enum
     {
       myStaticSerializers[typeof(T)] = this.CreateEnumSerializer<T>();
     }
