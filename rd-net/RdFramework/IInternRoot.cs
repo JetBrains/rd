@@ -41,6 +41,7 @@ namespace JetBrains.Rd
   /// </summary>
   public readonly struct InternId : IEquatable<InternId>
   {
+    private const int InvalidId = -1;
     public readonly int Value;
 
     public InternId(int value)
@@ -51,14 +52,14 @@ namespace JetBrains.Rd
     /// <summary>
     /// True if this ID represents an actual interned value. False indicates a failed interning operation or unset value
     /// </summary>
-    public bool IsValid => Value != -1;
+    public bool IsValid => Value != InvalidId;
     
     /// <summary>
     /// True if this ID represents a value interned by local InternRoot 
     /// </summary>
     public bool IsLocal => (Value & 1) == 0;
     
-    public static InternId Invalid = new InternId(-1);
+    public static InternId Invalid = new InternId(InvalidId);
 
     public static InternId Read(UnsafeReader reader)
     {
@@ -67,7 +68,7 @@ namespace JetBrains.Rd
 
     public static void Write(UnsafeWriter writer, InternId value)
     {
-      writer.Write(value.Value == -1 ? value.Value : value.Value ^ 1);
+      writer.Write(value.Value == InvalidId ? value.Value : value.Value ^ 1);
     }
 
     public bool Equals(InternId other)

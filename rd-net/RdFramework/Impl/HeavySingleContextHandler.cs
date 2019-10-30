@@ -21,7 +21,7 @@ namespace JetBrains.Rd.Impl
     {
       myHandler = handler;
       Context = context;
-      myProtocolValueSet = new RdSet<T>(context.ReadDelegate, context.WriteDelegate, new ViewableSet<T>(new ConcurrentDictionary<T, bool>().MutableKeySet(false)));
+      myProtocolValueSet = new RdSet<T>(context.ReadDelegate, context.WriteDelegate, new ViewableSet<T>(new ConcurrentSet<T>()));
       myModificationCookieValueSet = new ModificationCookieViewableSet<T, ProtocolContexts.SendWithoutContextsCookie>(myHandler.CreateSendWithoutContextsCookie, myProtocolValueSet);
     }
 
@@ -33,14 +33,13 @@ namespace JetBrains.Rd.Impl
     {
       base.Init(lifetime);
 
-      using (myHandler.CreateSendWithoutContextsCookie())
-      {
-        myInternRoot.RdId = RdId.Mix("InternRoot");
-        myProtocolValueSet.RdId = RdId.Mix("ValueSet");
+      Assertion.Assert(myHandler.IsSendWithoutContexts, "Must bind context handler without sending contexts to prevent reentrancy");
 
-        myInternRoot.Bind(lifetime, this, "InternRoot");
-        myProtocolValueSet.Bind(lifetime, this, "ValueSet");
-      }
+      myInternRoot.RdId = RdId.Mix("InternRoot");
+      myProtocolValueSet.RdId = RdId.Mix("ValueSet");
+
+      myInternRoot.Bind(lifetime, this, "InternRoot");
+      myProtocolValueSet.Bind(lifetime, this, "ValueSet");
 
       myProtocolValueSet.Advise(lifetime, HandleProtocolSetEvent);
     }

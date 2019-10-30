@@ -34,13 +34,13 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
 
-        sendWithoutContexts {
-            protocolValueSet.rdid = rdid.mix("ValueSet")
-            protocolValueSet.bind(lifetime, this, "ValueSet")
+        assert(contexts.isSendWithoutContexts) { "Must bind context handler without sending contexts to prevent reentrancy" }
 
-            internRoot.rdid = rdid.mix("InternRoot")
-            internRoot.bind(lifetime, this, "InternRoot")
-        }
+        protocolValueSet.rdid = rdid.mix("ValueSet")
+        protocolValueSet.bind(lifetime, this, "ValueSet")
+
+        internRoot.rdid = rdid.mix("InternRoot")
+        internRoot.bind(lifetime, this, "InternRoot")
 
         protocolValueSet.advise(lifetime) { addRemove, value ->
             handleValueAddedToProtocolSet(addRemove, value)

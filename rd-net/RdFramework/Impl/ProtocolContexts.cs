@@ -150,7 +150,7 @@ namespace JetBrains.Rd.Impl
     /// <summary>
     /// Reads context values from a message, sets current context to them, and returns a cookie to restore previous context
     /// </summary>
-    public MessageContextCookie ReadContextIntoCookie(UnsafeReader reader)
+    public MessageContextCookie ReadContextsIntoCookie(UnsafeReader reader)
     {
       var numContextValues = reader.ReadShort();
       Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
@@ -181,7 +181,7 @@ namespace JetBrains.Rd.Impl
     /// Writes the current context values
     /// </summary>
     [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "sync is for atomicity of write/send pairs, not access")]
-    public void WriteContext(UnsafeWriter writer)
+    public void WriteContexts(UnsafeWriter writer)
     {
       if (IsSendWithoutContexts)
       {

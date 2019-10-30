@@ -7,9 +7,10 @@ namespace JetBrains.Collections
 {
   /// <summary>
   /// A lock-free list that copies the underlying storage on all write operations. This allows for thread-safe operation with well-defined semantics at the cost of performance in write-heavy scenarios.
+  /// Used instead of pulling the whole System.Collections.Immutable nuget package.
   /// </summary>
   /// <typeparam name="T">Type of elements contained in this list</typeparam>
-  public class CopyOnWriteList<T> : IList<T>
+  internal class CopyOnWriteList<T> : IList<T>
   {
     private T[] myStorage;
 

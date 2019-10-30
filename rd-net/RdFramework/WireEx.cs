@@ -25,7 +25,7 @@ namespace JetBrains.Rd
       if(contextHandler == null)
         ProtocolContexts.WriteContextStub(writer);
       else
-        contextHandler.WriteContext(writer);
+        contextHandler.WriteContexts(writer);
     }
   }
 }

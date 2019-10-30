@@ -57,7 +57,5 @@ namespace JetBrains.Rd.Util
       }
       
     }
-    
-    public static SetOnDictionaryKeys<K, V> MutableKeySet<K, V>(this IDictionary<K, V> dictionary, V stubValue) => new SetOnDictionaryKeys<K, V>(dictionary, stubValue);
   }
 }

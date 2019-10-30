@@ -2,23 +2,16 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace JetBrains.Collections
+namespace JetBrains.Rd.Util
 {
-  public class SetOnDictionaryKeys<T, TValue> : 
+  internal class ConcurrentSet<T> : 
     #if NET35
     ICollection<T>
     #else
     ISet<T>
     #endif
   {
-    private readonly IDictionary<T, TValue> myDictionary;
-    private readonly TValue myStubValue;
-
-    public SetOnDictionaryKeys(IDictionary<T, TValue> dictionary, TValue stubValue)
-    {
-      myDictionary = dictionary;
-      myStubValue = stubValue;
-    }
+    private readonly ConcurrentDictionary<T, bool> myDictionary = new ConcurrentDictionary<T, bool>();
 
     IEnumerator IEnumerable.GetEnumerator()
     {
@@ -32,7 +25,7 @@ namespace JetBrains.Collections
 
     void ICollection<T>.Add(T item)
     {
-      myDictionary[item] = myStubValue;
+      myDictionary[item] = false;
     }
 
     public void Clear()
@@ -52,21 +45,16 @@ namespace JetBrains.Collections
 
     public bool Remove(T item)
     {
-      return myDictionary.Remove(item);
+      return myDictionary.TryRemove(item, out _);
     }
 
     public int Count => myDictionary.Count;
-    public bool IsReadOnly => myDictionary.IsReadOnly;
+    public bool IsReadOnly => false;
     
     #if !NET35
     bool ISet<T>.Add(T item)
     {
-      if (myDictionary is ConcurrentDictionary<T, TValue> concurrentDictionary)
-        return concurrentDictionary.TryAdd(item, myStubValue);
-      
-      if (myDictionary.ContainsKey(item)) return false;
-      myDictionary[item] = myStubValue;
-      return true;
+      return myDictionary.TryAdd(item, false);
     }
 
     public void ExceptWith(IEnumerable<T> other)
