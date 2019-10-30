@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
@@ -11,6 +10,10 @@ using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
 using NUnit.Framework;
+
+#if NET35
+
+#endif
 
 namespace Test.RdFramework.Reflection
 {
@@ -24,6 +27,10 @@ namespace Test.RdFramework.Reflection
       public virtual void Client(int round) { }
       public virtual void Server(int round) { }
     }
+
+#if NET35
+    private static TaskHack Task = new TaskHack();
+#endif
 
     [RdRpc]
     public interface IAsyncCallsTest

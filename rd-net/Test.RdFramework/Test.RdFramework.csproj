@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
-        <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
+        <TargetFrameworks>net35;net461;netcoreapp2.1</TargetFrameworks>
 
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
@@ -24,5 +23,10 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
       <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
+        <PackageReference Include="AsyncBridge.Net35" Version="0.2.0" />
+        <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
     </ItemGroup>
 </Project>

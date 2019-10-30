@@ -11,6 +11,10 @@ namespace Test.RdFramework.Reflection
   [Apartment(System.Threading.ApartmentState.STA)]
   public class ProxyGeneratorSimpleTest : RdReflectionTestBase
   {
+#if NET35
+    private static TaskHack Task = new TaskHack();
+#endif
+
     [Test]
     public void TestSimple()
     {
