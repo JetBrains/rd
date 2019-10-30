@@ -12,6 +12,6 @@ open class CrossTestKtRdTask : KotlinExec(), MarkedExecTask {
         get() = (super.getCommandLine() + tmpFile.absolutePath)
 
     init {
-        main = "com.jetbrains.rd.cross.${name}Kt"
+        main = "com.jetbrains.rd.cross.cases.${name}Kt"
     }
 }

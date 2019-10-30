@@ -14,7 +14,7 @@ namespace Test.RdCross
                                             "\"CrossTestCsClientAllEntities\", \"C:\\Work\rd\build\\src\\main\\resources\\tmp\\CrossTestKtCsAllEntities\\CrossTestCsClientAllEntities.tmp\"" +
                                             "]) for example.)");
             }
-            var type = Type.GetType($"Test.RdCross.{args[0]}") ??
+            var type = Type.GetType($"Test.RdCross.Cases.{args[0]}") ??
                        throw new ArgumentException($"Wrong class name={args[0]}");
             if (Activator.CreateInstance(type) is CrossTestCsBase testCsBase)
             {

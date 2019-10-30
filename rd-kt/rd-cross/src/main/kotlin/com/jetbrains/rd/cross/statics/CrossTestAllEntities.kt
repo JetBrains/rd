@@ -1,45 +1,19 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
+package com.jetbrains.rd.cross.statics
 
-package com.jetbrains.rd.cross
-
-import com.jetbrains.rd.cross.base.CrossTestKtServerBase
-import com.jetbrains.rd.cross.util.trackAction
-import com.jetbrains.rd.util.Date
 import com.jetbrains.rd.util.reactive.fire
 import demo.*
 import java.util.*
 
-@Suppress("unused")
-class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
-    override fun start(args: Array<String>) {
-        System.err.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        trackAction("Checking constant") {
-            checkConstants()
-        }
-
-        queue {
-            val model = trackAction("Creating DemoModel") {
-                DemoModel.create(modelLifetime, protocol)
-            }
-
-            val extModel = trackAction("Creating ExtModel") {
-                model.extModel
-            }
-
-            trackAction("Firing") {
-                fireAll(model, extModel)
-            }
-        }
-    }
-
-    private fun checkConstants() {
+@ExperimentalUnsignedTypes
+object CrossTestAllEntities {
+    internal fun checkConstants() {
         assert(DemoModel.const_toplevel) { "DemoModel.const_toplevel" }
         assert(ConstUtil.const_enum == MyEnum.default) { "ConstUtil.const_enum == MyEnum.default" }
         assert(ConstUtil.const_string == "const_string_value") { "ConstUtil.const_string == \"const_string_value\"" }
         assert(Base.const_base == 'B') { "ConstUtil.const_string == \"const_string_value\"" }
     }
 
-    private fun fireAll(model: DemoModel, extModel: ExtModel) {
+    internal fun fireAll(model: DemoModel, extModel: ExtModel) {
         model.boolean_property.set(false)
 
         model.boolean_array.set(booleanArrayOf(true, false, false))
@@ -90,8 +64,4 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
 
         extModel.checker.fire()
     }
-}
-
-fun main(args: Array<String>) {
-    CrossTestKtServerAllEntities().run(args)
 }

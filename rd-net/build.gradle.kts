@@ -27,6 +27,8 @@ tasks {
 
     val CrossTestCsClientAllEntities by creatingCrossTestTask()
 
+    val CrossTestCsServerAllEntities by creatingCrossTestTask()
+
     val CrossTestCsClientBigBuffer by creatingCrossTestTask()
 
     val CrossTestCsClientRdCall by creatingCrossTestTask()

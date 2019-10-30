@@ -1,18 +1,14 @@
-using System;
-using System.Diagnostics;
 using demo;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
-using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
-using Test.RdCross.Util;
 
 namespace Test.RdCross
 {
     // ReSharper disable once UnusedMember.Global
-    public class CrossTestCsClientAllEntities : CrossTestCsClientBase
+    public static class CrossTestCsAllEntities
     {
-      static void FireAll(DemoModel model, ExtModel extModel)
+      internal static void FireAll(DemoModel model, ExtModel extModel)
         {
             model.Boolean_property.Set(false);
 
@@ -60,28 +56,13 @@ namespace Test.RdCross
             extModel.Checker.Fire();
         }
 
-        protected override void Start(string[] args)
-        {
-          Logging.TrackAction("Checking constant", CheckConstants);
-            
-            Queue(() =>
-            {
-                var model = Logging.TrackAction("Creating DemoModel", () => new DemoModel(ModelLifetime, Protocol));
-                var extModel = Logging.TrackAction("Creating ExtModel", () => model.GetExtModel());
-                
-                Logging.TrackAction("Firing", () => 
-                  FireAll(model, extModel)
-                );
-            });
-        }
-
-        private static void CheckConstants()
+      internal static void CheckConstants()
         {
             Assertion.Assert(DemoModel.const_toplevel, "DemoModel.const_toplevel");
             Assertion.Assert(ConstUtil.const_enum == MyEnum.@default, "ConstUtil.const_enum == MyEnum.@default");
             Assertion.Assert(ConstUtil.const_string == "const_string_value",
                 "ConstUtil.const_string == 'const_string_value'");
-            Assertion.Assert(Base.const_base == 'B', "Base.const_base == 'B'");
+            Assertion.Assert(demo.Base.const_base == 'B', "Base.const_base == 'B'");
         }
     }
 }

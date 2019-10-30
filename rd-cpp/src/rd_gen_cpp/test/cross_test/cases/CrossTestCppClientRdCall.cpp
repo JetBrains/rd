@@ -21,11 +21,6 @@ namespace rd {
 					});
 
 					task = model.get_callback().start(L"Cpp");
-					task.advise(model_lifetime, [&](RdTaskResult<int32_t> const &result) {
-						printAnyway(printer, rd::to_string(result));
-
-						promise.set_value();
-					});
 				});
 
 				terminate();

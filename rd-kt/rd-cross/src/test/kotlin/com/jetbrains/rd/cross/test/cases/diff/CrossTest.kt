@@ -55,15 +55,10 @@ class CrossTest {
 
     private val methodName get() = name.methodName.replace("test", "")
 
+    //region AllEntities
     @Ignore
     @Test
     fun testCrossTestKtCppAllEntities() {
-        doTest(methodName)
-    }
-
-    @Ignore
-    @Test
-    fun testCrossTestKtCppBigBuffer() {
         doTest(methodName)
     }
 
@@ -73,10 +68,25 @@ class CrossTest {
     }
 
     @Test
-    fun testCrossTestKtCsBigBuffer() {
+    fun testCrossTestCsKtAllEntities() {
+        doTest(methodName)
+    }
+    //endregion
+
+    //region BigBuffer
+    @Ignore
+    @Test
+    fun testCrossTestKtCppBigBuffer() {
         doTest(methodName)
     }
 
+    @Test
+    fun testCrossTestKtCsBigBuffer() {
+        doTest(methodName)
+    }
+    //endregion
+
+    //region RdCall
     @Ignore
     @Test
     fun testCrossTestKtCppRdCall() {
@@ -87,4 +97,5 @@ class CrossTest {
     fun testCrossTestKtCsRdCall() {
         doTest(methodName)
     }
+    //endregion
 }

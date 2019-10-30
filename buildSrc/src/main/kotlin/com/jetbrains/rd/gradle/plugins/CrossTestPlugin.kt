@@ -56,6 +56,8 @@ class CrossTestPlugin : Plugin<Project> {
 
             val CrossTestKtServerAllEntities by creatingKtServerTask()
 
+            val CrossTestKtClientAllEntities by creatingKtServerTask()
+
             val CrossTestKtServerBigBuffer by creatingKtServerTask()
 
             val CrossTestKtServerRdCall by creatingKtServerTask()
@@ -88,6 +90,13 @@ class CrossTestPlugin : Plugin<Project> {
             val CrossTestKtCsAllEntities by creating(InteropTask::class) {
                 taskServer = CrossTestKtServerAllEntities
                 taskClient = getCsTaskByName("CrossTestCsClientAllEntities")
+
+                lateInit()
+            }
+
+            val CrossTestCsKtAllEntities by creating(InteropTask::class) {
+                taskServer = getCsTaskByName("CrossTestCsServerAllEntities")
+                taskClient = CrossTestKtClientAllEntities
 
                 lateInit()
             }

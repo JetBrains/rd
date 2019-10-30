@@ -6,8 +6,8 @@ import com.jetbrains.rd.util.Logger
 
 class CombinatorLogger(private val loggers: List<Logger>) : Logger {
     override fun log(level: LogLevel, message: Any?, throwable: Throwable?) =
-        loggers.forEach { log ->
-            log.log(level, message, throwable)
+        loggers.forEach { logger ->
+            logger.log(level, message, throwable)
         }
 
     override fun isEnabled(level: LogLevel) = loggers.any { it.isEnabled(level) }

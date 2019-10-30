@@ -74,5 +74,16 @@ abstract class CrossTestKtBase {
         }
     }
 
+    fun queue(action: () -> Unit) {
+        scheduler.queue {
+            try {
+                action()
+            } catch (e: Throwable) {
+                logWithTime("Async error occurred")
+                e.printStackTrace()
+            }
+        }
+    }
+
     abstract fun start(args: Array<String>)
 }

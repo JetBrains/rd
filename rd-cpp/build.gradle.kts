@@ -23,6 +23,8 @@ tasks {
 
     val CrossTestCppClientAllEntities by creatingCrossTestCppTask()
 
+    val CrossTestCppServerAllEntities by creatingCrossTestCppTask()
+
     val CrossTestCppClientBigBuffer by creatingCrossTestCppTask()
 
     val CrossTestCppClientRdCall by creatingCrossTestCppTask()

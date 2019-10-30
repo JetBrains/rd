@@ -1,6 +1,6 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
+@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "PackageDirectoryMismatch")
 
-package com.jetbrains.rd.cross
+package com.jetbrains.rd.cross.cases
 
 import com.jetbrains.rd.cross.base.CrossTestKtServerBase
 import demo.DemoModel

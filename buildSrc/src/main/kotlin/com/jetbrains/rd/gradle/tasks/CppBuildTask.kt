@@ -3,7 +3,7 @@ package com.jetbrains.rd.gradle.tasks
 open class CppBuildTask : RunScriptTask() {
     init {
         addInputs()
-//        addOutputs()
+        addOutputs()
     }
 
     private fun addInputs() {

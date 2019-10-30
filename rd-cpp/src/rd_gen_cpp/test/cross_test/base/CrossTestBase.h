@@ -34,9 +34,6 @@ namespace rd {
 			std::unique_ptr<rd::IProtocol> protocol;
 
 			std::ofstream out;
-
-			std::promise<void> promise;
-			std::future<void> f = promise.get_future();
 		public:
 			CrossTestBase();
 
@@ -58,9 +55,10 @@ namespace rd {
 
 			virtual int run() = 0;
 
+			static constexpr int SPINNING_TIMEOUT = 10'000;
+
 			void terminate() {
-				auto status = f.wait_for(std::chrono::seconds(10));
-				rd::util::sleep_this_thread(1'000);
+				rd::util::sleep_this_thread(SPINNING_TIMEOUT);
 
 				socket_definition.terminate();
 				definition.terminate();
