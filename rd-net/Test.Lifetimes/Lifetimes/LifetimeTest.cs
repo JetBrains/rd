@@ -897,14 +897,14 @@ namespace Test.Lifetimes.Lifetimes
         AutoResetEvent sync = new AutoResetEvent(false);
         var task = lt.StartAttached(TaskScheduler.Default, () => sync.WaitOne());
         def.Terminate();
-        var ex = Assert.Catch(ThrowLoggedExceptions); //first from terminate
+        var ex = Assert.Catch(ThrowLoggedExceptions, $"First exception from {nameof(LifetimeDefinition)}.Terminate"); //first from terminate
         Assert.True(ex.Message.Contains("ExecuteIfAlive"));
 
         sync.Set();
 
 
         task.Wait();
-        ex = Assert.Catch(ThrowLoggedExceptions); //first from terminate
+        ex = Assert.Catch(ThrowLoggedExceptions, $"Second exception from {nameof(LifetimeDefinition.ExecuteIfAliveCookie)}.Dispose"); //second from terminate
         Assert.True(ex.Message.Contains("ExecuteIfAlive"));
 
       }
