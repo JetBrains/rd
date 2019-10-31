@@ -24,13 +24,17 @@ namespace Test.Lifetimes
     [TearDown]
     public virtual void TearDown()
     {
-      TearDownInternal();
-      LifetimeDefinition.Terminate();
-      ThrowLoggedExceptions();
-      myDisposable.Dispose();
+      try
+      {
+        LifetimeDefinition.Terminate();
+        ThrowLoggedExceptions();
+      }
+      finally
+      {
+        myDisposable.Dispose();
+      }
     }
-
-    protected virtual void TearDownInternal() {}
+    
 
     protected void ThrowLoggedExceptions()
     {

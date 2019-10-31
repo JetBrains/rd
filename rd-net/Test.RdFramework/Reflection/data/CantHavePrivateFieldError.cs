@@ -5,7 +5,7 @@
 namespace Test.RdFramework.Reflection
 {
   [RdModel]
-  public class CantHavePrivateFieldError
+  public class CantHavePrivateFieldError : RdReflectionBindableBase
   {
     private NotRdModelData Val;
   }

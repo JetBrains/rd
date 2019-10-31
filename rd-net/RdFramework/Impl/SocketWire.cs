@@ -12,7 +12,9 @@ using JetBrains.Threading;
 namespace JetBrains.Rd.Impl
 {
   public static class SocketWire
-  {    
+  {
+    private static readonly ILog ourStaticLog = Log.GetLog<Base>();
+    
     public abstract class Base : WireBase
     {
       /// <summary>
@@ -96,16 +98,15 @@ namespace JetBrains.Rd.Impl
         });
       }
 
-      internal void CloseSocket([CanBeNull] Socket socket)
+      internal static void CloseSocket([CanBeNull] Socket socket)
       {
         if (socket == null)
-        {
-          Log.Verbose("{0}: socket is null", Id);
           return;
-        }
         
-        Log.CatchAndDrop(() => socket.Shutdown(SocketShutdown.Both));
-        Log.CatchAndDrop(socket.Close);
+        ourStaticLog.CatchAndDrop(() => socket.Shutdown(SocketShutdown.Both));
+        
+        //on netcore you can't solely execute Close() - it will hang forever
+        ourStaticLog.CatchAndDrop(socket.Close);
       }
 
 
@@ -492,8 +493,8 @@ namespace JetBrains.Rd.Impl
           },
           socket =>
           {
-            JetBrains.Diagnostics.Log.GetLog<Server>().Verbose("closing server socket");
-            socket.Close();
+            ourStaticLog.Verbose("closing server socket");
+            CloseSocket(socket);
           }
           );
 

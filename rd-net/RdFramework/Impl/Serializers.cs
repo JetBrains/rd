@@ -32,7 +32,7 @@ namespace JetBrains.Rd.Impl
     private readonly Dictionary<RdId, CtxReadDelegate<object>> myReaders = new Dictionary<RdId, CtxReadDelegate<object>>();
     private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
 
-    [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicCatalog;
+    [CanBeNull] private readonly ITypesRegistrar myRegistrar;
 
     struct ToplevelRegistration
     {
@@ -59,10 +59,10 @@ namespace JetBrains.Rd.Impl
     public Serializers() => RegisterFrameworkMarshallers(this);
 #endif
 
-    public Serializers([CanBeNull] IPolymorphicTypesCatalog polymorphicCatalog)
+    public Serializers([CanBeNull] ITypesRegistrar registrar)
       : this()
     {
-      myPolymorphicCatalog = polymorphicCatalog;
+      myRegistrar = registrar;
     }
 
     //readers
@@ -192,18 +192,30 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadULongArray, WriteULongArray, 48);
     }
 
-    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T: unmanaged, Enum
+    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
       return Cast32BitEnum<T>.FromInt(reader.ReadInt());
     }
 
-    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T: unmanaged, Enum
+    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       writer.Write(Cast32BitEnum<T>.ToInt(value));
     }
 
-    public void RegisterEnum<T>() where T: unmanaged, Enum
+    public void RegisterEnum<T>() where T :
+#if !NET35
+    unmanaged, 
+#endif
+     Enum
     {
       Register(ReadEnum<T>, WriteEnum<T>);
     }
@@ -256,7 +268,7 @@ namespace JetBrains.Rd.Impl
       {
         if (unknownInstanceReader == null)
         {
-          myPolymorphicCatalog?.TryDiscoverRegister(typeId, this);
+          myRegistrar?.TryRegister(typeId, this);
           if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed
@@ -295,7 +307,7 @@ namespace JetBrains.Rd.Impl
       var type = value.GetType();
       if (!myTypeMapping.TryGetValue(type, out typeId))
       {
-        myPolymorphicCatalog?.TryDiscoverRegister(type, this);
+        myRegistrar?.TryRegister(type, this);
         if (!myTypeMapping.TryGetValue(type, out typeId))
         {
           throw new KeyNotFoundException($"Type {type.FullName} have not registered");

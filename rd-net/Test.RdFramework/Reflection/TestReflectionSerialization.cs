@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using JetBrains.Collections.Viewable;
-using JetBrains.Rd;
-using JetBrains.Rd.Impl;
+﻿using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -9,10 +6,10 @@ namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
-  public class TestReflectionSerialization : RdFrameworkTestBase
+  public class TestReflectionSerialization : RdReflectionTestBase
   {
     [RdExt]
-    public sealed class RootModel : RdReflectionBindableBase
+    public sealed class RootModel : RdExtReflectionBindableBase
     {
       // public NestedModel Nested { get; }
 
@@ -25,34 +22,19 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<Animal> PolyProperty { get; }
     }
 
-    private ReflectionRdActivator myReflectionRdActivator;
-    private TestRdTypesCatalog myPolymorphicRdTypesCatalog;
-
-    protected override Serializers CreateSerializers(bool isServer)
-    {
-      return new Serializers(myPolymorphicRdTypesCatalog);
-    }
-
     public override void SetUp()
     {
-      var reflectionSerializers = new ReflectionSerializers();
-      myPolymorphicRdTypesCatalog = new TestRdTypesCatalog(reflectionSerializers);
-      myPolymorphicRdTypesCatalog.Register<Animal>();
-      myPolymorphicRdTypesCatalog.Register<Bear>();
-      myPolymorphicRdTypesCatalog.Register<EmptyOK>();
-
-      myReflectionRdActivator = new ReflectionRdActivator(reflectionSerializers, myPolymorphicRdTypesCatalog as IPolymorphicTypesCatalog);
-
       base.SetUp();
-      ServerWire.AutoTransmitMode = true;
-      ClientWire.AutoTransmitMode = true;
+      AddType(typeof(Animal));
+      AddType(typeof(Bear));
+      AddType(typeof(EmptyOK));
     }
 
     [Test]
     public void Test1()
     {
-      var s = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
-      var c = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
 
       s.EmptyOK.Value = new EmptyOK();
       Assert.IsNotNull(c.EmptyOK.Value);
@@ -61,27 +43,32 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestPolymorphicProperty()
     {
-      var s = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
-      var c = myReflectionRdActivator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
-
-      // s.BindCall(s.RdCall, req => (req.model.GetType().Name, req.model));
+      var s = SFacade.Activator.ActivateBind<RootModel>(TestLifetime, ClientProtocol);
+      var c = CFacade.Activator.ActivateBind<RootModel>(TestLifetime, ServerProtocol);
 
       s.Primitive.Value = true;
       c.Primitive.Value = false;
       Assert.AreEqual(s.Primitive.Value, c.Primitive.Value);
 
-      var requestBear = new Bear()
-      {
-        arrays = new string[]{"test", "test2"},
-        lists = new RdList<FieldsNotNullOk>()
-      };
-      requestBear.PublicMorozov.Add(new KeyValuePair<string, object>("lists", requestBear.lists));
+      var requestBear = CFacade.Activator.Activate<Bear>();
 
       c.PolyProperty.Value = requestBear; // (nameof(Bear), requestBear);
       var result = s.PolyProperty.Value;
 
       Assert.AreEqual(nameof(Bear), result.GetType().Name);
       Assert.AreNotSame(requestBear, result);
+    }
+
+    [Test]
+    public void TestEnum()
+    {
+      WithExts<RootModel>((c, s) =>
+      {
+        c.PropertiesNotNullOk.Value = new PropertiesNotNullOk("First", "Second", MyEnum.Second);
+        Assert.AreEqual(s.PropertiesNotNullOk.Value.First, "First");
+        Assert.AreEqual(s.PropertiesNotNullOk.Value.Second, "Second");
+        Assert.AreEqual(s.PropertiesNotNullOk.Value.Enum, MyEnum.Second);
+      });
     }
   }
 }

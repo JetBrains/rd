@@ -8,7 +8,7 @@ namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
-  public class ProxyGeneratorPropertiesTest : ProxyGeneratorTestBase
+  public class ProxyGeneratorPropertiesTest : RdReflectionTestBase
   {
     [RdRpc]
     public interface IPropertiesTest
@@ -21,7 +21,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class PropertiesTest : RdReflectionBindableBase, IPropertiesTest
+    public class PropertiesTest : RdExtReflectionBindableBase, IPropertiesTest
     {
       public IViewableProperty<string> RdProperty { get; private set; }
 
@@ -38,7 +38,7 @@ namespace Test.RdFramework.Reflection
 
       public LifeModel()
       {
-        StrProperty = new RdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString);
+        StrProperty = new RdProperty<string>(Serializers.ReadString, Serializers.WriteString);
       }
     }
 
@@ -47,11 +47,11 @@ namespace Test.RdFramework.Reflection
     {
       SaveGeneratedAssembly();
 
-      var client = ReflectionRdActivator.ActivateBind<PropertiesTest>(TestLifetime, ClientProtocol);
-      var proxy = CreateServerProxy<IPropertiesTest>();
-      Assertion.Assert(((RdReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+      var client = CFacade.Activator.ActivateBind<PropertiesTest>(TestLifetime, ClientProtocol);
+      var proxy = SFacade.ActivateProxy<IPropertiesTest>(TestLifetime, ServerProtocol);
+      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
 
-      TestRdTypesCatalog.AddType(typeof(LifeModel));
+      AddType(typeof(LifeModel));
       // test signals
       bool raised = false;
       proxy.Signal.Advise(TestLifetime, s => raised = true);
