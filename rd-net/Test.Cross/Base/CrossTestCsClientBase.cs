@@ -16,7 +16,13 @@ namespace Test.RdCross.Base
     {
       Console.WriteLine($"Waiting for port being written in file={FileSystem.PortFile}");
 
-      SpinWait.SpinUntil(() => FileSystem.IsFileReady(FileSystem.PortFileClosed), 5000);
+      SpinWait.SpinUntil(() => FileSystem.IsFileReady(FileSystem.PortFileClosed), 5_000);
+
+      if (!FileSystem.IsFileReady(FileSystem.PortFileClosed))
+      {
+        Console.Error.WriteLine("Stamp file wasn't created during timeout");
+        Environment.Exit(1);
+      }
 
       using (var stream = new StreamReader(File.OpenRead(FileSystem.PortFile)))
       {

@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import com.jetbrains.rd.util.threading.SpinWait
 import java.nio.file.Files
+import kotlin.system.exitProcess
 
 abstract class CrossTestKtClientBase : CrossTestKtBase() {
     private fun client(lifetime: Lifetime, port: Int): IProtocol {
@@ -20,6 +21,11 @@ abstract class CrossTestKtClientBase : CrossTestKtBase() {
 
         SpinWait.spinUntil(5_000) {
             Files.exists(portFileClosed.toPath())
+        }
+
+        if (!Files.exists(portFileClosed.toPath())) {
+            System.err.println("Stamp file wasn't created during timeout")
+            exitProcess(1)
         }
 
         val port =
