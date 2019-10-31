@@ -1,4 +1,4 @@
-#include "CrossTestAllEntities.h"
+#include "CrossTest_AllEntities.h"
 
 #include <DemoModel/Derived.h>
 

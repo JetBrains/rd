@@ -27,26 +27,36 @@ namespace Test.RdCross.Util
 
     public static void TrackAction(string message, Action action)
     {
-      using (new LoggingCookie(message))
+      var cookie = new LoggingCookie(message);
+      try
       {
         action();
+      }
+      catch (Exception e)
+      {
+        LogWithTime($"Exception {e} occured while {cookie.Action} executing");
+        throw;
+      }
+      finally
+      {
+        cookie.Dispose();
       }
     }
   }
 
-  class LoggingCookie : IDisposable
+  internal class LoggingCookie : IDisposable
   {
-    private readonly string myAction;
+    internal readonly string Action;
 
     public LoggingCookie(string action)
     {
-      myAction = action;
-      Logging.LogWithTime($"{myAction} started");
+      Action = action;
+      Logging.LogWithTime($"{Action} started");
     }
 
     public void Dispose()
     {
-      Logging.LogWithTime($"{myAction} finished");
+      Logging.LogWithTime($"{Action} finished");
     }
   }
 
@@ -68,9 +78,11 @@ namespace Test.RdCross.Util
     }
 
     private static readonly string[] ourProtocolConstNames = {"ProtocolInternRootRdId", "ProtocolClientIdSet"};
-      
+
     private readonly Regex myExcludedRegex =
-      new Regex(string.Join("|", Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>().Select(state => state.ToString()).Concat(ourProtocolConstNames)));
+      new Regex(string.Join("|",
+        Enum.GetValues(typeof(RdExtBase.ExtState)).Cast<RdExtBase.ExtState>().Select(state => state.ToString())
+          .Concat(ourProtocolConstNames)));
 
     private readonly Regex myRdIdRegex = new Regex(@"\(\d+\)|(taskId=\d+)|(send request '\d+')|(task '\d+')");
 

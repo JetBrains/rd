@@ -47,9 +47,6 @@ sourceSets {
             compiledBy("generateEverything")
         }
     }
-    test {
-
-    }
 }
 
 val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.test, models)

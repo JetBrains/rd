@@ -51,7 +51,7 @@ fun Project.creatingCopySourcesTask(currentSourceSet: NamedDomainObjectProvider<
         dependsOn(generativeSourceSet.output)
 
         this.currentSourceSet = currentSourceSet.get()
-        currentProject = this@creatingCopySourcesTask
+        this.currentProject = this@creatingCopySourcesTask
         this.generativeSourceSet = generativeSourceSet
 
         lateInit()
