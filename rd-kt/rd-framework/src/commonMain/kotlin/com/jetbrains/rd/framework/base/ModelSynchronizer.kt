@@ -61,6 +61,8 @@ fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b
 
     b.change.advise(lifetime) { evt ->
         evt.newValueOpt?.let {
+            // skip `Host` clientId from guest protocol
+            if (evt.key.value == "Host") return@advise
             synchronizePolymorphic(lifetime, a[evt.key], it)
         }
     }

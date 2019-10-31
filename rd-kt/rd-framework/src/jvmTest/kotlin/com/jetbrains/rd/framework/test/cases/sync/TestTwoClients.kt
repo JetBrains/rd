@@ -107,6 +107,7 @@ class TestTwoClients : TestBase() {
         wait { c1.map[0]?.p?.value == 2 }
     }
 
+    @Ignore("Enable after the branch with protocol contexts will be merged")
     @Test
     fun testPerClientIdMap() {
         c0.property.set(Clazz(1))
