@@ -2,6 +2,9 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.util.Callable
 import com.jetbrains.rd.util.Runnable
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.ISource
+import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.threadLocalWithInitial
 import kotlin.jvm.JvmStatic
 
@@ -23,7 +26,8 @@ data class ClientId(val value: String) {
         THROW
     }
 
-    companion object : ISerializer<ClientId> {
+    companion object : ISerializer<ClientId>, ISource<ClientId?> {
+        private val change = Signal<ClientId?>()
         private val defaultLocalId = ClientId("Host")
 
         /**
@@ -89,10 +93,10 @@ data class ClientId(val value: String) {
         fun withClientId(clientId: ClientId?, action: Runnable) {
             val oldClientId = currentClientId.get()
             try {
-                currentClientId.set(clientId)
+                setClientId(clientId)
                 action.run()
             } finally {
-                currentClientId.set(oldClientId)
+                setClientId(oldClientId)
             }
         }
 
@@ -103,10 +107,10 @@ data class ClientId(val value: String) {
         fun withClientId(clientId: ClientId?, action: () -> Unit) {
             val oldClientId = currentClientId.get()
             try {
-                currentClientId.set(clientId)
+                setClientId(clientId)
                 action()
             } finally {
-                currentClientId.set(oldClientId)
+                setClientId(oldClientId)
             }
         }
 
@@ -117,10 +121,10 @@ data class ClientId(val value: String) {
         fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T {
             val oldClientId = currentClientId.get()
             try {
-                currentClientId.set(clientId)
+                setClientId(clientId)
                 return action.call()
             } finally {
-                currentClientId.set(oldClientId)
+                setClientId(oldClientId)
             }
         }
 
@@ -131,11 +135,16 @@ data class ClientId(val value: String) {
         fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
             val oldClientId = currentClientId.get()
             try {
-                currentClientId.set(clientId)
+                setClientId(clientId)
                 return action()
             } finally {
-                currentClientId.set(oldClientId)
+                setClientId(oldClientId)
             }
+        }
+
+        private fun setClientId(clientId: ClientId?) {
+            currentClientId.set(clientId)
+            change.fire(clientId)
         }
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ClientId {
@@ -144,6 +153,10 @@ data class ClientId(val value: String) {
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ClientId) {
             buffer.writeString(value.value)
+        }
+
+        override fun advise(lifetime: Lifetime, handler: (ClientId?) -> Unit) {
+            change.advise(lifetime, handler)
         }
     }
 }
