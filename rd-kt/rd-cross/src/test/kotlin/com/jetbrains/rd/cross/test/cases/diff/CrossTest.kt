@@ -58,17 +58,17 @@ class CrossTest {
     //region AllEntities
     @Ignore
     @Test
-    fun testCrossTestKtCppAllEntities() {
+    fun testCrossTest_AllEntities_KtServer_CppClient() {
         doTest(methodName)
     }
 
     @Test
-    fun testCrossTestKtCsAllEntities() {
+    fun testCrossTest_AllEntities_KtServer_CsClient() {
         doTest(methodName)
     }
 
     @Test
-    fun testCrossTestCsKtAllEntities() {
+    fun testCrossTest_AllEntities_CsServer_KtClient() {
         doTest(methodName)
     }
     //endregion
@@ -76,12 +76,12 @@ class CrossTest {
     //region BigBuffer
     @Ignore
     @Test
-    fun testCrossTestKtCppBigBuffer() {
+    fun testCrossTest_BigBuffer_KtServer_CppClient() {
         doTest(methodName)
     }
 
     @Test
-    fun testCrossTestKtCsBigBuffer() {
+    fun testCrossTest_BigBuffer_KtServer_CsClient() {
         doTest(methodName)
     }
     //endregion
@@ -89,12 +89,12 @@ class CrossTest {
     //region RdCall
     @Ignore
     @Test
-    fun testCrossTestKtCppRdCall() {
+    fun testCrossTest_RdCall_KtServer_CppClient() {
         doTest(methodName)
     }
 
     @Test
-    fun testCrossTestKtCsRdCall() {
+    fun testCrossTest_RdCall_KtServer_CsClient() {
         doTest(methodName)
     }
     //endregion

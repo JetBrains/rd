@@ -7,8 +7,8 @@ import com.jetbrains.rd.generator.nova.PredefinedType.int
 import com.jetbrains.rd.generator.nova.PredefinedType.string
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.models.sync.SyncModelRoot.Clazz
-import com.jetbrains.rd.util.paths.ktDirectorySystemPropertyKey
-import com.jetbrains.rd.util.paths.outputDirectory
+import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.outputDirectory
 
 const val folder = "sync"
 

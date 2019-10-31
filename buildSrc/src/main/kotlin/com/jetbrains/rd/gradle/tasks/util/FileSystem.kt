@@ -17,7 +17,7 @@ val portFile = File(rdTmpDir, "port.txt")
         return field
     }
 
-val portFileClosed = portFile.resolveSibling("port.txt.closed")
+val portFileStamp = portFile.resolveSibling("port.txt.stamp")
 
 const val cppDirectorySystemPropertyKey = "model.out.src.cpp.dir"
 const val ktDirectorySystemPropertyKey = "model.out.src.kt.dir"

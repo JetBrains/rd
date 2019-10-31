@@ -2,15 +2,15 @@
 
 package com.jetbrains.rd.cross.cases
 
-import com.jetbrains.rd.cross.base.CrossTestKtServerBase
-import com.jetbrains.rd.cross.statics.CrossTestAllEntities.checkConstants
-import com.jetbrains.rd.cross.statics.CrossTestAllEntities.fireAll
+import com.jetbrains.rd.cross.base.CrossTest_KtServer_Base
+import com.jetbrains.rd.cross.statics.CrossTest_AllEntities.checkConstants
+import com.jetbrains.rd.cross.statics.CrossTest_AllEntities.fireAll
 import com.jetbrains.rd.cross.util.trackAction
 import demo.DemoModel
 import demo.extModel
 
-@Suppress("unused")
-class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
+@Suppress("ClassName")
+class CrossTest_AllEntities_KtServer : CrossTest_KtServer_Base() {
     override fun start(args: Array<String>) {
         trackAction("Checking constant") {
             checkConstants()
@@ -33,5 +33,5 @@ class CrossTestKtServerAllEntities : CrossTestKtServerBase() {
 }
 
 fun main(args: Array<String>) {
-    CrossTestKtServerAllEntities().run(args)
+    CrossTest_AllEntities_KtServer().run(args)
 }

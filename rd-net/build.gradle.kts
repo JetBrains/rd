@@ -1,7 +1,7 @@
 @file:Suppress("UNUSED_VARIABLE", "LocalVariableName")
 
+import com.jetbrains.rd.gradle.tasks.CrossTestCsTask
 import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
-import com.jetbrains.rd.gradle.tasks.DotnetRunTask
 
 
 tasks {
@@ -20,16 +20,16 @@ tasks {
         args = listOf("clean")
     }
 
-    fun creatingCrossTestTask() = creating(DotnetRunTask::class) {
+    fun creatingCrossTestCsTask() = creating(CrossTestCsTask::class) {
         dependsOn(buildCrossTests)
         workingDir = workingDir.resolve("Test.Cross")
     }
 
-    val CrossTestCsClientAllEntities by creatingCrossTestTask()
+    val CrossTest_AllEntities_CsClient by creatingCrossTestCsTask()
 
-    val CrossTestCsServerAllEntities by creatingCrossTestTask()
+    val CrossTest_AllEntities_CsServer by creatingCrossTestCsTask()
 
-    val CrossTestCsClientBigBuffer by creatingCrossTestTask()
+    val CrossTest_BigBuffer_CsClient by creatingCrossTestCsTask()
 
-    val CrossTestCsClientRdCall by creatingCrossTestTask()
+    val CrossTest_RdCall_CsClient by creatingCrossTestCsTask()
 }

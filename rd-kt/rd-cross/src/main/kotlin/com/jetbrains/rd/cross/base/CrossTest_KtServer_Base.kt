@@ -1,13 +1,13 @@
 package com.jetbrains.rd.cross.base
 
 import com.jetbrains.rd.cross.util.portFile
-import com.jetbrains.rd.cross.util.portFileClosed
+import com.jetbrains.rd.cross.util.portFileStamp
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SingleThreadScheduler
 
-abstract class CrossTestKtServerBase : CrossTestKtBase() {
+abstract class CrossTest_KtServer_Base : CrossTest_Kt_Base() {
     private fun server(lifetime: Lifetime, port: Int): IProtocol {
         scheduler = SingleThreadScheduler(lifetime, "SingleThreadScheduler")
         return Protocol("DemoServer", Serializers(), Identities(IdKind.Server), scheduler,
@@ -24,6 +24,6 @@ abstract class CrossTestKtServerBase : CrossTestKtBase() {
 
         println("port=$port 's written in file=${portFile.absolutePath}")
 
-        portFileClosed.createNewFile()
+        portFileStamp.createNewFile()
     }
 }

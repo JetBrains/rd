@@ -8,17 +8,20 @@ using Test.RdCross.Util;
 
 namespace Test.RdCross.Base
 {
-  public abstract class CrossTestCsClientBase : CrossTestCsBase
+  // ReSharper disable once InconsistentNaming
+  public abstract class CrossTest_CsClient_Base : CrossTest_Cs_Base
   {
     private readonly int myPort;
 
-    protected CrossTestCsClientBase()
+    protected CrossTest_CsClient_Base()
     {
+      static bool StampFileExists() => File.Exists(FileSystem.PortFileStamp);
+
       Console.WriteLine($"Waiting for port being written in file={FileSystem.PortFile}");
 
-      SpinWait.SpinUntil(() => FileSystem.IsFileReady(FileSystem.PortFileClosed), 5_000);
+      SpinWait.SpinUntil(StampFileExists, 5_000);
 
-      if (!FileSystem.IsFileReady(FileSystem.PortFileClosed))
+      if (!StampFileExists())
       {
         Console.Error.WriteLine("Stamp file wasn't created during timeout");
         Environment.Exit(1);

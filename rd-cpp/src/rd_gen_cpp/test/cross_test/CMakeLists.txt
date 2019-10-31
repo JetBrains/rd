@@ -8,14 +8,14 @@ target_include_directories(cross_test_lib PUBLIC base statics)
 
 target_link_libraries(cross_test_lib rd_framework_cpp demo_model)
 
-add_executable(CrossTestCppClientAllEntities cases/CrossTestCppClientAllEntities.cpp)
-add_executable(CrossTestCppClientBigBuffer cases/CrossTestCppClientBigBuffer.cpp)
-add_executable(CrossTestCppClientRdCall cases/CrossTestCppClientRdCall.cpp)
+add_executable(CrossTest_AllEntities_CppClient cases/CrossTest_AllEntities_CppClient.cpp)
+add_executable(CrossTest_BigBuffer_CppClient cases/CrossTest_BigBuffer_CppClient.cpp)
+add_executable(CrossTest_RdCall_CppClient cases/CrossTest_RdCall_CppClient.cpp)
 
 add_executable(CrossTestCppServerAllEntities cases/CrossTestCppServerAllEntities.cpp)
 
 foreach (test_target
-        CrossTestCppClientAllEntities CrossTestCppClientBigBuffer CrossTestCppClientRdCall
+        CrossTest_AllEntities_CppClient CrossTest_BigBuffer_CppClient CrossTest_RdCall_CppClient
         CrossTestCppServerAllEntities
         )
     target_link_libraries("${test_target}" cross_test_lib demo_model)

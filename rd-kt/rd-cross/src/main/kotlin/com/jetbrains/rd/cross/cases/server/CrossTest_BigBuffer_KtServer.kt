@@ -2,10 +2,11 @@
 
 package com.jetbrains.rd.cross.cases
 
-import com.jetbrains.rd.cross.base.CrossTestKtServerBase
+import com.jetbrains.rd.cross.base.CrossTest_KtServer_Base
 import demo.DemoModel
 
-class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
+@Suppress("ClassName")
+class CrossTest_BigBuffer_KtServer : CrossTest_KtServer_Base() {
     override fun start(args: Array<String>) {
         queue {
             val model = DemoModel.create(modelLifetime, protocol)
@@ -19,5 +20,5 @@ class CrossTestKtServerBigBuffer : CrossTestKtServerBase() {
 }
 
 fun main(args: Array<String>) {
-    CrossTestKtServerBigBuffer().run(args)
+    CrossTest_BigBuffer_KtServer().run(args)
 }

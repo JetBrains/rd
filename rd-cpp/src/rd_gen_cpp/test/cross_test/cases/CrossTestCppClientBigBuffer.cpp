@@ -11,10 +11,10 @@ using namespace demo;
 
 namespace rd {
 	namespace cross {
-		class CrossTestCppClientBigBuffer : public CrossTestClientBase {
+		class CrossTest_BigBuffer_CppClient : public CrossTestClientBase {
 
 		public:
-			CrossTestCppClientBigBuffer() = default;
+			CrossTest_BigBuffer_CppClient() = default;
 
 			int run() override {
 				DemoModel model;
@@ -39,6 +39,6 @@ namespace rd {
 }
 
 int main(int argc, char **argv) {
-	rd::cross::CrossTestCppClientBigBuffer test;
-	return test.main(argc, argv, "CrossTestCppClientBigBuffer");
+	rd::cross::CrossTest_BigBuffer_CppClient test;
+	return test.main(argc, argv, "CrossTest_BigBuffer_CppClient");
 }

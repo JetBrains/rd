@@ -1,12 +1,11 @@
 package com.jetbrains.rd.gradle.tasks
 
 import com.jetbrains.rd.gradle.tasks.util.portFile
-import com.jetbrains.rd.gradle.tasks.util.portFileClosed
+import com.jetbrains.rd.gradle.tasks.util.portFileStamp
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.internal.DefaultExecAction
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
@@ -51,7 +50,7 @@ open class InteropTask : DefaultTask() {
         val process = ProcessBuilder(command).apply {
             directory(task.getWorkingDir())
         }
-            .redirectErrorStream(true)
+//            .redirectErrorStream(true)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .redirectOutput(outputFile)
 
@@ -70,7 +69,7 @@ open class InteropTask : DefaultTask() {
 
     private fun beforeStart() {
         assert(portFile.delete())
-        assert(portFileClosed.delete())
+        assert(portFileStamp.delete())
         System.setProperty("TmpSubDirectory", name)
         assert(outputTmpDirectory().deleteRecursively())
         assert(outputTmpDirectory().mkdirs())

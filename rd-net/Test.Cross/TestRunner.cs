@@ -1,30 +1,34 @@
 using System;
 using System.Linq;
+using JetBrains.Core;
+using Test.RdCross.Base;
 
 namespace Test.RdCross
 {
-    public static class TestRunner
+  public static class TestRunner
+  {
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            if (args.Length != 2 )
-            {
-                throw new ArgumentException($"Wrong number of arguments:{args.Length}, expected = 2." +
-                                            "Main([" +
-                                            "\"CrossTestCsClientAllEntities\", \"C:\\Work\rd\build\\src\\main\\resources\\tmp\\CrossTestKtCsAllEntities\\CrossTestCsClientAllEntities.tmp\"" +
-                                            "]) for example.)");
-            }
-            var type = Type.GetType($"Test.RdCross.Cases.{args[0]}") ??
-                       throw new ArgumentException($"Wrong class name={args[0]}");
-            if (Activator.CreateInstance(type) is CrossTestCsBase testCsBase)
-            {
-                Console.WriteLine($"Instance of {type} created");
-                testCsBase.Run(args.Skip(1).ToArray());
-            }
-            else
-            {
-                throw new ArgumentException($"{type} is not an inheritor of CrossTestCsBase");
-            }
-        }
+      if (args.Length != 2)
+      {
+        throw new ArgumentException($"Wrong number of arguments:{args.Length}, expected = 2." +
+                                    "Main([" +
+                                    "\"CrossTest_AllEntities_CsClient\", \"C:\\Work\rd\build\\src\\main\\resources\\tmp\\CrossTest_AllEntities_KtServer_CsClient\\CrossTest_AllEntities_CsClient.tmp\"" +
+                                    "]) for example.)");
+      }
+
+      var type = (Type.GetType($"Test.RdCross.Cases.Server.{args[0]}") ??
+                 Type.GetType($"Test.RdCross.Cases.Client.{args[0]}")) ??
+                 throw new ArgumentException($"Wrong class name={args[0]}");
+      if (Activator.CreateInstance(type) is CrossTest_Cs_Base testCsBase)
+      {
+        Console.WriteLine($"Instance of {type} created");
+        testCsBase.Run(args.Skip(1).ToArray());
+      }
+      else
+      {
+        throw new ArgumentException($"{type} is not an inheritor of CrossTest_Cs_Base");
+      }
     }
+  }
 }

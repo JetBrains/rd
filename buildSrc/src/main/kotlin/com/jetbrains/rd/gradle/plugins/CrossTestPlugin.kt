@@ -31,14 +31,14 @@ class CrossTestPlugin : Plugin<Project> {
 //            return `rd-cpp`.tasks.getByName<CrossTestCppTask>(name)
 //        }
 
-        fun getCsTaskByName(name: String): DotnetRunTask {
-            return `rd-net`.tasks.getByName<DotnetRunTask>(name)
+        fun getCsTaskByName(name: String): CrossTestCsTask {
+            return `rd-net`.tasks.getByName<CrossTestCsTask>(name)
         }
 
         tasks {
             //region Kt
 
-            fun CrossTestKtRdTask.initialize() {
+            fun CrossTestTaskKt.initialize() {
                 dependsOn("classes")
                 classpath += files(target.buildDir
                         .resolve("classes")
@@ -49,68 +49,68 @@ class CrossTestPlugin : Plugin<Project> {
                 classpath += configurations["runtimeClasspath"]
             }
 
-            fun creatingKtServerTask() =
-                creating(CrossTestKtRdTask::class) {
+            fun creatingCrossTestRdTask() =
+                creating(CrossTestTaskKt::class) {
                     initialize()
                 }
 
-            val CrossTestKtServerAllEntities by creatingKtServerTask()
+            val CrossTest_AllEntities_KtServer by creatingCrossTestRdTask()
 
-            val CrossTestKtClientAllEntities by creatingKtServerTask()
+            val CrossTest_AllEntities_KtClient by creatingCrossTestRdTask()
 
-            val CrossTestKtServerBigBuffer by creatingKtServerTask()
+            val CrossTest_BigBuffer_KtServer by creatingCrossTestRdTask()
 
-            val CrossTestKtServerRdCall by creatingKtServerTask()
+            val CrossTest_RdCall_KtServer by creatingCrossTestRdTask()
 //endregion
 
 //region KtCpp
-            /*val CrossTestKtCppAllEntities by creating(InteropTask::class) {
-                taskServer = CrossTestKtServerAllEntities
-                taskClient = getCppTaskByName("CrossTestCppClientAllEntities")
+            /*val CrossTest_AllEntities_KtServer_CppClient by creating(InteropTask::class) {
+                taskServer = CrossTest_AllEntities_KtServer
+                taskClient = getCppTaskByName("CrossTest_AllEntities_CppClient")
 
                 lateInit()
             }
 
-            val CrossTestKtCppBigBuffer by creating(InteropTask::class) {
-                taskServer = CrossTestKtServerBigBuffer
-                taskClient = getCppTaskByName("CrossTestCppClientBigBuffer")
+            val CrossTest_BigBuffer_KtServer_CppClient by creating(InteropTask::class) {
+                taskServer = CrossTest_BigBuffer_KtServer
+                taskClient = getCppTaskByName("CrossTest_BigBuffer_CppClient")
 
                 lateInit()
             }
 
-            val CrossTestKtCppRdCall by creating(InteropTask::class) {
-                taskServer = CrossTestKtServerRdCall
-                taskClient = getCppTaskByName("CrossTestCppClientRdCall")
+            val CrossTest_RdCall_KtServer_CppClient by creating(InteropTask::class) {
+                taskServer = CrossTest_RdCall_KtServer
+                taskClient = getCppTaskByName("CrossTest_RdCall_CppClient")
 
                 lateInit()
             }*/
 //endregion
 
 //region KtCs
-            val CrossTestKtCsAllEntities by creating(InteropTask::class) {
-                taskServer = CrossTestKtServerAllEntities
-                taskClient = getCsTaskByName("CrossTestCsClientAllEntities")
+            val CrossTest_AllEntities_KtServer_CsClient by creating(InteropTask::class) {
+                taskServer = CrossTest_AllEntities_KtServer
+                taskClient = getCsTaskByName("CrossTest_AllEntities_CsClient")
 
                 lateInit()
             }
 
-            val CrossTestCsKtAllEntities by creating(InteropTask::class) {
-                taskServer = getCsTaskByName("CrossTestCsServerAllEntities")
-                taskClient = CrossTestKtClientAllEntities
+            val CrossTest_AllEntities_CsServer_KtClient by creating(InteropTask::class) {
+                taskServer = getCsTaskByName("CrossTest_AllEntities_CsServer")
+                taskClient = CrossTest_AllEntities_KtClient
 
                 lateInit()
             }
 
-            val CrossTestKtCsBigBuffer by creating(InteropTask::class) {
-                taskServer = CrossTestKtServerBigBuffer
-                taskClient = getCsTaskByName("CrossTestCsClientBigBuffer")
+            val CrossTest_BigBuffer_KtServer_CsClient by creating(InteropTask::class) {
+                taskServer = CrossTest_BigBuffer_KtServer
+                taskClient = getCsTaskByName("CrossTest_BigBuffer_CsClient")
 
                 lateInit()
             }
 
-            val CrossTestKtCsRdCall by creating(InteropTask::class) {
-                taskServer = CrossTestKtServerRdCall
-                taskClient = getCsTaskByName("CrossTestCsClientRdCall")
+            val CrossTest_RdCall_KtServer_CsClient by creating(InteropTask::class) {
+                taskServer = CrossTest_RdCall_KtServer
+                taskClient = getCsTaskByName("CrossTest_RdCall_CsClient")
 
                 lateInit()
             }

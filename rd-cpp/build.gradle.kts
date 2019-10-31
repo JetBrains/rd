@@ -1,7 +1,7 @@
 @file:Suppress("UNUSED_VARIABLE", "LocalVariableName")
 
 import com.jetbrains.rd.gradle.tasks.CppBuildTask
-import com.jetbrains.rd.gradle.tasks.CrossTestCppTask
+import com.jetbrains.rd.gradle.tasks.CrossTestTaskCpp
 
 tasks {
     val build by creating(CppBuildTask::class) {
@@ -17,15 +17,15 @@ tasks {
         delete("${project.buildDir}")
     }
 
-    fun creatingCrossTestCppTask() = creating(CrossTestCppTask::class) {
+    fun creatingCrossTestCppTask() = creating(CrossTestTaskCpp::class) {
         dependsOn(buildTests)
     }
 
-    val CrossTestCppClientAllEntities by creatingCrossTestCppTask()
+    val CrossTest_AllEntities_CppClient by creatingCrossTestCppTask()
 
     val CrossTestCppServerAllEntities by creatingCrossTestCppTask()
 
-    val CrossTestCppClientBigBuffer by creatingCrossTestCppTask()
+    val CrossTest_BigBuffer_CppClient by creatingCrossTestCppTask()
 
-    val CrossTestCppClientRdCall by creatingCrossTestCppTask()
+    val CrossTest_RdCall_CppClient by creatingCrossTestCppTask()
 }

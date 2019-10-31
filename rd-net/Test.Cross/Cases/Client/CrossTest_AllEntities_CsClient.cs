@@ -2,14 +2,15 @@ using demo;
 using Test.RdCross.Base;
 using Test.RdCross.Util;
 
-namespace Test.RdCross.Cases
+namespace Test.RdCross.Cases.Client
 {
   // ReSharper disable once UnusedType.Global
-  public class CrossTestCsServerAllEntities : CrossTestCsServerBase
+  // ReSharper disable once InconsistentNaming
+  public class CrossTest_AllEntities_CsClient : CrossTest_CsClient_Base
   {
     protected override void Start(string[] args)
     {
-      Logging.TrackAction("Checking constant", CrossTestCsAllEntities.CheckConstants);
+      Logging.TrackAction("Checking constant", CrossTest_AllEntities.CheckConstants);
 
       Queue(() =>
       {
@@ -17,7 +18,7 @@ namespace Test.RdCross.Cases
         var extModel = Logging.TrackAction("Creating ExtModel", () => model.GetExtModel());
 
         Logging.TrackAction("Firing", () =>
-          CrossTestCsAllEntities.FireAll(model, extModel)
+          CrossTest_AllEntities.FireAll(model, extModel)
         );
       });
     }

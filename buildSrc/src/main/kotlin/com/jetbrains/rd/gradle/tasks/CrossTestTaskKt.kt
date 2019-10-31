@@ -7,7 +7,7 @@ import java.io.ObjectOutputStream
 /**
  * Provides command line arguments for running Kotlin crosstest part
  */
-open class CrossTestKtRdTask : KotlinExec(), MarkedExecTask {
+open class CrossTestTaskKt : KotlinExec(), MarkedExecTask {
     override val commandLineWithArgs: List<String>
         get() = (super.getCommandLine() + tmpFile.absolutePath)
 

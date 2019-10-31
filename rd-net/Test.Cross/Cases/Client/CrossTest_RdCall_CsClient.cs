@@ -2,10 +2,11 @@
 using JetBrains.Rd.Tasks;
 using Test.RdCross.Base;
 
-namespace Test.RdCross.Cases
+namespace Test.RdCross.Cases.Client
 {
   // ReSharper disable once UnusedType.Global
-  internal class CrossTestCsClientRdCall : CrossTestCsClientBase
+  // ReSharper disable once InconsistentNaming
+  internal class CrossTest_RdCall_CsClient : CrossTest_CsClient_Base
   {
     protected override void Start(string[] args)
     {

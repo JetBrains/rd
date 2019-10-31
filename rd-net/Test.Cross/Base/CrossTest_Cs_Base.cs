@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
@@ -8,9 +7,10 @@ using JetBrains.Rd;
 using JetBrains.Threading;
 using Test.RdCross.Util;
 
-namespace Test.RdCross
+namespace Test.RdCross.Base
 {
-    public abstract class CrossTestCsBase
+  // ReSharper disable once InconsistentNaming
+  public abstract class CrossTest_Cs_Base
     {
         private string TestName => GetType().Name;
 
@@ -27,12 +27,13 @@ namespace Test.RdCross
 
         private readonly StringWriter myStringWriter = new StringWriter();
 
-        protected CrossTestCsBase()
+        protected CrossTest_Cs_Base()
         {
             SocketLifetime = SocketLifetimeDef.Lifetime;
             ModelLifetime = ModelLifetimeDef.Lifetime;
         }
 
+        // ReSharper disable once SuggestBaseTypeForParameter
         private void Before(string[] args)
         {
             if (args.Length != 1)
@@ -43,7 +44,8 @@ namespace Test.RdCross
 
             var outputFileName = args[0];
             Console.WriteLine($"outputFileName={outputFileName}");
-            myOutputFile = new StreamWriter(outputFileName);
+            var fileStream = new FileStream(outputFileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            myOutputFile = new StreamWriter(fileStream);
             Console.WriteLine($"Test:{TestName} started, file={outputFileName}");
         }
 
@@ -64,7 +66,7 @@ namespace Test.RdCross
             using (Log.UsingLogFactory(new CombinatorLogFactory(new LogFactoryBase[]
             {
               new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE),
-              new CrossTestsLogFactory(myStringWriter),
+              new CrossTestsLogFactory(myStringWriter)
             }))) 
             {
               try

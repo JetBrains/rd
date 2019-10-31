@@ -9,7 +9,8 @@ using Test.RdCross.Util;
 
 namespace Test.RdCross.Base
 {
-  public abstract class CrossTestCsServerBase : CrossTestCsBase
+  // ReSharper disable once InconsistentNaming
+  public abstract class CrossTest_CsServer_Base : CrossTest_Cs_Base
   {
     protected readonly int Port;
 
@@ -22,7 +23,7 @@ namespace Test.RdCross.Base
       return port;
     }
 
-    protected CrossTestCsServerBase()
+    protected CrossTest_CsServer_Base()
     {
       Port = FindFreePort();
 
@@ -33,7 +34,7 @@ namespace Test.RdCross.Base
 
       Console.WriteLine($"port={Port} 's written in file=${FileSystem.PortFile}");
       
-      using (File.Create(FileSystem.PortFileClosed)) { }
+      using (File.Create(FileSystem.PortFileStamp)) { }
     }
 
     protected void Queue(Action action)

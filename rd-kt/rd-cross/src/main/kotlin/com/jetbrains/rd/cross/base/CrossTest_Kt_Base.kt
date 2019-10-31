@@ -11,7 +11,8 @@ import java.io.File
 
 private const val SPINNING_TIMEOUT = 10_000L
 
-abstract class CrossTestKtBase {
+@Suppress("ClassName")
+abstract class CrossTest_Kt_Base {
     private val testName: String = this.javaClass.kotlin.simpleName!!
 
     private lateinit var outputFile: File
@@ -27,7 +28,7 @@ abstract class CrossTestKtBase {
 
     private fun before(args: Array<String>) {
         check(args.size == 1) {
-            "Wrong number of arguments for $testName:${args.size}, expected 1. main([\"CrossTestKtServerAllEntities\"]) for example."
+            "Wrong number of arguments for $testName:${args.size}, expected 1. main([\"CrossTest_AllEntities_KtServer\"]) for example."
         }
         val outputFileName = args[0]
         outputFile = File(outputFileName)

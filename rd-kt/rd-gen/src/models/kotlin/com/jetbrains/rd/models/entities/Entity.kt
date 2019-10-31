@@ -3,9 +3,9 @@ package com.jetbrains.rd.models.entities
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.util.paths.cppDirectorySystemPropertyKey
-import com.jetbrains.rd.util.paths.ktDirectorySystemPropertyKey
-import com.jetbrains.rd.util.paths.*
+import com.jetbrains.rd.generator.paths.cppDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.outputDirectory
 
 const val folder = "entities"
 

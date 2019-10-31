@@ -6,7 +6,7 @@ using JetBrains.Rd.Base;
 namespace Test.RdCross
 {
     // ReSharper disable once UnusedMember.Global
-    public static class CrossTestCsAllEntities
+    public static class CrossTest_AllEntities
     {
       internal static void FireAll(DemoModel model, ExtModel extModel)
         {

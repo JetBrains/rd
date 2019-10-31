@@ -8,7 +8,7 @@ using namespace demo;
 
 namespace rd {
 	namespace cross {
-		class CrossTestCppClientRdCall : public CrossTestClientBase {
+		class CrossTest_RdCall_CppClient : public CrossTestClientBase {
 			int run() override {
 				DemoModel model;
 
@@ -31,6 +31,6 @@ namespace rd {
 }
 
 int main(int argc, char **argv) {
-	rd::cross::CrossTestCppClientRdCall test;
-	return test.main(argc, argv, "CrossTestCppClientRdCall");
+	rd::cross::CrossTest_RdCall_CppClient test;
+	return test.main(argc, argv, "CrossTest_RdCall_CppClient");
 }

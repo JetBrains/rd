@@ -2,10 +2,11 @@
 
 package com.jetbrains.rd.cross.cases
 
-import com.jetbrains.rd.cross.base.CrossTestKtServerBase
+import com.jetbrains.rd.cross.base.CrossTest_KtServer_Base
 import demo.DemoModel
 
-class CrossKtServerRdCall : CrossTestKtServerBase() {
+@Suppress("ClassName")
+class CrossTest_RdCall_KtServer : CrossTest_KtServer_Base() {
     override fun start(args: Array<String>) {
         queue {
             val model = DemoModel.create(modelLifetime, protocol)
@@ -18,5 +19,5 @@ class CrossKtServerRdCall : CrossTestKtServerBase() {
 }
 
 fun main(args: Array<String>) {
-    CrossKtServerRdCall().run(args)
+    CrossTest_RdCall_KtServer().run(args)
 }

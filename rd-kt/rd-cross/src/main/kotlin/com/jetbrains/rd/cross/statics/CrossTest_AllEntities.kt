@@ -4,8 +4,9 @@ import com.jetbrains.rd.util.reactive.fire
 import demo.*
 import java.util.*
 
+@Suppress("ClassName")
 @ExperimentalUnsignedTypes
-object CrossTestAllEntities {
+object CrossTest_AllEntities {
     internal fun checkConstants() {
         assert(DemoModel.const_toplevel) { "DemoModel.const_toplevel" }
         assert(ConstUtil.const_enum == MyEnum.default) { "ConstUtil.const_enum == MyEnum.default" }
