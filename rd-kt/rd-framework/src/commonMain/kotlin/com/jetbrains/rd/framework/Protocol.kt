@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ViewableSet
 import com.jetbrains.rd.util.string.RName
 
+
 class Protocol(
         override val name: String,
         override val serializers: ISerializers,
@@ -20,6 +21,12 @@ class Protocol(
         parentClientIdSet : RdSet<ClientId>? = null
 ) : IRdDynamic, IProtocol {
 
+    @Deprecated("Backward compatible implementation for AWS plugin compile against Rider SDK 2019.2")
+    constructor(serializers: ISerializers,
+                identity: IIdentities,
+                scheduler: IScheduler,
+                wire: IWire,
+                lifetime: Lifetime) : this("Noname-Please-Specify-Name", serializers, identity, scheduler, wire, lifetime)
 
     override val location: RName = RName(name)
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet()
