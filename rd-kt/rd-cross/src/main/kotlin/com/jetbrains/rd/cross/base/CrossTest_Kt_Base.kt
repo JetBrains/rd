@@ -6,6 +6,7 @@ import com.jetbrains.rd.cross.util.logWithTime
 import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.IScheduler
 import java.io.File
 
@@ -53,7 +54,8 @@ abstract class CrossTest_Kt_Base {
             ConsoleLoggerFactory.apply {
                 minLevelToLog = LogLevel.Trace
             },
-            CrossTestsLoggerFactory(buffer)
+            CrossTestsLoggerFactory(buffer),
+            ErrorAccumulatorLoggerFactory
         ))) {
             try {
                 before(args)
@@ -71,6 +73,7 @@ abstract class CrossTest_Kt_Base {
                         }
                     }
                 }
+                ErrorAccumulatorLoggerFactory.throwAndClear()
             }
         }
     }
@@ -80,7 +83,7 @@ abstract class CrossTest_Kt_Base {
             try {
                 action()
             } catch (e: Throwable) {
-                logWithTime("Async error occurred")
+                ErrorAccumulatorLoggerFactory.getLogger(testName).error { "Async error occurred" }
                 e.printStackTrace()
             }
         }

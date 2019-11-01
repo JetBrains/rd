@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
-using JetBrains.Diagnostics;
-using JetBrains.Diagnostics.Internal;
 
-namespace Test.Lifetimes
+namespace JetBrains.Diagnostics.Internal
 {
   public class TestLogger : LogBase
   {
@@ -73,9 +71,9 @@ namespace Test.Lifetimes
       if (result != null) throw result;
     }
 
-    private class TestLogFactory : ILogFactory
+    internal class TestLogFactory : LogFactoryBase
     {
-      public ILog GetLog(string category) => Logger;
+      protected override LogBase GetLogBase(string category) => Logger;
     }
   }
 }

@@ -66,7 +66,8 @@ namespace Test.RdCross.Base
             using (Log.UsingLogFactory(new CombinatorLogFactory(new LogFactoryBase[]
             {
               new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE),
-              new CrossTestsLogFactory(myStringWriter)
+              new CrossTestsLogFactory(myStringWriter),
+              new TestLogger.TestLogFactory()
             }))) 
             {
               try
@@ -89,6 +90,7 @@ namespace Test.RdCross.Base
                     myOutputFile.Write(myStringWriter.ToString());
                   }
                 }
+                TestLogger.Logger.ThrowLoggedExceptions();
               }
             }
         }

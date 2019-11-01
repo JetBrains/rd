@@ -1,5 +1,6 @@
 using System;
 using JetBrains.Diagnostics;
+using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
 
