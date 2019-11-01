@@ -93,7 +93,6 @@ class SocketWireTest : TestBase() {
     }
 
 
-    @Ignore
     @Test()
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
@@ -128,7 +127,14 @@ class SocketWireTest : TestBase() {
     }
 
     private fun tryCloseConnection(protocol: Protocol) {
-        (protocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+
+        val wire = protocol.wire as SocketWire.Base
+        if (spinUntil(50) { wire.connected.value }) {
+            //if wire is not connected should not ask socket.close because it could lead to IOException
+            // 	at java.net.Socket.getOutputStream(Socket.java:951)
+            //	at com.jetbrains.rd.framework.SocketWire$Base$1.invoke(SocketWire.kt:102)
+            wire.socketProvider.valueOrNull?.close()
+        }
     }
 
 
