@@ -8,7 +8,7 @@ namespace Test.RdCross.Cases.Client
   // ReSharper disable once InconsistentNaming
   public class CrossTest_BigBuffer_CsClient : CrossTest_CsClient_Base
   {
-    protected override void Start(string[] args)
+    protected override void Start()
     {
       Queue(() =>
       {

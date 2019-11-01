@@ -8,7 +8,7 @@ namespace Test.RdCross.Cases.Server
   // ReSharper disable once InconsistentNaming
   public class CrossTest_AllEntities_CsServer : CrossTest_CsServer_Base
   {
-    protected override void Start(string[] args)
+    protected override void Start()
     {
       Logging.TrackAction("Checking constant", CrossTest_AllEntities.CheckConstants);
 

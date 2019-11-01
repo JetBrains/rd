@@ -50,8 +50,6 @@ open class InteropTask : DefaultTask() {
         val process = ProcessBuilder(command).apply {
             directory(task.getWorkingDir())
         }
-//            .redirectErrorStream(true)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
             .redirectOutput(outputFile)
 
         processes.add(NamedProcess(process, taskName))
@@ -94,15 +92,33 @@ open class InteropTask : DefaultTask() {
             .forEach { (process, name) ->
                 try {
                     val exitStatus = process.waitFor(PROCESS_WAIT_TIMEOUT, TimeUnit.SECONDS)
+                    val exitValue = process.exitValue()
                     if (!exitStatus) {
                         taskFailed = true
-                        println("$name exited with status=$exitStatus")
+                        println("$name is probably frozen")
+                    }
+                    if (exitValue != 0) {
+                        taskFailed = true
+                        println("$name exited with status=$exitValue")
                     }
                     process.destroyForcibly()
                 } catch (e: Throwable) {
                     println("Error occurred while process $name executing:")
                     e.printStackTrace()
                     taskFailed = true
+                } finally {
+                    val lines = process.errorStream.bufferedReader().lines().toArray()
+                    if (lines.isNotEmpty()) {
+                        with(System.err) {
+                            println("Error stream begins")
+                            println("---$name---")
+                            println("***")
+                            lines.forEach(this::println)
+                            println("***")
+                            println("---$name---")
+                            println("Error stream ends")
+                        }
+                    }
                 }
             }
 

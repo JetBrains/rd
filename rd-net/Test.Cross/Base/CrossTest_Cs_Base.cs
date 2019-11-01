@@ -72,7 +72,7 @@ namespace Test.RdCross.Base
               try
               {
                 Before(args);
-                Start(args);
+                Start();
                 After();
               }
               catch (Exception e)
@@ -86,14 +86,13 @@ namespace Test.RdCross.Base
                 {
                   using (myOutputFile)
                   {
-                    myOutputFile?.Write(myStringWriter.ToString());
+                    myOutputFile.Write(myStringWriter.ToString());
                   }
                 }
               }
             }
         }
 
-        protected abstract void Start(string[] args);
-
+        protected abstract void Start();
     }
 }
