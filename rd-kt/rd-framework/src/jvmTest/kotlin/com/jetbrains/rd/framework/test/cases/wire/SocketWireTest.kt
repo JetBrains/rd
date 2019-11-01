@@ -93,6 +93,7 @@ class SocketWireTest : TestBase() {
     }
 
 
+    @Ignore
     @Test()
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
