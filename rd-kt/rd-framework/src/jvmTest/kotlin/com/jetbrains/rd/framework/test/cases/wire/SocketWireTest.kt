@@ -10,10 +10,7 @@ import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.Timeout
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -96,6 +93,7 @@ class SocketWireTest : TestBase() {
     }
 
 
+    @Ignore
     @Test()
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
