@@ -87,6 +87,8 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
     override fun deepClone(): IRdBindable = RdCall(requestSzr, responseSzr)
 
+    override val wireScheduler : IScheduler get() = SynchronousScheduler
+
     companion object : ISerializer<RdCall<*,*>>{
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdCall<*, *> = read(ctx, buffer, Polymorphic<Any?>(), Polymorphic<Any?>())
 
