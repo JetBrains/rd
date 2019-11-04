@@ -113,7 +113,7 @@ fun Class.internRoot(scope: InternScope) {
 /**
  * Marks this key a light key. Light keys don't maintain a value set and send values un-interned.
  */
-val Context.light: Context
+val Context.Generated.light: Context
     get() {
         isHeavyKey = false
         return this

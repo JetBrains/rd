@@ -34,13 +34,13 @@ class TestTwoClients : TestBase() {
         val sp = mutableListOf<Protocol>()
         var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf)
+            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, initialContexts = *arrayOf<RdContext<*>>(SyncModelRoot.ClientId))
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, initialContexts = *arrayOf<RdContext<*>>(SyncModelRoot.ClientId)) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())
@@ -49,12 +49,6 @@ class TestTwoClients : TestBase() {
         wait { sp.size  == 2 }
 
         SyncModelRoot.ClientId.value = "Host"
-
-        cp[0].contexts.registerContext(SyncModelRoot.ClientId)
-        cp[1].contexts.registerContext(SyncModelRoot.ClientId)
-
-        sp[0].contexts.registerContext(SyncModelRoot.ClientId)
-        sp[1].contexts.registerContext(SyncModelRoot.ClientId)
 
         c0 = SyncModelRoot.create(lifetime, cp[0])
         c1 = SyncModelRoot.create(lifetime, cp[1])

@@ -50,7 +50,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     }
 
     private inline fun doAddHandler(context: RdContext<*>, factory: () -> ISingleContextHandler<*>) {
-        assert(wireScheduler.isActive || protocol.scheduler.isActive)
+        assert(!isBound || wireScheduler.isActive || protocol.scheduler.isActive)
         val value = factory()
         val prevValue = handlersMap.putIfAbsent(context, value)
         if (prevValue == null) {
@@ -62,6 +62,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
 
     private fun <T : Any> ensureContextHandlerExists(context: RdContext<T>) {
         if (!handlersMap.containsKey(context)) {
+            serializationCtx.serializers.register(RdContext.marshallerFor(context))
             doAddHandler(context) {
                 if(context.heavy)
                     HeavySingleContextHandler(context, this)
@@ -103,7 +104,6 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
      * Registers a context to be used with this protocol. Must be invoked on protocol's scheduler
      */
     fun <T : Any> registerContext(context: RdContext<T>) {
-        protocol.scheduler.assertThread()
         ensureContextHandlerExists(context)
     }
 
@@ -119,7 +119,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
      * Writes the current context values to the given buffer
      */
     fun writeCurrentMessageContext(buffer: AbstractBuffer) {
-        if (isSendWithoutContexts) return writeContextStub(buffer)
+        if (isSendWithoutContexts) return writeEmptyContexts(buffer)
 
         val writtenSize = myHandlerOrder.size
         buffer.writeShort(writtenSize.toShort())
@@ -140,7 +140,8 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
             oldValues.add(otherSideHandler.context.value)
 
             val value = otherSideHandler.readValue(serializationCtx, buffer)
-            RdContext.unsafeSet(otherSideHandler.context.key, value)
+            @Suppress("UNCHECKED_CAST")
+            (otherSideHandler.context as RdContext<Any>).value = value
         }
 
         try {
@@ -148,7 +149,8 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         } finally {
             for(i in 0 until numContextValues) {
                 val value = oldValues[i]
-                RdContext.unsafeSet(counterpartHandlers[i].context.key, value)
+                @Suppress("UNCHECKED_CAST")
+                (counterpartHandlers[i].context as RdContext<Any>).value = value
             }
         }
     }
@@ -157,7 +159,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         /**
          * Writes an empty context
          */
-        fun writeContextStub(buffer: AbstractBuffer) {
+        fun writeEmptyContexts(buffer: AbstractBuffer) {
             buffer.writeShort(0)
         }
     }

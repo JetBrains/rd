@@ -21,16 +21,31 @@ namespace Test.RdFramework.Contexts
       ClientWire.AutoTransmitMode = true;
     }
 
+    public class TestKey : RdContext<string>
+    {
+      private TestKey() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
+      {
+      }
+      
+      public static readonly TestKey Instance = new TestKey();
+
+      public override void RegisterOn(ISerializers serializers)
+      {
+        serializers.Register((_, __) => Instance, (_, __, ___) => { });
+      }
+    }
+
     [Theory]
     public void TestLateAdd(bool heavy)
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = TestKey.Instance;
       
       var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
       var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
 
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
-      
+
       key.Value = "1";
 
       Lifetime.Using(lt =>
@@ -74,6 +89,20 @@ namespace Test.RdFramework.Contexts
       });
       
       Assert.AreEqual("1", key.Value);
+    }
+
+    public class TestKey2 : RdContext<string>
+    {
+      private TestKey2() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
+      {
+      }
+      
+      public static readonly TestKey2 Instance = new TestKey2();
+      
+      public override void RegisterOn(ISerializers serializers)
+      {
+        serializers.Register((_, __) => Instance, (_, __, ___) => { });
+      }
     }
   }
 }

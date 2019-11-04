@@ -21,10 +21,13 @@ class ContextsTest : RdFrameworkTestBase() {
         val falseValue = false
     }
 
+    object TestKeyHeavy : RdContext<String>("test-key", true, FrameworkMarshallers.String)
+    object TestKeyLight : RdContext<String>("test-key", false, FrameworkMarshallers.String)
+
     @Theory
     fun testLateAdd(heavy: Boolean) {
         println("Heavy: $heavy")
-        val key = RdContext("test-key", heavy, FrameworkMarshallers.String)
+        val key = if(heavy) TestKeyHeavy else TestKeyLight
 
         val serverSignal = RdSignal<String>()
         val clientSignal = RdSignal<String>()

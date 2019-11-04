@@ -23,13 +23,14 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         @AfterClass
         @JvmStatic
         fun resetContext() {
-            RdContext<String>("test-key", true, FrameworkMarshallers.String).value = null
+            ContextsTest.TestKeyHeavy.value = null
+            ContextsTest.TestKeyLight.value = null
         }
     }
 
     @Test
     fun testOnStructMap() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, FrameworkMarshallers.String).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, FrameworkMarshallers.String).apply { master = it } }.static(1).apply { master = false }
@@ -56,7 +57,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testOnDynamicMap() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -83,7 +84,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind01() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -110,7 +111,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind02() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -133,7 +134,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind03() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -166,7 +167,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind04() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -199,7 +200,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind05() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -230,7 +231,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testLateBind06() {
-        val key = RdContext<String>("test-key", true, FrameworkMarshallers.String)
+        val key = ContextsTest.TestKeyHeavy
 
         val serverMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }
@@ -265,8 +266,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testValueSetChangesInContext() {
-        val key1 = RdContext<String>("test-key1", true, FrameworkMarshallers.String)
-        val key2 = RdContext<String>("test-key2", true, FrameworkMarshallers.String)
+        val key1 = object : RdContext<String>("test-key1", true, FrameworkMarshallers.String) {}
+        val key2 = object : RdContext<String>("test-key2", true, FrameworkMarshallers.String) {}
 
         val serverMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }

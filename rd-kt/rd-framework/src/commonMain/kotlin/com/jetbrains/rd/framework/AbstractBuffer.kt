@@ -31,7 +31,7 @@ abstract class AbstractBuffer {
     abstract fun readByteArrayRaw(array: ByteArray)
 
     abstract fun writeByteArray(array: ByteArray)
-    abstract fun writeByteArrayRaw(array: ByteArray, count: Int? = null)
+    abstract fun writeByteArrayRaw(array: ByteArray, offset: Int? = null, count: Int? = null)
 
     fun readString() = readNullableString()!!
     abstract fun readNullableString(): String?
@@ -134,3 +134,4 @@ abstract class AbstractBuffer {
 }
 
 expect fun createAbstractBuffer(): AbstractBuffer
+expect fun createAbstractBuffer(bytes: ByteArray): AbstractBuffer

@@ -11,7 +11,7 @@ namespace JetBrains.Rd.Impl
   internal class HeavySingleContextHandler<T> : RdReactiveBase, ISingleContextHandler<T>
   {
     private readonly ProtocolContexts myHandler;
-    private readonly InternRoot myInternRoot = new InternRoot();
+    private readonly InternRoot<T> myInternRoot;
     private readonly RdSet<T> myProtocolValueSet;
     private readonly ModificationCookieViewableSet<T, ProtocolContexts.SendWithoutContextsCookie> myModificationCookieValueSet;
 
@@ -21,6 +21,7 @@ namespace JetBrains.Rd.Impl
     {
       myHandler = handler;
       Context = context;
+      myInternRoot = new InternRoot<T>(context.ReadDelegate, context.WriteDelegate);
       myProtocolValueSet = new RdSet<T>(context.ReadDelegate, context.WriteDelegate, new ViewableSet<T>(new ConcurrentSet<T>()));
       myModificationCookieValueSet = new ModificationCookieViewableSet<T, ProtocolContexts.SendWithoutContextsCookie>(myHandler.CreateSendWithoutContextsCookie, myProtocolValueSet);
     }

@@ -32,9 +32,23 @@ namespace JetBrains.Rd
             return $"ClientId({Value})";
         }
 
+        public class ClientIdKey : RdContext<string>
+        {
+          private ClientIdKey() : base("ClientId", true, Serializers.ReadString, Serializers.WriteString)
+          {
+          }
+          
+          public static readonly ClientIdKey Instance = new ClientIdKey();
+          
+          public override void RegisterOn(ISerializers serializers)
+          {
+            serializers.Register((_, __) => Instance, (_, __, ___) => { });
+          }
+        }
+
         public static readonly ClientId LocalId = new ClientId("Host");
         
-        public static readonly RdContext<string> Context = new RdContext<string>("ClientId", true, Serializers.ReadString, Serializers.WriteString);
+        public static readonly RdContext<string> Context = ClientIdKey.Instance;
 
         public static readonly CtxReadDelegate<ClientId> ReadDelegate = (ctx, reader) => new ClientId(reader.ReadString());
         public static readonly CtxWriteDelegate<ClientId> WriteDelegate = (ctx, writer, value) => writer.Write(value.Value);

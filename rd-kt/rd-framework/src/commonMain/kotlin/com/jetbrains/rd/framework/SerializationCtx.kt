@@ -5,7 +5,7 @@ import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.readInternId
 import com.jetbrains.rd.framework.impl.writeInternId
 
-class SerializationCtx(val serializers: ISerializers, val internRoots: Map<String, IInternRoot> = emptyMap()) {
+class SerializationCtx(val serializers: ISerializers, val internRoots: Map<String, IInternRoot<Any>> = emptyMap()) {
     constructor(protocol: IProtocol) : this(protocol.serializers)
 }
 
@@ -54,7 +54,7 @@ fun <T: Any> ISerializer<T>.interned(internKey: String) : ISerializer<T> = objec
 
 fun SerializationCtx.withInternRootsHere(owner: RdBindableBase, vararg newRoots: String): SerializationCtx {
     return SerializationCtx(serializers, internRoots.plus(newRoots.associate {
-        it to owner.getOrCreateHighPriorityExtension("InternRoot-$it") { InternRoot() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
+        it to owner.getOrCreateHighPriorityExtension("InternRoot-$it") { InternRoot<Any>() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
 }
 
 inline fun <T: Any> SerializationCtx.readInterned(stream: AbstractBuffer, internKey: String, readValueDelegate: (SerializationCtx, AbstractBuffer) -> T): T {

@@ -18,7 +18,8 @@ import com.jetbrains.rd.util.keySet
 internal class HeavySingleContextHandler<T : Any>(override val context: RdContext<T>, private val contexts: ProtocolContexts) : RdReactiveBase(), ISingleContextHandler<T> {
     private val protocolValueSet = RdSet(context.serializer, ViewableSet(ConcurrentHashMap<T, Boolean>().keySet(true)))
     private val protocolValueSetWithCookie = ModificationCookieViewableSet(protocolValueSet, contexts::isSendWithoutContexts)
-    private val internRoot = InternRoot()
+    @Suppress("UNCHECKED_CAST")
+    private val internRoot = InternRoot(context.serializer)
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")

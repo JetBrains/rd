@@ -297,7 +297,10 @@ open class CSharp50Generator(
     }
 
     protected fun Context.longRef(scope: Declaration): String {
-        return pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope)
+        return when(this) {
+            is Context.External -> fqnFor(this@CSharp50Generator)
+            is Context.Generated -> pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope) + ".Instance"
+        }
     }
 
 
@@ -542,9 +545,18 @@ open class CSharp50Generator(
         }
         if(decl is Toplevel) {
             decl.declaredTypes.forEach {
-                if(it is Context) {
+                if(it is Context.Generated) {
                     val keyTypeName = "RdContext<${it.type.substitutedName(decl)}>"
-                    +"public static $keyTypeName ${it.keyName} = new ${keyTypeName}(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)});"
+                    +"public class ${it.keyName} : $keyTypeName {"
+                    indent {
+                        +"private ${it.keyName}() : this(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)}) {}"
+                        +"public static readonly ${it.keyName} Instance = new ${it.keyName}();"
+                        +"public override void RegisterOn(ISerializers serializers)"
+                        +"{"
+                        +"serializers.Register((_, __) => Instance, (_, __, ___) => { });"
+                        +"}"
+                    }
+                    +"}"
                 }
             }
         }

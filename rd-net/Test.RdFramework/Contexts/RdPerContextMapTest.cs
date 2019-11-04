@@ -13,13 +13,13 @@ namespace Test.RdFramework.Contexts
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
       
-      new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString).Value = null;
+      RdContextBasicTest.TestKey.Instance.Value = null;
     }
 
     [Test]
     public void TestOnStructMap()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -27,6 +27,7 @@ namespace Test.RdFramework.Contexts
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
       
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
 
@@ -49,7 +50,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind01()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -57,6 +58,7 @@ namespace Test.RdFramework.Contexts
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
       
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
 
@@ -78,7 +80,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind02()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -86,6 +88,7 @@ namespace Test.RdFramework.Contexts
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
       
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
 
@@ -104,7 +107,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind03()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -112,6 +115,7 @@ namespace Test.RdFramework.Contexts
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
       
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
 
@@ -138,7 +142,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind04()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -146,6 +150,7 @@ namespace Test.RdFramework.Contexts
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
       
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
 
@@ -171,13 +176,14 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind05()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
 
       var server1Cid = "Server-1";
 
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
       
@@ -202,7 +208,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind06()
     {
-      var key = new RdContext<string>("test-key", true, Serializers.ReadString, Serializers.WriteString);
+      var key = RdContextBasicTest.TestKey.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -217,6 +223,7 @@ namespace Test.RdFramework.Contexts
         lifetime.OnTermination(() => log.Add("Remove " + s));
       });
       
+      key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
       ClientProtocol.Contexts.RegisterContext(key);
 
@@ -235,8 +242,8 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestValueSetChangesInContext()
     {
-      var key1 = new RdContext<string>("test-key1", true, Serializers.ReadString, Serializers.WriteString);
-      var key2 = new RdContext<string>("test-key2", true, Serializers.ReadString, Serializers.WriteString);
+      var key1 = RdContextBasicTest.TestKey.Instance;
+      var key2 = RdContextBasicTest.TestKey2.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());
@@ -257,6 +264,8 @@ namespace Test.RdFramework.Contexts
       key1.Value = server1Cid;
       key2.Value = server1Cid;
       
+      key1.RegisterOn(ClientProtocol.Serializers);
+      key2.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key1);
       ServerProtocol.Contexts.RegisterContext(key2);
       ClientProtocol.Contexts.RegisterContext(key1);

@@ -23,8 +23,8 @@ class InterningRemovalsTest : RdFrameworkTestBase() {
     @Theory
     fun doTest(firstSendServer: Boolean, secondSendServer: Boolean, thirdSendServer: Boolean) {
         println("First: $firstSendServer second: $secondSendServer third: $thirdSendServer")
-        val rootServer = InternRoot().bindStatic(serverProtocol,"top")
-        val rootClient = InternRoot().bindStatic(clientProtocol, "top")
+        val rootServer = InternRoot<Any>().bindStatic(serverProtocol,"top")
+        val rootClient = InternRoot<Any>().bindStatic(clientProtocol, "top")
 
         val stringToSend = "This string is nice and long enough to overshadow any interning overheads"
 
@@ -62,7 +62,7 @@ class InterningRemovalsTest : RdFrameworkTestBase() {
         return (protocol.wire as TestWire).bytesWritten - pre
     }
 
-    private fun InternRoot.bindStatic(protocol: IProtocol, id: String) : InternRoot {
+    private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String) : InternRoot<T> {
         identify(protocol.identity, RdId.Null.mix(id))
         bind(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
         return this

@@ -11,7 +11,7 @@ import java.util.concurrent.CountDownLatch
 class ContextsMultithreadTest : RdAsyncTestBase() {
     @Test
     fun testBasic() {
-        val key = RdContext<String>("test-key", false, FrameworkMarshallers.String)
+        val key = object : RdContext<String>("test-key", false, FrameworkMarshallers.String) {}
 
         val serverSignal = RdSignal<String>().also { it.async = true }
         val clientSignal = RdSignal<String>()

@@ -1,14 +1,13 @@
 package com.jetbrains.rd.framework.test.cases.interning
 
-import com.jetbrains.rd.framework.IProtocol
-import com.jetbrains.rd.framework.RdId
+import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.static
+import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
-import com.jetbrains.rd.framework.interned
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.test.util.TestWire
-import com.jetbrains.rd.framework.withInternRootsHere
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -311,5 +310,24 @@ class InterningTest: RdFrameworkTestBase() {
         simpleTestData.forEach { (k, v) ->
             assertEquals(v, clientModel.issues[k]!!.text)
         }
+    }
+
+    @Test
+    fun testMonomorphic() {
+        val rootServerMono = InternRoot<Long>(FrameworkMarshallers.Long).bindStatic(serverProtocol,"top1")
+        val rootServerPoly = InternRoot<Long>().bindStatic(serverProtocol, "top2")
+
+        val monoSentBytes = measureBytes(serverProtocol) { rootServerMono.intern(0) }
+        val polySentBytes = measureBytes(serverProtocol) { rootServerPoly.intern(0) }
+
+        Assert.assertEquals(2 + 8 + 4, monoSentBytes)
+        Assert.assertEquals(2 + 8 + 4 + 8 + 4, polySentBytes)
+    }
+
+
+    private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String) : InternRoot<T> {
+        identify(protocol.identity, RdId.Null.mix(id))
+        bind(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
+        return this
     }
 }

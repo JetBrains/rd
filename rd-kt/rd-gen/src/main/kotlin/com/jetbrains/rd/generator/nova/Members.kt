@@ -166,7 +166,7 @@ val Member.hasEmptyConstructor : Boolean get() = when (this) {
 }
 
 fun Member.Reactive.perContext(key: Context) : Member.Reactive {
-    require(key.isHeavyKey) { "Only non-light keys can be used for per-context entities" }
+    require(key !is Context.Generated || key.isHeavyKey) { "Only non-light keys can be used for per-context entities" }
     context = key
     return this
 }

@@ -17,7 +17,8 @@ class Protocol(
     override val wire: IWire, //to initialize field with circular dependencies
     val lifetime: Lifetime,
     serializationCtx: SerializationCtx? = null,
-    parentContexts: ProtocolContexts? = null
+    parentContexts: ProtocolContexts? = null,
+    vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
 
 
@@ -33,7 +34,7 @@ class Protocol(
     }
 
     override val protocol: IProtocol get() = this
-    override val serializationContext: SerializationCtx = serializationCtx ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot().also {
+    override val serializationContext: SerializationCtx = serializationCtx ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot<Any>().also {
         it.rdid = RdId.Null.mix("ProtocolInternRoot")
         scheduler.invokeOrQueue {
             it.bind(lifetime, this, "ProtocolInternRoot")
@@ -43,8 +44,10 @@ class Protocol(
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
     init {
-        if (wire is IContextAwareWire)
-            wire.contexts = contexts
+        wire.updateContexts(contexts)
+        initialContexts.forEach {
+            contexts.registerContext(it)
+        }
 
         if (parentContexts == null) {
             contexts.also {

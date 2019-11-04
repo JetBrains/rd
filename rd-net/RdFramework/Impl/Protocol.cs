@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Impl
     
 
     public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null)
+      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, params RdContextBase[] initialContexts)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -38,16 +38,15 @@ namespace JetBrains.Rd.Impl
       Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
       Contexts = parentContexts ?? new ProtocolContexts();
-      SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
+      wire.Contexts = Contexts;
+      foreach (var rdContextBase in initialContexts) rdContextBase.RegisterOn(Contexts);
+      SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot<object>>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
       OutOfSyncModels = new ViewableSet<RdExtBase>();
-
-      if (wire is IContextAwareWire contextAwareWire)
-        contextAwareWire.Contexts = Contexts;
     }
 
-    private InternRoot CreateProtocolInternRoot(Lifetime lifetime)
+    private InternRoot<object> CreateProtocolInternRoot(Lifetime lifetime)
     {
-      var root = new InternRoot();
+      var root = new InternRoot<object>();
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
       Contexts.RdId = RdId.Nil.Mix(ContextHandlerRdId);
       Scheduler.InvokeOrQueue(() =>

@@ -8,20 +8,20 @@ import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.framework.IInternRoot
 import com.jetbrains.rd.framework.base.IRdBindable
 
-class InternRoot: IInternRoot {
+class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic()): IInternRoot<TBase> {
     override fun deepClone(): IRdBindable {
         error("Should never be called")
     }
 
     private val internedValueIndices = AtomicInteger()
-    private val directMap = ConcurrentHashMap<InternId, Any>()
-    private val inverseMap = ConcurrentHashMap<Any, InverseMapValue>()
+    private val directMap = ConcurrentHashMap<InternId, TBase>()
+    private val inverseMap = ConcurrentHashMap<TBase, InverseMapValue>()
 
-    override fun tryGetInterned(value: Any): InternId {
+    override fun tryGetInterned(value: TBase): InternId {
         return inverseMap[value]?.id ?: InternId.invalid
     }
 
-    override fun intern(value: Any): InternId {
+    override fun intern(value: TBase): InternId {
         return inverseMap[value]?.id ?: run {
             val newMapping = InverseMapValue(InternId.invalid, InternId.invalid)
             val oldMapping = inverseMap.putIfAbsent(value, newMapping)
@@ -32,9 +32,11 @@ class InternRoot: IInternRoot {
                 assert(idx.isLocal)
 
                 directMap[idx] = value
-                protocol.wire.send(rdid) { writer ->
-                    Polymorphic.write(serializationContext, writer, value)
-                    writer.writeInternId(idx)
+                protocol.contexts.sendWithoutContexts {
+                    protocol.wire.send(rdid) { writer ->
+                        serializer.write(serializationContext, writer, value)
+                        writer.writeInternId(idx)
+                    }
                 }
                 newMapping.id = idx
                 idx
@@ -42,7 +44,7 @@ class InternRoot: IInternRoot {
         }
     }
 
-    override fun remove(value: Any) {
+    override fun remove(value: TBase) {
         val localValue = inverseMap.remove(value)
         if (localValue != null) {
             directMap.remove(localValue.id)
@@ -50,20 +52,20 @@ class InternRoot: IInternRoot {
         }
     }
 
-    private fun get(id: InternId): Any? {
+    private fun get(id: InternId): TBase? {
         assert(id.isValid)
         return directMap[id]
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> unIntern(id: InternId): T {
+    override fun <T : TBase> unIntern(id: InternId): T {
         val value = get(id)
         require(value != null) { "Value for id $id has been removed" }
         return value as T
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> tryUnIntern(id: InternId): T? {
+    override fun <T : TBase> tryUnIntern(id: InternId): T? {
         return get(id) as T?
     }
 
@@ -74,7 +76,7 @@ class InternRoot: IInternRoot {
     override val wireScheduler: IScheduler = InternScheduler()
 
     override fun onWireReceived(buffer: AbstractBuffer) {
-        val value = Polymorphic.read(serializationContext, buffer) ?: return
+        val value = serializer.read(serializationContext, buffer) ?: return
         val remoteId = buffer.readInternId()
         assert(!remoteId.isLocal) { "Remote sent local InterningId, bug?" }
         assert(remoteId.isValid) { "Remote sent invalid InterningId, bug?" }

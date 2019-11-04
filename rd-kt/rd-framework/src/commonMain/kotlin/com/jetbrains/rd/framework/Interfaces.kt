@@ -55,19 +55,10 @@ interface IWire {
      * when the given [lifetime] is terminated.
      */
     fun advise(lifetime: Lifetime, entity: IRdWireable)
-}
 
-interface IContextAwareWire : IWire {
-    var contexts: ProtocolContexts?
+    val contexts: ProtocolContexts
 
-    fun writeContext(buffer: AbstractBuffer) {
-        contexts.let { handler ->
-            if(handler == null)
-                ProtocolContexts.writeContextStub(buffer)
-            else
-                handler.writeCurrentMessageContext(buffer)
-        }
-    }
+    fun updateContexts(newContexts: ProtocolContexts)
 }
 
 /**
@@ -123,30 +114,30 @@ interface IIdentities {
 /**
  * Interns values sent over protocol
  */
-interface IInternRoot: IRdReactive {
+interface IInternRoot<TBase : Any>: IRdReactive {
     /**
      * Returns an ID for a value. Returns invalid ID if the value was not interned
      */
-    fun tryGetInterned(value: Any): InternId
+    fun tryGetInterned(value: TBase): InternId
 
     /**
      * Interns a value and returns an ID for it. May return invalid ID if the value can't be interned due to multithreaded conflicts
      */
-    fun intern(value: Any): InternId
+    fun intern(value: TBase): InternId
 
     /**
      * Gets a value from interned ID. Throws an exception if no value matches the given ID
      */
-    fun <T : Any> unIntern(id: InternId): T
+    fun <T : TBase> unIntern(id: InternId): T
 
     /**
      * Gets a valie from interned ID, returns null if no value matches the given ID
      */
-    fun <T : Any> tryUnIntern(id: InternId): T?
+    fun <T : TBase> tryUnIntern(id: InternId): T?
 
     /**
      * Removes interned value. Any future attempts to un-intern IDs previously associated with this value will fail.
      * Not thread-safe. It's up to user to ensure that the value being removed is not being used in messages written on background threads.
      */
-    fun remove(value: Any)
+    fun remove(value: TBase)
 }

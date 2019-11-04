@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.util.threadLocalWithInitial
+import kotlin.reflect.KClass
 
 /**
  * Describes a context and provides access to value associated with this context.
@@ -13,34 +14,30 @@ import com.jetbrains.rd.util.threadLocalWithInitial
  * @param heavy Whether or not this context is heavy. A heavy context maintains a value set and interns values. A light context sends values as-is and does not maintain a value set.
  * @param serializer Serializer to be used with this context.
  */
-class RdContext<T : Any>(val key: String, val heavy: Boolean, val serializer: IMarshaller<T>) {
+abstract class RdContext<T : Any>(val key: String, val heavy: Boolean, val serializer: IMarshaller<T>) {
+    private val internalValue = threadLocalWithInitial<T?> { null }
     companion object : ISerializer<RdContext<*>> {
-        private val myValues = threadLocalWithInitial { HashMap<String, Any>() }
-
-        internal fun unsafeSet(key: String, value: Any?) {
-            if(value == null)
-                myValues.get().remove(key)
-            else
-                myValues.get()[key] = value
-        }
-
-        internal fun unsafeGet(key: String) : Any? {
-            return myValues.get()[key]
-        }
-
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdContext<*> {
-            val keyId = buffer.readString()
-            val isHeavy = buffer.readBoolean()
-            val typeId = buffer.readRdId()
-
-            @Suppress("UNCHECKED_CAST")
-            return RdContext<Any>(keyId, isHeavy, ctx.serializers.get(typeId) as IMarshaller<Any>)
+            return ctx.serializers.readPolymorphic(ctx, buffer)
         }
 
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdContext<*>) {
-            buffer.writeString(value.key)
-            buffer.writeBoolean(value.heavy)
-            buffer.writeRdId(value.serializer.id)
+            ctx.serializers.writePolymorphic(ctx, buffer, value)
+        }
+
+        fun marshallerFor(context: RdContext<*>): IMarshaller<RdContext<*>> {
+            return object : IMarshaller<RdContext<*>> {
+                override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdContext<*> {
+                    return context
+                }
+
+                override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdContext<*>) {
+                    // noop write
+                }
+
+                override val _type: KClass<*>
+                    get() = context::class
+            }
         }
     }
 
@@ -49,8 +46,8 @@ class RdContext<T : Any>(val key: String, val heavy: Boolean, val serializer: IM
      */
     @Suppress("UNCHECKED_CAST")
     var value: T?
-        get() = unsafeGet(key) as T?
-        set(value) = unsafeSet(key, value)
+        get() = internalValue.get()
+        set(value) = internalValue.set(value)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

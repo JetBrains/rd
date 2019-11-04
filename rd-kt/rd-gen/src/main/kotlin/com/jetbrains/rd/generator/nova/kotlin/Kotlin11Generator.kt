@@ -214,7 +214,10 @@ open class Kotlin11Generator(
     }
 
     protected fun Context.longRef(scope: Declaration): String {
-        return pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope)
+        return when(this) {
+            is Context.Generated -> pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope)
+            is Context.External -> fqnFor(this@Kotlin11Generator)
+        }
     }
 
     protected fun Member.Reactive.customSerializers(scope: Declaration, ignorePerClientId: Boolean = false) : List<String> {
@@ -380,10 +383,21 @@ open class Kotlin11Generator(
             prettyPrintTrait(decl)
             + "//deepClone"
             deepCloneTrait(decl)
+            + "//contexts"
+            contextsTrait(decl)
         }
 
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
+        }
+    }
+
+    protected fun PrettyPrinter.contextsTrait(decl: Declaration) {
+        if(decl is Toplevel) {
+            decl.declaredTypes.forEach {
+                if(it is Context.Generated)
+                    +"object ${it.keyName}: RdContext<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl)})"
+            }
         }
     }
 
@@ -440,12 +454,6 @@ open class Kotlin11Generator(
                 "val $name : $type = $value"
             } else {
                 "const val $name : $type = $value"
-            }
-        }
-        if(decl is Toplevel) {
-            decl.declaredTypes.forEach {
-                if(it is Context)
-                    +"val ${it.keyName} = RdContext<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl)})"
             }
         }
     }

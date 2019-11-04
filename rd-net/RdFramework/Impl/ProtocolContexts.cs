@@ -67,6 +67,7 @@ namespace JetBrains.Rd.Impl
     {
       if (myHandlersMap.TryAdd(context, handler))
       {
+        context.RegisterOn(SerializationContext.Serializers);
         lock (myOrderingLock) 
           myHandlerOrder.Add(handler);
       }
@@ -185,7 +186,7 @@ namespace JetBrains.Rd.Impl
     {
       if (IsSendWithoutContexts)
       {
-        WriteContextStub(writer);
+        WriteEmptyContexts(writer);
         return;
       }
       
@@ -198,7 +199,7 @@ namespace JetBrains.Rd.Impl
     /// <summary>
     /// Writes an empty context
     /// </summary>
-    public static void WriteContextStub(UnsafeWriter writer)
+    public static void WriteEmptyContexts(UnsafeWriter writer)
     {
       writer.Write((short) 0);
     } 

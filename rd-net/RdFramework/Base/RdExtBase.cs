@@ -171,9 +171,14 @@ namespace JetBrains.Rd.Base
     
     private readonly Queue<KeyValuePair<RdId, byte[]>> mySendQ = new Queue<KeyValuePair<RdId, byte[]>>();
     
+    public ProtocolContexts Contexts
+    {
+      get => RealWire.Contexts;
+      set => Assertion.Assert(RealWire.Contexts == value, "Can't change ProtocolContexts in ExtWire");
+    }
 
 
-    public ExtWire()
+    public unsafe ExtWire()
     {
       Connected.WhenTrue(Lifetime.Eternal, _ =>
       {
@@ -182,14 +187,19 @@ namespace JetBrains.Rd.Base
           while (mySendQ.Count > 0)
           {
             var p = mySendQ.Dequeue();
-            RealWire.Send(p.Key, writer => writer.WriteRaw(p.Value));
+            fixed (byte* bytePtr = p.Value)
+            {
+              var reader = UnsafeReader.CreateReader(bytePtr, p.Value.Length);
+              using(Contexts.ReadContextsIntoCookie(reader))
+                RealWire.Send(p.Key, writer => writer.WriteRaw(p.Value, reader.Position, p.Value.Length - reader.Position));
+            }
           }
         }               
       });
     }
 
     
-    public void Send<TContext>(RdId id, TContext context, Action<TContext, UnsafeWriter> writer)
+    public void Send<TContext>(RdId id, TContext param, Action<TContext, UnsafeWriter> writer)
     {
       lock (mySendQ)
       {
@@ -197,7 +207,8 @@ namespace JetBrains.Rd.Base
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
-            writer(context, cookie.Writer);
+            this.WriteContext(cookie.Writer);
+            writer(param, cookie.Writer);
             mySendQ.Enqueue(new KeyValuePair<RdId, byte[]>(id, cookie.CloneData()));
           }
 
@@ -205,7 +216,7 @@ namespace JetBrains.Rd.Base
         }
       }
 
-      RealWire.Send(id, context, writer);
+      RealWire.Send(id, param, writer);
     }
 
     public void Advise(Lifetime lifetime, IRdWireable entity)

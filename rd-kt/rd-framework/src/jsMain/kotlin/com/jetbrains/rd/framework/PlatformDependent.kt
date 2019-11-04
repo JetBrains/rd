@@ -9,3 +9,10 @@ actual fun createAbstractBuffer(): AbstractBuffer {
 actual inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit) : Boolean {
     TODO("not implemented")
 }
+
+actual fun createAbstractBuffer(bytes: ByteArray): AbstractBuffer {
+    val buffer = JsBuffer(ArrayBuffer(bytes.size))
+    buffer.writeByteArrayRaw(bytes)
+    buffer.rewind()
+    return buffer
+}

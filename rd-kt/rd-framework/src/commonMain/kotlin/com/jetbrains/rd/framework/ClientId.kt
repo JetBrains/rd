@@ -25,7 +25,7 @@ data class ClientId(val value: String) {
 
     companion object : ISerializer<ClientId> {
         private val defaultLocalId = ClientId("Host")
-        val context = RdContext("ClientId", true, FrameworkMarshallers.String)
+        val context = object : RdContext<String>("ClientId", true, FrameworkMarshallers.String) {}
 
         /**
          * Specifies behavior for ClientId.current

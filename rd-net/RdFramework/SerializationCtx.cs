@@ -10,24 +10,24 @@ namespace JetBrains.Rd
   {
     public ISerializers Serializers { get; private set; }
 
-    [NotNull] public readonly IDictionary<string, IInternRoot> InternRoots;
+    [NotNull] public readonly IDictionary<string, IInternRoot<object>> InternRoots;
 
-    public SerializationCtx(ISerializers serializers, IDictionary<string, IInternRoot> internRoots = null) : this()
+    public SerializationCtx(ISerializers serializers, IDictionary<string, IInternRoot<object>> internRoots = null) : this()
     {
       Serializers = serializers;
-      InternRoots = internRoots ?? new Dictionary<string, IInternRoot>();
+      InternRoots = internRoots ?? new Dictionary<string, IInternRoot<object>>();
     }
 
-    public SerializationCtx(IProtocol protocol, IDictionary<string, IInternRoot> internRoots = null) : this(protocol.Serializers, internRoots)
+    public SerializationCtx(IProtocol protocol, IDictionary<string, IInternRoot<object>> internRoots = null) : this(protocol.Serializers, internRoots)
     {
     }
 
     public SerializationCtx WithInternRootsHere(RdBindableBase owner, params string[] keys)
     {
-      var newInternRoots = new Dictionary<string, IInternRoot>(InternRoots);
+      var newInternRoots = new Dictionary<string, IInternRoot<object>>(InternRoots);
       foreach (var key in keys)
       {
-        var root = owner.GetOrCreateHighPriorityExtension("InternRoot-" + key, () => new InternRoot { RdId = owner.RdId.Mix(".InternRoot-" + key) });
+        var root = owner.GetOrCreateHighPriorityExtension("InternRoot-" + key, () => new InternRoot<object> { RdId = owner.RdId.Mix(".InternRoot-" + key) });
         newInternRoots[key] = root;
       }
       return new SerializationCtx(Serializers, newInternRoots);

@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Rd.Impl;
-using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd
@@ -22,19 +20,12 @@ namespace JetBrains.Rd
 
     public static RdContextBase Read(SerializationCtx ctx, UnsafeReader reader)
     {
-      var keyId = reader.ReadString();
-      var isHeavy = reader.ReadBoolean();
-      var serializerId = RdId.Read(reader);
-      var actualType = ctx.Serializers.GetTypeForId(serializerId);
-
-      return (RdContextBase) (new Func<string, bool, ISerializers, RdId, RdContextBase>(CreateContext<object>)).Method
-        .GetGenericMethodDefinition().MakeGenericMethod(actualType)
-        .Invoke(null, new object[] {keyId, isHeavy, ctx.Serializers, serializerId});
+      return ctx.Serializers.Read<RdContextBase>(ctx, reader);
     }
 
-    private static RdContext<T> CreateContext<T>(string key, bool isHeavy, ISerializers serializers, RdId typeId)
+    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdContextBase value)
     {
-      return new RdContext<T>(key, isHeavy, serializers.GetReaderForId<T>(typeId), serializers.GetWriterForId<T>(typeId));
+      ctx.Serializers.Write<RdContextBase>(ctx, writer, value);
     }
 
     public bool Equals(RdContextBase other)
@@ -67,14 +58,10 @@ namespace JetBrains.Rd
       return !Equals(left, right);
     }
 
-    public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdContextBase value)
-    {
-      value.Write(ctx, writer);
-    }
-
-    protected abstract void Write(SerializationCtx ctx, UnsafeWriter writer);
     public abstract void RegisterOn(ProtocolContexts contexts);
+    public abstract void RegisterOn(ISerializers serializers);
   }
+
   /// <summary>
   /// Describes a context and provides access to value associated with this context.
   /// The associated value is thread-local and synchronized between send/advise pairs on <see cref="IWire"/>. The associated value will be the same in handler method in <see cref="IWire.Advise"/> as it was in <see cref="IWire.Send"/>.
@@ -82,10 +69,17 @@ namespace JetBrains.Rd
   /// Best practice is to declare contexts in toplevel entities in protocol model using <c>Toplevel.context</c>. Manual declaration is also possible.
   /// </summary>
   /// <typeparam name="T">The type of value stored by this context</typeparam>
-  public class RdContext<T> : RdContextBase
+  public abstract class RdContext<T> : RdContextBase
   {
     [NotNull] public readonly CtxReadDelegate<T> ReadDelegate;
     [NotNull] public readonly CtxWriteDelegate<T> WriteDelegate;
+    
+    private ThreadLocal<Stack<T>> myContextStack = new ThreadLocal<Stack<T>>(() => new Stack<T>());
+#if NET35
+    private ThreadLocal<T> myValue = new ThreadLocal<T>();
+#else
+    private AsyncLocal<T> myValue = new AsyncLocal<T>();
+#endif
 
     /// <summary>
     /// 
@@ -94,71 +88,42 @@ namespace JetBrains.Rd
     /// <param name="isHeavy">Whether or not this context is heavy. A heavy context maintains a value set and interns values. A light context sends values as-is and does not maintain a value set.</param>
     /// <param name="readDelegate">Serializer to be used with this context.</param>
     /// <param name="writeDelegate">Serializer to be used with this context.</param>
-    public RdContext(string key, bool isHeavy, [NotNull] CtxReadDelegate<T> readDelegate, [NotNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy)
+    protected RdContext(string key, bool isHeavy, [NotNull] CtxReadDelegate<T> readDelegate,
+      [NotNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy)
     {
       ReadDelegate = readDelegate;
       WriteDelegate = writeDelegate;
     }
-    
-    private static readonly ThreadLocal<Dictionary<string, Stack<T>>> ourContextStacks = new ThreadLocal<Dictionary<string, Stack<T>>>(() => new Dictionary<string, Stack<T>>());
 
-#if NET35
-    private static readonly ConcurrentDictionary<string, ThreadLocal<T>> ourValues = new ConcurrentDictionary<string, ThreadLocal<T>>();
-#else
-    private static readonly ConcurrentDictionary<string, AsyncLocal<T>> ourValues = new ConcurrentDictionary<string, AsyncLocal<T>>();
-#endif
-    
-     /// <summary>
-     /// Current (thread- or async-local) value for this context
-     /// </summary>
+    /// <summary>
+    /// Current (thread- or async-local) value for this context
+    /// </summary>
     public T Value
     {
-      get
-      {
-        return ourValues.TryGetValue(Key, out var asyncLocal) ? asyncLocal.Value : default;
-      }
-      set
-      {
-        if (!ourValues.ContainsKey(Key))
-        {
-          #if NET35
-          ourValues.TryAdd(Key, new ThreadLocal<T>());
-          #else
-          ourValues.TryAdd(Key, new AsyncLocal<T>());
-          #endif
-        }
-
-        ourValues[Key].Value = value;
-      }
+      get => myValue.Value;
+      set => myValue.Value = value;
     }
 
-     /// <summary>
-     /// Pushes current context value to a thread-local stack and sets new value
-     /// </summary>
-     public void PushContext(T value)
+    /// <summary>
+    /// Pushes current context value to a thread-local stack and sets new value
+    /// </summary>
+    public void PushContext(T value)
     {
-      ourContextStacks.Value.GetOrCreate(Key, () => new Stack<T>()).Push(Value);
+      myContextStack.Value.Push(Value);
       Value = value;
     }
 
-     /// <summary>
-     /// Restores previous context value from a thread-local stack
-     /// </summary>
+    /// <summary>
+    /// Restores previous context value from a thread-local stack
+    /// </summary>
     public void PopContext()
     {
-      Value = ourContextStacks.Value[Key].Pop();
+      Value = myContextStack.Value.Pop();
     }
 
-     protected override void Write(SerializationCtx ctx, UnsafeWriter writer)
-     {
-       writer.Write(Key);
-       writer.Write(IsHeavy);
-       RdId.Write(writer, ctx.Serializers.GetIdForType(typeof(T)));
-     }
-
-     public override void RegisterOn(ProtocolContexts contexts)
-     {
-       contexts.RegisterContext(this);
-     }
+    public override void RegisterOn(ProtocolContexts contexts)
+    {
+      contexts.RegisterContext(this);
+    }
   }
 }

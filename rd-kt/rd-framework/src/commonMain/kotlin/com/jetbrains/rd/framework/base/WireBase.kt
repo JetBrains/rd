@@ -1,9 +1,6 @@
 package com.jetbrains.rd.framework.base
 
-import com.jetbrains.rd.framework.AbstractBuffer
-import com.jetbrains.rd.framework.IContextAwareWire
-import com.jetbrains.rd.framework.MessageBroker
-import com.jetbrains.rd.framework.RdId
+import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -11,7 +8,8 @@ import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.string.printToString
 
 
-abstract class WireBase(val scheduler: IScheduler) : IContextAwareWire {
+abstract class WireBase(val scheduler: IScheduler) : IWire {
+    private lateinit var contextsInternal: ProtocolContexts
     override val connected = Property(false)
     protected val messageBroker = MessageBroker(scheduler)
 
@@ -19,11 +17,13 @@ abstract class WireBase(val scheduler: IScheduler) : IContextAwareWire {
 
     fun dumpToString() = messageBroker.printToString()
 
-    override var contexts: ProtocolContexts? = null
-        set(value) {
-            require(field == null) { "Can't replace ProtocolContexts in IContextAwareWire"}
-            field = value
-        }
+    override val contexts: ProtocolContexts
+        get() = contextsInternal
 
     abstract override fun send(id: RdId, writer: (AbstractBuffer) -> Unit)
+
+    override fun updateContexts(newContexts: ProtocolContexts) {
+        require(!this::contextsInternal.isInitialized) { "Can't replace ProtocolContexts in IContextAwareWire"}
+        contextsInternal = newContexts
+    }
 }

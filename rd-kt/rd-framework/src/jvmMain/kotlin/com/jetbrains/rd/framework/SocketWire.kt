@@ -253,7 +253,7 @@ class SocketWire {
                 unsafeBuffer.writeInt(0) //placeholder for length
 
                 id.write(unsafeBuffer) //write id
-                writeContext(unsafeBuffer)
+                contexts.writeCurrentMessageContext(unsafeBuffer)
                 writer(unsafeBuffer) //write rest
 
                 val len = unsafeBuffer.position - initialPosition

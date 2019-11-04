@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.Queue
@@ -167,6 +168,12 @@ class ExtWire : IWire {
 
     override fun advise(lifetime: Lifetime, entity: IRdWireable) = realWire.advise(lifetime, entity)
 
+    override val contexts: ProtocolContexts
+        get() = realWire.contexts
+
+    override fun updateContexts(newContexts: ProtocolContexts) {
+        require(newContexts === realWire.contexts) { "Can't replace ProtocolContexts on ExtWire" }
+    }
 
     data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray)
     override val connected: Property<Boolean> = Property(false)
@@ -179,7 +186,11 @@ class ExtWire : IWire {
             Sync.lock(sendQ) {
                 while (true) {
                     val (id, count, payload) = sendQ.poll() ?: return@lock
-                    realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
+                    val readBuffer = createAbstractBuffer(payload)
+
+                    contexts.readMessageContextAndInvoke(readBuffer) {
+                        realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, readBuffer.position, count) }
+                    }
                 }
             }
         }
@@ -189,8 +200,10 @@ class ExtWire : IWire {
         Sync.lock(sendQ) {
             if (!sendQ.isEmpty() || !connected.value) {
                 val buffer = createAbstractBuffer()
+                contexts.writeCurrentMessageContext(buffer)
+                var contextEnd = buffer.position
                 writer(buffer)
-                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray()))
+                sendQ.offer(QueueItem(id, buffer.position - contextEnd, buffer.getArray()))
                 return
             }
 
