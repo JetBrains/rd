@@ -400,7 +400,7 @@ namespace JetBrains.Rd.Reflection
         myStore = store;
       }
 
-      public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, int? predefinedType = null)
+      public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedType = null)
       {
         myStore[typeof(T)] = new SerializerPair(reader, writer);
       }

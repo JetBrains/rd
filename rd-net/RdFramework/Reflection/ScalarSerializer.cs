@@ -342,7 +342,7 @@ namespace JetBrains.Rd.Reflection
       writer = scalarSerializer.GetWriter<T>();
     }
 
-    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, int? predefinedType = null)
+    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedType = null)
     {
       myStaticSerializers[typeof(T)] = new SerializerPair(reader, writer);
     }
