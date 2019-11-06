@@ -70,14 +70,14 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdRpc]
-    public interface IAsyncModelsTest
+    public interface IAsyncModelsTestDifferentName
     {
       Task<AColor> QueryColor();
       void SetPath(AsyncModelsTest.FileSystemPath animal);
     }
 
     [RdExt]
-    public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTest
+    public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTestDifferentName
     {
       public Task<AColor> QueryColor()
       {
@@ -173,7 +173,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestAsyncModels()
     {
-      TestTemplate<AsyncModelsTest, IAsyncModelsTest>(proxy =>
+      TestTemplate<AsyncModelsTest, IAsyncModelsTestDifferentName>(proxy =>
       {
         proxy.SetPath(new AsyncModelsTest.FileSystemPath("C:\\hello"));
         var queryColor = proxy.QueryColor();
