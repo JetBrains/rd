@@ -6,7 +6,7 @@ namespace JetBrains.Rd
 {
   public interface ISerializersContainer
   {
-    void Register<T>([NotNull] CtxReadDelegate<T> reader, [NotNull] CtxWriteDelegate<T> writer, int? predefinedType = null);
+    void Register<T>([NotNull] CtxReadDelegate<T> reader, [NotNull] CtxWriteDelegate<T> writer, long? predefinedType = null);
 
     void RegisterEnum<T>() where T :
 #if !NET35

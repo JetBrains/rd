@@ -14,12 +14,12 @@ namespace JetBrains.Rd
 
     private readonly long myValue;
 
-    public static RdId Define<T>(int? id = null)
+    public static RdId Define<T>(long? id = null)
     {
       return new RdId(id ?? Hash(typeof(T).Name));
     }
 
-    public static RdId Define(Type type, int? id = null)
+    public static RdId Define(Type type, long? id = null)
     {
       return new RdId(id ?? Hash(type.Name));
     }
