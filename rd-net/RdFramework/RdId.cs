@@ -24,6 +24,11 @@ namespace JetBrains.Rd
       return new RdId(id ?? Hash(type.Name));
     }
 
+    public static RdId DefineByFqn(Type type)
+    {
+      return new RdId(Hash(type.FullName));
+    }
+
     public RdId(long value)
     {
       myValue = value;
