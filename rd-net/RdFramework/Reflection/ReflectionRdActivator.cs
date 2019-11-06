@@ -75,7 +75,7 @@ namespace JetBrains.Rd.Reflection
     {
       var instance = Activate<T>();
 
-      var typename = typeof(T).Name;
+      var typename = GetTypeName(typeof(T));
       instance.Identify(protocol.Identities, RdId.Root.Mix(typename));
       instance.Bind(lifetime, protocol, typename);
 
@@ -91,7 +91,7 @@ namespace JetBrains.Rd.Reflection
     {
       var instance = Activate(type);
 
-      var typename = type.Name;
+      var typename = GetTypeName(type);
       var bindable = (RdExtReflectionBindableBase) instance;
       bindable.Identify(protocol.Identities, RdId.Root.Mix(typename));
       bindable.Bind(lifetime, protocol, typename);
@@ -372,6 +372,19 @@ namespace JetBrains.Rd.Reflection
       }
 
       throw new Exception($"Unable to activate generic type: {memberType}");
+    }
+
+    internal static string GetTypeName(Type type)
+    {
+      var typename = type.FullName;
+      if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(type))
+      {
+        var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(type.GetTypeInfo());
+        if (rpcInterface != null)
+          return rpcInterface.FullName;
+      }
+
+      return typename;
     }
   }
 }
