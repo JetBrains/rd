@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
@@ -334,7 +335,11 @@ namespace JetBrains.Rd.Reflection
     {
       var genericDefinition = implementingType.GetGenericTypeDefinition();
 
-      if (genericDefinition == typeof(RdProperty<>))
+      var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingType.GetTypeInfo(), t => GetOrRegisterStaticSerializerInternal(t, true));
+      if (intrinsic != null)
+        return intrinsic;
+
+      if (typeof(IViewableProperty<>).IsAssignableFrom(genericDefinition))
       {
         return CreateStaticReaderSingleGeneric(member, typeInfo.AsType(), implementingType, allowNullable: true);
       }
@@ -350,7 +355,6 @@ namespace JetBrains.Rd.Reflection
       {
         return CreateStaticReaderTwoGeneric(member, typeInfo.AsType(), implementingType);
       }
-
 
       throw new Exception($"Unable to register generic type: {typeInfo}");
     }
