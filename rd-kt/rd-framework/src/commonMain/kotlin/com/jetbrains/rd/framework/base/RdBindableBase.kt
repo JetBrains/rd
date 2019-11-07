@@ -33,7 +33,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     override val protocol : IProtocol get() = parent?.protocol?: nb()
 
-    protected val bindableChildren = ViewableList<Pair<String, Any?>>()
+    protected val bindableChildren : MutableList<Pair<String, Any?>> = ViewableList<Pair<String, Any?>>()
 
     override val serializationContext: SerializationCtx get() = parent?.serializationContext ?: nb()
 
@@ -151,7 +151,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
 
         fun doOneWay(lifetime: Lifetime, me: RdBindableBase, counterpart: RdBindableBase) {
-            me.bindableChildren.adviseAddRemove(lifetime) {addRemove, idx, (name, value) ->
+            (me.bindableChildren as ViewableList).adviseAddRemove(lifetime) {addRemove, idx, (name, value) ->
                 require (addRemove == AddRemove.Add) {"No delete events for bindableChildren are permitted: ${this}"}
                 if (value == null)
                     return@adviseAddRemove
