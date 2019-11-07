@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Impl;
@@ -154,6 +155,61 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+    [Test]
+    public void TestEventArgs()
+    {
+      WithExts<EventArgsExt>((c, s) =>
+      {
+        c.Objects.Value = new MyEventArgs<int?>() { Value = 42 };
+        Assert.AreEqual(42, s.Objects.Value.Value);
+      });
+    }
+
+    [Test]
+    public void TestGenericStruct()
+    {
+      WithExts<GenericStructExt>((c, s) =>
+      {
+        c.EnumStruct.Value = new TextControlOverridableValue<MyEnum>(MyEnum.First, MyEnum.Second);
+        c.IntStruct.Value = new TextControlOverridableValue<int>(1,2);
+
+        Assert.AreEqual(MyEnum.First, s.EnumStruct.Value.Original);
+        Assert.AreEqual(MyEnum.Second, s.EnumStruct.Value.Override);
+        Assert.AreEqual(1, s.IntStruct.Value.Original);
+        Assert.AreEqual(2, s.IntStruct.Value.Override);
+      });
+    }
+
+    [RdExt]
+    public class GenericStructExt : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<TextControlOverridableValue<int>> IntStruct { get; }
+      public IViewableProperty<TextControlOverridableValue<MyEnum>> EnumStruct { get; }
+    }
+
+    [RdScalar]
+    public struct TextControlOverridableValue<T>
+    {
+      public TextControlOverridableValue(T original, T @override)
+      {
+        Original = original;
+        Override = @override;
+      }
+      public T Original;
+      public T Override;
+    }
+
+    [RdExt]
+    public class EventArgsExt : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<MyEventArgs<int?>> Objects { get; }
+    }
+
+    [RdScalar]
+    public class MyEventArgs<T> : EventArgs
+    {
+      public T Value;
+    }
 
     [RdExt]
     public class ListInterfacesExt : RdExtReflectionBindableBase
