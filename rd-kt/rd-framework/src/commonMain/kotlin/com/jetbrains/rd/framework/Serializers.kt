@@ -3,26 +3,49 @@ package com.jetbrains.rd.framework
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.impl.RdSecureString
 import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlin.reflect.KClass
 
 private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. " +
         "Usually it should be done automatically during 'bind()' invocation but in complex cases you should do it manually."
 
+
 @Suppress("UNCHECKED_CAST")
 class Serializers : ISerializers {
 
-    override val toplevels: MutableSet<KClass<out ISerializersOwner>> = HashSet()
+    companion object {
+        private val backgroundRegistrar =  createBackgroundScheduler(Lifetime.Eternal, "SerializersBackgroundRegistrar")
+    }
+    override fun registerSerializersOwnerOnce(serializersOwner: ISerializersOwner) {
+        backgroundRegistrar.invokeOrQueue {
+            val key = serializersOwner::class
+            if (toplevels.add(key)) {
+                Protocol.initializationLogger.trace { "REGISTER serializers for ${key.simpleName}" }
+                serializersOwner.registerSerializersCore(this)
+            }
+        }
+    }
+
+    private val toplevels: MutableSet<KClass<out ISerializersOwner>> = HashSet()
+
+
 
     val types = hashMapOf<RdId, KClass<*>>()
     val readers = hashMapOf<RdId, (SerializationCtx, AbstractBuffer) -> Any>()
     val writers = hashMapOf<KClass<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
 
     init {
-        @Suppress("LeakingThis")
-        FrameworkMarshallers.registerIn(this)
+        backgroundRegistrar.invokeOrQueue {
+            FrameworkMarshallers.registerIn(this)
+        }
     }
 
     override fun <T : Any> register(serializer: IMarshaller<T>) {
+        if (!backgroundRegistrar.isActive) {
+            backgroundRegistrar.queue { register(serializer) }
+            return
+        }
+
         val id = serializer.id
         val t = serializer._type
 
@@ -40,6 +63,8 @@ class Serializers : ISerializers {
     }
 
     override fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>?): T? {
+        backgroundRegistrar.flush()
+
         val id = RdId.read(stream)
         if (id.isNull) return null
         val size = stream.readInt()
@@ -71,6 +96,8 @@ class Serializers : ISerializers {
     }
 
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
+        backgroundRegistrar.flush()
+
         val (id, writer) = writers[value::class]
                 ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
 

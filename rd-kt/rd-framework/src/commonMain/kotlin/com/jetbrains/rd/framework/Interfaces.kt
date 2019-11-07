@@ -50,7 +50,7 @@ interface IWire {
     fun send(id: RdId, writer: (AbstractBuffer) -> Unit)
 
     /**
-     * Adds a [handler] for receiving updated values of the object with the given [id]. The handler is removed
+     * Adds a [entity] for receiving updated values of the object with the given [IRdWireable.rdid]. The handler is removed
      * when the given [lifetime] is terminated.
      */
     fun advise(lifetime: Lifetime, entity: IRdWireable)
@@ -85,7 +85,8 @@ interface IUnknownInstance {
  * A registry of known serializers.
  */
 interface ISerializers {
-    val toplevels : MutableSet<KClass<out ISerializersOwner>>
+
+    fun registerSerializersOwnerOnce(serializersOwner: ISerializersOwner)
 
     fun <T : Any> register(serializer: IMarshaller<T>)
     fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T?
