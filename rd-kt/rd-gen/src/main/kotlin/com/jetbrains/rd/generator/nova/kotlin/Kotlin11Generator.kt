@@ -37,6 +37,9 @@ open class Kotlin11Generator(
     object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors: ISetting<Unit, Declaration>
 
+    //for AWS plugin, remove in 20.1
+    object DisableDeepCloneGeneration: ISetting<Unit, Declaration>
+
     object RefineFieldType: ISetting<Pair<String, IType>, SettingsHolder>
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
@@ -862,6 +865,8 @@ open class Kotlin11Generator(
     private fun PrettyPrinter.deepCloneTrait(decl: Declaration) {
 
         if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
+
+        if (decl.getSetting(DisableDeepCloneGeneration) == null) return
 
         block("override fun deepClone(): ${decl.name}  ") {
 
