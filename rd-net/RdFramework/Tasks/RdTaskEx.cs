@@ -11,9 +11,9 @@ namespace JetBrains.Rd.Tasks
 {
   public static class RdTaskEx
   {
-    public static bool IsSucceed<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Success;
-    public static bool IsCanceled<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Canceled;
-    public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
+    [PublicAPI] public static bool IsSucceed<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Success;
+    [PublicAPI] public static bool IsCanceled<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Canceled;
+    [PublicAPI] public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
 
     public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout) => SpinWaitEx.SpinUntil(Lifetime.Eternal, timeout, () => task.Result.HasValue());
     
@@ -49,7 +49,7 @@ namespace JetBrains.Rd.Tasks
     }
 
 
-    [PublicAPI]public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
     }
@@ -61,7 +61,7 @@ namespace JetBrains.Rd.Tasks
       endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)));
     }
     
-    [PublicAPI]public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler)
+    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler)
     {
       endpoint.Set(req =>
       {

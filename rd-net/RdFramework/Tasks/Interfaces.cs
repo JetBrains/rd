@@ -8,6 +8,7 @@ namespace JetBrains.Rd.Tasks
   [PublicAPI] 
   public interface IRdTask<T>
   {
+    //todo make RdTask as type alias for IReadonlyProperty<RdTaskResult<T>>
     IReadonlyProperty<RdTaskResult<T>> Result { get; }
   }
   

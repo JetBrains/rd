@@ -14,6 +14,7 @@ namespace JetBrains.Rd.Tasks
 {
   public class RdTask<T> : IRdTask<T>
   {
+    
     internal readonly WriteOnceProperty<RdTaskResult<T>> ResultInternal = new WriteOnceProperty<RdTaskResult<T>>();
 
     public IReadonlyProperty<RdTaskResult<T>> Result => ResultInternal;
