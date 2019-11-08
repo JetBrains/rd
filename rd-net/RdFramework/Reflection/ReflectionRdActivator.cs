@@ -12,6 +12,8 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Util;
+using JetBrains.Util.Util;
+
 #if NET35
 using TypeInfo = System.Type;
 #else
@@ -168,8 +170,17 @@ namespace JetBrains.Rd.Reflection
           var memberSetter = ReflectionUtil.GetSetter(mi);
           memberSetter(instance, currentValue);
         }
+        else
+        {
+          var implementingType = ReflectionSerializerVerifier.GetImplementingType(ReflectionUtil.GetReturnType(mi).GetTypeInfo());
+          Assertion.Assert(currentValue.GetType() == implementingType, 
+            "Bindable field {0} was initialized with incompatible type. Expected type {1}, actual {2}", 
+            mi, 
+            implementingType.ToString(true), 
+            currentValue.GetType().ToString(true));
+        }
       }
-
+      
       // Add RdEndpoint for Impl class (counterpart of Proxy)
       var interfaces = typeInfo.GetInterfaces();
       bool isProxy = interfaces.Contains(typeof(IProxyTypeMarker));

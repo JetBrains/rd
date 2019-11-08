@@ -112,8 +112,6 @@ namespace JetBrains.Rd.Reflection
         throw new ArgumentException("Only interfaces are supported.");
 
       var moduleBuilder = myModuleBuilder.Value;
-      // prefix names used to achieve same RdExt for both Proxy & Impl types.
-      // TODO: Horrible hack to determine implementation name. 
       var className = typeof(TInterface).Name.Substring(1);
       var proxyTypeName = "Proxy." + className;
       var typebuilder = moduleBuilder.DefineType(
