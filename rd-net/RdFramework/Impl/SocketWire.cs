@@ -267,7 +267,7 @@ namespace JetBrains.Rd.Impl
         }
         catch (Exception e)
         {
-          Log.Warn(e, $"{Id}: Exception raised during ACK, seqn = {seqN}");
+          Log.Warn(e, $"{Id}: ${e.GetType()} raised during ACK, seqn = {seqN}");
         }
       }
       
