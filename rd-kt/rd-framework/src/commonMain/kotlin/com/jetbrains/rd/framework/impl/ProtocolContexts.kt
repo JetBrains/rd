@@ -31,6 +31,9 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         error("This may not be cloned")
     }
 
+    val registeredContexts: Collection<RdContext<*>>
+        get() = handlersMap.keys
+
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
         Sync.lock(myOrderingsLock) {

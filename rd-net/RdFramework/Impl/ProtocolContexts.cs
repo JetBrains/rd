@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using JetBrains.Collections;
@@ -48,6 +49,8 @@ namespace JetBrains.Rd.Impl
     {
       Async = true;
     }
+    
+    public ICollection<RdContextBase> RegisteredContexts => myHandlersMap.Keys;
 
     internal ISingleContextHandler<T> GetHandlerForContext<T>(RdContext<T> context)
     {

@@ -21,13 +21,27 @@ namespace Test.RdFramework.Contexts
       ClientWire.AutoTransmitMode = true;
     }
 
-    public class TestKey : RdContext<string>
+    public class TestKeyHeavy : RdContext<string>
     {
-      private TestKey() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
+      private TestKeyHeavy() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
       {
       }
       
-      public static readonly TestKey Instance = new TestKey();
+      public static readonly TestKeyHeavy Instance = new TestKeyHeavy();
+
+      public override void RegisterOn(ISerializers serializers)
+      {
+        serializers.Register((_, __) => Instance, (_, __, ___) => { });
+      }
+    }
+    
+    public class TestKeyLight : RdContext<string>
+    {
+      private TestKeyLight() : base("test-key", false, Serializers.ReadString, Serializers.WriteString)
+      {
+      }
+      
+      public static readonly TestKeyLight Instance = new TestKeyLight();
 
       public override void RegisterOn(ISerializers serializers)
       {
@@ -38,7 +52,7 @@ namespace Test.RdFramework.Contexts
     [Theory]
     public void TestLateAdd(bool heavy)
     {
-      var key = TestKey.Instance;
+      var key = heavy ? TestKeyHeavy.Instance : (RdContext<string>) TestKeyLight.Instance;
       
       var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
       var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);

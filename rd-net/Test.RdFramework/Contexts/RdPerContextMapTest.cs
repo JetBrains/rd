@@ -13,13 +13,13 @@ namespace Test.RdFramework.Contexts
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
       
-      RdContextBasicTest.TestKey.Instance.Value = null;
+      RdContextBasicTest.TestKeyHeavy.Instance.Value = null;
     }
 
     [Test]
     public void TestOnStructMap()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -50,7 +50,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind01()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -80,7 +80,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind02()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -107,7 +107,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind03()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -142,7 +142,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind04()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -176,7 +176,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind05()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -208,7 +208,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestLateBind06()
     {
-      var key = RdContextBasicTest.TestKey.Instance;
+      var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
       var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
@@ -242,7 +242,7 @@ namespace Test.RdFramework.Contexts
     [Test]
     public void TestValueSetChangesInContext()
     {
-      var key1 = RdContextBasicTest.TestKey.Instance;
+      var key1 = RdContextBasicTest.TestKeyHeavy.Instance;
       var key2 = RdContextBasicTest.TestKey2.Instance;
 
       var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());

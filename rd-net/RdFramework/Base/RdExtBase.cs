@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -168,8 +169,22 @@ namespace JetBrains.Rd.Base
     internal readonly ViewableProperty<bool> Connected = new ViewableProperty<bool>(false);
     internal IWire RealWire;
     
+    private struct QueueItem
+    {
+      public readonly RdId Id;
+      public readonly byte[] Bytes;
+      public readonly KeyValuePair<RdContextBase, object>[] StoredContext;
+
+      public QueueItem(RdId id, byte[] bytes, KeyValuePair<RdContextBase, object>[] storedContext)
+      {
+        Id = id;
+        Bytes = bytes;
+        StoredContext = storedContext;
+      }
+    }
     
-    private readonly Queue<KeyValuePair<RdId, byte[]>> mySendQ = new Queue<KeyValuePair<RdId, byte[]>>();
+    
+    private readonly Queue<QueueItem> mySendQ = new Queue<QueueItem>();
     
     public ProtocolContexts Contexts
     {
@@ -187,11 +202,17 @@ namespace JetBrains.Rd.Base
           while (mySendQ.Count > 0)
           {
             var p = mySendQ.Dequeue();
-            fixed (byte* bytePtr = p.Value)
+            foreach (var keyValuePair in p.StoredContext)
+              keyValuePair.Key.PushContextBoxed(keyValuePair.Value);
+
+            try
             {
-              var reader = UnsafeReader.CreateReader(bytePtr, p.Value.Length);
-              using(Contexts.ReadContextsIntoCookie(reader))
-                RealWire.Send(p.Key, writer => writer.WriteRaw(p.Value, reader.Position, p.Value.Length - reader.Position));
+              RealWire.Send(p.Id, writer => writer.WriteRaw(p.Bytes, 0, p.Bytes.Length));
+            }
+            finally
+            {
+              foreach (var keyValuePair in p.StoredContext)
+                keyValuePair.Key.PopContext();
             }
           }
         }               
@@ -207,9 +228,10 @@ namespace JetBrains.Rd.Base
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
-            this.WriteContext(cookie.Writer);
             writer(param, cookie.Writer);
-            mySendQ.Enqueue(new KeyValuePair<RdId, byte[]>(id, cookie.CloneData()));
+            var storedContext = Contexts.RegisteredContexts
+              .Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
+            mySendQ.Enqueue(new QueueItem(id, cookie.CloneData(), storedContext));
           }
 
           return;

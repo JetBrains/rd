@@ -175,7 +175,7 @@ class ExtWire : IWire {
         require(newContexts === realWire.contexts) { "Can't replace ProtocolContexts on ExtWire" }
     }
 
-    data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray)
+    data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray, val context: List<Pair<RdContext<Any>, Any?>>)
     override val connected: Property<Boolean> = Property(false)
 
 
@@ -185,25 +185,35 @@ class ExtWire : IWire {
         connected.whenTrue(Lifetime.Eternal) { _ ->
             Sync.lock(sendQ) {
                 while (true) {
-                    val (id, count, payload) = sendQ.poll() ?: return@lock
+                    val (id, count, payload, context) = sendQ.poll() ?: return@lock
                     val readBuffer = createAbstractBuffer(payload)
 
-                    contexts.readMessageContextAndInvoke(readBuffer) {
-                        realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, readBuffer.position, count) }
+                    val prevValues = ArrayList<Any?>(context.size)
+                    context.forEach { (ctx, value) ->
+                        prevValues.add(ctx.value)
+                        ctx.value = value
                     }
+                    try {
+                        realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, readBuffer.position, count) }
+                    } finally {
+                        context.forEachIndexed { idx, (ctx, _) ->
+                            ctx.value = prevValues[idx]
+                        }
+                    }
+
                 }
             }
         }
     }
 
+
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
         Sync.lock(sendQ) {
             if (!sendQ.isEmpty() || !connected.value) {
                 val buffer = createAbstractBuffer()
-                contexts.writeCurrentMessageContext(buffer)
-                var contextEnd = buffer.position
                 writer(buffer)
-                sendQ.offer(QueueItem(id, buffer.position - contextEnd, buffer.getArray()))
+                @Suppress("UNCHECKED_CAST")
+                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray(), contexts.registeredContexts.map { (it as RdContext<Any>) to it.value }))
                 return
             }
 

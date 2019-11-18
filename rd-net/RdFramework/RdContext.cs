@@ -60,6 +60,12 @@ namespace JetBrains.Rd
 
     public abstract void RegisterOn(ProtocolContexts contexts);
     public abstract void RegisterOn(ISerializers serializers);
+    
+    internal abstract object ValueBoxed { get; set; }
+
+    public abstract void PopContext();
+
+    public abstract void PushContextBoxed(object value);
   }
 
   /// <summary>
@@ -104,6 +110,12 @@ namespace JetBrains.Rd
       set => myValue.Value = value;
     }
 
+    internal override object ValueBoxed
+    {
+      get => Value;
+      set => Value = (T) value;
+    }
+
     /// <summary>
     /// Pushes current context value to a thread-local stack and sets new value
     /// </summary>
@@ -113,10 +125,15 @@ namespace JetBrains.Rd
       Value = value;
     }
 
+    public override void PushContextBoxed(object value)
+    {
+      PushContext((T) value);
+    }
+
     /// <summary>
     /// Restores previous context value from a thread-local stack
     /// </summary>
-    public void PopContext()
+    public override void PopContext()
     {
       Value = myContextStack.Value.Pop();
     }
