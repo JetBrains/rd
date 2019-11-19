@@ -1,0 +1,59 @@
+Trace | SEND                      | property `DemoServer.DemoModel.boolean_property` :: ver = 0, value = false 
+Trace | SEND                      | property `DemoServer.DemoModel.boolean_array` :: ver = 0, value = "true, false, false" 
+Trace | SEND                      | property `DemoServer.DemoModel.scalar` :: ver = 0, value = MyScalar (
+  bool = false
+  byte = 13
+  short = 32000
+  int = 1000000000
+  long = -2000000000000000000
+  float = 3.14
+  double = -1.2345678901234567E8
+  unsigned_byte = 254
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
+  enum = kt
+  flags = [anyFlag, ktFlag]
+) 
+Trace | SEND                      | property `DemoServer.DemoModel.ubyte` :: ver = 0, value = 242 
+Trace | SEND                      | property `DemoServer.DemoModel.ubyte_array` :: ver = 0, value = UByteArray(storage=[13, -1]) 
+Trace | SEND                      | list `DemoServer.DemoModel.list`  :: Add :: key = 0 :: version = 1 :: value = 1 
+Trace | SEND                      | list `DemoServer.DemoModel.list`  :: Add :: key = 1 :: version = 2 :: value = 3 
+Trace | SEND                      | set `DemoServer.DemoModel.set`  :: Add :: 13  
+Trace | SEND                      | map `DemoServer.DemoModel.mapLongToString`  :: Add :: key = 13 :: value = "Kotlin" 
+Trace | SEND                      | property `DemoServer.DemoModel.interned_string` :: ver = 0, value = "Kotlin" 
+Trace | SEND                      | property `DemoServer.DemoModel.interned_string` :: ver = 0, value = "protocol" 
+Trace | SEND                      | property `DemoServer.DemoModel.interned_string` :: ver = 0, value = "Kotlin" 
+Trace | SEND                      | property `DemoServer.DemoModel.polymorphic` :: ver = 0, value = Derived (
+  string = "Kotlin instance"
+) 
+Trace | SEND                      | property `DemoServer.DemoModel.date` :: ver = 0, value = Thu Jan 01 03:00:13 MSK 1970 
+Trace | SEND                      | property `DemoServer.DemoModel.enum` :: ver = 0, value = kt 
+Trace | SEND                      | signal `DemoServer.DemoModel.extModel.checker` :: value = kotlin.Unit 
+Trace | RECV                      | property `DemoServer.DemoModel.property_with_default` :: oldver = 0, newver = 0, value = "192" 
+Trace | RECV                      | property `DemoServer.DemoModel.boolean_property` :: oldver = 0, newver = 0, value = false 
+Trace | RECV                      | property `DemoServer.DemoModel.boolean_array` :: oldver = 0, newver = 0, value = "false, true, false" 
+Trace | RECV                      | property `DemoServer.DemoModel.scalar` :: oldver = 0, newver = 0, value = MyScalar (
+  bool = false
+  byte = 50
+  short = 32000
+  int = 1000000000
+  long = -2000000000000000000
+  float = 3.14
+  double = -1.2345678901234567E8
+  unsigned_byte = 254
+  unsigned_short = 65534
+  unsigned_int = 4294967294
+  unsigned_long = 18446744073709551614
+  enum = net
+  flags = [anyFlag, netFlag]
+) 
+Trace | RECV                      | map `DemoServer.DemoModel.mapLongToString`  :: Add :: key = 50 :: value = "C#" 
+Trace | RECV                      | property `DemoServer.DemoModel.interned_string` :: oldver = 0, newver = 0, value = "C#" 
+Trace | RECV                      | property `DemoServer.DemoModel.interned_string` :: oldver = 0, newver = 0, value = "protocol" 
+Trace | RECV                      | property `DemoServer.DemoModel.interned_string` :: oldver = 0, newver = 0, value = "C#" 
+Trace | RECV                      | property `DemoServer.DemoModel.polymorphic` :: oldver = 0, newver = 0, value = Derived (
+  string = "C# instance"
+) 
+Trace | RECV                      | property `DemoServer.DemoModel.enum` :: oldver = 0, newver = 0, value = net 
+Trace | RECV                      | signal `DemoServer.DemoModel.extModel.checker` :: value = kotlin.Unit 

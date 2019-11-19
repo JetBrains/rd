@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading;
 using JetBrains.Annotations;
-using JetBrains.Util;
 
 namespace JetBrains.Diagnostics.Internal
 {
@@ -50,6 +49,5 @@ namespace JetBrains.Diagnostics.Internal
     {
       return new TextWriterLog(Writer, category, EnabledLevel);
     }
-    
   }
 }

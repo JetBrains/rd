@@ -11,7 +11,7 @@ namespace JetBrains.Rd.Base
 {
   public abstract class RdExtBase : RdReactiveBase
   {
-    enum ExtState
+    public enum ExtState
     {
       Ready,
       ReceivedCounterPart,

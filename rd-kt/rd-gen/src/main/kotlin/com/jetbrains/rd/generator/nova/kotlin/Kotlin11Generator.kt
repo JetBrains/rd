@@ -49,13 +49,6 @@ open class Kotlin11Generator(
     private val Member.Reactive.Stateful.optimizeNested : Boolean
         get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
 
-//    object MasterStateful : ISetting<Boolean, Declaration>
-//    private val Member.Reactive.Stateful.Property.master : Boolean
-//        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
-//
-//    private val Member.Reactive.Stateful.Map.master : Boolean
-//        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
-
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
                 this is PredefinedType.NativeIntegral ||

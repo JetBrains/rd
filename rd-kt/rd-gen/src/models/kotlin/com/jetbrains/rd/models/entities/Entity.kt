@@ -3,19 +3,22 @@ package com.jetbrains.rd.models.entities
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
-import java.io.File
+import com.jetbrains.rd.generator.paths.cppDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.outputDirectory
+
+const val folder = "entities"
 
 object EntityRoot : Root(
-        Kotlin11Generator(FlowTransform.Reversed, "org.example", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true)
-//    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
+        Kotlin11Generator(FlowTransform.Reversed, "org.example", outputDirectory(ktDirectorySystemPropertyKey, folder)),
+        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", outputDirectory(cppDirectorySystemPropertyKey, folder), true)
 ) {
     init {
         setting(Cpp17Generator.TargetName, "entities")
     }
 }
 
+@Suppress("unused")
 object DynamicExt : Ext(EntityRoot) {
     private var AbstractEntity = basestruct {
         field("name", PredefinedType.string)

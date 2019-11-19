@@ -4,50 +4,52 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
+import com.jetbrains.rd.generator.paths.cppDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.outputDirectory
 import java.io.File
+
+const val folder = "interning"
 
 @Suppress("unused")
 object InterningRoot1 : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
-        Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")), true)
+    Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", outputDirectory(ktDirectorySystemPropertyKey, folder)),
+    CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
+    Cpp17Generator(FlowTransform.AsIs, "rd.test.util", outputDirectory(cppDirectorySystemPropertyKey, folder), true)
 ) {
     init {
         setting(Cpp17Generator.TargetName, "interning_test_model")
-//        setting(Kotlin11Generator.MasterStateful, false)
-//        setting(CSharp50Generator.MasterStateful, false)
-        setting(Cpp17Generator.MasterStateful, false)
     }
-    val TestInternScope = /*InterningModelsGenTest.InterningRoot1.*/internScope()
 
-    val InterningTestModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val TestInternScope = internScope()
+
+    val InterningTestModel = classdef {
         internRoot(TestInternScope)
 
         field("searchLabel", PredefinedType.string)
-        map("issues", PredefinedType.int, /*InterningModelsGenTest.InterningRoot1.*/structdef("WrappedStringModel") {
+        map("issues", PredefinedType.int, structdef("WrappedStringModel") {
             field("text", PredefinedType.string.interned(TestInternScope))
         })
     }
 
-    val InterningNestedTestModel = /*InterningModelsGenTest.InterningRoot1.*/structdef {
+    val InterningNestedTestModel = structdef {
         field("value", PredefinedType.string)
         field("inner", this.interned(TestInternScope).nullable)
     }
 
-    val InterningNestedTestStringModel = /*InterningModelsGenTest.InterningRoot1.*/structdef {
+    val InterningNestedTestStringModel = structdef {
         field("value", PredefinedType.string.interned(TestInternScope))
         field("inner", this.nullable)
     }
 
-    val InterningProtocolLevelModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InterningProtocolLevelModel = classdef {
         field("searchLabel", PredefinedType.string)
-        map("issues", PredefinedType.int, /*InterningModelsGenTest.InterningRoot1.*/structdef("ProtocolWrappedStringModel") {
+        map("issues", PredefinedType.int, structdef("ProtocolWrappedStringModel") {
             field("text", PredefinedType.string.interned(ProtocolInternScope))
         })
     }
 
-    val InterningMtModel = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InterningMtModel = classdef {
         internRoot(TestInternScope)
 
         field("searchLabel", PredefinedType.string)
@@ -55,8 +57,8 @@ object InterningRoot1 : Root(
         signal("signaller2", PredefinedType.string.interned(TestInternScope)).async
     }
 
-    val InternScopeOutOfExt = /*InterningModelsGenTest.InterningRoot1.*/internScope()
-    val InterningExtensionHolder = /*InterningModelsGenTest.InterningRoot1.*/classdef {
+    val InternScopeOutOfExt = internScope()
+    val InterningExtensionHolder = classdef {
         internRoot(InternScopeOutOfExt)
     }
 
@@ -65,10 +67,10 @@ object InterningRoot1 : Root(
 
 @Suppress("Unused")
 object InterningExt : Ext(InterningRoot1.InterningExtensionHolder) {
-    val InternScopeInExt = /*InterningModelsGenTest.InterningExt.*/internScope()
+    val InternScopeInExt = internScope()
 
     init {
-        property("root", /*InterningModelsGenTest.InterningExt.*/classdef("InterningExtRootModel") {
+        property("root", classdef("InterningExtRootModel") {
             internRoot(InternScopeInExt)
 
             property("internedLocally", PredefinedType.string.interned(InternScopeInExt))

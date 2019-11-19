@@ -13,7 +13,7 @@ namespace rd {
 		size_t memory = 0;
 	public:
 		template<typename F>
-		explicit PkgInputStream(F &&f) : request_data(std::forward<F>(f)) {};
+		explicit PkgInputStream(F &&f) : request_data(std::forward<F>(f)) {}
 		
 		void rewind();
 
