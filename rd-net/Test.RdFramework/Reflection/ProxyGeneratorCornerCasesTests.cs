@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Reflection;
@@ -6,6 +7,34 @@ using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
 {
+  [TestFixture]
+  public class AsyncCornerCases : ProxyGeneratorAsyncCallsTest
+  {
+    [Test]
+    public void TestUnregisteredType()
+    {
+      TestTemplate<UnknownSerializer, IUnknownSerializer>(s =>
+      {
+        var task = s.M(new Derived());
+        Assert.Throws<AggregateException>(() => task.Wait(1000));
+      });
+    }
+
+    public class Base  { }
+    public class Derived : Base  { }
+
+    [RdRpc]
+    public interface IUnknownSerializer
+    {
+      Task M(Base val);
+    }
+    [RdExt]
+    public class UnknownSerializer : RdExtReflectionBindableBase, IUnknownSerializer
+    {
+      public Task M(Base val) => Task.Factory.StartNew(() => { });
+    }
+  }
+
   [TestFixture]
   [Apartment(System.Threading.ApartmentState.STA)]
   public class ProxyGeneratorCornerCasesTests : RdReflectionTestBase

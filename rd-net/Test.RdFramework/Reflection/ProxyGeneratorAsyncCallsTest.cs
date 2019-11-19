@@ -206,7 +206,7 @@ namespace Test.RdFramework.Reflection
     private void TestAsyncCalls(Action<IAsyncCallsTest> run) => TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
     private void TestSyncCalls(Action<ISyncCallsTest> run) => TestTemplate<SyncCallsTest, ISyncCallsTest>(run);
 
-    private void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
+    protected void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
     {
       ClientProtocol.Scheduler.Queue(() =>
       {
