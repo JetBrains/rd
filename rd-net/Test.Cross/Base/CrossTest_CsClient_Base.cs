@@ -15,7 +15,7 @@ namespace Test.RdCross.Base
 
     protected CrossTest_CsClient_Base()
     {
-      static bool StampFileExists() => File.Exists(FileSystem.PortFileStamp);
+      bool StampFileExists() => File.Exists(FileSystem.PortFileStamp);
 
       Console.WriteLine($"Waiting for port being written in file={FileSystem.PortFile}");
 
