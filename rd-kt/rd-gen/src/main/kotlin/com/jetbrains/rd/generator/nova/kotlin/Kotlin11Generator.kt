@@ -866,7 +866,7 @@ open class Kotlin11Generator(
 
         if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
 
-        if (decl.getSetting(DisableDeepCloneGeneration) == null) return
+        if (decl.getSetting(DisableDeepCloneGeneration) != null) return
 
         block("override fun deepClone(): ${decl.name}  ") {
 
