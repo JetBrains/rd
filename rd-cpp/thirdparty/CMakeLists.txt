@@ -24,6 +24,6 @@ target_link_libraries(thirdparty PUBLIC
         )
 
 install(FILES thirdparty.hpp
-        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}"
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER_THIRDPARTY}"
         CONFIGURATIONS Release
         )
