@@ -1,31 +1,27 @@
 package com.jetbrains.rd.cross.test.cases.diff
 
-import org.junit.After
+import com.jetbrains.rd.util.eol
+import org.junit.*
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
 import org.junit.rules.TestName
 import java.io.File
 import java.nio.file.Paths
 
 class CrossTest {
-    private fun File.toHighlightablePath() = "file:///"+this.canonicalPath.replace('\\','/')
+    private fun File.toHighlightablePath() = "file:///" + this.invariantSeparatorsPath
 
-    private fun assertEqualFiles(file1: File, file2: File) {
-        val t1 = file1.readText(Charsets.UTF_8)
-        val t2 = file2.readText(Charsets.UTF_8)
-        if (t1 == t2) {
-            println("The files ${file1.toHighlightablePath()} and ${file2.toHighlightablePath()} are same!")
+    private fun assertEqualFiles(expectedFile: File, actualFile: File) {
+        val expectedText = expectedFile.readText(Charsets.UTF_8)
+        val actualText = actualFile.readText(Charsets.UTF_8)
+        if (expectedText == actualText) {
+            println("The files ${expectedFile.toHighlightablePath()} and ${actualFile.toHighlightablePath()} are same!")
         } else {
-            fail("The files ${file1.toHighlightablePath()} and ${file2.toHighlightablePath()} differ!")
+            throw ComparisonFailure("The files ${expectedFile.toHighlightablePath()} and ${actualFile.toHighlightablePath()} differ!$eol", expectedText, actualText)
         }
     }
 
     companion object {
         val rootFolder: File = File(Paths.get("").toAbsolutePath().toString()).parentFile.parentFile
-
     }
 
     @After

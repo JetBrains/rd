@@ -1,6 +1,5 @@
 import com.jetbrains.rd.gradle.plugins.applyCrossTest
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
-import com.jetbrains.rd.gradle.tasks.InteropTask
 import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
