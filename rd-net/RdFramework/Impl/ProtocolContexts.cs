@@ -26,19 +26,19 @@ namespace JetBrains.Rd.Impl
     
     internal struct SendWithoutContextsCookie : IDisposable
     {
-      private readonly ProtocolContexts myHandler;
+      private readonly ProtocolContexts myContexts;
       private readonly bool myPrevValue;
 
-      public SendWithoutContextsCookie(ProtocolContexts handler)
+      public SendWithoutContextsCookie(ProtocolContexts contexts)
       {
-        myHandler = handler;
-        myPrevValue = handler.mySendWithoutContexts.Value;
-        handler.mySendWithoutContexts.Value = true;
+        myContexts = contexts;
+        myPrevValue = contexts.mySendWithoutContexts.Value;
+        contexts.mySendWithoutContexts.Value = true;
       }
 
       public void Dispose()
       {
-        myHandler.mySendWithoutContexts.Value = myPrevValue;
+        myContexts.mySendWithoutContexts.Value = myPrevValue;
       }
     }
 

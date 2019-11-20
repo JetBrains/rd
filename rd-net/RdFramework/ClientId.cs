@@ -39,10 +39,10 @@ namespace JetBrains.Rd
           }
           
           public static readonly ClientIdKey Instance = new ClientIdKey();
-          
-          public override void RegisterOn(ISerializers serializers)
+
+          protected internal override void RegisterOn(ISerializers serializers)
           {
-            serializers.Register((_, __) => Instance, (_, __, ___) => { });
+            serializers.Register((_, __) => Instance, (_, __, ___) => { }, RdId.Hash($"RdContext-{Key}"));
           }
         }
 

@@ -22,11 +22,12 @@ namespace JetBrains.Rd.Impl
     private readonly CtxReadDelegate<TBase> myReadDelegate;
     private readonly CtxWriteDelegate<TBase> myWriteDelegate;
 
-    public bool TryGetInterned(TBase value, out InternId result)
+    public InternId TryGetInterned(TBase value)
     {
       var hasValue = myInverseMap.TryGetValue(value, out var pair);
-      result = hasValue ? pair.Id : default;
-      return hasValue;
+      if (hasValue)
+        return pair.Id;
+      return InternId.Invalid;
     }
 
     public InternId Intern(TBase value)

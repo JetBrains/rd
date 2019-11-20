@@ -5,7 +5,6 @@ using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
-using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
@@ -24,9 +23,13 @@ namespace JetBrains.Rd.Impl
     /// Should match whatever is in rd-gen for ProtocolInternScope
     /// </summary>
     const string ProtocolInternScopeStringId = "Protocol";
-    
 
-    public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
+    public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler, 
+      [NotNull] IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
+      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, initialContexts)
+    { }
+
+    internal Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
       [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, params RdContextBase[] initialContexts)
     {
       

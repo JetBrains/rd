@@ -28,10 +28,8 @@ namespace JetBrains.Rd.Impl
   public class Serializers : ISerializers
   {
     private readonly Dictionary<Type, RdId> myTypeMapping = new Dictionary<Type, RdId>();
-    private readonly Dictionary<RdId, Type> myInverseTypeMapping = new Dictionary<RdId, Type>();
     private readonly Dictionary<RdId, Delegate> myReaders = new Dictionary<RdId, Delegate>();
     private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
-    private readonly Dictionary<RdId, Delegate> myRawWriters = new Dictionary<RdId, Delegate>();
 
     [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicCatalog;
 
@@ -209,7 +207,7 @@ namespace JetBrains.Rd.Impl
       Register(ReadEnum<T>, WriteEnum<T>);
     }
 
-    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, int? predefinedId = null)
+    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedId = null)
     {
       #if !NET35
       if (!myBackgroundRegistrar.IsInsideProcessing)
@@ -235,10 +233,8 @@ namespace JetBrains.Rd.Impl
         Protocol.InitializationLogger.Trace("Registering type {0}, id={1}", typeof(T).Name, typeId);
         
         myTypeMapping[typeof(T)] = typeId;
-        myInverseTypeMapping[typeId] = typeof(T);
         myReaders[typeId] = reader;
         myWriters[typeId] = (ctx, buffer, value) => writer(ctx, buffer, (T) value);
-        myRawWriters[typeId] = writer;
       }
 
     }
@@ -336,38 +332,6 @@ namespace JetBrains.Rd.Impl
       Protocol.InitializationLogger.Trace("REGISTER serializers for {0}", r.Type.Name);
 
       r.Action(this);
-    }
-
-    public Type GetTypeForId(RdId id)
-    {
-#if !NET35
-      myBackgroundRegistrar.WaitForEmpty();
-#endif
-      return myInverseTypeMapping[id];
-    }
-
-    public CtxReadDelegate<T> GetReaderForId<T>(RdId id)
-    {
-#if !NET35
-      myBackgroundRegistrar.WaitForEmpty();
-#endif
-      return (CtxReadDelegate<T>) myReaders[id];
-    }
-
-    public CtxWriteDelegate<T> GetWriterForId<T>(RdId id)
-    {
-#if !NET35
-      myBackgroundRegistrar.WaitForEmpty();
-#endif
-      return (CtxWriteDelegate<T>) myRawWriters[id];
-    }
-    
-    public RdId GetIdForType(Type type)
-    {
-#if !NET35
-      myBackgroundRegistrar.WaitForEmpty();
-#endif
-      return myTypeMapping[type];
     }
   }
 }

@@ -9,7 +9,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ViewableSet
 import com.jetbrains.rd.util.string.RName
 
-class Protocol(
+class Protocol internal constructor(
     override val name: String,
     override val serializers: ISerializers,
     override val identity: IIdentities,
@@ -21,6 +21,13 @@ class Protocol(
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
 
+    constructor(name: String,
+                serializers: ISerializers,
+                identity: IIdentities,
+                scheduler: IScheduler,
+                wire: IWire, //to initialize field with circular dependencies
+                lifetime: Lifetime,
+                vararg initialContexts: RdContext<*>) : this(name, serializers, identity, scheduler, wire, lifetime, null, null, *initialContexts)
 
     override val location: RName = RName(name)
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet()
@@ -44,7 +51,7 @@ class Protocol(
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
     init {
-        wire.updateContexts(contexts)
+        wire.setupContexts(contexts)
         initialContexts.forEach {
             contexts.registerContext(it)
         }

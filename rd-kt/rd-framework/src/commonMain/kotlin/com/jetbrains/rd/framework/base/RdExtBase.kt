@@ -171,7 +171,7 @@ class ExtWire : IWire {
     override val contexts: ProtocolContexts
         get() = realWire.contexts
 
-    override fun updateContexts(newContexts: ProtocolContexts) {
+    override fun setupContexts(newContexts: ProtocolContexts) {
         require(newContexts === realWire.contexts) { "Can't replace ProtocolContexts on ExtWire" }
     }
 
@@ -186,7 +186,6 @@ class ExtWire : IWire {
             Sync.lock(sendQ) {
                 while (true) {
                     val (id, count, payload, context) = sendQ.poll() ?: return@lock
-                    val readBuffer = createAbstractBuffer(payload)
 
                     val prevValues = ArrayList<Any?>(context.size)
                     context.forEach { (ctx, value) ->
@@ -194,7 +193,7 @@ class ExtWire : IWire {
                         ctx.value = value
                     }
                     try {
-                        realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, readBuffer.position, count) }
+                        realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
                     } finally {
                         context.forEachIndexed { idx, (ctx, _) ->
                             ctx.value = prevValues[idx]

@@ -35,6 +35,9 @@ abstract class RdContext<T : Any>(val key: String, val heavy: Boolean, val seria
                     // noop write
                 }
 
+                override val id: RdId
+                    get() = RdId("RdContext-${context.key}".getPlatformIndependentHash())
+
                 override val _type: KClass<*>
                     get() = context::class
             }

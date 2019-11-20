@@ -193,7 +193,7 @@ namespace JetBrains.Rd.Base
     }
 
 
-    public unsafe ExtWire()
+    public ExtWire()
     {
       Connected.WhenTrue(Lifetime.Eternal, _ =>
       {

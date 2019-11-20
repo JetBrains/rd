@@ -58,7 +58,7 @@ interface IWire {
 
     val contexts: ProtocolContexts
 
-    fun updateContexts(newContexts: ProtocolContexts)
+    fun setupContexts(newContexts: ProtocolContexts)
 }
 
 /**

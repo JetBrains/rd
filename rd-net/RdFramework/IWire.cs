@@ -21,8 +21,17 @@ namespace JetBrains.Rd
   {    
     protected readonly MessageBroker MessageBroker;
     private IScheduler myScheduler;
-    
-    public ProtocolContexts Contexts { get; set; }
+    private ProtocolContexts myContexts;
+
+    public ProtocolContexts Contexts
+    {
+      get => myContexts;
+      set
+      {
+        Assertion.Assert(myContexts == null || ReferenceEquals(myContexts, value), "May not replace contexts in IWire");
+        myContexts = value;
+      }
+    }
 
 
     protected WireBase([NotNull] IScheduler scheduler)

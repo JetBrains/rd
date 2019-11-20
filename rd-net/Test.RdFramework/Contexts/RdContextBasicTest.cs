@@ -1,4 +1,3 @@
-using System;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Impl;
@@ -29,7 +28,7 @@ namespace Test.RdFramework.Contexts
       
       public static readonly TestKeyHeavy Instance = new TestKeyHeavy();
 
-      public override void RegisterOn(ISerializers serializers)
+      protected internal override void RegisterOn(ISerializers serializers)
       {
         serializers.Register((_, __) => Instance, (_, __, ___) => { });
       }
@@ -43,7 +42,7 @@ namespace Test.RdFramework.Contexts
       
       public static readonly TestKeyLight Instance = new TestKeyLight();
 
-      public override void RegisterOn(ISerializers serializers)
+      protected internal override void RegisterOn(ISerializers serializers)
       {
         serializers.Register((_, __) => Instance, (_, __, ___) => { });
       }
@@ -112,8 +111,8 @@ namespace Test.RdFramework.Contexts
       }
       
       public static readonly TestKey2 Instance = new TestKey2();
-      
-      public override void RegisterOn(ISerializers serializers)
+
+      protected internal override void RegisterOn(ISerializers serializers)
       {
         serializers.Register((_, __) => Instance, (_, __, ___) => { });
       }

@@ -12,7 +12,7 @@ namespace JetBrains.Rd
     /// <summary>
     /// Tries to get an ID for a value. Doesn't intern it if it's not interned.
     /// </summary>
-    bool TryGetInterned(TBase value, out InternId result);
+    InternId TryGetInterned(TBase value);
     
     /// <summary>
     /// Interns a value and returns an ID for it. May return invalid ID in case of multithreaded contention.
@@ -42,58 +42,37 @@ namespace JetBrains.Rd
   public readonly struct InternId : IEquatable<InternId>
   {
     private const int InvalidId = -1;
-    public readonly int Value;
+    private readonly int myValue;
 
-    public InternId(int value)
+    internal InternId(int value)
     {
-      Value = value;
+      myValue = value;
     }
 
     /// <summary>
     /// True if this ID represents an actual interned value. False indicates a failed interning operation or unset value
     /// </summary>
-    public bool IsValid => Value != InvalidId;
+    public bool IsValid => myValue != InvalidId;
     
     /// <summary>
     /// True if this ID represents a value interned by local InternRoot 
     /// </summary>
-    public bool IsLocal => (Value & 1) == 0;
+    public bool IsLocal => (myValue & 1) == 0;
     
     public static InternId Invalid = new InternId(InvalidId);
 
-    public static InternId Read(UnsafeReader reader)
-    {
-      return new InternId(reader.ReadInt());
-    }
+    public static InternId Read(UnsafeReader reader) => new InternId(reader.ReadInt());
 
-    public static void Write(UnsafeWriter writer, InternId value)
-    {
-      writer.Write(value.Value == InvalidId ? value.Value : value.Value ^ 1);
-    }
+    public static void Write(UnsafeWriter writer, InternId value) => writer.Write(value.myValue == InvalidId ? value.myValue : value.myValue ^ 1);
 
-    public bool Equals(InternId other)
-    {
-      return Value == other.Value;
-    }
+    public bool Equals(InternId other) => myValue == other.myValue;
 
-    public override bool Equals(object obj)
-    {
-      return obj is InternId other && Equals(other);
-    }
+    public override bool Equals(object obj) => obj is InternId other && Equals(other);
 
-    public override int GetHashCode()
-    {
-      return Value;
-    }
+    public override int GetHashCode() => myValue;
 
-    public static bool operator ==(InternId left, InternId right)
-    {
-      return left.Equals(right);
-    }
+    public static bool operator ==(InternId left, InternId right) => left.Equals(right);
 
-    public static bool operator !=(InternId left, InternId right)
-    {
-      return !left.Equals(right);
-    }
+    public static bool operator !=(InternId left, InternId right) => !left.Equals(right);
   }
 }

@@ -198,7 +198,7 @@ class JsBuffer(private var buffer: ArrayBuffer) : AbstractBuffer() {
             1
     )
 
-    override fun writeByteArrayRaw(array: ByteArray, offset: Int?, count: Int?) = writeArrayBody(array.sliceArray((offset ?: 0) .. array.lastIndex), count ?: array.size,
+    override fun writeByteArrayRaw(array: ByteArray, count: Int?) = writeArrayBody(array, count ?: array.size,
             { buffer, position, length -> Int8Array(buffer, position, length) }, 1)
 
     override fun readNullableString(): String? {

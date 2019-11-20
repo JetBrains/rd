@@ -43,29 +43,20 @@ namespace JetBrains.Rd
       return Equals((RdContextBase) obj);
     }
 
-    public override int GetHashCode()
-    {
-      return Key.GetHashCode();
-    }
+    public override int GetHashCode() => Key.GetHashCode();
 
-    public static bool operator ==(RdContextBase left, RdContextBase right)
-    {
-      return Equals(left, right);
-    }
+    public static bool operator ==(RdContextBase left, RdContextBase right) => Equals(left, right);
 
-    public static bool operator !=(RdContextBase left, RdContextBase right)
-    {
-      return !Equals(left, right);
-    }
+    public static bool operator !=(RdContextBase left, RdContextBase right) => !Equals(left, right);
 
-    public abstract void RegisterOn(ProtocolContexts contexts);
-    public abstract void RegisterOn(ISerializers serializers);
+    protected internal abstract void RegisterOn(ProtocolContexts contexts);
+    protected internal abstract void RegisterOn(ISerializers serializers);
     
     internal abstract object ValueBoxed { get; set; }
 
-    public abstract void PopContext();
+    internal abstract void PopContext();
 
-    public abstract void PushContextBoxed(object value);
+    internal abstract void PushContextBoxed(object value);
   }
 
   /// <summary>
@@ -80,11 +71,11 @@ namespace JetBrains.Rd
     [NotNull] public readonly CtxReadDelegate<T> ReadDelegate;
     [NotNull] public readonly CtxWriteDelegate<T> WriteDelegate;
     
-    private ThreadLocal<Stack<T>> myContextStack = new ThreadLocal<Stack<T>>(() => new Stack<T>());
+    private readonly ThreadLocal<Stack<T>> myContextStack = new ThreadLocal<Stack<T>>(() => new Stack<T>());
 #if NET35
-    private ThreadLocal<T> myValue = new ThreadLocal<T>();
+    private readonly ThreadLocal<T> myValue = new ThreadLocal<T>();
 #else
-    private AsyncLocal<T> myValue = new AsyncLocal<T>();
+    private readonly AsyncLocal<T> myValue = new AsyncLocal<T>();
 #endif
 
     /// <summary>
@@ -110,7 +101,7 @@ namespace JetBrains.Rd
       set => myValue.Value = value;
     }
 
-    internal override object ValueBoxed
+    internal sealed override object ValueBoxed
     {
       get => Value;
       set => Value = (T) value;
@@ -119,28 +110,19 @@ namespace JetBrains.Rd
     /// <summary>
     /// Pushes current context value to a thread-local stack and sets new value
     /// </summary>
-    public void PushContext(T value)
+    internal void PushContext(T value)
     {
       myContextStack.Value.Push(Value);
       Value = value;
     }
 
-    public override void PushContextBoxed(object value)
-    {
-      PushContext((T) value);
-    }
+    internal sealed override void PushContextBoxed(object value) => PushContext((T) value);
 
     /// <summary>
     /// Restores previous context value from a thread-local stack
     /// </summary>
-    public override void PopContext()
-    {
-      Value = myContextStack.Value.Pop();
-    }
+    internal sealed override void PopContext() => Value = myContextStack.Value.Pop();
 
-    public override void RegisterOn(ProtocolContexts contexts)
-    {
-      contexts.RegisterContext(this);
-    }
+    protected internal sealed override void RegisterOn(ProtocolContexts contexts) => contexts.RegisterContext(this);
   }
 }

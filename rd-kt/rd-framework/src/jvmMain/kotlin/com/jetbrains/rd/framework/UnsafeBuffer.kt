@@ -122,13 +122,13 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
         offset += 4 + array.size
     }
 
-    override fun writeByteArrayRaw(array: ByteArray, arrayOffset: Int?, count: Int?) {
-        val sz = count ?: (array.size - (arrayOffset ?: 0))
+    override fun writeByteArrayRaw(array: ByteArray, count: Int?) {
+        val sz = count ?: (array.size - 0)
         require(sz >= 0 && sz <= array.size) { "sz >= 0 && sz <= array.size, sz = $sz, array.size=${array.size}" }
 
         requireAvailable(sz. toLong())
 
-        unsafe.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET.toLong() + (arrayOffset ?: 0), byteBufferMemoryBase, offset + memory, sz.toLong())
+        unsafe.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET.toLong(), byteBufferMemoryBase, offset + memory, sz.toLong())
 
         offset += sz
     }

@@ -22,8 +22,8 @@ abstract class WireBase(val scheduler: IScheduler) : IWire {
 
     abstract override fun send(id: RdId, writer: (AbstractBuffer) -> Unit)
 
-    override fun updateContexts(newContexts: ProtocolContexts) {
-        require(!this::contextsInternal.isInitialized) { "Can't replace ProtocolContexts in IContextAwareWire"}
+    override fun setupContexts(newContexts: ProtocolContexts) {
+        require(!this::contextsInternal.isInitialized) { "Can't replace ProtocolContexts in IWire"}
         contextsInternal = newContexts
     }
 }

@@ -551,7 +551,7 @@ open class CSharp50Generator(
                     indent {
                         +"private ${it.keyName}() : this(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)}) {}"
                         +"public static readonly ${it.keyName} Instance = new ${it.keyName}();"
-                        +"public override void RegisterOn(ISerializers serializers)"
+                        +"protected internal override void RegisterOn(ISerializers serializers)"
                         +"{"
                         +"serializers.Register((_, __) => Instance, (_, __, ___) => { });"
                         +"}"
