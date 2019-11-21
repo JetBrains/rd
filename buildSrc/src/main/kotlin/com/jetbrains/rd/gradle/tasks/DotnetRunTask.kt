@@ -1,18 +1,18 @@
 package com.jetbrains.rd.gradle.tasks
 
-import org.gradle.api.tasks.TaskAction
-import java.io.File
+import com.jetbrains.rd.gradle.dependencies.netCoreAppVersion
+import org.gradle.api.tasks.Exec
+import org.gradle.kotlin.dsl.create
+import org.gradle.process.BaseExecSpec
 
-open class DotnetRunTask : RunExecTask() {
+/**
+ * Run dotnet project using "dotnet" command line tool and "netcoreapp" as framework.
+ */
+@Suppress("UsePropertyAccessSyntax", "LeakingThis")
+open class DotnetRunTask : Exec() {
     init {
         executable = "dotnet"
-        workingDir = File(workingDir, "Cross")
-        setArgs(listOf("run", "-c:Configuration=Release", name))
-    }
 
-    @TaskAction
-    override fun exec() {
-        setArgs(args?.plus(tmpFile.absolutePath))
-        super.exec()
+        setArgs(listOf("run", "--framework=netcoreapp$netCoreAppVersion", name))
     }
 }

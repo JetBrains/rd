@@ -103,15 +103,15 @@ if (WIN32)
         SET(PLATFORM "x64")
     endif ()
     install(TARGETS rd_framework_cpp rd_core_cpp clsocket
-            CONFIGURATIONS Release
+            CONFIGURATIONS Release Debug
             ARCHIVE
-            DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/"
+            DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
             )
 endif ()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_framework_cpp"
-        CONFIGURATIONS Release
+        CONFIGURATIONS Debug Release
         FILES_MATCHING
         PATTERN *.h
         PATTERN *.hpp

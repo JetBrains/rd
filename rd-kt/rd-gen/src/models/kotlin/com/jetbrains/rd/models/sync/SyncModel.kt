@@ -1,14 +1,19 @@
+@file:Suppress("RemoveRedundantQualifierName")
+
 package com.jetbrains.rd.models.sync
 
 import com.jetbrains.rd.generator.nova.*
-import com.jetbrains.rd.generator.nova.PredefinedType.*
+import com.jetbrains.rd.generator.nova.PredefinedType.int
+import com.jetbrains.rd.generator.nova.PredefinedType.string
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import com.jetbrains.rd.models.sync.SyncModelRoot.Clazz
-import java.io.File
+import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
+import com.jetbrains.rd.generator.paths.outputDirectory
+
+const val folder = "sync"
 
 object SyncModelRoot : Root(
-    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", File(syspropertyOrInvalid("model.out.src.kt.dir")))
+    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", outputDirectory(ktDirectorySystemPropertyKey, folder))
 ) {
     val ClientId = context(string)
     val Baseclazz = baseclass {

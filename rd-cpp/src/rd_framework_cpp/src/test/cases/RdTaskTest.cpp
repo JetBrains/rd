@@ -3,9 +3,9 @@
 #include "RdFrameworkTestBase.h"
 #include "RdCall.h"
 #include "RdEndpoint.h"
+#include "RdSymmetricCall.h"
 
 #include <string>
-#include <task/RdSymmetricCall.h>
 
 using namespace rd;
 using namespace test;

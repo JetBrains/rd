@@ -1,26 +1,39 @@
 package com.jetbrains.rd.gradle.tasks
 
 import org.gradle.api.tasks.Exec
-import java.io.File
+import org.gradle.api.tasks.Input
 
+/**
+ * Build dotnet project using "dotnet" command line tool
+ */
+@Suppress("UsePropertyAccessSyntax", "LeakingThis")
 open class DotnetBuildTask : Exec() {
-    private lateinit var _projectName: String
-
-    var projectName: String
-        get() = _projectName
-        set(value) {
-            _projectName = value
-            executable = "dotnet"
-            workingDir = File(workingDir, "Cross")
-            setArgs(listOf("build", projectName, "-p:Configuration=Release", "--output=build"))
-        }
-
-
-    init {
-        group = "dotnet build"
+    fun configuration(value: String) {
+        args("-c=${value}")
     }
 
-    public override fun exec() {
-        super.exec()
+    init {
+        executable = "dotnet"
+
+        args("build")
+
+        addInputs()
+        addOutputs()
+    }
+
+    private fun addInputs() {
+        val excludedFolder = listOf(".idea", ".gradle", "bin", "obj", "packages", "artifacts")
+        val includedExtensions = listOf("cs", "csproj", "fs")
+        val search = workingDir.walk()
+            .onEnter { a -> a.name !in excludedFolder }
+            .filter { a -> a.isFile && a.extension in includedExtensions }
+        search.forEach { inputs.file(it) }
+    }
+
+    private fun addOutputs() {
+        val includedExtensions = listOf("dll", "exe")
+        val search = workingDir.walk()
+            .filter { a -> a.isFile && a.extension in includedExtensions }
+        search.forEach { outputs.file(it) }
     }
 }

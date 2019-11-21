@@ -115,7 +115,7 @@ fun JList<*>.hoveredIndex(): IPropertyView<Int?> = awtMousePoint().map {
 }
 
 fun ListSelectionModel.selectedIndexes(): IPropertyView<List<Int>> {
-    return proxyProperty(null as List<Int>) { lifetime, set ->
+    return proxyProperty(listOf()) { lifetime, set ->
         val listener = ListSelectionListener {
             val lsm = it.source as ListSelectionModel
             val list = ArrayList<Int>()

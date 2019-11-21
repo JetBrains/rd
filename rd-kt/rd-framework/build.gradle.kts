@@ -1,5 +1,6 @@
 import com.jetbrains.rd.gradle.plugins.applyMultiplatform
 import com.jetbrains.rd.gradle.tasks.CopySourcesTask
+import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
 
 plugins {
     kotlin("multiplatform")
@@ -25,14 +26,10 @@ kotlin {
     }
 }
 
-val testCopySources by tasks.creating(CopySourcesTask::class) {
-    dependsOn(":rd-gen:generateEverything")
-    currentSourceSet = kotlin.sourceSets.commonTest.get()
-    currentProject = project
-    generativeSourceSet = evaluationDependsOn(":rd-gen").sourceSets["models"]
-
-    lateInit()
-}
+val testCopySources by creatingCopySourcesTask(
+        kotlin.sourceSets.commonTest,
+        evaluationDependsOn(":rd-gen").sourceSets["models"]
+)
 
 tasks.named("compileTestKotlinJvm") {
     dependsOn(testCopySources)

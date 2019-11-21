@@ -54,6 +54,13 @@ namespace Test.RdFramework.Reflection
       run(c, s);
     }
 
+    protected void WithExtsProxy<T1, T2>(Action<T1, T2> run) where T1 : RdBindableBase where T2 : class 
+    {
+      var c = CFacade.Activator.ActivateBind<T1>(TestLifetime, ClientProtocol);
+      var s = SFacade.ActivateProxy<T2>(TestLifetime, ServerProtocol);
+      run(c, s);
+    }
+
     protected void SaveGeneratedAssembly()
     {
 #if NET35 || NETCOREAPP

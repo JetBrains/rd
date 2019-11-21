@@ -18,6 +18,10 @@ namespace rd {
 			return val;
 		}
 
+		inline std::string to_string(char const val[]) {
+			return val;
+		}
+
 //		template<>
 		inline std::string to_string(std::wstring const &val) {
 			return std::string(val.begin(), val.end());

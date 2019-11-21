@@ -24,6 +24,15 @@ namespace JetBrains.Rd
       return new RdId(id ?? Hash(type.Name));
     }
 
+    /// <summary>
+    /// Define an RdId by fully-qualified type name.
+    /// You should use it only in case of C#-C# communication.
+    /// </summary>
+    public static RdId DefineByFqn(Type type)
+    {
+      return new RdId(Hash(type.FullName));
+    }
+
     public RdId(long value)
     {
       myValue = value;

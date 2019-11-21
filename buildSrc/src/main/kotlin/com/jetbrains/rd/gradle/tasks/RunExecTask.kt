@@ -16,14 +16,14 @@ open class RunExecTask : Exec() {
         outputs.upToDateWhen { false }
     }
 
-    @TaskAction
-    override fun exec() {
-        val iterable = args as Iterable<*>
-        when {
-            Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine = listOfNotNull("cmd", "/c", "$execPath.exe") + iterable
-            Os.isFamily(Os.FAMILY_UNIX) -> commandLine = listOfNotNull("./$execPath") + iterable
-            Os.isFamily(Os.FAMILY_MAC) -> commandLine = listOfNotNull("./$execPath") + iterable
+    @Suppress("UNCHECKED_CAST")
+    override fun getCommandLine(): List<String> {
+        val iterable = args as Iterable<String>
+        return when {
+            Os.isFamily(Os.FAMILY_WINDOWS) -> listOfNotNull("cmd", "/c", "$execPath.exe") + iterable
+            Os.isFamily(Os.FAMILY_UNIX) -> listOfNotNull("./$execPath") + iterable
+            Os.isFamily(Os.FAMILY_MAC) -> listOfNotNull("./$execPath") + iterable
+            else -> error("")
         }
-        super.exec()
     }
 }

@@ -21,4 +21,5 @@ dependencies {
     compile("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
 //    compile("org.gradle.kotlin:plugins:1.3.1")
     compile("com.moowork.gradle:gradle-node-plugin:1.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.1")
 }

@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Reflection;
+using JetBrains.Annotations;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 
@@ -56,7 +57,7 @@ namespace JetBrains.Rd.Reflection
 
     private static void Bind(IRdBindable instance, Lifetime lifetime, IProtocol protocol)
     {
-      var typename = instance.GetType().Name;
+      var typename = ReflectionRdActivator.GetTypeName(instance.GetType());
       instance.Identify(protocol.Identities, RdId.Root.Mix(typename));
       instance.Bind(lifetime, protocol, typename);
     }
