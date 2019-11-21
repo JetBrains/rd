@@ -73,8 +73,38 @@ namespace JetBrains.Rd.Reflection
   {
     private static readonly HashSet<Type> ourPrimitiveTypes = new HashSet<Type>()
     {
-      typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(char), typeof(bool), typeof(Unit), typeof(string), typeof(Guid), typeof(DateTime), typeof(Uri), typeof(RdId), typeof(RdSecureString), typeof(byte[]), typeof(short[]), typeof(int[]), typeof(long[]), typeof(float[]), typeof(double[]), typeof(char[]), typeof(bool[])
+      typeof(byte),              // serializers.Register(ReadByte, WriteByte, 1);
+      typeof(short),             // serializers.Register(ReadShort, WriteShort, 2);
+      typeof(int),               // serializers.Register(ReadInt, WriteInt, 3);
+      typeof(long),              // serializers.Register(ReadLong, WriteLong, 4);
+      typeof(float),             // serializers.Register(ReadFloat, WriteFloat, 5);
+      typeof(double),            // serializers.Register(ReadDouble, WriteDouble, 6);
+      typeof(char),              // serializers.Register(ReadChar, WriteChar, 7);
+      typeof(bool),              // serializers.Register(ReadBool, WriteBool, 8);
+      typeof(Unit),              // serializers.Register(ReadVoid, WriteVoid, 9);
+      typeof(string),            // serializers.Register(ReadString, WriteString, 10);
+      typeof(Guid),              // serializers.Register(ReadGuid, WriteGuid, 11);
+      typeof(DateTime),          // serializers.Register(ReadDateTime, WriteDateTime, 12);
+      typeof(Uri),               // serializers.Register(ReadUri, WriteUri, 13);
+      typeof(RdId),              // serializers.Register(ReadRdId, WriteRdId, 14);
+      typeof(RdSecureString),    // serializers.Register(ReadSecureString, WriteSecureString, 15)
+      typeof(byte[]),            // serializers.Register(ReadByteArray, WriteByteArray, 31);
+      typeof(short[]),           // serializers.Register(ReadShortArray, WriteShortArray, 32);
+      typeof(int[]),             // serializers.Register(ReadIntArray, WriteIntArray, 33);
+      typeof(long[]),            // serializers.Register(ReadLongArray, WriteLongArray, 34);
+      typeof(float[]),           // serializers.Register(ReadFloatArray, WriteFloatArray, 35);
+      typeof(double[]),          // serializers.Register(ReadDoubleArray, WriteDoubleArray, 36);
+      typeof(char[]),            // serializers.Register(ReadCharArray, WriteCharArray, 37);
+      typeof(bool[]),            // serializers.Register(ReadBoolArray, WriteBoolArray, 38);
+      typeof(ushort),            // serializers.Register(ReadUShort, WriteUShort, 42);
+      typeof(uint),              // serializers.Register(ReadUInt, WriteUInt, 43);
+      typeof(ulong),             // serializers.Register(ReadULong, WriteULong, 44);
+      typeof(ushort[]),          // serializers.Register(ReadUShortArray, WriteUShortArray, 46);
+      typeof(uint[]),            // serializers.Register(ReadUIntArray, WriteUIntArray, 47);
+      typeof(ulong[]),           // serializers.Register(ReadULongArray, WriteULongArray, 48);
     };
+
+    private static readonly string ourFakeTupleFullName = typeof(ProxyGenerator.FakeTuple<>).FullName.NotNull().TrimEnd('1');
 
     public static bool IsPrimitive(Type typeInfo)
     {
@@ -89,9 +119,9 @@ namespace JetBrains.Rd.Reflection
       return IsFieldType(typeInfo) || IsMemberType(typeInfo);
     }
 
-    public static bool CanBeNull(MemberInfo memberInfo)
+    public static bool CanBeNull(Type type)
     {
-      var returnType = ReflectionUtil.GetReturnType(memberInfo);
+      var returnType = type;
 
       var returnTypeInfo = returnType.GetTypeInfo();
       if (IsNullable(returnTypeInfo, _ => true))
@@ -99,13 +129,13 @@ namespace JetBrains.Rd.Reflection
 
       if (returnTypeInfo.IsValueType)
         return false;
-
+/*
       foreach (var attribute in memberInfo.GetCustomAttributes(false))
         if (attribute is CanBeNullAttribute)
           return true;
+*/
 
-      // NotNull by default for any reference type
-      return false;
+      return true;
     }
 
     private static bool IsFieldType(TypeInfo typeInfo, bool canBeArray = true)
@@ -174,7 +204,7 @@ namespace JetBrains.Rd.Reflection
       return false;
     }
 
-    private static bool IsScalar(Type type)
+    public static bool IsScalar(Type type)
     {
       return !typeof(IRdBindable).IsAssignableFrom(type);
     }
@@ -182,7 +212,7 @@ namespace JetBrains.Rd.Reflection
     public static void AssertEitherExtModelAttribute(TypeInfo type)
     {
       /*Assertion.Assert((HasRdExtAttribute(type) || HasRdModelAttribute(type)), $"Invalid RdModel: expected to have either {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)} ({type.ToString(true)}).");*/
-      Assertion.Assert((HasRdExtAttribute(type) ^ HasRdModelAttribute(type)), $"Invalid RdModel: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
+      Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
     }
 
     public static void AssertRoot(TypeInfo type)
@@ -201,9 +231,9 @@ namespace JetBrains.Rd.Reflection
         return;
       }
 
-      if (IsValueTuple(type))
+      if (IsScalar(type))
       {
-        AssertValidTuple(type);
+        AssertValidScalar(type);
         return;
       }
 
@@ -212,7 +242,10 @@ namespace JetBrains.Rd.Reflection
 
     public static bool IsValueTuple(TypeInfo type)
     {
-      return type.IsGenericType && type.FullName.NotNull().StartsWith("System.ValueTuple`");
+      if (!type.IsGenericType)
+        return false;
+      var fullName = type.FullName.NotNull();
+      return fullName.StartsWith("System.ValueTuple`") || fullName.StartsWith(ourFakeTupleFullName);
     }
 
     public static bool HasRdExtAttribute(TypeInfo type)
@@ -227,25 +260,16 @@ namespace JetBrains.Rd.Reflection
       var isRdModel = HasRdExtAttribute(type);
       Assertion.Assert(isRdModel, $"Error in {type.ToString(true)} model: no {nameof(RdExtAttribute)} attribute specified");
       Assertion.Assert(!type.IsValueType, $"Error in {type.ToString(true)} model: can't be ValueType");
-      Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
+      Assertion.Assert(typeof(RdExtReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdExtReflectionBindableBase)}");
 
       // actually, it is possible, but error-prone.
       // you may have non-rdmodel base class and several sealed derivatives from it.
       // commented sealed check to avoid annoying colleagues.
       // Assertion.Assert(type.IsSealed, $"Error in {type.ToString(true)} model: RdModels must be sealed.");
 
-      foreach (var member in ReflectionSerializers.GetBindableMembers(type))
+      foreach (var member in SerializerReflectionUtil.GetBindableMembers(type))
       {
-        if (member is PropertyInfo || member is FieldInfo)
-        {
-          AssertMemberDeclaration(member);
-        }
-
-        if (member is TypeInfo)
-        {
-          // out scope for current validation
-        }
-        // methods and events are allowed in model
+        AssertMemberDeclaration(member);
       }
     }
 
@@ -262,25 +286,15 @@ namespace JetBrains.Rd.Reflection
     {
       var isDataModel = HasRdModelAttribute(type);
       Assertion.Assert(isDataModel, $"Error in {type.ToString(true)} model: no {nameof(RdModelAttribute)} attribute specified");
-
-      Assertion.Assert(!type.IsValueType, $"Error in {type.ToString(true)} model: data model can't be ValueType");
+      Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
 
       // No way to prevent serialization errors for intrinsic serializers, just skip for now
-      if (HasIntrinsicMethods(type))
+      if (HasIntrinsic(type))
         return;
 
-      foreach (var member in ReflectionSerializers.GetBindableMembers(type))
+      foreach (var member in SerializerReflectionUtil.GetBindableMembers(type))
       {
-        if (member is PropertyInfo || member is FieldInfo)
-        {
-          AssertDataMemberDeclaration(member);
-        }
-
-        if (member is TypeInfo)
-        {
-          // out scope for current validation
-        }
-        // methods events are allowed in model
+        AssertDataMemberDeclaration(member);
       }
     }
 
@@ -291,16 +305,20 @@ namespace JetBrains.Rd.Reflection
       return isDataModel;
     }
 
-    private static void AssertValidTuple(TypeInfo type)
+    private static void AssertValidScalar(TypeInfo type)
     {
-      var genericArguments = type.GetGenericArguments();
-      Assertion.Assert(genericArguments.Length <= 7, "Value tuples can only have no more than 7 arguments: {0}", type.ToString(true));
-      foreach (var tupleArgument in genericArguments)
+      if (HasRdModelAttribute(type) || HasRdExtAttribute(type))
       {
-        var argumentTypeInfo = tupleArgument.GetTypeInfo();
+        Assertion.Fail($"Scalar type {type.ToString(true)} is invalid. {nameof(RdExtAttribute)} and {nameof(RdModelAttribute)} are not applicable to scalars since they can't be bound to the protocol.");
+      }
+      var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+      foreach (var field in fields)
+      {
         Assertion.Assert(
-          IsFieldType(argumentTypeInfo, true) || HasRdModelAttribute(argumentTypeInfo),
-          $"Invalid value tuple model: {type.ToString(true)}, argument {tupleArgument.ToString(true)} is not valid field type. Check requirements in {nameof(ReflectionSerializerVerifier)}.{nameof(IsFieldType)}");
+          IsScalar(field.FieldType),
+          $"Expected to be scalar field: {type.ToString(true)}.{field.Name}." +
+          "Scalar types cannot be bindable and have a bindable fields (type { " +
+          $" Check requirements in {nameof(ReflectionSerializerVerifier)}.{nameof(IsFieldType)}");
       }
     }
 
@@ -332,11 +350,42 @@ namespace JetBrains.Rd.Reflection
       return typeInfo.AsType();
     }
 
+
+    public static bool HasIntrinsic(TypeInfo t)
+    {
+      return HasIntrinsicMethods(t) || HasIntrinsicFields(t) || HasRdExtAttribute(t);
+    }
+
+    public static bool HasIntrinsicAttribute(TypeInfo t)
+    {
+      var rdScalar = t.GetCustomAttribute<RdScalarAttribute>();
+      return rdScalar != null && rdScalar.Marshaller != null;
+    }
+
+    public static bool HasIntrinsicFields(TypeInfo t)
+    {
+      foreach (var member in t.GetFields(BindingFlags.Static | BindingFlags.Public))
+      {
+        if (member.Name == "Read" || member.Name == "Write")
+        {
+          return true;
+        }
+      }
+
+      return false;
+
+    }
+
     public static bool HasIntrinsicMethods(TypeInfo t)
     {
-      if (t.GetMethods(BindingFlags.Public | BindingFlags.Static)
-        .Any(m => m.Name == "Read" || m.Name == "Write"))
-        return true;
+      foreach (var member in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
+      {
+        if (member.Name == "Read" || member.Name == "Write")
+        {
+          return true;
+        }
+      }
+
       return false;
     }
   }

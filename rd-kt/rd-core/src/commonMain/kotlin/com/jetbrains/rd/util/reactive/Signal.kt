@@ -20,6 +20,7 @@ class Signal<T> : ISignal<T> {
     private var priorityListeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
     private var listeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
 
+    // todo: fix the race condition during increment
     private var _changingCnt = 0
     override val changing: Boolean get() = _changingCnt > 0
 

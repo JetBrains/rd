@@ -299,6 +299,28 @@ namespace JetBrains.Diagnostics
         log.Error(e);
       }            
     }
+    
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == ERROR. Do not throw exception (if any). 
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
+    /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif  
+    [PublicAPI] public static T Catch<T>(this ILog log, Func<T> action)
+    {
+      try
+      {
+        return action();
+      }
+      catch(Exception e)
+      {
+        log.Error(e);
+        return default;
+      }            
+    }    
 
     /// <summary>
     /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any). 
@@ -308,7 +330,7 @@ namespace JetBrains.Diagnostics
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
-    public static void CatchAndDrop(this ILog log, Action action)
+    [PublicAPI] public static void CatchAndDrop(this ILog log, Action action)
     {
       try
       {
@@ -321,6 +343,28 @@ namespace JetBrains.Diagnostics
     }
     
     /// <summary>
+    /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any). 
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
+    /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif  
+    [PublicAPI] public static T CatchAndDrop<T>(this ILog log, Func<T> action)
+    {
+      try
+      {
+        return action();
+      }
+      catch(Exception e)
+      {
+        DropException(e);
+        return default;
+      }            
+    }
+    
+    /// <summary>
     /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any). 
     /// </summary>
     /// <param name="log"></param>
@@ -328,7 +372,7 @@ namespace JetBrains.Diagnostics
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
-    public static void CatchWarn(this ILog log, Action action)
+    [PublicAPI] public static void CatchWarn(this ILog log, Action action)
     {
       try
       {
@@ -339,6 +383,29 @@ namespace JetBrains.Diagnostics
         log.Warn(e);
       }            
     }
+    
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any). 
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
+    /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
+    [PublicAPI] public static T CatchWarn<T>(this ILog log, Func<T> action)
+    {
+      try
+      {
+        return action();
+      }
+      catch(Exception e)
+      {
+        log.Warn(e);
+        return default;
+      }            
+    }
+    
 
     private static void DropException(Exception e)
     {

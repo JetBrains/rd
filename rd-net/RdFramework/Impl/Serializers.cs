@@ -28,10 +28,10 @@ namespace JetBrains.Rd.Impl
   public class Serializers : ISerializers
   {
     private readonly Dictionary<Type, RdId> myTypeMapping = new Dictionary<Type, RdId>();
-    private readonly Dictionary<RdId, Delegate> myReaders = new Dictionary<RdId, Delegate>();
+    private readonly Dictionary<RdId, CtxReadDelegate<object>> myReaders = new Dictionary<RdId, CtxReadDelegate<object>>();
     private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
 
-    [CanBeNull] private readonly IPolymorphicTypesCatalog myPolymorphicCatalog;
+    [CanBeNull] private readonly ITypesRegistrar myRegistrar;
 
     struct ToplevelRegistration
     {
@@ -58,10 +58,10 @@ namespace JetBrains.Rd.Impl
     public Serializers() => RegisterFrameworkMarshallers(this);
 #endif
 
-    public Serializers([CanBeNull] IPolymorphicTypesCatalog polymorphicCatalog)
+    public Serializers([CanBeNull] ITypesRegistrar registrar)
       : this()
     {
-      myPolymorphicCatalog = polymorphicCatalog;
+      myRegistrar = registrar;
     }
 
     //readers
@@ -191,18 +191,30 @@ namespace JetBrains.Rd.Impl
       serializers.Register(ReadULongArray, WriteULongArray, 48);
     }
 
-    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T: unmanaged, Enum
+    public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T :
+#if !NET35
+    unmanaged,
+#endif
+     Enum
     {
       Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
       return Cast32BitEnum<T>.FromInt(reader.ReadInt());
     }
 
-    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T: unmanaged, Enum
+    public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T :
+#if !NET35
+    unmanaged,
+#endif
+     Enum
     {
       writer.Write(Cast32BitEnum<T>.ToInt(value));
     }
 
-    public void RegisterEnum<T>() where T: unmanaged, Enum
+    public void RegisterEnum<T>() where T :
+#if !NET35
+    unmanaged,
+#endif
+     Enum
     {
       Register(ReadEnum<T>, WriteEnum<T>);
     }
@@ -233,8 +245,8 @@ namespace JetBrains.Rd.Impl
         Protocol.InitializationLogger.Trace("Registering type {0}, id={1}", typeof(T).Name, typeId);
         
         myTypeMapping[typeof(T)] = typeId;
-        myReaders[typeId] = reader;
-        myWriters[typeId] = (ctx, buffer, value) => writer(ctx, buffer, (T) value);
+        myReaders[typeId] = (ctx, unsafeReader) => reader(ctx, unsafeReader);
+        myWriters[typeId] = (ctx, unsafeWriter, value) => writer(ctx, unsafeWriter, (T)value);
       }
 
     }
@@ -250,13 +262,13 @@ namespace JetBrains.Rd.Impl
         return default(T);
       var size = reader.ReadInt();
 
-      Delegate ctxReadDelegateRaw;
-      if (!myReaders.TryGetValue(typeId, out ctxReadDelegateRaw))
+      CtxReadDelegate<object> ctxReadDelegate;
+      if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
       {
         if (unknownInstanceReader == null)
         {
-          myPolymorphicCatalog?.TryDiscoverRegister(typeId, this);
-          if (!myReaders.TryGetValue(typeId, out ctxReadDelegateRaw))
+          myRegistrar?.TryRegister(typeId, this);
+          if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed
             throw new KeyNotFoundException(string.Format("There is no readers found. Requested type '{0}'. Real type {1}", typeof(T).FullName, realType));
@@ -272,10 +284,9 @@ namespace JetBrains.Rd.Impl
         }
       }
 
-      var ctxReadDelegate = ctxReadDelegateRaw as CtxReadDelegate<T>;
-      Assertion.Assert(ctxReadDelegate != null, "Bad delegate cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(CtxReadDelegate<T>).Name, ctxReadDelegateRaw.GetType().Name);
-
-      return ctxReadDelegate(ctx, reader);
+      var uncasted = ctxReadDelegate(ctx, reader);
+      Assertion.Assert(uncasted is T, "Bad cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(T).Name, uncasted.GetType().Name);
+      return (T)uncasted;
     }
 
     public void Write<T>(SerializationCtx ctx, UnsafeWriter writer, T value)
@@ -295,7 +306,7 @@ namespace JetBrains.Rd.Impl
       var type = value.GetType();
       if (!myTypeMapping.TryGetValue(type, out typeId))
       {
-        myPolymorphicCatalog?.TryDiscoverRegister(type, this);
+        myRegistrar?.TryRegister(type, this);
         if (!myTypeMapping.TryGetValue(type, out typeId))
         {
           throw new KeyNotFoundException($"Type {type.FullName} have not registered");

@@ -27,7 +27,7 @@ interface IRdBindable : IRdDynamic {
     /**
      * Creates a clone of this IRdBindable not bound to any protocol
      */
-    fun deepClone() : IRdBindable
+    fun deepClone() : IRdBindable = TODO("This is a base implementation of deepClone. Shouldn't be invoked. Introduced for AWS plugin to compile with Rider SDK 19.2.")
 }
 
 //generator comprehension methods

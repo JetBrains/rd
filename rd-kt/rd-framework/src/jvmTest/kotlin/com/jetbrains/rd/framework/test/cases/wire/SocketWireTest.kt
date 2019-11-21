@@ -10,10 +10,7 @@ import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.Timeout
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -96,6 +93,7 @@ class SocketWireTest : TestBase() {
     }
 
 
+    @Ignore
     @Test()
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
@@ -130,7 +128,14 @@ class SocketWireTest : TestBase() {
     }
 
     private fun tryCloseConnection(protocol: Protocol) {
-        (protocol.wire as SocketWire.Base).socketProvider.valueOrNull?.close()
+
+        val wire = protocol.wire as SocketWire.Base
+        if (spinUntil(50) { wire.connected.value }) {
+            //if wire is not connected should not ask socket.close because it could lead to IOException
+            // 	at java.net.Socket.getOutputStream(Socket.java:951)
+            //	at com.jetbrains.rd.framework.SocketWire$Base$1.invoke(SocketWire.kt:102)
+            wire.socketProvider.valueOrNull?.close()
+        }
     }
 
 

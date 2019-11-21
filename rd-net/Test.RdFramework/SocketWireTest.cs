@@ -384,8 +384,10 @@ namespace Test.RdFramework
 
     private static void CloseSocket(IProtocol protocol)
     {
-      var wireBase = protocol.Wire as SocketWire.Base;
-      wireBase?.CloseSocket(wireBase.Socket);
+      if (!(protocol.Wire is SocketWire.Base socketWire))
+        return;
+      
+      SocketWire.Base.CloseSocket(socketWire.Socket);
     }
   }
 }

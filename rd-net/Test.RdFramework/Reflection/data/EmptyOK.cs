@@ -3,5 +3,5 @@
 namespace Test.RdFramework.Reflection
 {
   [RdModel]
-  public sealed class EmptyOK { }
+  public sealed class EmptyOK : RdReflectionBindableBase { }
 }

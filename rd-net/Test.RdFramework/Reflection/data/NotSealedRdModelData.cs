@@ -3,5 +3,5 @@
 namespace Test.RdFramework.Reflection
 {
   [RdExt]
-  public class NotSealedRdModelData : RdReflectionBindableBase { }
+  public class NotSealedRdModelData : RdExtReflectionBindableBase { }
 }

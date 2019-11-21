@@ -8,14 +8,11 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class TestVerification
   {
-    [Ignore("Fails")]
     [TestCase(typeof(NotRdModelData))]
     [TestCase(typeof(CantHaveNonRdError))]
     // [TestCase(typeof(CantHavePrivateFieldError))]
     [TestCase(typeof(NotRdModelData))]
     [TestCase(typeof(MyEnum), Description = "Enum can't be toplevel types")]
-    [TestCase(typeof(ModelCantHaveNullableError))]
-    [TestCase(typeof(ModelCantHaveFieldPropError))]
 //     [TestCase(typeof(NotSealedRdModelData))]
     [TestCase(typeof(NoBaseType))]
     [TestCase(typeof(CircularDependencyExtError))]
@@ -24,9 +21,9 @@ namespace Test.RdFramework.Reflection
     // [TestCase(typeof(CircularDependencyInModelError))]
     public void TestError(Type type)
     {
-      var serializer = new ReflectionSerializers();
+      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
-      var exception = Assert.Throws<Assertion.AssertionException>(() => activator.ActivateRdExt(type));
+      var exception = Assert.Throws<Assertion.AssertionException>(() => activator.Activate(type));
 
       Console.WriteLine(exception);
     }
@@ -35,9 +32,9 @@ namespace Test.RdFramework.Reflection
     [TestCase(typeof(ModelCalls))]
     public void TestActivation(Type type)
     {
-      var serializer = new ReflectionSerializers();
+      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
-      var activateRdModel = activator.ActivateRdExt(type);
+      var activateRdModel = activator.Activate(type);
     }
   }
 }

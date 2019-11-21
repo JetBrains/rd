@@ -3,7 +3,7 @@
 namespace Test.RdFramework.Reflection
 {
   [RdExt]
-  public class CircularDependencyExt2Error : RdReflectionBindableBase
+  public class CircularDependencyExt2Error : RdExtReflectionBindableBase
   {
     public CircularDependencyExtError ParentRef { get; }
   }

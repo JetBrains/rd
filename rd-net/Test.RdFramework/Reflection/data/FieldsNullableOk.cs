@@ -3,7 +3,7 @@ using JetBrains.Rd.Reflection;
 
 namespace Test.RdFramework.Reflection
 {
-  [RdModel]
+  [RdScalar] // Not required
   public sealed class FieldsNullableOk
   {
     [CanBeNull] public string FieldOne;
