@@ -70,14 +70,14 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdRpc]
-    public interface IAsyncModelsTest
+    public interface IAsyncModelsTestDifferentName
     {
       Task<AColor> QueryColor();
       void SetPath(AsyncModelsTest.FileSystemPath animal);
     }
 
     [RdExt]
-    public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTest
+    public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTestDifferentName
     {
       public Task<AColor> QueryColor()
       {
@@ -173,7 +173,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestAsyncModels()
     {
-      TestTemplate<AsyncModelsTest, IAsyncModelsTest>(proxy =>
+      TestTemplate<AsyncModelsTest, IAsyncModelsTestDifferentName>(proxy =>
       {
         proxy.SetPath(new AsyncModelsTest.FileSystemPath("C:\\hello"));
         var queryColor = proxy.QueryColor();
@@ -206,7 +206,7 @@ namespace Test.RdFramework.Reflection
     private void TestAsyncCalls(Action<IAsyncCallsTest> run) => TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
     private void TestSyncCalls(Action<ISyncCallsTest> run) => TestTemplate<SyncCallsTest, ISyncCallsTest>(run);
 
-    private void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
+    protected void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
     {
       ClientProtocol.Scheduler.Queue(() =>
       {

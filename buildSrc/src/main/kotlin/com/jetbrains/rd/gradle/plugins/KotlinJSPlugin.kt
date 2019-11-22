@@ -13,7 +13,7 @@ fun Project.applyKotlinJS() = apply<KotlinJSPlugin>()
 
 @Suppress("UNUSED_VARIABLE")
 class KotlinJSPlugin : Plugin<Project> {
-    override fun apply(target: Project) = target.run {
+    override fun apply(project: Project) = project.run {
         apply(plugin = "kotlin-platform-js")
         apply(plugin = "maven-publish")
 

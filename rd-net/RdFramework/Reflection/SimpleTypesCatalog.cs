@@ -19,7 +19,7 @@ namespace JetBrains.Rd.Reflection
 
     public void AddType(Type type)
     {
-      myRdIdToTypeMapping[RdId.Define(type)] = type;
+      myRdIdToTypeMapping[RdId.DefineByFqn(type)] = type;
     }
 
     public void Register<T>() => AddType(typeof(T));

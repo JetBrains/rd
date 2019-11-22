@@ -14,14 +14,23 @@ namespace JetBrains.Rd
 
     private readonly long myValue;
 
-    public static RdId Define<T>(int? id = null)
+    public static RdId Define<T>(long? id = null)
     {
       return new RdId(id ?? Hash(typeof(T).Name));
     }
 
-    public static RdId Define(Type type, int? id = null)
+    public static RdId Define(Type type, long? id = null)
     {
       return new RdId(id ?? Hash(type.Name));
+    }
+
+    /// <summary>
+    /// Define an RdId by fully-qualified type name.
+    /// You should use it only in case of C#-C# communication.
+    /// </summary>
+    public static RdId DefineByFqn(Type type)
+    {
+      return new RdId(Hash(type.FullName));
     }
 
     public RdId(long value)

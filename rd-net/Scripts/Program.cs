@@ -131,7 +131,10 @@ namespace JetBrains.Rd.Scripts
         {
           node.Attributes["version"].Value = RdVersion;
         }
-        doc.Save(file);
+
+        string newLine = LineEndingUtil.Detect(file);
+        using (var writer = new StreamWriter(file) { NewLine = newLine })
+          doc.Save(writer);
       }
       
       
@@ -159,7 +162,9 @@ namespace JetBrains.Rd.Scripts
           }
         }
 
-        doc.Save(file);
+        string newLine = LineEndingUtil.Detect(file);
+        using (var writer = new StreamWriter(file) { NewLine = newLine })
+          doc.Save(writer);
       }
 
       var roots = Directory.GetDirectories(RiderFolderPath, "*", SearchOption.TopDirectoryOnly)

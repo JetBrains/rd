@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using JetBrains.Annotations;
@@ -219,7 +220,7 @@ namespace JetBrains.Rd.Impl
       Register(ReadEnum<T>, WriteEnum<T>);
     }
 
-    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, int? predefinedId = null)
+    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedId = null)
     {
       #if !NET35
       if (!myBackgroundRegistrar.IsInsideProcessing)

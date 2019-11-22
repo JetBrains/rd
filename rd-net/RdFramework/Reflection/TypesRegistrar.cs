@@ -33,7 +33,7 @@ namespace JetBrains.Rd.Reflection
     {
       var serializerPair = myReflectionSerializersFactory.GetOrRegisterSerializerPair(type);
       ReflectionUtil.InvokeGenericThis(serializers, nameof(serializers.Register), type,
-        new[] {serializerPair.Reader, serializerPair.Writer, null});
+        new[] {serializerPair.Reader, serializerPair.Writer, RdId.DefineByFqn(type).Value });
     }
   }
 }

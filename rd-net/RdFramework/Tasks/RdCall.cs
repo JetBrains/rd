@@ -75,11 +75,6 @@ namespace JetBrains.Rd.Tasks
     public override void OnWireReceived(UnsafeReader reader)
     {
       var taskId = RdId.Read(reader);
-      var value = ReadRequestDelegate(SerializationContext, reader);
-      if (LogReceived.IsTraceEnabled()) 
-        LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
-
-
       var taskLifetimeDef = myBindLifetime.CreateNested();
       
       //subscribe for lifetime cancellation
@@ -91,6 +86,9 @@ namespace JetBrains.Rd.Tasks
       {
         try
         {
+          var value = ReadRequestDelegate(SerializationContext, reader);
+          if (LogReceived.IsTraceEnabled()) 
+            LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
           rdTask = Handler(taskLifetimeDef.Lifetime, value);
         }
         catch (Exception e)
@@ -98,8 +96,6 @@ namespace JetBrains.Rd.Tasks
           rdTask = RdTask<TRes>.Faulted(e);
         }
       }
-
-      
       
       rdTask.Result.Advise(taskLifetimeDef.Lifetime, result =>
       {

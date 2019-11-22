@@ -12,6 +12,8 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Util;
+using JetBrains.Util.Util;
+
 #if NET35
 using TypeInfo = System.Type;
 #else
@@ -75,7 +77,7 @@ namespace JetBrains.Rd.Reflection
     {
       var instance = Activate<T>();
 
-      var typename = typeof(T).Name;
+      var typename = GetTypeName(typeof(T));
       instance.Identify(protocol.Identities, RdId.Root.Mix(typename));
       instance.Bind(lifetime, protocol, typename);
 
@@ -91,7 +93,7 @@ namespace JetBrains.Rd.Reflection
     {
       var instance = Activate(type);
 
-      var typename = type.Name;
+      var typename = GetTypeName(type);
       var bindable = (RdExtReflectionBindableBase) instance;
       bindable.Identify(protocol.Identities, RdId.Root.Mix(typename));
       bindable.Bind(lifetime, protocol, typename);
@@ -168,8 +170,17 @@ namespace JetBrains.Rd.Reflection
           var memberSetter = ReflectionUtil.GetSetter(mi);
           memberSetter(instance, currentValue);
         }
+        else
+        {
+          var implementingType = ReflectionSerializerVerifier.GetImplementingType(ReflectionUtil.GetReturnType(mi).GetTypeInfo());
+          Assertion.Assert(currentValue.GetType() == implementingType, 
+            "Bindable field {0} was initialized with incompatible type. Expected type {1}, actual {2}", 
+            mi, 
+            implementingType.ToString(true), 
+            currentValue.GetType().ToString(true));
+        }
       }
-
+      
       // Add RdEndpoint for Impl class (counterpart of Proxy)
       var interfaces = typeInfo.GetInterfaces();
       bool isProxy = interfaces.Contains(typeof(IProxyTypeMarker));
@@ -372,6 +383,19 @@ namespace JetBrains.Rd.Reflection
       }
 
       throw new Exception($"Unable to activate generic type: {memberType}");
+    }
+
+    internal static string GetTypeName(Type type)
+    {
+      var typename = type.FullName;
+      if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(type))
+      {
+        var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(type.GetTypeInfo());
+        if (rpcInterface != null)
+          return rpcInterface.FullName;
+      }
+
+      return typename;
     }
   }
 }

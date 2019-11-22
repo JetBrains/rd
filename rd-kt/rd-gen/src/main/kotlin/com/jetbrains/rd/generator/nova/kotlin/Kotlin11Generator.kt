@@ -37,6 +37,9 @@ open class Kotlin11Generator(
     object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors: ISetting<Unit, Declaration>
 
+    //for AWS plugin, remove in 20.1
+    object DisableDeepCloneGeneration: ISetting<Unit, Declaration>
+
     object RefineFieldType: ISetting<Pair<String, IType>, SettingsHolder>
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
@@ -45,13 +48,6 @@ open class Kotlin11Generator(
 
     private val Member.Reactive.Stateful.optimizeNested : Boolean
         get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
-
-//    object MasterStateful : ISetting<Boolean, Declaration>
-//    private val Member.Reactive.Stateful.Property.master : Boolean
-//        get() = owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master
-//
-//    private val Member.Reactive.Stateful.Map.master : Boolean
-//        get() = (owner.getSetting(MasterStateful) ?: this@Kotlin11Generator.master)
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -862,6 +858,8 @@ open class Kotlin11Generator(
     private fun PrettyPrinter.deepCloneTrait(decl: Declaration) {
 
         if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
+
+        if (decl.getSetting(DisableDeepCloneGeneration) != null) return
 
         block("override fun deepClone(): ${decl.name}  ") {
 

@@ -56,7 +56,7 @@ namespace JetBrains.Rd.Reflection
       {
         var typeInfo = t.GetTypeInfo();
 
-        var intrinsic = TryGetIntrinsicSerializer(typeInfo);
+        var intrinsic = Intrinsic.TryGetIntrinsicSerializer(typeInfo, GetInstanceSerializer);
         if (intrinsic != null)
         {
           myTypesCatalog.AddType(type);
@@ -241,51 +241,6 @@ namespace JetBrains.Rd.Reflection
     }
 
 
-    [CanBeNull]
-    private SerializerPair TryGetIntrinsicSerializer(TypeInfo typeInfo)
-    {
-      if (ReflectionSerializerVerifier.HasIntrinsicMethods(typeInfo))
-      {
-        var genericArguments = typeInfo.GetGenericArguments();
-        if (genericArguments.Length == 1)
-        {
-          var argument = genericArguments[0];
-          var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo, argument);
-          var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
-          return SerializerPair.CreateFromMethods(staticRead, staticWrite, GetInstanceSerializer(argument));
-        }
-
-        if (genericArguments.Length == 0)
-        {
-          var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo);
-          var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
-          return SerializerPair.CreateFromMethods(staticRead, staticWrite);
-        }
-
-        return null;
-      }
-      else if (ReflectionSerializerVerifier.HasIntrinsicFields(typeInfo))
-      {
-        var readField = typeInfo.GetField("Read", BindingFlags.Public | BindingFlags.Static);
-        var writeField = typeInfo.GetField("Write", BindingFlags.Public | BindingFlags.Static);
-        if (readField == null)
-          Assertion.Fail($"Invalid intrinsic serializer for type {typeInfo}. Static field 'Read' with type {typeof(CtxReadDelegate<>).ToString(true)} not found");
-        if (writeField == null)
-          Assertion.Fail($"Invalid intrinsic serializer for type {typeInfo}. Static field 'Write' with type {typeof(CtxWriteDelegate<>).ToString(true)} not found");
-        var reader = readField.GetValue(null);
-        var writer = writeField.GetValue(null);
-        return new SerializerPair(reader, writer);
-      }
-      else if (ReflectionSerializerVerifier.HasIntrinsicAttribute(typeInfo))
-      {
-        var marshallerType = typeInfo.GetCustomAttribute<RdScalarAttribute>().NotNull().Marshaller;
-        var marshaller = Activator.CreateInstance(marshallerType);
-        return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(SerializerPair.FromMarshaller), typeInfo, marshaller);
-      }
-
-      return null;
-    }
-
     /// <summary>
     /// Register serializer for ValueTuples
     /// </summary>
@@ -342,7 +297,7 @@ namespace JetBrains.Rd.Reflection
       writer = scalarSerializer.GetWriter<T>();
     }
 
-    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, int? predefinedType = null)
+    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedType = null)
     {
       myStaticSerializers[typeof(T)] = new SerializerPair(reader, writer);
     }
