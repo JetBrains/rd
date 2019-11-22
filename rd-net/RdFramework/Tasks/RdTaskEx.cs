@@ -49,25 +49,25 @@ namespace JetBrains.Rd.Tasks
     }
 
 
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler cancellationAndRequestScheduler = null)
     {
-      endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
+      endpoint.Set((lt, req) => handler(lt, req).ToRdTask(), cancellationAndRequestScheduler);
     }
     
 
     
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler cancellationAndRequestScheduler = null)
     {
-      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)));
+      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)), cancellationAndRequestScheduler);
     }
     
-    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler)
+    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler cancellationAndRequestScheduler = null)
     {
       endpoint.Set(req =>
       {
         handler(req);
         return Unit.Instance;
-      });
+      }, cancellationAndRequestScheduler);
     }
     
     [PublicAPI]

@@ -14,7 +14,7 @@ namespace JetBrains.Rd.Tasks
   
   public interface IRdEndpoint<TReq, TRes>
   {
-    void Set(Func<Lifetime, TReq, RdTask<TRes>> handler);
+    void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationAndRequestScheduler = null);
   }
 
   public interface IRdCall<in TReq, TRes>

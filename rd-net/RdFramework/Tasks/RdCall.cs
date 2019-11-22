@@ -36,6 +36,7 @@ namespace JetBrains.Rd.Tasks
 
 
     private Lifetime myBindLifetime;
+    private IScheduler myEndpointHandlerAndCancellationScheduler;
 
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
@@ -64,9 +65,10 @@ namespace JetBrains.Rd.Tasks
 
 
     [PublicAPI]
-    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler)
+    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationAndRequestScheduler = null)
     {
       Handler = handler;
+      myEndpointHandlerAndCancellationScheduler = cancellationAndRequestScheduler;
     }
 
     [PublicAPI]
@@ -81,7 +83,8 @@ namespace JetBrains.Rd.Tasks
       var taskLifetimeDef = myBindLifetime.CreateNested();
       
       //subscribe for lifetime cancellation
-      new WiredLifetime(taskLifetimeDef, taskId, this, Wire);
+      var wiredTask = new WiredRdTask<TReq, TRes>(taskLifetimeDef, this, taskId, myEndpointHandlerAndCancellationScheduler, true);
+      
       
       RdTask<TRes> rdTask;
       using (UsingDebugInfo()) //now supports only sync handlers
@@ -122,6 +125,7 @@ namespace JetBrains.Rd.Tasks
         taskLifetimeDef.Terminate(); //need to terminate to unsubscribe lifetime listener - not for bindable entries
       });
     }
+    
 
     public TRes Sync(TReq request, RpcTimeouts timeouts = null)
     {
@@ -173,7 +177,7 @@ namespace JetBrains.Rd.Tasks
 
       var taskId = Proto.Identities.Next(RdId.Nil);
       var def = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
-      var task = new WiredRdTask<TReq, TRes>(def, this, taskId, scheduler);
+      var task = new WiredRdTask<TReq, TRes>(def, this, taskId, scheduler, false);
       Wire.Send(RdId, (writer) =>
       {
         if (LogSend.IsTraceEnabled())

@@ -29,31 +29,33 @@ namespace JetBrains.Rd.Util
         dictionary.Add(key, value = factory());
       return value;
     }
-    
-    public static void BlockingAddUnique<TKey, TValue>(
-      [NotNull] this IDictionary<TKey, TValue> dictionary, Lifetime lifetime, [NotNull] object @lock, TKey key, TValue value)
-    {
-      lock (@lock)
-      {
-        try
-        {
-          dictionary.Add(key, value);
-        }
-        catch (Exception e)
-        {
-          e.Data.Add("MyKey", key.ToString());
-          throw;
-        }
 
-        lifetime.OnTermination(() =>
+    public static void BlockingAddUnique<TKey, TValue>(
+      [NotNull] this IDictionary<TKey, TValue> dictionary, Lifetime lifetime, [NotNull] object @lock, TKey key,
+      TValue value)
+    {
+
+      lifetime.TryBracket(() =>
+      {
+        lock (@lock)
         {
-          lock (@lock)
+          try
           {
-            Assertion.Require(dictionary.Remove(key), "No value by key {0}", key);
+            dictionary.Add(key, value);
           }
-        });
-      }
-      
+          catch (Exception e)
+          {
+            e.Data.Add("MyKey", key.ToString());
+            throw;
+          }
+        }
+      }, () =>
+      {
+        lock (@lock)
+        {
+          Assertion.Require(dictionary.Remove(key), "No value by key {0}", key);
+        }
+      });
     }
   }
 }

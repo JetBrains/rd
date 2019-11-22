@@ -54,8 +54,25 @@ namespace JetBrains.Rd.Base
         rdBindable.Bind(lifetime, parent, name);
       else
         //Don't remove 'else'. RdList is bindable and collection simultaneously.
-        (value as IEnumerable).Bind0(lifetime, parent, name);
+        (value as IEnumerable)?.Bind0(lifetime, parent, name);
       
+    }
+
+    internal static bool IsBindable<T>(this T obj)
+    {
+      switch (obj)
+      {
+        case IRdBindable _:
+          return true;
+        case IEnumerable enumerable:
+        {
+          foreach (var item in enumerable)
+            return item is IRdBindable;
+          break;
+        }
+      }
+
+      return false;
     }
 
 
