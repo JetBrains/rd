@@ -42,12 +42,15 @@ namespace JetBrains.Rd.Impl
       }
     }
 
+    public override SerializationCtx SerializationContext { get; }
+
     internal SendWithoutContextsCookie CreateSendWithoutContextsCookie() => new SendWithoutContextsCookie(this);
     public bool IsSendWithoutContexts => mySendWithoutContexts.Value; 
 
-    public ProtocolContexts()
+    public ProtocolContexts(SerializationCtx serializationCtx)
     {
       Async = true;
+      SerializationContext = serializationCtx;
     }
     
     public ICollection<RdContextBase> RegisteredContexts => myHandlersMap.Keys;

@@ -40,10 +40,12 @@ namespace JetBrains.Rd.Impl
       Identities = identities ?? throw new ArgumentNullException(nameof(identities));
       Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
-      Contexts = parentContexts ?? new ProtocolContexts();
+      SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot<object>>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
+      Contexts = parentContexts ?? new ProtocolContexts(SerializationContext);
       wire.Contexts = Contexts;
       foreach (var rdContextBase in initialContexts) rdContextBase.RegisterOn(Contexts);
-      SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot<object>>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
+      if (parentContexts == null)
+        BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
     }
 
@@ -51,14 +53,23 @@ namespace JetBrains.Rd.Impl
     {
       var root = new InternRoot<object>();
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
-      Contexts.RdId = RdId.Nil.Mix(ContextHandlerRdId);
+      
       Scheduler.InvokeOrQueue(() =>
       {
         if (!lifetime.IsAlive) return;
         root.Bind(lifetime, this, ProtocolInternRootRdId);
-        Contexts.Bind(lifetime, this, ContextHandlerRdId);
       });
       return root;
+    }
+
+    private void BindContexts(Lifetime lifetime)
+    {
+      Contexts.RdId = RdId.Nil.Mix(ContextHandlerRdId);
+      Scheduler.InvokeOrQueue(() =>
+      {
+        if (!lifetime.IsAlive) return;
+        Contexts.Bind(lifetime, this, ContextHandlerRdId);
+      });
     }
       
     public string Name { get; }
