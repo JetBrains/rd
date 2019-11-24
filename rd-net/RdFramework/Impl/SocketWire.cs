@@ -106,7 +106,8 @@ namespace JetBrains.Rd.Impl
         ourStaticLog.CatchAndDrop(() => socket.Shutdown(SocketShutdown.Both));
         
         //on netcore you can't solely execute Close() - it will hang forever
-        ourStaticLog.CatchAndDrop(socket.Close);
+        //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034 
+        ourStaticLog.CatchAndDrop(() => socket.Close(TimeoutMs)); 
       }
 
 
