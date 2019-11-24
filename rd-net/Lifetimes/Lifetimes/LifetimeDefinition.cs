@@ -308,7 +308,7 @@ namespace JetBrains.Lifetimes
       //parent could ask for canceled already
       MarkCanceledRecursively();      
       
-      if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), WaitForExecutingInTerminationTimeoutMs))
+      if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWaitEx.SpinUntil(TimeSpan.FromMilliseconds(WaitForExecutingInTerminationTimeoutMs), () => ourExecutingSlice[myState] <= ThreadLocalExecuting()))
       {
         Log.Error($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination. You'll find stacktrace of ExecuteIfAlive in following error messages.");
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
