@@ -36,7 +36,7 @@ namespace JetBrains.Rd.Tasks
 
 
     private Lifetime myBindLifetime;
-    private IScheduler myEndpointHandlerAndCancellationScheduler;
+    private IScheduler myEndpointSchedulerForHandlerAndCancellation;
 
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
@@ -68,58 +68,49 @@ namespace JetBrains.Rd.Tasks
     public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationAndRequestScheduler = null)
     {
       Handler = handler;
-      myEndpointHandlerAndCancellationScheduler = cancellationAndRequestScheduler;
+      myEndpointSchedulerForHandlerAndCancellation = cancellationAndRequestScheduler;
     }
 
     [PublicAPI]
-    public override void OnWireReceived(UnsafeReader reader)
+    public override void OnWireReceived(UnsafeReader reader) //endpoint's side
     {
       var taskId = RdId.Read(reader);
-      var taskLifetimeDef = myBindLifetime.CreateNested();
       
+      var wiredTask = new WiredRdTask<TReq, TRes>(this, taskId, myEndpointSchedulerForHandlerAndCancellation ?? WireScheduler, true);
       //subscribe for lifetime cancellation
-      var wiredTask = new WiredRdTask<TReq, TRes>(taskLifetimeDef, this, taskId, myEndpointHandlerAndCancellationScheduler, true);
-      
-      
-      RdTask<TRes> rdTask;
+      var externalCancellation = wiredTask.Subscribe(myBindLifetime);
+
       using (UsingDebugInfo()) //now supports only sync handlers
       {
+        RdTask<TRes> rdTask;
         try
         {
           var value = ReadRequestDelegate(SerializationContext, reader);
           if (LogReceived.IsTraceEnabled()) 
             LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
-          rdTask = Handler(taskLifetimeDef.Lifetime, value);
+          rdTask = Handler(externalCancellation, value);
         }
         catch (Exception e)
         {
           rdTask = RdTask<TRes>.Faulted(e);
         }
-      }
-      
-      rdTask.Result.Advise(taskLifetimeDef.Lifetime, result =>
-      {
-        if (LogSend.IsTraceEnabled()) LogSend.Trace("endpoint `{0}`::({1}), taskId={2}, response = {3}", Location, RdId, taskId, result.PrintToString());
-
-        RdTaskResult<TRes> validatedResult;
-        try
-        {
-          if (result.Status == RdTaskStatus.Success) AssertNullability(result.Result);
-          validatedResult = result;
-        }
-        catch (Exception e)
-        {
-          LogSend.Error(e);
-          validatedResult = RdTaskResult<TRes>.Faulted(e);
-        }
-
-        Wire.Send(taskId, writer =>
-        {
-          RdTaskResult<TRes>.Write(WriteResponseDelegate, SerializationContext, writer, validatedResult);
-        });
         
-        taskLifetimeDef.Terminate(); //need to terminate to unsubscribe lifetime listener - not for bindable entries
-      });
+        rdTask.Result.Advise(Lifetime.Eternal, result =>
+          {
+            try
+            {
+              if (result.Status == RdTaskStatus.Success)
+                AssertNullability(result.Result);
+
+              wiredTask.ResultInternal.SetIfEmpty(result);
+            }
+            catch (Exception ee)
+            {
+              LogSend.Error($"Problem when responding to {this}, taskId={taskId}", ee);
+              wiredTask.Set(new RdFault(ee));
+            }
+          });
+      }
     }
     
 
@@ -172,8 +163,10 @@ namespace JetBrains.Rd.Tasks
       AssertNullability(request);
 
       var taskId = Proto.Identities.Next(RdId.Nil);
-      var def = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
-      var task = new WiredRdTask<TReq, TRes>(def, this, taskId, scheduler, false);
+      var task = new WiredRdTask<TReq, TRes>(this, taskId, scheduler, false);
+      
+      //no need for cancellationLifetime on call site
+      var _ = task.Subscribe(Lifetime.Intersect(requestLifetime, myBindLifetime));
       Wire.Send(RdId, (writer) =>
       {
         if (LogSend.IsTraceEnabled())

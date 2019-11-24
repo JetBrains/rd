@@ -11,8 +11,6 @@ namespace JetBrains.Rd.Tasks
 {
   class WiredRdTask<TReq, TRes> : RdTask<TRes>, IRdWireable
   {
-    private readonly LifetimeDefinition myWireAdviseLifetime;
-
     private readonly RdCall<TReq, TRes> myCall;
     private readonly bool myIsEndpoint;
     public RdId RdId { get; }
@@ -20,10 +18,9 @@ namespace JetBrains.Rd.Tasks
 
     private IWire myWire;
 
-    public WiredRdTask(LifetimeDefinition wireAdviseLifetime, RdCall<TReq, TRes> call, RdId rdId,
+    public WiredRdTask(RdCall<TReq, TRes> call, RdId rdId,
       IScheduler wireScheduler, bool isEndpoint)
     {
-      myWireAdviseLifetime = wireAdviseLifetime;
       myCall = call;
       myIsEndpoint = isEndpoint;
       RdId = rdId;
@@ -31,13 +28,17 @@ namespace JetBrains.Rd.Tasks
       myWire = call.Wire;
     }
 
-
-    public void Subscribe(Lifetime lifetime)
+    
+    
+    internal Lifetime Subscribe(Lifetime outerLifetime)
     {
-      var taskWireSubscriptionDefinition = lifetime.CreateNested();
+      var taskWireSubscriptionDefinition = outerLifetime.CreateNested();
+      var externalCancellation = outerLifetime.CreateNested();
+      
       myCall.Wire.Advise(taskWireSubscriptionDefinition.Lifetime, this); //this lifetimeDef listen only one value
-
-      Result.AdviseOnce(lifetime, taskResult =>
+      outerLifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled())); //todo 
+      
+      Result.AdviseOnce(Lifetime.Eternal, taskResult =>
       {
         taskWireSubscriptionDefinition.Terminate(); //no need to listen result or cancellation from wire
 
@@ -47,11 +48,16 @@ namespace JetBrains.Rd.Tasks
           if (myIsEndpoint)
             potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
 
-          potentiallyBindable.BindPolymorphic(myWireAdviseLifetime.Lifetime, myCall, RdId.ToString());
+          potentiallyBindable.BindPolymorphic(externalCancellation.Lifetime, myCall, RdId.ToString());
         }
 
         if (myIsEndpoint)
         {
+          if (taskResult.Status == RdTaskStatus.Canceled)
+          {
+            externalCancellation.Terminate();
+          }
+          
           Trace(RdReactiveBase.LogSend, "send response", taskResult);
           myWire.Send(RdId,
             writer =>
@@ -66,7 +72,7 @@ namespace JetBrains.Rd.Tasks
         }
       });
 
-      lifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()));
+      return externalCancellation.Lifetime;
     }
 
 

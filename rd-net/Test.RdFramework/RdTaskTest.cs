@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Threading;
 using NUnit.Framework;
@@ -27,6 +29,7 @@ namespace Test.RdFramework
       res.Set(handler);
       return res;
     }
+    
     
     
     [Test]
@@ -134,6 +137,47 @@ namespace Test.RdFramework
       SpinWaitEx.SpinUntil(() => handlerFinished);
       Assert.False(handlerCompletedSuccessfully);
     }
+
+    
+    
+    [Test]
+    public void TestBindable()
+    {
+      ClientWire.AutoTransmitMode = true;
+      ServerWire.AutoTransmitMode = true;
+      
+      
+      var call1 = new RdCall<Unit, RdSignal<int>>(Serializers.ReadVoid, Serializers.WriteVoid, RdSignal<int>.Read, RdSignal<int>.Write);
+      var call2 = new RdCall<Unit, RdSignal<int>>(Serializers.ReadVoid, Serializers.WriteVoid, RdSignal<int>.Read, RdSignal<int>.Write);
+
+      var respSignal = new RdSignal<int>();
+      call2.Set(_ => respSignal);
+      
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, call1, ourKey);
+      var clientEntity = BindToClient(LifetimeDefinition.Lifetime, call2, ourKey);
+
+      var ld = new LifetimeDefinition();
+      var lf = ld.Lifetime;
+      var signal = call1.Start(lf, Unit.Instance).AsTask().GetOrWait(lf);
+      var log = new List<int>();
+      
+      signal.Advise(Lifetime.Eternal, v =>
+      {
+        log.Add(v);
+        Console.WriteLine(v);
+      });
+      
+      respSignal.Fire(1);
+      respSignal.Fire(2);
+      respSignal.Fire(3);
+      ld.Terminate();
+      respSignal.Fire(4);
+
+      SpinWaitEx.SpinUntil(() => log.Count >= 3);
+      Thread.Sleep(100);
+      Assert.AreEqual(new [] {1, 2, 3}, log.ToArray());
+    }
+    
     
   }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Core;
 using JetBrains.Lifetimes;
@@ -373,5 +374,17 @@ namespace JetBrains.Collections.Viewable
       return new MappedProperty<T,R>(source, f);
     }
 
+
+#if !NET35
+    public static Task<T> NextValueAsync<T>(this ISource<T> source, Lifetime lifetime)
+    {
+      var tcs = lifetime.CreateTaskCompletionSource<T>();
+      source.AdviseOnce(lifetime, v =>
+      { 
+        tcs.TrySetResult(v);        
+      });
+      return tcs.Task;
+    }
+#endif
   }
 }

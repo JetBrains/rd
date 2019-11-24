@@ -53,7 +53,7 @@ namespace JetBrains.Rd.Tasks
     /// Creates new timeouts
     /// </summary>
     /// <param name="warnAwaitTime">Must be more than 0 ms and less or equal than <paramref name="errorAwaitTime"/>.</param>
-    /// <param name="errorAwaitTime">Must be more or equal than <param name="warnAwaitTime"></param>.</param>
+    /// <param name="errorAwaitTime">Must be more or equal than <paramref name="warnAwaitTime"/></param>.
     public RpcTimeouts(TimeSpan warnAwaitTime, TimeSpan errorAwaitTime)
     {
       Assertion.Require(warnAwaitTime.TotalMilliseconds > 0, "Warn timeout should be more 0ms but was: {0}", warnAwaitTime.TotalMilliseconds);
