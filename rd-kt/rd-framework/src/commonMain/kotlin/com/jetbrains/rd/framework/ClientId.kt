@@ -97,7 +97,7 @@ data class ClientId(val value: String) {
          * Computes a value under given ClientId
          */
         @JvmStatic
-        inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T = context::value.usingValue(clientId?.value, action)
+        fun <T> withClientId(clientId: ClientId?, action: () -> T): T = context::value.usingValue(clientId?.value, action)
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ClientId {
             return ClientId(buffer.readString())
