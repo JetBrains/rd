@@ -1,9 +1,9 @@
 #ifndef RD_CPP_EXTWIRE_H
 #define RD_CPP_EXTWIRE_H
 
-#include "IWire.h"
-#include "RdId.h"
-#include "Buffer.h"
+#include "base/IWire.h"
+#include "protocol/RdId.h"
+#include "protocol/Buffer.h"
 
 #include <queue>
 #include <mutex>

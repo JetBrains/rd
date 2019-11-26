@@ -1,9 +1,9 @@
 #ifndef RD_CPP_WRAPPER_H
 #define RD_CPP_WRAPPER_H
 
-#include "core_traits.h"
-#include "hash.h"
-#include "to_string.h"
+#include "util/core_traits.h"
+#include "std/hash.h"
+#include "std/to_string.h"
 
 #include "thirdparty.hpp"
 

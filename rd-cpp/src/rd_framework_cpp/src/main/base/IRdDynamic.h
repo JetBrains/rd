@@ -1,7 +1,7 @@
 #ifndef RD_CPP_IRDDYNAMIC_H
 #define RD_CPP_IRDDYNAMIC_H
 
-#include "RName.h"
+#include "impl/RName.h"
 
 namespace rd {
 	//region predeclared

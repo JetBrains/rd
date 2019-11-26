@@ -1,6 +1,6 @@
 #include "LifetimeDefinition.h"
 
-#include "Logger.h"
+#include "logger/Logger.h"
 
 namespace rd {
 	LifetimeDefinition::LifetimeDefinition(bool eternaled) : eternaled(eternaled), lifetime(eternaled) {}

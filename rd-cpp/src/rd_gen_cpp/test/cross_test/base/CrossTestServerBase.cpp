@@ -1,6 +1,6 @@
 #include "CrossTestServerBase.h"
 
-#include "SocketWire.h"
+#include "wire/SocketWire.h"
 
 #include <cstdint>
 #include <memory>

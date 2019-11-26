@@ -2,8 +2,8 @@
 #define RD_CPP_PROPERTYHOLDERWITHINTERNROOT_H
 
 
-#include "RdProperty.h"
-#include "SerializationCtx.h"
+#include "impl/RdProperty.h"
+#include "serialization/SerializationCtx.h"
 
 namespace rd {
 	namespace test {

@@ -1,9 +1,9 @@
 #ifndef RD_CPP_FRAMEWORK_RDID_H
 #define RD_CPP_FRAMEWORK_RDID_H
 
-#include "Buffer.h"
+#include "protocol/Buffer.h"
 #include "hashing.h"
-#include "hash.h"
+#include "std/hash.h"
 
 #include "thirdparty.hpp"
 

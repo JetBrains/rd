@@ -1,8 +1,8 @@
 #ifndef RD_CPP_POLYMORPHIC_H
 #define RD_CPP_POLYMORPHIC_H
 
-#include "Buffer.h"
-#include "RdReactiveBase.h"
+#include "protocol/Buffer.h"
+#include "base/RdReactiveBase.h"
 
 #include <type_traits>
 

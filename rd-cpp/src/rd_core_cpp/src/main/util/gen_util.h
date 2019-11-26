@@ -1,7 +1,7 @@
 #ifndef RD_CPP_GEN_UTIL_H
 #define RD_CPP_GEN_UTIL_H
 
-#include "hash.h"
+#include "std/hash.h"
 
 #include <cstdlib>
 #include <vector>

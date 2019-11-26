@@ -1,8 +1,8 @@
 #ifndef RD_CPP_SINGLETHREADSCHEDULERBASE_H
 #define RD_CPP_SINGLETHREADSCHEDULERBASE_H
 
-#include "IScheduler.h"
-#include "Lifetime.h"
+#include "scheduler/base/IScheduler.h"
+#include "lifetime/Lifetime.h"
 
 #include <utility>
 

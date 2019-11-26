@@ -1,7 +1,7 @@
-#include "MessageBroker.h"
+#include "protocol/MessageBroker.h"
 
-#include "core_util.h"
-#include "Buffer.h"
+#include "util/core_util.h"
+#include "protocol/Buffer.h"
 
 #include <cassert>
 

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "RdProperty.h"
-#include "RdList.h"
+#include "impl/RdProperty.h"
+#include "impl/RdList.h"
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
 #include "test_util.h"

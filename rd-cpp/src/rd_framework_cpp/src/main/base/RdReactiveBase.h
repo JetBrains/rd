@@ -2,9 +2,9 @@
 #define RD_CPP_RDREACTIVEBASE_H
 
 
-#include "RdBindableBase.h"
-#include "IRdReactive.h"
-#include "Logger.h"
+#include "base/RdBindableBase.h"
+#include "base/IRdReactive.h"
+#include "logger/Logger.h"
 #include "guards.h"
 
 #pragma warning( push )

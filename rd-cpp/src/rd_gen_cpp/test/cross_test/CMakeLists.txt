@@ -2,7 +2,7 @@ add_library(cross_test_lib
         base/CrossTestBase.cpp base/CrossTestBase.h
         base/CrossTestClientBase.cpp base/CrossTestClientBase.h
         base/CrossTestServerBase.cpp base/CrossTestServerBase.h
-        statics/CrossTestAllEntities.cpp statics/CrossTestAllEntities.h
+        statics/CrossTest_AllEntities.cpp statics/CrossTest_AllEntities.h
         )
 target_include_directories(cross_test_lib PUBLIC base statics)
 

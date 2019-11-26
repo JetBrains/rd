@@ -57,12 +57,12 @@ add_library(rd_framework_cpp STATIC
         #intern
         intern/InternRoot.cpp intern/InternRoot.h
         intern/InternScheduler.cpp intern/InternScheduler.h
-        #others
-        Identities.cpp Identities.h
-        Buffer.cpp Buffer.h
-        RdId.cpp RdId.h
-        Protocol.cpp Protocol.h
-        MessageBroker.cpp MessageBroker.h
+        #protocol
+        protocol/Identities.cpp protocol/Identities.h
+        protocol/Buffer.cpp protocol/Buffer.h
+        protocol/RdId.cpp protocol/RdId.h
+        protocol/Protocol.cpp protocol/Protocol.h
+        protocol/MessageBroker.cpp protocol/MessageBroker.h
         #pch
         ${PCH_CPP_OPT})
 
@@ -78,16 +78,6 @@ add_subdirectory(util)
 target_include_directories(rd_framework_cpp
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        base
-        ext
-        impl
-        intern
-        scheduler
-        scheduler/base
-        serialization
-        task
-        wire
-        util
         )
 
 target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp clsocket)

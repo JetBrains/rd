@@ -12,9 +12,7 @@ import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
-
 import java.io.File
-import java.nio.charset.Charset
 
 
 private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
@@ -284,7 +282,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 //        is Struct.Concrete -> sanitizedName(scope)
         is Declaration -> {
             val fullName = sanitizedName(scope)
-            if (rawType) {
+            if (rawType || isIntrinsic) {
                 fullName
             } else {
                 fullName.wrapper()
@@ -832,17 +830,21 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
     }
 
-    protected open fun PrettyPrinter.typedecl(decl: Declaration) {
-        if (decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
-            +"/**"
-            if (decl.documentation != null) {
-                +" * ${decl.documentation}"
+    private fun PrettyPrinter.docDecl(decl: Declaration) {
+        if (decl.documentation != null || decl.sourceFileAndLine != null) {
+            + "/// <summary>"
+            decl.documentation?.let {
+                + "/// $it"
             }
-            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
-                +" * @property ${member.name} ${member.documentation}"
+            decl.sourceFileAndLine?.let {
+                + "/// <p>Generated from: $it</p>"
             }
-            +" */"
+            + "/// </summary>"
         }
+    }
+
+    protected open fun PrettyPrinter.typedecl(decl: Declaration) {
+        docDecl(decl)
 
         surroundWithNamespaces {
             if (decl is Enum) {
@@ -1035,39 +1037,39 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
         val frameworkHeaders = listOf(
                 //root
-                "Protocol",
+                "protocol/Protocol",
                 //types
                 "types/DateTime",
                 //impl
-                "RdSignal",
-                "RdProperty",
-                "RdList",
-                "RdSet",
-                "RdMap",
+                "impl/RdSignal",
+                "impl/RdProperty",
+                "impl/RdList",
+                "impl/RdSet",
+                "impl/RdMap",
                 //base
-                "ISerializable",
-                "ISerializersOwner",
-                "IUnknownInstance",
+                "base/ISerializersOwner",
+                "base/IUnknownInstance",
                 //serialization
-                "Polymorphic",
-                "NullableSerializer",
-                "ArraySerializer",
-                "InternedSerializer",
-                "SerializationCtx",
-                "Serializers",
+                "serialization/ISerializable",
+                "serialization/Polymorphic",
+                "serialization/NullableSerializer",
+                "serialization/ArraySerializer",
+                "serialization/InternedSerializer",
+                "serialization/SerializationCtx",
+                "serialization/Serializers",
                 //ext
-                "RdExtBase",
+                "ext/RdExtBase",
                 //task
-                "RdCall",
-                "RdEndpoint",
-                "RdSymmetricCall",
+                "task/RdCall",
+                "task/RdEndpoint",
+                "task/RdSymmetricCall",
                 //std stubs
                 "std/to_string",
                 "std/hash",
                 //enum
-                "enum",
+                "util/enum",
                 //gen
-                "gen_util"
+                "util/gen_util"
         )
 
         +frameworkHeaders.joinToString(separator = eol) { s -> s.includeWithExtension("h") }

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "LifetimeDefinition.h"
-#include "Property.h"
+#include "lifetime/LifetimeDefinition.h"
+#include "reactive/Property.h"
 
 using namespace rd;
 

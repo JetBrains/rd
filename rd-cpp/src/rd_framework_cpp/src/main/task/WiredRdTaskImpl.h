@@ -1,7 +1,7 @@
 #ifndef RD_CPP_WIREDRDTASKIMPL_H
 #define RD_CPP_WIREDRDTASKIMPL_H
 
-#include "Polymorphic.h"
+#include "serialization/Polymorphic.h"
 #include "RdTaskResult.h"
 
 namespace rd {
