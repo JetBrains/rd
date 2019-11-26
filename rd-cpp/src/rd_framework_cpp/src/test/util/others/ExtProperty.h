@@ -2,8 +2,8 @@
 #define RD_CPP_EXTPROPERTY_H
 
 
-#include "RdExtBase.h"
-#include "RdProperty.h"
+#include "ext/RdExtBase.h"
+#include "impl/RdProperty.h"
 
 namespace rd {
 	namespace test {

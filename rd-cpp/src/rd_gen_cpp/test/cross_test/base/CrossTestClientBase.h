@@ -3,13 +3,13 @@
 
 #include "CrossTestBase.h"
 
-#include "LifetimeDefinition.h"
-#include "SimpleScheduler.h"
-#include "IWire.h"
-#include "SocketWire.h"
-#include "filesystem.h"
-#include "Protocol.h"
-#include "RdProperty.h"
+#include "lifetime/LifetimeDefinition.h"
+#include "scheduler/SimpleScheduler.h"
+#include "base/IWire.h"
+#include "wire/SocketWire.h"
+#include "std/filesystem.h"
+#include "protocol/Protocol.h"
+#include "impl/RdProperty.h"
 
 #include <fstream>
 

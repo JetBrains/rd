@@ -3,10 +3,10 @@
 
 
 #include "IRdDynamic.h"
-#include "Serializers.h"
-#include "Identities.h"
-#include "IScheduler.h"
-#include "IWire.h"
+#include "serialization/Serializers.h"
+#include "protocol/Identities.h"
+#include "scheduler/base/IScheduler.h"
+#include "base/IWire.h"
 
 #include <memory>
 

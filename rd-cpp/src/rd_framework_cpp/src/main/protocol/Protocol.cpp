@@ -1,7 +1,7 @@
-#include "Protocol.h"
+#include "protocol/Protocol.h"
 
-#include "SerializationCtx.h"
-#include "InternRoot.h"
+#include "serialization/SerializationCtx.h"
+#include "intern/InternRoot.h"
 
 #include <utility>
 

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ViewableSet.h"
+#include "reactive/ViewableSet.h"
 
 #include "test_util.h"
 

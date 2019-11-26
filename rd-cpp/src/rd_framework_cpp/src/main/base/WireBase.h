@@ -2,9 +2,9 @@
 #define RD_CPP_WIREBASE_H
 
 
-#include "Property.h"
-#include "IWire.h"
-#include "MessageBroker.h"
+#include "reactive/Property.h"
+#include "base/IWire.h"
+#include "protocol/MessageBroker.h"
 
 namespace rd {
 	class WireBase : public IWire {

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ViewableMap.h"
+#include "reactive/ViewableMap.h"
 #include "test_util.h"
 
 using namespace rd;

@@ -1,7 +1,7 @@
 #ifndef RD_CPP_RDTASKIMPL_H
 #define RD_CPP_RDTASKIMPL_H
 
-#include "Polymorphic.h"
+#include "serialization/Polymorphic.h"
 #include "RdTaskResult.h"
 
 #include "thirdparty.hpp"

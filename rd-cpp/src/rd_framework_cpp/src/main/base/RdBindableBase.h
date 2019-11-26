@@ -2,7 +2,7 @@
 #define RD_CPP_RDBINDABLEBASE_H
 
 #include "IRdBindable.h"
-#include "IProtocol.h"
+#include "base/IProtocol.h"
 
 #include "thirdparty.hpp"
 

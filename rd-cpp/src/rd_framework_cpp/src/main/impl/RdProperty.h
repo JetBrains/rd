@@ -2,9 +2,9 @@
 #define RD_CPP_RDPROPERTY_H
 
 
-#include "RdPropertyBase.h"
-#include "Polymorphic.h"
-#include "ISerializable.h"
+#include "base/RdPropertyBase.h"
+#include "serialization/Polymorphic.h"
+#include "serialization/ISerializable.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )

@@ -1,6 +1,6 @@
-#include "WireUtil.h"
+#include "wire/WireUtil.h"
 
-#include "core_util.h"
+#include "util/core_util.h"
 
 #include "PassiveSocket.h"
 #include "Host.h"

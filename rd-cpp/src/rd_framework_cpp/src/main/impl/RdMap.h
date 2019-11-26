@@ -1,10 +1,10 @@
 #ifndef RD_CPP_RDMAP_H
 #define RD_CPP_RDMAP_H
 
-#include "ViewableMap.h"
-#include "RdReactiveBase.h"
-#include "Polymorphic.h"
-#include "shared_function.h"
+#include "reactive/ViewableMap.h"
+#include "base/RdReactiveBase.h"
+#include "serialization/Polymorphic.h"
+#include "util/shared_function.h"
 
 #include <cstdint>
 

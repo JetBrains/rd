@@ -1,6 +1,6 @@
-#include "ISerializable.h"
+#include "serialization/ISerializable.h"
 
-#include "hash.h"
+#include "std/hash.h"
 
 namespace rd {
 	size_t IPolymorphicSerializable::hashCode() const noexcept {

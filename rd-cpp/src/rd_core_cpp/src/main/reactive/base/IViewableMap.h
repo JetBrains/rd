@@ -1,13 +1,13 @@
 #ifndef RD_CPP_IVIEWABLEMAP_H
 #define RD_CPP_IVIEWABLEMAP_H
 
-#include "LifetimeDefinition.h"
-#include "overloaded.h"
-#include "interfaces.h"
+#include "lifetime/LifetimeDefinition.h"
+#include "util/overloaded.h"
+#include "reactive/interfaces.h"
 #include "viewable_collections.h"
-#include "core_util.h"
+#include "util/core_util.h"
 
-#include "unordered_map.h"
+#include "std/unordered_map.h"
 
 #include "thirdparty.hpp"
 

@@ -1,8 +1,8 @@
 #ifndef RD_CPP_RDSYMMETRICCALL_H
 #define RD_CPP_RDSYMMETRICCALL_H
 
-#include "RdCall.h"
-#include "RdEndpoint.h"
+#include "task/RdCall.h"
+#include "task/RdEndpoint.h"
 
 namespace rd {
 	template<typename TReq, typename TRes, typename ReqSer = Polymorphic<TReq>, typename ResSer = Polymorphic<TRes> >

@@ -3,7 +3,7 @@
 
 
 #include "IRdBindable.h"
-#include "IScheduler.h"
+#include "scheduler/base/IScheduler.h"
 #include "IRdWireable.h"
 
 namespace rd {

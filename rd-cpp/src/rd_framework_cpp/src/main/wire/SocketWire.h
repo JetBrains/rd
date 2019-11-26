@@ -1,9 +1,9 @@
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
-#include "IScheduler.h"
-#include "WireBase.h"
-#include "Logger.h"
+#include "scheduler/base/IScheduler.h"
+#include "base/WireBase.h"
+#include "logger/Logger.h"
 #include "ByteBufferAsyncProcessor.h"
 #include "PkgInputStream.h"
 

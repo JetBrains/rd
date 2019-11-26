@@ -1,8 +1,8 @@
 #include "RdAsyncTestBase.h"
 
-#include "RdSignal.h"
-#include "Void.h"
-#include "WireUtil.h"
+#include "impl/RdSignal.h"
+#include "types/Void.h"
+#include "wire/WireUtil.h"
 
 #include "countdownlatch.hpp"
 
