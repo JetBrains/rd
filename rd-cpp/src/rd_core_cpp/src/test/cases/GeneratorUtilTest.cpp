@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "gen_util.h"
+#include "util/gen_util.h"
 
 #include "thirdparty.hpp"
 

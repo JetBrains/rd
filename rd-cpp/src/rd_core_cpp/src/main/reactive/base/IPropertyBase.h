@@ -2,10 +2,10 @@
 #define RD_CPP_IPROPERTYBASE_H
 
 
-#include "wrapper.h"
-#include "interfaces.h"
-#include "SignalX.h"
-#include "SequentialLifetimes.h"
+#include "types/wrapper.h"
+#include "reactive/interfaces.h"
+#include "reactive/SignalX.h"
+#include "lifetime/SequentialLifetimes.h"
 
 #include "thirdparty.hpp"
 

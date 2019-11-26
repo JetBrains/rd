@@ -1,9 +1,9 @@
 #ifndef RD_CPP_NULLABLESERIALIZER_H
 #define RD_CPP_NULLABLESERIALIZER_H
 
-#include "Polymorphic.h"
-#include "AbstractPolymorphic.h"
-#include "wrapper.h"
+#include "serialization/Polymorphic.h"
+#include "serialization/AbstractPolymorphic.h"
+#include "types/wrapper.h"
 #include "framework_traits.h"
 
 #include <type_traits>

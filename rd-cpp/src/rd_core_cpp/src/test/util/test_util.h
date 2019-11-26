@@ -1,11 +1,11 @@
 #ifndef RD_CPP_CORE_TEST_UTIL_H
 #define RD_CPP_CORE_TEST_UTIL_H
 
-#include "ViewableList.h"
-#include "ViewableSet.h"
-#include "ViewableMap.h"
+#include "reactive/ViewableList.h"
+#include "reactive/ViewableSet.h"
+#include "reactive/ViewableMap.h"
 
-#include "core_util.h"
+#include "util/core_util.h"
 
 #include <vector>
 

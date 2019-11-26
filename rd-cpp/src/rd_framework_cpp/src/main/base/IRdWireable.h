@@ -2,9 +2,9 @@
 #define RD_CPP_IRDWIREABLE_H
 
 
-#include <RdId.h>
-#include "IScheduler.h"
-#include "Buffer.h"
+#include "protocol/RdId.h"
+#include "scheduler/base/IScheduler.h"
+#include "protocol/Buffer.h"
 
 namespace rd {
 	class IRdWireable {

@@ -2,7 +2,7 @@
 #define RD_CPP_CORE_LOGGER_H
 
 #include "thirdparty.hpp"
-#include "core_util.h"
+#include "util/core_util.h"
 
 #include <string>
 #include <exception>

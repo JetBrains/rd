@@ -2,9 +2,9 @@
 
 #include "RdFrameworkTestBase.h"
 
-#include "RdProperty.h"
-#include "RdCall.h"
-#include "RdEndpoint.h"
+#include "impl/RdProperty.h"
+#include "task/RdCall.h"
+#include "task/RdEndpoint.h"
 
 #include "Linearization.h"
 

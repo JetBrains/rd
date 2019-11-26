@@ -1,9 +1,9 @@
 #ifndef RD_CPP_RDLIST_H
 #define RD_CPP_RDLIST_H
 
-#include "ViewableList.h"
-#include "RdReactiveBase.h"
-#include "Polymorphic.h"
+#include "reactive/ViewableList.h"
+#include "base/RdReactiveBase.h"
+#include "serialization/Polymorphic.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )

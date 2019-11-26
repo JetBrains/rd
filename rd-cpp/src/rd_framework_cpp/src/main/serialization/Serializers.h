@@ -1,12 +1,12 @@
 #ifndef RD_CPP_SERIALIZERS_H
 #define RD_CPP_SERIALIZERS_H
 
-#include "RdId.h"
-#include "ISerializable.h"
-#include "Identities.h"
-#include "IUnknownInstance.h"
+#include "protocol/RdId.h"
+#include "serialization/ISerializable.h"
+#include "protocol/Identities.h"
+#include "base/IUnknownInstance.h"
 #include "hashing.h"
-#include "RdAny.h"
+#include "serialization/RdAny.h"
 #include "DefaultAbstractDeclaration.h"
 
 #include "std/unordered_map.h"

@@ -1,7 +1,7 @@
 #define NOMINMAX
 
 #include "CrossTestClientBase.h"
-#include "CrossTestAllEntities.h"
+#include "CrossTest_AllEntities.h"
 
 #include "DemoModel/DemoModel.h"
 #include "ExtModel/ExtModel.h"
@@ -11,10 +11,10 @@
 #include "DemoModel/Flags.h"
 #include "DemoModel/ComplicatedPair.h"
 
-#include "Lifetime.h"
-#include "SocketWire.h"
-#include "SimpleScheduler.h"
-#include "WireUtil.h"
+#include "lifetime/Lifetime.h"
+#include "wire/SocketWire.h"
+#include "scheduler/SimpleScheduler.h"
+#include "wire/WireUtil.h"
 
 #include <cstdint>
 #include <string>

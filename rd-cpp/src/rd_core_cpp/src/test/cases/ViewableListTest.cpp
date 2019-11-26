@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "ViewableList.h"
+#include "reactive/ViewableList.h"
 #include "test_util.h"
 
 using namespace rd;

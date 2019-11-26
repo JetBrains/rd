@@ -23,6 +23,7 @@ add_library(rd_core_cpp STATIC
         #std
         std/hash.cpp std/hash.h
         std/to_string.cpp std/to_string.h
+        std/filesystem.cpp std/filesystem.h
         #types
         types/DateTime.cpp types/DateTime.h
         types/Void.cpp types/Void.h
@@ -43,13 +44,6 @@ add_subdirectory(util)
 
 target_include_directories(rd_core_cpp PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        lifetime
-        logger
-        reactive
-        reactive/base
-        std
-        types
-        util
         )
 
 target_link_libraries(rd_core_cpp PUBLIC rd_core_cpp_util thirdparty)

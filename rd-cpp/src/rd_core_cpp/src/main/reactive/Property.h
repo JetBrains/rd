@@ -1,9 +1,9 @@
 #ifndef RD_CPP_CORE_PROPERTY_H
 #define RD_CPP_CORE_PROPERTY_H
 
-#include "IProperty.h"
-#include "SignalX.h"
-#include "core_util.h"
+#include "base/IProperty.h"
+#include "reactive/SignalX.h"
+#include "util/core_util.h"
 
 namespace rd {
 

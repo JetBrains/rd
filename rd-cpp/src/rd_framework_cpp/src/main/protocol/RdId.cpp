@@ -1,6 +1,6 @@
-#include "RdId.h"
+#include "protocol/RdId.h"
 
-#include "Identities.h"
+#include "protocol/Identities.h"
 
 namespace rd {
 	RdId RdId::read(Buffer &buffer) {

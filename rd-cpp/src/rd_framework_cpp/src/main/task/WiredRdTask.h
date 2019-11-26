@@ -3,8 +3,8 @@
 
 #include "RdTask.h"
 #include "WiredRdTaskImpl.h"
-#include "RdReactiveBase.h"
-#include "IScheduler.h"
+#include "base/RdReactiveBase.h"
+#include "scheduler/base/IScheduler.h"
 
 namespace rd {
 	template<typename T, typename S = Polymorphic<T>>

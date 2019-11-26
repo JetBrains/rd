@@ -1,7 +1,7 @@
 #ifndef RD_CPP_RDENDPOINT_H
 #define RD_CPP_RDENDPOINT_H
 
-#include "Polymorphic.h"
+#include "serialization/Polymorphic.h"
 #include "RdTask.h"
 
 #pragma warning( push )

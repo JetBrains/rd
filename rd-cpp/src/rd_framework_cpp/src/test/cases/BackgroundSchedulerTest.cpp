@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "SingleThreadScheduler.h"
-#include "WireUtil.h"
-#include "LifetimeDefinition.h"
+#include "scheduler/SingleThreadScheduler.h"
+#include "wire/WireUtil.h"
+#include "lifetime/LifetimeDefinition.h"
 
 using namespace rd;
 

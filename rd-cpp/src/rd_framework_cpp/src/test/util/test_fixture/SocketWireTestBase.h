@@ -4,11 +4,11 @@
 
 #include <gtest/gtest.h>
 
-#include "LifetimeDefinition.h"
-#include "RdProperty.h"
-#include "Protocol.h"
-#include "WireUtil.h"
-#include "PumpScheduler.h"
+#include "lifetime/LifetimeDefinition.h"
+#include "impl/RdProperty.h"
+#include "protocol/Protocol.h"
+#include "wire/WireUtil.h"
+#include "wire/PumpScheduler.h"
 
 namespace rd {
 	namespace test {

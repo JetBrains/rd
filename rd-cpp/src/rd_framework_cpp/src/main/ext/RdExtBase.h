@@ -1,7 +1,7 @@
 #ifndef RD_CPP_RDEXTBASE_H
 #define RD_CPP_RDEXTBASE_H
 
-#include "RdReactiveBase.h"
+#include "base/RdReactiveBase.h"
 #include "ExtWire.h"
 
 #pragma warning( push )

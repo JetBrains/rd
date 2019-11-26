@@ -1,7 +1,7 @@
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
 
-#include "hash.h"
+#include "std/hash.h"
 
 #include <functional>
 #include <map>

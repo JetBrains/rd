@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "RdMap.h"
+#include "impl/RdMap.h"
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
 #include "test_util.h"

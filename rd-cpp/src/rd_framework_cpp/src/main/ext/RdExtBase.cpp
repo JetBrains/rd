@@ -1,9 +1,9 @@
 #include "RdExtBase.h"
 
-#include "Lifetime.h"
-#include "RdPropertyBase.h"
-#include "Protocol.h"
-#include "SynchronousScheduler.h"
+#include "lifetime/Lifetime.h"
+#include "base/RdPropertyBase.h"
+#include "protocol/Protocol.h"
+#include "scheduler/SynchronousScheduler.h"
 
 namespace rd {
 	const IProtocol *RdExtBase::get_protocol() const {

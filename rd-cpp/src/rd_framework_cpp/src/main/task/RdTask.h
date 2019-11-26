@@ -2,7 +2,7 @@
 #define RD_CPP_RDTASK_H
 
 #include "RdTaskImpl.h"
-#include "Polymorphic.h"
+#include "serialization/Polymorphic.h"
 
 #include <functional>
 

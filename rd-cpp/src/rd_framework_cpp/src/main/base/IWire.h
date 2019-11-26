@@ -2,9 +2,9 @@
 #define RD_CPP_IWIRE_H
 
 
-#include "interfaces.h"
-#include "IRdReactive.h"
-#include "Property.h"
+#include "reactive/interfaces.h"
+#include "base/IRdReactive.h"
+#include "reactive/Property.h"
 
 namespace rd {
 	/**
