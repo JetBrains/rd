@@ -19,7 +19,10 @@ object SyncModelRoot : Root(
     val Baseclazz = baseclass {
         field("f", int)
     }
+    val InternScope = internScope("internScopeForSyncTest")
     val Clazz = classdef extends Baseclazz {
+        internRoot(InternScope)
+
         property("p", int.nullable)
         map("mapPerClientId", int, int).perContext(ClientId)
     }

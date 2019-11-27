@@ -59,14 +59,14 @@ fun <K : Any, T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerContextM
         b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
-    b.advise(lifetime) { evt ->
-        evt.newValueOpt?.let {
-            // skip `Host` clientId from guest protocol
-            if (evt.key == "Host") return@advise
-            synchronizePolymorphic(lifetime, a[evt.key], it)
+    a.localChange {
+        b.view(lifetime) { lt, (key, value) ->
+            if (a.changing)
+                return@view
+
+            a[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
         }
     }
-
 }
 
 
