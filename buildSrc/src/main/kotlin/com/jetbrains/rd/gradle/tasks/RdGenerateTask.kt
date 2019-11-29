@@ -1,5 +1,6 @@
 package com.jetbrains.rd.gradle.tasks
 
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.JavaExec
 import java.io.File
 
@@ -7,6 +8,7 @@ import java.io.File
  * Uses compiled RdGen for generating prepared models
  */
 open class RdGenerateTask : JavaExec() {
+    @InputFiles
     val sourceDirectories = mutableListOf<File>()
 
     init {

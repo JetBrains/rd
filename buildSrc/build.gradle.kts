@@ -12,14 +12,15 @@ repositories {
 plugins {
     `kotlin-dsl`
     jacoco
+//    `java-library`
     kotlin("multiplatform") version "1.3.50" apply false
 }
 
 dependencies {
-    compile(gradleApi())
-    compile("org.jetbrains.kotlin:kotlin-gradle-plugin")
-    compile("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
-//    compile("org.gradle.kotlin:plugins:1.3.1")
-    compile("com.moowork.gradle:gradle-node-plugin:1.3.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.1")
+    implementation(gradleApi())
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:0.9.18")
+//    implementation("org.gradle.kotlin:plugins:1.3.1")
+    implementation("com.moowork.gradle:gradle-node-plugin:1.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
 }

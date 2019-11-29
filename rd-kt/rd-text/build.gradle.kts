@@ -8,9 +8,9 @@ plugins {
 }
 
 dependencies {
-    compile(project(":rd-framework"))
+    implementation(project(":rd-framework"))
 
-    testCompile("com.github.JetBrains:jetCheck:b5bc810e71")
-    testCompile("com.github.JetBrains:jetCheck:b5bc810e71:sources")
+    testImplementation("com.github.JetBrains:jetCheck:b5bc810e71")
+    testImplementation("com.github.JetBrains:jetCheck:b5bc810e71:sources")
 }
 

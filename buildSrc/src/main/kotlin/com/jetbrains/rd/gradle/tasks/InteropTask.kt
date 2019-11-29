@@ -5,6 +5,8 @@ import com.jetbrains.rd.gradle.tasks.util.portFileStamp
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Task
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
@@ -16,7 +18,9 @@ const val PROCESS_WAIT_TIMEOUT = 20L
  * that present server and client respectively.
  */
 open class InteropTask : DefaultTask() {
+    @Internal
     lateinit var taskServer: MarkedExecTask
+    @Internal
     lateinit var taskClient: MarkedExecTask
 
     private val serverRunningCommand by lazy { taskServer.commandLineWithArgs }
