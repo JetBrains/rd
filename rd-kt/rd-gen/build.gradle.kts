@@ -38,7 +38,7 @@ sourceSets {
         kotlin {
             compileClasspath += main.get().output
 
-            listOf("interning", "demo", "sync").map {
+            listOf("interning", "demo", "sync", "openEntity").map {
                 rootProject.buildDir.resolve("models").resolve(it)
             }.forEach {
                 output.dir(it)

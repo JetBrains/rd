@@ -347,6 +347,7 @@ open class Kotlin11Generator(
         }
 
         if (decl.isAbstract) p("abstract ")
+        if (decl.isOpen) p("open ")
         if (decl.isDataClass) p("data ")
 
 
@@ -472,6 +473,25 @@ open class Kotlin11Generator(
         else if (decl.isAbstract) {
             println()
             block("companion object : IAbstractDeclaration<${decl.name}>") {
+                abstractDeclarationTrait(decl)
+                println()
+                customSerializersTrait(decl)
+                println()
+                constantTrait(decl)
+            }
+        }
+        else if (decl.isOpen) {
+            println()
+            block("companion object : IMarshaller<${decl.name}>, IAbstractDeclaration<${decl.name}>") {
+                +"override val _type: KClass<${decl.name}> = ${decl.name}::class"
+                println()
+                readerTrait(decl)
+                println()
+                writerTrait(decl)
+                println()
+                customSerializersTrait(decl)
+                println()
+                constantTrait(decl)
                 abstractDeclarationTrait(decl)
                 println()
                 customSerializersTrait(decl)
@@ -611,10 +631,10 @@ open class Kotlin11Generator(
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
-                        ?: if (isAbstract)
-                            "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
-                        else
+                        ?: if (isSealed)
                             "${substitutedName(decl)}.read(ctx, buffer)"
+                        else
+                            "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
             is INullable -> "buffer.readNullable { ${itemType.reader()} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.read${substitutedName(decl)}()"
@@ -674,8 +694,8 @@ open class Kotlin11Generator(
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
-                    if (isAbstract) "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
-                    else "${substitutedName(decl)}.write(ctx, buffer, $field)"
+                    if (isSealed) "${substitutedName(decl)}.write(ctx, buffer, $field)"
+                    else "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
             is INullable -> "buffer.writeNullable($field) { ${itemType.writer("it")} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.write${substitutedName(decl)}($field)"
@@ -856,7 +876,7 @@ open class Kotlin11Generator(
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
         block("override fun print(printer: PrettyPrinter) ") {
             + "printer.println(\"${decl.name} (\")"
@@ -873,7 +893,7 @@ open class Kotlin11Generator(
 
     private fun PrettyPrinter.deepCloneTrait(decl: Declaration) {
 
-        if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
+        if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete || decl.isOpen))) return
 
         if (decl.getSetting(DisableDeepCloneGeneration) != null) return
 
@@ -920,7 +940,7 @@ open class Kotlin11Generator(
     }
 
     private fun PrettyPrinter.primaryCtorParamsTrait(decl: Declaration) {
-        fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
+        fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isSealed) "private " else "protected " }
 
         val own = decl.ownMembers.map {
             val attrs = it.getSetting(Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }

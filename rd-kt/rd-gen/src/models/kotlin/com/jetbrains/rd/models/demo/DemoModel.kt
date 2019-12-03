@@ -92,6 +92,14 @@ object DemoModel : Ext(DemoRoot) {
         field("string", PredefinedType.string)
     }
 
+    private var Open = openstruct extends Base{
+        field("openString", PredefinedType.string)
+    }
+
+    private var OpenDerived = openstruct extends Open{
+        field("openDerivedString", PredefinedType.string)
+    }
+
     private var complicatedPair = structdef {
         field("first", Derived)
         field("second", Derived)
@@ -123,6 +131,8 @@ object DemoModel : Ext(DemoRoot) {
         property("interned_string", PredefinedType.string.interned(ProtocolInternScope))
 
         property("polymorphic", Base)
+
+        property("polymorphic_open", OpenDerived)
 
         property("enum", MyEnum)
 
