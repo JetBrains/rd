@@ -61,6 +61,12 @@ class InternScope(pointcut: BindableDeclaration?, override val _name: String = "
         get() = javaClass.simpleName
 }
 
+enum class Modifier{
+    Abstract,
+    Open,
+    Sealed
+}
+
 sealed class Context(pointcut: Toplevel, val type: INonNullableScalar): Declaration(pointcut) {
     class Generated(pointcut: Toplevel, override val _name: String = "", type: INonNullableScalar, var isHeavyKey: Boolean = true) : Context(pointcut, type) {
         val keyName: String
@@ -201,7 +207,11 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     protected abstract val cl_name: String
 
     open val base : Declaration? = null
-    open val isAbstract : Boolean get() = false
+    open val modifier: Modifier get() =  Modifier.Sealed
+
+    val isAbstract: Boolean get() = modifier == Modifier.Abstract
+    val isOpen: Boolean get() = modifier == Modifier.Open
+    val isSealed: Boolean get() = modifier == Modifier.Sealed
 
     internal var lazyInitializer: (Declaration.() -> Unit)? = null
 
@@ -299,12 +309,20 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun baseclass(name : String, base: Class.Abstract?, body: Class.() -> Unit) = baseclass0(name, base, body)
 
 
-    private fun classdef0(name: String, base: Class.Abstract?, body: Class.() -> Unit) = append(Class.Concrete(name, this, base), body)
+    private fun classdef0(name: String, base: Class?, body: Class.() -> Unit) = append(Class.Concrete(name, this, base), body)
     fun classdef(name: String, body: Class.() -> Unit) = classdef0(name, null, body)
     fun classdef(body: Class.() -> Unit) = classdef0("", null, body)
     fun classdef(name: String) = Part<Class.Concrete>(name)
     val classdef = classdef("")
-    infix fun Part<Class.Concrete>.extends(p : Pair<Class.Abstract, Class.() -> Unit>) = classdef0(name, p.first, p.second)
+    infix fun Part<Class.Concrete>.extends(p : Pair<Class, Class.() -> Unit>) = classdef0(name, p.first, p.second)
+
+    private fun openclass0(name: String, base: Class?, body: Class.() -> Unit) = append(Class.Open(name, this, base), body)
+    fun openclass(name: String, body: Class.() -> Unit) = openclass0(name, null, body)
+    fun openclass(body: Class.() -> Unit) = openclass0("", null, body)
+    fun openclass(name: String) = Part<Class.Open>(name)
+    val openclass = openclass("")
+    infix fun Part<Class.Open>.extends(p : Pair<Class, Class.() -> Unit>) = openclass0(name, p.first, p.second)
+
 
     @Deprecated("Use infix function 'extends'.", ReplaceWith("classdef(name) extends base (body)"))
     fun classdef(name: String, base: Class.Abstract?, body: Class.() -> Unit) = classdef0(name, base, body)
@@ -322,12 +340,19 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun basestruct(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = basestruct0(name, base, body)
 
 
-    private fun structdef0(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = append(Struct.Concrete(name, this, base), body)
+    private fun structdef0(name : String, base: Struct?, body: Struct.() -> Unit) = append(Struct.Concrete(name, this, base), body)
     fun structdef(name : String, body: Struct.() -> Unit) = structdef0(name, null, body)
     fun structdef(body: Struct.() -> Unit) = structdef0("", null, body)
     fun structdef(name : String) = Part<Struct.Concrete>(name)
     val structdef = structdef("")
-    infix fun Part<Struct.Concrete>.extends(p : Pair<Struct.Abstract, Struct.() -> Unit>) = structdef0(name, p.first, p.second)
+    infix fun Part<Struct.Concrete>.extends(p : Pair<Struct, Struct.() -> Unit>) = structdef0(name, p.first, p.second)
+
+    private fun openstruct0(name: String, base: Struct?, body: Struct.() -> Unit) = append(Struct.Open(name, this, base), body)
+    fun openstruct(name: String, body: Struct.() -> Unit) = openstruct0(name, null, body)
+    fun openstruct(body: Struct.() -> Unit) = openstruct0("", null, body)
+    fun openstruct(name: String) = Part<Struct.Open>(name)
+    val openstruct = openstruct("")
+    infix fun Part<Struct.Open>.extends(p : Pair<Struct, Struct.() -> Unit>) = openstruct0(name, p.first, p.second)
 
     @Deprecated("Use infix function 'extends'.", ReplaceWith("structdef(name) extends base (body)"))
     fun structdef(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = structdef0(name, base, body)
@@ -347,19 +372,25 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
 
 
 
-sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Abstract?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar {
+sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Struct?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_struct"
 
     class Abstract(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base) {
-        override val isAbstract: Boolean get() = true
+        override val modifier: Modifier get() = Modifier.Abstract
         operator fun invoke(body: Struct.() -> Unit)= this to body //for extends
 
     }
-    class Concrete(name: String, pointcut: Toplevel, base: Abstract?, unknown: Boolean = false) : Struct(name, pointcut, base, unknown)
+
+    class Concrete(name: String, pointcut: Toplevel, base: Struct?, unknown: Boolean = false) : Struct(name, pointcut, base, unknown)
+
+    class Open (name: String, pointcut : Toplevel, base: Struct?) : Struct(name, pointcut, base) {
+        override val modifier: Modifier get() = Modifier.Open
+        operator fun invoke(body: Struct.() -> Unit) = this to body //for extends
+    }
 }
 operator fun <T : Struct> T.getValue(thisRef: Any?, property: KProperty<*>): T = this
 
-sealed class Class(override val _name: String, override val pointcut : Toplevel, override val base: Abstract?, val isUnknown: Boolean = false) :
+sealed class Class(override val _name: String, override val pointcut : Toplevel, override val base: Class?, val isUnknown: Boolean = false) :
         BindableDeclaration(pointcut), INonNullableBindable, Extensible {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_class"
 
@@ -368,10 +399,16 @@ sealed class Class(override val _name: String, override val pointcut : Toplevel,
 
     class Abstract (name : String, pointcut : Toplevel, base: Abstract?) : Class(name, pointcut, base) {
 
-        override val isAbstract : Boolean get() = true
+        override val modifier: Modifier get() = Modifier.Abstract
         operator fun invoke(body: Class.() -> Unit) = this to body //for extends
     }
-    class Concrete (name : String, pointcut : Toplevel, base: Abstract?, unknown: Boolean = false) : Class(name, pointcut, base, unknown)
+
+    class Concrete (name : String, pointcut : Toplevel, base: Class?, unknown: Boolean = false) : Class(name, pointcut, base, unknown)
+
+    class Open (name: String, pointcut : Toplevel, base: Class?) : Class(name, pointcut, base) {
+        override val modifier: Modifier get() = Modifier.Open
+        operator fun invoke(body: Class.() -> Unit) = this to body //for extends
+    }
 }
 operator fun <T : Class> T.getValue(thisRef: Any?, property: KProperty<*>) : T = this
 

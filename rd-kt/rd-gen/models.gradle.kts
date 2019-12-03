@@ -37,6 +37,10 @@ tasks {
         addSources(mapOf(
                 ktDirectorySystemPropertyKey to "$BUILD_DIR/models/sync"
         ), "sync")
+
+        addSources(mapOf(
+                ktDirectorySystemPropertyKey to "$BUILD_DIR/models/openEntity"
+        ), "openEntity")
     }
 
     @Suppress("UNUSED_VARIABLE")

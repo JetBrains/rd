@@ -436,6 +436,7 @@ open class CSharp50Generator(
         p("public ")
 
         if (decl.isAbstract) p("abstract ")
+        if (decl.isSealed) p("sealed ")
         if (decl.getSetting(Partial) != null) p("partial ")
 
         p("class ${decl.name}")
@@ -797,7 +798,7 @@ open class CSharp50Generator(
 
         +"//private fields"
         decl.ownMembers.filterIsInstance<Member.Reactive>().printlnWithBlankLine {
-            it.nullAttr() + (if (decl.isAbstract) "protected" else "private") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
+            it.nullAttr() + (if (decl.isSealed) "private" else "protected") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
         }
 
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
@@ -983,7 +984,7 @@ open class CSharp50Generator(
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
         val optOverride = (decl !is Struct).condstr { "override " }
         +"public ${optOverride}void Print(PrettyPrinter printer)"
@@ -997,7 +998,7 @@ open class CSharp50Generator(
     }
 
     private fun PrettyPrinter.toStringTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
         +"public override string ToString()"
         +"{"

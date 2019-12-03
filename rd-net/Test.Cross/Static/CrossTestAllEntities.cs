@@ -53,6 +53,10 @@ namespace Test.RdCross
 
             var derived = new Derived("C# instance");
             model.Polymorphic.Set(derived);
+
+            var openDerived = new OpenDerived("C# instance open derived string", "C# instance open string");
+            model.Polymorphic_open.Set(openDerived);
+
             model.Enum.Value = MyEnum.net;
             extModel.Checker.Fire();
         }
