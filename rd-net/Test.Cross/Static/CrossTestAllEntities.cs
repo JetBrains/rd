@@ -27,12 +27,13 @@ namespace Test.RdCross
                 uint.MaxValue - 1,
                 ulong.MaxValue - 1,
                 MyEnum.net,
-                Flags.anyFlag | Flags.netFlag
+                Flags.anyFlag | Flags.netFlag,
+                MyInitializedEnum.hundred
             );
 
             // ReSharper disable once UnusedVariable
             // ReSharper disable once InconsistentNaming
-            var (_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, unsigned_short, _unsigned_int, _unsigned_long, _my_enum, _flags) = scalar;
+            var (_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, unsigned_short, _unsigned_int, _unsigned_long, _my_enum, _flags, initializedEnum) = scalar;
             var (first, second) = new ComplicatedPair(new Derived("First"), new Derived("Second"));
             
             model.Scalar.Set(scalar);
