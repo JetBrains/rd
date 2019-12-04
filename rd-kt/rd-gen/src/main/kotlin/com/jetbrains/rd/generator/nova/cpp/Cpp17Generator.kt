@@ -1880,12 +1880,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 */
 
     protected fun PrettyPrinter.writerTraitDef(decl: Declaration) {
+        fun IType.polymorphicWriter(field: String) = "rd::Polymorphic<${templateName(decl)}>::write(ctx, buffer, $field)"
+
         fun IType.writer(field: String): String {
             return when (this) {
-                is CppIntrinsicType -> "rd::Polymorphic<$name>::write(ctx, buffer, $field)"
-                is Enum -> {
-                    "buffer.write_enum${underscoreSetOrEmpty}($field)"
-                }
+                is CppIntrinsicType -> polymorphicWriter(field)
+                is Enum -> polymorphicWriter(field)
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx &, rd::Buffer &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
                     """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""
