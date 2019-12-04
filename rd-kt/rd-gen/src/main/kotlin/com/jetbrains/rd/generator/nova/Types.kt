@@ -2,6 +2,7 @@
 
 package com.jetbrains.rd.generator.nova
 
+import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.util.getSourceFileAndLine
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.condstr
@@ -369,6 +370,13 @@ open class Enum(override val _name: String, override val pointcut : Toplevel) : 
 
         if (flags && constants.size > 30)
             errors.add("EnumSet $this contains more than 30 constants (does't fit Int)")
+
+        val fields = constants.mapIndexed { index, field ->
+            field.getSetting(Cpp17Generator.EnumConstantValue) ?: index
+        }
+        if (fields.distinct().size != fields.size) {
+            errors.add("EnumSet contains duplicated enum constants, values: $fields")
+        }
     }
 }
 
