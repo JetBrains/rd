@@ -19,6 +19,7 @@ T| protocol.SEND                  | property `Server.DemoModel.scalar` :: ver = 
   unsigned_long = 18446744073709551614
   enum = net
   flags = anyFlag, netFlag
+  myInitializedEnum = hundred
 )
 T| protocol.SEND                  | Set `Server.DemoModel.set`  :: Add :: 50
 T| protocol.SEND                  | map `Server.DemoModel.mapLongToString`  :: Add :: key = 50 :: value = "C#"
@@ -48,6 +49,7 @@ T| protocol.RECV                  | property `Server.DemoModel.scalar` :: oldver
   unsigned_long = 18446744073709551614
   enum = kt
   flags = anyFlag, ktFlag
+  myInitializedEnum = hundred
 )
 T| protocol.RECV                  | property `Server.DemoModel.ubyte` :: oldver = 0, newver = 0, value = 242
 T| protocol.RECV                  | property `Server.DemoModel.ubyte_array` :: oldver = 0, newver = 0, value = [
