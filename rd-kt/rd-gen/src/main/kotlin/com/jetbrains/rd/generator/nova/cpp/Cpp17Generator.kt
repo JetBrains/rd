@@ -9,7 +9,6 @@ import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
-import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import java.io.File
@@ -70,8 +69,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             return if (this is FakeDeclaration) {
                 decl.namespace
             } else {
-                val ns = getSetting(Namespace) ?: defaultNamespace
-                ns.split('.').joinToString(separator = "::")
+                return getSetting(Namespace) ?: defaultNamespace
             }
         }
 
@@ -539,17 +537,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     /**
      * Returns full name of receiver with namespace
      */
-    private fun Declaration.withNamespace(): String {
-        return if (isIntrinsic) {
-            platformTypeName
+    private fun Declaration.withNamespace() =
+        if (namespace.isEmpty()) {
+            "::$name"
         } else {
-            if (namespace.isEmpty()) {
-                "::$name"
-            } else {
-                "::$namespace::$name"
-            }
+            "::$namespace::$platformTypeName"
         }
-    }
 
 
     protected fun Declaration.scopeResolution(): String {
@@ -673,15 +666,25 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
 
-    private fun Declaration.predeclaration(isEnum : Boolean): String {
-        return PrettyPrinter().apply {
-            surroundWithNamespaces(namespace) {
-                +(isEnum.condstr { "enum " } + "class ${platformTypeName};")
+    private fun PrettyPrinter.predeclare(decl: Declaration) {
+        this.apply {
+            surroundWithNamespaces(decl.namespace) {
+                when (decl) {
+                    is Enum -> {
+                        val predecl = decl.getSetting(IsNonScoped)?.let {
+                            "enum ${decl.platformTypeName} : $it"
+                        } ?: "enum class ${decl.platformTypeName}"
+                        +("$predecl;")
+                    }
+                    else -> {
+                    }
+                }
             }
         }.toString()
     }
 
     object EnumConstantValue : ISetting<Int, Member.EnumConst>
+    object IsNonScoped : ISetting<String, Enum>
 
     private fun File.templateInstantiate(toplevels: List<Toplevel>) {
         fun collectInitializedEnums(): List<Enum> = toplevels.flatMap { tl ->
@@ -707,16 +710,25 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 withIncludeGuard(INSTANTIATION_FILE_NAME) {
                     +polymorphicHeader.includeWithExtension("h")
                     println()
-                    initializedEnums.forEach { enum ->
-                        +(enum as Declaration).includeWithExtension()
-                    }
+                    initializedEnums
+                        .map { enum ->
+                            if (enum.isIntrinsic) {
+                                enum.pointcut.getSetting(MarshallerHeaders)
+                            } else {
+                                listOf("${enum.pointcut.name}/${enum.name}.h")
+                            }
+                        }
+                        .filterNotNull()
+                        .flatten()
+                        .map { it.includeQuotes() }
+                        .forEach { +it }
                     println()
                     classes.forEach {
                         +"extern template class $it;"
                     }
                     println()
                     initializedEnums.forEach { enum ->
-                        +(enum.predeclaration(true))
+                        predeclare(enum)
                     }
                     println()
                     withNamespace("rd") {
@@ -776,7 +788,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                             map.forEach { (key, value) ->
                                 +"""
                                 |if (value == ${enum.withNamespace() + "::" + value.name}) {
-                                |   buffer.write_integral<int32_t>(static_cast<int32_t>($key));
+                                |   buffer.write_integral<int32_t>($key);
                                 |   return;
                                 |}
                              """.trimMargin()
@@ -814,32 +826,22 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val marshallerHeaders = tl.getSetting(MarshallerHeaders) ?: listOf()
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
-                    type.fsPath(tl, isDefinition).run {
-                        bufferedWriter().use { writer ->
-                            PrettyPrinter().apply {
-                                eolKind = Eol.osSpecified
-                                step = 4
+                    FileSystemPrettyPrinter(type.fsPath(tl, isDefinition)).use {
+                        //actual generation
 
-                                //actual generation
+                        autogenerated()
 
-                                autogenerated()
-
-                                if (isDefinition) {
-                                    source(type, types)
-                                } else {
-                                    header(type, marshallerHeaders)
-                                }
-
-                                writer.write(toString())
-                            }
+                        if (isDefinition) {
+                            source(type, types)
+                        } else {
+                            header(type, marshallerHeaders)
                         }
                     }
                 }
-
             }
-
-
         }
+
+
 
 
         if (toplevels.isNotEmpty()) {
@@ -1198,7 +1200,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         //third-party
         +"thirdparty".includeWithExtension("hpp")
 
-        +INSTANTIATION_FILE_NAME.includeWithExtension("h")
+        +("../$INSTANTIATION_FILE_NAME".includeWithExtension("h"))
 
         marshallerHeaders.forEach { it.includeAngleBrackets() }
     }

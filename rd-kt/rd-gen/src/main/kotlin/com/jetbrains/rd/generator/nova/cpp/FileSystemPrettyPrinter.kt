@@ -8,8 +8,7 @@ class FileSystemPrettyPrinter(val file: File) {
     fun use(block: PrettyPrinter.() -> Unit) {
         file.bufferedWriter().use { writer ->
             PrettyPrinter().apply {
-                eolKind = Eol.osSpecified
-                step = 4
+                setUp()
 
                 block()
 
@@ -17,4 +16,9 @@ class FileSystemPrettyPrinter(val file: File) {
             }
         }
     }
+}
+
+internal fun PrettyPrinter.setUp() = this.apply {
+    eolKind = Eol.osSpecified
+    step = 4
 }
