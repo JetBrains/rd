@@ -528,7 +528,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             this.withNamespace()
         } else {
             val needQualification = namespace != scope.namespace
-            needQualification.condstr { "::$namespace::" } + platformTypeName
+            needQualification.condstr { "$namespace::" } + platformTypeName
         }
     }
 
@@ -537,9 +537,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
      */
     private fun Declaration.withNamespace() =
         if (namespace.isEmpty()) {
-            "::$name"
+            "$name"
         } else {
-            "::$namespace::$platformTypeName"
+            "$namespace::$platformTypeName"
         }
 
 
@@ -782,7 +782,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                                 +"""
                                 |default:
                                 |   return static_cast<${enumType}>(x);
-                                """.trimIndent()
+                                """.trimMargin()
                             }
 
                         }
