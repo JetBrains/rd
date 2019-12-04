@@ -16,8 +16,24 @@ class CrossTest {
         if (expectedText == actualText) {
             println("The files ${expectedFile.toHighlightablePath()} and ${actualFile.toHighlightablePath()} are same!")
         } else {
+            createUpdateGoldScript(expectedFile, actualFile)
             throw ComparisonFailure("The files ${expectedFile.toHighlightablePath()} and ${actualFile.toHighlightablePath()} differ!$eol", expectedText, actualText)
         }
+    }
+
+    private fun createUpdateGoldScript(expectedFile: File, actualFile: File) {
+        val dir = createTempDir("JetTestScripts")
+        dir.mkdir()
+        val baseName = "copyToGold_${actualFile.nameWithoutExtension}"
+        var file = File(dir, "$baseName.bat")
+        var index = 1
+        while (file.exists()) {
+            file = File(dir, "$baseName$index.bat")
+            index++
+        }
+        file.createNewFile()
+        file.writeText("move /y \"${actualFile.absolutePath}\" \"${expectedFile.absolutePath}\"")
+        println("To update gold file use this script: ${file.toHighlightablePath()}")
     }
 
     companion object {
