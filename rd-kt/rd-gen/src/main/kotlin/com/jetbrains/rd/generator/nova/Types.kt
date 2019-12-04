@@ -142,7 +142,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     var documentation: String? = null
     var sourceFileAndLine: String? = null
 
-    val name: String by lazy {
+    open val name: String by lazy {
         if (_name.isNotEmpty()) return@lazy _name.capitalize()
 
         val parent = pointcut as? Toplevel ?: return@lazy ""
