@@ -709,14 +709,13 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     +polymorphicHeader.includeWithExtension("h")
                     println()
                     initializedEnums
-                        .map { enum ->
+                        .mapNotNull { enum ->
                             if (enum.isIntrinsic) {
                                 enum.pointcut.getSetting(MarshallerHeaders)
                             } else {
                                 listOf("${enum.pointcut.name}/${enum.name}.h")
                             }
                         }
-                        .filterNotNull()
                         .flatten()
                         .map { it.includeQuotes() }
                         .forEach { +it }
@@ -773,25 +772,34 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                         val enumType = enum.withNamespace()
                         block("$enumType Polymorphic<$enumType, void>::read(SerializationCtx& ctx, Buffer& buffer) {", "}") {
                             +"int32_t x = buffer.read_integral<int32_t>();"
-                            map.forEach { (key, value) ->
-                                +"""
-                                |if (x == $key) 
+                            block("switch (x) {", "}") {
+                                map.forEach { (key, value) ->
+                                    +"""
+                                |case $key: 
                                 |   return ${enum.withNamespace() + "::" + value.name};
-                             """.trimMargin()
+                                """.trimMargin()
+                                }
+                                +"""
+                                |default:
+                                |   return static_cast<${enumType}>(x);
+                                """.trimIndent()
                             }
-                            +"return static_cast<${enumType}>(x);"
+
                         }
                         println()
                         block("void Polymorphic<$enumType, void>::write(SerializationCtx& ctx, Buffer& buffer, $enumType const& value) {", "}") {
-                            map.forEach { (key, value) ->
-                                +"""
-                                |if (value == ${enum.withNamespace() + "::" + value.name}) {
+                            block("switch (value) {", "}") {
+                                map.forEach { (key, value) ->
+                                    +"""
+                                |case ${enum.withNamespace() + "::" + value.name}: {
                                 |   buffer.write_integral<int32_t>($key);
                                 |   return;
                                 |}
                              """.trimMargin()
+                                }
+                                +"default:"
+                                +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
                             }
-                            +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
                         }
                         +"template class Polymorphic<$enumType>;"
                     }
