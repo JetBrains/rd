@@ -32,7 +32,7 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 
 /**
  * Generate C++ code.
- * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
+ * @param defaultNamespace namespace separated by symbol "colon", "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
 open class Cpp17Generator(flowTransform: FlowTransform,
@@ -95,8 +95,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     object Intrinsic : ISetting<CppIntrinsicType, Declaration>
 
     object MarshallerHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
-
-    val nestedNamespaces = defaultNamespace.split('.')
 
     object PublicCtors : ISetting<Unit, Declaration>
 
