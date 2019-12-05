@@ -208,7 +208,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
 
     open val base : Declaration? = null
     open val implements: MutableList<Interface> = mutableListOf()
-    open var modifier: Modifier = Modifier.Sealed
+    open val modifier: Modifier = Modifier.Sealed
 
     val isAbstract: Boolean get() = modifier == Modifier.Abstract
     val isOpen: Boolean get() = modifier == Modifier.Open
@@ -439,14 +439,14 @@ sealed class Struct(override val _name: String, override val pointcut : Toplevel
     override val cl_name = "${javaClass.simpleName.decapitalize()}_struct"
 
     class Abstract(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base) {
-        override var modifier: Modifier = Modifier.Abstract
+        override val modifier: Modifier = Modifier.Abstract
         operator fun invoke(body: Struct.() -> Unit)= this to body //for extends
     }
 
     class Concrete(name: String, pointcut: Toplevel, base: Struct?, unknown: Boolean = false) : Struct(name, pointcut, base, unknown)
 
     class Open (name: String, pointcut : Toplevel, base: Struct?) : Struct(name, pointcut, base) {
-        override var modifier: Modifier = Modifier.Open
+        override val modifier: Modifier = Modifier.Open
         operator fun invoke(body: Struct.() -> Unit) = this to body //for extends
     }
 }
@@ -461,14 +461,14 @@ sealed class Class(override val _name: String, override val pointcut : Toplevel,
 
     class Abstract (name : String, pointcut : Toplevel, base: Abstract?) : Class(name, pointcut, base) {
 
-        override var modifier: Modifier  = Modifier.Abstract
+        override val modifier: Modifier  = Modifier.Abstract
         operator fun invoke(body: Class.() -> Unit) = this to body //for extends
     }
 
     class Concrete (name : String, pointcut : Toplevel, base: Class?, unknown: Boolean = false) : Class(name, pointcut, base, unknown)
 
     class Open (name: String, pointcut : Toplevel, base: Class?) : Class(name, pointcut, base) {
-        override var modifier: Modifier  = Modifier.Open
+        override val modifier: Modifier  = Modifier.Open
         operator fun invoke(body: Class.() -> Unit) = this to body //for extends
     }
 }

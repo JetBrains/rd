@@ -983,11 +983,11 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
             if(decl is Interface){
                 Logger.root.warn { "CppGenerator doesn't support interfaces. Declaration will be ignored" }
+                return@surroundWithNamespaces
             }
 
             if(decl.isOpen){
                 Logger.root.warn { "CppGenerator doesn't support open classes. All open classes wil be generated as abstract" }
-                decl.modifier = Modifier.Abstract
             }
 
             if (decl.isAbstract) comment("abstract")

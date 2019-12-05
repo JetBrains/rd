@@ -27,6 +27,7 @@ T| protocol.SEND                  | property `Server.DemoModel.interned_string` 
 T| protocol.SEND                  | property `Server.DemoModel.interned_string` :: ver = 0, value = "protocol"
 T| protocol.SEND                  | property `Server.DemoModel.interned_string` :: ver = 0, value = "C#"
 T| protocol.SEND                  | property `Server.DemoModel.polymorphic` :: ver = 0, value = Derived (  string = "C# instance")
+T| protocol.SEND                  | property `Server.DemoModel.polymorphic_open` :: ver = 0, value = OpenDerived (  openDerivedString = "C# instance open derived string"  openString = "C# instance open string")
 T| protocol.SEND                  | property `Server.DemoModel.enum` :: ver = 0, value = net
 T| protocol.SEND                  | signal `Server.DemoModel.extModel.checker` :: value = JetBrains.Core.Unit
 T| protocol.RECV                  | property `Server.DemoModel.boolean_property` :: oldver = 0, newver = 1, value = False
@@ -64,6 +65,7 @@ T| protocol.RECV                  | property `Server.DemoModel.interned_string` 
 T| protocol.RECV                  | property `Server.DemoModel.interned_string` :: oldver = 1, newver = 2, value = "protocol"
 T| protocol.RECV                  | property `Server.DemoModel.interned_string` :: oldver = 2, newver = 3, value = "Kotlin"
 T| protocol.RECV                  | property `Server.DemoModel.polymorphic` :: oldver = 0, newver = 1, value = Derived (  string = "Kotlin instance")
+T| protocol.RECV                  | property `Server.DemoModel.polymorphic_open` :: oldver = 0, newver = 1, value = OpenDerived (  openDerivedString = "Kotlin instance open derived string "  openString = "Kotlin instance open string")
 T| protocol.RECV                  | property `Server.DemoModel.date` :: oldver = 0, newver = 1, value = 1/1/1970 12:00:13 AM
 T| protocol.RECV                  | property `Server.DemoModel.enum` :: oldver = 0, newver = 1, value = kt
 T| protocol.RECV                  | signal `Server.DemoModel.extModel.checker` :: value = JetBrains.Core.Unit
