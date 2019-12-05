@@ -246,6 +246,7 @@ open class CSharp50Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         is Member.Const -> type.substitutedName(scope)
+        is Member.Method -> publicName
     }
 
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration): String =
@@ -259,6 +260,7 @@ open class CSharp50Generator(
         is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
             if(context != null && !perClientIdRawName) "RdPerContextMap<${context!!.type.substitutedName(scope)}, $it>" else it
         }
+        is Member.Method -> publicName
     }
 
 
@@ -429,6 +431,11 @@ open class CSharp50Generator(
             return
         }
 
+        if(decl is Interface){
+            interfaceDef(decl)
+            return
+        }
+
         if (decl is Toplevel && !decl.isExtension) {
             +(decl.getSetting(ClassAttributes)?.joinToOptString(prefix = "[", postfix = "]") ?: "")
         }
@@ -460,7 +467,8 @@ open class CSharp50Generator(
 
             +"//custom body"
             customBodyTrait(decl)
-
+            + "//methods"
+            methodsTrait(decl)
             +"//equals trait"
             equalsTrait(decl)
             +"//hash code trait"
@@ -1098,6 +1106,9 @@ open class CSharp50Generator(
         if (res.startsWith(','))
             res = res.substring(1)
 
+        val prefix = if(res.isBlank()) "" else ", "
+        res += if (decl.implements.isNotEmpty()) decl.implements.joinToString(prefix = prefix) { it.sanitizedName(decl) } else ""
+
         if (!res.isBlank()) {
             +" : $res"
         }
@@ -1115,6 +1126,61 @@ open class CSharp50Generator(
         }
         +"}"
     }
+
+    protected open fun PrettyPrinter.interfaceDef(decl: Interface) {
+        +"interface ${decl.name.capitalize()}"
+        indent {baseInterfacesTrait(decl) }
+        p("{")
+        println()
+        indent { methodsTrait(decl) }
+        p("}")
+    }
+
+    protected open fun PrettyPrinter.baseInterfacesTrait(decl: Interface) {
+        if (decl.baseInterfaces.isNotEmpty()) {
+            +" : ${decl.baseInterfaces.joinToString { it.name }}"
+        }
+    }
+
+    protected open fun PrettyPrinter.methodsTrait(decl: Interface) {
+        decl.ownMembers.filterIsInstance<Member.Method>().forEach { method ->
+            +"${if(method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}"}});"
+        }
+    }
+
+    protected open fun PrettyPrinter.methodsTrait(decl: Declaration){
+        decl.implements.forEach { inter->
+            inter.allMembers.filterIsInstance<Member.Method>().forEach { method->
+                methodTrait(method, decl, isAbstract = decl.isAbstract)
+            }
+        }
+
+        if (decl.isSealed) {
+            var currentDecl = decl.base
+            while (currentDecl != null && currentDecl.isAbstract) {
+                currentDecl.implements.forEach { inter ->
+                    inter.allMembers.filterIsInstance<Member.Method>().forEach {
+                        methodTrait(it, decl, isAbstract = false)
+                    }
+                }
+                currentDecl = currentDecl.base
+            }
+        }
+    }
+
+    protected open fun PrettyPrinter.methodTrait(method: Member.Method, decl: Declaration ,isAbstract: Boolean) {
+        println("public ${isAbstract.condstr { "abstract " }}${isUnknown(decl).condstr { "override " }}${if (method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}" }})${isAbstract.condstr { ";" }}")
+
+        if (isAbstract) return
+        println("{")
+        indent {
+            println("throw new NotImplementedException(\"You should implement method in derived class\");")
+        }
+        println("}")
+        println()
+    }
+
+    private fun isUnknown(decl: Declaration) = decl is Class.Concrete && decl.isUnknown || decl is Struct.Concrete && decl.isUnknown
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {
         val pointcut = decl.pointcut ?: return

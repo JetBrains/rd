@@ -2,12 +2,17 @@ package com.jetbrains.rd.models.openEntity
 
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.*
+import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rd.generator.paths.csDirectorySystemPropertyKey
 import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
 import com.jetbrains.rd.generator.paths.outputDirectory
+import com.jetbrains.rd.models.demo.folder
 
 object OpenEntityRoot : Root(
-    Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.openEntity", outputDirectory(ktDirectorySystemPropertyKey, "openEntity")))
+    Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.openEntity", outputDirectory(ktDirectorySystemPropertyKey, "openEntity")),
+    CSharp50Generator(FlowTransform.Reversed, "entity", outputDirectory(csDirectorySystemPropertyKey, folder))
+)
 
 object OpenEntityModel : Ext(OpenEntityRoot){
 

@@ -38,6 +38,8 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
         internal var usedInEquals = true
     }
 
+    class Method(override val name: String, val resultType: IType,  val args: List<Pair<String, IType>>) : Member(name, args.map { it.second } + resultType)
+
     sealed class Const(name : String, val type: IScalar, val value: String) : Member(name, listOf<IType>(type)){
         class Integral(name : String, type: PredefinedType, value: String) : Const(name, type, value)
 
