@@ -1,8 +1,8 @@
 #ifndef RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
-#include "Buffer.h"
-#include "RdId.h"
+#include "protocol/Buffer.h"
+#include "protocol/RdId.h"
 
 #include "std/unordered_map.h"
 
@@ -63,7 +63,7 @@ namespace rd {
 	};
 }
 
-#include "InternRoot.h"
+#include "intern/InternRoot.h"
 
 namespace rd {
 	template<typename T, util::hash_t InternKey>

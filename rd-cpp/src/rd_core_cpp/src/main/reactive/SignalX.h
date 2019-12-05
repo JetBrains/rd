@@ -1,9 +1,9 @@
 #ifndef RD_CPP_CORE_SIGNAL_H
 #define RD_CPP_CORE_SIGNAL_H
 
-#include "Lifetime.h"
-#include "interfaces.h"
-#include "core_util.h"
+#include "lifetime/Lifetime.h"
+#include "reactive/interfaces.h"
+#include "util/core_util.h"
 
 #include <utility>
 #include <functional>

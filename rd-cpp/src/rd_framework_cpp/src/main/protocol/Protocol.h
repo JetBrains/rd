@@ -2,9 +2,9 @@
 #define RD_CPP_PROTOCOL_H
 
 
-#include "IProtocol.h"
-#include "Identities.h"
-#include "SerializationCtx.h"
+#include "base/IProtocol.h"
+#include "protocol/Identities.h"
+#include "serialization/SerializationCtx.h"
 
 #include <memory>
 

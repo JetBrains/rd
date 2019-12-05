@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "RdBindableBase.h"
-#include "RdSignal.h"
+#include "base/RdBindableBase.h"
+#include "impl/RdSignal.h"
 #include "RdFrameworkTestBase.h"
 
 using vi = std::vector<int>;

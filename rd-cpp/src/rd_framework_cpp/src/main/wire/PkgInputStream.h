@@ -1,7 +1,7 @@
 #ifndef RD_CPP_PKGINPUTSTREAM_H
 #define RD_CPP_PKGINPUTSTREAM_H
 
-#include "Buffer.h"
+#include "protocol/Buffer.h"
 
 namespace rd {
 	class PkgInputStream {

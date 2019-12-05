@@ -21,7 +21,8 @@ namespace rd {
 										 std::numeric_limits<uint32_t>::max() - 1,
 										 std::numeric_limits<uint64_t>::max() - 1,
 										 demo::MyEnum::cpp,
-										 demo::Flags::anyFlag | demo::Flags::cppFlag
+										 demo::Flags::anyFlag | demo::Flags::cppFlag,
+										 demo::MyInitializedEnum::hundred
 			);
 #ifdef __cpp_structured_bindings
 			auto[_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, _unsigned_short, _unsigned_int, _unsigned_long, _enum, _flags] = scalar;

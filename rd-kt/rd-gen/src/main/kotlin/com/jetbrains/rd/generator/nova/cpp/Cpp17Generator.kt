@@ -9,12 +9,9 @@ import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
-import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
-
 import java.io.File
-import java.nio.charset.Charset
 
 
 private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
@@ -35,7 +32,7 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 
 /**
  * Generate C++ code.
- * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
+ * @param defaultNamespace namespace separated by symbol "colon", "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
 open class Cpp17Generator(flowTransform: FlowTransform,
@@ -45,7 +42,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 ) : GeneratorBase(flowTransform) {
     @Suppress("ObjectPropertyName")
     companion object {
-        //        private const val INSTANTIATION_FILE_NAME = "instantiations"
+        private const val INSTANTIATION_FILE_NAME = "instantiations"
+        private const val polymorphicHeader = "serialization/Polymorphic"
+
         object LanguageVersion {
             const val `C++11` = "201103L"
             const val `C++14` = "201402L"
@@ -70,8 +69,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             return if (this is FakeDeclaration) {
                 decl.namespace
             } else {
-                val ns = getSetting(Namespace) ?: defaultNamespace
-                ns.split('.').joinToString(separator = "::")
+                return getSetting(Namespace) ?: defaultNamespace
             }
         }
 
@@ -98,8 +96,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     object MarshallerHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
 
-    val nestedNamespaces = defaultNamespace.split('.')
-
     object PublicCtors : ISetting<Unit, Declaration>
 
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
@@ -107,14 +103,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     object TargetName : ISetting<String, Toplevel>
 
     private fun Declaration.fsName(isDefinition: Boolean) =
-            "$name.${if (isDefinition) "cpp" else "h"}"
+        "$name.${if (isDefinition) "cpp" else "h"}"
 
     protected open fun Toplevel.fsPath(): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
-            ?: File(folder, this.name)
+        ?: File(folder, this.name)
 
 
     protected open fun Declaration.fsPath(tl: Toplevel, isDefinition: Boolean): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
-            ?: File(tl.fsPath(), fsName(isDefinition))
+        ?: File(tl.fsPath(), fsName(isDefinition))
 
     private fun Root.targetName(): String {
         return getSetting(TargetName) ?: this.name
@@ -253,12 +249,16 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     private fun Member.getter() = "get_${this.publicName}"
 
-    private fun PrettyPrinter.surroundWithNamespaces(body: PrettyPrinter.() -> Unit) {
-        nestedNamespaces.foldRight(body) { s, acc ->
+    private fun PrettyPrinter.withNamespace(s: String, acc: PrettyPrinter.() -> Unit) {
+        titledBlock("namespace $s") {
+            acc()
+        }
+    }
+
+    private fun PrettyPrinter.surroundWithNamespaces(namespace: String, body: PrettyPrinter.() -> Unit) {
+        namespace.split("::").foldRight(body) { s, acc ->
             {
-                titledBlock("namespace $s") {
-                    acc()
-                }
+                withNamespace(s, acc)
             }
         }()
         //don't touch. it works
@@ -267,9 +267,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     //endregion
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
-                this is PredefinedType.NativeIntegral ||
-                this is PredefinedType.bool ||
-                this is PredefinedType.char
+            this is PredefinedType.NativeIntegral ||
+            this is PredefinedType.bool ||
+            this is PredefinedType.char
 
     private val IType.isPrimitive: Boolean
         get() = this is PredefinedType.NativeFloatingPointType || this.isPredefinedNumber
@@ -284,7 +284,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 //        is Struct.Concrete -> sanitizedName(scope)
         is Declaration -> {
             val fullName = sanitizedName(scope)
-            if (rawType) {
+            if (rawType || isIntrinsic) {
                 fullName
             } else {
                 fullName.wrapper()
@@ -374,10 +374,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean, withNamespace: Boolean): String {
         val className = if (withNamespace) "${scope.namespace}::" + scope.name else scope.name
         return leafSerializerRef(scope)
-                ?: isUsage.condstr { "$className::" } + when (this) {
-                    is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
-                    else -> "__${name}Serializer"
-                }
+            ?: isUsage.condstr { "$className::" } + when (this) {
+                is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
+                else -> "__${name}Serializer"
+            }
     }
 
 //endregion
@@ -532,9 +532,15 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
     }
 
-    private fun Declaration.withNamespace(): String {
-        return "$namespace::$name"
-    }
+    /**
+     * Returns full name of receiver with namespace
+     */
+    private fun Declaration.withNamespace() =
+        if (namespace.isEmpty()) {
+            "$name"
+        } else {
+            "$namespace::$platformTypeName"
+        }
 
 
     protected fun Declaration.scopeResolution(): String {
@@ -563,25 +569,25 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         return this.base?.let {
             mutableListOf(BaseClass(it as IType, it.allMembers))
         } ?: (
-                if (this is Toplevel)
-                    listOf(BaseClass(RdExtBase, emptyList()))
-                else if (this is Class || this is Aggregate || this is Toplevel)
-                    listOf(BaseClass(RdBindableBase, emptyList()))
-                else listOf()
-                )
+            if (this is Toplevel)
+                listOf(BaseClass(RdExtBase, emptyList()))
+            else if (this is Class || this is Aggregate || this is Toplevel)
+                listOf(BaseClass(RdBindableBase, emptyList()))
+            else listOf()
+            )
     }
 
     val Declaration.primaryCtorVisibility: String
         get() {
             val modifier =
-                    when {
-                        hasSetting(PublicCtors) -> "public"
-                        isAbstract -> "protected"
-                        hasSecondaryCtor -> "private"
-                        isExtension -> "public"
-                        this is Toplevel -> "private"
-                        else -> "public"
-                    } + ":"
+                when {
+                    hasSetting(PublicCtors) -> "public"
+                    isAbstract -> "protected"
+                    hasSecondaryCtor -> "private"
+                    isExtension -> "public"
+                    this is Toplevel -> "private"
+                    else -> "public"
+                } + ":"
             return modifier
         }
 
@@ -592,7 +598,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     private fun File.createPchHeader(pchHeaderFile: String) {
         val p = PrettyPrinter().apply {
-            withIncludeGuard("${pchHeaderFile.substringBeforeLast(".").toUpperCase()}_H") {
+            withIncludeGuard(pchHeaderFile.substringBeforeLast(".")) {
                 +"#include \"pch.h\""
             }
         }
@@ -628,9 +634,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                         |endif ()""".trimMargin()
                     )
                     val targetFiles = fileNames + listOf(
-                            /*"${INSTANTIATION_FILE_NAME}.h",
-                            "${INSTANTIATION_FILE_NAME}.cpp",*/
-                            "\${PCH_CPP_OPT}")
+                        "${INSTANTIATION_FILE_NAME}.h",
+                        "${INSTANTIATION_FILE_NAME}.cpp",
+                        "\${PCH_CPP_OPT}")
 
                     println("add_library($targetName STATIC ${targetFiles.joinToString(separator = eol)})")
                     val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = eol) { it.name }
@@ -656,39 +662,162 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             file.copyTo(this.resolve(Files.PrecompiledHeaderCmake), overwrite = true)
         }
     }
-/*
-    private fun File.templateInstantiate() {
+
+
+    private fun PrettyPrinter.predeclare(decl: Declaration) {
+        this.apply {
+            surroundWithNamespaces(decl.namespace) {
+                when (decl) {
+                    is Enum -> {
+                        val predecl = decl.getSetting(IsNonScoped)?.let {
+                            "enum ${decl.platformTypeName} : $it"
+                        } ?: "enum class ${decl.platformTypeName}"
+                        +("$predecl;")
+                    }
+                    else -> {
+                    }
+                }
+            }
+        }.toString()
+    }
+
+    object EnumConstantValue : ISetting<Int, Member.EnumConst>
+    object IsNonScoped : ISetting<String, Enum>
+
+    private fun File.templateInstantiate(toplevels: List<Toplevel>) {
+        fun collectInitializedEnums(): List<Enum> = toplevels.flatMap { tl ->
+            tl.declaredTypes.filterIsInstance<Enum>()
+                .filter { enum ->
+                    !enum.flags
+                }
+                .filter { enum ->
+                    enum.constants.any { field ->
+                        field.getSetting(EnumConstantValue) != null
+                    }
+                }
+        }
+
+        val initializedEnums = collectInitializedEnums()
+
         val classes = listOf(
-//                "rd::optional<rd::SerializationCtx>"
-                "rd::Wrapper<std::wstring>"
+            "rd::Wrapper<std::wstring>"
         )
 
-        File(this, "${INSTANTIATION_FILE_NAME}.cpp").run {
-            printWriter().use { writer ->
-                PrettyPrinter().apply {
-                    +"wrapper".include("h")
-                    +"string".include()
-
+        File(this, "${INSTANTIATION_FILE_NAME}.h").let { file ->
+            FileSystemPrettyPrinter(file).use {
+                withIncludeGuard(INSTANTIATION_FILE_NAME) {
+                    +polymorphicHeader.includeWithExtension("h")
+                    println()
+                    initializedEnums
+                        .mapNotNull { enum ->
+                            if (enum.isIntrinsic) {
+                                enum.pointcut.getSetting(MarshallerHeaders)
+                            } else {
+                                listOf("${enum.pointcut.name}/${enum.name}.h")
+                            }
+                        }
+                        .flatten()
+                        .map { it.includeQuotes() }
+                        .forEach { +it }
+                    println()
                     classes.forEach {
-                        +"template class $it;"
+                        +"extern template class $it;"
                     }
-                    writer.write(toString())
+                    println()
+                    initializedEnums.forEach { enum ->
+                        predeclare(enum)
+                    }
+                    println()
+                    withNamespace("rd") {
+                        initializedEnums.forEach { enum ->
+                            val enumTypeName = enum.withNamespace()
+                            block("""
+                                |template <>
+                                |class Polymorphic<$enumTypeName> {
+                            """.trimMargin(), "};") {
+                                +"public:"
+
+                                +"static $enumTypeName read(SerializationCtx& ctx, Buffer& buffer);"
+
+                                +"static void write(SerializationCtx& ctx, Buffer& buffer, $enumTypeName const& value);"
+                            }
+                            println()
+                            +"extern template class Polymorphic<$enumTypeName>;"
+                            println()
+                        }
+                    }
                 }
             }
         }
 
-        File(this, "${INSTANTIATION_FILE_NAME}.h").run {
-            printWriter().use { writer ->
-                PrettyPrinter().apply {
-                    classes.forEach {
-                        +"extern template class $it;"
+        File(this, "${INSTANTIATION_FILE_NAME}.cpp").let { file ->
+            FileSystemPrettyPrinter(file).use {
+                +INSTANTIATION_FILE_NAME.includeWithExtension("h")
+                println()
+                classes.forEach {
+                    +"template class $it;"
+                }
+                println()
+                withNamespace("rd") {
+                    initializedEnums.forEach { enum ->
+                        val map = enum.constants
+                            .mapIndexed { index, field ->
+                                field.getSetting(EnumConstantValue)?.let { _ ->
+                                    Pair(index, field)
+                                }
+                            }
+                            .filterNotNull()
+                            .toMap()
+
+                        val enumType = enum.withNamespace()
+                        block("$enumType Polymorphic<$enumType, void>::read(SerializationCtx& ctx, Buffer& buffer) {", "}") {
+                            +"int32_t x = buffer.read_integral<int32_t>();"
+                            block("switch (x) {", "}") {
+                                map.forEach { (key, value) ->
+                                    +"""
+                                |case $key: 
+                                |   return ${enum.withNamespace() + "::" + value.name};
+                                """.trimMargin()
+                                }
+                                +"""
+                                |default:
+                                |   return static_cast<${enumType}>(x);
+                                """.trimMargin()
+                            }
+
+                        }
+                        println()
+                        block("void Polymorphic<$enumType, void>::write(SerializationCtx& ctx, Buffer& buffer, $enumType const& value) {", "}") {
+                            block("switch (value) {", "}") {
+                                map.forEach { (key, value) ->
+                                    +"""
+                                |case ${enum.withNamespace() + "::" + value.name}: {
+                                |   buffer.write_integral<int32_t>($key);
+                                |   return;
+                                |}
+                             """.trimMargin()
+                                }
+                                +"default:"
+                                +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
+                            }
+                        }
+                        +"template class Polymorphic<$enumType>;"
                     }
-                    writer.write(toString())
                 }
             }
         }
     }
-*/
+
+    protected open fun PrettyPrinter.autogenerated() {
+        +"//------------------------------------------------------------------------------"
+        +"// <auto-generated>"
+        +"//     This code was generated by a ${RdGen::class.simpleName} v${RdGen.version}."
+        +"//"
+        +"//     Changes to this file may cause incorrect behavior and will be lost if"
+        +"//     the code is regenerated."
+        +"// </auto-generated>"
+        +"//------------------------------------------------------------------------------"
+    }
 
     override fun realGenerate(toplevels: List<Toplevel>) {
         val allFilePaths = emptyList<String>().toMutableList()
@@ -703,30 +832,22 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val marshallerHeaders = tl.getSetting(MarshallerHeaders) ?: listOf()
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
-                    type.fsPath(tl, isDefinition).run {
-                        bufferedWriter().use { writer ->
-                            PrettyPrinter().apply {
-                                eolKind = Eol.osSpecified
-                                step = 4
+                    FileSystemPrettyPrinter(type.fsPath(tl, isDefinition)).use {
+                        //actual generation
 
-                                //actual generation
+                        autogenerated()
 
-                                if (isDefinition) {
-                                    source(type, types)
-                                } else {
-                                    header(type, marshallerHeaders)
-                                }
-
-                                writer.write(toString())
-                            }
+                        if (isDefinition) {
+                            source(type, types)
+                        } else {
+                            header(type, marshallerHeaders)
                         }
                     }
                 }
-
             }
-
-
         }
+
+
 
 
         if (toplevels.isNotEmpty()) {
@@ -734,10 +855,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
             folder.precompiledHeaderCmake()
         }
-//        folder.templateInstantiate()
+
+        folder.templateInstantiate(toplevels)
     }
 
-    private fun PrettyPrinter.withIncludeGuard(includeGuardMacro: String, action: PrettyPrinter.() -> Unit) {
+    private fun PrettyPrinter.withIncludeGuard(includeGuardMacroName: String, action: PrettyPrinter.() -> Unit) {
+        val includeGuardMacro = "${includeGuardMacroName.toUpperCase()}_H"
         +"#ifndef $includeGuardMacro"
         +"#define $includeGuardMacro"
 
@@ -752,8 +875,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     //region files
     fun PrettyPrinter.header(decl: Declaration, marshallerHeaders: List<String>) {
-        val includeGuardMacro = "${decl.name.toUpperCase()}_H"
-        withIncludeGuard(includeGuardMacro) {
+        withIncludeGuard(decl.name) {
             println()
 
             includesDecl(marshallerHeaders)
@@ -771,7 +893,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
             if (decl is Toplevel && decl.isLibrary) {
                 comment("library")
-                surroundWithNamespaces {
+                surroundWithNamespaces(decl.namespace) {
                     libdecl(decl)
                 }
             } else {
@@ -787,7 +909,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         println()
 
         if (decl is Enum) {
-            surroundWithNamespaces {
+            surroundWithNamespaces(decl.namespace) {
                 enumToStringTraitDef(decl)
             }
             return
@@ -818,9 +940,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
         }
         if (decl is Toplevel && decl.isLibrary) {
-            surroundWithNamespaces { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
+            surroundWithNamespaces(decl.namespace) { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
         } else {
-            surroundWithNamespaces { typedef(decl) }
+            surroundWithNamespaces(decl.namespace) { typedef(decl) }
         }
     }
 //endregion
@@ -832,21 +954,25 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
     }
 
-    protected open fun PrettyPrinter.typedecl(decl: Declaration) {
-        if (decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
-            +"/**"
-            if (decl.documentation != null) {
-                +" * ${decl.documentation}"
+    private fun PrettyPrinter.docDecl(decl: Declaration) {
+        if (decl.documentation != null || decl.sourceFileAndLine != null) {
+            +"/// <summary>"
+            decl.documentation?.let {
+                +"/// $it"
             }
-            for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
-                +" * @property ${member.name} ${member.documentation}"
+            decl.sourceFileAndLine?.let {
+                +"/// <p>Generated from: $it</p>"
             }
-            +" */"
+            +"/// </summary>"
         }
+    }
 
-        surroundWithNamespaces {
+    protected open fun PrettyPrinter.typedecl(decl: Declaration) {
+        docDecl(decl)
+
+        surroundWithNamespaces(decl.namespace) {
             if (decl is Enum) {
-                enum(decl)
+                enumDecl(decl)
                 return@surroundWithNamespaces
             }
 
@@ -962,10 +1088,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
     }
 
-    protected open fun PrettyPrinter.enum(decl: Enum) {
+    protected open fun PrettyPrinter.enumDecl(decl: Enum) {
         titledBlock("enum class ${decl.name}") {
-            +decl.constants.withIndex().joinToString(separator = ",${eolKind.value}") { (idx, enumConst) ->
-                docComment(enumConst.documentation) + enumConst.name.sanitize() + decl.flags.condstr { " = 1 << $idx" }
+            +decl.constants.withIndex().joinToString(separator = ",${eolKind.value}") { (idx, field) ->
+                val doc = docComment(field.documentation)
+                val name = field.name.sanitize()
+                val value = field.getSetting(EnumConstantValue)?.let { " = $it" }
+                    ?: decl.flags.condstr { " = 1 << $idx" }
+                doc + name + value
             }
         }
 
@@ -1000,19 +1130,19 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     protected fun secondaryCtorParams(decl: Declaration): Constructor.Secondary.AllArguments {
         val ownMembers = decl.allMembers
-                .asSequence()
-                .filter { !it.hasEmptyConstructor }.plus(unknownMembersSecondary(decl))
-                .toList()
+            .asSequence()
+            .filter { !it.hasEmptyConstructor }.plus(unknownMembersSecondary(decl))
+            .toList()
         val membersOfBaseClasses = decl.allMembers
-                .asSequence()
-                .map {
-                    if (ownMembers.contains(it)) {
-                        it
-                    } else {
-                        null
-                    }
+            .asSequence()
+            .map {
+                if (ownMembers.contains(it)) {
+                    it
+                } else {
+                    null
                 }
-                .toList()
+            }
+            .toList()
         /*if (ownMembers.size + membersOfBaseClasses.size == 0) {
             return Constructor.Secondary.AllArguments()
         }*/
@@ -1026,48 +1156,47 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 //        +"class ${decl.name};"
 
         val standardHeaders = listOf(
-                "cstring",
-                "cstdint",
-                "vector",
-                "ctime"
+            "cstring",
+            "cstdint",
+            "vector",
+            "ctime"
         )
 
-
         val frameworkHeaders = listOf(
-                //root
-                "Protocol",
-                //types
-                "types/DateTime",
-                //impl
-                "RdSignal",
-                "RdProperty",
-                "RdList",
-                "RdSet",
-                "RdMap",
-                //base
-                "ISerializable",
-                "ISerializersOwner",
-                "IUnknownInstance",
-                //serialization
-                "Polymorphic",
-                "NullableSerializer",
-                "ArraySerializer",
-                "InternedSerializer",
-                "SerializationCtx",
-                "Serializers",
-                //ext
-                "RdExtBase",
-                //task
-                "RdCall",
-                "RdEndpoint",
-                "RdSymmetricCall",
-                //std stubs
-                "std/to_string",
-                "std/hash",
-                //enum
-                "enum",
-                //gen
-                "gen_util"
+            //root
+            "protocol/Protocol",
+            //types
+            "types/DateTime",
+            //impl
+            "impl/RdSignal",
+            "impl/RdProperty",
+            "impl/RdList",
+            "impl/RdSet",
+            "impl/RdMap",
+            //base
+            "base/ISerializersOwner",
+            "base/IUnknownInstance",
+            //serialization
+            "serialization/ISerializable",
+            polymorphicHeader,
+            "serialization/NullableSerializer",
+            "serialization/ArraySerializer",
+            "serialization/InternedSerializer",
+            "serialization/SerializationCtx",
+            "serialization/Serializers",
+            //ext
+            "ext/RdExtBase",
+            //task
+            "task/RdCall",
+            "task/RdEndpoint",
+            "task/RdSymmetricCall",
+            //std stubs
+            "std/to_string",
+            "std/hash",
+            //enum
+            "util/enum",
+            //gen
+            "util/gen_util"
         )
 
         +frameworkHeaders.joinToString(separator = eol) { s -> s.includeWithExtension("h") }
@@ -1077,7 +1206,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         //third-party
         +"thirdparty".includeWithExtension("hpp")
 
-//        +INSTANTIATION_FILE_NAME.include("h")
+        +("../$INSTANTIATION_FILE_NAME".includeWithExtension("h"))
 
         marshallerHeaders.forEach { it.includeAngleBrackets() }
     }
@@ -1151,14 +1280,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         fun dependentTypes(decl: Declaration): List<String> {
             val bases = listOfNotNull(decl.base?.name).map { "$it.h" }
             return (decl.ownMembers + decl.constantMembers)
-                    .asSequence()
-                    .map { parseMember(it) }
-                    .fold(arrayListOf<String>()) { acc, arrayList ->
-                        acc += arrayList
-                        acc
-                    }.plus(bases)
-                    //                .filter { dependencies.map { it.name }.contains(it) }
-                    .distinct().toList()
+                .asSequence()
+                .map { parseMember(it) }
+                .fold(arrayListOf<String>()) { acc, arrayList ->
+                    acc += arrayList
+                    acc
+                }.plus(bases)
+                //                .filter { dependencies.map { it.name }.contains(it) }
+                .distinct().toList()
         }
 
         val extHeaders = listOfNotNull(if (decl.isExtension) decl.pointcut?.name else null)
@@ -1201,10 +1330,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
         private()
         val allTypesForDelegation = decl.allMembers
-                .filterIsInstance<Member.Reactive>()
-                .flatMap { it.genericParams.toList() }
-                .distinct()
-                .filter { it.leafSerializerRef(decl) == null }
+            .filterIsInstance<Member.Reactive>()
+            .flatMap { it.genericParams.toList() }
+            .distinct()
+            .filter { it.leafSerializerRef(decl) == null }
 
         allTypesForDelegation.println { "using ${it.serializerRef(decl, false, false)} = ${it.serializerBuilder()};" }
     }
@@ -1294,8 +1423,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (!decl.hasSecondaryCtor) return null
 
         val members = decl.allMembers
-                .asSequence()
-                .filter { !it.hasEmptyConstructor }
+            .asSequence()
+            .filter { !it.hasEmptyConstructor }
         if (members.count() == 0) {
             return null
         }
@@ -1319,7 +1448,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     private fun shouldGenerateDeconstruct(decl: Declaration) =
-            (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct)))
+        (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct)))
 
     fun Declaration.defaultCtor(): Constructor.Default? {
         return if (allMembers.asSequence().filter { !it.hasEmptyConstructor }.toList().isEmpty()) {
@@ -1485,7 +1614,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     |class std::tuple_element<I, ${decl.withNamespace()}> {
                     |public:
                     |    using type = decltype (declval<${decl.withNamespace()}>().get<I>());
-                    |};""".trimMargin()
+                    |};
+                    |""".trimMargin()
             }
         }
     }
@@ -1565,8 +1695,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         get() = flags.condstr { "_set" }
 
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
+        fun IType.polymorphicReader() = "rd::Polymorphic<${templateName(decl)}>::read(ctx, buffer)"
+
         fun IType.reader(): String = when (this) {
-            is Enum -> "buffer.read_enum${underscoreSetOrEmpty}<${templateName(decl)}>()"
+            is Enum -> polymorphicReader()
             is InternedScalar -> {
                 val lambda = lambda("rd::SerializationCtx &, rd::Buffer &", "return ${itemType.reader()}")
                 """ctx.readInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $lambda)"""
@@ -1668,12 +1800,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         println()
         define(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner").const().override()) {
             types.filter { !it.isAbstract }
-                    .filterIsInstance<IType>()
-                    .filterNot { iType -> iType is Enum }
-                    .filterNot { iType -> iType is Declaration && iType.isIntrinsic }
-                    .println {
-                        "serializers.registry<${it.name}>();"
-                    }
+                .filterIsInstance<IType>()
+                .filterNot { iType -> iType is Enum }
+                .filterNot { iType -> iType is Declaration && iType.isIntrinsic }
+                .println {
+                    "serializers.registry<${it.name}>();"
+                }
 
             if (decl is Root) {
                 decl.toplevels.minus(decl).println {
@@ -1756,12 +1888,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 */
 
     protected fun PrettyPrinter.writerTraitDef(decl: Declaration) {
+        fun IType.polymorphicWriter(field: String) = "rd::Polymorphic<${templateName(decl)}>::write(ctx, buffer, $field)"
+
         fun IType.writer(field: String): String {
             return when (this) {
-                is CppIntrinsicType -> "rd::Polymorphic<$name>::write(ctx, buffer, $field)"
-                is Enum -> {
-                    "buffer.write_enum${underscoreSetOrEmpty}($field)"
-                }
+                is CppIntrinsicType -> polymorphicWriter(field)
+                is Enum -> polymorphicWriter(field)
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx &, rd::Buffer &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
                     """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""
@@ -1830,8 +1962,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 val base = "rd::" + (if (decl is Toplevel) "RdExtBase" else "RdBindableBase")
                 +"$base::init(lifetime);"
                 decl.ownMembers
-                        .filter { it.isBindable }
-                        .println { """bindPolymorphic(${it.encapsulatedName}, lifetime, this, "${it.name}");""" }
+                    .filter { it.isBindable }
+                    .println { """bindPolymorphic(${it.encapsulatedName}, lifetime, this, "${it.name}");""" }
             }
         }
     }
@@ -1841,8 +1973,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             define(it) {
                 +"rd::RdBindableBase::identify(identities, id);"
                 decl.ownMembers
-                        .filter { it.isBindable }
-                        .println { """identifyPolymorphic(${it.encapsulatedName}, identities, id.mix(".${it.name}"));""" }
+                    .filter { it.isBindable }
+                    .println { """identifyPolymorphic(${it.encapsulatedName}, identities, id.mix(".${it.name}"));""" }
             }
         }
     }
@@ -1889,14 +2021,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     protected fun PrettyPrinter.initializerTraitDef(decl: Declaration) {
         define(initializerTraitDecl(decl)) {
             decl.ownMembers
-                    .filterIsInstance<Member.Reactive.Stateful>()
-                    .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } }
-                    .println { "${it.encapsulatedName}.optimize_nested = true;" }
+                .filterIsInstance<Member.Reactive.Stateful>()
+                .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } }
+                .println { "${it.encapsulatedName}.optimize_nested = true;" }
 
             decl.ownMembers
-                    .filterIsInstance<Member.Reactive>()
-                    .filter { it.freeThreaded }
-                    .println { "${it.encapsulatedName}.async = true;" }
+                .filterIsInstance<Member.Reactive>()
+                .filter { it.freeThreaded }
+                .println { "${it.encapsulatedName}.async = true;" }
 
             if (decl is Toplevel) {
                 +"serializationHash = ${decl.serializationHash(IncrementalHash64()).result}L;"
@@ -2032,14 +2164,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     //region unknowns
     protected fun isUnknown(decl: Declaration) =
-            decl is Class.Concrete && decl.isUnknown ||
-                    decl is Struct.Concrete && decl.isUnknown
+        decl is Class.Concrete && decl.isUnknown ||
+            decl is Struct.Concrete && decl.isUnknown
 
     protected fun unknownMembers(decl: Declaration): List<Member.Field> =
-            if (isUnknown(decl)) listOf(
-                    Member.Field("unknownId", RdId),
-                    Member.Field("unknownBytes", ByteArray))//todo bytearray
-            else emptyList()
+        if (isUnknown(decl)) listOf(
+            Member.Field("unknownId", RdId),
+            Member.Field("unknownBytes", ByteArray))//todo bytearray
+        else emptyList()
 
     private fun unknownMembersSecondary(decl: Declaration) = unknownMembers(decl)
 
@@ -2051,9 +2183,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     protected fun docComment(doc: String?) = (doc != null).condstr {
         "\n" +
-                "/**" + eol +
-                " * $doc" + eol +
-                " */" + eol
+            "/**" + eol +
+            " * $doc" + eol +
+            " */" + eol
     }
 
     protected fun getDefaultValue(member: Member): String? {

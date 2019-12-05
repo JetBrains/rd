@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "RdFrameworkTestBase.h"
-#include "RdCall.h"
-#include "RdEndpoint.h"
-#include "RdSymmetricCall.h"
+#include "task/RdCall.h"
+#include "task/RdEndpoint.h"
+#include "task/RdSymmetricCall.h"
 
 #include <string>
 

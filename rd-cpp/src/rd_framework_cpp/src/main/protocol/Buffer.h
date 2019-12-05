@@ -1,10 +1,9 @@
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
-#include "DateTime.h"
-
-#include "core_util.h"
-#include "wrapper.h"
+#include "types/DateTime.h"
+#include "util/core_util.h"
+#include "types/wrapper.h"
 
 #include <vector>
 #include <type_traits>

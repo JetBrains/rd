@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "RdId.h"
-#include "Identities.h"
+#include "protocol/RdId.h"
+#include "protocol/Identities.h"
 
 using namespace rd;
 using namespace rd::util;

@@ -16,24 +16,46 @@ fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
 }
 
 fun<T> synchronize(lifetime: Lifetime, a: IMutablePropertyBase<T>, b: IMutablePropertyBase<T>) {
-    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+    val initialSyncIsFromAToB = a is IOptPropertyView<*> && a.hasValue || a is IPropertyView<*>
+
+    if (initialSyncIsFromAToB) {
+        a.flowInto(lifetime, b) { cloneAndSync(lifetime, it) }
+        b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it) }
+    } else {
+        b.flowInto(lifetime, a) { cloneAndSync(lifetime, it) }
+        a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it) }
+    }
 }
 
 fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableSet<T>, b: IMutableViewableSet<T>) {
-    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+    a.forEach {
+        b.remove(it)
+        b.add(cloneAndSync(lifetime, it))
+    }
+
+    b.forEach { if(!a.contains(it)) a.add(cloneAndSync(lifetime, it)) }
+
+    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableMap<K, V>, b: IMutableViewableMap<K, V>) {
-    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+    a.forEach {
+        b[it.key] = cloneAndSync(lifetime, it.value)
+    }
+
+    b.forEach {
+        if(!a.containsKey(it.key)) a[it.key] = cloneAndSync(lifetime, it.value)
+    }
+
+    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableList<T>, b: IMutableViewableList<T>) {
-    synchronizeImmutableLists(lifetime, a, b)
+    b.clear()
 
-    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
     b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 

@@ -1,8 +1,8 @@
 #ifndef RD_CPP_MESSAGEBROKER_H
 #define RD_CPP_MESSAGEBROKER_H
 
-#include "IRdReactive.h"
-#include "Logger.h"
+#include "base/IRdReactive.h"
+#include "logger/Logger.h"
 
 #include "std/unordered_map.h"
 

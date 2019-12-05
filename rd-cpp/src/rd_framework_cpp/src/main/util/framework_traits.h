@@ -1,8 +1,8 @@
 #ifndef RD_CPP_FRAMEWORK_TRAITS_H
 #define RD_CPP_FRAMEWORK_TRAITS_H
 
-// #include "SerializationCtx.h"
-// #include "Buffer.h"
+// #include "serialization/SerializationCtx.h"
+// #include "protocol/Buffer.h"
 
 #include <utility>
 #include <type_traits>

@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include "RdMap.h"
-#include "Protocol.h"
-#include "RdProperty.h"
-#include "RdSignal.h"
+#include "impl/RdMap.h"
+#include "protocol/Protocol.h"
+#include "impl/RdProperty.h"
+#include "impl/RdSignal.h"
 #include "SocketWireTestBase.h"
-#include "SocketWire.h"
+#include "wire/SocketWire.h"
 #include "DynamicEntity.h"
 #include "entities_util.h"
 

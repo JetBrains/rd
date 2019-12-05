@@ -1,6 +1,6 @@
 #include <utility>
 
-#include "SocketWire.h"
+#include "wire/SocketWire.h"
 
 #include <utility>
 #include <thread>

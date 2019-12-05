@@ -14,6 +14,7 @@ Trace | SEND                      | property `DemoServer.DemoModel.scalar` :: ve
   unsigned_long = 18446744073709551614
   enum = kt
   flags = [anyFlag, ktFlag]
+  myInitializedEnum = hundred
 ) 
 Trace | SEND                      | property `DemoServer.DemoModel.ubyte` :: ver = 1, value = 242 
 Trace | SEND                      | property `DemoServer.DemoModel.ubyte_array` :: ver = 1, value = UByteArray(storage=[13, -1]) 
@@ -47,6 +48,7 @@ Trace | RECV                      | property `DemoServer.DemoModel.scalar` :: ol
   unsigned_long = 18446744073709551614
   enum = net
   flags = [anyFlag, netFlag]
+  myInitializedEnum = hundred
 ) >> REJECTED 
 Trace | RECV                      | map `DemoServer.DemoModel.mapLongToString`  :: Add :: key = 50 :: value = "C#" 
 Trace | RECV                      | property `DemoServer.DemoModel.interned_string` :: oldver = 3, newver = 0, value = "C#" >> REJECTED 

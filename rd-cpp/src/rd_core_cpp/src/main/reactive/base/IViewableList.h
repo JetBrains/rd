@@ -1,11 +1,11 @@
 #ifndef RD_CPP_IVIEWABLELIST_H
 #define RD_CPP_IVIEWABLELIST_H
 
-#include "LifetimeDefinition.h"
-#include "overloaded.h"
-#include "interfaces.h"
+#include "lifetime/LifetimeDefinition.h"
+#include "util/overloaded.h"
+#include "reactive/interfaces.h"
 #include "viewable_collections.h"
-#include "wrapper.h"
+#include "types/wrapper.h"
 
 #include "std/unordered_map.h"
 

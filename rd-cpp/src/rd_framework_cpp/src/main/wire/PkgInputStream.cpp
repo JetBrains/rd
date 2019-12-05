@@ -2,7 +2,7 @@
 
 #include "PkgInputStream.h"
 
-#include "Logger.h"
+#include "logger/Logger.h"
 
 #include <algorithm>
 

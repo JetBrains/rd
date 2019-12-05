@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "RdProperty.h"
+#include "impl/RdProperty.h"
 
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"

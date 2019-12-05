@@ -1,9 +1,9 @@
 #ifndef RD_CPP_IVIEWABLESET_H
 #define RD_CPP_IVIEWABLESET_H
 
-#include "LifetimeDefinition.h"
-#include "interfaces.h"
-#include "core_util.h"
+#include "lifetime/LifetimeDefinition.h"
+#include "reactive/interfaces.h"
+#include "util/core_util.h"
 #include "viewable_collections.h"
 
 #include "std/unordered_map.h"

@@ -2,9 +2,9 @@
 #define RD_CPP_CORE_VIEWABLELIST_H
 
 
-#include "IViewableList.h"
-#include "SignalX.h"
-#include "core_util.h"
+#include "base/IViewableList.h"
+#include "reactive/SignalX.h"
+#include "util/core_util.h"
 
 #include <algorithm>
 #include <iterator>

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Property.h"
+#include "reactive/Property.h"
 
 using namespace rd;
 

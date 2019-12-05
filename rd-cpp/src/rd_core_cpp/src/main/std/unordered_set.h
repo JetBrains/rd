@@ -1,7 +1,7 @@
 #ifndef RD_CPP_UNORDERED_SET_H
 #define RD_CPP_UNORDERED_SET_H
 
-#include "hash.h"
+#include "std/hash.h"
 
 #include <unordered_set>
 

@@ -2,9 +2,9 @@
 #define RD_CPP_RDSET_H
 
 
-#include "ViewableSet.h"
-#include "RdReactiveBase.h"
-#include "Polymorphic.h"
+#include "reactive/ViewableSet.h"
+#include "base/RdReactiveBase.h"
+#include "serialization/Polymorphic.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )

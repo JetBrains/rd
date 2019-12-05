@@ -1,7 +1,7 @@
 #ifndef RD_CORE_CPP_TRAITS_H
 #define RD_CORE_CPP_TRAITS_H
 
-#include "Void.h"
+#include "types/Void.h"
 
 #include <type_traits>
 #include <string>

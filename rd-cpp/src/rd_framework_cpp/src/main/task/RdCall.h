@@ -1,10 +1,10 @@
 #ifndef RD_CPP_RDCALL_H
 #define RD_CPP_RDCALL_H
 
-#include "Polymorphic.h"
+#include "serialization/Polymorphic.h"
 #include "RdTask.h"
 #include "RdTaskResult.h"
-#include "SynchronousScheduler.h"
+#include "scheduler/SynchronousScheduler.h"
 #include "WiredRdTask.h"
 
 #include <thread>

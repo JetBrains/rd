@@ -31,7 +31,8 @@ object CrossTest_AllEntities {
             UInt.MAX_VALUE.minus(1u),
             ULong.MAX_VALUE.minus(1u),
             MyEnum.kt,
-            EnumSet.of(Flags.anyFlag, Flags.ktFlag)
+            EnumSet.of(Flags.anyFlag, Flags.ktFlag),
+            MyInitializedEnum.hundred
         )
 
         model.scalar.set(scalar)
