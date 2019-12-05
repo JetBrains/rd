@@ -207,7 +207,8 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     protected abstract val cl_name: String
 
     open val base : Declaration? = null
-    open val modifier: Modifier get() =  Modifier.Sealed
+    open val implements: MutableList<Interface> = mutableListOf()
+    open var modifier: Modifier = Modifier.Sealed
 
     val isAbstract: Boolean get() = modifier == Modifier.Abstract
     val isOpen: Boolean get() = modifier == Modifier.Open
@@ -305,6 +306,16 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     val baseclass = baseclass("")
     infix fun Part<Class.Abstract>.extends(p : Pair<Class.Abstract, Class.() -> Unit>) = baseclass0(name, p.first, p.second)
 
+    // base classes interface dsl
+    infix fun Part<Class.Abstract>.extends(p : Class.Abstract) = baseclass0(name, p){}.toIntermediateClass()
+    infix fun Part<Class.Abstract>.implements(i: Interface) = baseclass0(name, null){}.also { it.implements.add(i) }
+    infix fun Part<Class.Abstract>.implements(li: List<Interface>) = baseclass0(name, null){}.also { it.implements.addAll(li) }
+    infix fun IntermediateClass<Class.Abstract>.implements(i: Interface) = this.clazz.also { it.implements.add(i) }
+    infix fun IntermediateClass<Class.Abstract>.implements(li: List<Interface>) = this.clazz.also { it.implements.addAll(li) }
+
+    @Suppress("UNCHECKED_CAST")
+    infix fun Class.Abstract.with(body: Class.() -> Unit) = this.also { lazyInitializer = body as Declaration.() -> Unit }
+
     @Deprecated("Use infix function 'extends'.", ReplaceWith("baseclass(name) extends base (body)"))
     fun baseclass(name : String, base: Class.Abstract?, body: Class.() -> Unit) = baseclass0(name, base, body)
 
@@ -323,6 +334,16 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     val openclass = openclass("")
     infix fun Part<Class.Open>.extends(p : Pair<Class, Class.() -> Unit>) = openclass0(name, p.first, p.second)
 
+    // open classes interface dsl
+    infix fun Part<Class.Open>.extends(p : Class) = openclass0(name, p){}.toIntermediateClass()
+    infix fun Part<Class.Open>.implements(i: Interface) = openclass0(name, null){}.also { it.implements.add(i) }
+    infix fun Part<Class.Open>.implements(li: List<Interface>) = openclass0(name, null){}.also { it.implements.addAll(li) }
+    infix fun IntermediateClass<Class.Open>.implements(i: Interface) = this.clazz.also { it.implements.add(i) }
+    infix fun IntermediateClass<Class.Open>.implements(li: List<Interface>) = this.clazz.also { it.implements.addAll(li) }
+
+    @Suppress("UNCHECKED_CAST")
+    infix fun Class.Open.with(body: Class.() -> Unit) = this.also{ lazyInitializer = body as Declaration.() -> Unit }
+
 
     @Deprecated("Use infix function 'extends'.", ReplaceWith("classdef(name) extends base (body)"))
     fun classdef(name: String, base: Class.Abstract?, body: Class.() -> Unit) = classdef0(name, base, body)
@@ -335,6 +356,16 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun basestruct(name: String) = Part<Struct.Abstract>(name)
     val basestruct = basestruct("")
     infix fun Part<Struct.Abstract>.extends(p : Pair<Struct.Abstract, Struct.() -> Unit>) = basestruct0(name, p.first, p.second)
+
+    // base structs interface dsl
+    infix fun Part<Struct.Abstract>.extends(p : Struct.Abstract) = basestruct0(name, p){}.toIntermediateClass()
+    infix fun Part<Struct.Abstract>.implements(i: Interface) = basestruct0(name, null){}.also { it.implements.add(i) }
+    infix fun Part<Struct.Abstract>.implements(li: List<Interface>) = basestruct0(name, null){}.also { it.implements.addAll(li) }
+    infix fun IntermediateClass<Struct.Abstract>.implements(i: Interface) = this.clazz.also { it.implements.add(i) }
+    infix fun IntermediateClass<Struct.Abstract>.implements(li: List<Interface>) = this.clazz.also { it.implements.addAll(li) }
+
+    @Suppress("UNCHECKED_CAST")
+    infix fun Struct.Abstract.with(body: Struct.() -> Unit) = this.also { lazyInitializer = body as Declaration.() -> Unit }
 
     @Deprecated("Use infix function 'extends'.", ReplaceWith("basestruct(name) extends base (body)"))
     fun basestruct(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = basestruct0(name, base, body)
@@ -354,6 +385,18 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     val openstruct = openstruct("")
     infix fun Part<Struct.Open>.extends(p : Pair<Struct, Struct.() -> Unit>) = openstruct0(name, p.first, p.second)
 
+    // open structs interface dsl
+    infix fun Part<Struct.Open>.extends(p : Struct) = openstruct0(name, p){}.toIntermediateClass()
+    infix fun Part<Struct.Open>.implements(i: Interface) = openstruct0(name, null){}.also { it.implements.add(i) }
+    infix fun Part<Struct.Open>.implements(li: List<Interface>) = openstruct0(name, null){}.also { it.implements.addAll(li) }
+    infix fun IntermediateClass<Struct.Open>.implements(i: Interface) = this.clazz.also { it.implements.add(i) }
+    infix fun IntermediateClass<Struct.Open>.implements(li: List<Interface>) = this.clazz.also { it.implements.addAll(li) }
+
+    @Suppress("UNCHECKED_CAST")
+    infix fun Struct.Open.with(body: Struct.() -> Unit) = this.also { lazyInitializer = body as Declaration.() -> Unit }
+
+
+
     @Deprecated("Use infix function 'extends'.", ReplaceWith("structdef(name) extends base (body)"))
     fun structdef(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = structdef0(name, base, body)
 
@@ -368,23 +411,42 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun internScope(name: String = "") = InternScope(this, name)
     fun context(type: INonNullableScalar) = append(Context.Generated(this, "", type)) {}
     fun externalContext(type: INonNullableScalar, perGeneratorNames: List<Pair<java.lang.Class<in GeneratorBase>, String>>) = append(Context.External(this, perGeneratorNames, type)) {}
+
+
+    private fun interfacedef0(name: String, base: List<Interface>, body: Interface.() -> Unit) = append(Interface(name, this, base), body)
+    fun interfacedef(name: String, body: Interface.() -> Unit) = interfacedef0(name, emptyList(), body)
+    fun interfacedef(body: Interface.() -> Unit) = interfacedef0("", emptyList(), body)
+    fun interfacedef(name: String) = Part<Interface>(name)
+    val interfacedef = interfacedef("")
+
+    infix fun Part<Interface>.extends(p: Pair<Interface, Interface.() -> Unit>) = interfacedef0(name, listOf(p.first), p.second)
+    fun Part<Interface>.extends(vararg baseInterfaces: Interface, init: Interface.() -> Unit) = interfacedef0(name, baseInterfaces.toList(), init)
+
+    private fun <T : Declaration> T.toIntermediateClass() = IntermediateClass(this)
+
+    class IntermediateClass<T : Declaration>(val clazz: T)
 }
 
+class Interface(override val _name: String, pointcut: Toplevel, val baseInterfaces: List<Interface>) : Declaration(pointcut){
+    override val cl_name = "${javaClass.simpleName.decapitalize()}_interface"
+    operator fun invoke(body: Interface.() -> Unit) = this to body //for extends
 
+    operator fun plus(inter: Interface) = mutableListOf(this, inter)
+    operator fun plus(interList: List<Interface>) = interList + this
+}
 
 sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Struct?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_struct"
 
     class Abstract(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base) {
-        override val modifier: Modifier get() = Modifier.Abstract
+        override var modifier: Modifier = Modifier.Abstract
         operator fun invoke(body: Struct.() -> Unit)= this to body //for extends
-
     }
 
     class Concrete(name: String, pointcut: Toplevel, base: Struct?, unknown: Boolean = false) : Struct(name, pointcut, base, unknown)
 
     class Open (name: String, pointcut : Toplevel, base: Struct?) : Struct(name, pointcut, base) {
-        override val modifier: Modifier get() = Modifier.Open
+        override var modifier: Modifier = Modifier.Open
         operator fun invoke(body: Struct.() -> Unit) = this to body //for extends
     }
 }
@@ -399,14 +461,14 @@ sealed class Class(override val _name: String, override val pointcut : Toplevel,
 
     class Abstract (name : String, pointcut : Toplevel, base: Abstract?) : Class(name, pointcut, base) {
 
-        override val modifier: Modifier get() = Modifier.Abstract
+        override var modifier: Modifier  = Modifier.Abstract
         operator fun invoke(body: Class.() -> Unit) = this to body //for extends
     }
 
     class Concrete (name : String, pointcut : Toplevel, base: Class?, unknown: Boolean = false) : Class(name, pointcut, base, unknown)
 
     class Open (name: String, pointcut : Toplevel, base: Class?) : Class(name, pointcut, base) {
-        override val modifier: Modifier get() = Modifier.Open
+        override var modifier: Modifier  = Modifier.Open
         operator fun invoke(body: Class.() -> Unit) = this to body //for extends
     }
 }
