@@ -4,8 +4,7 @@ import com.jetbrains.rd.util.catch
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 
-class ViewableList<T : Any> : IMutableViewableList<T> {
-    private val storage: MutableList<T> = mutableListOf()
+class ViewableList<T : Any>(private val storage: MutableList<T> = mutableListOf()) : IMutableViewableList<T> {
     override val change = Signal<IViewableList.Event<T>>()
 
     override fun advise(lifetime: Lifetime, handler: (IViewableList.Event<T>) -> Unit) {

@@ -2,8 +2,10 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.impl.InternRoot
+import com.jetbrains.rd.framework.impl.readInternId
+import com.jetbrains.rd.framework.impl.writeInternId
 
-class SerializationCtx(val serializers: ISerializers, val internRoots: Map<String, IInternRoot> = emptyMap()) {
+class SerializationCtx(val serializers: ISerializers, val internRoots: Map<String, IInternRoot<Any>> = emptyMap()) {
     constructor(protocol: IProtocol) : this(protocol.serializers)
 }
 
@@ -52,15 +54,22 @@ fun <T: Any> ISerializer<T>.interned(internKey: String) : ISerializer<T> = objec
 
 fun SerializationCtx.withInternRootsHere(owner: RdBindableBase, vararg newRoots: String): SerializationCtx {
     return SerializationCtx(serializers, internRoots.plus(newRoots.associate {
-        it to owner.getOrCreateHighPriorityExtension("InternRoot-$it") { InternRoot() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
+        it to owner.getOrCreateHighPriorityExtension("InternRoot-$it") { InternRoot<Any>() }.apply { rdid = owner.rdid.mix(".InternRoot-$it") } }))
 }
 
 inline fun <T: Any> SerializationCtx.readInterned(stream: AbstractBuffer, internKey: String, readValueDelegate: (SerializationCtx, AbstractBuffer) -> T): T {
-    val interningRoot = internRoots[internKey] ?: return readValueDelegate(this, stream)
-    return interningRoot.unInternValue(stream.readInt() xor 1)
+    val internRoot = internRoots[internKey] ?: return readValueDelegate(this, stream)
+    val internId = stream.readInternId()
+    return if (internId.isValid)
+        internRoot.unIntern(internId)
+    else
+        readValueDelegate(this, stream)
 }
 
 inline fun <T: Any> SerializationCtx.writeInterned(stream: AbstractBuffer, value: T, internKey: String, writeValueDelegate: (SerializationCtx, AbstractBuffer, T) -> Unit) {
-    val interningRoot = internRoots[internKey] ?: return writeValueDelegate(this, stream, value)
-    stream.writeInt(interningRoot.internValue(value))
+    val internRoot = internRoots[internKey] ?: return writeValueDelegate(this, stream, value)
+    val internId = internRoot.intern(value)
+    stream.writeInternId(internId)
+    if (!internId.isValid) // value couldn't be interned, send as-is
+        writeValueDelegate(this, stream, value)
 }

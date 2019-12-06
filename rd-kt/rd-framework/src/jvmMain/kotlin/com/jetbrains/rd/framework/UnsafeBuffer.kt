@@ -123,7 +123,7 @@ class UnsafeBuffer private constructor(): AbstractBuffer(), Closeable {
     }
 
     override fun writeByteArrayRaw(array: ByteArray, count: Int?) {
-        val sz = count ?: array.size
+        val sz = count ?: (array.size - 0)
         require(sz >= 0 && sz <= array.size) { "sz >= 0 && sz <= array.size, sz = $sz, array.size=${array.size}" }
 
         requireAvailable(sz. toLong())

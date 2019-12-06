@@ -13,7 +13,7 @@ namespace JetBrains.Collections.Viewable
 #if !NET35
     private readonly ISet<T> myStorage;
 #else
-        private readonly HashSet<T> myStorage;
+        private readonly ICollection<T> myStorage;
 #endif
     
         public ISource<SetEvent<T>> Change => myChange;
@@ -24,7 +24,7 @@ namespace JetBrains.Collections.Viewable
 #if !NET35
             ISet<T> storage
 #else
-            HashSet<T> storage
+            ICollection<T> storage
 #endif
         )
         {
@@ -64,18 +64,29 @@ namespace JetBrains.Collections.Viewable
 
 
         #region ISet Read Methods
-        
+        #if !NET35
         public bool IsProperSubsetOf(IEnumerable<T> other) => myStorage.IsProperSubsetOf(other);
         public bool IsProperSupersetOf(IEnumerable<T> other) => myStorage.IsProperSupersetOf(other);
         public bool IsSubsetOf(IEnumerable<T> other) => myStorage.IsSubsetOf(other);
         public bool IsSupersetOf(IEnumerable<T> other) => myStorage.IsSupersetOf(other);
         public bool Overlaps(IEnumerable<T> other) => myStorage.Overlaps(other);
         public bool SetEquals(IEnumerable<T> other) => myStorage.SetEquals(other);
-        
+        #endif
         #endregion
 
         
         #region Simple write methods
+        #if NET35
+        public bool Add(T item)
+        {
+          if (myStorage.Contains(item))
+            return false;
+          myStorage.Add(item);
+
+          myChange.Fire(SetEvent<T>.Add(item));
+          return true;
+        }
+        #else
         public bool Add(T item)
         {
             if (!myStorage.Add(item))
@@ -84,6 +95,7 @@ namespace JetBrains.Collections.Viewable
             myChange.Fire(SetEvent<T>.Add(item));
             return true;
         }
+        #endif
         
         
 
@@ -117,7 +129,7 @@ namespace JetBrains.Collections.Viewable
             BulkFire(AddRemove.Remove, removed);
         }
         
-        
+        #if !NET35
         public void ExceptWith(IEnumerable<T> other)
         {
             var removed = new HashSet<T>(myStorage);
@@ -159,7 +171,7 @@ namespace JetBrains.Collections.Viewable
             
             UnionWith(otherExceptThis); //will throw add events for union
         }
-
+        #endif
         
         #endregion
     }

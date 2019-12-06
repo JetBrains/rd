@@ -14,6 +14,11 @@ namespace Test.RdFramework.Interning
   [Apartment(System.Threading.ApartmentState.STA)]
   public class InterningTest : RdFrameworkTestBase
   {
+    [Datapoint]
+    public static bool TrueDataPoint = true;
+    [Datapoint]
+    public static bool FalseDataPoint = false;
+    
     [SetUp]
     public void BeforeMethod()
     {
@@ -196,6 +201,56 @@ namespace Test.RdFramework.Interning
       Assertion.Assert(secondSendBytes == thirdSendBytes,
         "Sending a single interned object should take the same amount of bytes");
       Assertion.Assert(thirdSendBytes <= firstSendBytes - SumLengths(testValue), "Interning should save data");
+    }
+
+    [Theory]
+    public void TestRemovals(bool firstSendServer, bool secondSendServer, bool thirdSendServer)
+    {
+      var rootServer = new InternRoot<object>().Static(1);
+      rootServer.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top");
+      var rootClient = new InternRoot<object>().Static(1);
+      rootClient.Bind(LifetimeDefinition.Lifetime, ClientProtocol, "top");
+
+      var stringToSend = "This string is nice and long enough to overshadow any interning overheads";
+
+      IProtocol Proto(bool server) => server ? ServerProtocol : ClientProtocol;
+      InternRoot<object> Root(bool server) => server ? rootServer : rootClient;
+
+      var firstSendBytes = MeasureBytes(Proto(firstSendServer), () => { Root(firstSendServer).Intern(stringToSend); });
+
+      var secondSendBytes =
+        MeasureBytes(Proto(secondSendServer), () => { Root(secondSendServer).Intern(stringToSend); });
+
+      Assert.AreEqual(0, secondSendBytes, "Re-interning a value should not resend it");
+
+      var removalSendBytes = MeasureBytes(Proto(true), () =>
+      {
+        Root(true).Remove(stringToSend);
+        Root(false).Remove(stringToSend);
+      });
+
+      var thirdSendBytes = MeasureBytes(Proto(thirdSendServer), () => { Root(thirdSendServer).Intern(stringToSend); });
+
+      Assert.AreEqual(thirdSendBytes, firstSendBytes, "Re-sending removed value uses different amount of bytes, bug?");
+
+      Console.WriteLine($"Removal sent {removalSendBytes}");
+    }
+
+    [Test]
+    public void TestMonomorphic()
+    {
+      var rootServerMono = new InternRoot<long>(Serializers.ReadLong, Serializers.WriteLong).Static(1);
+      rootServerMono.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top1");
+      var rootServerPoly = new InternRoot<object>().Static(2);
+      rootServerPoly.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top2");
+
+      var sentBytesMono = MeasureBytes(ServerProtocol, () => rootServerMono.Intern(0L));
+      // bytes: message header (8+4+2), long (8), InternId (4)
+      Assert.AreEqual(14 + 8 + 4, sentBytesMono, "Monomorphic intern roots must not have polymorphic overhead");
+
+      var sentBytesPoly = MeasureBytes(ServerProtocol, () => rootServerPoly.Intern(0L));
+      // bytes: message header(8+4+2), type RdId (8), value length (4), long (8), InternId(4)
+      Assert.AreEqual(14 + 8 + 4 + 8 + 4, sentBytesPoly, "Polymorphic roots must use polymorphic writes");
     }
   }
 }

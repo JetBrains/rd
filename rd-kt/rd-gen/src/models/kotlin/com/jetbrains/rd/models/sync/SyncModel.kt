@@ -15,12 +15,16 @@ const val folder = "sync"
 object SyncModelRoot : Root(
     Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", outputDirectory(ktDirectorySystemPropertyKey, folder))
 ) {
+    val ClientId = context(string)
     val Baseclazz = baseclass {
         field("f", int)
     }
+    val InternScope = internScope("internScopeForSyncTest")
     val Clazz = classdef extends Baseclazz {
+        internRoot(InternScope)
+
         property("p", int.nullable)
-        map("mapPerClientId", int, int).perClientId
+        map("mapPerClientId", int, int).perContext(ClientId)
     }
 
     init {
@@ -36,7 +40,7 @@ object SyncModelRoot : Root(
         list("list", Clazz)
         set("set", int)
         map("map", int, Clazz)
-        property("propPerClientId", int).perClientId
+        property("propPerClientId", int).perContext(ClientId)
     }
 }
 

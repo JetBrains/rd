@@ -43,13 +43,13 @@ class TestTwoClientsLateSync : TestBase() {
         val sp = mutableListOf<Protocol>()
         var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf/*, SyncModelRoot.ClientId*/)
+            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelRoot.ClientId)
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime/*, SyncModelRoot.ClientId*/) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelRoot.ClientId) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())
@@ -136,7 +136,7 @@ class TestTwoClientsLateSync : TestBase() {
         assert(secondValue === s1.map[1]) { "Reference equality failed for s1 map" }
     }
 
-    /*@Test // todo: enable in contexts branch
+    @Test
     fun testPerClientIdMap() {
         s0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(listOf("A", "B", "C"))
         s1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(listOf("C", "D", "E"))
@@ -165,7 +165,7 @@ class TestTwoClientsLateSync : TestBase() {
         assertEquals(listOf(1 to 1), s1.property.valueOrThrow.mapPerClientIdPerContextMap["C"]!!.map { it.toPair() })
         assertEquals(listOf(), s1.property.valueOrThrow.mapPerClientIdPerContextMap["D"]!!.map { it.toPair() })
         assertEquals(listOf(), s1.property.valueOrThrow.mapPerClientIdPerContextMap["E"]!!.map { it.toPair() })
-    }*/
+    }
 
     @Test
     fun testProperty() {

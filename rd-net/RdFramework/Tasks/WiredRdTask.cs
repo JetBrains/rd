@@ -27,6 +27,7 @@ namespace JetBrains.Rd.Tasks
       RdId = rdId;
       Scheduler = scheduler;
       myWire = call.Wire;
+      Location = myCall.Location.Sub(RdId);
       
       call.Wire.Advise(lifetimeDef.Lifetime, this);
       lifetimeDef.Lifetime.TryOnTermination(() =>
@@ -63,5 +64,9 @@ namespace JetBrains.Rd.Tasks
         myLifetimeDef.Terminate(); //todo not true in case of bindable entities
       });
     }
+
+    public IProtocol Proto => myCall.Proto;
+    public SerializationCtx SerializationContext => myCall.SerializationContext;
+    public RName Location { get; }
   }
 }

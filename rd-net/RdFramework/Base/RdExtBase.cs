@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -49,7 +50,7 @@ namespace JetBrains.Rd.Base
       //todo ExtScheduler
       myExtWire.RealWire = parentWire;
       lifetime.Bracket(
-        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.ClientIdSet); },
+        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.Contexts); },
         () => { myExtProtocol = null; }
         );
         
@@ -168,9 +169,28 @@ namespace JetBrains.Rd.Base
     internal readonly ViewableProperty<bool> Connected = new ViewableProperty<bool>(false);
     internal IWire RealWire;
     
+    private struct QueueItem
+    {
+      public readonly RdId Id;
+      public readonly byte[] Bytes;
+      public readonly KeyValuePair<RdContextBase, object>[] StoredContext;
+
+      public QueueItem(RdId id, byte[] bytes, KeyValuePair<RdContextBase, object>[] storedContext)
+      {
+        Id = id;
+        Bytes = bytes;
+        StoredContext = storedContext;
+      }
+    }
     
-    private readonly Queue<KeyValuePair<RdId, byte[]>> mySendQ = new Queue<KeyValuePair<RdId, byte[]>>();
     
+    private readonly Queue<QueueItem> mySendQ = new Queue<QueueItem>();
+    
+    public ProtocolContexts Contexts
+    {
+      get => RealWire.Contexts;
+      set => Assertion.Assert(RealWire.Contexts == value, "Can't change ProtocolContexts in ExtWire");
+    }
 
 
     public ExtWire()
@@ -182,14 +202,25 @@ namespace JetBrains.Rd.Base
           while (mySendQ.Count > 0)
           {
             var p = mySendQ.Dequeue();
-            RealWire.Send(p.Key, writer => writer.WriteRaw(p.Value));
+            foreach (var keyValuePair in p.StoredContext)
+              keyValuePair.Key.PushContextBoxed(keyValuePair.Value);
+
+            try
+            {
+              RealWire.Send(p.Id, writer => writer.WriteRaw(p.Bytes, 0, p.Bytes.Length));
+            }
+            finally
+            {
+              foreach (var keyValuePair in p.StoredContext)
+                keyValuePair.Key.PopContext();
+            }
           }
         }               
       });
     }
 
     
-    public void Send<TContext>(RdId id, TContext context, Action<TContext, UnsafeWriter> writer)
+    public void Send<TContext>(RdId id, TContext param, Action<TContext, UnsafeWriter> writer)
     {
       lock (mySendQ)
       {
@@ -197,15 +228,17 @@ namespace JetBrains.Rd.Base
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
-            writer(context, cookie.Writer);
-            mySendQ.Enqueue(new KeyValuePair<RdId, byte[]>(id, cookie.CloneData()));
+            writer(param, cookie.Writer);
+            var storedContext = Contexts.RegisteredContexts
+              .Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
+            mySendQ.Enqueue(new QueueItem(id, cookie.CloneData(), storedContext));
           }
 
           return;
         }
       }
 
-      RealWire.Send(id, context, writer);
+      RealWire.Send(id, param, writer);
     }
 
     public void Advise(Lifetime lifetime, IRdWireable entity)

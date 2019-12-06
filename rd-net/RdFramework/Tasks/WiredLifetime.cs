@@ -21,6 +21,7 @@ namespace JetBrains.Rd.Tasks
       myParent = parent;
       RdId = rdId;
       WireScheduler = parent.WireScheduler; //maybe cancellation better to do synchronous
+      Location = myParent.Location.Sub(RdId);
       
       wire.Advise(definition.Lifetime, this);
     }
@@ -33,5 +34,9 @@ namespace JetBrains.Rd.Tasks
       reader.ReadVoid(); //nothing just a void signal
       myDefinition.Terminate();
     }
+
+    public IProtocol Proto => myParent.Proto;
+    public SerializationCtx SerializationContext => myParent.SerializationContext;
+    public RName Location { get; }
   }
 }

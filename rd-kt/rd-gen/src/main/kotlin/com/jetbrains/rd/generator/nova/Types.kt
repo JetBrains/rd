@@ -61,6 +61,28 @@ class InternScope(pointcut: BindableDeclaration?, override val _name: String = "
         get() = javaClass.simpleName
 }
 
+sealed class Context(pointcut: Toplevel, val type: INonNullableScalar): Declaration(pointcut) {
+    class Generated(pointcut: Toplevel, override val _name: String = "", type: INonNullableScalar, var isHeavyKey: Boolean = true) : Context(pointcut, type) {
+        val keyName: String
+            get() = name.also { assert(it != "") { "No name specified for context and no name can be derived for key in $pointcut" } }
+
+        override val cl_name: String
+            get() = javaClass.simpleName
+    }
+
+    class External(pointcut: Toplevel, val perGeneratorNames: List<Pair<java.lang.Class<in GeneratorBase>, String>>, type: INonNullableScalar) : Context(pointcut, type) {
+        override val _name: String
+            get() = ""
+        override val cl_name: String
+            get() = javaClass.simpleName
+
+        fun fqnFor(generator: GeneratorBase): String = perGeneratorNames.first { it.first.isAssignableFrom(generator.javaClass) }.second
+    }
+}
+
+
+
+
 sealed class PredefinedType : INonNullableScalar {
     override val name : String get() = javaClass.simpleName.capitalize()
 
@@ -319,6 +341,8 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun flags(body: Enum.() -> Unit) = enum( body).apply { flags = true }
 
     fun internScope(name: String = "") = InternScope(this, name)
+    fun context(type: INonNullableScalar) = append(Context.Generated(this, "", type)) {}
+    fun externalContext(type: INonNullableScalar, perGeneratorNames: List<Pair<java.lang.Class<in GeneratorBase>, String>>) = append(Context.External(this, perGeneratorNames, type)) {}
 }
 
 

@@ -5,20 +5,32 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import org.junit.Test
+import org.junit.experimental.theories.DataPoint
+import org.junit.experimental.theories.Theories
+import org.junit.experimental.theories.Theory
+import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 
+@RunWith(Theories::class)
 class InterningMultithreadTest : RdAsyncTestBase() {
 
-    @Test
-    fun test1() = doTest(1)
+    companion object {
+        @DataPoint @JvmField
+        val one = 1
+        @DataPoint @JvmField
+        val hundred = 100
+        @DataPoint @JvmField
+        val tenthousand = 10_000
 
-    @Test
-    fun test100() = doTest(100)
+        @DataPoint @JvmField
+        val trueValue = true
+        @DataPoint @JvmField
+        val falseValue = false
+    }
 
-    @Test
-    fun test10000() = doTest(10000)
-
-    fun doTest(typicalStringLength: Int) {
+    @Theory
+    fun doTest(typicalStringLength: Int, attemptContention: Boolean) {
+        println("Length: $typicalStringLength, contention: $attemptContention")
         val evt0 = CountDownLatch(2)
         val evt1 = CountDownLatch(3)
         val evt2 = CountDownLatch(1)
@@ -26,6 +38,10 @@ class InterningMultithreadTest : RdAsyncTestBase() {
 
         val iterationCount = 10_000
         val uniqueValues = 100
+
+        var clientBytesBase = 0L
+        val uiStringBase = if(attemptContention) "b" else "u"
+        val uniqueValuesMultiplier = if(attemptContention) 1 else 2
 
         clientUiScheduler.queue {
             val clientModel = clientProtocol.bindStatic(RdOptionalProperty(InterningMtModel).static(1), "top")
@@ -39,6 +55,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
             evt1.await()
 
             clientUiScheduler.queue {
+                clientBytesBase = clientWire.bytesWritten
                 evt2.await()
                 clientBgScheduler.queue {
                     for (i in 0 until iterationCount) {
@@ -46,7 +63,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
                     }
                 }
                 for (i in 0 until iterationCount) {
-                    clientModel.valueOrThrow.signaller.fire("u".repeat(typicalStringLength) + i % uniqueValues)
+                    clientModel.valueOrThrow.signaller.fire(uiStringBase.repeat(typicalStringLength) + i % uniqueValues)
                 }
             }
 
@@ -90,21 +107,24 @@ class InterningMultithreadTest : RdAsyncTestBase() {
         serverBgScheduler.assertNoExceptions()
 
         assert(seenValuesBg == seenValuesUi) { "Two receiving threads have seen different values, bug?" }
-        assert(seenValuesBg.size == uniqueValues * 2) { "Some values were not received" }
+        assert(seenValuesBg.size == uniqueValues * uniqueValuesMultiplier) { "Some values were not received" }
 
-        val uniqueValuesStringLengthSum = uniqueValues * typicalStringLength * 2 + 2 * (0 until uniqueValues).sumBy { it.toString().length }
+        val uniqueValuesStringLengthSum = (uniqueValues * typicalStringLength + (0 until uniqueValues).sumBy { it.toString().length }) * uniqueValuesMultiplier
 
-        val rawBytesExpected = uniqueValuesStringLengthSum.toLong() * 2 * iterationCount / uniqueValues + 4 * iterationCount * 2
+        // raw bytes: strings, string headers (4), context headers (2)
+        val rawBytesExpected = uniqueValuesStringLengthSum.toLong() * 2 * iterationCount / uniqueValues + 4 * iterationCount * 2 + iterationCount * 2 * 2
         // actual expected value calc:
         // rdid of entity doesn't count
-        // per signal firing: 4 bytes interned value
-        // per unique value: 4 bytes string length + string + 4 bytes id + 8 + 4 bytes polymorphic write
-        val actualBytesExpected = uniqueValuesStringLengthSum * 2 + 2 * uniqueValues * (4 + 4 + 8 + 4) + 2 * iterationCount * 4
+        // per signal firing: 4 bytes interned value, 2 bytes context
+        // per unique value: 4 bytes string length + string + 4 bytes id + 8 + 4 bytes polymorphic write + 2 bytes context
+        val actualBytesExpected = uniqueValuesStringLengthSum * 2 + uniqueValuesMultiplier * uniqueValues * (4 + 4 + 8 + 4 + 2) + 2 * iterationCount * (4 + 2)
 
-        assert(clientWire.bytesWritten <= actualBytesExpected * 2) { "Interning should save data, sent ${clientWire.bytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected" }
-        println("Sent ${clientWire.bytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected")
-        println("Interning mt contention: ${clientWire.bytesWritten.toFloat()/actualBytesExpected}")
-        println("Interning ratio (more=better): ${rawBytesExpected/clientWire.bytesWritten.toFloat()}")
+        val interningBytesWritten = clientWire.bytesWritten - clientBytesBase
+
+        assert(interningBytesWritten <= actualBytesExpected * 110 / 100) { "Interning should save data, sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected" }
+        println("Sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected")
+        println("Interning mt contention: ${interningBytesWritten.toFloat()/actualBytesExpected}")
+        println("Interning ratio (more=better): ${rawBytesExpected/interningBytesWritten.toFloat()}")
     }
 
     @Test
