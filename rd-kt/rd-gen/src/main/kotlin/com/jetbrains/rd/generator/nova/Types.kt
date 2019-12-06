@@ -570,8 +570,9 @@ abstract class Root(vararg val hardcodedGenerators: IGenerator) : Toplevel(null)
     }
 }
 
-fun Declaration.doc(value: String) {
+fun <T : Declaration> T.doc(value: String) : T{
     documentation = value
+    return this
 }
 
 val Declaration.isConcrete
