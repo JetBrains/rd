@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using JetBrains.Core;
 using Test.RdCross.Base;
@@ -25,6 +26,7 @@ namespace Test.RdCross
                    throw new ArgumentException($"Wrong class name={args[0]}");
         if (Activator.CreateInstance(type) is CrossTest_Cs_Base testCsBase)
         {
+          CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
           Console.WriteLine($"Instance of {type} created");
           testCsBase.Run(args.Skip(1).ToArray());
         }
