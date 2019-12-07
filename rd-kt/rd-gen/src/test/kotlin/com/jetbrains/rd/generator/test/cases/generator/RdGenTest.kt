@@ -10,7 +10,8 @@ enum class Configuration {
     EXAMPLE,
     DEMO_MODEL,
     RIDER_MODEL,
-    ENTITY_MODEL
+    ENTITY_MODEL,
+    UNREAL_MODEL
 }
 
 
@@ -22,7 +23,7 @@ fun main() {
 //    rdgen.filter *= "cpp"
 //    rdgen.filter *= "cpp|csharp"
 //    rdgen.filter *= "kotlin"
-    val configuration = Configuration.DEMO_MODEL
+    val configuration = Configuration.UNREAL_MODEL
     when (configuration) {
         Configuration.EXAMPLE -> {
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\example"
@@ -47,6 +48,19 @@ fun main() {
 
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\entities"
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator.entities"
+        }
+        Configuration.UNREAL_MODEL -> {
+            System.setProperty("model.out.src.lib.ue4.cpp.dir", "C:\\Work\\resharper-unreal\\src\\cpp\\RiderLink\\Source\\RiderLink\\Private\\RdEditorProtocol\\")
+            System.setProperty("model.out.src.editorPlugin.cpp.dir", "C:\\Work\\resharper-unreal\\src\\cpp\\RiderLink\\Source\\RiderLink\\Private\\RdEditorProtocol\\")
+
+//            rdgen.sources *= "C:\\Work\\resharper-unreal\\protocol\\src\\main\\kotlin\\model\\lib\\ue4"
+//            rdgen.sources *= "C:\\Work\\resharper-unreal\\protocol\\src\\main\\kotlin\\model\\editorPlugin"
+            rdgen.sources *= "C:\\Work\\resharper-unreal\\protocol\\src\\main\\kotlin\\model\\lib\\ue4;C:\\Work\\resharper-unreal\\protocol\\src\\main\\kotlin\\model\\editorPlugin"
+//            rdgen.packages *= "model.lib.ue4"
+//            rdgen.packages *= "model.editorPlugin"
+            rdgen.packages *= "model.lib.ue4;model.editorPlugin"
+
+            rdgen.classpath *= "C:\\Work\\resharper-unreal\\build\\riderRD-2019.3-SNAPSHOT\\lib\\rd\\rider-model.jar"
         }
     }
     rdgen.compilerClassloader = URLClassLoader(arrayOf(
