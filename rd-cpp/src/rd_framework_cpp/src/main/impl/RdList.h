@@ -4,6 +4,7 @@
 #include "reactive/ViewableList.h"
 #include "base/RdReactiveBase.h"
 #include "serialization/Polymorphic.h"
+#include "std/allocator.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )
@@ -15,7 +16,7 @@ namespace rd {
 	 * \tparam T type of stored values
 	 * \tparam S "SerDes" for values
 	 */
-	template<typename T, typename S = Polymorphic<T>>
+	template<typename T, typename S = Polymorphic<T>, typename A = allocator<T>>
 	class RdList final : public RdReactiveBase, public ViewableList<T>, public ISerializable {
 	private:
 		using WT = typename IViewableList<T>::WT;

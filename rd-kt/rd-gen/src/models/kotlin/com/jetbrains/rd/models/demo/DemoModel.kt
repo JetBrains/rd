@@ -149,6 +149,10 @@ object DemoModel : Ext(DemoRoot) {
         property("property_with_default", cc)
 
         property("if", `class`)
+
+        property("my_scalars", immutableList(MyScalar))
+        property("list_of_derived", immutableList(Derived))
+        property("list_of_base", immutableList(Base))
     }
 }
 

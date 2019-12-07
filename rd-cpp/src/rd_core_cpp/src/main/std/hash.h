@@ -4,8 +4,6 @@
 #include <functional>
 
 namespace rd {
-	/*template<typename T>
-	using hash = std::hash<T>;*/
 	template<typename T>
 	struct hash {
 		size_t operator()(const T& value) const noexcept {

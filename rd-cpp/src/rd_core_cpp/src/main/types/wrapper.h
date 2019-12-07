@@ -75,7 +75,7 @@ namespace rd {
 	 * \tparam T type of value
 	 */
 	template<typename T>
-	class Wrapper final : std::shared_ptr<T> {
+	class Wrapper final : public std::shared_ptr<T> {
 	private:
 		template<typename>
 		friend
