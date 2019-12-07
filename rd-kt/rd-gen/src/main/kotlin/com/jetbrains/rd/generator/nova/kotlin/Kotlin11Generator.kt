@@ -3,7 +3,7 @@ package com.jetbrains.rd.generator.nova.kotlin
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
-import com.jetbrains.rd.generator.nova.util.VersionNumber
+import com.jetbrains.rd.generator.nova.kotlin.KotlinSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -11,8 +11,6 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
-import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
-
 import java.io.File
 
 fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
@@ -178,8 +176,8 @@ open class Kotlin11Generator(
     }
 
 
-    protected open val Member.publicName : String get() = name
-    protected open val Member.encapsulatedName : String get() = isEncapsulated.condstr { "_" } + publicName
+    protected open val Member.publicName : String get() = sanitize(name)
+    protected open val Member.encapsulatedName : String get() = if (isEncapsulated) "_$name" else publicName
     protected open val Member.isEncapsulated : Boolean get() = this is Member.Reactive
 
     protected fun Member.ctorParam(containing: Declaration): String {
@@ -286,7 +284,7 @@ open class Kotlin11Generator(
         }
     }
 
-    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName", "UnnecessaryVariable")
+    private val suppressWarnings = listOf("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "PackageDirectoryMismatch", "UnusedImport", "unused", "LocalVariableName", "CanBeVal", "PropertyName", "EnumEntryName", "ClassName", "ObjectPropertyName", "UnnecessaryVariable", "SpellCheckingInspection")
 
     protected open fun PrettyPrinter.namespace(decl: Declaration) {
         val warnings = suppressWarnings.joinToString(separator = ",") { "\"$it\"" }

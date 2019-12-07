@@ -4,6 +4,7 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.Features.__cpp_structured_bindings
+import com.jetbrains.rd.generator.nova.cpp.CppSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
 import com.jetbrains.rd.generator.nova.util.joinToOptString
@@ -1086,7 +1087,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         titledBlock("enum class ${decl.name}") {
             +decl.constants.withIndex().joinToString(separator = ",${eolKind.value}") { (idx, field) ->
                 val doc = docComment(field.documentation)
-                val name = field.name.sanitize()
+                val name = sanitize(field.name)
                 val value = field.getSetting(EnumConstantValue)?.let { " = $it" }
                     ?: decl.flags.condstr { " = 1 << $idx" }
                 doc + name + value
@@ -1108,7 +1109,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         define(enumToStringTraitDecl(decl)) {
             +"""
             |switch(value) {
-            |${decl.constants.joinToString(separator = eol) { """case ${decl.name}::${it.name.sanitize()}: return "${it.name}";""" }}
+            |${decl.constants.joinToString(separator = eol) { """case ${decl.name}::${sanitize(it.name)}: return "${it.name}";""" }}
             |default: return std::to_string(static_cast<int32_t>(value));
             |}
             """.trimMargin()
@@ -2214,7 +2215,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     is PredefinedType.uint -> "${value}u"
                     is PredefinedType.ulong -> "${value}ull"
                     is PredefinedType.float -> "${value}f"
-                    is Enum -> "${member.type.name}::${value.sanitize()}"
+                    is Enum -> "${member.type.name}::${sanitize(value)}"
                     else -> value
                 }
             }

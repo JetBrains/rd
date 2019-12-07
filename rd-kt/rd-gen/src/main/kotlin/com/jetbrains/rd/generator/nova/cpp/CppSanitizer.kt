@@ -1,8 +1,14 @@
 package com.jetbrains.rd.generator.nova.cpp
 
+import com.jetbrains.rd.generator.nova.ISanitizer
 import com.jetbrains.rd.util.string.condstr
 
-private val keywords = arrayOf(
+object CppSanitizer : ISanitizer {
+    override val language: String
+        get() = "C++"
+
+    @Suppress("SpellCheckingInspection")
+    private val keywords = arrayOf(
         "alignas",
         "alignof",
         "and",
@@ -99,6 +105,9 @@ private val keywords = arrayOf(
         "while",
         "xor",
         "xor_eq"
-)
+    )
 
-internal fun String.sanitize(vararg contextVariables: String): String = this + (keywords.contains(this) || contextVariables.contains(this)).condstr { "_" }
+    internal fun sanitize(name: String, vararg contextVariables: String): String = name + (isKeyword(name) || contextVariables.contains(name)).condstr { "_" }
+
+    override fun isKeyword(name: String) = keywords.contains(name)
+}
