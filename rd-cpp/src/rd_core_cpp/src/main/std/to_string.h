@@ -66,8 +66,8 @@ namespace rd {
 			return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
 		}
 
-		template<typename T>
-		std::string to_string(std::vector<T> const &v) {
+		template<template<class, class> class C, typename T, typename A>
+		std::string to_string(C<T, A> const &v) {
 			std::string res = "[";
 			for (const auto &item : v) {
 				res += to_string(item);

@@ -30,7 +30,7 @@ add_library(rd_core_cpp STATIC
         types/wrapper.cpp types/wrapper.h
         #pch
         ${PCH_CPP_OPT}
-        std/unordered_map.cpp std/unordered_map.h std/unordered_set.cpp std/unordered_set.h std/allocator.cpp std/allocator.h)
+        std/unordered_map.cpp std/unordered_map.h std/unordered_set.cpp std/unordered_set.h std/allocator.cpp std/allocator.h std/list.cpp std/list.h)
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 

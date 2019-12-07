@@ -70,7 +70,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             return if (this is FakeDeclaration) {
                 decl.namespace
             } else {
-                getSetting(Namespace) ?: (this as? CppIntrinsicType)?.namespace ?: defaultNamespace
+                when (this) {
+                    is CppIntrinsicType -> namespace.orEmpty()
+                    else -> getSetting(Namespace) ?: defaultNamespace
+                }
             }
         }
 
@@ -91,16 +94,26 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private val Declaration.isIntrinsic: Boolean
         get() = getSetting(Intrinsic) != null
 
+    private val defaultListType = CppIntrinsicType("std", "vector", null)
+
     private val Declaration.listType: CppIntrinsicType
         get() {
-            return getSetting(ListType) ?: CppIntrinsicType("std", "vector", null)
+            return getSetting(ListType) ?: defaultListType
         }
+
+    private val defaultAllocatorType = { itemType: IType -> "rd::allocator<${itemType.name}>" }
+
+    private fun Declaration.allocatorType(itemType: IType): String {
+        return (getSetting(AllocatorType) ?: defaultAllocatorType).invoke(itemType)
+    }
 
     object ListType : ISetting<CppIntrinsicType, Declaration>
 
+    object AllocatorType : ISetting<(IType) -> String, Declaration>
+
     object Intrinsic : ISetting<CppIntrinsicType, Declaration>
 
-    object MarshallerHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
+    object AdditionalHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
 
     object PublicCtors : ISetting<Unit, Declaration>
 
@@ -719,7 +732,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     initializedEnums
                         .mapNotNull { enum ->
                             if (enum.isIntrinsic) {
-                                enum.pointcut.getSetting(MarshallerHeaders)
+                                enum.pointcut.getSetting(AdditionalHeaders)
                             } else {
                                 listOf("${enum.pointcut.name}/${enum.name}.h")
                             }
@@ -837,7 +850,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
-            val marshallerHeaders = tl.getSetting(MarshallerHeaders) ?: listOf()
+            val marshallerHeaders = tl.getSetting(AdditionalHeaders) ?: listOf()
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     FileSystemPrettyPrinter(type.fsPath(tl, isDefinition)).use {
@@ -1303,7 +1316,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         extHeaders.printlnWithBlankLine { it.includeWithExtension("h") }
         dependentTypes(decl).printlnWithBlankLine { it.includeQuotes() }
 
-        decl.getSetting(MarshallerHeaders)?.distinct()?.println { it.includeQuotes() }
+        decl.getSetting(AdditionalHeaders)?.distinct()?.println { it.includeQuotes() }
     }
 
 /*
@@ -1737,10 +1750,11 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
             is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                 this as IHasItemType
+                val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
                 if (isPrimitivesArray) {
-                    "buffer.read_array<${itemType.templateName(decl)}>()"
+                    "buffer.read_array<$templateTypes>()"
                 } else {
-                    """buffer.read_array<${itemType.templateName(decl)}>(${lambda(null, "return ${itemType.reader()}")})"""
+                    """buffer.read_array<$templateTypes>(${lambda(null, "return ${itemType.reader()}")})"""
                 }
             }
             else -> fail("Unknown declaration: $decl")
@@ -1929,8 +1943,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     if (isPrimitivesArray) {
                         "buffer.write_array($field)"
                     } else {
+                        val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
                         val lambda = lambda("${itemType.substitutedName(decl)} const & it", itemType.writer("it"), "void")
-                        "buffer.write_array<${itemType.substitutedName(decl)}>($field, $lambda)"
+                        "buffer.write_array<$templateTypes>($field, $lambda)"
                     }
                 }
                 else -> fail("Unknown declaration: $decl")

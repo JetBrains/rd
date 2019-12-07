@@ -497,7 +497,7 @@ INSTANTIATE_TEST_SUITE_P(SimpleDisconnectClient,
 						 DisconnectTestBase,
 						 ::testing::Values(false));
 
-TEST_P(DisconnectTestBase, DdosDisconnect) {
+TEST_P(DisconnectTestBase, DISABLED_DdosDisconnect) {
 	auto serverProtocol = server(socketLifetime);
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 

@@ -7,7 +7,7 @@
 #include <cstdlib>
 
 namespace rd {
-	template<template<typename, typename> class C, typename T, typename A = allocator<T>>
+	template<template<class, class> class C, typename T, typename A = allocator<T>>
 	size_t contentHashCode(C<T, A> const &list) noexcept {
 		size_t __r = 0;
 		for (auto const &e : list) {
@@ -22,13 +22,13 @@ namespace rd {
 		return rd::hash<T>()(value);
 	}
 
-	template<template<typename, typename> class C, typename T, typename A = allocator<T>>
+	template<template<class, class> class C, typename T, typename A = allocator<T>>
 	typename std::enable_if_t<std::is_integral<T>::value, size_t>
 	contentDeepHashCode(C<T, A> const &value) noexcept {
 		return contentHashCode(value);
 	}
 
-	template<template<typename, typename> class C, typename T, typename A = allocator<T>>
+	template<template<class, class> class C, typename T, typename A = allocator<T>>
 	typename std::enable_if_t<!std::is_integral<T>::value, size_t>
 	contentDeepHashCode(C<T, A> const &value) noexcept {
 		size_t result = 1;
