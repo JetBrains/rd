@@ -1944,7 +1944,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                         "buffer.write_array($field)"
                     } else {
                         val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
-                        val lambda = lambda("${itemType.substitutedName(decl)} const & it", itemType.writer("it"), "void")
+                        val lambda = lambda("${itemType.templateName(decl)} const & it", itemType.writer("it"), "void")
                         "buffer.write_array<$templateTypes>($field, $lambda)"
                     }
                 }
