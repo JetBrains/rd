@@ -8,47 +8,65 @@ import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.framework.IInternRoot
 import com.jetbrains.rd.framework.base.IRdBindable
 
-class InternRoot: IInternRoot {
+class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic()): IInternRoot<TBase> {
     override fun deepClone(): IRdBindable {
         error("Should never be called")
     }
 
-    private val myItemsList = ArrayList<Any>()
-    private val otherItemsList = ConcurrentHashMap<Int, Any>()
-    private val inverseMap = ConcurrentHashMap<Any, Int>()
+    private val internedValueIndices = AtomicInteger()
+    private val directMap = ConcurrentHashMap<InternId, TBase>()
+    private val inverseMap = ConcurrentHashMap<TBase, InverseMapValue>()
 
-    override fun tryGetInterned(value: Any): Int {
-        return inverseMap[value] ?: -1
+    override fun tryGetInterned(value: TBase): InternId {
+        return inverseMap[value]?.id ?: InternId.invalid
     }
 
-    override fun internValue(value: Any): Int {
-        return inverseMap[value] ?: run {
-            var idx = 0
-            protocol.wire.send(rdid) { writer ->
-                Polymorphic.write(serializationContext, writer, value)
-                Sync.lock(myItemsList) {
-                    idx = myItemsList.size * 2
-                    myItemsList.add(value)
+    override fun intern(value: TBase): InternId {
+        return inverseMap[value]?.id ?: run {
+            val newMapping = InverseMapValue(InternId.invalid, InternId.invalid)
+            val oldMapping = inverseMap.putIfAbsent(value, newMapping)
+            if (oldMapping != null) { // someone already allocated inverse mapping for this value
+                oldMapping.id
+            } else { // we've succeeded at allocating this value - send it
+                val idx = InternId(internedValueIndices.incrementAndGet() * 2)
+                assert(idx.isLocal)
+
+                directMap[idx] = value
+                protocol.contexts.sendWithoutContexts {
+                    protocol.wire.send(rdid) { writer ->
+                        serializer.write(serializationContext, writer, value)
+                        writer.writeInternId(idx)
+                    }
                 }
-                writer.writeInt(idx)
+                newMapping.id = idx
+                idx
             }
-            inverseMap.putIfAbsent(value, idx) ?: idx
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> unInternValue(id: Int): T {
-        return (if (isIndexOwned(id)) myItemsList[id / 2] else otherItemsList[id / 2]) as T
+    override fun remove(value: TBase) {
+        val localValue = inverseMap.remove(value)
+        if (localValue != null) {
+            directMap.remove(localValue.id)
+            directMap.remove(localValue.extraId)
+        }
     }
 
-    private fun isIndexOwned(id: Int) = (id and 1 == 0)
+    private fun get(id: InternId): TBase? {
+        assert(id.isValid)
+        return directMap[id]
+    }
 
-    override fun setInternedCorrespondence(id: Int, value: Any) {
-        require(!isIndexOwned(id)) { "Setting interned correspondence for object that we should have written, bug?" }
-//        require(id / 2 == otherItemsList.size, { "Out-of-sequence interned object id" })
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : TBase> unIntern(id: InternId): T {
+        val value = get(id)
+        require(value != null) { "Value for id $id has been removed" }
+        return value as T
+    }
 
-        otherItemsList[id / 2] = value
-        inverseMap[value] = id
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : TBase> tryUnIntern(id: InternId): T? {
+        return get(id) as T?
     }
 
     override var async: Boolean
@@ -58,11 +76,20 @@ class InternRoot: IInternRoot {
     override val wireScheduler: IScheduler = InternScheduler()
 
     override fun onWireReceived(buffer: AbstractBuffer) {
-        val value = Polymorphic.read(serializationContext, buffer) ?: return
-        val remoteId = buffer.readInt()
-        require(remoteId and 1 == 0) { "Remote sent ID marked as our own, bug?" }
-        setInternedCorrespondence(remoteId xor 1, value)
+        val value = serializer.read(serializationContext, buffer) ?: return
+        val remoteId = buffer.readInternId()
+        assert(!remoteId.isLocal) { "Remote sent local InterningId, bug?" }
+        assert(remoteId.isValid) { "Remote sent invalid InterningId, bug?" }
+        directMap[remoteId] = value
+        val newInverseMapValue = InverseMapValue(remoteId, InternId.invalid)
+        val oldValue = inverseMap.putIfAbsent(value, newInverseMapValue)
+        if (oldValue != null) {
+            assert(!oldValue.extraId.isValid) { "Remote send duplicate IDs for value $value" }
+            oldValue.extraId = remoteId
+        }
     }
+
+    private data class InverseMapValue(/*@Volatile*/ var id: InternId, var extraId: InternId) // @Volatile is broken when compiling js, actual/expected with it breaks when compiling jvm
 
     override var rdid: RdId = RdId.Null
         internal set
@@ -79,8 +106,7 @@ class InternRoot: IInternRoot {
             rdid = RdId.Null
         })
 
-        myItemsList.clear()
-        otherItemsList.clear()
+        directMap.clear()
         inverseMap.clear()
 
         protocol.wire.advise(lf, this)
@@ -102,6 +128,35 @@ class InternRoot: IInternRoot {
         get() = parent?.serializationContext ?: error("Not bound: $location")
 
     override var location: RName = RName("<<not bound>>")
+}
+
+/**
+ * An ID representing an interned value
+ */
+inline class InternId(val value: Int) {
+    /**
+     * True if this ID represents an actual interned value. False indicates a failed interning operation or unset value
+     */
+    val isValid: Boolean
+        get() = value != -1
+
+    /**
+     * True if this ID represents a value interned by local InternRoot
+     */
+    val isLocal: Boolean
+        get() = (value and 1) == 0
+
+    companion object {
+        val invalid = InternId(-1)
+    }
+}
+
+fun AbstractBuffer.readInternId(): InternId {
+    return InternId(readInt())
+}
+
+fun AbstractBuffer.writeInternId(id: InternId) {
+    writeInt(if(id.value == -1) id.value else id.value xor 1)
 }
 
 class InternScheduler : IScheduler {

@@ -16,7 +16,16 @@ namespace JetBrains.Rd
 
     public static void Send(this IWire wire, RdId id, Action<UnsafeWriter> writer)
     {
-      wire.Send(id, (object)null, (_, w) => writer(w));
+      wire.Send(id, writer, (action, w) => action(w));
+    }
+
+    public static void WriteContext(this IWire wire, UnsafeWriter writer)
+    {
+      var contextHandler = wire.Contexts;
+      if(contextHandler == null)
+        ProtocolContexts.WriteEmptyContexts(writer);
+      else
+        contextHandler.WriteContexts(writer);
     }
   }
 }

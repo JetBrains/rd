@@ -194,7 +194,7 @@ namespace JetBrains.Rd.Impl
 
     public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T :
 #if !NET35
-    unmanaged, 
+    unmanaged,
 #endif
      Enum
     {
@@ -204,7 +204,7 @@ namespace JetBrains.Rd.Impl
 
     public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T :
 #if !NET35
-    unmanaged, 
+    unmanaged,
 #endif
      Enum
     {
@@ -213,7 +213,7 @@ namespace JetBrains.Rd.Impl
 
     public void RegisterEnum<T>() where T :
 #if !NET35
-    unmanaged, 
+    unmanaged,
 #endif
      Enum
     {

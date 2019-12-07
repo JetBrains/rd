@@ -33,7 +33,7 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 
 /**
  * Generate C++ code.
- * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
+ * @param defaultNamespace namespace separated by symbol "colon", "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
 open class Cpp17Generator(flowTransform: FlowTransform,
@@ -101,8 +101,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     object Intrinsic : ISetting<CppIntrinsicType, Declaration>
 
     object MarshallerHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
-
-    val nestedNamespaces = defaultNamespace.split('.')
 
     object PublicCtors : ISetting<Unit, Declaration>
 
@@ -538,7 +536,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             this.withNamespace()
         } else {
             val needQualification = namespace != scope.namespace
-            needQualification.condstr { "::$namespace::" } + platformTypeName
+            needQualification.condstr { "$namespace::" } + platformTypeName
         }
     }
 
@@ -547,9 +545,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
      */
     private fun Declaration.withNamespace() =
         if (namespace.isEmpty()) {
-            "::$name"
+            "$name"
         } else {
-            "::$namespace::$platformTypeName"
+            "$namespace::$platformTypeName"
         }
 
 
@@ -719,14 +717,13 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     +polymorphicHeader.includeWithExtension("h")
                     println()
                     initializedEnums
-                        .map { enum ->
+                        .mapNotNull { enum ->
                             if (enum.isIntrinsic) {
                                 enum.pointcut.getSetting(MarshallerHeaders)
                             } else {
                                 listOf("${enum.pointcut.name}/${enum.name}.h")
                             }
                         }
-                        .filterNotNull()
                         .flatten()
                         .map { it.includeQuotes() }
                         .forEach { +it }
@@ -783,25 +780,34 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                         val enumType = enum.withNamespace()
                         block("$enumType Polymorphic<$enumType, void>::read(SerializationCtx& ctx, Buffer& buffer) {", "}") {
                             +"int32_t x = buffer.read_integral<int32_t>();"
-                            map.forEach { (key, value) ->
-                                +"""
-                                |if (x == $key) 
+                            block("switch (x) {", "}") {
+                                map.forEach { (key, value) ->
+                                    +"""
+                                |case $key: 
                                 |   return ${enum.withNamespace() + "::" + value.name};
-                             """.trimMargin()
+                                """.trimMargin()
+                                }
+                                +"""
+                                |default:
+                                |   return static_cast<${enumType}>(x);
+                                """.trimMargin()
                             }
-                            +"return static_cast<${enumType}>(x);"
+
                         }
                         println()
                         block("void Polymorphic<$enumType, void>::write(SerializationCtx& ctx, Buffer& buffer, $enumType const& value) {", "}") {
-                            map.forEach { (key, value) ->
-                                +"""
-                                |if (value == ${enum.withNamespace() + "::" + value.name}) {
+                            block("switch (value) {", "}") {
+                                map.forEach { (key, value) ->
+                                    +"""
+                                |case ${enum.withNamespace() + "::" + value.name}: {
                                 |   buffer.write_integral<int32_t>($key);
                                 |   return;
                                 |}
                              """.trimMargin()
+                                }
+                                +"default:"
+                                +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
                             }
-                            +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
                         }
                         +"template class Polymorphic<$enumType>;"
                     }
@@ -1891,12 +1897,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 */
 
     protected fun PrettyPrinter.writerTraitDef(decl: Declaration) {
+        fun IType.polymorphicWriter(field: String) = "rd::Polymorphic<${templateName(decl)}>::write(ctx, buffer, $field)"
+
         fun IType.writer(field: String): String {
             return when (this) {
-                is CppIntrinsicType -> "rd::Polymorphic<$name>::write(ctx, buffer, $field)"
-                is Enum -> {
-                    "buffer.write_enum${underscoreSetOrEmpty}($field)"
-                }
+                is CppIntrinsicType -> polymorphicWriter(field)
+                is Enum -> polymorphicWriter(field)
                 is InternedScalar -> {
                     val lambda = lambda("rd::SerializationCtx &, rd::Buffer &, ${itemType.substitutedName(decl)} const & internedValue", itemType.writer("internedValue"), "void")
                     """ctx.writeInterned<${itemType.templateName(decl)}, ${internKey.hash()}>(buffer, $field, $lambda)"""

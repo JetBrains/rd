@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.Protocol
-import com.jetbrains.rd.framework.impl.RdPerClientIdMap
+import com.jetbrains.rd.framework.impl.RdPerContextMap
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.trace
@@ -16,24 +16,46 @@ fun<T> synchronize(lifetime: Lifetime, a: ISignal<T>, b: ISignal<T>) {
 }
 
 fun<T> synchronize(lifetime: Lifetime, a: IMutablePropertyBase<T>, b: IMutablePropertyBase<T>) {
-    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+    val initialSyncIsFromAToB = a is IOptPropertyView<*> && a.hasValue || a is IPropertyView<*>
+
+    if (initialSyncIsFromAToB) {
+        a.flowInto(lifetime, b) { cloneAndSync(lifetime, it) }
+        b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it) }
+    } else {
+        b.flowInto(lifetime, a) { cloneAndSync(lifetime, it) }
+        a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it) }
+    }
 }
 
 fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableSet<T>, b: IMutableViewableSet<T>) {
-    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+    a.forEach {
+        b.remove(it)
+        b.add(cloneAndSync(lifetime, it))
+    }
+
+    b.forEach { if(!a.contains(it)) a.add(cloneAndSync(lifetime, it)) }
+
+    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 fun<K: Any, V: Any> synchronize(lifetime: Lifetime, a: IMutableViewableMap<K, V>, b: IMutableViewableMap<K, V>) {
-    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
-    b.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
+    a.forEach {
+        b[it.key] = cloneAndSync(lifetime, it.value)
+    }
+
+    b.forEach {
+        if(!a.containsKey(it.key)) a[it.key] = cloneAndSync(lifetime, it.value)
+    }
+
+    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
 fun<T: Any> synchronize(lifetime: Lifetime, a: IMutableViewableList<T>, b: IMutableViewableList<T>) {
-    synchronizeImmutableLists(lifetime, a, b)
+    b.clear()
 
-    a.change.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
+    a.flowInto(lifetime, b) { cloneAndSync(lifetime, it)}
     b.change.flowInto(lifetime, a) { cloneAndSync(lifetime, it)}
 }
 
@@ -51,7 +73,7 @@ fun<T: Any> synchronizeImmutableArrays(lifetime: Lifetime, a: Array<T>, b: Array
     }
 }
 
-fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b: RdPerClientIdMap<T>) {
+fun <K : Any, T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerContextMap<K, T>, b: RdPerContextMap<K, T>) {
     a.view(lifetime) { lt, (key, value) ->
         if (b.changing)
             return@view
@@ -59,14 +81,14 @@ fun <T:RdBindableBase> synchronize(lifetime: Lifetime, a: RdPerClientIdMap<T>, b
         b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
     }
 
-    b.change.advise(lifetime) { evt ->
-        evt.newValueOpt?.let {
-            // skip `Host` clientId from guest protocol
-            if (evt.key.value == "Host") return@advise
-            synchronizePolymorphic(lifetime, a[evt.key], it)
+    a.localChange {
+        b.view(lifetime) { lt, (key, value) ->
+            if (a.changing)
+                return@view
+
+            a[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
         }
     }
-
 }
 
 
@@ -94,8 +116,8 @@ internal fun synchronizePolymorphic(lifetime: Lifetime, first: Any?, second: Any
     } else if (first is IMutableViewableMap<*, *> && second is IMutableViewableMap<*, *>) {
         synchronize(lifetime, first as IMutableViewableMap<Any, Any>, second as IMutableViewableMap<Any, Any>)
 
-    } else if (first is RdPerClientIdMap<*> && second is RdPerClientIdMap<*>) {
-        synchronize(lifetime, first as RdPerClientIdMap<RdBindableBase>, second as RdPerClientIdMap<RdBindableBase>)
+    } else if (first is RdPerContextMap<*, *> && second is RdPerContextMap<*, *>) {
+        synchronize(lifetime, first as RdPerContextMap<Any, RdBindableBase>, second as RdPerContextMap<Any, RdBindableBase>)
 
     } else if (first is RdBindableBase && second is RdBindableBase) {
         first.synchronizeWith(lifetime, second)

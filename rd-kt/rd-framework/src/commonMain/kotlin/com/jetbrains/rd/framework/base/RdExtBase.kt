@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.Queue
@@ -48,7 +49,7 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.clientIdSet) },
+                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts) },
             {
                 extProtocol = null
 //                extScheduler = null
@@ -167,8 +168,14 @@ class ExtWire : IWire {
 
     override fun advise(lifetime: Lifetime, entity: IRdWireable) = realWire.advise(lifetime, entity)
 
+    override val contexts: ProtocolContexts
+        get() = realWire.contexts
 
-    data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray)
+    override fun setupContexts(newContexts: ProtocolContexts) {
+        require(newContexts === realWire.contexts) { "Can't replace ProtocolContexts on ExtWire" }
+    }
+
+    data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray, val context: List<Pair<RdContext<Any>, Any?>>)
     override val connected: Property<Boolean> = Property(false)
 
 
@@ -178,19 +185,34 @@ class ExtWire : IWire {
         connected.whenTrue(Lifetime.Eternal) { _ ->
             Sync.lock(sendQ) {
                 while (true) {
-                    val (id, count, payload) = sendQ.poll() ?: return@lock
-                    realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
+                    val (id, count, payload, context) = sendQ.poll() ?: return@lock
+
+                    val prevValues = ArrayList<Any?>(context.size)
+                    context.forEach { (ctx, value) ->
+                        prevValues.add(ctx.value)
+                        ctx.value = value
+                    }
+                    try {
+                        realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
+                    } finally {
+                        context.forEachIndexed { idx, (ctx, _) ->
+                            ctx.value = prevValues[idx]
+                        }
+                    }
+
                 }
             }
         }
     }
+
 
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
         Sync.lock(sendQ) {
             if (!sendQ.isEmpty() || !connected.value) {
                 val buffer = createAbstractBuffer()
                 writer(buffer)
-                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray()))
+                @Suppress("UNCHECKED_CAST")
+                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray(), contexts.registeredContexts.map { (it as RdContext<Any>) to it.value }))
                 return
             }
 
