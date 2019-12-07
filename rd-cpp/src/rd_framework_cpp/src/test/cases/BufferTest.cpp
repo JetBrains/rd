@@ -119,7 +119,7 @@ TEST(BufferTest, bigVector) {
 
 	buffer.rewind();
 
-	const auto res = buffer.read_array<int64_t>();
+	const auto res = buffer.read_array<std::vector, int64_t>();
 
 	EXPECT_EQ(res, list);
 }
@@ -229,7 +229,7 @@ TEST(BufferTest, ArraySerializer) {
 
 	using T = std::wstring;
 	using S = Polymorphic<T>;
-	using AS = ArraySerializer<S>;
+	using AS = ArraySerializer<S, std::vector>;
 
 	std::vector<Wrapper<T>> list{
 			L"start"

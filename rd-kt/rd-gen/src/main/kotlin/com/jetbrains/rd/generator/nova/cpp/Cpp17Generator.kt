@@ -70,7 +70,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             return if (this is FakeDeclaration) {
                 decl.namespace
             } else {
-                return getSetting(Namespace) ?: defaultNamespace
+                getSetting(Namespace) ?: (this as? CppIntrinsicType)?.namespace ?: defaultNamespace
             }
         }
 
@@ -89,9 +89,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
     private val Declaration.isIntrinsic: Boolean
+        get() = getSetting(Intrinsic) != null
+
+    private val Declaration.listType: CppIntrinsicType
         get() {
-            return getSetting(Intrinsic) != null
+            return getSetting(ListType) ?: CppIntrinsicType("std", "vector", null)
         }
+
+    object ListType : ISetting<CppIntrinsicType, Declaration>
 
     object Intrinsic : ISetting<CppIntrinsicType, Declaration>
 
@@ -147,6 +152,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private object RdBindableBase : RdCppLibraryType("rd::RdBindableBase")
 
     private object RdExtBase : RdCppLibraryType("rd::RdExtBase")
+
+    private object RdAbstract : RdCppLibraryType("rd::RdAbstract")
 
     //endregion",
     fun String.isWrapper(): Boolean {
@@ -314,8 +321,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 substitutedName.wrapper()
             }
         }
-        is IArray -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
-        is IImmutableList -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
+        is IArray -> "${scope.listType.withNamespace()}<${itemType.substitutedName(scope, false, omitNullability)}>"
+        is IImmutableList -> "${scope.listType.withNamespace()}<${itemType.substitutedName(scope, false, omitNullability)}>"
 
         is PredefinedType.char -> "wchar_t"
         is PredefinedType.byte -> "uint8_t"
@@ -1188,6 +1195,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             //std stubs
             "std/to_string",
             "std/hash",
+            "std/allocator",
             //enum
             "util/enum",
             //gen
@@ -1316,8 +1324,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     fun PrettyPrinter.customSerializersTrait(decl: Declaration) {
         fun IType.serializerBuilder(): String = leafSerializerRef(decl) ?: "rd::" + when (this) {
-            is IArray -> "ArraySerializer<${itemType.serializerBuilder()}>"
-            is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}>"
+            is IArray -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
+            is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
             is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
             is InternedScalar -> """InternedSerializer<${itemType.serializerBuilder()}, ${internKey.hash()}>"""
             else -> fail("Unknown type: $this")
@@ -1709,7 +1717,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration -> {
                 if (isIntrinsic) {
-                    "rd::Polymorphic<$name>::read(ctx, buffer)"
+                    polymorphicReader()
                 } else {
                     if (isAbstract)
                         "ctx.get_serializers().readPolymorphic<${templateName(decl)}>(ctx, buffer)"

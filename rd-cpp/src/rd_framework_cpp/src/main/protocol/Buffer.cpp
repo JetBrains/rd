@@ -114,7 +114,7 @@ void Buffer::writeString(std::string const &value) const {
 
 	template<int>
 	std::wstring read_wstring_spec(Buffer &buffer) {
-		auto v = buffer.read_array<uint16_t>();
+		auto v = buffer.read_array<std::vector, uint16_t>();
 		return std::wstring(v.begin(), v.end());
 	}
 
@@ -135,7 +135,7 @@ void Buffer::writeString(std::string const &value) const {
 	template<int>
 	void write_wstring_spec(Buffer &buffer, wstring_view value) {
 		const std::vector<uint16_t> v(value.begin(), value.end());
-		buffer.write_array<uint16_t>(v);
+		buffer.write_array<std::vector, uint16_t>(v);
 	}
 
 	template<>
