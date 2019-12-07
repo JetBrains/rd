@@ -5,6 +5,7 @@
 #include "util/core_util.h"
 #include "types/wrapper.h"
 #include "std/allocator.h"
+#include "std/list.h"
 
 #include <vector>
 #include <type_traits>
@@ -102,15 +103,19 @@ namespace rd {
 		C<T, A> read_array() {
 			int32_t len = read_integral<int32_t>();
 			RD_ASSERT_MSG(len >= 0, "read null array(length = " + std::to_string(len) + ")");
-			C<T, A> result(len);
-			read(reinterpret_cast<word_t *>(result.data()), sizeof(T) * len);
+			C<T, A> result;
+			resize(result, len);
+			if (len > 0) {
+				read(reinterpret_cast<word_t *>(&result[0]), sizeof(T) * len);
+			}
 			return result;
 		}
 
 		template<template<class, class> class C, typename T, typename A = allocator<value_or_wrapper<T>>>
 		C<value_or_wrapper<T>, A> read_array(std::function<value_or_wrapper<T>()> reader) {
 			int32_t len = read_integral<int32_t>();
-			C<value_or_wrapper<T>, A> result(len);
+			C<value_or_wrapper<T>, A> result;
+			resize(result, len);
 			for (int32_t i = 0; i < len; ++i) {
 				result[i] = std::move(reader());
 			}
@@ -119,22 +124,25 @@ namespace rd {
 
 		template<template<class, class> class C, typename T, typename A = allocator<T>, typename = typename std::enable_if_t<util::is_pod_v<T>>>
 		void write_array(C<T, A> const &container) {
-			write_integral<int32_t>(static_cast<int32_t>(container.size()));
-			write(reinterpret_cast<word_t const *>(container.data()), sizeof(T) * container.size());
+			const int32_t &len = ::rd::size(container);
+			write_integral<int32_t>(static_cast<int32_t>(len));
+			if (len > 0) {
+				write(reinterpret_cast<word_t const *>(&container[0]), sizeof(T) * len);
+			}
 		}
 
 		template<template<class, class> class C, typename T, typename A = allocator<T>>
-		void write_array(C<T, A> const &array, std::function<void(T const &)> writer) {
-			write_integral<int32_t>(array.size());
-			for (auto const &e : array) {
+		void write_array(C<T, A> const &container, std::function<void(T const &)> writer) {
+			write_integral<int32_t>(::rd::size(container));
+			for (auto const &e : container) {
 				writer(e);
 			}
 		}
 
 		template<template<class, class> class C, typename T, typename A = allocator<Wrapper<T>>>
-		void write_array(C<Wrapper<T>, A> const &array, std::function<void(T const &)> writer) {
-			write_integral<int32_t>(array.size());
-			for (auto const &e : array) {
+		void write_array(C<Wrapper<T>, A> const &container, std::function<void(T const &)> writer) {
+			write_integral<int32_t>(::rd::size(container));
+			for (auto const &e : container) {
 				writer(*e);
 			}
 		}

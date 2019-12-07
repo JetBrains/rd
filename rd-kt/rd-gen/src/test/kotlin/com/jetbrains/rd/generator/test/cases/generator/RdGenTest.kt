@@ -48,12 +48,6 @@ fun main() {
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\entities"
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator.entities"
         }
-        Configuration.UNREAL_MODEL -> {
-            System.setProperty("model.out.src.lib.ue4.cpp.dir", "C:\\temp\\unreal")
-
-            rdgen.sources *= "C:\\Work\\resharper-unreal\\protocol\\src\\main\\kotlin\\model\\lib\\ue4"
-            rdgen.packages *= "model.lib.ue4"
-        }
     }
     rdgen.compilerClassloader = URLClassLoader(arrayOf(
             File("C:\\Users\\jetbrains\\.IntelliJIdea2018.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
