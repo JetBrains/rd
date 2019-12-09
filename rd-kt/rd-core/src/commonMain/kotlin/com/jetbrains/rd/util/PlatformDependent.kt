@@ -10,6 +10,8 @@ expect class AtomicReference<T> (initial: T) {
     fun getAndUpdate(f : (T) -> T) : T
 }
 
+expect class CopyOnWriteArrayList<E>(): MutableList<E>
+
 expect class CancellationException() : IllegalStateException {
     constructor(message: String)
 }
@@ -75,6 +77,7 @@ expect class UUID(hi: Long, lo: Long) {
 
 expect class AtomicInteger constructor(v: Int = 0){
     fun get() : Int
+    fun set(value: Int)
     fun getAndAdd(v: Int) : Int
     fun incrementAndGet() : Int
     fun decrementAndGet() : Int

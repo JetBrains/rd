@@ -14,7 +14,7 @@ import com.jetbrains.rd.util.trace
 
 
 @Suppress("UNUSED_PARAMETER")
-class RdSet<T : Any> private constructor(val valueSerializer: ISerializer<T>, private val set: ViewableSet<T>)
+class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private val set: ViewableSet<T>)
 : RdReactiveBase(), IMutableViewableSet<T> by set {
 
     companion object {

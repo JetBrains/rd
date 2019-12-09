@@ -3,7 +3,7 @@ package com.jetbrains.rd.util.reactive
 import com.jetbrains.rd.util.catch
 import com.jetbrains.rd.util.lifetime.Lifetime
 
-class ViewableSet<T : Any> : IMutableViewableSet<T> {
+class ViewableSet<T : Any>(private val set: MutableSet<T> = LinkedHashSet<T>()) : IMutableViewableSet<T> {
     override fun add(element: T): Boolean {
         if (!set.add(element)) return false
         change.fire(IViewableSet.Event(AddRemove.Add, element))
@@ -59,7 +59,7 @@ class ViewableSet<T : Any> : IMutableViewableSet<T> {
 
     }
 
-    private val set = LinkedHashSet<T>()
+
     override val change = Signal<IViewableSet.Event<T>>()
 
     override fun advise(lifetime: Lifetime, handler: (IViewableSet.Event<T>) -> Unit) {

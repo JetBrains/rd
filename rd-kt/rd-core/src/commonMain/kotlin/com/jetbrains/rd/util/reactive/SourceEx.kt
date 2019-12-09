@@ -85,8 +85,8 @@ fun <TSrc, TDst> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutableProp
 fun <TSrc> ISource<TSrc>.flowInto(lifetime: Lifetime, target: IMutablePropertyBase<TSrc>) = flowInto(lifetime, target) {it}
 
 
-fun <TSrc:Any, TDst:Any> IViewableSet<TSrc>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {
-    advise(lifetime) { addRemove, v ->
+fun <TSrc:Any, TDst:Any> ISource<IViewableSet.Event<TSrc>>.flowInto(lifetime: Lifetime, target: IMutableViewableSet<TDst>, tf: (TSrc) -> TDst) {
+    advise(lifetime) { (addRemove, v) ->
         if (target.changing) return@advise
 
         when (addRemove) {
@@ -108,7 +108,7 @@ fun <TSrc:Any, TDst:Any> ISource<IViewableList.Event<TSrc>>.flowInto(lifetime: L
     }
 }
 
-fun <TKey:Any, TValue: Any> IViewableMap<TKey, TValue>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>, tf: (TValue) -> TValue) {
+fun <TKey:Any, TValue: Any> ISource<IViewableMap.Event<TKey, TValue>>.flowInto(lifetime: Lifetime, target: IMutableViewableMap<TKey, TValue>, tf: (TValue) -> TValue) {
     advise(lifetime) { evt ->
         if (target.changing) return@advise
 

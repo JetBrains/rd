@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.AddRemove
@@ -159,8 +160,12 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 if (!alreadySynchronized.add(name)) //already synchronized
                     return@adviseAddRemove
 
+                if (value is InternRoot<*>)
+                    return@adviseAddRemove
+
                 val other = counterpart.bindableChildren.getOrNull(idx) //by index must be faster
                     ?.takeIf { it.first == name } ?.second //value by index has the same name. Class will be checked when we try to synchronize
+                    ?: counterpart.bindableChildren.firstOrNull { it.first == name }?.second // try searching by name in case bindable child lists are different (i.e. extern root is present)
                     ?: counterpart.getOrCreateExtension(name) { value.deepClonePolymorphic() }
 
                 synchronizePolymorphic(lifetime, value, other)

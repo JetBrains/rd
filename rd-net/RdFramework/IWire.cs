@@ -11,14 +11,27 @@ namespace JetBrains.Rd
 {
   public interface IWire
   {
-    void Send<TContext>(RdId id, TContext context, [NotNull, InstantHandle] Action<TContext, UnsafeWriter> writer);
+    void Send<TParam>(RdId id, TParam param, [NotNull, InstantHandle] Action<TParam, UnsafeWriter> writer);
     void Advise([NotNull] Lifetime lifetime, [NotNull] IRdWireable entity);
+    
+    [NotNull] ProtocolContexts Contexts { get; set; }
   }
 
   public abstract class WireBase : IWire
   {    
     protected readonly MessageBroker MessageBroker;
     private IScheduler myScheduler;
+    private ProtocolContexts myContexts;
+
+    public ProtocolContexts Contexts
+    {
+      get => myContexts;
+      set
+      {
+        Assertion.Assert(myContexts == null || ReferenceEquals(myContexts, value), "May not replace contexts in IWire");
+        myContexts = value;
+      }
+    }
 
 
     protected WireBase([NotNull] IScheduler scheduler)
@@ -50,7 +63,7 @@ namespace JetBrains.Rd
     /// <param name="pkg">Package to transmit</param>
     protected abstract void SendPkg(UnsafeWriter.Cookie pkg);
 
-    public void Send<TContext>(RdId id, TContext context, Action<TContext, UnsafeWriter> writer)
+    public void Send<TParam>(RdId id, TParam param, Action<TParam, UnsafeWriter> writer)
     {
       Assertion.Require(!id.IsNil, "!id.IsNil");
       Assertion.AssertNotNull(writer, "writer != null");
@@ -60,7 +73,8 @@ namespace JetBrains.Rd
         cookie.Writer.Write(0); //placeholder for length
 
         id.Write(cookie.Writer);
-        writer(context, cookie.Writer);
+        this.WriteContext(cookie.Writer);
+        writer(param, cookie.Writer);
         cookie.WriteIntLengthToCookieStart();
 
         SendPkg(cookie);
@@ -70,6 +84,6 @@ namespace JetBrains.Rd
     public void Advise(Lifetime lifetime, IRdWireable reactive)
     {
       MessageBroker.Advise(lifetime, reactive);
-    }    
+    }
   }
 }

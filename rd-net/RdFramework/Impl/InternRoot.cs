@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
@@ -13,63 +12,103 @@ using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Impl
 {
-  public class InternRoot : IInternRoot
+  public class InternRoot<TBase> : IInternRoot<TBase>
   {
-    private readonly List<object> myInternedObjects = new List<object>();
-    private readonly ConcurrentDictionary<int, object> myOtherSideInternedObjects = new ConcurrentDictionary<int, object>();
-    private readonly ConcurrentDictionary<object, int> myInverseMap = new ConcurrentDictionary<object, int>();
+    private readonly ConcurrentDictionary<InternId, TBase> myDirectMap =
+      new ConcurrentDictionary<InternId, TBase>();
 
-    public bool TryGetInterned(object value, out int result)
+    private readonly ConcurrentDictionary<TBase, IdPair> myInverseMap = new ConcurrentDictionary<TBase, IdPair>();
+    private int myInternedIdCounter;
+    private readonly CtxReadDelegate<TBase> myReadDelegate;
+    private readonly CtxWriteDelegate<TBase> myWriteDelegate;
+
+    public InternId TryGetInterned(TBase value)
     {
-      return myInverseMap.TryGetValue(value, out result);
+      var hasValue = myInverseMap.TryGetValue(value, out var pair);
+      if (hasValue)
+        return pair.Id;
+      return InternId.Invalid;
     }
 
-    public int Intern(object value)
+    public InternId Intern(TBase value)
     {
-      int result;
-      if (myInverseMap.TryGetValue(value, out result))
-        return result;
-      
-      Proto.Wire.Send(RdId, writer =>
+      IdPair pair;
+      if (myInverseMap.TryGetValue(value, out pair))
+        return pair.Id;
+
+      pair.Id = pair.ExtraId = InternId.Invalid;
+
+      if (myInverseMap.TryAdd(value, pair))
       {
-        Polymorphic<object>.Write(SerializationContext, writer, value);
-        lock (myInternedObjects)
+        InternId allocatedId = new InternId(Interlocked.Increment(ref myInternedIdCounter) * 2);
+        
+        Assertion.Assert(allocatedId.IsLocal, "Newly allocated ID must be local");
+        
+        myDirectMap[allocatedId] = value;
+        using(Proto.Contexts.CreateSendWithoutContextsCookie())
+          Proto.Wire.Send(RdId, writer =>
+          {
+            myWriteDelegate(SerializationContext, writer, value);
+            InternId.Write(writer, allocatedId);
+          });
+
+        while (true)
         {
-          result = myInternedObjects.Count * 2;
-          myInternedObjects.Add(value);          
+          var oldPair = myInverseMap[value];
+          var modifiedPair = oldPair;
+          modifiedPair.Id = allocatedId;
+          if (myInverseMap.TryUpdate(value, modifiedPair, oldPair)) break;
         }
-        writer.Write(result);
-      });
-      
-      if (!myInverseMap.TryAdd(value, result)) 
-        result = myInverseMap[value];
-      
-      return result;
+      }
+
+      return myInverseMap[value].Id;
     }
 
-    private bool IsIndexOwned(int idx)
+    private object TryGetValue(InternId id)
     {
-      return (idx & 1) == 0;
+      myDirectMap.TryGetValue(id, out var value);
+      return value;
     }
 
-    public T UnIntern<T>(int id)
+    public bool TryUnIntern<T>(InternId id, out T result) where T : TBase
     {
-      return (T) (IsIndexOwned(id) ? myInternedObjects[id / 2] : myOtherSideInternedObjects[id / 2]);
+      var value = TryGetValue(id);
+      if (value != null)
+      {
+        result = (T) value;
+        return true;
+      }
+
+      result = default;
+      return false;
     }
 
-    public void SetInternedCorrespondence(int id, object value)
+    public void Remove(TBase value)
     {
-      Assertion.Assert(!IsIndexOwned(id), "Setting interned correspondence for object that we should have written, bug?");
-      
-      myOtherSideInternedObjects[id / 2] = value;
-      myInverseMap[value] = id;
+      if (myInverseMap.TryRemove(value, out var pair))
+      {
+        myDirectMap.TryRemove(pair.Id, out _);
+        myDirectMap.TryRemove(pair.ExtraId, out _);
+      }
+    }
+
+    public T UnIntern<T>(InternId id) where T : TBase
+    {
+      return (T) TryGetValue(id);
     }
 
     [CanBeNull] private IRdDynamic myParent;
 
+    public InternRoot([CanBeNull] CtxReadDelegate<TBase> readDelegate = null, [CanBeNull] CtxWriteDelegate<TBase> writeDelegate = null)
+    {
+      myReadDelegate = readDelegate ?? Polymorphic<TBase>.Read;
+      myWriteDelegate = writeDelegate ?? Polymorphic<TBase>.Write;
+    }
+
     public IProtocol Proto => myParent.NotNull(this).Proto;
     public SerializationCtx SerializationContext => myParent.NotNull(this).SerializationContext;
     public RName Location { get; private set; } = new RName("<<not bound>>");
+
     public void Print(PrettyPrinter printer)
     {
       printer.Print(ToString());
@@ -77,14 +116,14 @@ namespace JetBrains.Rd.Impl
       printer.Print(RdId.ToString());
       printer.Print(")");
     }
-    
+
     public override string ToString()
     {
-      return GetType().ToString(false, true) + ": `" + Location+"`";
+      return GetType().ToString(false, true) + ": `" + Location + "`";
     }
 
     public RdId RdId { get; set; }
-    
+
     public void Bind(Lifetime lf, IRdDynamic parent, string name)
     {
       if (myParent != null)
@@ -107,6 +146,9 @@ namespace JetBrains.Rd.Impl
         }
       );
       
+      myDirectMap.Clear();
+      myInverseMap.Clear();
+
       Proto.Wire.Advise(lf, this);
     }
 
@@ -118,14 +160,67 @@ namespace JetBrains.Rd.Impl
       RdId = id;
     }
 
-    public bool Async { get => true; set => throw new NotSupportedException("Intern Roots are always async"); }
+    public bool Async
+    {
+      get => true;
+      set => throw new NotSupportedException("Intern Roots are always async");
+    }
+
     public IScheduler WireScheduler => InternRootScheduler.Instance;
+
     public void OnWireReceived(UnsafeReader reader)
     {
-      var value = Polymorphic<object>.Read(SerializationContext, reader);
-      var id = reader.ReadInt();
-      Assertion.Require((id & 1) == 0, "Other side sent us id of our own side?");
-      SetInternedCorrespondence(id ^ 1, value);
+      var value = myReadDelegate(SerializationContext, reader);
+      var id = InternId.Read(reader);
+      Assertion.Require(!id.IsLocal, "Other side sent us id of our own side?");
+      Assertion.Require(id.IsValid, "Other side sent us invalid id?");
+      myDirectMap[id] = value;
+      var pair = new IdPair() { Id = id, ExtraId = InternId.Invalid };
+      if (!myInverseMap.TryAdd(value, pair))
+      {
+        while (true)
+        {
+          var oldPair = myInverseMap[value];
+          Assertion.Assert(!oldPair.ExtraId.IsValid, "Remote send duplicated IDs for value {0}", value);
+          var modifiedPair = oldPair;
+          modifiedPair.ExtraId = id;
+          if (myInverseMap.TryUpdate(value, modifiedPair, oldPair)) break;
+        }
+      }
+    }
+
+    private struct IdPair : IEquatable<IdPair>
+    {
+      public InternId Id;
+      public InternId ExtraId;
+
+      public bool Equals(IdPair other)
+      {
+        return Id.Equals(other.Id) && ExtraId.Equals(other.ExtraId);
+      }
+
+      public override bool Equals(object obj)
+      {
+        return obj is IdPair other && Equals(other);
+      }
+
+      public override int GetHashCode()
+      {
+        unchecked
+        {
+          return (Id.GetHashCode() * 397) ^ ExtraId.GetHashCode();
+        }
+      }
+
+      public static bool operator ==(IdPair left, IdPair right)
+      {
+        return left.Equals(right);
+      }
+
+      public static bool operator !=(IdPair left, IdPair right)
+      {
+        return !left.Equals(right);
+      }
     }
   }
 

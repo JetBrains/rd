@@ -64,10 +64,16 @@ abstract class AbstractBuffer {
 
     abstract fun checkAvailable(moreSize: Int)
 
+    /**
+     * Sets position to zero, can discard data in order to shrink backing storage
+     */
     open fun reset() {
         position = 0
     }
 
+    /**
+     * Sets position to zero, keeps all data
+     */
     fun rewind() {
         position = 0
     }
@@ -128,3 +134,4 @@ abstract class AbstractBuffer {
 }
 
 expect fun createAbstractBuffer(): AbstractBuffer
+expect fun createAbstractBuffer(bytes: ByteArray): AbstractBuffer

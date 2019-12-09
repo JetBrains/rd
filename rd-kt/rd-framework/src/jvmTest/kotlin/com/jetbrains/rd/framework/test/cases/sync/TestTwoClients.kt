@@ -6,16 +6,16 @@ import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import com.jetbrains.rd.util.reflection.usingValue
 import org.junit.After
 import org.junit.Ignore
 import org.junit.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import test.synchronization.extToClazz
-import java.lang.management.ManagementFactory
 import kotlin.assert
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.assertEquals
 
 class TestTwoClients : TestBase() {
 
@@ -37,13 +37,13 @@ class TestTwoClients : TestBase() {
         val sp = mutableListOf<Protocol>()
         var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf)
+            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelRoot.ClientId)
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelRoot.ClientId) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())
@@ -107,21 +107,50 @@ class TestTwoClients : TestBase() {
         wait { c1.map[0]?.p?.value == 2 }
     }
 
-    @Ignore("Enable after the branch with protocol contexts will be merged")
     @Test
     fun testPerClientIdMap() {
+        SyncModelRoot.ClientId::value.usingValue("Host") {
+            c0.property.set(Clazz(1))
+            wait { c1.property.hasValue }
+
+            c0.property.valueOrThrow.mapPerClientId[1] = 1
+            wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
+        }
+    }
+
+    @Test
+    fun testPerClientIdMapIntersection() {
         c0.property.set(Clazz(1))
         wait { c1.property.hasValue }
 
-        c0.property.valueOrThrow.mapPerClientId[1] = 1
-        wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
+        val c0ContextSet = listOf("A", "B", "C")
+        val c1ContextSet = listOf("C", "D", "E")
+
+        c0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(c0ContextSet)
+        c1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(c1ContextSet)
+
+        SyncModelRoot.ClientId::value.usingValue("C") {
+            c0.property.valueOrThrow.mapPerClientId[1] = 1
+            wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
+        }
+
+        assertEquals(c0ContextSet, c0.property.valueOrThrow.mapPerClientIdPerContextMap.map { it.component1() })
+        assertEquals(c1ContextSet, c1.property.valueOrThrow.mapPerClientIdPerContextMap.map { it.component1() })
     }
 
 
     @Test
     fun testPerClientIdProperty() {
-        c0.propPerClientId.set(1)
-        wait { c1.propPerClientId.valueOrNull == 1 }
+        SyncModelRoot.ClientId::value.usingValue("Host") {
+            c0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).add("Host")
+            c1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).add("Host")
+
+            wait { s0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).contains("Host") }
+            wait { s1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).contains("Host") }
+
+            c0.propPerClientId.set(1)
+            wait { c1.propPerClientId.valueOrNull == 1 }
+        }
     }
 
     @Test
