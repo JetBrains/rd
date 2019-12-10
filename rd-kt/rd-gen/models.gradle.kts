@@ -41,7 +41,8 @@ tasks {
 
     @Suppress("UNUSED_VARIABLE")
     val generateEverything by creating(RdGenerateTask::class) {
-        classpath = project.the<SourceSetContainer>()["main"]!!.runtimeClasspath
+        classpath(project.the<SourceSetContainer>()["main"]!!.compileClasspath)
+        classpath(project.the<SourceSetContainer>()["main"]!!.runtimeClasspath)
 
         collectSources()
 
