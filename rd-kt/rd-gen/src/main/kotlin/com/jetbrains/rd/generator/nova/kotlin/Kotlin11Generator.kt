@@ -353,9 +353,11 @@ open class Kotlin11Generator(
             return
         }
 
-        if (decl.isAbstract) p("abstract ")
-        if (decl.isOpen) p("open ")
-        if (decl.isDataClass) p("data ")
+        if(decl !is Toplevel) {
+            if (decl.isAbstract) p("abstract ")
+            if (decl.isOpen) p("open ")
+            if (decl.isDataClass) p("data ")
+        }
 
 
         + "class ${decl.name} ${decl.primaryCtorVisibility}("

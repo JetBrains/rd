@@ -172,7 +172,7 @@ open class CSharp50Generator(
     }
 
     //declarations
-    protected val Declaration.hasSecondaryCtor: Boolean get() = (this.isConcrete || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
+    protected val Declaration.hasSecondaryCtor: Boolean get() = (this.isConcrete || this.isOpen || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
 
     //members
     val Member.Reactive.actualFlow: FlowKind get() = memberFlowTransform.transform(flow)
@@ -442,8 +442,10 @@ open class CSharp50Generator(
 
         p("public ")
 
-        if (decl.isAbstract) p("abstract ")
-        if (decl.isSealed) p("sealed ")
+        if(decl !is Toplevel) {
+            if (decl.isAbstract) p("abstract ")
+            if (decl.isSealed) p("sealed ")
+        }
         if (decl.getSetting(Partial) != null) p("partial ")
 
         p("class ${decl.name}")
@@ -703,7 +705,7 @@ open class CSharp50Generator(
         }
 
         decl.allTypesForDelegation().forEach {
-            +"public static CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
+            +"public static${it.hideOverloadAttribute(decl)} CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
         }
     }
 
@@ -774,8 +776,20 @@ open class CSharp50Generator(
         }
 
         decl.allTypesForDelegation().forEach {
-            +"public static CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
+            +"public static ${it.hideOverloadAttribute(decl)} CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
         }
+    }
+
+    private fun IType.hideOverloadAttribute(decl : Declaration): String{
+        var currentDecl = decl
+        while (currentDecl.base != null){
+            currentDecl = currentDecl.base!!
+            if(currentDecl.isOpen && currentDecl.allTypesForDelegation().contains(this)){
+                return " new"
+            }
+        }
+
+        return ""
     }
 
 
@@ -994,8 +1008,21 @@ open class CSharp50Generator(
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
         if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
-        val optOverride = (decl !is Struct).condstr { "override " }
-        +"public ${optOverride}void Print(PrettyPrinter printer)"
+        fun Declaration.attributes() : String{
+            if(decl !is Struct) return "override "
+
+            var currentDecl = this
+            while (currentDecl.base != null){
+                currentDecl = currentDecl.base!!
+                if(currentDecl.isOpen){
+                    return "override "
+                }
+            }
+
+            return if(decl.isOpen) "virtual " else ""
+        }
+
+        +"public ${decl.attributes()}void Print(PrettyPrinter printer)"
         +"{"
         indent {
             +"printer.Println(\"${decl.name} (\");"
@@ -1025,6 +1052,7 @@ open class CSharp50Generator(
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
             decl.isAbstract -> "protected"
+            decl.isOpen -> "public"
             decl.hasSecondaryCtor -> "private"
             decl.isExtension -> "internal"
             decl is Toplevel -> "private"
