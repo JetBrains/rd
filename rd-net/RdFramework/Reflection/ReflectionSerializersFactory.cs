@@ -186,7 +186,7 @@ namespace JetBrains.Rd.Reflection
         if (serializerPair == null)
         {
 #if JET_MODE_ASSERT
-          Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => Types.ToString(t, true)).ToArray())}");
+          Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}");
 #endif
           throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}");
         }
@@ -204,7 +204,18 @@ namespace JetBrains.Rd.Reflection
 
       if (!mySerializers.TryGetValue(serializerType, out var serializerPair))
       {
-        ReflectionUtil.InvokeGenericThis(this, nameof(RegisterScalar), serializerType);
+        try
+        {
+          ReflectionUtil.InvokeGenericThis(this, nameof(RegisterScalar), serializerType);
+        }
+        catch (Exception e)
+        {
+#if JET_MODE_ASSERT
+          throw new Exception($"Unable to create serializer for {string.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}. {e.Message}", e);
+#else
+          throw new Exception($"Unable to create serializer for {serializerType.ToString(true)}. {e.Message}", e);
+#endif
+        }
         serializerPair = mySerializers[serializerType];
         if (serializerPair == null)
           Assertion.Fail($"Unable to Create serializer for scalar type {serializerType.ToString(true)}");
@@ -230,8 +241,8 @@ namespace JetBrains.Rd.Reflection
 
     public static Type GetRpcInterface(TypeInfo typeInfo)
     {
-      foreach (var @interface in typeInfo.GetInterfaces())
-        if (@interface.IsDefined(typeof(RdRpcAttribute), false))
+      foreach (var @interface in typeInfo.GetInterfaces()) 
+        if (ReflectionSerializerVerifier.IsRpcAttributeDefined(@interface)) 
           return @interface;
 
       return null;
