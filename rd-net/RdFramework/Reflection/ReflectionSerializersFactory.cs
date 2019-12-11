@@ -461,6 +461,14 @@ namespace JetBrains.Rd.Reflection
       return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(CreateFromMethods2), readMethod.ReturnType, readMethod, writeMethod);
     }
 
+    /// <summary>
+    /// Create serializer from Read  and Write method without <see cref="SerializationCtx"/>
+    /// </summary>
+    public static SerializerPair CreateFromNonProtocolMethods(MethodInfo readMethod, MethodInfo writeMethod)
+    {
+      return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(CreateFromNonProtocolMethodsT), readMethod.ReturnType, readMethod, writeMethod);
+    }
+
     public static SerializerPair CreateFromMethods2<T>(MethodInfo readMethod, MethodInfo writeMethod)
     {
       void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
@@ -514,6 +522,19 @@ namespace JetBrains.Rd.Reflection
     {
       CtxReadDelegate<T> ctxReadDelegate = marshaller.Read;
       CtxWriteDelegate<T> ctxWriteDelegate = marshaller.Write;
+      return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
+    }
+
+    private static SerializerPair CreateFromNonProtocolMethodsT<T>(MethodInfo readMethod, MethodInfo writeMethod)
+    {
+      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
+        writeMethod.Invoke(value, new object[] { writer });
+
+      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
+        (T) readMethod.Invoke(null, new object[] { reader });
+
+      CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+      CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
       return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
     }
 

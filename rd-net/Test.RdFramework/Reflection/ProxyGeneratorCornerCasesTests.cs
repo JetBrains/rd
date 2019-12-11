@@ -48,6 +48,7 @@ namespace Test.RdFramework.Reflection
     [RdRpc] public interface IInvalid7 { event Action<string> Event; }
     [RdRpc] public interface IInvalid8 { string X { set; } }
     [RdRpc] public interface IInvalid9 { string X { get; set; } }
+    public interface IInvalid10 {  }
 
     [Test] public void TestInvalid1() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid1>(); }); }
     [Test] public void TestInvalid2() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid2>(); }); }
@@ -58,6 +59,7 @@ namespace Test.RdFramework.Reflection
     [Test] public void TestInvalid7() { Assert.Throws<NotSupportedException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid7>(); }); }
     [Test] public void TestInvalid8() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid8>(); }); }
     [Test] public void TestInvalid9() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid9>(); }); }
+    [Test] public void TestInvalid10() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid10>(); }); }
 
 
     [Test]
