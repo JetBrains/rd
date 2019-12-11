@@ -38,6 +38,23 @@ namespace JetBrains.Rd.Reflection
     }
 
     [NotNull]
+    public static MethodInfo GetReadStaticNonProtocolSerializer([NotNull] TypeInfo typeInfo)
+    {
+      var types = new[]
+      {
+        typeof(UnsafeReader),
+      };
+      var methodInfo = typeInfo.GetMethod("Read", types);
+
+      if (methodInfo == null)
+      {
+        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Read({nameof(UnsafeReader)}");
+      }
+
+      return methodInfo;
+    }
+
+    [NotNull]
     public static MethodInfo GetReadStaticSerializer([NotNull] TypeInfo typeInfo, Type argumentType)
     {
       var types = new[]
@@ -75,6 +92,24 @@ namespace JetBrains.Rd.Reflection
 
       return methodInfo;
     }
+
+    [NotNull]
+    public static MethodInfo GetWriteNonProtocolDeserializer([NotNull] TypeInfo typeInfo)
+    {
+      var types = new[]
+      {
+        typeof(UnsafeWriter),
+      };
+      var methodInfo = typeInfo.GetMethod("Write", types, null);
+
+      if (methodInfo == null)
+      {
+        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public Write({string.Join(", ", types.Select(t => t.ToString(true)).ToArray())})");
+      }
+
+      return methodInfo;
+    }
+
 
     /// <summary>
     /// Get lists of members which take part in object serialization.

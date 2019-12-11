@@ -16,7 +16,29 @@ namespace JetBrains.Rd.Reflection
     [CanBeNull]
     public static SerializerPair TryGetIntrinsicSerializer(TypeInfo typeInfo, Func<Type, SerializerPair> getInstanceSerializer)
     {
-      if (ReflectionSerializerVerifier.HasIntrinsicMethods(typeInfo))
+      if (ReflectionSerializerVerifier.HasIntrinsicNonProtocolMethods(typeInfo))
+      {
+        var genericArguments = typeInfo.GetGenericArguments();
+        /*
+        if (genericArguments.Length == 1)
+        {
+          var argument = genericArguments[0];
+          var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo, argument);
+          var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
+          return SerializerPair.CreateFromMethods(staticRead, staticWrite, getInstanceSerializer(argument));
+        }
+        */
+        if (genericArguments.Length == 0)
+        {
+          var staticRead = SerializerReflectionUtil.GetReadStaticNonProtocolSerializer(typeInfo);
+          var instanceWriter = SerializerReflectionUtil.GetWriteNonProtocolDeserializer(typeInfo);
+          return SerializerPair.CreateFromNonProtocolMethods(staticRead, instanceWriter);
+        }
+
+        return null;
+      }
+
+      if (ReflectionSerializerVerifier.HasIntrinsicProtocolMethods(typeInfo))
       {
         var genericArguments = typeInfo.GetGenericArguments();
         if (genericArguments.Length == 1)
