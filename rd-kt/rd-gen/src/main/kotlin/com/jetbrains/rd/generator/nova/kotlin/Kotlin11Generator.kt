@@ -960,9 +960,6 @@ open class Kotlin11Generator(
 
 
     protected open fun PrettyPrinter.baseClassTrait(decl: Declaration) {
-        if(isUnknown(decl)){
-            decl.implements.add(Interface("IUnknownInstance", decl.pointcut as Toplevel, emptyList()))
-        }
         val base = decl.base ?: let {
             if (decl is Toplevel) p( " : RdExtBase()")
             else if (decl is Class || decl is Aggregate || decl is Toplevel) p(" : RdBindableBase()")
@@ -981,6 +978,9 @@ open class Kotlin11Generator(
 
 
     protected open fun PrettyPrinter.interfacesTrait(decl: Declaration) {
+        if(isUnknown(decl)){
+            p(", IUnknownInstance")
+        }
         if (decl.implements.isNotEmpty()) {
             p(decl.implements.joinToString(prefix = ", ") { it.name })
         }
