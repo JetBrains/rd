@@ -14,10 +14,10 @@ repositories {
 }
 
 dependencies {
-    compile(project(":rd-core:"))
+    implementation(project(":rd-core:"))
     implementation(gradleApi())
-    testCompile(project(":rd-framework"))
-    compile("org.jetbrains.kotlin:kotlin-compiler:${kotlinVersion}")
+    testImplementation(project(":rd-framework"))
+    implementation("org.jetbrains.kotlin:kotlin-compiler:${kotlinVersion}")
 }
 
 val fatJar = task<Jar>("fatJar") {
@@ -38,7 +38,7 @@ sourceSets {
         kotlin {
             compileClasspath += main.get().output
 
-            listOf("interning", "demo", "sync").map {
+            listOf("interning", "demo", "sync", "openEntity").map {
                 rootProject.buildDir.resolve("models").resolve(it)
             }.forEach {
                 output.dir(it)

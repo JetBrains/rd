@@ -2,9 +2,7 @@ package com.jetbrains.rd.gradle.tasks
 
 import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
-import org.gradle.api.tasks.Exec
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.creating
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import java.io.File
@@ -14,8 +12,11 @@ import javax.inject.Inject
  * Copy sources from {generativeSourceSet.output} to {currentProject.buildDir.resolve("generated")}
  */
 open class CopySourcesTask @Inject constructor() : Exec() {
+    @Internal
     lateinit var currentSourceSet: KotlinSourceSet
+    @Internal
     lateinit var currentProject: Project
+    @Internal
     lateinit var generativeSourceSet: SourceSet
 
     private lateinit var generatedDir: File

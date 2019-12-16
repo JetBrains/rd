@@ -8,10 +8,12 @@ import com.jetbrains.rd.generator.nova.cpp.CppSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
 import com.jetbrains.rd.generator.nova.util.joinToOptString
+import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
+import com.jetbrains.rd.util.warn
 import java.io.File
 
 
@@ -451,6 +453,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         is Member.Field -> type.templateName(scope)
         is Member.Reactive -> intfSimpleName + (genericParams.toList().map { it.templateName(scope) }).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
         is Member.Const -> type.templateName(scope)
+        is Member.Method -> publicName
     }
 
     protected open fun Member.implSubstitutedName(scope: Declaration) = when (this) {
@@ -460,6 +463,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
         }
         is Member.Const -> type.substitutedName(scope)
+        is Member.Method -> publicName
     }
 
     protected open fun Member.implTemplateName(scope: Declaration) = when (this) {
@@ -469,6 +473,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
         }
         is Member.Const -> type.templateName(scope)
+        is Member.Method -> publicName
     }
 
 
@@ -977,6 +982,15 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 return@surroundWithNamespaces
             }
 
+            if(decl is Interface){
+                Logger.root.warn { "CppGenerator doesn't support interfaces. Declaration will be ignored" }
+                return@surroundWithNamespaces
+            }
+
+            if(decl.isOpen){
+                Logger.root.warn { "CppGenerator doesn't support open classes. All open classes wil be generated as abstract" }
+            }
+
             if (decl.isAbstract) comment("abstract")
             if (decl is Struct.Concrete && decl.base == null) comment("data")
 
@@ -1261,6 +1275,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     }
                 }
                 is Member.Const -> listOfNotNull(decl.parseType(member.type, false))
+                is Member.Method ->  member.args.map { it.second } + member.resultType
             }
             return types.mapNotNull {
                 when (it) {

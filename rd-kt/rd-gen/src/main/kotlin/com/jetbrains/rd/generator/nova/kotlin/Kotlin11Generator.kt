@@ -145,6 +145,7 @@ open class Kotlin11Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         is Member.Const -> type.substitutedName(scope)
+        is Member.Method -> name
     }
 
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration) =
@@ -159,6 +160,7 @@ open class Kotlin11Generator(
             (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
                 if (context != null && !perContextRawName) "RdPerContextMap<${context!!.type.substitutedName(scope)}, $baseTypeName>" else baseTypeName
             }
+        is Member.Method -> name
     }
 
 
@@ -346,8 +348,16 @@ open class Kotlin11Generator(
             return
         }
 
-        if (decl.isAbstract) p("abstract ")
-        if (decl.isDataClass) p("data ")
+        if (decl is Interface) {
+            interfaceDef(decl)
+            return
+        }
+
+        if(decl !is Toplevel) {
+            if (decl.isAbstract) p("abstract ")
+            if (decl.isOpen) p("open ")
+            if (decl.isDataClass) p("data ")
+        }
 
 
         + "class ${decl.name} ${decl.primaryCtorVisibility}("
@@ -358,15 +368,13 @@ open class Kotlin11Generator(
 
         baseClassTrait(decl)
 
-        if (isUnknown(decl)) {
-            p(", IUnknownInstance")
-        }
-
         block("") {
             + "//companion"
             companionTrait(decl)
             + "//fields"
             fieldsTrait(decl)
+            + "//methods"
+            methodsTrait(decl)
             + "//initializer"
             initializerTrait(decl)
             + "//secondary constructor"
@@ -472,6 +480,25 @@ open class Kotlin11Generator(
         else if (decl.isAbstract) {
             println()
             block("companion object : IAbstractDeclaration<${decl.name}>") {
+                abstractDeclarationTrait(decl)
+                println()
+                customSerializersTrait(decl)
+                println()
+                constantTrait(decl)
+            }
+        }
+        else if (decl.isOpen) {
+            println()
+            block("companion object : IMarshaller<${decl.name}>, IAbstractDeclaration<${decl.name}>") {
+                +"override val _type: KClass<${decl.name}> = ${decl.name}::class"
+                println()
+                readerTrait(decl)
+                println()
+                writerTrait(decl)
+                println()
+                customSerializersTrait(decl)
+                println()
+                constantTrait(decl)
                 abstractDeclarationTrait(decl)
                 println()
                 customSerializersTrait(decl)
@@ -611,10 +638,10 @@ open class Kotlin11Generator(
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
-                        ?: if (isAbstract)
-                            "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
-                        else
+                        ?: if (isSealed)
                             "${substitutedName(decl)}.read(ctx, buffer)"
+                        else
+                            "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
             is INullable -> "buffer.readNullable { ${itemType.reader()} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.read${substitutedName(decl)}()"
@@ -674,8 +701,8 @@ open class Kotlin11Generator(
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
-                    if (isAbstract) "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
-                    else "${substitutedName(decl)}.write(ctx, buffer, $field)"
+                    if (isSealed) "${substitutedName(decl)}.write(ctx, buffer, $field)"
+                    else "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
             is INullable -> "buffer.writeNullable($field) { ${itemType.writer("it")} }"
             is IArray ->
                 if (isPrimitivesArray) "buffer.write${substitutedName(decl)}($field)"
@@ -856,7 +883,7 @@ open class Kotlin11Generator(
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
         block("override fun print(printer: PrettyPrinter) ") {
             + "printer.println(\"${decl.name} (\")"
@@ -873,7 +900,7 @@ open class Kotlin11Generator(
 
     private fun PrettyPrinter.deepCloneTrait(decl: Declaration) {
 
-        if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete))) return
+        if (!(decl is BindableDeclaration && (decl is Toplevel || decl.isConcrete || decl.isOpen))) return
 
         if (decl.getSetting(DisableDeepCloneGeneration) != null) return
 
@@ -920,7 +947,7 @@ open class Kotlin11Generator(
     }
 
     private fun PrettyPrinter.primaryCtorParamsTrait(decl: Declaration) {
-        fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isAbstract) "protected " else "private " }
+        fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isSealed) "private " else "protected " }
 
         val own = decl.ownMembers.map {
             val attrs = it.getSetting(Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
@@ -937,6 +964,7 @@ open class Kotlin11Generator(
             if (decl is Toplevel) p( " : RdExtBase()")
             else if (decl is Class || decl is Aggregate || decl is Toplevel) p(" : RdBindableBase()")
             else if (decl is Struct) p(" : IPrintable")
+            interfacesTrait(decl)
             return
         }
 
@@ -945,7 +973,17 @@ open class Kotlin11Generator(
             + base.allMembers.joinToString(",\n") { it.encapsulatedName }
         }
         p(")")
+        interfacesTrait(decl)
+    }
 
+
+    protected open fun PrettyPrinter.interfacesTrait(decl: Declaration) {
+        if(isUnknown(decl)){
+            p(", IUnknownInstance")
+        }
+        if (decl.implements.isNotEmpty()) {
+            p(decl.implements.joinToString(prefix = ", ") { it.name })
+        }
     }
 
 
@@ -961,6 +999,59 @@ open class Kotlin11Generator(
                 constantTrait(decl)
             }
         }
+    }
+
+
+    protected open fun PrettyPrinter.interfaceDef(decl: Interface) {
+        +"interface ${decl.name}"
+        indent {baseInterfacesTrait(decl) }
+        p("{")
+        println()
+        indent { methodsTrait(decl) }
+        p("}")
+    }
+
+    protected open fun PrettyPrinter.baseInterfacesTrait(decl: Interface) {
+        if (decl.baseInterfaces.isNotEmpty()) {
+            +" : ${decl.baseInterfaces.joinToString { it.name }}"
+        }
+    }
+
+    protected open fun PrettyPrinter.methodsTrait(decl: Interface){
+        decl.ownMembers.filterIsInstance<Member.Method>().forEach {method->
+            +"fun ${method.name}(${method.args.joinToString { t -> "${t.first}: ${t.second.name}"}})${if(method.resultType == PredefinedType.void) "" else " : ${method.resultType.name}"}"
+        }
+    }
+
+    protected open fun PrettyPrinter.methodsTrait(decl: Declaration) {
+        decl.implements.forEach { inter ->
+            inter.allMembers.filterIsInstance<Member.Method>().forEach { method ->
+                methodTrait(method, isAbstract = decl.isAbstract)
+            }
+        }
+
+        if (decl.isSealed) {
+            var currentDecl = decl.base
+            while (currentDecl != null && currentDecl.isAbstract) {
+                currentDecl.implements.forEach { inter ->
+                    inter.allMembers.filterIsInstance<Member.Method>().forEach {
+                        methodTrait(it,isAbstract = false)
+                    }
+                }
+                currentDecl = currentDecl.base
+            }
+        }
+    }
+
+
+    protected open fun PrettyPrinter.methodTrait(method: Member.Method, isAbstract: Boolean){
+        println("${isAbstract.condstr { "abstract " }}override fun ${method.name}(${method.args.joinToString { "${it.first}: ${it.second.name}" }})${if (method.resultType == PredefinedType.void) "" else " : ${method.resultType.name}"}${(!isAbstract).condstr { " {" }}")
+        if(isAbstract) return
+        indent {
+            println("throw UnsupportedOperationException(\"You should implement method in derived class\")")
+        }
+        println("}")
+        println()
     }
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {

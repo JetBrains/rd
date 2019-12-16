@@ -17,6 +17,7 @@ fun Struct.field(name : String, type : IScalar) = append(Field(name, type))
 fun Class.field(name : String, type : IType) = append(Field(name, type))
 fun Toplevel.field(name : String, type : Aggregate) = append(Field(name, type))
 fun Aggregate.field(name : String, type : Aggregate) = append(Field(name, type))
+fun Interface.method(name: String, resultType: IType, vararg args: Pair<String, IType>) = append(Member.Method(name, resultType, args.toList()))
 fun Declaration.const(name: String, type: PredefinedType, value: String) = appendConst(Member.Const.Integral(name, type, value))
 fun Declaration.const(name: String, type: Enum, value: Member.EnumConst) = appendConst(Member.Const.Enum(name, type, value))
 
@@ -91,6 +92,23 @@ private const val ce_bindable  = "Can't be used inside scalars: structs, enums, 
 @Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_bindable, level = DeprecationLevel.ERROR) fun Declaration.list(name : String, itemType : IType) : Nothing = error(ce_bindable)
 @Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_bindable, level = DeprecationLevel.ERROR) fun Declaration.set(name : String, itemType : INonNullableScalar) : Nothing = error(ce_bindable)
 @Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_bindable, level = DeprecationLevel.ERROR) fun Declaration.map(name : String, keyType : INonNullableScalar, valueType: INonNullable) : Nothing = error(ce_bindable)
+
+private const val ce_interface = "Can't be used inside interface."
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.const(name: String, type: INonNullableScalar, value: Any) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.field(name : String, type : Aggregate) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.signal(name : String, valueType : IType) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.source(name : String, valueType : IType) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.sink(name : String, valueType : IType) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.voidSignal(name : String) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.voidSource(name : String) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.voidSink(name : String) : Nothing = error(ce_interface)
+
+
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.property(name : String, valueType : IType) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.list(name : String, itemType : IType) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.set(name : String, itemType : INonNullableScalar) : Nothing = error(ce_interface)
+@Suppress("unused", "UNUSED_PARAMETER") @Deprecated(ce_interface, level = DeprecationLevel.ERROR) fun Interface.map(name : String, keyType : INonNullableScalar, valueType: INonNullable) : Nothing = error(ce_interface)
+
 
 
 fun array(type: IBindable) = ArrayOfBindables(type)

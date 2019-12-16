@@ -60,6 +60,9 @@ object CrossTest_AllEntities {
         val derived = Derived("Kotlin instance")
         model.polymorphic.set(derived)
 
+        val openDerived = OpenDerived("Kotlin instance open derived string ", "Kotlin instance open string")
+        model.polymorphic_open.set(openDerived)
+
         model.date.set(Date(13_000)) // Thu Jan 01 03:00:13 MSK 1970
 
         model.enum.set(MyEnum.kt)

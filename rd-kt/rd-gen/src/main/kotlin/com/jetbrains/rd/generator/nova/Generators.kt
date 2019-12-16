@@ -73,7 +73,9 @@ abstract class GeneratorBase(protected open val flowTransform: FlowTransform) : 
     protected open fun unknown(it: Declaration): Declaration? {
         return when (it) {
             is Struct.Abstract -> Struct.Concrete("${it.name}_Unknown", it.pointcut, it, true)
+            is Struct.Open -> Struct.Concrete("${it.name}_Unknown", it.pointcut, it, true)
             is Class.Abstract -> Class.Concrete("${it.name}_Unknown", it.pointcut, it, true)
+            is Class.Open -> Class.Concrete("${it.name}_Unknown", it.pointcut, it, true)
             else -> null
         }
     }

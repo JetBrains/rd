@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -66,6 +67,10 @@ open class MultiplatformPlugin : Plugin<Project> {
                         implementation("org.jetbrains.kotlin:kotlin-test-js")
                     }
                 }
+            }
+
+            tasks.withType<GenerateModuleMetadata> {
+                enabled = false
             }
 
             tasks.withType<AbstractPublishToMaven>()

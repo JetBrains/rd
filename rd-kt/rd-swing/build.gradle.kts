@@ -7,5 +7,5 @@ plugins {
 }
 
 dependencies {
-    compile(project(":rd-core"))
+    implementation(project(":rd-core"))
 }

@@ -28,7 +28,7 @@ or
 
 #### Requirements
 
-* Gradle 5.6.2
+* Gradle 6.0
 * Kotlin 1.3.50+
 
 #### Instruction

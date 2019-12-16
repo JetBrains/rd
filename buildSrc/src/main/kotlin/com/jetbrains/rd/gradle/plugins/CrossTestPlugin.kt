@@ -23,8 +23,8 @@ class CrossTestPlugin : Plugin<Project> {
 //        evaluationDependsOn(`rd-cpp`.path)
 
         dependencies {
-            `compile`(`rd-framework`)
-            `implementation`(gradleApi())
+            "implementation"(`rd-framework`)
+            "implementation"(gradleApi())
         }
 
 //        fun getCppTaskByName(name: String): CrossTestCppTask {
@@ -44,7 +44,7 @@ class CrossTestPlugin : Plugin<Project> {
                         .resolve("classes")
                         .resolve("kotlin")
                         .resolve("main"))
-                classpath += sourceSets.main.get().output
+                classpath += sourceSets["main"].output
                 classpath += configurations["compileClasspath"]
                 classpath += configurations["runtimeClasspath"]
             }
