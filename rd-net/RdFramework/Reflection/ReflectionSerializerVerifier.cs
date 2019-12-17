@@ -186,16 +186,10 @@ namespace JetBrains.Rd.Reflection
                genericDefinition == typeof(RdSet<>) ||
                genericDefinition == typeof(RdMap<,>) ||
                (genericDefinition == typeof(RdCall<,>) && IsScalar(arguments[0]) && IsScalar(arguments[1])) ||
-               IsFromRdProperty(typeInfo); // hack to support UProperty in RdExt
-
-        bool IsFromRdProperty(TypeInfo tInfo)
-        {
-          var genericArguments = tInfo.GetGenericArguments();
-          if (genericArguments.Length != 1)
-            return false;
-          var rdProperty = typeof(IViewableProperty<>).MakeGenericType(typeInfo.GetGenericArguments());
-          return rdProperty.GetTypeInfo().IsAssignableFrom(implementingType);
-        }
+               // UProperty support
+               typeInfo.GetInterface("JetBrains.Collections.Viewable.IViewableProperty`1")?.GetGenericTypeDefinition() == typeof(IViewableProperty<>) ||
+               // USignal support
+               typeInfo.GetInterface("JetBrains.Collections.Viewable.ISignal`1")?.GetGenericTypeDefinition() == typeof(ISignal<>);
       }
 
       var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
