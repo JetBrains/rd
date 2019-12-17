@@ -136,10 +136,13 @@ namespace JetBrains.Rd.Reflection
 
       bool isRdExt = baseType == typeof(RdExtReflectionBindableBase);
 
-      var members = GetFields(typeInfo, baseType);
+      var fields = GetFields(typeInfo, baseType);
       var list = new List<FieldInfo>();
-      foreach (var mi in members)
+      foreach (var mi in fields)
       {
+        if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(mi.FieldType))
+          continue;
+
         if (
           mi.MemberType == MemberTypes.Field &&
           (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(baseType)) &&
