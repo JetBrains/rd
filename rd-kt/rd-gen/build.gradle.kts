@@ -14,10 +14,10 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":rd-core:"))
+    compile(project(":rd-core:"))
     implementation(gradleApi())
     testImplementation(project(":rd-framework"))
-    implementation("org.jetbrains.kotlin:kotlin-compiler:${kotlinVersion}")
+    compile("org.jetbrains.kotlin:kotlin-compiler:${kotlinVersion}")
 }
 
 val fatJar = task<Jar>("fatJar") {
