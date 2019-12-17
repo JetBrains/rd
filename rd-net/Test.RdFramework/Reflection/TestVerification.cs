@@ -15,8 +15,8 @@ namespace Test.RdFramework.Reflection
     [TestCase(typeof(MyEnum), Description = "Enum can't be toplevel types")]
 //     [TestCase(typeof(NotSealedRdModelData))]
     [TestCase(typeof(NoBaseType))]
-    [TestCase(typeof(CircularDependencyExtError))]
-    [TestCase(typeof(CircularDependencyExt2Error))]
+    // [TestCase(typeof(CircularDependencyExtError))]
+    // [TestCase(typeof(CircularDependencyExt2Error))]
     [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
     // [TestCase(typeof(CircularDependencyInModelError))]
     public void TestError(Type type)
@@ -28,13 +28,30 @@ namespace Test.RdFramework.Reflection
       Console.WriteLine(exception);
     }
 
-    [TestCase(typeof(RootModel))]
-    [TestCase(typeof(ModelCalls))]
-    public void TestActivation(Type type)
+
+    public void TestActivation()
     {
       var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
-      var activateRdModel = activator.Activate(type);
+      var model = activator.Activate<ModelCalls>();
+      Assert.NotNull(model);
+      Assert.NotNull(model.Rpc1);
+      Assert.NotNull(model.Rpc2);
+    }
+
+    public void TestActivation2()
+    {
+      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
+      var activator = new ReflectionRdActivator(serializer, null);
+      var model = activator.Activate<RootModel>();
+      
+      Assert.NotNull(model);
+      Assert.NotNull(model.EmptyOK);
+      Assert.NotNull(model.FieldsNotNullOk);
+      Assert.NotNull(model.FieldsNullableOk);
+      Assert.Null(model.Nested); // nested models not supported anymore
+      Assert.NotNull(model.PropertiesNotNullOk);
+      Assert.NotNull(model.PropertiesNullOk);
     }
   }
 }
