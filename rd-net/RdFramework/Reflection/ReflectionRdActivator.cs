@@ -368,9 +368,11 @@ namespace JetBrains.Rd.Reflection
         return null;
       }
 
-      // hack for UProperty
+      // hack for UProperty & USignal
       if (genericArguments.Length == 1 &&
-          typeof(IViewableProperty<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType))
+            (typeof(IViewableProperty<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType) ||
+             typeof(ISignal<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType)
+          ))
       {
         foreach (var ctor in implementingType.GetTypeInfo().GetConstructors(BindingFlags.Public | BindingFlags.Instance))
         {
