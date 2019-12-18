@@ -134,7 +134,8 @@ namespace JetBrains.Rd.Reflection
       else
         baseType = typeof(RdBindableBase);
 
-      bool isRdExt = baseType == typeof(RdExtReflectionBindableBase);
+      bool isRdExtImpl = baseType == typeof(RdExtReflectionBindableBase) && !typeInfo.GetInterfaces().Contains(typeof(IProxyTypeMarker));
+      bool isRdRpcInterface = typeInfo.IsInterface && typeInfo.GetCustomAttribute<RdRpcAttribute>() != null;
 
       var fields = GetFields(typeInfo, baseType);
       var list = new List<FieldInfo>();
@@ -148,11 +149,15 @@ namespace JetBrains.Rd.Reflection
           (mi.DeclaringType != null && !mi.DeclaringType.GetTypeInfo().IsAssignableFrom(baseType)) &&
           mi.GetCustomAttribute<NonSerializedAttribute>() == null &&
 
-          // arbitrary data is allowed in RdExt since they don't have to be serializable
-          !(isRdExt && ReflectionSerializerVerifier.IsScalar(ReflectionSerializerVerifier.GetImplementingType(mi.FieldType.GetTypeInfo())))
+          // arbitrary data is allowed in RdExt implementations since they don't have to be serializable
+          !(isRdExtImpl && ReflectionSerializerVerifier.IsScalar(ReflectionSerializerVerifier.GetImplementingType(mi.FieldType.GetTypeInfo())))
         )
         {
           list.Add(mi);
+        }
+        else if (isRdRpcInterface)
+        {
+          throw new Exception($"Invalid member in RdRpc interface: {typeInfo.ToString(true)}.{mi.Name}");
         }
       }
 
