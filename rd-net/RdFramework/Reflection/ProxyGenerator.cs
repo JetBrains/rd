@@ -112,6 +112,9 @@ namespace JetBrains.Rd.Reflection
       if (!typeof(TInterface).IsInterface)
         throw new ArgumentException("Only interfaces are supported.");
 
+      if (typeof(TInterface).GetGenericArguments().Length > 0)
+        throw new ArgumentException("Generic interfaces are not supported.");
+
       if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
         throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
 
@@ -337,6 +340,9 @@ namespace JetBrains.Rd.Reflection
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
+
+      Assertion.Assert(!requestType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, requestType);
+      Assertion.Assert(!responseType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, responseType);
 
       try
       {

@@ -235,9 +235,6 @@ namespace JetBrains.Rd.Reflection
 
     private void RegisterScalar<T>()
     {
-      if (typeof(T).IsInterface || typeof(T).IsAbstract)
-        return;
-
       myScalars.GetOrCreate<T>(out var reader, out var writer);
       mySerializers.Add(typeof(T), new SerializerPair(reader, writer));
     }
@@ -541,11 +538,23 @@ namespace JetBrains.Rd.Reflection
 
     private static SerializerPair CreateFromNonProtocolMethodsT<T>(MethodInfo readMethod, MethodInfo writeMethod)
     {
-      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
-        writeMethod.Invoke(value, new object[] { writer });
+      Assertion.Assert(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType.ToString(true)})");
+      Assertion.Assert(!writeMethod.IsStatic, $"Read method should not be static ({readMethod.DeclaringType.ToString(true)})");
+      
+      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value)
+      {
+        if (!typeof(T).IsValueType && !writer.WriteNullness(value as object))
+          return;
+        writeMethod.Invoke(value, new object[] {writer});
+      }
 
-      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
-        (T) readMethod.Invoke(null, new object[] { reader });
+      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
+      {
+        if (!typeof(T).IsValueType && !reader.ReadNullness())
+          return default;
+
+        return (T) readMethod.Invoke(null, new object[] {reader});
+      }
 
       CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
       CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;

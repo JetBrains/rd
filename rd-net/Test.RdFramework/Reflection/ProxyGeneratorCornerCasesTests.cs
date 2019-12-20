@@ -54,7 +54,7 @@ namespace Test.RdFramework.Reflection
     [Test] public void TestInvalid2() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid2>(); }); }
     [Test] public void TestInvalid3() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid3>(); }); }
     [Test] public void TestInvalid4() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid4<int>>(); }); }
-    [Test] public void TestInvalid5() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid5>(); }); }
+    [Test] public void TestInvalid5() { Assert.Throws<Assertion.AssertionException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid5>(); }); }
     //[Test] public void TestInvalid6() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid6>(); }); }
     [Test] public void TestInvalid7() { Assert.Throws<NotSupportedException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid7>(); }); }
     [Test] public void TestInvalid8() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid8>(); }); }
