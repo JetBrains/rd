@@ -70,6 +70,16 @@ namespace JetBrains.Rd.Reflection
           var argumentTypeSerializerPair = GetInstanceSerializer(genericTypeArgument);
           return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(CollectionSerializers), nameof(CollectionSerializers.CreateListSerializerPair), genericTypeArgument, argumentTypeSerializerPair);
         }
+        else if (IsDictionary(t) || IsReadOnlyDictionary(t))
+        {
+          var typeArguments = t.GetGenericArguments();
+          var tkey = typeArguments[0];
+          var tvalue = typeArguments[1];
+          var keySerializer = GetInstanceSerializer(tkey);
+          var valueSerializer = GetInstanceSerializer(tvalue);
+          var serializersFactoryName = IsReadOnlyDictionary(t) ? nameof(CollectionSerializers.CreateReadOnlyDictionarySerializerPair) : nameof(CollectionSerializers.CreateDictionarySerializerPair);
+          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric2(typeof(CollectionSerializers), serializersFactoryName, tkey, tvalue, keySerializer, valueSerializer);
+        }
         else if (t.IsArray)
         {
           return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), t.GetElementType());
@@ -107,9 +117,28 @@ namespace JetBrains.Rd.Reflection
              );
     }
 
+    private static bool IsDictionary(Type t)
+    {
+      return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  &&
+             (generic == typeof(Dictionary<,>) ||
+              generic == typeof(IDictionary<,>)
+              );
+    }
+
+    private static bool IsReadOnlyDictionary(Type t)
+    {
+#if !NET35
+
+      return t.IsGenericType && t.GetGenericTypeDefinition() is var generic &&
+             generic == typeof(IReadOnlyDictionary<,>);
+#else
+      return false;
+#endif
+    }
+
     public bool CanBePolymorphic(Type type)
     {
-      if (IsList(type))
+      if (IsList(type) || IsDictionary(type))
         return false;
 
       return (type.IsClass && !type.IsSealed) || type.IsInterface;

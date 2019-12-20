@@ -181,6 +181,28 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+
+    [Test]
+    public void TestDictionary()
+    {
+      RunScalarTest(new Dictionary<string, string>() { {"a", "b"}}, CollectionAssert.AreEqual);
+    }
+
+    [Test]
+    public void TestIDictionary()
+    {
+      RunScalarTest(new Dictionary<string, string>() { {"a", "b"}} as IDictionary<string, string>, CollectionAssert.AreEqual);
+    }
+
+#if !NET35
+    [Test]
+    public void TestReadOnlyDictionary()
+    {
+      RunScalarTest(new Dictionary<string, string>() { {"a", "b"}} as IReadOnlyDictionary<string, string>, CollectionAssert.AreEqual);
+    }
+#endif
+
+
     [Test]
     public void TestCyclic()
     {
