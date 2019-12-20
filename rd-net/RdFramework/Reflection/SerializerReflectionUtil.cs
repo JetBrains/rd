@@ -48,7 +48,7 @@ namespace JetBrains.Rd.Reflection
 
       if (methodInfo == null)
       {
-        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Read({nameof(UnsafeReader)}");
+        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Read({nameof(UnsafeReader)})");
       }
 
       return methodInfo;

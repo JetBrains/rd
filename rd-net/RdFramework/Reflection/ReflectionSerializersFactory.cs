@@ -235,6 +235,9 @@ namespace JetBrains.Rd.Reflection
 
     private void RegisterScalar<T>()
     {
+      if (typeof(T).IsInterface || typeof(T).IsAbstract)
+        return;
+
       myScalars.GetOrCreate<T>(out var reader, out var writer);
       mySerializers.Add(typeof(T), new SerializerPair(reader, writer));
     }
