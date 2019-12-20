@@ -171,11 +171,10 @@ namespace JetBrains.Rd.Reflection
 
         object instance = FormatterServices.GetUninitializedObject(typeof(T));
 
-
         for (var index = 0; index < memberDeserializers.Length; index++)
         {
-          var value = memberDeserializers[index](ctx, unsafeReader);
-          memberSetters[index](instance, value);
+          var memberValue = memberDeserializers[index](ctx, unsafeReader);
+          memberSetters[index](instance, memberValue);
         }
         return (T) instance;
       };
