@@ -375,7 +375,7 @@ namespace JetBrains.Rd.Reflection
     {
       foreach (var member in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
       {
-        if (member.Name == "Read" || member.Name == "Write" || 
+        if ((member.Name == "Read" || member.Name == "Write") &&
             member.GetParameters() is var p && p.Length == 1 && p[0].ParameterType == typeof(UnsafeReader))
         {
           return true;
