@@ -1,9 +1,9 @@
 #ifndef RD_CPP_ANY_H
 #define RD_CPP_ANY_H
 
-#include "core_util.h"
-#include "wrapper.h"
-#include "ISerializable.h"
+#include "util/core_util.h"
+#include "types/wrapper.h"
+#include "serialization/ISerializable.h"
 
 #include "thirdparty.hpp"
 

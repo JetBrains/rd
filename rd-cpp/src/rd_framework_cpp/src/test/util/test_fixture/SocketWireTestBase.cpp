@@ -1,7 +1,7 @@
 #include "SocketWireTestBase.h"
 
-#include "SocketWire.h"
-#include "Identities.h"
+#include "wire/SocketWire.h"
+#include "protocol/Identities.h"
 
 namespace rd {
 	namespace test {

@@ -25,7 +25,7 @@ namespace JetBrains.Rd.Base
   }
 
 
-  public interface IRdWireable
+  public interface IRdWireable : IRdDynamic
   {
     RdId RdId { get; }
 

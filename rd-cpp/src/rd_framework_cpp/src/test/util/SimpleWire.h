@@ -2,9 +2,9 @@
 #define RD_CPP_TESTWIRE_H
 
 
-#include "WireBase.h"
-#include "RdId.h"
-#include "Buffer.h"
+#include "base/WireBase.h"
+#include "protocol/RdId.h"
+#include "protocol/Buffer.h"
 
 #include <queue>
 #include <utility>

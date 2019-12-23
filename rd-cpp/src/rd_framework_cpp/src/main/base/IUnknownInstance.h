@@ -1,7 +1,7 @@
 #ifndef RD_CPP_IUNKNOWNINSTANCE_H
 #define RD_CPP_IUNKNOWNINSTANCE_H
 
-#include "RdId.h"
+#include "protocol/RdId.h"
 
 namespace rd {
 	class IUnknownInstance {

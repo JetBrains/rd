@@ -31,7 +31,8 @@ object CrossTest_AllEntities {
             UInt.MAX_VALUE.minus(1u),
             ULong.MAX_VALUE.minus(1u),
             MyEnum.kt,
-            EnumSet.of(Flags.anyFlag, Flags.ktFlag)
+            EnumSet.of(Flags.anyFlag, Flags.ktFlag),
+            MyInitializedEnum.hundred
         )
 
         model.scalar.set(scalar)
@@ -58,6 +59,9 @@ object CrossTest_AllEntities {
 
         val derived = Derived("Kotlin instance")
         model.polymorphic.set(derived)
+
+        val openDerived = OpenDerived("Kotlin instance open derived string ", "Kotlin instance open string")
+        model.polymorphic_open.set(openDerived)
 
         model.date.set(Date(13_000)) // Thu Jan 01 03:00:13 MSK 1970
 

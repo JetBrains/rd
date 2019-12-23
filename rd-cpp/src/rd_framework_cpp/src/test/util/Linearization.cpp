@@ -1,6 +1,6 @@
 #include "Linearization.h"
 
-#include "core_util.h"
+#include "util/core_util.h"
 
 #include <chrono>
 #include <mutex>

@@ -64,5 +64,29 @@ namespace Test.RdFramework.Reflection
       client.List[0].StrProperty.Value = "Hello From Rd";
       Assert.AreEqual(proxy.List[0].StrProperty.Value, client.List[0].StrProperty.Value);
     }
+
+
+    [RdRpc]
+    public interface IPartSync
+    {
+      IViewableProperty<string> RdProperty { get; }
+    }
+
+    [RdExt]
+    public class PartSync : RdExtReflectionBindableBase, IPartSync
+    {
+      public IViewableProperty<string> RdProperty { get; private set; }
+      
+      // this signal should throw exception about useless bindable member
+      public ISignal<string> Signal { get; }
+    }
+
+    [Test]
+    public void TestOnlyRpcAreSynchronized()
+    {
+      var client = CFacade.InitBind(new PartSync(), TestLifetime, ClientProtocol);
+      var proxy = SFacade.ActivateProxy<IPartSync>(TestLifetime, ServerProtocol);
+      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+    }
   }
 }

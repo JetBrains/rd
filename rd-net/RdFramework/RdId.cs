@@ -56,7 +56,7 @@ namespace JetBrains.Rd
       return new RdId(myValue * 31 + (tail + 1));
     }
 
-    private static long Hash(string s, long initValue = 19)
+    public static long Hash(string s, long initValue = 19)
     {
       if (s == null) return 0;
 

@@ -1,8 +1,8 @@
 #ifndef RD_CPP_CORE_VIEWABLESET_H
 #define RD_CPP_CORE_VIEWABLESET_H
 
-#include "IViewableSet.h"
-#include "SignalX.h"
+#include "base/IViewableSet.h"
+#include "reactive/SignalX.h"
 #include "util/core_util.h"
 
 #include "tsl/ordered_set.h"

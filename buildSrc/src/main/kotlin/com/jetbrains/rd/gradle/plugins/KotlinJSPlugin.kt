@@ -18,8 +18,8 @@ class KotlinJSPlugin : Plugin<Project> {
         apply(plugin = "maven-publish")
 
         dependencies {
-            compile("org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion")
-            testCompile("org.jetbrains.kotlin:kotlin-test-js:$kotlinVersion")
+            "implementation"("org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion")
+            "testImplementation"("org.jetbrains.kotlin:kotlin-test-js:$kotlinVersion")
         }
 
         val target = "${projectDir}/build/classes/main"

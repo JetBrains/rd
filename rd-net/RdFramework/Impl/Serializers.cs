@@ -194,7 +194,7 @@ namespace JetBrains.Rd.Impl
 
     public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T :
 #if !NET35
-    unmanaged, 
+    unmanaged,
 #endif
      Enum
     {
@@ -204,7 +204,7 @@ namespace JetBrains.Rd.Impl
 
     public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T :
 #if !NET35
-    unmanaged, 
+    unmanaged,
 #endif
      Enum
     {
@@ -213,7 +213,7 @@ namespace JetBrains.Rd.Impl
 
     public void RegisterEnum<T>() where T :
 #if !NET35
-    unmanaged, 
+    unmanaged,
 #endif
      Enum
     {
@@ -269,6 +269,7 @@ namespace JetBrains.Rd.Impl
         if (unknownInstanceReader == null)
         {
           myRegistrar?.TryRegister(typeId, this);
+          myRegistrar?.TryRegister(typeof(T), this);
           if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed

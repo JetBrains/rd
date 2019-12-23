@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using JetBrains.Annotations;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
@@ -29,10 +30,10 @@ namespace JetBrains.Rd.Reflection
     {
     }
 
-    public ReflectionSerializersFacade([CanBeNull] ITypesCatalog typesCatalog = null, [CanBeNull] IScalarSerializers scalarSerializers = null, [CanBeNull] ReflectionSerializersFactory reflectionSerializers = null, [CanBeNull] IProxyGenerator proxyGenerator = null, [CanBeNull] ReflectionRdActivator activator = null, [CanBeNull] TypesRegistrar registrar = null, bool allowSave = false)
+    public ReflectionSerializersFacade([CanBeNull] ITypesCatalog typesCatalog = null, [CanBeNull] IScalarSerializers scalarSerializers = null, [CanBeNull] ReflectionSerializersFactory reflectionSerializers = null, [CanBeNull] IProxyGenerator proxyGenerator = null, [CanBeNull] ReflectionRdActivator activator = null, [CanBeNull] TypesRegistrar registrar = null, bool allowSave = false, [CanBeNull] Predicate<Type> blackListChecker = null)
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
-      ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog);
+      ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog, blackListChecker);
       SerializersFactory = reflectionSerializers ?? new ReflectionSerializersFactory(TypesCatalog, ScalarSerializers);
 
       ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(ScalarSerializers, allowSave));

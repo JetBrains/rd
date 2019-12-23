@@ -79,3 +79,5 @@ actual fun <T: Enum<T>> EnumSet<T>.values() : Set<T> = this
 
 actual typealias Runnable = java.lang.Runnable
 actual typealias Callable<T> = java.util.concurrent.Callable<T>
+
+actual typealias CopyOnWriteArrayList<T> = java.util.concurrent.CopyOnWriteArrayList<T>

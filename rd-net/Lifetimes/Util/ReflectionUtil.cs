@@ -123,6 +123,23 @@ namespace JetBrains.Util
       }
     }
 
+    [CanBeNull]
+    public static object InvokeStaticGeneric2(Type type, string methodName, Type argument1, Type argument2, [CanBeNull] params object[] parameters)
+    {
+      var methodInfo = type.OptionalTypeInfo().GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+      try
+      {
+        return methodInfo.NotNull().MakeGenericMethod(argument1, argument2)
+          .Invoke(null, parameters ?? EmptyArray<object>.Instance);
+      }
+      catch (TargetInvocationException e)
+      {
+        if (e.InnerException != null) throw e.InnerException;
+
+        throw;
+      }
+    }
+
 
     [CanBeNull]
     public static object TryGetNonStaticField(object ownerObject, string memberName)

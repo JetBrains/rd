@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "Buffer.h"
-#include "Polymorphic.h"
-#include "NullableSerializer.h"
-#include "ArraySerializer.h"
+#include "protocol/Buffer.h"
+#include "serialization/Polymorphic.h"
+#include "serialization/NullableSerializer.h"
+#include "serialization/ArraySerializer.h"
 
 #include <random>
 #include <numeric>

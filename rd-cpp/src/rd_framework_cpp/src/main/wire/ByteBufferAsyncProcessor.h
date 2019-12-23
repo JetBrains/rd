@@ -1,8 +1,8 @@
 #ifndef RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 #define RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 
-#include "Logger.h"
-#include "Buffer.h"
+#include "logger/Logger.h"
+#include "protocol/Buffer.h"
 
 #include <chrono>
 #include <string>

@@ -3,7 +3,7 @@
 
 #include "RdFrameworkTestBase.h"
 
-#include "RdProperty.h"
+#include "impl/RdProperty.h"
 
 #include <functional>
 #include <numeric>

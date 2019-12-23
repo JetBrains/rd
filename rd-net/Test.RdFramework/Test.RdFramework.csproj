@@ -8,6 +8,7 @@
         <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>

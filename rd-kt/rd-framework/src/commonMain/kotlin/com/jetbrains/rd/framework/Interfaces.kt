@@ -4,7 +4,8 @@ import com.jetbrains.rd.framework.base.IRdReactive
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
-import com.jetbrains.rd.framework.impl.RdSet
+import com.jetbrains.rd.framework.impl.InternId
+import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -35,7 +36,7 @@ interface IProtocol : IRdDynamic {
     // Models for which the serialization hash does not match that on the other side
     val outOfSyncModels: ViewableSet<RdExtBase>
 
-    val clientIdSet: RdSet<ClientId>
+    val contexts : ProtocolContexts
 }
 
 /**
@@ -54,6 +55,10 @@ interface IWire {
      * when the given [lifetime] is terminated.
      */
     fun advise(lifetime: Lifetime, entity: IRdWireable)
+
+    val contexts: ProtocolContexts
+
+    fun setupContexts(newContexts: ProtocolContexts)
 }
 
 /**
@@ -89,6 +94,7 @@ interface ISerializers {
     fun registerSerializersOwnerOnce(serializersOwner: ISerializersOwner)
 
     fun <T : Any> register(serializer: IMarshaller<T>)
+    fun get(id: RdId): IMarshaller<*>?
     fun <T> readPolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T?
     fun <T> writePolymorphicNullable(ctx: SerializationCtx, stream: AbstractBuffer, value: T)
     fun <T : Any> readPolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, abstractDeclaration: IAbstractDeclaration<T>? = null): T
@@ -106,9 +112,33 @@ interface IIdentities {
     fun next(parent: RdId): RdId
 }
 
-interface IInternRoot: IRdReactive {
-    fun tryGetInterned(value: Any): Int
-    fun internValue(value: Any): Int
-    fun <T : Any> unInternValue(id: Int): T
-    fun setInternedCorrespondence(id: Int, value: Any)
+/**
+ * Interns values sent over protocol
+ */
+interface IInternRoot<TBase : Any>: IRdReactive {
+    /**
+     * Returns an ID for a value. Returns invalid ID if the value was not interned
+     */
+    fun tryGetInterned(value: TBase): InternId
+
+    /**
+     * Interns a value and returns an ID for it. May return invalid ID if the value can't be interned due to multithreaded conflicts
+     */
+    fun intern(value: TBase): InternId
+
+    /**
+     * Gets a value from interned ID. Throws an exception if no value matches the given ID
+     */
+    fun <T : TBase> unIntern(id: InternId): T
+
+    /**
+     * Gets a valie from interned ID, returns null if no value matches the given ID
+     */
+    fun <T : TBase> tryUnIntern(id: InternId): T?
+
+    /**
+     * Removes interned value. Any future attempts to un-intern IDs previously associated with this value will fail.
+     * Not thread-safe. It's up to user to ensure that the value being removed is not being used in messages written on background threads.
+     */
+    fun remove(value: TBase)
 }

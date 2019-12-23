@@ -17,3 +17,6 @@ actual fun createAbstractBuffer(): AbstractBuffer {
 }
 
 actual fun createBackgroundScheduler(lifetime: Lifetime, name: String) : IScheduler = SingleThreadScheduler(lifetime, name)
+actual fun createAbstractBuffer(bytes: ByteArray): AbstractBuffer {
+    return UnsafeBuffer(bytes)
+}

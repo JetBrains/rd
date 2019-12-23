@@ -99,9 +99,9 @@ namespace JetBrains.Rd.Reflection
 
     public ISerializersContainer Cache { get; }
 
-    public ReflectionSerializersFactory([NotNull] ITypesCatalog typeCatalog, IScalarSerializers scalars = null)
+    public ReflectionSerializersFactory([NotNull] ITypesCatalog typeCatalog, IScalarSerializers scalars = null, Predicate<Type> blackListChecker = null)
     {
-      myScalars = scalars ?? new ScalarSerializer(typeCatalog);
+      myScalars = scalars ?? new ScalarSerializer(typeCatalog, blackListChecker);
       Cache = new SerializersContainer(mySerializers);
       Serializers.RegisterFrameworkMarshallers(Cache);
     }
@@ -186,7 +186,7 @@ namespace JetBrains.Rd.Reflection
         if (serializerPair == null)
         {
 #if JET_MODE_ASSERT
-          Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => Types.ToString(t, true)).ToArray())}");
+          Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}");
 #endif
           throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}");
         }
@@ -204,7 +204,18 @@ namespace JetBrains.Rd.Reflection
 
       if (!mySerializers.TryGetValue(serializerType, out var serializerPair))
       {
-        ReflectionUtil.InvokeGenericThis(this, nameof(RegisterScalar), serializerType);
+        try
+        {
+          ReflectionUtil.InvokeGenericThis(this, nameof(RegisterScalar), serializerType);
+        }
+        catch (Exception e)
+        {
+#if JET_MODE_ASSERT
+          throw new Exception($"Unable to create serializer for {string.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}. {e.Message}", e);
+#else
+          throw new Exception($"Unable to create serializer for {serializerType.ToString(true)}. {e.Message}", e);
+#endif
+        }
         serializerPair = mySerializers[serializerType];
         if (serializerPair == null)
           Assertion.Fail($"Unable to Create serializer for scalar type {serializerType.ToString(true)}");
@@ -230,8 +241,8 @@ namespace JetBrains.Rd.Reflection
 
     public static Type GetRpcInterface(TypeInfo typeInfo)
     {
-      foreach (var @interface in typeInfo.GetInterfaces())
-        if (@interface.IsDefined(typeof(RdRpcAttribute), false))
+      foreach (var @interface in typeInfo.GetInterfaces()) 
+        if (ReflectionSerializerVerifier.IsRpcAttributeDefined(@interface)) 
           return @interface;
 
       return null;
@@ -461,6 +472,14 @@ namespace JetBrains.Rd.Reflection
       return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(CreateFromMethods2), readMethod.ReturnType, readMethod, writeMethod);
     }
 
+    /// <summary>
+    /// Create serializer from Read  and Write method without <see cref="SerializationCtx"/>
+    /// </summary>
+    public static SerializerPair CreateFromNonProtocolMethods(MethodInfo readMethod, MethodInfo writeMethod)
+    {
+      return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(CreateFromNonProtocolMethodsT), readMethod.ReturnType, readMethod, writeMethod);
+    }
+
     public static SerializerPair CreateFromMethods2<T>(MethodInfo readMethod, MethodInfo writeMethod)
     {
       void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
@@ -514,6 +533,31 @@ namespace JetBrains.Rd.Reflection
     {
       CtxReadDelegate<T> ctxReadDelegate = marshaller.Read;
       CtxWriteDelegate<T> ctxWriteDelegate = marshaller.Write;
+      return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
+    }
+
+    private static SerializerPair CreateFromNonProtocolMethodsT<T>(MethodInfo readMethod, MethodInfo writeMethod)
+    {
+      Assertion.Assert(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType.ToString(true)})");
+      Assertion.Assert(!writeMethod.IsStatic, $"Read method should not be static ({readMethod.DeclaringType.ToString(true)})");
+      
+      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value)
+      {
+        if (!typeof(T).IsValueType && !writer.WriteNullness(value as object))
+          return;
+        writeMethod.Invoke(value, new object[] {writer});
+      }
+
+      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
+      {
+        if (!typeof(T).IsValueType && !reader.ReadNullness())
+          return default;
+
+        return (T) readMethod.Invoke(null, new object[] {reader});
+      }
+
+      CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+      CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
       return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
     }
 

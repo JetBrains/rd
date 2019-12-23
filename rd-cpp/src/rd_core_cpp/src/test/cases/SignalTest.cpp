@@ -2,8 +2,8 @@
 
 #include "test_util.h"
 
-#include "interfaces.h"
-#include "SignalX.h"
+#include "reactive/interfaces.h"
+#include "reactive/SignalX.h"
 
 using namespace rd;
 

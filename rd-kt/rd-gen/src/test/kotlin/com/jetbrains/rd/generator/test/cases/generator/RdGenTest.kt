@@ -9,7 +9,8 @@ enum class Configuration {
     EXAMPLE,
     DEMO_MODEL,
     RIDER_MODEL,
-    ENTITY_MODEL
+    ENTITY_MODEL,
+    UNREAL_MODEL
 }
 
 
@@ -21,7 +22,7 @@ fun main() {
 //    rdgen.filter *= "cpp"
 //    rdgen.filter *= "cpp|csharp"
 //    rdgen.filter *= "kotlin"
-    val configuration = Configuration.DEMO_MODEL
+    val configuration = Configuration.UNREAL_MODEL
     when (configuration) {
         Configuration.EXAMPLE -> {
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\example"
@@ -46,6 +47,12 @@ fun main() {
 
             rdgen.sources *= "C:\\Work\\rd\\rd-gen\\src\\test\\kotlin\\com\\jetbrains\\rd\\generator\\test\\cases\\generator\\entities"
             rdgen.packages *= "com.jetbrains.rd.generator.test.cases.generator.entities"
+        }
+        Configuration.UNREAL_MODEL -> {
+            System.setProperty("model.out.src.lib.ue4.cpp.dir", "C:\\temp\\unreal")
+
+            rdgen.sources *= "C:\\Work\\resharper-unreal\\protocol\\src\\main\\kotlin\\model\\lib\\ue4"
+            rdgen.packages *= "model.lib.ue4"
         }
     }
     rdgen.compilerClassloader = URLClassLoader(arrayOf(

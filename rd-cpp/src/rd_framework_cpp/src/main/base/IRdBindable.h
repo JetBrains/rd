@@ -2,8 +2,8 @@
 #define RD_CPP_FRAMEWORK_IRDBINDABLE_H
 
 #include "IRdDynamic.h"
-#include "Lifetime.h"
-#include "RdId.h"
+#include "lifetime/Lifetime.h"
+#include "protocol/RdId.h"
 
 
 namespace rd {

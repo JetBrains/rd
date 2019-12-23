@@ -2,12 +2,12 @@
 #define RD_CPP_INTERNROOT_H
 
 
-#include "RdReactiveBase.h"
+#include "base/RdReactiveBase.h"
 #include "InternScheduler.h"
-#include "Lifetime.h"
-#include "wrapper.h"
-#include "RdAny.h"
-#include "core_traits.h"
+#include "lifetime/Lifetime.h"
+#include "types/wrapper.h"
+#include "serialization/RdAny.h"
+#include "util/core_traits.h"
 
 #include "tsl/ordered_map.h"
 
@@ -71,7 +71,7 @@ namespace rd {
 
 #pragma warning( pop )
 
-#include "InternedAnySerializer.h"
+#include "serialization/InternedAnySerializer.h"
 
 namespace rd {
 	/*template<typename T>

@@ -14,3 +14,10 @@ actual inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit) : Boole
 }
 
 actual fun createBackgroundScheduler(lifetime: Lifetime, name: String): IScheduler = SynchronousScheduler //no bg on javascript
+
+actual fun createAbstractBuffer(bytes: ByteArray): AbstractBuffer {
+    val buffer = JsBuffer(ArrayBuffer(bytes.size))
+    buffer.writeByteArrayRaw(bytes)
+    buffer.rewind()
+    return buffer
+}

@@ -24,6 +24,7 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
         require(!id.isNull)
 
         val ostream = createAbstractBuffer()
+        contexts.writeCurrentMessageContext(ostream)
         writer(ostream)
 
         bytesWritten += ostream.position

@@ -26,7 +26,7 @@ object DemoRoot : Root(
 
 @ExperimentalUnsignedTypes
 object DemoModel : Ext(DemoRoot) {
-    private var MyEnum = enum {
+    private val MyEnum = enum {
         (+"default").doc("Dummy field with keyword-like name")
         +"kt"
         +"net"
@@ -35,7 +35,17 @@ object DemoModel : Ext(DemoRoot) {
         const("All", PredefinedType.int, 0)
     }
 
-    private var Flags = flags {
+    private val MyInitializedEnum = enum {
+        (+"zero")
+        (+"hundred").setting(Cpp17Generator.EnumConstantValue, 100)
+        (+"two")
+        (+"three")
+        (+"ten").setting(Cpp17Generator.EnumConstantValue, 10)
+        (+"five")
+        (+"six")
+    }
+
+    private val Flags = flags {
         +"anyFlag"
         +"ktFlag"
         +"netFlag"
@@ -56,6 +66,7 @@ object DemoModel : Ext(DemoRoot) {
         field("unsigned_long", PredefinedType.ulong)
         field("enum", MyEnum)
         field("flags", Flags)
+        field("myInitializedEnum", MyInitializedEnum)
     }
 
     private var ConstUtil = structdef {
@@ -79,6 +90,14 @@ object DemoModel : Ext(DemoRoot) {
 
     private var Derived = structdef extends Base {
         field("string", PredefinedType.string)
+    }
+
+    private var Open = openstruct extends Base{
+        field("openString", PredefinedType.string)
+    }
+
+    private var OpenDerived = openstruct extends Open{
+        field("openDerivedString", PredefinedType.string)
     }
 
     private var complicatedPair = structdef {
@@ -112,6 +131,8 @@ object DemoModel : Ext(DemoRoot) {
         property("interned_string", PredefinedType.string.interned(ProtocolInternScope))
 
         property("polymorphic", Base)
+
+        property("polymorphic_open", OpenDerived)
 
         property("enum", MyEnum)
 

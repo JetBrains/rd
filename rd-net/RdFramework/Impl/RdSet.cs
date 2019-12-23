@@ -13,16 +13,20 @@ namespace JetBrains.Rd.Impl
 {
   public class RdSet<T> : RdReactiveBase, IViewableSet<T>
   {
-    private readonly ViewableSet<T> mySet = new ViewableSet<T>();
+    private readonly IViewableSet<T> mySet;
 
     public RdSet() : this(Polymorphic<T>.Read, Polymorphic<T>.Write) {}
 
-    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
+    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, IViewableSet<T> backingSet)
     {
       ValueCanBeNull = false;
       ReadValueDelegate = readValue;
       WriteValueDelegate = writeValue;
+
+      mySet = backingSet ?? new ViewableSet<T>();
     }
+
+    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue) : this(readValue, writeValue, null) { }
 
 
     #region Serializers
@@ -158,8 +162,21 @@ namespace JetBrains.Rd.Impl
     }
     
     // ReSharper disable once AssignNullToNotNullAttribute
-    void ICollection<T>.Add(T item) => Add(item);
-    
+    #if NET35
+    public
+    #endif
+    void
+      #if !NET35
+      ICollection<T>.
+      #endif
+      Add(T item)
+    {
+      AssertNullability(item);
+      using (UsingLocalChange())
+        mySet.Add(item);
+    }
+
+    #if !NET35
     public bool Add(T item)
     {
       AssertNullability(item);
@@ -190,6 +207,7 @@ namespace JetBrains.Rd.Impl
       using (UsingLocalChange())        
         mySet.UnionWith(other);
     }
+    #endif
 
     public void Clear()
     {
@@ -203,7 +221,7 @@ namespace JetBrains.Rd.Impl
 
     #region ISet Read delegation
 
-    
+    #if !NET35
     public bool IsProperSubsetOf(IEnumerable<T> other) => mySet.IsProperSubsetOf(other);
 
     public bool IsProperSupersetOf(IEnumerable<T> other) => mySet.IsProperSupersetOf(other);
@@ -215,7 +233,7 @@ namespace JetBrains.Rd.Impl
     public bool Overlaps(IEnumerable<T> other) => mySet.Overlaps(other);
 
     public bool SetEquals(IEnumerable<T> other) => mySet.SetEquals(other);
-    
+    #endif
 
     #endregion
 

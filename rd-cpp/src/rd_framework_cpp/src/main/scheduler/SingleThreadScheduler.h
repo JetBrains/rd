@@ -2,9 +2,9 @@
 #define RD_CPP_SINGLETHREADSCHEDULER_H
 
 
-#include "SingleThreadSchedulerBase.h"
+#include "base/SingleThreadSchedulerBase.h"
 
-#include "Lifetime.h"
+#include "lifetime/Lifetime.h"
 
 namespace rd {
 	class SingleThreadScheduler : public SingleThreadSchedulerBase {

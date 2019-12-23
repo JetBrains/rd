@@ -148,7 +148,7 @@ namespace JetBrains.Rd.Reflection
 
       var instance = Activator.CreateInstance(implementingType);
 
-      ReflectionInit(instance);
+      ReflectionInitInternal(instance);
 #if JET_MODE_ASSERT
       myCurrentActivationChain.Dequeue();
 #endif
@@ -157,7 +157,20 @@ namespace JetBrains.Rd.Reflection
 
     public object ReflectionInit(object instance)
     {
+#if JET_MODE_ASSERT
+      myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
+      myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
+#endif
+
+      return ReflectionInitInternal(instance);
+    }
+
+    private object ReflectionInitInternal(object instance)
+    {
       var typeInfo = instance.GetType().GetTypeInfo();
+
+      if (ReflectionSerializerVerifier.HasRdExtAttribute(instance.GetType().GetTypeInfo()))
+        ReflectionSerializerVerifier.AssertValidRdExt(typeInfo);
 
       foreach (var mi in SerializerReflectionUtil.GetBindableMembers(typeInfo))
       {
@@ -368,9 +381,11 @@ namespace JetBrains.Rd.Reflection
         return null;
       }
 
-      // hack for UProperty
+      // hack for UProperty & USignal
       if (genericArguments.Length == 1 &&
-          typeof(IViewableProperty<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType))
+            (typeof(IViewableProperty<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType) ||
+             typeof(ISignal<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType)
+          ))
       {
         foreach (var ctor in implementingType.GetTypeInfo().GetConstructors(BindingFlags.Public | BindingFlags.Instance))
         {

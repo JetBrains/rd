@@ -2,9 +2,9 @@
 #define RD_CPP_RDPROPERTYBASE_H
 
 
-#include "RdReactiveBase.h"
-#include "Polymorphic.h"
-#include "Property.h"
+#include "base/RdReactiveBase.h"
+#include "serialization/Polymorphic.h"
+#include "reactive/Property.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )

@@ -1,7 +1,7 @@
 #ifndef RD_CPP_DATETIME_H
 #define RD_CPP_DATETIME_H
 
-#include "hash.h"
+#include "std/hash.h"
 
 #include <ctime>
 #include <string>

@@ -1,7 +1,7 @@
 #ifndef RD_CPP_ARRAYSERIALIZER_H
 #define RD_CPP_ARRAYSERIALIZER_H
 
-#include "SerializationCtx.h"
+#include "serialization/SerializationCtx.h"
 #include "framework_traits.h"
 
 #include <vector>

@@ -2,12 +2,12 @@
 #define RD_CPP_CORE_CPP_UTIL_H
 
 #include "erase_if.h"
-#include "gen_util.h"
-#include "overloaded.h"
-#include "shared_function.h"
-#include "hash.h"
-#include "to_string.h"
-#include "wrapper.h"
+#include "util/gen_util.h"
+#include "util/overloaded.h"
+#include "util/shared_function.h"
+#include "std/hash.h"
+#include "std/to_string.h"
+#include "types/wrapper.h"
 
 #include "thirdparty.hpp"
 

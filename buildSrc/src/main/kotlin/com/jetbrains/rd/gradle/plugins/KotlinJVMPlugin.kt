@@ -6,6 +6,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
@@ -51,6 +52,10 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 }
             }
 
+            tasks.withType<GenerateModuleMetadata> {
+                enabled = false
+            }
+
             configure<PublishingExtension> {
                 publications {
                     var mvnId = project.name
@@ -81,13 +86,13 @@ open class KotlinJVMPlugin : Plugin<Project> {
             }
 
             dependencies {
-                compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-                compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-                compile("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+                "implementation"("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+                "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+                "implementation"("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
-                testCompile("junit:junit:$junitVersion")
-                testCompile("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
-                testCompile("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+                "testImplementation"("junit:junit:$junitVersion")
+                "testImplementation"("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
+                "testImplementation"("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
             }
         }
     }

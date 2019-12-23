@@ -1,6 +1,6 @@
 #include "Serializers.h"
 
-#include "AbstractPolymorphic.h"
+#include "serialization/AbstractPolymorphic.h"
 
 namespace rd {
 	constexpr RdId STRING_PREDEFINED_ID = RdId(10);

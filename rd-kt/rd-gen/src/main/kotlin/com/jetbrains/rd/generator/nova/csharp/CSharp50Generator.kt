@@ -172,7 +172,7 @@ open class CSharp50Generator(
     }
 
     //declarations
-    protected val Declaration.hasSecondaryCtor: Boolean get() = (this.isConcrete || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
+    protected val Declaration.hasSecondaryCtor: Boolean get() = (this.isConcrete || this.isOpen || this is Toplevel) && this.allMembers.any { it.hasEmptyConstructor }
 
     //members
     val Member.Reactive.actualFlow: FlowKind get() = memberFlowTransform.transform(flow)
@@ -246,10 +246,11 @@ open class CSharp50Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         is Member.Const -> type.substitutedName(scope)
+        is Member.Method -> publicName
     }
 
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration): String =
-        "IViewableMap<ClientId, ${implSubstitutedName(scope, true)}>"
+        "IPerContextMap<${context!!.type.substitutedName(scope)}, ${implSubstitutedName(scope, true)}>"
 
 
     protected open fun Member.implSubstitutedName(scope: Declaration, perClientIdRawName: Boolean = false): String = when (this) {
@@ -257,8 +258,9 @@ open class CSharp50Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Const -> type.substitutedName(scope)
         is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
-            if(isPerClientId && !perClientIdRawName) "RdPerClientIdMap<$it>" else it
+            if(context != null && !perClientIdRawName) "RdPerContextMap<${context!!.type.substitutedName(scope)}, $it>" else it
         }
+        is Member.Method -> publicName
     }
 
 
@@ -285,15 +287,22 @@ open class CSharp50Generator(
     protected open val Member.isEncapsulated: Boolean get() = this is Member.Reactive
 
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean, ignorePerClientId: Boolean = false): String {
-        if(isPerClientId && !ignorePerClientId)
+        if(context != null && !ignorePerClientId)
             return leadingComma.condstr { ", " } + perClientIdMapValueFactory(containing)
         val res = genericParams.joinToString { it.readerDelegateRef(containing) + ", " + it.writerDelegateRef(containing) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
     }
 
     protected fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration) : String {
-        require(this.isPerClientId)
-        return "isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}${defaultValueAsString(true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
+        require(this.context != null)
+        return "${context!!.longRef(containing)}, isMaster => { var value = new ${this.implSubstitutedName(containing, true)}(${customSerializers(containing, false, true)}${defaultValueAsString(true)}); ${(this is Member.Reactive.Stateful.Map).condstr { "value.IsMaster = isMaster;" }} return value; }"
+    }
+
+    protected fun Context.longRef(scope: Declaration): String {
+        return when(this) {
+            is Context.External -> fqnFor(this@CSharp50Generator)
+            is Context.Generated -> pointcut!!.sanitizedName(scope) + "." + sanitizedName(scope) + ".Instance"
+        }
     }
 
 
@@ -410,7 +419,7 @@ open class CSharp50Generator(
 
 
     protected open fun PrettyPrinter.typedef(decl: Declaration) {
-        if (decl.getSetting(Intrinsic) != null) return
+        if (decl.getSetting(Intrinsic) != null || decl is Context) return
 
         println()
         println()
@@ -422,13 +431,21 @@ open class CSharp50Generator(
             return
         }
 
+        if(decl is Interface){
+            interfaceDef(decl)
+            return
+        }
+
         if (decl is Toplevel && !decl.isExtension) {
             +(decl.getSetting(ClassAttributes)?.joinToOptString(prefix = "[", postfix = "]") ?: "")
         }
 
         p("public ")
 
-        if (decl.isAbstract) p("abstract ")
+        if(decl !is Toplevel) {
+            if (decl.isAbstract) p("abstract ")
+            if (decl.isSealed) p("sealed ")
+        }
         if (decl.getSetting(Partial) != null) p("partial ")
 
         p("class ${decl.name}")
@@ -452,7 +469,8 @@ open class CSharp50Generator(
 
             +"//custom body"
             customBodyTrait(decl)
-
+            + "//methods"
+            methodsTrait(decl)
             +"//equals trait"
             equalsTrait(decl)
             +"//hash code trait"
@@ -536,6 +554,23 @@ open class CSharp50Generator(
             val value = getDefaultValue(decl, it)
             +"public const ${it.type.substitutedName(decl)} ${it.name} = $value;"
         }
+        if(decl is Toplevel) {
+            decl.declaredTypes.forEach {
+                if(it is Context.Generated) {
+                    val keyTypeName = "RdContext<${it.type.substitutedName(decl)}>"
+                    +"public class ${it.keyName} : $keyTypeName {"
+                    indent {
+                        +"private ${it.keyName}() : this(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)}) {}"
+                        +"public static readonly ${it.keyName} Instance = new ${it.keyName}();"
+                        +"protected internal override void RegisterOn(ISerializers serializers)"
+                        +"{"
+                        +"serializers.Register((_, __) => Instance, (_, __, ___) => { });"
+                        +"}"
+                    }
+                    +"}"
+                }
+            }
+        }
     }
 
     protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, declaredAndUnknownTypes: List<Declaration>) {
@@ -546,7 +581,7 @@ open class CSharp50Generator(
         +"{"
         indent {
             val internedTypes = declaredAndUnknownTypes.flatMap { it.referencedTypes }.filterIsInstance<InternedScalar>().map { it.itemType }
-            val typesUnderPerClientIdMembers = declaredAndUnknownTypes.flatMap { it.ownMembers }.filterIsInstance<Member.Reactive>().filter { it.isPerClientId }.flatMap { it.referencedTypes }
+            val typesUnderPerClientIdMembers = declaredAndUnknownTypes.flatMap { it.ownMembers }.filterIsInstance<Member.Reactive>().filter { it.context != null }.flatMap { it.referencedTypes }
 
             val allTypesForRegistration = declaredAndUnknownTypes.filter { it.base != null } +
                     internedTypes.filterIsInstance<Declaration>() + typesUnderPerClientIdMembers.filterIsInstance<Declaration>()
@@ -665,7 +700,7 @@ open class CSharp50Generator(
         }
 
         decl.allTypesForDelegation().forEach {
-            +"public static CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
+            +"public static${it.hideOverloadAttribute(decl)} CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
         }
     }
 
@@ -736,8 +771,20 @@ open class CSharp50Generator(
         }
 
         decl.allTypesForDelegation().forEach {
-            +"public static CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
+            +"public static ${it.hideOverloadAttribute(decl)} CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
         }
+    }
+
+    private fun IType.hideOverloadAttribute(decl : Declaration): String{
+        var currentDecl = decl
+        while (currentDecl.base != null){
+            currentDecl = currentDecl.base!!
+            if(currentDecl.isOpen && currentDecl.allTypesForDelegation().contains(this)){
+                return " new"
+            }
+        }
+
+        return ""
     }
 
 
@@ -754,9 +801,9 @@ open class CSharp50Generator(
                         val isNotVoid = type != PredefinedType.void
                         +"$prefix void ${member.publicName}(${isNotVoid.condstr { type.substitutedName(decl) + " value" }}) => ${member.encapsulatedName}.Fire(${isNotVoid.condstr { "value" }});"
                     }else {
-                        if (member.isPerClientId) {
-                            + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName}.GetForCurrentClientId();"
-                            + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerClientIdMap => ${member.encapsulatedName};"
+                        if (member.context != null) {
+                            + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName}.GetForCurrentContext();"
+                            + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerContextMap => ${member.encapsulatedName};"
                         } else
                         +"$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"}
                 is Member.Field ->
@@ -768,7 +815,7 @@ open class CSharp50Generator(
 
         +"//private fields"
         decl.ownMembers.filterIsInstance<Member.Reactive>().printlnWithBlankLine {
-            it.nullAttr() + (if (decl.isAbstract) "protected" else "private") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
+            it.nullAttr() + (if (decl.isSealed) "private" else "protected") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
         }
 
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
@@ -862,7 +909,7 @@ open class CSharp50Generator(
     }
 
     private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
-        return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (!isPerClientId || ignorePerClientId)) {
+        return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (context == null || ignorePerClientId)) {
             when (defaultValue) {
                 is String -> ", \"$defaultValue\""
                 is Member.Const -> ", ${defaultValue.name}"
@@ -954,10 +1001,23 @@ open class CSharp50Generator(
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
-        val optOverride = (decl !is Struct).condstr { "override " }
-        +"public ${optOverride}void Print(PrettyPrinter printer)"
+        fun Declaration.attributes() : String{
+            if(decl !is Struct) return "override "
+
+            var currentDecl = this
+            while (currentDecl.base != null){
+                currentDecl = currentDecl.base!!
+                if(currentDecl.isOpen){
+                    return "override "
+                }
+            }
+
+            return if(decl.isOpen) "virtual " else ""
+        }
+
+        +"public ${decl.attributes()}void Print(PrettyPrinter printer)"
         +"{"
         indent {
             +"printer.Println(\"${decl.name} (\");"
@@ -968,7 +1028,7 @@ open class CSharp50Generator(
     }
 
     private fun PrettyPrinter.toStringTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
 
         +"public override string ToString()"
         +"{"
@@ -987,6 +1047,7 @@ open class CSharp50Generator(
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
             decl.isAbstract -> "protected"
+            decl.isOpen -> "public"
             decl.hasSecondaryCtor -> "private"
             decl.isExtension -> "internal"
             decl is Toplevel -> "private"
@@ -1016,17 +1077,17 @@ open class CSharp50Generator(
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive.Stateful>()
-                    .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && !it.isPerClientId}
+                    .filter { it !is Member.Reactive.Stateful.Extension && it.genericParams.none { it is IBindable } && it.context == null}
                     .println { "${it.encapsulatedName}.OptimizeNested = true;" }
 
 //            decl.ownMembers
 //                    .filterIsInstance<Member.Reactive.Stateful.Property>()
-//                    .filter { !it.isPerClientId }
+//                    .filter { it.perContextKey == null }
 //                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 //
 //            decl.ownMembers
 //                    .filterIsInstance<Member.Reactive.Stateful.Map>()
-//                    .filter { !it.isPerClientId }
+//                    .filter { it.perContextKey == null }
 //                    .println { "${it.encapsulatedName}.IsMaster = ${it.master};" }
 
             decl.ownMembers
@@ -1068,6 +1129,9 @@ open class CSharp50Generator(
         if (res.startsWith(','))
             res = res.substring(1)
 
+        val prefix = if(res.isBlank()) "" else ", "
+        res += if (decl.implements.isNotEmpty()) decl.implements.joinToString(prefix = prefix) { it.sanitizedName(decl) } else ""
+
         if (!res.isBlank()) {
             +" : $res"
         }
@@ -1085,6 +1149,61 @@ open class CSharp50Generator(
         }
         +"}"
     }
+
+    protected open fun PrettyPrinter.interfaceDef(decl: Interface) {
+        +"interface ${decl.name.capitalize()}"
+        indent {baseInterfacesTrait(decl) }
+        p("{")
+        println()
+        indent { methodsTrait(decl) }
+        p("}")
+    }
+
+    protected open fun PrettyPrinter.baseInterfacesTrait(decl: Interface) {
+        if (decl.baseInterfaces.isNotEmpty()) {
+            +" : ${decl.baseInterfaces.joinToString { it.name }}"
+        }
+    }
+
+    protected open fun PrettyPrinter.methodsTrait(decl: Interface) {
+        decl.ownMembers.filterIsInstance<Member.Method>().forEach { method ->
+            +"${if(method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}"}});"
+        }
+    }
+
+    protected open fun PrettyPrinter.methodsTrait(decl: Declaration){
+        decl.implements.forEach { inter->
+            inter.allMembers.filterIsInstance<Member.Method>().forEach { method->
+                methodTrait(method, decl, isAbstract = decl.isAbstract)
+            }
+        }
+
+        if (decl.isSealed) {
+            var currentDecl = decl.base
+            while (currentDecl != null && currentDecl.isAbstract) {
+                currentDecl.implements.forEach { inter ->
+                    inter.allMembers.filterIsInstance<Member.Method>().forEach {
+                        methodTrait(it, decl, isAbstract = false)
+                    }
+                }
+                currentDecl = currentDecl.base
+            }
+        }
+    }
+
+    protected open fun PrettyPrinter.methodTrait(method: Member.Method, decl: Declaration ,isAbstract: Boolean) {
+        println("public ${isAbstract.condstr { "abstract " }}${isUnknown(decl).condstr { "override " }}${if (method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}" }})${isAbstract.condstr { ";" }}")
+
+        if (isAbstract) return
+        println("{")
+        indent {
+            println("throw new NotImplementedException(\"You should implement method in derived class\");")
+        }
+        println("}")
+        println()
+    }
+
+    private fun isUnknown(decl: Declaration) = decl is Class.Concrete && decl.isUnknown || decl is Struct.Concrete && decl.isUnknown
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {
         val pointcut = decl.pointcut ?: return

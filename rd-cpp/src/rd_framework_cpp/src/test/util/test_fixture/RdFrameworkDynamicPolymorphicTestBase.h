@@ -3,9 +3,9 @@
 
 #include "ConcreteEntity.h"
 #include "RdFrameworkTestBase.h"
-#include "RdReactiveBase.h"
+#include "base/RdReactiveBase.h"
 
-#include "core_traits.h"
+#include "util/core_traits.h"
 
 #include <type_traits>
 

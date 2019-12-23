@@ -7,14 +7,14 @@
 #include "AbstractEntity_Unknown.h"
 #include "FakeEntity.h"
 
-#include "AbstractPolymorphic.h"
-#include "ArraySerializer.h"
-#include "RdProperty.h"
-#include "RdSet.h"
-#include "RdMap.h"
-#include "RdList.h"
-#include "RdCall.h"
-#include "RdEndpoint.h"
+#include "serialization/AbstractPolymorphic.h"
+#include "serialization/ArraySerializer.h"
+#include "impl/RdProperty.h"
+#include "impl/RdSet.h"
+#include "impl/RdMap.h"
+#include "impl/RdList.h"
+#include "task/RdCall.h"
+#include "task/RdEndpoint.h"
 #include "test_util.h"
 
 

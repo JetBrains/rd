@@ -1,10 +1,10 @@
 #ifndef RD_CPP_RDTASKRESULT_H
 #define RD_CPP_RDTASKRESULT_H
 
-#include "Polymorphic.h"
-#include "overloaded.h"
-#include "wrapper.h"
-#include "core_util.h"
+#include "serialization/Polymorphic.h"
+#include "util/overloaded.h"
+#include "types/wrapper.h"
+#include "util/core_util.h"
 
 #include "thirdparty.hpp"
 

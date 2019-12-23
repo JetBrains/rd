@@ -6,9 +6,9 @@
 #include <memory>
 
 #include "SimpleWire.h"
-#include "Identities.h"
-#include "Protocol.h"
-#include "SimpleScheduler.h"
+#include "protocol/Identities.h"
+#include "protocol/Protocol.h"
+#include "scheduler/SimpleScheduler.h"
 
 namespace rd {
 	namespace test {

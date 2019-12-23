@@ -49,8 +49,8 @@ fun <T:Any, S:SettingsHolder> ISetting<T, S>.forGenerator(generator: IGenerator)
 /**
  * Set setting
  */
-fun <T: Any, S : SettingsHolder> S.setting(key: ISetting<T, S>, value: T) = apply { settings[key] = value }
-fun <T: Any, S : SettingsHolder> S.setting(key: SettingWithDefault<T, S>, value: T = key.default) = setting(key as ISetting<T, S>, value)
+fun <T: Any, S : SettingsHolder> S.setting(key: ISetting<T, S>, value: T) : S = apply { settings[key] = value }
+fun <T: Any, S : SettingsHolder> S.setting(key: SettingWithDefault<T, S>, value: T = key.default) : S = setting(key as ISetting<T, S>, value)
 
 /**
  * Should be called inside generation process ([IGenerator.generate]).

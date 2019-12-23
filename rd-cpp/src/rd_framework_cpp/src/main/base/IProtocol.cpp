@@ -1,10 +1,12 @@
-#include <utility>
-
-#include "IScheduler.h"
-#include "Identities.h"
-#include "IWire.h"
 #include "IProtocol.h"
-//#include "SerializationCtx.h"
+
+#include "scheduler/base/IScheduler.h"
+#include "protocol/Identities.h"
+#include "base/IWire.h"
+#include "base/IProtocol.h"
+//#include "serialization/SerializationCtx.h"
+
+#include <utility>
 
 namespace rd {
 	IProtocol::IProtocol() {}
