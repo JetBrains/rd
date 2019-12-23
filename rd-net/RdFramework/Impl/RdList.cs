@@ -125,13 +125,10 @@ namespace JetBrains.Rd.Impl
             stream.Write(evt.Index);
             if (evt.Kind != AddUpdateRemove.Remove) 
               me.WriteValueDelegate(sContext, stream, evt.NewValue);
-
-            if (LogSend.IsTraceEnabled())
-            {
-              LogSend.Trace("list `{0}` ({1}) :: {2} :: index={3} :: version = {4}{5}", me.Location, me.RdId, evt.Kind, evt.Index
-                , me.myNextVersion - 1
-                , evt.Kind != AddUpdateRemove.Remove  ? " :: value = " + evt.NewValue.PrintToString() : "");
-            }
+            
+            SendTrace?.Log($"list `{me.Location}` ({me.RdId}) :: {evt.Kind} :: index={evt.Index} :: " +
+                            $"version = {me.myNextVersion - 1}" +
+                            $"{(evt.Kind != AddUpdateRemove.Remove ? " :: value = " + evt.NewValue.PrintToString() : "")}");
           });
 
         });
@@ -147,7 +144,11 @@ namespace JetBrains.Rd.Impl
           value.BindPolymorphic(lf, this, "["+index+"]"); //todo name will be not unique when you add elements in the middle of the list 
         });
       }
+      
+      
     }
+
+    protected override string ShortName => "list";
 
 
     public override void OnWireReceived(UnsafeReader stream)
@@ -165,9 +166,8 @@ namespace JetBrains.Rd.Impl
       if (isPut)
         value = ReadValueDelegate(SerializationContext, stream);
         
-      LogReceived.Trace("list `{0}` ({1}) :: {2} :: index={3} :: version = {4}{5}", Location, RdId, kind, index
-        , version
-        , isPut  ? " :: value = " + value.PrintToString() : "");
+      ReceiveTrace?.Log(
+        $"list `{Location}` ({RdId}) :: {kind} :: index={index} :: version = {version}{(isPut ? " :: value = " + value.PrintToString() : "")}");
 
       if (version != myNextVersion)
       {

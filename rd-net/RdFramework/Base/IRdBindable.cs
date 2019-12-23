@@ -7,6 +7,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Base
 {
@@ -153,60 +154,78 @@ namespace JetBrains.Rd.Base
 
   public static class PrintableEx
   {
-    public static void PrintEx(this object thIs, PrettyPrinter printer)
+    public static void PrintEx(this object me, PrettyPrinter printer)
     {
-      var printable = thIs as IPrintable;
+      var printable = me as IPrintable;
       if (printer.BufferExceeded)
         return;
       
       if (printable != null) printable.Print(printer);
-      else if (thIs == null) printer.Print("<null>");
-      else if (thIs is string) printer.Print("\"" + thIs + "\"");
-      else if (thIs is IEnumerable enumerable)
+      else switch (me)
       {
-        printer.Print("[");        
-        using (printer.IndentCookie())
+        case null:
+          printer.Print("<null>");
+          break;
+        case string _:
+          printer.Print("\"" + me + "\"");
+          break;
+        case IEnumerable enumerable:
         {
-          var en = enumerable.GetEnumerator();
-          var count = 0;
-          var maxPrint = printer.CollectionMaxLength;
-          while (en.MoveNext())
+          printer.Print(enumerable.GetType().ToString(false, true));
+          if (me is ICollection collection)
           {
-            if (printer.BufferExceeded)
-              return;
-            if (count < maxPrint)
+            printer.Print($"(count={collection.Count})");  
+          }
+
+          if (!printer.PrintContent) break;
+          
+          printer.Print("[");        
+          using (printer.IndentCookie())
+          {
+            var en = enumerable.GetEnumerator();
+            var count = 0;
+            var maxPrint = printer.CollectionMaxLength;
+            while (en.MoveNext())
+            {
+              if (printer.BufferExceeded)
+                return;
+              if (count < maxPrint)
+              {
+                printer.Println();
+                en.Current.PrintEx(printer);
+              }
+              count ++;
+            }
+
+            if (count > maxPrint)
             {
               printer.Println();
-              en.Current.PrintEx(printer);
+              printer.Print("... and " + (count - maxPrint) + " more");
             }
-            count ++;
-          }
 
-          if (count > maxPrint)
-          {
-            printer.Println();
-            printer.Print("... and " + (count - maxPrint) + " more");
-          }
-
-          if (count > 0) printer.Println();
-          else printer.Print("<empty>");
-        }        
-        printer.Print("]");
+            if (count > 0) printer.Println();
+            else printer.Print("<empty>");
+          }        
+          printer.Print("]");
+          break;
+        }
+        default:
+          printer.Print(me.ToString());
+          break;
       }
-      else printer.Print(thIs.ToString());
     }
 
-    public static string PrintToString(this Object thIs)
+    public static string PrintToString(this object me)
     {
       var prettyPrinter = new PrettyPrinter();
-      thIs.PrintEx(prettyPrinter);
+      me.PrintEx(prettyPrinter);
       return prettyPrinter.ToString();
     }
 
-    public static string PrintToStringNoLimits(this Object thIs)
+    public static string PrintToStringNoLimits(this object me)
     {
-      var prettyPrinter = new PrettyPrinter {CollectionMaxLength = Int32.MaxValue};
-      thIs.PrintEx(prettyPrinter);
+      var prettyPrinter = new PrettyPrinter { CollectionMaxLength = Int32.MaxValue };
+      me.PrintEx(prettyPrinter);
       return prettyPrinter.ToString();
     }
   }

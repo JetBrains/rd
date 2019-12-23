@@ -14,37 +14,49 @@ namespace JetBrains.Rd.Util
       internal PrettyPrinterIndentCookie(PrettyPrinter printer) : this()
       {
         myPrinter = printer;
-        myPrinter.myIndent += myPrinter.myStep; 
+        myPrinter.myIndent += myPrinter.Step; 
       }
 
       public void Dispose()
       {
-        myPrinter.myIndent -= myPrinter.myStep;
+        myPrinter.myIndent -= myPrinter.Step;
       }
     }
     
-    private readonly int myLimit;
-    private int myStep = 2;
-    private readonly StringBuilder myBuilder = new StringBuilder();
+    
+    #region Inner state
+    
     private bool myNeedIndent = true;
-    private int myIndent = 0;
+    private int myIndent;
+    private readonly StringBuilder myBuilder = new StringBuilder();
+    #endregion
+    
+    
+    #region Settings used by PrettyPrinter itself
+    [PublicAPI] public const int InfiniteCapacity = -1;
+    [PublicAPI] public int BufferCapacity { get; set; } = InfiniteCapacity;
+    
+    [PublicAPI] public int Step { get; set; } = 2;
 
-    public PrettyPrinter(int limit = -1)
-    {
-      myLimit = limit;
-      CollectionMaxLength = 3;
-    }
-
-    public int CollectionMaxLength { get; set; }
+    [PublicAPI]
+    public int CollectionMaxLength { get; set; } = 3;
+    #endregion
+    
+    #region Settings for PrettyPriter clients
+    [PublicAPI] public bool PrintContent { get; set; } 
+    [PublicAPI] public bool PrintLocation { get; set; }
+    #endregion
+    
+    
 
     public bool BufferExceeded
     {
       get
       {
-        if (myLimit < 0)
+        if (BufferCapacity == InfiniteCapacity)
           return false;
 
-        return myBuilder.Length > myLimit;
+        return myBuilder.Length > BufferCapacity;
       }
     }
 

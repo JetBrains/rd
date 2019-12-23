@@ -7,6 +7,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Annotations;
 
 namespace JetBrains.Rd.Impl
 {
@@ -29,7 +30,8 @@ namespace JetBrains.Rd.Impl
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Value"));
       });
     }
-
+    
+    [PublicAPI]
     public RdProperty(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, T defaultValue) : this(readValue, writeValue)
     {
       Value = defaultValue;
@@ -127,9 +129,7 @@ namespace JetBrains.Rd.Impl
           var me = sendContext.This;
           writer.Write(me.myMasterVersion);
           me.WriteValueDelegate(sContext, writer, evt);
-          if (LogSend.IsTraceEnabled())
-            LogSend.Trace("property `{0}` ({1}):: ver = {2}, value = {3}", me.Location, me.RdId, me.myMasterVersion,
-              me.Value.PrintToString());
+          SendTrace?.Log($"property `{me.Location}` ({me.RdId}):: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
         });
       });
 
@@ -155,12 +155,7 @@ namespace JetBrains.Rd.Impl
 
       var rejected = IsMaster && version < myMasterVersion;
         
-      if (LogReceived.IsTraceEnabled())
-      {
-        LogReceived.Trace("property `{0}` ({1}):: oldver = {2}, newver = {3}, value = {4}{5}", 
-          Location, RdId, myMasterVersion, version, value.PrintToString(), rejected ? " REJECTED" : "");
-      }
-
+      ReceiveTrace?.Log($"property `{Location}` ({RdId}):: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
 
       if (rejected) return;
         
@@ -207,6 +202,8 @@ namespace JetBrains.Rd.Impl
 
     #endregion
 
+
+    protected override string ShortName => "property";
 
     public override void Print(PrettyPrinter printer)
     {

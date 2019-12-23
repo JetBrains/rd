@@ -479,7 +479,7 @@ namespace JetBrains.Rd.Impl
 
       internal static Socket CreateServerSocket(Lifetime lifetime, [CanBeNull] IPEndPoint endPoint)
       {
-        Protocol.InitializationLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
+        Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
         return lifetime.Bracket(() =>
           {
@@ -489,7 +489,7 @@ namespace JetBrains.Rd.Impl
             endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
             serverSocket.Bind(endPoint);
             serverSocket.Listen(1);
-            Protocol.InitializationLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+            Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
 
             return serverSocket;
           },

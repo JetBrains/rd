@@ -584,13 +584,8 @@ open class CSharp50Generator(
         val protocol = decl.namespace.contains(".Protocol").condstr { "JetBrains.Rd.Impl." } + "Protocol"
 
         indent {
-            +"Identify(protocol.Identities, RdId.Root.Mix(GetType().Name));"
-            +"Bind(lifetime, protocol, GetType().Name);"
-
-            +"if ($protocol.InitializationLogger.IsTraceEnabled())"
-            indent {
-                +"$protocol.InitializationLogger.Trace (\"CREATED toplevel object {0}\", this.PrintToString());"
-            }
+            +"Identify(protocol.Identities, RdId.Root.Mix(\"${decl.name}\"));"
+            +"Bind(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
         }
         +"}"
 

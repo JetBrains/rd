@@ -6,7 +6,6 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
-using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
@@ -29,7 +28,7 @@ namespace JetBrains.Rd.Tasks
     internal new SerializationCtx SerializationContext;
 
     //set via Set method
-    public Func<Lifetime, TReq, RdTask<TRes>> Handler { get; private set; }
+    [PublicAPI] public Func<Lifetime, TReq, RdTask<TRes>> Handler { get; private set; }
 
 
 
@@ -86,8 +85,7 @@ namespace JetBrains.Rd.Tasks
         try
         {
           var value = ReadRequestDelegate(SerializationContext, reader);
-          if (LogReceived.IsTraceEnabled()) 
-            LogReceived.Trace("endpoint `{0}`::({1}), taskId={2}, request = {3}", Location, RdId, taskId, value.PrintToString());
+          ReceiveTrace?.Log($"{this} taskId={taskId}, request = {value.PrintToString()}");
           rdTask = Handler(externalCancellation, value);
         }
         catch (Exception e)
@@ -106,7 +104,7 @@ namespace JetBrains.Rd.Tasks
             }
             catch (Exception ee)
             {
-              LogSend.Error($"Problem when responding to {this}, taskId={taskId}", ee);
+              ourLogSend.Error($"Problem when responding to {this}, taskId={taskId}", ee);
               wiredTask.Set(new RdFault(ee));
             }
           });
@@ -169,8 +167,7 @@ namespace JetBrains.Rd.Tasks
       var _ = task.Subscribe(Lifetime.Intersect(requestLifetime, myBindLifetime));
       Wire.Send(RdId, (writer) =>
       {
-        if (LogSend.IsTraceEnabled())
-          LogSend.Trace("call `{0}`::({1}) send request '{2}' : {3}", Location, RdId, taskId, request.PrintToString());
+        SendTrace?.Log($"{this} send request '{taskId}' : {request.PrintToString()}");
 
         taskId.Write(writer);
         WriteRequestDelegate(SerializationContext, writer, request);

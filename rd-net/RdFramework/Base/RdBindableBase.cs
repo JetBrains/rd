@@ -14,8 +14,9 @@ namespace JetBrains.Rd.Base
     #region Bound state: main
     
     public RdId RdId { get; set; }
-    
-    public RName Location { get; private set; } = new RName("<<not bound>>");   
+
+    internal static readonly RName NotBound = new RName("<<not bound>>");
+    public RName Location { get; private set; } = NotBound;   
     
     [CanBeNull] protected IRdDynamic Parent;
     
@@ -98,6 +99,7 @@ namespace JetBrains.Rd.Base
         pair.Value?.IdentifyPolymorphic(identities, id.Mix("." + pair.Key));
       }
     }
+    
     
     public virtual void Print(PrettyPrinter printer)
     {

@@ -4,13 +4,17 @@ using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
+using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Base
 {
   public abstract class RdReactiveBase : RdBindableBase, IRdReactive
   {    
-    internal static readonly ILog LogReceived = Protocol.TraceLogger.GetSublogger("RECV");
-    internal static readonly ILog LogSend = Protocol.TraceLogger.GetSublogger("SEND");
+    internal static readonly ILog ourLogReceived = Protocol.Logger.GetSublogger("RECV");
+    internal static readonly ILog ourLogSend = Protocol.Logger.GetSublogger("SEND");
+    
+    internal LogWithLevel? ReceiveTrace => ourLogReceived.Trace();
+    internal LogWithLevel? SendTrace => ourLogSend.Trace();
 
 
     #region Identification
@@ -102,5 +106,15 @@ namespace JetBrains.Rd.Base
     public abstract void OnWireReceived(UnsafeReader reader);
 
     #endregion
+
+
+    protected virtual string ShortName => GetType().Name;
+
+    public override string ToString()
+    {
+      return Location == NotBound ? 
+        GetType().ToString(false, true) : 
+        $"{ShortName} `{Location}`" + (RdId != RdId.Nil ? $" ({RdId})" : "");
+    }
   }
 }

@@ -123,12 +123,10 @@ namespace JetBrains.Rd.Impl
             if (evt.Kind != AddUpdateRemove.Remove) 
               me.WriteValueDelegate(sContext, stream, evt.NewValue);
 
-            if (LogSend.IsTraceEnabled())
-            {
-              LogSend.Trace("map `{0}` ({1}) :: {2} :: key = {3}{4}{5}", me.Location, me.RdId, evt.Kind, evt.Key.PrintToString()
-                , me.IsMaster     ? " :: version = " + version : ""
-                , evt.Kind != AddUpdateRemove.Remove  ? " :: value = " + evt.NewValue.PrintToString() : "");
-            }
+
+            SendTrace?.Log($"{me} :: {evt.Kind} :: key = {evt.Key.PrintToString()}"
+              + (me.IsMaster     ? " :: version = " + version : "")
+              + (evt.Kind != AddUpdateRemove.Remove  ? " :: value = " + evt.NewValue.PrintToString() : ""));
           });
 
         });
@@ -165,17 +163,17 @@ namespace JetBrains.Rd.Impl
         else if (!IsMaster) error = "Received ACK when not a Master";
         else if (!myPendingForAck.TryGetValue(key, out var pendingVersion)) error = "No pending for ACK";
         else if (pendingVersion < version)
-          error = string.Format("Pending version `{0}` < ACK version `{1}`", pendingVersion, version);
+          error = $"Pending version `{pendingVersion}` < ACK version `{version}`";
         // Good scenario
         else if (pendingVersion == version)
           myPendingForAck.Remove(key);
         //else do nothing, silently drop
 
         var isError = !string.IsNullOrEmpty(error);
-        if (LogReceived.IsTraceEnabled() || isError)
+        if (ourLogReceived.IsTraceEnabled() || isError)
         {
-          LogReceived.LogFormat(isError ? LoggingLevel.ERROR : LoggingLevel.TRACE,
-            "map `{0}` ({1})  :: ACK :: key = {2} :: version = {3}{4}", Location, RdId, key.PrintToString(), version,
+          ourLogReceived.LogFormat(isError ? LoggingLevel.ERROR : LoggingLevel.TRACE,
+            "{0}  :: ACK :: key = {1} :: version = {2}{3}", this, key.PrintToString(), version,
             isError ? " >> " + error : "");
         }
       }
@@ -189,28 +187,29 @@ namespace JetBrains.Rd.Impl
             case AddUpdateRemove.Add:
             case AddUpdateRemove.Update:
               var value = ReadValueDelegate(SerializationContext, stream);
-              if (LogReceived.IsTraceEnabled())
-              {
-                LogReceived.Trace("map `{0}` ({1})  :: {2} :: key = {3}{4} :: value = {5}", Location, RdId, kind,
-                  key.PrintToString(), msgVersioned ? " :: version = " + version : "", value.PrintToString());
-              }
+              
+              ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" +
+                                 (msgVersioned ? " :: version = " + version : "") +
+                                 $"value = {value.PrintToString()}"
+                                 );
+              
 
               if (msgVersioned || !IsMaster || !myPendingForAck.ContainsKey(key))
                 myMap[key] = value;
-              else LogReceived.Trace(">> CHANGE IGNORED");
+              else ReceiveTrace?.Log(">> CHANGE IGNORED");
 
               break;
 
             case AddUpdateRemove.Remove:
-              if (LogReceived.IsTraceEnabled())
-              {
-                LogReceived.Trace("map `{0}` ({1})  :: {2} :: key = {3}{4}", Location, RdId, kind,
-                  key.PrintToString(), msgVersioned ? " :: version = " + version : "");
-              }
+              
+              ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}"
+                + (msgVersioned ? " :: version = " + version : "")
+                );
+            
 
               if (msgVersioned || !IsMaster || !myPendingForAck.ContainsKey(key))
                 myMap.Remove(key);
-              else LogReceived.Trace(">> CHANGE IGNORED");
+              else ReceiveTrace?.Log(">> CHANGE IGNORED");
 
               break;
 
@@ -226,13 +225,12 @@ namespace JetBrains.Rd.Impl
             innerWriter.Write((1 << versionedFlagShift) | Ack);
             innerWriter.Write(version);
             WriteKeyDelegate.Invoke(SerializationContext, innerWriter, key);
-
-            if (LogSend.IsTraceEnabled())
-              LogSend.Trace("map `{0}` ({1}) :: ACK :: key = {2} :: version = {3}", Location, RdId, key.PrintToString(), version);
+            
+            SendTrace?.Log($"{this} :: ACK :: key = {key.PrintToString()} :: version = {version}");
           });
 
           if (IsMaster)
-            LogReceived.Error("Both ends are masters: {0}", Location);
+            ourLogReceived.Error("Both ends are masters: {0}", Location);
         }
       }
     }
@@ -363,6 +361,7 @@ namespace JetBrains.Rd.Impl
       }
     }
 
+    protected override string ShortName => "map";
 
     public override void Print(PrettyPrinter printer)
     {

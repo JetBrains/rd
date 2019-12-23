@@ -243,7 +243,7 @@ namespace JetBrains.Rd.Impl
           var existingType = myTypeMapping.First(p => p.Value == typeId).Key;
           throw new ArgumentException(string.Format("Can't register {0} with id {1}. Already registered {2}", typeof(T).FullName, typeId, existingType));
         }
-        Protocol.InitializationLogger.Trace("Registering type {0}, id={1}", typeof(T).Name, typeId);
+        Protocol.InitTrace?.Log($"Registering type {typeof(T).Name}, id={typeId}");
         
         myTypeMapping[typeof(T)] = typeId;
         myReaders[typeId] = (ctx, unsafeReader) => reader(ctx, unsafeReader);
@@ -341,7 +341,7 @@ namespace JetBrains.Rd.Impl
     private void RegisterToplevelInternal(ToplevelRegistration r)
     {
       if (!myRegisteredToplevels.Add(r.Type)) return;
-      Protocol.InitializationLogger.Trace("REGISTER serializers for {0}", r.Type.Name);
+      Protocol.InitTrace?.Log($"REGISTER serializers for {r.Type.Name}");
 
       r.Action(this);
     }

@@ -76,10 +76,8 @@ namespace JetBrains.Rd.Impl
             stream.Write((int)it.Kind);
             WriteValueDelegate(serializationContext, stream, it.Value);
 
-            if (LogSend.IsTraceEnabled())
-            {
-              LogSend.Trace("Set `{0}` ({1}) :: {2} :: {3}", Location, RdId, it.Kind, it.Value.PrintToString());
-            }
+            
+            SendTrace?.Log($"{this} :: {it.Kind} :: {it.Value.PrintToString()}");
           });
 
         });
@@ -93,7 +91,7 @@ namespace JetBrains.Rd.Impl
     {
       var kind = (AddRemove) stream.ReadInt();
       var value = ReadValueDelegate(SerializationContext, stream);
-      LogSend.Trace("Set `{0}` ({1}) :: {2} :: {3}", Location, RdId, kind, value.PrintToString());
+      ReceiveTrace?.Log($"{this} :: {kind} :: {value.PrintToString()}");
         
       using (UsingDebugInfo())
       {
@@ -140,18 +138,12 @@ namespace JetBrains.Rd.Impl
     }
 
 
-    public int Count
-    {
-      get { return mySet.Count; }
-    }
+    public int Count => mySet.Count;
 
-    public bool IsReadOnly
-    {
-      get { return mySet.IsReadOnly; }
-    }
+    public bool IsReadOnly => mySet.IsReadOnly;
 
 
-    public ISource<SetEvent<T>> Change { get { return mySet.Change; } }
+    public ISource<SetEvent<T>> Change => mySet.Change;
 
     #endregion
 
@@ -237,6 +229,7 @@ namespace JetBrains.Rd.Impl
     }
 
 
+    protected override string ShortName => "set";
     public override void Print(PrettyPrinter printer)
     {
       base.Print(printer);

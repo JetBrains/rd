@@ -4,7 +4,6 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
-using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
@@ -58,7 +57,7 @@ namespace JetBrains.Rd.Tasks
             externalCancellation.Terminate();
           }
           
-          Trace(RdReactiveBase.LogSend, "send response", taskResult);
+          Trace(RdReactiveBase.ourLogSend, "send response", taskResult);
           myWire.Send(RdId,
             writer =>
             {
@@ -67,7 +66,7 @@ namespace JetBrains.Rd.Tasks
         }
         else if (taskResult.Status == RdTaskStatus.Canceled) //we need to transfer cancellation to the other side
         {
-          Trace(RdReactiveBase.LogSend, "send cancellation");
+          Trace(RdReactiveBase.ourLogSend, "send cancellation");
           myWire.Send(RdId, writer => { writer.Write(Unit.Instance); }); //send cancellation to the other side
         }
       });
@@ -83,7 +82,7 @@ namespace JetBrains.Rd.Tasks
       {
         if (myIsEndpoint) //we are on endpoint side, so listening for cancellation
         {
-          Trace(RdReactiveBase.LogReceived, "received cancellation");
+          Trace(RdReactiveBase.ourLogReceived, "received cancellation");
           reader.ReadVoid(); //nothing just a void value
           ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
         }
@@ -91,10 +90,10 @@ namespace JetBrains.Rd.Tasks
         else // we are at call side, so listening no response and bind it if it's bindable
         {
           var resultFromWire = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, myCall.SerializationContext, reader);
-          Trace(RdReactiveBase.LogReceived, "received response", resultFromWire);
+          Trace(RdReactiveBase.ourLogReceived, "received response", resultFromWire);
           
           if (!ResultInternal.SetIfEmpty(resultFromWire))
-            Trace(RdReactiveBase.LogReceived, "response from wire was rejected because task already has result");
+            Trace(RdReactiveBase.ourLogReceived, "response from wire was rejected because task already has result");
         }
       }
     }
