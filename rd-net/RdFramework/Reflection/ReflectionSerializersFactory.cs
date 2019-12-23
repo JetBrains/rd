@@ -99,9 +99,9 @@ namespace JetBrains.Rd.Reflection
 
     public ISerializersContainer Cache { get; }
 
-    public ReflectionSerializersFactory([NotNull] ITypesCatalog typeCatalog, IScalarSerializers scalars = null)
+    public ReflectionSerializersFactory([NotNull] ITypesCatalog typeCatalog, IScalarSerializers scalars = null, Predicate<Type> blackListChecker = null)
     {
-      myScalars = scalars ?? new ScalarSerializer(typeCatalog);
+      myScalars = scalars ?? new ScalarSerializer(typeCatalog, blackListChecker);
       Cache = new SerializersContainer(mySerializers);
       Serializers.RegisterFrameworkMarshallers(Cache);
     }
