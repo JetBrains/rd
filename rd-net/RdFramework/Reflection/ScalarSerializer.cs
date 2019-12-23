@@ -24,16 +24,27 @@ namespace JetBrains.Rd.Reflection
     /// Types catalog required for providing information about statically discovered types during concrete serializer
     /// construction for sake of possibility for Rd serializers to lookup real type by representing RdId
     /// </summary>
-    private readonly ITypesCatalog myTypesCatalog;
+    [CanBeNull] private readonly ITypesCatalog myTypesCatalog;
 
     /// <summary>
-    /// Collection instance-specific serializers (polymorphic possible)
+    /// Collection static serializers (polymorphic is not possible here! Only instance serializer can be polymorphic)
     /// </summary>
-    private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
+    [NotNull] private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
 
-    public ScalarSerializer([NotNull] ITypesCatalog typesCatalog)
+    /// <summary>
+    /// Black listed type. Any attempt to create serializer for these types should throw exception.
+    /// Used to prevent attempts to pass an object which is well-known as non-serializable.
+    /// For example, any component of tree-like structure or object graph should not be passed to
+    /// serializer
+    ///
+    /// This predicate should return true only for blacklisted type
+    /// </summary>
+    [NotNull] private readonly Predicate<Type> myBlackListChecker;
+
+    public ScalarSerializer([NotNull] ITypesCatalog typesCatalog, Predicate<Type> blackListChecker = null)
     {
       myTypesCatalog = typesCatalog ?? throw new ArgumentNullException(nameof(typesCatalog));
+      myBlackListChecker = blackListChecker ?? (_ => false);
       Serializers.RegisterFrameworkMarshallers(this);
     }
 
@@ -47,6 +58,11 @@ namespace JetBrains.Rd.Reflection
       if (myStaticSerializers.TryGetValue(type, out var pair))
       {
         return pair;
+      }
+
+      if (myBlackListChecker(type))
+      {
+        Assertion.Fail($"Attempt to create serializer for black-listed type: {type.ToString(true)}");
       }
 
       var result = CreateSerializer(type);
