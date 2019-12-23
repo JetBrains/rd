@@ -318,10 +318,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 itemType.substitutedName(scope, rawType, omitNullability)
             } else {
                 val substitutedName = itemType.substitutedName(scope, true, omitNullability)
-                when (itemType) {
-                    is PredefinedType.string -> substitutedName.wrapper()
-                    is PredefinedType -> substitutedName.optional()
-                    is Enum -> substitutedName.optional()
+                val item = itemType
+                when {
+                    item is PredefinedType.string -> substitutedName.wrapper()
+                    item is PredefinedType -> substitutedName.optional()
+                    item is Enum -> substitutedName.optional()
+                    item is Declaration && item.isIntrinsic -> substitutedName.optional()
                     else -> substitutedName.wrapper()
                 }
             }
