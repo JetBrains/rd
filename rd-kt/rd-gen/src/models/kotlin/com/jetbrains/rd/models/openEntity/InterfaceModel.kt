@@ -1,10 +1,8 @@
 package com.jetbrains.rd.models.openEntity
 
-import com.jetbrains.rd.generator.nova.Ext
+import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.string
 import com.jetbrains.rd.generator.nova.PredefinedType.void
-import com.jetbrains.rd.generator.nova.field
-import com.jetbrains.rd.generator.nova.method
 
 
 class InterfaceModel : Ext(OpenEntityRoot) {
@@ -78,4 +76,14 @@ class InterfaceModel : Ext(OpenEntityRoot) {
     val multipleInterfaceDerivedOpenTestStruct = openstruct extends  testOpenStruct implements listOf(marker1, marker2) with {
         field("multipleInterfaceDerivedTestOpenStructField", string)
     }
+
+
+    // open class with nullable field
+    val baseClassWithNullable = baseclass{
+        property("testNullableString", string.nullable)
+    }
+
+    val openClassWithNullable = openclass extends baseClassWithNullable{}
+
+    val concreteClassWithNullable = classdef extends openClassWithNullable{}
 }
