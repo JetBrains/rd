@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Collections.Viewable;
+using JetBrains.Core;
 using JetBrains.Lifetimes;
 using JetBrains.Threading;
 using NUnit.Framework;
@@ -144,7 +146,37 @@ namespace Test.Lifetimes.Threading
       Assert.AreEqual(Enumerable.Range(0, n).Reverse().ToList(), log);
     }
     
+  
+    [Test]
+    public void TestAwaitDoesntChangeScheduler()
+    {
+
+      var scheduler = SingleThreadScheduler.RunOnSeparateThread(TestLifetime, "TestScheduler");
+      var channel = new AsyncChannel<Unit>(TestLifetime);
+      var actor = new Actor<int>("TestActor", TestLifetime, async x =>
+        {
+          Assert.AreEqual(scheduler, TaskScheduler.Current);
+          var task = channel.ReceiveAsync();
+          await task;
+          Assert.AreEqual(scheduler, TaskScheduler.Current);
+        }
+      , scheduler);
+
+      //first one - immediate
+      actor.SendAsync(1);
+      channel.SendAsync(Unit.Instance);
+      
+      //second one - await after timeout
+      Thread.Sleep(50);
+      channel.SendAsync(Unit.Instance);
+      Thread.Sleep(50);
+      channel.SendAsync(Unit.Instance);
+      
+      actor.WaitForEmpty();
+    }
     
   }
+  
+  
 #endif
 }
