@@ -17,6 +17,10 @@ namespace JetBrains.Rd.Tasks
 
     private IWire myWire;
 
+    public IProtocol Proto => myCall.Proto;
+    public SerializationCtx SerializationContext => myCall.SerializationContext;
+    public RName Location { get; }
+
     public WiredRdTask(RdCall<TReq, TRes> call, RdId rdId,
       IScheduler wireScheduler, bool isEndpoint)
     {
@@ -25,6 +29,7 @@ namespace JetBrains.Rd.Tasks
       RdId = rdId;
       WireScheduler = wireScheduler;
       myWire = call.Wire;
+      Location = call.Location.Sub(rdId);
     }
 
     
@@ -105,5 +110,7 @@ namespace JetBrains.Rd.Tasks
       
       log.Trace((myIsEndpoint ? "endpoint": "call") + $" `{myCall}` :: taskId={RdId} :: {message} "+additional?.PrintToString() );
     }
+    
+    
   }
 }
