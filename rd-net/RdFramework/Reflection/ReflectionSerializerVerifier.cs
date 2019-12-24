@@ -9,6 +9,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
+using JetBrains.Serialization;
 using JetBrains.Util;
 using JetBrains.Util.Util;
 
@@ -185,16 +186,10 @@ namespace JetBrains.Rd.Reflection
                genericDefinition == typeof(RdSet<>) ||
                genericDefinition == typeof(RdMap<,>) ||
                (genericDefinition == typeof(RdCall<,>) && IsScalar(arguments[0]) && IsScalar(arguments[1])) ||
-               IsFromRdProperty(typeInfo); // hack to support UProperty in RdExt
-
-        bool IsFromRdProperty(TypeInfo tInfo)
-        {
-          var genericArguments = tInfo.GetGenericArguments();
-          if (genericArguments.Length != 1)
-            return false;
-          var rdProperty = typeof(IViewableProperty<>).MakeGenericType(typeInfo.GetGenericArguments());
-          return rdProperty.GetTypeInfo().IsAssignableFrom(implementingType);
-        }
+               // UProperty support
+               typeInfo.GetInterface("JetBrains.Collections.Viewable.IViewableProperty`1")?.GetGenericTypeDefinition() == typeof(IViewableProperty<>) ||
+               // USignal support
+               typeInfo.GetInterface("JetBrains.Collections.Viewable.ISignal`1")?.GetGenericTypeDefinition() == typeof(ISignal<>);
       }
 
       var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
@@ -353,7 +348,7 @@ namespace JetBrains.Rd.Reflection
 
     public static bool HasIntrinsic(TypeInfo t)
     {
-      return HasIntrinsicMethods(t) || HasIntrinsicFields(t) || HasRdExtAttribute(t);
+      return HasIntrinsicNonProtocolMethods(t) || HasIntrinsicProtocolMethods(t) || HasIntrinsicFields(t) || HasRdExtAttribute(t);
     }
 
     public static bool HasIntrinsicAttribute(TypeInfo t)
@@ -376,17 +371,37 @@ namespace JetBrains.Rd.Reflection
 
     }
 
-    public static bool HasIntrinsicMethods(TypeInfo t)
+    public static bool HasIntrinsicNonProtocolMethods(TypeInfo t)
     {
       foreach (var member in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
       {
-        if (member.Name == "Read" || member.Name == "Write")
+        if ((member.Name == "Read" || member.Name == "Write") &&
+            member.GetParameters() is var p && p.Length == 1 && p[0].ParameterType == typeof(UnsafeReader))
         {
           return true;
         }
       }
 
       return false;
+    }
+
+
+    public static bool HasIntrinsicProtocolMethods(TypeInfo t)
+    {
+      foreach (var method in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
+      {
+        if (method.Name == "Read" || method.Name == "Write" && method.GetParameters().Any(p => p.ParameterType == typeof(SerializationCtx)))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    public static bool IsRpcAttributeDefined(Type @interface)
+    {
+      return @interface.IsDefined(typeof(RdRpcAttribute), false);
     }
   }
 }

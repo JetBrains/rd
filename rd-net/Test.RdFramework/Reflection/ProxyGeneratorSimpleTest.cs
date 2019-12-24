@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Reflection;
+using JetBrains.Serialization;
 using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
@@ -47,6 +48,16 @@ namespace Test.RdFramework.Reflection
       proxy.RunTests(new TestRunRequest());
     }
 
+    [Test]
+    public void TestNulls()
+    {
+      var proxy = SFacade.ActivateProxy<IUnitTestRemoteAgent>(TestLifetime, ServerProtocol);
+      var client = CFacade.Activator.ActivateBind<UnitTestRemoteAgent>(TestLifetime, ClientProtocol);
+      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+      proxy.RunTests(null);
+      proxy.RunTests(new TestRunRequest());
+    }
+
     [RdRpc]
     public interface ISimpleCalls
     {
@@ -72,6 +83,15 @@ namespace Test.RdFramework.Reflection
     }
     public class TestRunRequest
     {
+      public IntrinsicType Val;
+
+      public sealed class IntrinsicType
+      {
+        public static IntrinsicType Read(UnsafeReader reader) => new IntrinsicType();
+        public void Write(UnsafeWriter writer)
+        {
+        }
+      }
     }
 
     [RdExt]

@@ -46,6 +46,18 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public void TestRdSimpleMethods()
+    {
+      WithExts<IntrinsicExt4>((c, s) =>
+      {
+        c.Simple.Value = new NoRedIntrinsic4(1,1,1);
+        Assert.AreEqual(0, s.Simple.Value.Red);
+        Assert.AreEqual(1, s.Simple.Value.Green);
+        Assert.AreEqual(1, s.Simple.Value.Blue);
+      });
+    }
+
+    [Test]
     public void TestExternalSerialization()
     {
       void Reg(ISerializersContainer cache)
@@ -62,7 +74,7 @@ namespace Test.RdFramework.Reflection
       Reg(CFacade.SerializersFactory.Cache);
       Reg(SFacade.SerializersFactory.Cache);
 
-      WithExts<IntrinsicExt4>((c, s) =>
+      WithExts<NoIntrinsicExt>((c, s) =>
       {
         c.Simple.Value = new ScalarTests.ColorFields(1,1,1);
         Assert.AreEqual(0, s.Simple.Value.Red);
@@ -91,6 +103,13 @@ namespace Test.RdFramework.Reflection
 
     [RdExt]
     public class IntrinsicExt4 : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<NoRedIntrinsic4> Simple { get; }
+    }
+
+
+    [RdExt]
+    public class NoIntrinsicExt : RdExtReflectionBindableBase
     {
       public IViewableProperty<ScalarTests.ColorFields> Simple { get; }
     }
@@ -167,6 +186,36 @@ namespace Test.RdFramework.Reflection
         Red = red;
         Green = green;
         Blue = blue;
+      }
+    }
+
+    /// <summary>
+    /// Intrinsic way 4: implemented directly in type via Non-protocol methods with unsafe writers
+    /// </summary>
+    [RdScalar] // not required
+    public class NoRedIntrinsic4
+    {
+      public int Red { get;  }
+      public int Green { get; }
+      public int Blue { get; }
+
+      public NoRedIntrinsic4(int red, int green, int blue)
+      {
+        Red = red;
+        Green = green;
+        Blue = blue;
+      }
+
+      public static NoRedIntrinsic4 Read(UnsafeReader reader)
+      {
+        return new NoRedIntrinsic4(0 /*reader.ReadByte()*/, reader.ReadByte(), reader.ReadByte());
+      }
+
+      public void Write(UnsafeWriter writer)
+      {
+        // writer.Write((byte) value.Red);
+        writer.Write((byte) Green);
+        writer.Write((byte) Blue);
       }
     }
 

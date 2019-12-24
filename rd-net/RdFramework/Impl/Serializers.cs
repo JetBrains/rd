@@ -269,6 +269,7 @@ namespace JetBrains.Rd.Impl
         if (unknownInstanceReader == null)
         {
           myRegistrar?.TryRegister(typeId, this);
+          myRegistrar?.TryRegister(typeof(T), this);
           if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed

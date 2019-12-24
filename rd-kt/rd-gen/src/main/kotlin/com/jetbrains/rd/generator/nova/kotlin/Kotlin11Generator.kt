@@ -501,9 +501,6 @@ open class Kotlin11Generator(
                 constantTrait(decl)
                 abstractDeclarationTrait(decl)
                 println()
-                customSerializersTrait(decl)
-                println()
-                constantTrait(decl)
             }
         }
 

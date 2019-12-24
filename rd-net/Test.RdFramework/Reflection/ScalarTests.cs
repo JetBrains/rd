@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
+using JetBrains.Serialization;
 using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
@@ -178,6 +179,70 @@ namespace Test.RdFramework.Reflection
         Assert.AreEqual(1, s.IntStruct.Value.Original);
         Assert.AreEqual(2, s.IntStruct.Value.Override);
       });
+    }
+
+
+    [Test]
+    public void TestDictionary()
+    {
+      RunScalarTest(new Dictionary<string, string>() { {"a", "b"}}, CollectionAssert.AreEqual);
+    }
+
+    [Test]
+    public void TestIDictionary()
+    {
+      RunScalarTest(new Dictionary<string, string>() { {"a", "b"}} as IDictionary<string, string>, CollectionAssert.AreEqual);
+    }
+
+#if !NET35
+    [Test]
+    public void TestReadOnlyDictionary()
+    {
+      RunScalarTest(new Dictionary<string, string>() { {"a", "b"}} as IReadOnlyDictionary<string, string>, CollectionAssert.AreEqual);
+    }
+#endif
+
+
+    [Test]
+    public void TestCyclic()
+    {
+      RunScalarTest(new RedBlackList {Start = new RedBlackList.BlackNode() {Next = new RedBlackList.RedNode()}}, (a, b) =>
+      {
+        Assert.NotNull(b.Start.Next);
+        Assert.Null(b.Start.Next.Next);
+      });
+    }
+
+    sealed class RedBlackList
+    {
+      public BlackNode Start;
+      public sealed class BlackNode
+      {
+        public RedNode Next;
+      }
+
+      public sealed class RedNode
+      {
+        public BlackNode Next;
+      }
+    }
+    
+    public void RunScalarTest<T>(T instance, Action<T, T> checkEqual)
+    {
+      var scalar = new ScalarSerializer(CFacade.TypesCatalog);
+      var serializerPair = scalar.GetOrCreate(typeof(T));
+      var reader = serializerPair.GetReader<T>();
+      var writer = serializerPair.GetWriter<T>();
+      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+      {
+        unsafe
+        {
+          writer(default, cookie.Writer, instance);
+          var unsafeReader = UnsafeReader.CreateReader(cookie.Data, cookie.Count);
+          var restored = reader(default, unsafeReader);
+          checkEqual(instance, restored);
+        }
+      }
     }
 
     [RdExt]

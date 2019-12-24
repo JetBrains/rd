@@ -6,6 +6,7 @@ namespace Test.RdFramework.Reflection
   [RdExt]
   public sealed class RootModel : RdExtReflectionBindableBase
   {
+    // Can be nested but will not be activated and bind
     public NestedModel Nested { get; }
 
     public IViewableProperty<EmptyOK> EmptyOK { get; }
