@@ -9,6 +9,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Tasks;
 using JetBrains.Util;
+using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Reflection
 {
@@ -110,6 +111,12 @@ namespace JetBrains.Rd.Reflection
     {
       if (!typeof(TInterface).IsInterface)
         throw new ArgumentException("Only interfaces are supported.");
+
+      if (typeof(TInterface).GetGenericArguments().Length > 0)
+        throw new ArgumentException("Generic interfaces are not supported.");
+
+      if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
+        throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
 
       var moduleBuilder = myModuleBuilder.Value;
       var className = typeof(TInterface).Name.Substring(1);
@@ -333,8 +340,21 @@ namespace JetBrains.Rd.Reflection
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
-      myScalarSerializers.GetOrCreate(responseType);
-      myScalarSerializers.GetOrCreate(requestType);
+
+      Assertion.Assert(!requestType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, requestType);
+      Assertion.Assert(!responseType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, responseType);
+
+      try
+      {
+        if (!responseType.IsInterface)
+          myScalarSerializers.GetOrCreate(responseType);
+        if (!requestType.IsInterface)
+          myScalarSerializers.GetOrCreate(requestType);
+      }
+      catch (Exception e)
+      {
+        throw new Exception($"Unable to create proxy for {typeof(TInterface).ToString(true)}. {e.Message}", e);
+      }
 
       var fieldType = typeof(IRdCall<,>).MakeGenericType(requestType, responseType);
       var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);

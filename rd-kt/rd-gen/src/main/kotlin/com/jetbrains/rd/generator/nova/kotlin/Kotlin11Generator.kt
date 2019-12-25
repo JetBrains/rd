@@ -11,7 +11,6 @@ import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printer
-
 import java.io.File
 
 fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
@@ -502,9 +501,6 @@ open class Kotlin11Generator(
                 constantTrait(decl)
                 abstractDeclarationTrait(decl)
                 println()
-                customSerializersTrait(decl)
-                println()
-                constantTrait(decl)
             }
         }
 

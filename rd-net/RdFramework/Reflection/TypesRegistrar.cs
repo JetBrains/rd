@@ -26,6 +26,9 @@ namespace JetBrains.Rd.Reflection
 
     public void TryRegister(Type clrType, ISerializers serializers)
     {
+      if (clrType.IsInterface || clrType.IsAbstract)
+        return;
+
       Register(clrType, serializers);
     }
 
