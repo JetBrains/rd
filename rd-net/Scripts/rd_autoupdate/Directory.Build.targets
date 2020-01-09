@@ -1,0 +1,35 @@
+<Project>
+  <PropertyGroup>
+    <DotnetProducts>C:\work\main</DotnetProducts>
+    <DotnetHive>Main</DotnetHive>
+    <DotnetProductsOut>$(DotnetProducts)\Bin.$(DotnetHive)</DotnetProductsOut>
+  </PropertyGroup>
+  <ItemGroup>
+    <RdFrameworkPackage Include="$(DotnetProducts)\Packages\JetBrains.RdFramework.*\*.nupkg"/>
+    <RdFrameworkPackageNet461 Include="$(DotnetProducts)\Packages\JetBrains.RdFramework.*\lib\net461\JetBrains.RdFramework.*"/>
+    <RdFrameworkOutput Include="$(OutputPath)\JetBrains.RdFramework.*" />
+    <LifetimesPackage Include="$(DotnetProducts)\Packages\JetBrains.Lifetimes.*\*.nupkg"/>
+    <LifetimesPackageNet461 Include="$(DotnetProducts)\Packages\JetBrains.Lifetimes.*\lib\net461\JetBrains.Lifetimes.*"/>
+    <LifetimesOutput Include="$(OutputPath)\JetBrains.Lifetimes.*" />
+  </ItemGroup>
+  <Target Name="CopyToRd" AfterTargets="AfterBuild"  Condition="'$(TargetFramework)' == 'net461'">
+    <Copy SourceFiles="@(RdFrameworkOutput)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
+    <CombinePath BasePath="@(RdFrameworkPackage->'%(RootDir)%(Directory)')" Paths="lib\net461">
+        <Output TaskParameter="CombinedPaths" ItemName="RdFrameworkNet461Dir" />
+    </CombinePath>
+    <Copy SourceFiles="@(RdFrameworkOutput)" DestinationFolder="@(RdFrameworkNet461Dir)" ContinueOnError="false" />
+
+    <Copy SourceFiles="@(LifetimesOutput)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
+    <CombinePath BasePath="@(LifetimesPackage->'%(RootDir)%(Directory)')" Paths="lib\net461">
+        <Output TaskParameter="CombinedPaths" ItemName="LifetimesNet461Dir" />
+    </CombinePath>
+    <Copy SourceFiles="@(LifetimesOutput)" DestinationFolder="@(LifetimesNet461Dir)" ContinueOnError="false" />
+  </Target>
+  <Target Name="CleanRd" AfterTargets="Clean"  Condition="'$(TargetFramework)' == 'net461'">
+    <Unzip SourceFiles="@(RdFrameworkPackage)" DestinationFolder="@(RdFrameworkPackage->'%(RootDir)%(Directory)')"/>
+    <Copy SourceFiles="@(RdFrameworkPackageNet461)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
+
+    <Unzip SourceFiles="@(LifetimesPackage)" DestinationFolder="@(LifetimesPackage->'%(RootDir)%(Directory)')"/>
+    <Copy SourceFiles="@(LifetimesPackageNet461)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
+  </Target>
+</Project>

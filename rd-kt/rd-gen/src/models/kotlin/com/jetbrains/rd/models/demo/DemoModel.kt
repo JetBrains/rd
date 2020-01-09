@@ -26,6 +26,10 @@ object DemoRoot : Root(
 
 @ExperimentalUnsignedTypes
 object DemoModel : Ext(DemoRoot) {
+    private val `class` = structdef("class") {
+        field("true", PredefinedType.string)
+    }
+
     private val MyEnum = enum {
         (+"default").doc("Dummy field with keyword-like name")
         +"kt"
@@ -143,6 +147,8 @@ object DemoModel : Ext(DemoRoot) {
         val cc = const("const_for_default", PredefinedType.string, "192")
 
         property("property_with_default", cc)
+
+        property("if", `class`)
     }
 }
 

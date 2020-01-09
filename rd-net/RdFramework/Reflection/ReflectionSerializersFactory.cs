@@ -49,6 +49,14 @@ namespace JetBrains.Rd.Reflection
     {
     }
 
+    /// <summary>
+    /// Provides external marshaller for this type
+    /// </summary>
+    /// <param name="marshaller">
+    /// A type which implements <see cref="IIntrinsicMarshaller{T}"/> for this type or any base interface.
+    /// Keep in mind that if you provide an serializer for base interface a runtime casting error is possible on the
+    /// receiver side if receiver want to have an inheritor from this interface
+    /// </param>
     public RdScalarAttribute(Type marshaller)
     {
       Marshaller = marshaller;

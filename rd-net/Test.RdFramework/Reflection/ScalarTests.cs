@@ -213,6 +213,17 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+    [Test]
+    public void TestInvalidPointers()
+    {
+      Assert.Throws<ArgumentException>(() => { RunScalarTest(new NonScalarPtr(), (a, b) => { }); });
+    }
+
+    private class NonScalarPtr
+    {
+      public Action X;
+    }
+
     sealed class RedBlackList
     {
       public BlackNode Start;

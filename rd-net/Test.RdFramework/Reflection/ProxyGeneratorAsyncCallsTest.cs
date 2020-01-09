@@ -49,7 +49,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
+    internal class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
     {
       public Task<string> GetStringAsync()
       {
@@ -80,9 +80,9 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTestDifferentName
     {
-      public Task<AColor> QueryColor()
+      public async Task<AColor> QueryColor()
       {
-        return Task.FromResult(new AColor(10, 10, 10));
+        return await Task.FromResult(new AColor(10, 10, 10));
       }
 
       public void SetPath(FileSystemPath animal)

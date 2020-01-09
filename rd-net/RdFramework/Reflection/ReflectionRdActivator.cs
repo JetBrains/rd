@@ -203,7 +203,7 @@ namespace JetBrains.Rd.Reflection
         var bindableChildren = ((IReflectionBindable) instance).BindableChildren;
 
         var interfaceMap = typeInfo.GetInterfaceMap(rpcInterface);
-        var implementingMethods = interfaceMap.TargetMethods;
+        var interfaceMethods = interfaceMap.InterfaceMethods;
 
         // Dynamic adapters for Properties are not required, so skip them
         var ignoreMethods = new HashSet<string>(StringComparer.Ordinal);
@@ -213,25 +213,25 @@ namespace JetBrains.Rd.Reflection
           ignoreMethods.Add(propertyInfo.GetGetMethod()?.Name);
         }
 
-        foreach (var implMethod in implementingMethods)
+        foreach (var interfaceMethod in interfaceMethods)
         {
-          if (ignoreMethods.Contains(implMethod.Name))
+          if (ignoreMethods.Contains(interfaceMethod.Name))
             continue;
 
-          var adapter = myProxyGenerator.CreateAdapter(typeInfo, implMethod);
+          var adapter = myProxyGenerator.CreateAdapter(rpcInterface, interfaceMethod);
 
-          var name = ProxyGenerator.ProxyFieldName(implMethod);
-          var requestType = ProxyGenerator.GetRequstType(implMethod)[0];
+          var name = ProxyGenerator.ProxyFieldName(interfaceMethod);
+          var requestType = ProxyGenerator.GetRequstType(interfaceMethod)[0];
           EnsureFakeTupleRegistered(requestType);
 
-          var responseNonTaskType = ProxyGenerator.GetResponseType(implMethod, unwrapTask: true);
-          var responseType = ProxyGenerator.GetResponseType(implMethod, unwrapTask: false);
+          var responseNonTaskType = ProxyGenerator.GetResponseType(interfaceMethod, unwrapTask: true);
+          var responseType = ProxyGenerator.GetResponseType(interfaceMethod, unwrapTask: false);
           var endPointType = typeof(RdCall<,>).MakeGenericType(requestType, responseNonTaskType);
           var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
-          SetAsync(implMethod, endpoint);
+          SetAsync(interfaceMethod, endpoint);
           if (endpoint is RdReactiveBase reactiveBase)
             reactiveBase.ValueCanBeNull = true;
-          if (ProxyGenerator.IsSync(implMethod))
+          if (ProxyGenerator.IsSync(interfaceMethod))
           {
             var delType = typeof(Func<,,>).MakeGenericType(typeof(Lifetime), requestType, typeof(RdTask<>).MakeGenericType(responseNonTaskType));
             var @delegate = adapter.CreateDelegate(delType, instance);
