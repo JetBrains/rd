@@ -11,6 +11,7 @@ interface IPrintable {
 
 fun Any?.print(printer: PrettyPrinter) {
     when (this) {
+        is Unit -> printer.print("<unit>")
         is IPrintable -> this.print(printer)
         null -> printer.print("<null>")
         is String -> printer.print("\"$this\"")

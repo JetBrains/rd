@@ -129,7 +129,7 @@ namespace JetBrains.Rd.Impl
           var me = sendContext.This;
           writer.Write(me.myMasterVersion);
           me.WriteValueDelegate(sContext, writer, evt);
-          SendTrace?.Log($"property `{me.Location}` ({me.RdId}):: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
+          SendTrace?.Log($"{this} :: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
         });
       });
 
@@ -155,7 +155,7 @@ namespace JetBrains.Rd.Impl
 
       var rejected = IsMaster && version < myMasterVersion;
         
-      ReceiveTrace?.Log($"property `{Location}` ({RdId}):: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
+      ReceiveTrace?.Log($"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
 
       if (rejected) return;
         
@@ -208,6 +208,10 @@ namespace JetBrains.Rd.Impl
     public override void Print(PrettyPrinter printer)
     {
       base.Print(printer);
+      
+      if (!printer.PrintContent)
+        return;
+      
       printer.Print("(ver=" + myMasterVersion + ") [");
       if (Maybe.HasValue)
       {

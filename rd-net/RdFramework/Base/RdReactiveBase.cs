@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Impl;
+using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 using JetBrains.Util.Util;
 
@@ -106,15 +107,6 @@ namespace JetBrains.Rd.Base
     public abstract void OnWireReceived(UnsafeReader reader);
 
     #endregion
-
-
-    protected virtual string ShortName => GetType().Name;
-
-    public override string ToString()
-    {
-      return Location == NotBound ? 
-        GetType().ToString(false, true) : 
-        $"{ShortName} `{Location}`" + (RdId != RdId.Nil ? $" ({RdId})" : "");
-    }
+    
   }
 }

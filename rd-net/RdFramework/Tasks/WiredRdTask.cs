@@ -108,9 +108,10 @@ namespace JetBrains.Rd.Tasks
       if (!log.IsTraceEnabled())
         return;
       
-      log.Trace((myIsEndpoint ? "endpoint": "call") + $" `{myCall}` :: taskId={RdId} :: {message} "+additional?.PrintToString() );
+      log.Trace($"{this} :: {message}" + (additional != null ? ": " + additional.PrintToString() : ""));
     }
-    
-    
+
+    public override string ToString() => $"{myCall}, taskId={RdId}";
+
   }
 }

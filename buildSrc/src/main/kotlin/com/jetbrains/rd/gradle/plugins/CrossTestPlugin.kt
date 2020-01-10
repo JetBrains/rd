@@ -40,6 +40,7 @@ class CrossTestPlugin : Plugin<Project> {
 
             fun CrossTestTaskKt.initialize() {
                 dependsOn("classes")
+                dependsOn(":rd-net:buildCrossTests")
                 classpath += files(target.buildDir
                         .resolve("classes")
                         .resolve("kotlin")

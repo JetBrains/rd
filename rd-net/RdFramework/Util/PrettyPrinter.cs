@@ -43,8 +43,7 @@ namespace JetBrains.Rd.Util
     #endregion
     
     #region Settings for PrettyPriter clients
-    [PublicAPI] public bool PrintContent { get; set; } 
-    [PublicAPI] public bool PrintLocation { get; set; }
+    [PublicAPI] public bool PrintContent { get; set; } = true;
     #endregion
     
     

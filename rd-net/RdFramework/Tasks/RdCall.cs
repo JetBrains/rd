@@ -85,7 +85,7 @@ namespace JetBrains.Rd.Tasks
         try
         {
           var value = ReadRequestDelegate(SerializationContext, reader);
-          ReceiveTrace?.Log($"{this} taskId={taskId}, request = {value.PrintToString()}");
+          ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
           rdTask = Handler(externalCancellation, value);
         }
         catch (Exception e)
@@ -104,7 +104,7 @@ namespace JetBrains.Rd.Tasks
             }
             catch (Exception ee)
             {
-              ourLogSend.Error($"Problem when responding to {this}, taskId={taskId}", ee);
+              ourLogSend.Error($"Problem when responding to `{wiredTask}`", ee);
               wiredTask.Set(new RdFault(ee));
             }
           });
@@ -167,7 +167,7 @@ namespace JetBrains.Rd.Tasks
       var _ = task.Subscribe(Lifetime.Intersect(requestLifetime, myBindLifetime));
       Wire.Send(RdId, (writer) =>
       {
-        SendTrace?.Log($"{this} send request '{taskId}' : {request.PrintToString()}");
+        SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");
 
         taskId.Write(writer);
         WriteRequestDelegate(SerializationContext, writer, request);
@@ -185,5 +185,7 @@ namespace JetBrains.Rd.Tasks
     {
       value.RdId.Write(writer);
     }
+
+    protected override string ShortName => Handler == null ? "call" : "endpoint";
   }
 }

@@ -190,7 +190,7 @@ namespace JetBrains.Rd.Impl
               
               ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" +
                                  (msgVersioned ? " :: version = " + version : "") +
-                                 $"value = {value.PrintToString()}"
+                                 $" :: value = {value.PrintToString()}"
                                  );
               
 
@@ -366,7 +366,8 @@ namespace JetBrains.Rd.Impl
     public override void Print(PrettyPrinter printer)
     {
       base.Print(printer);
-
+      if (!printer.PrintContent) return;
+      
       printer.Print(" [");
       if (Count > 0) printer.Println();
 

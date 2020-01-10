@@ -34,7 +34,7 @@ Trace | SEND                      | property `DemoServer.DemoModel.polymorphic_o
 ) 
 Trace | SEND                      | property `DemoServer.DemoModel.date` :: ver = 0, value = Thu Jan 01 03:00:13 MSK 1970 
 Trace | SEND                      | property `DemoServer.DemoModel.enum` :: ver = 0, value = kt 
-Trace | SEND                      | signal `DemoServer.DemoModel.extModel.checker` :: value = kotlin.Unit 
+Trace | SEND                      | signal `DemoServer.DemoModel.extModel.checker` :: value = <unit> 
 Trace | RECV                      | property `DemoServer.DemoModel.property_with_default` :: oldver = 0, newver = 0, value = "192" 
 Trace | RECV                      | property `DemoServer.DemoModel.boolean_property` :: oldver = 0, newver = 0, value = false 
 Trace | RECV                      | property `DemoServer.DemoModel.boolean_array` :: oldver = 0, newver = 0, value = "false, true, false" 
@@ -66,4 +66,4 @@ Trace | RECV                      | property `DemoServer.DemoModel.polymorphic_o
   openString = "C# instance open string"
 ) 
 Trace | RECV                      | property `DemoServer.DemoModel.enum` :: oldver = 0, newver = 0, value = net 
-Trace | RECV                      | signal `DemoServer.DemoModel.extModel.checker` :: value = kotlin.Unit 
+Trace | RECV                      | signal `DemoServer.DemoModel.extModel.checker` :: value = <unit> 

@@ -315,6 +315,7 @@ namespace JetBrains.Rd.Impl
     public override void Print(PrettyPrinter printer)
     {
       base.Print(printer);
+      if (!printer.PrintContent) return;
 
       printer.Print(" [");
       if (Count > 0) printer.Println();

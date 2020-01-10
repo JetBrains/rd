@@ -171,11 +171,6 @@ namespace JetBrains.Rd.Base
           break;
         case IEnumerable enumerable:
         {
-          printer.Print(enumerable.GetType().ToString(false, true));
-          if (me is ICollection collection)
-          {
-            printer.Print($"(count={collection.Count})");  
-          }
 
           if (!printer.PrintContent) break;
           
