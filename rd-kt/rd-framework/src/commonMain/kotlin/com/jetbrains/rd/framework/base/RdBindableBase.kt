@@ -144,7 +144,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     operator fun <T : List<IRdBindable?>> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
 
 
-    fun synchronizeWith(lifetime: Lifetime, otherBindable: RdBindableBase) {
+    fun synchronizeWith(lifetime: Lifetime, otherBindable: RdBindableBase, accepts: (Any?) -> Boolean = { true }) {
         require (otherBindable::class == this::class) { "Can't synchronize ${this::class} with ${otherBindable::class}" }
 
         //todo so the trick is that exts can appear in different order and sometimes
@@ -168,7 +168,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                     ?: counterpart.bindableChildren.firstOrNull { it.first == name }?.second // try searching by name in case bindable child lists are different (i.e. extern root is present)
                     ?: counterpart.getOrCreateExtension(name) { value.deepClonePolymorphic() }
 
-                synchronizePolymorphic(lifetime, value, other)
+                ModelSynchronizer(accepts).synchronizePolymorphic(lifetime, value, other)
             }
         }
 
