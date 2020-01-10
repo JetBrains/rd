@@ -14,4 +14,4 @@ val portFile = File(rdTmpDir, "port.txt")
         return field
     }
 
-val portFileStamp = portFile.resolveSibling("port.txt.stamp")
+val portFileStamp = portFile.resolveSibling("port.txt.stamp").canonicalFile
