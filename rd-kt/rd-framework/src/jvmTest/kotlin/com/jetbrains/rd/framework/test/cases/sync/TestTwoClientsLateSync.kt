@@ -1,10 +1,12 @@
 package com.jetbrains.rd.framework.test.cases.sync
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.test.util.SequentialPumpingScheduler
 import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.util.ConsoleLoggerFactory
 import com.jetbrains.rd.util.addUnique
+import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import org.junit.After
 import org.junit.Test
@@ -22,6 +24,8 @@ import kotlin.collections.toPair
 import kotlin.collections.toSet
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
 
 class TestTwoClientsLateSync : TestBase() {
 
@@ -64,8 +68,8 @@ class TestTwoClientsLateSync : TestBase() {
         s1 = SyncModelRoot.create(lifetime, sp[1])
     }
 
-    private fun doSynchronize() {
-        s0.synchronizeWith(lifetime, s1)
+    private fun doSynchronize(accepts: (Any?) -> Boolean = { true }) {
+        s0.synchronizeWith(lifetime, s1, accepts)
     }
 
     @After
@@ -184,6 +188,14 @@ class TestTwoClientsLateSync : TestBase() {
         assert(s0Val !== s1.property.valueOrThrow)
     }
 
+    @Test
+    fun testDoNotSync() {
+        s0.doNotSync.set(1)
+
+        doSynchronize {! (it is RdBindableBase && it.location.localName == SyncModelRoot::doNotSync.name)}
+
+        assertFalse { s1.doNotSync.hasValue }
+    }
 
     @Test
     fun testExt() {
@@ -204,4 +216,5 @@ class TestTwoClientsLateSync : TestBase() {
         assertEquals(listOf(0 to 0), s0.property.valueOrThrow.extToClazz.map.map { it.component1() to it.component2().f })
         assertEquals(listOf(0 to 0), s1.property.valueOrThrow.extToClazz.map.map { it.component1() to it.component2().f })
     }
+
 }

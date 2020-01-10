@@ -41,6 +41,7 @@ object SyncModelRoot : Root(
         set("set", int)
         map("map", int, Clazz)
         property("propPerClientId", int).perContext(ClientId)
+        property("doNotSync", int)
     }
 }
 
