@@ -58,7 +58,7 @@ namespace JetBrains.Lifetimes
   /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> (e.g. <see cref="OnTermination(Action)"/>) methods.
   /// When lifetime is being terminated (i.e. it's <see cref="LifetimeDefinition"/> was called <see cref="LifetimeDefinition.Terminate"/>) all
   /// previously added termination resources are being terminated in stack-way LIFO order. Lifetimes forms a hierarchy with parent-child relations so in single-threaded world child always
-  /// becomes <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but it some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
+  /// becomes <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but in some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
   /// a directed acyclic graph. 
   ///
   /// <para>
