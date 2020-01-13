@@ -475,6 +475,7 @@ namespace JetBrains.Lifetimes
     
     #endregion
     
+    
     #region Candidates for extension methods
     
     [PublicAPI, NotNull]
@@ -491,6 +492,14 @@ namespace JetBrains.Lifetimes
       return OnTermination(() => GC.KeepAlive(@object));
     }
 
+    /// <summary>
+    /// <inheritdoc cref="OnTermination(IDisposable)"/>
+    /// <remarks>It's more clear for code review purposes when you are adding IDisposable by <c>AddDispose</c> rather than by <c>OnTermination</c></remarks>
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns>The same lifetime (fluent API)</returns>
+    [PublicAPI, NotNull] public Lifetime AddDispose([NotNull] IDisposable action) => OnTermination(action);
+    
     #endregion
                
     
@@ -503,8 +512,6 @@ namespace JetBrains.Lifetimes
 
     [Obsolete("Use `OnTermination()` instead")]
     public Lifetime AddAction([NotNull] Action action) => OnTermination(action);
-    
-    public Lifetime AddDispose([NotNull] IDisposable action) => OnTermination(action);
 
     [Obsolete("For most cases you need `IsNotAlive` which means lifetime is terminated or soon will be terminated (somebody called Terminate() on this lifetime or its parent)." +
               " If your operation makes sense in Canceled status (but must be stopped when resources termination already began) use Status < Terminating ")]
@@ -615,6 +622,7 @@ namespace JetBrains.Lifetimes
     public override string ToString() => Definition.ToString();
     
     #endregion
+    
     
     
     #region Old define
@@ -778,8 +786,19 @@ namespace JetBrains.Lifetimes
     
     #region Performance critical: Boxing/Unboxing
 
+    /// <summary>
+    /// Box lifetime without allocation. Must be use in pair with <see cref="TryUnwrapAsObject"/>.
+    /// </summary>
+    /// <param name="lifetime">Lifetime that you want to box without allocation</param>
+    /// <returns><see cref="LifetimeDefinition"/> for this lifetime. ONLY for zero-allocation purpose.</returns>
     [PublicAPI] public static object WrapAsObject(Lifetime lifetime) => lifetime.Definition;
 
+    /// <summary>
+    /// Try to unwrap object into <see cref="Lifetime"/>. Must be used in pair with <see cref="WrapAsObject"/>.
+    /// </summary>
+    /// <param name="obj">object that potentially is LifetimeDefinition previously wrapped by <see cref="WrapAsObject"/></param>
+    /// <param name="lifetime">if <code>obj is LifetimeDefinition</code> returns corresponding <see cref="LifetimeDefinition.Lifetime"/>; else returns <see cref="Eternal"/></param>
+    /// <returns>true if <code>obj is LifetimeDefinition</code> previously wrapped by <see cref="WrapAsObject"/>. false otherwise</returns>
     [PublicAPI] public static bool TryUnwrapAsObject(object obj, out Lifetime lifetime)
     {
       var ld = obj as LifetimeDefinition;
