@@ -6,21 +6,21 @@ namespace JetBrains.Lifetimes
 {
   
   /// <summary>
-  /// List for <see cref="Lifetimed{T}"/> entities. Not thread safe but designed to avoid <see cref="InvalidOperationException"/>
+  /// List for <see cref="ValueLifetimed{T}"/> entities. Not thread safe but designed to avoid <see cref="InvalidOperationException"/>
   /// from <see cref="IEnumerator.MoveNext"/> during concurrent modification. So no need to defense copy of internal array.
   ///
-  /// There are no <see cref="ICollection{T}.Remove"/> method, it's append only. When item's <see cref="Lifetimed{T}.Lifetime"/> becomes
-  /// not alive, item's <see cref="Lifetimed{T}.Value"/> is cleared (to avoid memory leak) and item is fully removed from internal
+  /// There are no <see cref="ICollection{T}.Remove"/> method, it's append only. When item's <see cref="ValueLifetimed{T}.Lifetime"/> becomes
+  /// not alive, item's <see cref="ValueLifetimed{T}.Value"/> is cleared (to avoid memory leak) and item is fully removed from internal
   /// <see cref="myItems"/> array after exponential growth phase in <see cref="EnsureCapacity"/>.
   ///
   ///  
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  public struct LifetimedList<T> : IEnumerable<Lifetimed<T>>
+  public struct LifetimedList<T> : IEnumerable<ValueLifetimed<T>>
   {
-    public struct Enumerator : IEnumerator<Lifetimed<T>>
+    public struct Enumerator : IEnumerator<ValueLifetimed<T>>
     {
-      private readonly Lifetimed<T>[] myItems;
+      private readonly ValueLifetimed<T>[] myItems;
       private readonly int mySize;
       private int myPos;
 
@@ -42,7 +42,7 @@ namespace JetBrains.Lifetimes
       }            
 
       public void Reset() { myPos = -1; }
-      public Lifetimed<T> Current => myItems[myPos];
+      public ValueLifetimed<T> Current => myItems[myPos];
       object IEnumerator.Current => Current;
     }
     
@@ -50,18 +50,18 @@ namespace JetBrains.Lifetimes
     //delimits items into two parts: with high priority (< Marker) and normal (>= Marker)
     public int Marker { get; private set; }
     private int mySize;
-    private Lifetimed<T>[] myItems;
+    private ValueLifetimed<T>[] myItems;
 
-    public void Add(Lifetime lifetime, T value) => Add(new Lifetimed<T>(lifetime, value));
-    public void AddPriorityItem(Lifetime lifetime, T value) => AddPriorityItem(new Lifetimed<T>(lifetime, value));
+    public void Add(Lifetime lifetime, T value) => Add(new ValueLifetimed<T>(lifetime, value));
+    public void AddPriorityItem(Lifetime lifetime, T value) => AddPriorityItem(new ValueLifetimed<T>(lifetime, value));
     
-    public void Add(Lifetimed<T> item)
+    public void Add(ValueLifetimed<T> item)
     {
       EnsureCapacity();
       myItems[mySize++] = item;
     }        
 
-    public void AddPriorityItem(Lifetimed<T> item)
+    public void AddPriorityItem(ValueLifetimed<T> item)
     {
       EnsureCapacity();
       Array.Copy(myItems, Marker, myItems, Marker+1, mySize-Marker);
@@ -72,7 +72,7 @@ namespace JetBrains.Lifetimes
     private void EnsureCapacity()
     {
       if (myItems == null)
-        myItems = new Lifetimed<T>[1];
+        myItems = new ValueLifetimed<T>[1];
       
       if (mySize < myItems.Length)
         return;
@@ -80,7 +80,7 @@ namespace JetBrains.Lifetimes
       // we have to make new array ALWAYS at this point, because this method could be called during enumeration and we want enumeration to work in a snapshot fashion      
       var countAfterCleaning = 0;
       var markerDecrement = 0;
-      var newItems = new Lifetimed<T>[mySize * 2]; //Count can't be zero here
+      var newItems = new ValueLifetimed<T>[mySize * 2]; //Count can't be zero here
       for (var i = 0; i < mySize; i++)
       {
         if (myItems[i].Lifetime.IsAlive)
@@ -107,7 +107,7 @@ namespace JetBrains.Lifetimes
       return new Enumerator(this);
     }
 
-    IEnumerator<Lifetimed<T>> IEnumerable<Lifetimed<T>>.GetEnumerator() => GetEnumerator();
+    IEnumerator<ValueLifetimed<T>> IEnumerable<ValueLifetimed<T>>.GetEnumerator() => GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator()
     {

@@ -1,8 +1,11 @@
+using System;
+using JetBrains.Annotations;
+
 namespace JetBrains.Lifetimes
 {
-  public struct Lifetimed<T>
+  public class Lifetimed<T> : ITerminationHandler
   {
-    public void Deconstruct(out Lifetime lifetime, out T value)
+    [PublicAPI] public void Deconstruct(out Lifetime lifetime, out T value)
     {
       lifetime = Lifetime;
       value = Value;
@@ -14,13 +17,16 @@ namespace JetBrains.Lifetimes
     public Lifetimed(Lifetime lifetime, T value)
     {
       Lifetime = lifetime;
-      Value = value;
+
+      using (var cookie = lifetime.UsingExecuteIfAlive())
+      {
+        if (!cookie.Succeed) return;
+
+        Value = value;
+        lifetime.OnTermination(this);
+      }
     }
 
-    public void ClearValueIfNotAlive()
-    {
-      if (!Lifetime.IsAlive)
-        Value = default(T);
-    }
+    void ITerminationHandler.OnTermination(Lifetime lifetime) => Value = default;
   }
 }
