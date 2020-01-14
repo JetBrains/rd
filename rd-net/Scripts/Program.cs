@@ -15,7 +15,7 @@ namespace JetBrains.Rd.Scripts
   {
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     // ReSharper disable once MemberCanBePrivate.Global
-    public static string RdVersion = "201.20200110.311";
+    public static string RdVersion = "201.20200110.312";
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     public static string RiderFolderPath = "c:/work/Uber";
 
@@ -96,7 +96,7 @@ namespace JetBrains.Rd.Scripts
       {
         if (folder.EndsWith("data") && folder.Replace('\\','/').EndsWith("test/data"))
           yield break; //very big folder
-        
+
         var files = Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly)
           .Where(it => IsProj(it) || IsPackagesConfig(it))
           .ToList();
@@ -150,6 +150,7 @@ namespace JetBrains.Rd.Scripts
 
         foreach (var pkg in Packages)
         {
+          
           foreach (XmlNode node in doc.SelectNodes($"//x:HintPath[contains(text(), \"{pkg}\")]", namespaceManager))
           {
             var text = (XmlText) node.FirstChild;

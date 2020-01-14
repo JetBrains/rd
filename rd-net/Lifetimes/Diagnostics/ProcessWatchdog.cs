@@ -78,7 +78,7 @@ namespace JetBrains.Diagnostics
         }
 
         if (!useWinApi)
-          return !Process.GetProcessById(pid).HasExited;
+          return ProcessExists_SystemDiagnostics(pid);
         
         try
         {
@@ -90,7 +90,7 @@ namespace JetBrains.Diagnostics
           // so fallback to slow implementation via System.Diagnostics.Process
           useWinApi = false;
           ourLogger.Warn(e);
-          return true;
+          return ProcessExists_SystemDiagnostics(pid);
         }
       }
       catch (Exception e)
@@ -121,6 +121,11 @@ namespace JetBrains.Diagnostics
         if (handle != IntPtr.Zero)
           Kernel32.CloseHandle(handle);
       }
+    }
+
+    private static bool ProcessExists_SystemDiagnostics(int pid)
+    {
+      return !Process.GetProcessById(pid).HasExited;
     }
   }
 }
