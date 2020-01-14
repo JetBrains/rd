@@ -54,6 +54,12 @@ namespace Test.RdFramework.Reflection
       run(c, s);
     }
 
+    protected void WithBothFacades(Action<ReflectionSerializersFacade> act)
+    {
+      act(CFacade);
+      act(SFacade);
+    }
+
     protected void WithExtsProxy<T1, T2>(Action<T1, T2> run) where T1 : RdBindableBase where T2 : class 
     {
       var c = CFacade.Activator.ActivateBind<T1>(TestLifetime, ClientProtocol);
