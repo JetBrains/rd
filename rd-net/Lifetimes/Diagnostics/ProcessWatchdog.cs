@@ -36,9 +36,11 @@ namespace JetBrains.Diagnostics
       {
         ourLogger.Info($"Monitoring parent process PID:{pid}");
 
+        var useWinApi = true;
+
         while (true)
         {
-          if (!ProcessExists(pid))
+          if (!ProcessExists(pid, ref useWinApi))
           {
             var exitMsg = $"Parent process PID:{pid} has quit, killing ourselves via Process.Kill";
             try
@@ -65,7 +67,7 @@ namespace JetBrains.Diagnostics
     [DllImport("libc", SetLastError = true)]
     private static extern int kill(int pid, int sig);
 
-    private static bool ProcessExists(int pid)
+    private static bool ProcessExists(int pid, ref bool useWinApi)
     {
       try
       {
@@ -75,7 +77,21 @@ namespace JetBrains.Diagnostics
           return kill(pid, 0) == 0;
         }
 
-        return ProcessExists_Windows(pid);
+        if (!useWinApi)
+          return ProcessExists_SystemDiagnostics(pid);
+        
+        try
+        {
+          return ProcessExists_Windows(pid);
+        }
+        catch (Win32Exception e)
+        {
+          // OpenProcess may fail with ERROR_ACCESS_DENIED and we don't know why
+          // so fallback to slow implementation via System.Diagnostics.Process
+          useWinApi = false;
+          ourLogger.Warn(e);
+          return ProcessExists_SystemDiagnostics(pid);
+        }
       }
       catch (Exception e)
       {
@@ -105,6 +121,11 @@ namespace JetBrains.Diagnostics
         if (handle != IntPtr.Zero)
           Kernel32.CloseHandle(handle);
       }
+    }
+
+    private static bool ProcessExists_SystemDiagnostics(int pid)
+    {
+      return !Process.GetProcessById(pid).HasExited;
     }
   }
 }
