@@ -3,12 +3,17 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using JetBrains.Annotations;
 using JetBrains.Interop;
 using JetBrains.Util;
 
 namespace JetBrains.Diagnostics
 {
-  public static class ProcessWatchdog
+  
+  /// <summary>
+  /// Watchdog that automatically terminates current process if some other process exits.
+  /// </summary>
+  [PublicAPI] public static class ProcessWatchdog
   {
     private static readonly ILog ourLogger = Log.GetLog(nameof(ProcessWatchdog));
     private const int DELAY_BEFORE_RETRY = 1000;

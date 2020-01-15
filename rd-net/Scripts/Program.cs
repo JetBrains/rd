@@ -15,7 +15,7 @@ namespace JetBrains.Rd.Scripts
   {
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     // ReSharper disable once MemberCanBePrivate.Global
-    public static string RdVersion = "201.20200110.312";
+    public static string RdVersion = "201.20200114.314";
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     public static string RiderFolderPath = "c:/work/Uber";
 

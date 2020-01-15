@@ -3,6 +3,12 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Lifetimes
 {
+  /// <summary>
+  /// Special kind reference to <see cref="Value"/> 
+  /// that automatically nullify it (make <c>default</c> for value types)
+  /// when lifetime becomes <see cref="LifetimeStatus.Terminated"/>. 
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public class Lifetimed<T> : ITerminationHandler
   {
     [PublicAPI] public void Deconstruct(out Lifetime lifetime, out T value)

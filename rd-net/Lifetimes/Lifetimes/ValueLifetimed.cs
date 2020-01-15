@@ -1,5 +1,9 @@
 namespace JetBrains.Lifetimes
 {
+  /// <summary>
+  /// Pair of lifetime and value
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public struct ValueLifetimed<T>
   {
     public void Deconstruct(out Lifetime lifetime, out T value)

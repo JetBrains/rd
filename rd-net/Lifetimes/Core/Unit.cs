@@ -3,7 +3,7 @@ using System;
 namespace JetBrains.Core
 {
   /// <summary>
-  /// Type that has the single instance. Adornment to <see cref="System.Void"/>.
+  /// Type that has the single instance accessible by <see cref="Instance"/>. Adornment to <see cref="System.Void"/>.
   /// </summary>
   public class Unit : IEquatable<Unit>
   {

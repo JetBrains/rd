@@ -3,6 +3,9 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Lifetimes
 {
+  /// <summary>
+  /// Inheritor of <see cref="OperationCanceledException"/> which is thrown by <see cref="Lifetimes.Lifetime.ThrowIfNotAlive"/>.
+  /// </summary>
   public class LifetimeCanceledException : OperationCanceledException
   {
     [PublicAPI] public Lifetime Lifetime { get; }

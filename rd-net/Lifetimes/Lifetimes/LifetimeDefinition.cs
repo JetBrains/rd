@@ -13,6 +13,10 @@ using JetBrains.Util.Util;
 
 namespace JetBrains.Lifetimes
 {
+  /// <summary>
+  /// Controller for <see cref="Lifetime"/> like <see cref="CancellationTokenSource"/> is a controller fot <see cref="CancellationToken"/>.
+  /// You can terminate this definition by <see cref="Terminate"/> method (or <see cref="Dispose"/> which is the same). 
+  /// </summary>
   public class LifetimeDefinition : IDisposable
   {    
     
@@ -34,6 +38,9 @@ namespace JetBrains.Lifetimes
     [ThreadStatic] private static int ourAllowTerminationUnderExecutionThreadStatic; 
       
     
+    /// <summary>
+    /// Use this cookie only by <see cref="Lifetime.UsingAllowTerminationUnderExecution"/>
+    /// </summary>
     public struct AllowTerminationUnderExecutionCookie : IDisposable
     {
       private Thread myDisposeThread;
@@ -106,12 +113,31 @@ namespace JetBrains.Lifetimes
     
     private int myState;
 
+    /// <summary>
+    /// Underlying lifetime for this definition.
+    /// <remarks> There are no implicit cast from <see cref="LifetimeDefinition"/> to <see cref="Lifetime"/> intentionally.
+    /// When method receives <see cref="LifetimeDefinition"/> as a parameter it means (in a philosophic sense) that this method either responsible for definition's termination
+    /// or it must pass definition to some other method.
+    /// You can easily make a mistake and forget to terminate definition when you implicitly convert into lifetime and pass to some other method.
+    /// </remarks>
+    /// </summary>
     public Lifetime Lifetime => new Lifetime(this);
     
-    
+    /// <summary>
+    /// <inheritdoc cref="LifetimeStatus"/>
+    /// </summary>
     [PublicAPI] public LifetimeStatus Status => ourStatusSlice[myState];
+    
+    /// <summary>
+    /// Means that this definition corresponds to <see cref="Lifetime.Eternal"/> and can't be terminated. 
+    /// </summary>
     [PublicAPI] public bool IsEternal => ReferenceEquals(this, Eternal);
 
+    /// <summary>
+    /// Hack that allows to terminate this definition under <see cref="Lifetimes.Lifetime.Execute{T}"/> section. 
+    ///
+    /// <inheritdoc cref="JetBrains.Lifetimes.Lifetime.UsingAllowTerminationUnderExecution"/>
+    /// </summary>
     public bool AllowTerminationUnderExecution
     {
       [PublicAPI] get => ourAllowTerminationUnderExecutionSlice[myState];
@@ -124,18 +150,50 @@ namespace JetBrains.Lifetimes
     
     #region Init
     
+    /// <summary>
+    /// Creates toplevel lifetime definition with no parent. <see cref="Status"/> will always be <see cref="LifetimeStatus.Alive"/>.
+    /// </summary>
     public LifetimeDefinition() {}    
     
+    /// <summary>
+    /// Created definition nested into <paramref name="parent"/>, i.e. this definition is attached to parent as termination resource.  
+    /// If parent <see cref="Lifetimes.Lifetime.Alive"/> than status of new definition is <see cref="LifetimeStatus.Alive"/>.
+    /// If parent <see cref="Lifetimes.Lifetime.IsNotAlive"/> than status of new definition is <see cref="LifetimeStatus.Terminated"/>.
+    ///
+    /// <para>
+    /// <see cref="parent"/>'s termination (via <see cref="Terminate"/> method) will instantly propagate <c>Canceling</c> signal
+    /// to all descendants, i.e all statuses of parent's children, children's children, ... will become <see cref="LifetimeStatus.Canceling"/>
+    /// instantly. And then resources destructure will begin from the most recently connected children to the last (stack's like LIFO way).
+    /// </para>
+    /// </summary>
+    ///
+    /// <param name="parent"></param>
     public LifetimeDefinition(Lifetime parent) : this()
     {
       parent.Definition.Attach(this);
     }   
   
+    /// <summary>
+    /// <inheritdoc cref="LifetimeDefinition(Lifetimes.Lifetime)"/>
+    ///
+    /// <para>
+    /// <c>atomicAction</c> will be executed only if <paramref name="parent"/>'s status is <see cref="LifetimeStatus.Alive"/>.
+    /// Any exception thrown by <paramref name="atomicAction"/> execution will cause termination of created definition (it will be returned
+    /// in status <see cref="Terminated"/>) and all attached resources will be terminated.
+    /// </para> 
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <param name="atomicAction"></param>
     public LifetimeDefinition(Lifetime parent, [CanBeNull, InstantHandle] Action<LifetimeDefinition> atomicAction) : this(parent)
     {
       ExecuteOrTerminateOnFail(atomicAction);
     }
     
+    /// <summary>
+    /// <inheritdoc cref="LifetimeDefinition(Lifetimes.Lifetime, Action{LifetimeDefinition})"/>
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <param name="atomicAction"></param>
     public LifetimeDefinition(Lifetime parent, [CanBeNull, InstantHandle] Action<Lifetime> atomicAction) : this(parent)
     {
       ExecuteOrTerminateOnFail(atomicAction);
@@ -189,10 +247,16 @@ namespace JetBrains.Lifetimes
     
     [PublicAPI] public static readonly string AnonymousLifetimeId = "Anonymous";
     
+    /// <summary>
+    /// You can optionally set this identification information to see logs with lifetime's id other than <see cref="AnonymousLifetimeId"/>
+    /// </summary>
     [PublicAPI, CanBeNull] public object Id { get; set; }    
     
     private bool IsVerboseLoggingEnabled => ourVerboseDiagnosticsSlice[myState];
     
+    /// <summary>
+    /// Enables logging of this lifetime's termination with level <see cref="LoggingLevel.VERBOSE"/> rather than <see cref="LoggingLevel.TRACE"/>
+    /// </summary>
     public void EnableTerminationLogging() => ourVerboseDiagnosticsSlice.InterlockedUpdate(ref myState, true);
 
     public override string ToString() => $"Lifetime `{Id ?? AnonymousLifetimeId}` [{Status}, executing={ourExecutingSlice[myState]}, resources={myResCount}]";
@@ -550,6 +614,9 @@ namespace JetBrains.Lifetimes
     
     #region Execute
 
+    /// <summary>
+    /// <inheritdoc cref="Lifetimes.Lifetime.ExecutingCount"/>
+    /// </summary>
     public int ExecutingCount => ourExecutingSlice[myState]; 
     
     
@@ -575,7 +642,9 @@ namespace JetBrains.Lifetimes
       return wrap ? Result.Wrap(action) : Result.Success(action());
     }
     
-    
+    /// <summary>
+    /// Must be used only by <see cref="Lifetime.UsingExecuteIfAlive"/>
+    /// </summary>
     public struct ExecuteIfAliveCookie : IDisposable
     {
       [NotNull] 
@@ -833,7 +902,9 @@ namespace JetBrains.Lifetimes
         myCts.Cancel();            
     }
     
-    
+    /// <summary>
+    /// <see cref="Lifetimes.Lifetime.ThrowIfNotAlive"/>
+    /// </summary>
     public void ThrowIfNotAlive()
     {
       if (Status != LifetimeStatus.Alive)
@@ -870,6 +941,10 @@ namespace JetBrains.Lifetimes
 
     #region Finalization
 
+    /// <summary>
+    /// Adds finalizer that logs error (via <see cref="Log.Error"/>) if this definition is garbage collected without being terminated.  
+    /// </summary>
+    /// <param name="comment"></param>
     [PublicAPI] public void AssertEverTerminated(string comment = null)
     {
       OnTermination(new FinalizableGuard(this, comment));
@@ -904,6 +979,18 @@ namespace JetBrains.Lifetimes
     
     #region Task API
 
+    /// <summary>
+    /// <list type="number">
+    /// <item>Finishes <paramref name="taskCompletionSource"/> with <see cref="TaskCompletionSource{TResult}.SetCanceled"/> when
+    /// this definition is termination.</item>
+    /// <item>
+    /// Terminates this definition by <see cref="Terminate"/> when <paramref name="taskCompletionSource"/> is completed (with any result).
+    /// </item>
+    /// </list>
+    /// </summary>
+    /// <param name="taskCompletionSource"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <exception cref="ArgumentNullException"></exception>
     [PublicAPI] public void SynchronizeWith<T>([NotNull] TaskCompletionSource<T> taskCompletionSource)
     {
       if (taskCompletionSource == null) throw new ArgumentNullException(nameof(taskCompletionSource));
