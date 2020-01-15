@@ -40,7 +40,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/rd-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>Reflection package support tasks now, RdCall design revised</PackageReleaseNotes>
+        <PackageReleaseNotes>New API and documentation</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
