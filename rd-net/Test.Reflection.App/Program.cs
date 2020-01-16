@@ -38,6 +38,10 @@ namespace Test.Reflection.App
 
     private static readonly IPEndPoint ourIpEndPoint = new IPEndPoint(IPAddress.Loopback, ourPort);
 
+    public static void StartClient() => Main(new [] {"client"});
+    public static void StartServer() => Main(new [] {"server"});
+    
+    //try to start both client and server
     static void Main(string[] args)
     {
       using (var lifetimeDefinition = new LifetimeDefinition())
@@ -54,7 +58,9 @@ namespace Test.Reflection.App
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, "Scheduler");
       Protocol protocol;
       SocketWire.Base wire;
-      var isServer = Util.Fork(args);
+
+
+      var isServer = args.Length == 0 ? Util.Fork(args) : args[0] == "server";
       if (isServer)
       {
         Console.Title = "Server";
