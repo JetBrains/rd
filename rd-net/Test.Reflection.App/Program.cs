@@ -85,7 +85,7 @@ namespace Test.Reflection.App
       while (lifetime.IsAlive)
       {
         if (Console.KeyAvailable && OnChar != null)
-          scheduler.Queue(() => OnChar?.Invoke(Console.ReadKey(false).KeyChar));
+          scheduler.Queue(() => OnChar?.Invoke(Console.ReadKey(true).KeyChar));
 
         Thread.Sleep(100);
       }
@@ -102,9 +102,10 @@ namespace Test.Reflection.App
       {
         root = facade.InitBind(new RootExt(), lifetime, protocol);
       }
+      (root as RdExtReflectionBindableBase).Connected.Advise(lifetime, v => Console.WriteLine("RootExt connected: " + v));
 
       root.OnChar.Advise(lifetime, Console.Write);
-      OnChar += c => root.Greet(c.ToString());
+      OnChar += c => root.OnChar.Fire(c);
     }
   }
 }
