@@ -235,8 +235,6 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair GetPolymorphic(Type type)
     {
-      Assertion.Assert(typeof(IRdBindable).IsAssignableFrom(type), "");
-
       var polymorphicClass = typeof(Polymorphic<>).MakeGenericType(type);
       var reader = polymorphicClass.GetTypeInfo().GetField("Read", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(type);
       var writer = polymorphicClass.GetTypeInfo().GetField("Write", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(type);
