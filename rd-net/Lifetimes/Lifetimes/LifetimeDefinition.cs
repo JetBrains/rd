@@ -370,7 +370,7 @@ namespace JetBrains.Lifetimes
       
       
       //parent could ask for canceled already
-      MarkCanceledRecursively();      
+      MarkCancelingRecursively();      
       
       if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), WaitForExecutingInTerminationTimeoutMs))
       {
@@ -393,7 +393,7 @@ namespace JetBrains.Lifetimes
     }
     
     
-    private void MarkCanceledRecursively()
+    private void MarkCancelingRecursively()
     {
       Assertion.Assert(!IsEternal, "Trying to terminate eternal lifetime");
 
@@ -412,7 +412,7 @@ namespace JetBrains.Lifetimes
       //Math.min is to ensure that even if some other thread increased myResCount, we don't get IndexOutOfBoundsException
       for (var i = Math.Min(myResCount, resources.Length) - 1; i >= 0; i--)  
       {
-        (resources[i] as LifetimeDefinition)?.MarkCanceledRecursively();
+        (resources[i] as LifetimeDefinition)?.MarkCancelingRecursively();
       }
     }
 
@@ -881,10 +881,10 @@ namespace JetBrains.Lifetimes
     private CancellationTokenSource myCts;
     
         
-    //Only if state >= Canceled
+    //Only if state >= Canceling
     private LifetimeCanceledException CanceledException() => new LifetimeCanceledException(Lifetime);
     
-    //Only if state >= Canceled
+    //Only if state >= Canceling
     private Result<Nothing> CanceledResult() => Result.Canceled(CanceledException());
     
 
@@ -924,7 +924,7 @@ namespace JetBrains.Lifetimes
           if (!mutex.Success)
           {
             Assertion.Assert(!ReferenceEquals(this, Terminated), "Mustn't reach this point on lifetime `Terminated`");
-            return Terminated.ToCancellationToken(); //to get stable CancellationTokenSource (for tasks to finish in Canceled state, rather than Faulted)
+            return Terminated.ToCancellationToken(); //to get stable CancellationTokenSource (for tasks to finish in Canceling state, rather than Faulted)
           }
           
           CreateCtsLazily();

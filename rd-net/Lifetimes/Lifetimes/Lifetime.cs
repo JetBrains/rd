@@ -604,7 +604,7 @@ namespace JetBrains.Lifetimes
     public Lifetime AddAction([NotNull] Action action) => OnTermination(action);
 
     [Obsolete("For most cases you need `IsNotAlive` which means lifetime is terminated or soon will be terminated (somebody called Terminate() on this lifetime or its parent)." +
-              " If your operation makes sense in Canceled status (but must be stopped when resources termination already began) use Status < Terminating ")]
+              " If your operation makes sense in Canceling status (but must be stopped when resources termination already began) use Status < Terminating ")]
     public bool IsTerminated => Status >= LifetimeStatus.Terminating;
 
     [Obsolete("Use `KeepAlive() instead`")]
