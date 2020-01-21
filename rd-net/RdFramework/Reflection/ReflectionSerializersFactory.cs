@@ -460,7 +460,6 @@ namespace JetBrains.Rd.Reflection
         $"Invalid type: expected CtxReaderDelegate, but was {reader.GetType().ToString(true)}");
       Assertion.Assert(writer.GetType().GetGenericTypeDefinition() == typeof(CtxWriteDelegate<>),
         $"Invalid type: expected CtxWriteDelegate, but was {writer.GetType().ToString(true)}");
-      Assertion.Assert(reader.GetType().GetGenericArguments()[0] == writer.GetType().GetGenericArguments()[0], $"Invalid SerializerPair. typeWriter != typeReader {reader} != {writer}");
 
       myReader = reader;
       myWriter = writer;

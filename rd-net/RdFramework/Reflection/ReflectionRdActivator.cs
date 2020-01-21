@@ -146,7 +146,15 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(typeof(RdBindableBase).GetTypeInfo().IsAssignableFrom(implementingType),
         $"Unable to activate {type.FullName}: type should be {nameof(RdBindableBase)}");
 
-      var instance = Activator.CreateInstance(implementingType);
+      object instance;
+      try
+      {
+        instance = Activator.CreateInstance(implementingType);
+      }
+      catch (MissingMethodException e)
+      {
+        throw new MissingMethodException($"Unable to create instance of: {implementingType.ToString(true)}.{e.Message}");
+      }
 
       ReflectionInitInternal(instance);
 #if JET_MODE_ASSERT
