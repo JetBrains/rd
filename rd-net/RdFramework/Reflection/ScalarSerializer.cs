@@ -32,6 +32,18 @@ namespace JetBrains.Rd.Reflection
     [NotNull] private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
 
     /// <summary>
+    /// Collection of specific polymorphic serializers. These serializers should be register before activating any Rd
+    /// entity to guarantee consistency of serializers in Rd objects
+    /// </summary>
+    private readonly Dictionary<Type, SerializerPair> myPolySerializers = new Dictionary<Type, SerializerPair>();
+
+    /// <summary>
+    /// A flag to enforce consistency of serializers. New specific poly serializer can't be registered after first query
+    /// of polymorphic serializer from outer world.
+    /// </summary>
+    private bool myPolySerializersSealed = false;
+
+    /// <summary>
     /// Black listed type. Any attempt to create serializer for these types should throw exception.
     /// Used to prevent attempts to pass an object which is well-known as non-serializable.
     /// For example, any component of tree-like structure or object graph should not be passed to
@@ -47,6 +59,16 @@ namespace JetBrains.Rd.Reflection
       myBlackListChecker = blackListChecker ?? (_ => false);
       Serializers.RegisterFrameworkMarshallers(this);
     }
+
+    public void RegisterPolymorphicSerializer([NotNull] Type type, SerializerPair serializers)
+    {
+      Assertion.Assert(CanBePolymorphic(type), $"Unable to register polymorphic serializer: {type.ToString(true)} is not a polymorphic type (it should be not sealed class or an interface)");
+      Assertion.Assert(!myStaticSerializers.ContainsKey(type), $"Unable to register polymorphic serializer: a static serializer for type {type.ToString(true)} already exists");
+      Assertion.Assert(!myPolySerializersSealed, $"Unable to register polymorphic serializer for type {type.ToString(true)}. It is too late to register a polymorphic serializer as one or more models were already activated.");
+      
+      myPolySerializers.Add(type, serializers);
+    }
+
 
     /// <summary>
     /// Return static serializers for type
@@ -246,32 +268,39 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair CreateArraySerializer<T>()
     {
-      GetInstanceSerializer(out var valueReader, out CtxWriteDelegate<T> valueWriter);
+      var serializers = GetInstanceSerializer(typeof(T));
+      var itemReader = serializers.GetReader<T>();
+      var itemWriter = serializers.GetWriter<T>();
 
-      CtxReadDelegate<T[]> reader = (ctx, unsafeReader) => unsafeReader.ReadArray(valueReader, ctx);
-      CtxWriteDelegate<T[]> writer = (ctx, unsafeWriter, value) => unsafeWriter.WriteArray(valueWriter, ctx, value);
+      CtxReadDelegate<T[]> reader = (ctx, unsafeReader) => unsafeReader.ReadArray(itemReader, ctx);
+      CtxWriteDelegate<T[]> writer = (ctx, unsafeWriter, value) => unsafeWriter.WriteArray(itemWriter, ctx, value);
       return new SerializerPair(reader, writer);
     }
 
-    private void GetInstanceSerializer<T>(out CtxReadDelegate<T> reader, out CtxWriteDelegate<T> writer)
+    public SerializerPair GetInstanceSerializer(Type t)
     {
-      if (CanBePolymorphic(typeof(T)))
-      {
-        reader = Polymorphic<T>.Read;
-        writer = Polymorphic<T>.Write;
-      }
-      else
-      {
-        var serializer = GetOrCreate(typeof(T));
-        reader = serializer.GetReader<T>();
-        writer = serializer.GetWriter<T>();
-      }
-    }
-
-    private SerializerPair GetInstanceSerializer(Type t)
-    {
+      myPolySerializersSealed = true;
       if (CanBePolymorphic(t))
       {
+        if (myPolySerializers.TryGetValue(t, out var value))
+          return value;
+
+        if (t.IsGenericType && ReflectionSerializerVerifier.IsScalar(t) &&
+            t.GetGenericArguments() is var arguments &&
+            arguments.Length == 1 &&
+            t.GetGenericTypeDefinition() is var genericDefinition &&
+            (typeof(IEnumerable<>) ==  genericDefinition || typeof(ICollection<>) == genericDefinition
+#if !NET35
+              || typeof(IReadOnlyCollection<>) == genericDefinition
+#endif
+              ))
+        {
+          if (!ReflectionSerializerVerifier.IsScalar(arguments[0])) 
+            Assertion.Fail($"Scalar type expected in type argument of IEnumerable, but got: {arguments[0].ToString(true)}");
+
+          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(CollectionSerializers), nameof(CollectionSerializers.CreateListSerializerPair), arguments[0], GetInstanceSerializer(arguments[0]));
+        }
+
         myTypesCatalog.AddType(t);
         return SerializerPair.Polymorphic(t);
       }

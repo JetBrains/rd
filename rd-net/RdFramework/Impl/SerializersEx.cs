@@ -38,7 +38,7 @@ namespace JetBrains.Rd.Impl
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static void WriteCollection<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, ICollection<T> value)
+    public static void WriteEnumerable<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, IEnumerable<T> value)
     {
       if (value == null)
       {
@@ -46,14 +46,18 @@ namespace JetBrains.Rd.Impl
         return;
       }
 
-      writer.Write(value.Count);
+      // // Don't dispose this cookie, otherwise it will delete all written data
+      var cookie = new UnsafeWriter.Cookie(writer);
+      cookie.Writer.Write(-1); // length
+      int i = 0;
       foreach (var item in value)
       {
+        ++i;
         itemWriter(ctx, writer, item);
       }
+
+      cookie.WriteIntLengthToCookieStart(i);
     }
-
-
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T[] ReadArray<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx)

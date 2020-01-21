@@ -57,6 +57,11 @@ namespace JetBrains.Serialization
         *(int*) Data = Count - sizeof(int);
       }
 
+      public void WriteIntLengthToCookieStart(int length)
+      {
+        *(int*) Data = length;
+      }
+
       public void CopyTo(byte[] dst, [Optional] int dstOffset, [Optional] int? count)
       {
         CopyTo(dst, dstOffset, count ?? Count);

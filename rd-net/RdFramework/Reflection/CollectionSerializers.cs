@@ -13,7 +13,7 @@ namespace JetBrains.Rd.Reflection
     public static SerializerPair CreateListSerializerPair<T>(SerializerPair itemSerializer)
     {
       CtxReadDelegate<List<T>> readListSerializer = (ctx, reader) => reader.ReadList(itemSerializer.GetReader<T>(), ctx);
-      CtxWriteDelegate<ICollection<T>> writeListSerializer =(ctx, writer, value) => writer.WriteCollection(itemSerializer.GetWriter<T>(), ctx, value);
+      CtxWriteDelegate<IEnumerable<T>> writeListSerializer =(ctx, writer, value) => writer.WriteEnumerable(itemSerializer.GetWriter<T>(), ctx, value);
       return new SerializerPair(readListSerializer, writeListSerializer);
     }
 
