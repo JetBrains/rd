@@ -28,6 +28,10 @@ namespace JetBrains.Collections.Viewable
     }
 
 
+    /// <summary>
+    /// Default implementation of <see cref="ISignal{T}"/>.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class Signal<T> : ISignal<T>, ITerminationHandler
     {
         private LifetimedList<Action<T>> myListeners = new LifetimedList<Action<T>>();

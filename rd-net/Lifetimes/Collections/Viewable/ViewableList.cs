@@ -2,11 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using JetBrains.Collections.Synchronized;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Default implementation if <see cref="IViewableList{T}"/>. 
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public class ViewableList<T> : IViewableList<T>
   {
     private readonly IList<T> myStorage;
@@ -18,6 +23,10 @@ namespace JetBrains.Collections.Viewable
 
     public ViewableList() : this(new List<T>()) {}
 
+    /// <summary>
+    /// Special delegating constructor that accepts storage backend (e.g. <see cref="SynchronizedList{T}"/>) 
+    /// </summary>
+    /// <param name="list"></param>
     public ViewableList(IList<T> list)
     {
       myStorage = list;

@@ -2,7 +2,16 @@ namespace JetBrains.Collections.Viewable
 {
   /// <summary>
   /// Mutable <see cref="IReadonlyProperty{T}"/>.
-  /// You must set distinct values (in terms of <see cref="object.Equals(object)"/>) or no event will be fired. 
+  /// If you put not equal values (in terms of <see cref="object.Equals(object)"/>) into
+  /// <see cref="Value"/> than no event will be fired and <see cref="ISource{T}.Advise"/>'s handler
+  /// won't be triggered. So code
+  /// <code>
+  /// //suppose property.Value != 1
+  /// property.Value = 1;
+  /// property.Value = 1;
+  /// </code>
+  /// will fire only one event with value 1.
+  /// 
   /// </summary>
   /// <typeparam name="T"></typeparam>
   public interface IViewableProperty<T> : IReadonlyProperty<T>

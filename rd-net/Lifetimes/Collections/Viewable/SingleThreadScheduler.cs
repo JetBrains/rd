@@ -32,7 +32,10 @@ namespace JetBrains.Collections.Viewable
     }
   }
 
-  
+  /// <summary>
+  /// Task scheduler that either creates separate thread (via <see cref="RunOnSeparateThread"/> or use current
+  /// (via <see cref="CreateOverExisting"/>). All enqueued tasks are executed sequentially. 
+  /// </summary>
   public class SingleThreadScheduler : TaskScheduler, IScheduler
   {
     class ActionQueue

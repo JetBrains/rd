@@ -2,6 +2,10 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Event of <see cref="IViewableSet{T}"/>
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public struct SetEvent<T>
   {
 

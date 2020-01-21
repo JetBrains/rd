@@ -5,6 +5,10 @@ using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Default implementation of <see cref="IViewableProperty{T}"/>. Synchronized internally.
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public class ViewableProperty<T> : IViewableProperty<T>
   {
     private readonly Signal<T> myChange = new Signal<T>();

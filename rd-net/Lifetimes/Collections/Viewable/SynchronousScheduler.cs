@@ -5,6 +5,11 @@ using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Scheduler that executes task and action synchronously
+  /// Perfect candidate for <see cref="Task.ContinueWith(System.Action{System.Threading.Tasks.Task,object},object)"/>
+  /// if you want to guarantee synchronous continuation
+  /// </summary>
   public class SynchronousScheduler : TaskScheduler, IScheduler
   {
     public static readonly SynchronousScheduler Instance = new SynchronousScheduler();

@@ -8,7 +8,7 @@ namespace JetBrains.Collections.Viewable
   public interface IScheduler
   {
     /// <summary>
-    /// Queue action to to execute. 
+    /// Queue action for execution. 
     /// </summary>
     /// <param name="action"></param>
     void Queue(Action action);
@@ -19,7 +19,8 @@ namespace JetBrains.Collections.Viewable
     bool IsActive { get; }
     
     /// <summary>
-    /// Helps to relax and speed up some usages if this scheduler can doesn't preserve sequential FIFO semantics (e.g. ThreadPool scheduler).
+    /// Helps to relax expectations and speed up some usages if this scheduler
+    /// can doesn't preserve sequential FIFO semantics (e.g. ThreadPool scheduler).
     /// </summary>
     bool OutOfOrderExecution { get; }
   }

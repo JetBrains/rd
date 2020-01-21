@@ -3,6 +3,13 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Viewable
 {
+  
+
+  /// <summary>
+  /// Observable dictionary. 
+  /// </summary>
+  /// <typeparam name="K"></typeparam>
+  /// <typeparam name="V"></typeparam>
   public interface IViewableMap<K, V> : IDictionary<K, V>, ISource<MapEvent<K, V>>
   {
     ISource<MapEvent<K, V>> Change { get; }

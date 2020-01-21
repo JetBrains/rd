@@ -14,7 +14,7 @@ namespace JetBrains.Collections.Viewable
     IScheduler Scheduler { get; set; }
     
     /// <summary>
-    /// Fires value that will be seen by all entities who subscribed by <see cref="ISource{T}.Advise"/>
+    /// Fires value that will be seen by all handlers who subscribed by <see cref="ISource{T}.Advise"/>
     /// </summary>
     /// <param name="value"></param>
     void Fire(T value);
