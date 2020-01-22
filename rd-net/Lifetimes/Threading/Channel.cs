@@ -24,6 +24,10 @@ namespace JetBrains.Threading
     Task SendAsync(T msg);
   }
 
+  /// <summary>
+  /// The same as blocking queue but for non-blocking asynchronous world.
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
   public class AsyncChannel<T> : IReceiveChannel<T>, ISendChannel<T>
   {
     private readonly Lifetime myLifetime;

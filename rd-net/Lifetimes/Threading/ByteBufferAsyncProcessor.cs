@@ -9,6 +9,14 @@ using JetBrains.Util.Internal;
 
 namespace JetBrains.Threading
 {
+  /// <summary>
+  /// Circular auto expandable and shrinkable byte buffer based on linked list of arrays with two roles:
+  /// <list type="number">
+  /// <item>Producers - fills buffer with <see cref="Put(byte*,int)"/> method</item>
+  /// <item>Consumer - process buffer in dedicated thread</item>
+  /// </list>
+  /// 
+  /// </summary>
   public unsafe class ByteBufferAsyncProcessor
   {
 
@@ -440,7 +448,7 @@ namespace JetBrains.Threading
 
     #region Queue filling API
 
-    public void Put(byte[] data)
+    [PublicAPI] public void Put(byte[] data)
     {
       fixed (byte* ptr = data)
       {
@@ -449,13 +457,13 @@ namespace JetBrains.Threading
     }
 
 
-    public void Put(UnsafeWriter.Cookie data)
+    [PublicAPI] public void Put(UnsafeWriter.Cookie data)
     {
       Put(data.Data, data.Count);
     }
 
 
-    public void Put(byte* start, int count)
+    [PublicAPI] public void Put(byte* start, int count)
     {
       if (count <= 0) return;
       

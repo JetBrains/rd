@@ -2,6 +2,10 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Event of <see cref="IViewableList{T}"/>
+  /// </summary>
+  /// <typeparam name="V"></typeparam>
   public struct ListEvent<V>
   {    
     public AddUpdateRemove Kind { get; private set; }

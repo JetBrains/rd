@@ -5,6 +5,12 @@ using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
+  
+  /// <summary>
+  /// For usage in code contexts
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
+  /// <typeparam name="TCookie"></typeparam>
   public class ModificationCookieViewableSet<T, TCookie> : IViewableSet<T> where TCookie: struct, IDisposable
   {
     private readonly Func<TCookie> myCookieFactory;

@@ -30,7 +30,8 @@ namespace JetBrains.Diagnostics
 
     
     /// <summary>
-    /// Set's default (lowest priority) <see cref="ILogFactory"/>. If nothing chosen <see cref="ConsoleVerboseFactory"/> is used
+    /// Default (lowest priority) <see cref="ILogFactory"/>. If nothing chosen <see cref="ConsoleVerboseFactory"/> is used.
+    /// This setting is effectively overriden (in a stack-like way) by <see cref="UsingLogFactory"/>
     /// </summary>
     public static ILogFactory DefaultFactory
     {

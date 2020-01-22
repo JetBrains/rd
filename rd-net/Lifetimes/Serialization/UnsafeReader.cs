@@ -10,6 +10,11 @@ using JetBrains.Util.Internal;
 
 namespace JetBrains.Serialization
 {
+  /// <summary>
+  /// Deserialize data from byte buffer that was initially serialized by <see cref="UnsafeWriter"/>
+  /// <seealso cref="UnsafeReader"/>
+  /// 
+  /// </summary>
   //Can't be struct because internal state must change during methods invocation
   public unsafe class UnsafeReader
   {    

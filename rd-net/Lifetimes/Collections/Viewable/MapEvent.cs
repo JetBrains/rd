@@ -2,6 +2,11 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Event of <see cref="IViewableMap{K,V}"/>
+  /// </summary>
+  /// <typeparam name="K"></typeparam>
+  /// <typeparam name="V"></typeparam>
   public struct MapEvent<K, V>
   {    
     public AddUpdateRemove Kind { get; private set; }
