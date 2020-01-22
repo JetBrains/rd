@@ -1103,6 +1103,23 @@ namespace Test.Lifetimes.Lifetimes
       tcs.SetCanceled();
       Assert.True(d.Lifetime.Status == LifetimeStatus.Terminated);
     }
+
+    [Test]
+    public void TestTerminatesAfter()
+    {
+      var lf = TestLifetime.CreateTerminatedAfter(TimeSpan.FromMilliseconds(100));
+      Assert.True(lf.IsAlive);
+      Thread.Sleep(200);
+      Assert.True(lf.IsNotAlive);
+      
+      lf = TestLifetime.CreateTerminatedAfter(TimeSpan.FromMilliseconds(100));
+      Assert.True(lf.IsAlive);
+      LifetimeDefinition.Terminate();
+      Assert.True(lf.IsNotAlive);
+      
+      Thread.Sleep(200);
+      Assert.True(lf.IsNotAlive);
+    }
     
 #endif
   }

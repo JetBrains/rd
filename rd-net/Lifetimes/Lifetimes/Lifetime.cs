@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
@@ -964,7 +965,27 @@ namespace JetBrains.Lifetimes
       //Nested definition is better that just adding termination action because it prevents memory leak
       CreateNested().SynchronizeWith(res);
       return res;
-    } 
+    }
+
+
+    /// <summary>
+    /// Returns lifetime that is child of this lifetime and will be terminated after specified period of time.
+    /// </summary>
+    /// <param name="timeSpan">Terminate lifetime after this amount of time</param>
+    /// <param name="terminationScheduler">Scheduler where termination will be invoked (if none specified, termination will start in timer's thread)</param>
+    [PublicAPI] public Lifetime CreateTerminatedAfter(TimeSpan timeSpan, TaskScheduler terminationScheduler = null)
+    {
+      var def = new LifetimeDefinition(this);
+      Task.Delay(timeSpan, this).ContinueWith(
+        _ => def.Terminate(), 
+        this, 
+        TaskContinuationOptions.None, 
+        terminationScheduler ?? SynchronousScheduler.Instance
+        );
+
+      return def.Lifetime;
+    }
+    
     
     #endregion
     #endif
