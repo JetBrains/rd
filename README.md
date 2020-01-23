@@ -1,8 +1,47 @@
 # RD
 
-Reactive Distributed communication framework for .net, kotlin, js, c++. Inspired by Rider IDE. 
+Reactive Distributed communication framework for .NET, Kotlin (and soon C++). 
+Inspired by JetBrains Rider IDE. 
 
-# First Step(Build)
+Motivation and brief course:
+
+https://www.youtube.com/watch?v=W9Jtagm8nVQ&feature=youtu.be&list=PLQ176FUIyIUaiCssbIPQjFGvQX92HPtGU
+
+## Structure
+The framework contains of several libraries for single process usage and cross process communication.
+
+### Lifetimes
+JetBrains Core library for graceful disposal, concurrency and reactive programming. For single process usage.
+
+* Kotlin
+  * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core
+  * Artifacts: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-core/0.201.40 
+
+* NET
+  * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/Lifetimes
+  * Artifacts: https://www.nuget.org/packages/JetBrains.Lifetimes
+
+### RdFramework
+JetBrains Networking library for reactive distributed communication
+
+* Kotlin
+  * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-framework
+  * Maven artifacts: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-framework/0.201.40 
+
+* .NET
+  * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework
+  * Maven artifacts: https://www.nuget.org/packages/JetBrains.RdFramework
+  
+### RdGen
+Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
+* Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-gen
+* Gradle: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-gen/0.201.40
+* NuGet: https://www.nuget.org/packages/JetBrains.RdGen
+
+
+
+  
+# How to build
 
 Firstly decide which languages will be involved in protocol. It may be **Kotlin** and **C#**, Rider uses them for instance. 
 Or **C++** only, who knows. After that prepare the environment and build needed assemblies. Choose **separate** or **common** build based on needs.
