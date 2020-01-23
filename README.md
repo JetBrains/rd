@@ -17,7 +17,7 @@ JetBrains Core library for graceful disposal, concurrency and reactive programmi
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core
   * Artifacts: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-core/0.201.40 
 
-* NET
+* .NET
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/Lifetimes
   * Artifacts: https://www.nuget.org/packages/JetBrains.Lifetimes
 
