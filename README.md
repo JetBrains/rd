@@ -3,10 +3,6 @@
 Reactive Distributed communication framework for .NET, Kotlin and C++ (experimental). 
 Inspired by JetBrains Rider IDE. 
 
-Motivation and brief course:
-
-https://www.youtube.com/watch?v=W9Jtagm8nVQ&feature=youtu.be&list=PLQ176FUIyIUaiCssbIPQjFGvQX92HPtGU
-
 ## Structure
 The framework contains of several libraries for single process usage and cross process communication.
 
