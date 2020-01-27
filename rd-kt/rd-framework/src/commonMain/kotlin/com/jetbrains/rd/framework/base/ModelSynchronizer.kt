@@ -85,13 +85,16 @@ class ModelSynchronizer(val accepts: (Any?) -> Boolean = { true }) {
             b[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
         }
 
-        a.localChange {
+        var isLocal = true
+        try {
             b.view(lifetime) { lt, (key, value) ->
-                if (a.changing)
+                if (a.changing || isLocal)
                     return@view
 
                 a[key]?.let { otherValue -> synchronizePolymorphic(lt, value, otherValue) }
             }
+        } finally {
+            isLocal = false
         }
     }
 
