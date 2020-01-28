@@ -34,7 +34,19 @@ namespace JetBrains.Threading
     {
       return SpinUntil(lifetime, TimeSpan.MaxValue, condition);
     }
-    
+
+    /// <summary>
+    /// Spins while <paramref name="timeout"/> is not elapsed and <paramref name="condition"/> is false.     
+    /// </summary>
+    /// <param name="timeout">Stops spinning and return <c>false</c> when timeout is alive</param>
+    /// <param name="condition">Stops spinning and return <c>false</c> when condition is true</param>
+    /// <returns><c>false</c> if <paramref name="timeout"/> is zero or elapsed during spinning.
+    /// Otherwise <c>true</c> (when <paramref name="condition"/> returns true)</returns>
+    [PublicAPI]
+    public static bool SpinUntil(TimeSpan timeout, Func<bool> condition)
+    {
+      return SpinUntil(Lifetime.Eternal, (long)timeout.TotalMilliseconds, condition);
+    }
     
     /// <summary>
     /// Spins while <paramref name="lifetime"/> is alive, <paramref name="timeout"/> is not elapsed and <paramref name="condition"/> is false.     

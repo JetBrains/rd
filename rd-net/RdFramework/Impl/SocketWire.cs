@@ -106,6 +106,8 @@ namespace JetBrains.Rd.Impl
         ourStaticLog.CatchAndDrop(() => socket.Shutdown(SocketShutdown.Both));
         
         //on netcore you can't solely execute Close() - it will hang forever
+        //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034 
+        // ourStaticLog.CatchAndDrop(() => socket.Close(TimeoutMs)); 
         ourStaticLog.CatchAndDrop(socket.Close);
       }
 
@@ -267,7 +269,7 @@ namespace JetBrains.Rd.Impl
         }
         catch (Exception e)
         {
-          Log.Warn(e, $"{Id}: Exception raised during ACK, seqn = {seqN}");
+          Log.Warn(e, $"{Id}: ${e.GetType()} raised during ACK, seqn = {seqN}");
         }
       }
       
@@ -477,7 +479,7 @@ namespace JetBrains.Rd.Impl
 
       internal static Socket CreateServerSocket(Lifetime lifetime, [CanBeNull] IPEndPoint endPoint)
       {
-        Protocol.InitializationLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
+        Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
         return lifetime.Bracket(() =>
           {
@@ -487,7 +489,7 @@ namespace JetBrains.Rd.Impl
             endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
             serverSocket.Bind(endPoint);
             serverSocket.Listen(1);
-            Protocol.InitializationLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+            Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
 
             return serverSocket;
           },

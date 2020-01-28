@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.InternRoot
+import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.AddRemove
@@ -80,7 +81,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
-    private val extensions = concurrentMapOf<String, Any>()
+    private val extensions = mutableMapOf<String, Any>()
 
     inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, create)
     internal inline fun <reified T: Any> getOrCreateHighPriorityExtension(name: String, noinline create: () -> T) = getOrCreateHighPriorityExtension(name, T::class, create)
@@ -89,20 +90,23 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     internal fun <T:Any> getOrCreateHighPriorityExtension(name: String, clazz: KClass<T>, create: () -> T) : T = getOrCreateExtension0(name, clazz, true, create)
 
     private fun <T:Any> getOrCreateExtension0(name: String, clazz: KClass<T>, highPriorityExtension: Boolean = false, create: () -> T) : T {
-        val res = extensions.getOrPut(name) {
-            val newExtension = create()
-            if (newExtension is IRdBindable) {
-                bindableChildren.add(if(highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
-                bindLifetime?.let {
-                    newExtension.identify(protocol.identity, rdid.mix(".$name"))
-                    newExtension.bind(it, this, name)
+        Sync.lock(extensions) {
+            val res = extensions.getOrPut(name) {
+                val newExtension = create()
+                if (newExtension is IRdBindable) {
+                    bindableChildren.add(if (highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
+                    bindLifetime?.let {
+                        newExtension.identify(protocol.identity, rdid.mix(".$name"))
+                        newExtension.bind(it, this, name)
+                    }
                 }
-            }
 
-            newExtension
+                newExtension
+            }
+            @Suppress("UNCHECKED_CAST")
+            return res as? T
+                ?: throw error("Wrong class found in extension `$location.$name` : Expected `${clazz.simpleName}` but found `${res::class.simpleName}`. Maybe you already set this extension with another type?")
         }
-        @Suppress("UNCHECKED_CAST")
-        return res as? T ?: throw error("Wrong class found in extension `$location.$name` : Expected `${clazz.simpleName}` but found `${res::class.simpleName}`. Maybe you already set this extension with another type?")
     }
 
     //need to implement in subclasses
@@ -144,7 +148,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     operator fun <T : List<IRdBindable?>> T.getValue(thisRef: Any?, property: KProperty<*>) : T = appendToBindableChildren(thisRef, property)
 
 
-    fun synchronizeWith(lifetime: Lifetime, otherBindable: RdBindableBase) {
+    fun synchronizeWith(lifetime: Lifetime, otherBindable: RdBindableBase, accepts: (Any?) -> Boolean = { true }) {
         require (otherBindable::class == this::class) { "Can't synchronize ${this::class} with ${otherBindable::class}" }
 
         //todo so the trick is that exts can appear in different order and sometimes
@@ -168,7 +172,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                     ?: counterpart.bindableChildren.firstOrNull { it.first == name }?.second // try searching by name in case bindable child lists are different (i.e. extern root is present)
                     ?: counterpart.getOrCreateExtension(name) { value.deepClonePolymorphic() }
 
-                synchronizePolymorphic(lifetime, value, other)
+                ModelSynchronizer(accepts).synchronizePolymorphic(lifetime, value, other)
             }
         }
 

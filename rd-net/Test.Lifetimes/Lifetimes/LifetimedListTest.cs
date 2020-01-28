@@ -20,8 +20,8 @@ namespace Test.Lifetimes.Lifetimes
       
       var l2 = new LifetimeDefinition();
       l2.Lifetime.OnTermination(() => lst.ClearValuesIfNotAlive());
-      lst.AddPriorityItem(new Lifetimed<int>(l2.Lifetime, 3));
-      lst.AddPriorityItem(new Lifetimed<int>(l2.Lifetime, 4));
+      lst.AddPriorityItem(new ValueLifetimed<int>(l2.Lifetime, 3));
+      lst.AddPriorityItem(new ValueLifetimed<int>(l2.Lifetime, 4));
       
       Assert.AreEqual(new List<int> {3, 4, 1, 2}, lst.Select(x => x.Value).ToList());
       
@@ -41,7 +41,7 @@ namespace Test.Lifetimes.Lifetimes
       lst.Add(l1.Lifetime, 1);
       Assert.AreEqual(new List<int> {1}, lst.Select(x => x.Value).ToList());
       
-      lst.AddPriorityItem(new Lifetimed<int>(l2.Lifetime, 2));
+      lst.AddPriorityItem(new ValueLifetimed<int>(l2.Lifetime, 2));
       Assert.AreEqual(new List<int> {2, 1}, lst.Select(x => x.Value).ToList());
     }
 

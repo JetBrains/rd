@@ -64,7 +64,7 @@ namespace JetBrains.Rd.Impl
     public override void OnWireReceived(UnsafeReader reader)
     {
       var value = myReadValue(SerializationContext, reader);
-      if (LogReceived.IsTraceEnabled()) LogReceived.Trace("signal `{0}` ({1}):: value = {2}", Location, RdId, value.PrintToString());
+      ReceiveTrace?.Log($"{this} :: value = {value.PrintToString()}");
       using (UsingDebugInfo())
         mySignal.Fire(value);
     }
@@ -72,7 +72,7 @@ namespace JetBrains.Rd.Impl
 
     public void Fire(T value)
     {
-//      AssertBound(); // todo: smart assert: fail if fired before bind; this allows bindless signals in UI
+//      AssertBound(); // todo: smart assert: fail if fired before bind; this allows not bound signals in UI
       if (!Async) AssertThreading();
 
       AssertNullability(value);
@@ -86,7 +86,7 @@ namespace JetBrains.Rd.Impl
       wire.NotNull(this).Send(RdId, SendContext.Of(SerializationContext, value, this), (sendContext, stream) =>
       {
         var me = sendContext.This;
-        if (LogSend.IsTraceEnabled()) LogSend.Trace("signal `{0}` ({1}):: value = {2}", me.Location, me.RdId, sendContext.Event.PrintToString());
+        SendTrace?.Log($"{me} :: value = {sendContext.Event.PrintToString()}");
 
         me.myWriteValue(sendContext.SzrCtx, stream, sendContext.Event);
       });
@@ -102,6 +102,7 @@ namespace JetBrains.Rd.Impl
 
       mySignal.Advise(lifetime, handler);
     }
-   
+
+    protected override string ShortName => "signal";
   }
 }

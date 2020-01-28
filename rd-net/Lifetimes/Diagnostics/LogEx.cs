@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
@@ -427,6 +428,42 @@ namespace JetBrains.Diagnostics
     }
 
     #endregion
+
+
+    #region LogWithLevel
     
+    /// <summary>
+    /// One-line shortcut builder to replace common pattern:
+    /// <code>
+    ///   if (logger.IsTraceEnabled())
+    ///     logger.Trace($"some messages with {HeavyComputation()}"")
+    /// </code>
+    /// Usage:
+    /// <code>
+    ///   logger.Trace()?.Log($"some messages with {HeavyComputation()}")
+    /// </code>
+    /// </summary>
+    /// <param name="logger"/>
+    /// <returns>struct <see cref="LogWithLevel"/>(<paramref name="logger"/>, <see cref="LoggingLevel.TRACE"/>) if <see cref="IsTraceEnabled"/>;
+    /// null otherwise</returns>
+    [PublicAPI] public static LogWithLevel? Trace(this ILog logger) => LogWithLevel.CreateIfEnabled(logger, LoggingLevel.TRACE);
+    
+    /// <summary>
+    /// One-line shortcut builder to replace common pattern:
+    /// <code>
+    ///   if (logger.IsVerboseEnabled())
+    ///     logger.Verbose($"some messages with {HeavyComputation()}"")
+    /// </code>
+    /// Usage:
+    /// <code>
+    ///   logger.Verbose()?.Log($"some messages with {HeavyComputation()}")
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <returns>struct <see cref="LogWithLevel"/>(<paramref name="logger"/>, <see cref="LoggingLevel.VERBOSE"/>) if <see cref="IsVersboseEnabled"/>;
+    /// null otherwise</returns>
+    [PublicAPI] public static LogWithLevel? Verbose(this ILog logger) => LogWithLevel.CreateIfEnabled(logger, LoggingLevel.VERBOSE);
+    
+    #endregion
   }
 }

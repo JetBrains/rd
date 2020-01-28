@@ -204,7 +204,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       // call wrapped method
-      il.Emit(OpCodes.Call, method);
+      il.Emit(OpCodes.Callvirt, method);
 
       // load Unit result if necessary
       if (method.ReturnType == typeof(void) && IsSync(method))

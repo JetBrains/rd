@@ -14,8 +14,9 @@ namespace JetBrains.Rd.Base
     #region Bound state: main
     
     public RdId RdId { get; set; }
-    
-    public RName Location { get; private set; } = new RName("<<not bound>>");   
+
+    internal static readonly RName NotBound = new RName("<<not bound>>");
+    public RName Location { get; private set; } = NotBound;   
     
     [CanBeNull] protected IRdDynamic Parent;
     
@@ -99,17 +100,23 @@ namespace JetBrains.Rd.Base
       }
     }
     
+    
+    
+    protected virtual string ShortName => GetType().ToString(false, true);
+
     public virtual void Print(PrettyPrinter printer)
     {
-      printer.Print(ToString());
-      printer.Print(" (");
-      printer.Print(RdId.ToString());
-      printer.Print(")");
+      if (Location == NotBound || printer.PrintContent)
+        printer.Print(GetType().ToString(false, true));
+      else
+        printer.Print($"{ShortName} `{Location}`" + (RdId != RdId.Nil ? $" ({RdId})" : ""));
     }
 
     public override string ToString()
     {
-      return GetType().ToString(withNamespaces: false, withGenericArguments: true) + ": `" + Location+"`";
+      var printer = new SingleLinePrettyPrinter {PrintContent = false};
+      Print(printer);
+      return printer.ToString();
     }
 
 

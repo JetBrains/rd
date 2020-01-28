@@ -26,15 +26,13 @@ namespace JetBrains.Rd.Reflection
 
     public void TryRegister(Type clrType, ISerializers serializers)
     {
-      if (clrType.IsInterface || clrType.IsAbstract)
-        return;
-
       Register(clrType, serializers);
     }
 
-    internal void Register(Type type, ISerializers serializers)
+    private void Register(Type type, ISerializersContainer serializers)
     {
-      var serializerPair = myReflectionSerializersFactory.GetOrRegisterSerializerPair(type);
+      var instanceSerializer = type.IsInterface || type.IsAbstract;
+      var serializerPair = myReflectionSerializersFactory.GetOrRegisterSerializerPair(type, instanceSerializer);
       ReflectionUtil.InvokeGenericThis(serializers, nameof(serializers.Register), type,
         new[] {serializerPair.Reader, serializerPair.Writer, RdId.DefineByFqn(type).Value });
     }

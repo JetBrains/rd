@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Core;
 using JetBrains.Lifetimes;
@@ -216,7 +217,15 @@ namespace JetBrains.Collections.Viewable
       });
     }
     
-    
+    /// <summary>
+    /// Same as <see cref="ISource{T}.Advise"/> but all events with kind=<see cref="AddUpdateRemove.Update"/> are
+    /// split into two sequential events with kinds <see cref="AddUpdateRemove.Remove"/> and <see cref="AddUpdateRemove.Add"/>
+    /// </summary>
+    /// <param name="me"></param>
+    /// <param name="lifetime"></param>
+    /// <param name="handler"></param>
+    /// <typeparam name="V"></typeparam>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static void AdviseAddRemove<V>(this IViewableList<V> me, Lifetime lifetime, Action<AddRemove, int, V> handler)
     {
       me.Advise(lifetime, e =>
@@ -240,7 +249,16 @@ namespace JetBrains.Collections.Viewable
     }
 
     
-    
+    /// <summary>
+    /// Structured subscription for List. Behaves same as <see cref="ISource{T}.Advise"/>
+    /// except <c>handler</c> receives <see cref="Lifetime"/> parameter
+    /// that terminates when someone removes or updates element on corresponding index. 
+    /// </summary>
+    /// <param name="me"></param>
+    /// <param name="lifetime"></param>
+    /// <param name="handler"></param>
+    /// <typeparam name="V"></typeparam>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static void View<V>(this IViewableList<V> me, Lifetime lifetime, Action<Lifetime, int, V> handler)
     {
       var lifetimes = new List<LifetimeDefinition>();
@@ -373,5 +391,17 @@ namespace JetBrains.Collections.Viewable
       return new MappedProperty<T,R>(source, f);
     }
 
+
+#if !NET35
+    public static Task<T> NextValueAsync<T>(this ISource<T> source, Lifetime lifetime)
+    {
+      var tcs = lifetime.CreateTaskCompletionSource<T>();
+      source.AdviseOnce(lifetime, v =>
+      { 
+        tcs.TrySetResult(v);        
+      });
+      return tcs.Task;
+    }
+#endif
   }
 }

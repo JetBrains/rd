@@ -7,6 +7,10 @@ using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Default implementation for <see cref="IViewableSet{T}"/>
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
     public class ViewableSet<T> : IViewableSet<T>
     {
         private readonly Signal<SetEvent<T>> myChange = new Signal<SetEvent<T>>();
@@ -20,6 +24,11 @@ namespace JetBrains.Collections.Viewable
 
 
         [PublicAPI] public ViewableSet() : this (new HashSet<T>()) {}
+        
+        /// <summary>
+        /// Special delegating constructor that accepts storage backend (e.g. <see cref="JetBrains.Collections.Synchronized.SynchronizedSet{T}"/>)
+        /// </summary>
+        /// <param name="storage"></param>
         [PublicAPI] public ViewableSet([NotNull]
 #if !NET35
             ISet<T> storage

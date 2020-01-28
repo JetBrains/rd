@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
@@ -58,7 +59,7 @@ namespace JetBrains.Lifetimes
   /// user can add termination resources into Lifetime with bunch of <c>OnTermination</c> (e.g. <see cref="OnTermination(Action)"/>) methods.
   /// When lifetime is being terminated (i.e. it's <see cref="LifetimeDefinition"/> was called <see cref="LifetimeDefinition.Terminate"/>) all
   /// previously added termination resources are being terminated in stack-way LIFO order. Lifetimes forms a hierarchy with parent-child relations so in single-threaded world child always
-  /// becomes <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but it some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
+  /// becomes <see cref="LifetimeStatus.Terminated"/> <b>BEFORE</b> parent. Usually this hierarchy is a tree but in some cases (like <see cref="Intersect(JetBrains.Lifetimes.Lifetime[])"/> it can be
   /// a directed acyclic graph. 
   ///
   /// <para>
@@ -238,7 +239,7 @@ namespace JetBrains.Lifetimes
 
     /// <summary>
     /// If you terminate lifetime definition <see cref="LifetimeDefinition.Terminate"/> under <see cref="Execute{T}"/> you'll get exception because 
-    /// it's impossible to keep guarantee that code under <see cref="Execute{T}"/> works with non-terminating livetime.
+    /// it's impossible to keep guarantee that code under <see cref="Execute{T}"/> works with non-terminating lifetime.
     /// However if you know what you are doing (e.g. <c>Terminate</c> is the last call in code under <c>Execute</c>), you can take this cookie and allow this behavior.
     /// </summary>
     /// <returns>Disposable that allow to call <see cref="LifetimeDefinition.Terminate"/> under <see cref="Execute{T}"/> </returns>
@@ -264,20 +265,49 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public LifetimeDefinition.ExecuteIfAliveCookie UsingExecuteIfAlive(bool allowTerminationUnderExecution = false) => Definition.UsingExecuteIfAlive(allowTerminationUnderExecution);
     
     /// <summary>
+    /// Executes <paramref name="action"/> in atomic manner, preventing lifetime to terminate:
+    /// <list type="number">
+    /// <item>If <see cref="IsAlive"/> is false then <paramref name="action"/> isn't executed and method returns <see cref="Result.Canceled()"/></item>
+    /// <item>If <see cref="IsAlive"/> is true then <paramref name="action"/> starts to execute and lifetime can't
+    /// become <see cref="LifetimeStatus.Terminating"/> until this execution finished. If someone terminates lifetime during action invocation,
+    /// it immediately becomes <see cref="LifetimeStatus.Canceling"/> (that forbids all following <see cref="Execute"/> to start), wait until
+    /// <paramref name="action"/> finishes its execution and only then status is set to <see cref="LifetimeStatus.Terminating"/> i.e. resource termination begins. </item>
+    /// </list>
     /// 
+    ///   
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="action"/> execution can last long and lifetime termination can hang because of it. If you want responsiveness you must check lifetime from time to time inside execution body
+    /// (e.g. by <see cref="ThrowIfNotAlive"/> method).
+    /// </remarks>
+    /// <param name="action">action to execute if this lifetime <see cref="IsAlive"/></param>
+    /// <param name="wrapExceptions">if some exception (even <see cref="OperationCanceledException"/>) is thrown during execution should we wrap it
+    /// into <see cref="Result{T}"/> or throw (default)</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns><see cref="Result"/> that encapsulates execution: successful, canceled ot fail</returns>
+    [PublicAPI] public Result<T> TryExecute<T>([NotNull, InstantHandle] Func<T> action, bool wrapExceptions = false) => Definition.TryExecute(action, wrapExceptions);
+    
+    /// <summary>
+    /// See <see cref="TryExecute{T}"/>
     /// </summary>
     /// <param name="action"></param>
     /// <param name="wrapExceptions"></param>
-    /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    [PublicAPI] public Result<T> TryExecute<T>([NotNull, InstantHandle] Func<T> action, bool wrapExceptions = false) => Definition.TryExecute(action, wrapExceptions);
-    
     [PublicAPI] public Result<Unit> TryExecute([NotNull, InstantHandle] Action action, bool wrapExceptions = false) => Definition.TryExecute(action, wrapExceptions);
     
+    /// <summary>
+    /// Same as <see cref="TryExecute{T}"/> but any if lifetime <see cref="IsNotAlive"/> than throws <see cref="LifetimeCanceledException"/>
+    /// </summary>
+    /// <param name="action"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI] public T Execute<T>([NotNull, InstantHandle] Func<T> action) => Definition.Execute(action);
     
+    /// <summary>
+    /// Same as <see cref="TryExecute{T}"/> but any if lifetime <see cref="IsNotAlive"/> than throws <see cref="LifetimeCanceledException"/> 
+    /// </summary>
+    /// <param name="action"></param>
     [PublicAPI] public void Execute([NotNull, InstantHandle] Action action) => Definition.Execute(action);
-    
     
     #endregion
     
@@ -286,16 +316,54 @@ namespace JetBrains.Lifetimes
     
     #region Bracket
     
+    /// <summary>
+    /// Semantic equivalent of <see cref="TryExecute{T}"/>(<paramref name="opening"/>) and <see cref="OnTermination(System.Action)"/>(<paramref name="closing"/>)
+    /// in atomic manner. Both actions will be executed only if <see cref="IsAlive"/>: <paramref name="opening"/> immediately and <paramref name="closing"/> on termination. 
+    ///
+    /// If exception happens in <paramref name="opening"/> it will be thrown (or wrapped into <see cref="Result{T}"/> as in <see cref="TryExecute{T}"/>), but <paramref name="closing"/>
+    /// will be executed on termination anyway.
+    /// </summary>
+    /// <param name="opening"></param>
+    /// <param name="closing"></param>
+    /// <param name="wrapExceptions"></param>
+    /// <returns></returns>
     [PublicAPI] public Result<Unit> TryBracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing, bool wrapExceptions = false) => Definition.TryBracket(opening, closing, wrapExceptions);
     
+    /// <summary>
+    /// <inheritdoc cref="TryBracket(Action, Action, bool)"/>
+    /// </summary>
+    /// <param name="opening"></param>
+    /// <param name="closing"></param>
+    /// <param name="wrapExceptions"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI] public Result<T> TryBracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing, bool wrapExceptions = false) => Definition.TryBracket(opening, closing, wrapExceptions);
     
+    /// <summary>
+    /// <inheritdoc cref="TryBracket(Action, Action, bool)"/>
+    /// </summary>
     [PublicAPI] public Result<T> TryBracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing, bool wrapExceptions = false) => Definition.TryBracket(opening, closing, wrapExceptions);
     
     
     
+    /// <summary>
+    /// Semantic equivalent of <see cref="Execute{T}"/>(<paramref name="opening"/>) and <see cref="OnTermination(System.Action)"/>(<paramref name="closing"/>)
+    /// in atomic manner. Both actions will be executed only if <see cref="IsAlive"/>: <paramref name="opening"/> immediately and <paramref name="closing"/> on termination.
+    /// Otherwise (see <see cref="IsNotAlive"/>) <see cref="LifetimeCanceledException"/> will be thrown. 
+    ///
+    /// If exception happens in <paramref name="opening"/> it will be thrown but <paramref name="closing"/>
+    /// will be executed on termination anyway.
+    /// </summary>
     [PublicAPI] public void Bracket([NotNull, InstantHandle] Action opening, [NotNull] Action closing) => Definition.Bracket(opening, closing);
-    [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing) => Definition.Bracket(opening, closing);    
+    
+    /// <summary>
+    /// <inheritdoc cref="Bracket(Action, Action)"/>
+    /// </summary>
+    [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action closing) => Definition.Bracket(opening, closing);
+    
+    /// <summary>
+    /// <inheritdoc cref="Bracket(Action, Action)"/>
+    /// </summary>
     [PublicAPI] public T Bracket<T>([NotNull, InstantHandle] Func<T> opening, [NotNull] Action<T> closing) => Definition.Bracket(opening, closing);
     
     
@@ -305,8 +373,16 @@ namespace JetBrains.Lifetimes
     
     #region Cancellation
 
+    /// <summary>
+    /// Transforms this lifetime into cancellation token
+    /// </summary>
+    /// <returns></returns>
     [PublicAPI] public CancellationToken ToCancellationToken() => Definition.ToCancellationToken();
     [PublicAPI] public static implicit operator CancellationToken(Lifetime lifetime) => lifetime.Definition.ToCancellationToken();
+    
+    /// <summary>
+    /// Throws <see cref="LifetimeCanceledException"/> is this lifetimes is <see cref="IsNotAlive"/>
+    /// </summary>
     [PublicAPI] public void ThrowIfNotAlive() => Definition.ThrowIfNotAlive();
 
     #endregion
@@ -384,7 +460,7 @@ namespace JetBrains.Lifetimes
     ///   <para>Analogous to the <c>using</c> statement of the C# language on everything that is added to the lifetime.</para>
     /// </summary>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public static async Task UsingAsync([NotNull] [InstantHandle] Func<Lifetime, Task> action)
+    [PublicAPI] public static async Task UsingAsync([NotNull] [InstantHandle] Func<Lifetime, Task> action)
     {
       if(action == null)
         throw new ArgumentNullException(nameof(action));
@@ -398,7 +474,7 @@ namespace JetBrains.Lifetimes
     ///   <para>Analogous to the <c>using</c> statement of the C# language on everything that is added to the lifetime.</para>
     /// </summary>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public static async Task<T> UsingAsync<T>([NotNull] [InstantHandle] Func<Lifetime, Task<T>> action)
+    [PublicAPI] public static async Task<T> UsingAsync<T>([NotNull] [InstantHandle] Func<Lifetime, Task<T>> action)
     {
       if(action == null)
         throw new ArgumentNullException(nameof(action));
@@ -413,7 +489,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="parent">A parent lifetime which limits the lifetime given to your action, and migth terminate it before the action ends.</param>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public static async Task UsingAsync(OuterLifetime parent, [NotNull] [InstantHandle] Func<Lifetime, Task> action)
+    [PublicAPI] public static async Task UsingAsync(OuterLifetime parent, [NotNull] [InstantHandle] Func<Lifetime, Task> action)
     {
       if(action == null)
         throw new ArgumentNullException(nameof(action));
@@ -431,7 +507,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="parent">A parent lifetime which limits the lifetime given to your action, and migth terminate it before the action ends.</param>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public static async Task<T> UsingAsync<T>(OuterLifetime parent, [NotNull] [InstantHandle] Func<Lifetime, Task<T>> action)
+    [PublicAPI] public static async Task<T> UsingAsync<T>(OuterLifetime parent, [NotNull] [InstantHandle] Func<Lifetime, Task<T>> action)
     {
       if(action == null)
         throw new ArgumentNullException(nameof(action));
@@ -449,7 +525,7 @@ namespace JetBrains.Lifetimes
     ///   <para>The parent lifetime which might cause premature termination of our lifetime (and, supposedly, the chain of tasks executed under the lifetime, if started correctly).</para>
     /// </summary>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public async Task<TRetVal> UsingNestedAsync<TRetVal>([NotNull] [InstantHandle] Func<Lifetime, Task<TRetVal>> action)
+    [PublicAPI] public async Task<TRetVal> UsingNestedAsync<TRetVal>([NotNull] [InstantHandle] Func<Lifetime, Task<TRetVal>> action)
     {
       if(action == null) throw new ArgumentNullException(nameof(action));
 
@@ -475,14 +551,30 @@ namespace JetBrains.Lifetimes
     
     #endregion
     
+    
     #region Candidates for extension methods
     
+    /// <summary>
+    /// Same as <see cref="LifetimeDefinition(Lifetime)"/>
+    /// </summary>
+    /// <returns></returns>
     [PublicAPI, NotNull]
     public LifetimeDefinition CreateNested() => new LifetimeDefinition(this);
         
+    /// <summary>
+    /// Same as <see cref="LifetimeDefinition(Lifetime, Action{LifetimeDefinition})"/>
+    /// </summary>
+    /// <returns></returns>
     [PublicAPI, NotNull]
     public LifetimeDefinition CreateNested([NotNull, InstantHandle] Action<LifetimeDefinition> atomicAction) => new LifetimeDefinition(this, atomicAction);
     
+    /// <summary>
+    /// Keeps object from being garbage collected until this lifetime is terminated.
+    /// <seealso cref="Lifetimed{T}"/>
+    /// </summary>
+    /// <param name="object"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     [PublicAPI]
     public Lifetime KeepAlive([NotNull] object @object)
     {
@@ -491,6 +583,14 @@ namespace JetBrains.Lifetimes
       return OnTermination(() => GC.KeepAlive(@object));
     }
 
+    /// <summary>
+    /// <inheritdoc cref="OnTermination(IDisposable)"/>
+    /// <remarks>It's more clear for code review purposes when you are adding IDisposable by <c>AddDispose</c> rather than by <c>OnTermination</c></remarks>
+    /// </summary>
+    /// <param name="disposable"></param>
+    /// <returns>The same lifetime (fluent API)</returns>
+    [PublicAPI] public Lifetime AddDispose([NotNull] IDisposable disposable) => OnTermination(disposable);
+    
     #endregion
                
     
@@ -503,11 +603,9 @@ namespace JetBrains.Lifetimes
 
     [Obsolete("Use `OnTermination()` instead")]
     public Lifetime AddAction([NotNull] Action action) => OnTermination(action);
-    
-    public Lifetime AddDispose([NotNull] IDisposable action) => OnTermination(action);
 
     [Obsolete("For most cases you need `IsNotAlive` which means lifetime is terminated or soon will be terminated (somebody called Terminate() on this lifetime or its parent)." +
-              " If your operation makes sense in Canceled status (but must be stopped when resources termination already began) use Status < Terminating ")]
+              " If your operation makes sense in Canceling status (but must be stopped when resources termination already began) use Status < Terminating ")]
     public bool IsTerminated => Status >= LifetimeStatus.Terminating;
 
     [Obsolete("Use `KeepAlive() instead`")]
@@ -544,15 +642,14 @@ namespace JetBrains.Lifetimes
     #region Intersection
 
 
-    
     /// <summary>
-    /// Creates an intersection with other lifetime — a lifetime to terminate when either one terminates.
+    /// Creates an intersection with other lifetime: new lifetime that terminate when either one terminates.
     /// </summary>
     [PublicAPI] 
     public Lifetime Intersect(Lifetime other) => Intersect(this, other);
     
     /// <summary>
-    /// Creates an intersection of some lifetimes — a lifetime to terminate when either one terminates.
+    /// Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
     /// </summary>
     [PublicAPI]
     public static Lifetime Intersect(Lifetime lifetime1, Lifetime lifetime2) //reduces memory traffic
@@ -565,11 +662,20 @@ namespace JetBrains.Lifetimes
       return DefineIntersection(lifetime1, lifetime2).Lifetime;
     }
     
+    /// <summary>
+    /// <inheritdoc cref="Intersect(JetBrains.Lifetimes.Lifetime, Lifetime)"/>
+    /// </summary>
     [PublicAPI] public static Lifetime Intersect([NotNull] params Lifetime[] lifetimes)
     {
       return DefineIntersection(lifetimes).Lifetime;
     }
 
+    /// <summary>
+    /// <inheritdoc cref="Intersect(JetBrains.Lifetimes.Lifetime, Lifetime)"/>
+    ///
+    /// This method returns definition rather than lifetime, so in addition to any parent's termination you can
+    /// <see cref="LifetimeDefinition.Terminate"/> it manually.  
+    /// </summary>
     public static LifetimeDefinition DefineIntersection(Lifetime lifetime1, Lifetime lifetime2) //reduces memory traffic
     {
       if (lifetime1.Status >= LifetimeStatus.Terminating || lifetime2.Status >= LifetimeStatus.Terminating)
@@ -585,7 +691,7 @@ namespace JetBrains.Lifetimes
     }
     
     /// <summary>
-    /// Creates an intersection of some lifetimes — a lifetime to terminate when either one terminates.
+    /// <inheritdoc cref="DefineIntersection(JetBrains.Lifetimes.Lifetime, Lifetime)"/>
     /// </summary>
     [PublicAPI, NotNull]
     public static LifetimeDefinition DefineIntersection([NotNull] params Lifetime[] lifetimes)
@@ -606,15 +712,23 @@ namespace JetBrains.Lifetimes
     
     #region Diagnostics
 
+    /// <summary>
+    /// <inheritdoc cref="LifetimeDefinition.Id"/>
+    /// </summary>
     [PublicAPI, CanBeNull] public object Id
     {
       get => Definition.Id;
       set => Definition.Id = value;
     }
+    
+    /// <summary>
+    /// <inheritdoc cref="LifetimeDefinition.EnableTerminationLogging"/>
+    /// </summary>
     [PublicAPI] public void EnableTerminationLogging() => Definition.EnableTerminationLogging();
     public override string ToString() => Definition.ToString();
     
     #endregion
+    
     
     
     #region Old define
@@ -648,6 +762,9 @@ namespace JetBrains.Lifetimes
     ///   <para>To pass the lifetime to objects&amp;functions or schedule termination actions on it, get it from the <see cref="LifetimeDefinition.Lifetime" /> property. Do not pass the definition itself to child objects, unless this is the intended scenario to allow them to terminate the lifetime upon their discretion (e. g. a user-cancelable non-modal dialog).</para>
     /// </returns>
     /// <seealso cref="Using(System.Action{Lifetime})" />
+    ///
+    /// <remarks>For compatibility reason logic is different than <see cref="LifetimeDefinition(Lifetime, Action{LifetimeDefinition})"/>: in this method
+    /// <paramref name="atomicAction"/> is always executed</remarks>
     [NotNull]
     public static LifetimeDefinition Define(Lifetime lifetime, [CanBeNull] string id = null, [CanBeNull] [InstantHandle] Action<LifetimeDefinition> atomicAction = null)
     {
@@ -668,8 +785,21 @@ namespace JetBrains.Lifetimes
       //return new LifetimeDefinition(lifetime, atomicAction) {Id = id}; 
     }
 
+    /// <summary>
+    /// Same as <see cref="Define(Lifetime, string, Action{LifetimeDefinition})"/>
+    /// </summary>
+    /// <param name="lifetime"></param>
+    /// <param name="atomicAction"></param>
+    /// <returns></returns>
     public static LifetimeDefinition Define(Lifetime lifetime, [CanBeNull] [InstantHandle] Action<Lifetime> atomicAction) => Define(lifetime, null, atomicAction);
 
+    /// <summary>
+    /// Same as <see cref="Define(Lifetime, string, Action{LifetimeDefinition})"/>
+    /// </summary>
+    /// <param name="lifetime"></param>
+    /// <param name="id"></param>
+    /// <param name="atomicAction"></param>
+    /// <returns></returns>
     public static LifetimeDefinition Define(Lifetime lifetime, [CanBeNull] string id, [CanBeNull] [InstantHandle] Action<Lifetime> atomicAction)
     {
       var res = new LifetimeDefinition {Id = id};
@@ -689,6 +819,11 @@ namespace JetBrains.Lifetimes
       //return new LifetimeDefinition(lifetime, atomicAction) {Id = id};
     }
     
+    /// <summary>
+    /// Same as <see cref="LifetimeDefinition()"/> with <see cref="Id"/> = <paramref name="id"/>
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     [NotNull]
     [Pure]
     public static LifetimeDefinition Define([CanBeNull] string id = null) => new LifetimeDefinition {Id = id};
@@ -703,24 +838,116 @@ namespace JetBrains.Lifetimes
     [MethodImpl(MethodImplOptions.AggressiveInlining)] private ScopedAsyncLocal<Lifetime> UsingAsyncLocal() => new ScopedAsyncLocal<Lifetime>(AsyncLocal, this);
 
 
+    /// <summary>
+    /// Do the same as <see cref="Execute{T}"/> but also (if <see cref="IsAlive"/>) suppress lifetime termination until task returned by <paramref name="closure"/>
+    /// is finished. Task will see this lifetime in <see cref="AsyncLocal"/>.
+    /// </summary>
+    /// <param name="closure"></param>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task ExecuteAsync([NotNull] Func<Task> closure) { using (UsingAsyncLocal()) return Definition.ExecuteAsync(closure); }
+    
+    /// <summary>
+    /// <inheritdoc cref="ExecuteAsync"/>
+    /// </summary>
+    /// <param name="closure"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task<T> ExecuteAsync<T>([NotNull] Func<Task<T>> closure)  { using (UsingAsyncLocal()) return Definition.ExecuteAsync(closure); }
 
+    /// <summary>
+    /// Do the same as <see cref="TryExecute{T}"/> but also (if <see cref="IsAlive"/>) suppress lifetime termination until task returned by <paramref name="closure"/>
+    /// is finished. Task will see this lifetime in <see cref="AsyncLocal"/>.
+    /// </summary>
+    /// <param name="closure"></param>
+    /// <param name="wrapExceptions"></param>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task TryExecuteAsync([NotNull] Func<Task> closure, bool wrapExceptions = false) => Definition.TryExecuteAsync(closure, wrapExceptions);
+    
+    /// <summary>
+    /// <inheritdoc cref="ExecuteAsync"/>
+    /// </summary>
+    /// <param name="closure"></param>
+    /// <param name="wrapExceptions"></param>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task<T> TryExecuteAsync<T>([NotNull] Func<Task<T>> closure, bool wrapExceptions = false) => Definition.TryExecuteAsync(closure, wrapExceptions);
     
     
+    /// <summary>
+    /// Starts task with this lifetime as <see cref="CancellationToken"/>. Task will see this lifetime in <see cref="AsyncLocal"/>.
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task Start(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
+    
+    /// <summary>
+    /// <inheritdoc cref="Start"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task<T> Start<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
     
+    /// <summary>
+    /// <inheritdoc cref="Start"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task StartAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
+    
+    /// <summary>
+    /// <inheritdoc cref="Start"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task<T> StartAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
 
 
-    [PublicAPI, NotNull] public Task StartAttached(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options)); 
+    /// <summary>
+    /// Starts task with this lifetime as <see cref="CancellationToken"/> but also (if <see cref="IsAlive"/>) suppress
+    /// lifetime termination until task is finished. Task will see this lifetime in <see cref="AsyncLocal"/>.
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [PublicAPI, NotNull] public Task StartAttached(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options));
+    
+    /// <summary>
+    /// <inheritdoc cref="StartAttached"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task<T> StartAttached<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options));
     
+    /// <summary>
+    /// <inheritdoc cref="StartAttached"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task StartAttachedAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
+    
+    /// <summary>
+    /// <inheritdoc cref="StartAttached"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     [PublicAPI, NotNull] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
 
 
@@ -738,7 +965,27 @@ namespace JetBrains.Lifetimes
       //Nested definition is better that just adding termination action because it prevents memory leak
       CreateNested().SynchronizeWith(res);
       return res;
-    } 
+    }
+
+
+    /// <summary>
+    /// Returns lifetime that is child of this lifetime and will be terminated after specified period of time.
+    /// </summary>
+    /// <param name="timeSpan">Terminate lifetime after this amount of time</param>
+    /// <param name="terminationScheduler">Scheduler where termination will be invoked (if none specified, termination will start in timer's thread)</param>
+    [PublicAPI] public Lifetime CreateTerminatedAfter(TimeSpan timeSpan, TaskScheduler terminationScheduler = null)
+    {
+      var def = new LifetimeDefinition(this);
+      Task.Delay(timeSpan, this).ContinueWith(
+        _ => def.Terminate(), 
+        this, 
+        TaskContinuationOptions.None, 
+        terminationScheduler ?? SynchronousScheduler.Instance
+        );
+
+      return def.Lifetime;
+    }
+    
     
     #endregion
     #endif
@@ -778,8 +1025,19 @@ namespace JetBrains.Lifetimes
     
     #region Performance critical: Boxing/Unboxing
 
+    /// <summary>
+    /// Box lifetime without allocation. Must be use in pair with <see cref="TryUnwrapAsObject"/>.
+    /// </summary>
+    /// <param name="lifetime">Lifetime that you want to box without allocation</param>
+    /// <returns><see cref="LifetimeDefinition"/> for this lifetime. ONLY for zero-allocation purpose.</returns>
     [PublicAPI] public static object WrapAsObject(Lifetime lifetime) => lifetime.Definition;
 
+    /// <summary>
+    /// Try to unwrap object into <see cref="Lifetime"/>. Must be used in pair with <see cref="WrapAsObject"/>.
+    /// </summary>
+    /// <param name="obj">object that potentially is LifetimeDefinition previously wrapped by <see cref="WrapAsObject"/></param>
+    /// <param name="lifetime">if <code>obj is LifetimeDefinition</code> returns corresponding <see cref="LifetimeDefinition.Lifetime"/>; else returns <see cref="Eternal"/></param>
+    /// <returns>true if <code>obj is LifetimeDefinition</code> previously wrapped by <see cref="WrapAsObject"/>. false otherwise</returns>
     [PublicAPI] public static bool TryUnwrapAsObject(object obj, out Lifetime lifetime)
     {
       var ld = obj as LifetimeDefinition;
@@ -837,7 +1095,19 @@ namespace JetBrains.Lifetimes
     
     #region Retry
 
-    public async Task RetryWhileOperationCancellingAsync(Func<Task> task)
+    /// <summary>
+    /// Creates and starts new <paramref name="task"/> while it is finished with <see cref="OperationCanceledException"/>.
+    /// Returned task can be finished in:
+    /// <list type="number">
+    /// <item>successfully - if some started <paramref name="task"/> finished successfully</item>
+    /// <item>failed - if some started <paramref name="task"/> finished with exception other than <see cref="OperationCanceledException"/></item>
+    /// <item>canceled - if this lifetime <see cref="IsNotAlive"/></item>
+    /// </list>
+    /// </summary>
+    /// <param name="task"></param>
+    /// <returns></returns>
+    /// <exception cref="LifetimeCanceledException"></exception>
+    [PublicAPI] public async Task RetryWhileOperationCancellingAsync(Func<Task> task)
     {
       while (IsAlive)
       {  
@@ -855,7 +1125,14 @@ namespace JetBrains.Lifetimes
     }
     
     
-    public async Task<T> RetryWhileOperationCancellingAsync<T>(Func<Task<T>> task)
+    /// <summary>
+    /// <inheritdoc cref="RetryWhileOperationCancellingAsync(Func{Task})"/>
+    /// </summary>
+    /// <param name="task"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    /// <exception cref="LifetimeCanceledException"></exception>
+    [PublicAPI] public async Task<T> RetryWhileOperationCancellingAsync<T>(Func<Task<T>> task)
     {
       while (IsAlive)
       {  

@@ -5,6 +5,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
 {
+  //todo Union with Result
   public sealed class RdTaskResult<T> : IPrintable
   {
     public RdTaskStatus Status { get; }

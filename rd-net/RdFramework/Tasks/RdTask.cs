@@ -14,13 +14,14 @@ namespace JetBrains.Rd.Tasks
 {
   public class RdTask<T> : IRdTask<T>
   {
+    
     internal readonly WriteOnceProperty<RdTaskResult<T>> ResultInternal = new WriteOnceProperty<RdTaskResult<T>>();
 
     public IReadonlyProperty<RdTaskResult<T>> Result => ResultInternal;
 
-    public void Set(T value) => ResultInternal.Value = RdTaskResult<T>.Success(value);
-    public void SetCancelled() => ResultInternal.Value = RdTaskResult<T>.Cancelled();
-    public void Set(Exception e) => ResultInternal.Value = RdTaskResult<T>.Faulted(e);
+    public void Set(T value) => ResultInternal.SetIfEmpty(RdTaskResult<T>.Success(value));
+    public void SetCancelled() => ResultInternal.SetIfEmpty(RdTaskResult<T>.Cancelled());
+    public void Set(Exception e) => ResultInternal.SetIfEmpty(RdTaskResult<T>.Faulted(e));
 
     private static RdTask<T> FromResult(RdTaskResult<T> result)
     {

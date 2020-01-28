@@ -35,11 +35,11 @@ namespace JetBrains.Rd.Base
     protected abstract Action<ISerializers> Register { get; }
     protected virtual long SerializationHash => 0L;
 
-    public override IScheduler WireScheduler { get { return SynchronousScheduler.Instance; } }
+    public override IScheduler WireScheduler => SynchronousScheduler.Instance;
 
     protected override void Init(Lifetime lifetime)
     {
-      TraceMe(Protocol.InitializationLogger, "binding");
+      Protocol.InitTrace?.Log($"{this} :: binding");
 
       var parentProtocol = base.Proto;
       var parentWire = parentProtocol.Wire;
@@ -64,14 +64,14 @@ namespace JetBrains.Rd.Base
       //protocol must be set first to allow bindable bind to it
       base.Init(lifetime);
       
-      TraceMe<Func<string>>(Protocol.InitializationLogger, "created and bound :: {0}", this.PrintToString);
+      Protocol.InitTrace?.Log($"{this} :: bound");
     }
 
 
     public override void OnWireReceived(UnsafeReader reader)
     {
       var remoteState = (ExtState)reader.ReadInt();
-      TraceMe(LogReceived, "remote: {0}", remoteState);
+      ReceiveTrace?.Log($"{{this}} : {remoteState}");
 
       switch (remoteState)
       {
@@ -98,7 +98,8 @@ namespace JetBrains.Rd.Base
         base.Proto.Scheduler.Queue(() => { base.Proto.OutOfSyncModels.Add(this); } );
         
         if (base.Proto is Protocol p && p.ThrowErrorOnOutOfSyncModels)
-          Assertion.Fail($"serializationHash of ext '{Location}' doesn't match to counterpart: maybe you forgot to generate models?");
+          Assertion.Fail($"{this} : SerializationHash doesn't match to counterpart: maybe you forgot to generate models?" +
+                         $"Our: `${SerializationHash}` counterpart: {counterpartSerializationHash}");
       }
     }
 
@@ -106,38 +107,12 @@ namespace JetBrains.Rd.Base
     {
       parentWire.Send(RdId, writer =>
       {
-        TraceMe(LogSend, state);
+        SendTrace?.Log($"{this} : {state}");
         writer.Write((int)state);
         writer.Write(SerializationHash);
       });
     }
-    
-    
-    [StringFormatMethod("fmt")]
-    private void TraceMe<T>(ILog logger, string fmt, T paramProvider)
-    {
-      if (!logger.IsTraceEnabled()) return;
 
-      string param;
-      var fparam = paramProvider as Func<object>;  
-      if (fparam != null)
-      {
-        param = fparam()?.ToString();
-      }
-      else
-      {
-        param = paramProvider?.ToString();
-      }
-      
-      logger.Trace("ext `{0}` ({1}) :: {2}", Location, RdId, string.Format(fmt, param));
-    }
-    
-    
-    private void TraceMe<T>(ILog logger, T msgProvider)
-    {
-      TraceMe(logger, "{0}", msgProvider);
-    }
-    
         
 
     protected override void InitBindableFields(Lifetime lifetime)
@@ -158,6 +133,8 @@ namespace JetBrains.Rd.Base
       }
       
     }
+
+    protected override string ShortName => "ext";
   }
 
   
@@ -182,10 +159,10 @@ namespace JetBrains.Rd.Base
         StoredContext = storedContext;
       }
     }
-    
+
     
     private readonly Queue<QueueItem> mySendQ = new Queue<QueueItem>();
-    
+
     public ProtocolContexts Contexts
     {
       get => RealWire.Contexts;
@@ -246,4 +223,5 @@ namespace JetBrains.Rd.Base
       RealWire.Advise(lifetime, entity);
     }
   }
+
 }

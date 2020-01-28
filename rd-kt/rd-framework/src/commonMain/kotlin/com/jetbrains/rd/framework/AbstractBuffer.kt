@@ -1,5 +1,8 @@
 package com.jetbrains.rd.framework
 
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.IScheduler
+
 abstract class AbstractBuffer {
     abstract var position: Int
 
@@ -135,3 +138,4 @@ abstract class AbstractBuffer {
 
 expect fun createAbstractBuffer(): AbstractBuffer
 expect fun createAbstractBuffer(bytes: ByteArray): AbstractBuffer
+expect fun createBackgroundScheduler(lifetime: Lifetime, name: String): IScheduler

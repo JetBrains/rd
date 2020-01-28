@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -8,6 +9,11 @@ using JetBrains.Lifetimes;
 
 namespace JetBrains.Collections.Viewable
 {
+  /// <summary>
+  /// Default implementation of <see cref="IViewableMap{K,V}"/>
+  /// </summary>
+  /// <typeparam name="TK"></typeparam>
+  /// <typeparam name="TV"></typeparam>
   public class ViewableMap<TK, TV> : IViewableMap<TK, TV>
   {
     [NotNull] private readonly IDictionary<TK, TV> myStorage;
@@ -20,6 +26,11 @@ namespace JetBrains.Collections.Viewable
 
     [PublicAPI] public ViewableMap(IEqualityComparer<TV> valueComparer) : this(new Dictionary<TK, TV>()) {}
 
+    /// <summary>
+    /// Special delegating constructor that accepts storage backend (e.g. <see cref="ConcurrentDictionary{TKey,TValue}"/>)
+    /// </summary>
+    /// <param name="storage"></param>
+    /// <param name="valueComparer"></param>
     [PublicAPI] public ViewableMap([NotNull] IDictionary<TK, TV> storage, [CanBeNull] IEqualityComparer<TV> valueComparer = null)
     {
       myStorage = storage ?? throw new ArgumentNullException(nameof(storage));

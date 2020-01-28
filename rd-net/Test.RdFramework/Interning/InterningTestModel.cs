@@ -55,8 +55,7 @@ namespace Test.RdFramework.Interning
     {
       Identify(protocol.Identities, RdId.Root.Mix(GetType().Name));
       Bind(lifetime, protocol, GetType().Name);
-      if (Protocol.InitializationLogger.IsTraceEnabled())
-        Protocol.InitializationLogger.Trace ("CREATED toplevel object {0}", this.PrintToString());
+      Protocol.InitTrace?.Log ($"CREATED toplevel object {this.PrintToString()}");
     }
     //custom body
     //equals trait

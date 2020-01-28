@@ -49,6 +49,14 @@ namespace JetBrains.Rd.Reflection
     {
     }
 
+    /// <summary>
+    /// Provides external marshaller for this type
+    /// </summary>
+    /// <param name="marshaller">
+    /// A type which implements <see cref="IIntrinsicMarshaller{T}"/> for this type or any base interface.
+    /// Keep in mind that if you provide an serializer for base interface a runtime casting error is possible on the
+    /// receiver side if receiver want to have an inheritor from this interface
+    /// </param>
     public RdScalarAttribute(Type marshaller)
     {
       Marshaller = marshaller;
@@ -199,7 +207,7 @@ namespace JetBrains.Rd.Reflection
     {
       if (instanceSerializer && myScalars.CanBePolymorphic(serializerType))
       {
-        return GetPolymorphic(serializerType);
+        return myScalars.GetInstanceSerializer(serializerType);
       }
 
       if (!mySerializers.TryGetValue(serializerType, out var serializerPair))
@@ -225,11 +233,11 @@ namespace JetBrains.Rd.Reflection
       return serializerPair;
     }
 
-    private static SerializerPair GetPolymorphic(Type argument)
+    private SerializerPair GetPolymorphic(Type type)
     {
-      var polymorphicClass = typeof(Polymorphic<>).MakeGenericType(argument);
-      var reader = polymorphicClass.GetTypeInfo().GetField("Read", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
-      var writer = polymorphicClass.GetTypeInfo().GetField("Write", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(argument);
+      var polymorphicClass = typeof(Polymorphic<>).MakeGenericType(type);
+      var reader = polymorphicClass.GetTypeInfo().GetField("Read", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(type);
+      var writer = polymorphicClass.GetTypeInfo().GetField("Write", BindingFlags.Public | BindingFlags.Static).NotNull().GetValue(type);
       return new SerializerPair(reader, writer);
     }
 
@@ -573,12 +581,32 @@ namespace JetBrains.Rd.Reflection
   public interface IScalarSerializers
   {
     /// <summary>
-    /// Return static serializers for type
+    /// Return static serializers for type Static serializer is the serializer which always return provided type and
+    /// never any of the inheritors. It makes sense to ask these serializers for struct, enums and sealed classes
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
     SerializerPair GetOrCreate(Type type);
+
+    /// <summary>
+    /// Return instance serializers for the type.
+    /// Instance means that Polymorphic types is possible, you can ask here for serializer for interface, for example
+    /// </summary>
+    /// <param name="t"></param>
+    /// <returns></returns>
+    SerializerPair GetInstanceSerializer(Type t);
+
+    /// <summary>
+    /// Register custom serializer for provided polymorphic type. It will be used instead of default <see
+    /// cref="Polymorphic{T}"/>. Be aware, that you can register your custom serializer only before any serializer was
+    /// asked via <see cref="GetInstanceSerializer"/>.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="serializers"></param>
+    void RegisterPolymorphicSerializer([NotNull] Type type, SerializerPair serializers);
+
     void GetOrCreate<T>(out CtxReadDelegate<T> reader, out CtxWriteDelegate<T> writer);
+
     bool CanBePolymorphic(Type type);
   }
 

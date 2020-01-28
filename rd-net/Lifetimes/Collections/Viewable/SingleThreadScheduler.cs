@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -30,8 +32,11 @@ namespace JetBrains.Collections.Viewable
     }
   }
 
-  
-  public class SingleThreadScheduler : IScheduler
+  /// <summary>
+  /// Task scheduler that either creates separate thread (via <see cref="RunOnSeparateThread"/> or use current
+  /// (via <see cref="CreateOverExisting"/>). All enqueued tasks are executed sequentially. 
+  /// </summary>
+  public class SingleThreadScheduler : TaskScheduler, IScheduler
   {
     class ActionQueue
     {
@@ -198,5 +203,26 @@ namespace JetBrains.Collections.Viewable
     public bool IsActive => Thread.CurrentThread == Thread;
 
     public bool OutOfOrderExecution => false;
+
+    
+
+    #region TaskScheduler
+    
+    protected override void QueueTask(Task task)
+    {
+      Queue(() => TryExecuteTask(task));
+    }
+
+    protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+    {
+      return false;
+    }
+
+    protected override IEnumerable<Task> GetScheduledTasks()
+    {
+      yield break;
+    }
+    
+    #endregion
   }
 }

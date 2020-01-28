@@ -8,12 +8,13 @@ namespace JetBrains.Rd.Tasks
   [PublicAPI] 
   public interface IRdTask<T>
   {
+    //todo make RdTask as type alias for IReadonlyProperty<RdTaskResult<T>>
     IReadonlyProperty<RdTaskResult<T>> Result { get; }
   }
   
   public interface IRdEndpoint<TReq, TRes>
   {
-    void Set(Func<Lifetime, TReq, RdTask<TRes>> handler);
+    void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationAndRequestScheduler = null);
   }
 
   public interface IRdCall<in TReq, TRes>

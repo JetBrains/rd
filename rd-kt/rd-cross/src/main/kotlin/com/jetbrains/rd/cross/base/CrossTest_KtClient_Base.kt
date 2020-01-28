@@ -18,14 +18,14 @@ abstract class CrossTest_KtClient_Base : CrossTest_Kt_Base() {
     }
 
     init {
-        println("Waiting for port being written in file=${portFile}")
+        println("Waiting for file created `$portFileStamp` and port written in file `${portFile}`")
 
-        fun stampFileExists() = Files.exists(portFileStamp.toPath())
+        fun stampFileExists() = portFileStamp.exists()
 
-        SpinWait.spinUntil(5_000, ::stampFileExists)
+        SpinWait.spinUntil(15_000, ::stampFileExists)
 
         if (!stampFileExists()) {
-            System.err.println("Stamp file wasn't created during timeout")
+            System.err.println("Stamp file `$portFileStamp` wasn't created during timeout")
             exitProcess(1)
         }
 

@@ -9,6 +9,7 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 using NUnit.Framework;
 
 #if NET35
@@ -48,7 +49,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [RdExt]
-    public class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
+    internal class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
     {
       public Task<string> GetStringAsync()
       {
@@ -79,9 +80,9 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     public class AsyncModelsTest : RdExtReflectionBindableBase, IAsyncModelsTestDifferentName
     {
-      public Task<AColor> QueryColor()
+      public async Task<AColor> QueryColor()
       {
-        return Task.FromResult(new AColor(10, 10, 10));
+        return await Task.FromResult(new AColor(10, 10, 10));
       }
 
       public void SetPath(FileSystemPath animal)
@@ -158,7 +159,7 @@ namespace Test.RdFramework.Reflection
 
 #if NET35
       // it seems like ExecuteSynchronously does not work in NET35
-      SpinWait.SpinUntil(() => result != null, 1000);
+      SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => result != null);
 #endif
       Assert.AreEqual(result, "result");
     }
@@ -233,7 +234,7 @@ namespace Test.RdFramework.Reflection
     private void WaitMessages()
     {
       bool IsIdle(IRdDynamic p) => ((SingleThreadScheduler) p.Proto.Scheduler).IsIdle;
-      SpinWait.SpinUntil(() => IsIdle(ServerProtocol) && IsIdle(ClientProtocol));
+      SpinWaitEx.SpinUntil(() => IsIdle(ServerProtocol) && IsIdle(ClientProtocol));
     }
 
     protected override IScheduler CreateScheduler(bool isServer)
@@ -243,7 +244,7 @@ namespace Test.RdFramework.Reflection
 
       var thread = new Thread(() => SingleThreadScheduler.RunInCurrentStackframe(TestLifetime, name, s => result = s)) { Name = name };
       thread.Start();
-      SpinWait.SpinUntil(() => result != null);
+      SpinWaitEx.SpinUntil(() => result != null);
       return result;
     }
   }

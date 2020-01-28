@@ -6,11 +6,7 @@ import com.jetbrains.rd.util.trace
 
 interface ISerializersOwner {
     fun register(serializers : ISerializers) {
-        val key = this::class
-        if (!serializers.toplevels.add(key)) return
-
-        Protocol.initializationLogger.trace { "REGISTER serializers for ${key.simpleName}" }
-        registerSerializersCore(serializers)
+        serializers.registerSerializersOwnerOnce(this)
     }
 
     fun registerSerializersCore(serializers : ISerializers)

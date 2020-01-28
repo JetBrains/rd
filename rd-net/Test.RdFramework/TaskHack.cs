@@ -1,5 +1,8 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Lifetimes;
+using JetBrains.Threading;
 
 #if NET35
 namespace Test.RdFramework
@@ -23,7 +26,7 @@ namespace Test.RdFramework
     {
       return Task.Factory.StartNew(() =>
       {
-        SpinWait.SpinUntil(() => token.IsCancellationRequested, ms);
+        SpinWaitEx.SpinUntil(Lifetime.Eternal, TimeSpan.FromMilliseconds(ms), () => token.IsCancellationRequested);
         token.ThrowIfCancellationRequested();
       }, token);
     }

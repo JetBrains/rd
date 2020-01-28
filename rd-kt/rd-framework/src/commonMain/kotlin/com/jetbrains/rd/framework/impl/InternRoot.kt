@@ -133,6 +133,7 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
 /**
  * An ID representing an interned value
  */
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class InternId(val value: Int) {
     /**
      * True if this ID represents an actual interned value. False indicates a failed interning operation or unset value

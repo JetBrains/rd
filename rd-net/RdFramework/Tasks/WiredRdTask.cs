@@ -4,69 +4,114 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
-using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
 {
   class WiredRdTask<TReq, TRes> : RdTask<TRes>, IRdWireable
   {
-    private readonly LifetimeDefinition myLifetimeDef;
-    
     private readonly RdCall<TReq, TRes> myCall;
+    private readonly bool myIsEndpoint;
     public RdId RdId { get; }
-    public IScheduler Scheduler { get; }
-    public IScheduler WireScheduler { get; } = SynchronousScheduler.Instance;
+    public IScheduler WireScheduler { get; }
 
     private IWire myWire;
-    
-    public WiredRdTask(LifetimeDefinition lifetimeDef, RdCall<TReq, TRes> call, RdId rdId, IScheduler scheduler)
+
+    public IProtocol Proto => myCall.Proto;
+    public SerializationCtx SerializationContext => myCall.SerializationContext;
+    public RName Location { get; }
+
+    public WiredRdTask(RdCall<TReq, TRes> call, RdId rdId,
+      IScheduler wireScheduler, bool isEndpoint)
     {
-      myLifetimeDef = lifetimeDef;
       myCall = call;
+      myIsEndpoint = isEndpoint;
       RdId = rdId;
-      Scheduler = scheduler;
+      WireScheduler = wireScheduler;
       myWire = call.Wire;
-      Location = myCall.Location.Sub(RdId);
+      Location = call.Location.Sub(rdId);
+    }
+
+    
+    
+    internal Lifetime Subscribe(Lifetime outerLifetime)
+    {
+      var taskWireSubscriptionDefinition = outerLifetime.CreateNested();
+      var externalCancellation = outerLifetime.CreateNested();
       
-      call.Wire.Advise(lifetimeDef.Lifetime, this);
-      lifetimeDef.Lifetime.TryOnTermination(() =>
+      myCall.Wire.Advise(taskWireSubscriptionDefinition.Lifetime, this); //this lifetimeDef listen only one value
+      outerLifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled())); //todo 
+      
+      Result.AdviseOnce(Lifetime.Eternal, taskResult =>
       {
-        //otherwise it could be successful continuation from Queue
-        if (ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()))
+        taskWireSubscriptionDefinition.Terminate(); //no need to listen result or cancellation from wire
+
+        var potentiallyBindable = taskResult.Result;
+        if (potentiallyBindable.IsBindable())
         {
-          RdReactiveBase.LogSend.Trace($"call {myCall.Location} ({myCall.RdId}) send cancellation for task '{RdId}'");
-          myWire.Send(rdId, writer => { writer.Write(Unit.Instance); }); //send cancellation to the other side
+          if (myIsEndpoint)
+            potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
+
+          potentiallyBindable.BindPolymorphic(externalCancellation.Lifetime, myCall, RdId.ToString());
+        }
+
+        if (myIsEndpoint)
+        {
+          if (taskResult.Status == RdTaskStatus.Canceled)
+          {
+            externalCancellation.Terminate();
+          }
+          
+          Trace(RdReactiveBase.ourLogSend, "send response", taskResult);
+          myWire.Send(RdId,
+            writer =>
+            {
+              RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
+            });
+        }
+        else if (taskResult.Status == RdTaskStatus.Canceled) //we need to transfer cancellation to the other side
+        {
+          Trace(RdReactiveBase.ourLogSend, "send cancellation");
+          myWire.Send(RdId, writer => { writer.Write(Unit.Instance); }); //send cancellation to the other side
         }
       });
+
+      return externalCancellation.Lifetime;
     }
 
 
     //received response from wire
     public void OnWireReceived(UnsafeReader reader)
     {
-      var resultFromWire = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, myCall.SerializationContext, reader);
-      
-      if (RdReactiveBase.LogReceived.IsTraceEnabled())
-        RdReactiveBase.LogReceived.Trace($"call {myCall.Location} ({myCall.RdId}) received response for task '{RdId}' : {resultFromWire.PrintToString()}");
-      
-      Scheduler.Queue(() =>
+      using (myCall.UsingDebugInfo())
       {
-        using (myCall.UsingDebugInfo())
+        if (myIsEndpoint) //we are on endpoint side, so listening for cancellation
         {
-          if (ResultInternal.SetIfEmpty(resultFromWire)) return;
+          Trace(RdReactiveBase.ourLogReceived, "received cancellation");
+          reader.ReadVoid(); //nothing just a void value
+          ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
         }
 
-        //trace
-        if (RdReactiveBase.LogReceived.IsTraceEnabled())
-          RdReactiveBase.LogReceived.Trace($"call {myCall.Location} ({myCall.RdId}) response for task '{RdId}' was dropped, because task already has result: {Result.Value}");
-        
-        myLifetimeDef.Terminate(); //todo not true in case of bindable entities
-      });
+        else // we are at call side, so listening no response and bind it if it's bindable
+        {
+          var resultFromWire = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, myCall.SerializationContext, reader);
+          Trace(RdReactiveBase.ourLogReceived, "received response", resultFromWire);
+          
+          if (!ResultInternal.SetIfEmpty(resultFromWire))
+            Trace(RdReactiveBase.ourLogReceived, "response from wire was rejected because task already has result");
+        }
+      }
     }
 
-    public IProtocol Proto => myCall.Proto;
-    public SerializationCtx SerializationContext => myCall.SerializationContext;
-    public RName Location { get; }
+    private void Trace(ILog log, string message, object additional = null)
+    {
+      if (!log.IsTraceEnabled())
+        return;
+      
+      log.Trace($"{this} :: {message}" + (additional != null ? ": " + additional.PrintToString() : ""));
+    }
+
+    public override string ToString() => $"{myCall}, taskId={RdId}";
+
   }
 }

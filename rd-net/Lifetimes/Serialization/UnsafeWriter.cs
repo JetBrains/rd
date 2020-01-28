@@ -8,7 +8,17 @@ using JetBrains.Util;
 using JetBrains.Util.Internal;
 
 namespace JetBrains.Serialization
-{  
+{ 
+  /// <summary>
+  /// Effective serialization tool. <see cref="UnsafeWriter"/> is thread-bound automatically expandable and shrinkable
+  /// byte buffer (with initial size of 1Mb). Entry point is <see cref="Cookie"/> obtained by  <see cref="NewThreadLocalWriter"/>.
+  /// It is <see cref="IDisposable"/> so must be used only with (possibly nested) <c>using</c> in stack-like way.
+  /// <see cref="Cookie"/> contains start position and length of currently serialized data (start + len = position), so when disposed it reverts writer
+  /// position to the cookie's start position.
+  ///
+  /// 
+  /// <seealso cref="UnsafeReader"/>
+  /// </summary>
   public sealed unsafe class UnsafeWriter
   {
     public struct Cookie : IDisposable
@@ -55,6 +65,11 @@ namespace JetBrains.Serialization
       public void WriteIntLengthToCookieStart()
       {
         *(int*) Data = Count - sizeof(int);
+      }
+
+      public void WriteIntLengthToCookieStart(int length)
+      {
+        *(int*) Data = length;
       }
 
       public void CopyTo(byte[] dst, [Optional] int dstOffset, [Optional] int? count)
