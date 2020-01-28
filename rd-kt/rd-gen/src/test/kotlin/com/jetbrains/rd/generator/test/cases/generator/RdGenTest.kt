@@ -88,7 +88,7 @@ fun main() {
         }
     }
     rdgen.compilerClassloader = URLClassLoader(arrayOf(
-        File("C:\\Users\\jetbrains\\.IntelliJIdea2018.2\\config\\plugins\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
+        File("C:\\RD\\dotnet-products\\Rider\\ultimate\\community\\build\\dependencies\\build\\kotlin\\Kotlin\\kotlinc\\lib\\kotlin-compiler.jar").toURI().toURL()
     ))
 
     rdgen.run()
