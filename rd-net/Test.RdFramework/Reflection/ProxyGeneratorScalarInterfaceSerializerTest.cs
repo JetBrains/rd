@@ -32,6 +32,7 @@ namespace Test.RdFramework.Reflection
       WithExtsProxy<SimpleCalls, ISimpleCalls>((c, proxy) =>
       {
         Assert.AreEqual(typeof(MyImpl2).Name, proxy.GetTypeName2(new MyImpl1()));
+        proxy.GetTypeName3(new IMyInterface[]{new MyImpl1(), new MyImpl2()});
       });
     }
 
@@ -64,6 +65,7 @@ namespace Test.RdFramework.Reflection
       int Count(IEnumerable<string> items);
       string GetTypeName(IEnumerable<string> items);
       string GetTypeName2(IMyInterface obj);
+      string GetTypeName3(IEnumerable<IMyInterface> obj);
     }
 
     [RdExt]
@@ -77,6 +79,11 @@ namespace Test.RdFramework.Reflection
       public string GetTypeName(IEnumerable<string> items)
       {
         return items.GetType().Name;
+      }
+
+      public string GetTypeName3(IEnumerable<IMyInterface> obj)
+      {
+        return obj.GetType().Name;
       }
 
       public string GetTypeName2(IMyInterface obj)

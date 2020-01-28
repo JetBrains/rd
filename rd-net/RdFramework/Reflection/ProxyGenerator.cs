@@ -8,6 +8,7 @@ using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Tasks;
+using JetBrains.Rd.Util;
 using JetBrains.Util;
 using JetBrains.Util.Util;
 
@@ -137,15 +138,21 @@ namespace JetBrains.Rd.Reflection
       typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[0]));
 
       var memberNames = new HashSet<string>(StringComparer.Ordinal);
-      var members = typeof(TInterface).GetMembers(BindingFlags.Instance | BindingFlags.Public);
-      foreach (var member in members)
+      ImplementInterface(typeof(TInterface), memberNames, typebuilder);
+      foreach (var baseInterface in typeof(TInterface).GetInterfaces())
+        ImplementInterface(baseInterface, memberNames, typebuilder);
+
+      void ImplementInterface(Type baseInterface, HashSet<string> hashSet, TypeBuilder typeBuilder)
       {
-        if (!memberNames.Add(member.Name))
+        foreach (var member in baseInterface.GetMembers(BindingFlags.Instance | BindingFlags.Public))
         {
-          throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
+          if (!hashSet.Add(member.Name))
+            throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
+
+          ImplementMember<TInterface>(typeBuilder, member);
         }
-        ImplementMember<TInterface>(typebuilder, member);
       }
+
 #if NET35
       return typebuilder.CreateType();
 #else
