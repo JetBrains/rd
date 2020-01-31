@@ -149,9 +149,14 @@ namespace JetBrains.Rd.Reflection
 
     private static bool IsList(Type t)
     {
-      return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  &&
-             (generic == typeof(List<>) ||
-              generic == typeof(IList<>) || generic == typeof(ICollection<>)
+      return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  && (
+              generic == typeof(List<>)
+              || generic == typeof(IList<>)
+              || generic == typeof(ICollection<>)
+              || generic == typeof(IEnumerable<>)
+#if !NET35
+              || generic == typeof(IReadOnlyList<>)
+#endif
              );
     }
 
