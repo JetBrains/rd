@@ -122,7 +122,7 @@ namespace JetBrains.Serialization
       myStartPtr = (byte*)Marshal.AllocHGlobal(myCurrentAllocSize = InitialAllocSize).ToPointer();
       if (myStartPtr == null)
         ErrorOomOldMono(); 
-      //can't use ILog.Verbose here because logger is closed to UnsafeWrier
+      //can't use ILog.Verbose here because logger is closed to UnsafeWriter
       LogLog.Verbose(LogCategory, "Created UnsafeWriter, initial alloc size: {0:N0} bytes", myCurrentAllocSize);
       Reset();
     }
@@ -130,7 +130,7 @@ namespace JetBrains.Serialization
     ~UnsafeWriter()
     {
       // See TMLN-925 Timeline crashes during closing
-      //ourLogger.Verbose("Removind UnsafeWriter, {0:N0} bytes are beeing free", myCurrentAllocSize);
+      //ourLogger.Verbose("Removing UnsafeWriter, {0:N0} bytes are being free", myCurrentAllocSize);
       if (myStartPtr != null) 
         LogLog.Catch(() => 
         {
