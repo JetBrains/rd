@@ -65,12 +65,11 @@ namespace JetBrains.Rd.Impl
       private readonly Actor<long> myAcktor;
       const string DisconnectedPauseReason = "Disconnected";
 
-      protected Base(string id, Lifetime lifetime, [NotNull] IScheduler scheduler, TimeSpan? heartBeatInterval) : base(scheduler)
+      protected Base(string id, Lifetime lifetime, [NotNull] IScheduler scheduler) : base(scheduler)
       {
         Id = id;
         Log = Diagnostics.Log.GetLog(GetType());
         myLifetime = lifetime;
-        HeartBeatInterval = heartBeatInterval ?? DefaultHeartBeatInterval;
         myAcktor = new Actor<long>(id+"-ACK", lifetime, SendAck);
         myPonger = new Actor<Unit>(id + "-PONG", lifetime, SendPong);
 
@@ -103,7 +102,7 @@ namespace JetBrains.Rd.Impl
           {
             scheduler.Queue(() => {Connected.Value = false;});
 
-            StopHeartbeat(socket);
+            StopHeartbeat();
             
             SendBuffer.Pause(DisconnectedPauseReason);
             
@@ -127,7 +126,7 @@ namespace JetBrains.Rd.Impl
         myTimer.Value.Start();
       }
 
-      private void StopHeartbeat(Socket socket)
+      private void StopHeartbeat()
       {
         myTimer.Value.Dispose();
         myTimer.Value = null;
@@ -332,7 +331,12 @@ namespace JetBrains.Rd.Impl
           {
             StablyConnected.Value = false;
           }
-          SendPing();
+
+          lock (mySocketSendLock)
+          {
+            Socket.Send(mySendPingPkgHeader);
+          }
+
           ++myMissedHeartbeats;
         }
         catch (ObjectDisposedException)
@@ -387,7 +391,7 @@ namespace JetBrains.Rd.Impl
       private readonly byte[] mySendPkgHeader = new byte[ PkgHeaderLen];
       private readonly byte[] myAckPkgHeader = new byte[ PkgHeaderLen]; //different threads
 
-      public readonly TimeSpan HeartBeatInterval;
+      public TimeSpan HeartBeatInterval { get; set; } = TimeSpan.FromMilliseconds(500);
       private readonly IViewableProperty<Timer> myTimer = new ViewableProperty<Timer>();
       private int myMissedHeartbeats;
       internal const int MaximumMissedHeartbeats = 2;
@@ -395,8 +399,6 @@ namespace JetBrains.Rd.Impl
       private readonly byte[] mySendPongPkgHeader = BitConverter.GetBytes(PONG_LEN).Concat(new byte[sizeof(long)]).ToArray();
 
       private readonly Actor<Unit> myPonger;
-
-      internal static readonly TimeSpan DefaultHeartBeatInterval = TimeSpan.FromMilliseconds(1000);
 
       private void Send0(byte[] data, int offset, int len, ref long seqN)
       {
@@ -506,11 +508,11 @@ namespace JetBrains.Rd.Impl
 
     public class Client : Base
     {
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null, TimeSpan? heartBeatInterval = null) : 
-        this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId, heartBeatInterval) {}
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) : 
+        this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
 
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null, TimeSpan? heartBeatInterval = null) : 
-        base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler, heartBeatInterval)
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) : 
+        base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         var thread = new Thread(() =>
         {
@@ -584,7 +586,7 @@ namespace JetBrains.Rd.Impl
       {}
         
       
-      internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null, TimeSpan? heartBeatInterval = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler, heartBeatInterval)
+      internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
         
@@ -600,7 +602,7 @@ namespace JetBrains.Rd.Impl
             var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             SetSocketOptions(serverSocket);
 
-            endPoint ??= new IPEndPoint(IPAddress.Loopback, 0);
+            endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
             serverSocket.Bind(endPoint);
             serverSocket.Listen(1);
             Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
