@@ -61,6 +61,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
 
 
         class Task  (name : String, paramType : IScalar, resultType: IScalar) : Reactive(name, paramType, resultType)
+        class BindableTask  (name : String, paramType : IScalar, resultType: IBindable) : Reactive(name, paramType, resultType)
         class Signal(name : String, paramType : IScalar) : Reactive(name, paramType)
 
         sealed class Stateful(name : String, vararg genericParams: IType)  : Reactive(name, *genericParams) {

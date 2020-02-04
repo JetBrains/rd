@@ -4,11 +4,20 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdCall
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
+import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.Linearization
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 import kotlin.test.*
 
@@ -25,7 +34,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         clientProtocol.bindStatic(client_property, "top")
         serverProtocol.bindStatic(server_property, "top")
 
-        server_property.set ( RdCall(Int::toString) )
+        server_property.set ( RdCall(null, Int::toString) )
 
 
         assertEquals("1", client_property.valueOrThrow.sync(1))

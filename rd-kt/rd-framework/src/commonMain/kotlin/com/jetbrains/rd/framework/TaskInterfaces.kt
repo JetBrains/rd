@@ -7,9 +7,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IOptPropertyView
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.RdFault
-import com.jetbrains.rd.util.string.PrettyPrinter
-import com.jetbrains.rd.util.string.print
-import com.jetbrains.rd.util.string.printToString
 
 /**
  * The result of asynchronously executing a task.
@@ -95,11 +92,15 @@ val <T> IRdTask<T>.isSucceeded : Boolean get() = result.valueOrNull is RdTaskRes
 val <T> IRdTask<T>.isCanceled : Boolean get() = result.valueOrNull is RdTaskResult.Cancelled
 val <T> IRdTask<T>.isFaulted : Boolean get() = result.valueOrNull is RdTaskResult.Fault
 
+interface ILifetimedRdCall<in TReq, out TRes> {
+
+    fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
+}
 
 /**
  * Represents an API provided by the remote process which can be invoked through the protocol.
  */
-interface IRdCall<in TReq, out TRes> {
+interface IRdCall<in TReq, out TRes> : ILifetimedRdCall<TReq, TRes> {
     /**
      * Invokes the API with the parameters given as [request] and waits for the result.
      */
@@ -120,10 +121,12 @@ interface IRdEndpoint<TReq, TRes> {
     /**
      * Assigns a handler that executes the API asynchronously.
      */
-    fun set(handler: (Lifetime, TReq) -> RdTask<TRes>)
+    fun set(cancellationAndRequestScheduler: IScheduler? = null, handler: (Lifetime, TReq) -> RdTask<TRes>)
 
     /**
      * Assigns a handler that executes the API synchronously.
      */
-    fun set(handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
+    fun set(cancellationAndRequestScheduler: IScheduler? = null, handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
 }
+
+interface ILifetimedRdCallWithEndpoint<TReq, TRes> : ILifetimedRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes>

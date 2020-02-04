@@ -11,7 +11,7 @@ class CrossTest_RdCall_KtServer : CrossTest_KtServer_Base() {
         queue {
             val model = DemoModel.create(modelLifetime, protocol)
 
-            model.callback.set(String::length)
+            model.callback.set { it -> it.length }
 
             model.call.start('K')
         }
