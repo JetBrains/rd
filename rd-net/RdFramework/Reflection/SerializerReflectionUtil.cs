@@ -135,7 +135,7 @@ namespace JetBrains.Rd.Reflection
         baseType = typeof(RdBindableBase);
 
       bool isRdExtImpl = baseType == typeof(RdExtReflectionBindableBase) && !typeInfo.GetInterfaces().Contains(typeof(IProxyTypeMarker));
-      bool isRdRpcInterface = typeInfo.IsInterface && typeInfo.GetCustomAttribute<RdRpcAttribute>() != null;
+      bool isRdRpcInterface = typeInfo.IsInterface; // can be specified in RdExt // && typeInfo.GetCustomAttribute<RdRpcAttribute>() != null;
 
       var fields = GetFields(typeInfo, baseType);
       var list = new List<FieldInfo>();

@@ -23,7 +23,25 @@ namespace JetBrains.Rd.Reflection
 {
   [AttributeUsage(AttributeTargets.Class, Inherited = false), MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
   [BaseTypeRequired(typeof(RdExtReflectionBindableBase))]
-  public class RdExtAttribute : Attribute { }
+  public class RdExtAttribute : Attribute
+  {
+    [CanBeNull]
+    public Type RdRpcInterface { get; }
+
+    public RdExtAttribute() { }
+
+    /// <summary>
+    /// Mark RdExt as implementing contract from specific RdRpc interface. That means that this RdExt will be exposed by
+    /// interface name, not by the type itself. It may be used when explicit marking of RdRpc is undesirable.
+    /// </summary>
+    /// <param name="rdRpcInterface">
+    ///   RdRpc interface type. Must be implemented by type, which marked by this RdExt attribute.
+    /// </param>
+    public RdExtAttribute(Type rdRpcInterface)
+    {
+      RdRpcInterface = rdRpcInterface;
+    }
+  }
 
   /// <summary>
   /// Mark implementing interface of RdExt by this attribute to indicate intent to use this interface for proxy generation
@@ -247,8 +265,12 @@ namespace JetBrains.Rd.Reflection
       mySerializers.Add(typeof(T), new SerializerPair(reader, writer));
     }
 
+    [CanBeNull]
     public static Type GetRpcInterface(TypeInfo typeInfo)
     {
+      if (typeInfo.GetCustomAttribute<RdExtAttribute>() is RdExtAttribute rdExt && rdExt.RdRpcInterface != null)
+        return rdExt.RdRpcInterface;
+
       foreach (var @interface in typeInfo.GetInterfaces()) 
         if (ReflectionSerializerVerifier.IsRpcAttributeDefined(@interface)) 
           return @interface;

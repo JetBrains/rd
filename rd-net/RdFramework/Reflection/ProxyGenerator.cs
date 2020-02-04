@@ -93,8 +93,9 @@ namespace JetBrains.Rd.Reflection
       if (typeof(TInterface).GetGenericArguments().Length > 0)
         throw new ArgumentException("Generic interfaces are not supported.");
 
-      if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
-        throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
+      // RdRpc attribute can be specified in RdExt attribute. Therefore, now this assert cannot be verified.
+      // if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
+      //   throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
 
       var moduleBuilder = myModuleBuilder.Value;
       var className = typeof(TInterface).Name.Substring(1);
@@ -111,8 +112,8 @@ namespace JetBrains.Rd.Reflection
       typebuilder.AddInterfaceImplementation(typeof(IProxyTypeMarker));
 
       // Add RdExt attribute to type
-      var rdExtConstructor = typeof(RdExtAttribute).GetConstructors()[0];
-      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[0]));
+      var rdExtConstructor = typeof(RdExtAttribute).GetConstructors().Single(c => c.GetParameters().Length == 1);
+      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ typeof(TInterface) }));
 
       var memberNames = new HashSet<string>(StringComparer.Ordinal);
       ImplementInterface(typeof(TInterface), memberNames, typebuilder);
