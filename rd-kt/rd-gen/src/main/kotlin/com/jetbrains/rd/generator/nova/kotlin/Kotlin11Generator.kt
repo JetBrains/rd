@@ -94,6 +94,11 @@ open class Kotlin11Generator(
                 Source -> "IRdCall"
                 Both -> "RdCall"
             }
+            is Member.Reactive.BindableTask -> when (actualFlow) {
+                Source -> "ILifetimedRdCall"
+                Sink -> "IRdEndpoint"
+                Both -> "ILifetimedRdCallWithEndpoint"
+            }
             is Member.Reactive.Signal -> when (actualFlow) {
                 Sink -> "I${async}Source"
                 Source, Both -> "I${async}Signal"
@@ -124,6 +129,7 @@ open class Kotlin11Generator(
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open val Member.Reactive.implSimpleName : String get () = when (this) {
         is Member.Reactive.Task -> "RdCall"
+        is Member.Reactive.BindableTask -> "RdCall"
         is Member.Reactive.Signal -> "RdSignal"
         is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
         is Member.Reactive.Stateful.List -> "RdList"

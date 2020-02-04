@@ -397,6 +397,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     Source -> "RdCall"
                     Both -> fail("Unsupported flow direction for tasks")
                 }
+                is Member.Reactive.BindableTask -> fail("Unsupported Bindable result type")
                 is Member.Reactive.Signal -> when (actualFlow) {
                     Sink -> "ISource"
                     Source, Both -> "ISignal"

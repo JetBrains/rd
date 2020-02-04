@@ -34,9 +34,12 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
     }
 
     //make it interlocked
-    fun setIfEmpty(newValue: T) {
-        if (_value == null)
+    fun setIfEmpty(newValue: T): Boolean {
+        if (_value == null) {
             set(newValue)
+            return true
+        }
+        return false
     }
 
     protected var _value: T? = null

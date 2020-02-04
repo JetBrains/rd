@@ -180,6 +180,11 @@ open class CSharp50Generator(
                     Sink -> "IRdEndpoint"
                     Both -> "RdCall"
                 }
+                is Member.Reactive.BindableTask -> when (actualFlow) {
+                    Source -> "ILifetimedRdCall"
+                    Sink -> "IRdEndpoint"
+                    Both -> "ILifetimedRdCallWithEndpoint"
+                }
                 is Member.Reactive.Signal -> when (actualFlow) {
                     Sink -> if (freeThreaded) "ISignal" else "ISource"
                     Source, Both -> "ISignal"
@@ -211,6 +216,7 @@ open class CSharp50Generator(
     protected open val Member.Reactive.implSimpleName: String
         get() = when (this) {
             is Member.Reactive.Task -> "RdCall"
+            is Member.Reactive.BindableTask -> "RdCall"
             is Member.Reactive.Signal -> "RdSignal"
             is Member.Reactive.Stateful.Property -> "RdProperty"
             is Member.Reactive.Stateful.List -> "RdList"
