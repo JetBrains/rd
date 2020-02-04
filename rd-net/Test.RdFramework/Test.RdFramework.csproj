@@ -2,7 +2,6 @@
     <PropertyGroup>
         <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
 
-        <LangVersion>latest</LangVersion>
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
         <DefineConstants>JET_MODE_ASSERT</DefineConstants>
