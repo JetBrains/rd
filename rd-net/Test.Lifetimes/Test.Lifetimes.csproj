@@ -5,7 +5,6 @@
         <DebugType>Full</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
-        <LangVersion>latest</LangVersion>
         <RootNamespace>Test.Lifetimes</RootNamespace>
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
