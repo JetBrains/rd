@@ -8,7 +8,6 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Serialization;
 using JetBrains.Threading;
-using JetBrains.Util;
 
 namespace JetBrains.Rd.Impl
 {
@@ -108,7 +107,7 @@ namespace JetBrains.Rd.Impl
         
         //on netcore you can't solely execute Close() - it will hang forever
         //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034 
-        //in this implementation we tried to avoid hang across supported platforms
+        //we use zero timeout here to avoid blocking mode with (possible infinite) SpinWait
         ourStaticLog.CatchAndDrop(() => socket.Close(0));
       }
 
