@@ -53,7 +53,8 @@ open class MultiplatformPlugin : Plugin<Project> {
                 val jvmTest by getting {
                     dependencies {
                         implementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-                        implementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+                        runtimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+                        implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
                         implementation("org.jetbrains.kotlin:kotlin-test")
                         implementation("org.jetbrains.kotlin:kotlin-test-junit")
                     }
