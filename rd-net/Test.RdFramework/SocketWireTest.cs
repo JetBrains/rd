@@ -259,6 +259,8 @@ namespace Test.RdFramework
     [Test]
     public void TestDisconnect()
     {
+      var timeout = TimeSpan.FromSeconds(5);
+      
       Lifetime.Using(lifetime =>
       {
         SynchronousScheduler.Instance.SetActive(lifetime);
@@ -276,21 +278,21 @@ namespace Test.RdFramework
 
         cp.Fire(1);
         cp.Fire(2);
-        SpinWaitEx.SpinUntil(() => log.Count == 2);
+        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 2));
         Assert.AreEqual(new List<int> {1, 2}, log);
 
         CloseSocket(clientProtocol);
         cp.Fire(3);
         cp.Fire(4);
 
-        SpinWaitEx.SpinUntil(() => log.Count == 4);
+        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 4));
         Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
 
         CloseSocket(serverProtocol);
         cp.Fire(5);
         cp.Fire(6);
 
-        SpinWaitEx.SpinUntil(() => log.Count == 6);
+        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 6));
         Assert.AreEqual(new List<int> {1, 2, 3, 4, 5, 6}, log);
       });
     }
