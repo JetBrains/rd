@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Timers;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
-using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
-using JetBrains.Rd.Base;
 using JetBrains.Serialization;
 using JetBrains.Threading;
 using Timer = System.Timers.Timer;
@@ -30,7 +27,6 @@ namespace JetBrains.Rd.Impl
 
       private const int ACK_MSG_LEN = -1;
       private const int PING_LEN = -2;
-      private const int PONG_LEN = -3;
       
       /// <summary>
       /// For logging
@@ -49,7 +45,7 @@ namespace JetBrains.Rd.Impl
       protected readonly IViewableProperty<Socket> SocketProvider = new ViewableProperty<Socket> ();
       
       public readonly IViewableProperty<bool> Connected = new ViewableProperty<bool> { Value = false };
-      public readonly IViewableProperty<bool> StablyConnected = new ViewableProperty<bool> { Value = false };
+      public readonly IViewableProperty<bool> HeartbeatAlive = new ViewableProperty<bool> { Value = false };
 
       protected readonly ByteBufferAsyncProcessor SendBuffer;
       protected readonly object Lock = new object();
@@ -71,13 +67,12 @@ namespace JetBrains.Rd.Impl
         Log = Diagnostics.Log.GetLog(GetType());
         myLifetime = lifetime;
         myAcktor = new Actor<long>(id+"-ACK", lifetime, SendAck);
-        myPonger = new Actor<Unit>(id + "-PONG", lifetime, SendPong);
 
         SendBuffer = new ByteBufferAsyncProcessor(id+"-Sender", Send0);
         SendBuffer.Pause(DisconnectedPauseReason);
         SendBuffer.Start();
         
-        Connected.Advise(lifetime, value => StablyConnected.Value = value);
+        Connected.Advise(lifetime, value => HeartbeatAlive.Value = value);
         
         
         //when connected
@@ -85,11 +80,12 @@ namespace JetBrains.Rd.Impl
         {
 //          //todo hack for multiconnection, bring it to API
 //          if (SupportsReconnect) SendBuffer.Clear();
+
+          using var timer = StartHeartbeat();
+
           SendBuffer.ReprocessUnacknowledged();
           SendBuffer.Resume(DisconnectedPauseReason);
-
-          StartHeartbeat();
-
+          
           scheduler.Queue(() => { Connected.Value = true; });                              
 
           try
@@ -102,8 +98,6 @@ namespace JetBrains.Rd.Impl
           {
             scheduler.Queue(() => {Connected.Value = false;});
 
-            StopHeartbeat();
-            
             SendBuffer.Pause(DisconnectedPauseReason);
             
             CloseSocket(socket);
@@ -111,25 +105,21 @@ namespace JetBrains.Rd.Impl
         });
       }
 
-      private void StartHeartbeat()
+      private static bool ConnectionEstablished(int currentTimeStamp, int counterpartTimestamp) => currentTimeStamp - counterpartTimestamp <= MaximumHeartbeatDelay;
+
+      private Timer StartHeartbeat()
       {
         void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
-          Log.Trace()?.Log($"{Id} try to send PING");
           Ping();
           Log.Trace()?.Log($"{Id} sent PING");
         }
 
-        myTimer.Set(new Timer{AutoReset = true});
-        myTimer.Value.Elapsed += OnTimedEvent;
-        myTimer.Value.Enabled = true;
-        myTimer.Value.Start();
-      }
-
-      private void StopHeartbeat()
-      {
-        myTimer.Value.Dispose();
-        myTimer.Value = null;
+        var timer = new Timer(HeartBeatInterval.TotalMilliseconds){AutoReset = true};
+        timer.Elapsed += OnTimedEvent;
+        timer.Enabled = true;
+        timer.Start();
+        return timer;
       }
 
 
@@ -257,24 +247,22 @@ namespace JetBrains.Rd.Impl
               return 0;
 
             Int32 len = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data);
-            Int64 seqN = UnsafeReader.ReadInt64FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
 
             if (len == PING_LEN)
             {
-              myPonger.SendAsync(Unit.Instance);
-              continue;
-            } 
-            if (len == PONG_LEN)
-            {
-              myMissedHeartbeats = 0;
-              StablyConnected.Value = true;
+              Int32 timestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
+              Int32 recognizedTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
+              Log.Trace()?.Log($"Received PING package with timestamp={timestamp}, recognizedTimestamp={recognizedTimestamp}");
+              
+              HeartbeatAlive.Value = ConnectionEstablished(timestamp, recognizedTimestamp);
+              myCounterpartTimestamp = timestamp;
               continue;
             }
 
+            Int64 seqN = UnsafeReader.ReadInt64FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
             if (len == ACK_MSG_LEN)
             {
               SendBuffer.Acknowledge(seqN);
-              continue;
             }
             else
             {
@@ -327,17 +315,24 @@ namespace JetBrains.Rd.Impl
       {
         try
         {
-          if (myMissedHeartbeats > MaximumMissedHeartbeats)
+          Log.Trace()?.Log($"{Id}: send PING currentHeartbeatTimeStamp: {myCurrentHeartbeatTimeStamp}, counterpartTimestamp: {myCounterpartTimestamp}");
+          if (!ConnectionEstablished(myCurrentHeartbeatTimeStamp, myCounterpartTimestamp))
           {
-            StablyConnected.Value = false;
+            HeartbeatAlive.Value = false;
+          }
+
+          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+          {
+            cookie.Writer.Write(PING_LEN);
+            cookie.Writer.Write(myCurrentHeartbeatTimeStamp);
+            cookie.Writer.Write(myCounterpartTimestamp);
+            cookie.CopyTo(myPingPkgHeader);
           }
 
           lock (mySocketSendLock)
-          {
-            Socket.Send(mySendPingPkgHeader);
-          }
+            Socket.Send(myPingPkgHeader);
 
-          ++myMissedHeartbeats;
+          ++myCurrentHeartbeatTimeStamp;
         }
         catch (ObjectDisposedException)
         {
@@ -347,34 +342,6 @@ namespace JetBrains.Rd.Impl
         {
           Log.Warn(e, $"{Id}: ${e.GetType()} raised during PING");
         }
-      }
-
-      private void SendPing()
-      {
-        lock (mySocketSendLock)
-        {
-          Socket.Send(mySendPingPkgHeader);
-        }
-      }
-      
-      private void SendPong(Unit unit)
-      {
-        Log.Trace()?.Log($"{Id} try to send PONG");
-        try
-        {
-          lock (mySocketSendLock)
-          {
-            Socket.Send(mySendPongPkgHeader);
-          }
-        }
-        catch (ObjectDisposedException)
-        {
-          Log.Verbose($"{Id}: Socket was disposed during PONG");
-        }
-        catch (Exception e)
-        {
-          Log.Warn(e, $"{Id}: ${e.GetType()} raised during PONG");
-        }      
       }
       
       private readonly object mySocketSendLock = new object();
@@ -392,13 +359,10 @@ namespace JetBrains.Rd.Impl
       private readonly byte[] myAckPkgHeader = new byte[ PkgHeaderLen]; //different threads
 
       public TimeSpan HeartBeatInterval { get; set; } = TimeSpan.FromMilliseconds(500);
-      private readonly IViewableProperty<Timer> myTimer = new ViewableProperty<Timer>();
-      private int myMissedHeartbeats;
-      internal const int MaximumMissedHeartbeats = 2;
-      private readonly byte[] mySendPingPkgHeader = BitConverter.GetBytes(PING_LEN).Concat(new byte[sizeof(long)]).ToArray();
-      private readonly byte[] mySendPongPkgHeader = BitConverter.GetBytes(PONG_LEN).Concat(new byte[sizeof(long)]).ToArray();
-
-      private readonly Actor<Unit> myPonger;
+      private int myCurrentHeartbeatTimeStamp;
+      private int myCounterpartTimestamp;
+      internal const int MaximumHeartbeatDelay = 2;
+      private readonly byte[] myPingPkgHeader = new byte[ PkgHeaderLen];
 
       private void Send0(byte[] data, int offset, int len, ref long seqN)
       {

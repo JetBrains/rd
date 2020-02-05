@@ -405,16 +405,16 @@ namespace Test.RdFramework
           proxy.StopServerToClientMessaging();
 
         var detectionTimeoutTicks = ((SocketWire.Base) clientProtocol.Wire).HeartBeatInterval.Ticks *
-                                    SocketWire.Base.MaximumMissedHeartbeats;
-        var detectionTimeout = TimeSpan.FromTicks(detectionTimeoutTicks) + TimeSpan.FromSeconds(1);
+                                    (SocketWire.Base.MaximumHeartbeatDelay + 2);
+        var detectionTimeout = TimeSpan.FromTicks(detectionTimeoutTicks);
           
         Thread.Sleep(detectionTimeout);
-          
+
         Assert.IsTrue(serverWire.Connected.Value);
         Assert.IsTrue(clientWire.Connected.Value);
           
-        Assert.IsFalse(serverWire.StablyConnected.Value);
-        Assert.IsFalse(clientWire.StablyConnected.Value);
+        Assert.IsFalse(serverWire.HeartbeatAlive.Value);
+        Assert.IsFalse(clientWire.HeartbeatAlive.Value);
 
         if (isClientToServer)
           proxy.StartClientToServerMessaging();
@@ -426,8 +426,8 @@ namespace Test.RdFramework
         Assert.IsTrue(serverWire.Connected.Value);
         Assert.IsTrue(clientWire.Connected.Value);
           
-        Assert.IsTrue(serverWire.StablyConnected.Value);
-        Assert.IsTrue(clientWire.StablyConnected.Value);
+        Assert.IsTrue(serverWire.HeartbeatAlive.Value);
+        Assert.IsTrue(clientWire.HeartbeatAlive.Value);
 
       });
     }

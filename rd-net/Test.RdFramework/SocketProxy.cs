@@ -135,35 +135,28 @@ namespace Test.RdFramework
     }
 
     private async void Messaging(string id, Stream source, Stream destination, byte[] buffer,
-      SequentialLifetimes lifetime)
+      SequentialLifetimes lifetimes)
     {
       while (myLifetime.IsAlive)
       {
         try
         {
-          if (source.CanRead)
+          var length = await source.ReadAsync(buffer, 0, buffer.Length, myLifetime);
+          if (length == 0)
           {
-            var length = await source.ReadAsync(buffer, 0, buffer.Length, myLifetime);
-            if (length == 0)
-            {
-              myLogger.Verbose($"{id}: Connection lost");
-              break;
-            }
+            myLogger.Verbose($"{id}: Connection lost");
+            break;
+          }
 
-            myLogger.Verbose($"{id}: Message of length: {length} was read");
-            if (!lifetime.IsCurrentTerminated)
-            {
-              await destination.WriteAsync(buffer, 0, length, myLifetime);
-              myLogger.Verbose($"{id}: Message of length: {length} was written");
-            }
-            else
-            {
-              myLogger.Verbose($"{id}: Message of length {length} was not transferred, because lifetime was terminated");
-            }
+          myLogger.Verbose($"{id}: Message of length: {length} was read");
+          if (!lifetimes.IsCurrentTerminated)
+          {
+            await destination.WriteAsync(buffer, 0, length, myLifetime);
+            myLogger.Verbose($"{id}: Message of length: {length} was written");
           }
           else
           {
-            myLogger.Error($"{id}: Cannot read from stream");
+            myLogger.Verbose($"{id}: Message of length {length} was not transferred, because lifetime was terminated");
           }
         }
         catch (OperationCanceledException)
