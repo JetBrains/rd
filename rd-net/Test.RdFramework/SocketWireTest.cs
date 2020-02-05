@@ -405,7 +405,7 @@ namespace Test.RdFramework
           proxy.StopServerToClientMessaging();
 
         var detectionTimeoutTicks = ((SocketWire.Base) clientProtocol.Wire).HeartBeatInterval.Ticks *
-                                    (SocketWire.Base.MaximumHeartbeatDelay + 2);
+                                    (SocketWire.Base.MaximumHeartbeatDelay + 3);
         var detectionTimeout = TimeSpan.FromTicks(detectionTimeoutTicks);
           
         Thread.Sleep(detectionTimeout);

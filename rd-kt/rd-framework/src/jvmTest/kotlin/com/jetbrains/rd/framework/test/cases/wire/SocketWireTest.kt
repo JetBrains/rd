@@ -336,7 +336,7 @@ class SocketWireTest : TestBase() {
                 proxy.stopServerToClientMessaging()
 
             val detectionTimeoutMs = (clientProtocol.wire as SocketWire.Base).heartBeatInterval.toMillis() *
-                (SocketWire.maximumHeartbeatDelay + 2)
+                (SocketWire.maximumHeartbeatDelay + 3)
             val detectionTimeout: Duration = Duration.ofMillis(detectionTimeoutMs)
 
             Thread.sleep(detectionTimeout.toMillis())
