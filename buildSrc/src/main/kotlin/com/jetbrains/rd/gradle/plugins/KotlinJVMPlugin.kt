@@ -83,6 +83,8 @@ open class KotlinJVMPlugin : Plugin<Project> {
             val test by tasks.getting(Test::class) {
                 maxHeapSize = "512m"
                 finalizedBy(tasks.named("jacocoTestReport"))
+
+                useJUnitPlatform()
             }
 
             dependencies {
