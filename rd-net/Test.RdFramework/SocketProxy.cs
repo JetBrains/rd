@@ -69,7 +69,7 @@ namespace Test.RdFramework
 
     public async void Start()
     {
-      static void SetSocketOptions(TcpClient acceptedClient) => acceptedClient.NoDelay = true;
+      void SetSocketOptions(TcpClient acceptedClient) => acceptedClient.NoDelay = true;
 
       while (myLifetime.IsAlive)
       {
