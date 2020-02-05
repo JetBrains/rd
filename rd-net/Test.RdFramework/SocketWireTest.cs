@@ -383,7 +383,7 @@ namespace Test.RdFramework
     [TestCase(false)]
     public void TestPacketLoss(bool isClientToServer)
     {
-      using var factory = Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE));
+      // using var factory = Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE));
       Lifetime.Using(lifetime =>
       {
         SynchronousScheduler.Instance.SetActive(lifetime);
