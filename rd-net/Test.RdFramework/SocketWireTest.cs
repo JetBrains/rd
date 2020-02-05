@@ -6,6 +6,7 @@ using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
+using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
@@ -259,42 +260,45 @@ namespace Test.RdFramework
     [Test]
     public void TestDisconnect()
     {
-      var timeout = TimeSpan.FromSeconds(5);
-      
-      Lifetime.Using(lifetime =>
+      using (var factory = Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
       {
-        SynchronousScheduler.Instance.SetActive(lifetime);
-        var serverProtocol = Server(lifetime, null);
-        var clientProtocol = Client(lifetime, serverProtocol);
+        var timeout = TimeSpan.FromSeconds(5);
 
-        var sp = new RdSignal<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        Lifetime.Using(lifetime =>
+        {
+          SynchronousScheduler.Instance.SetActive(lifetime);
+          var serverProtocol = Server(lifetime, null);
+          var clientProtocol = Client(lifetime, serverProtocol);
 
-        var cp = new RdSignal<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+          var sp = new RdSignal<int>().Static(1);
+          sp.Bind(lifetime, serverProtocol, Top);
 
-        var log = new List<int>();
-        sp.Advise(lifetime, i => log.Add(i));
+          var cp = new RdSignal<int>().Static(1);
+          cp.Bind(lifetime, clientProtocol, Top);
 
-        cp.Fire(1);
-        cp.Fire(2);
-        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 2));
-        Assert.AreEqual(new List<int> {1, 2}, log);
+          var log = new List<int>();
+          sp.Advise(lifetime, i => log.Add(i));
 
-        CloseSocket(clientProtocol);
-        cp.Fire(3);
-        cp.Fire(4);
+          cp.Fire(1);
+          cp.Fire(2);
+          Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 2));
+          Assert.AreEqual(new List<int> {1, 2}, log);
 
-        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 4));
-        Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
+          CloseSocket(clientProtocol);
+          cp.Fire(3);
+          cp.Fire(4);
 
-        CloseSocket(serverProtocol);
-        cp.Fire(5);
-        cp.Fire(6);
+          Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 4));
+          Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
 
-        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 6));
-        Assert.AreEqual(new List<int> {1, 2, 3, 4, 5, 6}, log);
-      });
+          CloseSocket(serverProtocol);
+          cp.Fire(5);
+          cp.Fire(6);
+
+          Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 6));
+          Assert.AreEqual(new List<int> {1, 2, 3, 4, 5, 6}, log);
+        });
+      }
     }
 
     [Test]
