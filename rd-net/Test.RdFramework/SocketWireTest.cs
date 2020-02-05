@@ -260,45 +260,43 @@ namespace Test.RdFramework
     [Test]
     public void TestDisconnect()
     {
-      using (var factory = Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
+      using var factory = Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE));
+      var timeout = TimeSpan.FromSeconds(5);
+
+      Lifetime.Using(lifetime =>
       {
-        var timeout = TimeSpan.FromSeconds(5);
+        SynchronousScheduler.Instance.SetActive(lifetime);
+        var serverProtocol = Server(lifetime, null);
+        var clientProtocol = Client(lifetime, serverProtocol);
 
-        Lifetime.Using(lifetime =>
-        {
-          SynchronousScheduler.Instance.SetActive(lifetime);
-          var serverProtocol = Server(lifetime, null);
-          var clientProtocol = Client(lifetime, serverProtocol);
+        var sp = new RdSignal<int>().Static(1);
+        sp.Bind(lifetime, serverProtocol, Top);
 
-          var sp = new RdSignal<int>().Static(1);
-          sp.Bind(lifetime, serverProtocol, Top);
+        var cp = new RdSignal<int>().Static(1);
+        cp.Bind(lifetime, clientProtocol, Top);
 
-          var cp = new RdSignal<int>().Static(1);
-          cp.Bind(lifetime, clientProtocol, Top);
+        var log = new List<int>();
+        sp.Advise(lifetime, i => log.Add(i));
 
-          var log = new List<int>();
-          sp.Advise(lifetime, i => log.Add(i));
+        cp.Fire(1);
+        cp.Fire(2);
+        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 2));
+        Assert.AreEqual(new List<int> {1, 2}, log);
 
-          cp.Fire(1);
-          cp.Fire(2);
-          Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 2));
-          Assert.AreEqual(new List<int> {1, 2}, log);
+        CloseSocket(clientProtocol);
+        cp.Fire(3);
+        cp.Fire(4);
 
-          CloseSocket(clientProtocol);
-          cp.Fire(3);
-          cp.Fire(4);
+        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 4));
+        Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
 
-          Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 4));
-          Assert.AreEqual(new List<int> {1, 2, 3, 4}, log);
+        CloseSocket(serverProtocol);
+        cp.Fire(5);
+        cp.Fire(6);
 
-          CloseSocket(serverProtocol);
-          cp.Fire(5);
-          cp.Fire(6);
-
-          Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 6));
-          Assert.AreEqual(new List<int> {1, 2, 3, 4, 5, 6}, log);
-        });
-      }
+        Assert.True(SpinWaitEx.SpinUntil(timeout, () => log.Count == 6));
+        Assert.AreEqual(new List<int> {1, 2, 3, 4, 5, 6}, log);
+      });
     }
 
     [Test]
