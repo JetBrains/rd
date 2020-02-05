@@ -81,7 +81,7 @@ namespace JetBrains.Rd.Impl
 //          //todo hack for multiconnection, bring it to API
 //          if (SupportsReconnect) SendBuffer.Clear();
 
-          using var timer = StartHeartbeat();
+          var timer = StartHeartbeat();
 
           SendBuffer.ReprocessUnacknowledged();
           SendBuffer.Resume(DisconnectedPauseReason);
@@ -99,6 +99,8 @@ namespace JetBrains.Rd.Impl
             scheduler.Queue(() => {Connected.Value = false;});
 
             SendBuffer.Pause(DisconnectedPauseReason);
+            
+            timer.Dispose();
             
             CloseSocket(socket);
           }          
