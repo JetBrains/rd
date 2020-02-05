@@ -90,7 +90,8 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
                 "implementation"("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
-                "testImplementation"("junit:junit:$junitVersion")
+                "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+                "testImplementation"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
                 "testImplementation"("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
                 "testImplementation"("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
             }
