@@ -13,6 +13,8 @@ import com.jetbrains.rd.util.spinUntil
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.net.InetAddress
 import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -312,9 +314,9 @@ class SocketWireTest : TestBase() {
         spinUntil { factory.size == 0 }
     }
 
-    @Test
-    fun testPacketLoss() {
-        val isClientToServer: Boolean = true //todo parameterized test
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun testPacketLoss(isClientToServer: Boolean) {
         Lifetime.using { lifetime ->
             val serverProtocol = server(lifetime)
             val serverWire = serverProtocol.wire as SocketWire.Base
