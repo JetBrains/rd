@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.string.printToString
 abstract class WireBase(val scheduler: IScheduler) : IWire {
     private lateinit var contextsInternal: ProtocolContexts
     override val connected = Property(false)
+    val heartbeatAlive = Property(false)
     protected val messageBroker = MessageBroker(scheduler)
 
     override fun advise(lifetime: Lifetime, entity: IRdWireable) = messageBroker.adviseOn(lifetime, entity)
