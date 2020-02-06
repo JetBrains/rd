@@ -121,7 +121,7 @@ typealias RdEndpoint<TReq, TRes> = RdCall<TReq, TRes>
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 //Can't be constructed by constructor, only by deserializing counterpart: RdEndpoint
 class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphic<TReq>(),
-                         internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes>, ILifetimedRdCallWithEndpoint<TReq, TRes> {
+                         internal val responseSzr: ISerializer<TRes> = Polymorphic<TRes>()) : RdReactiveBase(), IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes> {
 
     override fun deepClone(): IRdBindable = RdCall(requestSzr, responseSzr)
 

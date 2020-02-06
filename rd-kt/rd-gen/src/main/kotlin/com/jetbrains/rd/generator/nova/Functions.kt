@@ -8,7 +8,6 @@ import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.List
 import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Map
 import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Set
 import com.jetbrains.rd.generator.nova.Member.Reactive.Task
-import com.jetbrains.rd.generator.nova.Member.Reactive.BindableTask
 import com.jetbrains.rd.util.PublicApi
 import java.lang.IllegalArgumentException
 
@@ -61,10 +60,8 @@ fun BindableDeclaration.voidSource(name : String) = source(name, PredefinedType.
 @Deprecated("", ReplaceWith("sink(name, void)"))
 fun BindableDeclaration.voidSink(name : String) = sink(name, PredefinedType.void)
 
-fun BindableDeclaration.call(name : String, paramType : IScalar, resultType : IScalar) = append(Task(name, paramType, resultType).write)
-fun BindableDeclaration.call(name : String, paramType : IScalar, resultType : IBindable) = append(BindableTask(name, paramType, resultType).write)
-fun BindableDeclaration.callback(name : String, paramType : IScalar, resultType : IScalar) = append(Task(name, paramType, resultType).readonly)
-fun BindableDeclaration.callback(name : String, paramType : IScalar, resultType : IBindable) = append(BindableTask(name, paramType, resultType).readonly)
+fun BindableDeclaration.call(name : String, paramType : IScalar, resultType : IType) = append(Task(name, paramType, resultType).write)
+fun BindableDeclaration.callback(name : String, paramType : IScalar, resultType : IType) = append(Task(name, paramType, resultType).readonly)
 
 
 fun BindableDeclaration.property(name : String, valueType : IType) = append(Property(name, valueType))

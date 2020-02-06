@@ -17,18 +17,12 @@ namespace JetBrains.Rd.Tasks
     void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationAndRequestScheduler = null);
   }
 
-  public interface ILifetimedRdCall<in TReq, TRes>
-  {
-    IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler responseScheduler = null);
-  }
-
-  public interface IRdCall<in TReq, TRes> : ILifetimedRdCall<TReq, TRes>
+  public interface IRdCall<in TReq, TRes>
   {
     TRes Sync(TReq request, RpcTimeouts timeouts = null);
+    
+    [Obsolete("Use overload with Lifetime")]
     IRdTask<TRes> Start(TReq request, IScheduler responseScheduler = null);
-  }
-
-  public interface ILifetimedRdCallWithEndpoint<TReq, TRes> : ILifetimedRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes>
-  {
+    IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler responseScheduler = null);
   }
 }
