@@ -108,6 +108,9 @@ namespace JetBrains.Rd.Impl
         //on netcore you can't solely execute Close() - it will hang forever
         //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034 
         //we use zero timeout here to avoid blocking mode with (possible infinite) SpinWait
+        // According to reference source, non-zero timeouts (infinite -1 or positive numbers) lead to the problematic code with hanging spin wait.
+        // The linked corefx issue gives mixed feedback on when it's fixed (netcore 3/net 5), but we have first-hand evidence for issues on netcore 3.
+        // Additionally, the worst thing that Close(0) does is sending a connection reset, which seems to be fine for our purposes.
         ourStaticLog.CatchAndDrop(() => socket.Close(0));
       }
 
