@@ -67,9 +67,9 @@ class SocketWire {
         private const val ping_len: Int = -2
         private const val pkg_header_len = 12
         const val disconnectedPauseReason = "Socket not connected"
-        public const val maximumHeartbeatDelay = 2
+        const val maximumHeartbeatDelay = 3
 
-        private fun connectionEstablished(currentTimeStamp : Int, counterpartTimestamp: Int) = currentTimeStamp - counterpartTimestamp <= maximumHeartbeatDelay
+        private fun connectionEstablished(timeStamp : Int, notionTimestamp: Int) = timeStamp - notionTimestamp <= maximumHeartbeatDelay
     }
 
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
@@ -139,22 +139,26 @@ class SocketWire {
 
         private fun ping() {
             catchAndDrop {
-                logger.trace { "$id: send PING currentHeartbeatTimeStamp: $currentHeartbeatTimeStamp, " +
-                    "counterpartTimestamp: $counterpartTimestamp" }
+                logger.trace {
+                    "$id: send PING " +
+                        "currentTimeStamp: $currentTimeStamp, " +
+                        "counterpartTimestamp: $counterpartTimestamp, " +
+                        "counterpartNotionTimestamp: $counterpartNotionTimestamp"
+                }
 
-                if (!connectionEstablished(currentHeartbeatTimeStamp, counterpartTimestamp)) {
+                if (!connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
                     heartbeatAlive.value = false
                 }
 
                 synchronized(socketSendLock) {
                     sendPingPkgHeader.reset()
                     sendPingPkgHeader.writeInt(ping_len)
-                    sendPingPkgHeader.writeInt(currentHeartbeatTimeStamp)
+                    sendPingPkgHeader.writeInt(currentTimeStamp)
                     sendPingPkgHeader.writeInt(counterpartTimestamp)
                     output.write(sendPingPkgHeader.getArray())
                 }
 
-                ++currentHeartbeatTimeStamp
+                ++currentTimeStamp
             }
         }
 
@@ -219,20 +223,30 @@ class SocketWire {
                     val len = stream.readInt32() ?: return -1
 
                     if (len == ping_len) {
-                        val timestamp = stream.readInt32() ?: return -1
-                        val recognizedTimestamp = stream.readInt32() ?: return -1
-                        logger.trace { "Received PING package timestamp: $timestamp, " +
-                            "recognizedTimestamp: $recognizedTimestamp" }
+                        val receivedTimestamp = stream.readInt32() ?: return -1
+                        val receivedCounterpartTimestamp = stream.readInt32() ?: return -1
+                        logger.trace {
+                            "$id received PING package " +
+                                "receivedTimestamp: $receivedTimestamp, " +
+                                "receivedCounterpartTimestamp: $receivedCounterpartTimestamp" +
+                                "currentTimeStamp: $currentTimeStamp, " +
+                                "counterpartTimestamp: $counterpartTimestamp, " +
+                                "counterpartNotionTimestamp: $counterpartNotionTimestamp"
+                        }
 
-                        heartbeatAlive.value = connectionEstablished(timestamp, recognizedTimestamp)
-                        counterpartTimestamp = timestamp
+                        counterpartTimestamp = receivedTimestamp
+                        counterpartNotionTimestamp = receivedCounterpartTimestamp
 
+                        if (connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
+                            heartbeatAlive.value = true
+                        }
                         continue
                     }
 
                     val seqn = stream.readInt64() ?: return -1
-                    if (len == ack_msg_len){
-                        sendBuffer.acknowledge(seqn)}
+                    if (len == ack_msg_len) {
+                        sendBuffer.acknowledge(seqn)
+                    }
                     else {
                         require(len > 0) {"len > 0: $len"}
                         require (len < 300_000_000) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
@@ -274,9 +288,26 @@ class SocketWire {
         private val sendPkgHeader = createAbstractBuffer()
         private val ackPkgHeader = createAbstractBuffer()
 
+        /**
+         * Ping's interval and not actually detection's timeout.
+         */
         val heartBeatInterval: Duration = Duration.ofMillis(500)
-        private var currentHeartbeatTimeStamp = 0
+
+        /**
+         * Timestamp of this wire which increases at intervals of [heartBeatInterval].
+         */
+        private var currentTimeStamp = 0
+
+        /**
+         * Actual notion about counterpart's [currentTimeStamp].
+         */
         private var counterpartTimestamp = 0
+
+        /**
+         * The latest received counterpart's notion of this wire's [currentTimeStamp].
+         */
+        private var counterpartNotionTimestamp = 0
+
         private val sendPingPkgHeader = createAbstractBuffer()
 
         private fun send0(chunk: ByteBufferAsyncProcessor.Chunk) {

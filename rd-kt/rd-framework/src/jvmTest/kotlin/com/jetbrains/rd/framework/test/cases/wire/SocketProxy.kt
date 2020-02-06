@@ -7,15 +7,13 @@ import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.info
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.SequentialLifetimes
-import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import com.jetbrains.rd.util.lifetime.*
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.*
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.Socket
+import java.time.Duration
 import kotlin.concurrent.thread
 
 
@@ -26,6 +24,8 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
 
     val port: Int
         get() = _port ?: throw IllegalStateException("SocketProxy was not started")
+
+    var latency: Duration = Duration.ZERO
 
     companion object {
         private const val DefaultBufferSize = 16370
@@ -61,8 +61,8 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
 
         try {
             logger.info { "Creating proxies for server and client..." }
-            proxyServer = Socket(InetAddress.getLoopbackAddress(), serverPort)
-            proxyClient = SocketWire.Server.createServerSocket(lifetime, 0, false)
+            proxyServer = Socket(InetAddress.getLoopbackAddress(), serverPort).also { lifetime.onTermination(it) }
+            proxyClient = SocketWire.Server.createServerSocket(lifetime, 0, false).also { lifetime.onTermination(it) }
 
             setSocketOptions(proxyServer)
             _port = proxyClient.localPort
@@ -122,6 +122,7 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
                 }
                 logger.info { "${id}: Message of length: $length was read" }
                 if (!lifetimes.isTerminated) {
+                    Thread.sleep(latency.toMillis())
                     destination.write(buffer, 0, length)
                     logger.info { "$id: Message of length: $length was written" }
                 } else {
