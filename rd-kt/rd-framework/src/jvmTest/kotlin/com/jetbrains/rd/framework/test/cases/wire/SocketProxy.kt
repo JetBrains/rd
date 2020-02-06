@@ -71,6 +71,7 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
             val thread = thread {
                 try {
                     val acceptedClient = proxyClient.accept()!!
+                    lifetime.onTermination(acceptedClient)
                     setSocketOptions(acceptedClient)
                     logger.info { "New client connected on port $port" }
 

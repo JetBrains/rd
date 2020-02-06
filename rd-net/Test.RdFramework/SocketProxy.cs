@@ -40,8 +40,6 @@ namespace Test.RdFramework
 
     private readonly SequentialLifetimes myServerToClientLifetime;
     private readonly SequentialLifetimes myClientToServerLifetime;
-    private TcpClient myProxyServer;
-    private TcpListener myProxyClient;
 
     internal SocketProxy(string id, Lifetime lifetime, int serverPort)
     {
@@ -69,36 +67,49 @@ namespace Test.RdFramework
 
     public async void Start()
     {
-      void SetSocketOptions(TcpClient acceptedClient) => acceptedClient.NoDelay = true;
+      void SetSocketOptions(TcpClient client) => client.NoDelay = true;
 
       while (myLifetime.IsAlive)
       {
         try
         {
           myLogger.Verbose("Creating proxies for server and client...");
-          myProxyServer = new TcpClient(IPAddress.Loopback.ToString(), myServerPort);
-          myProxyClient = new TcpListener(new IPEndPoint(IPAddress.Loopback, 0));
+          var proxyServer = new TcpClient(IPAddress.Loopback.ToString(), myServerPort);
+          var proxyClient = new TcpListener(new IPEndPoint(IPAddress.Loopback, 0));
 
-          myLifetime.OnTermination(() => myProxyServer.Close());
+          myLifetime.OnTermination(() =>
+          {
+            proxyServer.GetStream().Close();
+            proxyServer.Close();
+            proxyServer.Dispose();
+            proxyClient.Stop();
+          });
+          
+          SetSocketOptions(proxyServer);
 
-          SetSocketOptions(myProxyServer);
+          proxyClient.Start();
 
-          myProxyClient.Start();
-
-          myPort = ((IPEndPoint) myProxyClient.LocalEndpoint).Port;
+          myPort = ((IPEndPoint) proxyClient.LocalEndpoint).Port;
           myLogger.Verbose($"Proxies for server on port {myServerPort} and client on port {Port} created successfully");
 
-          var acceptedClient = await myProxyClient.AcceptTcpClientAsync();
+          var acceptedClient = await proxyClient.AcceptTcpClientAsync();
 
+          myLifetime.OnTermination(() =>
+          {
+            acceptedClient.GetStream().Close();
+            acceptedClient.Close();
+            acceptedClient.Dispose();
+          });
+          
           SetSocketOptions(acceptedClient);
 
           myLogger.Verbose($"New client connected on port {Port}");
 
-          Connect(myProxyServer, acceptedClient);
+          Connect(proxyServer, acceptedClient);
         }
         catch (Exception e)
         {
-          myLogger.Error(e, "Failed to create proxies");
+          myLogger.Warn(e, "Failed to create proxies");
         }
       }
     }
@@ -168,7 +179,7 @@ namespace Test.RdFramework
         }
         catch (Exception e)
         {
-          myLogger.Error(e, $"{id}: Messaging failed");
+          myLogger.Warn(e, $"{id}: Messaging failed");
         }
       }
     }
