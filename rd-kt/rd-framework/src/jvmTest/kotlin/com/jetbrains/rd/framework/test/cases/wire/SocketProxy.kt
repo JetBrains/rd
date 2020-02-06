@@ -90,17 +90,19 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
         try {
             logger.info { "Connecting proxies between themselves..." }
 
-            val task1 = GlobalScope.launch {
+            val task1 = thread {
+                logger.info { "Server to client messaging started" }
                 messaging("Server to client", proxyServer.inputStream, proxyClient.outputStream, serverToClientBuffer, serverToClientLifetime)
             }
 
-            val task2 = GlobalScope.launch {
+            val task2 = thread {
+                logger.info { "Client to server messaging started" }
                 messaging("Client to server", proxyClient.inputStream, proxyServer.outputStream, clientToServerBuffer, clientToServerLifetime)
             }
 
             lifetime.onTermination {
-                task1.cancel()
-                task2.cancel()
+                task1.join()
+                task2.join()
             }
 
             logger.info { "Async transferring messages started" }
@@ -111,6 +113,7 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
 
     private fun messaging(id: String, source: InputStream, destination: OutputStream, buffer: ByteArray, lifetimes: SequentialLifetimes) {
         while (lifetime.isAlive) {
+            logger.info { "$id: Lifetime is alive, messaging in process..." }
             try {
                 val length = source.read(buffer)
                 if (length == 0) {
