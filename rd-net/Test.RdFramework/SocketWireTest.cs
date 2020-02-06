@@ -383,7 +383,7 @@ namespace Test.RdFramework
     [TestCase(false)]
     public void TestPacketLoss(bool isClientToServer)
     {
-      // using var factory = Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE));
+      using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
       Lifetime.Using(lifetime =>
       {
         SynchronousScheduler.Instance.SetActive(lifetime);
@@ -429,6 +429,36 @@ namespace Test.RdFramework
         Assert.IsTrue(serverWire.HeartbeatAlive.Value);
         Assert.IsTrue(clientWire.HeartbeatAlive.Value);
 
+      });
+    }
+
+    [Test]
+    [Ignore("Not enough timeout to get the correct test")]
+    public void TestStressHeartbeat()
+    {
+      // using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
+      Lifetime.Using(lifetime =>
+      {
+        SynchronousScheduler.Instance.SetActive(lifetime);
+
+        var interval = TimeSpan.FromMilliseconds(50);
+
+        var serverProtocol = Server(lifetime);
+        var serverWire = ((SocketWire.Base) serverProtocol.Wire).With(wire => wire.HeartBeatInterval = interval);
+
+        var latency = TimeSpan.FromMilliseconds(40);
+        var proxy = new SocketProxy("TestProxy", lifetime, serverProtocol) {Latency = latency};
+        proxy.Start();
+
+        var clientProtocol = Client(lifetime, proxy.Port);
+        var clientWire = ((SocketWire.Base) clientProtocol.Wire).With(wire => wire.HeartBeatInterval = interval);
+
+        Thread.Sleep(DefaultTimeout);
+
+        serverWire.HeartbeatAlive.WhenFalse(lifetime, _ => Assert.Fail("Detected false disconnect on server side"));
+        clientWire.HeartbeatAlive.WhenFalse(lifetime, _ => Assert.Fail("Detected false disconnect on client side"));
+
+        Thread.Sleep(TimeSpan.FromSeconds(50));
       });
     }
 

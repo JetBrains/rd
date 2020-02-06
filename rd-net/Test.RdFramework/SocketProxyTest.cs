@@ -1,9 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Collections.Viewable;
-using JetBrains.Diagnostics;
-using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
@@ -50,7 +47,12 @@ namespace Test.RdFramework
           //Connection is established for now
 
           sp.Fire(1);
-          Thread.Sleep(SocketWireTest.DefaultTimeout);
+
+          SpinWaitEx.SpinUntil(() => serverLog.Count == 1);
+          SpinWaitEx.SpinUntil(() => clientLog.Count == 1);
+          Assert.AreEqual(new List<int> {1}, serverLog);
+          Assert.AreEqual(new List<int> {1}, clientLog);
+
           cp.Fire(2);
 
           SpinWaitEx.SpinUntil(() => serverLog.Count == 2);
@@ -58,20 +60,23 @@ namespace Test.RdFramework
           Assert.AreEqual(new List<int> {1, 2}, serverLog);
           Assert.AreEqual(new List<int> {1, 2}, clientLog);
 
-
           proxy.StopServerToClientMessaging();
 
+          cp.Advise(lifetime, i => Assert.AreNotSame(3, i, "Value {0} mustn't be received", 3));
+
           sp.Fire(3);
-          Thread.Sleep(SocketWireTest.DefaultTimeout);
+
+          SpinWaitEx.SpinUntil(() => serverLog.Count == 3);
           Assert.AreEqual(new List<int> {1, 2, 3}, serverLog);
-          Assert.AreEqual(new List<int> {1, 2}, clientLog);
 
 
           proxy.StopClientToServerMessaging();
 
+          sp.Advise(lifetime, i => Assert.AreNotSame(4, i, "Value {0} mustn't be received", 4));
+
           cp.Fire(4);
-          Thread.Sleep(SocketWireTest.DefaultTimeout);
-          Assert.AreEqual(new List<int> {1, 2, 3}, serverLog);
+
+          SpinWaitEx.SpinUntil(() => clientLog.Count == 3);
           Assert.AreEqual(new List<int> {1, 2, 4}, clientLog);
 
           //Connection is broken for now
@@ -86,7 +91,7 @@ namespace Test.RdFramework
 
 
           proxy.StartClientToServerMessaging();
-            
+
           cp.Fire(6);
           SpinWaitEx.SpinUntil(() => serverLog.Count == 5);
           SpinWaitEx.SpinUntil(() => clientLog.Count == 5);
@@ -97,13 +102,18 @@ namespace Test.RdFramework
 
           proxyLifetimeDefinition.Terminate();
 
+          
+          cp.Advise(lifetime, i => Assert.AreNotSame(7, i, "Value {0} mustn't be received", 7));
           sp.Fire(7);
-          Thread.Sleep(SocketWireTest.DefaultTimeout);
+          
+          SpinWaitEx.SpinUntil(() => serverLog.Count == 6);
+          Assert.AreEqual(new List<int> {1, 2, 3, 5, 6, 7}, serverLog);
+
+
+          sp.Advise(lifetime, i => Assert.AreNotSame(8, i, "Value {0} mustn't be received", 8));
           cp.Fire(8);
 
-          SpinWaitEx.SpinUntil(() => serverLog.Count == 6);
           SpinWaitEx.SpinUntil(() => clientLog.Count == 6);
-          Assert.AreEqual(new List<int> {1, 2, 3, 5, 6, 7}, serverLog);
           Assert.AreEqual(new List<int> {1, 2, 4, 5, 6, 8}, clientLog);
 
           //Connection is broken for now, proxy is not alive

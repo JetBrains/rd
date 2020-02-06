@@ -31,6 +31,8 @@ namespace Test.RdFramework
         return myPort.Value;
       }
     }
+    
+    public TimeSpan Latency { get; set; } = TimeSpan.Zero;
 
     private const int DefaultBufferSize = 16370;
     private readonly byte[] myServerToClientBuffer = new byte[DefaultBufferSize];
@@ -57,8 +59,6 @@ namespace Test.RdFramework
         
         StopServerToClientMessaging();
         StopClientToServerMessaging();
-
-        myProxyServer?.Close();
       });
     }
 
@@ -78,6 +78,8 @@ namespace Test.RdFramework
           myLogger.Verbose("Creating proxies for server and client...");
           myProxyServer = new TcpClient(IPAddress.Loopback.ToString(), myServerPort);
           myProxyClient = new TcpListener(new IPEndPoint(IPAddress.Loopback, 0));
+
+          myLifetime.OnTermination(() => myProxyServer.Close());
 
           SetSocketOptions(myProxyServer);
 
@@ -151,6 +153,7 @@ namespace Test.RdFramework
           myLogger.Verbose($"{id}: Message of length: {length} was read");
           if (!lifetimes.IsCurrentTerminated)
           {
+            await Task.Delay(Latency, myLifetime);
             await destination.WriteAsync(buffer, 0, length, myLifetime);
             myLogger.Verbose($"{id}: Message of length: {length} was written");
           }

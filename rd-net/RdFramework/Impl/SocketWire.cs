@@ -107,14 +107,14 @@ namespace JetBrains.Rd.Impl
         });
       }
 
-      private static bool ConnectionEstablished(int currentTimeStamp, int counterpartTimestamp) => currentTimeStamp - counterpartTimestamp <= MaximumHeartbeatDelay;
+      private static bool ConnectionEstablished(int timeStamp, int notionTimestamp) => timeStamp - notionTimestamp <= MaximumHeartbeatDelay;
 
       private Timer StartHeartbeat()
       {
         void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
           Ping();
-          Log.Trace()?.Log($"{Id} sent PING");
+          Log.Trace()?.Log($"{Id}: sent PING");
         }
 
         var timer = new Timer(HeartBeatInterval.TotalMilliseconds){AutoReset = true};
@@ -252,12 +252,22 @@ namespace JetBrains.Rd.Impl
 
             if (len == PING_LEN)
             {
-              Int32 timestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
-              Int32 recognizedTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
-              Log.Trace()?.Log($"Received PING package with timestamp={timestamp}, recognizedTimestamp={recognizedTimestamp}");
+              Int32 receivedTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
+              Int32 receivedCounterpartTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
+              Log.Trace()?.Log($"{Id}: Received PING package " +
+                               $"receivedTimestamp={receivedTimestamp}, " +
+                               $"receivedCounterpartTimestamp={receivedCounterpartTimestamp}, " +
+                               $"currentTimeStamp={myCurrentTimeStamp}, " +
+                               $"counterpartTimestamp={myCounterpartTimestamp}, " +
+                               $"counterpartNotionTimestamp={myCounterpartNotionTimestamp}");
+              myCounterpartTimestamp = receivedTimestamp;
+              myCounterpartNotionTimestamp = receivedCounterpartTimestamp;
               
-              HeartbeatAlive.Value = ConnectionEstablished(timestamp, recognizedTimestamp);
-              myCounterpartTimestamp = timestamp;
+              if (ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
+              {
+                HeartbeatAlive.Value = true;
+              }
+              
               continue;
             }
 
@@ -309,7 +319,7 @@ namespace JetBrains.Rd.Impl
         }
         catch (Exception e)
         {
-          Log.Warn(e, $"{Id}: ${e.GetType()} raised during ACK, seqn = {seqN}");
+          Log.Warn(e, $"{Id}: {e.GetType()} raised during ACK, seqn = {seqN}");
         }
       }
       
@@ -317,8 +327,11 @@ namespace JetBrains.Rd.Impl
       {
         try
         {
-          Log.Trace()?.Log($"{Id}: send PING currentHeartbeatTimeStamp: {myCurrentHeartbeatTimeStamp}, counterpartTimestamp: {myCounterpartTimestamp}");
-          if (!ConnectionEstablished(myCurrentHeartbeatTimeStamp, myCounterpartTimestamp))
+          Log.Trace()?.Log($"{Id}: send PING " +
+                           $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                           $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                           $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+          if (!ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
           {
             HeartbeatAlive.Value = false;
           }
@@ -326,7 +339,7 @@ namespace JetBrains.Rd.Impl
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
             cookie.Writer.Write(PING_LEN);
-            cookie.Writer.Write(myCurrentHeartbeatTimeStamp);
+            cookie.Writer.Write(myCurrentTimeStamp);
             cookie.Writer.Write(myCounterpartTimestamp);
             cookie.CopyTo(myPingPkgHeader);
           }
@@ -334,7 +347,7 @@ namespace JetBrains.Rd.Impl
           lock (mySocketSendLock)
             Socket.Send(myPingPkgHeader);
 
-          ++myCurrentHeartbeatTimeStamp;
+          ++myCurrentTimeStamp;
         }
         catch (ObjectDisposedException)
         {
@@ -342,7 +355,7 @@ namespace JetBrains.Rd.Impl
         }
         catch (Exception e)
         {
-          Log.Warn(e, $"{Id}: ${e.GetType()} raised during PING");
+          Log.Warn(e, $"{Id}: {e.GetType()} raised during PING");
         }
       }
       
@@ -361,9 +374,23 @@ namespace JetBrains.Rd.Impl
       private readonly byte[] myAckPkgHeader = new byte[ PkgHeaderLen]; //different threads
 
       public TimeSpan HeartBeatInterval { get; set; } = TimeSpan.FromMilliseconds(500);
-      private int myCurrentHeartbeatTimeStamp;
+      
+      /// <summary>
+      /// Timestamp of this wire which increases at intervals of <see cref="HeartBeatInterval"/>
+      /// </summary>
+      private int myCurrentTimeStamp;
+      
+      /// <summary>
+      /// Actual notion about counterpart's <see cref="myCurrentTimeStamp"/>
+      /// </summary>
       private int myCounterpartTimestamp;
-      internal const int MaximumHeartbeatDelay = 2;
+      
+      /// <summary>
+      /// The latest received counterpart's notion of this wire's <see cref="myCurrentTimeStamp"/>
+      /// </summary>
+      private int myCounterpartNotionTimestamp;
+      
+      internal const int MaximumHeartbeatDelay = 3;
       private readonly byte[] myPingPkgHeader = new byte[ PkgHeaderLen];
 
       private void Send0(byte[] data, int offset, int len, ref long seqN)
