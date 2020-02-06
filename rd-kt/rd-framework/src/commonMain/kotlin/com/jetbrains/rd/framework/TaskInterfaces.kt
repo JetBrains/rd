@@ -92,15 +92,10 @@ val <T> IRdTask<T>.isSucceeded : Boolean get() = result.valueOrNull is RdTaskRes
 val <T> IRdTask<T>.isCanceled : Boolean get() = result.valueOrNull is RdTaskResult.Cancelled
 val <T> IRdTask<T>.isFaulted : Boolean get() = result.valueOrNull is RdTaskResult.Fault
 
-interface ILifetimedRdCall<in TReq, out TRes> {
-
-    fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
-}
-
 /**
  * Represents an API provided by the remote process which can be invoked through the protocol.
  */
-interface IRdCall<in TReq, out TRes> : ILifetimedRdCall<TReq, TRes> {
+interface IRdCall<in TReq, out TRes> {
     /**
      * Invokes the API with the parameters given as [request] and waits for the result.
      */
@@ -110,7 +105,9 @@ interface IRdCall<in TReq, out TRes> : ILifetimedRdCall<TReq, TRes> {
      * Asynchronously invokes the API with the parameters given as [request] and waits for the result.
      * The returned task will have its result value assigned through the given [responseScheduler].
      */
+    @Deprecated("Use overload with Lifetime")
     fun start(request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
+    fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
 }
 
 /**
@@ -128,5 +125,3 @@ interface IRdEndpoint<TReq, TRes> {
      */
     fun set(cancellationAndRequestScheduler: IScheduler? = null, handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
 }
-
-interface ILifetimedRdCallWithEndpoint<TReq, TRes> : ILifetimedRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes>

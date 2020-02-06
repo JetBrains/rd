@@ -10,7 +10,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
 {
-  public class RdCall<TReq, TRes> : RdReactiveBase, IRdCall<TReq, TRes>, ILifetimedRdCallWithEndpoint<TReq, TRes>
+  public class RdCall<TReq, TRes> : RdReactiveBase, IRdCall<TReq, TRes>, IRdEndpoint<TReq, TRes>
   {
     [PublicAPI]
     public CtxReadDelegate<TReq> ReadRequestDelegate { get; }
