@@ -96,11 +96,11 @@ object DemoModel : Ext(DemoRoot) {
         field("string", PredefinedType.string)
     }
 
-    private var Open = openstruct extends Base{
+    private var Open = openstruct extends Base {
         field("openString", PredefinedType.string)
     }
 
-    private var OpenDerived = openstruct extends Open{
+    private var OpenDerived = openstruct extends Open {
         field("openDerivedString", PredefinedType.string)
     }
 

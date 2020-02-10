@@ -383,7 +383,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             is PredefinedType -> "Polymorphic<${templateName(scope)}>"
             is Declaration -> {
                 val name = sanitizedName(scope)
-                if (isAbstract) {
+                if (isAbstract || isOpen) {
                     "AbstractPolymorphic<$name>"
                 } else {
                     "Polymorphic<$name>"
@@ -613,7 +613,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val modifier =
                 when {
                     hasSetting(PublicCtors) -> "public"
-                    isAbstract -> "protected"
+                    isAbstract || isOpen -> "protected"
                     hasSecondaryCtor -> "private"
                     isExtension -> "public"
                     this is Toplevel -> "private"
@@ -947,7 +947,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
         if (decl is Toplevel) {
-            dependencies.filter { !it.isAbstract }.filterIsInstance<IType>().println {
+            dependencies.filter { !(it.isAbstract || it.isOpen) }.filterIsInstance<IType>().println {
                 if (it is Declaration) {
                     val name = it.name
                     "../${it.pointcut!!.name}/$name".includeWithExtension()
@@ -961,7 +961,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val rootName = decl.root.sanitizedName(decl)
             +"../$rootName/$rootName".includeWithExtension()
         }
-        if (decl.isAbstract) {
+        if (decl.isAbstract || decl.isOpen) {
             +(unknown(decl)!!.includeWithExtension())
         }
         if (decl is Root) {
@@ -1017,6 +1017,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
 
             if (decl.isAbstract) comment("abstract")
+            if (decl.isOpen) comment("open")
             if (decl is Struct.Concrete && decl.base == null) comment("data")
 
 
@@ -1531,7 +1532,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private fun readerTraitDecl(decl: Declaration): Signature? {
         return when {
             decl.isConcrete -> MemberFunction(decl.name, "read(rd::SerializationCtx& ctx, rd::Buffer & buffer)", decl.name).static()
-            decl.isAbstract -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
+            decl.isAbstract || decl.isOpen -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
             else -> null
         }
     }
@@ -1574,7 +1575,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     protected fun equalsTraitDecl(decl: Declaration): MemberFunction? {
         val signature = MemberFunction("bool", "equals(rd::ISerializable const& object)", decl.name).const()
-        return if (decl is Toplevel || decl.isAbstract) {
+        return if (decl is Toplevel || decl.isAbstract || decl.isOpen) {
             null
         } else {
             signature.override()
@@ -1619,7 +1620,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         val signature = MemberFunction("std::string", "toString()", decl.name).const()
         return when {
             decl is Toplevel -> signature.override()
-            decl.isAbstract -> signature.override()
+            decl.isAbstract || decl.isOpen -> signature.override()
             decl.isConcrete -> signature.override()
             else -> signature
         }
@@ -1758,7 +1759,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 if (isIntrinsic) {
                     polymorphicReader()
                 } else {
-                    if (isAbstract)
+                    if (isAbstract || isOpen)
                         "ctx.get_serializers().readPolymorphic<${templateName(decl)}>(ctx, buffer)"
                     else
                         "${templateName(decl)}::read(ctx, buffer)"
@@ -1842,7 +1843,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         +"${decl.name}::$serializersOwnerImplName const ${decl.name}::serializersOwner;"
         println()
         define(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner").const().override()) {
-            types.filter { !it.isAbstract }
+            types.filter { !(it.isAbstract || it.isOpen) }
                 .filterIsInstance<IType>()
                 .filterNot { iType -> iType is Enum }
                 .filterNot { iType -> iType is Declaration && iType.isIntrinsic }
@@ -1917,7 +1918,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 } else {
                     readerBodyTrait(decl)
                 }
-            } else if (decl.isAbstract) {
+            } else if (decl.isAbstract || decl.isOpen) {
                 readerBodyTrait(unknown(decl)!!)
             }
         }
@@ -1949,7 +1950,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.write_integral($field)"
                 is PredefinedType.NativeFloatingPointType -> "buffer.write_floating_point($field)"
                 is Declaration ->
-                    if (isAbstract)
+                    if (isAbstract || isOpen)
                         "ctx.get_serializers().writePolymorphic<${templateName(decl)}>(ctx, buffer, $field)"
                     else {
                         "rd::Polymorphic<std::decay_t<decltype($field)>>::write(ctx, buffer, $field)"
@@ -2084,7 +2085,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private fun PrettyPrinter.equalsTraitDef(decl: Declaration) {
         define(equalsTraitDecl(decl)) {
             +"auto const &other = dynamic_cast<${decl.name} const&>(object);"
-            if (decl.isAbstract || decl !is IScalar) {
+            if (decl.isAbstract || decl.isOpen || decl !is IScalar) {
                 +"return this == &other;"
             } else {
                 +"if (this == &other) return true;"
