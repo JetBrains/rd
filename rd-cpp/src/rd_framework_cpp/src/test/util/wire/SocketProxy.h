@@ -1,9 +1,8 @@
 #ifndef RD_CPP_TESTSOCKETPROXY_H
 #define RD_CPP_TESTSOCKETPROXY_H
 
+#include "thirdparty.hpp"
 
-#include "ActiveSocket.h"
-#include "PassiveSocket.h"
 #include "base/IProtocol.h"
 #include "protocol/Buffer.h"
 #include "wire/SocketWire.h"
@@ -16,7 +15,7 @@ namespace rd {
             int serverPort;
             Logger logger;
 
-            rd::optional<int> port;
+            optional<int> port;
 
 			static constexpr int DefaultBufferSize = 16370;
             mutable Buffer serverToClientBuffer{DefaultBufferSize};

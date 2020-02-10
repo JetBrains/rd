@@ -541,7 +541,7 @@ struct PacketLossTestBase : SocketWireTestBase, ::testing::WithParamInterface<bo
 
 TEST_P(PacketLossTestBase, TestPacketLoss) {
 	auto serverProtocol = server(socketLifetime, 0);
-	auto serverWire = dynamic_cast<SocketWire::Base const *>(serverProtocol.get_wire());
+	auto serverWire = dynamic_cast<SocketWire::Base const *> (serverProtocol.get_wire());
 
 	SocketProxy proxy("TestProxy", socketLifetime, &serverProtocol);
 	proxy.start();
