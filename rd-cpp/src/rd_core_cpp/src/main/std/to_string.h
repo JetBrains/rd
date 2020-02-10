@@ -7,6 +7,8 @@
 #include <sstream>
 #include <vector>
 #include <atomic>
+#include <future>
+
 
 #include "thirdparty.hpp"
 
@@ -35,6 +37,15 @@ namespace rd {
 
 		inline std::string to_string(std::exception const &e) {
 			return std::string(e.what());
+		}
+
+		inline std::string to_string(std::future_status const &status) {
+			switch (status) {
+				case std::future_status::ready: return "ready";
+				case std::future_status::timeout: return "timeout";
+				case std::future_status::deferred: return "deferred";
+				default: return "unknown";
+			}
 		}
 
 		template<typename Rep, typename Period>

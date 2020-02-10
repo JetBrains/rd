@@ -11,7 +11,10 @@ add_library(rd_framework_cpp_test_util
 
         SimpleWire.cpp SimpleWire.h PropertyHolderWithInternRoot.cpp PropertyHolderWithInternRoot.h
         scheduler/TestSingleThreadScheduler.cpp scheduler/TestSingleThreadScheduler.h
-        Linearization.cpp Linearization.h)
+        Linearization.cpp Linearization.h
+        
+        wire/SocketProxy.cpp wire/SocketProxy.h
+        )
 
 add_subdirectory(entities)
 add_subdirectory(interning)

@@ -18,7 +18,7 @@ namespace rd {
 		set_current_lifetime(LifetimeDefinition::get_shared_eternal());
 	}
 
-	bool SequentialLifetimes::is_terminated() {
+	bool SequentialLifetimes::is_terminated() const {
 		return current_def->is_eternal() || current_def->is_terminated();
 	}
 

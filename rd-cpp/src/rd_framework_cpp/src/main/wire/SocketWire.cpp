@@ -12,6 +12,7 @@ namespace rd {
 	std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
 	constexpr int32_t SocketWire::Base::ACK_MESSAGE_LENGTH;
+	constexpr int32_t SocketWire::Base::PING_MESSAGE_LENGTH;
 	constexpr int32_t SocketWire::Base::PACKAGE_HEADER_LENGTH;
 
 	SocketWire::Base::Base(std::string id, Lifetime lifetime, IScheduler *scheduler)
@@ -19,6 +20,7 @@ namespace rd {
 			  scheduler(scheduler), local_send_buffer(SEND_BUFFER_SIZE) {
 		async_send_buffer.pause("initial");
 		async_send_buffer.start();
+		ping_pkg_header.write_integral(PING_MESSAGE_LENGTH);
 	}
 
 	void SocketWire::Base::receiverProc() const {
@@ -55,10 +57,12 @@ namespace rd {
 
 			RD_ASSERT_THROW_MSG(socket_provider->Send(send_package_header.data(), send_package_header.get_position()) ==
 								PACKAGE_HEADER_LENGTH,
-								this->id + ": failed to send header over the network")
+								this->id + ": failed to send header over the network"
+										   ", reason: " + socket_provider->DescribeError())
 
 			RD_ASSERT_THROW_MSG(socket_provider->Send(msg.data(), msglen) == msglen,
-								this->id + ": failed to send package over the network");
+								this->id + ": failed to send package over the network"
+										   ", reason: " + socket_provider->DescribeError());
 			logger.info(this->id + ": were sent " + std::to_string(msglen) + " bytes");
 			//        RD_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
 			return true;
@@ -99,19 +103,43 @@ namespace rd {
 				return;
 			}
 		}
-		async_send_buffer.resume();
 
-		connected.set(true);
+		auto heartbeat = LifetimeDefinition::use([this](Lifetime heartbeatLifetime) {
+			const auto heartbeat = start_heartbeat(heartbeatLifetime).share();
 
-		receiverProc();
+			async_send_buffer.resume();
 
-		connected.set(false);
+			connected.set(true);
 
-		async_send_buffer.pause("Disconnected");
+			receiverProc();
+
+			connected.set(false);
+
+			async_send_buffer.pause("Disconnected");
+
+			return heartbeat;
+		});
+		const auto status = heartbeat.wait_for(timeout);
+
+		logger.debug(this->id + ": waited for heartbeat to stop with status: " + to_string(status));
+		
 		if (!socket_provider->Shutdown(CSimpleSocket::Both)) {
 			//double close?
 			logger.warn(this->id + ": possibly double close after disconnect");
 		}
+	}
+
+	bool SocketWire::Base::connection_established(int32_t timestamp, int32_t notion_timestamp) {
+		return timestamp - notion_timestamp <= MaximumHeartbeatDelay;
+	}
+
+	std::future<void> SocketWire::Base::start_heartbeat(Lifetime lifetime) {
+		return std::async([this, lifetime] {
+			while (!lifetime->is_terminated()) {
+				std::this_thread::sleep_for(heartBeatInterval);
+				ping();
+			}
+		});
 	}
 
 	bool SocketWire::Base::read_from_socket(Buffer::word_t *res, int32_t msglen) const {
@@ -146,7 +174,7 @@ namespace rd {
 				}
 				hi += read;
 				if (read > 0) {
-					logger.info(this->id + ": receive finished: " + std::to_string(read) + "bytes read");
+					logger.info(this->id + ": receive finished: %d bytes read", read);
 				}
 			}
 		}
@@ -166,15 +194,43 @@ namespace rd {
 			if (!read_integral_from_socket(len)) {
 				return INVALID_HEADER;
 			}
+			if (len == PING_MESSAGE_LENGTH) {
+				int32_t received_timestamp = 0;
+				int32_t received_counterpart_timestamp = 0;
+				if (!read_integral_from_socket(received_timestamp)) {
+					return INVALID_HEADER;
+				}
+				if (!read_integral_from_socket(received_counterpart_timestamp)) {
+					return INVALID_HEADER;
+				}
+				logger.trace(
+						id + ": received PING package "
+						"received_timestamp: %d, "
+						"received_counterpart_timestamp: %d, "
+						"current_timestamp: %d, "
+						"counterpart_timestamp: %d, "
+						"counterpart_acknowledge_timestamp: %d, ",
+						received_timestamp, received_counterpart_timestamp, current_timestamp, counterpart_timestamp,
+						counterpart_acknowledge_timestamp
+				);
+
+				counterpart_timestamp = received_timestamp;
+				counterpart_acknowledge_timestamp = received_counterpart_timestamp;
+
+				if ((connection_established(current_timestamp, counterpart_acknowledge_timestamp))) {
+					heartbeatAlive.set(true);
+				}
+				continue;
+			}
 			if (!read_integral_from_socket(seqn)) {
 				return INVALID_HEADER;
 			}
 
 			if (len == ACK_MESSAGE_LENGTH) {
 				async_send_buffer.acknowledge(seqn);
-			} else {
-				return std::make_pair(len, seqn);
+				continue;
 			}
+			return std::make_pair(len, seqn);
 		}
 	}
 
@@ -189,7 +245,7 @@ namespace rd {
 		const auto len = pair.first;
 		const auto seqn = pair.second;
 
-		logger.debug("read len=%d, seqn=%lld, max_received_seqn=%lld", len, seqn, max_received_seqn);
+		logger.debug(this->id + ": read len=%d, seqn=%lld, max_received_seqn=%lld", len, seqn, max_received_seqn);
 
 		receive_pkg.require_available(len);
 		if (!read_data_from_socket(receive_pkg.data(), len)) {
@@ -242,6 +298,34 @@ namespace rd {
 		return socket_provider.get();
 	}
 
+	void SocketWire::Base::ping() const {
+		logger.trace(
+				this->id + ": send PING currentHeartbeatTimeStamp: %d, "
+					 "counterpart_timestamp: %d, "
+					 "counterpart_acknowledge_timestamp: %d",
+				current_timestamp, counterpart_timestamp, counterpart_acknowledge_timestamp);
+		if (!connection_established(current_timestamp, counterpart_acknowledge_timestamp)) {
+			heartbeatAlive.set(false);
+		}
+		try {
+			ping_pkg_header.set_position(sizeof(PING_MESSAGE_LENGTH));
+			ping_pkg_header.write_integral(current_timestamp);
+			ping_pkg_header.write_integral(counterpart_timestamp);
+			{
+				std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
+				RD_ASSERT_THROW_MSG(
+						socket_provider->Send(ping_pkg_header.data(), ping_pkg_header.get_position()) ==
+						PACKAGE_HEADER_LENGTH,
+						this->id + ": failed to send ping over the network"
+								   ", reason: " + socket_provider->DescribeError())
+			}
+
+			++current_timestamp;
+		} catch (std::exception const& e) {
+			logger.warn(&e, this->id + ": exception raised during PING");
+		}
+	}
+
 	bool SocketWire::Base::send_ack(sequence_number_t seqn) const {
 		logger.trace(id + " send ack %lld", seqn);
 		try {
@@ -252,7 +336,8 @@ namespace rd {
 				std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 				RD_ASSERT_THROW_MSG(
 						socket_provider->Send(ack_buffer.data(), ack_buffer.get_position()) == PACKAGE_HEADER_LENGTH,
-						this->id + ": failed to send ack over the network")
+						this->id + ": failed to send ack over the network"
+								   ", reason: " + socket_provider->DescribeError())
 			}
 			return true;
 		} catch (std::exception const &e) {
@@ -269,9 +354,11 @@ namespace rd {
 				while (!lifetime->is_terminated()) {
 					try {
 						socket = std::make_shared<CActiveSocket>();
-						RD_ASSERT_THROW_MSG(socket->Initialize(), this->id + ": failed to init ActiveSocket");
+						RD_ASSERT_THROW_MSG(socket->Initialize(), this->id + ": failed to init ActiveSocket"
+								", reason: " + socket->DescribeError());
 						RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
-											this->id + ": failed to DisableNagleAlgoritm");
+											this->id + ": failed to DisableNagleAlgoritm"
+											", reason: " + socket->DescribeError());
 
 						// On windows connect will try to send SYN 3 times with interval of 500ms (total time is 1second)
 						// Connect timeout doesn't work if it's more than 1 second. But we don't need it because we can close socket any moment.
@@ -280,12 +367,14 @@ namespace rd {
 						//HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
 						logger.info(this->id + ": connecting 127.0.0.1:" + std::to_string(this->port));
 						RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
-											this->id + ": failed to open ActiveSocket");
+											this->id + ": failed to open ActiveSocket"
+													   ", reason: " + socket->DescribeError());
 						{
 							std::lock_guard<decltype(lock)> guard(lock);
 							if (lifetime->is_terminated()) {
 								if (!socket->Close()) {
-									logger.error(this->id + "failed to close socket");
+									logger.error(this->id + "failed to close socket"
+															", reason: " + socket->DescribeError());
 								}
 								return;
 							}
@@ -342,9 +431,11 @@ namespace rd {
 #ifdef SIGPIPE
 		signal(SIGPIPE, SIG_IGN);
 #endif
-		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket")
+		RD_ASSERT_MSG(ss->Initialize(), this->id + ": failed to initialize socket"
+										", reason: " + socket->DescribeError())
 		RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
-					  this->id + ": failed to listen socket on port:" + std::to_string(port));
+					  this->id + ": failed to listen socket on port:" + std::to_string(port) +
+					  ", reason: " + ss->DescribeError());
 
 		logger.info(this->id + ": listening 127.0.0.1/" + std::to_string(port));
 		this->port = ss->GetServerPort();
@@ -355,10 +446,12 @@ namespace rd {
 				try {
 					logger.info(this->id + ": accepting started");
 					CActiveSocket *accepted = ss->Accept();
-					RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()))
+					RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()) +
+							", reason: " + ss->DescribeError())
 					socket.reset(accepted);
 					logger.info(this->id + ": accepted passive socket");
-					RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed")
+					RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id + ": tcpNoDelay failed"
+							", reason: " + socket->DescribeError())
 
 					{
 						std::lock_guard<decltype(lock)> guard(lock);
