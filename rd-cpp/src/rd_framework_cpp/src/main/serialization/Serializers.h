@@ -59,6 +59,9 @@ namespace rd {
 
 		template<typename T>
 		void writePolymorphic(SerializationCtx  &ctx, Buffer &stream, const Wrapper<T> &value) const;
+
+		template<typename T>
+		void writePolymorphic(SerializationCtx& ctx, Buffer& stream, T const& value) const;
 	};
 }
 
@@ -121,6 +124,11 @@ namespace rd {
 	template<typename T>
 	void Serializers::writePolymorphic(SerializationCtx  &ctx, Buffer &stream, const Wrapper<T> &value) const {
 		writePolymorphicNullable(ctx, stream, *value);
+	}
+
+	template<typename T>
+	void Serializers::writePolymorphic(SerializationCtx& ctx, Buffer& stream, T const& value) const {
+		writePolymorphicNullable(ctx, stream, value);
 	}
 }
 
