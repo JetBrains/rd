@@ -21,4 +21,17 @@ class EnumUtilTest {
         assertTrue(flags.contains(TestEnum.One))
         assertFalse(flags.contains(TestEnum.Two))
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testParseFromFlags_outOfRange() {
+        val enumCombinedVal = (1 shl 3)
+        parseFromFlags<TestEnum>(enumCombinedVal)
+    }
+
+    @Test
+    fun testParseFromFlags_maxPossibleValue() {
+        val enumCombinedVal = (1 shl 3) - 1
+        val flags = parseFromFlags<TestEnum>(enumCombinedVal)
+        assertTrue(flags.size == 3)
+    }
 }
