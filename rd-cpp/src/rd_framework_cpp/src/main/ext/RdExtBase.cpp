@@ -74,17 +74,14 @@ namespace rd {
 
 		int64_t counterpartSerializationHash = buffer.read_integral<int64_t>();
 		if (serializationHash != counterpartSerializationHash) {
-			//need to queue since outOfSyncModels is not synchronized
-//        RdReactiveBase::get_protocol()->scheduler->queue([this](){ RdReactiveBase::get_protocol().outOfSyncModels.add(this) });
 			RD_ASSERT_MSG(false, "serializationHash of ext " + to_string(location) +
-								 " doesn't match to counterpart: maybe you forgot to generate models?")
+								 " doesn't match to counterpart: maybe you forgot to generate models?\n"
+								 "our: " + to_string(serializationHash) + ", counterpart:" + to_string(counterpartSerializationHash))
 		}
 	}
 
 	void RdExtBase::sendState(IWire const &wire, ExtState state) const {
-
 		wire.send(rdid, [&](Buffer &buffer) {
-			// traceMe(logSend, to_string(state));
 			buffer.write_enum<ExtState>(state);
 			buffer.write_integral<int64_t>(serializationHash);
 		});
