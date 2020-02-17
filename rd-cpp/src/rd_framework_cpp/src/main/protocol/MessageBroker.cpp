@@ -10,9 +10,14 @@
 namespace rd {
 	Logger MessageBroker::logger;
 
+	static void execute(const IRdReactive* that, Buffer msg) {
+		int16_t context = msg.read_integral<int16_t>(); //skip context
+		that->on_wire_received(std::move(msg));
+	}
+	
 	void MessageBroker::invoke(const IRdReactive *that, Buffer msg, bool sync) const {
 		if (sync) {
-			that->on_wire_received(std::move(msg));
+			execute(that, std::move(msg));
 		} else {
 			auto action = [this, that, message = std::move(msg)]() mutable {
 				bool exists_id = false;
@@ -21,7 +26,7 @@ namespace rd {
 					exists_id = subscriptions.count(that->rdid) > 0;
 				}
 				if (exists_id) {
-					that->on_wire_received(std::move(message));
+					execute(that, std::move(message));
 				} else {
 					logger.trace("Disappeared Handler for Reactive entities with id:" + to_string(that->rdid));
 				}
