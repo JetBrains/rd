@@ -33,6 +33,7 @@ namespace rd {
 			std::lock_guard<decltype(lock)> guard(lock);
 			if (!sendQ.empty() || !connected.get()) {
 				Buffer buffer;
+				buffer.write_integral<int16_t>(0); //placeholder for context
 				writer(buffer);
 				sendQ.emplace(id, buffer.getRealArray());
 				return;
