@@ -76,6 +76,7 @@ namespace rd {
 		local_send_buffer.write_integral<int32_t>(0); //placeholder for length
 
 		rd_id.write(local_send_buffer); //write id
+		local_send_buffer.write_integral<int16_t>(0); //placeholder for context
 		writer(local_send_buffer); //write rest
 
 		int32_t len = static_cast<int32_t>(local_send_buffer.get_position());
