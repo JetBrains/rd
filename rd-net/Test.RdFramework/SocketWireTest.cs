@@ -222,10 +222,12 @@ namespace Test.RdFramework
 
 
     [Test]
+    [Timeout(5000)]
     public void TestClientWithoutServer()
     {
       Lifetime.Using(lifetime =>
       {
+        WithLongTimeout(lifetime);
         SynchronousScheduler.Instance.SetActive(lifetime);
         Client(lifetime, FindFreePort());
       });

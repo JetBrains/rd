@@ -419,6 +419,8 @@ namespace JetBrains.Rd.Impl
               try
               {
                 var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                Socket = s;
+
                 SetSocketOptions(s);
                 Log.Verbose("{0} : connecting", Id);
                 s.Connect(endPoint);
@@ -433,7 +435,6 @@ namespace JetBrains.Rd.Impl
                   }
                   else
                   {
-                    Socket = s;
                     Log.Verbose("{0} : connected", Id);
                   }
                 }
