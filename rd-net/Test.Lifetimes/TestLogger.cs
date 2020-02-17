@@ -2,18 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
+using JetBrains.Diagnostics.Internal;
+using NUnit.Framework;
 
-namespace JetBrains.Diagnostics.Internal
+namespace Test.Lifetimes
 {
   public class TestLogger : LogBase
   {
-    public static readonly TestLogger Logger = new TestLogger("Tests");
+    public static readonly TestLogger ExceptionLogger = new TestLogger("Tests");
     public static readonly ILogFactory Factory = new TestLogFactory();
 
     private readonly object myMonitor = new object();
     private readonly List<Exception> myExceptions = new List<Exception>();
 
-    private TestLogger([NotNull] string category) : base(category) { }
+    private TestLogger([NotNull] string category) : base(category, LoggingLevel.VERBOSE)
+    {
+      Handlers += WriteMessage;
+    }
+
+    private void WriteMessage(LeveledMessage message)
+    {
+      TestContext.Progress.WriteLine(message.FormattedMessage);
+    }
 
     protected override string Format(LoggingLevel level, string message, Exception exception)
     {
@@ -73,7 +84,12 @@ namespace JetBrains.Diagnostics.Internal
 
     internal class TestLogFactory : LogFactoryBase
     {
-      protected override LogBase GetLogBase(string category) => Logger;
+      protected override LogBase GetLogBase(string category)
+      {
+        var testLogger = new TestLogger(category);
+        testLogger.Handlers += message => ExceptionLogger.Log(message.Level, message.FormattedMessage);
+        return testLogger;
+      }
     }
   }
 }
