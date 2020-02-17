@@ -182,10 +182,12 @@ namespace Test.RdFramework
 
 
     [Test]
+    [Timeout(5000)]
     public void TestServerWithoutClient()
     {
       Lifetime.Using(lifetime =>
       {
+        WithLongTimeout(lifetime);
         SynchronousScheduler.Instance.SetActive(lifetime);
         Server(lifetime);
       });
@@ -404,6 +406,12 @@ namespace Test.RdFramework
       }
       
       SocketWire.Base.CloseSocket(socketWire.Socket.NotNull());
+    }
+
+    private static void WithLongTimeout(Lifetime lifetime)
+    {
+      var oldValue = SocketWire.Base.TimeoutMs;
+      lifetime.Bracket(() => SocketWire.Base.TimeoutMs = 100_000, () => SocketWire.Base.TimeoutMs = oldValue);
     }
   }
 }

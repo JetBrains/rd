@@ -21,7 +21,7 @@ namespace JetBrains.Rd.Impl
       /// Timeout for <see cref="System.Net.Sockets.Socket.Connect(System.Net.EndPoint)"/>  and for <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/>  from socket (to guarantee read_thread termination if <see cref="System.Net.Sockets.Socket.Close()"/> doesn't
       /// lead to exception thrown by <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/> 
       /// </summary>
-      protected const int TimeoutMs = 500;
+      public static int TimeoutMs = 500;
 
       private const int ACK_MSG_LEN = -1;
       
@@ -376,14 +376,21 @@ namespace JetBrains.Rd.Impl
               Monitor.PulseAll(Lock);
             }
 
+            CloseServerSocket();
+
             Log.Verbose("{0}: waiting for receiver thread", Id);
-            receiverThread.Join(TimeoutMs + 100);
+            if (!receiverThread.Join(TimeoutMs + 100))
+              Log.Verbose("{0}: unable to join receiver thread", Id);
+
             Log.Verbose("{0}: termination finished", Id);
           }
         );
       }
 
-      
+      protected virtual void CloseServerSocket()
+      {
+      }
+
 
       public int Port { get; protected set; }
 
@@ -469,12 +476,15 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
+      private Socket myServerSocket;
+
       public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(lifetime, endPoint), optId)
       {}
         
       
       internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
+        myServerSocket = serverSocket;
         Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
         
         StartServerSocket(lifetime, serverSocket);
@@ -560,6 +570,11 @@ namespace JetBrains.Rd.Impl
         thread.Start();
 
         AddTerminationActions(thread);
+      }
+
+      protected override void CloseServerSocket()
+      {
+        CloseSocket(myServerSocket);
       }
     }
     
