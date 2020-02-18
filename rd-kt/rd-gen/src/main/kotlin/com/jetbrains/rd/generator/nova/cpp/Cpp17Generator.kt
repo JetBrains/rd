@@ -72,7 +72,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             return if (this is FakeDeclaration) {
                 decl.namespace
             } else {
-                return getSetting(Namespace) ?: defaultNamespace
+                when (this) {
+                    is CppIntrinsicType -> namespace.orEmpty()
+                    else -> getSetting(Namespace) ?: defaultNamespace
+                }
             }
         }
 
@@ -91,13 +94,28 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
     private val Declaration.isIntrinsic: Boolean
+        get() = getSetting(Intrinsic) != null
+
+    private val defaultListType = CppIntrinsicType("std", "vector", null)
+
+    private val Declaration.listType: CppIntrinsicType
         get() {
-            return getSetting(Intrinsic) != null
+            return getSetting(ListType) ?: defaultListType
         }
+
+    private val defaultAllocatorType = { itemType: IType -> "rd::allocator<${itemType.name}>" }
+
+    private fun Declaration.allocatorType(itemType: IType): String {
+        return (getSetting(AllocatorType) ?: defaultAllocatorType).invoke(itemType)
+    }
+
+    object ListType : ISetting<CppIntrinsicType, Declaration>
+
+    object AllocatorType : ISetting<(IType) -> String, Declaration>
 
     object Intrinsic : ISetting<CppIntrinsicType, Declaration>
 
-    object MarshallerHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
+    object AdditionalHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
 
     object PublicCtors : ISetting<Unit, Declaration>
 
@@ -147,6 +165,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private object RdBindableBase : RdCppLibraryType("rd::RdBindableBase")
 
     private object RdExtBase : RdCppLibraryType("rd::RdExtBase")
+
+    private object RdAbstract : RdCppLibraryType("rd::RdAbstract")
 
     //endregion",
     fun String.isWrapper(): Boolean {
@@ -298,10 +318,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 itemType.substitutedName(scope, rawType, omitNullability)
             } else {
                 val substitutedName = itemType.substitutedName(scope, true, omitNullability)
-                when (itemType) {
-                    is PredefinedType.string -> substitutedName.wrapper()
-                    is PredefinedType -> substitutedName.optional()
-                    is Enum -> substitutedName.optional()
+                val item = itemType
+                when {
+                    item is PredefinedType.string -> substitutedName.wrapper()
+                    item is PredefinedType -> substitutedName.optional()
+                    item is Enum -> substitutedName.optional()
+                    item is Declaration && item.isIntrinsic -> substitutedName.optional()
                     else -> substitutedName.wrapper()
                 }
             }
@@ -314,8 +336,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 substitutedName.wrapper()
             }
         }
-        is IArray -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
-        is IImmutableList -> "std::vector<${itemType.substitutedName(scope, false, omitNullability)}>"
+        is IArray -> "${scope.listType.withNamespace()}<${itemType.substitutedName(scope, false, omitNullability)}>"
+        is IImmutableList -> "${scope.listType.withNamespace()}<${itemType.substitutedName(scope, false, omitNullability)}>"
 
         is PredefinedType.char -> "wchar_t"
         is PredefinedType.byte -> "uint8_t"
@@ -361,7 +383,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             is PredefinedType -> "Polymorphic<${templateName(scope)}>"
             is Declaration -> {
                 val name = sanitizedName(scope)
-                if (isAbstract) {
+                if (isAbstract || isOpen) {
                     "AbstractPolymorphic<$name>"
                 } else {
                     "Polymorphic<$name>"
@@ -451,7 +473,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     protected open fun Member.intfSubstitutedName(scope: Declaration) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.templateName(scope)
-        is Member.Reactive -> intfSimpleName + (genericParams.toList().map { it.templateName(scope) }).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+        is Member.Reactive -> {
+            val customSerializers = if (this is Member.Reactive.Task) customSerializers(scope, false) else emptyList()
+            intfSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+        }
         is Member.Const -> type.templateName(scope)
         is Member.Method -> publicName
     }
@@ -588,7 +613,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val modifier =
                 when {
                     hasSetting(PublicCtors) -> "public"
-                    isAbstract -> "protected"
+                    isAbstract || isOpen -> "protected"
                     hasSecondaryCtor -> "private"
                     isExtension -> "public"
                     this is Toplevel -> "private"
@@ -717,7 +742,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     initializedEnums
                         .mapNotNull { enum ->
                             if (enum.isIntrinsic) {
-                                enum.pointcut.getSetting(MarshallerHeaders)
+                                enum.pointcut.getSetting(AdditionalHeaders)
                             } else {
                                 listOf("${enum.pointcut.name}/${enum.name}.h")
                             }
@@ -835,7 +860,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
-            val marshallerHeaders = tl.getSetting(MarshallerHeaders) ?: listOf()
+            val marshallerHeaders = tl.getSetting(AdditionalHeaders) ?: listOf()
             for (type in types) {
                 listOf(false, true).forEach { isDefinition ->
                     FileSystemPrettyPrinter(type.fsPath(tl, isDefinition)).use {
@@ -922,7 +947,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
         if (decl is Toplevel) {
-            dependencies.filter { !it.isAbstract }.filterIsInstance<IType>().println {
+            dependencies.filter { !(it.isAbstract || it.isOpen) }.filterIsInstance<IType>().println {
                 if (it is Declaration) {
                     val name = it.name
                     "../${it.pointcut!!.name}/$name".includeWithExtension()
@@ -936,7 +961,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val rootName = decl.root.sanitizedName(decl)
             +"../$rootName/$rootName".includeWithExtension()
         }
-        if (decl.isAbstract) {
+        if (decl.isAbstract || decl.isOpen) {
             +(unknown(decl)!!.includeWithExtension())
         }
         if (decl is Root) {
@@ -992,6 +1017,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
 
             if (decl.isAbstract) comment("abstract")
+            if (decl.isOpen) comment("open")
             if (decl is Struct.Concrete && decl.base == null) comment("data")
 
 
@@ -1208,6 +1234,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             //std stubs
             "std/to_string",
             "std/hash",
+            "std/allocator",
             //enum
             "util/enum",
             //gen
@@ -1310,7 +1337,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         extHeaders.printlnWithBlankLine { it.includeWithExtension("h") }
         dependentTypes(decl).printlnWithBlankLine { it.includeQuotes() }
 
-        decl.getSetting(MarshallerHeaders)?.distinct()?.println { it.includeQuotes() }
+        decl.getSetting(AdditionalHeaders)?.distinct()?.println { it.includeQuotes() }
     }
 
 /*
@@ -1337,8 +1364,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     fun PrettyPrinter.customSerializersTrait(decl: Declaration) {
         fun IType.serializerBuilder(): String = leafSerializerRef(decl) ?: "rd::" + when (this) {
-            is IArray -> "ArraySerializer<${itemType.serializerBuilder()}>"
-            is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}>"
+            is IArray -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
+            is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
             is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
             is InternedScalar -> """InternedSerializer<${itemType.serializerBuilder()}, ${internKey.hash()}>"""
             else -> fail("Unknown type: $this")
@@ -1505,7 +1532,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private fun readerTraitDecl(decl: Declaration): Signature? {
         return when {
             decl.isConcrete -> MemberFunction(decl.name, "read(rd::SerializationCtx& ctx, rd::Buffer & buffer)", decl.name).static()
-            decl.isAbstract -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
+            decl.isAbstract || decl.isOpen -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
             else -> null
         }
     }
@@ -1548,7 +1575,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     protected fun equalsTraitDecl(decl: Declaration): MemberFunction? {
         val signature = MemberFunction("bool", "equals(rd::ISerializable const& object)", decl.name).const()
-        return if (decl is Toplevel || decl.isAbstract) {
+        return if (decl is Toplevel || decl.isAbstract || decl.isOpen) {
             null
         } else {
             signature.override()
@@ -1593,7 +1620,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         val signature = MemberFunction("std::string", "toString()", decl.name).const()
         return when {
             decl is Toplevel -> signature.override()
-            decl.isAbstract -> signature.override()
+            decl.isAbstract || decl.isOpen -> signature.override()
             decl.isConcrete -> signature.override()
             else -> signature
         }
@@ -1730,9 +1757,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration -> {
                 if (isIntrinsic) {
-                    "rd::Polymorphic<$name>::read(ctx, buffer)"
+                    polymorphicReader()
                 } else {
-                    if (isAbstract)
+                    if (isAbstract || isOpen)
                         "ctx.get_serializers().readPolymorphic<${templateName(decl)}>(ctx, buffer)"
                     else
                         "${templateName(decl)}::read(ctx, buffer)"
@@ -1744,10 +1771,11 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
             is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                 this as IHasItemType
+                val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
                 if (isPrimitivesArray) {
-                    "buffer.read_array<${itemType.templateName(decl)}>()"
+                    "buffer.read_array<$templateTypes>()"
                 } else {
-                    """buffer.read_array<${itemType.templateName(decl)}>(${lambda(null, "return ${itemType.reader()}")})"""
+                    """buffer.read_array<$templateTypes>(${lambda(null, "return ${itemType.reader()}")})"""
                 }
             }
             else -> fail("Unknown declaration: $decl")
@@ -1815,7 +1843,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         +"${decl.name}::$serializersOwnerImplName const ${decl.name}::serializersOwner;"
         println()
         define(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", "${decl.name}::${decl.name}SerializersOwner").const().override()) {
-            types.filter { !it.isAbstract }
+            types.filter { !(it.isAbstract || it.isOpen) }
                 .filterIsInstance<IType>()
                 .filterNot { iType -> iType is Enum }
                 .filterNot { iType -> iType is Declaration && iType.isIntrinsic }
@@ -1890,7 +1918,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 } else {
                     readerBodyTrait(decl)
                 }
-            } else if (decl.isAbstract) {
+            } else if (decl.isAbstract || decl.isOpen) {
                 readerBodyTrait(unknown(decl)!!)
             }
         }
@@ -1922,7 +1950,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.write_integral($field)"
                 is PredefinedType.NativeFloatingPointType -> "buffer.write_floating_point($field)"
                 is Declaration ->
-                    if (isAbstract)
+                    if (isAbstract || isOpen)
                         "ctx.get_serializers().writePolymorphic<${templateName(decl)}>(ctx, buffer, $field)"
                     else {
                         "rd::Polymorphic<std::decay_t<decltype($field)>>::write(ctx, buffer, $field)"
@@ -1936,8 +1964,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     if (isPrimitivesArray) {
                         "buffer.write_array($field)"
                     } else {
-                        val lambda = lambda("${itemType.substitutedName(decl)} const & it", itemType.writer("it"), "void")
-                        "buffer.write_array<${itemType.substitutedName(decl)}>($field, $lambda)"
+                        val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
+                        val lambda = lambda("${itemType.templateName(decl)} const & it", itemType.writer("it"), "void")
+                        "buffer.write_array<$templateTypes>($field, $lambda)"
                     }
                 }
                 else -> fail("Unknown declaration: $decl")
@@ -2056,7 +2085,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private fun PrettyPrinter.equalsTraitDef(decl: Declaration) {
         define(equalsTraitDecl(decl)) {
             +"auto const &other = dynamic_cast<${decl.name} const&>(object);"
-            if (decl.isAbstract || decl !is IScalar) {
+            if (decl.isAbstract || decl.isOpen || decl !is IScalar) {
                 +"return this == &other;"
             } else {
                 +"if (this == &other) return true;"
