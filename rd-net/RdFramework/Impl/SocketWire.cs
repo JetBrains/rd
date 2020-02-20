@@ -376,8 +376,6 @@ namespace JetBrains.Rd.Impl
               Monitor.PulseAll(Lock);
             }
 
-            CloseServerSocket();
-
             Log.Verbose("{0}: waiting for receiver thread", Id);
             if (!receiverThread.Join(TimeoutMs + 100))
               Log.Verbose("{0}: unable to join receiver thread", Id);
@@ -386,11 +384,6 @@ namespace JetBrains.Rd.Impl
           }
         );
       }
-
-      protected virtual void CloseServerSocket()
-      {
-      }
-
 
       public int Port { get; protected set; }
 
@@ -477,43 +470,36 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      private Socket myServerSocket;
-
-      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(lifetime, endPoint), optId)
+      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(endPoint), optId)
       {}
-        
-      
+
       internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
-        myServerSocket = serverSocket;
         Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
-        
+
         StartServerSocket(lifetime, serverSocket);
+
+        lifetime.OnTermination(() =>
+          {
+            ourStaticLog.Verbose("closing server socket");
+            CloseSocket(serverSocket);
+          }
+        );
       }
 
-      internal static Socket CreateServerSocket(Lifetime lifetime, [CanBeNull] IPEndPoint endPoint)
+      internal static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
       {
         Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
-        return lifetime.Bracket(() =>
-          {
-            var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            SetSocketOptions(serverSocket);
+        var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        SetSocketOptions(serverSocket);
 
-            endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
-            serverSocket.Bind(endPoint);
-            serverSocket.Listen(1);
-            Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+        endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
+        serverSocket.Bind(endPoint);
+        serverSocket.Listen(1);
+        Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
 
-            return serverSocket;
-          },
-          socket =>
-          {
-            ourStaticLog.Verbose("closing server socket");
-            CloseSocket(socket);
-          }
-          );
-
+        return serverSocket;
       }
 
       private void StartServerSocket(Lifetime lifetime, [NotNull] Socket serverSocket)
@@ -572,11 +558,6 @@ namespace JetBrains.Rd.Impl
 
         AddTerminationActions(thread);
       }
-
-      protected override void CloseServerSocket()
-      {
-        CloseSocket(myServerSocket);
-      }
     }
     
     
@@ -617,7 +598,7 @@ namespace JetBrains.Rd.Impl
         IPEndPoint endpoint = null
       )
       {
-        var serverSocket = Server.CreateServerSocket(lifetime, endpoint);
+        var serverSocket = Server.CreateServerSocket(endpoint);
         LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port; 
         
         void Rec()
