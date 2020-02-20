@@ -69,7 +69,7 @@ namespace Test.Lifetimes.Lifetimes
       });
 
       Assert.IsTrue(sequence.IsCurrentTerminated);
-      Assert.AreEqual("start\r\nBefore terminate\r\nend\r\nAfter terminate\r\n", sb.ToString());
+      Assert.AreEqual("start\nBefore terminate\nend\nAfter terminate\n", sb.ToString().Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -96,7 +96,7 @@ namespace Test.Lifetimes.Lifetimes
       }
 
       Assert.IsTrue(sequence.IsCurrentTerminated);
-      Assert.AreEqual("start\r\nBefore exception\r\nend\r\nExpected exception\r\n", sb.ToString());
+      Assert.AreEqual("start\nBefore exception\nend\nExpected exception\n", sb.ToString().Replace("\r\n", "\n"));
     }
   }
 }
