@@ -37,8 +37,9 @@ namespace JetBrains.Lifetimes
     {
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
       TerminateCurrent();
-      var next = new LifetimeDefinition(myParentLifetime, atomicAction);
+      var next = new LifetimeDefinition(myParentLifetime);
       SetNextAndTerminateCurrent(next);
+      next.ExecuteOrTerminateOnFail(atomicAction);
     }
 
     public void DefineNext([NotNull] Action<LifetimeDefinition> atomicAction)

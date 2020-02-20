@@ -201,8 +201,8 @@ namespace JetBrains.Lifetimes
     
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
-    private void ExecuteOrTerminateOnFail([CanBeNull] Action<LifetimeDefinition> atomicAction)
+#endif
+    internal void ExecuteOrTerminateOnFail([CanBeNull] Action<LifetimeDefinition> atomicAction)
     {
       try
       {
@@ -221,8 +221,8 @@ namespace JetBrains.Lifetimes
     
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
-    private void ExecuteOrTerminateOnFail([CanBeNull] Action<Lifetime> atomicAction)
+#endif
+    internal void ExecuteOrTerminateOnFail([CanBeNull] Action<Lifetime> atomicAction)
     {
       try
       {
@@ -708,7 +708,6 @@ namespace JetBrains.Lifetimes
     {
       return new ExecuteIfAliveCookie(this, allowTerminationUnderExecution, disableIncrementThreadLocalExecuting);
     }
-               
     
     
     internal Result<T> TryExecute<T>([NotNull] Func<T> action, bool wrapExceptions = false)
