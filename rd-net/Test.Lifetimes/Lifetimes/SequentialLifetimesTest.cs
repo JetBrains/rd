@@ -51,6 +51,49 @@ namespace Test.Lifetimes.Lifetimes
       Assert.AreEqual(expected.ToString(), sb.ToString());
     }
 
+    [Test]
+    public void TestSimpleDefineNext()
+    {
+      var sequence = new SequentialLifetimes(TestLifetime);
+      var sb = new StringBuilder();
+      var expected = new StringBuilder();
+
+      const int max = 3;
+      for (int i = 0; i < max; i++)
+      {
+        sb.AppendLine($"before {i}");
+        sequence.DefineNext(lifetimeDefinition =>
+        {
+          var c = i;
+          lifetimeDefinition.Bracket(
+            () => sb.AppendLine($"start {c}"),
+            () => sb.AppendLine($"end {c}"));
+          sb.AppendLine($"in {c}");
+        });
+
+        
+        if (i == 0)
+          expected.AppendLine($"before {i}");
+
+        expected.AppendLine($"start {i}");
+        expected.AppendLine($"in {i}");
+
+        if (i != max - 1)
+        {
+          expected.AppendLine($"before {i+1}");
+          expected.AppendLine($"end {i}");
+        }
+      }
+
+      Assert.IsFalse(sequence.IsCurrentTerminated);
+      Assert.AreEqual(expected.ToString(), sb.ToString());
+
+      sequence.TerminateCurrent();
+      Assert.IsTrue(sequence.IsCurrentTerminated);
+      expected.AppendLine($"end {max - 1}");
+      Assert.AreEqual(expected.ToString(), sb.ToString());
+    }
+
 
     [Test]
     public void TestTerminateInNext()

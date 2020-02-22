@@ -35,13 +35,12 @@ namespace JetBrains.Lifetimes
 
     /// <summary>
     /// Terminates the current lifetime, calls your handler with the new lifetime and tries to set it as current.
+    /// Similar to <see cref="DefineNext"/>
     /// </summary>
     public void Next([NotNull] Action<Lifetime> atomicAction)
     {
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
-      TerminateCurrent();
-      var next = new LifetimeDefinition(myParentLifetime);
-      TrySetNewAndTerminateOld(next, definition => definition.ExecuteOrTerminateOnFail(atomicAction));
+      DefineNext(lifetimeDefinition => atomicAction(lifetimeDefinition.Lifetime));
     }
 
     /// <summary>
@@ -53,7 +52,7 @@ namespace JetBrains.Lifetimes
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
       
       TerminateCurrent();
-      var next = new LifetimeDefinition(myParentLifetime, atomicAction);
+      var next = new LifetimeDefinition(myParentLifetime);
       TrySetNewAndTerminateOld(next, definition => definition.ExecuteOrTerminateOnFail(atomicAction));
     }
     
