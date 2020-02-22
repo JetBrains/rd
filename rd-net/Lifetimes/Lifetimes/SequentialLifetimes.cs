@@ -108,8 +108,12 @@ namespace JetBrains.Lifetimes
       }
       finally
       {
-        if (Interlocked.CompareExchange(ref myCurrentDef, newLifetimeDefinition, tempLifetimeDefinition) != tempLifetimeDefinition || tempLifetimeDefinition.Status == LifetimeStatus.Terminated) 
+        if (Interlocked.CompareExchange(ref myCurrentDef, newLifetimeDefinition, tempLifetimeDefinition) != tempLifetimeDefinition || tempLifetimeDefinition.Status == LifetimeStatus.Terminated)
+        {
           TerminateLifetimeDefinition(newLifetimeDefinition);
+        }
+
+        tempLifetimeDefinition.Terminate();
       }
 
       return newLifetimeDefinition;
