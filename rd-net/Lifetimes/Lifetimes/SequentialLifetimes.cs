@@ -12,7 +12,6 @@ namespace JetBrains.Lifetimes
   /// </summary>
   public class SequentialLifetimes
   {
-    
     private readonly Lifetime myParentLifetime;
     [NotNull] private LifetimeDefinition myCurrentDef = LifetimeDefinition.Terminated;
 
@@ -23,32 +22,39 @@ namespace JetBrains.Lifetimes
       myParentLifetime = lifetime;
     }
 
+    /// <summary>
+    /// Terminates current lifetime and starts new.
+    /// </summary>
+    /// <returns>New lifetime. Note, In case of a race condition this lifetime might be terminated.</returns>
     public Lifetime Next()
     {
       TerminateCurrent();
       var next = new LifetimeDefinition(myParentLifetime);
-      return SetNextAndTerminateCurrent(next).Lifetime;
+      return TrySetNewAndTerminateOld(next).Lifetime;
     }
 
     /// <summary>
-    /// Terminates the current lifetime and calls your handler with the new lifetime.
+    /// Terminates the current lifetime, calls your handler with the new lifetime and tries to set it as current.
     /// </summary>
     public void Next([NotNull] Action<Lifetime> atomicAction)
     {
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
       TerminateCurrent();
       var next = new LifetimeDefinition(myParentLifetime);
-      SetNextAndTerminateCurrent(next);
-      next.ExecuteOrTerminateOnFail(atomicAction);
+      TrySetNewAndTerminateOld(next, definition => definition.ExecuteOrTerminateOnFail(atomicAction));
     }
 
+    /// <summary>
+    /// Terminates the current lifetime, calls your handler with the new lifetime and tries to set it as current.
+    /// Similar to <see cref="Next(System.Action{JetBrains.Lifetimes.Lifetime})"/>
+    /// </summary>
     public void DefineNext([NotNull] Action<LifetimeDefinition> atomicAction)
     {
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
       
       TerminateCurrent();
       var next = new LifetimeDefinition(myParentLifetime, atomicAction);
-      SetNextAndTerminateCurrent(next);
+      TrySetNewAndTerminateOld(next, definition => definition.ExecuteOrTerminateOnFail(atomicAction));
     }
     
     /// <summary>
@@ -63,7 +69,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     public void TerminateCurrent()
     {
-      SetNextAndTerminateCurrent(LifetimeDefinition.Terminated);
+      TrySetNewAndTerminateOld(LifetimeDefinition.Terminated);
     }
 
     // For sequential usage (say single-threaded or actor-like) usage only.
@@ -71,22 +77,42 @@ namespace JetBrains.Lifetimes
 
     /// <summary>
     /// Atomically, assigns the new lifetime and terminates the old one.
+    /// In case of a race condition when current lifetime is overwritten new lifetime is terminated
     /// </summary>
-    
-    private LifetimeDefinition SetNextAndTerminateCurrent([NotNull] LifetimeDefinition def)
+    /// <param name="newLifetimeDefinition">New lifetime definition to set</param>
+    /// <param name="actionWithNewLifetime">Action to perform once new lifetime is set</param>
+    /// <returns>New lifetime definition which can be terminated in case of a race condition</returns>
+    private LifetimeDefinition TrySetNewAndTerminateOld(LifetimeDefinition newLifetimeDefinition, [CanBeNull] Action<LifetimeDefinition> actionWithNewLifetime = null)
     {
-      var old = Interlocked.Exchange(ref myCurrentDef, def);
-      try
+      void TerminateLifetimeDefinition(LifetimeDefinition lifetimeDefinition)
       {
-        old.AllowTerminationUnderExecution = true;
-        old.Terminate();
-      }
-      catch(Exception ex)
-      {
-        Log.Root.Error(ex);
+        lifetimeDefinition.AllowTerminationUnderExecution = true;
+        lifetimeDefinition.Terminate();
       }
 
-      return def;
+      // temporary lifetime definition to cope with race condition
+      var tempLifetimeDefinition = new LifetimeDefinition(myParentLifetime);
+      var old = Interlocked.Exchange(ref myCurrentDef, tempLifetimeDefinition);
+      try
+      {
+        TerminateLifetimeDefinition(old);
+      }
+      catch (Exception e)
+      {
+        Log.Root.Error(e);
+      }
+
+      try
+      {
+        actionWithNewLifetime?.Invoke(newLifetimeDefinition);
+      }
+      finally
+      {
+        if (Interlocked.CompareExchange(ref myCurrentDef, newLifetimeDefinition, tempLifetimeDefinition) != tempLifetimeDefinition || tempLifetimeDefinition.Status == LifetimeStatus.Terminated) 
+          TerminateLifetimeDefinition(newLifetimeDefinition);
+      }
+
+      return newLifetimeDefinition;
     }
   }
 }

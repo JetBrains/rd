@@ -69,7 +69,7 @@ namespace Test.Lifetimes.Lifetimes
       });
 
       Assert.IsTrue(sequence.IsCurrentTerminated);
-      Assert.AreEqual("start\nBefore terminate\nend\nAfter terminate\n", sb.ToString().Replace("\r\n", "\n"));
+      Assert.AreEqual("start\nBefore terminate\nAfter terminate\nend\n", sb.ToString().Replace("\r\n", "\n"));
     }
 
     [Test]
