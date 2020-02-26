@@ -10,8 +10,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <NoWarn>1591,1570,1574</NoWarn>
         
-        <LangVersion>latest</LangVersion>
-        
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
         
         <Configurations>Debug;Release;CrossTests</Configurations>
@@ -39,7 +37,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>New API and documentation</PackageReleaseNotes>
+        <PackageReleaseNotes>Fixed SequentialLifetimes.Next</PackageReleaseNotes>
     </PropertyGroup>
     
     

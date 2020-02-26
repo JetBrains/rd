@@ -28,6 +28,10 @@ data class RdId(val hash: Long) {
             val number = buffer.readLong()
             return RdId(number)
         }
+
+        override fun toString(): String {
+            throw UnsupportedOperationException("Don't tostring RdId companion")
+        }
     }
 
 

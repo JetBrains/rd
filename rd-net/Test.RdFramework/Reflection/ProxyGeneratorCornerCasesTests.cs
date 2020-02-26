@@ -52,30 +52,49 @@ namespace Test.RdFramework.Reflection
     [RdRpc] public interface IInvalid11 { void M(Action x); }
 
 
-    [Test] public void TestInvalid1() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid1>(); }); }
-    [Test] public void TestInvalid2() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid2>(); }); }
-    [Test] public void TestInvalid3() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid3>(); }); }
-    [Test] public void TestInvalid4() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid4<int>>(); }); }
-    [Test] public void TestInvalid5() { Assert.Throws<Assertion.AssertionException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid5>(); }); }
-    //[Test] public void TestInvalid6() { Assert.Throws<ArgumentException>(() => { myProxyGenerator.CreateType<IInvalid6>(); }); }
-    [Test] public void TestInvalid7() { Assert.Throws<NotSupportedException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid7>(); }); }
-    [Test] public void TestInvalid8() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid8>(); }); }
-    [Test] public void TestInvalid9() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid9>(); }); }
-    [Test] public void TestInvalid10() { Assert.Throws<ArgumentException>(() => { CFacade.ProxyGenerator.CreateType<IInvalid10>(); }); }
-    [Test] public void TestInvalid11() { Assert.Throws<Exception>(() => { CFacade.ProxyGenerator.CreateType<IInvalid11>(); }); }
+    private bool TestType<T>() where T : class
+    {
+      try
+      {
+        CFacade.ProxyGenerator.CreateType<T>();
+        CFacade.ScalarSerializers.GetOrCreate(typeof(T));
+      }
+      catch (Exception e)
+      {
+        return true;
+      }
+
+      return false;
+    }
+
+    [Test] public void TestInvalid1() { Assert.IsTrue(TestType<IInvalid1>()); }
+    [Test] public void TestInvalid2() { Assert.IsTrue(TestType<IInvalid2>()); }
+    [Test] public void TestInvalid3() { Assert.IsTrue(TestType<IInvalid3>()); }
+    [Test] public void TestInvalid4() { Assert.IsTrue(TestType<IInvalid4<int>>()); }
+    [Test] public void TestInvalid5() { Assert.IsTrue(TestType<IInvalid5>()); }
+    [Test] public void TestInvalid7() { Assert.IsTrue(TestType<IInvalid7>()); }
+    [Test] public void TestInvalid8() { Assert.IsTrue(TestType<IInvalid8>()); }
+    [Test] public void TestInvalid9() { Assert.IsTrue(TestType<IInvalid9>()); }
+    [Test] public void TestInvalid10() { Assert.IsTrue(TestType<IInvalid10>()); }
+    [Test] public void TestInvalid11() { Assert.IsTrue(TestType<IInvalid11>()); }
 
 
     [Test]
     public void TestIncorrectInitialization()
     {
-      Assert.Throws<Assertion.AssertionException>(() =>
+      try
       {
         WithExtsProxy<WrongInitializedTypeTest, IWrongInitialializedTypeTest>((c, s) =>
         {
           c.ViewableProperty.Value = "test";
           Assert.AreEqual(c.ViewableProperty.Value, s.ViewableProperty.Value);
         });
-      });
+      }
+      catch (Exception e)
+      {
+        return;
+      }
+      Assert.Fail();
     }
 
     [Test]

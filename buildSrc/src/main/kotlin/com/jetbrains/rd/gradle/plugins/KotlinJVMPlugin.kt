@@ -83,6 +83,8 @@ open class KotlinJVMPlugin : Plugin<Project> {
             val test by tasks.getting(Test::class) {
                 maxHeapSize = "512m"
                 finalizedBy(tasks.named("jacocoTestReport"))
+
+                useJUnitPlatform()
             }
 
             dependencies {
@@ -90,7 +92,9 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
                 "implementation"("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
-                "testImplementation"("junit:junit:$junitVersion")
+                "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+                "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+                "testImplementation"("org.junit.jupiter:junit-jupiter-params:$junitVersion")
                 "testImplementation"("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
                 "testImplementation"("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
             }

@@ -8,6 +8,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.api.publish.tasks.GenerateModuleMetadata
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -52,7 +53,9 @@ open class MultiplatformPlugin : Plugin<Project> {
                 }
                 val jvmTest by getting {
                     dependencies {
-                        implementation("junit:junit:$junitVersion")
+                        implementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+                        runtimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+                        implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
                         implementation("org.jetbrains.kotlin:kotlin-test")
                         implementation("org.jetbrains.kotlin:kotlin-test-junit")
                     }
@@ -67,6 +70,10 @@ open class MultiplatformPlugin : Plugin<Project> {
                         implementation("org.jetbrains.kotlin:kotlin-test-js")
                     }
                 }
+            }
+
+            tasks.withType<Test> {
+                useJUnitPlatform()
             }
 
             tasks.withType<GenerateModuleMetadata> {

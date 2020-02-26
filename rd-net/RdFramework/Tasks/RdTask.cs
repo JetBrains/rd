@@ -32,6 +32,7 @@ namespace JetBrains.Rd.Tasks
 
     public static RdTask<T> Successful(T result) => FromResult(RdTaskResult<T>.Success(result));
     public static RdTask<T> Faulted(Exception exception) => FromResult(RdTaskResult<T>.Faulted(exception));
+    public static RdTask<T> Cancelled() => FromResult(RdTaskResult<T>.Cancelled());
 
 #if !NET35
     [PublicAPI] public static implicit operator Task<T>(RdTask<T> task) => task.AsTask();

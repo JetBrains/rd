@@ -60,6 +60,15 @@ internal fun Any.bindPolymorphic(lf: Lifetime, parent: IRdDynamic, name: String)
     }
 }
 
+internal fun <T> T.isBindable(): Boolean {
+    return when (this) {
+        is IRdBindable -> true
+        is Array<*> -> this.firstOrNull() is IRdBindable
+        is List<*> -> this.firstOrNull() is IRdBindable
+        else -> false
+    }
+}
+
 @Suppress("UNCHECKED_CAST")
 fun <T:Any?> T.deepClonePolymorphic() : T {
     return when (this) {

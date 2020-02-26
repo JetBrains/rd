@@ -66,13 +66,12 @@ namespace Test.RdFramework.Reflection
     }
 
 
-    [RdRpc]
     public interface IPartSync
     {
       IViewableProperty<string> RdProperty { get; }
     }
 
-    [RdExt]
+    [RdExt(typeof(IPartSync))]
     public class PartSync : RdExtReflectionBindableBase, IPartSync
     {
       public IViewableProperty<string> RdProperty { get; private set; }

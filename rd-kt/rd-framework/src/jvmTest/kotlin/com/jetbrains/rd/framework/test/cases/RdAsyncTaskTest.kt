@@ -4,13 +4,27 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdCall
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
+import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.Linearization
+import junit.framework.Assert.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.CyclicBarrier
 import kotlin.concurrent.thread
-import kotlin.test.*
+import kotlin.test.assertFails
+import kotlin.test.assertTrue
 
 class RdAsyncTaskTest : RdFrameworkTestBase() {
     @Suppress("UNCHECKED_CAST")
@@ -25,7 +39,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         clientProtocol.bindStatic(client_property, "top")
         serverProtocol.bindStatic(server_property, "top")
 
-        server_property.set ( RdCall(Int::toString) )
+        server_property.set ( RdCall(null, Int::toString) )
 
 
         assertEquals("1", client_property.valueOrThrow.sync(1))
@@ -58,7 +72,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         l.point(0)
 
         l.point(3)
-        assertTrue(task.isSucceeded, "${task.result.hasValue}")
+        assertTrue("${task.result.hasValue}", task.isSucceeded)
         assertFalse(task.isCanceled)
         assertFalse(task.isFaulted)
         assertTrue(task.result.hasValue)
@@ -79,6 +93,114 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
             else -> assertFails {  }
         }
     }
+
+    @Test
+    fun testCancellation() {
+        val entity_id = 1
+
+        val server_entity = RdCall<Unit, String>().static(entity_id)
+        val client_entity = RdCall<Unit, String>(null) { x -> x.toString()}.static(entity_id)
+
+        clientProtocol.bindStatic(client_entity, "client")
+        serverProtocol.bindStatic(server_entity, "server")
+
+        var handlerFinished = false;
+        var handlerCompletedSuccessfully = false;
+        client_entity.set(null) { lf, req ->
+            val rdTask = RdTask<String>()
+            val syncPoint = CountDownLatch(1)
+            val job = GlobalScope.launch {
+                try {
+                    syncPoint.countDown()
+                    delay(500)
+                    if (lf.isAlive)
+                        handlerCompletedSuccessfully = true;
+                } finally {
+                    handlerFinished = true;
+                }
+                rdTask.set("")
+            }
+
+            lf.onTermination { syncPoint.await(); job.cancel() }
+            return@set rdTask
+        }
+
+        //1. explicit cancellation
+        val ld = LifetimeDefinition();
+        var task = server_entity.start(ld.lifetime, Unit);
+        ld.terminate();
+
+        spinUntil { task.result.hasValue }
+        assert(task.isCanceled)
+
+        spinUntil { handlerFinished }
+        assertFalse(handlerCompletedSuccessfully)
+
+        //2. no cancellation
+        handlerFinished = false;
+        handlerCompletedSuccessfully = false;
+        task = server_entity.start(LifetimeDefinition().lifetime, Unit)
+
+        spinUntil { task.result.hasValue }
+        assert(task.isSucceeded)
+
+        spinUntil { handlerFinished }
+        assert(handlerCompletedSuccessfully)
+
+        //3. cancellation from parent lifetime
+        handlerFinished = false;
+        handlerCompletedSuccessfully = false;
+        clientLifetime
+        task = server_entity.start(LifetimeDefinition().lifetime, Unit)
+        clientLifetimeDef.terminate()
+        serverLifetimeDef.terminate()
+
+        spinUntil { task.result.hasValue }
+        assert(task.isCanceled)
+
+        spinUntil { handlerFinished }
+        assertFalse(handlerCompletedSuccessfully)
+    }
+
+    @Test
+    fun testBindable() {
+        val entity_id = 1
+
+        val call1 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id);
+        val call2 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id);
+
+        val respSignal = RdSignal<Int>();
+        call2.set(null) { _ -> respSignal }
+
+        serverProtocol.bindStatic(call1, "server")
+        clientProtocol.bindStatic(call2, "client")
+
+
+        val ld = LifetimeDefinition();
+        val lf = ld.lifetime;
+        val task1 = call1.start(lf, Unit)
+
+        spinUntil { task1.result.hasValue }
+        com.jetbrains.rd.util.assert(task1.isSucceeded)
+
+        val signal = task1.result.valueOrThrow.unwrap()
+        val log = mutableListOf<Int>()
+        signal.advise(Lifetime.Eternal) {
+            log.add(it);
+        }
+
+        respSignal.fire(1);
+        respSignal.fire(2);
+        respSignal.fire(3);
+
+        ld.terminate()
+        respSignal.fire(4);
+
+        spinUntil { log.count() >= 3 }
+        Thread.sleep(100)
+        log.toIntArray().contentEquals(arrayOf(1, 2, 3).toIntArray())
+    }
+
 
 }
 
