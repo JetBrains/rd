@@ -27,6 +27,7 @@ object OpenEntityModel : Ext(OpenEntityRoot){
     }
 
     private val openClassEntity = openclass extends baseOpenClassEntity {
+        field("test", string)
         property("openClassProperty", int)
     }
 
