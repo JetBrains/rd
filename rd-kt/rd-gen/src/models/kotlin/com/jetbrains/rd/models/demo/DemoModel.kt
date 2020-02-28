@@ -92,6 +92,11 @@ object DemoModel : Ext(DemoRoot) {
         const("const_base", PredefinedType.char, 'B')
     }
 
+    private var OpenClass = openclass {
+        property("string", PredefinedType.string)
+        field("field", PredefinedType.string)
+    }
+
     private var Derived = structdef extends Base {
         field("string", PredefinedType.string)
     }
