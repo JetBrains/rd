@@ -1029,7 +1029,7 @@ open class CSharp50Generator(
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
             decl.isAbstract -> "protected"
-            decl.isOpen -> "public"
+            decl.isOpen && decl.hasSecondaryCtor -> "protected"
             decl.hasSecondaryCtor -> "private"
             decl.isExtension -> "internal"
             decl is Toplevel -> "private"

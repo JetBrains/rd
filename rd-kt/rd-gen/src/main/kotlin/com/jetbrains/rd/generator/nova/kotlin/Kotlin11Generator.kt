@@ -926,6 +926,7 @@ open class Kotlin11Generator(
         val modifier =
             when {
                 hasSetting(PublicCtors) -> ""
+                hasSecondaryCtor and isOpen -> "protected"
                 hasSecondaryCtor -> "private"
                 isExtension -> "internal"
                 this is Toplevel -> "private"
@@ -934,7 +935,7 @@ open class Kotlin11Generator(
         return modifier.isNotEmpty().condstr { "$modifier constructor" }
     }
 
-    protected val Declaration.hasSecondaryCtor : Boolean get () = (this is Toplevel || this.isConcrete) && this.allMembers.any { it.hasEmptyConstructor }
+    protected val Declaration.hasSecondaryCtor : Boolean get () = (this is Toplevel || this.isConcrete || this.isOpen) && this.allMembers.any { it.hasEmptyConstructor }
 
     protected open val Member.hasEmptyConstructor : Boolean get() = when (this) {
         is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
