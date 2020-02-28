@@ -56,6 +56,9 @@ namespace Test.RdCross
 
             var openDerived = new OpenDerived("C# instance open derived string", "C# instance open string");
             model.Polymorphic_open.Set(openDerived);
+            
+            var openClass = new OpenClass("c# test");
+            openClass.String.Set("property");
 
             model.Enum.Value = MyEnum.net;
             extModel.Checker.Fire();
