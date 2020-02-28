@@ -19,7 +19,7 @@ class OpenEntitiesTest : RdFrameworkTestBase(){
         serverProtocol.bindStatic(serverProperty, "classTest")
         clientProtocol.bindStatic(clientProperty, "classTest")
 
-        val model = ConcreteClassEntity()
+        val model = ConcreteClassEntity("test")
         serverProperty.set(model)
 
         val clientEntity = clientProperty.valueOrThrow
