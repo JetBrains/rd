@@ -9,9 +9,9 @@ import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.TestWire
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SynchronousScheduler
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertEquals
@@ -21,7 +21,7 @@ class TestReflectionMarshaller {
     companion object {
         val lifetimeDef = Lifetime.Eternal.createNested()
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun afterTest() {
             lifetimeDef.terminate()
@@ -36,7 +36,7 @@ class TestReflectionMarshaller {
     )
     val buf = createAbstractBuffer()
 
-    @Before
+    @BeforeEach
     fun setup() {
         buf.rewind()
     }
@@ -70,7 +70,7 @@ class TestReflectionMarshaller {
 
     @Test
     fun testEmpty() {
-        class X() {
+        class X {
             override fun equals(other: Any?) = other is X
         }
         doTest(X())

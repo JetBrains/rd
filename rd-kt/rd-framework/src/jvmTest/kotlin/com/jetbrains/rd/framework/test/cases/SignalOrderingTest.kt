@@ -4,7 +4,7 @@ import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 
 class SignalOrderingTest : RdAsyncTestBase() {

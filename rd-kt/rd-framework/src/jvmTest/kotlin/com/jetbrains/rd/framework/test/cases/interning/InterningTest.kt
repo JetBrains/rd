@@ -7,8 +7,7 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.test.util.TestWire
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -320,8 +319,8 @@ class InterningTest: RdFrameworkTestBase() {
         val monoSentBytes = measureBytes(serverProtocol) { rootServerMono.intern(0) }
         val polySentBytes = measureBytes(serverProtocol) { rootServerPoly.intern(0) }
 
-        Assert.assertEquals(2 + 8 + 4, monoSentBytes)
-        Assert.assertEquals(2 + 8 + 4 + 8 + 4, polySentBytes)
+        assertEquals(2 + 8 + 4, monoSentBytes)
+        assertEquals(2 + 8 + 4 + 8 + 4, polySentBytes)
     }
 
 

@@ -9,8 +9,8 @@ import com.jetbrains.rd.util.collections.QueueImpl
 import com.jetbrains.rd.util.reactive.IOptProperty
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.Ignore
 
 class InterningWithExtTest : RdFrameworkTestBase() {
 
