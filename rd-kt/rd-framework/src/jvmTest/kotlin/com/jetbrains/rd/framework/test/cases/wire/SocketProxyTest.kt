@@ -5,9 +5,9 @@ import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SpinWait
-import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Test
 
 
 class SocketProxyTest : TestBase() {
