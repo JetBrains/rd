@@ -11,6 +11,7 @@ import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun Project.applyMultiplatform() = apply<MultiplatformPlugin>()
 
@@ -27,7 +28,21 @@ open class MultiplatformPlugin : Plugin<Project> {
         configure<KotlinMultiplatformExtension> {
             val packageJavadoc = createPackageJavaDoc(files("src/commonMain/kotlin", "src/jvmMain/kotlin"))
 
-            jvm {}
+            jvm {
+                tasks {
+                    named<KotlinCompile>("compileKotlinJvm") {
+                        kotlinOptions {
+                            jvmTarget = "1.8"
+                        }
+                    }
+
+                    named<KotlinCompile>("compileTestKotlinJvm") {
+                        kotlinOptions {
+                            jvmTarget = "1.8"
+                        }
+                    }
+                }
+            }
             js {}
             metadata {}
 
@@ -57,7 +72,7 @@ open class MultiplatformPlugin : Plugin<Project> {
                         runtimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
                         implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
                         implementation("org.jetbrains.kotlin:kotlin-test")
-                        implementation("org.jetbrains.kotlin:kotlin-test-junit")
+                        implementation("org.jetbrains.kotlin:kotlin-test-junit5")
                     }
                 }
                 val jsMain by getting {

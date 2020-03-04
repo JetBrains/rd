@@ -6,11 +6,12 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory.errors
 import com.jetbrains.rd.util.spinUntil
-import org.junit.Rule
-import org.junit.rules.Timeout
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 open class TestBase {
 
     protected lateinit var lifetimeDef : LifetimeDefinition
@@ -24,11 +25,7 @@ open class TestBase {
         })
     }
 
-    @JvmField
-    @Rule
-    var globalTimeout = Timeout.seconds(30)
-
-    @BeforeTest
+    @BeforeEach
     fun setupLogger() {
         errors.clear()
         SequentialPumpingScheduler.flush()
@@ -37,7 +34,7 @@ open class TestBase {
         Logger.set(lifetime, ErrorAccumulatorLoggerFactory)
     }
 
-    @AfterTest
+    @AfterEach
     fun teardownLogger() {
         SequentialPumpingScheduler.flush()
         lifetimeDef.terminate()

@@ -3,9 +3,10 @@ package com.jetbrains.rd.util.test.cases
 import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.test.framework.RdTestBase
 import com.jetbrains.rd.util.threading.SpinWait
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import kotlin.concurrent.thread
-import kotlin.test.*
 
 class LifetimeTest : RdTestBase() {
 
@@ -110,7 +111,7 @@ class LifetimeTest : RdTestBase() {
     fun testBracketSuccess() {
         val def = LifetimeDefinition()
 
-        var x = 0;
+        var x = 0
         assertEquals(0, def.bracket({ x++ }, { x++; }))
         assertEquals(1, x)
         def.terminate()
@@ -121,8 +122,8 @@ class LifetimeTest : RdTestBase() {
     fun testBracketFailure() {
         val def = LifetimeDefinition()
 
-        var x = 0;
-        assertFails { def.bracket({ x++; fail() }, { x++; }) }
+        var x = 0
+        assertThrows(Throwable::class.java) { def.bracket({ x++; fail<Throwable>() }, { x++; }) }
         assertEquals(1, x)
         def.terminate()
         assertEquals(1, x)
@@ -132,9 +133,9 @@ class LifetimeTest : RdTestBase() {
     fun testBracketCanceled() {
         val def = LifetimeDefinition()
 
-        var x = 0;
+        var x = 0
         def.terminate()
-        assertNull (def.bracket({ x++; fail() }, { x++; }) )
+        assertNull (def.bracket({ x++; fail<Throwable>() }, { x++; }) )
         assertEquals(0, x)
         def.terminate()
         assertEquals(0, x)

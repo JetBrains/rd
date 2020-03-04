@@ -15,16 +15,14 @@ import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.Linearization
-import junit.framework.Assert.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.CyclicBarrier
 import kotlin.concurrent.thread
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
 
 class RdAsyncTaskTest : RdFrameworkTestBase() {
     @Suppress("UNCHECKED_CAST")
@@ -72,7 +70,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         l.point(0)
 
         l.point(3)
-        assertTrue("${task.result.hasValue}", task.isSucceeded)
+        assertTrue(task.isSucceeded, "${task.result.hasValue}")
         assertFalse(task.isCanceled)
         assertFalse(task.isFaulted)
         assertTrue(task.result.hasValue)
@@ -87,10 +85,10 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         l.disable()
 
         when (interruptedTask.result.valueOrThrow) {
-            is RdTaskResult.Success<*> -> assertFails {  }
+            is RdTaskResult.Success<*> -> assertThrows(Throwable::class.java) {  }
             is RdTaskResult.Cancelled<*> -> {}
-            is RdTaskResult.Fault<*> -> assertFails {  }
-            else -> assertFails {  }
+            is RdTaskResult.Fault<*> -> assertThrows(Throwable::class.java) {  }
+            else -> assertThrows(Throwable::class.java) {  }
         }
     }
 
@@ -104,8 +102,8 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         clientProtocol.bindStatic(client_entity, "client")
         serverProtocol.bindStatic(server_entity, "server")
 
-        var handlerFinished = false;
-        var handlerCompletedSuccessfully = false;
+        var handlerFinished = false
+        var handlerCompletedSuccessfully = false
         client_entity.set(null) { lf, req ->
             val rdTask = RdTask<String>()
             val syncPoint = CountDownLatch(1)
@@ -114,9 +112,9 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
                     syncPoint.countDown()
                     delay(500)
                     if (lf.isAlive)
-                        handlerCompletedSuccessfully = true;
+                        handlerCompletedSuccessfully = true
                 } finally {
-                    handlerFinished = true;
+                    handlerFinished = true
                 }
                 rdTask.set("")
             }
@@ -126,9 +124,9 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         }
 
         //1. explicit cancellation
-        val ld = LifetimeDefinition();
-        var task = server_entity.start(ld.lifetime, Unit);
-        ld.terminate();
+        val ld = LifetimeDefinition()
+        var task = server_entity.start(ld.lifetime, Unit)
+        ld.terminate()
 
         spinUntil { task.result.hasValue }
         assert(task.isCanceled)
@@ -137,8 +135,8 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         assertFalse(handlerCompletedSuccessfully)
 
         //2. no cancellation
-        handlerFinished = false;
-        handlerCompletedSuccessfully = false;
+        handlerFinished = false
+        handlerCompletedSuccessfully = false
         task = server_entity.start(LifetimeDefinition().lifetime, Unit)
 
         spinUntil { task.result.hasValue }
@@ -148,8 +146,8 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         assert(handlerCompletedSuccessfully)
 
         //3. cancellation from parent lifetime
-        handlerFinished = false;
-        handlerCompletedSuccessfully = false;
+        handlerFinished = false
+        handlerCompletedSuccessfully = false
         clientLifetime
         task = server_entity.start(LifetimeDefinition().lifetime, Unit)
         clientLifetimeDef.terminate()
@@ -166,18 +164,18 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
     fun testBindable() {
         val entity_id = 1
 
-        val call1 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id);
-        val call2 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id);
+        val call1 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id)
+        val call2 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id)
 
-        val respSignal = RdSignal<Int>();
+        val respSignal = RdSignal<Int>()
         call2.set(null) { _ -> respSignal }
 
         serverProtocol.bindStatic(call1, "server")
         clientProtocol.bindStatic(call2, "client")
 
 
-        val ld = LifetimeDefinition();
-        val lf = ld.lifetime;
+        val ld = LifetimeDefinition()
+        val lf = ld.lifetime
         val task1 = call1.start(lf, Unit)
 
         spinUntil { task1.result.hasValue }
@@ -186,15 +184,15 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         val signal = task1.result.valueOrThrow.unwrap()
         val log = mutableListOf<Int>()
         signal.advise(Lifetime.Eternal) {
-            log.add(it);
+            log.add(it)
         }
 
-        respSignal.fire(1);
-        respSignal.fire(2);
-        respSignal.fire(3);
+        respSignal.fire(1)
+        respSignal.fire(2)
+        respSignal.fire(3)
 
         ld.terminate()
-        respSignal.fire(4);
+        respSignal.fire(4)
 
         spinUntil { log.count() >= 3 }
         Thread.sleep(100)

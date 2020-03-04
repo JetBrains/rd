@@ -5,6 +5,7 @@ using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Threading;
+using Test.Lifetimes;
 using Test.RdCross.Util;
 
 namespace Test.RdCross.Base
@@ -90,7 +91,7 @@ namespace Test.RdCross.Base
                     myOutputFile.Write(myStringWriter.ToString());
                   }
                 }
-                TestLogger.Logger.ThrowLoggedExceptions();
+                TestLogger.ExceptionLogger.ThrowLoggedExceptions();
               }
             }
         }
