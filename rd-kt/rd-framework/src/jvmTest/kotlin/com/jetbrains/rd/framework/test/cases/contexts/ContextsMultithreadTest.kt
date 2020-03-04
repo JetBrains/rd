@@ -4,8 +4,8 @@ import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 
 class ContextsMultithreadTest : RdAsyncTestBase() {
@@ -52,7 +52,7 @@ class ContextsMultithreadTest : RdAsyncTestBase() {
             clientProtocol.bindStatic(clientSignal, 1)
 
             clientSignal.advise(clientLifetime) {
-                Assert.assertEquals(it, key.value)
+                assertEquals(it, key.value)
             }
 
             latch1.countDown()

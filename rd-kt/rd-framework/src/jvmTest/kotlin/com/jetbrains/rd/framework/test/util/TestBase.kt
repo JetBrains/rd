@@ -6,11 +6,12 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory.errors
 import com.jetbrains.rd.util.spinUntil
-import org.junit.Rule
-import org.junit.rules.Timeout
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 open class TestBase {
 
     protected lateinit var lifetimeDef : LifetimeDefinition
@@ -23,10 +24,6 @@ open class TestBase {
             condition()
         })
     }
-
-    @JvmField
-    @Rule
-    var globalTimeout = Timeout.seconds(30)
 
     @BeforeTest
     fun setupLogger() {

@@ -1,7 +1,8 @@
 package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.parseFromFlags
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -22,10 +23,12 @@ class EnumUtilTest {
         assertFalse(flags.contains(TestEnum.Two))
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testParseFromFlags_outOfRange() {
-        val enumCombinedVal = (1 shl 3)
-        parseFromFlags<TestEnum>(enumCombinedVal)
+        Assertions.assertThrows(IllegalArgumentException::class.java) {
+            val enumCombinedVal = (1 shl 3)
+            parseFromFlags<TestEnum>(enumCombinedVal)
+        }
     }
 
     @Test

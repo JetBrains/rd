@@ -12,15 +12,16 @@ import com.jetbrains.rd.framework.test.util.DynamicEntity
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.onTermination
-import org.junit.AfterClass
-import org.junit.Assert
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+
 
 class RdPerContextMapTest : RdFrameworkTestBase() {
     companion object {
-        @BeforeClass
-        @AfterClass
+        @BeforeAll
+        @AfterAll
         @JvmStatic
         fun resetContext() {
             ContextsTest.TestKeyHeavy.value = null
@@ -162,7 +163,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
 
-        Assert.assertEquals(listOf("Add $server1Cid", "Add $server2Cid"), log)
+        assertEquals(listOf("Add $server1Cid", "Add $server2Cid"), log)
     }
 
     @Test
@@ -195,7 +196,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
 
-        Assert.assertEquals(listOf("Add $server1Cid", "Add $server2Cid", "Remove $server2Cid"), log)
+        assertEquals(listOf("Add $server1Cid", "Add $server2Cid", "Remove $server2Cid"), log)
     }
 
     @Test
@@ -226,7 +227,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
-        Assert.assertEquals(listOf("Add $server1Cid"), log)
+        assertEquals(listOf("Add $server1Cid"), log)
     }
 
     @Test
@@ -257,11 +258,11 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
         key.value = null
 
-        Assert.assertTrue(serverProtocol.contexts.getValueSet(key).contains(server1Cid))
+        assertTrue(serverProtocol.contexts.getValueSet(key).contains(server1Cid))
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
-        Assert.assertEquals(listOf("Add $server1Cid"), log)
+        assertEquals(listOf("Add $server1Cid"), log)
     }
 
     @Test
@@ -302,8 +303,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         key1.value = null
         key2.value = null
 
-        Assert.assertFalse(serverProtocol.contexts.getValueSet(key1).contains(server1Cid))
-        Assert.assertFalse(serverProtocol.contexts.getValueSet(key2).contains(server1Cid))
-        Assert.assertEquals(listOf("Add $server2Cid", "Add $server3Cid"), log)
+        assertFalse(serverProtocol.contexts.getValueSet(key1).contains(server1Cid))
+        assertFalse(serverProtocol.contexts.getValueSet(key2).contains(server1Cid))
+        assertEquals(listOf("Add $server2Cid", "Add $server3Cid"), log)
     }
 }

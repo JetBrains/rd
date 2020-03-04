@@ -3,8 +3,9 @@ package com.jetbrains.rd.util.test.cases
 import com.jetbrains.rd.util.log2ceil
 import com.jetbrains.rd.util.parseLong
 import com.jetbrains.rd.util.putLong
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Test
+
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.test.assertEquals
@@ -29,11 +30,11 @@ class BitHacksTest {
             actual.putLong(l1, 0)
             actual.putLong(l2, 8)
 
-            Assert.assertArrayEquals(actual, expected)
+            assertArrayEquals(actual, expected)
 
             //parse
-            Assert.assertEquals(actual.parseLong(0), l1)
-            Assert.assertEquals(actual.parseLong(8), l2)
+            assertEquals(actual.parseLong(0), l1)
+            assertEquals(actual.parseLong(8), l2)
         }
     }
 

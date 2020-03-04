@@ -8,8 +8,8 @@ import com.jetbrains.rd.util.ConsoleLoggerFactory
 import com.jetbrains.rd.util.addUnique
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import test.synchronization.extToClazz
@@ -72,7 +72,7 @@ class TestTwoClientsLateSync : TestBase() {
         s0.synchronizeWith(lifetime, s1, accepts)
     }
 
-    @After
+    @AfterEach
     fun teardown() {
         ConsoleLoggerFactory.traceCategories.clear()
     }

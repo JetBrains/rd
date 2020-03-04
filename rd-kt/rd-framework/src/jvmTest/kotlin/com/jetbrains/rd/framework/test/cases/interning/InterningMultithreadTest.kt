@@ -4,31 +4,30 @@ import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import org.junit.Test
-import org.junit.experimental.theories.DataPoint
-import org.junit.experimental.theories.Theories
-import org.junit.experimental.theories.Theory
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.CountDownLatch
+import java.util.stream.Stream
 
-@RunWith(Theories::class)
 class InterningMultithreadTest : RdAsyncTestBase() {
 
     companion object {
-        @DataPoint @JvmField
-        val one = 1
-        @DataPoint @JvmField
-        val hundred = 100
-        @DataPoint @JvmField
-        val tenthousand = 10_000
-
-        @DataPoint @JvmField
-        val trueValue = true
-        @DataPoint @JvmField
-        val falseValue = false
+        @Suppress("unused")
+        @JvmStatic
+        fun doTest_Args(): Stream<Arguments> = Stream.of(
+            Arguments.of(1, true),
+            Arguments.of(100, true),
+            Arguments.of(10_000, true),
+            Arguments.of(1, false),
+            Arguments.of(100, false),
+            Arguments.of(10_000, false)
+        )
     }
 
-    @Theory
+    @ParameterizedTest
+    @MethodSource("doTest_Args")
     fun doTest(typicalStringLength: Int, attemptContention: Boolean) {
         println("Length: $typicalStringLength, contention: $attemptContention")
         val evt0 = CountDownLatch(2)

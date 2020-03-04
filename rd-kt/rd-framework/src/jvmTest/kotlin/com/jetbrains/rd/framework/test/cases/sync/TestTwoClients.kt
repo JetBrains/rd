@@ -7,9 +7,8 @@ import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.reflection.usingValue
-import org.junit.After
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import test.synchronization.extToClazz
@@ -60,7 +59,7 @@ class TestTwoClients : TestBase() {
         s0.synchronizeWith(lifetime, s1)
     }
 
-    @After
+    @AfterEach
     fun teardown() {
         ConsoleLoggerFactory.traceCategories.clear()
     }
