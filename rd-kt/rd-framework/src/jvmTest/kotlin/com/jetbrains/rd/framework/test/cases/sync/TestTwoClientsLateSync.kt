@@ -9,6 +9,9 @@ import com.jetbrains.rd.util.addUnique
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
@@ -22,10 +25,6 @@ import kotlin.collections.set
 import kotlin.collections.setOf
 import kotlin.collections.toPair
 import kotlin.collections.toSet
-import kotlin.test.BeforeTest
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFalse
 
 class TestTwoClientsLateSync : TestBase() {
 
@@ -35,7 +34,7 @@ class TestTwoClientsLateSync : TestBase() {
     lateinit var s0: SyncModelRoot
     lateinit var s1: SyncModelRoot
 
-    @BeforeTest
+    @BeforeEach
     fun setup() {
         ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClientsLateSync::class.qualifiedName!!))
 
@@ -167,8 +166,8 @@ class TestTwoClientsLateSync : TestBase() {
         assertEquals(listOf(1 to 1), s0.property.valueOrThrow.mapPerClientIdPerContextMap["C"]!!.map { it.toPair() })
 
         assertEquals(listOf(1 to 1), s1.property.valueOrThrow.mapPerClientIdPerContextMap["C"]!!.map { it.toPair() })
-        assertEquals(listOf(), s1.property.valueOrThrow.mapPerClientIdPerContextMap["D"]!!.map { it.toPair() })
-        assertEquals(listOf(), s1.property.valueOrThrow.mapPerClientIdPerContextMap["E"]!!.map { it.toPair() })
+        assertEquals(listOf<String>(), s1.property.valueOrThrow.mapPerClientIdPerContextMap["D"]!!.map { it.toPair() })
+        assertEquals(listOf<String>(), s1.property.valueOrThrow.mapPerClientIdPerContextMap["E"]!!.map { it.toPair() })
     }
 
     @Test

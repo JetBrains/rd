@@ -10,11 +10,11 @@ import com.jetbrains.rd.framework.test.util.TestWire
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
-import kotlin.test.assertEquals
 
 class TestReflectionMarshaller {
 

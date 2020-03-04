@@ -4,10 +4,10 @@ import com.jetbrains.rd.framework.UnsafeBuffer
 import com.jetbrains.rd.framework.test.cases.A
 import com.jetbrains.rd.framework.test.cases.B
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import kotlin.test.assertEquals
 
 class UnsafeBufferTest {
     @ParameterizedTest

@@ -2,9 +2,9 @@ package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.parseFromFlags
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class EnumUtilTest {
 
