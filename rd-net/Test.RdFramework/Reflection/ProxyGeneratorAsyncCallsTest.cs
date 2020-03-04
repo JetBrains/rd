@@ -221,6 +221,7 @@ namespace Test.RdFramework.Reflection
 
       using (var barrier = new ManualResetEvent(false))
       {
+        SaveGeneratedAssembly();
         ServerProtocol.Scheduler.Queue(() =>
           Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value"));
         runTest(proxy);
