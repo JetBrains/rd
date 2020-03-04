@@ -4,11 +4,11 @@ import com.jetbrains.rd.util.log2ceil
 import com.jetbrains.rd.util.parseLong
 import com.jetbrains.rd.util.putLong
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 import java.nio.ByteBuffer
 import java.util.*
-import kotlin.test.assertEquals
 
 class BitHacksTest {
 

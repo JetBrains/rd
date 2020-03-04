@@ -8,13 +8,12 @@ import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.reflection.usingValue
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import test.synchronization.extToClazz
-import kotlin.assert
-import kotlin.test.BeforeTest
-import kotlin.test.assertEquals
 
 class TestTwoClients : TestBase() {
 
@@ -24,7 +23,7 @@ class TestTwoClients : TestBase() {
     lateinit var s0: SyncModelRoot
     lateinit var s1: SyncModelRoot
 
-    @BeforeTest
+    @BeforeEach
     fun setup() {
         ConsoleLoggerFactory.traceCategories.addAll(listOf("protocol", TestTwoClients::class.qualifiedName!!))
 

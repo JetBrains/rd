@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 
-import kotlin.test.AfterTest
 
 open class RdAsyncTestBase : RdFrameworkTestBase() {
     companion object {
@@ -59,7 +58,7 @@ open class RdAsyncTestBase : RdFrameworkTestBase() {
         ErrorAccumulatorLoggerFactory.throwAndClear()
     }
 
-    @AfterTest
+    @AfterEach
     fun tearDownSchedulers() {
         clientBgScheduler.assertNoExceptions()
         serverBgScheduler.assertNoExceptions()

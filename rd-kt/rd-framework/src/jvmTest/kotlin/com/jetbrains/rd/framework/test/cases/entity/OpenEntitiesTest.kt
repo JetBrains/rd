@@ -5,8 +5,8 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.test.cases.openEntity.*
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.reactive.valueOrThrow
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 class OpenEntitiesTest : RdFrameworkTestBase(){
 

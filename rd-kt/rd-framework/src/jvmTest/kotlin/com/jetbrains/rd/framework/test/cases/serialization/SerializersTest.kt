@@ -3,8 +3,8 @@ package com.jetbrains.rd.framework.test.cases.serialization
 import com.jetbrains.rd.framework.UnsafeBuffer
 import com.jetbrains.rd.framework.readArray
 import com.jetbrains.rd.framework.writeArray
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 class SerializersTest {
 

@@ -18,13 +18,11 @@ import com.jetbrains.rd.util.threading.Linearization
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
 
 class RdAsyncTaskTest : RdFrameworkTestBase() {
     @Suppress("UNCHECKED_CAST")
@@ -87,10 +85,10 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         l.disable()
 
         when (interruptedTask.result.valueOrThrow) {
-            is RdTaskResult.Success<*> -> assertFails {  }
+            is RdTaskResult.Success<*> -> assertThrows(Throwable::class.java) {  }
             is RdTaskResult.Cancelled<*> -> {}
-            is RdTaskResult.Fault<*> -> assertFails {  }
-            else -> assertFails {  }
+            is RdTaskResult.Fault<*> -> assertThrows(Throwable::class.java) {  }
+            else -> assertThrows(Throwable::class.java) {  }
         }
     }
 

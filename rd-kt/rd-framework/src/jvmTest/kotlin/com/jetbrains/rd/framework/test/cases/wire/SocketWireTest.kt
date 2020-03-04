@@ -10,13 +10,13 @@ import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
-import kotlin.test.Ignore
-import kotlin.test.assertEquals
 
 
 class SocketWireTest : TestBase() {
@@ -94,7 +94,7 @@ class SocketWireTest : TestBase() {
     }
 
 
-    @Ignore
+    @Disabled
     @Test
     fun TestDisconnect() {
         val serverProtocol = server(socketLifetime)
