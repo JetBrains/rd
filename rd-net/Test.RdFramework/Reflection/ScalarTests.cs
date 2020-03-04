@@ -144,15 +144,15 @@ namespace Test.RdFramework.Reflection
           InterfaceListOfInts = new List<int>() {1, 2, 3},
           ListOfInts = new List<int>() {1, 2, 3},
           CollectionOfInts = new List<int>() {1, 2, 3},
-          // ReadonlyListInts = new List<int>() {1, 2, 3},
-          // EnumerableInts = new List<int>() {1, 2, 3},
+          ReadonlyListInts = new List<int>() {1, 2, 3},
+          EnumerableInts = new List<int>() {1, 2, 3},
         };
 
         CollectionAssert.AreEqual(c.Objects.Value.InterfaceListOfInts , s.Objects.Value.InterfaceListOfInts );
         CollectionAssert.AreEqual(c.Objects.Value.ListOfInts          , s.Objects.Value.ListOfInts          );
         CollectionAssert.AreEqual(c.Objects.Value.CollectionOfInts    , s.Objects.Value.CollectionOfInts    );
-        // CollectionAssert.AreEqual(c.Objects.Value.ReadonlyListInts    , s.Objects.Value.ReadonlyListInts    );
-        // CollectionAssert.AreEqual(c.Objects.Value.EnumerableInts      , s.Objects.Value.EnumerableInts      );
+        CollectionAssert.AreEqual(c.Objects.Value.ReadonlyListInts    , s.Objects.Value.ReadonlyListInts    );
+        CollectionAssert.AreEqual(c.Objects.Value.EnumerableInts      , s.Objects.Value.EnumerableInts      );
       });
     }
 
@@ -297,9 +297,8 @@ namespace Test.RdFramework.Reflection
         public IList<int> InterfaceListOfInts;
         public List<int> ListOfInts;
         public IList<int> CollectionOfInts;
-        // not supported
-        // public IReadOnlyList<int> ReadonlyListInts;
-        // public IEnumerable<int> EnumerableInts;
+        public IReadOnlyList<int> ReadonlyListInts;
+        public IEnumerable<int> EnumerableInts;
       }
     }
 

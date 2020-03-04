@@ -149,9 +149,14 @@ namespace JetBrains.Rd.Reflection
 
     private static bool IsList(Type t)
     {
-      return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  &&
-             (generic == typeof(List<>) ||
-              generic == typeof(IList<>) || generic == typeof(ICollection<>)
+      return t.IsGenericType && t.GetGenericTypeDefinition() is var generic  && (
+              generic == typeof(List<>)
+              || generic == typeof(IList<>)
+              || generic == typeof(ICollection<>)
+              || generic == typeof(IEnumerable<>)
+#if !NET35
+              || generic == typeof(IReadOnlyList<>)
+#endif
              );
     }
 
@@ -280,26 +285,10 @@ namespace JetBrains.Rd.Reflection
     public SerializerPair GetInstanceSerializer(Type t)
     {
       myPolySerializersSealed = true;
-      if (CanBePolymorphic(t))
+      if (CanBePolymorphic(t) && !(t.IsGenericType && (IsList(t) || IsDictionary(t) || IsReadOnlyDictionary(t))))
       {
         if (myPolySerializers.TryGetValue(t, out var value))
           return value;
-
-        if (t.IsGenericType && ReflectionSerializerVerifier.IsScalar(t) &&
-            t.GetGenericArguments() is var arguments &&
-            arguments.Length == 1 &&
-            t.GetGenericTypeDefinition() is var genericDefinition &&
-            (typeof(IEnumerable<>) ==  genericDefinition || typeof(ICollection<>) == genericDefinition
-#if !NET35
-              || typeof(IReadOnlyCollection<>) == genericDefinition
-#endif
-              ))
-        {
-          if (!ReflectionSerializerVerifier.IsScalar(arguments[0])) 
-            Assertion.Fail($"Scalar type expected in type argument of IEnumerable, but got: {arguments[0].ToString(true)}");
-
-          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(CollectionSerializers), nameof(CollectionSerializers.CreateListSerializerPair), arguments[0], GetInstanceSerializer(arguments[0]));
-        }
 
         myTypesCatalog.AddType(t);
         return SerializerPair.Polymorphic(t);

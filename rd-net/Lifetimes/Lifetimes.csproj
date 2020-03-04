@@ -37,7 +37,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
         <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>New API and documentation</PackageReleaseNotes>
+        <PackageReleaseNotes>Fixed SequentialLifetimes.Next</PackageReleaseNotes>
     </PropertyGroup>
     
     

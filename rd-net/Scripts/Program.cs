@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -118,54 +119,44 @@ namespace JetBrains.Rd.Scripts
         }
       }
 
-
-      
       void UpdatePackagesConfig(string file)
       {
-        var doc = new XmlDocument();
         Console.WriteLine($"Updating: {file}");
-        doc.Load(file);
         
-        foreach (var pkg in Packages)
-        foreach (XmlNode node in doc.SelectNodes($"/packages/package[@id='{pkg}']"))
+        EditXmlDocument(file, doc =>
         {
-          node.Attributes["version"].Value = RdVersion;
-        }
-
-        string newLine = LineEndingUtil.Detect(file);
-        using (var writer = new StreamWriter(file) { NewLine = newLine })
-          doc.Save(writer);
+          foreach (var pkg in Packages)
+          foreach (XmlNode node in doc.SelectNodes($"/packages/package[@id='{pkg}']"))
+          {
+            node.Attributes["version"].Value = RdVersion;
+          }
+        });
       }
-      
-      
+
       void UpdateCsproj(string file)
       {
-        var doc = new XmlDocument();
         Console.WriteLine($"Updating: {file}");
-        doc.Load(file);
-
-        var namespaceManager = new XmlNamespaceManager(doc.NameTable);
-        namespaceManager.AddNamespace("", doc.DocumentElement.NamespaceURI);
-        namespaceManager.AddNamespace("x", doc.DocumentElement.NamespaceURI);
-
-        foreach (var pkg in Packages)
+        EditXmlDocument(file, doc =>
         {
-          
-          foreach (XmlNode node in doc.SelectNodes($"//x:HintPath[contains(text(), \"{pkg}\")]", namespaceManager))
-          {
-            var text = (XmlText) node.FirstChild;
-            text.Value = Regex.Replace(text.Value, $"{pkg}.*.\\\\lib", $"{pkg}.{RdVersion}\\lib");
-          }
+          var namespaceManager = new XmlNamespaceManager(doc.NameTable);
+          namespaceManager.AddNamespace("", doc.DocumentElement.NamespaceURI);
+          namespaceManager.AddNamespace("x", doc.DocumentElement.NamespaceURI);
 
-          foreach (XmlNode node in doc.SelectNodes($"//x:Import[contains(@Project, \"{pkg}\")]", namespaceManager))
+          foreach (var pkg in Packages)
           {
-            node.Attributes["Project"].Value = Regex.Replace(node.Attributes["Project"].Value, $"{pkg}.*.\\\\build", $"{pkg}.{RdVersion}\\build");
-          }
-        }
 
-        string newLine = LineEndingUtil.Detect(file);
-        using (var writer = new StreamWriter(file) { NewLine = newLine })
-          doc.Save(writer);
+            foreach (XmlNode node in doc.SelectNodes($"//x:HintPath[contains(text(), \"{pkg}\")]", namespaceManager))
+            {
+              var text = (XmlText) node.FirstChild;
+              text.Value = Regex.Replace(text.Value, $"{pkg}.*.\\\\lib", $"{pkg}.{RdVersion}\\lib");
+            }
+
+            foreach (XmlNode node in doc.SelectNodes($"//x:Import[contains(@Project, \"{pkg}\")]", namespaceManager))
+            {
+              node.Attributes["Project"].Value = Regex.Replace(node.Attributes["Project"].Value, $"{pkg}.*.\\\\build", $"{pkg}.{RdVersion}\\build");
+            }
+          }
+        });
       }
 
       var roots = Directory.GetDirectories(RiderFolderPath, "*", SearchOption.TopDirectoryOnly)
@@ -196,5 +187,22 @@ namespace JetBrains.Rd.Scripts
 
     }
 
+    private static void EditXmlDocument(string path, Action<XmlDocument> modify)
+    {
+      var doc = new XmlDocument();
+      Encoding enc;
+      using (var reader = new StreamReader(path, new UTF8Encoding(false)))
+      {
+        doc.Load(reader);
+        enc = reader.CurrentEncoding;
+        if (enc is UTF8Encoding utf8)
+          Console.WriteLine("Preamble length: {0}", utf8.Preamble.Length);
+      }
+
+      modify(doc);
+
+      string newLine = LineEndingUtil.Detect(path);
+      using (var writer = new StreamWriter(path, false, enc) {NewLine = newLine}) doc.Save(writer);
+    }
   }
 }

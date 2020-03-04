@@ -165,7 +165,7 @@ open class CSharp50Generator(
     fun Member.nullAttr(isCtorParam: Boolean = false) =
             if (this !is Member.Field) "$notnull "
             else if (this.type is INullable)
-                if (isCtorParam && isOptional) "[Optional] "
+                if (isCtorParam && isOptional) "[CanBeNull] "
                 else "[CanBeNull] "
             else if (this.type.isValueType) ""
             else "$notnull "
@@ -812,31 +812,32 @@ open class CSharp50Generator(
         }
     }
 
-
-    protected fun PrettyPrinter.secondaryConstructorTrait(decl: Declaration) {
-        if (!decl.hasSecondaryCtor) return
-
-
-        fun PrettyPrinter.defaultValue(member: Member, typeName: String) {
-            if (member is Member.Field) {
-                member.defaultValue?.let { defaultValue ->
-                    p(" = ")
-                    when (defaultValue) {
-                        is String -> p(
-                                if (member.type is Enum) {
-                                    if (member.type.flags && defaultValue.isEmpty())
-                                        "($typeName)0"
-                                    else
-                                        "$typeName.$defaultValue"
-                                } else {
-                                    "\"$defaultValue\""
-                                }
-                        )
-                        else -> p(defaultValue.toString())
-                    }
+    private fun PrettyPrinter.defaultValue(member: Member, typeName: String) {
+        if (member is Member.Field && haveDefaultValue(member)) {
+            member.defaultValue.let { defaultValue ->
+                p(" = ")
+                when (defaultValue) {
+                    is String -> p(
+                        if (member.type is Enum) {
+                            if (member.type.flags && defaultValue.isEmpty())
+                                "($typeName)0"
+                            else
+                                "$typeName.$defaultValue"
+                        } else {
+                            "\"$defaultValue\""
+                        }
+                    )
+                    else -> p(defaultValue.toString())
                 }
             }
         }
+    }
+
+    private fun haveDefaultValue(member: Member.Field) =
+        (member.isOptional || member.defaultValue != null)
+
+    protected fun PrettyPrinter.secondaryConstructorTrait(decl: Declaration) {
+        if (!decl.hasSecondaryCtor) return
 
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
@@ -854,7 +855,7 @@ open class CSharp50Generator(
                         val typeName = it.implSubstitutedName(decl)
 
                         printer {
-                            p(it.nullAttr(true)) // [Null], [NotNull], [Optional]
+                            p(it.nullAttr(true)) // [Null], [NotNull], [CanBeNull]
                             p(typeName)
                             p(" ")
                             p(sanitize(it.name))
@@ -1037,7 +1038,26 @@ open class CSharp50Generator(
 
         +"$accessModifier ${decl.name}("
         indent {
-            +decl.allMembers.joinToString(",\r\n") { "${it.nullAttr(true)}${it.implSubstitutedName(decl)} ${sanitize(it.name)}" }
+            val indexAfterWhichAllHaveDefaultValues = decl.allMembers.withIndex()
+                .reversed()
+                .dropWhile {
+                    val member = it.value
+                    member is Member.Field && haveDefaultValue(member)
+                }.firstOrNull()?.index ?: -1
+            +decl.allMembers.withIndex()
+                .joinToString(",\r\n") {
+                    val member = it.value
+                    val typeName = member.implSubstitutedName(decl)
+
+                    printer {
+                        p(member.nullAttr(true)) // [Null], [NotNull], [CanBeNull]
+                        p(typeName)
+                        p(" ")
+                        p(sanitize(member.name))
+                        if (it.index > indexAfterWhichAllHaveDefaultValues)
+                            defaultValue(member, typeName)
+                    }.toString()
+                }
         }
         p(")")
         val base = decl.base

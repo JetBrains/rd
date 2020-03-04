@@ -31,7 +31,12 @@ namespace Test.RdFramework.Reflection
       WithBothFacades(f => f.ScalarSerializers.RegisterPolymorphicSerializer(typeof(IMyInterface), SerializerPair.FromMarshaller(new MyInterfaceMarshaller())));
       WithExtsProxy<SimpleCalls, ISimpleCalls>((c, proxy) =>
       {
+        var instanceSerializer = CFacade.ScalarSerializers.GetInstanceSerializer(typeof(IReadOnlyDictionary<string, string>));
+
         Assert.AreEqual(typeof(MyImpl2).Name, proxy.GetTypeName2(new MyImpl1()));
+        proxy.GetTypeName3(new IMyInterface[]{new MyImpl1(), new MyImpl2()});
+
+        Assert.AreEqual(1, proxy.ReadonlyDictionaryCount(new Dictionary<string, string>() {{"", ""}}));
       });
     }
 
@@ -64,6 +69,8 @@ namespace Test.RdFramework.Reflection
       int Count(IEnumerable<string> items);
       string GetTypeName(IEnumerable<string> items);
       string GetTypeName2(IMyInterface obj);
+      string GetTypeName3(IEnumerable<IMyInterface> obj);
+      int ReadonlyDictionaryCount(IReadOnlyDictionary<string, string> dict);
     }
 
     [RdExt]
@@ -78,6 +85,13 @@ namespace Test.RdFramework.Reflection
       {
         return items.GetType().Name;
       }
+
+      public string GetTypeName3(IEnumerable<IMyInterface> obj)
+      {
+        return obj.GetType().Name;
+      }
+
+      public int ReadonlyDictionaryCount(IReadOnlyDictionary<string, string> dict) => dict.Count;
 
       public string GetTypeName2(IMyInterface obj)
       {

@@ -20,8 +20,9 @@ namespace JetBrains.Rd.Tasks
   public interface IRdCall<in TReq, TRes>
   {
     TRes Sync(TReq request, RpcTimeouts timeouts = null);
+    
+    [Obsolete("Use overload with Lifetime")]
     IRdTask<TRes> Start(TReq request, IScheduler responseScheduler = null);
-
     IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler responseScheduler = null);
   }
 }

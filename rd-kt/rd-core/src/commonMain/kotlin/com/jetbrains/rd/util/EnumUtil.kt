@@ -9,7 +9,7 @@ inline fun <reified T:Enum<T>> parseFromOrdinal(ordinal: Int) : T {
 
 inline fun <reified T:Enum<T>> parseFromFlags(flags: Int) : EnumSet<T> {
     enumValues<T>().let { values ->
-        require(flags in 0..(1 shl (values.size - 1))) {"'$flags' not in range of ${T::class.simpleName} enum set: [0..${(1 shl (values.size - 1))})"}
+        require(flags in 0 until (1 shl values.size)) {"'$flags' not in range of ${T::class.simpleName} enum set: [0..${(1 shl values.size)})"}
         val res = mutableSetOf<T>()
         var x = flags
         var i = 0

@@ -9,13 +9,11 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Tasks;
 using JetBrains.Util;
-using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Reflection
 {
   public class ProxyGenerator : IProxyGenerator
   {
-    private readonly IScalarSerializers myScalarSerializers;
     private readonly bool myAllowSave;
 
     /*
@@ -66,34 +64,14 @@ namespace JetBrains.Rd.Reflection
       typeof(FakeTuple<,,,,,,,>), // T1, T2, T3, T4, T5, T6, T7, TRest
     };
 
-    private static readonly FieldInfo[][] ourValueTuplesFields;
-
-    static ProxyGenerator()
-    {
-      var names = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6", "Item7", "Rest" };
-      ourValueTuplesFields = new FieldInfo[ValueTuples.Length][];
-      for (int i = 0; i < ValueTuples.Length; i++)
-      {
-        var pCount = i + 1;
-        var fieldInfos = new FieldInfo[pCount];
-        for (int f = 0; f < pCount; f++)
-        {
-          fieldInfos[f] = ValueTuples[i].GetField(names[f]);
-        }
-
-        ourValueTuplesFields[i] = fieldInfos;
-      }
-    }
-
     private readonly Lazy<AssemblyBuilder> myAssemblyBuilder;
     private readonly Lazy<ModuleBuilder> myModuleBuilder;
 
     public AssemblyBuilder DynamicAssembly => myAssemblyBuilder.Value;
     public ModuleBuilder DynamicModule => myModuleBuilder.Value;
 
-    public ProxyGenerator(IScalarSerializers scalarSerializers, bool allowSave = false)
+    public ProxyGenerator(bool allowSave = false)
     {
-      myScalarSerializers = scalarSerializers;
       myAllowSave = allowSave;
 #if NETSTANDARD
      myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
@@ -107,19 +85,20 @@ namespace JetBrains.Rd.Reflection
 #endif
     }
 
-    public Type CreateType<TInterface>() where TInterface : class
+    public Type CreateType(Type interfaceType)
     {
-      if (!typeof(TInterface).IsInterface)
+      if (!interfaceType.IsInterface)
         throw new ArgumentException("Only interfaces are supported.");
 
-      if (typeof(TInterface).GetGenericArguments().Length > 0)
+      if (interfaceType.GetGenericArguments().Length > 0)
         throw new ArgumentException("Generic interfaces are not supported.");
 
-      if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
-        throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
+      // RdRpc attribute can be specified in RdExt attribute. Therefore, now this assert cannot be verified.
+      // if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
+      //   throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
 
       var moduleBuilder = myModuleBuilder.Value;
-      var className = typeof(TInterface).Name.Substring(1);
+      var className = interfaceType.Name.Substring(1);
       var proxyTypeName = "Proxy." + className;
       var typebuilder = moduleBuilder.DefineType(
         proxyTypeName,
@@ -127,25 +106,31 @@ namespace JetBrains.Rd.Reflection
         typeof(RdExtReflectionBindableBase));
 
       // Implement interface
-      typebuilder.AddInterfaceImplementation(typeof(TInterface));
+      typebuilder.AddInterfaceImplementation(interfaceType);
 
       // mark it as proxy type
       typebuilder.AddInterfaceImplementation(typeof(IProxyTypeMarker));
 
       // Add RdExt attribute to type
-      var rdExtConstructor = typeof(RdExtAttribute).GetConstructors()[0];
-      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[0]));
+      var rdExtConstructor = typeof(RdExtAttribute).GetConstructors().Single(c => c.GetParameters().Length == 1);
+      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ interfaceType }));
 
       var memberNames = new HashSet<string>(StringComparer.Ordinal);
-      var members = typeof(TInterface).GetMembers(BindingFlags.Instance | BindingFlags.Public);
-      foreach (var member in members)
+      ImplementInterface(interfaceType, memberNames, typebuilder);
+      foreach (var baseInterface in interfaceType.GetInterfaces())
+        ImplementInterface(baseInterface, memberNames, typebuilder);
+
+      void ImplementInterface(Type baseInterface, HashSet<string> hashSet, TypeBuilder typeBuilder)
       {
-        if (!memberNames.Add(member.Name))
+        foreach (var member in baseInterface.GetMembers(BindingFlags.Instance | BindingFlags.Public))
         {
-          throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
+          if (!hashSet.Add(member.Name))
+            throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
+
+          ImplementMember(typeBuilder, member);
         }
-        ImplementMember<TInterface>(typebuilder, member);
       }
+
 #if NET35
       return typebuilder.CreateType();
 #else
@@ -249,7 +234,7 @@ namespace JetBrains.Rd.Reflection
       return (returnType != typeof(Task)) && (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(Task<>));
     }
 
-    private void ImplementMember<TInterface>(TypeBuilder typebuilder, MemberInfo member)
+    private void ImplementMember(TypeBuilder typebuilder, MemberInfo member)
     {
       switch (member.MemberType)
       {
@@ -262,11 +247,11 @@ namespace JetBrains.Rd.Reflection
         case MemberTypes.Method:
           if (member is MethodInfo method && !method.IsSpecialName)
           {
-            ImplementMethod<TInterface>(typebuilder, method);
+            ImplementMethod(typebuilder, method);
           }
           break;
         case MemberTypes.Property:
-          ImplementProperty<TInterface>(typebuilder, ((PropertyInfo)member));
+          ImplementProperty(typebuilder, ((PropertyInfo)member));
           break;
         default:
           var ex = new InvalidOperationException("Unexpected Member Type bit fields combination.");
@@ -274,7 +259,7 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    private void ImplementProperty<TInterface>(TypeBuilder typebuilder, PropertyInfo propertyInfo)
+    private void ImplementProperty(TypeBuilder typebuilder, PropertyInfo propertyInfo)
     {
       string MakeBackingFieldName(string propertyName)
       {
@@ -335,7 +320,7 @@ namespace JetBrains.Rd.Reflection
       return method.ReturnType;
     }
 
-    private void ImplementMethod<TInterface>(TypeBuilder typebuilder, MethodInfo method)
+    private void ImplementMethod(TypeBuilder typebuilder, MethodInfo method)
     {
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
@@ -343,18 +328,6 @@ namespace JetBrains.Rd.Reflection
 
       Assertion.Assert(!requestType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, requestType);
       Assertion.Assert(!responseType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, responseType);
-
-      try
-      {
-        if (!responseType.IsInterface)
-          myScalarSerializers.GetOrCreate(responseType);
-        if (!requestType.IsInterface)
-          myScalarSerializers.GetOrCreate(requestType);
-      }
-      catch (Exception e)
-      {
-        throw new Exception($"Unable to create proxy for {typeof(TInterface).ToString(true)}. {e.Message}", e);
-      }
 
       var fieldType = typeof(IRdCall<,>).MakeGenericType(requestType, responseType);
       var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);

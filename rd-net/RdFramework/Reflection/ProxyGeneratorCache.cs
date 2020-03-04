@@ -23,9 +23,9 @@ namespace JetBrains.Rd.Reflection
       myGenerator = generator;
     }
 
-    public Type CreateType<TInterface>() where TInterface : class
+    public Type CreateType(Type interfaceType)
     {
-      return myTypesCache.GetOrAdd(typeof(TInterface), type => myGenerator.CreateType<TInterface>());
+      return myTypesCache.GetOrAdd(interfaceType, type => myGenerator.CreateType(interfaceType));
     }
 
     public DynamicMethod CreateAdapter(Type selfType, MethodInfo method)

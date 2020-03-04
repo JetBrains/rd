@@ -23,7 +23,7 @@ namespace JetBrains.Rd.Impl
       /// Timeout for <see cref="System.Net.Sockets.Socket.Connect(System.Net.EndPoint)"/>  and for <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/>  from socket (to guarantee read_thread termination if <see cref="System.Net.Sockets.Socket.Close()"/> doesn't
       /// lead to exception thrown by <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/> 
       /// </summary>
-      protected const int TimeoutMs = 500;
+      public static int TimeoutMs = 500;
 
       private const int ACK_MSG_LEN = -1;
       private const int PING_LEN = -2;
@@ -134,8 +134,11 @@ namespace JetBrains.Rd.Impl
         
         //on netcore you can't solely execute Close() - it will hang forever
         //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034 
-        // ourStaticLog.CatchAndDrop(() => socket.Close(TimeoutMs)); 
-        ourStaticLog.CatchAndDrop(socket.Close);
+        //we use zero timeout here to avoid blocking mode with (possible infinite) SpinWait
+        // According to reference source, non-zero timeouts (infinite -1 or positive numbers) lead to the problematic code with hanging spin wait.
+        // The linked corefx issue gives mixed feedback on when it's fixed (netcore 3/net 5), but we have first-hand evidence for issues on netcore 3.
+        // Additionally, the worst thing that Close(0) does is sending a connection reset, which seems to be fine for our purposes.
+        ourStaticLog.CatchAndDrop(() => socket.Close(0));
       }
 
 
@@ -481,13 +484,13 @@ namespace JetBrains.Rd.Impl
             }
 
             Log.Verbose("{0}: waiting for receiver thread", Id);
-            receiverThread.Join(TimeoutMs + 100);
+            if (!receiverThread.Join(TimeoutMs + 100))
+              Log.Verbose("{0}: unable to join receiver thread", Id);
+
             Log.Verbose("{0}: termination finished", Id);
           }
         );
       }
-
-      
 
       public int Port { get; protected set; }
 
@@ -518,6 +521,8 @@ namespace JetBrains.Rd.Impl
               try
               {
                 var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                Socket = s;
+
                 SetSocketOptions(s);
                 Log.Verbose("{0} : connecting", Id);
                 s.Connect(endPoint);
@@ -532,7 +537,6 @@ namespace JetBrains.Rd.Impl
                   }
                   else
                   {
-                    Socket = s;
                     Log.Verbose("{0} : connected", Id);
                   }
                 }
@@ -575,45 +579,47 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, CreateServerSocket(lifetime, endPoint), optId)
-      {}
-        
-      
-      internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
+      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, optId)
       {
-        Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
-        
+        var serverSocket = CreateServerSocket(endPoint);
+
+        StartServerSocket(lifetime, serverSocket);
+
+        lifetime.OnTermination(() =>
+          {
+            ourStaticLog.Verbose("closing server socket");
+            CloseSocket(serverSocket);
+          }
+        );
+      }
+
+      internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : this(lifetime, scheduler, optId)
+      {
         StartServerSocket(lifetime, serverSocket);
       }
 
-      internal static Socket CreateServerSocket(Lifetime lifetime, [CanBeNull] IPEndPoint endPoint)
+      private Server(Lifetime lifetime, IScheduler scheduler, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
+      {}
+
+      internal static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
       {
         Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
-        return lifetime.Bracket(() =>
-          {
-            var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            SetSocketOptions(serverSocket);
+        var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        SetSocketOptions(serverSocket);
 
-            endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
-            serverSocket.Bind(endPoint);
-            serverSocket.Listen(1);
-            Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+        endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
+        serverSocket.Bind(endPoint);
+        serverSocket.Listen(1);
+        Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
 
-            return serverSocket;
-          },
-          socket =>
-          {
-            ourStaticLog.Verbose("closing server socket");
-            CloseSocket(socket);
-          }
-          );
-
+        return serverSocket;
       }
 
       private void StartServerSocket(Lifetime lifetime, [NotNull] Socket serverSocket)
       {
         if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
+        Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
         Log.Verbose("{0} : started, port: {1}", Id, Port);
 
         var thread = new Thread(() =>
@@ -707,7 +713,13 @@ namespace JetBrains.Rd.Impl
         IPEndPoint endpoint = null
       )
       {
-        var serverSocket = Server.CreateServerSocket(lifetime, endpoint);
+        var serverSocket = Server.CreateServerSocket(endpoint);
+        var serverSocketLifetimeDef = new LifetimeDefinition(lifetime);
+        serverSocketLifetimeDef.Lifetime.OnTermination(() =>
+        {
+          ourStaticLog.Verbose("closing server socket");
+          Base.CloseSocket(serverSocket);
+        });
         LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port; 
         
         void Rec()
@@ -716,6 +728,12 @@ namespace JetBrains.Rd.Impl
           {
             var (scheduler, id) = wireParametersFactory();
             var s = new Server(lifetime, scheduler, serverSocket, id);
+            // Each server will spawn a thread that will be waiting in serverSocket.Accept method. When lifetime
+            // termination is invoked, these threads synchronously join the termination thread. Since these Thread.Join
+            // calls are located deeper in the Lifetime termination stack we have to place this socket termination call
+            // after each server creation.
+            lifetime.OnTermination(() => serverSocketLifetimeDef.Terminate());
+
             s.Connected.WhenTrue(lifetime, lt =>
             {
               Connected.AddLifetimed(lt, s);

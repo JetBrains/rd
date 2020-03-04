@@ -1,6 +1,6 @@
 using System;
+using System.IO;
 using JetBrains.Diagnostics;
-using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
 
@@ -39,7 +39,7 @@ namespace Test.Lifetimes
 
     protected void ThrowLoggedExceptions()
     {
-      TestLogger.Logger.ThrowLoggedExceptions();
+      TestLogger.ExceptionLogger.ThrowLoggedExceptions();
     }
   }
 }
