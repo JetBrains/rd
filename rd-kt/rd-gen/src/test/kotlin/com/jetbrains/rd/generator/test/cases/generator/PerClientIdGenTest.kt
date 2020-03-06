@@ -4,8 +4,8 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 import java.io.File
 
 
@@ -51,7 +51,7 @@ class PerClientIdGenTest {
 
         val generatedSources = File(kotlinGeneratedSourcesDir).walk().toList()
         val compiledClassesLoader = rdgen.compileDsl(generatedSources)
-        Assert.assertNotNull("Failed to compile generated sources: ${rdgen.error}", compiledClassesLoader)
+        assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdgen.error}")
     }
 }
 

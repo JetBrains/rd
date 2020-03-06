@@ -6,8 +6,9 @@ import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import com.jetbrains.rd.util.reflection.toPath
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 import java.io.File
 
 
@@ -49,12 +50,12 @@ class CallTest {
 
         val generatedSources = File(kotlinGeneratedSourcesDir).walk().toList() + listOf(generatedCodeTestFile)
         val compiledClassesLoader = rdgen.compileDsl(generatedSources)
-        Assert.assertNotNull("Failed to compile generated sources: ${rdgen.error}", compiledClassesLoader)
+        assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdgen.error}")
 
         val generatedCodeClass = compiledClassesLoader!!.loadClass("GeneratedCodeTestKt")
         val method = generatedCodeClass.getMethod("main")
         val result = method.invoke(null) as String
-        Assert.assertEquals(result, "OK", result)
+        assertEquals(result, "OK", result)
     }
 }
 

@@ -21,8 +21,8 @@ import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Assert
-import kotlin.test.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 private fun IRdBindable.top(lifetime: Lifetime, protocol: IProtocol) {
     identify(protocol.identity, RdId.Null.mix(this.javaClass.simpleName))
@@ -167,7 +167,7 @@ class TextBufferTest {
                 serverWire.processAllMessages()
                 clientWire.processAllMessages()
                 serverWire.processAllMessages()
-                Assert.assertEquals(masterText, slaveText)
+                assertEquals(masterText, slaveText)
             } finally {
                 tearDown()
             }
