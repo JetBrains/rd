@@ -16,37 +16,17 @@ namespace rd {
 	namespace detail {
 		using std::to_string;
 
-		inline std::string to_string(std::string const &val) {
-			return val;
-		}
+		std::string to_string(std::string const &val);
 
-		inline std::string to_string(char const val[]) {
-			return val;
-		}
+		std::string to_string(char const val[]);
 
-//		template<>
-		inline std::string to_string(std::wstring const &val) {
-			return std::string(val.begin(), val.end());
-		}
+		std::string to_string(std::wstring const &val);
 
-		inline std::string to_string(std::thread::id const &id) {
-			std::ostringstream ss;
-			ss << id;
-			return ss.str();
-		}
+		std::string to_string(std::thread::id const &id);
 
-		inline std::string to_string(std::exception const &e) {
-			return std::string(e.what());
-		}
+		std::string to_string(std::exception const &e);
 
-		inline std::string to_string(std::future_status const &status) {
-			switch (status) {
-				case std::future_status::ready: return "ready";
-				case std::future_status::timeout: return "timeout";
-				case std::future_status::deferred: return "deferred";
-				default: return "unknown";
-			}
-		}
+		std::string to_string(std::future_status const &status);
 
 		template<typename Rep, typename Period>
 		inline std::string to_string(std::chrono::duration<Rep, Period> const &time) {
@@ -95,9 +75,7 @@ namespace rd {
 
 		using std::to_wstring;
 
-		inline std::wstring to_wstring(std::string const &s) {
-			return std::wstring(s.begin(), s.end());
-		}
+		std::wstring to_wstring(std::string const &s);
 
 		template<class T>
 		std::wstring as_wstring(T const &t) {
