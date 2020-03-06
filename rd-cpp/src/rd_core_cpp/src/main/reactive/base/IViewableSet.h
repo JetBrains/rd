@@ -32,7 +32,7 @@ namespace rd {
 	 * \brief A set allowing its contents to be observed. 
 	 * \tparam T type of stored values (may be abstract)
 	 */
-	template<typename T>
+	template<typename T, typename A = allocator<T>>
 	class IViewableSet : public IViewable<T>, public ISource<detail::SetEvent<T>> {
 	protected:
 		using WT = value_or_wrapper<T>;

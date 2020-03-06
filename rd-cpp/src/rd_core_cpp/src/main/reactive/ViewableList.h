@@ -14,13 +14,14 @@ namespace rd {
 	/**
 	 * \brief complete class which has @code IViewableList<T>'s properties
 	 */
-	template<typename T>
+	template<typename T, typename A = allocator<T>>
 	class ViewableList : public IViewableList<T> {
 	public:
 		using Event = typename IViewableList<T>::Event;
 
 	private:
-		using data_t = std::vector<Wrapper<T>>;
+		using WA = typename A::template rebind<Wrapper<T>>::other;
+		using data_t = std::vector<Wrapper<T>, WA>;
 		mutable data_t list;
 		Signal<Event> change;
 
