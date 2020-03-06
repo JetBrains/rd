@@ -3,9 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
-using JetBrains.Diagnostics;
 using JetBrains.Rd;
-using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
@@ -19,8 +17,30 @@ using NUnit.Framework;
 namespace Test.RdFramework.Reflection
 {
   [TestFixture]
-  public class ProxyGeneratorAsyncCallsTest : RdReflectionTestBase
+  public class ProxyGeneratorAsyncCallsTest : ProxyGeneratorTestBase
   {
+    [RdExt]
+    internal class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
+    {
+      public Task<string> GetStringAsync()
+      {
+        return Task.FromResult("result");
+      }
+
+      public Task RunSomething()
+      {
+        return Task.CompletedTask;
+      }
+
+      public Task<int> iSum(int a, int b) => Task.FromResult(a + b);
+      public Task<uint> uiSum(uint a, uint b) => Task.FromResult(a + b);
+      public Task<long> lSum(long a, long b) => Task.FromResult(a + b);
+      public Task<ulong> ulSum(ulong a, ulong b) => Task.FromResult(a + b);
+      public Task<short> sSum(short a, short b) => Task.FromResult(unchecked((short)(a + b)));
+      public Task<ushort> usSum(ushort a, ushort b) => Task.FromResult(unchecked((ushort)(a + b)));
+      public Task<byte> bSum(byte a, byte b) => Task.FromResult(unchecked((byte)(a + b)));
+    }
+
     public class AsyncTestFixture<T>
     {
       public virtual int Rounds => 1;
@@ -46,28 +66,6 @@ namespace Test.RdFramework.Reflection
       Task<byte> bSum(byte a, byte b);
       Task<uint> uiSum(uint a, uint b);
       Task<long> lSum(long a, long b);
-    }
-
-    [RdExt]
-    internal class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
-    {
-      public Task<string> GetStringAsync()
-      {
-        return Task.FromResult("result");
-      }
-
-      public Task RunSomething()
-      {
-        return Task.CompletedTask;
-      }
-
-      public Task<int> iSum(int a, int b) => Task.FromResult(a + b);
-      public Task<uint> uiSum(uint a, uint b) => Task.FromResult(a + b);
-      public Task<long> lSum(long a, long b) => Task.FromResult(a + b);
-      public Task<ulong> ulSum(ulong a, ulong b) => Task.FromResult(a + b);
-      public Task<short> sSum(short a, short b) => Task.FromResult(unchecked((short) (a + b)));
-      public Task<ushort> usSum(ushort a, ushort b) => Task.FromResult(unchecked((ushort) (a + b)));
-      public Task<byte> bSum(byte a, byte b) => Task.FromResult(unchecked((byte) (a + b)));
     }
 
     [RdRpc]
@@ -206,37 +204,6 @@ namespace Test.RdFramework.Reflection
 
     private void TestAsyncCalls(Action<IAsyncCallsTest> run) => TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
     private void TestSyncCalls(Action<ISyncCallsTest> run) => TestTemplate<SyncCallsTest, ISyncCallsTest>(run);
-
-    protected void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
-    {
-      ClientProtocol.Scheduler.Queue(() =>
-      {
-        var client = CFacade.Activator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
-      });
-
-      TInterface proxy = null;
-      ServerProtocol.Scheduler.Queue(() => { proxy = SFacade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol); });
-
-      WaitMessages();
-
-      using (var barrier = new ManualResetEvent(false))
-      {
-        SaveGeneratedAssembly();
-        ServerProtocol.Scheduler.Queue(() =>
-          Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value"));
-        runTest(proxy);
-        ServerProtocol.Scheduler.Queue(() => barrier.Set());
-
-        WaitMessages();
-        barrier.WaitOne();
-      }
-    }
-
-    private void WaitMessages()
-    {
-      bool IsIdle(IRdDynamic p) => ((SingleThreadScheduler) p.Proto.Scheduler).IsIdle;
-      SpinWaitEx.SpinUntil(() => IsIdle(ServerProtocol) && IsIdle(ClientProtocol));
-    }
 
     protected override IScheduler CreateScheduler(bool isServer)
     {

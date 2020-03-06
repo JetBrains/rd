@@ -1,15 +1,7 @@
 ﻿using System;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Collections.Viewable;
-using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
-using JetBrains.Rd;
-using JetBrains.Rd.Base;
-using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
-using JetBrains.Serialization;
 using JetBrains.Threading;
 using NUnit.Framework;
 
@@ -20,7 +12,7 @@ using NUnit.Framework;
 namespace Test.RdFramework.Reflection
 {
   [TestFixture]
-  public class ProxyGeneratorCancellationTest : RdReflectionTestBase
+  public class ProxyGeneratorCancellationTest : ProxyGeneratorAsyncCallsTest
   {
     [RdRpc]
     public interface IAsyncCallsTest
@@ -82,47 +74,5 @@ namespace Test.RdFramework.Reflection
     }
 
     private void TestAsyncCalls(Action<IAsyncCallsTest> run) => TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
-
-    protected void TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
-    {
-      ClientProtocol.Scheduler.Queue(() =>
-      {
-        var client = CFacade.Activator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
-      });
-
-      TInterface proxy = null;
-      ServerProtocol.Scheduler.Queue(() => { proxy = SFacade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol); });
-
-      WaitMessages();
-
-      using (var barrier = new ManualResetEvent(false))
-      {
-        ServerProtocol.Scheduler.Queue(() =>
-          Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value"));
-        runTest(proxy);
-        ServerProtocol.Scheduler.Queue(() => barrier.Set());
-
-        WaitMessages();
-        barrier.WaitOne();
-      }
-    }
-
-    private void WaitMessages()
-    {
-      bool IsIdle(IRdDynamic p) => ((SingleThreadScheduler) p.Proto.Scheduler).IsIdle;
-      SpinWaitEx.SpinUntil(() => IsIdle(ServerProtocol) && IsIdle(ClientProtocol));
-    }
-
-    protected override IScheduler CreateScheduler(bool isServer)
-    {
-      string name = (isServer ? "server" : "client") + " scheduler";
-      IScheduler result = null;
-
-      var thread = new Thread(() => SingleThreadScheduler.RunInCurrentStackframe(TestLifetime, name, s => result = s)) { Name = name };
-      thread.Start();
-      SpinWaitEx.SpinUntil(() => result != null);
-      return result;
-    }
   }
-
 }
