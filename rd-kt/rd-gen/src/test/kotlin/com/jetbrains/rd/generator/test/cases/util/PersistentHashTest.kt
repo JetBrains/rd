@@ -1,26 +1,26 @@
 package com.jetbrains.rd.generator.test.cases.util
 
 import com.jetbrains.rd.util.hash.PersistentHash
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 class PersistentHashTest {
 
     var file : Path = Paths.get("fake")
 
-    @Before
+    @BeforeEach
     fun setUp() {
         file  = Files.createTempFile("PersistentHash", ".txt")
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         file.toFile().delete()
     }
