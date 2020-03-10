@@ -12,8 +12,10 @@ using NUnit.Framework;
 namespace Test.RdFramework.Reflection
 {
   [TestFixture]
-  public class ProxyGeneratorCancellationTest : ProxyGeneratorAsyncCallsTest
+  public class ProxyGeneratorCancellationTest : ProxyGeneratorTestBase
   {
+    protected override bool IsAsync => true;
+
     [RdRpc]
     public interface IAsyncCallsTest
     {
@@ -41,10 +43,10 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
-    public void TestAsyncCancel()
+    public async Task TestAsyncCancel()
     {
       bool? isCancelled = null;
-      TestAsyncCalls(model =>
+      await TestAsyncCalls(model =>
       {
         var cancellationLifetimeDef = new LifetimeDefinition();
         model.GetLongRunningInt(100, cancellationLifetimeDef.Lifetime).
@@ -59,10 +61,10 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
-    public void TestAsync()
+    public async Task TestAsync()
     {
       bool? isCancelled = null;
-      TestAsyncCalls(model =>
+      var testAsyncCalls = TestAsyncCalls(model =>
       {
         var cancellationLifetimeDef = new LifetimeDefinition();
         model.GetInt(100, cancellationLifetimeDef.Lifetime).
@@ -70,9 +72,10 @@ namespace Test.RdFramework.Reflection
       });
 
       SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
+      await testAsyncCalls;
       Assert.AreEqual(false, isCancelled);
     }
 
-    private void TestAsyncCalls(Action<IAsyncCallsTest> run) => TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
+    private async Task TestAsyncCalls(Action<IAsyncCallsTest> run) => await TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
   }
 }
