@@ -35,7 +35,7 @@ namespace Test.RdFramework.Reflection
       await Wait();
     }
 
-    private Task Wait()
+    protected Task Wait()
     {
       bool IsIdle(IRdDynamic p) => ((SingleThreadScheduler) p.Proto.Scheduler).IsIdle;
       return Task.Run(() => SpinWaitEx.SpinUntil(() => IsIdle(ServerProtocol) && IsIdle(ClientProtocol)));
