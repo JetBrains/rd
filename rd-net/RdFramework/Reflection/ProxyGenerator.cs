@@ -402,7 +402,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       // TReq
-      if (parameters.Length > 0)
+      if (parameters.Length - (lifetimeArgument == -1 ? 0 : 1) > 0)
       {
         // Others arguments, skip `this` argument (0)
         for (int i = 0; i < parameters.Length; i++)
