@@ -26,7 +26,7 @@ class CallTest {
     @Suppress("unused")
     class TestRoot2 : Root()
 
-    object Solution : Ext(TestRoot1) {
+    object Solution2 : Ext(TestRoot1) {
 
         init {
             call("get", PredefinedType.int, classdef("myClass") {
