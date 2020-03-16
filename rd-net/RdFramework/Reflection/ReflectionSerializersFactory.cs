@@ -157,7 +157,8 @@ namespace JetBrains.Rd.Reflection
         myCurrentSerializersChain.Enqueue(type);
 #endif
         
-        ReflectionUtil.InvokeGenericThis(this, nameof(RegisterModelSerializer), type);
+        using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type))
+          ReflectionUtil.InvokeGenericThis(this, nameof(RegisterModelSerializer), type);
 
 #if JET_MODE_ASSERT
         myCurrentSerializersChain.Dequeue();
@@ -227,11 +228,7 @@ namespace JetBrains.Rd.Reflection
         }
         catch (Exception e)
         {
-#if JET_MODE_ASSERT
-          throw new Exception($"Unable to create serializer for {string.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}. {e.Message}", e);
-#else
-          throw new Exception($"Unable to create serializer for {serializerType.ToString(true)}. {e.Message}", e);
-#endif
+          throw new Exception($"Unable to create serializer for {e.Data[FirstChanceExceptionInterceptor.ExceptionDataKey]}. {e.Message}", e);
         }
         serializerPair = mySerializers[serializerType];
         if (serializerPair == null)

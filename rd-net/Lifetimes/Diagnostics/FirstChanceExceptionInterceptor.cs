@@ -30,7 +30,7 @@ namespace JetBrains.Diagnostics
       AppDomain.CurrentDomain.FirstChanceException += (sender, args) =>
       {
         var info = string.Join("\n -> ", GetThreadLocalDebugInfo());
-        if (!string.IsNullOrEmpty(info))
+        if (!string.IsNullOrEmpty(info) && !args.Exception.Data.Contains(ExceptionDataKey))
         {
           args.Exception.Data[ExceptionDataKey] = info;
         }
