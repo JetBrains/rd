@@ -89,7 +89,10 @@ namespace JetBrains.Rd.Reflection
         Assertion.Fail($"Attempt to create serializer for black-listed type: {type.ToString(true)}");
       }
 
-      var result = CreateSerializer(type);
+      SerializerPair result;
+      using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type)) 
+        result = CreateSerializer(type);
+
       myStaticSerializers[type] = result;
       return result;
 
