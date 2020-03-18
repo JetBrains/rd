@@ -270,6 +270,11 @@ namespace JetBrains.Rd.Impl
         {
           Log.Verbose($"{Id}: Socket was disposed during ACK, seqn = {seqN}");
         }
+        catch (SocketException e)
+        {
+          // looks like this does not deserve a warn, as the only thing that can happen is a fatal socket failure anyway, and that will likely be reported properly from other threads
+          Log.Verbose(e, $"{Id}: ${e.GetType()} raised during ACK, seqn = {seqN}");
+        }
         catch (Exception e)
         {
           Log.Warn(e, $"{Id}: ${e.GetType()} raised during ACK, seqn = {seqN}");
