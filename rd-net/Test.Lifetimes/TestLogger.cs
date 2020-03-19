@@ -32,7 +32,7 @@ namespace Test.Lifetimes
       {
         lock (myMonitor)
         {
-          myExceptions.Add(exception ?? new Exception(message));
+          myExceptions.Add(exception == null ? new Exception(message) : new Exception(message, exception));
         }
       }
 

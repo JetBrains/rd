@@ -176,10 +176,10 @@ namespace JetBrains.Serialization
         return *(UInt16*) bb;
     }
 
-    public static Int32 ReadInt32FromBytes(byte[] bytes)
+    public static Int32 ReadInt32FromBytes(byte[] bytes, int offset = 0)
     {
       fixed (byte* bb = bytes)
-        return *(Int32*) bb;
+        return *(Int32*) (bb + offset);
     }
     
     public static Int64 ReadInt64FromBytes(byte[] bytes, int offset = 0)

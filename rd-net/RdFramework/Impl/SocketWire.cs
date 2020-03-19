@@ -2,12 +2,14 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Timers;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Serialization;
 using JetBrains.Threading;
+using Timer = System.Timers.Timer;
 
 namespace JetBrains.Rd.Impl
 {
@@ -24,6 +26,7 @@ namespace JetBrains.Rd.Impl
       public static int TimeoutMs = 500;
 
       private const int ACK_MSG_LEN = -1;
+      private const int PING_LEN = -2;
       
       /// <summary>
       /// For logging
@@ -42,6 +45,7 @@ namespace JetBrains.Rd.Impl
       protected readonly IViewableProperty<Socket> SocketProvider = new ViewableProperty<Socket> ();
       
       public readonly IViewableProperty<bool> Connected = new ViewableProperty<bool> { Value = false };
+      public readonly IViewableProperty<bool> HeartbeatAlive = new ViewableProperty<bool> { Value = false };
 
       protected readonly ByteBufferAsyncProcessor SendBuffer;
       protected readonly object Lock = new object();
@@ -62,12 +66,13 @@ namespace JetBrains.Rd.Impl
         Id = id;
         Log = Diagnostics.Log.GetLog(GetType());
         myLifetime = lifetime;
-        myAcktor = new Actor<long>(id+"-ACK", lifetime, (Action<long>)SendAck);
+        myAcktor = new Actor<long>(id+"-ACK", lifetime, SendAck);
 
         SendBuffer = new ByteBufferAsyncProcessor(id+"-Sender", Send0);
         SendBuffer.Pause(DisconnectedPauseReason);
         SendBuffer.Start();
         
+        Connected.Advise(lifetime, value => HeartbeatAlive.Value = value);
         
         
         //when connected
@@ -75,10 +80,12 @@ namespace JetBrains.Rd.Impl
         {
 //          //todo hack for multiconnection, bring it to API
 //          if (SupportsReconnect) SendBuffer.Clear();
+
+          var timer = StartHeartbeat();
+
           SendBuffer.ReprocessUnacknowledged();
           SendBuffer.Resume(DisconnectedPauseReason);
           
-
           scheduler.Queue(() => { Connected.Value = true; });                              
 
           try
@@ -93,10 +100,30 @@ namespace JetBrains.Rd.Impl
 
             SendBuffer.Pause(DisconnectedPauseReason);
             
+            timer.Dispose();
+            
             CloseSocket(socket);
           }          
         });
       }
+
+      private static bool ConnectionEstablished(int timeStamp, int notionTimestamp) => timeStamp - notionTimestamp <= MaximumHeartbeatDelay;
+
+      private Timer StartHeartbeat()
+      {
+        void OnTimedEvent(object sender, ElapsedEventArgs e)
+        {
+          Ping();
+          Log.Trace()?.Log($"{Id}: sent PING");
+        }
+
+        var timer = new Timer(HeartBeatInterval.TotalMilliseconds){AutoReset = true};
+        timer.Elapsed += OnTimedEvent;
+        timer.Enabled = true;
+        timer.Start();
+        return timer;
+      }
+
 
       internal static void CloseSocket([CanBeNull] Socket socket)
       {
@@ -225,10 +252,33 @@ namespace JetBrains.Rd.Impl
               return 0;
 
             Int32 len = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data);
-            Int64 seqN = UnsafeReader.ReadInt64FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
 
-            if (len == ACK_MSG_LEN) 
+            if (len == PING_LEN)
+            {
+              Int32 receivedTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
+              Int32 receivedCounterpartTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
+              Log.Trace()?.Log($"{Id}: Received PING package " +
+                               $"receivedTimestamp={receivedTimestamp}, " +
+                               $"receivedCounterpartTimestamp={receivedCounterpartTimestamp}, " +
+                               $"currentTimeStamp={myCurrentTimeStamp}, " +
+                               $"counterpartTimestamp={myCounterpartTimestamp}, " +
+                               $"counterpartNotionTimestamp={myCounterpartNotionTimestamp}");
+              myCounterpartTimestamp = receivedTimestamp;
+              myCounterpartNotionTimestamp = receivedCounterpartTimestamp;
+              
+              if (ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
+              {
+                HeartbeatAlive.Value = true;
+              }
+              
+              continue;
+            }
+
+            Int64 seqN = UnsafeReader.ReadInt64FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
+            if (len == ACK_MSG_LEN)
+            {
               SendBuffer.Acknowledge(seqN);
+            }
             else
             {
               
@@ -277,7 +327,43 @@ namespace JetBrains.Rd.Impl
         }
         catch (Exception e)
         {
-          Log.Warn(e, $"{Id}: ${e.GetType()} raised during ACK, seqn = {seqN}");
+          Log.Warn(e, $"{Id}: {e.GetType()} raised during ACK, seqn = {seqN}");
+        }
+      }
+      
+      private void Ping()
+      {
+        try
+        {
+          Log.Trace()?.Log($"{Id}: send PING " +
+                           $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                           $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                           $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+          if (!ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
+          {
+            HeartbeatAlive.Value = false;
+          }
+
+          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+          {
+            cookie.Writer.Write(PING_LEN);
+            cookie.Writer.Write(myCurrentTimeStamp);
+            cookie.Writer.Write(myCounterpartTimestamp);
+            cookie.CopyTo(myPingPkgHeader);
+          }
+
+          lock (mySocketSendLock)
+            Socket.Send(myPingPkgHeader);
+
+          ++myCurrentTimeStamp;
+        }
+        catch (ObjectDisposedException)
+        {
+          Log.Verbose($"{Id}: Socket was disposed during PING");
+        }
+        catch (Exception e)
+        {
+          Log.Warn(e, $"{Id}: {e.GetType()} raised during PING");
         }
       }
       
@@ -294,6 +380,27 @@ namespace JetBrains.Rd.Impl
       private const int PkgHeaderLen = sizeof(int) /*pkgFullLen */ + sizeof(long) /*seqN*/;
       private readonly byte[] mySendPkgHeader = new byte[ PkgHeaderLen];
       private readonly byte[] myAckPkgHeader = new byte[ PkgHeaderLen]; //different threads
+
+      public TimeSpan HeartBeatInterval { get; set; } = TimeSpan.FromMilliseconds(500);
+      
+      /// <summary>
+      /// Timestamp of this wire which increases at intervals of <see cref="HeartBeatInterval"/>
+      /// </summary>
+      private int myCurrentTimeStamp;
+      
+      /// <summary>
+      /// Actual notion about counterpart's <see cref="myCurrentTimeStamp"/>
+      /// </summary>
+      private int myCounterpartTimestamp;
+      
+      /// <summary>
+      /// The latest received counterpart's notion of this wire's <see cref="myCurrentTimeStamp"/>
+      /// </summary>
+      private int myCounterpartNotionTimestamp;
+      
+      internal const int MaximumHeartbeatDelay = 3;
+      private readonly byte[] myPingPkgHeader = new byte[ PkgHeaderLen];
+
       private void Send0(byte[] data, int offset, int len, ref long seqN)
       {
         try
@@ -363,7 +470,7 @@ namespace JetBrains.Rd.Impl
       }
 
 
-      //can't take socket from mySoсketProvider: it could be not set yet 
+      //can't take socket from mySocketProvider: it could be not set yet 
       protected void AddTerminationActions([NotNull] Thread receiverThread)
       {
         // ReSharper disable once ImpureMethodCallOnReadonlyValueField
@@ -402,9 +509,11 @@ namespace JetBrains.Rd.Impl
 
     public class Client : Base
     {
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) : this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) : 
+        this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
 
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) : base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) : 
+        base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         var thread = new Thread(() =>
         {

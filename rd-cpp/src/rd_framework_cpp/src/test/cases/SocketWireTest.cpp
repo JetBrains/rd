@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
 
-#include "impl/RdMap.h"
-#include "protocol/Protocol.h"
-#include "impl/RdProperty.h"
-#include "impl/RdSignal.h"
-#include "SocketWireTestBase.h"
-#include "wire/SocketWire.h"
 #include "DynamicEntity.h"
 #include "entities_util.h"
+#include "SocketWireTestBase.h"
+#include "impl/RdMap.h"
+#include "impl/RdProperty.h"
+#include "impl/RdSignal.h"
+#include "protocol/Protocol.h"
+#include "wire/SocketWire.h"
+#include "wire/SocketProxy.h"
 
 #include <random>
 
@@ -497,7 +498,7 @@ INSTANTIATE_TEST_SUITE_P(SimpleDisconnectClient,
 						 DisconnectTestBase,
 						 ::testing::Values(false));
 
-TEST_P(DisconnectTestBase, DdosDisconnect) {
+TEST_P(DisconnectTestBase, DISABLED_DdosDisconnect) {
 	auto serverProtocol = server(socketLifetime);
 	auto clientProtocol = client(socketLifetime, serverProtocol);
 
@@ -534,3 +535,59 @@ TEST_P(DisconnectTestBase, DdosDisconnect) {
 
 	terminate();
 }
+
+struct PacketLossTestBase : SocketWireTestBase, ::testing::WithParamInterface<bool> {
+};
+
+TEST_P(PacketLossTestBase, TestPacketLoss) {
+	auto serverProtocol = server(socketLifetime, 0);
+	auto serverWire = dynamic_cast<SocketWire::Base const *> (serverProtocol.get_wire());
+
+	SocketProxy proxy("TestProxy", socketLifetime, &serverProtocol);
+	proxy.start();
+
+	auto clientProtocol = client(socketLifetime, proxy.getPort());
+	auto clientWire = dynamic_cast<SocketWire::Base const *>(clientProtocol.get_wire());
+
+	sleep_this_thread(100);
+
+	if (GetParam())
+		proxy.StopClientToServerMessaging();
+	else
+		proxy.StopServerToClientMessaging();
+
+	auto detectionTimeout = dynamic_cast<SocketWire::Base const *>(clientProtocol.get_wire())->heartBeatInterval *
+							(SocketWire::Base::MaximumHeartbeatDelay + 3);
+
+	auto detectionTimeoutMs = std::chrono::duration_cast<std::chrono::milliseconds>(detectionTimeout).count();
+	sleep_this_thread(detectionTimeoutMs);
+
+	ASSERT_TRUE(serverWire->connected.get());
+	ASSERT_TRUE(clientWire->connected.get());
+
+	ASSERT_FALSE(serverWire->heartbeatAlive.get());
+	ASSERT_FALSE(clientWire->heartbeatAlive.get());
+
+	if (GetParam())
+		proxy.StartClientToServerMessaging();
+	else
+		proxy.StartServerToClientMessaging();
+
+	sleep_this_thread(detectionTimeoutMs);
+
+	ASSERT_TRUE(serverWire->connected.get());
+	ASSERT_TRUE(clientWire->connected.get());
+
+	ASSERT_TRUE(serverWire->heartbeatAlive.get());
+	ASSERT_TRUE(clientWire->heartbeatAlive.get());
+
+	terminate();
+}
+
+INSTANTIATE_TEST_SUITE_P(PacketLossServer,
+						 PacketLossTestBase,
+						 ::testing::Values(true));
+
+INSTANTIATE_TEST_SUITE_P(PacketLossClient,
+						 PacketLossTestBase,
+						 ::testing::Values(false));

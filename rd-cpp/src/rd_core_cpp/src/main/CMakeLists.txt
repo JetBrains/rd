@@ -21,16 +21,20 @@ add_library(rd_core_cpp STATIC
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
         #std
-        std/hash.cpp std/hash.h
+        std/hash.h
         std/to_string.cpp std/to_string.h
         std/filesystem.cpp std/filesystem.h
+        std/allocator.h
+        std/list.h
+        std/unordered_map.h
+        std/unordered_set.h
         #types
         types/DateTime.cpp types/DateTime.h
         types/Void.cpp types/Void.h
         types/wrapper.cpp types/wrapper.h
         #pch
         ${PCH_CPP_OPT}
-        std/unordered_map.cpp std/unordered_map.h std/unordered_set.cpp std/unordered_set.h)
+        )
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 

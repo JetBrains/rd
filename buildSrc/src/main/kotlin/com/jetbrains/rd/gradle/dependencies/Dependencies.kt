@@ -1,6 +1,6 @@
 package com.jetbrains.rd.gradle.dependencies
 
-const val kotlinVersion = "1.3.50"
+const val kotlinVersion = "1.3.61"
 const val kotlinxCoroutinesVersion = "1.3.2"
 const val dokkaVersion = "0.9.18"
 const val junitVersion = "5.6.0"

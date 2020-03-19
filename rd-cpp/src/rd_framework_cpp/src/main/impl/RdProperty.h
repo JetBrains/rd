@@ -5,6 +5,7 @@
 #include "base/RdPropertyBase.h"
 #include "serialization/Polymorphic.h"
 #include "serialization/ISerializable.h"
+#include "std/allocator.h"
 
 #pragma warning( push )
 #pragma warning( disable:4250 )

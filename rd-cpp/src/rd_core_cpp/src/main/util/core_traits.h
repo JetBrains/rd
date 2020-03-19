@@ -72,6 +72,9 @@ namespace rd {
 
 		template <typename T>
 		constexpr bool is_enum_v = std::is_enum<T>::value;
+
+		template< class T >
+		constexpr bool is_pod_v = std::is_pod<T>::value;
 		//endregion
 
 		template<typename T>

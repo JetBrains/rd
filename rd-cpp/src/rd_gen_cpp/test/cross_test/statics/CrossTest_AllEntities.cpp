@@ -2,6 +2,8 @@
 
 #include <DemoModel/Derived.h>
 
+#undef max
+
 namespace rd {
 	namespace cross {
 		void CrossTestAllEntities::fireAll(const demo::DemoModel &model, const demo::ExtModel &extModel) {
@@ -17,7 +19,7 @@ namespace rd {
 										 3.14f,
 										 -123456789.012345678,
 										 std::numeric_limits<uint8_t>::max() - 1,
-										 std::numeric_limits<uint16_t>::max() - 1,
+										 (std::numeric_limits<uint16_t>::max()) - 1,
 										 std::numeric_limits<uint32_t>::max() - 1,
 										 std::numeric_limits<uint64_t>::max() - 1,
 										 demo::MyEnum::cpp,

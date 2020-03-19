@@ -62,15 +62,15 @@ namespace rd {
 
 	//class Polymorphic<int, void>;
 
-	template<typename T>
-	class Polymorphic<std::vector<T>> {
+	template<template<class, class> class C, typename T, typename A>
+	class Polymorphic<C<T, A>, void> {
 	public:
-		inline static std::vector<T> read(SerializationCtx  &ctx, Buffer &buffer) {
-			return buffer.read_array<T>();
+		inline static C<T, A> read(SerializationCtx  &ctx, Buffer &buffer) {
+			return buffer.read_array<C, T, A>();
 		}
 
-		inline static void write(SerializationCtx  &ctx, Buffer &buffer, std::vector<T> const &value) {
-			buffer.write_array<T>(value);
+		inline static void write(SerializationCtx  &ctx, Buffer &buffer, C<T, A> const &value) {
+			buffer.write_array<C, T, A>(value);
 		}
 	};
 

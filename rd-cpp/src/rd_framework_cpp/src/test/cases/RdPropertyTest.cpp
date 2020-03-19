@@ -112,7 +112,7 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, property_companion) {
+/*TEST_F(RdFrameworkTestBase, property_companion) {
 	RdProperty<int32_t> p1_in(0);
 	RdProperty<int32_t> p2_in(0);
 
@@ -142,7 +142,7 @@ TEST_F(RdFrameworkTestBase, property_companion) {
 	EXPECT_EQ((std::vector<int32_t>{0, 0, 12}), log);
 
 	AfterTest();
-}
+}*/
 
 TEST_F(RdFrameworkTestBase, property_vector) {
 	using list = std::vector<int>;

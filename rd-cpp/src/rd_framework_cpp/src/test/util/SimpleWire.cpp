@@ -9,6 +9,7 @@ namespace rd {
 		void SimpleWire::send(RdId const &id, std::function<void(Buffer &buffer)> writer) const {
 			assert(!id.isNull());
 			Buffer buffer;
+			buffer.write_integral<int16_t>(0); //placeholder for context
 			writer(buffer);
 
 			bytesWritten += buffer.get_position();

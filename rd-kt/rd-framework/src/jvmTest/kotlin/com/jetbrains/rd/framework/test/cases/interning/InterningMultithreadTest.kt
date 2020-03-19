@@ -120,7 +120,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
 
         val interningBytesWritten = clientWire.bytesWritten - clientBytesBase
 
-        assert(interningBytesWritten <= actualBytesExpected * 110 / 100) { "Interning should save data, sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected" }
+        assert(interningBytesWritten <= actualBytesExpected * 120 / 100) { "Interning should save data, sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected" }
         println("Sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected")
         println("Interning mt contention: ${interningBytesWritten.toFloat()/actualBytesExpected}")
         println("Interning ratio (more=better): ${rawBytesExpected/interningBytesWritten.toFloat()}")
