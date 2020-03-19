@@ -40,39 +40,44 @@ namespace JetBrains.Rd.Tasks
       var externalCancellation = outerLifetime.CreateNested();
       
       myCall.Wire.Advise(taskWireSubscriptionDefinition.Lifetime, this); //this lifetimeDef listen only one value
-      outerLifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled())); //todo 
+      taskWireSubscriptionDefinition.Lifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()));
       
       Result.AdviseOnce(Lifetime.Eternal, taskResult =>
       {
-        taskWireSubscriptionDefinition.Terminate(); //no need to listen result or cancellation from wire
-
-        var potentiallyBindable = taskResult.Result;
-        if (potentiallyBindable.IsBindable())
+        try
         {
-          if (myIsEndpoint)
-            potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
-
-          potentiallyBindable.BindPolymorphic(externalCancellation.Lifetime, myCall, RdId.ToString());
-        }
-
-        if (myIsEndpoint)
-        {
-          if (taskResult.Status == RdTaskStatus.Canceled)
+          var potentiallyBindable = taskResult.Result;
+          if (potentiallyBindable.IsBindable())
           {
-            externalCancellation.Terminate();
+            if (myIsEndpoint)
+              potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
+
+            potentiallyBindable.BindPolymorphic(externalCancellation.Lifetime, myCall, RdId.ToString());
           }
-          
-          Trace(RdReactiveBase.ourLogSend, "send response", taskResult);
-          myWire.Send(RdId,
-            writer =>
+
+          if (myIsEndpoint)
+          {
+            if (taskResult.Status == RdTaskStatus.Canceled)
             {
-              RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
-            });
+              externalCancellation.Terminate();
+            }
+
+            Trace(RdReactiveBase.ourLogSend, "send response", taskResult);
+            myWire.Send(RdId,
+              writer =>
+              {
+                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
+              });
+          }
+          else if (taskResult.Status == RdTaskStatus.Canceled) //we need to transfer cancellation to the other side
+          {
+            Trace(RdReactiveBase.ourLogSend, "send cancellation");
+            myWire.Send(RdId, writer => { writer.Write(Unit.Instance); }); //send cancellation to the other side
+          }
         }
-        else if (taskResult.Status == RdTaskStatus.Canceled) //we need to transfer cancellation to the other side
+        finally
         {
-          Trace(RdReactiveBase.ourLogSend, "send cancellation");
-          myWire.Send(RdId, writer => { writer.Write(Unit.Instance); }); //send cancellation to the other side
+          taskWireSubscriptionDefinition.Terminate(); //no need to listen result or cancellation from wire
         }
       });
 
