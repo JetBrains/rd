@@ -9,7 +9,7 @@ import org.gradle.api.tasks.Input
 @Suppress("UsePropertyAccessSyntax", "LeakingThis")
 open class DotnetBuildTask : Exec() {
     fun configuration(value: String) {
-        args("-c=${value}")
+        args("--configuration=${value}")
     }
 
     init {

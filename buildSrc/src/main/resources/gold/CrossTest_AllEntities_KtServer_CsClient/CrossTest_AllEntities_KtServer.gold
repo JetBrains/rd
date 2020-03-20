@@ -32,6 +32,11 @@ Trace | SEND                      | property `DemoServer.DemoModel.polymorphic_o
   openDerivedString = "Kotlin instance open derived string "
   openString = "Kotlin instance open string"
 ) 
+Trace | SEND                      | property `DemoServer.DemoModel.openClassProperty` :: ver = 0, value = OpenClass (
+  string = RdOptionalProperty: `<<not bound>>` (ver=0) [ <not initialized> ]
+  field = "field"
+) 
+Trace | SEND                      | property `DemoServer.DemoModel.openClassProperty.$.string` :: ver = 0, value = "Kotlin test" 
 Trace | SEND                      | property `DemoServer.DemoModel.date` :: ver = 0, value = Thu Jan 01 03:00:13 MSK 1970 
 Trace | SEND                      | property `DemoServer.DemoModel.enum` :: ver = 0, value = kt 
 Trace | SEND                      | signal `DemoServer.DemoModel.extModel.checker` :: value = <unit> 
@@ -65,5 +70,10 @@ Trace | RECV                      | property `DemoServer.DemoModel.polymorphic_o
   openDerivedString = "C# instance open derived string"
   openString = "C# instance open string"
 ) 
+Trace | RECV                      | property `DemoServer.DemoModel.openClassProperty` :: oldver = 0, newver = 0, value = OpenClass (
+  string = RdOptionalProperty: `<<not bound>>` (ver=0) [ <not initialized> ]
+  field = "c# test"
+) 
+Trace | RECV                      | property `DemoServer.DemoModel.openClassProperty.$.string` :: oldver = 0, newver = 0, value = "property" 
 Trace | RECV                      | property `DemoServer.DemoModel.enum` :: oldver = 0, newver = 0, value = net 
 Trace | RECV                      | signal `DemoServer.DemoModel.extModel.checker` :: value = <unit> 

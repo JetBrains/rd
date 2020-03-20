@@ -13,7 +13,7 @@ class CrossTest_RdCall_KtServer : CrossTest_KtServer_Base() {
 
             model.callback.set { it -> it.length }
 
-            model.call.start('K')
+            model.call.start(modelLifetime, 'K')
         }
     }
 }

@@ -154,6 +154,8 @@ object DemoModel : Ext(DemoRoot) {
         property("property_with_default", cc)
 
         property("if", `class`)
+
+        property("OpenClassProperty", OpenClass)
     }
 }
 

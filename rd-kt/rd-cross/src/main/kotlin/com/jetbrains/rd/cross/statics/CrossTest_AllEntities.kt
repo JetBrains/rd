@@ -64,6 +64,8 @@ object CrossTest_AllEntities {
         model.polymorphic_open.set(openDerived)
 
         val openClass = OpenClass("field")
+        model.openClassProperty.set(openClass)
+
         openClass.string.set("Kotlin test")
 
         model.date.set(Date(13_000)) // Thu Jan 01 03:00:13 MSK 1970
