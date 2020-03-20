@@ -54,14 +54,13 @@ namespace JetBrains.Rd.Tasks
 
             potentiallyBindable.BindPolymorphic(externalCancellation.Lifetime, myCall, RdId.ToString());
           }
+          else
+          {
+            externalCancellation.Terminate();
+          }
 
           if (myIsEndpoint)
           {
-            if (taskResult.Status == RdTaskStatus.Canceled)
-            {
-              externalCancellation.Terminate();
-            }
-
             Trace(RdReactiveBase.ourLogSend, "send response", taskResult);
             myWire.Send(RdId,
               writer =>
