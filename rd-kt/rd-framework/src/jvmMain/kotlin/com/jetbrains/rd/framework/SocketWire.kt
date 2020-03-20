@@ -8,6 +8,9 @@ import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
@@ -61,9 +64,12 @@ class SocketWire {
     companion object {
         val timeout: Duration = Duration.ofMillis(500)
         private const val ack_msg_len: Int = -1
+        private const val ping_len: Int = -2
         private const val pkg_header_len = 12
         const val disconnectedPauseReason = "Socket not connected"
+        const val maximumHeartbeatDelay = 3
 
+        private fun connectionEstablished(timeStamp : Int, notionTimestamp: Int) = timeStamp - notionTimestamp <= maximumHeartbeatDelay
     }
 
     abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
@@ -95,6 +101,8 @@ class SocketWire {
             sendBuffer.pause(disconnectedPauseReason)
             sendBuffer.start()
 
+            connected.advise(lifetime) { heartbeatAlive.value = it }
+
             socketProvider.advise(lifetime) { socket ->
 
                 logger.debug { "$id : connected" }
@@ -106,23 +114,60 @@ class SocketWire {
                 sendBuffer.reprocessUnacknowledged()
                 sendBuffer.resume(disconnectedPauseReason)
 
+                val heartbeatJob = startHeartbeat()
+
                 scheduler.queue { connected.value = true }
 
                 try {
                     receiverProc(socket)
                 } finally {
                     scheduler.queue { connected.value = false }
+                    heartbeatJob.cancel()
                     sendBuffer.pause(disconnectedPauseReason)
                     catchAndDrop { socket.close() }
                 }
             }
         }
 
+        private fun startHeartbeat() = GlobalScope.launch {
+            while (true) {
+                delay(heartBeatInterval.toMillis())
+                ping()
+                logger.trace { "$id: sent PING" }
+            }
+        }
+
+        private fun ping() {
+            catchAndDrop {
+                logger.trace {
+                    "$id: send PING " +
+                        "currentTimeStamp: $currentTimeStamp, " +
+                        "counterpartTimestamp: $counterpartTimestamp, " +
+                        "counterpartNotionTimestamp: $counterpartNotionTimestamp"
+                }
+
+                if (!connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
+                    heartbeatAlive.value = false
+                }
+
+                synchronized(socketSendLock) {
+                    sendPingPkgHeader.reset()
+                    sendPingPkgHeader.writeInt(ping_len)
+                    sendPingPkgHeader.writeInt(currentTimeStamp)
+                    sendPingPkgHeader.writeInt(counterpartTimestamp)
+                    output.write(sendPingPkgHeader.getArray())
+                }
+
+                ++currentTimeStamp
+            }
+        }
+
+
         private fun receiverProc(socket: Socket) {
             while (lifetime.isAlive) {
                 try {
                     if (!socket.isConnected) {
-                        logger.debug {"Stop receive messages because socket disconnected" }
+                        logger.debug { "Stop receive messages because socket disconnected" }
                         break
                     }
 
@@ -176,11 +221,32 @@ class SocketWire {
 
                 while (true) {
                     val len = stream.readInt32() ?: return -1
+
+                    if (len == ping_len) {
+                        val receivedTimestamp = stream.readInt32() ?: return -1
+                        val receivedCounterpartTimestamp = stream.readInt32() ?: return -1
+                        logger.trace {
+                            "$id received PING package " +
+                                "receivedTimestamp: $receivedTimestamp, " +
+                                "receivedCounterpartTimestamp: $receivedCounterpartTimestamp" +
+                                "currentTimeStamp: $currentTimeStamp, " +
+                                "counterpartTimestamp: $counterpartTimestamp, " +
+                                "counterpartNotionTimestamp: $counterpartNotionTimestamp"
+                        }
+
+                        counterpartTimestamp = receivedTimestamp
+                        counterpartNotionTimestamp = receivedCounterpartTimestamp
+
+                        if (connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
+                            heartbeatAlive.value = true
+                        }
+                        continue
+                    }
+
                     val seqn = stream.readInt64() ?: return -1
-
-
-                    if (len == ack_msg_len)
+                    if (len == ack_msg_len) {
                         sendBuffer.acknowledge(seqn)
+                    }
                     else {
                         require(len > 0) {"len > 0: $len"}
                         require (len < 300_000_000) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
@@ -221,6 +287,28 @@ class SocketWire {
         private val socketSendLock = Any()
         private val sendPkgHeader = createAbstractBuffer()
         private val ackPkgHeader = createAbstractBuffer()
+
+        /**
+         * Ping's interval and not actually detection's timeout.
+         */
+        val heartBeatInterval: Duration = Duration.ofMillis(500)
+
+        /**
+         * Timestamp of this wire which increases at intervals of [heartBeatInterval].
+         */
+        private var currentTimeStamp = 0
+
+        /**
+         * Actual notion about counterpart's [currentTimeStamp].
+         */
+        private var counterpartTimestamp = 0
+
+        /**
+         * The latest received counterpart's notion of this wire's [currentTimeStamp].
+         */
+        private var counterpartNotionTimestamp = 0
+
+        private val sendPingPkgHeader = createAbstractBuffer()
 
         private fun send0(chunk: ByteBufferAsyncProcessor.Chunk) {
             try {

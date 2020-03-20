@@ -35,7 +35,7 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 
 /**
  * Generate C++ code.
- * @param defaultNamespace namespace separated by symbol "colon", "a::b::c", for instance.
+ * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
 open class Cpp17Generator(flowTransform: FlowTransform,
@@ -806,7 +806,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                             block("switch (x) {", "}") {
                                 map.forEach { (key, value) ->
                                     +"""
-                                |case $key: 
+                                |case $key:
                                 |   return ${enum.withNamespace() + "::" + value.name};
                                 """.trimMargin()
                                 }

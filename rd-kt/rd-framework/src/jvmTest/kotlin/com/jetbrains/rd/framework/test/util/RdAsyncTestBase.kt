@@ -3,11 +3,11 @@ package com.jetbrains.rd.framework.test.util
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
-import org.junit.After
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import kotlin.test.AfterTest
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+
 
 open class RdAsyncTestBase : RdFrameworkTestBase() {
     companion object {
@@ -20,7 +20,7 @@ open class RdAsyncTestBase : RdFrameworkTestBase() {
         var serverUiScheduler: TestSingleThreadScheduler = TestSingleThreadScheduler("ServerUi")
         private set
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun makeFreshSchedulers() {
             if(!clientBgScheduler.executor.isShutdown) return
@@ -31,7 +31,7 @@ open class RdAsyncTestBase : RdFrameworkTestBase() {
             serverUiScheduler = TestSingleThreadScheduler("ServerUi")
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun shutdownSchedulers() {
             clientBgScheduler.executor.shutdown()
@@ -48,17 +48,17 @@ open class RdAsyncTestBase : RdFrameworkTestBase() {
     override val serverScheduler: IScheduler
         get() = serverUiScheduler
 
-    @Before
+    @BeforeEach
     fun clearErrorsBeforeTest() {
         ErrorAccumulatorLoggerFactory.errors.clear()
     }
 
-    @After
+    @AfterEach
     fun reportErrorsAfterTest() {
         ErrorAccumulatorLoggerFactory.throwAndClear()
     }
 
-    @AfterTest
+    @AfterEach
     fun tearDownSchedulers() {
         clientBgScheduler.assertNoExceptions()
         serverBgScheduler.assertNoExceptions()

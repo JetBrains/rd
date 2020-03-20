@@ -31,6 +31,8 @@ namespace JetBrains.Rd.Reflection
   /// </summary>
   public class ReflectionRdActivator
   {
+    private static readonly ILog ourLog = Log.GetLog<ReflectionRdActivator>();
+
     [NotNull] private readonly ReflectionSerializersFactory mySerializersFactory;
     [NotNull] private readonly IProxyGenerator myProxyGenerator;
     [CanBeNull] private readonly ITypesCatalog myTypesCatalog;
@@ -379,6 +381,8 @@ namespace JetBrains.Rd.Reflection
         var argument2 = genericArguments[1];
         var serializerPair2 = GetProperSerializer(argument2);
         var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
+        if (ourLog.IsTraceEnabled())
+          ourLog.Trace("Create RdCall: {0}.{1}, TReq poly: {2}, TRes poly: {3}", implementingType.FullName, memberName, serializerPair.IsPolymorphic, serializerPair2.IsPolymorphic);
         ((RdReactiveBase) instance).ValueCanBeNull = true;
         return instance;
       }

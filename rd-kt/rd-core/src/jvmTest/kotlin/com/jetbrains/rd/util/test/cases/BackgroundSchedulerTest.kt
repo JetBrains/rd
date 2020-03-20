@@ -6,25 +6,23 @@ import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Statics
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFalse
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+
 
 class BackgroundSchedulerTest {
 
 
     private lateinit var disposeLoggerFactory: Closeable
 
-    @Before
+    @BeforeEach
     fun setup() {
         val statics = Statics<ILoggerFactory>()
         disposeLoggerFactory = statics.push(ErrorAccumulatorLoggerFactory)
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         disposeLoggerFactory.close()
     }
@@ -35,7 +33,7 @@ class BackgroundSchedulerTest {
     fun test0() {
         val s = TestSingleThreadScheduler("test")
         assertFalse { s.isActive }
-        assertFails { s.assertThread() }
+        Assertions.assertThrows(Throwable::class.java) {s.assertThread() }
 
 
         val tasksExecuted = AtomicInteger(0)
@@ -60,7 +58,7 @@ class BackgroundSchedulerTest {
             tasksExecuted.incrementAndGet()
         }
 
-        assertFails { s.assertNoExceptions() }
+        Assertions.assertThrows(Throwable::class.java) { s.assertNoExceptions() }
         assertEquals(tasksExecuted.get(), 3)
     }
 }

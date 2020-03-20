@@ -3,27 +3,15 @@ package com.jetbrains.rd.framework.test.cases.serialization
 import com.jetbrains.rd.framework.UnsafeBuffer
 import com.jetbrains.rd.framework.test.cases.A
 import com.jetbrains.rd.framework.test.cases.B
-import org.junit.Test
-import org.junit.experimental.theories.DataPoint
-import org.junit.experimental.theories.Theories
-import org.junit.experimental.theories.Theory
-import org.junit.runner.RunWith
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
-@RunWith(Theories::class)
 class UnsafeBufferTest {
-
-    companion object {
-        @DataPoint
-        @JvmField
-        val trueValue = true
-
-        @DataPoint
-        @JvmField
-        val falseValue = false
-    }
-
-    @Theory
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
     fun testIntArrayWrite(backedByByteArray: Boolean) {
         val buf = if (backedByByteArray) UnsafeBuffer(ByteArray(0)) else UnsafeBuffer(0)
 
@@ -37,24 +25,29 @@ class UnsafeBufferTest {
         assert(array.contentEquals(readArray))
     }
 
-    @Theory
-    @Test(expected = IndexOutOfBoundsException::class)
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
     fun testIntArrayOverflowReadEmpty(backedByByteArray: Boolean) {
-        val buf = if (backedByByteArray) UnsafeBuffer(ByteArray(0)) else UnsafeBuffer(0)
+        Assertions.assertThrows(IndexOutOfBoundsException::class.java) {
+            val buf = if (backedByByteArray) UnsafeBuffer(ByteArray(0)) else UnsafeBuffer(0)
 
-        buf.readIntArray()
+            buf.readIntArray()
+        }
     }
 
-    @Theory
-    @Test(expected = IndexOutOfBoundsException::class)
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
     fun testIntArrayOverflowReadWrongSize(backedByByteArray: Boolean) {
-        val buf = if (backedByByteArray) UnsafeBuffer(ByteArray(0)) else UnsafeBuffer(0)
+        Assertions.assertThrows(IndexOutOfBoundsException::class.java) {
 
-        buf.writeInt(100)
+            val buf = if (backedByByteArray) UnsafeBuffer(ByteArray(0)) else UnsafeBuffer(0)
 
-        buf.rewind()
+            buf.writeInt(100)
 
-        buf.readIntArray()
+            buf.rewind()
+
+            buf.readIntArray()
+        }
     }
 
     // todo: tests to cover other aspects of the buffer

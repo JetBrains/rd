@@ -5,31 +5,38 @@ import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.test.util.TestWire
-import org.junit.experimental.theories.*
-import org.junit.runner.RunWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
-@RunWith(Theories::class)
 class InterningRemovalsTest : RdFrameworkTestBase() {
     companion object {
-        @DataPoint
-        @JvmField
-        val trueValue = true
-
-        @DataPoint
-        @JvmField
-        val falseValue = false
+        @Suppress("unused")
+        @JvmStatic
+        fun doTest_Args(): Stream<Arguments> = Stream.of(
+            Arguments.of(true, true, true),
+            Arguments.of(true, true, false),
+            Arguments.of(true, false, true),
+            Arguments.of(true, false, false),
+            Arguments.of(false, true, true),
+            Arguments.of(false, true, false),
+            Arguments.of(false, false, true),
+            Arguments.of(false, false, false)
+        )
     }
 
-    @Theory
+    @ParameterizedTest
+    @MethodSource("doTest_Args")
     fun doTest(firstSendServer: Boolean, secondSendServer: Boolean, thirdSendServer: Boolean) {
         println("First: $firstSendServer second: $secondSendServer third: $thirdSendServer")
-        val rootServer = InternRoot<Any>().bindStatic(serverProtocol,"top")
+        val rootServer = InternRoot<Any>().bindStatic(serverProtocol, "top")
         val rootClient = InternRoot<Any>().bindStatic(clientProtocol, "top")
 
         val stringToSend = "This string is nice and long enough to overshadow any interning overheads"
 
-        fun proto(server: Boolean) = if(server) serverProtocol else clientProtocol
-        fun root(server: Boolean) = if(server) rootServer else rootClient
+        fun proto(server: Boolean) = if (server) serverProtocol else clientProtocol
+        fun root(server: Boolean) = if (server) rootServer else rootClient
 
         val firstSendBytes = measureBytes(proto(firstSendServer)) {
             root(firstSendServer).intern(stringToSend)
@@ -62,9 +69,9 @@ class InterningRemovalsTest : RdFrameworkTestBase() {
         return (protocol.wire as TestWire).bytesWritten - pre
     }
 
-    private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String) : InternRoot<T> {
+    private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String): InternRoot<T> {
         identify(protocol.identity, RdId.Null.mix(id))
-        bind(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
+        bind(if (protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
         return this
     }
 }

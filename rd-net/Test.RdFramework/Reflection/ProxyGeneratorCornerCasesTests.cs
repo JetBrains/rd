@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
-using JetBrains.Diagnostics;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -10,10 +9,12 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class AsyncCornerCases : ProxyGeneratorAsyncCallsTest
   {
+    protected override bool IsAsync => true;
+
     [Test]
-    public void TestUnregisteredType()
+    public async Task TestUnregisteredType()
     {
-      TestTemplate<UnknownSerializer, IUnknownSerializer>(s =>
+      await TestTemplate<UnknownSerializer, IUnknownSerializer>(s =>
       {
         var task = s.M(new Derived());
         Assert.Throws<AggregateException>(() => task.Wait(1000));

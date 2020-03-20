@@ -35,7 +35,7 @@ namespace Test.RdCross
             // ReSharper disable once InconsistentNaming
             var (_bool, _byte, _short, _int, _long, _float, _double, _unsigned_byte, unsigned_short, _unsigned_int, _unsigned_long, _my_enum, _flags, initializedEnum) = scalar;
             var (first, second) = new ComplicatedPair(new Derived("First"), new Derived("Second"));
-            
+
             model.Scalar.Set(scalar);
 
             model.Set.Add(50);
@@ -56,7 +56,7 @@ namespace Test.RdCross
 
             var openDerived = new OpenDerived("C# instance open derived string", "C# instance open string");
             model.Polymorphic_open.Set(openDerived);
-            
+
             var openClass = new OpenClass("c# test");
             model.OpenClassProperty.Set(openClass);
             openClass.String.Set("property");

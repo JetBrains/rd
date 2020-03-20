@@ -3,7 +3,7 @@ package com.jetbrains.rd.generator.test.cases.compiler
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.File
 
 

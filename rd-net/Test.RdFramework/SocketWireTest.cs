@@ -7,12 +7,12 @@ using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
+using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Threading;
-using JetBrains.Util;
 using NUnit.Framework;
 using Test.Lifetimes;
 
@@ -21,8 +21,9 @@ namespace Test.RdFramework
   [TestFixture]
   public class SocketWireTest : LifetimesTestBase
   {
+    internal static TimeSpan DefaultTimeout = TimeSpan.FromMilliseconds(100);
 
-    public const string Top = "top";
+    internal const string Top = "top";
     private void WaitAndAssert<T>(RdProperty<T> property, T expected, T prev)
     {
       WaitAndAssert(property, expected, new Maybe<T>(prev));
@@ -50,23 +51,21 @@ namespace Test.RdFramework
     }
 
 
-    private IProtocol Server(Lifetime lifetime, int? port = null)
+    internal static IProtocol Server(Lifetime lifetime, int? port = null)
     {
       var id = "TestServer";
-      return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance,
-          new SocketWire.Server(lifetime, SynchronousScheduler.Instance, new IPEndPoint(IPAddress.Loopback, port ?? 0), id), lifetime
-      );
+      var server = new SocketWire.Server(lifetime, SynchronousScheduler.Instance, new IPEndPoint(IPAddress.Loopback, port ?? 0), id);
+      return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance, server, lifetime);
     }
 
-    private IProtocol Client(Lifetime lifetime, int port)
+    internal static IProtocol Client(Lifetime lifetime, int port)
     {
       var id = "TestClient";
-      return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance,        
-          new SocketWire.Client(lifetime, SynchronousScheduler.Instance, port, id), lifetime
-      );
+      var client = new SocketWire.Client(lifetime, SynchronousScheduler.Instance, port, id);
+      return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance, client, lifetime);
     }
 
-    private IProtocol Client(Lifetime lifetime, IProtocol serverProtocol)
+    internal static IProtocol Client(Lifetime lifetime, IProtocol serverProtocol)
     {
       // ReSharper disable once PossibleNullReferenceException
       return Client(lifetime, (serverProtocol.Wire as SocketWire.Server).Port);
@@ -182,10 +181,12 @@ namespace Test.RdFramework
 
 
     [Test]
+    [Timeout(5000)]
     public void TestServerWithoutClient()
     {
       Lifetime.Using(lifetime =>
       {
+        WithLongTimeout(lifetime);
         SynchronousScheduler.Instance.SetActive(lifetime);
         Server(lifetime);
       });
@@ -220,10 +221,12 @@ namespace Test.RdFramework
 
 
     [Test]
+    [Timeout(5000)]
     public void TestClientWithoutServer()
     {
       Lifetime.Using(lifetime =>
       {
+        WithLongTimeout(lifetime);
         SynchronousScheduler.Instance.SetActive(lifetime);
         Client(lifetime, FindFreePort());
       });
@@ -275,7 +278,7 @@ namespace Test.RdFramework
       Lifetime.Using(lifetime =>
       {
         SynchronousScheduler.Instance.SetActive(lifetime);
-        var serverProtocol = Server(lifetime, null);
+        var serverProtocol = Server(lifetime);
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = new RdSignal<int>().Static(1);
@@ -392,8 +395,89 @@ namespace Test.RdFramework
       sLifetime.Terminate();
       SpinWaitEx.SpinUntil(() => factory.Connected.Count == 0);
     }
-      
-      
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void TestPacketLoss(bool isClientToServer)
+    {
+      using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
+      Lifetime.Using(lifetime =>
+      {
+        SynchronousScheduler.Instance.SetActive(lifetime);
+
+        var serverProtocol = Server(lifetime);
+        var serverWire = (SocketWire.Base) serverProtocol.Wire;
+
+        var proxy = new SocketProxy("TestProxy", lifetime, serverProtocol);
+        proxy.Start();
+
+        var clientProtocol = Client(lifetime, proxy.Port);
+        var clientWire = (SocketWire.Base) clientProtocol.Wire;
+
+        Thread.Sleep(DefaultTimeout);
+
+        if (isClientToServer)
+          proxy.StopClientToServerMessaging();
+        else
+          proxy.StopServerToClientMessaging();
+
+        var detectionTimeoutTicks = ((SocketWire.Base) clientProtocol.Wire).HeartBeatInterval.Ticks *
+                                    (SocketWire.Base.MaximumHeartbeatDelay + 3);
+        var detectionTimeout = TimeSpan.FromTicks(detectionTimeoutTicks);
+          
+        Thread.Sleep(detectionTimeout);
+
+        Assert.IsTrue(serverWire.Connected.Value);
+        Assert.IsTrue(clientWire.Connected.Value);
+          
+        Assert.IsFalse(serverWire.HeartbeatAlive.Value);
+        Assert.IsFalse(clientWire.HeartbeatAlive.Value);
+
+        if (isClientToServer)
+          proxy.StartClientToServerMessaging();
+        else
+          proxy.StartServerToClientMessaging();
+
+        Thread.Sleep(detectionTimeout);
+
+        Assert.IsTrue(serverWire.Connected.Value);
+        Assert.IsTrue(clientWire.Connected.Value);
+          
+        Assert.IsTrue(serverWire.HeartbeatAlive.Value);
+        Assert.IsTrue(clientWire.HeartbeatAlive.Value);
+
+      });
+    }
+
+    [Test]
+    [Ignore("Not enough timeout to get the correct test")]
+    public void TestStressHeartbeat()
+    {
+      // using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
+      Lifetime.Using(lifetime =>
+      {
+        SynchronousScheduler.Instance.SetActive(lifetime);
+
+        var interval = TimeSpan.FromMilliseconds(50);
+
+        var serverProtocol = Server(lifetime);
+        var serverWire = ((SocketWire.Base) serverProtocol.Wire).With(wire => wire.HeartBeatInterval = interval);
+
+        var latency = TimeSpan.FromMilliseconds(40);
+        var proxy = new SocketProxy("TestProxy", lifetime, serverProtocol) {Latency = latency};
+        proxy.Start();
+
+        var clientProtocol = Client(lifetime, proxy.Port);
+        var clientWire = ((SocketWire.Base) clientProtocol.Wire).With(wire => wire.HeartBeatInterval = interval);
+
+        Thread.Sleep(DefaultTimeout);
+
+        serverWire.HeartbeatAlive.WhenFalse(lifetime, _ => Assert.Fail("Detected false disconnect on server side"));
+        clientWire.HeartbeatAlive.WhenFalse(lifetime, _ => Assert.Fail("Detected false disconnect on client side"));
+
+        Thread.Sleep(TimeSpan.FromSeconds(50));
+      });
+    }
 
     private static void CloseSocket(IProtocol protocol)
     {
@@ -404,6 +488,12 @@ namespace Test.RdFramework
       }
       
       SocketWire.Base.CloseSocket(socketWire.Socket.NotNull());
+    }
+
+    private static void WithLongTimeout(Lifetime lifetime)
+    {
+      var oldValue = SocketWire.Base.TimeoutMs;
+      lifetime.Bracket(() => SocketWire.Base.TimeoutMs = 100_000, () => SocketWire.Base.TimeoutMs = oldValue);
     }
   }
 }

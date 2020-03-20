@@ -101,11 +101,11 @@ object DemoModel : Ext(DemoRoot) {
         field("string", PredefinedType.string)
     }
 
-    private var Open = openstruct extends Base{
+    private var Open = openstruct extends Base {
         field("openString", PredefinedType.string)
     }
 
-    private var OpenDerived = openstruct extends Open{
+    private var OpenDerived = openstruct extends Open {
         field("openDerivedString", PredefinedType.string)
     }
 
@@ -154,6 +154,10 @@ object DemoModel : Ext(DemoRoot) {
         property("property_with_default", cc)
 
         property("if", `class`)
+
+        property("my_scalars", immutableList(MyScalar))
+        property("list_of_derived", immutableList(Derived))
+        property("list_of_base", immutableList(Base))
 
         property("OpenClassProperty", OpenClass)
     }

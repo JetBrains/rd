@@ -9,8 +9,8 @@ import com.jetbrains.rd.util.collections.QueueImpl
 import com.jetbrains.rd.util.reactive.IOptProperty
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 class InterningWithExtTest : RdFrameworkTestBase() {
 
@@ -30,15 +30,15 @@ class InterningWithExtTest : RdFrameworkTestBase() {
 
 
     @Test
-    @Ignore
+    @Disabled
     fun testLocalInternLateConnect() = doTest(true) { it.internedLocally }
 
     @Test
-    @Ignore
+    @Disabled
     fun testExternalInternLateConnect() = doTest(true) { it.internedExternally }
 
     @Test
-    @Ignore
+    @Disabled
     fun testProtocolInternLateConnect() = doTest(true) { it.internedInProtocol }
 
     private fun doTest(delayClientInit: Boolean, propertyGetter: (InterningExtRootModel) -> IOptProperty<String>) {

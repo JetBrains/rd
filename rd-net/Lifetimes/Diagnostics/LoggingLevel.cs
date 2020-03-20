@@ -27,7 +27,7 @@ namespace JetBrains.Diagnostics
     INFO = 4,
 
     /// <summary>
-    /// Additional info for debbuging
+    /// Additional info for debugging
     /// </summary>
     VERBOSE = 5,
 

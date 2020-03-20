@@ -7,6 +7,8 @@
 #include <sstream>
 #include <vector>
 #include <atomic>
+#include <future>
+
 
 #include "thirdparty.hpp"
 
@@ -14,28 +16,17 @@ namespace rd {
 	namespace detail {
 		using std::to_string;
 
-		inline std::string to_string(std::string const &val) {
-			return val;
-		}
+		std::string to_string(std::string const &val);
 
-		inline std::string to_string(char const val[]) {
-			return val;
-		}
+		std::string to_string(char const val[]);
 
-//		template<>
-		inline std::string to_string(std::wstring const &val) {
-			return std::string(val.begin(), val.end());
-		}
+		std::string to_string(std::wstring const &val);
 
-		inline std::string to_string(std::thread::id const &id) {
-			std::ostringstream ss;
-			ss << id;
-			return ss.str();
-		}
+		std::string to_string(std::thread::id const &id);
 
-		inline std::string to_string(std::exception const &e) {
-			return std::string(e.what());
-		}
+		std::string to_string(std::exception const &e);
+
+		std::string to_string(std::future_status const &status);
 
 		template<typename Rep, typename Period>
 		inline std::string to_string(std::chrono::duration<Rep, Period> const &time) {
@@ -66,8 +57,8 @@ namespace rd {
 			return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
 		}
 
-		template<typename T>
-		std::string to_string(std::vector<T> const &v) {
+		template<template<class, class> class C, typename T, typename A>
+		std::string to_string(C<T, A> const &v) {
 			std::string res = "[";
 			for (const auto &item : v) {
 				res += to_string(item);
@@ -84,9 +75,7 @@ namespace rd {
 
 		using std::to_wstring;
 
-		inline std::wstring to_wstring(std::string const &s) {
-			return std::wstring(s.begin(), s.end());
-		}
+		std::wstring to_wstring(std::string const &s);
 
 		template<class T>
 		std::wstring as_wstring(T const &t) {

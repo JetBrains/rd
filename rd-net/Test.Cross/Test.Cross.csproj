@@ -12,6 +12,13 @@
     <ItemGroup>
         <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
+        <Compile Include="..\Test.Lifetimes\TestLogger.cs">
+          <Link>Util\TestLogger.cs</Link>
+        </Compile>
         <Compile Include="obj\DemoModel\*.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="nunit" Version="3.12.0" />
     </ItemGroup>
 </Project>

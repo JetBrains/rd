@@ -487,7 +487,7 @@ namespace JetBrains.Lifetimes
     ///   <para>Scopes your code in <paramref name="action" /> with a lifetime that is terminated automatically when <paramref name="action" /> completes execution, or when its execution is aborted by an exception.</para>
     ///   <para>Analogous to the <c>using</c> statement of the C# language on everything that is added to the lifetime.</para>
     /// </summary>
-    /// <param name="parent">A parent lifetime which limits the lifetime given to your action, and migth terminate it before the action ends.</param>
+    /// <param name="parent">A parent lifetime which limits the lifetime given to your action, and might terminate it before the action ends.</param>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
     [PublicAPI] public static async Task UsingAsync(OuterLifetime parent, [NotNull] [InstantHandle] Func<Lifetime, Task> action)
     {
@@ -505,7 +505,7 @@ namespace JetBrains.Lifetimes
     ///   <para>Scopes your code in <paramref name="action" /> with a lifetime that is terminated automatically when <paramref name="action" /> completes execution, or when its execution is aborted by an exception.</para>
     ///   <para>Analogous to the <c>using</c> statement of the C# language on everything that is added to the lifetime.</para>
     /// </summary>
-    /// <param name="parent">A parent lifetime which limits the lifetime given to your action, and migth terminate it before the action ends.</param>
+    /// <param name="parent">A parent lifetime which limits the lifetime given to your action, and might terminate it before the action ends.</param>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
     [PublicAPI] public static async Task<T> UsingAsync<T>(OuterLifetime parent, [NotNull] [InstantHandle] Func<Lifetime, Task<T>> action)
     {

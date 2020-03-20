@@ -19,9 +19,12 @@ namespace rd {
 	 * \tparam V type of stored values
 	 * \tparam KS "SerDes" for keys
 	 * \tparam VS "SerDes" for values
+	 * \tparam KA allocator for keys
+	 * \tparam VA allocator for values
 	 */
-	template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>>
-	class RdMap final : public RdReactiveBase, public ViewableMap<K, V>, public ISerializable {
+	template<typename K, typename V, typename KS = Polymorphic<K>, typename VS = Polymorphic<V>,
+	        typename KA = std::allocator<K>, typename VA = std::allocator<V>>
+	class RdMap final : public RdReactiveBase, public ViewableMap<K, V, KA, VA>, public ISerializable {
 	private:
 		using WK = typename IViewableMap<K, V>::WK;
 		using WV = typename IViewableMap<K, V>::WV;
