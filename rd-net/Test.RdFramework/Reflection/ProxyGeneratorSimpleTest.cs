@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Diagnostics;
+using JetBrains.dotMemoryUnit;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
 using NUnit.Framework;
@@ -56,6 +57,20 @@ namespace Test.RdFramework.Reflection
       Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
       proxy.RunTests(null);
       proxy.RunTests(new TestRunRequest());
+    }
+
+    [Test, Explicit]
+    public void TestLeaks()
+    {
+      var proxy = SFacade.ActivateProxy<IUnitTestRemoteAgent>(TestLifetime, ServerProtocol);
+      var client = CFacade.Activator.ActivateBind<UnitTestRemoteAgent>(TestLifetime, ClientProtocol);
+
+      var checkpoint = dotMemory.Check();
+      for (int i = 0; i < 100000; i++)
+      {
+        proxy.RunTests(new TestRunRequest());
+      }
+      dotMemory.Check(m => Assert.Less(m.GetDifference(checkpoint).GetNewObjects().SizeInBytes, 128_000));
     }
 
     [RdRpc]
