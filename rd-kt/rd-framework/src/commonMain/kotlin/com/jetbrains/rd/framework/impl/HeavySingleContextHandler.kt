@@ -100,7 +100,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
 
     override var async: Boolean
         get() = true
-        set(value) = error("SingleKeyContextHandler is always async")
+        set(_) = error("SingleKeyContextHandler is always async")
 
     override val wireScheduler = InternScheduler()
 }

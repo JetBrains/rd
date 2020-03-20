@@ -170,7 +170,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
 
     override var async: Boolean
         get() = true
-        set(value) = error("ProtocolContextHandler is always async")
+        set(_) = error("ProtocolContextHandler is always async")
 
     override val wireScheduler: IScheduler = InternScheduler()
 }
