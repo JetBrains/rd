@@ -2,6 +2,7 @@
 #define RD_CPP_WRAPPER_H
 
 #include "util/core_traits.h"
+#include "std/allocator.h"
 #include "std/hash.h"
 #include "std/to_string.h"
 
@@ -12,7 +13,7 @@
 #include <utility>
 
 namespace rd {
-	template<typename T>
+	template<typename T, typename A = std::allocator<T>>
 	class Wrapper;
 
 	template<typename T, typename R = void>
@@ -74,14 +75,16 @@ namespace rd {
 	 * \brief wrapper over value of any type. It supports semantic of shared ownership due to shared_ptr as storage.
 	 * \tparam T type of value
 	 */
-	template<typename T>
+	template<typename T, typename A>
 	class Wrapper final : public std::shared_ptr<T> {
 	private:
-		template<typename>
+		template<typename, typename>
 		friend
 		class Wrapper;
 
 		using Base = std::shared_ptr<T>;
+
+		A alloc;
 	public:
 		using type = T;
 
@@ -123,7 +126,7 @@ namespace rd {
 				>::value
 		>>
 		Wrapper(F &&value) :
-				Base(std::make_shared<G>(std::forward<F>(value))) {
+				Base(std::allocate_shared<G>(alloc, std::forward<F>(value))) {
 		}
 
 		template<typename F>
@@ -135,7 +138,7 @@ namespace rd {
 		template<typename U = T, typename R = typename std::enable_if_t<!std::is_abstract<std::decay_t<U>>::value>>
 		Wrapper(optional<U> &&opt) {
 			if (opt) {
-				*this = std::make_shared<U>(*std::move(opt));
+				*this = std::allocate_shared<U>(alloc, *std::move(opt));
 			}
 		}
 
@@ -245,6 +248,11 @@ namespace rd {
 		template<typename T, typename ...Args>
 		Wrapper<T> make_wrapper(Args &&... args) {
 			return Wrapper<T>(std::make_shared<T>(std::forward<Args>(args)...));
+		}
+
+		template<typename T, typename A, typename ...Args>
+		Wrapper<T> allocate_wrapper(const A &alloc, Args &&... args) {
+			return Wrapper<T>(std::allocate_shared<T, A>(alloc, std::forward<Args>(args)...));
 		}
 		/*template<typename T>
 		constexpr Wrapper<T> null_wrapper = Wrapper<T>(nullptr);*/

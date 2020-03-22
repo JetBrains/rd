@@ -15,9 +15,10 @@ namespace rd {
 	 *
 	 * \tparam T type of stored values
 	 * \tparam S "SerDes" for values
+	 * \tparam A allocator for values
 	 */
 	template<typename T, typename S = Polymorphic<T>, typename A = allocator<T>>
-	class RdList final : public RdReactiveBase, public ViewableList<T>, public ISerializable {
+	class RdList final : public RdReactiveBase, public ViewableList<T, A>, public ISerializable {
 	private:
 		using WT = typename IViewableList<T>::WT;
 

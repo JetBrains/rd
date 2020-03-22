@@ -4,24 +4,14 @@ import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import demo.DemoModel
 import demo.extModel
-import org.junit.Assert
-import org.junit.experimental.theories.DataPoint
-import org.junit.experimental.theories.Theories
-import org.junit.experimental.theories.Theory
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
-@RunWith(Theories::class)
 class ContextWithExtTest : RdFrameworkTestBase() {
-    companion object {
-        @JvmField
-        @DataPoint
-        val trueValue = true
-        @JvmField
-        @DataPoint
-        val falseValue = false
-    }
 
-    @Theory
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
     fun testExtPreserveContextOnLateConnect(useHeavyContext: Boolean) {
         println("useHeavyContext: $useHeavyContext")
         val context = if(useHeavyContext) ContextsTest.TestKeyHeavy else ContextsTest.TestKeyLight
@@ -54,7 +44,7 @@ class ContextWithExtTest : RdFrameworkTestBase() {
 
         setWireAutoFlush(true)
 
-        Assert.assertEquals(3, numReceives)
-        Assert.assertEquals(fireValues.toSet(), receivedContexts)
+        assertEquals(3, numReceives)
+        assertEquals(fireValues.toSet(), receivedContexts)
     }
 }

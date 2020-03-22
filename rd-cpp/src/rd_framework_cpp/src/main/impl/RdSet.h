@@ -18,7 +18,7 @@ namespace rd {
 	 * \tparam S "SerDes" for values
 	 */
 	template<typename T, typename S = Polymorphic<T>, typename A = allocator<T>>
-	class RdSet final : public RdReactiveBase, public ViewableSet<T>, public ISerializable {
+	class RdSet final : public RdReactiveBase, public ViewableSet<T, A>, public ISerializable {
 	private:
 		using WT = typename IViewableSet<T>::WT;
 	protected:

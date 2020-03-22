@@ -13,6 +13,7 @@ namespace rd {
 	class IWire {
 	public:
 		Property<bool> connected{false};
+		Property<bool> heartbeatAlive{false};
 
 		//region ctor/dtor
 

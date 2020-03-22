@@ -1,6 +1,7 @@
 #ifndef RD_CPP_CORE_VIEWABLESET_H
 #define RD_CPP_CORE_VIEWABLESET_H
 
+#include "std/allocator.h"
 #include "base/IViewableSet.h"
 #include "reactive/SignalX.h"
 #include "util/core_util.h"
@@ -13,17 +14,18 @@ namespace rd {
 	 * \brief complete class which has @code IViewableSet<T>'s properties
 	 * \tparam T 
 	 */
-	template<typename T>
-	class ViewableSet : public IViewableSet<T> {
+	template<typename T, typename A = allocator<T>>
+	class ViewableSet : public IViewableSet<T, A> {
 	public:
 		using Event = typename IViewableSet<T>::Event;
 
-		using IViewableSet<T>::advise;
+		using IViewableSet<T, A>::advise;
 	private:
-		using WT = typename IViewableSet<T>::WT;
+		using WT = typename IViewableSet<T, A>::WT;
+		using WA = typename A::template rebind<Wrapper<T>>::other;
 
 		Signal<Event> change;
-		using data_t = ordered_set<Wrapper<T>, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>>;
+		using data_t = ordered_set<Wrapper<T>, wrapper::TransparentHash<T>, wrapper::TransparentKeyEqual<T>, WA>;
 		mutable data_t set;
 	public:
 		//region ctor/dtor

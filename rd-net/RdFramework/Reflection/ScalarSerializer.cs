@@ -20,6 +20,8 @@ namespace JetBrains.Rd.Reflection
 {
   public class ScalarSerializer : IScalarSerializers, ISerializersContainer
   {
+    private static ILog log = Log.GetLog(typeof(ScalarSerializer));
+
     /// <summary>
     /// Types catalog required for providing information about statically discovered types during concrete serializer
     /// construction for sake of possibility for Rd serializers to lookup real type by representing RdId
@@ -87,7 +89,10 @@ namespace JetBrains.Rd.Reflection
         Assertion.Fail($"Attempt to create serializer for black-listed type: {type.ToString(true)}");
       }
 
-      var result = CreateSerializer(type);
+      SerializerPair result;
+      using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type)) 
+        result = CreateSerializer(type);
+
       myStaticSerializers[type] = result;
       return result;
 
@@ -289,8 +294,7 @@ namespace JetBrains.Rd.Reflection
       {
         if (myPolySerializers.TryGetValue(t, out var value))
           return value;
-
-        myTypesCatalog.AddType(t);
+        myTypesCatalog?.AddType(t);
         return SerializerPair.Polymorphic(t);
       }
       else
@@ -367,7 +371,9 @@ namespace JetBrains.Rd.Reflection
 
     public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedType = null)
     {
-      myStaticSerializers[typeof(T)] = new SerializerPair(reader, writer);
+      var serializer = new SerializerPair(reader, writer);
+      Assertion.Assert(!serializer.IsPolymorphic, "You should not register polymorphic serializer. Todo: why");
+      myStaticSerializers[typeof(T)] = serializer;
     }
 
     public void RegisterEnum<T>() where T :

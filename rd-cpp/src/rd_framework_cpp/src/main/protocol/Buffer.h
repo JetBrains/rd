@@ -131,7 +131,7 @@ namespace rd {
 			}
 		}
 
-		template<template<class, class> class C, typename T, typename A = allocator<T>, typename = typename std::enable_if_t<!std::is_abstract<T>::value>>
+		template<template<class, class> class C, typename T, typename A = allocator<T>>
 		void write_array(C<T, A> const &container, std::function<void(T const &)> writer) {
 			write_integral<int32_t>(::rd::size(container));
 			for (auto const &e : container) {

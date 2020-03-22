@@ -2,12 +2,11 @@ package com.jetbrains.rd.framework.test.cases.entity
 
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
-import com.jetbrains.rd.framework.test.cases.openEntity.ConcreteClassEntity
-import com.jetbrains.rd.framework.test.cases.openEntity.ConcreteStructEntity
+import com.jetbrains.rd.framework.test.cases.openEntity.*
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import org.junit.Test
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class OpenEntitiesTest : RdFrameworkTestBase(){
 
@@ -19,7 +18,7 @@ class OpenEntitiesTest : RdFrameworkTestBase(){
         serverProtocol.bindStatic(serverProperty, "classTest")
         clientProtocol.bindStatic(clientProperty, "classTest")
 
-        val model = ConcreteClassEntity()
+        val model = ConcreteClassEntity("test")
         serverProperty.set(model)
 
         val clientEntity = clientProperty.valueOrThrow

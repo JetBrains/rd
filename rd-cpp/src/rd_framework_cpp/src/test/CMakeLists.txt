@@ -14,6 +14,7 @@ add_executable(rd_framework_cpp_test
         cases/DynamicPolymorphicTest.cpp
         cases/InterningTest.cpp
         cases/BackgroundSchedulerTest.cpp
+        cases/SocketProxyTest.cpp
         #pch
         ${PCH_CPP_OPT}
         cases/RdAsyncTaskTest.cpp cases/RdAsyncSignalTest.cpp)

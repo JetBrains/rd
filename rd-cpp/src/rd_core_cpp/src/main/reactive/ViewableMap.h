@@ -17,7 +17,7 @@ namespace rd {
 	/**
 	 * \brief complete class which has @code IViewableMap<K, V>'s properties
 	 */
-	template<typename K, typename V>
+	template<typename K, typename V, typename KA = std::allocator<K>, typename VA = std::allocator<V>>
 	class ViewableMap : public IViewableMap<K, V> {
 	public:
 		using Event = typename IViewableMap<K, V>::Event;
@@ -26,9 +26,11 @@ namespace rd {
 		using WV = typename IViewableMap<K, V>::WV;
 		using OV = typename IViewableMap<K, V>::OV;
 
+		using PA = typename VA::template rebind<std::pair<Wrapper<K>, Wrapper<V>>>::other;
+
 		Signal<Event> change;
 
-		using data_t = ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>>;
+		using data_t = ordered_map<Wrapper<K>, Wrapper<V>, wrapper::TransparentHash<K>, wrapper::TransparentKeyEqual<K>, PA>;
 		mutable data_t map;
 	public:
 		//region ctor/dtor

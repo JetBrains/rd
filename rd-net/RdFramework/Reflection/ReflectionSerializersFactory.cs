@@ -147,21 +147,18 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair GetOrRegisterStaticSerializerInternal(Type type, bool instance)
     {
+      if (ReflectionSerializerVerifier.IsScalar(type))
+        return GetOrCreateScalar(type, instance);
+      
+      // RdModels only
       if (!mySerializers.TryGetValue(type, out var serializerPair))
       {
 #if JET_MODE_ASSERT
         myCurrentSerializersChain.Enqueue(type);
 #endif
-
-        if (ReflectionSerializerVerifier.IsScalar(type))
-        {
-          return GetOrCreateScalar(type, instance);
-        }
-        else
-        {
+        
+        using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type))
           ReflectionUtil.InvokeGenericThis(this, nameof(RegisterModelSerializer), type);
-        }
-
 
 #if JET_MODE_ASSERT
         myCurrentSerializersChain.Dequeue();
@@ -175,15 +172,10 @@ namespace JetBrains.Rd.Reflection
 
       Assertion.AssertNotNull(serializerPair, $"Unable to register type: {type.ToString(true)}, undetected circular dependency.");
 
-      if (instance && CanBePolymorphicRdModel(type))
+      if (instance && !type.IsSealed)
         return GetPolymorphic(type);
 
       return serializerPair;
-    }
-
-    private bool CanBePolymorphicRdModel(Type type)
-    {
-      return !type.IsSealed;
     }
 
     internal SerializerPair GetOrCreateMemberSerializer([NotNull] MemberInfo mi, [NotNull] Type serializerType, bool allowNullable)
@@ -236,15 +228,13 @@ namespace JetBrains.Rd.Reflection
         }
         catch (Exception e)
         {
-#if JET_MODE_ASSERT
-          throw new Exception($"Unable to create serializer for {string.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}. {e.Message}", e);
-#else
-          throw new Exception($"Unable to create serializer for {serializerType.ToString(true)}. {e.Message}", e);
-#endif
+          throw new Exception($"Unable to create serializer for {e.Data[FirstChanceExceptionInterceptor.ExceptionDataKey]}. {e.Message}", e);
         }
         serializerPair = mySerializers[serializerType];
         if (serializerPair == null)
           Assertion.Fail($"Unable to Create serializer for scalar type {serializerType.ToString(true)}");
+        else 
+          Assertion.Assert(!serializerPair.IsPolymorphic, "Polymorphic serializer can't be stored in staticSerializers");
         return serializerPair;
       }
 
@@ -262,7 +252,9 @@ namespace JetBrains.Rd.Reflection
     private void RegisterScalar<T>()
     {
       myScalars.GetOrCreate<T>(out var reader, out var writer);
-      mySerializers.Add(typeof(T), new SerializerPair(reader, writer));
+      var serializerPair = new SerializerPair(reader, writer);
+      Assertion.Assert(!serializerPair.IsPolymorphic, "Polymorphic serializer can't be stored in staticSerializers");
+      mySerializers.Add(typeof(T), serializerPair);
     }
 
     [CanBeNull]
@@ -472,6 +464,15 @@ namespace JetBrains.Rd.Reflection
     public object Reader => myReader;
 
     public object Writer => myWriter;
+
+    public bool IsPolymorphic
+    {
+      get
+      {
+        var ctxReadDelegate = (Delegate) myReader;
+        return ctxReadDelegate.Method.DeclaringType?.DeclaringType?.Name.Contains(nameof(Polymorphic)) == true;
+      }
+    }
 
     public SerializerPair([NotNull] object reader, [NotNull] object writer)
     {

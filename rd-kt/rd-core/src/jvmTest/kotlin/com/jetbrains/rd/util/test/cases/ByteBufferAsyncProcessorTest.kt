@@ -1,7 +1,7 @@
 package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 

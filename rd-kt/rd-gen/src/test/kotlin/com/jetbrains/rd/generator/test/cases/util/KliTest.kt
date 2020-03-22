@@ -1,11 +1,9 @@
 package com.jetbrains.rd.generator.test.cases.util
 
 import com.jetbrains.rd.util.kli.Kli
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import java.nio.file.Paths
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class KliTest {
 
@@ -30,7 +28,7 @@ class KliTest {
 
         }
 
-        kli.resetAndParse("-Us3", "--name=X3", "c:/tmp");
+        kli.resetAndParse("-Us3", "--name=X3", "c:/tmp")
         assert(kli.error == null) { kli.error!! }
         kli.apply {
             assertFalse (+verbose)

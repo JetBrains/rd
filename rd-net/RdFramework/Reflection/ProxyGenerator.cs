@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -85,12 +86,12 @@ namespace JetBrains.Rd.Reflection
 #endif
     }
 
-    public Type CreateType<TInterface>() where TInterface : class
+    public Type CreateType(Type interfaceType)
     {
-      if (!typeof(TInterface).IsInterface)
+      if (!interfaceType.IsInterface)
         throw new ArgumentException("Only interfaces are supported.");
 
-      if (typeof(TInterface).GetGenericArguments().Length > 0)
+      if (interfaceType.GetGenericArguments().Length > 0)
         throw new ArgumentException("Generic interfaces are not supported.");
 
       // RdRpc attribute can be specified in RdExt attribute. Therefore, now this assert cannot be verified.
@@ -98,7 +99,7 @@ namespace JetBrains.Rd.Reflection
       //   throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
 
       var moduleBuilder = myModuleBuilder.Value;
-      var className = typeof(TInterface).Name.Substring(1);
+      var className = interfaceType.Name.Substring(1);
       var proxyTypeName = "Proxy." + className;
       var typebuilder = moduleBuilder.DefineType(
         proxyTypeName,
@@ -106,18 +107,18 @@ namespace JetBrains.Rd.Reflection
         typeof(RdExtReflectionBindableBase));
 
       // Implement interface
-      typebuilder.AddInterfaceImplementation(typeof(TInterface));
+      typebuilder.AddInterfaceImplementation(interfaceType);
 
       // mark it as proxy type
       typebuilder.AddInterfaceImplementation(typeof(IProxyTypeMarker));
 
       // Add RdExt attribute to type
       var rdExtConstructor = typeof(RdExtAttribute).GetConstructors().Single(c => c.GetParameters().Length == 1);
-      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ typeof(TInterface) }));
+      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ interfaceType }));
 
       var memberNames = new HashSet<string>(StringComparer.Ordinal);
-      ImplementInterface(typeof(TInterface), memberNames, typebuilder);
-      foreach (var baseInterface in typeof(TInterface).GetInterfaces())
+      ImplementInterface(interfaceType, memberNames, typebuilder);
+      foreach (var baseInterface in interfaceType.GetInterfaces())
         ImplementInterface(baseInterface, memberNames, typebuilder);
 
       void ImplementInterface(Type baseInterface, HashSet<string> hashSet, TypeBuilder typeBuilder)
@@ -127,7 +128,7 @@ namespace JetBrains.Rd.Reflection
           if (!hashSet.Add(member.Name))
             throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
 
-          ImplementMember<TInterface>(typeBuilder, member);
+          ImplementMember(typeBuilder, member);
         }
       }
 
@@ -140,12 +141,12 @@ namespace JetBrains.Rd.Reflection
 
 
     /// <summary>
-    /// Wrap method into Tuple-like adapter.
+    /// Wrap method into Tuple-like adapter for using regular .NEt method as RdCall endpoint.
     ///
     /// Expected signature for sync methods
-    /// (this, Lifetime, TReq) → RdTask{TRes}
-    /// async methods: (which returns Task)
-    /// (this, Lifetime, TReq) → Task{TRes}
+    ///   (this, Lifetime, TReq) → RdTask{TRes}
+    /// async methods:
+    ///   (this, Lifetime, TReq) → Task{TRes}
     /// </summary>
     /// <returns></returns>
     public DynamicMethod CreateAdapter(Type selfType, MethodInfo method)
@@ -155,7 +156,7 @@ namespace JetBrains.Rd.Reflection
 
       // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter", 
       //   TypeAttributes.Public & TypeAttributes.Sealed & TypeAttributes.Abstract & TypeAttributes.BeforeFieldInit);
-      var requestType = GetRequstType(method);
+      var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, unwrapTask: false);
       Type returnType;
       if (IsSync(method))
@@ -167,27 +168,36 @@ namespace JetBrains.Rd.Reflection
         returnType = responseType;
       }
 
-      var methodBuilder = new DynamicMethod(method.Name, returnType, new[] { selfType, typeof(Lifetime), requestType[0] }, DynamicModule);
+      var methodBuilder = new DynamicMethod(method.Name, returnType, new[] { selfType, typeof(Lifetime), requestType }, DynamicModule);
       var il = methodBuilder.GetILGenerator();
 
       // Invoke adapter method
       il.Emit(OpCodes.Ldarg_0); // this/self
-      IEnumerable<FieldInfo> fields;
-      if (requestType[0] == typeof(Unit))
+      FieldInfo[] fields;
+      if (requestType == typeof(Unit))
       {
         fields = new FieldInfo[0];
       }
       else
       {
-        fields = requestType[0].GetFields().OrderBy(f => f.Name);
-      }
-      //for (int j = 0; j < impl.GetParameters().Length; j++)
-      foreach(var field in fields)
-      {
-        il.Emit(OpCodes.Ldarg_2); // value tuple
-        il.Emit(OpCodes.Ldfld, field);
+        fields = requestType.GetFields();
       }
 
+      var parameters = method.GetParameters();
+      for (int pi = 0, fi = 0; pi < parameters.Length; pi++)
+      {
+        if (parameters[pi].ParameterType == typeof(Lifetime))
+        {
+          LoadArgument(il, 1 /* external cancellation lifetime in SetHandler */);
+        }
+        else
+        {
+          Assertion.Assert(parameters[pi].ParameterType == fields[fi].FieldType, "parameters[pi].ParameterType == fields[i].FieldType");
+          il.Emit(OpCodes.Ldarg_2); // value tuple
+          il.Emit(OpCodes.Ldfld, fields[fi]);
+          fi++;
+        }
+      }
       // call wrapped method
       il.Emit(OpCodes.Callvirt, method);
 
@@ -234,7 +244,7 @@ namespace JetBrains.Rd.Reflection
       return (returnType != typeof(Task)) && (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(Task<>));
     }
 
-    private void ImplementMember<TInterface>(TypeBuilder typebuilder, MemberInfo member)
+    private void ImplementMember(TypeBuilder typebuilder, MemberInfo member)
     {
       switch (member.MemberType)
       {
@@ -247,11 +257,11 @@ namespace JetBrains.Rd.Reflection
         case MemberTypes.Method:
           if (member is MethodInfo method && !method.IsSpecialName)
           {
-            ImplementMethod<TInterface>(typebuilder, method);
+            ImplementMethod(typebuilder, method);
           }
           break;
         case MemberTypes.Property:
-          ImplementProperty<TInterface>(typebuilder, ((PropertyInfo)member));
+          ImplementProperty(typebuilder, ((PropertyInfo)member));
           break;
         default:
           var ex = new InvalidOperationException("Unexpected Member Type bit fields combination.");
@@ -259,7 +269,7 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    private void ImplementProperty<TInterface>(TypeBuilder typebuilder, PropertyInfo propertyInfo)
+    private void ImplementProperty(TypeBuilder typebuilder, PropertyInfo propertyInfo)
     {
       string MakeBackingFieldName(string propertyName)
       {
@@ -291,6 +301,13 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
+    /// <summary>
+    /// Get the list of tuples, used to
+    ///
+    /// Note the special treatment of Lifetime and CancellationToken types - they are not included in the result.
+    /// </summary>
+    /// <param name="method"></param>
+    /// <returns></returns>
     public static Type[] GetRequstType(MethodInfo method)
     {
       // todo: support more than 7 parameters
@@ -299,7 +316,18 @@ namespace JetBrains.Rd.Reflection
         return new[] {typeof(Unit)};
 
       Assertion.Assert(parameters.Length <= 7, "parameters.Length <= 7");
-      return new[] {ValueTuples[parameters.Length - 1].MakeGenericType(parameters.Select(p => p.ParameterType).ToArray()) };
+      List<Type> list = new List<Type>();
+      foreach (var p in parameters)
+      {
+        // Lifetime treated as cancellation token
+        if (p.ParameterType != typeof(Lifetime) || p.ParameterType == typeof(CancellationToken)) 
+          list.Add(p.ParameterType);
+      }
+
+      if (list.Count == 0)
+        return new[] {typeof(Unit)};
+
+      return new[] {ValueTuples[list.Count - 1].MakeGenericType(list.ToArray()) };
     }
 
     public static Type GetResponseType(MethodInfo method, bool unwrapTask = false)
@@ -320,7 +348,7 @@ namespace JetBrains.Rd.Reflection
       return method.ReturnType;
     }
 
-    private void ImplementMethod<TInterface>(TypeBuilder typebuilder, MethodInfo method)
+    private void ImplementMethod(TypeBuilder typebuilder, MethodInfo method)
     {
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
@@ -350,10 +378,41 @@ namespace JetBrains.Rd.Reflection
       ilgen.Emit(OpCodes.Ldarg_0);
       ilgen.Emit(OpCodes.Ldfld, field);
 
-      if (parameters.Length > 0)
+      int lifetimeArgument = -1;
+      if (!isSyncCall)
       {
-        // load args
-        LoadArguments(ilgen, parameters.Length + 1 /* #0 is `self/this` argument */);
+        // Lifetime
+        for (int i = 0; i < parameters.Length; i++)
+        {
+          if (parameters[i].ParameterType == typeof(Lifetime))
+          {
+            Assertion.Assert(lifetimeArgument == -1, "Only one lifetime parameter is allowed");
+            lifetimeArgument = i;
+          }
+        }
+
+        if (lifetimeArgument != -1)
+          LoadArgument(ilgen, lifetimeArgument + 1);
+        else
+        {
+          var getEternalLifetimeMethod = typeof(Lifetime)
+            .GetProperty(nameof(Lifetime.Eternal), BindingFlags.Static | BindingFlags.Public)?.GetGetMethod();
+          ilgen.Emit(OpCodes.Call, getEternalLifetimeMethod);
+        }
+      }
+
+      // TReq
+      if (parameters.Length - (lifetimeArgument == -1 ? 0 : 1) > 0)
+      {
+        // Others arguments, skip `this` argument (0)
+        for (int i = 0; i < parameters.Length; i++)
+        {
+          if (i != lifetimeArgument)
+          {
+            // load args
+            LoadArgument(ilgen, i + 1 /* #0 is `self/this` argument */);
+          }
+        }
 
         // create tuple and load it to stack
         ilgen.Emit(OpCodes.Newobj, requestType.GetConstructors().Single());
@@ -363,36 +422,21 @@ namespace JetBrains.Rd.Reflection
         ilgen.Emit(OpCodes.Ldsfld, typeof(Unit).GetField(nameof(Unit.Instance)));
       }
 
-
-      var startMethod = fieldType.GetMethods().Single(info => info.Name == nameof(IRdCall<int, int>.Start) && info.GetParameters().Length == 2);
-      
       if (isSyncCall)
       {
-        //ilgen.Emit(OpCodes.Ldsfld, typeof(SynchronousScheduler).GetField(nameof(SynchronousScheduler.Instance))); // ResponseScheduler
+        Assertion.Assert(lifetimeArgument == -1, "Unable to implement proxy method {0}. CancellationToken or Lifetime can't be used with sync methods.", method);
         ilgen.Emit(OpCodes.Ldnull); // RpcTimeouts
         ilgen.Emit(OpCodes.Callvirt, fieldType.GetMethod(nameof(IRdCall<int,int>.Sync)).NotNull("fieldType.GetMethod(Sync) != null"));
-        // ilgen.Emit(OpCodes.Callvirt, (typeof(RdTask<>)).MakeGenericType(responseType)
-        //   .GetProperty(nameof(IRdTask<int>.Result))
-        //   .NotNull("NoResult Property")
-        //   .GetGetMethod(false));
-        // ilgen.Emit(OpCodes.Callvirt, (typeof(IReadonlyProperty<>)).MakeGenericType(typeof(RdTaskResult<>).MakeGenericType(responseType))
-        //   .GetProperty(nameof(IReadonlyProperty<int>.Value))
-        //   .NotNull("no Value Property")
-        //   .GetGetMethod(false));
-        // ilgen.Emit(OpCodes.Call, (typeof(RdTaskResult<>)).MakeGenericType(responseType)
-        //   .GetProperty(nameof(RdTaskResult<int>.Result))
-        //   .NotNull("no ResultValue Property")
-        //   .GetGetMethod(false));
       }
       else
       {
+        // Start(Lifetime, TReq, Scheduler)
+        var startMethod = fieldType.GetMethods().Single(info => info.Name == nameof(IRdCall<int, int>.Start) && info.GetParameters().Length == 3);
+
         // async
         ilgen.Emit(OpCodes.Ldnull); // ResponseScheduler
         ilgen.Emit(OpCodes.Callvirt, startMethod.NotNull("fieldType.GetMethod(Start) != null"));
-/*        ilgen.Emit(OpCodes.Callvirt, (typeof(IReadonlyProperty<>)).MakeGenericType(typeof(RdTaskResult<>).MakeGenericType(responseType))
-          .GetProperty(nameof(IReadonlyProperty<int>.Value))
-          .NotNull("no Value Property")
-          .GetGetMethod(false));*/
+
         ilgen.Emit(OpCodes.Call, (typeof(ProxyGeneratorUtil))
           .GetMethod(nameof(ProxyGeneratorUtil.ToTask)).NotNull("No ToTask method").MakeGenericMethod(responseType));
       }
@@ -417,22 +461,30 @@ namespace JetBrains.Rd.Reflection
     }
 
     /// <summary>
-    /// Loads the given number of arguments on the stack, excluding #0 ("this" on an instance method).
+    /// Loads the given argument on the stack
     /// </summary>
-    private static void LoadArguments(ILGenerator ilgen, int nArgsToLoad)
+    private static void LoadArgument(ILGenerator ilgen, int nArg)
     {
-      /*if (nArgsToLoad > 0)
-        ilgen.Emit(OpCodes.Ldarg_0);*/
-      if (nArgsToLoad > 1)
-        ilgen.Emit(OpCodes.Ldarg_1);
-      if (nArgsToLoad > 2)
-        ilgen.Emit(OpCodes.Ldarg_2);
-      if (nArgsToLoad > 3)
-        ilgen.Emit(OpCodes.Ldarg_3);
-      for (int i = 4; (i < nArgsToLoad) && (i < 0x100); i++)
-        ilgen.Emit(OpCodes.Ldarg_S, (byte)i);
-      for (int i = 0x100; i < nArgsToLoad; i++)
-        ilgen.Emit(OpCodes.Ldarg, (short)i);
+      switch (nArg)
+      {
+        case 0:
+          ilgen.Emit(OpCodes.Ldarg_0);
+          return;
+        case 1:
+          ilgen.Emit(OpCodes.Ldarg_1);
+          return;
+        case 2:
+          ilgen.Emit(OpCodes.Ldarg_2);
+          return;
+        case 3:
+          ilgen.Emit(OpCodes.Ldarg_3);
+          return;
+      }
+
+      if (nArg < 0x100)
+        ilgen.Emit(OpCodes.Ldarg_S, (byte)nArg);
+      else
+        ilgen.Emit(OpCodes.Ldarg, (short)nArg);
     }
   }
 }

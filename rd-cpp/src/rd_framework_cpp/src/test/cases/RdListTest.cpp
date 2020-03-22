@@ -128,7 +128,7 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, rd_list_of_rd_property) {
+/*TEST_F(RdFrameworkTestBase, rd_list_of_rd_property) {
 	int32_t id = 1;
 
 	RdList<RdProperty<int32_t>> server_list;
@@ -178,7 +178,7 @@ TEST_F(RdFrameworkTestBase, rd_list_of_rd_property) {
 	}));
 
 	AfterTest();
-}
+}*/
 
 TEST_F(RdFrameworkTestBase, list_move) {
 	RdList<int> list1;
