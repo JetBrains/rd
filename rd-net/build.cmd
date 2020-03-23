@@ -6,7 +6,7 @@ GOTO :CMDSCRIPT
 set -eux
 PACKAGES_DIR=$(pwd)/artifacts/nuget
 BUILD_COUNTER=0
-PACKAGE_VERSION=193.0.$BUILD_COUNTER-prerelease
+PACKAGE_VERSION=201.0.$BUILD_COUNTER
 
 rm -rf $PACKAGES_DIR
 
@@ -23,7 +23,7 @@ exit 0
 pushd "%~dp0"
 set PACKAGES_DIR=%~dp0\artifacts\nuget
 set BUILD_COUNTER=0
-set PACKAGE_VERSION=191.0.%BUILD_COUNTER%-prerelease
+set PACKAGE_VERSION=201.0.%BUILD_COUNTER%
 
 rmdir /S /Q %PACKAGES_DIR%
 
