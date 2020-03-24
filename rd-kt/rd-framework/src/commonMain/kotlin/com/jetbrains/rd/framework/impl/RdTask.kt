@@ -64,13 +64,11 @@ class WiredRdTask<TReq, TRes>(
                         taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
 
                     taskResult.value.bindPolymorphic(externalCancellation.lifetime, call, rdid.toString())
+                } else {
+                    externalCancellation.terminate()
                 }
 
                 if (isEndpoint) {
-                    if (taskResult is RdTaskResult.Cancelled) {
-                        externalCancellation.terminate()
-                    }
-
                     wire.send(rdid) { writer ->
                         RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
                     }
