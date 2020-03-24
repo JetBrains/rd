@@ -33,7 +33,7 @@ namespace rd {
 	contentDeepHashCode(C<T, A> const &value) noexcept {
 		size_t result = 1;
 		for (auto const &x : value) {
-			result = 31 * result + contentDeepHashCode(x);
+			result = 31 * result + contentDeepHashCode<T>(x);
 		}
 		return result;
 	}
