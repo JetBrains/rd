@@ -39,10 +39,10 @@ namespace rd {
 			}
 
 			void on_wire_received(Buffer buffer) const override {
-				auto result = RdTaskResult<T, S>::read(cutpoint->get_serialization_context(), buffer);
-				logReceived.trace("call %s %s received response %s : " + to_string(result),
+				auto read_result = RdTaskResult<T, S>::read(cutpoint->get_serialization_context(), buffer);
+				logReceived.trace("call %s %s received response %s : " + to_string(read_result),
 								  to_string(cutpoint->location).c_str(), to_string(rdid).c_str(), to_string(rdid).c_str());
-				scheduler->queue([&, result = std::move(result)]() mutable {
+				scheduler->queue([&, result = std::move(read_result)]() mutable {
 					if (this->result->has_value()) {
 						logReceived.trace(
 								"call %s %s response was dropped, task result is: " + to_string(result.unwrap()),
