@@ -70,8 +70,8 @@ namespace rd {
 		/**
 		 * \brief @see set above
 		 */
-		void set(std::function<WTRes(TReq const &)> handler) const {
-			this->handler = [handler = std::move(handler)](Lifetime _, TReq const &req) -> RdTask <TRes, ResSer> {
+		void set(std::function<WTRes(TReq const &)> functor) const {
+			this->handler = [handler = std::move(functor)](Lifetime _, TReq const &req) -> RdTask <TRes, ResSer> {
 				return RdTask<TRes, ResSer>::from_result(handler(req));
 			};
 		}
