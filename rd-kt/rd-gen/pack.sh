@@ -11,7 +11,7 @@ fi
 rm -f "$cache_dir/*.tmp"
 
 nuget_dir=${build_dir}/nuget
-nuget_version="${BUILD_NUMBER:-193.0.0}"
+nuget_version="${BUILD_NUMBER:-202.0.0}"
 build_configuration=${1:-Debug}
 
 mkdir -p $cache_dir
@@ -28,23 +28,24 @@ then
   wget -O "${cache_dir}/nuget.exe.tmp" https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
   mv "${cache_dir}/nuget.exe.tmp" "${cache_dir}/nuget.exe"
 fi
-if [[ ! -f "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz" ]]
+if [[ ! -f "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz" ]]
 then
-  wget -O "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz.tmp" https://repo.labs.intellij.net/thirdparty/dotnet-sdk-2.2.300-linux-x64.tar.gz
-  mv "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz.tmp" "${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz"
+  wget -O "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz.tmp" https://download.visualstudio.microsoft.com/download/pr/f65a8eb0-4537-4e69-8ff3-1a80a80d9341/cc0ca9ff8b9634f3d9780ec5915c1c66/dotnet-sdk-3.1.201-linux-x64.tar.gz
+  mv "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz.tmp" "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz"
 fi
 
 mkdir -p ${build_dir}/jdk
 tar xf ${cache_dir}/jdk.lin.tar.gz -C ${build_dir}/jdk
 
 mkdir -p ${build_dir}/.dotnet
-tar xf ${cache_dir}/dotnet-sdk-2.2.300-linux-x64.tar.gz -C ${build_dir}/.dotnet
+tar xf ${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz -C ${build_dir}/.dotnet
 
 export JAVA_HOME=${build_dir}/jdk
 chmod +x ${JAVA_HOME}/bin/*
-${build_dir}/../../../gradlew fatJar
+${build_dir}/../../../gradlew -Dorg.gradle.daemon=false fatJar
 
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 mkdir -p ${nuget_dir}/lib/net
 touch ${nuget_dir}/lib/net/_._
