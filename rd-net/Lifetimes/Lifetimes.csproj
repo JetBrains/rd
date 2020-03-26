@@ -36,8 +36,8 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
-        <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/lifetimes-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>Fixed SequentialLifetimes.Next</PackageReleaseNotes>
+        <PackageIcon>PackageIcon.png</PackageIcon>
+        <PackageReleaseNotes>Embedding package icon</PackageReleaseNotes>
     </PropertyGroup>
     
     
@@ -54,4 +54,7 @@
         <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="PackageIcon.png" Pack="true" PackagePath=""/>
+    </ItemGroup>
 </Project>

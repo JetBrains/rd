@@ -37,8 +37,8 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
-        <PackageIconUrl>https://raw.githubusercontent.com/JetBrains/rd/master/docs/logo/rd-icon-128.png</PackageIconUrl>
-        <PackageReleaseNotes>New API and documentation</PackageReleaseNotes>
+        <PackageIcon>PackageIcon.png</PackageIcon>
+        <PackageReleaseNotes>Fix memory leaks</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
@@ -61,5 +61,9 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="PackageIcon.png" Pack="true" PackagePath=""/>
     </ItemGroup>
 </Project>
