@@ -54,12 +54,7 @@ Open solution in JetBrains Rider: https://github.com/JetBrains/rd/tree/master/rd
 
 #### Console build instructions
 
-* cd rd-net
-* ./build.cmd
-
-or
-
-* gradle :rd-net:build -x test
+* `dotnet build rd-net/Rd.sln`
 
 ### Kotlin
 
@@ -72,7 +67,7 @@ Open solution in IntellijIDEA:  https://github.com/JetBrains/rd
 
 #### Console build instructions
 
-* gradle :build -x test
+* `gradle :build -x test`
 
 ### C++ (experimental)
 
@@ -88,16 +83,22 @@ or
 
 #### Console build instructions
 
-* cd rd-cpp
-* ./build.cmd
+* `cd rd-cpp`
+* `./build.cmd`
 
 or
 
-* gradle :rd-cpp:build -x test
+* `gradle :rd-cpp:build -x test`
 
 ## Build everything
 
-* gradle build
+* `gradle build`
+
+### Build NuGet packages instructions
+
+To build packages locally please use: `rd-kt/rd-gen/pack.sh`
+
+*\* Right now it works only on Linux. Please use Docker for Windows or macOS.*
 
 # How to generate models (stubs)
 
