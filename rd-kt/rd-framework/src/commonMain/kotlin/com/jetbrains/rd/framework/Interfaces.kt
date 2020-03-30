@@ -50,7 +50,7 @@ interface IWire {
     val heartbeatAlive: Property<Boolean>
 
     /**
-     * Ping's interval and not actually detection's timeout.
+     * Ping's interval.
      */
     @UseExperimental(ExperimentalTime::class)
     var heartBeatInterval: Duration

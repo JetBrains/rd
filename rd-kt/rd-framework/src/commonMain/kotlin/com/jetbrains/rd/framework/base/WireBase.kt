@@ -28,6 +28,7 @@ abstract class WireBase(val scheduler: IScheduler) : IWire {
 
     /**
      * Ping's interval and not actually detection's timeout.
+     * Its value must be the same on both sides of connection.
      */
     @UseExperimental(ExperimentalTime::class)
     override var heartBeatInterval = 500.milliseconds
