@@ -19,8 +19,10 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
 class SocketWireTest : TestBase() {
 
     private fun <T : Any> RdOptionalProperty<T>.waitAndAssert(expected: T, prev: T? = null) {
@@ -311,19 +313,20 @@ class SocketWireTest : TestBase() {
         spinUntil { factory.size == 0 }
     }
 
+    @ExperimentalTime
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun testPacketLoss(isClientToServer: Boolean) {
         Lifetime.using { lifetime ->
             val serverProtocol = server(lifetime)
-            val serverWire = serverProtocol.wire as SocketWire.Base
+            val serverWire = serverProtocol.wire
 
             val proxy = SocketProxy("TestProxy", lifetime, serverProtocol)
 
             proxy.start()
 
             val clientProtocol = client(lifetime, proxy.port)
-            val clientWire = clientProtocol.wire as SocketWire.Base
+            val clientWire = clientProtocol.wire
 
             Thread.sleep(100)
 
@@ -332,9 +335,9 @@ class SocketWireTest : TestBase() {
             else
                 proxy.stopServerToClientMessaging()
 
-            val detectionTimeout = (clientProtocol.wire as SocketWire.Base).heartBeatInterval.multipliedBy((SocketWire.maximumHeartbeatDelay + 3).toLong())
+            val detectionTimeout = clientProtocol.wire.heartBeatInterval.times((SocketWire.maximumHeartbeatDelay + 3))
 
-            Thread.sleep(detectionTimeout.toMillis())
+            Thread.sleep(detectionTimeout.toLongMilliseconds())
 
             assertTrue(serverWire.connected.value)
             assertTrue(clientWire.connected.value)
@@ -347,7 +350,7 @@ class SocketWireTest : TestBase() {
             else
                 proxy.startServerToClientMessaging()
 
-            Thread.sleep(detectionTimeout.toMillis())
+            Thread.sleep(detectionTimeout.toLongMilliseconds())
 
             assertTrue(serverWire.connected.value)
             assertTrue(clientWire.connected.value)
