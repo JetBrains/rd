@@ -165,7 +165,7 @@ std::future<void> SocketWire::Base::start_heartbeat(Lifetime lifetime)
 	return std::async([this, lifetime] {
 		while (!lifetime->is_terminated())
 		{
-			std::this_thread::sleep_for(heartBeatInterval);
+			std::this_thread::sleep_for(heartbeatInterval);
 			ping();
 		}
 	});

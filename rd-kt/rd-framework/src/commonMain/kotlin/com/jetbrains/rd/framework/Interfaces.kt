@@ -53,7 +53,7 @@ interface IWire {
      * Ping's interval.
      */
     @UseExperimental(ExperimentalTime::class)
-    var heartBeatInterval: Duration
+    var heartbeatInterval: Duration
 
     /**
      * Sends a data block with the given [id] and the given [writer] function that can write the data.
