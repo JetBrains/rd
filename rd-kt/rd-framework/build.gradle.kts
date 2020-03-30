@@ -1,6 +1,6 @@
 import com.jetbrains.rd.gradle.plugins.applyMultiplatform
-import com.jetbrains.rd.gradle.tasks.CopySourcesTask
 import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
@@ -24,6 +24,10 @@ kotlin {
         }
 
     }
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
 }
 
 val testCopySources by creatingCopySourcesTask(

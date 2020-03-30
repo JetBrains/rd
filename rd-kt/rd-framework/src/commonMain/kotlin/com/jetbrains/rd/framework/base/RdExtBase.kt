@@ -15,6 +15,8 @@ import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import com.jetbrains.rd.util.trace
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 abstract class RdExtBase : RdReactiveBase() {
     enum class ExtState {
@@ -181,8 +183,15 @@ class ExtWire : IWire {
         require(newContexts === realWire.contexts) { "Can't replace ProtocolContexts on ExtWire" }
     }
 
+    @Suppress("ArrayInDataClass")
     data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray, val context: List<Pair<RdContext<Any>, Any?>>)
     override val connected: Property<Boolean> = Property(false)
+    override val heartbeatAlive = connected
+
+    @UseExperimental(ExperimentalTime::class)
+    override var heartBeatInterval: Duration
+        get() = Duration.INFINITE
+        set(_) {}
 
 
     private val sendQ = Queue<QueueItem>()
