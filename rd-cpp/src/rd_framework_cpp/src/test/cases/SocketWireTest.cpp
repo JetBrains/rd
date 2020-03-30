@@ -593,7 +593,7 @@ TEST_P(PacketLossTestBase, TestPacketLoss)
 	else
 		proxy.StopServerToClientMessaging();
 
-	auto detectionTimeout = dynamic_cast<SocketWire::Base const*>(clientProtocol.get_wire())->heartBeatInterval *
+	auto detectionTimeout = dynamic_cast<SocketWire::Base const*>(clientProtocol.get_wire())->heartbeatInterval *
 							(SocketWire::Base::MaximumHeartbeatDelay + 3);
 
 	auto detectionTimeoutMs = std::chrono::duration_cast<std::chrono::milliseconds>(detectionTimeout).count();

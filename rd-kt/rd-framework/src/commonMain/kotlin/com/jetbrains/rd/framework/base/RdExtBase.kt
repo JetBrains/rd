@@ -189,7 +189,7 @@ class ExtWire : IWire {
     override val heartbeatAlive = connected
 
     @UseExperimental(ExperimentalTime::class)
-    override var heartBeatInterval: Duration
+    override var heartbeatInterval: Duration
         get() = Duration.INFINITE
         set(_) {}
 

@@ -31,7 +31,7 @@ abstract class WireBase(val scheduler: IScheduler) : IWire {
      * Its value must be the same on both sides of connection.
      */
     @UseExperimental(ExperimentalTime::class)
-    override var heartBeatInterval = 500.milliseconds
+    override var heartbeatInterval = 500.milliseconds
 
     abstract override fun send(id: RdId, writer: (AbstractBuffer) -> Unit)
 

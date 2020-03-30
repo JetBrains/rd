@@ -55,7 +55,7 @@ public:
 		mutable Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
 
 		/**
-		 * \brief Timestamp of this wire which increases at intervals of [heartBeatInterval].
+		 * \brief Timestamp of this wire which increases at intervals of [heartbeatInterval].
 		 */
 		mutable int32_t current_timestamp = 0;
 
@@ -96,7 +96,7 @@ public:
 
 	public:
 		static constexpr int32_t MaximumHeartbeatDelay = 3;
-		std::chrono::milliseconds heartBeatInterval = std::chrono::milliseconds(500);
+		std::chrono::milliseconds heartbeatInterval = std::chrono::milliseconds(500);
 
 		// region ctor/dtor
 

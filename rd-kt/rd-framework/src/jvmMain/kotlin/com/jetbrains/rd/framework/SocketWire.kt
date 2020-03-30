@@ -133,7 +133,7 @@ class SocketWire {
         @UseExperimental(ExperimentalTime::class)
         private fun startHeartbeat() = GlobalScope.launch {
             while (true) {
-                delay(heartBeatInterval.toLongMilliseconds())
+                delay(heartbeatInterval.toLongMilliseconds())
                 ping()
             }
         }
@@ -293,7 +293,7 @@ class SocketWire {
         private val ackPkgHeader = createAbstractBuffer()
 
         /**
-         * Timestamp of this wire which increases at intervals of [heartBeatInterval].
+         * Timestamp of this wire which increases at intervals of [heartbeatInterval].
          */
         private var currentTimeStamp = 0
 
