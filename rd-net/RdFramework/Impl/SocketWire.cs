@@ -16,48 +16,48 @@ namespace JetBrains.Rd.Impl
   public static class SocketWire
   {
     private static readonly ILog ourStaticLog = Log.GetLog<Base>();
-    
+
     public abstract class Base : WireBase
     {
       /// <summary>
       /// Timeout for <see cref="System.Net.Sockets.Socket.Connect(System.Net.EndPoint)"/>  and for <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/>  from socket (to guarantee read_thread termination if <see cref="System.Net.Sockets.Socket.Close()"/> doesn't
-      /// lead to exception thrown by <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/> 
+      /// lead to exception thrown by <see cref="System.Net.Sockets.Socket.Receive(byte[],int,System.Net.Sockets.SocketFlags)"/>
       /// </summary>
       public static int TimeoutMs = 500;
 
       private const int ACK_MSG_LEN = -1;
       private const int PING_LEN = -2;
-      
+
       /// <summary>
       /// For logging
       /// </summary>
       public readonly string Id;
-      
+
       protected readonly ILog Log;
-      
+
       /// <summary>
       /// Lifetime of this wire. If counterpart disconnects, lifetime is not terminate automatically.
       /// </summary>
       private readonly Lifetime myLifetime;
-      
-      
+
+
       //All operations must be bound to socket (connect or accept) thread.
       protected readonly IViewableProperty<Socket> SocketProvider = new ViewableProperty<Socket> ();
-      
+
       public readonly IViewableProperty<bool> Connected = new ViewableProperty<bool> { Value = false };
       public readonly IViewableProperty<bool> HeartbeatAlive = new ViewableProperty<bool> { Value = false };
 
       protected readonly ByteBufferAsyncProcessor SendBuffer;
       protected readonly object Lock = new object();
-      
+
       public Socket Socket { get; protected set; }
 
       [PublicAPI]
       public long ReadBytesCount;
-      
+
       [PublicAPI]
       public long WrittenBytesCount;
-      
+
       private readonly Actor<long> myAcktor;
       const string DisconnectedPauseReason = "Disconnected";
 
@@ -71,10 +71,10 @@ namespace JetBrains.Rd.Impl
         SendBuffer = new ByteBufferAsyncProcessor(id+"-Sender", Send0);
         SendBuffer.Pause(DisconnectedPauseReason);
         SendBuffer.Start();
-        
+
         Connected.Advise(lifetime, value => HeartbeatAlive.Value = value);
-        
-        
+
+
         //when connected
         SocketProvider.Advise(lifetime, socket =>
         {
@@ -85,8 +85,8 @@ namespace JetBrains.Rd.Impl
 
           SendBuffer.ReprocessUnacknowledged();
           SendBuffer.Resume(DisconnectedPauseReason);
-          
-          scheduler.Queue(() => { Connected.Value = true; });                              
+
+          scheduler.Queue(() => { Connected.Value = true; });
 
           try
           {
@@ -99,11 +99,11 @@ namespace JetBrains.Rd.Impl
             scheduler.Queue(() => {Connected.Value = false;});
 
             SendBuffer.Pause(DisconnectedPauseReason);
-            
+
             timer.Dispose();
-            
+
             CloseSocket(socket);
-          }          
+          }
         });
       }
 
@@ -128,11 +128,11 @@ namespace JetBrains.Rd.Impl
       {
         if (socket == null)
           return;
-        
+
         ourStaticLog.CatchAndDrop(() => socket.Shutdown(SocketShutdown.Both));
-        
+
         //on netcore you can't solely execute Close() - it will hang forever
-        //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034 
+        //sometimes on netcoreapp2.1 it could hang forever during <c>Accept()</c> on other thread: https://github.com/dotnet/corefx/issues/26034
         //we use zero timeout here to avoid blocking mode with (possible infinite) SpinWait
         // According to reference source, non-zero timeouts (infinite -1 or positive numbers) lead to the problematic code with hanging spin wait.
         // The linked corefx issue gives mixed feedback on when it's fixed (netcore 3/net 5), but we have first-hand evidence for issues on netcore 3.
@@ -141,15 +141,15 @@ namespace JetBrains.Rd.Impl
       }
 
 
-      
+
 
       private BufferWindow myMsgLengthBuffer;
       private BufferWindow myPkg;
       private BufferWindow myPkgBuffer;
       private BufferWindow myPkgHeaderBuffer;
       private BufferWindow mySocketBuffer;
-      
-      
+
+
       private void ReceiverProc(Socket socket)
       {
         myPkg = new BufferWindow(16384);
@@ -157,7 +157,7 @@ namespace JetBrains.Rd.Impl
         mySocketBuffer = new BufferWindow(16384);
         myMsgLengthBuffer = new BufferWindow(4);
         myPkgHeaderBuffer = new BufferWindow(12);
-        
+
         while (myLifetime.IsAlive)
         {
           if (!socket.Connected)
@@ -194,7 +194,7 @@ namespace JetBrains.Rd.Impl
                   "Sometimes it happens because of Timeout property on socket. Your os: {3}.",
                   e.GetType().Name, Id, e.Message, Environment.OSVersion.VersionString);
               }
-              
+
             }
             else
             {
@@ -208,8 +208,8 @@ namespace JetBrains.Rd.Impl
 
       private bool ReadMsg()
       {
-        long maxSeqnAtStart = myMaxReceivedSeqn; 
-        
+        long maxSeqnAtStart = myMaxReceivedSeqn;
+
         myMsgLengthBuffer.Lo = myMsgLengthBuffer.Hi = 0;
         if (!myMsgLengthBuffer.Read(ref myPkgBuffer, ReceiveFromPkgBuffer))
           return false;
@@ -222,20 +222,20 @@ namespace JetBrains.Rd.Impl
           Log.Warn("{0}: Can't read message with len={1} from the wire because connection was shut down", Id, len);
           return false;
         }
-        
+
         if (myMaxReceivedSeqn > maxSeqnAtStart)
           myAcktor.SendAsync(myMaxReceivedSeqn);
-        
+
         Receive(msgBuffer.Data);
         ReadBytesCount += len + sizeof(Int32 /*len*/);
         return true;
       }
 
-      
+
       private int ReceiveFromPkgBuffer(byte[] buffer, int offset, int size)
       {
         //size > 0
-        
+
         if (myPkg.Available > 0)
         {
           var sizeToCopy = Math.Min(size, myPkg.Available);
@@ -258,7 +258,7 @@ namespace JetBrains.Rd.Impl
               Int32 receivedCounterpartTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
               myCounterpartTimestamp = receivedTimestamp;
               myCounterpartNotionTimestamp = receivedCounterpartTimestamp;
-              
+
               if (ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
               {
                 if (!HeartbeatAlive.Value) // only on change
@@ -272,7 +272,7 @@ namespace JetBrains.Rd.Impl
                 }
                 HeartbeatAlive.Value = true;
               }
-              
+
               continue;
             }
 
@@ -283,7 +283,7 @@ namespace JetBrains.Rd.Impl
             }
             else
             {
-              
+
               myPkg.Clear();
               if (!myPkg.Read(ref mySocketBuffer, ReceiveFromSocket, len))
                 return 0;
@@ -292,7 +292,7 @@ namespace JetBrains.Rd.Impl
               {
                 myMaxReceivedSeqn = seqN; //will be acknowledged when we read whole message
                 Assertion.Assert(myPkg.Available > 0, "myPkgBuffer.Available > 0");
-                
+
                 var sizeToCopy = Math.Min(size, myPkg.Available);
                 myPkg.MoveTo(buffer, offset, sizeToCopy);
                 return sizeToCopy;
@@ -332,7 +332,7 @@ namespace JetBrains.Rd.Impl
           Log.Warn(e, $"{Id}: {e.GetType()} raised during ACK, seqn = {seqN}");
         }
       }
-      
+
       private void Ping()
       {
         if (BackwardsCompatibleWireFormat) return;
@@ -373,9 +373,9 @@ namespace JetBrains.Rd.Impl
           Log.Warn(e, $"{Id}: {e.GetType()} raised during PING");
         }
       }
-      
+
       private readonly object mySocketSendLock = new object();
-      
+
       private int ReceiveFromSocket(byte[] buffer, int offset, int size)
       {
         return Socket.Receive(buffer, offset, size, 0);
@@ -388,23 +388,27 @@ namespace JetBrains.Rd.Impl
       private readonly byte[] mySendPkgHeader = new byte[ PkgHeaderLen];
       private readonly byte[] myAckPkgHeader = new byte[ PkgHeaderLen]; //different threads
 
+      /// <summary>
+      /// Ping's interval and not actually detection's timeout.
+      /// Its value must be the same on both sides of connection.
+      /// </summary>
       public TimeSpan HeartBeatInterval { get; set; } = TimeSpan.FromMilliseconds(500);
-      
+
       /// <summary>
       /// Timestamp of this wire which increases at intervals of <see cref="HeartBeatInterval"/>
       /// </summary>
       private int myCurrentTimeStamp;
-      
+
       /// <summary>
       /// Actual notion about counterpart's <see cref="myCurrentTimeStamp"/>
       /// </summary>
       private int myCounterpartTimestamp;
-      
+
       /// <summary>
       /// The latest received counterpart's notion of this wire's <see cref="myCurrentTimeStamp"/>
       /// </summary>
       private int myCounterpartNotionTimestamp;
-      
+
       internal const int MaximumHeartbeatDelay = 3;
       private readonly byte[] myPingPkgHeader = new byte[ PkgHeaderLen];
 
@@ -440,23 +444,23 @@ namespace JetBrains.Rd.Impl
           {
             Log.Error(e);
           }
-                    
-        }        
+
+        }
       }
 
       protected override void SendPkg(UnsafeWriter.Cookie cookie)
       {
         SendBuffer.Put(cookie);
       }
-      
-      
+
+
       //It's a kind of magic...
       protected static void SetSocketOptions(Socket s)
       {
-        s.NoDelay = true;              
+        s.NoDelay = true;
 
 //        if (!TimeoutForbidden())
-//          s.ReceiveTimeout = TimeoutMs; //sometimes shutdown and close doesn't lead Receive to throw exception 
+//          s.ReceiveTimeout = TimeoutMs; //sometimes shutdown and close doesn't lead Receive to throw exception
 
         //following optimization is under Windows only
 //        if (!PlatformUtil.IsRunningUnderWindows) return;
@@ -477,7 +481,7 @@ namespace JetBrains.Rd.Impl
       }
 
 
-      //can't take socket from mySocketProvider: it could be not set yet 
+      //can't take socket from mySocketProvider: it could be not set yet
       protected void AddTerminationActions([NotNull] Thread receiverThread)
       {
         // ReSharper disable once ImpureMethodCallOnReadonlyValueField
@@ -516,10 +520,10 @@ namespace JetBrains.Rd.Impl
 
     public class Client : Base
     {
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) : 
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) :
         this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
 
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) : 
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) :
         base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         var thread = new Thread(() =>
@@ -690,8 +694,8 @@ namespace JetBrains.Rd.Impl
         AddTerminationActions(thread);
       }
     }
-    
-    
+
+
     public struct WireParameters
     {
       public readonly IScheduler Scheduler;
@@ -710,16 +714,16 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    
 
-    
+
+
     public class ServerFactory
     {
       [PublicAPI] public readonly int LocalPort;
       [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
 
-      
-      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint endpoint = null) 
+
+      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint endpoint = null)
         : this(lifetime, () => new WireParameters(scheduler, null), endpoint) {}
 
 
@@ -736,8 +740,8 @@ namespace JetBrains.Rd.Impl
           ourStaticLog.Verbose("closing server socket");
           Base.CloseSocket(serverSocket);
         });
-        LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port; 
-        
+        LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
+
         void Rec()
         {
           lifetime.TryExecute(() =>
@@ -762,7 +766,7 @@ namespace JetBrains.Rd.Impl
 
         Rec();
       }
-      
+
     }
   }
 }
