@@ -186,12 +186,15 @@ class ExtWire : IWire {
     @Suppress("ArrayInDataClass")
     data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray, val context: List<Pair<RdContext<Any>, Any?>>)
     override val connected: Property<Boolean> = Property(false)
-    override val heartbeatAlive = connected
+    override val heartbeatAlive
+        get() = realWire.heartbeatAlive
 
     @UseExperimental(ExperimentalTime::class)
     override var heartbeatInterval: Duration
-        get() = Duration.INFINITE
-        set(_) {}
+        get() = realWire.heartbeatInterval
+        set(duration) {
+            realWire.heartbeatInterval = duration
+        }
 
 
     private val sendQ = Queue<QueueItem>()
