@@ -17,7 +17,7 @@ namespace rd {
 	 * \tparam T type of stored value
 	 * \tparam S "SerDes" for value
 	 */
-	template<typename T, typename S = Polymorphic<T>>
+	template<typename T, typename S = Polymorphic<T>, typename A = allocator<T>>
 	class RdProperty final : public RdPropertyBase<T, S>, public ISerializable {
 	public:
 		using value_type = T;
