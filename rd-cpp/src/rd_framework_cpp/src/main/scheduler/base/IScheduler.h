@@ -12,6 +12,9 @@ namespace rd {
 	 */
 	class IScheduler {
 		static Logger logger;
+
+	protected:
+		std::thread::id thread_id;
 	public:
 		//region ctor/dtor
 
@@ -41,6 +44,8 @@ namespace rd {
 		virtual void flush() = 0;
 
 		virtual bool is_active() const = 0;
+
+		std::thread::id get_thread_id() const { return thread_id;}
 	};
 }
 
