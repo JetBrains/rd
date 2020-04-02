@@ -4,6 +4,7 @@ add_subdirectory(variant)
 add_subdirectory(clsocket)
 add_subdirectory(string-view-lite)
 add_subdirectory(CTPL)
+add_subdirectory(fmt)
 
 add_library(thirdparty STATIC thirdparty.hpp thirdparty.cpp)
 target_include_directories(thirdparty PUBLIC
