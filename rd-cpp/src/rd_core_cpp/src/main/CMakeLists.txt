@@ -50,7 +50,10 @@ target_include_directories(rd_core_cpp PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_link_libraries(rd_core_cpp PUBLIC rd_core_cpp_util thirdparty)
+target_link_libraries(rd_core_cpp
+        PUBLIC rd_core_cpp_util thirdparty
+        PRIVATE fmt::fmt
+        )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_core_cpp"
