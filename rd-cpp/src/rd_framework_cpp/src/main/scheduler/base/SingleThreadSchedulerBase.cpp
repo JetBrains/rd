@@ -18,7 +18,10 @@ namespace rd {
 	}
 
 	SingleThreadSchedulerBase::SingleThreadSchedulerBase(std::string name) :
-			name(std::move(name)), pool(std::make_unique<ctpl::thread_pool>(1)), thread_id(std::this_thread::get_id()) {}
+			name(std::move(name)), pool(std::make_unique<ctpl::thread_pool>(1))
+	{
+		thread_id = std::this_thread::get_id();
+	}
 
 	void SingleThreadSchedulerBase::flush() {
 		RD_ASSERT_MSG(!is_active(),
