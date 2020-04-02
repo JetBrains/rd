@@ -19,7 +19,6 @@ namespace rd {
 		std::atomic_uint32_t tasks_executing{0};
 		std::atomic_uint32_t active{0};
 		std::unique_ptr<ctpl::thread_pool> pool;
-		std::thread::id thread_id;
 
 		class PoolTask {
 			std::function<void()> f;
@@ -31,7 +30,6 @@ namespace rd {
 		};
 
 	public:
-		std::thread::id GetThreadId() { return thread_id; }
 		//region ctor/dtor
 		SingleThreadSchedulerBase(std::string name);
 
