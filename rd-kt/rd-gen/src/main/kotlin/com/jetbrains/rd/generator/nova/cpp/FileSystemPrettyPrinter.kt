@@ -19,6 +19,6 @@ class FileSystemPrettyPrinter(val file: File) {
 }
 
 internal fun PrettyPrinter.setUp() = this.apply {
-    eolKind = Eol.osSpecified
+    eolKind = Eol.linux
     step = 4
 }

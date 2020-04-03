@@ -257,7 +257,7 @@ open class Kotlin11Generator(
         toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
-                    eolKind = Eol.osSpecified
+                    eolKind = Eol.linux
                     step = 4
 
                     //actual generation
