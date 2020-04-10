@@ -16,9 +16,9 @@ namespace JetBrains.Rd.Impl
     {
       internal readonly List<byte[]> DefaultSchedulerMessages = new List<byte[]>();
       internal readonly List<byte[]> CustomSchedulerMessages = new List<byte[]>();
-    }  
+    }
 
-
+    public bool BackwardsCompatibleWireFormat = false;
 
     private readonly IScheduler myScheduler;
     private readonly object myLock = new object();
@@ -54,7 +54,7 @@ namespace JetBrains.Rd.Impl
       });
     }
     
-    private static unsafe void Execute(IRdWireable reactive, byte[] msg)
+    private unsafe void Execute(IRdWireable reactive, byte[] msg)
     {
       fixed (byte* p = msg)
       {
@@ -62,8 +62,11 @@ namespace JetBrains.Rd.Impl
         var rdid0 = RdId.Read(reader);
         Assertion.Assert(reactive.RdId.Equals(rdid0), "Not equals: {0}, {1}", reactive.RdId, rdid0);
 
-        using (reactive.Proto.Contexts.ReadContextsIntoCookie(reader))
+        if (BackwardsCompatibleWireFormat)
           reactive.OnWireReceived(reader);
+        else
+          using (reactive.Proto.Contexts.ReadContextsIntoCookie(reader))
+            reactive.OnWireReceived(reader);
       }
     }
     
