@@ -23,7 +23,7 @@ namespace JetBrains.Rd
     private IScheduler myScheduler;
     private ProtocolContexts myContexts;
     
-    public bool BackwardsCompatibleWireFormat = false;
+    private bool myBackwardsCompatibleWireFormat = false;
 
     public ProtocolContexts Contexts
     {
@@ -32,6 +32,16 @@ namespace JetBrains.Rd
       {
         Assertion.Assert(myContexts == null || ReferenceEquals(myContexts, value), "May not replace contexts in IWire");
         myContexts = value;
+      }
+    }
+
+    public bool BackwardsCompatibleWireFormat
+    {
+      get => myBackwardsCompatibleWireFormat;
+      set
+      {
+        myBackwardsCompatibleWireFormat = value;
+        MessageBroker.BackwardsCompatibleWireFormat = value;
       }
     }
 
@@ -75,7 +85,7 @@ namespace JetBrains.Rd
         cookie.Writer.Write(0); //placeholder for length
 
         id.Write(cookie.Writer);
-        if (!BackwardsCompatibleWireFormat)
+        if (!myBackwardsCompatibleWireFormat)
           this.WriteContext(cookie.Writer);
         writer(param, cookie.Writer);
         cookie.WriteIntLengthToCookieStart();
