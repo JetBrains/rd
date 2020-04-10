@@ -333,6 +333,8 @@ namespace JetBrains.Rd.Impl
       
       private void Ping()
       {
+        if (BackwardsCompatibleWireFormat) return;
+        
         try
         {
           Log.Trace()?.Log($"{Id}: send PING " +

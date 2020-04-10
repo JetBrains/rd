@@ -22,6 +22,8 @@ namespace JetBrains.Rd
     protected readonly MessageBroker MessageBroker;
     private IScheduler myScheduler;
     private ProtocolContexts myContexts;
+    
+    public bool BackwardsCompatibleWireFormat = false;
 
     public ProtocolContexts Contexts
     {
@@ -73,7 +75,8 @@ namespace JetBrains.Rd
         cookie.Writer.Write(0); //placeholder for length
 
         id.Write(cookie.Writer);
-        this.WriteContext(cookie.Writer);
+        if (!BackwardsCompatibleWireFormat)
+          this.WriteContext(cookie.Writer);
         writer(param, cookie.Writer);
         cookie.WriteIntLengthToCookieStart();
 
