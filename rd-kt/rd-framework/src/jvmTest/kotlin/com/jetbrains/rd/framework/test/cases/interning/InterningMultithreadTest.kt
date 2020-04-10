@@ -41,6 +41,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
         var clientBytesBase = 0L
         val uiStringBase = if(attemptContention) "b" else "u"
         val uniqueValuesMultiplier = if(attemptContention) 1 else 2
+        val maxBytesMultiplier = if(attemptContention) 2  else 1
 
         clientUiScheduler.queue {
             val clientModel = clientProtocol.bindStatic(RdOptionalProperty(InterningMtModel).static(1), "top")
@@ -120,7 +121,7 @@ class InterningMultithreadTest : RdAsyncTestBase() {
 
         val interningBytesWritten = clientWire.bytesWritten - clientBytesBase
 
-        assert(interningBytesWritten <= actualBytesExpected * 120 / 100) { "Interning should save data, sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected" }
+        assert(interningBytesWritten <= actualBytesExpected * 120 * maxBytesMultiplier / 100) { "Interning should save data, sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected" }
         println("Sent ${interningBytesWritten}, expected interned $actualBytesExpected, expected raw $rawBytesExpected")
         println("Interning mt contention: ${interningBytesWritten.toFloat()/actualBytesExpected}")
         println("Interning ratio (more=better): ${rawBytesExpected/interningBytesWritten.toFloat()}")
