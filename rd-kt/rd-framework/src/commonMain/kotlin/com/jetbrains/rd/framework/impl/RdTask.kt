@@ -55,32 +55,33 @@ class WiredRdTask<TReq, TRes>(
         val externalCancellation = outerLifetime.createNested()
 
         call.wire.advise(taskWireSubscriptionDefinition.lifetime, this)
-        outerLifetime.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
+        taskWireSubscriptionDefinition.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
 
         result.adviseOnce(Lifetime.Eternal) { taskResult ->
-            taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
+            try {
+                if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
+                    if (isEndpoint)
+                        taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
 
-            if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
-                if (isEndpoint)
-                    taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
-
-                taskResult.value.bindPolymorphic(externalCancellation.lifetime, call, rdid.toString())
-            }
-
-            if (isEndpoint) {
-                if (taskResult is RdTaskResult.Cancelled) {
+                    taskResult.value.bindPolymorphic(externalCancellation.lifetime, call, rdid.toString())
+                } else {
                     externalCancellation.terminate()
                 }
 
-                wire.send(rdid) { writer ->
-                    RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+                if (isEndpoint) {
+                    wire.send(rdid) { writer ->
+                        RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+                    }
+                } else if (taskResult is RdTaskResult.Cancelled) //we need to transfer cancellation to the other side
+                {
+                    RdReactiveBase.logSend.trace { "send cancellation" }
+                    wire.send(rdid) { writer ->
+                        writer.writeVoid(Unit)
+                    } //send cancellation to the other side
                 }
-            } else if (taskResult is RdTaskResult.Cancelled) //we need to transfer cancellation to the other side
-            {
-                RdReactiveBase.logSend.trace { "send cancellation" }
-                wire.send(rdid) { writer ->
-                    writer.writeVoid(Unit)
-                } //send cancellation to the other side
+
+            } finally {
+                taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
             }
         }
         

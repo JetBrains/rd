@@ -1,11 +1,15 @@
 #include "IScheduler.h"
 
 #include <functional>
+#include <sstream>
+
 
 namespace rd {
 	void IScheduler::assert_thread() const {
 		if (!is_active()) {
-			Logger().error("Illegal scheduler for current action");
+			std::ostringstream  msg;
+			msg << "Illegal scheduler for current action. Must be " << thread_id << ", was " << std::this_thread::get_id();
+			Logger().error(msg.str());
 		}
 	}
 
