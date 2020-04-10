@@ -51,15 +51,19 @@ class Protocol internal constructor(
     override val protocol: IProtocol get() = this
     override val serializationContext: SerializationCtx = serializationCtx ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot<Any>().also {
         it.rdid = RdId.Null.mix("ProtocolInternRoot")
-        scheduler.invokeOrQueue {
-            it.bind(lifetime, this, "ProtocolInternRoot")
-        }
     }))
 
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
     init {
         wire.setupContexts(contexts)
+
+        if(serializationCtx == null) {
+            scheduler.invokeOrQueue {
+                serializationContext.internRoots.getValue("Protocol").bind(lifetime, this, "ProtocolInternRoot")
+            }
+        }
+
         initialContexts.forEach {
             contexts.registerContext(it)
         }
