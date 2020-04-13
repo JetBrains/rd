@@ -11,7 +11,7 @@ fi
 rm -f "$cache_dir/*.tmp"
 
 nuget_dir=${build_dir}/nuget
-nuget_version="${BUILD_NUMBER:-202.0.0}"
+nuget_version="${BUILD_NUMBER:-2020.2.0-preview1}"
 build_configuration=${1:-Debug}
 
 mkdir -p $cache_dir
