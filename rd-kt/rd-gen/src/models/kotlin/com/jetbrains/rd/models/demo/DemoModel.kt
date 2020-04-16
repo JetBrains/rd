@@ -109,6 +109,16 @@ object DemoModel : Ext(DemoRoot) {
         field("openDerivedString", PredefinedType.string)
     }
 
+    private var StructWithOpenStructField = structdef {
+        field("inner", openstruct("OpenStructInField") {
+            field("underflow0", PredefinedType.string)
+            field("underflow1", PredefinedType.string)
+            field("value", PredefinedType.int)
+            field("overflow0", PredefinedType.string)
+            field("overflow1", PredefinedType.string)
+        })
+    }
+
     private var complicatedPair = structdef {
         field("first", Derived)
         field("second", Derived)
@@ -158,6 +168,8 @@ object DemoModel : Ext(DemoRoot) {
         property("my_scalars", immutableList(MyScalar))
         property("list_of_derived", immutableList(Derived))
         property("list_of_base", immutableList(Base))
+
+        property("struct_with_open_field", StructWithOpenStructField)
     }
 }
 

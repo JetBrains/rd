@@ -62,6 +62,8 @@ namespace Test.RdCross
 
             model.Enum.Value = MyEnum.net;
             extModel.Checker.Fire();
+            
+            model.Struct_with_open_field.Value = new StructWithOpenStructField(new OpenStructInField("", "", 456, "", ""));
         }
 
       internal static void CheckConstants()

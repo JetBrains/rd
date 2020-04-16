@@ -71,5 +71,7 @@ object CrossTest_AllEntities {
         model.enum.set(MyEnum.kt)
 
         extModel.checker.fire()
+
+        model.struct_with_open_field.set(StructWithOpenStructField(OpenStructInField("", "", 123, "", "")))
     }
 }
