@@ -102,6 +102,7 @@ open class CSharp50Generator(
                         || type is INullable
                         || type is InternedScalar
                         || type is Enum && memberIsReactive
+                        || type is Declaration && type.isOpen
 
 
         return allMembers.flatMap {
@@ -270,7 +271,7 @@ open class CSharp50Generator(
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean, ignorePerClientId: Boolean = false): String {
         if(context != null && !ignorePerClientId)
             return leadingComma.condstr { ", " } + perClientIdMapValueFactory(containing)
-        val res = genericParams.joinToString { it.readerDelegateRef(containing) + ", " + it.writerDelegateRef(containing) }
+        val res = genericParams.joinToString { it.readerDelegateRef(containing, true) + ", " + it.writerDelegateRef(containing, false) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
     }
 
@@ -541,7 +542,7 @@ open class CSharp50Generator(
                     val keyTypeName = "RdContext<${it.type.substitutedName(decl)}>"
                     +"public class ${it.keyName} : $keyTypeName {"
                     indent {
-                        +"private ${it.keyName}() : this(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl)}, ${it.type.writerDelegateRef(decl)}) {}"
+                        +"private ${it.keyName}() : this(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl, false)}, ${it.type.writerDelegateRef(decl,false)}) {}"
                         +"public static readonly ${it.keyName} Instance = new ${it.keyName}();"
                         +"protected internal override void RegisterOn(ISerializers serializers)"
                         +"{"
@@ -564,12 +565,12 @@ open class CSharp50Generator(
             val internedTypes = declaredAndUnknownTypes.flatMap { it.referencedTypes }.filterIsInstance<InternedScalar>().map { it.itemType }
             val typesUnderPerClientIdMembers = declaredAndUnknownTypes.flatMap { it.ownMembers }.filterIsInstance<Member.Reactive>().filter { it.context != null }.flatMap { it.referencedTypes }
 
-            val allTypesForRegistration = declaredAndUnknownTypes.filter { it.base != null } +
+            val allTypesForRegistration = declaredAndUnknownTypes.filter { it.base != null || it.isOpen } +
                     internedTypes.filterIsInstance<Declaration>() + typesUnderPerClientIdMembers.filterIsInstance<Declaration>()
 
             allTypesForRegistration.filter { !it.isAbstract }.distinct().println {
                 if (it is IType)
-                    "serializers.Register(${it.readerDelegateRef(decl)}, ${it.writerDelegateRef(decl)});"
+                    "serializers.Register(${it.readerDelegateRef(decl, true)}, ${it.writerDelegateRef(decl, true)});"
                 else
                     fail("Unsupported declaration in register: $it")
             }
@@ -608,15 +609,15 @@ open class CSharp50Generator(
     }
 
 
-    fun IType.readerDeclaredElsewhereDelegateRef(containing: Declaration) = when (this) {
+    fun IType.readerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean) = when (this) {
         is Enum -> null //to overwrite Declaration
         is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Read$name"
-        is Declaration -> this.getSetting(Intrinsic)?.readDelegateFqn ?: "${sanitizedName(containing)}.Read"
+        is Declaration -> if(this.isOpen && !allowSpecificOpenTypeReference) null else (this.getSetting(Intrinsic)?.readDelegateFqn ?: "${sanitizedName(containing)}.Read")
         is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Read$name" else null
         else -> null
     }
 
-    fun IType.readerDelegateRef(containing: Declaration) = readerDeclaredElsewhereDelegateRef(containing)
+    fun IType.readerDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean) = readerDeclaredElsewhereDelegateRef(containing, allowSpecificOpenTypeReference)
             ?: when (this) {
                 is InternedScalar -> "Read${name}At${internKey.keyName}"
                 else -> "Read$name" //must be constructed here
@@ -624,13 +625,17 @@ open class CSharp50Generator(
 
     protected fun PrettyPrinter.readerAndDelegatesTrait(decl: Declaration) {
 
-        fun IType.complexDelegateBuilder(): String = readerDeclaredElsewhereDelegateRef(decl) ?: when (this) {
+        fun IType.complexDelegateBuilder(): String = readerDeclaredElsewhereDelegateRef(decl, false) ?: when (this) {
             is Enum -> "new CtxReadDelegate<${sanitizedName(decl)}>(JetBrains.Rd.Impl.Serializers.ReadEnum<${sanitizedName(decl)}>)"
             is IArray -> itemType.complexDelegateBuilder() + ".Array()"
             is InternedScalar -> itemType.complexDelegateBuilder() + ".Interned(\"${internKey.keyName}\")"
             is IImmutableList -> itemType.complexDelegateBuilder() + ".List()"
             is INullable -> itemType.complexDelegateBuilder() +
                     ".Nullable" + (if (itemType.isValueType) "Struct" else "Class") + "()"
+            is Declaration -> {
+                assert(isOpen)
+                "Polymorphic<${sanitizedName(decl)}>.ReadAbstract(${sanitizedName(decl)}_Unknown.Read)"
+            }
             else -> fail("Unknown type: $this")
         }
 
@@ -639,7 +644,7 @@ open class CSharp50Generator(
             is Enum -> "(${sanitizedName(decl)})reader.ReadInt()"
             is PredefinedType -> "reader.Read$name()"
             is InternedScalar -> "ctx.ReadInterned(reader, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
-            else -> readerDelegateRef(decl) + "(ctx, reader)"
+            else -> readerDelegateRef(decl, false) + "(ctx, reader)"
         }
 
         fun Member.reader(): String = when (this) {
@@ -681,20 +686,20 @@ open class CSharp50Generator(
         }
 
         decl.allTypesForDelegation().forEach {
-            +"public static${it.hideOverloadAttribute(decl)} CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
+            +"public static${it.hideOverloadAttribute(decl)} CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl, false)} = ${it.complexDelegateBuilder()};"
         }
     }
 
 
-    fun IType.writerDeclaredElsewhereDelegateRef(containing: Declaration) = when (this) {
+    fun IType.writerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean) = when (this) {
         is Enum -> null //to overwrite Declaration
         is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Write$name"
-        is Declaration -> this.getSetting(Intrinsic)?.writeDelegateFqn ?: "${sanitizedName(containing)}.Write"
+        is Declaration -> if(isOpen && !allowSpecificOpenTypeReference) null else (this.getSetting(Intrinsic)?.writeDelegateFqn ?: "${sanitizedName(containing)}.Write")
         is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Write$name" else null
         else -> null
     }
 
-    fun IType.writerDelegateRef(containing: Declaration) = writerDeclaredElsewhereDelegateRef(containing)
+    fun IType.writerDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean) = writerDeclaredElsewhereDelegateRef(containing, allowSpecificOpenTypeReference)
             ?: when (this) {
                 is InternedScalar -> "Write${name}At${internKey.keyName}"
                 else -> "Write$name" //must be constructed here
@@ -702,13 +707,17 @@ open class CSharp50Generator(
 
     protected fun PrettyPrinter.writerAndDelegatesTrait(decl: Declaration) {
 
-        fun IType.complexDelegateBuilder(): String = writerDeclaredElsewhereDelegateRef(decl) ?: when (this) {
+        fun IType.complexDelegateBuilder(): String = writerDeclaredElsewhereDelegateRef(decl, false) ?: when (this) {
             is Enum -> "new CtxWriteDelegate<${sanitizedName(decl)}>(JetBrains.Rd.Impl.Serializers.WriteEnum<${sanitizedName(decl)}>)"
             is IArray -> itemType.complexDelegateBuilder() + ".Array()"
             is IImmutableList -> itemType.complexDelegateBuilder() + ".List()"
             is InternedScalar -> itemType.complexDelegateBuilder() + ".Interned(\"${internKey.keyName}\")"
             is INullable -> itemType.complexDelegateBuilder() +
                     ".Nullable" + (if (itemType.isValueType) "Struct" else "Class") + "()"
+            is Declaration -> {
+                assert(isOpen)
+                "Polymorphic<${sanitizedName(decl)}>.Write"
+            }
             else -> fail("Unknown type: $this")
         }
 
@@ -717,7 +726,7 @@ open class CSharp50Generator(
             is Enum -> "writer.Write((int)$field)"
             is PredefinedType -> "writer.Write($field)"
             is InternedScalar -> "ctx.WriteInterned(writer, $field, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
-            else -> writerDelegateRef(decl) + "(ctx, writer, $field)"
+            else -> writerDelegateRef(decl, false) + "(ctx, writer, $field)"
         }
 
         fun Member.writer(): String = when (this) {
@@ -752,7 +761,7 @@ open class CSharp50Generator(
         }
 
         decl.allTypesForDelegation().forEach {
-            +"public static ${it.hideOverloadAttribute(decl)} CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl)} = ${it.complexDelegateBuilder()};"
+            +"public static ${it.hideOverloadAttribute(decl)} CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl, false)} = ${it.complexDelegateBuilder()};"
         }
     }
 
