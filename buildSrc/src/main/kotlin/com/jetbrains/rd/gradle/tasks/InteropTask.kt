@@ -50,11 +50,14 @@ open class InteropTask : DefaultTask() {
             "command=${command.joinToString(separator = " ")}, " +
             "working dir=${task.getWorkingDir()}")
         val outputFile = createTempFile(suffix = "$taskName.out")
+        val errFile = createTempFile(suffix = "$taskName.err")
         println("outputFile=${outputFile}")
+        println("errFile=${errFile}")
         val process = ProcessBuilder(command).apply {
             directory(task.getWorkingDir())
         }
             .redirectOutput(outputFile)
+            .redirectError(errFile)
 
         processes.add(NamedProcess(process, taskName))
     }

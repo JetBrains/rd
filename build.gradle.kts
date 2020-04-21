@@ -17,6 +17,7 @@ repositories {
 
 plugins {
     base
+    id("me.filippov.gradle.jvm.wrapper") version "0.9.3"
 }
 
 allprojects {
@@ -39,8 +40,4 @@ allprojects {
         jcenter()
         maven { setUrl("https://jitpack.io") }
     }
-}
-
-val clean by tasks.getting(Delete::class) {
-    delete(rootProject.buildDir)
 }

@@ -1,5 +1,9 @@
 #!/bin/bash
 set -e -x -v -u
+
+# This script create NuGet package for Jdk which required for RdGen NuGet.
+# You need run it if you want to update Jdk NuGet package
+
 base_dir=$(cd "$(dirname "$0")"; pwd)
 build_dir="${base_dir}/build"
 cache_dir="${base_dir}/cache"

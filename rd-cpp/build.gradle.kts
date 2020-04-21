@@ -13,10 +13,6 @@ tasks {
         execPath("buildtest.cmd")
     }
 
-    val clean by creating(Delete::class) {
-        delete("${project.buildDir}")
-    }
-
     fun creatingCrossTestCppTask() = creating(CrossTestTaskCpp::class) {
         dependsOn(buildTests)
     }
