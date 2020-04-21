@@ -127,7 +127,8 @@ private fun collectClasses(classLoader: ClassLoader,
                            namespacePrefixes: Array<String>,
                            verbose: Boolean) : List<Class<*>> {
 
-    val classes = classLoader.scanForClasses(*namespacePrefixes).toList()
+    val classes = classLoader.scanForClasses(*namespacePrefixes).toMutableList()
+    classes.sortBy { it.name }
     if (verbose) println("${classes.count()} classes found")
     return classes
 }
