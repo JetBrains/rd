@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
@@ -10,6 +11,10 @@ using JetBrains.Lifetimes;
 using JetBrains.Serialization;
 using JetBrains.Threading;
 using Timer = System.Timers.Timer;
+
+#if NET35
+using TaskEx = System.Threading.Tasks.TaskEx;
+#endif
 
 namespace JetBrains.Rd.Impl
 {
@@ -525,15 +530,11 @@ namespace JetBrains.Rd.Impl
 
             while (lifetime.IsAlive)
             {
-              try
+              var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+              Socket = s;
+
+              if (Connect(s, endPoint, TimeoutMs, lifetime))
               {
-                var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                Socket = s;
-
-                SetSocketOptions(s);
-                Log.Verbose("{0} : connecting", Id);
-                s.Connect(endPoint);
-
                 lock (Lock)
                 {
                   if (!lifetime.IsAlive)
@@ -542,16 +543,12 @@ namespace JetBrains.Rd.Impl
                     CloseSocket(s); //to guarantee socket termination
                     return;
                   }
-                  else
-                  {
-                    Log.Verbose("{0} : connected", Id);
-                  }
+                  Log.Verbose("{0} : connected", Id);
+
+                  SocketProvider.Value = Socket;
                 }
-
-                SocketProvider.Value = Socket;
               }
-
-              catch (SocketException)
+              else
               {
                 lock (Lock)
                 {
@@ -561,8 +558,6 @@ namespace JetBrains.Rd.Impl
                 }
               }
             }
-
-
           }
           catch (SocketException e)
           {
@@ -581,6 +576,54 @@ namespace JetBrains.Rd.Impl
         thread.Start();
 
         AddTerminationActions(thread);
+      }
+
+      private bool Connect(Socket socket, IPEndPoint endPoint, int timeoutMs, Lifetime lifetime)
+      {
+        using (var lf = lifetime.CreateNested())
+        {
+          var connectTask = Task.Factory.StartNew(() =>
+          {
+            try
+            {
+              SetSocketOptions(socket);
+              Log.Verbose("{0} : connecting", Id);
+              socket.Connect(endPoint);
+              return true;
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (SocketException e)
+            {
+              Log.Verbose(e, Id);
+            }
+            catch (Exception e)
+            {
+              Log.Warn(e, Id);
+            }
+
+            return false;
+          });
+          
+#if NET35
+          var timeoutTask = TaskEx.Delay(timeoutMs, lf.ToCancellationToken());
+          var firstTask = TaskEx.WhenAny(connectTask, timeoutTask).GetAwaiter().GetResult();
+
+#else
+          var timeoutTask = Task.Delay(timeoutMs, lf.ToCancellationToken());
+          var firstTask = Task.WhenAny(connectTask, timeoutTask).GetAwaiter().GetResult();
+
+#endif
+          if (firstTask == timeoutTask)
+          {
+            CloseSocket(socket);
+            Log.Warn("{0}: Socket not connected in provided timeout: {1}", Id, timeoutMs);
+            return false;
+          }
+
+          return connectTask.Result;
+        }
       }
     }
 
