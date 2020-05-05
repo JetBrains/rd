@@ -2,6 +2,7 @@ add_subdirectory(optional)
 add_subdirectory(ordered-map)
 add_subdirectory(variant)
 add_subdirectory(clsocket)
+add_subdirectory(countdownlatch)
 add_subdirectory(string-view-lite)
 add_subdirectory(CTPL)
 
@@ -13,6 +14,7 @@ target_include_directories(thirdparty PUBLIC
         variant
         string-view-lite
         ctpl
+        countdownlatch
         )
 
 target_link_libraries(thirdparty PUBLIC
@@ -21,6 +23,7 @@ target_link_libraries(thirdparty PUBLIC
         tsl::ordered_map
         string_view-lite
         ctpl
+        countdownlatch
         )
 
 install(FILES thirdparty.hpp

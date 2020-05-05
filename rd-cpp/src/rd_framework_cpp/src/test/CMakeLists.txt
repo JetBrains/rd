@@ -1,6 +1,9 @@
 #exec
 
 add_executable(rd_framework_cpp_test
+        #pch
+        ${PCH_CPP_OPT}
+        #cases
         cases/BufferTest.cpp
         cases/RdIdTest.cpp
         cases/RdPropertyTest.cpp
@@ -15,9 +18,8 @@ add_executable(rd_framework_cpp_test
         cases/InterningTest.cpp
         cases/BackgroundSchedulerTest.cpp
         cases/SocketProxyTest.cpp
-        #pch
-        ${PCH_CPP_OPT}
-        cases/RdAsyncTaskTest.cpp cases/RdAsyncSignalTest.cpp)
+        cases/RdAsyncTaskTest.cpp
+        cases/RdAsyncSignalTest.cpp)
 
 message(STATUS "Using pch by rd_framework_test: '${ENABLE_PCH_HEADERS}'")
 
