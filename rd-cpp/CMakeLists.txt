@@ -17,7 +17,7 @@ set(CMAKE_INSTALL_PUBLIC_HEADER "${CMAKE_CURRENT_LIST_DIR}/export/include")
 set(CMAKE_INSTALL_PUBLIC_HEADER_THIRDPARTY "${CMAKE_INSTALL_PUBLIC_HEADER}/thirdparty")
 
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -D_GLIBCXX_DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -50,6 +50,10 @@ endif ()
 
 add_subdirectory(thirdparty)
 add_subdirectory(src)
+
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/demo")
+    message(FATAL_ERROR "Run 'gradlew generateEverything' in rd root to generate missing folders.")
+endif()
 
 if (ENABLE_TESTS_OPTION)
     add_subdirectory(googletest)

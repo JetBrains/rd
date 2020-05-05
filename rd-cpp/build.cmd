@@ -4,7 +4,6 @@ GOTO :CMDSCRIPT
 ::CMDLITERAL
 
 set -eux
-./get_dependencies.cmd
 mkdir -p build
 cd build
 cmake -G "Visual Studio 15 2017" ..
