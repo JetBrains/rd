@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
-
-#include "impl/RdProperty.h"
-#include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
+#include "RdFrameworkTestBase.h"
 #include "entities_util.h"
+#include "impl/RdProperty.h"
+
+#include <gtest/gtest.h>
 
 using vi = std::vector<int>;
 
@@ -11,7 +11,8 @@ using namespace rd;
 using namespace test;
 using namespace test::util;
 
-TEST_F(RdFrameworkTestBase, property_statics) {
+TEST_F(RdFrameworkTestBase, property_statics)
+{
 	int property_id = 1;
 
 	auto client_property = RdProperty<int32_t>(1);
@@ -24,36 +25,36 @@ TEST_F(RdFrameworkTestBase, property_statics) {
 	std::vector<int> client_log;
 	std::vector<int> server_log;
 
-	client_property.advise(Lifetime::Eternal(), [&client_log](int const &v) { client_log.push_back(v); });
-	server_property.advise(Lifetime::Eternal(), [&server_log](int const &v) { server_log.push_back(v); });
+	client_property.advise(Lifetime::Eternal(), [&client_log](int const& v) { client_log.push_back(v); });
+	server_property.advise(Lifetime::Eternal(), [&server_log](int const& v) { server_log.push_back(v); });
 
-	//not bound
+	// not bound
 	EXPECT_EQ((vi{1}), client_log);
 	EXPECT_EQ((vi{1}), server_log);
 
-	//bound
+	// bound
 	bindStatic(serverProtocol.get(), server_property, static_name);
 	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ((vi{1}), client_log);
 	EXPECT_EQ((vi{1}), server_log);
 
-	//set from client
+	// set from client
 
 	client_property.set(2);
 	EXPECT_EQ((vi{1, 2}), client_log);
 	EXPECT_EQ((vi{1, 2}), server_log);
 
-	//set from server
+	// set from server
 	server_property.set(3);
 	EXPECT_EQ((vi{1, 2, 3}), client_log);
 	EXPECT_EQ((vi{1, 2, 3}), server_log);
 
-
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, property_dynamic) {
+TEST_F(RdFrameworkTestBase, property_dynamic)
+{
 	using listOf = std::vector<int32_t>;
 
 	int property_id = 1;
@@ -65,31 +66,30 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 	statics(server_property, (property_id)).slave();
 
 	client_property.get().rdid = server_property.get().rdid = RdId(2);
-	dynamic_cast<IRdBindable const &>(client_property.get().get_foo()).rdid =
-	dynamic_cast<IRdBindable const &>(server_property.get().get_foo()).rdid =
-			RdId(3);
+	dynamic_cast<IRdBindable const&>(client_property.get().get_foo()).rdid =
+		dynamic_cast<IRdBindable const&>(server_property.get().get_foo()).rdid = RdId(3);
 
 	/*DynamicEntity::create(clientProtocol.get());
 	DynamicEntity::create(serverProtocol.get());*/
-	//bound
+	// bound
 	bindStatic(serverProtocol.get(), server_property, static_name);
 	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	std::vector<int32_t> clientLog;
 	std::vector<int32_t> serverLog;
 
-	client_property.advise(Lifetime::Eternal(), [&](DynamicEntity const &entity) {
-		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const &it) { clientLog.push_back(it); });
+	client_property.advise(Lifetime::Eternal(), [&](DynamicEntity const& entity) {
+		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const& it) { clientLog.push_back(it); });
 	});
-	server_property.advise(Lifetime::Eternal(), [&](DynamicEntity const &entity) {
-		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const &it) { serverLog.push_back(it); });
+	server_property.advise(Lifetime::Eternal(), [&](DynamicEntity const& entity) {
+		entity.get_foo().advise(Lifetime::Eternal(), [&](int32_t const& it) { serverLog.push_back(it); });
 	});
 
 	EXPECT_EQ((listOf{0}), clientLog);
 	EXPECT_EQ((listOf{0}), serverLog);
 
 	client_property.emplace(make_dynamic_entity(2));
-//	client_property.set(DynamicEntity(2));
+	//	client_property.set(DynamicEntity(2));
 
 	EXPECT_EQ((listOf{0, 2}), clientLog);
 	EXPECT_EQ((listOf{0, 2}), serverLog);
@@ -144,7 +144,8 @@ TEST_F(RdFrameworkTestBase, property_dynamic) {
 	AfterTest();
 }*/
 
-TEST_F(RdFrameworkTestBase, property_vector) {
+TEST_F(RdFrameworkTestBase, property_vector)
+{
 	using list = std::vector<int>;
 
 	int property_id = 1;
@@ -158,56 +159,61 @@ TEST_F(RdFrameworkTestBase, property_vector) {
 	std::vector<int> client_log(10, 10);
 	std::vector<int> server_log(10, 10);
 
-	client_property.advise(Lifetime::Eternal(), [&client_log](list const &v) { client_log = v; });
-	server_property.advise(Lifetime::Eternal(), [&server_log](list const &v) { server_log = v; });
+	client_property.advise(Lifetime::Eternal(), [&client_log](list const& v) { client_log = v; });
+	server_property.advise(Lifetime::Eternal(), [&server_log](list const& v) { server_log = v; });
 
-	//not bound
+	// not bound
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
 
-	//bound
+	// bound
 	bindStatic(serverProtocol.get(), server_property, static_name);
 	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
 
-	//set from client
+	// set from client
 	client_property.set(vi{1});
 	EXPECT_EQ((vi{1}), client_log);
 	EXPECT_EQ((vi{1}), server_log);
 
-	//set from client
+	// set from client
 	server_property.set(vi{1, 2, 3});
 	EXPECT_EQ((vi{1, 2, 3}), client_log);
 	EXPECT_EQ((vi{1, 2, 3}), server_log);
 
-
 	AfterTest();
 }
 
-
-class ListSerializer {
+class ListSerializer
+{
 	using list = std::vector<DynamicEntity>;
+
 public:
-	static list read(SerializationCtx &ctx, Buffer &buffer) {
+	static list read(SerializationCtx& ctx, Buffer& buffer)
+	{
 		int32_t len = buffer.read_integral<int32_t>();
 		list v;
-		for (int i = 0; i < len; ++i) {
+		for (int i = 0; i < len; ++i)
+		{
 			v.push_back(DynamicEntity::read(ctx, buffer));
 		}
 		return v;
 	}
 
-	static void write(SerializationCtx &ctx, Buffer &buffer, const list &value) {
+	static void write(SerializationCtx& ctx, Buffer& buffer, const list& value)
+	{
 		buffer.write_integral<int32_t>(value.size());
-		for (const auto &item : value) {
+		for (const auto& item : value)
+		{
 			item.write(ctx, buffer);
 		}
 	}
 };
 
-TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
+TEST_F(RdFrameworkTestBase, property_vector_polymorphic)
+{
 	using list = std::vector<DynamicEntity>;
 
 	int property_id = 1;
@@ -221,35 +227,34 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
 	std::vector<int> client_log;
 	std::vector<int> server_log;
 
-	client_property.advise(Lifetime::Eternal(), [&client_log](list const &v) {
-		for (auto &x : v) {
-			x.get_foo().advise(Lifetime::Eternal(), [&client_log](int const &value) {
-				client_log.push_back(value);
-			});
+	client_property.advise(Lifetime::Eternal(), [&client_log](list const& v) {
+		for (auto& x : v)
+		{
+			x.get_foo().advise(Lifetime::Eternal(), [&client_log](int const& value) { client_log.push_back(value); });
 		}
 	});
 
-	//not bound
+	// not bound
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
 
 	/*DynamicEntity::create(clientProtocol.get());*/
 	/*DynamicEntity::create(serverProtocol.get());*/
 
-	//bound
+	// bound
 	bindStatic(serverProtocol.get(), server_property, static_name);
 	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_EQ(0, client_log.size());
 	EXPECT_EQ(0, server_log.size());
 
-	//set from client
+	// set from client
 	list t;
 	t.emplace_back(make_dynamic_entity(2));
 	client_property.set(std::move(t));
 	EXPECT_EQ((vi{2}), client_log);
 
-	//set from client
+	// set from client
 	list q;
 	q.emplace_back(make_dynamic_entity(0));
 	q.emplace_back(make_dynamic_entity(1));
@@ -261,7 +266,8 @@ TEST_F(RdFrameworkTestBase, property_vector_polymorphic) {
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, property_optional) {
+TEST_F(RdFrameworkTestBase, property_optional)
+{
 	using Type = int32_t;
 	using opt = optional<Type>;
 
@@ -279,18 +285,14 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 	std::vector<opt> server_log;
 
 	LifetimeDefinition::use([&](Lifetime lifetime) {
-		client_property.advise(lifetime, [&client_log](opt const &v) {
-			client_log.push_back(v);
-		});
-		server_property.advise(lifetime, [&server_log](opt const &v) {
-			server_log.push_back(v);
-		});
+		client_property.advise(lifetime, [&client_log](opt const& v) { client_log.push_back(v); });
+		server_property.advise(lifetime, [&server_log](opt const& v) { server_log.push_back(v); });
 
-		//not bound
+		// not bound
 		EXPECT_EQ((std::vector<opt>{nullopt}), client_log);
 		EXPECT_EQ((std::vector<opt>{nullopt}), server_log);
 
-		//bound
+		// bound
 		bindStatic(serverProtocol.get(), server_property, static_name);
 		bindStatic(clientProtocol.get(), client_property, static_name);
 
@@ -332,7 +334,8 @@ TEST_F(RdFrameworkTestBase, property_optional) {
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, property_uninitialized) {
+TEST_F(RdFrameworkTestBase, property_uninitialized)
+{
 	int property_id = 1;
 
 	RdProperty<int32_t> client_property;
@@ -347,18 +350,18 @@ TEST_F(RdFrameworkTestBase, property_uninitialized) {
 	client_property.advise(Lifetime::Eternal(), [&client_log](int v) { client_log.push_back(v); });
 	server_property.advise(Lifetime::Eternal(), [&server_log](int v) { server_log.push_back(v); });
 
-	//not bound
+	// not bound
 	EXPECT_TRUE(client_log.empty());
 	EXPECT_TRUE(server_log.empty());
 
-	//bound
+	// bound
 	bindStatic(serverProtocol.get(), server_property, static_name);
 	bindStatic(clientProtocol.get(), client_property, static_name);
 
 	EXPECT_TRUE(client_log.empty());
 	EXPECT_TRUE(server_log.empty());
 
-	//set from client
+	// set from client
 
 	client_property.set(1);
 	EXPECT_EQ((vi{1}), client_log);
@@ -368,7 +371,7 @@ TEST_F(RdFrameworkTestBase, property_uninitialized) {
 	EXPECT_EQ((vi{1, 2}), client_log);
 	EXPECT_EQ((vi{1, 2}), server_log);
 
-	//set from server
+	// set from server
 	server_property.set(3);
 	EXPECT_EQ((vi{1, 2, 3}), client_log);
 	EXPECT_EQ((vi{1, 2, 3}), server_log);

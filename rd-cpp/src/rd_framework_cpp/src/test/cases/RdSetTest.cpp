@@ -1,14 +1,15 @@
-#include <gtest/gtest.h>
-
-#include "impl/RdSet.h"
 #include "RdFrameworkTestBase.h"
+#include "impl/RdSet.h"
+
+#include <gtest/gtest.h>
 
 using vi = std::vector<int>;
 
 using namespace rd;
 using namespace test;
 
-TEST_F(RdFrameworkTestBase, set_statics) {
+TEST_F(RdFrameworkTestBase, set_statics)
+{
 	int32_t id = 1;
 
 	RdSet<int> server_set;
@@ -19,17 +20,12 @@ TEST_F(RdFrameworkTestBase, set_statics) {
 
 	vi log;
 
-	server_set.advise(serverLifetimeDef.lifetime,
-					 [&](AddRemove kind, int v) {
-						 log.push_back((kind == AddRemove::ADD) ? v :
-									   -v);
-					 });
+	server_set.advise(serverLifetimeDef.lifetime, [&](AddRemove kind, int v) { log.push_back((kind == AddRemove::ADD) ? v : -v); });
 
 	client_set.add(2);
 	client_set.add(0);
 	client_set.add(1);
 	client_set.add(8);
-
 
 	EXPECT_EQ(vi(), log);
 
@@ -47,21 +43,22 @@ TEST_F(RdFrameworkTestBase, set_statics) {
 	client_set.remove(2);
 	EXPECT_EQ((vi{2, 0, 1, 8, -1, -2}), log);
 
-
 	client_set.clear();
 	EXPECT_EQ((vi{2, 0, 1, 8, -1, -2, -0, -8}), log);
 
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, set_move) {
+TEST_F(RdFrameworkTestBase, set_move)
+{
 	RdSet<int> set1;
 	RdSet<int> set2(std::move(set1));
 
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, set_iterator) {
+TEST_F(RdFrameworkTestBase, set_iterator)
+{
 	RdSet<int> set;
 	EXPECT_EQ(set.end(), set.rbegin().base());
 	set.addAll({1, 2, 3});

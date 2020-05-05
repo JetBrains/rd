@@ -3,42 +3,48 @@
 
 #include "protocol/Buffer.h"
 
-namespace rd {
-	class PkgInputStream {
-	private:
-		Buffer buffer;
+namespace rd
+{
+class PkgInputStream
+{
+private:
+	Buffer buffer;
 
-		std::function<int32_t()> request_data;
+	std::function<int32_t()> request_data;
 
-		size_t memory = 0;
-	public:
-		template<typename F>
-		explicit PkgInputStream(F &&f) : request_data(std::forward<F>(f)) {}
-		
-		void rewind();
+	size_t memory = 0;
 
-		void require_available(int size);
+public:
+	template <typename F>
+	explicit PkgInputStream(F&& f) : request_data(std::forward<F>(f))
+	{
+	}
 
-		size_t get_position() const;
+	void rewind();
 
-		Buffer::word_t *data();
+	void require_available(int size);
 
-		Buffer &get_buffer();
+	size_t get_position() const;
 
-		int32_t try_read(Buffer::word_t *res, size_t size);
+	Buffer::word_t* data();
 
-		bool read(Buffer::word_t *res, size_t size);
+	Buffer& get_buffer();
 
-		template<typename T>
-		T read_integral() {
-			T x{};
-			if (!read(reinterpret_cast<Buffer::word_t*>(&x), sizeof(T))) {
-				return -1;
-			}
-			return x;
+	int32_t try_read(Buffer::word_t* res, size_t size);
+
+	bool read(Buffer::word_t* res, size_t size);
+
+	template <typename T>
+	T read_integral()
+	{
+		T x{};
+		if (!read(reinterpret_cast<Buffer::word_t*>(&x), sizeof(T)))
+		{
+			return -1;
 		}
-	};
-}
+		return x;
+	}
+};
+}	 // namespace rd
 
-
-#endif //RD_CPP_PKGINPUTSTREAM_H
+#endif	  // RD_CPP_PKGINPUTSTREAM_H

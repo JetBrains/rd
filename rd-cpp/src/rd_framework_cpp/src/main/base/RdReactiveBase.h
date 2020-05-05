@@ -1,71 +1,74 @@
 #ifndef RD_CPP_RDREACTIVEBASE_H
 #define RD_CPP_RDREACTIVEBASE_H
 
-
-#include "base/RdBindableBase.h"
 #include "base/IRdReactive.h"
-#include "logger/Logger.h"
+#include "base/RdBindableBase.h"
 #include "guards.h"
+#include "logger/Logger.h"
 
-#pragma warning( push )
-#pragma warning( disable:4250 )
+#pragma warning(push)
+#pragma warning(disable : 4250)
 
-namespace rd {
-	//region predeclared
+namespace rd
+{
+// region predeclared
 
-	class IWire;
+class IWire;
 
-	class IProtocol;
+class IProtocol;
 
-	class Serializers;
-	//endregion
+class Serializers;
+// endregion
 
-	class RdReactiveBase : public RdBindableBase, public IRdReactive {
-	public:
-		static Logger logReceived;
-		static Logger logSend;
+class RdReactiveBase : public RdBindableBase, public IRdReactive
+{
+public:
+	static Logger logReceived;
+	static Logger logSend;
 
-		//region ctor/dtor
+	// region ctor/dtor
 
-		RdReactiveBase() = default;
+	RdReactiveBase() = default;
 
-		RdReactiveBase(RdReactiveBase &&other);
+	RdReactiveBase(RdReactiveBase&& other);
 
-		RdReactiveBase &operator=(RdReactiveBase &&other);
+	RdReactiveBase& operator=(RdReactiveBase&& other);
 
-		virtual ~RdReactiveBase() = default;
-		//endregion
+	virtual ~RdReactiveBase() = default;
+	// endregion
 
-		const IWire *get_wire() const;
+	const IWire* get_wire() const;
 
-		mutable bool is_local_change = false;
+	mutable bool is_local_change = false;
 
-		//delegated
+	// delegated
 
-		const Serializers &get_serializers() const;
+	const Serializers& get_serializers() const;
 
-		IScheduler *get_default_scheduler() const;
+	IScheduler* get_default_scheduler() const;
 
-		IScheduler *get_wire_scheduler() const override;
+	IScheduler* get_wire_scheduler() const override;
 
-		void assert_threading() const;
+	void assert_threading() const;
 
-		void assert_bound() const;
+	void assert_bound() const;
 
-		template<typename F>
-		auto local_change(F &&action) const -> typename std::result_of_t<F()> {
-			if (is_bound() && !async) {
-				assert_threading();
-			}
-
-			RD_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + to_string(rdid));
-
-			util::bool_guard bool_guard(is_local_change);
-			return action();
+	template <typename F>
+	auto local_change(F&& action) const -> typename std::result_of_t<F()>
+	{
+		if (is_bound() && !async)
+		{
+			assert_threading();
 		}
-	};
-}
 
-#pragma warning( pop )
+		RD_ASSERT_MSG(!is_local_change, "!isLocalChange for RdReactiveBase with id:" + to_string(rdid));
 
-#endif //RD_CPP_RDREACTIVEBASE_H
+		util::bool_guard bool_guard(is_local_change);
+		return action();
+	}
+};
+}	 // namespace rd
+
+#pragma warning(pop)
+
+#endif	  // RD_CPP_RDREACTIVEBASE_H

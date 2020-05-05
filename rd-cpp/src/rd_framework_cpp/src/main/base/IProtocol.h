@@ -1,57 +1,60 @@
 #ifndef RD_CPP_IPROTOCOL_H
 #define RD_CPP_IPROTOCOL_H
 
-
 #include "IRdDynamic.h"
-#include "serialization/Serializers.h"
+#include "base/IWire.h"
 #include "protocol/Identities.h"
 #include "scheduler/base/IScheduler.h"
-#include "base/IWire.h"
+#include "serialization/Serializers.h"
 
 #include <memory>
 
-namespace rd {
-	//region predeclared
+namespace rd
+{
+// region predeclared
 
-	class SerializationCtx;
-	//endregion
+class SerializationCtx;
+// endregion
 
-	/**
-	 * \brief A root node in an object graph which can be synchronized with its remote copy over a network or a similar connection.
-	 */
-	class IProtocol : public IRdDynamic {
-		friend class RdExtBase;
-	public:
-		std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
-	protected:
-		std::shared_ptr<Identities> identity;
-		IScheduler *scheduler = nullptr;
-	public:
-		std::shared_ptr<IWire> wire;
-		//region ctor/dtor
+/**
+ * \brief A root node in an object graph which can be synchronized with its remote copy over a network or a similar connection.
+ */
+class IProtocol : public IRdDynamic
+{
+	friend class RdExtBase;
 
-		IProtocol();
+public:
+	std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
 
-		IProtocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire);
+protected:
+	std::shared_ptr<Identities> identity;
+	IScheduler* scheduler = nullptr;
 
-		IProtocol(IProtocol &&other) noexcept = default;
+public:
+	std::shared_ptr<IWire> wire;
+	// region ctor/dtor
 
-		IProtocol &operator=(IProtocol &&other) noexcept = default;
+	IProtocol();
 
-		virtual ~IProtocol();
-		//endregion
+	IProtocol(std::shared_ptr<Identities> identity, IScheduler* scheduler, std::shared_ptr<IWire> wire);
 
-		const Identities * get_identity() const;
+	IProtocol(IProtocol&& other) noexcept = default;
 
-		const IProtocol *get_protocol() const override;
+	IProtocol& operator=(IProtocol&& other) noexcept = default;
 
-		IScheduler *get_scheduler() const;
+	virtual ~IProtocol();
+	// endregion
 
-		const IWire *get_wire() const;
+	const Identities* get_identity() const;
 
-		const Serializers& get_serializers() const;
-	};
-}
+	const IProtocol* get_protocol() const override;
 
+	IScheduler* get_scheduler() const;
 
-#endif //RD_CPP_IPROTOCOL_H
+	const IWire* get_wire() const;
+
+	const Serializers& get_serializers() const;
+};
+}	 // namespace rd
+
+#endif	  // RD_CPP_IPROTOCOL_H

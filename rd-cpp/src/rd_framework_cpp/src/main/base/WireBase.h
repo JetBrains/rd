@@ -1,30 +1,33 @@
 #ifndef RD_CPP_WIREBASE_H
 #define RD_CPP_WIREBASE_H
 
-
-#include "reactive/Property.h"
 #include "base/IWire.h"
 #include "protocol/MessageBroker.h"
+#include "reactive/Property.h"
 
-namespace rd {
-	class WireBase : public IWire {
-	protected:
-		IScheduler *scheduler = nullptr;
+namespace rd
+{
+class WireBase : public IWire
+{
+protected:
+	IScheduler* scheduler = nullptr;
 
-		MessageBroker message_broker;
-	public:
-		//region ctor/dtor
+	MessageBroker message_broker;
 
-		WireBase(WireBase &&) = default;
+public:
+	// region ctor/dtor
 
-		explicit WireBase(IScheduler *scheduler) : scheduler(scheduler), message_broker(scheduler) {}
+	WireBase(WireBase&&) = default;
 
-		virtual ~WireBase() = default;
-		//endregion
+	explicit WireBase(IScheduler* scheduler) : scheduler(scheduler), message_broker(scheduler)
+	{
+	}
 
-		void advise(Lifetime lifetime, IRdReactive const *entity) const override;
-	};
-}
+	virtual ~WireBase() = default;
+	// endregion
 
+	void advise(Lifetime lifetime, IRdReactive const* entity) const override;
+};
+}	 // namespace rd
 
-#endif //RD_CPP_WIREBASE_H
+#endif	  // RD_CPP_WIREBASE_H

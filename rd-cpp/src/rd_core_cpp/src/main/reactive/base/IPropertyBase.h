@@ -1,65 +1,71 @@
 #ifndef RD_CPP_IPROPERTYBASE_H
 #define RD_CPP_IPROPERTYBASE_H
 
-
-#include "types/wrapper.h"
-#include "reactive/interfaces.h"
-#include "reactive/SignalX.h"
 #include "lifetime/SequentialLifetimes.h"
-
+#include "reactive/SignalX.h"
+#include "reactive/interfaces.h"
 #include "thirdparty.hpp"
+#include "types/wrapper.h"
 
-namespace rd {
-	template<typename T>
-	class IPropertyBase : public ISource<T>, public IViewable<T> {
-	protected:
-		mutable property_storage<T> value;
+namespace rd
+{
+template <typename T>
+class IPropertyBase : public ISource<T>, public IViewable<T>
+{
+protected:
+	mutable property_storage<T> value;
 
-		Signal<T> change, before_change;
+	Signal<T> change, before_change;
 
-		using WT = value_or_wrapper<T>;
-	public:
+	using WT = value_or_wrapper<T>;
 
-		bool has_value() const {
-			return (bool) (value);
-		}
+public:
+	bool has_value() const
+	{
+		return (bool) (value);
+	}
 
-		//region ctor/dtor
+	// region ctor/dtor
 
-		IPropertyBase() = default;
+	IPropertyBase() = default;
 
-		IPropertyBase(IPropertyBase &&other) = default;
+	IPropertyBase(IPropertyBase&& other) = default;
 
-		IPropertyBase &operator=(IPropertyBase &&other) = default;
+	IPropertyBase& operator=(IPropertyBase&& other) = default;
 
-		template <typename F>
-		explicit IPropertyBase(F &&value) : value(std::forward<F>(value)) {}
+	template <typename F>
+	explicit IPropertyBase(F&& value) : value(std::forward<F>(value))
+	{
+	}
 
-		virtual ~IPropertyBase() = default;
-		//endregion
+	virtual ~IPropertyBase() = default;
+	// endregion
 
-		virtual void advise_before(Lifetime lifetime, std::function<void(T const &)> handler) const = 0;
+	virtual void advise_before(Lifetime lifetime, std::function<void(T const&)> handler) const = 0;
 
-		void view(Lifetime lifetime, std::function<void(Lifetime, T const &)> handler) const override {
-			if (lifetime->is_terminated()) return;
+	void view(Lifetime lifetime, std::function<void(Lifetime, T const&)> handler) const override
+	{
+		if (lifetime->is_terminated())
+			return;
 
-			Lifetime lf = lifetime.create_nested();
-			std::shared_ptr<SequentialLifetimes> seq = std::make_shared<SequentialLifetimes>(lf);
+		Lifetime lf = lifetime.create_nested();
+		std::shared_ptr<SequentialLifetimes> seq = std::make_shared<SequentialLifetimes>(lf);
 
-			this->advise_before(lf, [lf, seq](T const &v) {
-				if (!lf->is_terminated()) {
-					seq->terminate_current();
-				}
-			});
+		this->advise_before(lf, [lf, seq](T const& v) {
+			if (!lf->is_terminated())
+			{
+				seq->terminate_current();
+			}
+		});
 
-			this->advise(lf, [lf, seq, handler](T const &v) {
-				if (!lf->is_terminated()) {
-					handler(seq->next(), v);
-				}
-			});
-		}
-	};
-}
+		this->advise(lf, [lf, seq, handler](T const& v) {
+			if (!lf->is_terminated())
+			{
+				handler(seq->next(), v);
+			}
+		});
+	}
+};
+}	 // namespace rd
 
-
-#endif //RD_CPP_IPROPERTYBASE_H
+#endif	  // RD_CPP_IPROPERTYBASE_H

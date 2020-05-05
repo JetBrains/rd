@@ -1,16 +1,16 @@
-#include <gtest/gtest.h>
-
-
 #include "SocketWireTestBase.h"
 #include "impl/RdSignal.h"
 #include "wire/SocketProxy.h"
+
+#include <gtest/gtest.h>
 
 using namespace rd;
 using namespace rd::util;
 using namespace test;
 using namespace test::util;
 
-TEST_F(SocketWireTestBase, TestSocketProxySimple) {
+TEST_F(SocketWireTestBase, TestSocketProxySimple)
+{
 	auto proxyLifetimeDefinition = LifetimeDefinition(lifetime);
 	auto proxyLifetime = proxyLifetimeDefinition.lifetime;
 	auto serverProtocol = server(socketLifetime);
@@ -37,14 +37,10 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 	auto serverLog = std::vector<int>();
 	auto clientLog = std::vector<int>();
 
-	sp.advise(lifetime, [&serverLog](int i) {
-		serverLog.push_back(i);
-	});
-	cp.advise(lifetime, [&clientLog](int i) {
-		clientLog.push_back(i);
-	});
+	sp.advise(lifetime, [&serverLog](int i) { serverLog.push_back(i); });
+	cp.advise(lifetime, [&clientLog](int i) { clientLog.push_back(i); });
 
-	//Connection is established for now
+	// Connection is established for now
 
 	sp.fire(1);
 
@@ -62,7 +58,6 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 	EXPECT_EQ((std::vector<int>{1, 2}), serverLog);
 	EXPECT_EQ((std::vector<int>{1, 2}), clientLog);
 
-
 	proxy.StopServerToClientMessaging();
 
 	checkSchedulersAreEmpty();
@@ -74,7 +69,6 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 	checkSchedulersAreEmpty();
 
 	EXPECT_EQ((std::vector<int>{1, 2, 3}), serverLog);
-
 
 	proxy.StopClientToServerMessaging();
 
@@ -88,7 +82,7 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 
 	EXPECT_EQ((std::vector<int>{1, 2, 4}), clientLog);
 
-	//Connection is broken for now
+	// Connection is broken for now
 
 	proxy.StartServerToClientMessaging();
 	checkSchedulersAreEmpty();
@@ -101,7 +95,6 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 	EXPECT_EQ((std::vector<int>{1, 2, 3, 5}), serverLog);
 	EXPECT_EQ((std::vector<int>{1, 2, 4, 5}), clientLog);
 
-
 	proxy.StartClientToServerMessaging();
 
 	cp.fire(6);
@@ -112,7 +105,7 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 	EXPECT_EQ((std::vector<int>{1, 2, 3, 5, 6}), serverLog);
 	EXPECT_EQ((std::vector<int>{1, 2, 4, 5, 6}), clientLog);
 
-	//Connection is established for now
+	// Connection is established for now
 
 	proxyLifetimeDefinition.terminate();
 
@@ -125,7 +118,7 @@ TEST_F(SocketWireTestBase, TestSocketProxySimple) {
 
 	checkSchedulersAreEmpty();
 
-	//Connection is broken for now, proxy is not alive
+	// Connection is broken for now, proxy is not alive
 
 	terminate();
 }

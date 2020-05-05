@@ -1,6 +1,11 @@
 #ifndef RD_CPP_FRAMEWORK_PCH_H
 #define RD_CPP_FRAMEWORK_PCH_H
 
+#include "ActiveSocket.h"
+#include "PassiveSocket.h"
+#include "SimpleSocket.h"
+#include "thirdparty.hpp"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -22,10 +27,4 @@
 #include <utility>
 #include <vector>
 
-#include "thirdparty.hpp"
-
-#include "SimpleSocket.h"
-#include "ActiveSocket.h"
-#include "PassiveSocket.h"
-
-#endif //RD_CPP_FRAMEWORK_PCH_H
+#endif	  // RD_CPP_FRAMEWORK_PCH_H

@@ -1,6 +1,8 @@
 #ifndef RD_CPP_CORE_PCH_H
 #define RD_CPP_CORE_PCH_H
 
+#include "thirdparty.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -9,6 +11,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -24,8 +27,5 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <ctime>
 
-#include "thirdparty.hpp"
-
-#endif //RD_CPP_CORE_PCH_H
+#endif	  // RD_CPP_CORE_PCH_H

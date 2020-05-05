@@ -1,2 +1,1 @@
 ﻿#include "RdFrameworkDynamicPolymorphicTestBase.h"
-
