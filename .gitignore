@@ -37,7 +37,6 @@ cmake-build-*
 /rd-cpp/build
 /rd-cpp/export
 /rd-cpp/gradle/
-/rd-cpp/googletest/
 /rd-cpp/demo/
 /rd-cpp/src/rd_framework_cpp/src/test/util/entities/
 /rd-cpp/src/rd_framework_cpp/src/test/util/interning/

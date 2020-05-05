@@ -1,0 +1,4 @@
+[submodule "rd-cpp/googletest"]
+	path = rd-cpp/googletest
+	url = https://github.com/google/googletest.git
+	branch = v1.10.x
