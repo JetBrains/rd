@@ -1,17 +1,16 @@
-#include "wire/SocketWire.h"
-#include "scheduler/SimpleScheduler.h"
 #include "impl/RdProperty.h"
 #include "protocol/Protocol.h"
+#include "scheduler/SimpleScheduler.h"
 #include "std/filesystem.h"
-
 #include "thirdparty.hpp"
+#include "wire/SocketWire.h"
 
 #include <fstream>
 
-
 using namespace rd;
 
-int main() {
+int main()
+{
 	auto tmp_directory = filesystem::get_temp_directory() + "/rd/port.txt";
 	std::ifstream fin(tmp_directory);
 	uint16_t port;
@@ -35,10 +34,9 @@ int main() {
 	property_rx.rdid = RdId(2);
 	property_rx.bind(lifetime, &clientProtocol, "rx");
 
-	property_rx.advise(lifetime, [](optional<int32_t> const &x) {
-		std::cout << "rx value changed to " << *x << "\n";
-	});
-	for (int i = 1; i < 10; ++i) {
+	property_rx.advise(lifetime, [](optional<int32_t> const& x) { std::cout << "rx value changed to " << *x << "\n"; });
+	for (int i = 1; i < 10; ++i)
+	{
 		property_main.set(i);
 	}
 

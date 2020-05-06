@@ -1,38 +1,40 @@
 #ifndef RD_CPP_CORE_SEQUENTIAL_LIFETIMES_H
 #define RD_CPP_CORE_SEQUENTIAL_LIFETIMES_H
 
-#include "lifetime/LifetimeDefinition.h"
 #include "lifetime/Lifetime.h"
+#include "lifetime/LifetimeDefinition.h"
 
-namespace rd {
-	class SequentialLifetimes {
-	private:
-		std::shared_ptr<LifetimeDefinition> current_def = LifetimeDefinition::get_shared_eternal();
-		Lifetime parent_lifetime;
-	public:
-		//region ctor/dtor
-		SequentialLifetimes() = delete;
+namespace rd
+{
+class SequentialLifetimes
+{
+private:
+	std::shared_ptr<LifetimeDefinition> current_def = LifetimeDefinition::get_shared_eternal();
+	Lifetime parent_lifetime;
 
-		SequentialLifetimes(SequentialLifetimes const&) = delete;
+public:
+	// region ctor/dtor
+	SequentialLifetimes() = delete;
 
-		SequentialLifetimes &operator=(SequentialLifetimes const &) = delete;
+	SequentialLifetimes(SequentialLifetimes const&) = delete;
 
-		SequentialLifetimes(SequentialLifetimes &&) = delete;
+	SequentialLifetimes& operator=(SequentialLifetimes const&) = delete;
 
-		SequentialLifetimes &operator=(SequentialLifetimes &&) = delete;
+	SequentialLifetimes(SequentialLifetimes&&) = delete;
 
-		explicit SequentialLifetimes(Lifetime parent_lifetime);
-		//endregion
+	SequentialLifetimes& operator=(SequentialLifetimes&&) = delete;
 
-		Lifetime next();
+	explicit SequentialLifetimes(Lifetime parent_lifetime);
+	// endregion
 
-		void terminate_current();
+	Lifetime next();
 
-		bool is_terminated() const;
+	void terminate_current();
 
-		void set_current_lifetime(std::shared_ptr<LifetimeDefinition> new_def);
-	};
-}
+	bool is_terminated() const;
 
+	void set_current_lifetime(std::shared_ptr<LifetimeDefinition> new_def);
+};
+}	 // namespace rd
 
-#endif //RD_CPP_CORE_SEQUENTIAL_LIFETIMES_H
+#endif	  // RD_CPP_CORE_SEQUENTIAL_LIFETIMES_H

@@ -3,13 +3,15 @@
 
 #include "DynamicEntity.h"
 
-namespace rd {
-	namespace test{
-		namespace util {
-			DynamicEntity make_dynamic_entity(int32_t x);
-		}
-	}
+namespace rd
+{
+namespace test
+{
+namespace util
+{
+DynamicEntity make_dynamic_entity(int32_t x);
 }
+}	 // namespace test
+}	 // namespace rd
 
-
-#endif //RD_CPP_ENTITIES_UTIL_H
+#endif	  // RD_CPP_ENTITIES_UTIL_H

@@ -3,10 +3,10 @@
 
 #include <memory>
 
-namespace rd {
-	template<typename T>
-	using allocator = std::allocator<T>;
+namespace rd
+{
+template <typename T>
+using allocator = std::allocator<T>;
 }
 
-
-#endif //RD_CPP_ALLOCATOR_H
+#endif	  // RD_CPP_ALLOCATOR_H

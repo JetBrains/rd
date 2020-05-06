@@ -1,17 +1,15 @@
 #include "RdAsyncTestBase.h"
-
+#include "countdownlatch.hpp"
 #include "impl/RdSignal.h"
 #include "types/Void.h"
 #include "wire/WireUtil.h"
-
-#include "countdownlatch.hpp"
 
 using namespace rd;
 using namespace rd::test;
 using namespace rd::test::util;
 
-
-TEST_F(RdAsyncTestBase, DISABLED_asyncSignalStatic) {
+TEST_F(RdAsyncTestBase, DISABLED_asyncSignalStatic)
+{
 	std::atomic_int32_t acc{0};
 
 	clatch::countdownlatch evt1(3);
@@ -50,14 +48,12 @@ TEST_F(RdAsyncTestBase, DISABLED_asyncSignalStatic) {
 			printf("server advise completed");
 			evt1.count_down();
 			evt1.await();
-
 		});
 	});
 
 	EXPECT_EQ(0, acc);
 	evt1.count_down();
 	evt1.await();
-
 
 	evt2.await();
 	clientUiScheduler->flush();

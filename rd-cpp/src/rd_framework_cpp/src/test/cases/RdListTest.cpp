@@ -1,17 +1,18 @@
-#include <gtest/gtest.h>
-
-#include "impl/RdProperty.h"
-#include "impl/RdList.h"
-#include "RdFrameworkTestBase.h"
 #include "DynamicEntity.h"
-#include "test_util.h"
+#include "RdFrameworkTestBase.h"
 #include "entities_util.h"
+#include "impl/RdList.h"
+#include "impl/RdProperty.h"
+#include "test_util.h"
+
+#include <gtest/gtest.h>
 
 using namespace rd;
 using namespace test;
 using namespace test::util;
 
-TEST_F(RdFrameworkTestBase, rd_list_static) {
+TEST_F(RdFrameworkTestBase, rd_list_static)
+{
 	int32_t id = 1;
 
 	RdList<std::wstring> server_list;
@@ -25,16 +26,14 @@ TEST_F(RdFrameworkTestBase, rd_list_static) {
 
 	std::vector<std::string> logUpdate;
 
-	client_list.advise(Lifetime::Eternal(),
-					   [&](IViewableList<std::wstring>::Event entry) {
-						   logUpdate.emplace_back(to_string(entry));
-					   });
+	client_list.advise(
+		Lifetime::Eternal(), [&](IViewableList<std::wstring>::Event entry) { logUpdate.emplace_back(to_string(entry)); });
 
 	EXPECT_EQ(0, server_list.size());
 	EXPECT_EQ(0, client_list.size());
 
 	server_list.add(L"Server value 1");
-//    server_list.push_backAll(listOf("Server value 2", "Server value 3"));
+	//    server_list.push_backAll(listOf("Server value 2", "Server value 3"));
 	server_list.add(L"Server value 2");
 	server_list.add(L"Server value 3");
 
@@ -59,21 +58,15 @@ TEST_F(RdFrameworkTestBase, rd_list_static) {
 	EXPECT_EQ(client_list.get(4), L"Server value 5");
 	EXPECT_EQ(server_list.get(4), L"Server value 5");
 
-
-	EXPECT_EQ(logUpdate,
-			  (std::vector<std::string>{"Add 0:Server value 1",
-										"Add 1:Server value 2",
-										"Add 2:Server value 3",
-										"Add 3:Server value 4",
-										"Update 3:Client value 4",
-										"Add 4:Client value 5",
-										"Update 4:Server value 5"})
-	);
+	EXPECT_EQ(
+		logUpdate, (std::vector<std::string>{"Add 0:Server value 1", "Add 1:Server value 2", "Add 2:Server value 3",
+					   "Add 3:Server value 4", "Update 3:Client value 4", "Add 4:Client value 5", "Update 4:Server value 5"}));
 
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
+TEST_F(RdFrameworkTestBase, rd_list_dynamic)
+{
 	int32_t id = 1;
 
 	RdList<DynamicEntity> server_list;
@@ -93,12 +86,10 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 
 	std::vector<std::string> log;
 
-	server_list.view(Lifetime::Eternal(), [&](Lifetime lf, size_t k, DynamicEntity const &v) {
-		lf->bracket(
-				[&log, k]() { log.push_back("start " + std::to_string(k)); },
-				[&log, k]() { log.push_back("finish " + std::to_string(k)); }
-		);
-		v.get_foo().advise(lf, [&log](int32_t const &fooval) { log.push_back(std::to_string(fooval)); });
+	server_list.view(Lifetime::Eternal(), [&](Lifetime lf, size_t k, DynamicEntity const& v) {
+		lf->bracket([&log, k]() { log.push_back("start " + std::to_string(k)); },
+			[&log, k]() { log.push_back("finish " + std::to_string(k)); });
+		v.get_foo().advise(lf, [&log](int32_t const& fooval) { log.push_back(std::to_string(fooval)); });
 	});
 
 	client_list.emplace_add(make_dynamic_entity(2));
@@ -116,14 +107,8 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 
 	client_list.clear();
 
-	EXPECT_EQ(log, (std::vector<std::string>{"start 0", "2",
-											 "0",
-											 "1",
-											 "finish 0", "start 0", "1",
-											 "start 1", "8",
-											 "finish 1",
-											 "start 1", "3",
-											 "finish 1", "finish 0"}));
+	EXPECT_EQ(log, (std::vector<std::string>{"start 0", "2", "0", "1", "finish 0", "start 0", "1", "start 1", "8", "finish 1",
+					   "start 1", "3", "finish 1", "finish 0"}));
 
 	AfterTest();
 }
@@ -180,14 +165,16 @@ TEST_F(RdFrameworkTestBase, rd_list_dynamic) {
 	AfterTest();
 }*/
 
-TEST_F(RdFrameworkTestBase, list_move) {
+TEST_F(RdFrameworkTestBase, list_move)
+{
 	RdList<int> list1;
 	RdList<int> list2(std::move(list1));
 
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, list_iterator) {
+TEST_F(RdFrameworkTestBase, list_iterator)
+{
 	RdList<int> list;
 	EXPECT_EQ(list.end(), list.rbegin().base());
 	list.addAll({1, 2, 3});

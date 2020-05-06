@@ -1,5 +1,5 @@
 #include "IRdWireable.h"
 
-namespace rd {
-
+namespace rd
+{
 }

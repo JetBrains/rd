@@ -3,90 +3,98 @@
 
 #include "protocol/Buffer.h"
 #include "protocol/RdId.h"
-
 #include "std/unordered_map.h"
 
 #include <functional>
+#include <regex>
 #include <string>
 #include <utility>
-#include <regex>
 
-namespace rd {
-	//region predeclared
+namespace rd
+{
+// region predeclared
 
-	class IProtocol;
+class IProtocol;
 
-	class Serializers;
+class Serializers;
 
-	class InternRoot;
+class InternRoot;
 
-	class RdBindableBase;
-	//endregion
+class RdBindableBase;
+// endregion
 
-	class SerializationCtx {
-		Serializers const *serializers = nullptr;
-	public:
-		using roots_t = rd::unordered_map<util::hash_t, InternRoot const *>;
+class SerializationCtx
+{
+	Serializers const* serializers = nullptr;
 
-		roots_t intern_roots{};
+public:
+	using roots_t = rd::unordered_map<util::hash_t, InternRoot const*>;
 
-		//region ctor/dtor
+	roots_t intern_roots{};
 
-		//    SerializationCtx() = delete;
+	// region ctor/dtor
 
-		SerializationCtx(SerializationCtx const &other) = delete;
+	//    SerializationCtx() = delete;
 
-		SerializationCtx &operator=(SerializationCtx const &other) = delete;
+	SerializationCtx(SerializationCtx const& other) = delete;
 
-		SerializationCtx(SerializationCtx &&other) = default;
+	SerializationCtx& operator=(SerializationCtx const& other) = delete;
 
-		SerializationCtx &operator=(SerializationCtx &&other) = default;
+	SerializationCtx(SerializationCtx&& other) = default;
 
-//		explicit SerializationCtx(const Serializers *serializers = nullptr);
+	SerializationCtx& operator=(SerializationCtx&& other) = default;
 
-		explicit SerializationCtx(const Serializers *serializers, roots_t intern_roots = {});
+	//		explicit SerializationCtx(const Serializers *serializers = nullptr);
 
-		SerializationCtx
-		withInternRootsHere(RdBindableBase const &owner, std::initializer_list<std::string> new_roots) const;
+	explicit SerializationCtx(const Serializers* serializers, roots_t intern_roots = {});
 
-		//endregion
+	SerializationCtx withInternRootsHere(RdBindableBase const& owner, std::initializer_list<std::string> new_roots) const;
 
-		template<typename T, util::hash_t InternKey>
-		Wrapper<T> readInterned(Buffer &buffer, std::function<T(SerializationCtx &, Buffer &)> readValueDelegate);
+	// endregion
 
-		template<typename T, util::hash_t InternKey, typename F,
-				typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx &, Buffer &, T>::value>
-		>
-		void writeInterned(Buffer &buffer, Wrapper<T> const &value, F &&writeValueDelegate);
+	template <typename T, util::hash_t InternKey>
+	Wrapper<T> readInterned(Buffer& buffer, std::function<T(SerializationCtx&, Buffer&)> readValueDelegate);
 
-		Serializers const &get_serializers() const;
-	};
-}
+	template <typename T, util::hash_t InternKey, typename F,
+		typename = typename std::enable_if_t<util::is_invocable<F, SerializationCtx&, Buffer&, T>::value> >
+	void writeInterned(Buffer& buffer, Wrapper<T> const& value, F&& writeValueDelegate);
+
+	Serializers const& get_serializers() const;
+};
+}	 // namespace rd
 
 #include "intern/InternRoot.h"
 
-namespace rd {
-	template<typename T, util::hash_t InternKey>
-	Wrapper<T> SerializationCtx::readInterned(Buffer &buffer,
-											  std::function<T(SerializationCtx &, Buffer &)> readValueDelegate) {
-		auto it = intern_roots.find(InternKey);
-		if (it != intern_roots.end()) {
-			int32_t index = buffer.read_integral<int32_t>() ^1;
-			return it->second->un_intern_value<T>(index);
-		} else {
-			return wrapper::make_wrapper<T>(readValueDelegate(*this, buffer));
-		}
+namespace rd
+{
+template <typename T, util::hash_t InternKey>
+Wrapper<T> SerializationCtx::readInterned(Buffer& buffer, std::function<T(SerializationCtx&, Buffer&)> readValueDelegate)
+{
+	auto it = intern_roots.find(InternKey);
+	if (it != intern_roots.end())
+	{
+		int32_t index = buffer.read_integral<int32_t>() ^ 1;
+		return it->second->un_intern_value<T>(index);
 	}
-
-	template<typename T, util::hash_t InternKey, typename F, typename>
-	void SerializationCtx::writeInterned(Buffer &buffer, const Wrapper<T> &value, F &&writeValueDelegate) {
-		auto it = intern_roots.find(InternKey);
-		if (it != intern_roots.end()) {
-			int32_t index = it->second->intern_value<T>(value);
-			buffer.write_integral<int32_t>(index);
-		} else {
-			writeValueDelegate(const_cast<SerializationCtx &>(*this), buffer, *value);
-		}
+	else
+	{
+		return wrapper::make_wrapper<T>(readValueDelegate(*this, buffer));
 	}
 }
-#endif //RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
+
+template <typename T, util::hash_t InternKey, typename F, typename>
+void SerializationCtx::writeInterned(Buffer& buffer, const Wrapper<T>& value, F&& writeValueDelegate)
+{
+	auto it = intern_roots.find(InternKey);
+	if (it != intern_roots.end())
+	{
+		int32_t index = it->second->intern_value<T>(value);
+		buffer.write_integral<int32_t>(index);
+	}
+	else
+	{
+		writeValueDelegate(const_cast<SerializationCtx&>(*this), buffer, *value);
+	}
+}
+}	 // namespace rd
+#endif	  // RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

@@ -2,52 +2,52 @@
 
 #include "CrossTestClientBase.h"
 #include "CrossTest_AllEntities.h"
-
-#include "DemoModel/DemoModel.h"
-#include "ExtModel/ExtModel.h"
-#include "DemoModel/Derived.h"
-#include "DemoModel/ConstUtil.h"
-#include "DemoModel/MyEnum.h"
-#include "DemoModel/Flags.h"
 #include "DemoModel/ComplicatedPair.h"
-
+#include "DemoModel/ConstUtil.h"
+#include "DemoModel/DemoModel.h"
+#include "DemoModel/Derived.h"
+#include "DemoModel/Flags.h"
+#include "DemoModel/MyEnum.h"
+#include "ExtModel/ExtModel.h"
 #include "lifetime/Lifetime.h"
-#include "wire/SocketWire.h"
 #include "scheduler/SimpleScheduler.h"
+#include "wire/SocketWire.h"
 #include "wire/WireUtil.h"
 
 #include <cstdint>
-#include <string>
 #include <future>
-
-
+#include <string>
 
 using namespace rd;
 using namespace demo;
 
-namespace rd {
-	namespace cross {
-		class CrossTestClientAllEntities : public CrossTestClientBase {
-		protected:
-			int run() override {
-				DemoModel model;
+namespace rd
+{
+namespace cross
+{
+class CrossTestClientAllEntities : public CrossTestClientBase
+{
+protected:
+	int run() override
+	{
+		DemoModel model;
 
-				scheduler.queue([&]() mutable {
-					model.connect(model_lifetime, protocol.get());
-					ExtModel const &extModel = ExtModel::getOrCreateExtensionOf(model);
+		scheduler.queue([&]() mutable {
+			model.connect(model_lifetime, protocol.get());
+			ExtModel const& extModel = ExtModel::getOrCreateExtensionOf(model);
 
+			CrossTestAllEntities::fireAll(model, extModel);
+		});
 
-					CrossTestAllEntities::fireAll(model, extModel);
-				});
-
-				terminate();
-				return 0;
-			}
-		};
+		terminate();
+		return 0;
 	}
-}
+};
+}	 // namespace cross
+}	 // namespace rd
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
 	rd::cross::CrossTestClientAllEntities test;
 	return test.main(argc, argv, "CrossTestClientAllEntities");
 }

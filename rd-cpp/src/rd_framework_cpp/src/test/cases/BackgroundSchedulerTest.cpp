@@ -1,17 +1,18 @@
-#include <gtest/gtest.h>
-
+#include "lifetime/LifetimeDefinition.h"
 #include "scheduler/SingleThreadScheduler.h"
 #include "wire/WireUtil.h"
-#include "lifetime/LifetimeDefinition.h"
+
+#include <gtest/gtest.h>
 
 using namespace rd;
 
-TEST(BackgroundSchedulerTest, Simple) {
+TEST(BackgroundSchedulerTest, Simple)
+{
 	LifetimeDefinition definition{false};
 	Lifetime lifetime = definition.lifetime;
 	rd::SingleThreadScheduler s(lifetime, "test");
 	EXPECT_FALSE(s.is_active());
-//	EXPECT_THROW(s.assert_thread(), std::exception);
+	//	EXPECT_THROW(s.assert_thread(), std::exception);
 
 	std::atomic_int32_t tasks_executed{0};
 	s.queue([&]() {
@@ -27,12 +28,8 @@ TEST(BackgroundSchedulerTest, Simple) {
 	s.flush();
 	EXPECT_EQ(2, tasks_executed);
 
-	s.queue([]() {
-		throw std::invalid_argument("");
-	});
-	s.queue([&]() {
-		tasks_executed++;
-	});
+	s.queue([]() { throw std::invalid_argument(""); });
+	s.queue([&]() { tasks_executed++; });
 
 	s.flush();
 	EXPECT_EQ(3, tasks_executed);

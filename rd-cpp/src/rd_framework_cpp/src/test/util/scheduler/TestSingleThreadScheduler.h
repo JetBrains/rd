@@ -3,17 +3,17 @@
 
 #include "scheduler/base/SingleThreadSchedulerBase.h"
 
-namespace rd {
-	class TestSingleThreadScheduler : public SingleThreadSchedulerBase {
+namespace rd
+{
+class TestSingleThreadScheduler : public SingleThreadSchedulerBase
+{
+public:
+	// region ctor/dtor
+	explicit TestSingleThreadScheduler(std::string string);
 
-	public:
-		//region ctor/dtor
-		explicit TestSingleThreadScheduler(std::string string);
+	virtual ~TestSingleThreadScheduler() = default;
+	// endregion
+};
+}	 // namespace rd
 
-		virtual ~TestSingleThreadScheduler() = default;
-		//endregion
-	};
-}
-
-
-#endif //RD_CPP_TESTSINGLETHREADSCHEDULER_H
+#endif	  // RD_CPP_TESTSINGLETHREADSCHEDULER_H

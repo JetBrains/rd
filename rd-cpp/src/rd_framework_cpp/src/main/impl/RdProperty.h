@@ -1,95 +1,106 @@
 #ifndef RD_CPP_RDPROPERTY_H
 #define RD_CPP_RDPROPERTY_H
 
-
 #include "base/RdPropertyBase.h"
-#include "serialization/Polymorphic.h"
 #include "serialization/ISerializable.h"
+#include "serialization/Polymorphic.h"
 #include "std/allocator.h"
 
-#pragma warning( push )
-#pragma warning( disable:4250 )
+#pragma warning(push)
+#pragma warning(disable : 4250)
 
-namespace rd {
-	/**
-	 * \brief Reactive property for connection through wire. 
-	 
-	 * \tparam T type of stored value
-	 * \tparam S "SerDes" for value
-	 */
-	template<typename T, typename S = Polymorphic<T>, typename A = allocator<T>>
-	class RdProperty final : public RdPropertyBase<T, S>, public ISerializable {
-	public:
-		using value_type = T;
+namespace rd
+{
+/**
+ * \brief Reactive property for connection through wire.
 
-		//region ctor/dtor
+ * \tparam T type of stored value
+ * \tparam S "SerDes" for value
+ */
+template <typename T, typename S = Polymorphic<T>, typename A = allocator<T>>
+class RdProperty final : public RdPropertyBase<T, S>, public ISerializable
+{
+public:
+	using value_type = T;
 
-		RdProperty() = default;
+	// region ctor/dtor
 
-		RdProperty(RdProperty const &) = delete;
+	RdProperty() = default;
 
-		RdProperty &operator=(RdProperty const &) = delete;
+	RdProperty(RdProperty const&) = delete;
 
-		RdProperty(RdProperty &&) = default;
+	RdProperty& operator=(RdProperty const&) = delete;
 
-		RdProperty &operator=(RdProperty &&) = default;
+	RdProperty(RdProperty&&) = default;
 
-		template<typename F>
-		explicit RdProperty(F &&value) : RdPropertyBase<T, S>(std::forward<F>(value)) {}
+	RdProperty& operator=(RdProperty&&) = default;
 
-		virtual ~RdProperty() = default;
-		//endregion
+	template <typename F>
+	explicit RdProperty(F&& value) : RdPropertyBase<T, S>(std::forward<F>(value))
+	{
+	}
 
-		static RdProperty<T, S> read(SerializationCtx &ctx, Buffer &buffer) {
-			RdId id = RdId::read(buffer);
-			bool not_null = buffer.read_bool();//not null/
-			(void) not_null;
-			auto value = S::read(ctx, buffer);
-			RdProperty<T, S> property;
-			property.value = std::move(value);
-			withId(property, id);
-			return property;
+	virtual ~RdProperty() = default;
+	// endregion
+
+	static RdProperty<T, S> read(SerializationCtx& ctx, Buffer& buffer)
+	{
+		RdId id = RdId::read(buffer);
+		bool not_null = buffer.read_bool();	   // not null/
+		(void) not_null;
+		auto value = S::read(ctx, buffer);
+		RdProperty<T, S> property;
+		property.value = std::move(value);
+		withId(property, id);
+		return property;
+	}
+
+	void write(SerializationCtx& ctx, Buffer& buffer) const override
+	{
+		this->rdid.write(buffer);
+		buffer.write_bool(true);
+		S::write(ctx, buffer, this->get());
+	}
+
+	void advise(Lifetime lifetime, std::function<void(T const&)> handler) const override
+	{
+		RdPropertyBase<T, S>::advise(lifetime, std::move(handler));
+	}
+
+	RdProperty<T, S>& slave()
+	{
+		this->is_master = false;
+		return *this;
+	}
+
+	void identify(Identities const& identities, RdId const& id) const override
+	{
+		RdBindableBase::identify(identities, id);
+		if (!this->optimize_nested && this->has_value())
+		{
+			identifyPolymorphic(this->get(), identities, identities.next(id));
 		}
+	}
 
-		void write(SerializationCtx &ctx, Buffer &buffer) const override {
-			this->rdid.write(buffer);
-			buffer.write_bool(true);
-			S::write(ctx, buffer, this->get());
-		}
+	friend bool operator==(const RdProperty& lhs, const RdProperty& rhs)
+	{
+		return &lhs == &rhs;
+	}
 
-		void advise(Lifetime lifetime, std::function<void(T const &)> handler) const override {
-			RdPropertyBase<T, S>::advise(lifetime, std::move(handler));
-		}
+	friend bool operator!=(const RdProperty& lhs, const RdProperty& rhs)
+	{
+		return !(rhs == lhs);
+	}
 
-		RdProperty<T, S> &slave() {
-			this->is_master = false;
-			return *this;
-		}
+	friend std::string to_string(RdProperty const& value)
+	{
+		return to_string(static_cast<Property<T> const&>(value));
+	}
+};
+}	 // namespace rd
 
+#pragma warning(pop)
 
-		void identify(Identities const &identities, RdId const &id) const override {
-			RdBindableBase::identify(identities, id);
-			if (!this->optimize_nested && this->has_value()) {
-				identifyPolymorphic(this->get(), identities, identities.next(id));
-			}
-		}
+static_assert(std::is_move_constructible<rd::RdProperty<int>>::value, "Is move constructible from RdProperty<int>");
 
-		friend bool operator==(const RdProperty &lhs, const RdProperty &rhs) {
-			return &lhs == &rhs;
-		}
-
-		friend bool operator!=(const RdProperty &lhs, const RdProperty &rhs) {
-			return !(rhs == lhs);
-		}
-
-		friend std::string to_string(RdProperty const &value) {
-			return to_string(static_cast<Property<T> const &>(value));
-		}
-	};
-}
-
-#pragma warning( pop )
-
-static_assert(std::is_move_constructible<rd::RdProperty<int> >::value, "Is move constructible from RdProperty<int>");
-
-#endif //RD_CPP_RDPROPERTY_H
+#endif	  // RD_CPP_RDPROPERTY_H
