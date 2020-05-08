@@ -10,6 +10,7 @@ import com.jetbrains.rd.util.collections.QueueImpl
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.flowInto
 import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
@@ -49,7 +50,10 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts) },
+                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts).also {
+                    it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
+                }
+            },
             {
                 extProtocol = null
 //                extScheduler = null
