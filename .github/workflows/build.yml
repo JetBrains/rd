@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     container: ivanpashchenko/rider-full-debian-stretch-slim:latest
     steps:
     - uses: actions/checkout@v2
