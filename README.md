@@ -126,7 +126,7 @@ JetBrains.Rd.Impl.Server and *.Client respectively
 
 com.jetbrains.rd.framework.Server and *.Client respectively
 
-### С++
+### C++
 
 rd::SocketWire::Server and *.Client respectively
 
