@@ -204,21 +204,24 @@ namespace rd {
 				if (!read_integral_from_socket(received_counterpart_timestamp)) {
 					return INVALID_HEADER;
 				}
-				logger.trace(
-						id + ": received PING package "
-						"received_timestamp: %d, "
-						"received_counterpart_timestamp: %d, "
-						"current_timestamp: %d, "
-						"counterpart_timestamp: %d, "
-						"counterpart_acknowledge_timestamp: %d, ",
-						received_timestamp, received_counterpart_timestamp, current_timestamp, counterpart_timestamp,
-						counterpart_acknowledge_timestamp
-				);
 
 				counterpart_timestamp = received_timestamp;
 				counterpart_acknowledge_timestamp = received_counterpart_timestamp;
 
 				if ((connection_established(current_timestamp, counterpart_acknowledge_timestamp))) {
+					if (!heartbeatAlive.get()) { // only on change
+						logger.trace(
+								"Connection is alive after receiving PING " + id + ": "
+								"received_timestamp: %d, "
+								"received_counterpart_timestamp: %d, "
+								"current_timestamp: %d, "
+								"counterpart_timestamp: %d, "
+								"counterpart_acknowledge_timestamp: %d, ",
+								received_timestamp, received_counterpart_timestamp, current_timestamp,
+								counterpart_timestamp,
+								counterpart_acknowledge_timestamp
+						);
+					}
 					heartbeatAlive.set(true);
 				}
 				continue;
@@ -300,12 +303,15 @@ namespace rd {
 	}
 
 	void SocketWire::Base::ping() const {
-		logger.trace(
-				this->id + ": send PING currentHeartbeatTimeStamp: %d, "
-					 "counterpart_timestamp: %d, "
-					 "counterpart_acknowledge_timestamp: %d",
-				current_timestamp, counterpart_timestamp, counterpart_acknowledge_timestamp);
 		if (!connection_established(current_timestamp, counterpart_acknowledge_timestamp)) {
+			if (heartbeatAlive.get()) { // only on change
+				logger.trace(
+						"Disconnect detected while sending PING " + this->id + ": "
+						"current_timestamp: %d, "
+						"counterpart_timestamp: %d, "
+						"counterpart_acknowledge_timestamp: %d",
+						current_timestamp, counterpart_timestamp, counterpart_acknowledge_timestamp);
+			}
 			heartbeatAlive.set(false);
 		}
 		try {

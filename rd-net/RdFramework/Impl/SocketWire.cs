@@ -257,17 +257,20 @@ namespace JetBrains.Rd.Impl
             {
               Int32 receivedTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
               Int32 receivedCounterpartTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
-              Log.Trace()?.Log($"{Id}: Received PING package " +
-                               $"receivedTimestamp={receivedTimestamp}, " +
-                               $"receivedCounterpartTimestamp={receivedCounterpartTimestamp}, " +
-                               $"currentTimeStamp={myCurrentTimeStamp}, " +
-                               $"counterpartTimestamp={myCounterpartTimestamp}, " +
-                               $"counterpartNotionTimestamp={myCounterpartNotionTimestamp}");
               myCounterpartTimestamp = receivedTimestamp;
               myCounterpartNotionTimestamp = receivedCounterpartTimestamp;
               
               if (ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
               {
+                if (!HeartbeatAlive.Value) // only on change
+                {
+                  Log.Trace()?.Log($"Connection is alive after receiving PING {Id}: " +
+                                   $"receivedTimestamp: {receivedTimestamp}, " +
+                                   $"receivedCounterpartTimestamp: {receivedCounterpartTimestamp}, " +
+                                   $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                                   $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                                   $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+                }
                 HeartbeatAlive.Value = true;
               }
               
@@ -337,12 +340,15 @@ namespace JetBrains.Rd.Impl
         
         try
         {
-          Log.Trace()?.Log($"{Id}: send PING " +
-                           $"currentTimeStamp: {myCurrentTimeStamp}, " +
-                           $"counterpartTimestamp: {myCounterpartTimestamp}, " +
-                           $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
           if (!ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
           {
+            if (HeartbeatAlive.Value) // log only on change
+            {
+              Log.Trace()?.Log($"Disconnect detected while sending PING {Id}: " +
+                               $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                               $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                               $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+            }
             HeartbeatAlive.Value = false;
           }
 
