@@ -10,13 +10,13 @@ namespace JetBrains.Rd.Reflection
   {
     List<KeyValuePair<string, object>> IReflectionBindable.BindableChildren => BindableChildren;
 
-    private bool bindableChildrenFilled = false;
+    private bool myBindableChildrenFilled = false;
     protected override Action<ISerializers> Register { get; } = s => { };
 
-    protected void EnsureBindableChildren()
+    void IReflectionBindable.EnsureBindableChildren()
     {
-      if (bindableChildrenFilled) return;
-      bindableChildrenFilled = true;
+      if (myBindableChildrenFilled) return;
+      myBindableChildrenFilled = true;
       BindableChildrenUtil.FillBindableFields(this);
     }
 
@@ -25,18 +25,18 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     public virtual void OnActivated()
     {
-      EnsureBindableChildren();
+      ((IReflectionBindable) this).EnsureBindableChildren();
     }
 
     protected override void InitBindableFields(Lifetime lifetime)
     {
-      EnsureBindableChildren();
+      ((IReflectionBindable) this).EnsureBindableChildren();
       base.InitBindableFields(lifetime);
     }
 
     public override void Identify(IIdentities identities, RdId id)
     {
-      EnsureBindableChildren();
+      ((IReflectionBindable) this).EnsureBindableChildren();
       base.Identify(identities, id);
     }
 

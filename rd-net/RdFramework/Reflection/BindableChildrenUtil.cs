@@ -12,6 +12,7 @@ namespace JetBrains.Rd.Reflection
   {
     List<KeyValuePair<string, object>> BindableChildren { get; }
     void OnActivated();
+    void EnsureBindableChildren();
   }
 
   internal static class BindableChildrenUtil

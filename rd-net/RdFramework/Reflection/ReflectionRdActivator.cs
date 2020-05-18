@@ -286,6 +286,12 @@ namespace JetBrains.Rd.Reflection
       // Allow initialize to setup bindings to composite properties.
       if (instance is IReflectionBindable reflectionBindable)
       {
+        reflectionBindable.EnsureBindableChildren();
+        if (reflectionBindable.BindableChildren.Count == 0)
+        {
+          ourLog.Error($"{reflectionBindable.GetType().ToString(true)} Attempt to activate RdExt without bindable children. Most likely it indicates an error.");
+        }
+
         reflectionBindable.OnActivated();
       }
 

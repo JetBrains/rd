@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
+using Test.Lifetimes;
 
 namespace Test.RdFramework.Reflection
 {
@@ -103,10 +104,17 @@ namespace Test.RdFramework.Reflection
     {
       Assert.Throws<Exception>(() =>
       {
-        WithExtsProxy<UnexpectedInterfaceType, IUnexpectedInterfaceType>((c, s) =>
+        try
         {
-          c.ViewableProperty.Value = "test";
-        });
+          WithExtsProxy<UnexpectedInterfaceType, IUnexpectedInterfaceType>((c, s) =>
+          {
+            c.ViewableProperty.Value = "test";
+          });
+        }
+        finally
+        {
+          TestLogger.ExceptionLogger.ThrowLoggedExceptions();
+        }
       });
     }
 
