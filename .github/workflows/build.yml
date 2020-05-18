@@ -1,0 +1,20 @@
+name: rd-net
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ivanpashchenko/rider-full-debian-stretch-slim:latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: dotnet --version
+    - run: cd rd-net && dotnet restore
+    - run: cd rd-net && dotnet build --configuration Release --no-restore
+    - name: Tests
+      run: cd rd-net && dotnet test --no-restore --verbosity normal
+
