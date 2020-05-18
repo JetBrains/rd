@@ -133,20 +133,20 @@ class SocketWire {
             while (true) {
                 delay(heartBeatInterval.toMillis())
                 ping()
-                logger.trace { "$id: sent PING" }
             }
         }
 
         private fun ping() {
             catchAndDrop {
-                logger.trace {
-                    "$id: send PING " +
-                        "currentTimeStamp: $currentTimeStamp, " +
-                        "counterpartTimestamp: $counterpartTimestamp, " +
-                        "counterpartNotionTimestamp: $counterpartNotionTimestamp"
-                }
-
                 if (!connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
+                    if (heartbeatAlive.value) { // only on change
+                        logger.trace {
+                            "Disconnect detected while sending PING $id: " +
+                                "currentTimeStamp: $currentTimeStamp, " +
+                                "counterpartTimestamp: $counterpartTimestamp, " +
+                                "counterpartNotionTimestamp: $counterpartNotionTimestamp"
+                        }
+                    }
                     heartbeatAlive.value = false
                 }
 
@@ -225,19 +225,21 @@ class SocketWire {
                     if (len == ping_len) {
                         val receivedTimestamp = stream.readInt32() ?: return -1
                         val receivedCounterpartTimestamp = stream.readInt32() ?: return -1
-                        logger.trace {
-                            "$id received PING package " +
-                                "receivedTimestamp: $receivedTimestamp, " +
-                                "receivedCounterpartTimestamp: $receivedCounterpartTimestamp" +
-                                "currentTimeStamp: $currentTimeStamp, " +
-                                "counterpartTimestamp: $counterpartTimestamp, " +
-                                "counterpartNotionTimestamp: $counterpartNotionTimestamp"
-                        }
 
                         counterpartTimestamp = receivedTimestamp
                         counterpartNotionTimestamp = receivedCounterpartTimestamp
 
                         if (connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
+                            if (!heartbeatAlive.value) { // only on change
+                                logger.trace {
+                                    "Connection is alive after receiving PING $id: " +
+                                        "receivedTimestamp: $receivedTimestamp, " +
+                                        "receivedCounterpartTimestamp: $receivedCounterpartTimestamp" +
+                                        "currentTimeStamp: $currentTimeStamp, " +
+                                        "counterpartTimestamp: $counterpartTimestamp, " +
+                                        "counterpartNotionTimestamp: $counterpartNotionTimestamp"
+                                }
+                            }
                             heartbeatAlive.value = true
                         }
                         continue
