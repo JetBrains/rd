@@ -98,6 +98,7 @@ class RdGen : Kli() {
 
             val args = listOf(
                 "-cp", cp,
+                "-no-stdlib",
                 "-d", dst.toString(),
                 "-jvm-target", "1.8"
             ) + src.map { it.absolutePath }
