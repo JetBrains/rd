@@ -227,7 +227,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
             val value = requestSzr.read(serializationContext, buffer)
             logReceived.trace { "endpoint `$location`::($rdid) taskId=($taskId) request = ${value.printToString()}" }
             handler!!.invoke(externalCancellation, value)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             RdTask.faulted<TRes>(e)
         }
 
@@ -235,7 +235,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
             try {
                 logSend.trace {"endpoint `$location`::($rdid) taskId=($taskId) response = ${result.printToString()}" + (handler == null).condstr { " BUT handler is NULL" }}
                 wiredTask.result.setIfEmpty(result)
-            } catch (ex: Exception) {
+            } catch (ex: Throwable) {
                 logSend.log(LogLevel.Error, "Problem when responding to `${wiredTask}`", ex)
                 wiredTask.result.set(RdTaskResult.Fault(ex))
             }
