@@ -76,6 +76,8 @@
 #    endif
 #endif
 
+#undef min
+#undef max
 
 namespace tsl {
 
