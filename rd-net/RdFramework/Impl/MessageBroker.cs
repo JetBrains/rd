@@ -89,6 +89,9 @@ namespace JetBrains.Rd.Impl
           {
             byte[] msg1;
 
+            IRdWireable subscription;
+            bool hasSubscription;
+
             lock (myLock)
             {
               if (currentBroker.DefaultSchedulerMessages.Count > 0)
@@ -98,9 +101,11 @@ namespace JetBrains.Rd.Impl
               }
               else
                 msg1 = null;
+
+              hasSubscription = mySubscriptions.TryGetValue(id, out subscription);
             }
 
-            if (!mySubscriptions.TryGetValue(id, out var subscription))
+            if (!hasSubscription)
             {
               myLogger.Trace("No handler for id: {0}", id);
             }
