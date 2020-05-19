@@ -51,10 +51,6 @@ endif ()
 add_subdirectory(thirdparty)
 add_subdirectory(src)
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/demo")
-    message(FATAL_ERROR "Run 'gradlew generateEverything' in rd root to generate missing folders.")
-endif()
-
 if (ENABLE_TESTS_OPTION)
     if(NOT EXISTS "${PROJECT_SOURCE_DIR}/demo")
         message(FATAL_ERROR "Run 'gradlew generateEverything' in rd root to generate missing folders.")
