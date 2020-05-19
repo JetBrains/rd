@@ -15,8 +15,8 @@ import java.io.File
 
 open class CSharp50Generator(
         flowTransform: FlowTransform = FlowTransform.AsIs,
-        val defaultNamespace: String = System.getProperty("rdgen.cs.namespace") ?: "org.example",
-        override val folder: File = File(syspropertyOrInvalid("rdgen.cs.dir"))
+        val defaultNamespace: String,
+        override val folder: File
 ) : GeneratorBase(flowTransform) {
 
     object Inherits : ISetting<String, Declaration>
