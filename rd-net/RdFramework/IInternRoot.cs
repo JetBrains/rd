@@ -74,5 +74,7 @@ namespace JetBrains.Rd
     public static bool operator ==(InternId left, InternId right) => left.Equals(right);
 
     public static bool operator !=(InternId left, InternId right) => !left.Equals(right);
+
+    public override string ToString() => $"InternId({myValue})";
   }
 }

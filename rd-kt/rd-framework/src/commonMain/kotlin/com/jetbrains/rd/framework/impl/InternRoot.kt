@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.framework.IInternRoot
 import com.jetbrains.rd.framework.base.IRdBindable
+import com.jetbrains.rd.framework.base.RdReactiveBase
 
 class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic()): IInternRoot<TBase> {
     override fun deepClone(): IRdBindable {
@@ -30,6 +31,8 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
             } else { // we've succeeded at allocating this value - send it
                 val idx = InternId(internedValueIndices.incrementAndGet() * 2)
                 assert(idx.isLocal)
+
+                RdReactiveBase.logSend.trace { "InternRoot `$location` ($rdid):: $idx = $value" }
 
                 directMap[idx] = value
                 protocol.contexts.sendWithoutContexts {
@@ -80,6 +83,7 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
         val remoteId = buffer.readInternId()
         assert(!remoteId.isLocal) { "Remote sent local InterningId, bug?" }
         assert(remoteId.isValid) { "Remote sent invalid InterningId, bug?" }
+        RdReactiveBase.logReceived.trace { "InternRoot `$location` ($rdid):: $remoteId = $value" }
         directMap[remoteId] = value
         val newInverseMapValue = InverseMapValue(remoteId, InternId.invalid)
         val oldValue = inverseMap.putIfAbsent(value, newInverseMapValue)
@@ -150,6 +154,8 @@ inline class InternId(val value: Int) {
     companion object {
         val invalid = InternId(-1)
     }
+
+    override fun toString() = "InternId($value)"
 }
 
 fun AbstractBuffer.readInternId(): InternId {

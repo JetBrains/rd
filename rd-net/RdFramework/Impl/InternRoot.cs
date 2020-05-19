@@ -44,6 +44,8 @@ namespace JetBrains.Rd.Impl
         
         Assertion.Assert(allocatedId.IsLocal, "Newly allocated ID must be local");
         
+        RdReactiveBase.SendTrace?.Log($"InternRoot `{Location}` ({RdId}):: {allocatedId} = {value}");
+        
         myDirectMap[allocatedId] = value;
         using(Proto.Contexts.CreateSendWithoutContextsCookie())
           Proto.Wire.Send(RdId, writer =>
@@ -174,6 +176,7 @@ namespace JetBrains.Rd.Impl
       var id = InternId.Read(reader);
       Assertion.Require(!id.IsLocal, "Other side sent us id of our own side?");
       Assertion.Require(id.IsValid, "Other side sent us invalid id?");
+      RdReactiveBase.ReceiveTrace?.Log($"InternRoot `{Location}` ({RdId}):: {id} = {value}");
       myDirectMap[id] = value;
       var pair = new IdPair() { Id = id, ExtraId = InternId.Invalid };
       if (!myInverseMap.TryAdd(value, pair))
