@@ -208,20 +208,25 @@ namespace JetBrains.Rd.Reflection
       var interfaces = typeInfo.GetInterfaces();
       bool isProxy = interfaces.Contains(typeof(IProxyTypeMarker));
       var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(typeInfo);
+
       if (!isProxy && rpcInterface != null)
       {
-        var bindableChildren = ((IReflectionBindable) instance).BindableChildren;
-
-        var interfaceMap = typeInfo.GetInterfaceMap(rpcInterface);
-        var interfaceMethods = interfaceMap.InterfaceMethods;
-
         // Dynamic adapters for Properties are not required, so skip them
         var ignoreMethods = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var propertyInfo in rpcInterface.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        List<MethodInfo> interfaceMethods = new List<MethodInfo>();
+        void RegisterInterface(Type baseInterface)
         {
-          ignoreMethods.Add(propertyInfo.GetSetMethod()?.Name);
-          ignoreMethods.Add(propertyInfo.GetGetMethod()?.Name);
+          interfaceMethods.AddRange(typeInfo.GetInterfaceMap(baseInterface).InterfaceMethods);
+          foreach (var propertyInfo in baseInterface.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+          {
+            ignoreMethods.Add(propertyInfo.GetSetMethod()?.Name);
+            ignoreMethods.Add(propertyInfo.GetGetMethod()?.Name);
+          }
         }
+
+        RegisterInterface(rpcInterface);
+        foreach (var baseInterface in rpcInterface.GetInterfaces())
+          RegisterInterface(baseInterface);
 
         foreach (var interfaceMethod in interfaceMethods)
         {
@@ -265,7 +270,7 @@ namespace JetBrains.Rd.Reflection
               methodInfo.Invoke(null, new[] {endpoint, @delegate});
             }
           }
-
+          var bindableChildren = ((IReflectionBindable)instance).BindableChildren;
           bindableChildren.Add(new KeyValuePair<string, object>(name, endpoint));
         }
       }
@@ -281,6 +286,12 @@ namespace JetBrains.Rd.Reflection
       // Allow initialize to setup bindings to composite properties.
       if (instance is IReflectionBindable reflectionBindable)
       {
+        reflectionBindable.EnsureBindableChildren();
+        if (reflectionBindable.BindableChildren.Count == 0)
+        {
+          ourLog.Error($"{reflectionBindable.GetType().ToString(true)} Attempt to activate RdExt without bindable children. Most likely it indicates an error.");
+        }
+
         reflectionBindable.OnActivated();
       }
 
