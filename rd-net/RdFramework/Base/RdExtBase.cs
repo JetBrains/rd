@@ -57,12 +57,12 @@ namespace JetBrains.Rd.Base
       parentWire.Advise(lifetime, this);
             
       
-      SendState(parentWire, ExtState.Ready);
       lifetime.OnTermination(() => { SendState(parentWire, ExtState.Disconnected); });
-      
       
       //protocol must be set first to allow bindable bind to it
       base.Init(lifetime);
+
+      SendState(parentWire, ExtState.Ready);
       
       Protocol.InitTrace?.Log($"{this} :: bound");
     }
@@ -71,7 +71,7 @@ namespace JetBrains.Rd.Base
     public override void OnWireReceived(UnsafeReader reader)
     {
       var remoteState = (ExtState)reader.ReadInt();
-      ReceiveTrace?.Log($"{{this}} : {remoteState}");
+      ReceiveTrace?.Log($"{this} : {remoteState}");
 
       switch (remoteState)
       {
