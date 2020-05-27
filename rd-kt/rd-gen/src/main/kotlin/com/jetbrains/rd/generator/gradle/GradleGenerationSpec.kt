@@ -11,7 +11,8 @@ data class GradleGenerationSpec(
         var transform: String? = null,
         var root: String = "",
         var namespace: String = "",
-        var directory: String = ""
+        var directory: String = "",
+        var generatedFileSuffix: String = ".Generated"
 ) {
 
     fun toGeneratorAndRoot(availableRoots: List<Root>) : IGeneratorAndRoot {
@@ -23,8 +24,8 @@ data class GradleGenerationSpec(
                 else -> throw GeneratorException("Unknown flow transform type ${transform}, use 'asis', 'reversed' or 'symmetric'")
             }
             val generator = when (language) {
-                "kotlin" -> Kotlin11Generator(flowTransform, namespace, File(directory))
-                "csharp" -> CSharp50Generator(flowTransform, namespace, File(directory))
+                "kotlin" -> Kotlin11Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
+                "csharp" -> CSharp50Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
                 "cpp" -> Cpp17Generator(flowTransform, namespace, File(directory))
                 else -> throw GeneratorException("Unknown language $language, use 'kotlin' or 'csharp' or 'cpp'")
             }

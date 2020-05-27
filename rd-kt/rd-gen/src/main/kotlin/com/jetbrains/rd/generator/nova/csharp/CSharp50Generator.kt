@@ -5,7 +5,6 @@ import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.csharp.CSharpSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.util.joinToOptString
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -14,10 +13,11 @@ import com.jetbrains.rd.util.string.printer
 import java.io.File
 
 open class CSharp50Generator(
-        flowTransform: FlowTransform = FlowTransform.AsIs,
-        val defaultNamespace: String,
-        override val folder: File
-) : GeneratorBase(flowTransform) {
+    flowTransform: FlowTransform = FlowTransform.AsIs,
+    val defaultNamespace: String,
+    override val folder: File,
+    generatedFileSuffix: String = ".Generated"
+) : GeneratorBase(flowTransform, generatedFileSuffix) {
 
     object Inherits : ISetting<String, Declaration>
     object InheritsAutomation : ISetting<Boolean, Declaration>
@@ -32,7 +32,7 @@ open class CSharp50Generator(
     object FsPath : ISetting<(CSharp50Generator) -> File, Toplevel>
 
     val Toplevel.fsPath: File
-        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${this.name}.Generated.cs")
+        get() = getSetting(FsPath)?.invoke(this@CSharp50Generator) ?: File(folder, "${this.name}$generatedFileSuffix.cs")
 
     object FlowTransformProperty : ISetting<FlowTransform, Declaration>
 

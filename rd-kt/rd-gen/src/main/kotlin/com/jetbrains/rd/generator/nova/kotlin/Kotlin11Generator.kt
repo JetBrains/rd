@@ -22,8 +22,9 @@ fun PrettyPrinter.block(title: String, body: PrettyPrinter.() -> Unit) {
 open class Kotlin11Generator(
     flowTransform: FlowTransform,
     private val defaultNamespace: String,
-    override val folder: File
-) : GeneratorBase(flowTransform) {
+    override val folder: File,
+    generatedFileSuffix: String = ".Generated"
+) : GeneratorBase(flowTransform, generatedFileSuffix) {
 
 
     //language specific properties
@@ -41,7 +42,7 @@ open class Kotlin11Generator(
     object RefineFieldType: ISetting<Pair<String, IType>, SettingsHolder>
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
-    protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name.Generated.kt")
+    protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name$generatedFileSuffix.kt")
 
 
     private val Member.Reactive.Stateful.optimizeNested : Boolean

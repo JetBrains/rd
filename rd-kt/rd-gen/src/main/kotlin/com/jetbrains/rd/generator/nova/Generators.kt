@@ -44,7 +44,7 @@ fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
 /**
  * Base class for generators to deduplicate common logic
  */
-abstract class GeneratorBase(protected open val flowTransform: FlowTransform) : IGenerator {
+abstract class GeneratorBase(protected open val flowTransform: FlowTransform, protected val generatedFileSuffix: String) : IGenerator {
     object AllowDeconstruct: ISetting<Unit, Declaration>
 
     /**
