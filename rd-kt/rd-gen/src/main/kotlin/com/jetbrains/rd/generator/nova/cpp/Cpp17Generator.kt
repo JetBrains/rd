@@ -42,7 +42,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                           val defaultNamespace: String,
                           override val folder: File,
                           val usingPrecompiledHeaders: Boolean = false
-) : GeneratorBase(flowTransform) {
+) : GeneratorBase(flowTransform, ".Generated") {
     @Suppress("ObjectPropertyName")
     companion object {
         private const val INSTANTIATION_FILE_NAME = "instantiations"
