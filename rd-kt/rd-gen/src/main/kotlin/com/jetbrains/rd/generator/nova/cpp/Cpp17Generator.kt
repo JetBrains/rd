@@ -41,8 +41,9 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
 open class Cpp17Generator(flowTransform: FlowTransform,
                           val defaultNamespace: String,
                           override val folder: File,
+                          generatedFileSuffix: String = ".Generated",
                           val usingPrecompiledHeaders: Boolean = false
-) : GeneratorBase(flowTransform, ".Generated") {
+) : GeneratorBase(flowTransform, generatedFileSuffix) {
     @Suppress("ObjectPropertyName")
     companion object {
         private const val INSTANTIATION_FILE_NAME = "instantiations"
@@ -123,8 +124,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     object TargetName : ISetting<String, Toplevel>
 
+    private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "hpp"
+
     private fun Declaration.fsName(isDefinition: Boolean) =
-        "$name.${if (isDefinition) "cpp" else "h"}"
+        "$name$generatedFileSuffix.${fsExtension(isDefinition)}"
 
     protected open fun Toplevel.fsPath(): File = getSetting(FsPath)?.invoke(this@Cpp17Generator)
         ?: File(folder, this.name)

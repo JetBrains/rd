@@ -15,7 +15,7 @@ const val folder = "interning"
 object InterningRoot1 : Root(
     Kotlin11Generator(FlowTransform.AsIs, "com.jetbrains.rd.framework.test.cases.interning", outputDirectory(ktDirectorySystemPropertyKey, folder)),
     CSharp50Generator(FlowTransform.AsIs, "JetBrains.Platform.Tests.Cases.RdFramework.Interning", File("build/testOutputCSharp")),
-    Cpp17Generator(FlowTransform.AsIs, "rd::test::util", outputDirectory(cppDirectorySystemPropertyKey, folder), true)
+    Cpp17Generator(FlowTransform.AsIs, "rd::test::util", outputDirectory(cppDirectorySystemPropertyKey, folder), usingPrecompiledHeaders=true)
 ) {
     init {
         setting(Cpp17Generator.TargetName, "interning_test_model")
