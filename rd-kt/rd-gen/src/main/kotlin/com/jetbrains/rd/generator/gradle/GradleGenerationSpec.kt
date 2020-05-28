@@ -26,7 +26,7 @@ data class GradleGenerationSpec(
             val generator = when (language) {
                 "kotlin" -> Kotlin11Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
                 "csharp" -> CSharp50Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
-                "cpp" -> Cpp17Generator(flowTransform, namespace, File(directory))
+                "cpp" -> Cpp17Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
                 else -> throw GeneratorException("Unknown language $language, use 'kotlin' or 'csharp' or 'cpp'")
             }
 
