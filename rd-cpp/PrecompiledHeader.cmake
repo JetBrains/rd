@@ -111,7 +111,12 @@ function(export_all_flags _filename mode)
   endif()
   set(_standard_check "${_standard_check}\n")
 
-  file(GENERATE OUTPUT "${_filename}" CONTENT "${_compile_definitions}${_include_directories}${_compile_flags}${_compile_options}${_standard_check}${_pic}\n")
+  # https://github.com/larsch/cmake-precompiled-header/issues/12
+  # file(GENERATE OUTPUT "${_filename}" CONTENT "${_compile_definitions}${_include_directories}${_compile_flags}${_compile_options}${_standard_check}${_pic}\n")
+  if (NOT EXISTS ${_filename})
+    message(${_filename} " does not exist, generating...")
+    file(GENERATE OUTPUT "${_filename}" CONTENT "${_compile_definitions}${_include_directories}${_compile_flags}${_compile_options}\n")
+  endif()
 endfunction()
 
 function (gcc_pch_targets_for_mode _input _pch_path mode)
@@ -207,8 +212,11 @@ function(add_precompiled_header _target _input)
   endif()
 
   if(MSVC)
-    set(_pch_cxx_pch "${CMAKE_CFG_INTDIR}/cxx_${_input_we}.pch")
-    set(_pch_c_pch "${CMAKE_CFG_INTDIR}/c_${_input_we}.pch")
+    # https://github.com/larsch/cmake-precompiled-header/issues/13
+    # set(_pch_cxx_pch "${CMAKE_CFG_INTDIR}/cxx_${_input_we}.pch")
+    # set(_pch_c_pch "${CMAKE_CFG_INTDIR}/c_${_input_we}.pch")
+    set(_pch_cxx_pch "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/cxx${_input_we}.pch")
+    set(_pch_c_pch "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/c${_input_we}.pch")
 
     get_target_property(sources ${_target} SOURCES)
     foreach(_source ${sources})
