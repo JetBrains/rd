@@ -232,6 +232,12 @@ namespace JetBrains.Rd.Reflection
         return;
       }
 
+      // Generated from DSL models
+      if (typeof(RdBindableBase).IsAssignableFrom(type) && HasIntrinsicFields(type))
+      {
+        return;
+      }
+
       throw new InvalidOperationException($"Invalid rd type, can be only RdExt, RdModel or ValueTuple {type.ToString(true)}");
     }
 
