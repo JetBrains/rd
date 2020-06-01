@@ -156,9 +156,20 @@ namespace JetBrains.Rd.Reflection
 #if JET_MODE_ASSERT
         myCurrentSerializersChain.Enqueue(type);
 #endif
-        
+
         using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type))
-          ReflectionUtil.InvokeGenericThis(this, nameof(RegisterModelSerializer), type);
+        {
+          if (ReflectionSerializerVerifier.HasIntrinsicFields(type.GetTypeInfo()))
+          {
+            mySerializers.Add(type, Intrinsic.TryGetIntrinsicSerializer(
+              type.GetTypeInfo(), 
+              _ => throw new InvalidOperationException("Generic models are not supported")));
+          }
+          else
+          {
+            ReflectionUtil.InvokeGenericThis(this, nameof(RegisterModelSerializer), type);
+          }
+        }
 
 #if JET_MODE_ASSERT
         myCurrentSerializersChain.Dequeue();

@@ -41,6 +41,10 @@ tasks {
         addSources(mapOf(
                 ktDirectorySystemPropertyKey to "$BUILD_DIR/models/openEntity"
         ), "openEntity")
+
+        addSources(mapOf(
+                csDirectorySystemPropertyKey to "${csRoot}/Test.RdFramework/Reflection/data/Generated"
+        ), "reflectionTest")
     }
 
     @Suppress("UNUSED_VARIABLE")
