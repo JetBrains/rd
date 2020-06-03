@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="15.0">
+    <ItemGroup>
+        <RdCppLibs Include="$(MSBuildThisFileDirectory)\libs\$(Platform)\x64\$(Configuration)\*.lib" />
+    </ItemGroup>
+    <PropertyGroup>
+        <!-- Expand the items to a property -->
+        <RdCppLibraries>@(RdCppLibs)</RdCppLibraries>
+    </PropertyGroup>
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include</AdditionalIncludeDirectories>
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>$(RdCppLibraries);%(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
+    </ItemDefinitionGroup>
+</Project>

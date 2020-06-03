@@ -35,7 +35,8 @@ cmake-build-*
 /rd-net/Rd.sln.DotSettings.user
 
 /rd-cpp/build
-/rd-cpp/export
+/rd-cpp/export/libs
+/rd-cpp/export/include
 /rd-cpp/gradle/
 /rd-cpp/demo/
 /rd-cpp/src/rd_framework_cpp/src/test/util/entities/

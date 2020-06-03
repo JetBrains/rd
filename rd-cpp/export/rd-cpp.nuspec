@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>JetBrains.RdFramework.Cpp</id>
+        <authors>JetBrains</authors>
+        <version>0.0.0.0</version>
+        <repository type="git" url="https://github.com/JetBrains/rd" />
+        <description>JetBrains Rd Framework CPP implementation</description>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <tags>Native, native</tags>
+    </metadata>
+
+    <files>
+        <file src="libs\**\*.*" target="native/libs" />
+        <file src="include\**\*.*" target="native/include" />
+        <file src="rd-cpp.props" target="native" />
+    </files>
+</package>
