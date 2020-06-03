@@ -1,0 +1,204 @@
+name: Build RD CPP
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  NINJA_VERSION: 1.9.0
+  BUILD_TYPE: Release
+  VERSION: 201.1
+  # Need to change these values to JetBrains account
+  # And set `RD_CPP_BINTRAY_KEY` for RD repo
+  BINTRAY_USER: alexander-pirogov
+  BINTRAY_REPO: RD-CPP
+
+jobs:
+  build:
+    env:
+      working-dir: ${{ github.workspace}}${{ matrix.config.SEP }}rd-cpp
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019.zip",
+            os: windows-latest,
+            cc: "cl", cxx: "cl",
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+            SEP: \
+          }
+        - {
+            name: "RD CPP Windows VS 2017", artifact: "RD-CPP-Windows-MSVC-2017.zip",
+            os: windows-2016,
+            cc: "cl", cxx: "cl",
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+            SEP: \
+          }
+        - {
+            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang.zip",
+            os: ubuntu-latest,
+            cc: "clang", cxx: "clang++",
+            SEP: /
+          }
+        - {
+            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang.zip",
+            os: macos-latest,
+            cc: "clang", cxx: "clang++",
+            SEP: /
+          }
+
+    steps:
+    - uses: actions/checkout@v1
+      
+    - name: Cache submodules
+      uses: actions/cache@v2
+      id: cache-submodules
+      with:
+        path: |
+          rd-cpp/thirdparty/spdlog
+          rd-cpp/thirdparty/googletest
+        key: ${{ matrix.config.os }}-submodules-${{ hashFiles('.gitmodules') }}
+      
+    - name: Get submodules
+      if: steps.cache-submodules.outputs.cache-hit != 'true'
+      run: git submodule update --init --recursive
+      
+    - name: Cache Ninja
+      uses: actions/cache@v2
+      id: cache-ninja
+      with:
+        path: |
+          rd-cpp/ninja
+          rd-cpp/ninja.exe
+        key: ${{ matrix.config.os }}-Ninja-${{ env.NINJA_VERSION }}
+      
+    - name: Download Ninja
+      if: steps.cache-ninja.outputs.cache-hit != 'true'
+      id: download_ninja
+      working-directory: ${{ env.working-dir }}
+      shell: cmake -P {0}
+      run: |
+        set(ninja_version $ENV{NINJA_VERSION})
+
+        message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
+
+        if ("${{ runner.os }}" STREQUAL "Windows")
+          set(ninja_suffix "win.zip")
+        elseif ("${{ runner.os }}" STREQUAL "Linux")
+          set(ninja_suffix "linux.zip")
+        elseif ("${{ runner.os }}" STREQUAL "macOS")
+          set(ninja_suffix "mac.zip")
+        endif()
+
+        set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
+        file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
+        execute_process(COMMAND
+                        ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+
+        if (NOT "${{ runner.os }}" STREQUAL "Windows")
+          execute_process(
+            COMMAND chmod +x ninja
+          )
+        endif()
+      
+    - name: Configure
+      working-directory: ${{ env.working-dir }}
+      shell: cmake -P {0}
+      run: |
+        set(ENV{CC} ${{ matrix.config.cc }})
+        set(ENV{CXX} ${{ matrix.config.cxx }})
+        file(GLOB all_files "*")
+        message(${all_files})
+
+        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+          execute_process(
+            COMMAND "${{ matrix.config.environment_script }}" && set
+            OUTPUT_FILE environment_script_output.txt
+          )
+          file(STRINGS environment_script_output.txt output_lines)
+          foreach(line IN LISTS output_lines)
+            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+            endif()
+          endforeach()
+        endif()
+
+        set(path_separator ":")
+        if ("${{ runner.os }}" STREQUAL "Windows")
+          set(path_separator ";")
+        endif()
+        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+
+        file(MAKE_DIRECTORY build)
+        execute_process(
+          COMMAND ${CMAKE_COMMAND}
+            -S .
+            -B build
+            -DENABLE_TESTS_OPTION:BOOL=OFF
+            -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
+            -G Ninja
+            -DCMAKE_MAKE_PROGRAM=${CMAKE_CURRENT_SOURCE_DIR}/ninja
+          RESULT_VARIABLE result
+        )
+        if (NOT result EQUAL 0)
+          message(FATAL_ERROR "Bad exit status")
+        endif()
+
+
+    - name: Build
+      working-directory: ${{ env.working-dir }}
+      shell: cmake -P {0}
+      run: |
+        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+        file(GLOB all_files "*")
+        message(${all_files})
+
+        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+          file(STRINGS environment_script_output.txt output_lines)
+          foreach(line IN LISTS output_lines)
+            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+            endif()
+          endforeach()
+        endif()
+
+        set(path_separator ":")
+        if ("${{ runner.os }}" STREQUAL "Windows")
+          set(path_separator ";")
+        endif()
+        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+
+        execute_process(
+          COMMAND ${CMAKE_COMMAND} --build build --config ${{ env.BUILD_TYPE }}
+          RESULT_VARIABLE result
+        )
+        if (NOT result EQUAL 0)
+          message(FATAL_ERROR "Bad exit status")
+        endif()
+
+    - name: Install Strip
+      working-directory: ${{ env.working-dir }}
+      run: cd build && cmake --config ${{ env.BUILD_TYPE }} -P cmake_install.cmake
+    
+    - name: Pack
+      working-directory: ${{ env.working-dir }}
+      run: cd export && cmake -E tar "cfv" ../${{ matrix.config.artifact }} --format=zip include libs
+
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        path:  |
+          ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
+        name: ${{ matrix.config.artifact }}
+        
+    - name: Send to Bintray
+      working-directory: ${{ env.working-dir }}
+      run: curl -T ${{ matrix.config.artifact }} -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/${{ github.run_number }}/
+    
+    - name: Publish to Bintray
+      run: curl -X POST -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/publish
