@@ -1,4 +1,4 @@
-name: Build RD CPP
+name: rd-cpp
 
 on:
   push:
