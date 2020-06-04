@@ -42,7 +42,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                           val defaultNamespace: String,
                           override val folder: File,
                           val usingPrecompiledHeaders: Boolean = false
-) : GeneratorBase(flowTransform) {
+) : GeneratorBase(flowTransform, ".Generated") {
     @Suppress("ObjectPropertyName")
     companion object {
         private const val INSTANTIATION_FILE_NAME = "instantiations"
@@ -473,7 +473,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     protected open fun Member.intfSubstitutedName(scope: Declaration) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.templateName(scope)
-        is Member.Reactive -> intfSimpleName + (genericParams.toList().map { it.templateName(scope) }).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+        is Member.Reactive -> {
+            val customSerializers = if (this is Member.Reactive.Task) customSerializers(scope, false) else emptyList()
+            intfSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+        }
         is Member.Const -> type.templateName(scope)
         is Member.Method -> publicName
     }
