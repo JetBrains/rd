@@ -121,7 +121,7 @@ jobs:
             RETURN_CODE execute_vcvars_result
           )          
           if (NOT execute_vcvars_result EQUAL 0)
-            message(FATAL_ERROR "Bad exit status. Fail running ${{ matrix.config.environment_script }")
+            message(FATAL_ERROR "Bad exit status. Fail running ${{ matrix.config.environment_script }}")
           endif()
           file(STRINGS environment_script_output.txt output_lines)
           foreach(line IN LISTS output_lines)
@@ -198,6 +198,7 @@ jobs:
         path:  |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
         name: ${{ env.artifact }}
+
     - name: Publish to GH Packages
       run: |
         mvn \
@@ -209,9 +210,3 @@ jobs:
          -Dregistry=https://maven.pkg.github.com/JetBrains \
          -Dtoken=${{ secrets.GITHUB_TOKEN }}
         
-#     - name: Send to Bintray
-#       working-directory: ${{ env.working-dir }}
-#       run: curl -T ${{ matrix.config.artifact }} -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/${{ github.run_number }}/
-    
-#     - name: Publish to Bintray
-#       run: curl -X POST -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/publish
