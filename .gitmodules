@@ -4,5 +4,5 @@
 	branch = v1.10.x
 [submodule "rd-cpp/thirdparty/spdlog"]
 	path = rd-cpp/thirdparty/spdlog
-	url = git@github.com:gabime/spdlog.git
+	url = https://github.com/gabime/spdlog.git
 	branch = cf6f1dd01e660d5865d68bf5fa78f6376b89470a
