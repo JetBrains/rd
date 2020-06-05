@@ -2,9 +2,9 @@ name: rd-cpp
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, gh-actions-rd-cpp ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, gh-actions-rd-cpp ]
 
 env:
   NINJA_VERSION: 1.9.0
