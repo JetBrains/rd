@@ -15,6 +15,7 @@ jobs:
   build:
     env:
       working-dir: ${{ github.workspace}}${{ matrix.config.SEP }}rd-cpp
+      artifact: ${{ matrix.config.artifact }}.{{ env.VERSION }}.${{ github.run_number }}.zip
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -22,27 +23,27 @@ jobs:
       matrix:
         config:
         - {
-            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019-${{ env.VERSION }}.${{ github.run_number }}.zip",
+            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019-",
             os: windows-latest,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
             SEP: \
           }
         - {
-            name: "RD CPP Windows VS 2017", artifact: "RD-CPP-Windows-MSVC-2017-${{ env.VERSION }}.${{ github.run_number }}.zip",
+            name: "RD CPP Windows VS 2017", artifact: "RD-CPP-Windows-MSVC-2017-",
             os: windows-2016,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
             SEP: \
           }
         - {
-            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-${{ env.VERSION }}.${{ github.run_number }}.zip",
+            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-",
             os: ubuntu-latest,
             cc: "clang", cxx: "clang++",
             SEP: /
           }
         - {
-            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang-${{ env.VERSION }}.${{ github.run_number }}.zip",
+            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang-",
             os: macos-latest,
             cc: "clang", cxx: "clang++",
             SEP: /
@@ -189,14 +190,14 @@ jobs:
     
     - name: Pack
       working-directory: ${{ env.working-dir }}
-      run: cd export && cmake -E tar "cfv" ../${{ matrix.config.artifact }} --format=zip include libs
+      run: cd export && cmake -E tar "cfv" ../${{ env.artifact }} --format=zip include libs
 
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
         path:  |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
-        name: ${{ matrix.config.artifact }}
+        name: ${{ env.artifact }}
     - name: Publish to GH Packages
       run: |
         mvn \
@@ -204,7 +205,7 @@ jobs:
          -Dpackaging=zip \
          -DartifcatId=rd-cpp \
          -Dversion=${{ env.version }} \
-         -Dfile=${{ matrix.config.artifact }} \
+         -Dfile=${{ env.artifact }} \
          -Dregistry=https://maven.pkg.github.com/JetBrains \
          -Dtoken=${{ secrets.GITHUB_TOKEN }}
         
