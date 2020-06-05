@@ -94,12 +94,7 @@ jobs:
 
         set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
         file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
-        execute_process(COMMAND
-                        ${CMAKE_COMMAND} -E tar xvf ./ninja.zip
-                        RETURN_CODE download_ninja_result)
-        if (NOT download_ninja_result EQUAL 0)
-          message(FATAL_ERROR "Bad exit status. Fail downloading Ninja")
-        endif()
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
 
         if (NOT "${{ runner.os }}" STREQUAL "Windows")
           execute_process(COMMAND chmod +x ninja)
