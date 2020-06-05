@@ -10,10 +10,6 @@ env:
   NINJA_VERSION: 1.9.0
   BUILD_TYPE: Release
   VERSION: 201.1
-  # Need to change these values to JetBrains account
-  # And set `RD_CPP_BINTRAY_KEY` for RD repo
-  BINTRAY_USER: alexander-pirogov
-  BINTRAY_REPO: RD-CPP
 
 jobs:
   build:
@@ -26,27 +22,27 @@ jobs:
       matrix:
         config:
         - {
-            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019.zip",
+            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019-${{ env.VERSION }}.${{ github.run_number }}.zip",
             os: windows-latest,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
             SEP: \
           }
         - {
-            name: "RD CPP Windows VS 2017", artifact: "RD-CPP-Windows-MSVC-2017.zip",
+            name: "RD CPP Windows VS 2017", artifact: "RD-CPP-Windows-MSVC-2017-${{ env.VERSION }}.${{ github.run_number }}.zip",
             os: windows-2016,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
             SEP: \
           }
         - {
-            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang.zip",
+            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-${{ env.VERSION }}.${{ github.run_number }}.zip",
             os: ubuntu-latest,
             cc: "clang", cxx: "clang++",
             SEP: /
           }
         - {
-            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang.zip",
+            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang-${{ env.VERSION }}.${{ github.run_number }}.zip",
             os: macos-latest,
             cc: "clang", cxx: "clang++",
             SEP: /
@@ -201,10 +197,20 @@ jobs:
         path:  |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
         name: ${{ matrix.config.artifact }}
+    - name: Publish to GH Packages
+      run: |
+        mvn \
+         deploy:deploy-file \
+         -Dpackaging=zip \
+         -DartifcatId=rd-cpp \
+         -Dversion=${{ env.version }} \
+         -Dfile=${{ matrix.config.artifact }} \
+         -Dregistry=https://maven.pkg.github.com/JetBrains \
+         -Dtoken=${{ secrets.GITHUB_TOKEN }}
         
-    - name: Send to Bintray
-      working-directory: ${{ env.working-dir }}
-      run: curl -T ${{ matrix.config.artifact }} -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/${{ github.run_number }}/
+#     - name: Send to Bintray
+#       working-directory: ${{ env.working-dir }}
+#       run: curl -T ${{ matrix.config.artifact }} -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/${{ github.run_number }}/
     
-    - name: Publish to Bintray
-      run: curl -X POST -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/publish
+#     - name: Publish to Bintray
+#       run: curl -X POST -u${{ env.BINTRAY_USER }}:${{ secrets.RD_CPP_BINTRAY_KEY }} https://api.bintray.com/content/${{ env.BINTRAY_USER }}/${{ env.BINTRAY_REPO }}/${{ env.BUILD_TYPE }}/${{ env.VERSION }}/publish
