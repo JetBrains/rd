@@ -94,7 +94,12 @@ jobs:
 
         set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
         file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+        execute_process(COMMAND
+                ${CMAKE_COMMAND} -E tar xvf ./ninja.zip	
+                RESULT_VARIABLE download_ninja_result)	
+        if (NOT download_ninja_result EQUAL 0)	
+            message(FATAL_ERROR "Bad exit status. Fail downloading Ninja")	
+        endif()
 
         if (NOT "${{ runner.os }}" STREQUAL "Windows")
           execute_process(COMMAND chmod +x ninja)
@@ -113,7 +118,7 @@ jobs:
           execute_process(
             COMMAND "${{ matrix.config.environment_script }}" && set
             OUTPUT_FILE environment_script_output.txt
-            RETURN_CODE execute_vcvars_result
+            RESULT_VARIABLE execute_vcvars_result
           )          
           if (NOT execute_vcvars_result EQUAL 0)
             message(FATAL_ERROR "Bad exit status. Fail running ${{ matrix.config.environment_script }}")
