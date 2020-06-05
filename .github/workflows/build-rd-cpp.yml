@@ -60,6 +60,9 @@ jobs:
           rd-cpp/thirdparty/spdlog
           rd-cpp/thirdparty/googletest
         key: ${{ matrix.config.os }}-submodules-${{ hashFiles('.gitmodules') }}
+        
+    - name: HACK change git submodules
+      run: git config --file=.gitmodules submodule.rd-cpp/thirdparty/spdlog.url "https://github.com/gabime/spdlog.git"
       
     - name: Get submodules
       if: steps.cache-submodules.outputs.cache-hit != 'true'
