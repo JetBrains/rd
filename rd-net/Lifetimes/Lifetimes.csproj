@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net35;net461</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net35</TargetFrameworks>
         <AssemblyName>JetBrains.Lifetimes</AssemblyName>
         <RootNamespace>JetBrains</RootNamespace>
         
@@ -46,6 +46,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="JetBrains.NETFramework.ReferenceAssemblies.net35" Version="1.0.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
     </ItemGroup>
 
@@ -55,6 +59,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="PackageIcon.png" Pack="true" PackagePath=""/>
+        <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 </Project>

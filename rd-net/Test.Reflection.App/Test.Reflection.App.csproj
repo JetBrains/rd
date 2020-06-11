@@ -2,15 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net461</TargetFramework>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' AND Exists('$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client')">$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' AND Exists('/usr/lib/mono/2.0-api')">/usr/lib/mono/2.0-api</FrameworkPathOverride>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net461' AND Exists('/usr/lib/mono/4.6.1-api')">/usr/lib/mono/4.6.1-api</FrameworkPathOverride>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' AND Exists(' /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0-api')"> /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0-api</FrameworkPathOverride>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net461' AND Exists(' /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.6.1-api')"> /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.6.1-api</FrameworkPathOverride>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
