@@ -74,15 +74,15 @@ namespace JetBrains.Rd.Reflection
     public ProxyGenerator(bool allowSave = false)
     {
       myAllowSave = allowSave;
-#if NETSTANDARD
-     myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
-     myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
-#else
+#if NET35
       myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), allowSave ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run));
       if (allowSave)
         myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator", "RdProxy.dll"));
       else
         myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
+#else
+      myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
+      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
 #endif
     }
 
