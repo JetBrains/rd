@@ -1,33 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <AssemblyName>JetBrains.Lifetimes</AssemblyName>
-        <RootNamespace>JetBrains</RootNamespace>
+        <TargetFramework>net35</TargetFramework>
+        <AssemblyName>JetBrains.RdFramework</AssemblyName>
+        <RootNamespace>JetBrains.Rd</RootNamespace>
         
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <NoWarn>1591,1570,1574</NoWarn>
-        
+
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
         
         <Configurations>Debug;Release;CrossTests</Configurations>
         
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    
+
+
     <PropertyGroup Label="NuGet">
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <PackageId>JetBrains.Lifetimes</PackageId>
+        <PackageId>JetBrains.RdFramework.net35</PackageId>
         <PackageProjectUrl>https://github.com/JetBrains/rd</PackageProjectUrl>
         <RepositoryUrl>https://github.com/JetBrains/rd</RepositoryUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryType>git</RepositoryType>
         <Authors>JetBrains</Authors>
         <Copyright>Copyright © JetBrains 2019</Copyright>
-        <PackageTags>rd lifetime reactive viewable</PackageTags>
-        <Description>JetBrains Core library for graceful disposal, concurrency and reactive programming</Description>
+        <PackageTags>rd reactive distributed protocol</PackageTags>
+        <Description>JetBrains Networking library for reactive distributed communication</Description>
 
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -35,21 +36,35 @@
 
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        
+
         <PackageIcon>PackageIcon.png</PackageIcon>
-        <PackageReleaseNotes>Embedding package icon</PackageReleaseNotes>
+        <PackageReleaseNotes>Fix memory leaks</PackageReleaseNotes>
     </PropertyGroup>
-    
-    
+
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
-
+    
     <ItemGroup>
+        <PackageReference Include="JetBrains.NETFramework.ReferenceAssemblies.net35" Version="1.0.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
+        <PackageReference Include="AsyncBridge.Net35" Version="0.2.0" />
+        <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Lifetimes.net35\Lifetimes.net35.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="PackageIcon.png" Pack="true" PackagePath="" />
+        <None Include="..\RdFramework\PackageIcon.png" Pack="true" PackagePath="" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Compile Include="..\RdFramework\**\*.cs" />
+        <Compile Remove="**\obj\**\*" />
     </ItemGroup>
 </Project>
