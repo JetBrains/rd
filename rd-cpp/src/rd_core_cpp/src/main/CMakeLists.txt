@@ -21,13 +21,13 @@ add_library(rd_core_cpp STATIC
         reactive/base/IProperty.h
         reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
         #std
-        std/hash.cpp std/hash.h
+        std/hash.h
         std/to_string.cpp std/to_string.h
         std/allocator.cpp std/allocator.h
         std/filesystem.cpp std/filesystem.h
         std/list.cpp std/list.h
-        std/unordered_map.cpp std/unordered_map.h
-        std/unordered_set.cpp std/unordered_set.h
+        std/unordered_map.h
+        std/unordered_set.h
         #types
         types/DateTime.cpp types/DateTime.h
         types/Void.cpp types/Void.h
