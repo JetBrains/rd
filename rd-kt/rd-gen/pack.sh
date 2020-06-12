@@ -55,8 +55,15 @@ export BUILD_CONFIGURATION=$build_configuration
 ${build_dir}/.dotnet/dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Rd.sln
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Lifetimes/Lifetimes.csproj
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/RdFramework/RdFramework.csproj
+${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Lifetimes.net35/Lifetimes.net35.csproj
+${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/RdFramework.net35/RdFramework.net35.csproj
+
 mv ${build_dir}/../../../rd-net/RdFramework/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
 mv ${build_dir}/../../../rd-net/RdFramework/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
+mv ${build_dir}/../../../rd-net/RdFramework.net35/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
+mv ${build_dir}/../../../rd-net/RdFramework.net35/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
 mv ${build_dir}/../../../rd-net/Lifetimes/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
 mv ${build_dir}/../../../rd-net/Lifetimes/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
+mv ${build_dir}/../../../rd-net/Lifetimes.net35/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
+mv ${build_dir}/../../../rd-net/Lifetimes.net35/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
 mono ${cache_dir}/nuget.exe pack -Version $nuget_version -OutputDirectory ${build_dir} ${base_dir}/JetBrains.RdGen.nuspec
