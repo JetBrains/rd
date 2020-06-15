@@ -1,55 +1,56 @@
 #ifndef RD_CPP_PROTOCOL_H
 #define RD_CPP_PROTOCOL_H
 
-
 #include "base/IProtocol.h"
 #include "protocol/Identities.h"
 #include "serialization/SerializationCtx.h"
 
 #include <memory>
 
-namespace rd {
-	//region predeclared
+namespace rd
+{
+// region predeclared
 
-	class SerializationCtx;
+class SerializationCtx;
 
-	class InternRoot;
-	//endregion
+class InternRoot;
+// endregion
 
-	/**
-	 * \brief Top level node in the object graph. It stores [SerializationCtx] for polymorphic "SerDes"
-	 */
-	class Protocol : /*IRdDynamic, */public IProtocol {
-		constexpr static string_view InternRootName{"ProtocolInternRoot"};
+/**
+ * \brief Top level node in the object graph. It stores [SerializationCtx] for polymorphic "SerDes"
+ */
+class Protocol : /*IRdDynamic, */ public IProtocol
+{
+	constexpr static string_view InternRootName{"ProtocolInternRoot"};
 
-		Lifetime lifetime;
+	Lifetime lifetime;
 
-		mutable std::unique_ptr<SerializationCtx> context;
+	mutable std::unique_ptr<SerializationCtx> context;
 
-		mutable std::unique_ptr<InternRoot> internRoot;
+	mutable std::unique_ptr<InternRoot> internRoot;
 
-		//region ctor/dtor
-	private:
-		void initialize() const ;
-	public:
-		Protocol(std::shared_ptr<Identities> identity, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
+	// region ctor/dtor
+private:
+	void initialize() const;
 
-		Protocol(Identities::IdKind, IScheduler *scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
+public:
+	Protocol(std::shared_ptr<Identities> identity, IScheduler* scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 
-		Protocol(Protocol const &) = delete;
+	Protocol(Identities::IdKind, IScheduler* scheduler, std::shared_ptr<IWire> wire, Lifetime lifetime);
 
-		Protocol(Protocol &&) noexcept = default;
+	Protocol(Protocol const&) = delete;
 
-		Protocol &operator=(Protocol &&) noexcept = default;
+	Protocol(Protocol&&) noexcept = default;
 
-		virtual ~Protocol();
-		//endregion
+	Protocol& operator=(Protocol&&) noexcept = default;
 
-		SerializationCtx &get_serialization_context() const override;
+	virtual ~Protocol();
+	// endregion
 
-		static const Logger initializationLogger;
-	};
-}
+	SerializationCtx& get_serialization_context() const override;
 
+	static const Logger initializationLogger;
+};
+}	 // namespace rd
 
-#endif //RD_CPP_PROTOCOL_H
+#endif	  // RD_CPP_PROTOCOL_H

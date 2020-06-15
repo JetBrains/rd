@@ -5,11 +5,12 @@
 #include <cassert>
 #include <cstdlib>
 
-namespace rd {
-	namespace filesystem {
-		std::string get_temp_directory();
-	}
+namespace rd
+{
+namespace filesystem
+{
+std::string get_temp_directory();
 }
+}	 // namespace rd
 
-
-#endif //RD_CPP_FILESYSTEM_H
+#endif	  // RD_CPP_FILESYSTEM_H

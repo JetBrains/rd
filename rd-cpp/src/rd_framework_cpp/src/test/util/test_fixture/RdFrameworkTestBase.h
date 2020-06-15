@@ -10,65 +10,70 @@
 #include "protocol/Protocol.h"
 #include "scheduler/SimpleScheduler.h"
 
-namespace rd {
-	namespace test {
-		class RdFrameworkTestBase : public ::testing::Test {
-			bool after_test_called = false;
-		public:
-			int static_entity_id = 1;
-			std::string static_name = "top";
+namespace rd
+{
+namespace test
+{
+class RdFrameworkTestBase : public ::testing::Test
+{
+	bool after_test_called = false;
 
-			Serializers serializers;
+public:
+	int static_entity_id = 1;
+	std::string static_name = "top";
 
-			LifetimeDefinition clientLifetimeDef;
-			LifetimeDefinition serverLifetimeDef;
+	Serializers serializers;
 
-			Lifetime clientLifetime;
-			Lifetime serverLifetime;
+	LifetimeDefinition clientLifetimeDef;
+	LifetimeDefinition serverLifetimeDef;
 
-			std::unique_ptr<IProtocol> clientProtocol;
-			std::unique_ptr<IProtocol> serverProtocol;
+	Lifetime clientLifetime;
+	Lifetime serverLifetime;
 
-			SimpleScheduler clientScheduler;
-			SimpleScheduler serverScheduler;
+	std::unique_ptr<IProtocol> clientProtocol;
+	std::unique_ptr<IProtocol> serverProtocol;
 
-			std::shared_ptr<SimpleWire> clientWire;
-			std::shared_ptr<SimpleWire> serverWire;
+	SimpleScheduler clientScheduler;
+	SimpleScheduler serverScheduler;
 
-			//    /*std::unique_ptr<IWire>*/SimpleWire clientWire{&clientScheduler};
-			//    /*std::unique_ptr<IWire>*/SimpleWire serverSimpleWire{&serverScheduler};
+	std::shared_ptr<SimpleWire> clientWire;
+	std::shared_ptr<SimpleWire> serverWire;
 
-			std::shared_ptr<Identities> clientIdentities = std::make_shared<Identities>(Identities::CLIENT);
-			std::shared_ptr<Identities> serverIdentities = std::make_shared<Identities>(Identities::SERVER);
+	//    /*std::unique_ptr<IWire>*/SimpleWire clientWire{&clientScheduler};
+	//    /*std::unique_ptr<IWire>*/SimpleWire serverSimpleWire{&serverScheduler};
 
-			//    private var disposeLoggerFactory: Closeable? = null
+	std::shared_ptr<Identities> clientIdentities = std::make_shared<Identities>(Identities::CLIENT);
+	std::shared_ptr<Identities> serverIdentities = std::make_shared<Identities>(Identities::SERVER);
 
-			//    @BeforeTest
-			RdFrameworkTestBase();
+	//    private var disposeLoggerFactory: Closeable? = null
 
-			//    @AfterTest
-			virtual void AfterTest();
+	//    @BeforeTest
+	RdFrameworkTestBase();
 
-			template<typename T>
-			T &bindStatic(IProtocol *protocol, T &x, std::string const &name) const {
-				Lifetime lf = (protocol == clientProtocol.get() ? clientLifetime : serverLifetime);
-				x.bind(lf, protocol, name);
-				return x;
-			}
+	//    @AfterTest
+	virtual void AfterTest();
 
-			template<typename T>
-			T &bindStatic(IProtocol *protocol, T &x, int id) const {
-				Lifetime lf = (protocol == clientProtocol.get() ? clientLifetime : serverLifetime);
-				statics(x, id).bind(lf, protocol, static_name);
-				return x;
-			}
-
-			void setWireAutoFlush(bool flag);
-
-            virtual ~RdFrameworkTestBase();
-        };
+	template <typename T>
+	T& bindStatic(IProtocol* protocol, T& x, std::string const& name) const
+	{
+		Lifetime lf = (protocol == clientProtocol.get() ? clientLifetime : serverLifetime);
+		x.bind(lf, protocol, name);
+		return x;
 	}
-}
 
+	template <typename T>
+	T& bindStatic(IProtocol* protocol, T& x, int id) const
+	{
+		Lifetime lf = (protocol == clientProtocol.get() ? clientLifetime : serverLifetime);
+		statics(x, id).bind(lf, protocol, static_name);
+		return x;
+	}
 
-#endif //RD_CPP_RDFRAMEWORKTESTBASE_H
+	void setWireAutoFlush(bool flag);
+
+	virtual ~RdFrameworkTestBase();
+};
+}	 // namespace test
+}	 // namespace rd
+
+#endif	  // RD_CPP_RDFRAMEWORKTESTBASE_H

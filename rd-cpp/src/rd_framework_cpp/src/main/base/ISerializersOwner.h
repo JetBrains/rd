@@ -3,25 +3,27 @@
 
 #include <unordered_set>
 
-namespace rd {
-	//region predeclared
+namespace rd
+{
+// region predeclared
 
-	class Serializers;
-	//endregion
+class Serializers;
+// endregion
 
-	class ISerializersOwner {
-		mutable std::unordered_set<Serializers const*> used;
-	public:
-		//region ctor/dtor
+class ISerializersOwner
+{
+	mutable std::unordered_set<Serializers const*> used;
 
-		virtual ~ISerializersOwner() = default;
-		//endregion
+public:
+	// region ctor/dtor
 
-		void registry(Serializers const &serializers) const;
+	virtual ~ISerializersOwner() = default;
+	// endregion
 
-		virtual void registerSerializersCore(Serializers const &serializers) const = 0;
-	};
-}
+	void registry(Serializers const& serializers) const;
 
+	virtual void registerSerializersCore(Serializers const& serializers) const = 0;
+};
+}	 // namespace rd
 
-#endif //RD_CPP_ISERIALIZERSOWNER_H
+#endif	  // RD_CPP_ISERIALIZERSOWNER_H

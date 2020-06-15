@@ -10,20 +10,21 @@
 using namespace rd;
 using namespace test;
 
-TEST_F(RdFrameworkTestBase, testStaticSuccess) {
+TEST_F(RdFrameworkTestBase, testStaticSuccess)
+{
 	int entity_id = 1;
 
 	RdCall<int, std::wstring> client_entity;
-	RdEndpoint<int, std::wstring> server_entity([](int const &it) -> std::wstring { return std::to_wstring(it); });
+	RdEndpoint<int, std::wstring> server_entity([](int const& it) -> std::wstring { return std::to_wstring(it); });
 
 	statics(client_entity, entity_id);
 	statics(server_entity, entity_id);
 
-	//not bound
+	// not bound
 	EXPECT_THROW(client_entity.sync(0), std::invalid_argument);
 	EXPECT_THROW(client_entity.start(0), std::invalid_argument);
 
-	//bound
+	// bound
 	bindStatic(serverProtocol.get(), server_entity, static_name);
 	bindStatic(clientProtocol.get(), client_entity, static_name);
 
@@ -36,12 +37,13 @@ TEST_F(RdFrameworkTestBase, testStaticSuccess) {
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, testStaticDifficult) {
+TEST_F(RdFrameworkTestBase, testStaticDifficult)
+{
 	int entity_id = 1;
 
 	auto client_entity = RdCall<std::wstring, int64_t>();
-	auto server_entity = RdEndpoint<std::wstring, int64_t>(
-			[](std::wstring const &s) -> int64_t { return std::hash<std::wstring>()(s); });
+	auto server_entity =
+		RdEndpoint<std::wstring, int64_t>([](std::wstring const& s) -> int64_t { return std::hash<std::wstring>()(s); });
 
 	statics(client_entity, entity_id);
 	statics(server_entity, entity_id);
@@ -56,7 +58,8 @@ TEST_F(RdFrameworkTestBase, testStaticDifficult) {
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, testStaticFailure) {
+TEST_F(RdFrameworkTestBase, testStaticFailure)
+{
 	auto client_entity = RdCall<int, std::wstring>();
 	auto server_entity = RdEndpoint<int, std::wstring>([](int) -> std::wstring { throw std::runtime_error("1234"); });
 
@@ -71,21 +74,20 @@ TEST_F(RdFrameworkTestBase, testStaticFailure) {
 
 	RdTaskResult<std::wstring> task_result = task.value_or_throw();
 
-	task_result.as_faulted([&](typename decltype(task_result)::Fault const &t) {
-		EXPECT_EQ(L"1234", t.reason_message);
-	});
+	task_result.as_faulted([&](typename decltype(task_result)::Fault const& t) { EXPECT_EQ(L"1234", t.reason_message); });
 
 	AfterTest();
 }
 
-TEST_F(RdFrameworkTestBase, testSymmetricCall) {
+TEST_F(RdFrameworkTestBase, testSymmetricCall)
+{
 	RdSymmetricCall<std::wstring, int32_t> server_entity, client_entity;
 
 	statics(client_entity, static_entity_id);
 	statics(server_entity, static_entity_id);
 
-	server_entity.set([](std::wstring const &s) { return +s.length(); });
-	client_entity.set([](std::wstring const &s) { return -s.length(); });
+	server_entity.set([](std::wstring const& s) { return +s.length(); });
+	client_entity.set([](std::wstring const& s) { return -s.length(); });
 
 	bindStatic(serverProtocol.get(), server_entity, static_name);
 	bindStatic(clientProtocol.get(), client_entity, static_name);

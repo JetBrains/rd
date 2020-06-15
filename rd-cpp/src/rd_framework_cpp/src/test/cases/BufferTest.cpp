@@ -12,7 +12,8 @@ using namespace rd;
 
 SerializationCtx ctx{nullptr};
 
-TEST(BufferTest, RdVoid) {
+TEST(BufferTest, RdVoid)
+{
 	Buffer buffer;
 	using S = Polymorphic<Void>;
 	S::write(ctx, buffer, Void{});
@@ -22,7 +23,8 @@ TEST(BufferTest, RdVoid) {
 	EXPECT_EQ(0, buffer.get_position());
 }
 
-TEST(BufferTest, readWritePod) {
+TEST(BufferTest, readWritePod)
+{
 	Buffer buffer;
 
 	buffer.write_integral<int32_t>(0);
@@ -33,11 +35,8 @@ TEST(BufferTest, readWritePod) {
 	buffer.write_char('-');
 	buffer.write_bool(true);
 
-	EXPECT_EQ(buffer.get_position(), (
-			sizeof(int32_t) + sizeof(int32_t) +
-			sizeof(int64_t) + sizeof(int32_t) +
-			sizeof(uint16_t) + sizeof(uint16_t) +
-			sizeof(bool)));
+	EXPECT_EQ(buffer.get_position(), (sizeof(int32_t) + sizeof(int32_t) + sizeof(int64_t) + sizeof(int32_t) + sizeof(uint16_t) +
+										 sizeof(uint16_t) + sizeof(bool)));
 
 	buffer.rewind();
 
@@ -50,8 +49,8 @@ TEST(BufferTest, readWritePod) {
 	EXPECT_EQ(true, buffer.read_bool());
 }
 
-
-TEST(BufferTest, getArray) {
+TEST(BufferTest, getArray)
+{
 	using W = int32_t;
 	const size_t N = 100;
 	const size_t MEM = N * sizeof(W);
@@ -59,7 +58,8 @@ TEST(BufferTest, getArray) {
 	Buffer buffer;
 
 	std::vector<W> list(N, -1);
-	for (auto t : list) {
+	for (auto t : list)
+	{
 		buffer.write_integral(t);
 	}
 
@@ -74,23 +74,23 @@ TEST(BufferTest, getArray) {
 	EXPECT_EQ(realArray, data);
 }
 
-
-TEST(BufferTest, string) {
+TEST(BufferTest, string)
+{
 	Buffer buffer;
 
 	std::wstring s;
-	for (int i = 0; i < 255; ++i) {
+	for (int i = 0; i < 255; ++i)
+	{
 		s += static_cast<wchar_t>(i);
 	}
 
 	Polymorphic<std::wstring>::write(ctx, buffer, s);
 	buffer.write_integral<int32_t>(s.length());
 
-	EXPECT_EQ(buffer.get_position(), (
-			sizeof(int32_t) + //length
-			2 * s.size() + //todo make protocol independent constant
-			sizeof(int32_t) //length
-	));
+	EXPECT_EQ(buffer.get_position(), (sizeof(int32_t) +		// length
+										 2 * s.size() +		// todo make protocol independent constant
+										 sizeof(int32_t)	// length
+										 ));
 
 	buffer.rewind();
 	const auto res = Polymorphic<std::wstring>::read(ctx, buffer);
@@ -99,8 +99,8 @@ TEST(BufferTest, string) {
 	EXPECT_EQ(len, s.length());
 }
 
-
-TEST(BufferTest, bigVector) {
+TEST(BufferTest, bigVector)
+{
 	const int STEP = 100'000;
 
 	Buffer buffer;
@@ -112,10 +112,8 @@ TEST(BufferTest, bigVector) {
 
 	buffer.write_array(list);
 
-	EXPECT_EQ(buffer.get_position(), (
-			sizeof(int32_t) + //length
-			8 * list.size()
-	));
+	EXPECT_EQ(buffer.get_position(), (sizeof(int32_t) +	   // length
+										 8 * list.size()));
 
 	buffer.rewind();
 
@@ -124,8 +122,10 @@ TEST(BufferTest, bigVector) {
 	EXPECT_EQ(res, list);
 }
 
-TEST(BufferTest, Enum) {
-	enum class Numbers {
+TEST(BufferTest, Enum)
+{
+	enum class Numbers
+	{
 		ONE,
 		TWO,
 		THREE
@@ -137,9 +137,8 @@ TEST(BufferTest, Enum) {
 	buffer.write_enum<Numbers>(Numbers::TWO);
 	buffer.write_enum<Numbers>(Numbers::THREE);
 
-	EXPECT_EQ(buffer.get_position(), (
-			3 * 4 //3 - quantity,  4 - enum size
-	));
+	EXPECT_EQ(buffer.get_position(), (3 * 4	   // 3 - quantity,  4 - enum size
+										 ));
 
 	buffer.rewind();
 
@@ -152,8 +151,10 @@ TEST(BufferTest, Enum) {
 	EXPECT_EQ(Numbers::THREE, three);
 }
 
-TEST(BufferTest, EnumSet) {
-	enum class Flags {
+TEST(BufferTest, EnumSet)
+{
+	enum class Flags
+	{
 		ONE = 1 << 0,
 		TWO = 1 << 1,
 		THREE = 1 << 2
@@ -165,9 +166,8 @@ TEST(BufferTest, EnumSet) {
 	buffer.write_enum_set<Flags>(Flags::TWO);
 	buffer.write_enum_set<Flags>(Flags::THREE);
 
-	EXPECT_EQ(buffer.get_position(), (
-			3 * 4 //3 - quantity,  4 - enum size
-	));
+	EXPECT_EQ(buffer.get_position(), (3 * 4	   // 3 - quantity,  4 - enum size
+										 ));
 
 	buffer.rewind();
 
@@ -180,51 +180,51 @@ TEST(BufferTest, EnumSet) {
 	EXPECT_EQ(Flags::THREE, three);
 }
 
-TEST(BufferTest, NullableSerializer) {
+TEST(BufferTest, NullableSerializer)
+{
 	Buffer buffer;
 
 	using T = std::wstring;
 	using S = Polymorphic<T>;
 	using NS = NullableSerializer<S>;
 
-	std::vector<Wrapper<T>> list{
-			nullopt,
-			L"1",
-			L"2",
-			nullopt,
-			L"error"
-	};
+	std::vector<Wrapper<T>> list{nullopt, L"1", L"2", nullopt, L"error"};
 
 	buffer.write_integral<int32_t>(+1);
-	for (auto const &x : list) {
+	for (auto const& x : list)
+	{
 		NS::write(ctx, buffer, x);
 	}
 	buffer.write_integral<int32_t>(-1);
 
-	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<T> const &s) {
-		if (s) {
-			acc += 4 + 2 * s->size(); //1 - nullable flag, 4 - length siz, 2 - symbol size
-		} else {
-			//nothing because nullable string
+	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<T> const& s) {
+		if (s)
+		{
+			acc += 4 + 2 * s->size();	 // 1 - nullable flag, 4 - length siz, 2 - symbol size
+		}
+		else
+		{
+			// nothing because nullable string
 		}
 		return acc;
 	});
-	EXPECT_EQ(buffer.get_position(), 4 + //first integral
-			(1 + 4 + summary_size) + // 1 - nullable flag, 4 - list's size,
-			4
-	);
+	EXPECT_EQ(buffer.get_position(), 4 +							 // first integral
+										 (1 + 4 + summary_size) +	 // 1 - nullable flag, 4 - list's size,
+										 4);
 
 	buffer.rewind();
 
 	EXPECT_EQ(+1, buffer.read_integral<int32_t>());
-	for (auto const &expected : list) {
+	for (auto const& expected : list)
+	{
 		auto actual = NS::read(ctx, buffer);
 		EXPECT_EQ(expected, actual);
 	}
 	EXPECT_EQ(-1, buffer.read_integral<int32_t>());
 }
 
-TEST(BufferTest, ArraySerializer) {
+TEST(BufferTest, ArraySerializer)
+{
 	Buffer buffer;
 
 	using T = std::wstring;
@@ -232,26 +232,22 @@ TEST(BufferTest, ArraySerializer) {
 	using AS = ArraySerializer<S, std::vector>;
 
 	std::vector<Wrapper<T>> list{
-			L"start"
-			L"1",
-			L"2",
-			L"",
-			L"error"
-	};
+		L"start"
+		L"1",
+		L"2", L"", L"error"};
 
 	buffer.write_integral<int32_t>(+1);
 	AS::write(ctx, buffer, list);
 	buffer.write_integral<int32_t>(-1);
 
-	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<std::wstring> const &s) {
-		acc += 4 + 2 * s->size(); //4 - length siz, 2 - symbol size
+	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<std::wstring> const& s) {
+		acc += 4 + 2 * s->size();	 // 4 - length siz, 2 - symbol size
 		return acc;
 	});
-	EXPECT_EQ(buffer.get_position(), (
-			4 + //first integral
-			(4 + summary_size) + //4 - list's size,
-			4 //last integral
-	));
+	EXPECT_EQ(buffer.get_position(), (4 +						 // first integral
+										 (4 + summary_size) +	 // 4 - list's size,
+										 4						 // last integral
+										 ));
 
 	buffer.rewind();
 
@@ -263,14 +259,16 @@ TEST(BufferTest, ArraySerializer) {
 	EXPECT_EQ(-1, buffer.read_integral<int32_t>());
 }
 
-TEST(BufferTest, floating_point) {
+TEST(BufferTest, floating_point)
+{
 	std::vector<float> float_v{1.0f, -1.0f, -123.456f, 123.456f};
 	std::vector<double> double_v{2.0, -2.0, 248.248, -248.248};
 
 	const int C = float_v.size();
 
 	Buffer buffer;
-	for (int i = 0; i < C; ++i) {
+	for (int i = 0; i < C; ++i)
+	{
 		buffer.write_floating_point(float_v[i]);
 		buffer.write_floating_point(double_v[i]);
 	}
@@ -278,7 +276,8 @@ TEST(BufferTest, floating_point) {
 	EXPECT_EQ(buffer.get_position(), C * (sizeof(float) + sizeof(double)));
 	buffer.rewind();
 
-	for (int i = 0; i < C; ++i) {
+	for (int i = 0; i < C; ++i)
+	{
 		const auto f = buffer.read_floating_point<float>();
 		const auto d = buffer.read_floating_point<double>();
 		EXPECT_FLOAT_EQ(f, float_v[i]);
@@ -286,7 +285,8 @@ TEST(BufferTest, floating_point) {
 	}
 }
 
-TEST(BufferTest, unsigned_types) {
+TEST(BufferTest, unsigned_types)
+{
 	uint8_t val1 = 8;
 	uint16_t val2 = 16;
 	uint32_t val3 = 32;
@@ -309,7 +309,8 @@ TEST(BufferTest, unsigned_types) {
 	EXPECT_EQ(buffer.read_integral<uint64_t>(), val4);
 }
 
-TEST(BufferTest, date_time) {
+TEST(BufferTest, date_time)
+{
 	Buffer buffer;
 
 	DateTime time_now{std::time(nullptr)};

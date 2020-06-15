@@ -6,20 +6,22 @@
 
 #endif
 
-namespace rd {
-	std::string filesystem::get_temp_directory() {
+namespace rd
+{
+std::string filesystem::get_temp_directory()
+{
 #ifdef _WIN32
-		/*char path[MAX_PATH];
-		assert(GetTempPath(MAX_PATH, path));
-		return path;*/
-		return getenv("TEMP");
+	/*char path[MAX_PATH];
+	assert(GetTempPath(MAX_PATH, path));
+	return path;*/
+	return getenv("TEMP");
 #endif
 #ifdef __linux__
-		return "/tmp";
+	return "/tmp";
 #endif
 #ifdef __APPLE__
-		return getenv("TMPDIR");
+	return getenv("TMPDIR");
 #endif
-		//todo check Mac OS
-	}
+	// todo check Mac OS
 }
+}	 // namespace rd

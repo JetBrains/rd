@@ -4,26 +4,31 @@
 #include <functional>
 #include <string>
 
-namespace rd {
-	/**
-	 * \brief For using in idle events
-	 */
-	class Void {
-		friend bool operator==(const Void &lhs, const Void &rhs);
+namespace rd
+{
+/**
+ * \brief For using in idle events
+ */
+class Void
+{
+	friend bool operator==(const Void& lhs, const Void& rhs);
 
-		friend bool operator!=(const Void &lhs, const Void &rhs);
-	};
+	friend bool operator!=(const Void& lhs, const Void& rhs);
+};
 
-	std::string to_string(Void const &);
-}
+std::string to_string(Void const&);
+}	 // namespace rd
 
-namespace std {
-	template<>
-	struct hash<rd::Void> {
-		size_t operator()(const rd::Void &value) const noexcept {
-			return 0;
-		}
-	};
-}
+namespace std
+{
+template <>
+struct hash<rd::Void>
+{
+	size_t operator()(const rd::Void& value) const noexcept
+	{
+		return 0;
+	}
+};
+}	 // namespace std
 
-#endif //RD_CPP_VOID_H
+#endif	  // RD_CPP_VOID_H
