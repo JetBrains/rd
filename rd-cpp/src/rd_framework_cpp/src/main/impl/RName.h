@@ -5,38 +5,41 @@
 
 #include <string>
 
-namespace rd {
-	/**
-	 * \brief Recursive name. For constructs like Aaaa.Bbb::CCC
-	 */
-	class RName {
-	private:
-		RName *parent = nullptr;
-		std::string local_name, separator;
-	public:
-		//region ctor/dtor
+namespace rd
+{
+/**
+ * \brief Recursive name. For constructs like Aaaa.Bbb::CCC
+ */
+class RName
+{
+private:
+	RName* parent = nullptr;
+	std::string local_name, separator;
 
-		RName() = default;
+public:
+	// region ctor/dtor
 
-		RName(const RName &other) = default;
+	RName() = default;
 
-		RName(RName &&other) noexcept = default;
+	RName(const RName& other) = default;
 
-		RName &operator=(const RName &other) = default;
+	RName(RName&& other) noexcept = default;
 
-		RName &operator=(RName &&other) noexcept = default;
+	RName& operator=(const RName& other) = default;
 
-		RName(RName * parent, string_view localName, string_view separator);
+	RName& operator=(RName&& other) noexcept = default;
 
-		explicit RName(string_view local_name);
-		//endregion
+	RName(RName* parent, string_view localName, string_view separator);
 
-		RName sub(string_view localName, string_view separator);
+	explicit RName(string_view local_name);
+	// endregion
 
-		friend std::string to_string(RName const& value);
+	RName sub(string_view localName, string_view separator);
 
-		static RName Empty();
-	};
-}
+	friend std::string to_string(RName const& value);
 
-#endif //RD_CPP_FRAMEWORK_RNAME_H
+	static RName Empty();
+};
+}	 // namespace rd
+
+#endif	  // RD_CPP_FRAMEWORK_RNAME_H

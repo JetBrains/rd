@@ -1,54 +1,57 @@
 #ifndef RD_CPP_CORE_LIFETIME_DEFINITION_H
 #define RD_CPP_CORE_LIFETIME_DEFINITION_H
 
-
 #include "LifetimeImpl.h"
 #include "lifetime/Lifetime.h"
 
 #include <functional>
 #include <type_traits>
 
-namespace rd {
-	class LifetimeDefinition {
-	private:
-		friend class SequentialLifetimes;
+namespace rd
+{
+class LifetimeDefinition
+{
+private:
+	friend class SequentialLifetimes;
 
-		bool eternaled = false;
-	public:
-		Lifetime lifetime;
+	bool eternaled = false;
 
-		LifetimeDefinition() = delete;
+public:
+	Lifetime lifetime;
 
-		explicit LifetimeDefinition(bool is_eternal = false);
+	LifetimeDefinition() = delete;
 
-		explicit LifetimeDefinition(const Lifetime &parent);
+	explicit LifetimeDefinition(bool is_eternal = false);
 
-		LifetimeDefinition(LifetimeDefinition const &other) = delete;
+	explicit LifetimeDefinition(const Lifetime& parent);
 
-		LifetimeDefinition &operator=(LifetimeDefinition const &other) = delete;
+	LifetimeDefinition(LifetimeDefinition const& other) = delete;
 
-		LifetimeDefinition(LifetimeDefinition &&other) = default;
+	LifetimeDefinition& operator=(LifetimeDefinition const& other) = delete;
 
-		LifetimeDefinition &operator=(LifetimeDefinition &&other) = default;
+	LifetimeDefinition(LifetimeDefinition&& other) = default;
 
-		virtual ~LifetimeDefinition();
+	LifetimeDefinition& operator=(LifetimeDefinition&& other) = default;
 
-//    static std::shared_ptr<LifetimeDefinition> eternal;
-		static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
+	virtual ~LifetimeDefinition();
 
-		bool is_terminated() const;
+	//    static std::shared_ptr<LifetimeDefinition> eternal;
+	static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
 
-		bool is_eternal() const;
+	bool is_terminated() const;
 
-		void terminate();
+	bool is_eternal() const;
 
-		template<typename F>
-		static auto use(F &&block) -> typename std::result_of_t<F(Lifetime)> {
-			LifetimeDefinition definition(false);
-			Lifetime lw = definition.lifetime.create_nested();
-			return block(lw);
-		}
-	};
-}
+	void terminate();
 
-#endif //RD_CPP_CORE_LIFETIME_DEFINITION_H
+	template <typename F>
+	static auto use(F&& block) -> typename std::result_of_t<F(Lifetime)>
+	{
+		LifetimeDefinition definition(false);
+		Lifetime lw = definition.lifetime.create_nested();
+		return block(lw);
+	}
+};
+}	 // namespace rd
+
+#endif	  // RD_CPP_CORE_LIFETIME_DEFINITION_H

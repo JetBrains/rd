@@ -12,7 +12,7 @@ using namespace rd;
 using namespace test;
 using namespace test::util;
 
-//TEST_F(SocketWireTestBase, testStringExtension) {
+// TEST_F(SocketWireTestBase, testStringExtension) {
 //    Protocol serverProtocol = server(socketLifetime);
 //    Protocol clientProtocol = client(socketLifetime, serverProtocol);
 //
@@ -103,8 +103,9 @@ using namespace test::util;
 	terminate();
 }*/
 
-TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
-//	int64_t const serialization_hash = 1ll << 40u;
+TEST_F(SocketWireTestBase, /*DISABLED_*/ testSlowpokeExtension)
+{
+	//	int64_t const serialization_hash = 1ll << 40u;
 
 	Protocol serverProtocol = server(socketLifetime);
 	Protocol clientProtocol = client(socketLifetime, serverProtocol);
@@ -112,32 +113,30 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/testSlowpokeExtension) {
 	RdProperty<int> serverProperty{0}, clientProperty{0};
 	init(serverProtocol, clientProtocol, &serverProperty, &clientProperty);
 
-	auto const &serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"SERVER");
-//	serverExt.serializationHash = serialization_hash;
-	
+	auto const& serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"SERVER");
+	//	serverExt.serializationHash = serialization_hash;
+
 	serverExt.property.set(L"UPDATE");
 	serverExt.property.set(L"UPGRADE");
 
-	auto const &clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"CLIENT");
-//	clientExt.serializationHash = serialization_hash;
+	auto const& clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"CLIENT");
+	//	clientExt.serializationHash = serialization_hash;
 
 	EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 
-	
-//	clientScheduler.pump_one_message(); //send Ready
-//	serverScheduler.pump_one_message(); //send Ready
-//	serverScheduler.pump_one_message(); //send ReceivedCounterpart
-//	clientScheduler.pump_one_message(); //send ReceivedCounterpart
-	//no need in pumping due to synchronous scheduler
-	clientScheduler.pump_one_message(); //send "UPDATE"
-
+	//	clientScheduler.pump_one_message(); //send Ready
+	//	serverScheduler.pump_one_message(); //send Ready
+	//	serverScheduler.pump_one_message(); //send ReceivedCounterpart
+	//	clientScheduler.pump_one_message(); //send ReceivedCounterpart
+	// no need in pumping due to synchronous scheduler
+	clientScheduler.pump_one_message();	   // send "UPDATE"
 
 	EXPECT_EQ(serverExt.property.get(), L"UPGRADE");
 	EXPECT_EQ(clientExt.property.get(), L"UPDATE");
 
-	clientScheduler.pump_one_message(); //send "UPGRADE"
+	clientScheduler.pump_one_message();	   // send "UPGRADE"
 	checkSchedulersAreEmpty();
-	
+
 	EXPECT_EQ(serverExt.property.get(), L"UPGRADE");
 	EXPECT_EQ(clientExt.property.get(), L"UPGRADE");
 

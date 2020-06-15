@@ -12,7 +12,8 @@ using namespace rd;
 using namespace rd::util;
 using namespace test;
 
-TEST_F(RdFrameworkTestBase, DISABLED_TestDynamic) {
+TEST_F(RdFrameworkTestBase, DISABLED_TestDynamic)
+{
 	RdProperty<RdCall<int32_t, std::wstring> > client_property;
 	RdProperty<RdEndpoint<int32_t, std::wstring> > server_property;
 
@@ -23,15 +24,13 @@ TEST_F(RdFrameworkTestBase, DISABLED_TestDynamic) {
 	bindStatic(clientProtocol.get(), client_property, static_name);
 	bindStatic(serverProtocol.get(), server_property, static_name);
 
-	server_property.emplace([](int32_t x) -> std::wstring {
-		return std::to_wstring(x);
-	});
+	server_property.emplace([](int32_t x) -> std::wstring { return std::to_wstring(x); });
 
 	EXPECT_EQ(L"1", client_property.get().sync(1).value_or_throw().unwrap());
 
 	Linearization l;
 
-	server_property.emplace([&l](Lifetime lifetime, int32_t const &v) -> RdTask<std::wstring> {
+	server_property.emplace([&l](Lifetime lifetime, int32_t const& v) -> RdTask<std::wstring> {
 		RdTask<std::wstring> task;
 
 		std::thread t([&l, task, v] {
@@ -49,7 +48,7 @@ TEST_F(RdFrameworkTestBase, DISABLED_TestDynamic) {
 	l.point(3);
 	l.reset();
 
-	//wait for task
+	// wait for task
 	auto task = client_property.get().start(3);
 	EXPECT_FALSE(task.is_succeeded());
 	EXPECT_FALSE(task.is_canceled());
@@ -68,7 +67,7 @@ TEST_F(RdFrameworkTestBase, DISABLED_TestDynamic) {
 
 	auto interrupted_task = client_property.get().start(0);
 
-	//terminate request
+	// terminate request
 	client_property.emplace();
 
 	EXPECT_TRUE(interrupted_task.is_canceled());
