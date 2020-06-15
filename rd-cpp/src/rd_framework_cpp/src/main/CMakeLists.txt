@@ -78,6 +78,7 @@ add_subdirectory(util)
 target_include_directories(rd_framework_cpp
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        $<TARGET_PROPERTY:thirdparty,PUBLIC_INCLUDE_DIRECTORIES>
         )
 
 target_link_libraries(rd_framework_cpp

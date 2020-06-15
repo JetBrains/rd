@@ -1,7 +1,5 @@
 #include "LifetimeImpl.h"
 
-#include "logger/Logger.h"
-
 #include <utility>
 
 namespace rd
@@ -61,7 +59,7 @@ void LifetimeImpl::attach_nested(std::shared_ptr<LifetimeImpl> nested)
 LifetimeImpl::~LifetimeImpl()
 {
 	/*if (!is_eternal() && !is_terminated()) {
-		Logger().error("forget to terminate lifetime with id:" + to_string(id));
+		spdlog::error("forget to terminate lifetime with id: {}", to_string(id));
 		terminate();
 	}*/
 }

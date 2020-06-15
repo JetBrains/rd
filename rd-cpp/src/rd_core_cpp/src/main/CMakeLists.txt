@@ -6,8 +6,6 @@ add_library(rd_core_cpp STATIC
         lifetime/Lifetime.cpp lifetime/Lifetime.h
         lifetime/LifetimeDefinition.cpp lifetime/LifetimeDefinition.h
         lifetime/SequentialLifetimes.cpp lifetime/SequentialLifetimes.h
-        #logger
-        logger/Logger.cpp logger/Logger.h
         #reactive
         reactive/SignalX.h
         reactive/interfaces.h
@@ -48,6 +46,7 @@ add_subdirectory(util)
 
 target_include_directories(rd_core_cpp PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        $<TARGET_PROPERTY:thirdparty,PUBLIC_INCLUDE_DIRECTORIES>
         )
 
 target_link_libraries(rd_core_cpp

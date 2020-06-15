@@ -89,9 +89,9 @@ void RdExtBase::sendState(IWire const& wire, ExtState state) const
 	});
 }
 
-void RdExtBase::traceMe(const Logger& logger, string_view message) const
+void RdExtBase::traceMe(std::shared_ptr<spdlog::logger> logger, string_view message) const
 {
-	logger.trace("ext " + to_string(location) + " " + to_string(rdid) + ":: " + std::string(message));
+	logger->trace("ext {} {}:: {}", to_string(location), to_string(rdid), std::string(message));
 }
 
 IScheduler* RdExtBase::get_wire_scheduler() const

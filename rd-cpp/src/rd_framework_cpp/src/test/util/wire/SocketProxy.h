@@ -16,7 +16,7 @@ class SocketProxy
 	std::string id;
 	Lifetime lifetime;
 	int serverPort;
-	Logger logger;
+	std::shared_ptr<spdlog::logger> logger;
 
 	optional<int> port;
 

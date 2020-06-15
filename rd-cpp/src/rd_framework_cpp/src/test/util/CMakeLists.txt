@@ -34,3 +34,5 @@ target_link_libraries(rd_framework_cpp_test_util PUBLIC
         rd_core_cpp_test_util
         entities
         interning_test_model)
+
+target_compile_definitions(rd_framework_cpp_test_util PRIVATE _WINSOCKAPI_=1)

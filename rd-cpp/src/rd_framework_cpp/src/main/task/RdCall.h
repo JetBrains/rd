@@ -76,8 +76,8 @@ public:
 		{
 			std::this_thread::yield();
 		}
-		Logger().debug("Time elapsed:" + to_string(std::chrono::system_clock::now() - time_at_start) +
-					   "has_value=" + to_string(task.has_value()));
+		spdlog::debug("Time elapsed: {}, has_value={}", to_string(std::chrono::system_clock::now() - time_at_start),
+			to_string(task.has_value()));
 		task.value_or_throw().unwrap();	   // check for existing value
 		sync_task_id = nullopt;
 		return task;
@@ -128,8 +128,8 @@ private:
 		}
 
 		get_wire()->send(rdid, [&](Buffer& buffer) {
-			logSend.trace("call %s::%s send %s request %s : " + to_string(request), to_string(location).c_str(),
-				to_string(rdid).c_str(), (sync ? "SYNC" : "ASYNC"), to_string(task_id).c_str());
+			logSend->trace("call {}::{} send {} request {} : {}", to_string(location), to_string(rdid), (sync ? "SYNC" : "ASYNC"),
+				to_string(task_id), to_string(request));
 			task_id.write(buffer);
 			ReqSer::write(get_serialization_context(), buffer, request);
 		});

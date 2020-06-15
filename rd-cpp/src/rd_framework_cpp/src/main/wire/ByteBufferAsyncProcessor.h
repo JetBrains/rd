@@ -1,8 +1,8 @@
 #ifndef RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 #define RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 
-#include "logger/Logger.h"
 #include "protocol/Buffer.h"
+#include "spdlog/spdlog-inl.h"
 
 #include <chrono>
 #include <string>
@@ -40,7 +40,7 @@ private:
 	std::function<bool(Buffer::ByteArray const&, sequence_number_t seqn)> processor;
 
 	StateKind state{StateKind::Initialized};
-	static Logger logger;
+	static std::shared_ptr<spdlog::logger> logger;
 
 	std::thread::id async_thread_id;
 	std::future<void> async_future;

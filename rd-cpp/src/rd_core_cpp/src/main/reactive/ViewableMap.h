@@ -1,7 +1,6 @@
 #ifndef RD_CPP_CORE_VIEWABLE_MAP_H
 #define RD_CPP_CORE_VIEWABLE_MAP_H
 
-#include "logger/Logger.h"
 #include "base/IViewableMap.h"
 #include "reactive/SignalX.h"
 #include "util/core_util.h"

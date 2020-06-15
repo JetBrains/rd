@@ -1,6 +1,10 @@
 #include <utility>
 
 #include "wire/SocketWire.h"
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
 
 #include <utility>
 #include <thread>
@@ -8,7 +12,8 @@
 
 namespace rd
 {
-Logger SocketWire::Base::logger;
+std::shared_ptr<spdlog::logger> SocketWire::Base::logger =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("wireLog", spdlog::color_mode::automatic);
 
 std::chrono::milliseconds SocketWire::timeout = std::chrono::milliseconds(500);
 
@@ -32,21 +37,21 @@ void SocketWire::Base::receiverProc() const
 		{
 			if (!socket_provider->IsSocketValid())
 			{
-				logger.debug(this->id + ": stop receive messages because socket disconnected");
+				logger->debug("{}: stop receive messages because socket disconnected", this->id);
 				//					async_send_buffer.terminate();
 				break;
 			}
 
 			if (!read_and_dispatch_message())
 			{
-				logger.debug(id + ": connection was gracefully shutdown");
+				logger->debug("{}: connection was gracefully shutdown", id);
 				//					async_send_buffer.terminate();
 				break;
 			}
 		}
 		catch (std::exception const& ex)
 		{
-			logger.error(&ex, this->id + " caught processing");
+			logger->error("{} caught processing | {}", this->id, ex.what());
 			//				async_send_buffer.terminate();
 			break;
 		}
@@ -76,21 +81,21 @@ bool SocketWire::Base::send0(Buffer::ByteArray const& msg, sequence_number_t seq
 																					 ": failed to send package over the network"
 																					 ", reason: " +
 																					 socket_provider->DescribeError());
-		logger.info(this->id + ": were sent " + std::to_string(msglen) + " bytes");
-		//        RD_ASSERT_MSG(socketProvider->Flush(), this->id + ": failed to flush");
+		logger->info("{}: were sent {} bytes", this->id,  msglen);
+		//        RD_ASSERT_MSG(socketProvider->Flush(), "{}: failed to flush");
 		return true;
 	}
 	catch (std::exception const& e)
 	{
 		//			async_send_buffer.pause("send0");
-		logger.warn(&e, "Send0 failed due to: ");
+		logger->warn("Send0 failed due to: | {}", e.what());
 		return false;
 	}
 }
 
 void SocketWire::Base::send(RdId const& rd_id, std::function<void(Buffer& buffer)> writer) const
 {
-	RD_ASSERT_MSG(!rd_id.isNull(), this->id + ": id mustn't be null");
+	RD_ASSERT_MSG(!rd_id.isNull(), "{}: id mustn't be null");
 
 	local_send_buffer.write_integral<int32_t>(0);	 // placeholder for length
 
@@ -139,12 +144,12 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 	});
 	const auto status = heartbeat.wait_for(timeout);
 
-	logger.debug(this->id + ": waited for heartbeat to stop with status: " + to_string(status));
+	logger->debug("{}: waited for heartbeat to stop with status: {}", this->id, status);
 
 	if (!socket_provider->Shutdown(CSimpleSocket::Both))
 	{
 		// double close?
-		logger.warn(this->id + ": possibly double close after disconnect");
+		logger->warn("{}: possibly double close after disconnect", this->id);
 	}
 }
 
@@ -187,7 +192,7 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 			{
 				hi = lo = receiver_buffer.begin();
 			}
-			logger.info(this->id + ": receive started");
+			logger->info("{}: receive started", this->id);
 			if (!socket_provider->IsSocketValid())
 			{
 				return false;
@@ -195,24 +200,24 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 			int32_t read = socket_provider->Receive(static_cast<int32_t>(receiver_buffer.end() - hi), &*hi);
 			if (read == -1)
 			{
-				logger.error(this->id + ": error has occurred while receiving");
+				logger->error("{}: error has occurred while receiving", this->id);
 				return false;
 			}
 			if (read == 0)
 			{
-				logger.warn(this->id + ": socket was shutted down for receiving");
+				logger->warn("{}: socket was shutted down for receiving", this->id);
 				return false;
 			}
 			hi += read;
 			if (read > 0)
 			{
-				logger.info(this->id + ": receive finished: %d bytes read", read);
+				logger->info("{}: receive finished: {} bytes read", this->id, read);
 			}
 		}
 	}
 	if (ptr != msglen)
 	{
-		logger.error("read invalid number of bytes from socket, expected: %d, actual: %d", msglen, ptr);
+		logger->error("read invalid number of bytes from socket, expected: {}, actual: {}", msglen, ptr);
 		assert(false);
 	}
 	return true;
@@ -250,14 +255,14 @@ std::pair<int, sequence_number_t> SocketWire::Base::read_header() const
 			{
 				if (!heartbeatAlive.get())
 				{	 // only on change
-					logger.trace("Connection is alive after receiving PING " + id +
-									 ": "
-									 "received_timestamp: %d, "
-									 "received_counterpart_timestamp: %d, "
-									 "current_timestamp: %d, "
-									 "counterpart_timestamp: %d, "
-									 "counterpart_acknowledge_timestamp: %d, ",
-						received_timestamp, received_counterpart_timestamp, current_timestamp, counterpart_timestamp,
+					logger->trace(
+						"Connection is alive after receiving PING {}: "
+						"received_timestamp: {}, "
+						"received_counterpart_timestamp: {}, "
+						"current_timestamp: {}, "
+						"counterpart_timestamp: {}, "
+						"counterpart_acknowledge_timestamp: {}, ",
+						id, received_timestamp, received_counterpart_timestamp, current_timestamp, counterpart_timestamp,
 						counterpart_acknowledge_timestamp);
 				}
 				heartbeatAlive.set(true);
@@ -285,18 +290,18 @@ int32_t SocketWire::Base::read_package() const
 	const auto pair = read_header();
 	if (pair == INVALID_HEADER)
 	{
-		logger.debug(this->id + ": failed to read header");
+		logger->debug("{}: failed to read header", this->id);
 		return -1;
 	}
 	const auto len = pair.first;
 	const auto seqn = pair.second;
 
-	logger.debug(this->id + ": read len=%d, seqn=%lld, max_received_seqn=%lld", len, seqn, max_received_seqn);
+	logger->debug("{}: read len={}, seqn={}, max_received_seqn={}", this->id, len, seqn, max_received_seqn);
 
 	receive_pkg.require_available(len);
 	if (!read_data_from_socket(receive_pkg.data(), len))
 	{
-		logger.debug(this->id + ": failed to read package");
+		logger->debug("{}: failed to read package", this->id);
 		return -1;
 	}
 	send_ack(seqn);
@@ -306,7 +311,7 @@ int32_t SocketWire::Base::read_package() const
 	}
 	max_received_seqn = seqn;
 
-	logger.info(this->id + ": was received package, bytes=%d, seqn=%d", len, seqn);
+	logger->info("{}: was received package, bytes={}, seqn={}", this->id, len, seqn);
 	return len;
 }
 
@@ -315,29 +320,29 @@ bool SocketWire::Base::read_and_dispatch_message() const
 	sz = (sz == -1 ? receive_pkg.read_integral<int32_t>() : sz);
 	if (sz == -1)
 	{
-		logger.error("sz == -1");
+		logger->error("sz == -1");
 		return false;
 	}
 	id_ = (id_ == -1 ? receive_pkg.read_integral<RdId::hash_t>() : id_);
 	if (id_ == -1)
 	{
-		logger.error("id == -1");
+		logger->error("id == -1");
 		return false;
 	}
-	logger.trace(this->id + ": message info: sz=%d, id=%d", sz, id_);
+	logger->trace("{}: message info: sz={}, id={}", this->id, sz, id_);
 	const RdId rd_id{id_};
 	sz -= 8;	// RdId
 	message.require_available(sz);
 
 	if (!receive_pkg.read(message.data() + message.get_position(), sz - message.get_position()))
 	{
-		logger.error(this->id + ": constructing message failed");
+		logger->error("{}: constructing message failed", this->id);
 		return false;
 	}
 
-	logger.debug(this->id + ": message received");
+	logger->debug("{}: message received", this->id);
 	message_broker.dispatch(rd_id, std::move(message));
-	logger.debug(this->id + ": message dispatched");
+	logger->debug("{}: message dispatched", this->id);
 
 	sz = -1;
 	id_ = -1;
@@ -357,12 +362,12 @@ void SocketWire::Base::ping() const
 	{
 		if (heartbeatAlive.get())
 		{	 // only on change
-			logger.trace("Disconnect detected while sending PING " + this->id +
-							 ": "
-							 "current_timestamp: %d, "
-							 "counterpart_timestamp: %d, "
-							 "counterpart_acknowledge_timestamp: %d",
-				current_timestamp, counterpart_timestamp, counterpart_acknowledge_timestamp);
+			logger->trace(
+				"Disconnect detected while sending PING {}: "
+				"current_timestamp: {}, "
+				"counterpart_timestamp: {}, "
+				"counterpart_acknowledge_timestamp: {}",
+				this->id, current_timestamp, counterpart_timestamp, counterpart_acknowledge_timestamp);
 		}
 		heartbeatAlive.set(false);
 	}
@@ -385,13 +390,13 @@ void SocketWire::Base::ping() const
 	}
 	catch (std::exception const& e)
 	{
-		logger.warn(&e, this->id + ": exception raised during PING");
+		logger->warn("{}: exception raised during PING | {}", this->id, e.what());
 	}
 }
 
 bool SocketWire::Base::send_ack(sequence_number_t seqn) const
 {
-	logger.trace(id + " send ack %lld", seqn);
+	logger->trace("{} send ack {}", id, seqn);
 	try
 	{
 		ack_buffer.rewind();
@@ -409,7 +414,7 @@ bool SocketWire::Base::send_ack(sequence_number_t seqn) const
 	}
 	catch (std::exception const& e)
 	{
-		logger.warn(&e, id + ": exception raised during ACK, seqn = %lld", seqn);
+		logger->warn("{}: exception raised during ACK, seqn = {} | {}", id, seqn, e.what());
 		return false;
 	}
 }
@@ -440,7 +445,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 
 					// https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
 					// HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
-					logger.info(this->id + ": connecting 127.0.0.1:" + std::to_string(this->port));
+					logger->info("{}: connecting 127.0.0.1: {}", this->id, this->port);
 					RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port), this->id +
 																				   ": failed to open ActiveSocket"
 																				   ", reason: " +
@@ -451,10 +456,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 						{
 							if (!socket->Close())
 							{
-								logger.error(this->id +
-											 "failed to close socket"
-											 ", reason: " +
-											 socket->DescribeError());
+								logger->error("{} failed to close socket, reason: {}", this->id, socket->DescribeError());
 							}
 							return;
 						}
@@ -481,35 +483,35 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 		}
 		catch (std::exception const& e)
 		{
-			logger.info(this->id + ": closed with exception: ", &e);
+			logger->info("{}: closed with exception: {}", this->id, e.what());
 		}
-		logger.debug(this->id + ": thread expired");
+		logger->debug("{}: thread expired", this->id);
 	});
 
 	lifetime->add_action([this]() {
-		logger.info(this->id + ": starts terminating lifetime");
+		logger->info("{}: starts terminating lifetime", this->id);
 
 		const bool send_buffer_stopped = async_send_buffer.stop(timeout);
-		logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
+		logger->debug("{}: send buffer stopped, success: {}", this->id, send_buffer_stopped);
 
 		{
 			std::lock_guard<decltype(lock)> guard(lock);
-			logger.debug(this->id + ": closing socket");
+			logger->debug("{}: closing socket", this->id);
 
 			if (socket != nullptr)
 			{
 				if (!socket->Close())
 				{
-					logger.error(this->id + ": failed to close socket");
+					logger->error("{}: failed to close socket", this->id);
 				}
 			}
 		}
 		cv.notify_all();
 
-		logger.debug(this->id + ": waiting for receiver thread");
-		logger.debug(this->id + ": is thread joinable? " + std::to_string(thread.joinable()));
+		logger->debug("{}: waiting for receiver thread", this->id);
+		logger->debug("{}: is thread joinable? {}", this->id, thread.joinable());
 		thread.join();
-		logger.info(this->id + ": termination finished");
+		logger->info("{}: termination finished", this->id);
 	});
 }
 
@@ -524,22 +526,22 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 										", reason: " +
 										socket->DescribeError())
 	RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
-		this->id + ": failed to listen socket on port:" + std::to_string(port) + ", reason: " + ss->DescribeError());
+		"{}: failed to listen socket on port:" + std::to_string(port) + ", reason: " + ss->DescribeError());
 
-	logger.info(this->id + ": listening 127.0.0.1/" + std::to_string(port));
+	logger->info("{}: listening 127.0.0.1/{}", this->id, port);
 	this->port = ss->GetServerPort();
-	RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
+	RD_ASSERT_MSG(this->port != 0, "{}: port wasn't chosen")
 
 	thread = std::thread([this, lifetime]() mutable {
 		while (!lifetime->is_terminated())
 		{
 			try
 			{
-				logger.info(this->id + ": accepting started");
+				logger->info("{}: accepting started", this->id);
 				CActiveSocket* accepted = ss->Accept();
 				RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()) + ", reason: " + ss->DescribeError())
 				socket.reset(accepted);
-				logger.info(this->id + ": accepted passive socket");
+				logger->info("{}: accepted passive socket", this->id);
 				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id +
 																		": tcpNoDelay failed"
 																		", reason: " +
@@ -549,54 +551,54 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 					std::lock_guard<decltype(lock)> guard(lock);
 					if (lifetime->is_terminated())
 					{
-						logger.debug(this->id + ": closing passive socket");
+						logger->debug("{}: closing passive socket", this->id);
 						if (!socket->Close())
 						{
-							logger.error(this->id + ": failed to close socket");
+							logger->error("{}: failed to close socket", this->id);
 						}
-						logger.info(this->id + ": close passive socket");
+						logger->info("{}: close passive socket", this->id);
 					}
 				}
 
-				logger.debug(this->id + ": setting socket provider");
+				logger->debug("{}: setting socket provider", this->id);
 				set_socket_provider(socket);
 			}
 			catch (std::exception const& e)
 			{
-				logger.info(this->id + ": closed with exception: ", &e);
+				logger->info("{}: closed with exception: {}", this->id, e.what());
 			}
 		}
-		logger.debug(this->id + ": thread expired");
+		logger->debug("{}: thread expired", this->id);
 	});
 
 	lifetime->add_action([this] {
-		logger.info(this->id + ": start terminating lifetime");
+		logger->info("{}: start terminating lifetime", this->id);
 
 		const bool send_buffer_stopped = async_send_buffer.stop(timeout);
-		logger.debug(this->id + ": send buffer stopped, success: " + std::to_string(send_buffer_stopped));
+		logger->debug("{}: send buffer stopped, success: {}", this->id, send_buffer_stopped);
 
-		logger.debug(this->id + ": closing server socket");
+		logger->debug("{}: closing server socket", this->id);
 		if (!ss->Close())
 		{
-			logger.error(this->id + ": failed to close server socket");
+			logger->error("{}: failed to close server socket", this->id);
 		}
 
 		{
 			std::lock_guard<decltype(lock)> guard(lock);
-			logger.debug(this->id + ": closing socket");
+			logger->debug("{}: closing socket", this->id);
 			if (socket != nullptr)
 			{
 				if (!socket->Close())
 				{
-					logger.error(this->id + ": failed to close socket");
+					logger->error("{}: failed to close socket", this->id);
 				}
 			}
 		}
 
-		logger.debug(this->id + ": waiting for receiver thread");
-		logger.debug(this->id + ": is thread joinable? " + std::to_string(thread.joinable()));
+		logger->debug("{}: waiting for receiver thread", this->id);
+		logger->debug("{}: is thread joinable? {}", this->id, thread.joinable());
 		thread.join();
-		logger.info(this->id + ": termination finished");
+		logger->info("{}: termination finished", this->id);
 	});
 }
 }	 // namespace rd
