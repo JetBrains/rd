@@ -28,4 +28,4 @@
 
 #include "thirdparty.hpp"
 
-#endif //RD_CPP_CORE_PCH_H
+#endif	  // RD_CPP_CORE_PCH_H

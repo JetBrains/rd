@@ -3,38 +3,39 @@
 
 #include "impl/RName.h"
 
-namespace rd {
-	//region predeclared
+namespace rd
+{
+// region predeclared
 
-	class IProtocol;
+class IProtocol;
 
-	class SerializationCtx;
-	//endregion
+class SerializationCtx;
+// endregion
 
-	/**
-	 * \brief A node in a graph of entities that can be synchronized with its remote copy over a network or 
-	 * a similar connection.
-	 */
-	class IRdDynamic {
-	public:
-		mutable RName location;
+/**
+ * \brief A node in a graph of entities that can be synchronized with its remote copy over a network or
+ * a similar connection.
+ */
+class IRdDynamic
+{
+public:
+	mutable RName location;
 
-		//region ctor/dtor
+	// region ctor/dtor
 
-		IRdDynamic() = default;
+	IRdDynamic() = default;
 
-		IRdDynamic(IRdDynamic &&other) = default;
+	IRdDynamic(IRdDynamic&& other) = default;
 
-		IRdDynamic &operator=(IRdDynamic &&other) = default;
+	IRdDynamic& operator=(IRdDynamic&& other) = default;
 
-		virtual ~IRdDynamic() = default;
-		//endregion
+	virtual ~IRdDynamic() = default;
+	// endregion
 
-		virtual const IProtocol *get_protocol() const = 0;
+	virtual const IProtocol* get_protocol() const = 0;
 
-		virtual SerializationCtx &get_serialization_context() const = 0;
-	};
-}
+	virtual SerializationCtx& get_serialization_context() const = 0;
+};
+}	 // namespace rd
 
-
-#endif //RD_CPP_IRDDYNAMIC_H
+#endif	  // RD_CPP_IRDDYNAMIC_H

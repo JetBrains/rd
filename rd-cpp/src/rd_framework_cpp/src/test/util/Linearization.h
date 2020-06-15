@@ -6,30 +6,31 @@
 #include <condition_variable>
 #include <chrono>
 
+namespace rd
+{
+namespace util
+{
+class Linearization
+{
+private:
+	std::mutex lock;
+	std::condition_variable cv;
 
-namespace rd {
-	namespace util {
-		class Linearization {
+	bool enabled = true;
+	int32_t next_id = 0;
 
-		private:
-			std::mutex lock;
-			std::condition_variable cv;
+	void set_enable(bool value);
 
-			bool enabled = true;
-			int32_t next_id = 0;
+public:
+	void point(int32_t id);
 
-			void set_enable(bool value);
-		public:
+	void reset();
 
-			void point(int32_t id);
+	void enable();
 
-			void reset();
+	void disable();
+};
+}	 // namespace util
+}	 // namespace rd
 
-			void enable();
-
-			void disable();
-		};
-	}
-}
-
-#endif //RD_CPP_LINEARIZATION_H
+#endif	  // RD_CPP_LINEARIZATION_H

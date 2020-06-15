@@ -3,18 +3,19 @@
 
 #include "protocol/RdId.h"
 
-namespace rd {
-	class IUnknownInstance {
-	public:
-		RdId unknownId{0};
+namespace rd
+{
+class IUnknownInstance
+{
+public:
+	RdId unknownId{0};
 
-		IUnknownInstance();
+	IUnknownInstance();
 
-		explicit IUnknownInstance(const RdId &unknownId);
+	explicit IUnknownInstance(const RdId& unknownId);
 
-		explicit IUnknownInstance(RdId &&unknownId);
-	};
-}
+	explicit IUnknownInstance(RdId&& unknownId);
+};
+}	 // namespace rd
 
-
-#endif //RD_CPP_IUNKNOWNINSTANCE_H
+#endif	  // RD_CPP_IUNKNOWNINSTANCE_H

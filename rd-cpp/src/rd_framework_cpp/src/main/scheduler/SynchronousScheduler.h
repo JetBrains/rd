@@ -5,33 +5,35 @@
 
 #include "guards.h"
 
-namespace rd {
-	class SynchronousScheduler : public IScheduler {
-		static thread_local int32_t active;
-	public:
-		//region ctor/dtor
+namespace rd
+{
+class SynchronousScheduler : public IScheduler
+{
+	static thread_local int32_t active;
 
-		SynchronousScheduler() = default;
+public:
+	// region ctor/dtor
 
-		SynchronousScheduler(SynchronousScheduler const &) = delete;
+	SynchronousScheduler() = default;
 
-		SynchronousScheduler(SynchronousScheduler &&) = delete;
+	SynchronousScheduler(SynchronousScheduler const&) = delete;
 
-		virtual ~SynchronousScheduler() = default;
-		//endregion
+	SynchronousScheduler(SynchronousScheduler&&) = delete;
 
-		void queue(std::function<void()> action) override;
+	virtual ~SynchronousScheduler() = default;
+	// endregion
 
-		void flush() override;
+	void queue(std::function<void()> action) override;
 
-		bool is_active() const override;
-	};
+	void flush() override;
 
-	/**
-	 * \brief global synchronous scheduler for whole application.
-	 */
-	extern SynchronousScheduler globalSynchronousScheduler;
-}
+	bool is_active() const override;
+};
 
+/**
+ * \brief global synchronous scheduler for whole application.
+ */
+extern SynchronousScheduler globalSynchronousScheduler;
+}	 // namespace rd
 
-#endif //RD_CPP_SYNCHRONOUSSCHEDULER_H
+#endif	  // RD_CPP_SYNCHRONOUSSCHEDULER_H

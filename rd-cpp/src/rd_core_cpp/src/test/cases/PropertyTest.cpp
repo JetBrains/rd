@@ -4,23 +4,19 @@
 
 using namespace rd;
 
-TEST(property, advise) {
+TEST(property, advise)
+{
 	int acc = 0;
 
-	std::unique_ptr<IProperty<int> > property = std::make_unique<Property<int>>();
+	std::unique_ptr<IProperty<int>> property = std::make_unique<Property<int>>();
 
 	property->set(++acc);
 
 	std::vector<int> log;
 	LifetimeDefinition::use([&property, &acc, &log](Lifetime lifetime) {
-		property->advise(lifetime, [&log](int const &x) {
-			log.push_back(-x);
-		});
-		property->view(lifetime, [&log](Lifetime inner, int const &x) {
-			inner->bracket(
-					[&log, &x]() { log.push_back(x); },
-					[&log, &x]() { log.push_back(10 + x); }
-			);
+		property->advise(lifetime, [&log](int const& x) { log.push_back(-x); });
+		property->view(lifetime, [&log](Lifetime inner, int const& x) {
+			inner->bracket([&log, &x]() { log.push_back(x); }, [&log, &x]() { log.push_back(10 + x); });
 		});
 
 		lifetime->add_action([&log]() { log.push_back(0); });
@@ -38,25 +34,25 @@ TEST(property, advise) {
 	EXPECT_EQ(expected, log);
 }
 
-TEST(property, when_true) {
+TEST(property, when_true)
+{
 	int acc1 = 0;
 	int acc2 = 0;
 
 	std::unique_ptr<IProperty<bool>> property = std::make_unique<Property<bool>>(false);
 	property->set(true);
 	LifetimeDefinition::use([&](Lifetime lifetime) {
-		property->view(lifetime, [&acc1](Lifetime lt, bool const &flag) {
-			if (flag) {
+		property->view(lifetime, [&acc1](Lifetime lt, bool const& flag) {
+			if (flag)
+			{
 				acc1++;
 			}
 		});
 
-		property->view(lifetime, [&](Lifetime lt, bool const &flag) {
-			if (flag) {
-				lt->bracket(
-						[&acc2]() { acc2 += 2; },
-						[&acc2]() { acc2 -= 1; }
-				);
+		property->view(lifetime, [&](Lifetime lt, bool const& flag) {
+			if (flag)
+			{
+				lt->bracket([&acc2]() { acc2 += 2; }, [&acc2]() { acc2 -= 1; });
 			}
 		});
 
@@ -79,14 +75,13 @@ TEST(property, when_true) {
 	EXPECT_EQ(2, acc2);
 }
 
-TEST(property, view) {
+TEST(property, view)
+{
 	std::unique_ptr<IProperty<int>> property = std::make_unique<Property<int>>(1);
 	int save = 0;
 
 	LifetimeDefinition::use([&](Lifetime lifetime) {
-		property->view(lifetime, [&](Lifetime lt, int const &value) {
-			save = value;
-		});
+		property->view(lifetime, [&](Lifetime lt, int const& value) { save = value; });
 		property->set(2);
 		EXPECT_EQ(2, save);
 		lifetime->add_action([&property]() { property->set(-1); });
@@ -97,7 +92,8 @@ TEST(property, view) {
 	EXPECT_EQ(-1, save);
 }
 
-TEST(property, uninitialized) {
+TEST(property, uninitialized)
+{
 	Property<int> property;
 
 	EXPECT_THROW(property.get(), std::exception);
@@ -105,9 +101,7 @@ TEST(property, uninitialized) {
 	std::vector<int> log;
 
 	LifetimeDefinition::use([&](Lifetime lifetime) {
-		property.advise(lifetime, [&log](int const &val) {
-			log.push_back(val);
-		});
+		property.advise(lifetime, [&log](int const& val) { log.push_back(val); });
 
 		EXPECT_TRUE(log.empty());
 

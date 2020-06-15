@@ -3,14 +3,16 @@
 
 #include <functional>
 
-namespace rd {
-	template<typename T>
-	struct hash {
-		size_t operator()(const T& value) const noexcept {
-			return std::hash<T>()(value);
-		}
-	};
-}
+namespace rd
+{
+template <typename T>
+struct hash
+{
+	size_t operator()(const T& value) const noexcept
+	{
+		return std::hash<T>()(value);
+	}
+};
+}	 // namespace rd
 
-
-#endif //RD_CPP_HASH_H
+#endif	  // RD_CPP_HASH_H
