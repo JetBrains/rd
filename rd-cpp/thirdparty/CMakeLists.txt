@@ -5,6 +5,8 @@ add_subdirectory(clsocket)
 add_subdirectory(countdownlatch)
 add_subdirectory(string-view-lite)
 add_subdirectory(CTPL)
+
+set(SPDLOG_HEADER_ONLY 1)
 add_subdirectory(spdlog)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/spdlog/include/
@@ -21,7 +23,7 @@ target_include_directories(thirdparty PUBLIC
         string-view-lite
         ctpl
         countdownlatch
-        spdlog_header_only
+        spdlog/include
         )
 
 target_link_libraries(thirdparty PUBLIC

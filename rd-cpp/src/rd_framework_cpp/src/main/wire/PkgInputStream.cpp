@@ -2,8 +2,6 @@
 
 #include "PkgInputStream.h"
 
-#include "logger/Logger.h"
-
 #include <algorithm>
 
 namespace rd
@@ -52,7 +50,7 @@ int32_t PkgInputStream::try_read(Buffer::word_t* res, size_t size)
 
 bool PkgInputStream::read(Buffer::word_t* res, size_t size)
 {
-	//		Logger().trace("PkgInputStream call: size=%d, pos=%d, memory=%d", size, buffer.get_position(), memory);
+	//		spdlog::trace("PkgInputStream call: size={}, pos={}, memory={}", size, buffer.get_position(), memory);
 
 	int32_t summary_size = 0;
 	while (summary_size < size)

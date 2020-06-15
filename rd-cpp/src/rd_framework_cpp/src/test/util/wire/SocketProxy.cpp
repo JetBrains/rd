@@ -1,5 +1,10 @@
 #include "SocketProxy.h"
 
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+
 #include <utility>
 
 namespace rd
@@ -10,7 +15,7 @@ void SocketProxy::connect(CSimpleSocket& proxyServer, CSimpleSocket& proxyClient
 {
 	try
 	{
-		logger.info("Connecting proxies between themselves...");
+		logger->info("Connecting proxies between themselves...");
 
 		auto task1 = std::async([&] {
 			messaging("Server to client", proxyServer, proxyClient, serverToClientBuffer, serverToClientLifetime);
@@ -24,11 +29,11 @@ void SocketProxy::connect(CSimpleSocket& proxyServer, CSimpleSocket& proxyClient
 			task1.wait();
 			task2.wait();
 		});
-		logger.info(id + ": transferring messages started");
+		logger->info("{}: transferring messages started", id);
 	}
 	catch (std::exception const& e)
 	{
-		logger.error(&e, id + ": connecting proxies failed");
+		logger->error("{}: connecting proxies failed {}", id, e.what());
 	}
 }
 
@@ -55,7 +60,7 @@ void SocketProxy::messaging(const std::string& id, CSimpleSocket& source, CSimpl
 										 source.DescribeError());
 			}
 
-			logger.info(id + ": message of length: %d was read", length);
+			logger->info("{}: message of length: {} was read", id, length);
 			if (!lifetimes.is_terminated())
 			{
 				int32_t total_sent = 0;
@@ -77,18 +82,18 @@ void SocketProxy::messaging(const std::string& id, CSimpleSocket& source, CSimpl
 												 destination.DescribeError());
 					}
 					total_sent += sent;
-					logger.info(id + ": piece of message of length: %d was written", sent);
+					logger->info("{}: piece of message of length: {} was written", id, sent);
 				}
-				logger.info(id + ": message of length: %d was fully written", length);
+				logger->info("{}: message of length: {} was fully written", id, length);
 			}
 			else
 			{
-				logger.info(id + ": message of length %d was not transferred, because lifetime was terminated", length);
+				logger->info("{}: message of length {} was not transferred, because lifetime was terminated", id, length);
 			}
 		}
 		catch (std::exception const& e)
 		{
-			logger.error(&e, id + ": messaging failed");
+			logger->error("{}: messaging failed | {}", id, e.what());
 			break;
 		}
 	}
@@ -98,6 +103,7 @@ SocketProxy::SocketProxy(std::string id, Lifetime lifetime, int serverPort)
 	: id(std::move(id))
 	, lifetime(lifetime)
 	, serverPort(serverPort)
+	, logger(spdlog::stderr_color_mt<spdlog::synchronous_factory>("socketProxyLog", spdlog::color_mode::automatic))
 	, serverToClientLifetime(lifetime)
 	, clientToServerLifetime(lifetime)
 {
@@ -124,7 +130,7 @@ void SocketProxy::start()
 {
 	try
 	{
-		logger.info("Creating proxies for server and client...");
+		logger->info("Creating proxies for server and client...");
 		proxyServer = std::make_unique<CActiveSocket>();
 		if (!proxyServer->Initialize())
 		{
@@ -159,7 +165,7 @@ void SocketProxy::start()
 		}
 
 		port = proxyClient->GetServerPort();
-		logger.info("Proxies for server on port %d and client on port %d created successfully", serverPort, port);
+		logger->info("Proxies for server on port {} and client on port {} created successfully", serverPort, port.value());
 
 		auto thread = std::make_shared<std::thread>([this] {
 			CActiveSocket* accepted_client = proxyClient->Accept();
@@ -173,7 +179,7 @@ void SocketProxy::start()
 
 			accepted_client->DisableNagleAlgoritm();
 
-			logger.info("New client connected on port %d", port);
+			logger->info("New client connected on port {}", port.value());
 
 			connect(*proxyServer, *accepted_client);
 		});
@@ -182,7 +188,7 @@ void SocketProxy::start()
 	}
 	catch (std::exception const& e)
 	{
-		logger.error(&e, "Failed to create proxies");
+		logger->error("Failed to create proxies | {}", e.what());
 	}
 }
 

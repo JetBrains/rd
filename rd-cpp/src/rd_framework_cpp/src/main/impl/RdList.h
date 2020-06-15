@@ -102,7 +102,7 @@ public:
 					{
 						S::write(this->get_serialization_context(), buffer, *new_value);
 					}
-					logSend.trace(logmsg(op, next_version - 1, e.get_index(), new_value));
+					logSend->trace(logmsg(op, next_version - 1, e.get_index(), new_value));
 				});
 			});
 		});
@@ -136,7 +136,7 @@ public:
 			{
 				auto value = S::read(this->get_serialization_context(), buffer);
 
-				logReceived.trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
+				logReceived->trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
 
 				(index < 0) ? list::add(std::move(value)) : list::add(static_cast<size_t>(index), std::move(value));
 				break;
@@ -145,14 +145,14 @@ public:
 			{
 				auto value = S::read(this->get_serialization_context(), buffer);
 
-				logReceived.trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
+				logReceived->trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
 
 				list::set(static_cast<size_t>(index), std::move(value));
 				break;
 			}
 			case Op::REMOVE:
 			{
-				logReceived.trace(logmsg(op, version, index));
+				logReceived->trace(logmsg(op, version, index));
 
 				list::removeAt(static_cast<size_t>(index));
 				break;

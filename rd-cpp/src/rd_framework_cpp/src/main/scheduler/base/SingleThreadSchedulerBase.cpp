@@ -1,6 +1,11 @@
 #include "SingleThreadSchedulerBase.h"
 
 #include "ctpl_stl.h"
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+#include "util/core_util.h"
 
 namespace rd
 {
@@ -18,13 +23,15 @@ void SingleThreadSchedulerBase::PoolTask::operator()(int id) const
 	}
 	catch (std::exception const& e)
 	{
-		scheduler->log.error(&e, "Background task failed, scheduler=%s, thread_id=%d", scheduler->name.c_str(), id);
+		scheduler->log->error("Background task failed, scheduler={}, thread_id={} | {}", scheduler->name, id, e.what());
 		--scheduler->tasks_executing;
 	}
 }
 
 SingleThreadSchedulerBase::SingleThreadSchedulerBase(std::string name)
-	: name(std::move(name)), pool(std::make_unique<ctpl::thread_pool>(1))
+	: log(spdlog::stderr_color_mt<spdlog::synchronous_factory>("log", spdlog::color_mode::automatic))
+	, name(std::move(name))
+	, pool(std::make_unique<ctpl::thread_pool>(1))
 {
 	thread_id = std::this_thread::get_id();
 }

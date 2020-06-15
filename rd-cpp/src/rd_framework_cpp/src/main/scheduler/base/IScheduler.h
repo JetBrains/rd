@@ -1,9 +1,8 @@
 #ifndef RD_CPP_ISCHEDULER_H
 #define RD_CPP_ISCHEDULER_H
 
-#include "logger/Logger.h"
-
 #include <functional>
+#include <thread>
 
 namespace rd
 {
@@ -12,8 +11,6 @@ namespace rd
  */
 class IScheduler
 {
-	static Logger logger;
-
 protected:
 	std::thread::id thread_id;
 

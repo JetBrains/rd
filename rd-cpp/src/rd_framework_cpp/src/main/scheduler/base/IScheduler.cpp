@@ -1,5 +1,7 @@
 #include "IScheduler.h"
 
+#include "spdlog/spdlog-inl.h"
+
 #include <functional>
 #include <sstream>
 
@@ -11,7 +13,7 @@ void IScheduler::assert_thread() const
 	{
 		std::ostringstream msg;
 		msg << "Illegal scheduler for current action. Must be " << thread_id << ", was " << std::this_thread::get_id();
-		Logger().error(msg.str());
+		spdlog::error(msg.str());
 	}
 }
 
