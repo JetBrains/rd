@@ -1,9 +1,16 @@
 #include "RdReactiveBase.h"
 
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+
 namespace rd
 {
-Logger RdReactiveBase::logReceived{};
-Logger RdReactiveBase::logSend{};
+std::shared_ptr<spdlog::logger> RdReactiveBase::logReceived =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("logReceived", spdlog::color_mode::automatic);
+std::shared_ptr<spdlog::logger> RdReactiveBase::logSend =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("logSend", spdlog::color_mode::automatic);
 
 RdReactiveBase::RdReactiveBase(RdReactiveBase&& other) : RdBindableBase(std::move(other)) /*, async(other.async)*/
 {

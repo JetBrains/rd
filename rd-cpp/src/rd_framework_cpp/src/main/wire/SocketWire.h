@@ -3,7 +3,6 @@
 
 #include "scheduler/base/IScheduler.h"
 #include "base/WireBase.h"
-#include "logger/Logger.h"
 #include "ByteBufferAsyncProcessor.h"
 #include "PkgInputStream.h"
 
@@ -25,7 +24,7 @@ public:
 	class Base : public WireBase
 	{
 	protected:
-		static Logger logger;
+		static std::shared_ptr<spdlog::logger> logger;
 
 		std::timed_mutex lock;
 		mutable std::mutex socket_send_lock;

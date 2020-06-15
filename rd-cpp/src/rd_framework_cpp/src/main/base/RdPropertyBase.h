@@ -79,8 +79,8 @@ public:
 			get_wire()->send(rdid, [this, &v](Buffer& buffer) {
 				buffer.write_integral<int32_t>(master_version);
 				S::write(this->get_serialization_context(), buffer, v);
-				logSend.trace("SEND property " + to_string(location) + " + " + to_string(rdid) +
-							  ":: ver = " + std::to_string(master_version) + ", value = " + to_string(v));
+				logSend->trace("SEND property {} + {}:: ver = {}, value = {}", to_string(location), to_string(rdid),
+					std::to_string(master_version), to_string(v));
 			});
 		});
 
@@ -103,9 +103,8 @@ public:
 		WT v = S::read(this->get_serialization_context(), buffer);
 
 		bool rejected = is_master && version < master_version;
-		logSend.trace("RECV property " + to_string(location) + " " + to_string(rdid) +
-						  ":: oldver=%d, ver=%d, value = " + to_string(v) + (rejected ? ">> REJECTED" : ""),
-			master_version, version);
+		logSend->trace("RECV property {} {}:: oldver={}, ver={}, value = {}{}", to_string(location), to_string(rdid),
+			master_version, version, to_string(v), (rejected ? ">> REJECTED" : ""));
 		if (rejected)
 		{
 			return;

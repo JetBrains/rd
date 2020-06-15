@@ -16,7 +16,7 @@ SingleThreadScheduler::SingleThreadScheduler(Lifetime lifetime, std::string name
 		}
 		catch (std::exception const& e)
 		{
-			log.error("Failed to terminate %s", this->name.c_str());
+			log->error("Failed to terminate {}", this->name);
 		}
 	});
 }

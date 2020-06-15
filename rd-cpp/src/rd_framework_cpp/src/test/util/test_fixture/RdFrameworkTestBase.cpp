@@ -42,7 +42,7 @@ RdFrameworkTestBase::~RdFrameworkTestBase()
 {
 	if (!after_test_called)
 	{
-		Logger().warn("Call AfterTest method in test function body");
+		spdlog::warn("Call AfterTest method in test function body");
 	}
 }
 }	 // namespace test

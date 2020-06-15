@@ -1,6 +1,6 @@
 #include "LifetimeDefinition.h"
 
-#include "logger/Logger.h"
+#include "spdlog/spdlog-inl.h"
 
 namespace rd
 {
@@ -46,7 +46,7 @@ LifetimeDefinition::~LifetimeDefinition()
 		{
 			if (!lifetime->is_terminated())
 			{
-				Logger().warn("Did you forget to terminate Lifetime definition?");
+				spdlog::warn("Did you forget to terminate Lifetime definition?");
 				lifetime->terminate();
 			}
 		}

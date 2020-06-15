@@ -3,8 +3,9 @@
 
 #include "base/RdBindableBase.h"
 #include "base/IRdReactive.h"
-#include "logger/Logger.h"
 #include "guards.h"
+
+#include "spdlog/spdlog-inl.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4250)
@@ -23,8 +24,8 @@ class Serializers;
 class RdReactiveBase : public RdBindableBase, public IRdReactive
 {
 public:
-	static Logger logReceived;
-	static Logger logSend;
+	static std::shared_ptr<spdlog::logger> logReceived;
+	static std::shared_ptr<spdlog::logger> logSend;
 
 	// region ctor/dtor
 

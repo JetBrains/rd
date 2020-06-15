@@ -11,6 +11,8 @@
 
 #include "thirdparty.hpp"
 
+#include "spdlog/spdlog-inl.h"
+
 #include <memory>
 #include <string>
 #include <thread>
@@ -19,17 +21,17 @@
 #include <sstream>
 #include <cassert>
 
-#define RD_ASSERT_MSG(expr, msg)                      \
-	if (!(expr))                                      \
-	{                                                 \
-		std::cerr << std::endl << (msg) << std::endl; \
-		assert(expr);                                 \
+#define RD_ASSERT_MSG(expr, msg)      \
+	if (!(expr))                      \
+	{                                 \
+		spdlog::error("\n{}\n", msg); \
+		assert(expr);                 \
 	}
-#define RD_ASSERT_THROW_MSG(expr, msg)                \
-	if (!(expr))                                      \
-	{                                                 \
-		std::cerr << std::endl << (msg) << std::endl; \
-		throw std::runtime_error(msg);                \
+#define RD_ASSERT_THROW_MSG(expr, msg) \
+	if (!(expr))                       \
+	{                                  \
+		spdlog::error("\n{}\n", msg);  \
+		throw std::runtime_error(msg); \
 	}
 
 namespace rd
