@@ -3,11 +3,17 @@
 #include "util/core_util.h"
 #include "protocol/Buffer.h"
 
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+
 #include <cassert>
 
 namespace rd
 {
-Logger MessageBroker::logger;
+std::shared_ptr<spdlog::logger> MessageBroker::logger =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("logger", spdlog::color_mode::automatic);
 
 static void execute(const IRdReactive* that, Buffer msg)
 {
@@ -35,7 +41,7 @@ void MessageBroker::invoke(const IRdReactive* that, Buffer msg, bool sync) const
 			}
 			else
 			{
-				logger.trace("Disappeared Handler for Reactive entities with id:" + to_string(that->rdid));
+				logger->trace("Disappeared Handler for Reactive entities with id: {}", to_string(that->rdid));
 			}
 		};
 		std::function<void()> function = util::make_shared_function(std::move(action));
@@ -86,7 +92,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 				}
 				else
 				{
-					logger.trace("No handler for id: " + to_string(id));
+					logger->trace("No handler for id: {}", to_string(id));
 				}
 
 				if (current.default_scheduler_messages.empty())

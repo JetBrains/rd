@@ -6,8 +6,6 @@ add_library(rd_core_cpp STATIC
         lifetime/Lifetime.cpp lifetime/Lifetime.h
         lifetime/LifetimeDefinition.cpp lifetime/LifetimeDefinition.h
         lifetime/SequentialLifetimes.cpp lifetime/SequentialLifetimes.h
-        #logger
-        logger/Logger.cpp logger/Logger.h
         #reactive
         reactive/SignalX.h
         reactive/interfaces.h

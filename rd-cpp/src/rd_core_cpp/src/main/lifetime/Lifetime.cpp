@@ -1,5 +1,11 @@
 #include "Lifetime.h"
 
+#include "spdlog/spdlog-inl.h"
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+
 #include <memory>
 
 #include "thirdparty.hpp"
@@ -13,8 +19,13 @@ LifetimeImpl* Lifetime::operator->() const
 	return ptr.operator->();
 }
 
+std::once_flag onceFlag;
+
 Lifetime::Lifetime(bool is_eternal) : ptr(std::allocate_shared<LifetimeImpl, Allocator>(allocator, is_eternal))
 {
+	std::call_once(onceFlag, [] {
+		spdlog::set_default_logger(spdlog::stderr_color_mt<spdlog::synchronous_factory>("default", spdlog::color_mode::automatic));
+	});
 }
 
 Lifetime Lifetime::create_nested() const
@@ -24,13 +35,9 @@ Lifetime Lifetime::create_nested() const
 	return lw;
 }
 
-namespace
-{
-Lifetime ETERNAL(true);
-}
-
 Lifetime const& Lifetime::Eternal()
 {
+	static Lifetime ETERNAL(true);
 	return ETERNAL;
 }
 

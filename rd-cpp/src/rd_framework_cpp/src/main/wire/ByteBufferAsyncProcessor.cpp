@@ -1,11 +1,17 @@
 #include <util/guards.h>
 #include "ByteBufferAsyncProcessor.h"
 
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+
 namespace rd
 {
 size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
 
-Logger ByteBufferAsyncProcessor::logger;
+std::shared_ptr<spdlog::logger> ByteBufferAsyncProcessor::logger =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("byteBufferLog", spdlog::color_mode::automatic);
 
 ByteBufferAsyncProcessor::ByteBufferAsyncProcessor(
 	std::string id, std::function<bool(Buffer::ByteArray const&, sequence_number_t)> processor)
@@ -32,15 +38,14 @@ bool ByteBufferAsyncProcessor::terminate0(time_t timeout, StateKind state_to_set
 		std::lock_guard<decltype(lock)> guard(lock);
 		if (state == StateKind::Initialized)
 		{
-			logger.debug("Can't " + std::string(action) + "\'" + id + "\', because it hasn't been started yet");
+			logger->debug("Can't {} \'{}\', because it hasn't been started yet", std::string(action), id);
 			cleanup0();
 			return true;
 		}
 
 		if (state >= state_to_set)
 		{
-			logger.debug(
-				"Trying to " + std::string(action) + " async processor \'" + id + "\' but it's in state " + to_string(state));
+			logger->debug("Trying to {} async processor \'{}' but it's in state {}", std::string(action), id, to_string(state));
 			return true;
 		}
 
@@ -54,7 +59,7 @@ bool ByteBufferAsyncProcessor::terminate0(time_t timeout, StateKind state_to_set
 
 	if (status == std::future_status::timeout)
 	{
-		logger.error("Couldn't wait async thread during time: %s", to_string(timeout).c_str());
+		logger->error("Couldn't wait async thread during time: {}", to_string(timeout));
 		success = false;
 	}
 
@@ -77,12 +82,12 @@ bool ByteBufferAsyncProcessor::reprocess()
 	{
 		std::lock_guard<decltype(queue_lock)> guard(queue_lock);
 
-		logger.debug(this->id + ": reprocessing started");
+		logger->debug("{}: reprocessing started", id);
 
 		std::unique_lock<decltype(processing_lock)> ul(processing_lock);
 		processing_cv.wait(ul, [this]() -> bool { return !in_processing; });
 
-		logger.debug(this->id + ": reprocessing waited for main processing");
+		logger->debug("{}: reprocessing waited for main processing", id);
 
 		while (current_seqn <= acknowledged_seqn)
 		{
@@ -108,7 +113,7 @@ void ByteBufferAsyncProcessor::process()
 		std::unique_lock<decltype(processing_lock)> ul(processing_lock);
 		util::bool_guard bool_guard(in_processing);
 
-		logger.debug(this->id + ": processing started");
+		logger->debug("{}: processing started", id);
 
 		while (!queue.empty() && processor(queue.front(), max_sent_seqn + 1))
 		{
@@ -144,7 +149,7 @@ void ByteBufferAsyncProcessor::ThreadProc()
 				}
 				cv.wait(lock);
 
-				logger.debug(this->id + "'s ThreadProc waited for notify");
+				logger->debug("{}'s ThreadProc waited for notify", id);
 
 				if (state >= StateKind::Terminating)
 				{
@@ -161,7 +166,7 @@ void ByteBufferAsyncProcessor::ThreadProc()
 		}
 		catch (std::exception const& e)
 		{
-			logger.error(&e, "Exception while processing byte queue");
+			logger->error("Exception while processing byte queue | {}", e.what());
 		}
 	}
 }
@@ -173,7 +178,7 @@ void ByteBufferAsyncProcessor::start()
 
 		if (state != StateKind::Initialized)
 		{
-			logger.debug("Trying to START async processor " + id + " but it's in state " + to_string(state));
+			logger->debug("Trying to START async processor {} but it's in state {}", id, to_string(state));
 			return;
 		}
 
@@ -213,15 +218,15 @@ void ByteBufferAsyncProcessor::pause(const std::string& reason)
 
 	++interrupt_balance;
 
-	logger.debug(id + " paused with reason=" + reason + ",state=" + to_string(state));
+	logger->debug("{} paused with reason={},state={}", id, reason, to_string(state));
 
 	auto current_thread_id = std::this_thread::get_id();
 	if (current_thread_id != async_thread_id)
 	{
-		logger.debug(id + " paused from another thread : " + to_string(current_thread_id));
+		logger->debug(id + "{} paused from another thread : {}", id, to_string(current_thread_id));
 		std::unique_lock<decltype(processing_lock)> ul(processing_lock);
 		processing_cv.wait(ul, [this]() -> bool { return !in_processing; });
-		logger.debug(this->id + ": pausing waited for main processing");
+		logger->debug("{}: pausing waited for main processing", id);
 	}
 }
 
@@ -234,7 +239,7 @@ void ByteBufferAsyncProcessor::resume()
 
 		--interrupt_balance;
 
-		logger.debug(id + " resumed");
+		logger->debug("{} resumed", id);
 	}
 
 	cv.notify_all();
@@ -246,12 +251,12 @@ void ByteBufferAsyncProcessor::acknowledge(sequence_number_t seqn)
 
 	if (seqn > acknowledged_seqn)
 	{
-		logger.trace(this->id + ": new acknowledged seqn: %lld", seqn);
+		logger->trace("{}: new acknowledged seqn: {}", this->id, seqn);
 		acknowledged_seqn = seqn;
 	}
 	else
 	{
-		logger.error("Acknowledge %lld called, while next seqn MUST BE greater than %lld", seqn, acknowledged_seqn);
+		logger->error("Acknowledge {} called, while next seqn MUST BE greater than {}", seqn, acknowledged_seqn);
 	}
 }
 

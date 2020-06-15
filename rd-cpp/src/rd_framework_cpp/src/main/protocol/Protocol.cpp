@@ -3,11 +3,17 @@
 #include "serialization/SerializationCtx.h"
 #include "intern/InternRoot.h"
 
+// clang-format off
+#include "util/fix_ho_spdlog.h"
+// clang-format on
+#include "spdlog/sinks/stdout_color_sinks-inl.h"
+
 #include <utility>
 
 namespace rd
 {
-const Logger Protocol::initializationLogger;
+std::shared_ptr<spdlog::logger> Protocol::initializationLogger =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("initializationLogger", spdlog::color_mode::automatic);
 
 constexpr string_view Protocol::InternRootName;
 

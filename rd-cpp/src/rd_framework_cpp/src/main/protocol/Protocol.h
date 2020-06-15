@@ -49,7 +49,7 @@ public:
 
 	SerializationCtx& get_serialization_context() const override;
 
-	static const Logger initializationLogger;
+	static std::shared_ptr<spdlog::logger> initializationLogger;
 };
 }	 // namespace rd
 

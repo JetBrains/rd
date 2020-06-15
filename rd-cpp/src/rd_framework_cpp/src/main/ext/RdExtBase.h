@@ -4,6 +4,8 @@
 #include "base/RdReactiveBase.h"
 #include "ExtWire.h"
 
+#include "spdlog/spdlog-inl.h"
+
 #pragma warning(push)
 #pragma warning(disable : 4250)
 namespace rd
@@ -47,7 +49,7 @@ public:
 
 	void sendState(IWire const& wire, ExtState state) const;
 
-	void traceMe(const Logger& logger, string_view message) const;
+	void traceMe(std::shared_ptr<spdlog::logger> logger, string_view message) const;
 };
 
 std::string to_string(RdExtBase::ExtState state);
