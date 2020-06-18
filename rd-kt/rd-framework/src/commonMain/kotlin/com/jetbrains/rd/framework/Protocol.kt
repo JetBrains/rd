@@ -59,9 +59,7 @@ class Protocol internal constructor(
         wire.setupContexts(contexts)
 
         if(serializationCtx == null) {
-            scheduler.invokeOrQueue {
-                serializationContext.internRoots.getValue("Protocol").bind(lifetime, this, "ProtocolInternRoot")
-            }
+            serializationContext.internRoots.getValue("Protocol").bind(lifetime, this, "ProtocolInternRoot")
         }
 
         initialContexts.forEach {
