@@ -70,13 +70,6 @@ jobs:
       if: steps.cache-submodules.outputs.cache-hit != 'true'
       run: git submodule update --init --recursive
 
-    - name: Setup .NET Core @ Latest
-      uses: actions/setup-dotnet@v1
-      with:
-        source-url: https://nuget.pkg.github.com/jetbrains/index.json
-      env:
-        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
     - name: Get nuget
       if: steps.cache-nuget.outputs.cache-hit != 'true'
       uses: nuget/setup-nuget@v1
@@ -221,12 +214,16 @@ jobs:
     - name: Pack Nuget
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
       run: nuget pack rd-cpp.nuspec -Version ${{ env.version }} -Suffix ${{ matrix.config.suffix }}
+
+    - name: Add sources
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      continue-on-error: true
+      run: nuget sources Add -Name Bintray -Source https://api.bintray.com/nuget/jetbrains/rd-nuget -UserName ${{ secrets.RD_BINTRAY_USER }} -Password ${{ secrets.RD_BINTRAY_KEY }}
+    
+    - name: Set API key
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      run: nuget setapikey ${{ secrets.RD_BINTRAY_USER }}:${{ secrets.RD_BINTRAY_KEY }} -Source Bintray
       
     - name: Push nuget
-      uses: tanaka-takayoshi/nuget-publish-to-github-packages-action@v2.1
-      if: github.event_name == 'commit'
-      with:
-        nupkg-path: 'rd-cpp/export/JetBrains.RdFramework.Cpp.${{ env.version }}-${{ matrix.config.suffix }}.nupkg'
-        repo-owner: 'jetbrains'
-        gh-user: 'jetbrains'
-        token: ${{ secrets.GITHUB_TOKEN }}
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      run: nuget push JetBrains.RdFramework.Cpp.${{ env.version }}-${{ matrix.config.suffix }}.nupkg -Source https://api.bintray.com/nuget/jetbrains/rd-nuget
