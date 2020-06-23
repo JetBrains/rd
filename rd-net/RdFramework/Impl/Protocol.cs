@@ -44,6 +44,8 @@ namespace JetBrains.Rd.Impl
       SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot<object>>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
       Contexts = parentContexts ?? new ProtocolContexts(SerializationContext);
       wire.Contexts = Contexts;
+      if (serializationCtx == null)
+        SerializationContext.InternRoots[ProtocolInternScopeStringId].Bind(lifetime, this, ProtocolInternRootRdId);
       foreach (var rdContextBase in initialContexts) rdContextBase.RegisterOn(Contexts);
       if (parentContexts == null)
         BindContexts(lifetime);
@@ -55,7 +57,6 @@ namespace JetBrains.Rd.Impl
       var root = new InternRoot<object>();
       root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
       
-      root.Bind(lifetime, this, ProtocolInternRootRdId); 
       return root;
     }
 
