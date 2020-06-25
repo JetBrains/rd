@@ -208,7 +208,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
-        path:  |
+        path: |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
         name: ${{ env.artifact }}
 
