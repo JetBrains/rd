@@ -29,7 +29,7 @@ namespace JetBrains.Threading
 
     private readonly AsyncLocal<Unit> myInsideProcessingFlow = new AsyncLocal<Unit>(); 
 
-    private long myTotalMessagesProcessed; //todo maybe someday we run in ARM we need Interlocked.Increment
+    private long myTotalMessagesProcessed;
 
     /// <summary>
     /// You can use this field for composing this actor's channel with other channels.
@@ -125,7 +125,7 @@ namespace JetBrains.Threading
       }
       finally
       {
-        myTotalMessagesProcessed++;
+        Interlocked.Increment(ref myTotalMessagesProcessed);
       }
     }
 
