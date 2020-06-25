@@ -17,6 +17,8 @@ jobs:
       working-dir: ${{ github.workspace}}${{ matrix.config.SEP }}rd-cpp
       version: 201.1.${{ github.run_number }}
       artifact: ${{ matrix.config.artifact }}201.1.${{ github.run_number }}.zip
+      rd-bintray-user: ${{ secrets.RD_BINTRAY_USER }}
+      rd-bintray-key: ${{ secrets.RD_BINTRAY_KEY }}
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -74,7 +76,6 @@ jobs:
       if: steps.cache-nuget.outputs.cache-hit != 'true'
       uses: nuget/setup-nuget@v1
       with:
-        nuget-api-key: ${{ secrets.GITHUB_TOKEN }}
         nuget-version: '5.x'
       
     - name: Cache Ninja
@@ -216,14 +217,17 @@ jobs:
       run: nuget pack rd-cpp.nuspec -Version ${{ env.version }} -Suffix ${{ matrix.config.suffix }}
 
     - name: Add sources
+      if: ${{ env.rd-bintray-key }}
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
       continue-on-error: true
-      run: nuget sources Add -Name Bintray -Source https://api.bintray.com/nuget/jetbrains/rd-nuget -UserName ${{ secrets.RD_BINTRAY_USER }} -Password ${{ secrets.RD_BINTRAY_KEY }}
+      run: nuget sources Add -Name Bintray -Source https://api.bintray.com/nuget/jetbrains/rd-nuget -UserName ${{ env.rd-bintray-user }} -Password ${{ env.rd-bintray-key }}
     
     - name: Set API key
+      if: ${{ env.rd-bintray-key }}
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
-      run: nuget setapikey ${{ secrets.RD_BINTRAY_USER }}:${{ secrets.RD_BINTRAY_KEY }} -Source Bintray
+      run: nuget setapikey ${{ env.rd-bintray-user }}:${{ env.rd-bintray-key }} -Source Bintray
       
     - name: Push nuget
+      if: ${{ env.rd-bintray-key }}
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
       run: nuget push JetBrains.RdFramework.Cpp.${{ env.version }}-${{ matrix.config.suffix }}.nupkg -Source https://api.bintray.com/nuget/jetbrains/rd-nuget
