@@ -217,17 +217,17 @@ jobs:
       run: nuget pack rd-cpp.nuspec -Version ${{ env.version }} -Suffix ${{ matrix.config.suffix }}
 
     - name: Add sources
-      if: ${{ env.rd-bintray-key }}
+      if: ${{ env.rd-bintray-key != '' }}
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
       continue-on-error: true
       run: nuget sources Add -Name Bintray -Source https://api.bintray.com/nuget/jetbrains/rd-nuget -UserName ${{ env.rd-bintray-user }} -Password ${{ env.rd-bintray-key }}
     
     - name: Set API key
-      if: ${{ env.rd-bintray-key }}
+      if: ${{ env.rd-bintray-key != '' }}
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
       run: nuget setapikey ${{ env.rd-bintray-user }}:${{ env.rd-bintray-key }} -Source Bintray
       
     - name: Push nuget
-      if: ${{ env.rd-bintray-key }}
+      if: ${{ env.rd-bintray-key != '' }}
       working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
       run: nuget push JetBrains.RdFramework.Cpp.${{ env.version }}-${{ matrix.config.suffix }}.nupkg -Source https://api.bintray.com/nuget/jetbrains/rd-nuget
