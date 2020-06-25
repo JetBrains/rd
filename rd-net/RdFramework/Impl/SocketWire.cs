@@ -114,7 +114,6 @@ namespace JetBrains.Rd.Impl
         void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
           Ping();
-          Log.Trace()?.Log($"{Id}: sent PING");
         }
 
         var timer = new Timer(HeartBeatInterval.TotalMilliseconds){AutoReset = true};
