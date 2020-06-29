@@ -52,24 +52,25 @@ namespace JetBrains.Rd.Impl
     private readonly Actor<ToplevelRegistration> myBackgroundRegistrar;
 
     [Obsolete("Provide Lifetime and TaskScheduler. An active Task will leak in case of missing Lifetime (via Actor)", false)]
-    public Serializers() : this(Lifetime.Eternal, null)
+    public Serializers() : this(Lifetime.Eternal, null, null)
     {
     }
 
-    public Serializers(Lifetime lifetime, [CanBeNull] TaskScheduler scheduler)
+    public Serializers(Lifetime lifetime, [CanBeNull] TaskScheduler scheduler, [CanBeNull] ITypesRegistrar registrar)
     {
+      myRegistrar = registrar;
       myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", lifetime, RegisterToplevelInternal, scheduler);
       myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
     }
 #else
     public Serializers() => RegisterFrameworkMarshallers(this);
-#endif
 
     public Serializers([CanBeNull] ITypesRegistrar registrar)
       : this()
     {
       myRegistrar = registrar;
     }
+#endif
 
     //readers
     public static readonly CtxReadDelegate<byte> ReadByte = (ctx, reader) => reader.ReadByte();
