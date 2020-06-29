@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
@@ -44,7 +45,7 @@ namespace Test.RdFramework.Reflection
 
     protected override Serializers CreateSerializers(bool isServer)
     {
-      return new Serializers(isServer ? SFacade.Registrar : CFacade.Registrar);
+      return new Serializers(TestLifetime, TaskScheduler.Default, isServer ? SFacade.Registrar : CFacade.Registrar);
     }
 
     protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase
