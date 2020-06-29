@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -50,9 +51,14 @@ namespace JetBrains.Rd.Impl
 #if !NET35
     private readonly Actor<ToplevelRegistration> myBackgroundRegistrar;
 
-    public Serializers()
+    [Obsolete("Provide Lifetime and TaskScheduler. An active Task will leak in case of missing Lifetime (via Actor)", false)]
+    public Serializers() : this(Lifetime.Eternal, null)
     {
-      myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", Lifetime.Eternal, RegisterToplevelInternal);
+    }
+
+    public Serializers(Lifetime lifetime, [CanBeNull] TaskScheduler scheduler)
+    {
+      myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", lifetime, RegisterToplevelInternal, scheduler);
       myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
     }
 #else
