@@ -8,6 +8,7 @@
 
 namespace rd
 {
+
 template <template <class, class> class C, typename T, typename A = allocator<T>>
 size_t contentHashCode(C<T, A> const& list) noexcept
 {
@@ -20,28 +21,41 @@ size_t contentHashCode(C<T, A> const& list) noexcept
 	// todo faster for integrals
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
 size_t contentDeepHashCode(T const& value) noexcept
 {
 	return rd::hash<T>()(value);
 }
 
-template <template <class, class> class C, typename T, typename A = allocator<T>>
-typename std::enable_if_t<std::is_integral<T>::value, size_t> contentDeepHashCode(C<T, A> const& value) noexcept
+template<class T>
+using remove_all_t = std::remove_reference_t<std::remove_cv_t<T>>;
+
+// optional and rd::Wrapper
+template <class T, typename = std::enable_if_t<!std::is_integral_v<T>>>
+typename std::enable_if_t<std::is_same_v<decltype(T{}.has_value()), bool>, size_t> contentDeepHashCode(T const& value) noexcept
+{
+	return rd::hash<remove_all_t<T>>()(value);
+}
+
+// containers
+template <class T, typename = std::enable_if_t<!std::is_integral_v<T>>>
+typename std::enable_if_t<std::is_integral_v<remove_all_t<decltype(*begin(T{}))>>, size_t> contentDeepHashCode(T const& value) noexcept
 {
 	return contentHashCode(value);
 }
 
-template <template <class, class> class C, typename T, typename A = allocator<T>>
-typename std::enable_if_t<!std::is_integral<T>::value, size_t> contentDeepHashCode(C<T, A> const& value) noexcept
+// containers of non-integral types
+template <class T, typename = std::enable_if_t<!std::is_integral_v<T>>>
+typename std::enable_if_t<!std::is_integral_v<remove_all_t<decltype(*begin(T{}))>>, size_t> contentDeepHashCode(T const& value) noexcept
 {
 	size_t result = 1;
 	for (auto const& x : value)
 	{
-		result = 31 * result + contentDeepHashCode<T>(x);
+		result = 31 * result + contentDeepHashCode<remove_all_t<decltype(x)>>(x);
 	}
 	return result;
 }
+
 }	 // namespace rd
 
 #endif	  // RD_CPP_GEN_UTIL_H
