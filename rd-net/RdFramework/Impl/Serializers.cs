@@ -62,6 +62,13 @@ namespace JetBrains.Rd.Impl
       myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", lifetime, RegisterToplevelInternal, scheduler);
       myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
     }
+
+    [Obsolete("Provide Lifetime and TaskScheduler. An active Task will leak in case of missing Lifetime (via Actor)", false)]
+    public Serializers([CanBeNull] ITypesRegistrar registrar)
+      : this()
+    {
+      myRegistrar = registrar;
+    }
 #else
     public Serializers() => RegisterFrameworkMarshallers(this);
 
