@@ -224,7 +224,7 @@ public:
 	bool add(size_t index, WT element) const override
 	{
 		list.emplace(list.begin() + index, std::move(element));
-		change.fire(typename Event::Add(index, &(*list[index])));
+		change.fire(typename Event::Add(static_cast<int32_t>(index), &(*list[index])));
 		return true;
 	}
 
@@ -233,7 +233,7 @@ public:
 		auto res = std::move(list[index]);
 		list.erase(list.begin() + index);
 
-		change.fire(typename Event::Remove(index, &(*res)));
+		change.fire(typename Event::Remove(static_cast<int32_t>(index), &(*res)));
 		return wrapper::unwrap<T>(std::move(res));
 	}
 
@@ -257,7 +257,7 @@ public:
 	{
 		auto old_value = std::move(list[index]);
 		list[index] = Wrapper<T>(std::move(element));
-		change.fire(typename Event::Update(index, &(*old_value), &(*list[index])));	   //???
+		change.fire(typename Event::Update(static_cast<int32_t>(index), &(*old_value), &(*list[index])));	   //???
 		return wrapper::unwrap<T>(std::move(old_value));
 	}
 
@@ -283,9 +283,9 @@ public:
 	void clear() const override
 	{
 		std::vector<Event> changes;
-		for (int i = size(); i > 0; --i)
+		for (size_t i = size(); i > 0; --i)
 		{
-			changes.push_back(typename Event::Remove(i - 1, &(*list[i - 1])));
+			changes.push_back(typename Event::Remove(static_cast<int32_t>(i - 1), &(*list[i - 1])));
 		}
 		for (auto const& e : changes)
 		{

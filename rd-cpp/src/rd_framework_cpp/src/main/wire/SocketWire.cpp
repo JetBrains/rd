@@ -466,6 +466,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 				}
 				catch (std::exception const& e)
 				{
+					(void)e;
 					std::lock_guard<decltype(lock)> guard(lock);
 					bool should_reconnect = false;
 					if (!lifetime->is_terminated())

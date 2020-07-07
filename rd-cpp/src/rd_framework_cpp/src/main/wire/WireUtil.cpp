@@ -22,7 +22,7 @@ uint16_t find_free_port()
 	return port;
 }
 
-void sleep_this_thread(int ms)
+void sleep_this_thread(int64_t ms)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }

@@ -78,7 +78,7 @@ TEST(viewable_map, view)
 			log.push_back("View " + to_string(value));
 			lt->add_action([&log, value]() { log.push_back("UnView " + to_string(value)); });
 		});
-		for (size_t i = 0; i < elementsView.size(); ++i)
+		for (int32_t i = 0, size = static_cast<int32_t>(elementsView.size()); i < size; ++i)
 		{
 			map->set(i, elementsView[i]);
 		}
@@ -202,14 +202,14 @@ TEST(viewable_map_iterators, fori)
 
 	for (auto it = c.begin(); it != c.end(); ++it)
 	{
-		int i = it - c.begin();
+		auto i = it - c.begin();
 		EXPECT_EQ(it.key(), mapper(perm4[i]));
 		EXPECT_EQ(it.value(), perm4[i]);
 	}
 
 	for (auto it = c.rbegin(); it != c.rend(); ++it)
 	{
-		int i = perm4.size() - (it - c.rbegin()) - 1;
+		auto i = perm4.size() - (it - c.rbegin()) - 1;
 		auto const& type = it.key();
 		EXPECT_EQ(type, mapper(perm4[i]));
 		int const& value = it.value();

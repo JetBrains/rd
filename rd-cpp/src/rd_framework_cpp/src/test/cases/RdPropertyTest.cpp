@@ -204,7 +204,7 @@ public:
 
 	static void write(SerializationCtx& ctx, Buffer& buffer, const list& value)
 	{
-		buffer.write_integral<int32_t>(value.size());
+		buffer.write_integral<int32_t>(static_cast<int32_t>(value.size()));
 		for (const auto& item : value)
 		{
 			item.write(ctx, buffer);
