@@ -170,7 +170,7 @@ jobs:
       working-directory: ${{ env.working-dir }}
       shell: cmake -P {0}
       run: |
-        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+        set(ENV{NINJA_STATUS}  "[%f/%t %o/sec] ")
         file(GLOB all_files "*")
         message(${all_files})
 
