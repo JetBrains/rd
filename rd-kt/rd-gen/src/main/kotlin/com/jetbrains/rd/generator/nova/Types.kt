@@ -327,6 +327,17 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     val classdef = classdef("")
     infix fun Part<Class.Concrete>.extends(p : Pair<Class, Class.() -> Unit>) = classdef0(name, p.first, p.second)
 
+    // concrete classes interface dsl
+    infix fun Part<Class.Concrete>.extends(p : Class.Concrete) = classdef0(name, p){}.toIntermediateClass()
+    infix fun Part<Class.Concrete>.implements(i: Interface) = classdef0(name, null){}.also { it.implements.add(i) }
+    infix fun Part<Class.Concrete>.implements(li: List<Interface>) = classdef0(name, null){}.also { it.implements.addAll(li) }
+    infix fun IntermediateClass<Class.Concrete>.implements(i: Interface) = this.clazz.also { it.implements.add(i) }
+    infix fun IntermediateClass<Class.Concrete>.implements(li: List<Interface>) = this.clazz.also { it.implements.addAll(li) }
+
+    @Suppress("UNCHECKED_CAST")
+    infix fun Class.Concrete.with(body: Class.() -> Unit) = this.also { lazyInitializer = body as Declaration.() -> Unit }
+
+
     private fun openclass0(name: String, base: Class?, body: Class.() -> Unit) = append(Class.Open(name, this, base), body)
     fun openclass(name: String, body: Class.() -> Unit) = openclass0(name, null, body)
     fun openclass(body: Class.() -> Unit) = openclass0("", null, body)

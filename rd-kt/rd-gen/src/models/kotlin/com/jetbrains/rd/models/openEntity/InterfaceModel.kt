@@ -21,6 +21,11 @@ class InterfaceModel : Ext(OpenEntityRoot) {
         method("derivedInterfaceMethod2", string, Pair("something", string))
     }
 
+    // concrete classes
+    val testConcreteClassWithInterface = classdef implements marker1 + marker2 with {
+        field("testConcreteClass", string)
+    }
+
     // base classes
 
     val testClass = baseclass implements testInterface with {
