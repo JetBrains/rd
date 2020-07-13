@@ -124,7 +124,9 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     object TargetName : ISetting<String, Toplevel>
 
-    private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "hpp"
+    private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "h"
+
+    private fun Declaration.headerFileName() = this.fsName(false)
 
     private fun Declaration.fsName(isDefinition: Boolean) =
         "$name$generatedFileSuffix.${fsExtension(isDefinition)}"
@@ -207,7 +209,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     private fun Declaration.includeWithExtension(): String {
-        return this.name.includeWithExtension("h")
+        return this.headerFileName().includeQuotes()
     }
 
     private fun IType.includeWithExtension(): String {
@@ -747,7 +749,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                             if (enum.isIntrinsic) {
                                 enum.pointcut.getSetting(AdditionalHeaders)
                             } else {
-                                listOf("${enum.pointcut.name}/${enum.name}.h")
+                                listOf("${enum.pointcut.name}/${enum.headerFileName()}")
                             }
                         }
                         .flatten()
@@ -860,7 +862,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val directory = tl.fsPath()
             directory.mkdirs()
             val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { !it.isIntrinsic }
-            val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
+            val fileNames = types.map { it.fsName(true) } + types.map { it.headerFileName() }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
             val marshallerHeaders = tl.getSetting(AdditionalHeaders) ?: listOf()
@@ -893,8 +895,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         folder.templateInstantiate(toplevels)
     }
 
-    private fun PrettyPrinter.withIncludeGuard(includeGuardMacroName: String, action: PrettyPrinter.() -> Unit) {
-        val includeGuardMacro = "${includeGuardMacroName.toUpperCase()}_H"
+    private fun PrettyPrinter.withIncludeGuard(includeGuardMacro: String, action: PrettyPrinter.() -> Unit) {
         +"#ifndef $includeGuardMacro"
         +"#define $includeGuardMacro"
 
@@ -907,9 +908,13 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         +"#endif // $includeGuardMacro"
     }
 
+    private fun Declaration.includeGuardName(): String {
+        return this.headerFileName().replace('.', '_').toUpperCase()
+    }
+
     //region files
     fun PrettyPrinter.header(decl: Declaration, marshallerHeaders: List<String>) {
-        withIncludeGuard(decl.name) {
+        withIncludeGuard(decl.includeGuardName()) {
             println()
 
             includesDecl(marshallerHeaders)
@@ -952,8 +957,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (decl is Toplevel) {
             dependencies.filter { !(it.isAbstract || it.isOpen) }.filterIsInstance<IType>().println {
                 if (it is Declaration) {
-                    val name = it.name
-                    "../${it.pointcut!!.name}/$name".includeWithExtension()
+                    "../${it.pointcut!!.name}/${it.headerFileName()}".includeQuotes()
                 } else {
                     it.includeWithExtension()
                 }
@@ -961,16 +965,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
         println()
         if (decl is Toplevel) {
-            val rootName = decl.root.sanitizedName(decl)
-            +"../$rootName/$rootName".includeWithExtension()
+            +"../${decl.root.name}/${decl.root.headerFileName()}".includeQuotes()
         }
         if (decl.isAbstract || decl.isOpen) {
             +(unknown(decl)!!.includeWithExtension())
         }
         if (decl is Root) {
             decl.toplevels.forEach {
-                val name = it.name
-                +"../$name/$name".includeWithExtension()
+                +"../${it.name}/${it.headerFileName()}".includeQuotes()
             }
         }
         if (decl is Toplevel && decl.isLibrary) {
@@ -1309,10 +1311,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
             return types.mapNotNull {
                 when (it) {
-                    is Root -> "../${it.name}/${it.name}.h"
+                    is Root -> "../${it.name}/${it.headerFileName()}"
                     is Declaration ->
                         if (!it.isIntrinsic) {
-                            "../${it.pointcut!!.name}/${it.name}.h"
+                            "../${it.pointcut!!.name}/${it.headerFileName()}"
                         } else {
                             it.getSetting(Intrinsic)!!.header
                         }
@@ -1324,7 +1326,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
         fun dependentTypes(decl: Declaration): List<String> {
-            val bases = listOfNotNull(decl.base?.name).map { "$it.h" }
+            val bases = listOfNotNull(decl.base).map { it.headerFileName() }
             return (decl.ownMembers + decl.constantMembers)
                 .asSequence()
                 .map { parseMember(it) }
@@ -1336,8 +1338,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 .distinct().toList()
         }
 
-        val extHeaders = listOfNotNull(if (decl.isExtension) decl.pointcut?.name else null)
-        extHeaders.printlnWithBlankLine { it.includeWithExtension("h") }
+        val extDecls = listOfNotNull(if (decl.isExtension) decl.pointcut else null)
+        extDecls.printlnWithBlankLine { it.includeWithExtension() }
         dependentTypes(decl).printlnWithBlankLine { it.includeQuotes() }
 
         decl.getSetting(AdditionalHeaders)?.distinct()?.println { it.includeQuotes() }
