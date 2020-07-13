@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "InterningTestBase.h"
-#include "InterningNestedTestStringModel.h"
-#include "InterningNestedTestModel.h"
-#include "InterningTestModel.h"
+#include "InterningNestedTestStringModel.Generated.h"
+#include "InterningNestedTestModel.Generated.h"
+#include "InterningTestModel.Generated.h"
 #include "PropertyHolderWithInternRoot.h"
 
 using namespace rd;

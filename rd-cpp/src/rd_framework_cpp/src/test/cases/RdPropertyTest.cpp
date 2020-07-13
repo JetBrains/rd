@@ -2,7 +2,7 @@
 
 #include "impl/RdProperty.h"
 #include "RdFrameworkTestBase.h"
-#include "DynamicEntity.h"
+#include "DynamicEntity.Generated.h"
 #include "entities_util.h"
 
 using vi = std::vector<int>;

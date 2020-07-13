@@ -3,8 +3,8 @@
 #include "impl/RdProperty.h"
 
 #include "RdFrameworkTestBase.h"
-#include "DynamicEntity.h"
-#include "DynamicExt.h"
+#include "DynamicEntity.Generated.h"
+#include "DynamicExt.Generated.h"
 #include "SocketWireTestBase.h"
 #include "ExtProperty.h"
 
