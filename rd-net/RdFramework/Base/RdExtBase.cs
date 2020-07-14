@@ -71,7 +71,7 @@ namespace JetBrains.Rd.Base
     public override void OnWireReceived(UnsafeReader reader)
     {
       var remoteState = (ExtState)reader.ReadInt();
-      ReceiveTrace?.Log($"{this} : {remoteState}");
+      ReceiveTrace?.Log($"Ext {Location} ({RdId}) : {remoteState}");
 
       switch (remoteState)
       {
