@@ -5,11 +5,11 @@
 
 #include "DemoModel/DemoModel.Generated.h"
 #include "ExtModel/ExtModel.Generated.h"
-#include "DemoModel/Derived.h"
-#include "DemoModel/ConstUtil.h"
-#include "DemoModel/MyEnum.h"
-#include "DemoModel/Flags.h"
-#include "DemoModel/ComplicatedPair.h"
+#include "DemoModel/Derived.Generated.h"
+#include "DemoModel/ConstUtil.Generated.h"
+#include "DemoModel/MyEnum.Generated.h"
+#include "DemoModel/Flags.Generated.h"
+#include "DemoModel/ComplicatedPair.Generated.h"
 
 #include "lifetime/Lifetime.h"
 #include "wire/SocketWire.h"
