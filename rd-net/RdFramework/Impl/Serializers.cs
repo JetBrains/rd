@@ -249,7 +249,9 @@ namespace JetBrains.Rd.Impl
         {
           if (myReaders.ContainsKey(typeId))
           {
-            var existingType = myTypeMapping.First(p => p.Value == typeId).Key;
+            Type existingType;
+            lock(myLock)
+              existingType = myTypeMapping.First(p => p.Value == typeId).Key;
             throw new ArgumentException(string.Format("Can't register {0} with id {1}. Already registered {2}", typeof(T).FullName, typeId, existingType));
           }
           Protocol.InitTrace?.Log($"Registering type {typeof(T).Name}, id={typeId}");
@@ -337,8 +339,9 @@ namespace JetBrains.Rd.Impl
       // Don't dispose this cookie, otherwise it will delete all written data
       var cookie = new UnsafeWriter.Cookie(writer);
       writer.Write(0);
-
-      var writerDelegate = myWriters[typeId];
+      CtxWriteDelegate<object> writerDelegate;
+      lock (myLock)
+        writerDelegate = myWriters[typeId];
       writerDelegate(ctx, writer, value);
 
       cookie.WriteIntLengthToCookieStart();
