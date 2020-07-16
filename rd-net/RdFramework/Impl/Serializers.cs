@@ -34,6 +34,7 @@ namespace JetBrains.Rd.Impl
     private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
 
     [CanBeNull] private readonly ITypesRegistrar myRegistrar;
+    private readonly object myLock = new object();
 
     struct ToplevelRegistration
     {
@@ -236,30 +237,37 @@ namespace JetBrains.Rd.Impl
 
     public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedId = null)
     {
-      var typeId = RdId.Define<T>(predefinedId);
-      RdId existing;
-      if (myTypeMapping.TryGetValue(typeof(T), out existing))
+      lock (myLock)
       {
-        Assertion.Require(existing == typeId, "Type {0} already present with id={1}, but now is set with {2}", typeof(T).FullName, existing, typeId);
-      }
-      else
-      {
-        if (myReaders.ContainsKey(typeId))
+        var typeId = RdId.Define<T>(predefinedId);
+        RdId existing;
+        if (myTypeMapping.TryGetValue(typeof(T), out existing))
         {
-          var existingType = myTypeMapping.First(p => p.Value == typeId).Key;
-          throw new ArgumentException(string.Format("Can't register {0} with id {1}. Already registered {2}", typeof(T).FullName, typeId, existingType));
+          Assertion.Require(existing == typeId, "Type {0} already present with id={1}, but now is set with {2}", typeof(T).FullName, existing, typeId);
         }
-        Protocol.InitTrace?.Log($"Registering type {typeof(T).Name}, id={typeId}");
+        else
+        {
+          if (myReaders.ContainsKey(typeId))
+          {
+            var existingType = myTypeMapping.First(p => p.Value == typeId).Key;
+            throw new ArgumentException(string.Format("Can't register {0} with id {1}. Already registered {2}", typeof(T).FullName, typeId, existingType));
+          }
+          Protocol.InitTrace?.Log($"Registering type {typeof(T).Name}, id={typeId}");
         
-        myTypeMapping[typeof(T)] = typeId;
-        myReaders[typeId] = (ctx, unsafeReader) => reader(ctx, unsafeReader);
-        myWriters[typeId] = (ctx, unsafeWriter, value) => writer(ctx, unsafeWriter, (T)value);
+          myTypeMapping[typeof(T)] = typeId;
+          myReaders[typeId] = (ctx, unsafeReader) => reader(ctx, unsafeReader);
+          myWriters[typeId] = (ctx, unsafeWriter, value) => writer(ctx, unsafeWriter, (T)value);
+        }
       }
-
     }
 
     public T Read<T>(SerializationCtx ctx, UnsafeReader reader, [CanBeNull] CtxReadDelegate<T> unknownInstanceReader = null)
     {
+      bool TryGetReader(RdId rdId, out CtxReadDelegate<object> readDelegate)
+      {
+        lock (myLock)
+          return myReaders.TryGetValue(rdId, out readDelegate);
+      }
 #if !NET35
       myBackgroundRegistrar.WaitForEmpty();
 #endif
@@ -269,14 +277,13 @@ namespace JetBrains.Rd.Impl
         return default(T);
       var size = reader.ReadInt();
 
-      CtxReadDelegate<object> ctxReadDelegate;
-      if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
+      if (!TryGetReader(typeId, out var ctxReadDelegate))
       {
         if (unknownInstanceReader == null)
         {
           myRegistrar?.TryRegister(typeId, this);
           myRegistrar?.TryRegister(typeof(T), this);
-          if (!myReaders.TryGetValue(typeId, out ctxReadDelegate))
+          if (!TryGetReader(typeId, out ctxReadDelegate))
           {
             var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed
             throw new KeyNotFoundException(string.Format("There is no readers found. Requested type '{0}'. Real type {1}", typeof(T).FullName, realType));
@@ -299,6 +306,12 @@ namespace JetBrains.Rd.Impl
 
     public void Write<T>(SerializationCtx ctx, UnsafeWriter writer, T value)
     {
+      bool TryGetTypeMapping(Type type1, out RdId rdId)
+      {
+        lock (myLock)
+          return myTypeMapping.TryGetValue(type1, out rdId);
+      }
+
 #if !NET35
       myBackgroundRegistrar.WaitForEmpty();
 #endif
@@ -310,12 +323,11 @@ namespace JetBrains.Rd.Impl
         return;
       }
 
-      RdId typeId;
       var type = value.GetType();
-      if (!myTypeMapping.TryGetValue(type, out typeId))
+      if (!TryGetTypeMapping(type, out var typeId))
       {
         myRegistrar?.TryRegister(type, this);
-        if (!myTypeMapping.TryGetValue(type, out typeId))
+        if (!TryGetTypeMapping(type, out typeId))
         {
           throw new KeyNotFoundException($"Type {type.FullName} have not registered");
         }
