@@ -1,7 +1,7 @@
 #ifndef RD_CPP_ENTITIES_UTIL_H
 #define RD_CPP_ENTITIES_UTIL_H
 
-#include "DynamicEntity.h"
+#include "DynamicEntity.Generated.h"
 
 namespace rd
 {

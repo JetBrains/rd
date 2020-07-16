@@ -3,7 +3,7 @@
 #include "impl/RdProperty.h"
 #include "impl/RdList.h"
 #include "RdFrameworkTestBase.h"
-#include "DynamicEntity.h"
+#include "DynamicEntity.Generated.h"
 #include "test_util.h"
 #include "entities_util.h"
 

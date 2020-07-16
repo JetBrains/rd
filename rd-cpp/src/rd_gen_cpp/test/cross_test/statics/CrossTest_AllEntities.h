@@ -1,8 +1,8 @@
 #ifndef RD_CPP_CROSSTESTALLENTITIES_H
 #define RD_CPP_CROSSTESTALLENTITIES_H
 
-#include "DemoModel/DemoModel.h"
-#include "ExtModel/ExtModel.h"
+#include "DemoModel/DemoModel.Generated.h"
+#include "ExtModel/ExtModel.Generated.h"
 
 #include <string>
 #include <vector>

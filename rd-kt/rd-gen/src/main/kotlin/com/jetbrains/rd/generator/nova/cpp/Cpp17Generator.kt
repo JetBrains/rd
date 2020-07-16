@@ -110,6 +110,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         return (getSetting(AllocatorType) ?: defaultAllocatorType).invoke(itemType)
     }
 
+    private fun Declaration.exportMacroName(): String? = getSetting(ExportMacroName)
+
     object ListType : ISetting<CppIntrinsicType, Declaration>
 
     object AllocatorType : ISetting<(IType) -> String, Declaration>
@@ -118,13 +120,17 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     object AdditionalHeaders : SettingWithDefault<List<String>, Toplevel>(listOf())
 
+    object ExportMacroName : ISetting<String, Declaration>
+
     object PublicCtors : ISetting<Unit, Declaration>
 
     object FsPath : ISetting<(Cpp17Generator) -> File, Toplevel>
 
     object TargetName : ISetting<String, Toplevel>
 
-    private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "hpp"
+    private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "h"
+
+    private fun Declaration.headerFileName() = this.fsName(false)
 
     private fun Declaration.fsName(isDefinition: Boolean) =
         "$name$generatedFileSuffix.${fsExtension(isDefinition)}"
@@ -207,7 +213,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     private fun Declaration.includeWithExtension(): String {
-        return this.name.includeWithExtension("h")
+        return this.headerFileName().includeQuotes()
     }
 
     private fun IType.includeWithExtension(): String {
@@ -632,7 +638,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     private fun File.createPchHeader(pchHeaderFile: String) {
         val p = PrettyPrinter().apply {
-            withIncludeGuard(pchHeaderFile.substringBeforeLast(".")) {
+            withIncludeGuard(pchHeaderFile.includeGuardName()) {
                 +"#include \"pch.h\""
             }
         }
@@ -739,7 +745,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
         File(this, "${INSTANTIATION_FILE_NAME}.h").let { file ->
             FileSystemPrettyPrinter(file).use {
-                withIncludeGuard(INSTANTIATION_FILE_NAME) {
+                withIncludeGuard("${INSTANTIATION_FILE_NAME}.h".includeGuardName()) {
                     +polymorphicHeader.includeWithExtension("h")
                     println()
                     initializedEnums
@@ -747,7 +753,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                             if (enum.isIntrinsic) {
                                 enum.pointcut.getSetting(AdditionalHeaders)
                             } else {
-                                listOf("${enum.pointcut.name}/${enum.name}.h")
+                                listOf("${enum.pointcut.name}/${enum.headerFileName()}")
                             }
                         }
                         .flatten()
@@ -860,7 +866,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             val directory = tl.fsPath()
             directory.mkdirs()
             val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { !it.isIntrinsic }
-            val fileNames = types.map { it.fsName(true) } + types.map { it.fsName(false) }
+            val fileNames = types.map { it.fsName(true) } + types.map { it.headerFileName() }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
             val marshallerHeaders = tl.getSetting(AdditionalHeaders) ?: listOf()
@@ -893,8 +899,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         folder.templateInstantiate(toplevels)
     }
 
-    private fun PrettyPrinter.withIncludeGuard(includeGuardMacroName: String, action: PrettyPrinter.() -> Unit) {
-        val includeGuardMacro = "${includeGuardMacroName.toUpperCase()}_H"
+    private fun PrettyPrinter.withIncludeGuard(includeGuardMacro: String, action: PrettyPrinter.() -> Unit) {
         +"#ifndef $includeGuardMacro"
         +"#define $includeGuardMacro"
 
@@ -907,9 +912,17 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         +"#endif // $includeGuardMacro"
     }
 
+    private fun String.includeGuardName(): String {
+        return this.replace('.', '_').toUpperCase()
+    }
+
+    private fun Declaration.includeGuardName(): String {
+        return this.headerFileName().includeGuardName()
+    }
+
     //region files
     fun PrettyPrinter.header(decl: Declaration, marshallerHeaders: List<String>) {
-        withIncludeGuard(decl.name) {
+        withIncludeGuard(decl.includeGuardName()) {
             println()
 
             includesDecl(marshallerHeaders)
@@ -920,8 +933,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
             VsWarningsDefault?.let {
                 +"#pragma warning( push )"
-                it.forEach {
-                    +"#pragma warning( disable:$it )"
+                it.forEach { warn ->
+                    +"#pragma warning( disable:$warn )"
                 }
             }
 
@@ -933,6 +946,13 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             } else {
                 typedecl(decl)
             }
+
+            VsWarningsDefault?.let {
+                println()
+                +"#pragma warning( pop )"
+                println()
+            }
+
             println()
         }
     }
@@ -952,8 +972,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (decl is Toplevel) {
             dependencies.filter { !(it.isAbstract || it.isOpen) }.filterIsInstance<IType>().println {
                 if (it is Declaration) {
-                    val name = it.name
-                    "../${it.pointcut!!.name}/$name".includeWithExtension()
+                    "../${it.pointcut!!.name}/${it.headerFileName()}".includeQuotes()
                 } else {
                     it.includeWithExtension()
                 }
@@ -961,29 +980,47 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
         println()
         if (decl is Toplevel) {
-            val rootName = decl.root.sanitizedName(decl)
-            +"../$rootName/$rootName".includeWithExtension()
+            +"../${decl.root.name}/${decl.root.headerFileName()}".includeQuotes()
         }
         if (decl.isAbstract || decl.isOpen) {
             +(unknown(decl)!!.includeWithExtension())
         }
         if (decl is Root) {
             decl.toplevels.forEach {
-                val name = it.name
-                +"../$name/$name".includeWithExtension()
+                +"../${it.name}/${it.headerFileName()}".includeQuotes()
             }
         }
+
+        VsWarningsDefault?.let {
+            +"#pragma warning( push )"
+            it.forEach { warn ->
+                +"#pragma warning( disable:$warn )"
+            }
+        }
+
         if (decl is Toplevel && decl.isLibrary) {
             surroundWithNamespaces(decl.namespace) { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
         } else {
             surroundWithNamespaces(decl.namespace) { typedef(decl) }
         }
+
+        VsWarningsDefault?.let {
+            println()
+            +"#pragma warning( pop )"
+            println()
+        }
     }
 //endregion
 
     //region declaration
+    private fun Declaration.classNameDecl(): String {
+        return exportMacroName()
+            ?.let { "class $it $name" }
+            ?: "class $name"
+    }
+
     protected open fun PrettyPrinter.libdecl(decl: Declaration) {
-        titledBlock("class ${decl.name}") {
+        titledBlock(decl.classNameDecl()) {
             registerSerializersTraitDecl(decl)
         }
     }
@@ -1010,12 +1047,12 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 return@surroundWithNamespaces
             }
 
-            if(decl is Interface){
+            if (decl is Interface) {
                 Logger.root.warn { "CppGenerator doesn't support interfaces. Declaration will be ignored" }
                 return@surroundWithNamespaces
             }
 
-            if(decl.isOpen){
+            if (decl.isOpen) {
                 Logger.root.warn { "CppGenerator doesn't support open classes. All open classes wil be generated as abstract" }
             }
 
@@ -1023,8 +1060,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             if (decl.isOpen) comment("open")
             if (decl is Struct.Concrete && decl.base == null) comment("data")
 
+            p(decl.classNameDecl())
 
-            p("class ${decl.name} ")
             baseClassTraitDecl(decl)
             block("{", "};") {
                 comment("companion")
@@ -1116,12 +1153,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
 //        externTemplates(decl)
-
-        VsWarningsDefault?.let {
-            println()
-            +"#pragma warning( pop )"
-            println()
-        }
 
         comment("hash code trait")
         hashSpecialization(decl)
@@ -1309,10 +1340,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             }
             return types.mapNotNull {
                 when (it) {
-                    is Root -> "../${it.name}/${it.name}.h"
+                    is Root -> "../${it.name}/${it.headerFileName()}"
                     is Declaration ->
                         if (!it.isIntrinsic) {
-                            "../${it.pointcut!!.name}/${it.name}.h"
+                            "../${it.pointcut!!.name}/${it.headerFileName()}"
                         } else {
                             it.getSetting(Intrinsic)!!.header
                         }
@@ -1324,7 +1355,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
         fun dependentTypes(decl: Declaration): List<String> {
-            val bases = listOfNotNull(decl.base?.name).map { "$it.h" }
+            val bases = listOfNotNull(decl.base).map { it.headerFileName() }
             return (decl.ownMembers + decl.constantMembers)
                 .asSequence()
                 .map { parseMember(it) }
@@ -1336,8 +1367,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 .distinct().toList()
         }
 
-        val extHeaders = listOfNotNull(if (decl.isExtension) decl.pointcut?.name else null)
-        extHeaders.printlnWithBlankLine { it.includeWithExtension("h") }
+        val extDecls = listOfNotNull(if (decl.isExtension) decl.pointcut else null)
+        extDecls.printlnWithBlankLine { it.includeWithExtension() }
         dependentTypes(decl).printlnWithBlankLine { it.includeQuotes() }
 
         decl.getSetting(AdditionalHeaders)?.distinct()?.println { it.includeQuotes() }
@@ -1356,7 +1387,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 */
 
     private fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {
-        +bases(decl).joinToString(separator = ", ", prefix = ": ") { "public ${it.type.name}" }
+        +bases(decl).joinToString(separator = ", ", prefix = " : ") { "public ${it.type.name}" }
     }
 
 

@@ -1,6 +1,6 @@
 #include "CrossTest_AllEntities.h"
 
-#include <DemoModel/Derived.h>
+#include "DemoModel/Derived.Generated.h"
 
 #undef max
 

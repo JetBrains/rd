@@ -1,6 +1,6 @@
 #include "CrossTestClientBase.h"
 
-#include "DemoModel.h"
+#include "DemoModel.Generated.h"
 
 #include "impl/RdProperty.h"
 

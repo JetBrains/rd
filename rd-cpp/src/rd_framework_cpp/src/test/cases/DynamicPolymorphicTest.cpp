@@ -3,9 +3,9 @@
 
 #include "RdFrameworkDynamicPolymorphicTestBase.h"
 
-#include "AbstractEntity.h"
-#include "AbstractEntity_Unknown.h"
-#include "FakeEntity.h"
+#include "AbstractEntity.Generated.h"
+#include "AbstractEntity_Unknown.Generated.h"
+#include "FakeEntity.Generated.h"
 
 #include "serialization/AbstractPolymorphic.h"
 #include "serialization/ArraySerializer.h"
@@ -204,7 +204,8 @@ TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint)
 		}
 		else if (value.type_name() == FakeEntity::static_type_name())
 		{
-			FakeEntity res{L"Ignored", value.get_name()};
+			bool ignored = true;
+			FakeEntity res{ignored, value.get_name()};
 			return Wrapper<FakeEntity>{std::move(res)};
 		}
 		else
@@ -219,7 +220,8 @@ TEST_F(DTaskTest, dynamic_polymorphic_call_endpoint)
 	EXPECT_EQ(res, value_a);
 	EXPECT_EQ(res, value_a);	// check twice
 
-	FakeEntity fake_entity{L"Ignored", L"A"};
+	bool ignored = true;
+	FakeEntity fake_entity{ignored, L"A"};
 	auto task = client_entity.start(fake_entity, &clientScheduler);
 	auto const& task_result = task.value_or_throw();
 	AbstractEntity const& unwrap = task_result.unwrap();

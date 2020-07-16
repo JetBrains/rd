@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "DynamicEntity.h"
+#include "DynamicEntity.Generated.h"
 #include "entities_util.h"
 #include "SocketWireTestBase.h"
 #include "impl/RdMap.h"
