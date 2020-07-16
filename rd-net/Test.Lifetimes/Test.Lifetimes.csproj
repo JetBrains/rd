@@ -21,12 +21,8 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.17" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+    <ItemGroup>
       <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
-        <ProjectReference Include="..\Lifetimes.net35\Lifetimes.net35.csproj" />
     </ItemGroup>
     
 </Project>

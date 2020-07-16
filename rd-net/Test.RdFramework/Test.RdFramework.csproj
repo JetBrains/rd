@@ -21,4 +21,13 @@
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
         <ProjectReference Include="..\Test.Lifetimes\Test.Lifetimes.csproj" />
     </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+      <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
+        <PackageReference Include="AsyncBridge.Net35" Version="0.2.0" />
+        <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
+    </ItemGroup>
 </Project>
