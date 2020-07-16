@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net35;netcoreapp2.1</TargetFrameworks>
+        <TargetFrameworks>net461;net35;netcoreapp2.1</TargetFrameworks>
         <DebugType>Full</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
@@ -11,10 +11,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.NETFramework.ReferenceAssemblies.net35" Version="1.0.1">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
         <PackageReference Include="nunit" Version="3.12.0" />        
         <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />        
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />        
