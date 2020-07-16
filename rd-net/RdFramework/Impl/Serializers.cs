@@ -236,14 +236,6 @@ namespace JetBrains.Rd.Impl
 
     public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedId = null)
     {
-      #if !NET35
-      if (!myBackgroundRegistrar.IsInsideProcessing)
-      {
-        myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(T), szr => szr.Register(reader, writer, predefinedId)));
-        myBackgroundRegistrar.WaitForEmpty();
-      }
-      #endif
-        
       var typeId = RdId.Define<T>(predefinedId);
       RdId existing;
       if (myTypeMapping.TryGetValue(typeof(T), out existing))
