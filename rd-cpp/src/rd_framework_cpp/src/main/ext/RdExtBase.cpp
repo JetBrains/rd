@@ -42,8 +42,7 @@ void RdExtBase::init(Lifetime lifetime) const
 	{
 		bindPolymorphic(*(it.second), lifetime, this, it.first);
 	}
-
-	traceMe(Protocol::initializationLogger, "created and bound :: ${printToString()}");
+	traceMe(Protocol::initializationLogger, "created and bound");
 }
 
 void RdExtBase::on_wire_received(Buffer buffer) const
