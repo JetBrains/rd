@@ -9,7 +9,7 @@ namespace util
 {
 uint16_t find_free_port();
 
-void sleep_this_thread(int ms);
+void sleep_this_thread(int64_t ms);
 }	 // namespace util
 }	 // namespace rd
 

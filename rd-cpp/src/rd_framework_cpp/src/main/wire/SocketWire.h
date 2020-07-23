@@ -91,7 +91,7 @@ public:
 
 		bool read_data_from_socket(Buffer::word_t* data, size_t len) const
 		{
-			return read_from_socket(reinterpret_cast<Buffer::word_t*>(data), len);
+			return read_from_socket(reinterpret_cast<Buffer::word_t*>(data), static_cast<int32_t>(len));
 		}
 
 	public:

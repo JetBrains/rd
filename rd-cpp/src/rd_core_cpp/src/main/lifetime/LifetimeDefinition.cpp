@@ -46,7 +46,6 @@ LifetimeDefinition::~LifetimeDefinition()
 		{
 			if (!lifetime->is_terminated())
 			{
-				spdlog::warn("Did you forget to terminate Lifetime definition?");
 				lifetime->terminate();
 			}
 		}

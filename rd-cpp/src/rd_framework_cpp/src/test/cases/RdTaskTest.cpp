@@ -86,8 +86,8 @@ TEST_F(RdFrameworkTestBase, testSymmetricCall)
 	statics(client_entity, static_entity_id);
 	statics(server_entity, static_entity_id);
 
-	server_entity.set([](std::wstring const& s) { return +s.length(); });
-	client_entity.set([](std::wstring const& s) { return -s.length(); });
+	server_entity.set([](std::wstring const& s) { return +static_cast<int32_t>(s.length()); });
+	client_entity.set([](std::wstring const& s) { return -static_cast<int32_t>(s.length()); });
 
 	bindStatic(serverProtocol.get(), server_entity, static_name);
 	bindStatic(clientProtocol.get(), client_entity, static_name);

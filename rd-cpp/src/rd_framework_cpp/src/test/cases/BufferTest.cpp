@@ -85,7 +85,7 @@ TEST(BufferTest, string)
 	}
 
 	Polymorphic<std::wstring>::write(ctx, buffer, s);
-	buffer.write_integral<int32_t>(s.length());
+	buffer.write_integral<int32_t>(static_cast<int32_t>(s.length()));
 
 	EXPECT_EQ(buffer.get_position(), (sizeof(int32_t) +		// length
 										 2 * s.size() +		// todo make protocol independent constant
@@ -197,7 +197,7 @@ TEST(BufferTest, NullableSerializer)
 	}
 	buffer.write_integral<int32_t>(-1);
 
-	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<T> const& s) {
+	const size_t summary_size = std::accumulate(list.begin(), list.end(), 0LL, [](size_t acc, Wrapper<T> const& s) {
 		if (s)
 		{
 			acc += 4 + 2 * s->size();	 // 1 - nullable flag, 4 - length siz, 2 - symbol size
@@ -240,7 +240,7 @@ TEST(BufferTest, ArraySerializer)
 	AS::write(ctx, buffer, list);
 	buffer.write_integral<int32_t>(-1);
 
-	const int summary_size = std::accumulate(list.begin(), list.end(), 0, [](int acc, Wrapper<std::wstring> const& s) {
+	const size_t summary_size = std::accumulate(list.begin(), list.end(), 0LL, [](size_t acc, Wrapper<std::wstring> const& s) {
 		acc += 4 + 2 * s->size();	 // 4 - length siz, 2 - symbol size
 		return acc;
 	});
@@ -264,10 +264,10 @@ TEST(BufferTest, floating_point)
 	std::vector<float> float_v{1.0f, -1.0f, -123.456f, 123.456f};
 	std::vector<double> double_v{2.0, -2.0, 248.248, -248.248};
 
-	const int C = float_v.size();
+	const size_t C = float_v.size();
 
 	Buffer buffer;
-	for (int i = 0; i < C; ++i)
+	for (size_t i = 0; i < C; ++i)
 	{
 		buffer.write_floating_point(float_v[i]);
 		buffer.write_floating_point(double_v[i]);
@@ -276,12 +276,12 @@ TEST(BufferTest, floating_point)
 	EXPECT_EQ(buffer.get_position(), C * (sizeof(float) + sizeof(double)));
 	buffer.rewind();
 
-	for (int i = 0; i < C; ++i)
+	for (size_t i = 0; i < C; ++i)
 	{
 		const auto f = buffer.read_floating_point<float>();
 		const auto d = buffer.read_floating_point<double>();
 		EXPECT_FLOAT_EQ(f, float_v[i]);
-		EXPECT_FLOAT_EQ(d, double_v[i]);
+		EXPECT_DOUBLE_EQ(d, double_v[i]);
 	}
 }
 

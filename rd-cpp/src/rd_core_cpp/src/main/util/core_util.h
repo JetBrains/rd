@@ -24,13 +24,13 @@
 #define RD_ASSERT_MSG(expr, msg)      \
 	if (!(expr))                      \
 	{                                 \
-		spdlog::error("\n{}\n", msg); \
+		spdlog::error("{}\n", msg);   \
 		assert(expr);                 \
 	}
 #define RD_ASSERT_THROW_MSG(expr, msg) \
 	if (!(expr))                       \
 	{                                  \
-		spdlog::error("\n{}\n", msg);  \
+		spdlog::error("{}\n", msg);    \
 		throw std::runtime_error(msg); \
 	}
 

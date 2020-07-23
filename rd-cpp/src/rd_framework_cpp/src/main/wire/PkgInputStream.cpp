@@ -41,7 +41,7 @@ int32_t PkgInputStream::try_read(Buffer::word_t* res, size_t size)
 			return -1;
 		}
 	}
-	const int n = (std::min)(size, memory - buffer.get_position());
+	const int32_t n = static_cast<int32_t>((std::min)(size, memory - buffer.get_position()));
 	Buffer::word_t* start = buffer.current_pointer();
 	std::copy(start, start + n, res);
 	buffer.set_position(buffer.get_position() + n);

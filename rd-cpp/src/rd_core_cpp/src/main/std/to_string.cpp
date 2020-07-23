@@ -1,3 +1,6 @@
+#include <locale>
+#include <codecvt>
+
 #include "to_string.h"
 
 namespace rd
@@ -16,7 +19,9 @@ std::string detail::to_string(const char* val)
 
 std::string detail::to_string(std::wstring const& val)
 {
-	return std::string(val.begin(), val.end());
+	using convert_type = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_type> converter;
+	return converter.to_bytes(val);
 }
 
 std::string detail::to_string(std::thread::id const& id)
