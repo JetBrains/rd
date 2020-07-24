@@ -80,8 +80,6 @@ target_include_directories(rd_framework_cpp
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_compile_definitions(rd_framework_cpp PUBLIC _WINSOCKAPI_=1)
-
 target_link_libraries(rd_framework_cpp
         PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp clsocket
         )
