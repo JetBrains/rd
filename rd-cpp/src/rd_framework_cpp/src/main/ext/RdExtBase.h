@@ -4,7 +4,7 @@
 #include "base/RdReactiveBase.h"
 #include "ExtWire.h"
 
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4250)

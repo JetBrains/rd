@@ -1,11 +1,9 @@
 #include "SingleThreadSchedulerBase.h"
 
-#include "ctpl_stl.h"
-// clang-format off
-#include "util/fix_ho_spdlog.h"
-// clang-format on
-#include "spdlog/sinks/stdout_color_sinks-inl.h"
 #include "util/core_util.h"
+
+#include "ctpl_stl.h"
+#include "spdlog/include/spdlog/sinks/stdout_color_sinks.h"
 
 namespace rd
 {

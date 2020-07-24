@@ -11,7 +11,7 @@
 
 #include "thirdparty.hpp"
 
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 #include <memory>
 #include <string>

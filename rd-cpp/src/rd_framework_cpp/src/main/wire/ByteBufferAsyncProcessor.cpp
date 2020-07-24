@@ -1,10 +1,8 @@
-#include <util/guards.h>
 #include "ByteBufferAsyncProcessor.h"
 
-// clang-format off
-#include "util/fix_ho_spdlog.h"
-// clang-format on
-#include "spdlog/sinks/stdout_color_sinks-inl.h"
+#include "util/guards.h"
+
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 namespace rd
 {

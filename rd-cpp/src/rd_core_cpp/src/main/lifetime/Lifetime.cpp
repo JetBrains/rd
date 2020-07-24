@@ -1,14 +1,10 @@
 #include "Lifetime.h"
 
-#include "spdlog/spdlog-inl.h"
-// clang-format off
-#include "util/fix_ho_spdlog.h"
-// clang-format on
-#include "spdlog/sinks/stdout_color_sinks-inl.h"
-
 #include <memory>
 
 #include "thirdparty.hpp"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 namespace rd
 {
