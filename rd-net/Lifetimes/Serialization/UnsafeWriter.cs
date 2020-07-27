@@ -24,13 +24,15 @@ namespace JetBrains.Serialization
     public struct Cookie : IDisposable
     {      
       private readonly UnsafeWriter myWriter;
+      private readonly Action myCleanupAction;
 
       private readonly int myStart;
 
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      public Cookie(UnsafeWriter writer) : this()
+      public Cookie(UnsafeWriter writer, Action cleanupAction = null) : this()
       {
         myWriter = writer;
+        myCleanupAction = cleanupAction;
         myStart = myWriter.Count;
       }
       
@@ -91,6 +93,7 @@ namespace JetBrains.Serialization
       public void Dispose()
       {
         myWriter?.Reset(myStart);
+        myCleanupAction?.Invoke();
       }
     }
 
@@ -102,8 +105,29 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static Cookie NewThreadLocalWriter()
     {
+      return NewThreadLocalWriterImpl(false);
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static Cookie NewThreadLocalWriterWithCleanup()
+    {
+      return NewThreadLocalWriterImpl(true);
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static Cookie NewThreadLocalWriterImpl(bool releaseThreadStaticWriterIfNewlyCreated)
+    {
+      Action cleanupAction = null;
+      if (releaseThreadStaticWriterIfNewlyCreated && ourWriter == null)
+      {
+        cleanupAction = () =>
+        {
+          ourWriter = null;
+        };
+      }
+
       if (ourWriter == null) ourWriter = new UnsafeWriter();      
-      return new Cookie(ourWriter);
+      return new Cookie(ourWriter, cleanupAction);
     }
 
     private const int InitialAllocSize = 1 << 20;
