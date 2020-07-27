@@ -36,10 +36,4 @@
 		}                                                                                                           \
 	}
 
-// Backward compatibility macro
-// TODO: remove it after migration to newer rd-gen
-#ifndef DEFINE_ENUM_FLAG_OPERATORS
-#define DEFINE_ENUM_FLAG_OPERATORS(E) RD_DEFINE_ENUM_FLAG_OPERATORS(E)
-#endif
-
 #endif	  // RD_CPP_ENUM_H
