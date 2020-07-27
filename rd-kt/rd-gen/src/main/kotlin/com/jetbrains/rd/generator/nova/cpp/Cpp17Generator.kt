@@ -31,7 +31,7 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
 
 /*please set VsWarningsDefault to null if you don't need disabling VS warnings
 val VsWarningsDefault : IntArray? = null*/
-val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244)
+val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244, 4100)
 
 /**
  * Generate C++ code.
