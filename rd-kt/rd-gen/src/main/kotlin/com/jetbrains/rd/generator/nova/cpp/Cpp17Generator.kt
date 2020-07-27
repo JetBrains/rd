@@ -1175,7 +1175,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
 
         if (decl.flags) {
-            +"DEFINE_ENUM_FLAG_OPERATORS(${decl.name})"
+            +"RD_DEFINE_ENUM_FLAG_OPERATORS(${decl.name})"
         }
 
         declare(enumToStringTraitDecl(decl))
