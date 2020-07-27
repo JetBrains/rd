@@ -351,7 +351,7 @@ namespace JetBrains.Rd.Impl
             HeartbeatAlive.Value = false;
           }
 
-          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+          using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
           {
             cookie.Writer.Write(PING_LEN);
             cookie.Writer.Write(myCurrentTimeStamp);
