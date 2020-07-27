@@ -29,6 +29,11 @@ namespace JetBrains.Serialization
       private readonly int myStart;
 
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+      public Cookie(UnsafeWriter writer) : this(writer, null)
+      {
+      }
+
+      [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public Cookie(UnsafeWriter writer, Action cleanupAction = null) : this()
       {
         myWriter = writer;
