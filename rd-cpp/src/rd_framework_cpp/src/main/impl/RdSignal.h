@@ -56,7 +56,7 @@ public:
 	virtual ~RdSignal() = default;
 	// endregion
 
-	static RdSignal<T, S> read(SerializationCtx& ctx, Buffer& buffer)
+	static RdSignal<T, S> read(SerializationCtx& /*ctx*/, Buffer& buffer)
 	{
 		RdSignal<T, S> res;
 		const RdId& id = RdId::read(buffer);
@@ -64,7 +64,7 @@ public:
 		return res;
 	}
 
-	void write(SerializationCtx& ctx, Buffer& buffer) const override
+	void write(SerializationCtx& /*ctx*/, Buffer& buffer) const override
 	{
 		rdid.write(buffer);
 	}

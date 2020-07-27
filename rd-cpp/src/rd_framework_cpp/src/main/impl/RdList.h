@@ -50,7 +50,7 @@ public:
 	virtual ~RdList() = default;
 	// endregion
 
-	static RdList<T, S> read(SerializationCtx& ctx, Buffer& buffer)
+	static RdList<T, S> read(SerializationCtx& /*ctx*/, Buffer& buffer)
 	{
 		RdList<T, S> result;
 		int64_t next_version = buffer.read_integral<int64_t>();
@@ -61,7 +61,7 @@ public:
 		return result;
 	}
 
-	void write(SerializationCtx& ctx, Buffer& buffer) const override
+	void write(SerializationCtx& /*ctx*/, Buffer& buffer) const override
 	{
 		buffer.write_integral<int64_t>(next_version);
 		rdid.write(buffer);

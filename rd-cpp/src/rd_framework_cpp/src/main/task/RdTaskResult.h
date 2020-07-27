@@ -109,7 +109,7 @@ public:
 					  buffer.write_integral<int32_t>(0);
 					  S::write(ctx, buffer, value.value);
 				  },
-				  [&buffer](Cancelled const& value) { buffer.write_integral<int32_t>(1); },
+				  [&buffer](Cancelled const&) { buffer.write_integral<int32_t>(1); },
 				  [&buffer](Fault const& value) {
 					  buffer.write_integral<int32_t>(2);
 					  buffer.write_wstring(value.reason_type_fqn);

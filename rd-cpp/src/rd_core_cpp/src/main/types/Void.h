@@ -24,7 +24,7 @@ namespace std
 template <>
 struct hash<rd::Void>
 {
-	size_t operator()(const rd::Void& value) const noexcept
+	size_t operator()(const rd::Void&) const noexcept
 	{
 		return 0;
 	}
