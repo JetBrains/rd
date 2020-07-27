@@ -42,7 +42,8 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                           val defaultNamespace: String,
                           override val folder: File,
                           generatedFileSuffix: String = ".Generated",
-                          val usingPrecompiledHeaders: Boolean = false
+                          val usingPrecompiledHeaders: Boolean = false,
+                          val generatePrecompiledHeaders: Boolean = true
 ) : GeneratorBase(flowTransform, generatedFileSuffix) {
     @Suppress("ObjectPropertyName")
     companion object {
@@ -651,32 +652,43 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     private fun File.cmakeLists(targetName: String, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList(), subdirectories: List<String> = emptyList()) {
         mkdirs()
+        if (usingPrecompiledHeaders && !generatePrecompiledHeaders) {
+            fail("Option 'usingPrecompiledHeaders' conflicts with disabled option 'generatePrecompiledHeaders'")
+        }
+
         val pchHeaderFile = "${pchFileName(targetName)}.h"
         val pchCppFile = "${pchFileName(targetName)}.cpp"
 
-        createPchHeader(pchHeaderFile)
-        createPchSource(pchCppFile, pchHeaderFile)
+        if (generatePrecompiledHeaders) {
+            createPchHeader(pchHeaderFile)
+            createPchSource(pchCppFile, pchHeaderFile)
+        }
 
         File(this, "CMakeLists.txt").run {
             printWriter().use {
                 it.apply {
                     println("cmake_minimum_required(VERSION 3.7)")
 
-                    val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
-                    val conditionalVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
+                    val pchOptionVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
 
-                    println("option($conditionalVariable \"Enable precompiled headers\" $onOrOff)")
-                    println("""
-                        |if ($conditionalVariable)
+                    val targetFiles = (fileNames +
+                        listOf(
+                            "${INSTANTIATION_FILE_NAME}.h",
+                            "${INSTANTIATION_FILE_NAME}.cpp"
+                        )).toMutableList()
+                    if (generatePrecompiledHeaders) {
+                        val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
+
+                        println("option($pchOptionVariable \"Enable precompiled headers\" $onOrOff)")
+                        println("""
+                        |if ($pchOptionVariable)
                         |    set(PCH_CPP_OPT $pchCppFile)
                         |else ()
                         |    set(PCH_CPP_OPT "")
                         |endif ()""".trimMargin()
-                    )
-                    val targetFiles = fileNames + listOf(
-                        "${INSTANTIATION_FILE_NAME}.h",
-                        "${INSTANTIATION_FILE_NAME}.cpp",
-                        "\${PCH_CPP_OPT}")
+                        )
+                        targetFiles.add("\${PCH_CPP_OPT}")
+                    }
 
                     println("add_library($targetName STATIC ${targetFiles.joinToString(separator = eol)})")
                     val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = eol) { it.name }
@@ -685,12 +697,15 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                     println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
                     println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
 //                println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
-                    println("""
-                            |if ($conditionalVariable)
-                            |    include(${Files.PrecompiledHeaderCmake})
-                            |    add_precompiled_header(${targetName} $pchHeaderFile SOURCE_CXX ${pchCppFile} FORCEINCLUDE)
-                            |endif ()""".trimMargin()
-                    )
+
+                    if (generatePrecompiledHeaders) {
+                        println("""
+                                |if ($pchOptionVariable)
+                                |    include(${Files.PrecompiledHeaderCmake})
+                                |    add_precompiled_header($targetName $pchHeaderFile SOURCE_CXX $pchCppFile FORCEINCLUDE)
+                                |endif ()""".trimMargin()
+                        )
+                    }
                 }
             }
         }
