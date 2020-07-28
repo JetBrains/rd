@@ -19,7 +19,15 @@ actual fun currentThreadName() : String = Thread.currentThread().run { "$id:$nam
 actual class AtomicReference<T> actual constructor(initial: T) {
     private val impl = AtomicReference(initial)
     actual fun get(): T = impl.get()
-    actual fun getAndUpdate(f: (T) -> T): T = impl.getAndUpdate(f)
+    actual fun getAndUpdate(f: (T) -> T): T {
+        var prev: T
+        var next: T
+        do {
+            prev = impl.get()
+            next = f(prev)
+        } while (!impl.compareAndSet(prev, next))
+        return prev
+    }
     fun getAndSet(new: T): T = impl.getAndSet(new)
 }
 
