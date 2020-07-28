@@ -1,6 +1,6 @@
 #include "IScheduler.h"
 
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 #include <functional>
 #include <sstream>

@@ -5,7 +5,7 @@
 
 #include "std/unordered_map.h"
 
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 #include <queue>
 

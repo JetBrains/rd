@@ -3,7 +3,7 @@
 
 #include "scheduler/base/IScheduler.h"
 #include "lifetime/Lifetime.h"
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 #include <utility>
 

@@ -43,7 +43,7 @@ public:
 
 	// endregion
 
-	static RdSet<T, S> read(SerializationCtx& ctx, Buffer& buffer)
+	static RdSet<T, S> read(SerializationCtx& /*ctx*/, Buffer& buffer)
 	{
 		RdSet<T, S> result;
 		RdId id = RdId::read(buffer);
@@ -51,7 +51,7 @@ public:
 		return result;
 	}
 
-	void write(SerializationCtx& ctx, Buffer& buffer) const override
+	void write(SerializationCtx& /*ctx*/, Buffer& buffer) const override
 	{
 		rdid.write(buffer);
 	}

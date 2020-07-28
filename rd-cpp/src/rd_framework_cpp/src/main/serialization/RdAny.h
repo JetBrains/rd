@@ -87,7 +87,7 @@ struct TransparentKeyEqual
 	bool operator()(InternedAny const& val_l, any::string const& val_r) const
 	{
 		return visit(util::make_visitor(
-						 [](wrapped_super_t const& value) { return false; }, [&](any::string const& s) { return s == val_r; }),
+						 [](wrapped_super_t const& /*value*/) { return false; }, [&](any::string const& s) { return s == val_r; }),
 			val_l);
 	}
 

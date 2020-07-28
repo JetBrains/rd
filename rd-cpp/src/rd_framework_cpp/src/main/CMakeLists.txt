@@ -80,8 +80,6 @@ target_include_directories(rd_framework_cpp
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_compile_definitions(rd_framework_cpp PUBLIC _WINSOCKAPI_=1)
-
 target_link_libraries(rd_framework_cpp
         PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp clsocket
         )
@@ -96,7 +94,7 @@ if (WIN32)
     elseif ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
         SET(PLATFORM "x64")
     endif ()
-    install(TARGETS rd_framework_cpp rd_core_cpp clsocket
+    install(TARGETS rd_framework_cpp rd_core_cpp clsocket spdlog
             CONFIGURATIONS Release Debug
             ARCHIVE
             DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"

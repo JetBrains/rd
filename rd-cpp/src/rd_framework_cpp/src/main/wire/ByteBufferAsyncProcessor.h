@@ -2,7 +2,7 @@
 #define RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 
 #include "protocol/Buffer.h"
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 #include <chrono>
 #include <string>

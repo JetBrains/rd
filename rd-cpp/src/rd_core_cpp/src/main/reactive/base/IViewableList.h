@@ -81,7 +81,7 @@ public:
 	T const* get_new_value() const
 	{
 		return visit(util::make_visitor([](Add const& e) { return e.new_value; }, [](Update const& e) { return e.new_value; },
-						 [](Remove const& e) { return static_cast<T const*>(nullptr); }),
+						 [](Remove const& /*e*/) { return static_cast<T const*>(nullptr); }),
 			v);
 	}
 

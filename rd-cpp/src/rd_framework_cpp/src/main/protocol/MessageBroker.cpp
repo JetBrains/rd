@@ -1,14 +1,6 @@
 #include "protocol/MessageBroker.h"
 
-#include "util/core_util.h"
-#include "protocol/Buffer.h"
-
-// clang-format off
-#include "util/fix_ho_spdlog.h"
-// clang-format on
-#include "spdlog/sinks/stdout_color_sinks-inl.h"
-
-#include <cassert>
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 namespace rd
 {

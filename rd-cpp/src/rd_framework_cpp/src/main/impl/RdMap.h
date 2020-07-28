@@ -69,7 +69,7 @@ public:
 	virtual ~RdMap() = default;
 	// endregion
 
-	static RdMap<K, V, KS, VS> read(SerializationCtx& ctx, Buffer& buffer)
+	static RdMap<K, V, KS, VS> read(SerializationCtx& /*ctx*/, Buffer& buffer)
 	{
 		RdMap<K, V, KS, VS> res;
 		RdId id = RdId::read(buffer);
@@ -77,7 +77,7 @@ public:
 		return res;
 	}
 
-	void write(SerializationCtx& ctx, Buffer& buffer) const override
+	void write(SerializationCtx& /*ctx*/, Buffer& buffer) const override
 	{
 		rdid.write(buffer);
 	}

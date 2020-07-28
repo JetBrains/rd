@@ -87,7 +87,7 @@ public:
 	{
 		return visit(util::make_visitor([](typename MapEvent::Add const& e) { return e.new_value; },
 						 [](typename MapEvent::Update const& e) { return e.new_value; },
-						 [](typename MapEvent::Remove const& e) { return static_cast<V const*>(nullptr); }),
+						 [](typename MapEvent::Remove const& /*e*/) { return static_cast<V const*>(nullptr); }),
 			v);
 	}
 

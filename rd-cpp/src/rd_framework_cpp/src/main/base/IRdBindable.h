@@ -54,7 +54,7 @@ public:
 
 template <typename T>
 typename std::enable_if_t<!util::is_base_of_v<IRdBindable, typename std::decay_t<T>>> inline identifyPolymorphic(
-	T&&, Identities const& identities, RdId const& id)
+	T&&, Identities const& /*identities*/, RdId const& /*id*/)
 {
 }
 
@@ -76,7 +76,7 @@ typename std::enable_if_t<util::is_base_of_v<IRdBindable, T>> inline identifyPol
 
 template <typename T>
 typename std::enable_if_t<!util::is_base_of_v<IRdBindable, typename std::decay_t<T>>> inline bindPolymorphic(
-	T&&, Lifetime lf, const IRdDynamic* parent, string_view name)
+	T&&, Lifetime /*lf*/, const IRdDynamic* /*parent*/, string_view /*name*/)
 {
 }
 

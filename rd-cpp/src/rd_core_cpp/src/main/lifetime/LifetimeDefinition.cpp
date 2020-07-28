@@ -1,6 +1,6 @@
 #include "LifetimeDefinition.h"
 
-#include "spdlog/spdlog-inl.h"
+#include "spdlog/spdlog.h"
 
 namespace rd
 {
