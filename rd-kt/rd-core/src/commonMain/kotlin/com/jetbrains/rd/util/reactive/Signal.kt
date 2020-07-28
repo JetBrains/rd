@@ -14,7 +14,11 @@ class Signal<T> : ISignal<T> {
         fun priorityAdviseSection(block:() -> Unit) = incrementCookie(cookie, TlsBoxed<Int>::value) { block() }
 
         fun Void() = Signal<Unit>()
+
+        private val logger = getLogger<Signal<*>>()
     }
+
+    var debugId: String = "<no id>"
 
 
     private var priorityListeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
@@ -44,12 +48,20 @@ class Signal<T> : ISignal<T> {
                 {
                     queue.getAndUpdate { arr ->
                         if (arr.contains(handler)) throw IllegalArgumentException("Duplicate handler: $handler")
+                        if (arr.size == 10_000) {
+                            logger.warn { "Added over 10k handlers to a signal $debugId" }
+                        }
                         arr.insert(handler, arr.size)
                     }
                 },
                 {
-                    queue.getAndUpdate { arr ->
-                        arr.remove (handler).apply { if (equals(arr)) throw IllegalArgumentException("No handler: $handler") }
+                    val elapsed = measureTimeMillis {
+                        queue.getAndUpdate { arr ->
+                            arr.remove(handler).apply { if (equals(arr)) throw IllegalArgumentException("No handler: $handler") }
+                        }
+                    }
+                    if (elapsed > 1000) {
+                        logger.warn { "Removing a subscription from $debugId took $elapsed, have ${queue.get().size} subscriptions" }
                     }
                 }
         )

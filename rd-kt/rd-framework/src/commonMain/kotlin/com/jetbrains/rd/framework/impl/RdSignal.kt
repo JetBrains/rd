@@ -46,6 +46,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
         wireScheduler = defaultScheduler
         wire.advise(lifetime, this)
 
+        signal.debugId = location.toString()
     }
 
     override fun fire(value: T) {
