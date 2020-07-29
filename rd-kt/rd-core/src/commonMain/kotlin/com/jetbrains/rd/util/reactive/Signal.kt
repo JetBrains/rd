@@ -18,8 +18,6 @@ class Signal<T> : ISignal<T> {
         private val logger = getLogger<Signal<*>>()
     }
 
-    var debugId: String = "<no id>"
-
 
     private var priorityListeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
     private var listeners = AtomicReference<Array<(T) -> Unit>>(emptyArray())
@@ -49,19 +47,14 @@ class Signal<T> : ISignal<T> {
                     queue.getAndUpdate { arr ->
                         if (arr.contains(handler)) throw IllegalArgumentException("Duplicate handler: $handler")
                         if (arr.size == 10_000) {
-                            logger.warn { "Added over 10k handlers to a signal $debugId" }
+                            logger.error { "10k handlers were added for a signal; this will cause performance degradation" }
                         }
                         arr.insert(handler, arr.size)
                     }
                 },
                 {
-                    val elapsed = measureTimeMillis {
-                        queue.getAndUpdate { arr ->
-                            arr.remove(handler).apply { if (equals(arr)) throw IllegalArgumentException("No handler: $handler") }
-                        }
-                    }
-                    if (elapsed > 1000) {
-                        logger.warn { "Removing a subscription from $debugId took $elapsed, have ${queue.get().size} subscriptions" }
+                    queue.getAndUpdate { arr ->
+                        arr.remove (handler).apply { if (equals(arr)) throw IllegalArgumentException("No handler: $handler") }
                     }
                 }
         )
