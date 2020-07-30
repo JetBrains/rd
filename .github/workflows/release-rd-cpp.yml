@@ -1,10 +1,11 @@
-name: build-rd-cpp
+name: release-rd-cpp
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'Release version (e.g. 202.1.1)'
+        required: true
 
 env:
   NINJA_VERSION: 1.9.0
@@ -14,7 +15,9 @@ jobs:
   build:
     env:
       working-dir: ${{ github.workspace}}${{ matrix.config.SEP }}rd-cpp
-      artifact: ${{ matrix.config.artifact }}${{ github.run_number }}.zip
+      artifact: ${{ matrix.config.artifact }}${{ github.event.inputs.release-version }}.zip
+      rd-bintray-user: ${{ secrets.RD_BINTRAY_USER }}
+      rd-bintray-key: ${{ secrets.RD_BINTRAY_KEY }}
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -207,3 +210,23 @@ jobs:
         path: |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
         name: ${{ env.artifact }}
+
+    - name: Pack Nuget
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      run: nuget pack rd-cpp.nuspec -Version ${{ github.event.inputs.release-version }} -Suffix ${{ matrix.config.suffix }}
+
+    - name: Add sources
+      if: ${{ env.rd-bintray-user != '' && env.rd-bintray-key != '' }}
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      continue-on-error: true
+      run: nuget sources Add -Name Bintray -Source https://api.bintray.com/nuget/jetbrains/rd-nuget -UserName ${{ env.rd-bintray-user }} -Password ${{ env.rd-bintray-key }}
+    
+    - name: Set API key
+      if: ${{ env.rd-bintray-user != '' && env.rd-bintray-key != '' }}
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      run: nuget setapikey ${{ env.rd-bintray-user }}:${{ env.rd-bintray-key }} -Source Bintray
+      
+    - name: Push nuget
+      if: ${{ env.rd-bintray-user != '' && env.rd-bintray-key != '' }}
+      working-directory: ${{ env.working-dir }}${{ matrix.config.SEP }}export
+      run: nuget push JetBrains.RdFramework.Cpp.${{ github.event.inputs.release-version }}-${{ matrix.config.suffix }}.nupkg -Source https://api.bintray.com/nuget/jetbrains/rd-nuget
