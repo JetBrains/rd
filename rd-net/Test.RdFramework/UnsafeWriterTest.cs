@@ -1,4 +1,6 @@
-﻿using JetBrains.Serialization;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Serialization;
 using NUnit.Framework;
 
 namespace Test.RdFramework
@@ -13,7 +15,7 @@ namespace Test.RdFramework
       return (UnsafeWriter) ourWriterField.GetValue(null);
     }
     */
-
+    [Test]
     public void TestWriterIsReused01()
     {
       UnsafeWriter firstWriter;
@@ -31,6 +33,7 @@ namespace Test.RdFramework
       Assert.IsTrue(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
     }
 
+    [Test]
     public void TestWriterIsReused02()
     {
       UnsafeWriter firstWriter;
@@ -48,38 +51,50 @@ namespace Test.RdFramework
       Assert.IsTrue(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
     }
 
+    [Test]
     public void TestWriterIsNotReused01()
     {
-      UnsafeWriter firstWriter;
-      using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
+      var thread = new Thread(() =>
       {
-        firstWriter = cookie.Writer;
-      }
+        UnsafeWriter firstWriter;
+        using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
+        {
+          firstWriter = cookie.Writer;
+        }
 
-      UnsafeWriter secondWriter;
-      using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
-      {
-        secondWriter = cookie.Writer;
-      }
+        UnsafeWriter secondWriter;
+        using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
+        {
+          secondWriter = cookie.Writer;
+        }
 
-      Assert.IsFalse(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
+        Assert.IsFalse(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
+      });
+      thread.Start();
+      thread.Join();
     }
 
+    [Test]
     public void TestWriterIsNotReused02()
     {
-      UnsafeWriter firstWriter;
-      using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
+      var thread = new Thread(() =>
       {
-        firstWriter = cookie.Writer;
-      }
+        UnsafeWriter firstWriter;
+        using (var cookie = UnsafeWriter.NewThreadLocalWriterWithCleanup())
+        {
+          firstWriter = cookie.Writer;
+        }
 
-      UnsafeWriter secondWriter;
-      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
-      {
-        secondWriter = cookie.Writer;
-      }
+        UnsafeWriter secondWriter;
+        using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+        {
+          secondWriter = cookie.Writer;
+        }
 
-      Assert.IsFalse(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
+        Assert.IsFalse(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
+      });
+      thread.Start();
+      thread.Join();
     }
   }
 }
