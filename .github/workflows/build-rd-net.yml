@@ -8,14 +8,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 15
-    container: ivanpashchenko/rider-full-debian-stretch-slim:latest
     steps:
     - uses: actions/checkout@v2
-    - run: dotnet --version
-    - run: cd rd-net && dotnet restore
-    - run: cd rd-net && dotnet build --configuration Release --no-restore
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v1.4.0
+      with:
+        dotnet-version: '3.1.302'
+    - name: Restore
+      run: cd rd-net && dotnet restore
+    - name: Compile
+      run: cd rd-net && dotnet build --configuration Release --no-restore
     - name: Tests
       run: cd rd-net && dotnet test --no-restore --verbosity quiet --logger trx
     - uses: actions/upload-artifact@v2
