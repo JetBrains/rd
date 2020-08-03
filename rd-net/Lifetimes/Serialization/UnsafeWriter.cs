@@ -127,6 +127,7 @@ namespace JetBrains.Serialization
       {
         cleanupAction = () =>
         {
+          ourWriter.FreeMemory();
           ourWriter = null;
         };
       }
@@ -158,13 +159,22 @@ namespace JetBrains.Serialization
 
     ~UnsafeWriter()
     {
+      FreeMemory();
+    }
+
+    private void FreeMemory()
+    {
       // See TMLN-925 Timeline crashes during closing
       //ourLogger.Verbose("Removing UnsafeWriter, {0:N0} bytes are being free", myCurrentAllocSize);
       if (myStartPtr != null) 
         LogLog.Catch(() => 
         {
           lock (myLock)
-            if (myStartPtr != null) Marshal.FreeHGlobal(new IntPtr(myStartPtr));
+            if (myStartPtr != null)
+            {
+              Marshal.FreeHGlobal(new IntPtr(myStartPtr));
+              myStartPtr = null;
+            }
         });
     }
     
