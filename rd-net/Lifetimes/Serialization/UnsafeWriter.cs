@@ -103,10 +103,22 @@ namespace JetBrains.Serialization
 
     private const string LogCategory = "UnsafeWriter";
 
+
+    [ThreadStatic] private static bool ourAllowUnsafeWriterCaching;
+
     /// <summary>
     /// Whether <see cref="UnsafeWriter"/> can be cached for the specific thread.
     /// </summary>
-    [ThreadStatic] public static bool AllowUnsafeWriterCaching;
+    public static bool AllowUnsafeWriterCaching
+    {
+      get => ourAllowUnsafeWriterCaching;
+      set
+      {
+        ourAllowUnsafeWriterCaching = value;
+        if (!ourAllowUnsafeWriterCaching)
+          ourWriter = null;
+      }
+    }
 
     /// <summary>
     /// Cached <see cref="UnsafeWriter"/> for reuse
@@ -520,6 +532,7 @@ namespace JetBrains.Serialization
     public static readonly WriteDelegate<byte[]> ByteArrayDelegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<int[]> IntArrayDelegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<string[]> StringArrayDelegate = (writer, x) => writer.Write(StringDelegate, x);
+
     #endregion
 
 
