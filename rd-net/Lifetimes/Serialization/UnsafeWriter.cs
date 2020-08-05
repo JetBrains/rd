@@ -21,26 +21,22 @@ namespace JetBrains.Serialization
   /// </summary>
   public sealed unsafe class UnsafeWriter
   {
+    private readonly int myInitialAllocSize;
+
     public struct Cookie : IDisposable
     {      
       private readonly UnsafeWriter myWriter;
-      private readonly Action myCleanupAction;
 
       private readonly int myStart;
 
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      public Cookie(UnsafeWriter writer) : this(writer, null)
+      public Cookie(UnsafeWriter writer)
       {
-      }
-
-      [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      public Cookie(UnsafeWriter writer, Action cleanupAction = null) : this()
-      {
+        UnsafeWriterStatistics.OnCookieCreated();
         myWriter = writer;
-        myCleanupAction = cleanupAction;
         myStart = myWriter.Count;
       }
-      
+
       public UnsafeWriter Writer
       {
         [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -97,46 +93,57 @@ namespace JetBrains.Serialization
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public void Dispose()
       {
-        myWriter?.Reset(myStart);
-        myCleanupAction?.Invoke();
+        UnsafeWriterStatistics.OnCookieDisposing(myWriter.myInitialAllocSize, myWriter.myCurrentAllocSize);
+        if (ourWriter != myWriter)
+          myWriter?.FreeMemory();
+        else 
+          myWriter?.Reset(myStart);
       }
     }
 
     private const string LogCategory = "UnsafeWriter";
 
-    [ThreadStatic]
-    private static UnsafeWriter ourWriter;
+    /// <summary>
+    /// Whether <see cref="UnsafeWriter"/> can be cached for the specific thread.
+    /// </summary>
+    [ThreadStatic] public static bool AllowUnsafeWriterCaching;
+
+    /// <summary>
+    /// Cached <see cref="UnsafeWriter"/> for reuse
+    /// </summary>
+    [ThreadStatic] private static UnsafeWriter ourWriter;
+
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static Cookie NewThreadLocalWriter()
-    {
-      return NewThreadLocalWriterImpl(false);
-    }
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static Cookie NewThreadLocalWriterWithCleanup()
     {
       return NewThreadLocalWriterImpl(true);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private static Cookie NewThreadLocalWriterImpl(bool releaseThreadStaticWriterIfNewlyCreated)
+    public static Cookie NewThreadLocalWriterNoCaching()
     {
-      Action cleanupAction = null;
-      if (releaseThreadStaticWriterIfNewlyCreated && ourWriter == null)
-      {
-        cleanupAction = () =>
-        {
-          ourWriter.FreeMemory();
-          ourWriter = null;
-        };
-      }
-
-      if (ourWriter == null) ourWriter = new UnsafeWriter();      
-      return new Cookie(ourWriter, cleanupAction);
+      return NewThreadLocalWriterImpl(false);
     }
 
-    private const int InitialAllocSize = 1 << 20;
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static Cookie NewThreadLocalWriterImpl(bool allowCaching)
+    {
+      if (ourWriter != null)
+        return new Cookie(ourWriter);
+
+      if (!allowCaching)
+        return new Cookie(new UnsafeWriter(InitialAllocSizeOnNonCachedThread));
+
+      if (!AllowUnsafeWriterCaching)
+        return new Cookie(new UnsafeWriter(InitialAllocSizeOnNonCachedThread));
+
+      ourWriter = new UnsafeWriter(InitialAllocSizeOnCachedThread);      
+      return new Cookie(ourWriter);
+    }
+
+    private const int InitialAllocSizeOnNonCachedThread = 1 << 12;
+    private const int InitialAllocSizeOnCachedThread = 1 << 20;
     private const int MaxAllocSize = 1 << 30;
 
     private readonly object myLock = new object();
@@ -147,9 +154,9 @@ namespace JetBrains.Serialization
     private byte* myPtr;
     private int myCount;    
 
-    private UnsafeWriter()
-    {            
-      myStartPtr = (byte*)Marshal.AllocHGlobal(myCurrentAllocSize = InitialAllocSize).ToPointer();
+    private UnsafeWriter(int initialAllocSize)
+    {
+      myStartPtr = (byte*)Marshal.AllocHGlobal(myCurrentAllocSize = myInitialAllocSize = initialAllocSize).ToPointer();
       if (myStartPtr == null)
         ErrorOomOldMono(); 
       //can't use ILog.Verbose here because logger is closed to UnsafeWriter
@@ -184,7 +191,7 @@ namespace JetBrains.Serialization
     {
       myPtr = myStartPtr + start;
       myCount = start;
-      if (myCurrentAllocSize > InitialAllocSize)
+      if (myCurrentAllocSize > myInitialAllocSize)
       {
         if (start == 0) Realloc(myCount);
         else LogLog.Verbose(LogCategory, "Can't realloc, start={0}", start);
@@ -232,7 +239,7 @@ namespace JetBrains.Serialization
         throw new ArgumentException(string.Format("Can't allocate more memory: {0:N0} bytes, max: {1:N0}", newCount, MaxAllocSize));
       }
 
-      var reallocSize = InitialAllocSize;
+      var reallocSize = myInitialAllocSize;
       while (newCount > reallocSize)
       {
         reallocSize <<= 1;

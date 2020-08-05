@@ -20,7 +20,7 @@ namespace JetBrains.Rd
   public abstract class WireBase : IWire
   {    
     protected readonly MessageBroker MessageBroker;
-    private IScheduler myScheduler;
+    protected IScheduler Scheduler { get; }
     private ProtocolContexts myContexts;
     
     private bool myBackwardsCompatibleWireFormat = false;
@@ -50,7 +50,7 @@ namespace JetBrains.Rd
     {
       if (scheduler == null) throw new ArgumentNullException(nameof(scheduler));
 
-      myScheduler = scheduler;
+      Scheduler = scheduler;
       MessageBroker = new MessageBroker(scheduler);
     }
 
