@@ -155,23 +155,31 @@ namespace Test.Lifetimes.Threading
       for (int i=0; i<4; i++)
         tasks.Add(Task.Run(() =>
         {
-          var rnd = new Random();
-  
-          while (Until())
+          try
           {
-            lock (tasks)
+            UnsafeWriter.AllowUnsafeWriterCaching = true;
+            var rnd = new Random();
+
+            while (Until())
             {
-              using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+              lock (tasks)
               {
-                cookie.Writer.Write(++next);
-                buffer.Put(cookie);
+                using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+                {
+                  cookie.Writer.Write(++next);
+                  buffer.Put(cookie);
+                }
               }
+
+              if (rnd.Next(1000) < 1) Thread.Sleep(1);
+              if (rnd.Next(1000) < 5)
+                buffer.Clear();
             }
-            if (rnd.Next(1000) < 1) Thread.Sleep(1);
-            if (rnd.Next(1000) < 5) 
-              buffer.Clear();
           }
-          
+          finally
+          {
+            UnsafeWriter.AllowUnsafeWriterCaching = false;
+          }
         }));
       
       Task.WaitAll(tasks.ToArray());
