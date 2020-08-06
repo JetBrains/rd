@@ -46,9 +46,8 @@ namespace JetBrains.Rd.Impl
         return;
       }
 
-      // // Don't dispose this cookie, otherwise it will delete all written data
-      var cookie = new UnsafeWriter.Cookie(writer);
-      cookie.Writer.Write(-1); // length
+      var cookie = new UnsafeWriter.Bookmark(writer);
+      writer.Write(-1); // length
       int i = 0;
       foreach (var item in value)
       {
@@ -56,7 +55,7 @@ namespace JetBrains.Rd.Impl
         itemWriter(ctx, writer, item);
       }
 
-      cookie.WriteIntLengthToCookieStart(i);
+      cookie.WriteIntLength(i);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]

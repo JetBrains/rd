@@ -337,14 +337,14 @@ namespace JetBrains.Rd.Impl
       typeId.Write(writer);
 
       // Don't dispose this cookie, otherwise it will delete all written data
-      var cookie = new UnsafeWriter.Cookie(writer);
+      var bookmark = new UnsafeWriter.Bookmark(writer);
       writer.Write(0);
       CtxWriteDelegate<object> writerDelegate;
       lock (myLock)
         writerDelegate = myWriters[typeId];
       writerDelegate(ctx, writer, value);
 
-      cookie.WriteIntLengthToCookieStart();
+      bookmark.WriteIntLength();
     }
 
     
