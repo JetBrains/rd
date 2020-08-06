@@ -155,7 +155,7 @@ namespace Test.RdFramework
     }
 
     [Test]
-    public void ReportReentrancy()
+    public void ReportReentrancy01()
     {
       var thread = new Thread(() =>
       {
@@ -165,6 +165,33 @@ namespace Test.RdFramework
         {
           using (var nestedCookie = UnsafeWriter.NewThreadLocalWriter())
             cookie.Writer.Write(0);
+        }
+      });
+      thread.Start();
+      thread.Join();
+      var reentrancyEvent = UnsafeWriterStatistics.GetEvents().FirstOrDefault(@event => @event.Type == UnsafeWriterStatistics.EventType.REENTRANCY);
+      Assert.IsNull(reentrancyEvent);
+    }
+
+    [Test]
+    public void ReportReentrancy02()
+    {
+      var thread = new Thread(() =>
+      {
+        UnsafeWriter.AllowUnsafeWriterCaching = true;
+        UnsafeWriterStatistics.ClearEvents();
+        UnsafeWriterStatistics.ReportReentrancy = true;
+        try
+        {
+          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+          {
+            using (var nestedCookie = UnsafeWriter.NewThreadLocalWriter())
+              cookie.Writer.Write(0);
+          }
+        }
+        finally
+        {
+          UnsafeWriterStatistics.ReportReentrancy = false;
         }
       });
       thread.Start();

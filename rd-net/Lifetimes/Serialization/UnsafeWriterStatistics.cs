@@ -11,6 +11,7 @@ namespace JetBrains.Serialization
     public static int ReportAllocationOnNonCachedThreadThreshold = 1 << 20;
     public static int ReportAccessCounterThreshold = 1000;
     public static int ReportOnOfN = 1000;
+    public static bool ReportReentrancy = false;
 
     // thread data
     [ThreadStatic] private static bool ourThreadIsUsed = false;
@@ -81,7 +82,7 @@ namespace JetBrains.Serialization
       }
 
       ourThreadReentrancyCounter++;
-      if (ourThreadReentrancyCounter > 1)
+      if (ourThreadReentrancyCounter > 1 && ReportReentrancy)
       {
         if (ourThreadReentrancyStacks == null)
           ourThreadReentrancyStacks = new List<string>();
