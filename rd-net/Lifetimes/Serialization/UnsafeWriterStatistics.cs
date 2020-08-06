@@ -15,6 +15,7 @@ namespace JetBrains.Serialization
     // thread data
     [ThreadStatic] private static bool ourThreadIsUsed = false;
     [ThreadStatic] private static int ourThreadReentrancyCounter = 0;
+    [ThreadStatic] private static IList<string> ourThreadReentrancyStacks = null;
     [ThreadStatic] private static int ourThreadAccessCounter = 0;
     [ThreadStatic] private static int ourThreadMaxAllocatedSize = 0;
 
@@ -46,14 +47,14 @@ namespace JetBrains.Serialization
     public class Event
     {
       public EventType Type { get; }
-      [CanBeNull] public String Stacktrace { get; }
       [CanBeNull] public string Message { get; }
+      [NotNull] public IList<string> Stacktraces { get; }
 
-      public Event(EventType type, [CanBeNull] string message, [CanBeNull] string stacktrace)
+      public Event(EventType type, [CanBeNull] string message, IList<string> stacktraces)
       {
         Type = type;
-        Stacktrace = stacktrace;
         Message = message;
+        Stacktraces = stacktraces;
       }
     }
 
@@ -65,9 +66,9 @@ namespace JetBrains.Serialization
     }
 
 
-    private static void ReportEvent(EventType type, [CanBeNull] string message)
+    private static void ReportEvent(EventType type, [CanBeNull] string message, IList<string> stacktraces = null)
     {
-      var @event = new Event(type, message, Environment.StackTrace);
+      var @event = new Event(type, message, stacktraces ?? new []{Environment.StackTrace});
       AddEvent(@event);
     }
 
@@ -80,8 +81,11 @@ namespace JetBrains.Serialization
       }
 
       ourThreadReentrancyCounter++;
-      // if (ourThreadReentrancyCounter > 1)
-      //   ReportEvent(EventType.REENTRANCY, null);
+      if (ourThreadReentrancyCounter > 1)
+      {
+        if (ourThreadReentrancyStacks == null)
+          ourThreadReentrancyStacks = new List<string>();
+      }
 
       ourThreadAccessCounter++;
       if (!UnsafeWriter.AllowUnsafeWriterCaching && ourThreadAccessCounter > ReportAccessCounterThreshold)
@@ -94,6 +98,16 @@ namespace JetBrains.Serialization
     public static void OnCookieDisposing(int initialAllocSize, int currentSize)
     {
       ourThreadReentrancyCounter--;
+      if (ourThreadReentrancyStacks != null)
+      {
+        ourThreadReentrancyStacks.Add(Environment.StackTrace);
+        if (ourThreadReentrancyCounter == 0)
+        {
+          ReportEvent(EventType.REENTRANCY, null, ourThreadReentrancyStacks);
+          ourThreadReentrancyStacks = null;
+        }
+      }
+
       if (!UnsafeWriter.AllowUnsafeWriterCaching)
       {
         if (currentSize > ReportAllocationOnNonCachedThreadThreshold)
