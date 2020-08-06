@@ -62,11 +62,6 @@ namespace JetBrains.Serialization
         return res;
       }
 
-      public void WriteIntLengthToCookieStart(int length)
-      {
-        *(int*) Data = length;
-      }
-
       public void CopyTo(byte[] dst, [Optional] int dstOffset, [Optional] int? count)
       {
         CopyTo(dst, dstOffset, count ?? Count);
@@ -115,7 +110,7 @@ namespace JetBrains.Serialization
       /// </summary>
       public void WriteIntLength()
       {
-        *(int*) Data = myStart - sizeof(int);
+        *(int*) Data = myWriter.Count - myStart - sizeof(int);
       }
 
       public void WriteIntLength(int length)
