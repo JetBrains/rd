@@ -124,6 +124,7 @@ namespace Test.RdFramework
     {
       var thread = new Thread(() =>
       {
+        UnsafeWriterStatistics.ClearEvents();
         for (int i = 0; i < UnsafeWriterStatistics.ReportAccessCounterThreshold + UnsafeWriterStatistics.ReportOnOfN; ++i)
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
@@ -141,6 +142,7 @@ namespace Test.RdFramework
     {
       var thread = new Thread(() =>
       {
+        UnsafeWriterStatistics.ClearEvents();
         using (var cookie = UnsafeWriter.NewThreadLocalWriter())
         {
           for (int i=0; i<UnsafeWriterStatistics.ReportAllocationOnNonCachedThreadThreshold+1; ++i)
@@ -152,12 +154,13 @@ namespace Test.RdFramework
       var memoryAllocationEvent = UnsafeWriterStatistics.GetEvents().First(@event => @event.Type == UnsafeWriterStatistics.EventType.MEMORY_ALLOCATION);
     }
 
-    [Test, Ignore("Temporarily not reported")]
+    [Test]
     public void ReportReentrancy()
     {
       var thread = new Thread(() =>
       {
         UnsafeWriter.AllowUnsafeWriterCaching = true;
+        UnsafeWriterStatistics.ClearEvents();
         using (var cookie = UnsafeWriter.NewThreadLocalWriter())
         {
           using (var nestedCookie = UnsafeWriter.NewThreadLocalWriter())
@@ -167,6 +170,7 @@ namespace Test.RdFramework
       thread.Start();
       thread.Join();
       var reentrancyEvent = UnsafeWriterStatistics.GetEvents().First(@event => @event.Type == UnsafeWriterStatistics.EventType.REENTRANCY);
+      Assert.IsTrue(reentrancyEvent.Stacktraces.Count == 2, "reentrancyEvent.Stacktraces.Count == 2");
     }
   }
 }
