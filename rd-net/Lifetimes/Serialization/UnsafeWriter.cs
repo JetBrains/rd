@@ -62,14 +62,6 @@ namespace JetBrains.Serialization
         return res;
       }
 
-      /// <summary>
-      /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer. Cookie must be prepared by invoking `<see cref="UnsafeWriter.Write(int)"/><c>(0)</c>` as first cookie call.
-      /// </summary>
-      public void WriteIntLengthToCookieStart()
-      {
-        *(int*) Data = Count - sizeof(int);
-      }
-
       public void WriteIntLengthToCookieStart(int length)
       {
         *(int*) Data = length;
@@ -98,6 +90,37 @@ namespace JetBrains.Serialization
           myWriter?.FreeMemory();
         else 
           myWriter?.Reset(myStart);
+      }
+    }
+
+    public struct Bookmark
+    {
+      private readonly UnsafeWriter myWriter;
+      private readonly int myStart;
+
+      public Bookmark(UnsafeWriter writer)
+      {
+        myWriter = writer;
+        myStart = myWriter.Count;
+      }
+
+      public byte* Data
+      {
+        [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+        get => myWriter.Data + myStart;
+      }
+
+      /// <summary>
+      /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer. Cookie must be prepared by invoking `<see cref="UnsafeWriter.Write(int)"/><c>(0)</c>` as first cookie call.
+      /// </summary>
+      public void WriteIntLength()
+      {
+        *(int*) Data = myStart - sizeof(int);
+      }
+
+      public void WriteIntLength(int length)
+      {
+        *(int*) Data = length;
       }
     }
 
