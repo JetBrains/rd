@@ -96,7 +96,7 @@ namespace JetBrains.Serialization
       }
     }
 
-    public static void OnCookieDisposing(int initialAllocSize, int currentSize)
+    public static void OnCookieDisposing(int currentSize)
     {
       ourThreadReentrancyCounter--;
       if (ourThreadReentrancyStacks != null)
