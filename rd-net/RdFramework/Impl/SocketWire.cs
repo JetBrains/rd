@@ -113,7 +113,7 @@ namespace JetBrains.Rd.Impl
       {
         void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
-          Scheduler.Queue(Ping);
+          Ping();
         }
 
         var timer = new Timer(HeartBeatInterval.TotalMilliseconds){AutoReset = true};
