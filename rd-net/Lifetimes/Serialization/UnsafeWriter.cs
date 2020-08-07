@@ -80,7 +80,7 @@ namespace JetBrains.Serialization
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public void Dispose()
       {
-        UnsafeWriterStatistics.OnCookieDisposing(myWriter.myInitialAllocSize, myWriter.myCurrentAllocSize);
+        UnsafeWriterStatistics.OnCookieDisposing(myWriter?.myCurrentAllocSize ?? 0);
         if (ourWriter != myWriter)
           myWriter?.FreeMemory();
         else 

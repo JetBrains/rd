@@ -199,5 +199,13 @@ namespace Test.RdFramework
       var reentrancyEvent = UnsafeWriterStatistics.GetEvents().First(@event => @event.Type == UnsafeWriterStatistics.EventType.REENTRANCY);
       Assert.IsTrue(reentrancyEvent.Stacktraces.Count == 2, "reentrancyEvent.Stacktraces.Count == 2");
     }
+
+    [Test]
+    public void TestNullWriterInCookie()
+    {
+      using (var cookie = new UnsafeWriter.Cookie())
+      {
+      }
+    }
   }
 }
