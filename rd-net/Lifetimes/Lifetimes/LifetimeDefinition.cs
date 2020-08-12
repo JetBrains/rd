@@ -103,11 +103,8 @@ namespace JetBrains.Lifetimes
         
     #region State
 
-    private const int ResourcesInitialCapacity = 1; 
-    
     private int myResCount;
-    //in fact we could optimize footprint even better by changing `object[]` to `object` for single object 
-    [CanBeNull] private object[] myResources = new object[ResourcesInitialCapacity];
+    [CanBeNull] private object myResourcesObject;
     
     private int myState;
 
@@ -404,15 +401,24 @@ namespace JetBrains.Lifetimes
       // Then children lifetimes become canceled in their termination 
       
       // In fact here access to resources could be done without mutex because setting cancellation status of children is rather optimization than necessity
-      var resources = myResources;
-      if (resources == null) return;
-      
-      //Math.min is to ensure that even if some other thread increased myResCount, we don't get IndexOutOfBoundsException
-      for (var i = Math.Min(myResCount, resources.Length) - 1; i >= 0; i--)  
+      switch (myResourcesObject)
       {
-        (resources[i] as LifetimeDefinition)?.MarkCancelingRecursively();
+        case null: return;
+        
+        case object[] resources:
+          //Math.min is to ensure that even if some other thread increased myResCount, we don't get IndexOutOfBoundsException
+          for (var i = Math.Min(myResCount, resources.Length) - 1; i >= 0; i--) 
+            MarkCancelingLifetime(resources[i]);
+          return;
+        
+        case {} resource:
+          MarkCancelingLifetime(resource);
+          return;
       }
     }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static void MarkCancelingLifetime(object obj) => (obj as LifetimeDefinition)?.MarkCancelingRecursively();
 
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
@@ -424,43 +430,22 @@ namespace JetBrains.Lifetimes
       Assertion.Assert(ourMutexSlice[myState] == false, "{0}: mutex must be released in this point", this);
       //no one can take mutex after this point
 
-      var resources = myResources;
-      Assertion.AssertNotNull(resources, "{0}: `resources` can't be null on destructuring stage", this);
-      
-      for (var i = myResCount - 1; i >= 0; i--)
+      var resourcesObject = myResourcesObject;
+      Assertion.Assert(resourcesObject != null || myResCount == 0, "{0}: `resources` can't be null on destructuring stage", this);
+
+      switch (resourcesObject)
       {
-        try
-        {
-          switch (resources[i])
-          {
-            case Action a:
-              a();
-              break;
-
-            case LifetimeDefinition ld:
-              ld.Terminate();
-              break;
-
-            case IDisposable d:
-              d.Dispose();
-              break;
-            
-            case ITerminationHandler th:
-              th.OnTermination(Lifetime);
-              break;
-
-            default:
-              Log.Error("{0}: unknown type of termination resource: {1}", this, resources[i]);
-              break;
-          }
-        }
-        catch (Exception e)
-        {
-          Log.Error(e, $"{this}: exception on termination of resource[{i}]: ${resources[i]}");
-        }
+        case object[] resources: 
+          for (var i = myResCount - 1; i >= 0; i--) 
+            DestructResource(resources[i]);
+          break;
+        
+        case { } resource:
+          DestructResource(resource);
+          break;
       }
 
-      myResources = null;
+      myResourcesObject = null;
       myResCount = 0;
       
       //In fact we shouldn't make cts null, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
@@ -471,9 +456,40 @@ namespace JetBrains.Lifetimes
       Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
     }
 
-    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private void DestructResource(object resource)
+    {
+      try
+      {
+        switch (resource)
+        {
+          case Action a:
+            a();
+            break;
 
-    
+          case LifetimeDefinition ld:
+            ld.Terminate();
+            break;
+
+          case IDisposable d:
+            d.Dispose();
+            break;
+
+          case ITerminationHandler th:
+            th.OnTermination(Lifetime);
+            break;
+
+          default:
+            Log.Error("{0}: unknown type of termination resource: {1}", this, resource);
+            break;
+        }
+      }
+      catch (Exception e)
+      {
+        Log.Error(e, $"{this}: exception on termination of resource: ${resource}");
+      }
+    }
+
     #endregion
 
     
@@ -494,30 +510,56 @@ namespace JetBrains.Lifetimes
         if (!mutex.Success)
           return false;
 
-        var resources = myResources;
-        Assertion.AssertNotNull(resources, "{0}: `resources` can't be null under mutex while status < Terminating", this);
-        
-        if (myResCount == resources.Length)
+        switch (myResourcesObject)
         {
-          var countAfterCleaning = 0;
-          for (var i = 0; i < myResCount; i++)
-          {
-            //can't clear Canceling because TryAdd works in Canceling state 
-            if (resources[i] is LifetimeDefinition ld && ld.Status >= LifetimeStatus.Terminating)
-              resources[i] = null;
-            else
-              resources[countAfterCleaning++] = resources[i];
-          }
+          case null:
+            myResourcesObject = action;
+            myResCount = 1;
+            return true;
+          
+          case object[] resources:
+            if (myResCount == resources.Length)
+            {
+              var countAfterCleaning = 0;
+              for (var i = 0; i < myResCount; i++)
+              {
+                //can't clear Canceling because TryAdd works in Canceling state 
+                if (IsTerminatingLifetime(resources[i]))
+                  resources[i] = null;
+                else
+                  resources[countAfterCleaning++] = resources[i];
+              }
 
-          myResCount = countAfterCleaning;
-          if (countAfterCleaning * 2 > resources.Length)
-            Array.Resize(ref myResources, countAfterCleaning * 2); //must be more than 1, so it always should be room for one more resource
+              myResCount = countAfterCleaning;
+              if (countAfterCleaning * 2 > resources.Length)
+              {
+                Array.Resize(ref resources, countAfterCleaning * 2); //must be more than 1, so it always should be room for one more resource
+                myResourcesObject = resources;
+              }
+            }
+
+            // ReSharper disable once PossibleNullReferenceException
+            resources[myResCount++] = action;
+            return true;
+          
+          case {} resource:
+            if (IsTerminatingLifetime(resource))
+            {
+              myResourcesObject = action;
+              return true;
+            }
+
+            myResourcesObject = new[] {resource, action};
+            myResCount = 2;
+            return true;
         }
-
-        // ReSharper disable once PossibleNullReferenceException
-        myResources[myResCount++] = action;
-        return true;
       }
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static bool IsTerminatingLifetime(object obj)
+    {
+      return obj is LifetimeDefinition ld && ld.Status >= LifetimeStatus.Terminating;
     }
 
 
