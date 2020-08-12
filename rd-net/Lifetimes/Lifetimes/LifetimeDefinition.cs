@@ -29,8 +29,7 @@ namespace JetBrains.Lifetimes
 
     static LifetimeDefinition()
     {
-      Terminated.ToCancellationToken(); //to create cts
-      Terminated.Terminate();
+      Terminated.myState = ourStatusSlice.Updated(Terminated.myState, LifetimeStatus.Terminated);
     }
 
     //Dictionary is used only for thread-local termination check. Maybe it's not worth it an we should remove map.
@@ -98,7 +97,6 @@ namespace JetBrains.Lifetimes
     private static readonly BitSlice<bool> ourAllowTerminationUnderExecutionSlice = BitSlice.Bool(ourVerboseDiagnosticsSlice);
     private static readonly BitSlice<bool> ourLogErrorAfterExecution = BitSlice.Bool(ourAllowTerminationUnderExecutionSlice);
          
-    
     #endregion
     
     
@@ -149,7 +147,7 @@ namespace JetBrains.Lifetimes
     
     
     #region Init
-    
+
     /// <summary>
     /// Creates toplevel lifetime definition with no parent. <see cref="Status"/> will always be <see cref="LifetimeStatus.Alive"/>.
     /// </summary>
@@ -467,8 +465,7 @@ namespace JetBrains.Lifetimes
       
       //In fact we shouldn't make cts null, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
       //But to avoid memory leaks we must do it. So if you 1) run task with alive lifetime 2) terminate lifetime 3) in task invoke ThrowIfNotAlive() you can obtain `Faulted` state rather than `Canceled`. But it doesn't matter in `async-await` programming.     
-      if (!ReferenceEquals(this, Terminated))
-        myCts = null;
+      myCts = null;
       
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
       Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
@@ -915,16 +912,13 @@ namespace JetBrains.Lifetimes
     {
       if (myCts == null)
       {
-        if (doNotCreateCts)
-          return Terminated.ToCancellationToken();
+        if (doNotCreateCts || ReferenceEquals(this, Terminated))
+          return new CancellationToken(true);
         
         using (var mutex = new UnderMutexCookie(this, LifetimeStatus.Alive))
         {
           if (!mutex.Success)
-          {
-            Assertion.Assert(!ReferenceEquals(this, Terminated), "Mustn't reach this point on lifetime `Terminated`");
-            return Terminated.ToCancellationToken(); //to get stable CancellationTokenSource (for tasks to finish in Canceling state, rather than Faulted)
-          }
+            return new CancellationToken(true); //to get stable CancellationTokenSource (for tasks to finish in Canceling state, rather than Faulted)
           
           CreateCtsLazily();
         }
