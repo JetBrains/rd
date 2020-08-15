@@ -158,6 +158,9 @@ namespace Test.Lifetimes.Lifetimes
     public void TestTerminated()
     {
       Assert.True(Lifetime.Terminated.Status == LifetimeStatus.Terminated);
+      
+      Assert.True(Lifetime.Terminated.ToCancellationToken().IsCancellationRequested);
+      Assert.AreEqual(Lifetime.Terminated.ToCancellationToken(), Lifetime.Terminated.ToCancellationToken());
     }
 
 
