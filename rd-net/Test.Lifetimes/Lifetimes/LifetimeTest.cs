@@ -776,8 +776,28 @@ namespace Test.Lifetimes.Lifetimes
       var resCount = def.GetDynamicField("myResCount");
       Assert.AreEqual(2, resCount); //one is dead
       
-      var resourcesCapacity = def.GetDynamicField("myResources").GetDynamicProperty("Length");
+      var resourcesCapacity = def.GetDynamicField("myResourcesObject").GetDynamicProperty("Length");
       Assert.AreEqual(2, resourcesCapacity); //one is dead
+    }
+
+    [Test]
+    public void SingleResourceTest()
+    {
+      var definition = new LifetimeDefinition();
+      var resources = definition.GetDynamicField("myResourcesObject");
+      Assert.AreEqual(resources, null);
+      var resCount = definition.GetDynamicField("myResCount");
+      Assert.AreEqual(0, resCount);
+
+      for (var i = 0; i < 10; i++)
+      {
+        using var nested = definition.Lifetime.CreateNested();
+        resources = definition.GetDynamicField("myResourcesObject");
+        Assert.AreEqual(nested, resources);
+        
+        resCount = definition.GetDynamicField("myResCount");
+        Assert.AreEqual(1, resCount);
+      }
     }
 
     
