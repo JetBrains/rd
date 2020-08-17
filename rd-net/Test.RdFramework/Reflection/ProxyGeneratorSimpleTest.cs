@@ -23,7 +23,7 @@ namespace Test.RdFramework.Reflection
     public void TestSimple()
     {
       var proxy = SFacade.ActivateProxy<ISimpleCalls>(TestLifetime, ServerProtocol);
-      SaveGeneratedAssembly();
+      // SaveGeneratedAssembly();
 
       var client = CFacade.Activator.ActivateBind<SimpleCalls>(TestLifetime, ClientProtocol);
       // typeof(Reflection.SimpleCalls);//

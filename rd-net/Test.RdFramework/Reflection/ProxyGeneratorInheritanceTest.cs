@@ -32,7 +32,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestInheritance1()
     {
-      SaveGeneratedAssembly();
+      // SaveGeneratedAssembly();
 
       var client = CFacade.Activator.ActivateBind<InheritanceTest>(TestLifetime, ClientProtocol);
       var proxy = SFacade.ActivateProxy<IInheritanceTest>(TestLifetime, ServerProtocol);

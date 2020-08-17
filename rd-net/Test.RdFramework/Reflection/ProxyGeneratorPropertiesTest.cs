@@ -45,7 +45,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestProperties()
     {
-      SaveGeneratedAssembly();
+      // SaveGeneratedAssembly();
 
       var client = CFacade.Activator.ActivateBind<PropertiesTest>(TestLifetime, ClientProtocol);
       var proxy = SFacade.ActivateProxy<IPropertiesTest>(TestLifetime, ServerProtocol);

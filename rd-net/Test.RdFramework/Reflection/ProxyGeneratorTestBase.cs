@@ -24,7 +24,7 @@ namespace Test.RdFramework.Reflection
 
       await Wait();
 
-      SaveGeneratedAssembly();
+      // SaveGeneratedAssembly();
       
       await YieldToServer();
       Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value,
