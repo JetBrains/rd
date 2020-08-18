@@ -190,7 +190,10 @@ namespace JetBrains.Serialization
       if (myStartPtr == null)
         ErrorOomOldMono(); 
       //can't use ILog.Verbose here because logger is closed to UnsafeWriter
-      LogLog.Verbose(LogCategory, "Created UnsafeWriter, initial alloc size: {0:N0} bytes", myCurrentAllocSize);
+      if (myCurrentAllocSize <= InitialAllocSizeOnNonCachedThread)
+        LogLog.Trace(LogCategory, "Created UnsafeWriter, initial alloc size: {0:N0} bytes", myCurrentAllocSize);
+      else
+        LogLog.Verbose(LogCategory, "Created UnsafeWriter, initial alloc size: {0:N0} bytes", myCurrentAllocSize);
       Reset();
     }
 
