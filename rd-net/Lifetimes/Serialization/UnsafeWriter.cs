@@ -206,18 +206,25 @@ namespace JetBrains.Serialization
     {
       // See TMLN-925 Timeline crashes during closing
       //ourLogger.Verbose("Removing UnsafeWriter, {0:N0} bytes are being free", myCurrentAllocSize);
-      if (myStartPtr != null) 
-        LogLog.Catch(() => 
+      if (myStartPtr != null)
+      {
+        try
         {
           lock (myLock)
+          {
             if (myStartPtr != null)
             {
               Marshal.FreeHGlobal(new IntPtr(myStartPtr));
               myStartPtr = null;
             }
-        });
+          }
+        }
+        catch (Exception e)
+        {
+          LogLog.Error(e);
+        }
+      }
     }
-    
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void Reset(int start = 0)
