@@ -17,7 +17,7 @@ dependencies {
     compile(project(":rd-core:"))
     implementation(gradleApi())
     testImplementation(project(":rd-framework"))
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
+    compile("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
 }
 
