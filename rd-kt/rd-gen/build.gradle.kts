@@ -17,7 +17,8 @@ dependencies {
     compile(project(":rd-core:"))
     implementation(gradleApi())
     testImplementation(project(":rd-framework"))
-    compile("org.jetbrains.kotlin:kotlin-compiler:${kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
 }
 
 val fatJar = task<Jar>("fatJar") {
