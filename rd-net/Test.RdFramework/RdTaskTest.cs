@@ -151,7 +151,12 @@ namespace Test.RdFramework
       var call2 = new RdCall<Unit, RdSignal<int>>(Serializers.ReadVoid, Serializers.WriteVoid, RdSignal<int>.Read, RdSignal<int>.Write);
 
       var respSignal = new RdSignal<int>();
-      call2.Set(_ => respSignal);
+      var endpointLfTerminated = false;
+      call2.Set((endpointLf, _) =>
+      {
+        endpointLf.OnTermination(() => endpointLfTerminated = true);
+        return RdTask<RdSignal<int>>.Successful(respSignal);
+      });
       
       var serverEntity = BindToServer(LifetimeDefinition.Lifetime, call1, ourKey);
       var clientEntity = BindToClient(LifetimeDefinition.Lifetime, call2, ourKey);
@@ -171,11 +176,13 @@ namespace Test.RdFramework
       respSignal.Fire(2);
       respSignal.Fire(3);
       ld.Terminate();
-      respSignal.Fire(4);
+      Assert.False(respSignal.IsBound);
 
       SpinWaitEx.SpinUntil(() => log.Count >= 3);
       Thread.Sleep(100);
       Assert.AreEqual(new [] {1, 2, 3}, log.ToArray());
+      
+      Assert.True(endpointLfTerminated);
     }
     
     
