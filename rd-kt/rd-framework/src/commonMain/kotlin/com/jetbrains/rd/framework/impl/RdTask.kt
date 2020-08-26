@@ -35,75 +35,100 @@ open class RdTask<T> : IRdTask<T> {
 
 
 @Suppress("UNCHECKED_CAST")
-class WiredRdTask<TReq, TRes>(
+abstract class WiredRdTask<TReq, TRes>(
     val call: RdCall<TReq,TRes>,
     override val rdid: RdId,
-    override val wireScheduler: IScheduler,
-    private val isEndpoint: Boolean
+    override val wireScheduler: IScheduler
 ) : RdTask<TRes>(), IRdWireable {
 
-    override val protocol: IProtocol
-        get() = call.protocol
-    override val serializationContext: SerializationCtx
-        get() = call.serializationContext
+    override val protocol: IProtocol get() = call.protocol
+    override val serializationContext: SerializationCtx get() = call.serializationContext
 
     val wire get() = call.wire
     override val location: RName = call.location.sub(rdid.toString(), ".")
+}
 
-    internal fun subscribe(outerLifetime: Lifetime): Lifetime {
+class CallSideWiredRdTask<TReq, TRes>(
+    outerLifetime: Lifetime,
+    call: RdCall<TReq, TRes>,
+    rdid: RdId,
+    wireScheduler: IScheduler
+) : WiredRdTask<TReq, TRes>(call, rdid, wireScheduler) {
+
+    init {
         val taskWireSubscriptionDefinition = outerLifetime.createNested()
-        val externalCancellation = outerLifetime.createNested()
 
-        call.wire.advise(taskWireSubscriptionDefinition.lifetime, this)
+        call.wire.advise(taskWireSubscriptionDefinition.lifetime, this) //this lifetimeDef listen only one value
         taskWireSubscriptionDefinition.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
 
         result.adviseOnce(Lifetime.Eternal) { taskResult ->
-            try {
-                if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
-                    if (isEndpoint)
-                        taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
+            taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
 
-                    taskResult.value.bindPolymorphic(externalCancellation.lifetime, call, rdid.toString())
-                } else {
-                    externalCancellation.terminate()
+            if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
+                taskResult.value.bindPolymorphic(outerLifetime, call, rdid.toString())
+                if (!outerLifetime.onTerminationIfAlive(::sendCancellation)) {
+                    sendCancellation()
                 }
-
-                if (isEndpoint) {
-                    wire.send(rdid) { writer ->
-                        RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
-                    }
-                } else if (taskResult is RdTaskResult.Cancelled) //we need to transfer cancellation to the other side
-                {
-                    RdReactiveBase.logSend.trace { "send cancellation" }
-                    wire.send(rdid) { writer ->
-                        writer.writeVoid(Unit)
-                    } //send cancellation to the other side
-                }
-
-            } finally {
-                taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
+            } else if (taskResult is RdTaskResult.Cancelled) { //we need to transfer cancellation to the other side
+                sendCancellation()
             }
         }
-        
-        return externalCancellation.lifetime
+    }
+
+    private fun sendCancellation() {
+        RdReactiveBase.logSend.trace { "send cancellation" }
+        wire.send(rdid) { writer ->
+            writer.writeVoid(Unit)
+        } //send cancellation to the other side
     }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
-        if (isEndpoint) //we are on endpoint side, so listening for cancellation
-        {
-            RdReactiveBase.logReceived.trace { "received cancellation" }
-            buffer.readVoid() //nothing just a void value
-            result.setIfEmpty(RdTaskResult.Cancelled())
-        } else // we are at call side, so listening no response and bind it if it's bindable
-        {
-            val resultFromWire = RdTaskResult.read(call.serializationContext, buffer, call.responseSzr)
+        // we are at call side, so listening no response and bind it if it's bindable
+        val resultFromWire = RdTaskResult.read(call.serializationContext, buffer, call.responseSzr)
 
-            RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) received response for task '$rdid' : ${resultFromWire.printToString()} " }
-            if (!result.setIfEmpty(resultFromWire))
-                RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
-        }
+        RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) received response for task '$rdid' : ${resultFromWire.printToString()} " }
+        if (!result.setIfEmpty(resultFromWire))
+            RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
     }
 }
+
+class EndpointWiredRdTask<TReq, TRes>(
+    bindLifetime: Lifetime,
+    call: RdCall<TReq, TRes>,
+    rdid: RdId,
+    wireScheduler: IScheduler
+) : WiredRdTask<TReq, TRes>(call, rdid, wireScheduler) {
+
+    private val def = bindLifetime.createNested()
+    val lifetime get() = def.lifetime
+
+    init {
+        call.wire.advise(lifetime, this)
+        lifetime.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
+
+        result.adviseOnce(Lifetime.Eternal) { taskResult ->
+            if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
+                taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
+                taskResult.value.bindPolymorphic(lifetime, call, rdid.toString())
+            } else {
+                def.terminate()
+            }
+
+            wire.send(rdid) { writer ->
+                RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+            }
+        }
+    }
+
+    override fun onWireReceived(buffer: AbstractBuffer) {
+        //we are on endpoint side, so listening for cancellation
+        RdReactiveBase.logReceived.trace { "received cancellation" }
+        buffer.readVoid() //nothing just a void value
+        result.setIfEmpty(RdTaskResult.Cancelled())
+        def.terminate()
+    }
+}
+
 
 class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
 {
@@ -189,10 +214,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         if (!async) assertThreading()
 
         val taskId = protocol.identity.next(RdId.Null)
-        val task = WiredRdTask(this, taskId, scheduler, false)
-
-        //no need for cancellationLifetime on call site
-        task.subscribe(lifetime.intersect(bindLifetime))
+        val task = CallSideWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler)
 
         wire.send(rdid) { buffer ->
             logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
@@ -220,8 +242,8 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     override fun onWireReceived(buffer: AbstractBuffer) {
         val taskId = RdId.read(buffer)
 
-        val wiredTask = WiredRdTask(this, taskId, endpointSchedulerForHandlerAndCancellation ?: wireScheduler, true)
-        val externalCancellation = wiredTask.subscribe(bindLifetime)
+        val wiredTask = EndpointWiredRdTask(bindLifetime, this, taskId, endpointSchedulerForHandlerAndCancellation ?: wireScheduler)
+        val externalCancellation = wiredTask.lifetime
 
         val rdTask = try {
             val value = requestSzr.read(serializationContext, buffer)

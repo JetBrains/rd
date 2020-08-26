@@ -168,7 +168,11 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         val call2 = RdCall(FrameworkMarshallers.Void, RdSignal.Companion as ISerializer<RdSignal<Int>>).static(entity_id)
 
         val respSignal = RdSignal<Int>()
-        call2.set(null) { _ -> respSignal }
+        var endpointLfTerminated = false
+        call2.set(null) { endpointLf, _ ->
+            endpointLf.onTermination { endpointLfTerminated = true }
+            RdTask.fromResult(respSignal)
+        }
 
         serverProtocol.bindStatic(call1, "server")
         clientProtocol.bindStatic(call2, "client")
@@ -179,7 +183,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         val task1 = call1.start(lf, Unit)
 
         spinUntil { task1.result.hasValue }
-        com.jetbrains.rd.util.assert(task1.isSucceeded)
+        assert(task1.isSucceeded)
 
         val signal = task1.result.valueOrThrow.unwrap()
         val log = mutableListOf<Int>()
@@ -192,11 +196,13 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         respSignal.fire(3)
 
         ld.terminate()
-        respSignal.fire(4)
+        assertFalse(respSignal.isBound)
 
         spinUntil { log.count() >= 3 }
         Thread.sleep(100)
         log.toIntArray().contentEquals(arrayOf(1, 2, 3).toIntArray())
+
+        assert(endpointLfTerminated)
     }
 
 

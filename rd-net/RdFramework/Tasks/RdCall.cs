@@ -75,9 +75,9 @@ namespace JetBrains.Rd.Tasks
     {
       var taskId = RdId.Read(reader);
       
-      var wiredTask = new WiredRdTask<TReq, TRes>(this, taskId, myEndpointSchedulerForHandlerAndCancellation ?? WireScheduler, true);
+      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(myBindLifetime, this, taskId, myEndpointSchedulerForHandlerAndCancellation ?? WireScheduler);
       //subscribe for lifetime cancellation
-      var externalCancellation = wiredTask.Subscribe(myBindLifetime);
+      var externalCancellation = wiredTask.Lifetime;
 
       using (UsingDebugInfo()) //now supports only sync handlers
       {
@@ -161,10 +161,8 @@ namespace JetBrains.Rd.Tasks
       AssertNullability(request);
 
       var taskId = Proto.Identities.Next(RdId.Nil);
-      var task = new WiredRdTask<TReq, TRes>(this, taskId, scheduler, false);
+      var task = new WiredRdTask<TReq,TRes>.CallSide(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler);
       
-      //no need for cancellationLifetime on call site
-      var _ = task.Subscribe(Lifetime.Intersect(requestLifetime, myBindLifetime));
       Wire.Send(RdId, (writer) =>
       {
         SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");
