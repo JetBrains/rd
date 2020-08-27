@@ -62,8 +62,8 @@ Open solution in IntellijIDEA:  https://github.com/JetBrains/rd
 
 #### Requirements
 
-* Gradle 6.2.2
-* Kotlin 1.3.61
+* Gradle 6.6.1
+* Kotlin 1.4.0
 
 #### Console build instructions
 

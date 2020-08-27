@@ -10,6 +10,12 @@ plugins {
     kotlin("jvm")
 }
 
+sourceSets {
+    main {
+        compileClasspath = configurations.compileClasspath.get().minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
+    }
+}
+
 val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.main, evaluationDependsOn(":rd-gen").sourceSets["models"])
 
 tasks {

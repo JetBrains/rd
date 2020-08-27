@@ -14,11 +14,12 @@ repositories {
 }
 
 dependencies {
-    compile(project(":rd-core:"))
+    implementation(project(":rd-core:"))
     implementation(gradleApi())
+    implementation("org.jetbrains.intellij.deps:trove4j:1.0.20181211")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
+    implementation("org.jetbrains.kotlin:kotlin-script-runtime")
     testImplementation(project(":rd-framework"))
-    compile("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
-    implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
 }
 
 val fatJar = task<Jar>("fatJar") {
@@ -35,8 +36,13 @@ apply(from = "models.gradle.kts")
 lateinit var models: SourceSet
 
 sourceSets {
+    main {
+        compileClasspath = configurations.compileClasspath.get().minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
+    }
+
     models = create("models") {
         kotlin {
+            compileClasspath = configurations.compileClasspath.get().minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
             compileClasspath += main.get().output
 
             listOf("interning", "demo", "sync", "openEntity").map {

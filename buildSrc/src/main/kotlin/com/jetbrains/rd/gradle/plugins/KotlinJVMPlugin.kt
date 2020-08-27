@@ -89,6 +89,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
 
             dependencies {
                 "implementation"("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+                "implementation"("org.jetbrains.kotlin:kotlin-stdlib-common:$kotlinVersion")
                 "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
                 "implementation"("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
