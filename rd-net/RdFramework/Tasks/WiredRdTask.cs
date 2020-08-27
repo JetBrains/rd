@@ -45,9 +45,9 @@ namespace JetBrains.Rd.Tasks
     
     
     
-    internal class CallSide : WiredRdTask<TReq, TRes>
+    internal class CallSite : WiredRdTask<TReq, TRes>
     {
-      public CallSide(Lifetime outerLifetime, RdCall<TReq, TRes> call, RdId rdId, IScheduler wireScheduler) : base(call, rdId, wireScheduler)
+      public CallSite(Lifetime outerLifetime, RdCall<TReq, TRes> call, RdId rdId, IScheduler wireScheduler) : base(call, rdId, wireScheduler)
       {
         var taskWireSubscriptionDefinition = outerLifetime.CreateNested();
       
