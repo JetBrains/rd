@@ -48,7 +48,7 @@ abstract class WiredRdTask<TReq, TRes>(
     override val location: RName = call.location.sub(rdid.toString(), ".")
 }
 
-class CallSideWiredRdTask<TReq, TRes>(
+class CallSiteWiredRdTask<TReq, TRes>(
     outerLifetime: Lifetime,
     call: RdCall<TReq, TRes>,
     rdid: RdId,
@@ -214,7 +214,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         if (!async) assertThreading()
 
         val taskId = protocol.identity.next(RdId.Null)
-        val task = CallSideWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler)
+        val task = CallSiteWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler)
 
         wire.send(rdid) { buffer ->
             logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }

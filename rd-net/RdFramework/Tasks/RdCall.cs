@@ -161,7 +161,7 @@ namespace JetBrains.Rd.Tasks
       AssertNullability(request);
 
       var taskId = Proto.Identities.Next(RdId.Nil);
-      var task = new WiredRdTask<TReq,TRes>.CallSide(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler);
+      var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler);
       
       Wire.Send(RdId, (writer) =>
       {
