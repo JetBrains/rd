@@ -20,8 +20,7 @@ namespace JetBrains.Util
         Environment.OSVersion.Platform == PlatformID.Win32Windows ||
         Environment.OSVersion.Platform == PlatformID.WinCE;
       
-      IsRunningOnCore = string.Equals(
-        typeof(string).Assembly.GetName().Name,
+      IsRunningOnCore = typeof(string).Assembly.FullName.StartsWith(
         "System.Private.CoreLib",
         StringComparison.Ordinal);
 
