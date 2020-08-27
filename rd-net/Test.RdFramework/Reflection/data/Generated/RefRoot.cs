@@ -62,7 +62,6 @@ namespace Test.RdFramework.Reflection.Generated
     {
       
       serializers.RegisterToplevelOnce(typeof(RefRoot), RefRoot.RegisterDeclaredTypesSerializers);
-      serializers.RegisterToplevelOnce(typeof(RefExt), RefExt.RegisterDeclaredTypesSerializers);
     }
     
     public RefRoot(Lifetime lifetime, IProtocol protocol) : this()

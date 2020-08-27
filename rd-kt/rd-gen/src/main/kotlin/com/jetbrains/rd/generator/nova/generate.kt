@@ -8,6 +8,8 @@ import com.jetbrains.rd.util.string.condstr
 import java.io.File
 import java.lang.Class
 import java.lang.reflect.Modifier
+import java.net.URL
+import java.net.URLClassLoader
 
 fun generateRdModel(
     classLoader: ClassLoader,
@@ -34,7 +36,7 @@ fun generateRdModel(
 
     val javaClasses = collectClasses(classLoader, namespacePrefixes, verbose)
 
-    val toplevels = collectTopLevels(javaClasses, verbose)
+    val toplevels = collectTopLevels(classLoader, javaClasses, verbose)
 
 
     val validationErrors = ArrayList<String>()
@@ -51,7 +53,14 @@ fun generateRdModel(
             validationErrors.joinToString ("") {"\n\n>> $it"}
         )
 
-    val generatorsToInvoke = collectSortedGeneratorsToInvoke(roots, javaClasses, genfilter, verbose, gradleGenerationSpecs)
+    val generatorsToInvoke = collectSortedGeneratorsToInvoke(
+        classLoader,
+        roots,
+        javaClasses,
+        genfilter,
+        verbose,
+        gradleGenerationSpecs
+    )
 
     if (verbose) {
         println()
@@ -133,18 +142,30 @@ private fun collectClasses(classLoader: ClassLoader,
     return classes
 }
 
+private fun reloadInCompatibleClassLoader(parentClassLoader: ClassLoader, classes: List<Class<*>>): List<Class<*>> {
+    val classLoaders = mapOf<URL, ClassLoader>()
+    return classes.map { cl ->
+        val codeBase = cl.protectionDomain.codeSource.location
+        val classLoader = classLoaders.getOrElse(codeBase) { URLClassLoader(arrayOf(codeBase), parentClassLoader) }
+        classLoader.loadClass(cl.name)
+    }
+}
 
 private fun collectTopLevels(
+    foreignClassLoader: ClassLoader,
     classes: List<Class<*>>,
     verbose: Boolean
 ): List<Toplevel> {
+    val foreignToplevel = foreignClassLoader.loadClass(Toplevel::class.qualifiedName)
 
-    val toplevelClasses = classes.filter { Toplevel::class.java.isAssignableFrom(it) }
+    val toplevelClasses = classes.filter { foreignToplevel.isAssignableFrom(it) }
         .filter { !(it.isInterface || Modifier.isAbstract(it.modifiers)) }.toList()
     if (verbose) println("${toplevelClasses.size} toplevel class${(toplevelClasses.size != 1).condstr { "es" }} found")
 
+    val currentClassLoader = Toplevel::class.java.classLoader
+    val reloadedTopLevels = reloadInCompatibleClassLoader(currentClassLoader, toplevelClasses)
 
-    val toplevels = toplevelClasses.map {
+    val toplevels = reloadedTopLevels.map {
         val kclass = it.kotlin
         if (kclass.constructors.any())
             it.getDeclaredConstructor().newInstance()
@@ -162,6 +183,7 @@ private fun collectTopLevels(
 
 
 private fun collectSortedGeneratorsToInvoke(
+    foreignClassLoader: ClassLoader,
     roots: List<Root>,
     classes: List<Class<*>>,
     filterByGeneratorClassSimpleName: Regex,
@@ -173,7 +195,11 @@ private fun collectSortedGeneratorsToInvoke(
 
     val gradle = gradleGenerationSpecs.map { it.toGeneratorAndRoot(roots) }
 
-    val external = classes.filter { IGeneratorAndRoot::class.java.isAssignableFrom(it) }.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<ExternalGenerator>()
+    val foreignIGeneratorAndRoot = foreignClassLoader.loadClass(IGeneratorAndRoot::class.qualifiedName)
+    val generatorRootClasses = classes.filter { foreignIGeneratorAndRoot.isAssignableFrom(it) }
+    val currentClassLoader = IGeneratorAndRoot::class.java.classLoader
+    val reloadedGeneratorRootClasses = reloadInCompatibleClassLoader(currentClassLoader, generatorRootClasses)
+    val external = reloadedGeneratorRootClasses.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<ExternalGenerator>()
 
     if (verbose) {
         println()
