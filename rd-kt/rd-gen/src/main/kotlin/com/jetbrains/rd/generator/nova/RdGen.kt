@@ -2,6 +2,7 @@ package com.jetbrains.rd.generator.nova
 
 import com.jetbrains.rd.generator.gradle.GradleGenerationSpec
 import com.jetbrains.rd.generator.nova.util.InvalidSysproperty
+import com.jetbrains.rd.util.ClassLoaderUtil
 import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
 import com.jetbrains.rd.util.kli.Kli
@@ -131,7 +132,7 @@ class RdGen : Kli() {
         }
     }
 
-    private val defaultClassloader = RdGen::class.java.classLoader!!
+    private val defaultClassloader = ClassLoaderUtil.createClassLoaderWithoutClassesFromGradleDistribution()
 
     fun compileDsl(src: List<File>) : ClassLoader? {
         val dst = compiled.value?.apply {
