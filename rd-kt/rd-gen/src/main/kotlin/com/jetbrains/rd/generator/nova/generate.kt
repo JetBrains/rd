@@ -36,7 +36,6 @@ fun generateRdModel(
 
     val toplevels = collectTopLevels(javaClasses, verbose)
 
-
     val validationErrors = ArrayList<String>()
 
     val roots = toplevels.map { it.root }.distinct()

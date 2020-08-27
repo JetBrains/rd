@@ -290,10 +290,11 @@ class RdGen : Kli() {
                 defaultClassloader
             }
 
-
         //3. Find all rd model classes in classpath and generate code
+        val generateRdModelMethod = classloader.loadClass("com.jetbrains.rd.generator.nova.GenerateKt").methods.single { it.name == "generateRdModel" }
         val outputFolders = try {
-            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs)
+            @Suppress("UNCHECKED_CAST")
+            generateRdModelMethod.invoke(null, classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs) as Set<File>
         } catch (e : Throwable) {
             e.printStackTrace()
             return false
