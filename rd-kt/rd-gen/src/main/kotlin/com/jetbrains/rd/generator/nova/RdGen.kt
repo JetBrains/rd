@@ -2,7 +2,6 @@ package com.jetbrains.rd.generator.nova
 
 import com.jetbrains.rd.generator.gradle.GradleGenerationSpec
 import com.jetbrains.rd.generator.nova.util.InvalidSysproperty
-import com.jetbrains.rd.util.ClassLoaderUtil
 import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
 import com.jetbrains.rd.util.kli.Kli
@@ -132,7 +131,7 @@ class RdGen : Kli() {
         }
     }
 
-    private val defaultClassloader = ClassLoaderUtil.createClassLoaderWithoutClassesFromGradleDistribution()
+    private val defaultClassloader = RdGen::class.java.classLoader!!
 
     fun compileDsl(src: List<File>) : ClassLoader? {
         val dst = compiled.value?.apply {
@@ -290,11 +289,10 @@ class RdGen : Kli() {
                 defaultClassloader
             }
 
+
         //3. Find all rd model classes in classpath and generate code
-        val generateRdModelMethod = classloader.loadClass("com.jetbrains.rd.generator.nova.GenerateKt").methods.single { it.name == "generateRdModel" }
         val outputFolders = try {
-            @Suppress("UNCHECKED_CAST")
-            generateRdModelMethod.invoke(null, classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs) as Set<File>
+            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs)
         } catch (e : Throwable) {
             e.printStackTrace()
             return false

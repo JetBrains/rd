@@ -49,10 +49,8 @@ tasks {
 
     @Suppress("UNUSED_VARIABLE")
     val generateEverything by creating(RdGenerateTask::class) {
-        classpath(project.the<SourceSetContainer>()["main"]!!.compileClasspath
-                .minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
-        )
-        classpath(project.the<SourceSetContainer>()["main"]!!.output)
+        classpath(project.the<SourceSetContainer>()["main"]!!.compileClasspath)
+        classpath(project.the<SourceSetContainer>()["main"]!!.runtimeClasspath)
 
         collectSources()
 
