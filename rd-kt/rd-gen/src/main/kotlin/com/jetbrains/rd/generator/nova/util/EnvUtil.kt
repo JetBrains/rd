@@ -11,12 +11,12 @@ import java.util.*
 const val InvalidSysproperty = "--INVALID--"
 
 /**
- * Try to get java property with name [name] from [Statics] ?: [System.getProperties].
+ * Try to get java property with name [name] from [System.getProperties].
  * If failed get [default]
  * If [default] is null return string with some dignostics and [InvalidSysproperty] inside.
  */
 fun syspropertyOrInvalid(name: String, default: String? = null) : String {
-    val properties = Statics<Properties>().get() ?: System.getProperties()
+    val properties = System.getProperties()
     return properties[name]?.toString()
             ?: default
             ?: "$InvalidSysproperty($name)"

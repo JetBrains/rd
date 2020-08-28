@@ -46,10 +46,6 @@ open class RdgenParams @JvmOverloads constructor(val project: Project, val task:
     var verbose: Boolean? = null
 
 
-//  for passing system properties
-    val properties : Properties = Properties()
-
-
     //specify multiple generators
     internal val generators =  mutableListOf<GradleGenerationSpec>()
     fun generator(closure: Closure<GradleGenerationSpec>) = GradleGenerationSpec().apply {
@@ -75,45 +71,43 @@ open class RdgenTask : DefaultTask() {
     private val local: RdgenParams = extensions.create("params", RdgenParams::class.java, this)
     private val global: RdgenParams? = project.extensions.findByType(RdgenParams::class.java)
 
-    fun <T> get(p: KProperty<T>): T {
-        val res = p.call(local)
+    fun <T> get(getter: (RdgenParams) -> T): T {
+        val res = getter(local)
         if (global == null) return res
         return when {
-            res == null -> p.call(global)
-            res is Collection<*> && res.isEmpty() -> p.call(global)
-            res is Map<*, *> && res.isEmpty() -> p.call(global)
+            res == null -> getter(global)
+            res is Collection<*> && res.isEmpty() -> getter(global)
+            res is Map<*, *> && res.isEmpty() -> getter(global)
             else -> res
         }
     }
 
-    fun files(p: KProperty<List<*>>) : Set<File> {
-        val list = get(p)
+    fun files(getter: (RdgenParams) -> List<*>) : Set<File> {
+        val list = get(getter)
         val res = list.map { if (it is Function0<*>) it() else it  }
         return project.files(res).files
     }
 
     @TaskAction
     fun run() {
-        Statics<Properties>().use(get(RdgenParams::properties)) {
-            val rdGen = RdGen().apply {
-                sources *=  files(  RdgenParams::_sources).joinToString(";")
-                hashFolder.parse(   get(    RdgenParams::hashFolder))
-                compiled.parse(     get(    RdgenParams::compiled))
-                classpath.parse(    files(  RdgenParams::_classpath).joinToString(File.pathSeparator) { it.path })
-                packages.parse(     get(    RdgenParams::packages))
-                filter.parse(       get(    RdgenParams::filter))
+        val rdGen = RdGen().apply {
+            sources *=  files{  it._sources }.joinToString(";")
+            hashFolder.parse(   get{    it.hashFolder})
+            compiled.parse(     get{    it.compiled})
+            classpath.parse(    files{  it._classpath}.joinToString(File.pathSeparator) { it.path })
+            packages.parse(     get{    it.packages})
+            filter.parse(       get{    it.filter})
 
 
-                force *=            get(RdgenParams::force) ?: false
-                verbose *=          get(RdgenParams::verbose) ?: false
-                clearOutput *=      get(RdgenParams::clearOutput) ?: false
+            force *=            get{it.force} ?: false
+            verbose *=          get{it.verbose} ?: false
+            clearOutput *=      get{it.clearOutput} ?: false
 
-                gradleGenerationSpecs.addAll(get(RdgenParams::generators))
-            }
+            gradleGenerationSpecs.addAll(get{it.generators})
+        }
 
 //            print("Press any key to continue: ")
 //            System.`in`.read()
-            check(rdGen.run()) { "Rd Generation failed!" }
-        }
+        check(rdGen.run()) { "Rd Generation failed!" }
     }
 }

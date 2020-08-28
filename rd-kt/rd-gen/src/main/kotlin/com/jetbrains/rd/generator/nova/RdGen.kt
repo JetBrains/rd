@@ -43,9 +43,6 @@ class RdGen : Kli() {
     override val comments: String
         get() = "Generates RD Model from DSL "
 
-
-    var compilerClassloader : ClassLoader? = null
-
     val sources =       option_string('s',    "source", "Folders with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
     val hashFolder =    option_path(  'h',    "hash-folder","Folder to store hash file '$hashFileName' for incremental generation", Paths.get("").toAbsolutePath())
     val compiled =      option_path(  null,   "compiled", "Folder for compiled dsl. Temporary folder is created if option is not specified.")
@@ -74,11 +71,8 @@ class RdGen : Kli() {
         v("Searching for Kotlin compiler")
         try {
             val compilerClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
-            val clazz = compilerClassloader?.let {
-                v("Using special classloader for kotlin compiler: $it")
-                Class.forName(compilerClass, true, it)
-            }?: Class.forName(compilerClass)
-
+            v("Using special classloader for kotlin compiler: $defaultClassloader")
+            val clazz = Class.forName(compilerClass, true, defaultClassloader)
 
             val method = clazz.getMethod("exec", PrintStream::class.java, arrayOf("").javaClass)
             v("Compiling sources from '${src.joinToString { it.absolutePath } }' to '${dst.toAbsolutePath()}'")
