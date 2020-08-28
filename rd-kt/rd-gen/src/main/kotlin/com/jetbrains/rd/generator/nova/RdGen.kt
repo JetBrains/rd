@@ -1,19 +1,13 @@
 package com.jetbrains.rd.generator.nova
 
-import com.jetbrains.rd.generator.gradle.GradleGenerationSpec
-import com.jetbrains.rd.generator.nova.util.InvalidSysproperty
 import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
 import com.jetbrains.rd.util.kli.Kli
-import com.jetbrains.rd.util.reflection.scanForClasses
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
-import com.jetbrains.rd.util.reflection.usingValue
-import com.jetbrains.rd.util.string.condstr
 import java.io.File
 import java.io.PrintStream
 import java.lang.Class
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -58,7 +52,14 @@ class RdGen : Kli() {
     val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp|cpp")
     val verbose =       option_flag(  'v',    "verbose", "Verbose output")
 
-    val gradleGenerationSpecs = mutableListOf<GradleGenerationSpec>()
+    val generatorsFile = option_string('g', "generators", "Path to the file with serialized GeneratorSpecs")
+
+    val gradleGenerationSpecs: List<GenerationSpec>
+        get() {
+            val path = generatorsFile.value
+            return if (path == null) emptyList()
+            else GenerationSpec.loadFrom(File(generatorsFile.value))
+        }
 
     val hashfile : Path get() = Paths.get(hashFolder.value!!.toString(), hashFileName).normalize()
 
@@ -288,8 +289,7 @@ class RdGen : Kli() {
                 println("To see parameters and usages invoke `rdgen -h`")
                 defaultClassloader
             }
-
-
+        v("gradleGenerationSpecs='[${gradleGenerationSpecs.joinToString("\n")}]")
         //3. Find all rd model classes in classpath and generate code
         val outputFolders = try {
             generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs)

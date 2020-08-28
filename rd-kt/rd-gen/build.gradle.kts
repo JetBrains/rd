@@ -14,10 +14,10 @@ repositories {
 }
 
 dependencies {
-    compile(project(":rd-core:"))
+    implementation(project(":rd-core:"))
     implementation(gradleApi())
     testImplementation(project(":rd-framework"))
-    compile("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
 }
 
@@ -48,12 +48,27 @@ sourceSets {
             compiledBy("generateEverything")
         }
     }
+
+    create("gradlePlugin") {
+        compileClasspath += sourceSets["main"].compileClasspath
+    }
 }
 
 val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.test, models)
 
 tasks.named("compileTestKotlin") {
     dependsOn(testCopySources)
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks {
+    jar {
+        from(sourceSets["gradlePlugin"].output)
+    }
 }
 
 val modelsImplementation: Configuration by configurations.getting {
