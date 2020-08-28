@@ -1,6 +1,5 @@
 package com.jetbrains.rd.generator.nova
 
-import com.jetbrains.rd.generator.gradle.GradleGenerationSpec
 import com.jetbrains.rd.generator.nova.util.InvalidSysproperty
 import com.jetbrains.rd.util.reflection.scanForClasses
 import com.jetbrains.rd.util.reflection.usingValue
@@ -15,7 +14,7 @@ fun generateRdModel(
     verbose: Boolean = false,
     generatorsFilter: Regex? = null,
     clearOutputFolderIfExists: Boolean = false,
-    gradleGenerationSpecs: List<GradleGenerationSpec> = emptyList()
+    generationSpecs: List<GenerationSpec> = emptyList()
 ): Set<File> {
     val startTime = System.currentTimeMillis()
 
@@ -27,8 +26,8 @@ fun generateRdModel(
         println("Searching classes with namespace prefixes: '${namespacePrefixes.joinToString(", ")}'")
         println("Regex for filtering generators: '${genfilter.pattern}'")
 
-        if (gradleGenerationSpecs.isNotEmpty())
-            println("Found ${gradleGenerationSpecs.size} gradle generators")
+        if (generationSpecs.isNotEmpty())
+            println("Found ${generationSpecs.size} gradle generators")
     }
 
 
@@ -51,7 +50,7 @@ fun generateRdModel(
             validationErrors.joinToString ("") {"\n\n>> $it"}
         )
 
-    val generatorsToInvoke = collectSortedGeneratorsToInvoke(roots, javaClasses, genfilter, verbose, gradleGenerationSpecs)
+    val generatorsToInvoke = collectSortedGeneratorsToInvoke(roots, javaClasses, genfilter, verbose, generationSpecs)
 
     if (verbose) {
         println()
@@ -166,12 +165,12 @@ private fun collectSortedGeneratorsToInvoke(
     classes: List<Class<*>>,
     filterByGeneratorClassSimpleName: Regex,
     verbose: Boolean,
-    gradleGenerationSpecs: List<GradleGenerationSpec>
+    generationSpecs: List<GenerationSpec>
 ): List<IGeneratorAndRoot> {
 
     val hardcoded = roots.flatMap { root -> root.hardcodedGenerators.map { ExternalGenerator(it, root) } }
 
-    val gradle = gradleGenerationSpecs.map { it.toGeneratorAndRoot(roots) }
+    val gradle = generationSpecs.map { it.toGeneratorAndRoot(roots) }
 
     val external = classes.filter { IGeneratorAndRoot::class.java.isAssignableFrom(it) }.mapNotNull { it.kotlin.objectInstance }.filterIsInstance<ExternalGenerator>()
 

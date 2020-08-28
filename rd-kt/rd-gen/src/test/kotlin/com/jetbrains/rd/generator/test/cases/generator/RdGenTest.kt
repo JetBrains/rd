@@ -1,6 +1,5 @@
 package com.jetbrains.rd.generator.test.cases.generator
 
-import com.jetbrains.rd.generator.gradle.GradleGenerationSpec
 import com.jetbrains.rd.generator.nova.RdGen
 import java.io.File
 import java.net.URLClassLoader
