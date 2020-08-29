@@ -60,11 +60,6 @@ tasks.named("compileTestKotlin") {
     dependsOn(testCopySources)
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks {
     jar {
         from(sourceSets["gradlePlugin"].output)
