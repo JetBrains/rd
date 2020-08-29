@@ -34,11 +34,7 @@ public class RdGenTask extends JavaExec {
   }
 
   private List<String> generateArgs() {
-    try {
-      RdGenExtension effective = local.mergeWith(global);
-      return effective.toArguments();
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
+    RdGenExtension effective = local.mergeWith(global);
+    return effective.toArguments();
   }
 }
