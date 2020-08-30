@@ -39,4 +39,4 @@ jobs:
       if: failure()
       with:
         name: tests-log
-        path: "**/test-results/*"
+        path: "**/reports/*"
