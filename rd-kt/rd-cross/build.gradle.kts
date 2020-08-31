@@ -17,3 +17,9 @@ tasks {
         dependsOn(testCopySources)
     }
 }
+
+sourceSets {
+    main {
+        compileClasspath = compileClasspath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
+    }
+}
