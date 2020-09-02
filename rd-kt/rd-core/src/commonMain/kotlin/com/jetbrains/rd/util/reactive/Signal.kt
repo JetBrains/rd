@@ -15,7 +15,7 @@ class Signal<T> : ISignal<T> {
 
         fun Void() = Signal<Unit>()
 
-        private val logger = getLogger<Signal<*>>()
+        private val logger by lazy { getLogger<Signal<*>>() }
     }
 
 
