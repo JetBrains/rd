@@ -1,4 +1,4 @@
-# RD
+# RD (http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
 Reactive Distributed communication framework for .NET, Kotlin and C++ (experimental). 
 Inspired by JetBrains Rider IDE. 
