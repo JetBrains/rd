@@ -7,6 +7,11 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
+import com.jetbrains.rd.framework.util.asCompletableFuture
+import com.jetbrains.rd.framework.util.await
+import com.jetbrains.rd.framework.util.awaitAll
+import com.jetbrains.rd.framework.util.toRdTask
+import com.jetbrains.rd.util.AtomicInteger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -15,10 +20,7 @@ import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.Linearization
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.junit.jupiter.api.Assertions
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
@@ -199,7 +201,248 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         log.toIntArray().contentEquals(arrayOf(1, 2, 3).toIntArray())
     }
 
+    @ExperimentalCoroutinesApi
+    @Test
+    fun testToRdTask() {
+        val entity_id = 1
 
+        val server_entity = RdCall<Unit, String>().static(entity_id)
+        val client_entity = RdCall<Unit, String>(null) { x -> x.toString() }.static(entity_id)
+
+        clientProtocol.bindStatic(client_entity, "client")
+        serverProtocol.bindStatic(server_entity, "server")
+
+        client_entity.set(null) { _, _ -> GlobalScope.async { "0" }.toRdTask() }
+
+        Lifetime.using { lf ->
+            val task = server_entity.start(lf, Unit)
+            task.wait(500) { task.isSucceeded }
+            assert(task.isSucceeded)
+            assertEquals("0", task.result.valueOrThrow.unwrap())
+        }
+
+        client_entity.set(null) { lf, req -> GlobalScope.async { throw CancellationException() }.toRdTask() }
+
+        Lifetime.using { lf ->
+            val task = server_entity.start(lf, Unit)
+            task.wait(500) { task.isCanceled }
+            assert(task.isCanceled)
+        }
+
+        client_entity.set(null) { lf, req -> GlobalScope.async { throw IllegalArgumentException("1") }.toRdTask() }
+
+        Lifetime.using { lf ->
+            val task = server_entity.start(lf, Unit)
+            task.wait(500) { task.isFaulted }
+            assert(task.isFaulted)
+            val res = task.result.valueOrThrow
+            assertEquals("1", (res as RdTaskResult.Fault).error.reasonMessage)
+        }
+    }
+
+    @Test
+    fun testAsCompletableFuture() {
+        val entity_id = 1
+
+        val server_entity = RdCall<Unit, String>().static(entity_id)
+        val client_entity = RdCall<Unit, String>(null) { x -> x.toString() }.static(entity_id)
+
+        clientProtocol.bindStatic(client_entity, "client")
+        serverProtocol.bindStatic(server_entity, "server")
+
+        client_entity.set(null) { _ -> "0" }
+
+        Lifetime.using { lf ->
+            val future = server_entity.start(lf, Unit).asCompletableFuture()
+            assert(future.isDone)
+            assertEquals("0", future.getNow(null))
+        }
+
+        client_entity.set(null) { _, _ -> RdTask.canceled() }
+
+        Lifetime.using { lf ->
+            val future = server_entity.start(lf, Unit).asCompletableFuture()
+            assert(future.isCancelled)
+        }
+
+        client_entity.set(null) { _ -> throw IllegalArgumentException("1") }
+
+        Lifetime.using { lf ->
+            val future = server_entity.start(lf, Unit).asCompletableFuture()
+            assert(future.isCompletedExceptionally)
+        }
+    }
+
+    @Test
+    fun testCompletableFutureToRdTask() {
+        val entity_id = 1
+
+        val server_entity = RdCall<Unit, String>().static(entity_id)
+        val client_entity = RdCall<Unit, String>(null) { x -> x.toString() }.static(entity_id)
+
+        clientProtocol.bindStatic(client_entity, "client")
+        serverProtocol.bindStatic(server_entity, "server")
+
+        client_entity.set(null) { _ -> "0" }
+
+        Lifetime.using { lf ->
+            val rdTask = server_entity.start(lf, Unit).asCompletableFuture().toRdTask()
+            assert(rdTask.isSucceeded)
+            assertEquals("0", rdTask.result.valueOrThrow.unwrap())
+        }
+
+        client_entity.set(null) { _, _ -> RdTask.canceled() }
+
+        Lifetime.using { lf ->
+            val future = server_entity.start(lf, Unit).asCompletableFuture().toRdTask()
+            assert(future.isCanceled)
+        }
+
+        client_entity.set(null) { _ -> throw IllegalArgumentException("1") }
+
+        Lifetime.using { lf ->
+            val future = server_entity.start(lf, Unit).asCompletableFuture().toRdTask()
+            assert(future.isFaulted)
+        }
+    }
+
+    @Test
+    fun testRdTaskAwait() {
+        val entity_id = 1
+
+        val server_entity = RdCall<Unit, String>().static(entity_id)
+        val client_entity = RdCall<Unit, String>(null) { x -> x.toString() }.static(entity_id)
+
+        clientProtocol.bindStatic(client_entity, "client")
+        serverProtocol.bindStatic(server_entity, "server")
+
+        client_entity.set(null) { _ -> "0" }
+
+        var completedSuccessfully = false
+        var error: Throwable? = null
+
+        Lifetime.using { lf ->
+            val job = GlobalScope.launch {
+                try {
+                    val res = server_entity.start(lf, Unit).await()
+                    assertEquals("0", res)
+                    completedSuccessfully = true
+                } catch (e: Throwable) {
+                    error = e
+                }
+            }
+            spinUntil { job.isCompleted }
+            assertNull(error)
+            assert(completedSuccessfully)
+        }
+
+        client_entity.set(null) { _, _ -> RdTask.canceled() }
+
+        completedSuccessfully = false
+        error = null
+
+        Lifetime.using { lf ->
+            val job = GlobalScope.launch {
+                try {
+                    val res = server_entity.start(lf, Unit).await()
+                    assertEquals("0", res)
+                    completedSuccessfully = true
+                } catch (e: Throwable) {
+                    error = e
+                }
+            }
+            spinUntil { job.isCompleted }
+            assert(error is CancellationException)
+        }
+
+        client_entity.set(null) { _, _ -> throw IllegalArgumentException("1") }
+
+        completedSuccessfully = false
+        error = null
+
+        Lifetime.using { lf ->
+            val job = GlobalScope.launch {
+                try {
+                    val res = server_entity.start(lf, Unit).await()
+                    assertEquals("0", res)
+                    completedSuccessfully = true
+                } catch (e: Throwable) {
+                    error = e
+                }
+            }
+            spinUntil { job.isCompleted }
+            assertNotNull(error)
+        }
+    }
+
+    @ExperimentalCoroutinesApi
+    @Test
+    fun testRdTaskAwaitAll() {
+        val entity_id = 1
+
+        val server_entity = RdCall<Long, Long>().static(entity_id)
+        val client_entity = RdCall<Long, Long>(null) { x -> x ?: 0 }.static(entity_id)
+
+        clientProtocol.bindStatic(client_entity, "client")
+        serverProtocol.bindStatic(server_entity, "server")
+
+
+        var completedSuccessfully = false
+        var error: Throwable? = null
+        val count = AtomicInteger(0)
+
+        client_entity.set(null) { _, req ->
+            GlobalScope.async {
+                if  (req < 0)
+                    throw KotlinNullPointerException(req.toString())
+
+                delay(req * 10)
+                count.incrementAndGet()
+                req
+            }.toRdTask()
+        }
+
+        Lifetime.using { lf ->
+            val job = GlobalScope.launch {
+                try {
+                    val list = listOf<Long>(10, 20, 5, 30, 40)
+                    val result = list.map { server_entity.start(lf, it) }.awaitAll()
+
+                    assertEquals(list.size, result.size)
+                    list.forEachIndexed { index, value ->
+                        assertEquals(value, result[index])
+                    }
+                    assertEquals(list.size, count.get())
+                    completedSuccessfully = true
+                } catch (e: Throwable) {
+                    error = e
+                }
+            }
+            spinUntil { job.isCompleted }
+            assertNull(error)
+            assert(completedSuccessfully)
+        }
+
+        completedSuccessfully = false
+        error = null
+        count.set(0)
+
+        Lifetime.using { lf ->
+            val list = listOf<Long>(10, 20, 5, 30, 40, -1)
+            val job = GlobalScope.launch {
+                try {
+                    list.map { server_entity.start(lf, it) }.awaitAll()
+                    completedSuccessfully = true
+                } catch (e: Throwable) {
+                    error = e
+                }
+            }
+            spinUntil { job.isCompleted }
+            assertEquals(list.size - 1, count.get())
+            assertNotNull(error)
+            assertFalse(completedSuccessfully)
+        }
+    }
 }
 
 
