@@ -387,7 +387,7 @@ namespace JetBrains.Rd.Reflection
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
       }
 
-      if (genericDefinition == typeof(RdMap<,>) || genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
+      if (genericDefinition == typeof(RdMap<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
       {
         var argument2 = genericArguments[1];
         var serializerPair2 = GetProperSerializer(argument2);
