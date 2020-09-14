@@ -31,7 +31,8 @@ SingleThreadSchedulerBase::SingleThreadSchedulerBase(std::string name)
 	, name(std::move(name))
 	, pool(std::make_unique<ctpl::thread_pool>(1))
 {
-	thread_id = std::this_thread::get_id();
+	RD_ASSERT_THROW_MSG(pool->size() == 1, "Thread pool wasn't properly initalized");
+	thread_id = pool->get_thread(0).get_id();
 }
 
 void SingleThreadSchedulerBase::flush()
