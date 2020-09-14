@@ -1,6 +1,7 @@
 #include "ByteBufferAsyncProcessor.h"
 
 #include "util/guards.h"
+#include <util/thread_util.h>
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 
@@ -127,6 +128,7 @@ void ByteBufferAsyncProcessor::process()
 
 void ByteBufferAsyncProcessor::ThreadProc()
 {
+	rd::util::set_thread_name(id.empty() ? "ByteBufferAsyncProcessor Thread" : id.c_str());
 	async_thread_id = std::this_thread::get_id();
 
 	while (true)

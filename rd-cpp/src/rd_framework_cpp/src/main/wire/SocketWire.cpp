@@ -1,5 +1,7 @@
 #include "wire/SocketWire.h"
 
+#include <util/thread_util.h>
+
 #include "spdlog/sinks/stdout_color_sinks.h"
 
 #include <utility>
@@ -77,7 +79,7 @@ bool SocketWire::Base::send0(Buffer::ByteArray const& msg, sequence_number_t seq
 																					 ": failed to send package over the network"
 																					 ", reason: " +
 																					 socket_provider->DescribeError());
-		logger->info("{}: were sent {} bytes", this->id,  msglen);
+		logger->info("{}: were sent {} bytes", this->id, msglen);
 		//        RD_ASSERT_MSG(socketProvider->Flush(), "{}: failed to flush");
 		return true;
 	}
@@ -419,6 +421,8 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	: Base(id, lifetime, scheduler), port(port)
 {
 	thread = std::thread([this, lifetime]() mutable {
+        rd::util::set_thread_name(this->id.empty() ? "SocketWire::Client Thread" : this->id.c_str());
+
 		try
 		{
 			while (!lifetime->is_terminated())
@@ -462,7 +466,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 				}
 				catch (std::exception const& e)
 				{
-					(void)e;
+					(void) e;
 					std::lock_guard<decltype(lock)> guard(lock);
 					bool should_reconnect = false;
 					if (!lifetime->is_terminated())
@@ -530,6 +534,8 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	RD_ASSERT_MSG(this->port != 0, "{}: port wasn't chosen")
 
 	thread = std::thread([this, lifetime]() mutable {
+		rd::util::set_thread_name(this->id.empty() ? "SocketWire::Server Thread" : this->id.c_str());
+
 		while (!lifetime->is_terminated())
 		{
 			try
