@@ -144,7 +144,11 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 
 	logger->debug("{}: waited for heartbeat to stop with status: {}", this->id, status);
 
-	if (!socket_provider->Shutdown(CSimpleSocket::Both))
+	if (!socket_provider->IsSocketValid())
+	{
+		logger->debug("{}: socket was already shut down", this->id);
+	}
+	else if (!socket_provider->Shutdown(CSimpleSocket::Both))
 	{
 		// double close?
 		logger->warn("{}: possibly double close after disconnect", this->id);
@@ -191,19 +195,17 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 				hi = lo = receiver_buffer.begin();
 			}
 			logger->info("{}: receive started", this->id);
-			if (!socket_provider->IsSocketValid())
-			{
-				return false;
-			}
 			int32_t read = socket_provider->Receive(static_cast<int32_t>(receiver_buffer.end() - hi), &*hi);
 			if (read == -1)
 			{
+				auto err = socket_provider->GetSocketError();
+				if (err == CSimpleSocket::SocketInvalidSocket) return false;
 				logger->error("{}: error has occurred while receiving", this->id);
 				return false;
 			}
 			if (read == 0)
 			{
-				logger->warn("{}: socket was shutted down for receiving", this->id);
+				logger->info("{}: socket was shut down for receiving", this->id);
 				return false;
 			}
 			hi += read;
@@ -318,7 +320,7 @@ bool SocketWire::Base::read_and_dispatch_message() const
 	sz = (sz == -1 ? receive_pkg.read_integral<int32_t>() : sz);
 	if (sz == -1)
 	{
-		logger->error("sz == -1");
+		logger->debug("{}: sz == -1", this->id);
 		return false;
 	}
 	id_ = (id_ == -1 ? receive_pkg.read_integral<RdId::hash_t>() : id_);
@@ -376,8 +378,10 @@ void SocketWire::Base::ping() const
 		ping_pkg_header.write_integral(counterpart_timestamp);
 		{
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
+			int32_t sent = socket_provider->Send(ping_pkg_header.data(), ping_pkg_header.get_position());
+			if (sent == 0 && !socket_provider->IsSocketValid()) return;
 			RD_ASSERT_THROW_MSG(
-				socket_provider->Send(ping_pkg_header.data(), ping_pkg_header.get_position()) == PACKAGE_HEADER_LENGTH,
+				sent == PACKAGE_HEADER_LENGTH,
 				this->id +
 					": failed to send ping over the network"
 					", reason: " +
@@ -527,11 +531,12 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 										", reason: " +
 										socket->DescribeError())
 	RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
-		"{}: failed to listen socket on port:" + std::to_string(port) + ", reason: " + ss->DescribeError());
+		this->id + ": failed to listen socket on port:" + std::to_string(port) + ", reason: " + ss->DescribeError());
 
-	logger->info("{}: listening 127.0.0.1/{}", this->id, port);
 	this->port = ss->GetServerPort();
-	RD_ASSERT_MSG(this->port != 0, "{}: port wasn't chosen")
+	RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
+
+	logger->info("{}: listening 127.0.0.1/{}", this->id, this->port);
 
 	thread = std::thread([this, lifetime]() mutable {
 		rd::util::set_thread_name(this->id.empty() ? "SocketWire::Server Thread" : this->id.c_str());
@@ -542,9 +547,9 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 			{
 				logger->info("{}: accepting started", this->id);
 				CActiveSocket* accepted = ss->Accept();
-				RD_ASSERT_THROW_MSG(accepted != nullptr, std::string(ss->DescribeError()) + ", reason: " + ss->DescribeError())
+				RD_ASSERT_THROW_MSG(accepted != nullptr, this->id + ": accepting failed, reason: " + ss->DescribeError())
 				socket.reset(accepted);
-				logger->info("{}: accepted passive socket", this->id);
+				logger->info("{}: accepted passive socket {}/{}", this->id, socket->GetClientAddr(), socket->GetClientPort());
 				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id +
 																		": tcpNoDelay failed"
 																		", reason: " +
