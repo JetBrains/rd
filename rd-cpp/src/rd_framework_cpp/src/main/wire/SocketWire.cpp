@@ -199,7 +199,11 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 			if (read == -1)
 			{
 				auto err = socket_provider->GetSocketError();
-				if (err == CSimpleSocket::SocketInvalidSocket) return false;
+				if (err == CSimpleSocket::SocketInvalidSocket)
+				{
+					logger->info("{}: socket was shut down for receiving", this->id);
+					return false;
+				}
 				logger->error("{}: error has occurred while receiving", this->id);
 				return false;
 			}
@@ -379,13 +383,13 @@ void SocketWire::Base::ping() const
 		{
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 			int32_t sent = socket_provider->Send(ping_pkg_header.data(), ping_pkg_header.get_position());
-			if (sent == 0 && !socket_provider->IsSocketValid()) return;
-			RD_ASSERT_THROW_MSG(
-				sent == PACKAGE_HEADER_LENGTH,
-				this->id +
-					": failed to send ping over the network"
-					", reason: " +
-					socket_provider->DescribeError())
+			if (sent == 0 && !socket_provider->IsSocketValid())
+			{
+				logger->debug("{}: failed to send ping over the network, reason: socket was shut down for sending", this->id);
+				return;
+			}
+			RD_ASSERT_THROW_MSG(sent == PACKAGE_HEADER_LENGTH,
+				fmt::format("{}: failed to send ping over the network, reason: {}", this->id, socket_provider->DescribeError()))
 		}
 
 		++current_timestamp;
@@ -425,7 +429,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	: Base(id, lifetime, scheduler), port(port)
 {
 	thread = std::thread([this, lifetime]() mutable {
-        rd::util::set_thread_name(this->id.empty() ? "SocketWire::Client Thread" : this->id.c_str());
+		rd::util::set_thread_name(this->id.empty() ? "SocketWire::Client Thread" : this->id.c_str());
 
 		try
 		{
@@ -434,14 +438,10 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 				try
 				{
 					socket = std::make_shared<CActiveSocket>();
-					RD_ASSERT_THROW_MSG(socket->Initialize(), this->id +
-																  ": failed to init ActiveSocket"
-																  ", reason: " +
-																  socket->DescribeError());
-					RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id +
-																			": failed to DisableNagleAlgoritm"
-																			", reason: " +
-																			socket->DescribeError());
+					RD_ASSERT_THROW_MSG(socket->Initialize(),
+						fmt::format("{}: failed to init ActiveSocket, reason: {}", this->id, socket->DescribeError()));
+					RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
+						fmt::format("{}: failed to DisableNagleAlgoritm, reason: {}", this->id, socket->DescribeError()));
 
 					// On windows connect will try to send SYN 3 times with interval of 500ms (total time is 1second)
 					// Connect timeout doesn't work if it's more than 1 second. But we don't need it because we can close socket any
@@ -450,10 +450,8 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 					// https://stackoverflow.com/questions/22417228/prevent-tcp-socket-connection-retries
 					// HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxConnectRetransmissions
 					logger->info("{}: connecting 127.0.0.1: {}", this->id, this->port);
-					RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port), this->id +
-																				   ": failed to open ActiveSocket"
-																				   ", reason: " +
-																				   socket->DescribeError());
+					RD_ASSERT_THROW_MSG(socket->Open("127.0.0.1", this->port),
+						fmt::format("{}: failed to open ActiveSocket, reason: {}", this->id, socket->DescribeError()));
 					{
 						std::lock_guard<decltype(lock)> guard(lock);
 						if (lifetime->is_terminated())
@@ -526,15 +524,12 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
 #endif
-	RD_ASSERT_MSG(ss->Initialize(), this->id +
-										": failed to initialize socket"
-										", reason: " +
-										socket->DescribeError())
+	RD_ASSERT_MSG(ss->Initialize(), fmt::format("{}: failed to initialize socket, reason: {}", this->id, socket->DescribeError()));
 	RD_ASSERT_MSG(ss->Listen("127.0.0.1", port),
-		this->id + ": failed to listen socket on port:" + std::to_string(port) + ", reason: " + ss->DescribeError());
+		fmt::format("{}: failed to listen socket on port: {}, reason: {}", this->id, std::to_string(port), ss->DescribeError()));
 
 	this->port = ss->GetServerPort();
-	RD_ASSERT_MSG(this->port != 0, this->id + ": port wasn't chosen")
+	RD_ASSERT_MSG(this->port != 0, fmt::format("{}: port wasn't chosen", this->id));
 
 	logger->info("{}: listening 127.0.0.1/{}", this->id, this->port);
 
@@ -547,13 +542,12 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 			{
 				logger->info("{}: accepting started", this->id);
 				CActiveSocket* accepted = ss->Accept();
-				RD_ASSERT_THROW_MSG(accepted != nullptr, this->id + ": accepting failed, reason: " + ss->DescribeError())
+				RD_ASSERT_THROW_MSG(
+					accepted != nullptr, fmt::format("{}: accepting failed, reason: {}", this->id, ss->DescribeError()));
 				socket.reset(accepted);
 				logger->info("{}: accepted passive socket {}/{}", this->id, socket->GetClientAddr(), socket->GetClientPort());
-				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(), this->id +
-																		": tcpNoDelay failed"
-																		", reason: " +
-																		socket->DescribeError())
+				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
+					fmt::format("{}: tcpNoDelay failed, reason: {}", this->id, socket->DescribeError()));
 
 				{
 					std::lock_guard<decltype(lock)> guard(lock);
