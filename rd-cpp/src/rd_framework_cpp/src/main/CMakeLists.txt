@@ -1,6 +1,5 @@
 #lib
-
-add_library(rd_framework_cpp STATIC
+add_library(rd_framework_cpp SHARED
         #base
         base/IRdBindable.h
         base/IRdReactive.h
@@ -66,6 +65,11 @@ add_library(rd_framework_cpp STATIC
         #pch
         ${PCH_CPP_OPT})
 
+include(GenerateExportHeader)
+generate_export_header(rd_framework_cpp
+        BASE_NAME rd_framework
+        EXPORT_MACRO_NAME RD_FRAMEWORK_API)
+
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 
 if (ENABLE_PCH_HEADERS)
@@ -78,6 +82,7 @@ add_subdirectory(util)
 target_include_directories(rd_framework_cpp
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
         )
 
 target_link_libraries(rd_framework_cpp
@@ -93,7 +98,7 @@ if (WIN32)
     elseif ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
         SET(PLATFORM "x64")
     endif ()
-    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
+    install(TARGETS rd_framework_cpp rd_core_cpp spdlog
             CONFIGURATIONS Release Debug
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
             RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
@@ -101,7 +106,7 @@ if (WIN32)
             )
 elseif (APPLE)
     SET(PLATFORM "x64")
-    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
+    install(TARGETS rd_framework_cpp rd_core_cpp spdlog
             CONFIGURATIONS Release Debug
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
             RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
@@ -109,7 +114,7 @@ elseif (APPLE)
             )
 elseif (UNIX)
     SET(PLATFORM "x64")
-    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
+    install(TARGETS rd_framework_cpp rd_core_cpp spdlog
             CONFIGURATIONS Release Debug
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
             RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
@@ -127,5 +132,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         PATTERN *.hpp
         )
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rd_framework_export.h
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_framework_cpp"
+        )
 #target_compile_options(rd_framework_cpp PUBLIC -ftemplate-backtrace-limit=100)
 #target_link_options(rd_framework_cpp PUBLIC -fdiagnostics-show-template-tree)

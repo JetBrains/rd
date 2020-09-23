@@ -1,38 +1,47 @@
 #lib
 
-add_library(rd_core_cpp STATIC
+add_library(rd_core_cpp SHARED
         #lifetime
         lifetime/LifetimeImpl.cpp lifetime/LifetimeImpl.h
         lifetime/Lifetime.cpp lifetime/Lifetime.h
         lifetime/LifetimeDefinition.cpp lifetime/LifetimeDefinition.h
         lifetime/SequentialLifetimes.cpp lifetime/SequentialLifetimes.h
         #reactive
-        reactive/SignalX.h
-        reactive/interfaces.h
+        reactive/base/SignalCookie.h reactive/base/SignalCookie.cpp
+        reactive/base/SignalX.h
         reactive/Property.h
         reactive/ViewableMap.h
         reactive/ViewableSet.h
         reactive/ViewableList.h
+        reactive/base/interfaces.h
         reactive/base/IViewableList.h
         reactive/base/IViewableSet.h
-        reactive/base/IViewableMap.h reactive/SignalX.cpp
+        reactive/base/IViewableMap.h
         reactive/base/IProperty.h
-        reactive/base/viewable_collections.cpp reactive/base/viewable_collections.h
+        reactive/base/viewable_collections.h
         #std
-        std/hash.cpp std/hash.h
-        std/to_string.cpp std/to_string.h
-        std/allocator.cpp std/allocator.h
-        std/filesystem.cpp std/filesystem.h
-        std/list.cpp std/list.h
-        std/unordered_map.cpp std/unordered_map.h
-        std/unordered_set.cpp std/unordered_set.h
+        std/hash.h
+        std/to_string.h
+        std/allocator.h
+        std/list.h
+        std/unordered_map.h
+        std/unordered_set.h
         #types
         types/DateTime.cpp types/DateTime.h
-        types/Void.cpp types/Void.h
-        types/wrapper.cpp types/wrapper.h
+        types/Void.h
+        types/wrapper.h
+        #util
+        util/core_traits.h util/core_util.h
+        util/enum.h util/erase_if.h
+        util/gen_util.h util/overloaded.h
         #pch
         ${PCH_CPP_OPT}
-        )
+        reactive/base/SignalCookie.cpp reactive/base/SignalCookie.h)
+
+include(GenerateExportHeader)
+generate_export_header(rd_core_cpp
+        BASE_NAME rd_core
+        EXPORT_MACRO_NAME RD_CORE_API)
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 
@@ -41,15 +50,13 @@ if (ENABLE_PCH_HEADERS)
     add_precompiled_header(rd_core_cpp pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
 endif ()
 
-
-add_subdirectory(util)
-
 target_include_directories(rd_core_cpp PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
         )
 
 target_link_libraries(rd_core_cpp
-        PUBLIC rd_core_cpp_util thirdparty
+        PUBLIC thirdparty
         )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
@@ -58,4 +65,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         FILES_MATCHING
         PATTERN *.h
         PATTERN *.hpp
+        )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rd_core_export.h
+        DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER}/rd_core_cpp"
         )

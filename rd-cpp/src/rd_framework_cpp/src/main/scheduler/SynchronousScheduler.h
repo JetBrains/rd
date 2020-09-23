@@ -29,6 +29,9 @@ public:
 
 	bool is_active() const override;
 
+	/**
+	 * \brief global synchronous scheduler for whole application.
+	 */
 	static SynchronousScheduler& Instance()
 	{
 		static SynchronousScheduler globalSynchronousScheduler;
@@ -36,9 +39,6 @@ public:
 	}
 };
 
-/**
- * \brief global synchronous scheduler for whole application.
- */
 }	 // namespace rd
 
 #endif	  // RD_CPP_SYNCHRONOUSSCHEDULER_H
