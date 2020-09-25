@@ -420,7 +420,7 @@ namespace JetBrains.Rd.Reflection
       throw new Exception($"Unable to activate generic type: {memberType}");
     }
 
-    internal static string GetTypeName(Type type)
+    public static string GetTypeName(Type type)
     {
       var typename = type.FullName;
       if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(type))
