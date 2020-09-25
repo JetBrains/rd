@@ -43,7 +43,7 @@ namespace Test.RdFramework.Reflection
       public CustomProperty<Payload> Signal { get; set; }
     }
 
-    public class CustomProperty<T> : ISignal<T>, IRdBindable
+    public sealed class CustomProperty<T> : ISignal<T>, IRdBindable
     {
       private readonly string myId;
       private readonly RdSignal<T> myRdSignal;

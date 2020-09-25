@@ -387,7 +387,7 @@ namespace JetBrains.Rd.Reflection
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
       }
 
-      if (genericDefinition == typeof(RdMap<,>) || genericDefinition == typeof(InprocRpc<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
+      if (genericDefinition == typeof(RdMap<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
       {
         var argument2 = genericArguments[1];
         var serializerPair2 = GetProperSerializer(argument2);
@@ -405,10 +405,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       // hack for UProperty & USignal
-      if (genericArguments.Length == 1 &&
-            (typeof(IViewableProperty<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType) ||
-             typeof(ISignal<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType)
-          ))
+      if (genericArguments.Length == 1 && typeof(IRdBindable).IsAssignableFrom(implementingType) && implementingType.IsClass)
       {
         foreach (var ctor in implementingType.GetTypeInfo().GetConstructors(BindingFlags.Public | BindingFlags.Instance))
         {
@@ -423,7 +420,7 @@ namespace JetBrains.Rd.Reflection
       throw new Exception($"Unable to activate generic type: {memberType}");
     }
 
-    internal static string GetTypeName(Type type)
+    public static string GetTypeName(Type type)
     {
       var typename = type.FullName;
       if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(type))
