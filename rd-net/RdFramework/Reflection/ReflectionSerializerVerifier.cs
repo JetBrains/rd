@@ -278,7 +278,7 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(isMember,
         $"Error in {member.DeclaringType?.ToString(true)}: model: member {member.Name} " +
         $"can't be {ReflectionUtil.GetReturnType(member)} type, " +
-        "only RdProperty | RdList | RdSet | RdMap | RdModel | RdCall allowed in RdModel or RdExt!");
+        "only (RdProperty | RdList | RdSet | RdMap | RdModel | RdCall | custom sealed bindable types) allowed in RdModel or RdExt!");
     }
 
     public static void AssertValidRdModel([NotNull] TypeInfo type)
