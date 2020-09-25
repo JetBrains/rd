@@ -405,10 +405,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       // hack for UProperty & USignal
-      if (genericArguments.Length == 1 &&
-            (typeof(IViewableProperty<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType) ||
-             typeof(ISignal<>).MakeGenericType(genericArguments).GetTypeInfo().IsAssignableFrom(implementingType)
-          ))
+      if (genericArguments.Length == 1 && typeof(IRdBindable).IsAssignableFrom(implementingType) && implementingType.IsClass)
       {
         foreach (var ctor in implementingType.GetTypeInfo().GetConstructors(BindingFlags.Public | BindingFlags.Instance))
         {

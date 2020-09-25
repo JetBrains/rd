@@ -186,10 +186,8 @@ namespace JetBrains.Rd.Reflection
                genericDefinition == typeof(RdSet<>) ||
                genericDefinition == typeof(RdMap<,>) ||                          // TResponse can be LiveModel
                (genericDefinition == typeof(RdCall<,>) && IsScalar(arguments[0]) /*&& IsScalar(arguments[1])*/) ||
-               // UProperty support
-               typeInfo.GetInterface("JetBrains.Collections.Viewable.IViewableProperty`1")?.GetGenericTypeDefinition() == typeof(IViewableProperty<>) ||
-               // USignal support
-               typeInfo.GetInterface("JetBrains.Collections.Viewable.ISignal`1")?.GetGenericTypeDefinition() == typeof(ISignal<>);
+               // Custom classes support
+               (typeInfo.IsClass && typeInfo.IsSealed && typeof(IRdBindable).IsAssignableFrom(typeInfo));
       }
 
       var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
