@@ -58,6 +58,14 @@ sealed class Lifetime {
         }
     }
 
+    inline fun <T> usingNested(action: (Lifetime) -> T): T {
+        val nested = createNested()
+        return try {
+            action(nested.lifetime)
+        } finally {
+            nested.terminate()
+        }
+    }
 
     abstract val status : LifetimeStatus
 
