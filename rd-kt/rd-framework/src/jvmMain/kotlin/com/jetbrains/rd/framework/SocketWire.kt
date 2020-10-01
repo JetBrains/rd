@@ -293,7 +293,7 @@ class SocketWire {
         /**
          * Ping's interval and not actually detection's timeout.
          */
-        val heartBeatInterval: Duration = Duration.ofMillis(500)
+        var heartBeatInterval: Duration = Duration.ofMillis(500)
 
         /**
          * Timestamp of this wire which increases at intervals of [heartBeatInterval].
