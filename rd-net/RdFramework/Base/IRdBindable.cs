@@ -28,6 +28,7 @@ namespace JetBrains.Rd.Base
   public interface IRdWireable : IRdDynamic
   {
     RdId RdId { get; }
+    bool IsBound { get; }
 
     IScheduler WireScheduler { get; }
 

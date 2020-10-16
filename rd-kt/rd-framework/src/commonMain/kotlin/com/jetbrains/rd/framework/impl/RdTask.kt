@@ -41,6 +41,7 @@ abstract class WiredRdTask<TReq, TRes>(
     override val wireScheduler: IScheduler
 ) : RdTask<TRes>(), IRdWireable {
 
+    override val isBound  get() = call.isBound
     override val protocol: IProtocol get() = call.protocol
     override val serializationContext: SerializationCtx get() = call.serializationContext
 

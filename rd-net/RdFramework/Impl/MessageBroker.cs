@@ -41,17 +41,22 @@ namespace JetBrains.Rd.Impl
       
       reactive.WireScheduler.Queue(() =>
       {
-        bool shouldProcess;
-        lock (myLock)
-        {
-          shouldProcess = mySubscriptions.ContainsKey(reactive.RdId);
-        }
-
-        if (shouldProcess)
+        if (ShouldProcess(reactive))
           Execute(reactive, msg);
         else
           myLogger.Trace("Handler for entity {0} dissapeared", reactive);
       });
+      
+    }
+
+    private bool ShouldProcess(IRdWireable reactive)
+    {
+      if (!reactive.IsBound) return false;
+
+      lock (myLock)
+      {
+        return mySubscriptions.ContainsKey(reactive.RdId);
+      }
     }
     
     private unsafe void Execute(IRdWireable reactive, byte[] msg)

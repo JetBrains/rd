@@ -98,6 +98,8 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
     override var rdid: RdId = RdId.Null
         internal set
 
+    override val isBound get() = parent != null
+
     override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
         require (this.parent == null) { "Trying to bound already bound $this to ${parent.location}" }
 
