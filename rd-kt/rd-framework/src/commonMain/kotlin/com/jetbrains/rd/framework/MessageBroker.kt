@@ -26,7 +26,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
             }
         } else {
             wireScheduler.queue {
-                if (Sync.lock(lock) { subscriptions.containsKey(rdid) }) {
+                if (isBound && Sync.lock(lock) { subscriptions.containsKey(rdid) }) {
                     protocol.contexts.readMessageContextAndInvoke(msg) {
                         onWireReceived(msg)
                     }

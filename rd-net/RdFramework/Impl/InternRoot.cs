@@ -125,6 +125,7 @@ namespace JetBrains.Rd.Impl
     }
 
     public RdId RdId { get; set; }
+    public bool IsBound => myParent != null;
 
     public void Bind(Lifetime lf, IRdDynamic parent, string name)
     {

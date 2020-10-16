@@ -12,6 +12,7 @@ namespace JetBrains.Rd.Tasks
   {
     private readonly RdCall<TReq, TRes> myCall;
     public RdId RdId { get; }
+    public bool IsBound => myCall.IsBound;
     public IScheduler WireScheduler { get; }
 
     private readonly IWire myWire;

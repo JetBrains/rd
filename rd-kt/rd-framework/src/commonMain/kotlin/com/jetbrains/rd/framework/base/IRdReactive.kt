@@ -23,6 +23,7 @@ interface IRdReactive : IRdBindable, IRdWireable {
 interface IRdWireable: IRdDynamic {
 
     val rdid: RdId
+    val isBound: Boolean
 
     /**
      * Scheduler on which wire invokes callback [onWireReceived]. Default is the same as [protocol]'s one.
