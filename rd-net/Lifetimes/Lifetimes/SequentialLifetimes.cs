@@ -91,6 +91,9 @@ namespace JetBrains.Lifetimes
 
       // temporary lifetime definition to cope with race condition
       var tempLifetimeDefinition = new LifetimeDefinition(myParentLifetime);
+      // the lifetime needs to be terminated but LifetimeDefinition.Terminated cannot be used as we will use Interlocked.CompareExchange
+      tempLifetimeDefinition.Terminate();
+
       var old = Interlocked.Exchange(ref myCurrentDef, tempLifetimeDefinition);
       try
       {
@@ -107,12 +110,10 @@ namespace JetBrains.Lifetimes
       }
       finally
       {
-        if (Interlocked.CompareExchange(ref myCurrentDef, newLifetimeDefinition, tempLifetimeDefinition) != tempLifetimeDefinition || tempLifetimeDefinition.Status == LifetimeStatus.Terminated)
+        if (Interlocked.CompareExchange(ref myCurrentDef, newLifetimeDefinition, tempLifetimeDefinition) != tempLifetimeDefinition)
         {
           TerminateLifetimeDefinition(newLifetimeDefinition);
         }
-
-        tempLifetimeDefinition.Terminate();
       }
 
       return newLifetimeDefinition;

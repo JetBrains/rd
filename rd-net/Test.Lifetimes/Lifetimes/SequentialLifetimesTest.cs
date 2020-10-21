@@ -141,5 +141,36 @@ namespace Test.Lifetimes.Lifetimes
       Assert.IsTrue(sequence.IsCurrentTerminated);
       Assert.AreEqual("start\nBefore exception\nend\nExpected exception\n", sb.ToString().Replace("\r\n", "\n"));
     }
+
+    [Test]
+    public void TestTerminateCurrent01()
+    {
+      var sequentialLifetimes = new SequentialLifetimes(TestLifetime);
+      sequentialLifetimes.Next(lifetime => lifetime.OnTermination(() =>
+      {
+        Assert.IsTrue(lifetime.IsNotAlive, "lifetime.IsNotAlive");
+        Assert.IsTrue(sequentialLifetimes.IsCurrentTerminated, "sequentialLifetimes.IsCurrentTerminated");
+      }));
+      sequentialLifetimes.TerminateCurrent();
+    }
+
+    [Test]
+    public void TestTerminateCurrent02()
+    {
+      var sb = new StringBuilder();
+      var sequentialLifetimes = new SequentialLifetimes(TestLifetime);
+      sequentialLifetimes.Next(lifetime => lifetime.OnTermination(() =>
+      {
+        sb.Append("T1");
+        Assert.IsTrue(lifetime.IsNotAlive, "lifetime.IsNotAlive");
+        Assert.IsTrue(sequentialLifetimes.IsCurrentTerminated, "sequentialLifetimes.IsCurrentTerminated");
+      }));
+      sequentialLifetimes.Next(lifetime =>
+      {
+        sb.Append("N2");
+      });
+
+      Assert.AreEqual("T1N2", sb.ToString());
+    }
   }
 }
