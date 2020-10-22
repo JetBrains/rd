@@ -231,20 +231,38 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         +postfix
     }
 
+    protected fun PrettyPrinter.blockNoIndent(prefix: String, postfix: String, body: PrettyPrinter.() -> Unit) {
+        +prefix
+        body()
+        +postfix
+    }
+
     protected fun PrettyPrinter.braceBlock(body: PrettyPrinter.() -> Unit) {
         +"{"
         indent(body)
         +"}"
     }
 
+    protected fun PrettyPrinter.braceBlockNoIndent(body: PrettyPrinter.() -> Unit) {
+        +"{"
+        body()
+        +"}"
+    }
+
     protected fun PrettyPrinter.titledBlock(title: String, body: PrettyPrinter.() -> Unit) {
         +"$title {"
         indent(body)
-        +"};"
+        +"}"
+    }
+
+    protected fun PrettyPrinter.titledBlockNoIndent(title: String, body: PrettyPrinter.() -> Unit) {
+        +"$title {"
+        body()
+        +"}"
     }
 
     protected fun PrettyPrinter.comment(comment: String) {
-        +"${eolKind.value}//$comment"
+        +"// $comment"
     }
 
     protected fun PrettyPrinter.declare(signature: Signature?) {
@@ -268,23 +286,35 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         }
     }
 
-    private fun PrettyPrinter.private() {
+    private fun PrettyPrinter.privateBlock(body: PrettyPrinter.() -> Unit) {
+        println()
         +"private:"
+        indent {
+            body()
+        }
     }
 
-    private fun PrettyPrinter.protected() {
+    private fun PrettyPrinter.protectedBlock(body: PrettyPrinter.() -> Unit) {
+        println()
         +"protected:"
+        indent {
+            body()
+        }
     }
 
-    private fun PrettyPrinter.public() {
+    private fun PrettyPrinter.publicBlock(body: PrettyPrinter.() -> Unit) {
+        println()
         +"public:"
+        indent {
+            body()
+        }
     }
 
     private fun Member.getter() = "get_${this.publicName}"
 
-    private fun PrettyPrinter.withNamespace(s: String, acc: PrettyPrinter.() -> Unit) {
-        titledBlock("namespace $s") {
-            acc()
+    private fun PrettyPrinter.withNamespace(s: String, body: PrettyPrinter.() -> Unit) {
+        titledBlockNoIndent("namespace $s") {
+            body()
         }
     }
 
@@ -720,20 +750,18 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
 
     private fun PrettyPrinter.predeclare(decl: Declaration) {
-        this.apply {
-            surroundWithNamespaces(decl.namespace) {
-                when (decl) {
-                    is Enum -> {
-                        val predecl = decl.getSetting(IsNonScoped)?.let {
-                            "enum ${decl.platformTypeName} : $it"
-                        } ?: "enum class ${decl.platformTypeName}"
-                        +("$predecl;")
-                    }
-                    else -> {
-                    }
+        surroundWithNamespaces(decl.namespace) {
+            when (decl) {
+                is Enum -> {
+                    val predecl = decl.getSetting(IsNonScoped)?.let {
+                        "enum ${decl.platformTypeName} : $it"
+                    } ?: "enum class ${decl.platformTypeName}"
+                    +("$predecl;")
+                }
+                else -> {
                 }
             }
-        }.toString()
+        }
     }
 
     object EnumConstantValue : ISetting<Int, Member.EnumConst>
@@ -951,12 +979,15 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 it.forEach { warn ->
                     +"#pragma warning( disable:$warn )"
                 }
+                println()
             }
 
             if (decl is Toplevel && decl.isLibrary) {
                 comment("library")
                 surroundWithNamespaces(decl.namespace) {
+                    println()
                     libdecl(decl)
+                    println()
                 }
             } else {
                 typedecl(decl)
@@ -1035,8 +1066,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     protected open fun PrettyPrinter.libdecl(decl: Declaration) {
-        titledBlock(decl.classNameDecl()) {
-            registerSerializersTraitDecl(decl)
+        blockNoIndent("${decl.classNameDecl()} {", "};") {
+            publicBlock() {
+                registerSerializersTraitDecl(decl)
+            }
         }
     }
 
@@ -1057,6 +1090,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         docDecl(decl)
 
         surroundWithNamespaces(decl.namespace) {
+            println()
             if (decl is Enum) {
                 enumDecl(decl)
                 return@surroundWithNamespaces
@@ -1078,108 +1112,136 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             p(decl.classNameDecl())
 
             baseClassTraitDecl(decl)
-            block("{", "};") {
-                comment("companion")
+            blockNoIndent(" {", "};") {
                 companionTraitDecl(decl)
 
                 if (decl.isExtension) {
-                    comment("extension")
-                    declare(extensionTraitDecl(decl as Ext))
+                    indent() {
+                        comment("extension")
+                        declare(extensionTraitDecl(decl as Ext))
+                    }
                 }
 
-                comment("custom serializers")
-                customSerializersTrait(decl)
+                privateBlock() {
+                    comment("custom serializers")
+                    customSerializersTrait(decl)
+                }
 
-                comment("constants")
-                public()
-                constantsDecl(decl)
+                publicBlock() {
+                    comment("constants")
+                    constantsDecl(decl)
+                }
 
-                comment("fields")
-                protected()
-                fieldsDecl(decl)
+                protectedBlock() {
+                    comment("fields")
+                    fieldsDecl(decl)
+                }
 
-                comment("initializer")
-                private()
-                declare(initializerTraitDecl(decl))
+                privateBlock() {
+                    comment("initializer")
+                    declare(initializerTraitDecl(decl))
+                }
 
-                comment("primary ctor")
                 //            +(decl.primaryCtorVisibility)
-                public()
-                declare(primaryCtorTraitDecl(decl))
+                publicBlock() {
+                    primaryCtorTraitDecl(decl)?.let {
+                        comment("primary ctor")
+                        declare(it)
+                    }
 
-                comment("secondary constructor")
-                declare(secondaryConstructorTraitDecl(decl))
+                    secondaryConstructorTraitDecl(decl)?.let {
+                        comment("secondary constructor")
+                        declare(it)
+                    }
 
-                ifDefDirective(__cpp_structured_bindings) {
-                    comment("deconstruct trait")
-                    deconstructTrait(decl)
+                    if (shouldGenerateDeconstruct(decl)) {
+                        println()
+                        comment("deconstruct trait")
+                        ifDefDirective(__cpp_structured_bindings) {
+                            deconstructTrait(decl)
+                        }
+                    }
+
+                    println()
+                    comment("default ctors and dtors")
+                    defaultCtorsDtorsDecl(decl)
+
+                    println()
+                    comment("reader")
+                    declare(readerTraitDecl(decl))
+
+                    println()
+                    comment("writer")
+                    declare(writerTraitDecl(decl))
+
+                    println()
+                    comment("virtual init")
+                    declare(virtualInitTraitDecl(decl))
+
+                    println()
+                    comment("identify")
+                    declare(identifyTraitDecl(decl))
+
+                    println()
+                    comment("getters")
+                    declare(gettersTraitDecl(decl))
+
+                    println()
+                    comment("intern")
+                    declare(internTraitDecl(decl))
                 }
 
-                comment("default ctors and dtors")
-                defaultCtorsDtorsDecl(decl)
+                privateBlock() {
+                    comment("equals trait")
+                    declare(equalsTraitDecl(decl))
+                }
 
-                comment("reader")
-                declare(readerTraitDecl(decl))
+                publicBlock() {
+                    comment("equality operators")
+                    equalityOperatorsDecl(decl)
 
-                comment("writer")
-                declare(writerTraitDecl(decl))
+                    comment("hash code trait")
+                    declare(hashCodeTraitDecl(decl))
 
-                comment("virtual init")
-                declare(virtualInitTraitDecl(decl))
+                    comment("type name trait")
+                    declare(typenameTraitDecl(decl))
 
-                comment("identify")
-                declare(identifyTraitDecl(decl))
+                    comment("static type name trait")
+                    declare(staticTypenameTraitDecl(decl))
+                }
 
-                comment("getters")
-                declare(gettersTraitDecl(decl))
+                privateBlock() {
+                    comment("polymorphic to string")
+                    declare(polymorphicToStringTraitDecl(decl))
+                }
 
-                comment("intern")
-                declare(internTraitDecl(decl))
-
-                comment("equals trait")
-                private()
-                declare(equalsTraitDecl(decl))
-
-                comment("equality operators")
-                public()
-                equalityOperatorsDecl(decl)
-
-                comment("hash code trait")
-                declare(hashCodeTraitDecl(decl))
-
-                comment("type name trait")
-                declare(typenameTraitDecl(decl))
-
-                comment("static type name trait")
-                declare(staticTypenameTraitDecl(decl))
-
-                comment("polymorphic to string")
-                private()
-                declare(polymorphicToStringTraitDecl(decl))
-
-                comment("external to string")
-                public()
-                declare(externalToStringTraitDecl(decl))
+                publicBlock() {
+                    comment("external to string")
+                    declare(externalToStringTraitDecl(decl))
+                }
 
                 /*if (decl.isExtension) {
                     extensionTraitDef(decl as Ext)
                 }*/
             }
+            println()
         }
 
 //        externTemplates(decl)
 
-        comment("hash code trait")
         hashSpecialization(decl)
 
-        ifDefDirective(__cpp_structured_bindings) {
-            comment("tuple trait")
-            tupleSpecialization(decl)
+        if (shouldGenerateDeconstruct(decl)) {
+            println()
+            ifDefDirective(__cpp_structured_bindings) {
+                comment("tuple trait")
+                tupleSpecialization(decl)
+            }
         }
     }
 
     protected open fun PrettyPrinter.enumDecl(decl: Enum) {
-        titledBlock("enum class ${decl.name}") {
+        block("enum class ${decl.name} {", "};") {
             +decl.constants.withIndex().joinToString(separator = ",${eolKind.value}") { (idx, field) ->
                 val doc = docComment(field.documentation)
                 val name = sanitize(field.name)
@@ -1402,7 +1464,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 */
 
     private fun PrettyPrinter.baseClassTraitDecl(decl: Declaration) {
-        +bases(decl).joinToString(separator = ", ", prefix = " : ") { "public ${it.type.name}" }
+        p(bases(decl).joinToString(separator = ", ", prefix = " : ") { "public ${it.type.name}" })
     }
 
 
@@ -1420,7 +1482,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             else -> fail("Unknown type: $this")
         }
 
-        private()
         val allTypesForDelegation = decl.allMembers
             .filterIsInstance<Member.Reactive>()
             .flatMap { it.genericParams.toList() }
@@ -1437,9 +1498,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     protected fun PrettyPrinter.registerSerializersTraitDecl(decl: Declaration) {
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
-        public()
         block("struct $serializersOwnerImplName final : public rd::ISerializersOwner {", "};") {
-            declare(MemberFunction("void", "registerSerializersCore(rd::Serializers const& serializers)", decl.name).const().override())
+            declare(
+                MemberFunction(
+                    "void",
+                    "registerSerializersCore(rd::Serializers const& serializers)",
+                    decl.name
+                ).const().override()
+            )
         }
         println()
         +"static const $serializersOwnerImplName serializersOwner;"
@@ -1456,12 +1522,14 @@ open class Cpp17Generator(flowTransform: FlowTransform,
             declare(abstractDeclarationTraitDecl(decl))
         }*/
         if (decl is Toplevel) {
-            println()
-            registerSerializersTraitDecl(decl)
-            println()
-            public()
-            declare(createMethodTraitDecl(decl))
-            println()
+            publicBlock() {
+                registerSerializersTraitDecl(decl)
+                println()
+            }
+            publicBlock() {
+                declare(createMethodTraitDecl(decl))
+                println()
+            }
         }
     }
 
@@ -1526,15 +1594,13 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
 
     private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
-        if (shouldGenerateDeconstruct(decl)) {
-            +"template <size_t I>"
-            define(MemberFunction("decltype(auto)", "get()", null).const()) {
-                val n = decl.ownMembers.size
-                val condition = "I < 0 || I >= $n"
-                +"if constexpr ($condition) static_assert ($condition, \"$condition\");"
-                decl.ownMembers.forEachIndexed { index, member ->
-                    +"else if constexpr (I==$index)  return static_cast<const ${member.implTemplateName(decl)}&>(${member.getter()}());"
-                }
+        +"template <size_t I>"
+        define(MemberFunction("decltype(auto)", "get()", null).const()) {
+            val n = decl.ownMembers.size
+            val condition = "I < 0 || I >= $n"
+            +"if constexpr ($condition) static_assert ($condition, \"$condition\");"
+            decl.ownMembers.forEachIndexed { index, member ->
+                +"else if constexpr (I==$index)  return static_cast<const ${member.implTemplateName(decl)}&>(${member.getter()}());"
             }
         }
     }
@@ -1685,30 +1751,34 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         if (decl !is IScalar) return
         if (decl is Enum) return
 
-        block("namespace rd {", "}") {
-            block("template <> struct hash<${decl.withNamespace()}> {", "};") {
+        println()
+        comment("hash code trait")
+        withNamespace("rd") {
+            println()
+            +"template <>"
+            block( "struct hash<${decl.withNamespace()}> {", "};") {
                 block("size_t operator()(const ${decl.withNamespace()} & value) const noexcept {", "}") {
                     +"return value.hashCode();"
                 }
             }
+            println()
         }
     }
 
     private fun PrettyPrinter.tupleSpecialization(decl: Declaration) {
-        if (shouldGenerateDeconstruct(decl)) {
-            val n = decl.ownMembers.size
-            titledBlock("namespace std") {
-                +"template<>"
-                +"class tuple_size<${decl.withNamespace()}> : public integral_constant<size_t, $n> {};"
-                println()
-                +"""
-                    |template<size_t I>
-                    |class std::tuple_element<I, ${decl.withNamespace()}> {
-                    |public:
-                    |    using type = decltype (declval<${decl.withNamespace()}>().get<I>());
-                    |};
-                    |""".trimMargin()
-            }
+        val n = decl.ownMembers.size
+        withNamespace("std") {
+            println()
+            +"template <>"
+            +"class tuple_size<${decl.withNamespace()}> : public integral_constant<size_t, $n> {};"
+            println()
+            +"""
+                |template <size_t I>
+                |class tuple_element<I, ${decl.withNamespace()}> {
+                |public:
+                |    using type = decltype (declval<${decl.withNamespace()}>().get<I>());
+                |};""".trimMargin()
+            println()
         }
     }
 
@@ -2325,13 +2395,13 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     private fun PrettyPrinter.ifDefDirective(feature: String, printer: PrettyPrinter.() -> Unit) {
         +"#ifdef $feature"
-        indent(printer)
+        printer()
         +"#endif"
     }
 
     private fun PrettyPrinter.ifDirective(feature: String, printer: PrettyPrinter.() -> Unit) {
         +"#if $feature"
-        indent(printer)
+        printer()
         +"#endif"
     }
 
