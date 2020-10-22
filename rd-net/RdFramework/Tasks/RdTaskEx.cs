@@ -23,7 +23,7 @@ namespace JetBrains.Rd.Tasks
       var res = new RdTask<T>();
       task.ContinueWith(t =>
       {
-        if (t.IsCanceled)
+        if (t.IsOperationCanceled())
           res.SetCancelled();
         else if (t.IsFaulted)
           res.Set(t.Exception?.Flatten().GetBaseException());
@@ -38,7 +38,7 @@ namespace JetBrains.Rd.Tasks
       var res = new RdTask<Unit>();
       task.ContinueWith(t =>
       {
-        if (t.IsCanceled)
+        if (t.IsOperationCanceled())
           res.SetCancelled();
         else if (t.IsFaulted)
           res.Set(t.Exception?.Flatten().GetBaseException());

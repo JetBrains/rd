@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
@@ -22,6 +23,7 @@ namespace Test.RdFramework.Reflection
       Task<string> GetLongRunningString(Lifetime cancellationLifetime, string result);
       Task<int> GetLongRunningInt(int arg, Lifetime cancellationLifetime );
       Task<int> GetInt(int arg, Lifetime cancellationLifetime );
+      Task AlwaysCancelled();
     }
 
     [RdExt]
@@ -40,6 +42,15 @@ namespace Test.RdFramework.Reflection
       }
 
       public async Task<int> GetInt(int arg, Lifetime cancellationLifetime) => 1;
+
+      public Task AlwaysCancelled()
+      {
+        return Task.Factory.StartNew(() =>
+        {
+          Thread.Sleep(100);
+          throw new OperationCanceledException();
+        });
+      }
     }
 
     [Test]
@@ -54,6 +65,20 @@ namespace Test.RdFramework.Reflection
 
         Task.Run(async () => { await Task.Delay(10); cancellationLifetimeDef.Terminate();});
         cancellationLifetimeDef.Terminate();
+      });
+
+      SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
+      Assert.AreEqual(true, isCancelled);
+    }
+
+    [Test]
+    public async Task TestAsyncExternalCancellation()
+    {
+      bool? isCancelled = null;
+      await TestAsyncCalls(model =>
+      {
+        model.AlwaysCancelled().
+          ContinueWith(t => isCancelled = t.IsCanceled, TaskContinuationOptions.ExecuteSynchronously);
       });
 
       SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
