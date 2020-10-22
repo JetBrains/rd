@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.7)
 project(
         rd_cpp
         VERSION 1.0
-#        DESCRIPTION "C++ implementation of JetBrains IPC"
-#        HOMEPAGE_URL "https://github.com/jetbrains/rd"
+        # DESCRIPTION "C++ implementation of JetBrains IPC"
+        # HOMEPAGE_URL "https://github.com/jetbrains/rd"
         LANGUAGES CXX
 )
 
@@ -35,8 +35,10 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID
 elseif (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    add_compile_options(/wd4996     # POSIX name is deprecated
-                        /wd4250)    # method inheritance via dominance
+    add_compile_options(
+            /wd4996     # POSIX name is deprecated
+            /wd4250     # method inheritance via dominance
+    )
 endif ()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -44,9 +46,9 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 option(ENABLE_TESTS_OPTION "Global enable test" ON)
 option(INSTALL_GTEST OFF)
 
-set(RD_CORE_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable core tests." FORCE)
-set(RD_FRAMEWORK_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable framework tests." FORCE)
-set(RD_GEN_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable gen tests." FORCE)
+set(RD_CORE_CPP_ENABLE_TESTS ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable core tests." FORCE)
+set(RD_FRAMEWORK_CPP_ENABLE_TESTS ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable framework tests." FORCE)
+set(RD_GEN_CPP_ENABLE_TESTS ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable gen tests." FORCE)
 
 # pch are not working on clang for now, need investigation
 if (MSVC)
@@ -64,9 +66,9 @@ add_subdirectory(thirdparty)
 add_subdirectory(src)
 
 if (ENABLE_TESTS_OPTION)
-    if(NOT EXISTS "${PROJECT_SOURCE_DIR}/demo")
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/demo")
         message(FATAL_ERROR "Run 'gradlew generateEverything' in rd root to generate missing folders.")
-    endif()
+    endif ()
     add_subdirectory(googletest)
     add_subdirectory(demo)
 endif ()
