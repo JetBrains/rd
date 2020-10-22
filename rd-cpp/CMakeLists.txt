@@ -44,7 +44,12 @@ set(RD_CORE_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable core tes
 set(RD_FRAMEWORK_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable framework tests." FORCE)
 set(RD_GEN_CPP_ENABLE_TESTS  ${ENABLE_TESTS_OPTION} CACHE BOOL "Enable gen tests." FORCE)
 
-option(ENABLE_PCH_HEADERS "Enable precompiled headers" ON)
+# pch are not working on clang for now, need investigation
+if (MSVC)
+    option(ENABLE_PCH_HEADERS "Enable precompiled headers" ON)
+else ()
+    option(ENABLE_PCH_HEADERS "Enable precompiled headers" OFF)
+endif ()
 if (ENABLE_PCH_HEADERS)
     set(PCH_CPP_OPT pch.cpp)
 else ()
