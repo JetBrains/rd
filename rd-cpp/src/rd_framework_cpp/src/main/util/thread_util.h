@@ -8,7 +8,6 @@ namespace rd
 namespace util
 {
 void set_thread_name(const char* name);
-void set_thread_name(std::thread& thread, const char* name);
 
 }
 
