@@ -31,28 +31,28 @@ void SetThreadName(uint32_t dwThreadID, const char* threadName)
 	{
 	}
 }
+
 void SetThreadName(const char* threadName)
 {
 	SetThreadName(GetCurrentThreadId(), threadName);
 }
 
-void SetThreadName(std::thread& thread, const char* threadName)
+#elif defined(__APPLE__)
+
+#include <pthread.h>
+
+void SetThreadName(const char* threadName)
 {
-	DWORD threadId = ::GetThreadId(static_cast<HANDLE>(thread.native_handle()));
-	SetThreadName(threadId, threadName);
+	pthread_setname_np(threadName);
 }
 
 #else
-void SetThreadName(std::thread& thread, const char* threadName)
-{
-	auto handle = thread.native_handle();
-	pthread_setname_np(handle, threadName);
-}
 
-#include <sys/prctl.h>
+#include <pthread.h>
+
 void SetThreadName(const char* threadName)
 {
-	prctl(PR_SET_NAME, threadName, 0, 0, 0);
+	pthread_setname_np(pthread_self(), threadName);
 }
 
 #endif
@@ -61,11 +61,6 @@ namespace rd
 {
 namespace util
 {
-void set_thread_name(std::thread& thread, const char* name)
-{
-	SetThreadName(thread, name);
-}
-
 void set_thread_name(const char* name)
 {
 	SetThreadName(name);

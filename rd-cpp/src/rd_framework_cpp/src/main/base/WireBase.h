@@ -16,9 +16,6 @@ protected:
 
 public:
 	// region ctor/dtor
-
-	WireBase(WireBase&&) = default;
-
 	explicit WireBase(IScheduler* scheduler) : scheduler(scheduler), message_broker(scheduler)
 	{
 	}

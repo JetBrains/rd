@@ -84,9 +84,8 @@ target_link_libraries(rd_framework_cpp
         PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp clsocket
         )
 
-if (UNIX)
-    target_link_libraries(rd_framework_cpp PRIVATE pthread)
-endif ()
+find_package(Threads REQUIRED)
+target_link_libraries(rd_framework_cpp PRIVATE Threads::Threads)
 
 if (WIN32)
     if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
@@ -96,9 +95,28 @@ if (WIN32)
     endif ()
     install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
             CONFIGURATIONS Release Debug
-            ARCHIVE
-            DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
+            RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
             )
+elseif (UNIX)
+    SET(PLATFORM "x64")
+    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
+            CONFIGURATIONS Release Debug
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
+            RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
+            )
+elseif (APPLE)
+    SET(PLATFORM "x64")
+    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
+            CONFIGURATIONS Release Debug
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
+            RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
+            )
+else ()
+    message(FATAL_ERROR "OS not supported")
 endif ()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/

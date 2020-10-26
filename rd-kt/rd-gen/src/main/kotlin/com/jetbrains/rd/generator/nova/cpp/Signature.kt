@@ -76,10 +76,11 @@ sealed class Signature {
     }
 
     sealed class Constructor(protected val generator: Cpp17Generator, protected val decl: Declaration, private val arguments: List<Member>) : Signature() {
-        private var isExplicit = false
 
         val name = decl.name
         val params = arguments.joinToString(separator = ", ") { generator.ctorParam(it, decl, false) }
+
+        private val isExplicit get() = (arguments.count() == 1)
 
         override fun decl(): String {
             return isExplicit.condstr { "explicit " } + "${decl.name}($params);"
