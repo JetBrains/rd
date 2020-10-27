@@ -124,7 +124,7 @@ namespace JetBrains.Rd.Impl
       }
 
 
-      internal static void CloseSocket([CanBeNull] Socket socket)
+      public static void CloseSocket([CanBeNull] Socket socket)
       {
         if (socket == null)
           return;
@@ -605,7 +605,11 @@ namespace JetBrains.Rd.Impl
         );
       }
 
-      internal Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : this(lifetime, scheduler, optId)
+      /// <summary>
+      /// Creates a server wire with an externally-provided socket. By using this constructor, you are not transferring
+      /// ownership of the provided socket to created wire. It is consumer's responsibility to manager socket's lifetime.
+      /// </summary>
+      public Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : this(lifetime, scheduler, optId)
       {
         StartServerSocket(lifetime, serverSocket);
       }
@@ -613,7 +617,7 @@ namespace JetBrains.Rd.Impl
       private Server(Lifetime lifetime, IScheduler scheduler, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {}
 
-      internal static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
+      public static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
       {
         Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
