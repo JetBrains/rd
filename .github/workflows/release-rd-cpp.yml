@@ -40,20 +40,20 @@ jobs:
             SEP: \,
             suffix: win-vs17
           }
-#         - {
-#             name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-",
-#             os: ubuntu-latest,
-#             cc: "clang", cxx: "clang++",
-#             SEP: /,
-#               suffix: linux-clang
-#           }
-#         - {
-#             name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang-",
-#             os: macos-latest,
-#             cc: "clang", cxx: "clang++",
-#             SEP: /,
-#               suffix: mac-clang
-#           }
+        - {
+            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-",
+            os: ubuntu-latest,
+            cc: "clang", cxx: "clang++",
+            SEP: /,
+              suffix: linux-clang
+          }
+        - {
+            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang-",
+            os: macos-latest,
+            cc: "clang", cxx: "clang++",
+            SEP: /,
+              suffix: mac-clang
+          }
 
     steps:
     - uses: actions/checkout@v1
