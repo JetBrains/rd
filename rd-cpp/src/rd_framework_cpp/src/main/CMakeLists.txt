@@ -99,14 +99,6 @@ if (WIN32)
             RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Win/${PLATFORM}/$<CONFIG>/"
             )
-elseif (UNIX)
-    SET(PLATFORM "x64")
-    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
-            CONFIGURATIONS Release Debug
-            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
-            RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
-            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
-            )
 elseif (APPLE)
     SET(PLATFORM "x64")
     install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
@@ -114,6 +106,14 @@ elseif (APPLE)
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
             RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Mac/${PLATFORM}/$<CONFIG>/"
+            )
+elseif (UNIX)
+    SET(PLATFORM "x64")
+    install(TARGETS rd_framework_cpp rd_core_cpp rd_framework_cpp_util clsocket spdlog
+            CONFIGURATIONS Release Debug
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
+            RUNTIME DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBS}/Linux/${PLATFORM}/$<CONFIG>/"
             )
 else ()
     message(FATAL_ERROR "OS not supported")
