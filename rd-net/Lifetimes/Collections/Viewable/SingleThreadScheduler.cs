@@ -140,7 +140,6 @@ namespace JetBrains.Collections.Viewable
       {
         try
         {
-          UnsafeWriter.AllowUnsafeWriterCaching = true;
           while (true)
           {
             ExecuteOneAction(blockIfNoActionAvailable: true);
@@ -152,10 +151,6 @@ namespace JetBrains.Collections.Viewable
         catch (Exception e)
         {
           myLog.Error(e, $"Abnormal termination of {this}");
-        }
-        finally
-        {
-          UnsafeWriter.AllowUnsafeWriterCaching = false;
         }
       }
     }

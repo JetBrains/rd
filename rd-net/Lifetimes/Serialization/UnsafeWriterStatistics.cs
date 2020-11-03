@@ -62,8 +62,6 @@ namespace JetBrains.Serialization
     public enum EventType
     {
       REENTRANCY,
-      ACCESS_COUNTER,
-      MEMORY_ALLOCATION
     }
 
 
@@ -89,11 +87,6 @@ namespace JetBrains.Serialization
       }
 
       ourThreadAccessCounter++;
-      if (!UnsafeWriter.AllowUnsafeWriterCaching && ourThreadAccessCounter > ReportAccessCounterThreshold)
-      {
-        if (ourThreadAccessCounter % ReportOnOfN == 0)
-          ReportEvent(EventType.ACCESS_COUNTER, $"{ourThreadAccessCounter} UnsafeWriter calls on thread without caching");
-      }
     }
 
     public static void OnCookieDisposing(int currentSize)
@@ -109,17 +102,14 @@ namespace JetBrains.Serialization
         }
       }
 
-      if (!UnsafeWriter.AllowUnsafeWriterCaching)
-      {
-        if (currentSize > ReportAllocationOnNonCachedThreadThreshold)
-          ReportEvent(EventType.MEMORY_ALLOCATION, $"{currentSize} bytes allocated on thread without caching");
-      }
-
       if (currentSize > ourThreadMaxAllocatedSize)
       {
         ourThreadMaxAllocatedSize = currentSize;
         while (ourThreadMaxAllocatedSize > ourMaxAllocatedSize)
+        {
+          Thread.MemoryBarrier();
           Interlocked.CompareExchange(ref ourMaxAllocatedSize, ourThreadMaxAllocatedSize, ourMaxAllocatedSize);
+        }
       }
     }
   }

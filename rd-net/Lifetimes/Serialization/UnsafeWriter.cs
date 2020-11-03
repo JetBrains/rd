@@ -122,19 +122,15 @@ namespace JetBrains.Serialization
     private const string LogCategory = "UnsafeWriter";
 
 
-    [ThreadStatic] private static bool ourAllowUnsafeWriterCaching;
-
     /// <summary>
     /// Whether <see cref="UnsafeWriter"/> can be cached for the specific thread.
     /// </summary>
+    [Obsolete("Don't use")]
     public static bool AllowUnsafeWriterCaching
     {
-      get => ourAllowUnsafeWriterCaching;
+      get => true;
       set
       {
-        ourAllowUnsafeWriterCaching = value;
-        if (!ourAllowUnsafeWriterCaching)
-          ourWriter = null;
       }
     }
 
@@ -147,33 +143,28 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static Cookie NewThreadLocalWriter()
     {
-      return NewThreadLocalWriterImpl(true);
+      if (ourWriter != null)
+        return new Cookie(ourWriter);
+
+      ourWriter = new UnsafeWriter(InitialAllocSizeOnNonCachedThread);
+      return new Cookie(ourWriter);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [Obsolete("Use NewThreadLocalWriterImpl()")]
     public static Cookie NewThreadLocalWriterNoCaching()
     {
       return NewThreadLocalWriterImpl(false);
     }
 
+    [Obsolete("Use NewThreadLocalWriterImpl()")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static Cookie NewThreadLocalWriterImpl(bool allowCaching)
     {
-      if (ourWriter != null)
-        return new Cookie(ourWriter);
-
-      if (!allowCaching)
-        return new Cookie(new UnsafeWriter(InitialAllocSizeOnNonCachedThread));
-
-      if (!AllowUnsafeWriterCaching)
-        return new Cookie(new UnsafeWriter(InitialAllocSizeOnNonCachedThread));
-
-      ourWriter = new UnsafeWriter(InitialAllocSizeOnCachedThread);      
-      return new Cookie(ourWriter);
+      return NewThreadLocalWriter();
     }
 
     private const int InitialAllocSizeOnNonCachedThread = 1 << 12;
-    private const int InitialAllocSizeOnCachedThread = 1 << 20;
     private const int MaxAllocSize = 1 << 30;
 
     private readonly object myLock = new object();

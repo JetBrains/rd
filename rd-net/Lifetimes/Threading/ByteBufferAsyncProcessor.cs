@@ -204,7 +204,6 @@ namespace JetBrains.Threading
     {
       try
       {
-        UnsafeWriter.AllowUnsafeWriterCaching = true;
         ThreadProc();
       }
       catch (ThreadAbortException e)
@@ -212,10 +211,6 @@ namespace JetBrains.Threading
         LogLog.Info($"ByteBufferProcessor {Id} was stopped by Thread.Abort rather than by normal Stop(): {0}", e);
 
         Thread.ResetAbort();
-      }
-      finally
-      {
-        UnsafeWriter.AllowUnsafeWriterCaching = false;
       }
     }
     
@@ -268,80 +263,71 @@ namespace JetBrains.Threading
     
     private void ThreadProc()
     {
-      UnsafeWriter.AllowUnsafeWriterCaching = true;
-      try
+      while (true)
       {
+        lock (myLock)
+        {
+          if (State >= StateKind.Terminating) return;
 
-        while (true)
+          while (myAllDataProcessed || myPauseReasons.Count > 0)
+          {
+            if (State >= StateKind.Stopping) return;
+            Monitor.Wait(myLock);
+            if (State >= StateKind.Terminating) return;
+          }
+
+          //In case of only put requests, we could write Assertion.Assert(chunk.Ptr > 0, "chunk.Ptr > 0"); 
+          //But in case of clear, we could get "Wait + Put(full)  + Clear + Put" before this line and 'chunkToProcess' will point to empty chunk. 
+          //RIDER-15223
+          while (myChunkToProcess.CheckEmpty(this)) //should never be endless, because `myAllDataProcessed` is 'false', that means that we MUST have ptr > 0 somewhere
+            myChunkToProcess = myChunkToProcess.Next;
+
+          if (myChunkToFill == myChunkToProcess)
+          {
+            //it's possible that next chuck is occupied by entry with seqN > acknowledgedSeqN
+            GrowConditionally();
+
+            myChunkToFill = myChunkToProcess.Next;
+          }
+
+          ShrinkConditionally(myChunkToProcess);
+
+          Assertion.Assert(myChunkToProcess.Ptr > 0, "chunkToProcess.Ptr > 0");
+          Assertion.Assert(myChunkToFill != myChunkToProcess && myChunkToFill.IsNotProcessed, "myChunkToFill != chunkToProcess && myChunkToFill.IsNotProcessed");
+
+          myProcessing = true;
+        }
+
+
+        long seqN = myChunkToProcess.IsNotProcessed ? 0 : myChunkToProcess.SeqN;
+        try
+        {
+          myProcessor(myChunkToProcess.Data, 0, myChunkToProcess.Ptr, ref seqN);
+        }
+        catch (Exception e)
+        {
+          LogLog.Error(e);
+        }
+        finally
         {
           lock (myLock)
           {
-            if (State >= StateKind.Terminating) return;
+            myProcessing = false;
 
-            while (myAllDataProcessed || myPauseReasons.Count > 0)
+            if (myChunkToProcess == null)
             {
-              if (State >= StateKind.Stopping) return;
-              Monitor.Wait(myLock);
-              if (State >= StateKind.Terminating) return;
+              LogLog.Error($"{nameof(myChunkToProcess)} is null. State: {State}");
             }
-
-            //In case of only put requests, we could write Assertion.Assert(chunk.Ptr > 0, "chunk.Ptr > 0"); 
-            //But in case of clear, we could get "Wait + Put(full)  + Clear + Put" before this line and 'chunkToProcess' will point to empty chunk. 
-            //RIDER-15223
-            while (myChunkToProcess.CheckEmpty(this)) //should never be endless, because `myAllDataProcessed` is 'false', that means that we MUST have ptr > 0 somewhere
+            else
+            {
+              myChunkToProcess.SeqN = seqN;
               myChunkToProcess = myChunkToProcess.Next;
-
-            if (myChunkToFill == myChunkToProcess)
-            {
-              //it's possible that next chuck is occupied by entry with seqN > acknowledgedSeqN
-              GrowConditionally();
-
-              myChunkToFill = myChunkToProcess.Next;
-            }
-
-            ShrinkConditionally(myChunkToProcess);
-
-            Assertion.Assert(myChunkToProcess.Ptr > 0, "chunkToProcess.Ptr > 0");
-            Assertion.Assert(myChunkToFill != myChunkToProcess && myChunkToFill.IsNotProcessed, "myChunkToFill != chunkToProcess && myChunkToFill.IsNotProcessed");
-
-            myProcessing = true;
-          }
-
-
-          long seqN = myChunkToProcess.IsNotProcessed ? 0 : myChunkToProcess.SeqN;
-          try
-          {
-            myProcessor(myChunkToProcess.Data, 0, myChunkToProcess.Ptr, ref seqN);
-          }
-          catch (Exception e)
-          {
-            LogLog.Error(e);
-          }
-          finally
-          {
-            lock (myLock)
-            {
-              myProcessing = false;
-
-              if (myChunkToProcess == null)
-              {
-                LogLog.Error($"{nameof(myChunkToProcess)} is null. State: {State}");
-              }
-              else
-              {
-                myChunkToProcess.SeqN = seqN;
-                myChunkToProcess = myChunkToProcess.Next;
-                //            Assertion.Assert(myChunkToProcess.IsNotProcessed, "chunkToProcess.IsNotProcessed"); not true in case of reprocessing
-                if (myChunkToProcess.Ptr == 0)
-                  myAllDataProcessed = true;
-              }
+              //            Assertion.Assert(myChunkToProcess.IsNotProcessed, "chunkToProcess.IsNotProcessed"); not true in case of reprocessing
+              if (myChunkToProcess.Ptr == 0)
+                myAllDataProcessed = true;
             }
           }
         }
-      }
-      finally
-      {
-        UnsafeWriter.AllowUnsafeWriterCaching = false;
       }
     }
 

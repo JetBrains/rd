@@ -308,7 +308,7 @@ namespace JetBrains.Rd.Impl
       {
         try
         {
-          using (var cookie = UnsafeWriter.NewThreadLocalWriterNoCaching())
+          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
             cookie.Writer.Write(ACK_MSG_LEN);
             cookie.Writer.Write(seqN);
@@ -351,7 +351,7 @@ namespace JetBrains.Rd.Impl
             HeartbeatAlive.Value = false;
           }
 
-          using (var cookie = UnsafeWriter.NewThreadLocalWriterNoCaching())
+          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
             cookie.Writer.Write(PING_LEN);
             cookie.Writer.Write(myCurrentTimeStamp);
