@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
@@ -27,14 +29,31 @@ namespace JetBrains.Serialization
     {
       private readonly UnsafeWriter myWriter;
 
-      private readonly int myStart;
+      private int myStart;
+
+      [ThreadStatic]
+      private static int ourRecursionLevel;
 
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public Cookie(UnsafeWriter writer)
       {
         UnsafeWriterStatistics.OnCookieCreated();
         myWriter = writer;
-        myStart = myWriter.Count;
+        if (ourRecursionLevel == 0)
+        {
+          var memory = NativeMemoryPool.Reserve();
+          Assertion.Assert(memory.IsValid, "memoryCookie.IsValid");
+          Assertion.Assert(memory.Data != IntPtr.Zero, "memoryCookie.Data != Zero");
+
+          myWriter.Initialize(memory);
+          myStart = 0;
+        }
+        else
+        {
+          myStart = myWriter.Count;
+        }
+
+        ourRecursionLevel++;
       }
 
       public UnsafeWriter Writer
@@ -80,11 +99,18 @@ namespace JetBrains.Serialization
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public void Dispose()
       {
-        UnsafeWriterStatistics.OnCookieDisposing(myWriter?.myCurrentAllocSize ?? 0);
-        if (ourWriter != myWriter)
-          myWriter?.FreeMemory();
-        else 
-          myWriter?.Reset(myStart);
+        // default struct constructor was used for unknown reason
+        if (myWriter == null)
+          return;
+        UnsafeWriterStatistics.OnCookieDisposing(myWriter.myCurrentAllocSize);
+
+        ourRecursionLevel--;
+        myWriter.Reset(myStart);
+
+        if (ourRecursionLevel == 0)
+        {
+          myWriter.Deinitialize();
+        }
       }
     }
 
@@ -146,8 +172,11 @@ namespace JetBrains.Serialization
       if (ourWriter != null)
         return new Cookie(ourWriter);
 
-      ourWriter = new UnsafeWriter(InitialAllocSizeOnNonCachedThread);
-      return new Cookie(ourWriter);
+      ourWriter = new UnsafeWriter();
+      var writer = new Cookie(ourWriter);
+      // hack: release memory only on threads, which actually make an allocation.
+      ourWriter.ReleaseResources = NativeMemoryPool.ThreadMemoryHolder.AllocatedOnThread;
+      return writer;
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -164,57 +193,51 @@ namespace JetBrains.Serialization
       return NewThreadLocalWriter();
     }
 
-    private const int InitialAllocSizeOnNonCachedThread = 1 << 12;
-    private const int MaxAllocSize = 1 << 30;
-
     private readonly object myLock = new object();
 
     private byte* myStartPtr;
     private int myCurrentAllocSize;
+    private NativeMemoryPool.Cookie myMemory;
 
     private byte* myPtr;
     private int myCount;
 
-    private UnsafeWriter(int initialAllocSize)
+    /// <summary>
+    /// Indicates whether the UnsafeWriter should try to cleanup used memory in <see cref="NativeMemoryPool"/> 
+    /// </summary>
+    internal int ReleaseResources;
+
+    private UnsafeWriter()
     {
-      myStartPtr = (byte*)Marshal.AllocHGlobal(myCurrentAllocSize = myInitialAllocSize = initialAllocSize).ToPointer();
-      if (myStartPtr == null)
-        ErrorOomOldMono(); 
-      //can't use ILog.Verbose here because logger is closed to UnsafeWriter
-      if (myCurrentAllocSize <= InitialAllocSizeOnNonCachedThread)
-        LogLog.Trace(LogCategory, "Created UnsafeWriter, initial alloc size: {0:N0} bytes", myCurrentAllocSize);
-      else
-        LogLog.Verbose(LogCategory, "Created UnsafeWriter, initial alloc size: {0:N0} bytes", myCurrentAllocSize);
-      Reset();
+      myInitialAllocSize = NativeMemoryPool.AllocSize;
+    }
+
+    /// <summary>
+    /// Creates a new UnsafeWriter
+    /// </summary>
+    /// <param name="memory">Pointer to allocated <see cref="InitialAllocSizeOnCachedThread"/> bytes of memory</param>
+    private void Initialize(NativeMemoryPool.Cookie memory)
+    {
+      myMemory = memory;
+      myCurrentAllocSize = memory.Length;
+      myStartPtr = myPtr = (byte*) memory.Data;
+    }
+
+    private void Deinitialize()
+    {
+      if (myStartPtr != null)
+      {
+        myMemory.Dispose();
+      }
+      myStartPtr = (byte*) 0;
+      myPtr = (byte*) 0;
     }
 
     ~UnsafeWriter()
     {
-      FreeMemory();
-    }
-
-    private void FreeMemory()
-    {
-      // See TMLN-925 Timeline crashes during closing
-      //ourLogger.Verbose("Removing UnsafeWriter, {0:N0} bytes are being free", myCurrentAllocSize);
-      if (myStartPtr != null)
-      {
-        try
-        {
-          lock (myLock)
-          {
-            if (myStartPtr != null)
-            {
-              Marshal.FreeHGlobal(new IntPtr(myStartPtr));
-              myStartPtr = null;
-            }
-          }
-        }
-        catch (Exception e)
-        {
-          LogLog.Error(e);
-        }
-      }
+      Deinitialize();
+      for (int i = 0; i < ReleaseResources; i++)
+        NativeMemoryPool.TryFreeMemory();
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -265,11 +288,6 @@ namespace JetBrains.Serialization
 
     private void Realloc(int newCount)
     {
-      if (newCount > MaxAllocSize)
-      {
-        throw new ArgumentException(string.Format("Can't allocate more memory: {0:N0} bytes, max: {1:N0}", newCount, MaxAllocSize));
-      }
-
       var reallocSize = myInitialAllocSize;
       while (newCount > reallocSize)
       {
@@ -279,20 +297,13 @@ namespace JetBrains.Serialization
       try
       {
         LogLog.Verbose(LogCategory, "Realloc UnsafeWriter, current: {0:N0} bytes, new: {1:N0}", myCurrentAllocSize, reallocSize);
-
-        lock (myLock)
+        if (myStartPtr != null) //already terminated
         {
-          if (myStartPtr != null) //already terminated
-          {
-            myStartPtr = (byte*)Marshal.ReAllocHGlobal(new IntPtr(myStartPtr), new IntPtr(reallocSize)).ToPointer();
-            if (myStartPtr == null)
-              ErrorOomOldMono(); 
-            
-            myPtr = myStartPtr + myCount;
-            myCurrentAllocSize = reallocSize;
-            myCount = newCount;
-          }
-        }        
+          myStartPtr = (byte*) myMemory.Realloc(reallocSize);
+          myPtr = myStartPtr + myCount;
+          myCurrentAllocSize = reallocSize;
+          myCount = newCount;
+        }
       }
       catch (Exception e)
       {
@@ -302,10 +313,6 @@ namespace JetBrains.Serialization
       }
     }
 
-    private void ErrorOomOldMono()
-    {
-      throw new Exception("Allocator returned NULLPTR. Usually this happens in case of OOM on Mono Runtime.");
-    }
 
     #region Primitive writers
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]

@@ -31,7 +31,6 @@ namespace Test.RdFramework
       Assert.IsTrue(ReferenceEquals(firstWriter, secondWriter), "object.ReferenceEquals(firstWriter, secondWriter)");
     }
 
-
     [Test]
     public void ReportReentrancy01()
     {
