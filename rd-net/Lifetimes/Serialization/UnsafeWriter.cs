@@ -8,7 +8,7 @@ using JetBrains.Util;
 using JetBrains.Util.Internal;
 
 namespace JetBrains.Serialization
-{ 
+{
   /// <summary>
   /// Effective serialization tool. <see cref="UnsafeWriter"/> is thread-bound automatically expandable and shrinkable
   /// byte buffer (with initial size of 1Mb). Entry point is <see cref="Cookie"/> obtained by  <see cref="NewThreadLocalWriter"/>.
@@ -16,7 +16,7 @@ namespace JetBrains.Serialization
   /// <see cref="Cookie"/> contains start position and length of currently serialized data (start + len = position), so when disposed it reverts writer
   /// position to the cookie's start position.
   ///
-  /// 
+  ///
   /// <seealso cref="UnsafeReader"/>
   /// </summary>
   public sealed unsafe class UnsafeWriter
@@ -24,7 +24,7 @@ namespace JetBrains.Serialization
     private readonly int myInitialAllocSize;
 
     public struct Cookie : IDisposable
-    {      
+    {
       private readonly UnsafeWriter myWriter;
 
       private readonly int myStart;
@@ -66,9 +66,9 @@ namespace JetBrains.Serialization
       {
         CopyTo(dst, dstOffset, count ?? Count);
       }
-      
+
       public void CopyTo(byte[] dst, int dstOffset, int count)
-      {        
+      {
         CopyTo(dst, 0, dstOffset, count);
       }
 
@@ -76,7 +76,7 @@ namespace JetBrains.Serialization
       {
         Marshal.Copy((IntPtr)(Data + srcOffset), dst, dstOffset, count);
       }
-      
+
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public void Dispose()
       {
@@ -177,12 +177,12 @@ namespace JetBrains.Serialization
     private const int MaxAllocSize = 1 << 30;
 
     private readonly object myLock = new object();
-    
+
     private byte* myStartPtr;
-    private int myCurrentAllocSize;    
+    private int myCurrentAllocSize;
 
     private byte* myPtr;
-    private int myCount;    
+    private int myCount;
 
     private UnsafeWriter(int initialAllocSize)
     {
@@ -242,7 +242,7 @@ namespace JetBrains.Serialization
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       get
-      {        
+      {
         return myCount;
       }
     }
@@ -250,7 +250,7 @@ namespace JetBrains.Serialization
     private byte* Data
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      get { return myStartPtr; }      
+      get { return myStartPtr; }
     }
 
     public byte* Ptr
@@ -262,7 +262,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void Prepare(int nbytes)
     {
-      var newCount = myCount + nbytes;      
+      var newCount = myCount + nbytes;
       if (newCount <= myCurrentAllocSize)
       {
         myCount = newCount;
@@ -286,7 +286,7 @@ namespace JetBrains.Serialization
       }
 
       try
-      { 
+      {
         LogLog.Verbose(LogCategory, "Realloc UnsafeWriter, current: {0:N0} bytes, new: {1:N0}", myCurrentAllocSize, reallocSize);
 
         lock (myLock)
@@ -330,7 +330,7 @@ namespace JetBrains.Serialization
       Prepare(sizeof(byte));
       *(myPtr++) = value;
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Guid value)
     {
@@ -396,7 +396,7 @@ namespace JetBrains.Serialization
     {
       fixed (byte* bb = data)
         *(int*)(bb+offset) = value;
-    } 
+    }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Int64 value)
@@ -455,7 +455,7 @@ namespace JetBrains.Serialization
       {
         Write(value.Length);
         WriteStringContentInternal(this, value, 0, value.Length);
-      } 
+      }
     }
 
 
@@ -549,7 +549,7 @@ namespace JetBrains.Serialization
     public static readonly WriteDelegate<double> DoubleDelegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<float> FloatDelegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<Int16> Int16Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int32> Int32Delegate = (writer, x) => writer.Write(x);    
+    public static readonly WriteDelegate<Int32> Int32Delegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<Int64> Int64Delegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<UInt16> UInt16Delegate = (writer, x) => writer.Write(x);
     public static readonly WriteDelegate<UInt32> UInt32Delegate = (writer, x) => writer.Write(x);
@@ -585,12 +585,12 @@ namespace JetBrains.Serialization
       if (value == null) Write(-1);
       else
       {
-        Write(value.Length);        
+        Write(value.Length);
         fixed (int* c = value)
         {
-          Write((byte*)c, value.Length * sizeof(int));          
+          Write((byte*)c, value.Length * sizeof(int));
         }
-      } 
+      }
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
