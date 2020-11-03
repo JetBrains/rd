@@ -11,7 +11,7 @@ const val folder = "entities"
 
 object EntityRoot : Root(
         Kotlin11Generator(FlowTransform.Reversed, "org.example", outputDirectory(ktDirectorySystemPropertyKey, folder)),
-        Cpp17Generator(FlowTransform.AsIs, "rd::test::util", outputDirectory(cppDirectorySystemPropertyKey, folder), generatePrecompiledHeaders=false)
+        Cpp17Generator(FlowTransform.AsIs, "rd::test::util", outputDirectory(cppDirectorySystemPropertyKey, folder))
 ) {
     init {
         setting(Cpp17Generator.TargetName, "entities")

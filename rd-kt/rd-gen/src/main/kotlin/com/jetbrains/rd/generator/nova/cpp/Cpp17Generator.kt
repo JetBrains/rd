@@ -38,13 +38,13 @@ val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244, 4100)
  * @param defaultNamespace namespace separated by symbol "point", which will be translated to nested namespaces. "a.b.c" to "a::b::c", for instance.
  * Remember about following properties: "FsPath", "TargetName"!
  */
-open class Cpp17Generator(flowTransform: FlowTransform,
-                          val defaultNamespace: String,
-                          override val folder: File,
-                          generatedFileSuffix: String = ".Generated",
-                          val usingPrecompiledHeaders: Boolean = false,
-                          val generatePrecompiledHeaders: Boolean = true
+open class Cpp17Generator(
+    flowTransform: FlowTransform,
+    val defaultNamespace: String,
+    override val folder: File,
+    generatedFileSuffix: String = ".Generated"
 ) : GeneratorBase(flowTransform, generatedFileSuffix) {
+
     @Suppress("ObjectPropertyName")
     companion object {
         private const val INSTANTIATION_FILE_NAME = "instantiations"
@@ -129,6 +129,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
     object TargetName : ISetting<String, Toplevel>
 
+    object UsePrecompiledHeaders : SettingWithDefault<Boolean, Toplevel>(false)
+
+    object GeneratePrecompiledHeaders : SettingWithDefault<Boolean, Toplevel>(false)
+
     private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "h"
 
     private fun Declaration.headerFileName() = this.fsName(false)
@@ -146,6 +150,10 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     private fun Root.targetName(): String {
         return getSetting(TargetName) ?: this.name
     }
+
+    private fun Root.usePrecompiledHeaders(): Boolean = getSetting(UsePrecompiledHeaders) ?: false
+
+    private fun Root.generatePrecompiledHeaders(): Boolean = getSetting(GeneratePrecompiledHeaders) ?: false
 
     private val Class.isInternRoot: Boolean
         get() = internRootForScopes.isNotEmpty()
@@ -680,7 +688,11 @@ open class Cpp17Generator(flowTransform: FlowTransform,
         File(this, pchCppFile).writeText("#include \"${pchHeaderFile}\"")
     }
 
-    private fun File.cmakeLists(targetName: String, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList(), subdirectories: List<String> = emptyList()) {
+    private fun File.cmakeLists(root: Root, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList(), subdirectories: List<String> = emptyList()) {
+        val targetName = root.targetName()
+        val usingPrecompiledHeaders = root.usePrecompiledHeaders()
+        val generatePrecompiledHeaders = root.generatePrecompiledHeaders()
+
         mkdirs()
         if (usingPrecompiledHeaders && !generatePrecompiledHeaders) {
             fail("Option 'usingPrecompiledHeaders' conflicts with disabled option 'generatePrecompiledHeaders'")
@@ -739,13 +751,15 @@ open class Cpp17Generator(flowTransform: FlowTransform,
                 }
             }
         }
+
+        if (usingPrecompiledHeaders) {
+            this.precompiledHeaderCmake()
+        }
     }
 
     private fun File.precompiledHeaderCmake() {
-        if (usingPrecompiledHeaders) {
-            val file = File("./src/main/resources/cpp/${Files.PrecompiledHeaderCmake}")
-            file.copyTo(this.resolve(Files.PrecompiledHeaderCmake), overwrite = true)
-        }
+        val file = File("./src/main/resources/cpp/${Files.PrecompiledHeaderCmake}")
+        file.copyTo(this.resolve(Files.PrecompiledHeaderCmake), overwrite = true)
     }
 
 
@@ -935,8 +949,7 @@ open class Cpp17Generator(flowTransform: FlowTransform,
 
         if (toplevels.isNotEmpty()) {
             val root = toplevels.first().root
-            folder.cmakeLists(root.targetName(), allFilePaths, toplevels/*, toplevels.map { it.name }*/)
-            folder.precompiledHeaderCmake()
+            folder.cmakeLists(root, allFilePaths, toplevels/*, toplevels.map { it.name }*/)
         }
 
         folder.templateInstantiate(toplevels)
@@ -2410,6 +2423,6 @@ open class Cpp17Generator(flowTransform: FlowTransform,
     }
 
     override fun toString(): String {
-        return "Cpp17Generator(flowTransform=$flowTransform, defaultNamespace='$defaultNamespace', folder=${folder.canonicalPath}, usingPrecompiledHeaders=$usingPrecompiledHeaders)"
+        return "Cpp17Generator($flowTransform, \"$defaultNamespace\", '${folder.canonicalPath}')"
     }
 }

@@ -15,7 +15,7 @@ const val folder = "demo"
 
 object DemoRoot : Root(
     Kotlin11Generator(FlowTransform.AsIs, "demo", outputDirectory(ktDirectorySystemPropertyKey, folder)),
-    Cpp17Generator(FlowTransform.Reversed, "demo", outputDirectory(cppDirectorySystemPropertyKey, folder), generatePrecompiledHeaders=false),
+    Cpp17Generator(FlowTransform.Reversed, "demo", outputDirectory(cppDirectorySystemPropertyKey, folder)),
     CSharp50Generator(FlowTransform.Reversed, "demo", outputDirectory(csDirectorySystemPropertyKey, folder))
 ) {
 
