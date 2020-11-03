@@ -19,6 +19,12 @@ namespace JetBrains.Serialization
 
     [ThreadStatic] private static ThreadMemoryHolder ourThreadMemory;
 
+    /// <summary>
+    /// All allocated holders of native blocks. The array should be filled from the start.
+    /// Lock policy: any modification of this array should be protected by <see cref="ourLock"/>
+    /// It is mandatory to reserve block before removing or replacing it from the array. Be aware that there are readers
+    /// of this array that do not required to use a lock.
+    /// </summary>
     private static ThreadMemoryHolder[] ourBlocks = new ThreadMemoryHolder[Environment.ProcessorCount];
     private static readonly object ourLock = new object();
 
@@ -49,6 +55,8 @@ namespace JetBrains.Serialization
     /// <returns>true if the block was deallocated, false if there are no such blocks.</returns>
     public static bool TryFreeMemory()
     {
+      // See TMLN-925 Timeline crashes during closing
+      //ourLogger.Verbose("Removing UnsafeWriter, {0:N0} bytes are being free", myCurrentAllocSize);
       lock (ourLock)
       {
         for (int i = ourBlocks.Length - 1; i >= 0; i--)
@@ -108,7 +116,7 @@ namespace JetBrains.Serialization
       bool SearchAndReserve(out ThreadMemoryHolder holder)
       {
         var blocks = ourBlocks;
-        var start = blocks.Length % Thread.CurrentThread.ManagedThreadId;
+        var start = Thread.CurrentThread.ManagedThreadId % blocks.Length;
         for (int i = start; i < blocks.Length; i++)
         {
           holder = blocks[i];
