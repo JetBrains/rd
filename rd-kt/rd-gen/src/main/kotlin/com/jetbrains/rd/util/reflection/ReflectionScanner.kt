@@ -77,9 +77,9 @@ private fun File.scanForClasses(pkg: String, classLoader: ClassLoader): Sequence
             .filter { it.isFile && it.name.endsWith(classSuffix) }
             .map {
                 val classFileLocation = it.absolutePath
-                if (!classFileLocation.contains(pkg.pkg2path(true))) return@map null
 
                 val relativeToRoot = classFileLocation.removePrefix(root.toString()).removePrefix(File.separator)
+                if (!relativeToRoot.startsWith(pkg.pkg2path(true))) return@map null
                 val className = relativeToRoot.removeSuffix(classSuffix).path2pkg()
                 val clazz = classLoader.tryLoadClass(className)
                 clazz
