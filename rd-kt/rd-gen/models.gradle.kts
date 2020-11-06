@@ -1,7 +1,7 @@
+import com.jetbrains.rd.gradle.tasks.RdGenerateTask
 import com.jetbrains.rd.gradle.tasks.util.cppDirectorySystemPropertyKey
 import com.jetbrains.rd.gradle.tasks.util.csDirectorySystemPropertyKey
 import com.jetbrains.rd.gradle.tasks.util.ktDirectorySystemPropertyKey
-import com.jetbrains.rd.gradle.tasks.RdGenerateTask
 
 val repoRoot: File by rootProject.extra.properties
 val cppRoot: File by rootProject.extra.properties
@@ -61,6 +61,6 @@ tasks {
                 .resolve("hash")
                 .resolve("models")
         outputs.dirs(hashFolder)
-        args = listOf("--source=$sourceFiles;", "--hash-folder=$hashFolder", "-v")
+        args = listOf("--source=$sourceFiles;", "--packages=com,org,testModels", "--hash-folder=$hashFolder", "-v")
     }
 }
