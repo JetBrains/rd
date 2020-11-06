@@ -1,14 +1,13 @@
 package com.jetbrains.rd.generator.test.cases.generator
 
 import com.jetbrains.rd.generator.nova.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import com.jetbrains.rd.util.reflection.toPath
-import org.jetbrains.kotlin.fir.builder.generateAccessExpression
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -16,6 +15,7 @@ import java.io.File
 class CallTest {
     companion object {
         const val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+        const val kotlinTempOutputDir = "build/testOutputKotlinTemp"
     }
 
     object TestRoot1 : Root(
@@ -38,6 +38,11 @@ class CallTest {
 
     val classloader: ClassLoader = CallTest::class.java.classLoader
 
+    @BeforeEach
+    fun cleanup() {
+        File(kotlinTempOutputDir).deleteRecursively()
+    }
+
     @Test
     fun test1() {
         generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator"), true)
@@ -59,25 +64,28 @@ class CallTest {
         assertEquals(result, "OK", result)
     }
 
+    /**
+     * Model named [testModels.testSubpackage.FooRoot] should be captured by package filter `testModels.testSubpackage`.
+     */
     @Test
     fun test2() {
-        generateRdModel(classloader, arrayOf("callTest2"), true)
-        val generatedOutputPath = "build/generatedOutputCallTest"
-        File(generatedOutputPath).listFiles()!!.forEach {
-            it.delete()
-        }
+        generateRdModel(classloader, arrayOf("testModels.testSubpackage"), true)
 
-        val rdgen = RdGen()
+        val generatedSources = File(kotlinTempOutputDir).listFiles()!!
+        assertEquals(1, generatedSources.size)
+        assertNotNull(generatedSources.singleOrNull { it.name == "FooRoot.Generated.kt" })
+    }
 
-        val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rd.framework") +
-            classloader.scanForResourcesContaining("com.jetbrains.rd.util")
-        rdgen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
+    /**
+     * Model named [testModels.testSubpackage.FooRoot] shouldn't be captured by package filter `testSubpackage` (even if
+     * such package exists on the the top level, but has no appropriate classes).
+     */
+    @Test
+    fun test3() {
+        generateRdModel(classloader, arrayOf("testSubpackage"), true)
 
-
-        rdgen.run()
-
-        val generatedSources = File(generatedOutputPath).listFiles()!!
-        assertEquals(2, generatedSources.size)
+        val generatedSources = File(kotlinTempOutputDir).listFiles().orEmpty()
+        assertEquals(0, generatedSources.size)
     }
 }
 
