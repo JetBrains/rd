@@ -6,6 +6,7 @@ import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import com.jetbrains.rd.util.reflection.toPath
+import org.jetbrains.kotlin.fir.builder.generateAccessExpression
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -56,6 +57,27 @@ class CallTest {
         val method = generatedCodeClass.getMethod("main")
         val result = method.invoke(null) as String
         assertEquals(result, "OK", result)
+    }
+
+    @Test
+    fun test2() {
+        generateRdModel(classloader, arrayOf("callTest2"), true)
+        val generatedOutputPath = "build/generatedOutputCallTest"
+        File(generatedOutputPath).listFiles()!!.forEach {
+            it.delete()
+        }
+
+        val rdgen = RdGen()
+
+        val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rd.framework") +
+            classloader.scanForResourcesContaining("com.jetbrains.rd.util")
+        rdgen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
+
+
+        rdgen.run()
+
+        val generatedSources = File(generatedOutputPath).listFiles()!!
+        assertEquals(2, generatedSources.size)
     }
 }
 
