@@ -44,6 +44,10 @@ namespace JetBrains.Serialization
           var memory = NativeMemoryPool.Reserve();
           Assertion.Assert(memory.IsValid, "memoryCookie.IsValid");
           Assertion.Assert(memory.Data != IntPtr.Zero, "memoryCookie.Data != Zero");
+          if (memory.CausedAllocation)
+          {
+            myWriter.ReleaseResources++;
+          }
 
           myWriter.Initialize(memory);
           myStart = 0;
@@ -174,8 +178,6 @@ namespace JetBrains.Serialization
 
       ourWriter = new UnsafeWriter();
       var writer = new Cookie(ourWriter);
-      // hack: release memory only on threads, which actually make an allocation.
-      ourWriter.ReleaseResources = NativeMemoryPool.ThreadMemoryHolder.AllocatedOnThread;
       return writer;
     }
 

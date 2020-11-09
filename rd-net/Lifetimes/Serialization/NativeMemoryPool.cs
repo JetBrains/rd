@@ -94,7 +94,7 @@ namespace JetBrains.Serialization
       if (SearchAndReserve(out h))
         return new Cookie(h);
       if (AllocateNew(out h))
-        return new Cookie(h);
+        return new Cookie(h, causedAllocation: true);
 
       // All items in array blocks are busy and not available, increase the array size and try once more
       lock (ourLock)
@@ -106,7 +106,7 @@ namespace JetBrains.Serialization
         if (SearchAndReserve(out h))
           return new Cookie(h);
         if (AllocateNew(out h))
-          return new Cookie(h);
+          return new Cookie(h, causedAllocation: true);
       }
 
       Assertion.Fail("Unable to reserve a native memory block");
@@ -187,6 +187,14 @@ namespace JetBrains.Serialization
     public readonly struct Cookie : IDisposable
     {
       private readonly ThreadMemoryHolder myHolder;
+
+      /// <summary>
+      /// Indicates whether a new native block was actually allocated to fulfil the request.
+      /// When this property is set to true in returned Cookie, you become responsible for the allocated block
+      /// in pool (which can be used by different features). But it is only your obligation to call
+      /// <see cref="NativeMemoryPool.TryFreeMemory"/> after lifetime of your feature has over.
+      /// </summary>
+      public readonly bool CausedAllocation;
       public bool IsValid => myHolder != null;
 
       public IntPtr Data => myHolder.Data;
@@ -197,9 +205,10 @@ namespace JetBrains.Serialization
         return myHolder.Realloc(size);
       }
 
-      internal Cookie([NotNull] ThreadMemoryHolder holder)
+      internal Cookie([NotNull] ThreadMemoryHolder holder, bool causedAllocation = false)
       {
         myHolder = holder ?? throw new ArgumentNullException(nameof(holder));
+        CausedAllocation = causedAllocation;
       }
 
       public void Dispose()
@@ -218,9 +227,6 @@ namespace JetBrains.Serialization
       private int myUse;
       public IntPtr Data => myPtr;
 
-      [ThreadStatic]
-      internal static int AllocatedOnThread;
-
       public bool IsUsed => myUse == Used;
       public bool IsDisposed => myUse == Disposed;
 
@@ -228,7 +234,6 @@ namespace JetBrains.Serialization
 
       public ThreadMemoryHolder()
       {
-        AllocatedOnThread++;
         Assertion.Assert(myPtr == IntPtr.Zero, "myPtr == IntPtr.Zero");
         myPtr = AllocateMemory(AllocSize);
         Length = AllocSize;
