@@ -96,7 +96,7 @@ namespace JetBrains.Diagnostics
     [DllImport("libc", SetLastError = true)]
     private static extern int kill(int pid, int sig);
 
-    private static bool ProcessExists(int pid, ref bool useWinApi)
+    public static bool ProcessExists(int pid, ref bool useWinApi)
     {
       try
       {
