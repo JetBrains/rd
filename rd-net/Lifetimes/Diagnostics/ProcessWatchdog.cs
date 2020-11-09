@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Interop;
+using JetBrains.Lifetimes;
 using JetBrains.Util;
 
 namespace JetBrains.Diagnostics
 {
-  
   /// <summary>
   /// Watchdog that automatically terminates current process if some other process exits.
   /// </summary>
@@ -20,6 +20,11 @@ namespace JetBrains.Diagnostics
     private const int ERROR_INVALID_PARAMETER = 87;
 
     public static void StartWatchdogForPidEnvironmentVariable(string envVarName)
+    {
+      StartWatchdogForPidEnvironmentVariable(envVarName, Lifetime.Eternal);
+    }
+
+    public static void StartWatchdogForPidEnvironmentVariable(string envVarName, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null)
     {
       var parentProcessPidString = Environment.GetEnvironmentVariable(envVarName);
       if (parentProcessPidString == null)
@@ -32,10 +37,15 @@ namespace JetBrains.Diagnostics
         ourLogger.Error($"Unable to parse int from environment variable '{envVarName}' => do not watch parent process to die");
         return;
       }
-      StartWatchdogForPid(parentProcessPid);
+      StartWatchdogForPid(parentProcessPid, lifetime, gracefulShutdownPeriod);
     }
 
     public static void StartWatchdogForPid(int pid)
+    {
+      StartWatchdogForPid(pid, Lifetime.Eternal);
+    }
+
+    public static void StartWatchdogForPid(int pid, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null)
     {
       var watchThread = new Thread(() =>
       {
@@ -45,6 +55,11 @@ namespace JetBrains.Diagnostics
 
         while (true)
         {
+          if (lifetime.IsNotAlive)
+          {
+            ourLogger.Info($"Monitoring of process {pid} stopped by lifetime termination");
+            return;
+          }
           if (!ProcessExists(pid, ref useWinApi))
           {
             var exitMsg = $"Parent process PID:{pid} has quit, killing ourselves via Process.Kill";
@@ -52,6 +67,15 @@ namespace JetBrains.Diagnostics
             {
               LogLog.Error(exitMsg);
               ourLogger.Error(exitMsg);
+              
+              if (gracefulShutdownPeriod.HasValue)
+              {
+                var waitingMessage = $"Waiting for grace period: {gracefulShutdownPeriod.Value}";
+                LogLog.Info(waitingMessage);
+                ourLogger.Info(waitingMessage);
+                
+                Thread.Sleep(gracefulShutdownPeriod.Value);
+              }
             }
             catch
             {
