@@ -8,6 +8,8 @@ expect fun currentThreadName() : String
 expect class AtomicReference<T> (initial: T) {
     fun get() : T
     fun getAndUpdate(f : (T) -> T) : T
+    fun getAndSet(newValue: T): T
+    fun compareAndSet(expectedValue: T, newValue: T): Boolean
 }
 
 expect class CopyOnWriteArrayList<E>(): MutableList<E>

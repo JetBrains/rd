@@ -20,7 +20,8 @@ actual class AtomicReference<T> actual constructor(initial: T) {
     private val impl = AtomicReference(initial)
     actual fun get(): T = impl.get()
     actual fun getAndUpdate(f: (T) -> T): T = impl.getAndUpdate(f)
-    fun getAndSet(new: T): T = impl.getAndSet(new)
+    actual fun getAndSet(newValue: T): T = impl.getAndSet(newValue)
+    actual fun compareAndSet(expectedValue: T, newValue: T): Boolean = impl.compareAndSet(expectedValue, newValue)
 }
 
 actual typealias CancellationException = CancellationException

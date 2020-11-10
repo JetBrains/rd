@@ -1,9 +1,6 @@
 package com.jetbrains.rd.util.test.cases
 
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.SequentialLifetimes
-import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.plusAssign
+import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.test.framework.RdTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -90,6 +87,36 @@ class SequentialLifetimesTest : RdTestBase()  {
         lfB.terminate()
         assertTrue(accA)
         assertTrue(accB)
+    }
+
+    @Test
+    fun testTerminateCurrent01() {
+        val sequentialLifetimes = SequentialLifetimes(Lifetime.Eternal)
+        sequentialLifetimes.defineNext { _, lifetime ->
+            lifetime.onTermination {
+                assertTrue(lifetime.isNotAlive, "lifetime.isNotAlive")
+                assertTrue(sequentialLifetimes.isTerminated, "sequentialLifetimes.isTerminated")
+            }
+        }
+        sequentialLifetimes.terminateCurrent()
+    }
+
+    @Test
+    fun testTerminateCurrent02() {
+        val sb = StringBuilder()
+        val sequentialLifetimes = SequentialLifetimes(Lifetime.Eternal)
+        sequentialLifetimes.defineNext { _, lifetime ->
+            lifetime.onTermination {
+                sb.append("T1")
+                assertTrue(lifetime.isNotAlive, "lifetime.isNotAlive")
+                assertTrue(sequentialLifetimes.isTerminated, "sequentialLifetimes.isTerminated")
+            }
+        }
+        sequentialLifetimes.defineNext { _, lifetime ->
+            sb.append("N2")
+        }
+
+        assertEquals("T1N2", sb.toString())
     }
 }
 
