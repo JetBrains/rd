@@ -1,7 +1,6 @@
 package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.collections.QueueImpl
-import kotlin.Exception
 import kotlin.reflect.KClass
 
 actual open class ExecutionException actual constructor (message: String, cause: Throwable?) : Exception(message, cause)
@@ -12,6 +11,19 @@ actual class AtomicReference<T> actual constructor(initial: T) {
     private var impl : T = initial
     actual fun get(): T = impl
     actual fun getAndUpdate(f: (T) -> T): T = impl.also { impl = f(impl) }
+    actual fun getAndSet(newValue: T): T {
+        val old = impl
+        impl = newValue
+        return old
+    }
+    actual fun compareAndSet(expectedValue: T, newValue: T): Boolean {
+        if (impl == expectedValue) {
+            impl = newValue
+            return true
+        }
+
+        return false
+    }
 }
 
 actual class CancellationException(message: String, cause: Throwable?) : IllegalStateException(message, cause) {
