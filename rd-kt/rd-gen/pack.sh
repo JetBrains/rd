@@ -12,7 +12,15 @@ rm -f "$cache_dir/*.tmp"
 
 nuget_dir=${build_dir}/nuget
 nuget_version="${BUILD_NUMBER:-2020.3.0-preview1}"
-build_configuration=${1:-Debug}
+
+if [[ $nuget_version =~ "preview" ]]
+then
+  build_configuration=Debug
+else
+  build_configuration=Release
+fi
+
+echo Build configuration: $build_configuration
 
 mkdir -p $cache_dir
 echo $cache_dir
@@ -42,7 +50,10 @@ tar xf ${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz -C ${build_dir}/.dotnet
 
 export JAVA_HOME=${build_dir}/jdk
 chmod +x ${JAVA_HOME}/bin/*
+
+pushd ${build_dir}/../../../
 ${build_dir}/../../../gradlew -Dorg.gradle.daemon=false fatJar
+popd
 
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
