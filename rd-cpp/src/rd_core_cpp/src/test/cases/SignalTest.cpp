@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "test_util.h"
-
-#include "reactive/interfaces.h"
-#include "reactive/SignalX.h"
+#include <lifetime/LifetimeDefinition.h>
+#include <reactive/base/interfaces.h>
+#include <reactive/base/SignalX.h>
 
 using namespace rd;
 

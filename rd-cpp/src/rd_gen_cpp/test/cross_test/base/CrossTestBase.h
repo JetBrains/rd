@@ -5,7 +5,7 @@
 #include "scheduler/SimpleScheduler.h"
 #include "base/IWire.h"
 #include "wire/SocketWire.h"
-#include "std/filesystem.h"
+#include "../../../../rd_core_cpp/src/test/util/filesystem.h"
 #include "protocol/Protocol.h"
 #include "wire/WireUtil.h"
 

@@ -15,7 +15,6 @@
 #include "impl/RdList.h"
 #include "task/RdCall.h"
 #include "task/RdEndpoint.h"
-#include "test_util.h"
 
 using namespace rd;
 using namespace rd::test;

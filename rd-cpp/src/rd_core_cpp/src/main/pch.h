@@ -26,6 +26,6 @@
 #include <vector>
 #include <ctime>
 
-#include "thirdparty.hpp"
+#include <thirdparty.hpp>
 
 #endif	  // RD_CPP_CORE_PCH_H

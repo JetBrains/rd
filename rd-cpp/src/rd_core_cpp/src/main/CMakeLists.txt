@@ -36,7 +36,7 @@ add_library(rd_core_cpp SHARED
         util/gen_util.h util/overloaded.h
         #pch
         ${PCH_CPP_OPT}
-        reactive/base/SignalCookie.cpp reactive/base/SignalCookie.h)
+        )
 
 include(GenerateExportHeader)
 generate_export_header(rd_core_cpp

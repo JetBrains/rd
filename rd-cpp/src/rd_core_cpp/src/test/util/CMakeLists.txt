@@ -1,5 +1,5 @@
 add_library(rd_core_cpp_test_util STATIC
-        test_util.cpp test_util.h)
+        filesystem.cpp filesystem.h)
 
 target_link_libraries(rd_core_cpp_test_util rd_core_cpp)
 
