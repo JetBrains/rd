@@ -22,7 +22,7 @@ namespace JetBrains.Serialization
 
     private static readonly IList<Event> ourEvents = new List<Event>();
     private static int ourThreadCount = 0;
-    private static int ourMaxAllocatedSize = 0;
+    private static volatile int ourMaxAllocatedSize = 0;
 
     public static IList<Event> GetEvents()
     {
