@@ -20,5 +20,10 @@
     <ItemGroup>
       <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
     </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+      <PackageReference Include="BenchmarkDotNet">
+        <Version>0.12.1</Version>
+      </PackageReference>
+    </ItemGroup>
     
 </Project>

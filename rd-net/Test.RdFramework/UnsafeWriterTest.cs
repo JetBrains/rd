@@ -32,50 +32,6 @@ namespace Test.RdFramework
     }
 
     [Test]
-    public void ReportReentrancy01()
-    {
-      var thread = new Thread(() =>
-      {
-        UnsafeWriterStatistics.ClearEvents();
-        using (var cookie = UnsafeWriter.NewThreadLocalWriter())
-        {
-          using (var nestedCookie = UnsafeWriter.NewThreadLocalWriter())
-            cookie.Writer.Write(0);
-        }
-      });
-      thread.Start();
-      thread.Join();
-      var reentrancyEvent = UnsafeWriterStatistics.GetEvents().FirstOrDefault(@event => @event.Type == UnsafeWriterStatistics.EventType.REENTRANCY);
-      Assert.IsNull(reentrancyEvent);
-    }
-
-    [Test]
-    public void ReportReentrancy02()
-    {
-      var thread = new Thread(() =>
-      {
-        UnsafeWriterStatistics.ClearEvents();
-        UnsafeWriterStatistics.ReportReentrancy = true;
-        try
-        {
-          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
-          {
-            using (var nestedCookie = UnsafeWriter.NewThreadLocalWriter())
-              cookie.Writer.Write(0);
-          }
-        }
-        finally
-        {
-          UnsafeWriterStatistics.ReportReentrancy = false;
-        }
-      });
-      thread.Start();
-      thread.Join();
-      var reentrancyEvent = UnsafeWriterStatistics.GetEvents().First(@event => @event.Type == UnsafeWriterStatistics.EventType.REENTRANCY);
-      Assert.IsTrue(reentrancyEvent.Stacktraces.Count == 2, "reentrancyEvent.Stacktraces.Count == 2");
-    }
-
-    [Test]
     public void TestNullWriterInCookie()
     {
       using (var cookie = new UnsafeWriter.Cookie())

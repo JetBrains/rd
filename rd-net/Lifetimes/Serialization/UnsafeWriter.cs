@@ -25,39 +25,16 @@ namespace JetBrains.Serialization
   {
     private readonly int myInitialAllocSize;
 
-    public struct Cookie : IDisposable
+    public readonly struct Cookie : IDisposable
     {
       private readonly UnsafeWriter myWriter;
-
-      private int myStart;
-
-      [ThreadStatic]
-      private static int ourRecursionLevel;
-
+      private readonly int myStart;
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public Cookie(UnsafeWriter writer)
       {
-        UnsafeWriterStatistics.OnCookieCreated();
         myWriter = writer;
-        if (ourRecursionLevel == 0)
-        {
-          var memory = NativeMemoryPool.Reserve();
-          Assertion.Assert(memory.IsValid, "memoryCookie.IsValid");
-          Assertion.Assert(memory.Data != IntPtr.Zero, "memoryCookie.Data != Zero");
-          if (memory.CausedAllocation)
-          {
-            myWriter.ReleaseResources++;
-          }
-
-          myWriter.Initialize(memory);
-          myStart = 0;
-        }
-        else
-        {
-          myStart = myWriter.Count;
-        }
-
-        ourRecursionLevel++;
+        myWriter.Initialize();
+        myStart = myWriter.Count;
       }
 
       public UnsafeWriter Writer
@@ -106,15 +83,8 @@ namespace JetBrains.Serialization
         // default struct constructor was used for unknown reason
         if (myWriter == null)
           return;
-        UnsafeWriterStatistics.OnCookieDisposing(myWriter.myCurrentAllocSize);
 
-        ourRecursionLevel--;
-        myWriter.Reset(myStart);
-
-        if (ourRecursionLevel == 0)
-        {
-          myWriter.Deinitialize();
-        }
+        myWriter.Deinitialize(myStart);
       }
     }
 
@@ -199,7 +169,6 @@ namespace JetBrains.Serialization
 
     private byte* myStartPtr;
     private int myCurrentAllocSize;
-    private NativeMemoryPool.Cookie myMemory;
 
     private byte* myPtr;
     private int myCount;
@@ -212,32 +181,64 @@ namespace JetBrains.Serialization
     private UnsafeWriter()
     {
       myInitialAllocSize = NativeMemoryPool.AllocSize;
+      myMemory = null;
     }
+
+    /// <summary>
+    /// Stores the last used memory holder. Be aware that this holder is not reserved for current unsafe writer only and
+    /// in some circumstances may be used and reserved by other consumer (when it's free)
+    /// </summary>
+    private NativeMemoryPool.ThreadMemoryHolder myMemory;
+    private int myRecursionLevel = 0;
 
     /// <summary>
     /// Creates a new UnsafeWriter
     /// </summary>
-    /// <param name="memory">Pointer to allocated <see cref="InitialAllocSizeOnCachedThread"/> bytes of memory</param>
-    private void Initialize(NativeMemoryPool.Cookie memory)
+    private void Initialize()
     {
-      myMemory = memory;
-      myCurrentAllocSize = memory.Length;
-      myStartPtr = myPtr = (byte*) memory.Data;
+      if (myRecursionLevel++ == 0)
+      {
+        if (myMemory != null && myMemory.TryReserve())
+        {
+        }
+        else
+        {
+          var cookie = NativeMemoryPool.ReserveMiss();
+          Assertion.Assert(cookie.IsValid, "memoryCookie.IsValid");
+          myMemory = cookie.myHolder;
+          if (cookie.CausedAllocation)
+          {
+            ReleaseResources++;
+          }
+        }
+
+        myCurrentAllocSize = NativeMemoryPool.AllocSize;
+        myStartPtr = myPtr = (byte*) myMemory.Data;
+        myCount = 0;
+      }
     }
 
-    private void Deinitialize()
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private void Deinitialize(int start)
     {
-      if (myStartPtr != null)
+      if (--myRecursionLevel == 0)
       {
-        myMemory.Dispose();
+        myMemory.Free();
+        myCurrentAllocSize = 0;
+        // Setting current alloc size to zero have a special semantic of making current UnsafeWriter invalid.
+        // There is no need to additionally resetting these pointers as write will check available memory and raise an 
+        // exception for this special case
+        // myStartPtr = (byte*) 0;
+        // myPtr = (byte*) 0;
       }
-      myStartPtr = (byte*) 0;
-      myPtr = (byte*) 0;
+      else
+      {
+        Reset(start);
+      }
     }
 
     ~UnsafeWriter()
     {
-      Deinitialize();
       for (int i = 0; i < ReleaseResources; i++)
         NativeMemoryPool.TryFreeMemory();
     }
@@ -290,6 +291,9 @@ namespace JetBrains.Serialization
 
     private void Realloc(int newCount)
     {
+      if (myCurrentAllocSize == 0)
+        throw new InvalidOperationException("UnsafeWriter is uninitialized, unable to realloc");
+
       var reallocSize = myInitialAllocSize;
       while (newCount > reallocSize)
       {

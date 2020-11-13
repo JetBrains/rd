@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 using JetBrains.Serialization;
 using NUnit.Framework;
 
+#if NET461
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
+#endif
+
 namespace Test.Lifetimes.Serialization
 {
   [TestFixture]
@@ -61,7 +66,6 @@ namespace Test.Lifetimes.Serialization
       Assert.AreEqual(0, NativeMemoryPool.SampleCount());
     }
 
-
     [Test, Explicit("Roughly measure performance")]
     public void Perf()
     {
@@ -71,7 +75,7 @@ namespace Test.Lifetimes.Serialization
         MaxDegreeOfParallelism = -1
       }, x =>
       {
-        for (int a = 0; a < 100000000; a++)
+        for (int a = 0; a < 100_000_000; a++)
         {
           using (var y = UnsafeWriter.NewThreadLocalWriter())
           {
@@ -81,5 +85,30 @@ namespace Test.Lifetimes.Serialization
       });
       Console.WriteLine(sw.ElapsedMilliseconds);
     }
+
+#if NET461
+    [Test, Explicit("Scientifically measure performance")]
+    public void Bdn()
+    {
+      // 13.11.2020
+      // BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19041.572 (2004/?/20H1)
+      // Intel Core i7-4790K CPU 4.00GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
+      //   [Host]     : .NET Framework 4.8 (4.8.4250.0), X64 RyuJIT
+      //   DefaultJob : .NET Framework 4.8 (4.8.4250.0), X64 RyuJIT
+      // | Method |     Mean |    Error |   StdDev |
+      // |------- |---------:|---------:|---------:|
+      // |      M | 24.34 ns | 0.153 ns | 0.143 ns |
+      BenchmarkRunner.Run<NativeMemoryPoolTests>();
+    }
+
+    [Benchmark]
+    public void M()
+    {
+      using (var y = UnsafeWriter.NewThreadLocalWriter())
+      {
+        y.Writer.Write("hhhhdd");
+      }
+    }
+#endif
   }
 }

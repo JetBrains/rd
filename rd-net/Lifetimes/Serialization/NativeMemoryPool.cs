@@ -87,7 +87,7 @@ namespace JetBrains.Serialization
       return false;
     }
 
-    private static Cookie ReserveMiss()
+    internal static Cookie ReserveMiss()
     {
       // try to search in the array of all memory blocks
       ThreadMemoryHolder h;
@@ -186,7 +186,7 @@ namespace JetBrains.Serialization
 
     public readonly struct Cookie : IDisposable
     {
-      private readonly ThreadMemoryHolder myHolder;
+      internal readonly ThreadMemoryHolder myHolder;
 
       /// <summary>
       /// Indicates whether a new native block was actually allocated to fulfil the request.
@@ -217,7 +217,7 @@ namespace JetBrains.Serialization
       }
     }
 
-    internal class ThreadMemoryHolder : IDisposable
+    internal sealed class ThreadMemoryHolder : IDisposable
     {
       private const int Unused = 0;
       private const int Used = 1;
@@ -241,9 +241,6 @@ namespace JetBrains.Serialization
 
       public bool TryReserve()
       {
-        if (myUse == Used)
-          return false;
-
         if (Interlocked.CompareExchange(ref myUse, Used, Unused) == Unused)
           return myPtr != IntPtr.Zero;
 
@@ -255,6 +252,11 @@ namespace JetBrains.Serialization
         if (Length < AllocSize)
         {
           LogLog.Error("Invalid attempt to release slot with too small chunk of memory");
+          Realloc(AllocSize);
+        }
+
+        if (Length > AllocSize)
+        {
           Realloc(AllocSize);
         }
 
