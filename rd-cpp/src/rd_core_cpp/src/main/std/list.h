@@ -7,7 +7,10 @@
 namespace rd
 {
 template <typename T>
-int32_t size(T const& value);
+int32_t size(T const& value) = delete;
+
+// c++17 has std::size for std::vector
+#if __cplusplus < 201703L
 
 template <typename T, typename A>
 int32_t size(std::vector<T, A> const& value)
@@ -15,8 +18,7 @@ int32_t size(std::vector<T, A> const& value)
 	return static_cast<int32_t>(value.size());
 }
 
-template <typename T>
-void resize(T& value, int32_t size);
+#endif
 
 template <typename T, typename A>
 void resize(std::vector<T, A>& value, int32_t size)
