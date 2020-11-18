@@ -55,8 +55,11 @@ open class RdGenExtension(private val project: Project) {
             arguments.add("--compiled")
             arguments.add(compiled)
         }
-        arguments.add("-c")
-        arguments.add(java.lang.String.join(System.getProperty("path.separator"), classPathEntries))
+        if (classPathEntries.any()) {
+            arguments.add("-c")
+            arguments.add(java.lang.String.join(System.getProperty("path.separator"), classPathEntries))
+        }
+
         if (force == true) arguments.add("-f")
         if (clearOutput == true) arguments.add("-x")
         if (packages != null) {
