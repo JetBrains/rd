@@ -109,10 +109,12 @@ abstract class RdExtBase : RdReactiveBase() {
         }
     }
 
-    private fun IWire.sendState(state: ExtState) = send(rdid) {
-        logSend.traceMe {state}
-        it.writeEnum (state)
-        it.writeLong(serializationHash)
+    private fun IWire.sendState(state: ExtState) = protocol.contexts.sendWithoutContexts {
+        send(rdid) {
+            logSend.traceMe { state }
+            it.writeEnum(state)
+            it.writeLong(serializationHash)
+        }
     }
     private inline fun Logger.traceMe (message:() -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
 

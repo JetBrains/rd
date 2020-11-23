@@ -105,12 +105,13 @@ namespace JetBrains.Rd.Base
 
     private void SendState(IWire parentWire, ExtState state)
     {
-      parentWire.Send(RdId, writer =>
-      {
-        SendTrace?.Log($"{this} : {state}");
-        writer.Write((int)state);
-        writer.Write(SerializationHash);
-      });
+      using(base.Proto.Contexts.CreateSendWithoutContextsCookie())
+        parentWire.Send(RdId, writer =>
+        {
+          SendTrace?.Log($"{this} : {state}");
+          writer.Write((int)state);
+          writer.Write(SerializationHash);
+        });
     }
 
         
