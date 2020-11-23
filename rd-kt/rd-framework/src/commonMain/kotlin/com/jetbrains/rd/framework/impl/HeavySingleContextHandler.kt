@@ -25,7 +25,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
         error("This may not be cloned")
     }
 
-    private inline fun sendWithoutContexts(block: () -> Unit) {
+    private fun sendWithoutContexts(block: () -> Unit) {
         contexts.sendWithoutContexts(block)
     }
 

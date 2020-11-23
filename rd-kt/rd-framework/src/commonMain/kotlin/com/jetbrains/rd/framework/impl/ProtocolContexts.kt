@@ -25,7 +25,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     private val myOrderingsLock = Any() // used to protect writes to myKeyHandlersOrder
 
     internal var isSendWithoutContexts by threadLocal { false }
-    internal inline fun sendWithoutContexts(block: () -> Unit) = this::isSendWithoutContexts.usingValue(true, block)
+    internal fun sendWithoutContexts(block: () -> Unit) = this::isSendWithoutContexts.usingValue(true, block)
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
