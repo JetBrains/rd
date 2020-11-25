@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -374,11 +376,12 @@ namespace JetBrains.Lifetimes
       
       if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), WaitForExecutingInTerminationTimeoutMs))
       {
-        Log.Error($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination. You'll find stacktrace of ExecuteIfAlive in following error messages.");
+        Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
+                        + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
+                        + "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100");
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
       }
 
-      
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Canceling))
         return;
       
