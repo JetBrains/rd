@@ -165,8 +165,6 @@ namespace JetBrains.Serialization
       return NewThreadLocalWriter();
     }
 
-    private readonly object myLock = new object();
-
     private byte* myStartPtr;
     private int myCurrentAllocSize;
 
