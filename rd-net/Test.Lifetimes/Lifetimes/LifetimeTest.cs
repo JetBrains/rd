@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
+using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Threading;
 using NUnit.Framework;
@@ -205,6 +206,56 @@ namespace Test.Lifetimes.Lifetimes
       Assert.True(lt.TryExecute(Fail<int>).Exception is LifetimeCanceledException);
       Assert.True(lt.TryExecute(Fail<int>, true).Canceled);
       Assert.True(lt.TryExecute(Fail<int>, true).Exception is LifetimeCanceledException);
+    }
+
+    [Test]
+    public void TestLongTryExecute()
+    {
+      const string expectedWarningText = "can't wait for `ExecuteIfAlive` completed on other thread";
+      const string expectedExceptionText = "ExecuteIfAlive after termination of";
+      bool warningReceived = false, exceptionReceived = false;
+
+      Lifetime.Using(lifetime =>
+      {
+        void LoggerHandler(LeveledMessage message)
+        {
+          if (message.Level == LoggingLevel.WARN && message.FormattedMessage.Contains(expectedWarningText)) 
+            warningReceived = true;
+        }
+
+        lifetime.Bracket(
+          () => TestLogger.ExceptionLogger.Handlers += LoggerHandler,
+          () => TestLogger.ExceptionLogger.Handlers -= LoggerHandler
+          );
+
+        var lifetimeDefinition = lifetime.CreateNested();
+        var lifetimeTerminatedEvent = new ManualResetEvent(false);
+        var backgroundThreadIsInTryExecuteEvent = new ManualResetEvent(false);
+        var thread = new Thread(() => lifetimeDefinition.Lifetime.TryExecute(() =>
+        {
+          backgroundThreadIsInTryExecuteEvent.Set();
+          lifetimeTerminatedEvent.WaitOne();
+        }));
+        thread.Start();
+        backgroundThreadIsInTryExecuteEvent.WaitOne();
+        lifetimeDefinition.Terminate();
+        lifetimeTerminatedEvent.Set();
+        thread.Join();
+        try
+        {
+          TestLogger.ExceptionLogger.ThrowLoggedExceptions();
+        }
+        catch (Exception e)
+        {
+          if (!e.Message.Contains(expectedExceptionText))
+            throw;
+
+          exceptionReceived = true;
+        }
+      });
+
+      Assert.IsTrue(warningReceived, "Warning `{0}` must have been logged", expectedWarningText);
+      Assert.IsTrue(exceptionReceived, "Exception `{0}` must have been logged", expectedExceptionText);
     }
     
     [Test]
