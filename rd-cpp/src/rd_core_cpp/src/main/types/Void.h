@@ -11,12 +11,21 @@ namespace rd
  */
 class Void
 {
-	friend bool operator==(const Void& lhs, const Void& rhs);
+	friend inline bool operator==(const Void&, const Void&)
+	{
+		return true;
+	}
 
-	friend bool operator!=(const Void& lhs, const Void& rhs);
+	friend inline bool operator!=(const Void&, const Void&)
+	{
+		return false;
+	}
 };
 
-std::string to_string(Void const&);
+inline std::string to_string(Void const&)
+{
+	return "void";
+}
 }	 // namespace rd
 
 namespace std

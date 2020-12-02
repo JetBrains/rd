@@ -1,7 +1,7 @@
 #ifndef RD_CPP_UNORDERED_MAP_H
 #define RD_CPP_UNORDERED_MAP_H
 
-#include "std/hash.h"
+#include "hash.h"
 
 #include <unordered_map>
 

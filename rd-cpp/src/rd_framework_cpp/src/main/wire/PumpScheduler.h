@@ -1,11 +1,18 @@
 #ifndef RD_CPP_PUMPSCHEDULER_H
 #define RD_CPP_PUMPSCHEDULER_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "scheduler/base/IScheduler.h"
 
 #include <condition_variable>
 #include <thread>
 #include <queue>
+
+#include <rd_framework_export.h>
 
 namespace rd
 {
@@ -13,7 +20,7 @@ namespace test
 {
 namespace util
 {
-class PumpScheduler : public IScheduler
+class RD_FRAMEWORK_API PumpScheduler : public IScheduler
 {
 public:
 	std::string name;
@@ -46,5 +53,9 @@ public:
 }	 // namespace util
 }	 // namespace test
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_PUMPSCHEDULER_H

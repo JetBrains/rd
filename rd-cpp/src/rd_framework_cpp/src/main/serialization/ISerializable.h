@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 // region predeclared
@@ -16,7 +18,7 @@ class SerializationCtx;
  * \brief Provides \ref write for serialization to be overriden. For deserialization derived class must have static
  * method read. See examples for more information.
  */
-class ISerializable
+class RD_FRAMEWORK_API ISerializable
 {
 public:
 	virtual ~ISerializable() = default;
@@ -27,7 +29,7 @@ public:
 /**
  * \brief Dynamically polymorhic node.
  */
-class IPolymorphicSerializable : public ISerializable
+class RD_FRAMEWORK_API IPolymorphicSerializable : public ISerializable
 {
 public:
 	/**
@@ -44,16 +46,16 @@ public:
 
 	virtual bool equals(ISerializable const&) const = 0;
 
-	friend bool operator==(const IPolymorphicSerializable& lhs, const IPolymorphicSerializable& rhs);
+	friend bool RD_FRAMEWORK_API operator==(const IPolymorphicSerializable& lhs, const IPolymorphicSerializable& rhs);
 
-	friend bool operator!=(const IPolymorphicSerializable& lhs, const IPolymorphicSerializable& rhs);
+	friend bool RD_FRAMEWORK_API operator!=(const IPolymorphicSerializable& lhs, const IPolymorphicSerializable& rhs);
 };
 }	 // namespace rd
 
 namespace std
 {
 template <>
-struct hash<rd::IPolymorphicSerializable>
+struct RD_FRAMEWORK_API hash<rd::IPolymorphicSerializable>
 {
 	size_t operator()(const rd::IPolymorphicSerializable& value) const noexcept
 	{

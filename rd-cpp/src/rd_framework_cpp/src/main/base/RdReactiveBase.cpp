@@ -4,9 +4,9 @@
 
 namespace rd
 {
-std::shared_ptr<spdlog::logger> RdReactiveBase::logReceived =
+static std::shared_ptr<spdlog::logger> logReceived =
 	spdlog::stderr_color_mt<spdlog::synchronous_factory>("logReceived", spdlog::color_mode::automatic);
-std::shared_ptr<spdlog::logger> RdReactiveBase::logSend =
+std::shared_ptr<spdlog::logger> logSend =
 	spdlog::stderr_color_mt<spdlog::synchronous_factory>("logSend", spdlog::color_mode::automatic);
 
 RdReactiveBase::RdReactiveBase(RdReactiveBase&& other) : RdBindableBase(std::move(other)) /*, async(other.async)*/

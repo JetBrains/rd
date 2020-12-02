@@ -96,7 +96,7 @@ public:
 	{
 		auto task_id = RdId::read(buffer);
 		auto value = ReqSer::read(get_serialization_context(), buffer);
-		logReceived->trace("endpoint {}::{} request = {}", to_string(location), to_string(rdid), to_string(value));
+		spdlog::get("logReceived")->trace("endpoint {}::{} request = {}", to_string(location), to_string(rdid), to_string(value));
 		if (!handler)
 		{
 			throw std::invalid_argument("handler is empty for RdEndPoint");
@@ -111,7 +111,7 @@ public:
 			task.fault(e);
 		}
 		task.advise(*bind_lifetime, [this, task_id, &task](RdTaskResult<TRes, ResSer> const& task_result) {
-			logSend->trace("endpoint {}::{} response = {}", to_string(location), to_string(rdid), to_string(*task.result));
+			spdlog::get("logSend")->trace("endpoint {}::{} response = {}", to_string(location), to_string(rdid), to_string(*task.result));
 			get_wire()->send(task_id, [&](Buffer& inner_buffer) { task_result.write(get_serialization_context(), inner_buffer); });
 			// todo remove from awaiting_tasks
 		});

@@ -1,11 +1,18 @@
 #ifndef RD_CPP_SINGLETHREADSCHEDULERBASE_H
 #define RD_CPP_SINGLETHREADSCHEDULERBASE_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "scheduler/base/IScheduler.h"
 #include "lifetime/Lifetime.h"
 #include "spdlog/spdlog.h"
 
 #include <utility>
+
+#include <rd_framework_export.h>
 
 namespace ctpl
 {
@@ -14,7 +21,7 @@ class thread_pool;
 
 namespace rd
 {
-class SingleThreadSchedulerBase : public IScheduler
+class RD_FRAMEWORK_API SingleThreadSchedulerBase : public IScheduler
 {
 protected:
 	std::shared_ptr<spdlog::logger> log;
@@ -49,5 +56,9 @@ public:
 	bool is_active() const override;
 };
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_SINGLETHREADSCHEDULERBASE_H

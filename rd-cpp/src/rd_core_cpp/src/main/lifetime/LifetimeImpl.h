@@ -1,7 +1,12 @@
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
 
-#include "std/hash.h"
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
+#include <std/hash.h>
 
 #include <functional>
 #include <map>
@@ -10,11 +15,13 @@
 #include <atomic>
 #include <utility>
 
-#include "thirdparty.hpp"
+#include <thirdparty.hpp>
+
+#include <rd_core_export.h>
 
 namespace rd
 {
-class LifetimeImpl final
+class RD_CORE_API LifetimeImpl final
 {
 public:
 	friend class LifetimeDefinition;
@@ -39,8 +46,6 @@ private:
 
 public:
 	// region ctor/dtor
-	LifetimeImpl() = delete;
-
 	explicit LifetimeImpl(bool is_eternal = false);
 
 	LifetimeImpl(LifetimeImpl const& other) = delete;
@@ -95,5 +100,9 @@ public:
 	void attach_nested(std::shared_ptr<LifetimeImpl> nested);
 };
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_CORE_LIFETIME_H

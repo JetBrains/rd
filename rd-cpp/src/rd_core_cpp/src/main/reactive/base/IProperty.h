@@ -1,10 +1,11 @@
 #ifndef RD_CPP_IPROPERTY_H
 #define RD_CPP_IPROPERTY_H
 
-#include "reactive/SignalX.h"
-#include "lifetime/Lifetime.h"
+#include "SignalX.h"
 #include "IPropertyBase.h"
-#include "types/wrapper.h"
+
+#include <lifetime/Lifetime.h>
+#include <types/wrapper.h>
 
 #include <functional>
 

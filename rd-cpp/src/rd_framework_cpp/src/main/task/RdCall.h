@@ -69,7 +69,7 @@ public:
 	 */
 	WiredRdTask<TRes, ResSer> sync(TReq const& request, std::chrono::milliseconds timeout = 200ms) const
 	{
-		auto task = start_internal(request, true, &globalSynchronousScheduler);
+		auto task = start_internal(request, true, &SynchronousScheduler::Instance());
 		auto time_at_start = std::chrono::system_clock::now();
 		while (!task.has_value() && !(*bind_lifetime)->is_terminated() &&
 			   ((std::chrono::system_clock::now() - time_at_start) < timeout))
@@ -85,7 +85,7 @@ public:
 
 	IScheduler* get_wire_scheduler() const override
 	{
-		return &globalSynchronousScheduler;
+		return &SynchronousScheduler::Instance();
 	}
 
 	/**
@@ -128,7 +128,7 @@ private:
 		}
 
 		get_wire()->send(rdid, [&](Buffer& buffer) {
-			logSend->trace("call {}::{} send {} request {} : {}", to_string(location), to_string(rdid), (sync ? "SYNC" : "ASYNC"),
+			spdlog::get("logSend")->trace("call {}::{} send {} request {} : {}", to_string(location), to_string(rdid), (sync ? "SYNC" : "ASYNC"),
 				to_string(task_id), to_string(request));
 			task_id.write(buffer);
 			ReqSer::write(get_serialization_context(), buffer, request);

@@ -16,12 +16,12 @@ RdId Serializers::real_rd_id(const IPolymorphicSerializable& value)
 	return RdId(util::getPlatformIndependentHash(value.type_name()));
 }
 
-RdId Serializers::real_rd_id(const std::wstring& value)
+RdId Serializers::real_rd_id(const std::wstring& /*value*/)
 {
 	return STRING_PREDEFINED_ID;
 }
 
-void Serializers::real_write(SerializationCtx& ctx, Buffer& buffer, IUnknownInstance const& value)
+void Serializers::real_write(SerializationCtx& /*ctx*/, Buffer& buffer, IUnknownInstance const& value)
 {
 	value.unknownId.write(buffer);
 }

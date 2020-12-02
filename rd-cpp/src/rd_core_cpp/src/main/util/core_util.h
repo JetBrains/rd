@@ -2,16 +2,16 @@
 #define RD_CPP_CORE_CPP_UTIL_H
 
 #include "erase_if.h"
-#include "util/gen_util.h"
-#include "util/overloaded.h"
-#include "util/shared_function.h"
-#include "std/hash.h"
-#include "std/to_string.h"
-#include "types/wrapper.h"
+#include "gen_util.h"
+#include "overloaded.h"
+#include "shared_function.h"
 
-#include "thirdparty.hpp"
+#include <std/hash.h>
+#include <std/to_string.h>
+#include <types/wrapper.h>
 
-#include "spdlog/spdlog.h"
+#include <thirdparty.hpp>
+#include <spdlog/spdlog.h>
 
 #include <memory>
 #include <string>
@@ -21,11 +21,11 @@
 #include <sstream>
 #include <cassert>
 
-#define RD_ASSERT_MSG(expr, msg)      \
-	if (!(expr))                      \
-	{                                 \
-		spdlog::error("{}\n", msg);   \
-		assert(expr);                 \
+#define RD_ASSERT_MSG(expr, msg)    \
+	if (!(expr))                    \
+	{                               \
+		spdlog::error("{}\n", msg); \
+		assert(expr);               \
 	}
 #define RD_ASSERT_THROW_MSG(expr, msg) \
 	if (!(expr))                       \
@@ -36,6 +36,15 @@
 
 namespace rd
 {
+namespace util
+{
+template <typename T0, typename... T>
+constexpr std::vector<T0> arrayListOf(T0&& arg, T&&... args)
+{
+	return std::vector<T0>{std::forward<T0>(arg), std::forward<T>(args)...};
+}
+}	 // namespace util
+
 namespace wrapper
 {
 template <typename T>

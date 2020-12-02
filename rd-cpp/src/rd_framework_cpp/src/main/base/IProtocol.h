@@ -1,6 +1,11 @@
 #ifndef RD_CPP_IPROTOCOL_H
 #define RD_CPP_IPROTOCOL_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "IRdDynamic.h"
 #include "serialization/Serializers.h"
 #include "protocol/Identities.h"
@@ -8,6 +13,8 @@
 #include "base/IWire.h"
 
 #include <memory>
+
+#include <rd_framework_export.h>
 
 namespace rd
 {
@@ -19,7 +26,7 @@ class SerializationCtx;
 /**
  * \brief A root node in an object graph which can be synchronized with its remote copy over a network or a similar connection.
  */
-class IProtocol : public IRdDynamic
+class RD_FRAMEWORK_API IProtocol : public IRdDynamic
 {
 	friend class RdExtBase;
 
@@ -56,5 +63,9 @@ public:
 	const Serializers& get_serializers() const;
 };
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_IPROTOCOL_H

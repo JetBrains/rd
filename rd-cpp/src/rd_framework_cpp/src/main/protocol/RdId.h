@@ -11,13 +11,14 @@
 #include <string>
 
 #include <memory>
+#include <rd_framework_export.h>
 
 namespace rd
 {
 class RdId;
 
 template <>
-struct hash<RdId>
+struct RD_FRAMEWORK_API hash<RdId>
 {
 	size_t operator()(const RdId& value) const noexcept;
 };
@@ -25,7 +26,7 @@ struct hash<RdId>
 /**
  * \brief An identifier of the object that participates in the object graph.
  */
-class RdId
+class RD_FRAMEWORK_API RdId
 {
 public:
 	using hash_t = util::hash_t;
@@ -38,9 +39,9 @@ private:
 	hash_t hash{NULL_ID};
 
 public:
-	friend bool operator==(RdId const& left, RdId const& right);
+	friend bool RD_FRAMEWORK_API operator==(RdId const& left, RdId const& right);
 
-	friend bool operator!=(const RdId& lhs, const RdId& rhs);
+	friend bool RD_FRAMEWORK_API operator!=(const RdId& lhs, const RdId& rhs);
 
 	// region ctor/dtor
 	constexpr RdId() = default;
@@ -107,7 +108,7 @@ public:
 		return RdId(util::getPlatformIndependentHash(tail, static_cast<util::constexpr_hash_t>(hash)));
 	}
 
-	friend std::string to_string(RdId const& id);
+	friend std::string RD_FRAMEWORK_API to_string(RdId const& id);
 };
 
 inline size_t hash<RdId>::operator()(const RdId& value) const noexcept

@@ -1,23 +1,30 @@
 #ifndef RD_CPP_CORE_LIFETIMEWRAPPER_H
 #define RD_CPP_CORE_LIFETIMEWRAPPER_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "LifetimeImpl.h"
 
-#include "std/hash.h"
+#include <std/hash.h>
 
 #include <memory>
+
+#include <rd_core_export.h>
 
 namespace rd
 {
 class Lifetime;
 
 template <>
-struct hash<Lifetime>
+struct RD_CORE_API hash<Lifetime>
 {
 	size_t operator()(const Lifetime& value) const noexcept;
 };
 
-class Lifetime final
+class RD_CORE_API Lifetime final
 {
 private:
 	using Allocator = std::allocator<LifetimeImpl>;
@@ -35,8 +42,6 @@ public:
 
 	// region ctor/dtor
 
-	Lifetime() = delete;
-
 	Lifetime(Lifetime const& other) = default;
 
 	Lifetime& operator=(Lifetime const& other) = default;
@@ -48,7 +53,8 @@ public:
 	~Lifetime() = default;
 	// endregion
 
-	friend bool operator==(Lifetime const& lw1, Lifetime const& lw2);
+	friend bool RD_CORE_API operator==(Lifetime const& lw1, Lifetime const& lw2);
+	friend bool RD_CORE_API operator!=(Lifetime const& lw1, Lifetime const& lw2);
 
 	explicit Lifetime(bool is_eternal = false);
 
@@ -62,5 +68,9 @@ inline size_t hash<Lifetime>::operator()(const Lifetime& value) const noexcept
 	return hash<std::shared_ptr<LifetimeImpl> >()(value.ptr);
 }
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_CORE_LIFETIMEWRAPPER_H

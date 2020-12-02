@@ -48,7 +48,7 @@ void RdExtBase::init(Lifetime lifetime) const
 void RdExtBase::on_wire_received(Buffer buffer) const
 {
 	ExtState remoteState = buffer.read_enum<ExtState>();
-	traceMe(logReceived, "remote: " + to_string(remoteState));
+	traceMe(spdlog::get("logReceived"), "remote: " + to_string(remoteState));
 
 	switch (remoteState)
 	{
@@ -95,7 +95,7 @@ void RdExtBase::traceMe(std::shared_ptr<spdlog::logger> logger, string_view mess
 
 IScheduler* RdExtBase::get_wire_scheduler() const
 {
-	return &globalSynchronousScheduler;
+	return &SynchronousScheduler::Instance();
 }
 
 std::string to_string(RdExtBase::ExtState state)

@@ -1,6 +1,11 @@
 #ifndef RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 #define RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "protocol/Buffer.h"
 #include "spdlog/spdlog.h"
 
@@ -11,11 +16,13 @@
 #include <future>
 #include <list>
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 using sequence_number_t = int64_t;
 
-class ByteBufferAsyncProcessor
+class RD_FRAMEWORK_API ByteBufferAsyncProcessor
 {
 public:
 	enum class StateKind
@@ -96,5 +103,9 @@ public:
 
 std::string to_string(ByteBufferAsyncProcessor::StateKind state);
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_BYTEBUFFERASYNCPROCESSOR_H

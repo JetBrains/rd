@@ -1,8 +1,8 @@
 #ifndef RD_CPP_GEN_UTIL_H
 #define RD_CPP_GEN_UTIL_H
 
-#include "std/hash.h"
-#include "std/allocator.h"
+#include <std/hash.h>
+#include <std/allocator.h>
 
 #include <cstdlib>
 

@@ -3,6 +3,8 @@
 
 #include "impl/RName.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 // region predeclared
@@ -16,7 +18,7 @@ class SerializationCtx;
  * \brief A node in a graph of entities that can be synchronized with its remote copy over a network or
  * a similar connection.
  */
-class IRdDynamic
+class RD_FRAMEWORK_API IRdDynamic
 {
 public:
 	mutable RName location;

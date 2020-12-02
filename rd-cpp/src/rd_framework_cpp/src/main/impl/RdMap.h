@@ -123,7 +123,7 @@ public:
 						VS::write(this->get_serialization_context(), buffer, *new_value);
 					}
 
-					logSend->trace("SEND{}", logmsg(op, next_version - 1, e.get_key(), new_value));
+					spdlog::get("logSend")->trace("SEND{}", logmsg(op, next_version - 1, e.get_key(), new_value));
 				});
 			});
 		});
@@ -184,11 +184,11 @@ public:
 			}
 			if (errmsg.empty())
 			{
-				logReceived->trace(logmsg(Op::ACK, version, &(wrapper::get<K>(key))));
+				spdlog::get("logReceived")->trace(logmsg(Op::ACK, version, &(wrapper::get<K>(key))));
 			}
 			else
 			{
-				logReceived->error(logmsg(Op::ACK, version, &(wrapper::get<K>(key))) + " >> " + errmsg);
+				spdlog::get("logReceived")->error(logmsg(Op::ACK, version, &(wrapper::get<K>(key))) + " >> " + errmsg);
 			}
 		}
 		else
@@ -205,7 +205,7 @@ public:
 
 			if (msg_versioned || !is_master || pendingForAck.count(key) == 0)
 			{
-				logReceived->trace("RECV{}", logmsg(op, version, &(wrapper::get<K>(key)), value));
+				spdlog::get("logReceived")->trace("RECV{}", logmsg(op, version, &(wrapper::get<K>(key)), value));
 				if (value.has_value())
 				{
 					map::set(std::move(key), *std::move(value));
@@ -217,7 +217,7 @@ public:
 			}
 			else
 			{
-				logReceived->trace("{} >> REJECTED", logmsg(op, version, &(wrapper::get<K>(key)), value));
+				spdlog::get("logReceived")->trace("{} >> REJECTED", logmsg(op, version, &(wrapper::get<K>(key)), value));
 			}
 
 			if (msg_versioned)
@@ -233,7 +233,7 @@ public:
 				get_wire()->send(rdid, std::move(writer));
 				if (is_master)
 				{
-					logReceived->error("Both ends are masters: {}", to_string(location));
+					spdlog::get("logReceived")->error("Both ends are masters: {}", to_string(location));
 				}
 			}
 		}

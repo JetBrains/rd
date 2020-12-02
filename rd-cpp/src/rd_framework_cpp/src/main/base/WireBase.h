@@ -5,9 +5,11 @@
 #include "base/IWire.h"
 #include "protocol/MessageBroker.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class WireBase : public IWire
+class RD_FRAMEWORK_API WireBase : public IWire
 {
 protected:
 	IScheduler* scheduler = nullptr;

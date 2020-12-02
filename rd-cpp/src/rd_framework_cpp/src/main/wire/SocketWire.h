@@ -1,6 +1,11 @@
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "scheduler/base/IScheduler.h"
 #include "base/WireBase.h"
 #include "ByteBufferAsyncProcessor.h"
@@ -14,14 +19,16 @@
 #include <array>
 #include <condition_variable>
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class SocketWire
+class RD_FRAMEWORK_API SocketWire
 {
 	static std::chrono::milliseconds timeout;
 
 public:
-	class Base : public WireBase
+	class RD_FRAMEWORK_API Base : public WireBase
 	{
 	protected:
 		static std::shared_ptr<spdlog::logger> logger;
@@ -131,7 +138,7 @@ public:
 		bool send_ack(sequence_number_t seqn) const;
 	};
 
-	class Client : public Base
+	class RD_FRAMEWORK_API Client : public Base
 	{
 	public:
 		uint16_t port = 0;
@@ -146,7 +153,7 @@ public:
 		std::condition_variable_any cv;
 	};
 
-	class Server : public Base
+	class RD_FRAMEWORK_API Server : public Base
 	{
 	public:
 		uint16_t port = 0;
@@ -162,5 +169,9 @@ public:
 	};
 };
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_SOCKETWIRE_H

@@ -1,16 +1,23 @@
 #ifndef RD_CPP_IWIRE_H
 #define RD_CPP_IWIRE_H
 
-#include "reactive/interfaces.h"
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
+#include "reactive/base/interfaces.h"
 #include "base/IRdReactive.h"
 #include "reactive/Property.h"
+
+#include <rd_framework_export.h>
 
 namespace rd
 {
 /**
  * \brief Sends and receives serialized object data over a network or a similar connection.
  */
-class IWire
+class RD_FRAMEWORK_API IWire
 {
 public:
 	Property<bool> connected{false};
@@ -41,5 +48,9 @@ public:
 	virtual void advise(Lifetime lifetime, IRdReactive const* entity) const = 0;
 };
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_IWIRE_H

@@ -1,6 +1,11 @@
 #ifndef RD_CPP_INTERNROOT_H
 #define RD_CPP_INTERNROOT_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "base/RdReactiveBase.h"
 #include "InternScheduler.h"
 #include "lifetime/Lifetime.h"
@@ -13,6 +18,8 @@
 #include <vector>
 #include <string>
 #include <mutex>
+
+#include <rd_framework_export.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4250)
@@ -28,7 +35,7 @@ class Identities;
 /**
  * \brief Node in graph for storing interned objects.
  */
-class InternRoot final : public RdReactiveBase
+class RD_FRAMEWORK_API InternRoot final : public RdReactiveBase
 {
 private:
 	// template<typename T>
@@ -128,5 +135,9 @@ int32_t InternRoot::intern_value(Wrapper<T> value) const
 	return index;
 }
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_INTERNROOT_H

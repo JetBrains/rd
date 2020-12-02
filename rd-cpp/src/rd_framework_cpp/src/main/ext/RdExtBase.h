@@ -1,10 +1,17 @@
 #ifndef RD_CPP_RDEXTBASE_H
 #define RD_CPP_RDEXTBASE_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "base/RdReactiveBase.h"
 #include "ExtWire.h"
 
 #include "spdlog/spdlog.h"
+
+#include <rd_framework_export.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4250)
@@ -13,7 +20,7 @@ namespace rd
 /**
  * \brief Base class for creating extension node according to bottom-up design.
  */
-class RdExtBase : public RdReactiveBase
+class RD_FRAMEWORK_API RdExtBase : public RdReactiveBase
 {
 	std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
 	mutable std::shared_ptr<IProtocol> extProtocol /* = nullptr*/;
@@ -56,5 +63,9 @@ std::string to_string(RdExtBase::ExtState state);
 }	 // namespace rd
 
 #pragma warning(pop)
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_RDEXTBASE_H

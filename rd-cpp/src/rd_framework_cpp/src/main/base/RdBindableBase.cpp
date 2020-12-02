@@ -1,6 +1,6 @@
 #include "RdBindableBase.h"
 
-#include "reactive/SignalX.h"
+#include "reactive/base/SignalX.h"
 
 namespace rd
 {

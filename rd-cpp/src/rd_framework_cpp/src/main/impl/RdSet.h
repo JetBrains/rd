@@ -71,7 +71,7 @@ public:
 					buffer.write_enum<AddRemove>(kind);
 					S::write(this->get_serialization_context(), buffer, v);
 
-					logSend->trace("SENDset {} {}:: {}:: {}", to_string(location), to_string(rdid), to_string(kind), to_string(v));
+					spdlog::get("logSend")->trace("SENDset {} {}:: {}:: {}", to_string(location), to_string(rdid), to_string(kind), to_string(v));
 				});
 			});
 		});

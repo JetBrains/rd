@@ -1,15 +1,22 @@
 #ifndef RD_CPP_ISCHEDULER_H
 #define RD_CPP_ISCHEDULER_H
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include <functional>
 #include <thread>
+
+#include <rd_framework_export.h>
 
 namespace rd
 {
 /**
  * \brief Allows to queue the execution of actions on a different thread.
  */
-class IScheduler
+class RD_FRAMEWORK_API IScheduler
 {
 protected:
 	std::thread::id thread_id;
@@ -50,5 +57,9 @@ public:
 	}
 };
 }	 // namespace rd
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_ISCHEDULER_H

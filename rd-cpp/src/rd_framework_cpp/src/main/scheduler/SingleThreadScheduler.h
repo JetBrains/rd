@@ -5,9 +5,11 @@
 
 #include "lifetime/Lifetime.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class SingleThreadScheduler : public SingleThreadSchedulerBase
+class RD_FRAMEWORK_API SingleThreadScheduler : public SingleThreadSchedulerBase
 {
 public:
 	Lifetime lifetime;

@@ -3,9 +3,11 @@
 
 #include "protocol/RdId.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class IUnknownInstance
+class RD_FRAMEWORK_API IUnknownInstance
 {
 public:
 	RdId unknownId{0};
