@@ -19,7 +19,9 @@ enum class LifetimeStatus {
 
 sealed class Lifetime {
     companion object {
-        internal val threadLocalExecuting : CountingSet<Lifetime> by threadLocal { CountingSet<Lifetime>() }
+        private val threadLocalExecutingBackingFiled : ThreadLocal<CountingSet<Lifetime>> = threadLocalWithInitial { CountingSet() }
+        // !!! IMPORTANT !!! Don't use 'by ThreadLocal' to avoid slow reflection initialization
+        internal val threadLocalExecuting get() = threadLocalExecutingBackingFiled.get()
 
         var waitForExecutingInTerminationTimeout = 500L //timeout for waiting executeIfAlive in termination
 
