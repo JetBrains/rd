@@ -289,7 +289,7 @@ class RdGen : Kli() {
                 println("To see parameters and usages invoke `rdgen -h`")
                 defaultClassloader
             }
-        v("gradleGenerationSpecs='[${gradleGenerationSpecs.joinToString("\n")}]")
+        v("gradleGenerationSpecs=[${gradleGenerationSpecs.joinToString("\n")}]")
         //3. Find all rd model classes in classpath and generate code
         val outputFolders = try {
             generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs)
