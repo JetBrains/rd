@@ -22,12 +22,33 @@ fun syspropertyOrInvalid(name: String, default: String? = null) : String {
             ?: "$InvalidSysproperty($name)"
 }
 
-internal fun getSourceFileAndLine() : String? {
+fun booleanSystemProperty(name: String, default: Boolean): Boolean {
+    val propertyValue = syspropertyOrInvalid(name, default.toString())
+    return propertyValue.equals("true", ignoreCase = true) || propertyValue == "1"
+}
+
+fun <T> usingSystemProperty(name: String, value: String, block: () -> T): T {
+    val oldValue = System.getProperty(name)
+    try {
+        System.setProperty(name, value)
+        return block()
+    } finally {
+        if (oldValue == null)
+            System.clearProperty(name)
+        else
+            System.setProperty(name, oldValue)
+    }
+}
+
+internal fun getSourceFileAndLine(withLine: Boolean): String? {
     val rdgenNamespace = IGenerator::class.java.`package`.name
 
     Thread.currentThread().stackTrace.drop(1).forEach { ste ->
         if (!ste.className.startsWith(rdgenNamespace))
-            return ste.fileName?.let { it + ":" + ste.lineNumber }
+            return (
+                if (withLine) ste.fileName?.let { it + ":" + ste.lineNumber }
+                else ste.fileName
+            )
     }
     return null
 }

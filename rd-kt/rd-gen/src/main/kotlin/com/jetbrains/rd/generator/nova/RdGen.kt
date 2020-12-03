@@ -1,5 +1,6 @@
 package com.jetbrains.rd.generator.nova
 
+import com.jetbrains.rd.generator.nova.util.usingSystemProperty
 import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
 import com.jetbrains.rd.util.kli.Kli
@@ -51,6 +52,8 @@ class RdGen : Kli() {
     val packages =      option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rd.model.nova", "com,org")
     val filter =        option_string(null,   "filter", "Filter generators by searching regular expression inside generator class simple name (case insensitive). Example: kotlin|csharp|cpp")
     val verbose =       option_flag(  'v',    "verbose", "Verbose output")
+
+    val noLineNumbersInComments = option_flag('n', "no-line-numbers", "Don't save original source line numbers in comments inside of generated files")
 
     val generatorsFile = option_string('g', "generators", "Path to the file with serialized GeneratorSpecs")
 
@@ -209,7 +212,7 @@ class RdGen : Kli() {
             res.mix("userClasspath", classpath.value)
             res.mix("filter", filter.value)
             res.mix("packages", packages.value)
-
+            res.mix("noLineNumbersInComments", noLineNumbersInComments.value.toString())
         }
     }
 
@@ -290,9 +293,22 @@ class RdGen : Kli() {
                 defaultClassloader
             }
         v("gradleGenerationSpecs=[${gradleGenerationSpecs.joinToString("\n")}]")
+        v("noLineNumbersInComments=${noLineNumbersInComments.value}")
         //3. Find all rd model classes in classpath and generate code
         val outputFolders = try {
-            generateRdModel(classloader, pkgPrefixes, verbose.value, generatorFilter, clearOutput.value, gradleGenerationSpecs)
+            usingSystemProperty(
+                SharedGeneratorSettings.LineNumbersInCommentsEnv,
+                (!noLineNumbersInComments.value).toString()
+            ) {
+                generateRdModel(
+                    classloader,
+                    pkgPrefixes,
+                    verbose.value,
+                    generatorFilter,
+                    clearOutput.value,
+                    gradleGenerationSpecs
+                )
+            }
         } catch (e : Throwable) {
             e.printStackTrace()
             return false

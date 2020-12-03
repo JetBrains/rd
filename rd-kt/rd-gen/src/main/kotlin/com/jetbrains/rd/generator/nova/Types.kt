@@ -3,6 +3,7 @@
 package com.jetbrains.rd.generator.nova
 
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
+import com.jetbrains.rd.generator.nova.util.booleanSystemProperty
 import com.jetbrains.rd.generator.nova.util.getSourceFileAndLine
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.condstr
@@ -286,13 +287,13 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Declaration> append(typedef: T, typedefBody: T.() -> Unit) : T {
-        typedef.sourceFileAndLine = getSourceFileAndLine()
+        typedef.sourceFileAndLine = getSourceFileAndLine(booleanSystemProperty(SharedGeneratorSettings.LineNumbersInCommentsEnv, true))
         declaredTypes.add(typedef)
         return typedef.apply { lazyInitializer = typedefBody as Declaration.() -> Unit}
     }
 
     init {
-        sourceFileAndLine = getSourceFileAndLine()
+        sourceFileAndLine = getSourceFileAndLine(booleanSystemProperty(SharedGeneratorSettings.LineNumbersInCommentsEnv, true))
     }
 
 

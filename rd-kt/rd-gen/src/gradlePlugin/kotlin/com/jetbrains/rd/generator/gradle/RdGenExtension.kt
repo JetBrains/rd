@@ -71,6 +71,7 @@ open class RdGenExtension(private val project: Project) {
             arguments.add(filter)
         }
         if (verbose == true) arguments.add("-v")
+        if (!lineNumbersInComments) arguments.add("--no-line-numbers")
         val generatorsFile = createGeneratorsFile()
         if (generatorsFile != null) {
             arguments.add("-g")
@@ -86,6 +87,7 @@ open class RdGenExtension(private val project: Project) {
     var packages: String? = null
     var filter: String? = null
     var verbose: Boolean? = null
+    var lineNumbersInComments = true
 
     private val generators: MutableList<GradleGenerationSpec> = ArrayList()
     fun generator(closure: Closure<GradleGenerationSpec>) = GradleGenerationSpec().apply {
