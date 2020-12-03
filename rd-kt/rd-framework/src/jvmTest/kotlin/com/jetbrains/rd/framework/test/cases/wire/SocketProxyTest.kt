@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.SpinWait
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 
@@ -14,6 +15,7 @@ class SocketProxyTest : TestBase() {
     private val DefaultTimeoutMs = 100L
 
     @Test
+    @Disabled("Unstable")
     fun testSimple() {
         // using val factory = Log.UsingLogFactory( TextWriterLogFactory(Console.Out, LoggingLevel.TRACE))
         Lifetime.using { lifetime ->
