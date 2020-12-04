@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.ExperimentalTime
 
-@UseExperimental(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 class SocketProxyTest : TestBase() {
     private val DefaultTimeoutMs = 100L
 

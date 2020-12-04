@@ -189,7 +189,7 @@ class ExtWire : IWire {
     override val heartbeatAlive
         get() = realWire.heartbeatAlive
 
-    @UseExperimental(ExperimentalTime::class)
+    @OptIn(ExperimentalTime::class)
     override var heartbeatInterval: Duration
         get() = realWire.heartbeatInterval
         set(duration) {

@@ -130,7 +130,7 @@ class SocketWire {
             }
         }
 
-        @UseExperimental(ExperimentalTime::class)
+        @OptIn(ExperimentalTime::class)
         private fun startHeartbeat() = GlobalScope.launch {
             while (true) {
                 delay(heartbeatInterval.toLongMilliseconds())
@@ -439,7 +439,7 @@ class SocketWire {
     }
 
 
-    @UseExperimental(ExperimentalTime::class)
+    @OptIn(ExperimentalTime::class)
     class Server internal constructor(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocket, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
         val port : Int = ss.localPort
 
