@@ -20,7 +20,6 @@ import java.time.Duration
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.concurrent.thread
-import kotlin.time.ExperimentalTime
 
 private fun InputStream.readByteArray(a : ByteArray): Boolean {
     var pos = 0
@@ -130,10 +129,9 @@ class SocketWire {
             }
         }
 
-        @OptIn(ExperimentalTime::class)
         private fun startHeartbeat() = GlobalScope.launch {
             while (true) {
-                delay(heartbeatInterval.toLongMilliseconds())
+                delay(heartbeatIntervalMs)
                 ping()
             }
         }
@@ -439,7 +437,6 @@ class SocketWire {
     }
 
 
-    @OptIn(ExperimentalTime::class)
     class Server internal constructor(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocket, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
         val port : Int = ss.localPort
 

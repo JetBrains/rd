@@ -15,8 +15,6 @@ import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import com.jetbrains.rd.util.trace
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 abstract class RdExtBase : RdReactiveBase() {
     enum class ExtState {
@@ -189,11 +187,10 @@ class ExtWire : IWire {
     override val heartbeatAlive
         get() = realWire.heartbeatAlive
 
-    @OptIn(ExperimentalTime::class)
-    override var heartbeatInterval: Duration
-        get() = realWire.heartbeatInterval
+    override var heartbeatIntervalMs: Long
+        get() = realWire.heartbeatIntervalMs
         set(duration) {
-            realWire.heartbeatInterval = duration
+            realWire.heartbeatIntervalMs = duration
         }
 
 

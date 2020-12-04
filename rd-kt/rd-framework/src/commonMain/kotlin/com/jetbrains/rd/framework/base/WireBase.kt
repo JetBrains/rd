@@ -9,9 +9,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.string.printToString
-import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
-
 
 abstract class WireBase(val scheduler: IScheduler) : IWire {
     private lateinit var contextsInternal: ProtocolContexts
@@ -30,8 +27,7 @@ abstract class WireBase(val scheduler: IScheduler) : IWire {
      * Ping's interval and not actually detection's timeout.
      * Its value must be the same on both sides of connection.
      */
-    @OptIn(ExperimentalTime::class)
-    override var heartbeatInterval = 500.milliseconds
+    override var heartbeatIntervalMs = 500L
 
     abstract override fun send(id: RdId, writer: (AbstractBuffer) -> Unit)
 

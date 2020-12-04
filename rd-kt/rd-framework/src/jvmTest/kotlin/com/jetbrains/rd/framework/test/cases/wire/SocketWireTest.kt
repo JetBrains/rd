@@ -19,10 +19,8 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
-import kotlin.time.ExperimentalTime
 
 
-@ExperimentalTime
 class SocketWireTest : TestBase() {
 
     private fun <T : Any> RdOptionalProperty<T>.waitAndAssert(expected: T, prev: T? = null) {
@@ -313,7 +311,6 @@ class SocketWireTest : TestBase() {
         spinUntil { factory.size == 0 }
     }
 
-    @ExperimentalTime
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun testPacketLoss(isClientToServer: Boolean) {
@@ -335,9 +332,9 @@ class SocketWireTest : TestBase() {
             else
                 proxy.stopServerToClientMessaging()
 
-            val detectionTimeout = clientProtocol.wire.heartbeatInterval.times((SocketWire.maximumHeartbeatDelay + 3))
+            val detectionTimeoutMs = clientProtocol.wire.heartbeatIntervalMs * (SocketWire.maximumHeartbeatDelay + 3)
 
-            Thread.sleep(detectionTimeout.toLongMilliseconds())
+            Thread.sleep(detectionTimeoutMs)
 
             assertTrue(serverWire.connected.value)
             assertTrue(clientWire.connected.value)
@@ -350,7 +347,7 @@ class SocketWireTest : TestBase() {
             else
                 proxy.startServerToClientMessaging()
 
-            Thread.sleep(detectionTimeout.toLongMilliseconds())
+            Thread.sleep(detectionTimeoutMs)
 
             assertTrue(serverWire.connected.value)
             assertTrue(clientWire.connected.value)
