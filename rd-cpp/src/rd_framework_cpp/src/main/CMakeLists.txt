@@ -86,11 +86,11 @@ target_include_directories(rd_framework_cpp
         )
 
 target_link_libraries(rd_framework_cpp
-        PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp clsocket
+        PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp
         )
 
 find_package(Threads REQUIRED)
-target_link_libraries(rd_framework_cpp PRIVATE Threads::Threads)
+target_link_libraries(rd_framework_cpp PRIVATE Threads::Threads clsocket)
 
 if (WIN32)
     if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")

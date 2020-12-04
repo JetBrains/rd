@@ -4,6 +4,10 @@
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 
+#include <SimpleSocket.h>
+#include <ActiveSocket.h>
+#include <PassiveSocket.h>
+
 #include <utility>
 #include <thread>
 #include <csignal>
@@ -425,6 +429,17 @@ bool SocketWire::Base::send_ack(sequence_number_t seqn) const
 	}
 }
 
+bool SocketWire::Base::try_shutdown_connection() const
+{
+	auto s = get_socket_provider();
+	if (s == nullptr)
+		return false;
+
+	return s->Shutdown(CSimpleSocket::Both);
+}
+
+SocketWire::Base::~Base() = default;
+
 SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t port, const std::string& id)
 	: Base(id, lifetime, scheduler), port(port)
 {
@@ -518,8 +533,10 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	});
 }
 
+SocketWire::Client::~Client() = default;
+
 SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t port, const std::string& id)
-	: Base(id, lifetime, scheduler)
+	: Base(id, lifetime, scheduler), ss(std::make_unique<CPassiveSocket>())
 {
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
@@ -603,4 +620,7 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 		logger->info("{}: termination finished", this->id);
 	});
 }
+
+SocketWire::Server::~Server() = default;
+
 }	 // namespace rd

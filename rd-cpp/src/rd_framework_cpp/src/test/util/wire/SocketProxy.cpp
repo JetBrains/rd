@@ -2,6 +2,10 @@
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 
+#include <SimpleSocket.h>
+#include <ActiveSocket.h>
+#include <PassiveSocket.h>
+
 #include <utility>
 
 namespace rd
@@ -103,6 +107,8 @@ SocketProxy::SocketProxy(std::string id, Lifetime lifetime, int serverPort)
 	, logger(spdlog::stderr_color_mt<spdlog::synchronous_factory>("socketProxyLog", spdlog::color_mode::automatic))
 	, serverToClientLifetime(lifetime)
 	, clientToServerLifetime(lifetime)
+	, proxyServer(std::make_unique<CActiveSocket>())
+	, proxyClient(std::make_unique<CPassiveSocket>())
 {
 	serverToClientLifetime.next();
 	clientToServerLifetime.next();
@@ -217,5 +223,8 @@ int SocketProxy::getPort()
 	}
 	return port.value();
 }
+
+SocketProxy::~SocketProxy() = default;
+
 }	 // namespace util
 }	 // namespace rd

@@ -3,10 +3,6 @@
 #include "DynamicEntity.Generated.h"
 #include "entities_util.h"
 #include "SocketWireTestBase.h"
-#include "impl/RdMap.h"
-#include "impl/RdProperty.h"
-#include "impl/RdSignal.h"
-#include "protocol/Protocol.h"
 #include "wire/SocketWire.h"
 #include "wire/SocketProxy.h"
 
@@ -458,14 +454,10 @@ TEST_F(SocketWireTestBase, DISABLED_TestFailoverServer)
 
 void try_close_socket(Protocol const& protocol)
 {
-	auto socket = dynamic_cast<SocketWire::Base const*>(protocol.get_wire())->get_socket_provider();
-
-	if (socket != nullptr)
+	auto wire = dynamic_cast<SocketWire::Base const*>(protocol.get_wire());
+	while (!wire->try_shutdown_connection())
 	{
-		while (!socket->Shutdown(CSimpleSocket::Both))
-		{
-			std::cerr << "Test: Shutdown failed?" << std::endl;
-		}
+		std::cerr << "Test: Shutdown failed?" << std::endl;
 	}
 	std::cerr << "Test: Socket closed" << std::endl;
 }

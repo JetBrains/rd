@@ -11,15 +11,15 @@
 #include "ByteBufferAsyncProcessor.h"
 #include "PkgInputStream.h"
 
-#include "SimpleSocket.h"
-#include "ActiveSocket.h"
-#include "PassiveSocket.h"
-
 #include <string>
 #include <array>
 #include <condition_variable>
 
 #include <rd_framework_export.h>
+
+class CSimpleSocket;
+class CActiveSocket;
+class CPassiveSocket;
 
 namespace rd
 {
@@ -101,6 +101,10 @@ public:
 			return read_from_socket(reinterpret_cast<Buffer::word_t*>(data), static_cast<int32_t>(len));
 		}
 
+		void set_socket_provider(std::shared_ptr<CActiveSocket> new_socket);
+
+		CSimpleSocket* get_socket_provider() const;
+
 	public:
 		static constexpr int32_t MaximumHeartbeatDelay = 3;
 		std::chrono::milliseconds heartBeatInterval = std::chrono::milliseconds(500);
@@ -109,7 +113,7 @@ public:
 
 		Base(std::string id, Lifetime lifetime, IScheduler* scheduler);
 
-		virtual ~Base() = default;
+		~Base() override;
 
 		// endregion
 
@@ -125,17 +129,15 @@ public:
 
 		void send(RdId const& rd_id, std::function<void(Buffer& buffer)> writer) const override;
 
-		void set_socket_provider(std::shared_ptr<CActiveSocket> new_socket);
-
 		static bool connection_established(int32_t timestamp, int32_t acknowledged_timestamp);
 
 		std::future<void> start_heartbeat(Lifetime lifetime);
 
-		CSimpleSocket* get_socket_provider() const;
-
 		void ping() const;
 
 		bool send_ack(sequence_number_t seqn) const;
+
+		bool try_shutdown_connection() const;
 	};
 
 	class RD_FRAMEWORK_API Client : public Base
@@ -147,7 +149,7 @@ public:
 
 		Client(Lifetime lifetime, IScheduler* scheduler, uint16_t port = 0, const std::string& id = "ClientSocket");
 
-		virtual ~Client() = default;
+		~Client() override;
 		// endregion
 
 		std::condition_variable_any cv;
@@ -158,13 +160,13 @@ public:
 	public:
 		uint16_t port = 0;
 
-		std::unique_ptr<CPassiveSocket> ss = std::make_unique<CPassiveSocket>();
+		std::unique_ptr<CPassiveSocket> ss;
 
 		// region ctor/dtor
 
 		Server(Lifetime lifetime, IScheduler* scheduler, uint16_t port = 0, const std::string& id = "ServerSocket");
 
-		virtual ~Server() = default;
+		~Server() override;
 		// endregion
 	};
 };
