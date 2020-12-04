@@ -52,7 +52,7 @@ interface IWire {
     /**
      * Ping's interval.
      */
-    @UseExperimental(ExperimentalTime::class)
+    @OptIn(ExperimentalTime::class)
     var heartbeatInterval: Duration
 
     /**
