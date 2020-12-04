@@ -1,6 +1,5 @@
 import com.jetbrains.rd.gradle.plugins.applyMultiplatform
 import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
@@ -24,10 +23,6 @@ kotlin {
         }
 
     }
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
 }
 
 val testCopySources by creatingCopySourcesTask(

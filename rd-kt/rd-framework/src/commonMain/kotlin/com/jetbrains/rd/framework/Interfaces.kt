@@ -13,8 +13,6 @@ import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableSet
 import com.jetbrains.rd.util.string.RName
 import kotlin.reflect.KClass
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 /**
  * A node in a graph of entities that can be synchronized with its remote copy over a network or a similar connection.
@@ -52,8 +50,7 @@ interface IWire {
     /**
      * Ping's interval.
      */
-    @OptIn(ExperimentalTime::class)
-    var heartbeatInterval: Duration
+    var heartbeatIntervalMs: Long
 
     /**
      * Sends a data block with the given [id] and the given [writer] function that can write the data.
