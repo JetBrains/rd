@@ -10,7 +10,7 @@
 #include "serialization/ISerializable.h"
 #include "protocol/Identities.h"
 #include "base/IUnknownInstance.h"
-#include "hashing.h"
+#include "util/hashing.h"
 #include "serialization/RdAny.h"
 #include "DefaultAbstractDeclaration.h"
 

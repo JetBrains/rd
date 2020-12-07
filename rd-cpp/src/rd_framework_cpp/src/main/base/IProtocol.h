@@ -3,14 +3,12 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable:4251)
+#pragma warning(disable : 4251)
 #endif
 
 #include "IRdDynamic.h"
-#include "serialization/Serializers.h"
-#include "protocol/Identities.h"
-#include "scheduler/base/IScheduler.h"
-#include "base/IWire.h"
+
+#include <serialization/Serializers.h>
 
 #include <memory>
 
@@ -21,6 +19,10 @@ namespace rd
 // region predeclared
 
 class SerializationCtx;
+class Identities;
+class IScheduler;
+class IWire;
+
 // endregion
 
 /**
@@ -49,23 +51,37 @@ public:
 
 	IProtocol& operator=(IProtocol&& other) noexcept = default;
 
-	virtual ~IProtocol();
+	~IProtocol() override;
 	// endregion
 
-	const Identities* get_identity() const;
+	const Identities* get_identity() const
+	{
+		return identity.get();
+	}
 
-	const IProtocol* get_protocol() const override;
+	const IProtocol* get_protocol() const override
+	{
+		return this;
+	}
 
-	IScheduler* get_scheduler() const;
+	IScheduler* get_scheduler() const
+	{
+		return scheduler;
+	}
 
-	const IWire* get_wire() const;
+	const IWire* get_wire() const
+	{
+		return wire.get();
+	}
 
-	const Serializers& get_serializers() const;
+	const Serializers& get_serializers() const
+	{
+		return *serializers;
+	}
 };
 }	 // namespace rd
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
 
 #endif	  // RD_CPP_IPROTOCOL_H

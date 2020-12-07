@@ -3,7 +3,7 @@
 
 #include "serialization/SerializationCtx.h"
 #include "serialization/Polymorphic.h"
-#include "framework_traits.h"
+#include "util/framework_traits.h"
 
 namespace rd
 {

@@ -1,7 +1,10 @@
 #include "InternRoot.h"
 
-#include "serialization/AbstractPolymorphic.h"
-#include "serialization/InternedAnySerializer.h"
+#include <base/IWire.h>
+#include <base/IProtocol.h>
+
+#include <serialization/AbstractPolymorphic.h>
+#include <serialization/InternedAnySerializer.h>
 
 namespace rd
 {

@@ -1,7 +1,7 @@
 #ifndef RD_CPP_IRDDYNAMIC_H
 #define RD_CPP_IRDDYNAMIC_H
 
-#include "impl/RName.h"
+#include <impl/RName.h>
 
 #include <rd_framework_export.h>
 

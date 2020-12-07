@@ -2,18 +2,16 @@
 #define RD_CPP_FRAMEWORK_IRDBINDABLE_H
 
 #include "IRdDynamic.h"
-#include "lifetime/Lifetime.h"
-#include "protocol/RdId.h"
+
+#include <lifetime/Lifetime.h>
+#include <protocol/RdId.h>
 
 #include <rd_framework_export.h>
 
 namespace rd
 {
 class Identities;
-}
 
-namespace rd
-{
 /**
  * \brief A non-root node in an object graph which can be synchronized with its remote copy over a network or
  * a similar connection.
@@ -32,7 +30,7 @@ public:
 
 	IRdBindable& operator=(IRdBindable&& other) = default;
 
-	virtual ~IRdBindable() = default;
+	~IRdBindable() override = default;
 	// endregion
 
 	/**
@@ -84,7 +82,7 @@ typename std::enable_if_t<!util::is_base_of_v<IRdBindable, typename std::decay_t
 
 inline void bindPolymorphic(IRdBindable const& that, Lifetime lf, const IRdDynamic* parent, string_view name)
 {
-	that.bind(lf, parent, name);
+	that.bind(std::move(lf), parent, name);
 }
 
 template <typename T>

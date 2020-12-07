@@ -1,6 +1,9 @@
 #include "RdBindableBase.h"
 
-#include "reactive/base/SignalX.h"
+#include "IProtocol.h"
+
+#include <reactive/base/SignalX.h>
+#include <scheduler/base/IScheduler.h>
 
 namespace rd
 {
@@ -83,4 +86,12 @@ void RdBindableBase::init(Lifetime lifetime) const
 		}
 	}
 }
+
+void RdBindableBase::initialize_extension(IRdBindable* extension, const std::string& name) const
+{
+	auto protocol = get_protocol();
+	extension->identify(*protocol->get_identity(), rdid.mix(".").mix(name));
+	extension->bind(*bind_lifetime, this, name);
+}
+
 }	 // namespace rd

@@ -1,14 +1,16 @@
 #ifndef RD_CPP_WIREBASE_H
 #define RD_CPP_WIREBASE_H
 
-#include "reactive/Property.h"
-#include "base/IWire.h"
-#include "protocol/MessageBroker.h"
+#include "IWire.h"
+
+#include <protocol/MessageBroker.h>
 
 #include <rd_framework_export.h>
 
 namespace rd
 {
+class IScheduler;
+
 class RD_FRAMEWORK_API WireBase : public IWire
 {
 protected:

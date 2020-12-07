@@ -12,7 +12,6 @@ add_library(rd_framework_cpp SHARED
         base/RdPropertyBase.h
         base/ISerializersOwner.cpp
         base/IUnknownInstance.cpp base/IUnknownInstance.h
-        base/IRdWireable.cpp base/IRdWireable.h
         #impl
         impl/RdSignal.h
         impl/RdProperty.h
@@ -62,6 +61,11 @@ add_library(rd_framework_cpp SHARED
         protocol/RdId.cpp protocol/RdId.h
         protocol/Protocol.cpp protocol/Protocol.h
         protocol/MessageBroker.cpp protocol/MessageBroker.h
+        #util
+        util/hashing.h
+        util/framework_traits.h
+        util/guards.h
+        util/thread_util.h util/thread_util.cpp
         #pch
         ${PCH_CPP_OPT})
 
@@ -77,17 +81,13 @@ if (ENABLE_PCH_HEADERS)
     add_precompiled_header(rd_framework_cpp pch.h SOURCE_CXX pch.cpp FORCEINCLUDE)
 endif ()
 
-add_subdirectory(util)
-
 target_include_directories(rd_framework_cpp
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_BINARY_DIR}
         )
 
-target_link_libraries(rd_framework_cpp
-        PUBLIC rd_core_cpp rd_framework_cpp_util
-        )
+target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp)
 
 find_package(Threads REQUIRED)
 target_link_libraries(rd_framework_cpp PRIVATE Threads::Threads clsocket)

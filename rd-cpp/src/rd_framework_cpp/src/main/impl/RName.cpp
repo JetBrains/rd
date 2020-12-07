@@ -1,7 +1,5 @@
 #include "RName.h"
 
-#include "thirdparty.hpp"
-
 namespace rd
 {
 class RNameImpl

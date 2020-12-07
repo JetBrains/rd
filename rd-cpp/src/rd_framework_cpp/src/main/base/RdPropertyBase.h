@@ -1,9 +1,12 @@
 #ifndef RD_CPP_RDPROPERTYBASE_H
 #define RD_CPP_RDPROPERTYBASE_H
 
-#include "base/RdReactiveBase.h"
-#include "serialization/Polymorphic.h"
-#include "reactive/Property.h"
+#include "RdReactiveBase.h"
+#include "IWire.h"
+#include "IProtocol.h"
+
+#include <serialization/Polymorphic.h>
+#include <reactive/Property.h>
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -33,16 +36,18 @@ public:
 
 	RdPropertyBase(RdPropertyBase const&) = delete;
 
-	RdPropertyBase(RdPropertyBase&& other) = default;
+	RdPropertyBase& operator=(RdPropertyBase& other) = delete;
 
-	RdPropertyBase& operator=(RdPropertyBase&& other) = default;
+	RdPropertyBase(RdPropertyBase&& other) noexcept = default;
+
+	RdPropertyBase& operator=(RdPropertyBase&& other) noexcept = default;
 
 	template <typename F>
 	explicit RdPropertyBase(F&& value) : Property<T>(std::forward<F>(value))
 	{
 	}
 
-	virtual ~RdPropertyBase() = default;
+	~RdPropertyBase() override = default;
 	// endregion
 
 	bool is_default_value_changed() const

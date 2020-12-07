@@ -1,12 +1,11 @@
 #ifndef RD_CPP_RDSIGNAL_H
 #define RD_CPP_RDSIGNAL_H
 
-#include "lifetime/Lifetime.h"
-#include "reactive/base/interfaces.h"
-#include "scheduler/base/IScheduler.h"
-#include "reactive/base/SignalX.h"
-#include "base/RdReactiveBase.h"
-#include "serialization/Polymorphic.h"
+#include <base/RdReactiveBase.h>
+#include <base/IWire.h>
+#include <reactive/base/interfaces.h>
+#include <serialization/Polymorphic.h>
+#include <serialization/ISerializable.h>
 
 #if defined(_MSC_VER)
 #pragma warning(push)

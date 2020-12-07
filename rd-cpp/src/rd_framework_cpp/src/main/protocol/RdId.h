@@ -2,7 +2,7 @@
 #define RD_CPP_FRAMEWORK_RDID_H
 
 #include "protocol/Buffer.h"
-#include "hashing.h"
+#include <util/hashing.h>
 #include "std/hash.h"
 
 #include "thirdparty.hpp"

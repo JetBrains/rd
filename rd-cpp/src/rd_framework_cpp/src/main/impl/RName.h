@@ -6,7 +6,8 @@
 #pragma warning(disable:4251)
 #endif
 
-#include "thirdparty.hpp"
+#include <memory>
+#include <thirdparty.hpp>
 
 #include <string>
 #include <rd_framework_export.h>

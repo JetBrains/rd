@@ -3,7 +3,7 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable:4251)
+#pragma warning(disable : 4251)
 #endif
 
 #include <unordered_set>
@@ -35,6 +35,5 @@ public:
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
 
 #endif	  // RD_CPP_ISERIALIZERSOWNER_H

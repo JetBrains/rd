@@ -1,10 +1,10 @@
 #ifndef RD_CPP_RDPROPERTY_H
 #define RD_CPP_RDPROPERTY_H
 
-#include "base/RdPropertyBase.h"
-#include "serialization/Polymorphic.h"
-#include "serialization/ISerializable.h"
-#include "std/allocator.h"
+#include <base/RdPropertyBase.h>
+#include <serialization/Polymorphic.h>
+#include <serialization/ISerializable.h>
+#include <std/allocator.h>
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -29,20 +29,16 @@ public:
 
 	RdProperty() = default;
 
-	RdProperty(RdProperty const&) = delete;
+	RdProperty(RdProperty&&) noexcept = default;
 
-	RdProperty& operator=(RdProperty const&) = delete;
-
-	RdProperty(RdProperty&&) = default;
-
-	RdProperty& operator=(RdProperty&&) = default;
+	RdProperty& operator=(RdProperty&&) noexcept = default;
 
 	template <typename F>
 	explicit RdProperty(F&& value) : RdPropertyBase<T, S>(std::forward<F>(value))
 	{
 	}
 
-	virtual ~RdProperty() = default;
+	~RdProperty() override = default;
 	// endregion
 
 	static RdProperty<T, S> read(SerializationCtx& ctx, Buffer& buffer)

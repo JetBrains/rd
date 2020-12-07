@@ -1,10 +1,12 @@
 #ifndef RD_CPP_RDSET_H
 #define RD_CPP_RDSET_H
 
-#include "reactive/ViewableSet.h"
-#include "base/RdReactiveBase.h"
-#include "serialization/Polymorphic.h"
-#include "std/allocator.h"
+#include <base/RdReactiveBase.h>
+#include <base/IWire.h>
+#include <reactive/ViewableSet.h>
+#include <serialization/ISerializable.h>
+#include <serialization/Polymorphic.h>
+#include <std/allocator.h>
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -37,11 +39,11 @@ public:
 
 	RdSet() = default;
 
-	RdSet(RdSet&&) = default;
+	RdSet(RdSet&&) noexcept = default;
 
-	RdSet& operator=(RdSet&&) = default;
+	RdSet& operator=(RdSet&&) noexcept = default;
 
-	virtual ~RdSet() = default;
+	~RdSet() override = default;
 
 	// endregion
 
@@ -49,7 +51,7 @@ public:
 	{
 		RdSet<T, S> result;
 		RdId id = RdId::read(buffer);
-		withId(result, std::move(id));
+		withId(result, id);
 		return result;
 	}
 

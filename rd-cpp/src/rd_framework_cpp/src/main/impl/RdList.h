@@ -2,6 +2,8 @@
 #define RD_CPP_RDLIST_H
 
 #include <base/RdReactiveBase.h>
+#include <base/IWire.h>
+#include <protocol/Protocol.h>
 #include <reactive/ViewableList.h>
 #include <serialization/Polymorphic.h>
 #include <serialization/ISerializable.h>
@@ -47,9 +49,9 @@ public:
 
 	RdList() = default;
 
-	RdList(RdList&&)  noexcept = default;
+	RdList(RdList&&) noexcept = default;
 
-	RdList& operator=(RdList&&)  noexcept = default;
+	RdList& operator=(RdList&&) noexcept = default;
 
 	~RdList() override = default;
 	// endregion

@@ -1,11 +1,12 @@
 #ifndef RD_CPP_RDREACTIVEBASE_H
 #define RD_CPP_RDREACTIVEBASE_H
 
-#include "base/RdBindableBase.h"
-#include "base/IRdReactive.h"
-#include "guards.h"
+#include "RdBindableBase.h"
+#include "IRdReactive.h"
 
-#include "spdlog/spdlog.h"
+#include <util/guards.h>
+
+#include <spdlog/spdlog.h>
 
 #include <rd_framework_export.h>
 
@@ -20,8 +21,6 @@ namespace rd
 
 class IWire;
 
-class IProtocol;
-
 class Serializers;
 // endregion
 
@@ -32,11 +31,11 @@ public:
 
 	RdReactiveBase() = default;
 
-	RdReactiveBase(RdReactiveBase&& other);
+	RdReactiveBase(RdReactiveBase&& other) noexcept;
 
-	RdReactiveBase& operator=(RdReactiveBase&& other);
+	RdReactiveBase& operator=(RdReactiveBase&& other) noexcept;
 
-	virtual ~RdReactiveBase() = default;
+	~RdReactiveBase() override;
 	// endregion
 
 	const IWire* get_wire() const;

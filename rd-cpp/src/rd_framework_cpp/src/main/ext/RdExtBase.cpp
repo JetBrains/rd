@@ -1,9 +1,8 @@
 #include "RdExtBase.h"
+#include "ExtWire.h"
 
-#include "lifetime/Lifetime.h"
-#include "base/RdPropertyBase.h"
-#include "protocol/Protocol.h"
-#include "scheduler/SynchronousScheduler.h"
+#include <protocol/Protocol.h>
+#include <scheduler/SynchronousScheduler.h>
 
 namespace rd
 {
@@ -97,6 +96,11 @@ IScheduler* RdExtBase::get_wire_scheduler() const
 {
 	return &SynchronousScheduler::Instance();
 }
+RdExtBase::RdExtBase() : extWire(std::make_shared<ExtWire>())
+{
+}
+
+RdExtBase::~RdExtBase() = default;
 
 std::string to_string(RdExtBase::ExtState state)
 {

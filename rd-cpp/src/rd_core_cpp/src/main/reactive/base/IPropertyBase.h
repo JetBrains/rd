@@ -31,9 +31,9 @@ public:
 
 	IPropertyBase() = default;
 
-	IPropertyBase(IPropertyBase&& other) = default;
+	IPropertyBase(IPropertyBase&& other) noexcept = default;
 
-	IPropertyBase& operator=(IPropertyBase&& other) = default;
+	IPropertyBase& operator=(IPropertyBase&& other) noexcept = default;
 
 	template <typename F>
 	explicit IPropertyBase(F&& value) : value(std::forward<F>(value))

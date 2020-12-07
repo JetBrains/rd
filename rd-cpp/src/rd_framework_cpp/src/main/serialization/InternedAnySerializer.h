@@ -1,10 +1,11 @@
 #ifndef RD_CPP_ANYSERIALIZER_H
 #define RD_CPP_ANYSERIALIZER_H
 
-#include "serialization/SerializationCtx.h"
-#include "serialization/RdAny.h"
+#include "SerializationCtx.h"
+#include "Serializers.h"
+#include "RdAny.h"
 
-#include "thirdparty.hpp"
+#include <thirdparty.hpp>
 
 namespace rd
 {

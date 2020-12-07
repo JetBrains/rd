@@ -1,6 +1,9 @@
 #include "RdReactiveBase.h"
+#include "IProtocol.h"
 
-#include "spdlog/sinks/stdout_color_sinks.h"
+#include <scheduler/base/IScheduler.h>
+
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace rd
 {
@@ -9,12 +12,12 @@ static std::shared_ptr<spdlog::logger> logReceived =
 std::shared_ptr<spdlog::logger> logSend =
 	spdlog::stderr_color_mt<spdlog::synchronous_factory>("logSend", spdlog::color_mode::automatic);
 
-RdReactiveBase::RdReactiveBase(RdReactiveBase&& other) : RdBindableBase(std::move(other)) /*, async(other.async)*/
+RdReactiveBase::RdReactiveBase(RdReactiveBase&& other) noexcept : RdBindableBase(std::move(other)) /*, async(other.async)*/
 {
 	async = other.async;
 }
 
-RdReactiveBase& RdReactiveBase::operator=(RdReactiveBase&& other)
+RdReactiveBase& RdReactiveBase::operator=(RdReactiveBase&& other) noexcept
 {
 	async = other.async;
 	static_cast<RdBindableBase&>(*this) = std::move(other);
@@ -44,7 +47,7 @@ void RdReactiveBase::assert_bound() const
 
 const Serializers& RdReactiveBase::get_serializers() const
 {
-	return *get_protocol()->serializers.get();
+	return *get_protocol()->serializers;
 }
 
 IScheduler* RdReactiveBase::get_default_scheduler() const
@@ -56,4 +59,7 @@ IScheduler* RdReactiveBase::get_wire_scheduler() const
 {
 	return get_default_scheduler();
 }
+
+RdReactiveBase::~RdReactiveBase() = default;
+
 }	 // namespace rd

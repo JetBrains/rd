@@ -3,19 +3,18 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable:4251)
+#pragma warning(disable : 4251)
 #endif
 
 #include "IRdBindable.h"
-#include "base/IProtocol.h"
 
-#include "thirdparty.hpp"
+#include <thirdparty.hpp>
 
 #include <rd_framework_export.h>
 
 namespace rd
 {
-class RD_FRAMEWORK_API RdBindableBase : public virtual IRdBindable /*, IPrintable*/
+class RD_FRAMEWORK_API RdBindableBase : public virtual IRdBindable
 {
 protected:
 	mutable optional<Lifetime> bind_lifetime;
@@ -38,7 +37,7 @@ public:
 
 	RdBindableBase& operator=(RdBindableBase&& other) = default;
 
-	virtual ~RdBindableBase() = default;
+	~RdBindableBase() override = default;
 	// endregion
 
 	// need to implement in subclasses
@@ -64,14 +63,12 @@ public:
 		}
 		else
 		{
-			std::shared_ptr<IRdBindable> new_extension = std::make_shared<T>(std::forward<Args>(args)...);
-			T const& res = *dynamic_cast<T const*>(new_extension.get());
+			std::shared_ptr<T> new_extension = std::make_shared<T>(std::forward<Args>(args)...);
 			if (bind_lifetime.has_value())
 			{
-				auto protocol = get_protocol();
-				new_extension->identify(*protocol->get_identity(), rdid.mix(".").mix(name));
-				new_extension->bind(*bind_lifetime, this, name);
+				initialize_extension(new_extension.get(), name);
 			}
+			T const& res = *new_extension.get();
 			bindable_extensions.emplace(name, std::move(new_extension));
 			return res;
 		}
@@ -85,6 +82,9 @@ public:
 	 }
 	 return std::any_cast<T const &>(non_bindable_extensions.at(name));
  }*/
+
+private:
+	void initialize_extension(IRdBindable* extension, const std::string& name) const;
 };
 
 // T : RdBindableBase
@@ -114,6 +114,5 @@ T& withIdFromName(T& that, std::string const& name)
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
 
 #endif	  // RD_CPP_RDBINDABLEBASE_H

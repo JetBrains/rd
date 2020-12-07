@@ -51,7 +51,7 @@ public:
 
 	Protocol& operator=(Protocol&&) noexcept = default;
 
-	virtual ~Protocol();
+	~Protocol() override;
 	// endregion
 
 	SerializationCtx& get_serialization_context() const override;

@@ -1,10 +1,13 @@
 #ifndef RD_CPP_RDMAP_H
 #define RD_CPP_RDMAP_H
 
-#include "reactive/ViewableMap.h"
-#include "base/RdReactiveBase.h"
-#include "serialization/Polymorphic.h"
-#include "util/shared_function.h"
+#include <base/RdReactiveBase.h>
+#include <base/IWire.h>
+#include <protocol/Protocol.h>
+#include <reactive/ViewableMap.h>
+#include <serialization/Polymorphic.h>
+#include <serialization/ISerializable.h>
+#include <util/shared_function.h>
 
 #include <cstdint>
 
@@ -64,11 +67,11 @@ public:
 
 	RdMap() = default;
 
-	RdMap(RdMap&&) = default;
+	RdMap(RdMap&&) noexcept = default;
 
-	RdMap& operator=(RdMap&&) = default;
+	RdMap& operator=(RdMap&&) noexcept = default;
 
-	virtual ~RdMap() = default;
+	~RdMap() override = default;
 	// endregion
 
 	static RdMap<K, V, KS, VS> read(SerializationCtx& /*ctx*/, Buffer& buffer)

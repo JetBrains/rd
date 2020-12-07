@@ -1,10 +1,9 @@
 #ifndef RD_CPP_RDEXTBASE_H
 #define RD_CPP_RDEXTBASE_H
 
-#include "base/RdReactiveBase.h"
-#include "ExtWire.h"
+#include <base/RdReactiveBase.h>
 
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 #include <rd_framework_export.h>
 
@@ -16,13 +15,15 @@
 
 namespace rd
 {
+class ExtWire;
+
 /**
  * \brief Base class for creating extension node according to bottom-up design.
  */
 class RD_FRAMEWORK_API RdExtBase : public RdReactiveBase
 {
-	std::shared_ptr<ExtWire> extWire = std::make_shared<ExtWire>();
-	mutable std::shared_ptr<IProtocol> extProtocol /* = nullptr*/;
+	std::shared_ptr<ExtWire> extWire;
+	mutable std::shared_ptr<IProtocol> extProtocol;
 
 public:
 	enum class ExtState
@@ -34,13 +35,13 @@ public:
 
 	// region ctor/dtor
 
-	RdExtBase() = default;
+	RdExtBase();
 
-	RdExtBase(RdExtBase&&) = default;
+	RdExtBase(RdExtBase&&) noexcept = default;
 
-	RdExtBase& operator=(RdExtBase&&) = default;
+	RdExtBase& operator=(RdExtBase&&) noexcept = default;
 
-	virtual ~RdExtBase() = default;
+	~RdExtBase() override;
 	// endregion
 
 	mutable int64_t serializationHash = 0;
@@ -64,6 +65,5 @@ std::string to_string(RdExtBase::ExtState state);
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
 
 #endif	  // RD_CPP_RDEXTBASE_H

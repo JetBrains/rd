@@ -1,7 +1,7 @@
-#ifndef RD_CPP_TESTSCHEDULER_H
-#define RD_CPP_TESTSCHEDULER_H
+#ifndef RD_CPP_SIMPLESCHEDULER_H
+#define RD_CPP_SIMPLESCHEDULER_H
 
-#include "scheduler/base/IScheduler.h"
+#include "base/IScheduler.h"
 
 #include <rd_framework_export.h>
 
@@ -27,4 +27,4 @@ public:
 };
 }	 // namespace rd
 
-#endif	  // RD_CPP_TESTSCHEDULER_H
+#endif	  // RD_CPP_SIMPLESCHEDULER_H

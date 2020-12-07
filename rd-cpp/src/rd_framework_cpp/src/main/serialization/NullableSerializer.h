@@ -4,7 +4,7 @@
 #include "serialization/Polymorphic.h"
 #include "serialization/AbstractPolymorphic.h"
 #include "types/wrapper.h"
-#include "framework_traits.h"
+#include "util/framework_traits.h"
 
 #include <type_traits>
 

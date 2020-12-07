@@ -3,17 +3,19 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable:4251)
+#pragma warning(disable : 4251)
 #endif
 
-#include "reactive/base/interfaces.h"
-#include "base/IRdReactive.h"
-#include "reactive/Property.h"
+#include <reactive/Property.h>
+#include <protocol/Buffer.h>
+#include <protocol/RdId.h>
 
 #include <rd_framework_export.h>
 
 namespace rd
 {
+class IRdReactive;
+
 /**
  * \brief Sends and receives serialized object data over a network or a similar connection.
  */
@@ -51,6 +53,5 @@ public:
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
 
 #endif	  // RD_CPP_IWIRE_H

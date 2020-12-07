@@ -2,13 +2,15 @@
 #define RD_CPP_FRAMEWORK_IRDREACTIVE_H
 
 #include "IRdBindable.h"
-#include "scheduler/base/IScheduler.h"
-#include "IRdWireable.h"
+
+#include <protocol/Buffer.h>
 
 #include <rd_framework_export.h>
 
 namespace rd
 {
+class IScheduler;
+
 /**
  * \brief A non-root node in an object graph which can be synchronized with its remote copy over a network or
  * a similar connection, and which allows to subscribe to its changes.
@@ -25,7 +27,7 @@ public:
 
 	IRdReactive() = default;
 
-	virtual ~IRdReactive() = default;
+	~IRdReactive() override = default;
 	// endregion
 
 	/**

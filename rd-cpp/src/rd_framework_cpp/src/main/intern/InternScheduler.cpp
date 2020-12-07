@@ -1,6 +1,6 @@
 #include "InternScheduler.h"
 
-#include "guards.h"
+#include <util/guards.h>
 
 namespace rd
 {

@@ -3,12 +3,12 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable:4251)
+#pragma warning(disable : 4251)
 #endif
 
-#include "base/IWire.h"
-#include "protocol/RdId.h"
-#include "protocol/Buffer.h"
+#include <base/IWire.h>
+#include <protocol/RdId.h>
+#include <protocol/Buffer.h>
 
 #include <queue>
 #include <mutex>
@@ -34,9 +34,9 @@ public:
 	void send(RdId const& id, std::function<void(Buffer& buffer)> writer) const override;
 };
 }	 // namespace rd
+
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
 
 #endif	  // RD_CPP_EXTWIRE_H

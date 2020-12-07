@@ -1,7 +1,5 @@
 #include "ExtWire.h"
 
-#include "protocol/Buffer.h"
-
 namespace rd
 {
 ExtWire::ExtWire()

@@ -26,13 +26,9 @@ public:
 
 	IProperty() = default;
 
-	IProperty(IProperty&& other) = default;
+	IProperty(IProperty&& other) noexcept = default;
 
-	IProperty& operator=(IProperty&& other) = default;
-
-	explicit IProperty(T const& value) : IPropertyBase<T>(value)
-	{
-	}
+	IProperty& operator=(IProperty&& other) noexcept = default;
 
 	template <typename F>
 	explicit IProperty(F&& value) : IPropertyBase<T>(std::forward<F>(value))
