@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -23,10 +24,10 @@ namespace Test.RdFramework
     private static readonly int ourKey = 1;
 
 
-    private RdCall<TIn, TOut> CreateEndpoint<TIn, TOut>(Func<TIn, TOut> handler)
+    private RdCall<TIn, TOut> CreateEndpoint<TIn, TOut>(Func<TIn, TOut> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
     {
       var res = new RdCall<TIn, TOut>();
-      res.Set(handler);
+      res.Set(handler, cancellationScheduler, handlerScheduler);
       return res;
     }
     
@@ -185,6 +186,50 @@ namespace Test.RdFramework
       Assert.True(endpointLfTerminated);
     }
     
-    
+    [Test]
+    public void TestOverriddenHandlerScheduler()
+    {
+      ClientWire.AutoTransmitMode = true;
+      ServerWire.AutoTransmitMode = true;
+
+      var scheduler = SingleThreadScheduler.RunOnSeparateThread(TestLifetime, "Background scheduler");
+
+      var callsite = BindToServer(LifetimeDefinition.Lifetime, new RdCall<int, string>(), ourKey);
+      var endpoint = BindToClient(LifetimeDefinition.Lifetime, new RdCall<int, string>(), ourKey);
+      
+      Assert.IsFalse(scheduler.IsActive);
+
+      var point1 = false;
+      var point2 = false;
+      var thread = Thread.CurrentThread;
+      endpoint.Set(i =>
+      {
+        Assert.IsTrue(scheduler.IsActive);
+        Assert.AreNotEqual(thread, Thread.CurrentThread);
+        
+        Volatile.Write(ref point1, true);
+        
+        SpinWaitEx.SpinUntil(TestLifetime, TimeSpan.FromSeconds(10), () => point2);
+        Assert.IsTrue(point2);
+        
+        return i.ToString();
+      }, handlerScheduler: scheduler);
+
+      Assert.IsFalse(scheduler.IsActive);
+      
+      var task = callsite.Start(0);
+      var result = task.Result;
+      
+      Assert.IsFalse(result.Maybe.HasValue);
+      
+      SpinWaitEx.SpinUntil(TestLifetime, TimeSpan.FromSeconds(10), () => point1);
+      Assert.IsTrue(point1);
+      Assert.IsFalse(result.Maybe.HasValue);
+      
+      Volatile.Write(ref point2, true);
+      SpinWaitEx.SpinUntil(TestLifetime, () => result.Maybe.HasValue);
+      
+      Assert.AreEqual("0", result.Value.Result);
+    }
   }
 }

@@ -118,10 +118,10 @@ interface IRdEndpoint<TReq, TRes> {
     /**
      * Assigns a handler that executes the API asynchronously.
      */
-    fun set(cancellationAndRequestScheduler: IScheduler? = null, handler: (Lifetime, TReq) -> RdTask<TRes>)
+    fun set(cancellationScheduler: IScheduler? = null, handlerScheduler: IScheduler? = null, handler: (Lifetime, TReq) -> RdTask<TRes>)
 
     /**
      * Assigns a handler that executes the API synchronously.
      */
-    fun set(cancellationAndRequestScheduler: IScheduler? = null, handler: (TReq) -> TRes) = set { _, req -> RdTask.fromResult(handler(req)) }
+    fun set(cancellationScheduler: IScheduler? = null, handlerScheduler: IScheduler? = null, handler: (TReq) -> TRes) = set(cancellationScheduler, handlerScheduler) { _, req -> RdTask.fromResult(handler(req)) }
 }

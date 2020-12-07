@@ -16,7 +16,7 @@
         
         <Platforms>AnyCPU</Platforms>
         
-        <LangVersion>9</LangVersion>
+        <LangVersion>8</LangVersion>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">

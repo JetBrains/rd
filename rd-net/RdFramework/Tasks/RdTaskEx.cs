@@ -49,25 +49,28 @@ namespace JetBrains.Rd.Tasks
     }
 
 
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler cancellationAndRequestScheduler = null)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
     {
-      endpoint.Set((lt, req) => handler(lt, req).ToRdTask(), cancellationAndRequestScheduler);
+      endpoint.Set((lt, req) => handler(lt, req).ToRdTask(), cancellationScheduler, handlerScheduler);
     }
     
-
-    
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler cancellationAndRequestScheduler = null)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, TRes> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
     {
-      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)), cancellationAndRequestScheduler);
+      endpoint.Set((lifetime, req) => RdTask<TRes>.Successful(handler(lifetime, req)), cancellationScheduler, handlerScheduler);
     }
     
-    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler cancellationAndRequestScheduler = null)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
+    {
+      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)), cancellationScheduler, handlerScheduler);
+    }
+    
+    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
     {
       endpoint.Set(req =>
       {
         handler(req);
         return Unit.Instance;
-      }, cancellationAndRequestScheduler);
+      }, cancellationScheduler, handlerScheduler);
     }
     
     [PublicAPI]

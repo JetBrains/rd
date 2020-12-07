@@ -170,7 +170,10 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
 
     lateinit var bindLifetime : Lifetime
-    private var endpointSchedulerForHandlerAndCancellation: IScheduler? = null
+    private var cancellationScheduler: IScheduler? = null
+    private var handlerScheduler: IScheduler? = null
+
+    override val wireScheduler get() = handlerScheduler ?: super.wireScheduler
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
@@ -228,22 +231,23 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     /**
      * Assigns a handler that executes the API asynchronously.
      */
-    override fun set(cancellationAndRequestScheduler: IScheduler?, handler: (Lifetime, TReq) -> RdTask<TRes>) {
+    override fun set(cancellationScheduler: IScheduler?, handlerScheduler: IScheduler?, handler: (Lifetime, TReq) -> RdTask<TRes>) {
         this.handler = handler
-        this.endpointSchedulerForHandlerAndCancellation = cancellationAndRequestScheduler
+        this.cancellationScheduler = cancellationScheduler
+        this.handlerScheduler = handlerScheduler
     }
 
-    constructor(cancellationAndRequestScheduler: IScheduler? = null, handler:(Lifetime, TReq) -> RdTask<TRes>) : this() { set(cancellationAndRequestScheduler, handler) }
+    constructor(cancellationScheduler: IScheduler? = null, handlerScheduler: IScheduler? = null, handler:(Lifetime, TReq) -> RdTask<TRes>) : this() { set(cancellationScheduler, handlerScheduler, handler) }
 
     /**
      * Assigns a handler that executes the API synchronously.
      */
-    constructor(cancellationAndRequestScheduler: IScheduler? = null, handler: (TReq) -> TRes) : this () { set(cancellationAndRequestScheduler, handler) }
+    constructor(cancellationScheduler: IScheduler? = null, handlerScheduler: IScheduler? = null, handler: (TReq) -> TRes) : this () { set(cancellationScheduler, handlerScheduler, handler) }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val taskId = RdId.read(buffer)
 
-        val wiredTask = EndpointWiredRdTask(bindLifetime, this, taskId, endpointSchedulerForHandlerAndCancellation ?: wireScheduler)
+        val wiredTask = EndpointWiredRdTask(bindLifetime, this, taskId, cancellationScheduler ?: SynchronousScheduler)
         val externalCancellation = wiredTask.lifetime
 
         val rdTask = try {

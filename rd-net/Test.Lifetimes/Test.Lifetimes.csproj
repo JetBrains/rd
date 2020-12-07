@@ -8,7 +8,7 @@
         <RootNamespace>Test.Lifetimes</RootNamespace>
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <LangVersion>9</LangVersion>
+        <LangVersion>8</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

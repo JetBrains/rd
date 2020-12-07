@@ -20,10 +20,12 @@ import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.Linearization
+import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 class RdAsyncTaskTest : RdFrameworkTestBase() {
@@ -39,7 +41,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         clientProtocol.bindStatic(client_property, "top")
         serverProtocol.bindStatic(server_property, "top")
 
-        server_property.set ( RdCall(null, Int::toString) )
+        server_property.set ( RdCall(null, null, Int::toString) )
 
 
         assertEquals("1", client_property.valueOrThrow.sync(1))
@@ -448,6 +450,51 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
             assertNotNull(error)
             assertFalse(completedSuccessfully)
         }
+    }
+
+    @Test
+    fun testOverriddenHandlerScheduler() {
+        val entity_id = 1
+
+        val callsite = RdCall<Int, String>().static(entity_id)
+        val endpoint = RdCall<Int, String>(null) { x -> throw Exception() }.static(entity_id)
+
+        clientProtocol.bindStatic(callsite, "client")
+        serverProtocol.bindStatic(endpoint, "server")
+
+
+        val scheduler = TestSingleThreadScheduler("Test background scheduler")
+        assertFalse(scheduler.isActive);
+
+        val point1 = CountDownLatch(1)
+        val point2 = CountDownLatch(1)
+
+        endpoint.set(handlerScheduler = scheduler) { _, req ->
+            assertTrue(scheduler.isActive)
+            point1.countDown()
+
+            point2.await(10, TimeUnit.SECONDS)
+            assertEquals(0L, point2.count)
+            return@set RdTask.fromResult(req.toString())
+        }
+
+        assertFalse(scheduler.isActive)
+
+        val task = callsite.start(0);
+        val result = task.result;
+
+        assertFalse(result.hasValue)
+
+        point1.await(10, TimeUnit.SECONDS)
+        assertEquals(0L, point1.count)
+
+        assertFalse(result.hasValue)
+        point2.countDown()
+
+        spinUntil(10000) { result.hasValue }
+        assertTrue(result.hasValue)
+
+        assertEquals("0", result.valueOrThrow.unwrap())
     }
 }
 
