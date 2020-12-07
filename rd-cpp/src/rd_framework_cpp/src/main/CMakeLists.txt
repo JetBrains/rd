@@ -86,7 +86,7 @@ target_include_directories(rd_framework_cpp
         )
 
 target_link_libraries(rd_framework_cpp
-        PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp
+        PUBLIC rd_core_cpp rd_framework_cpp_util
         )
 
 find_package(Threads REQUIRED)
