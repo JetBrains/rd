@@ -17,7 +17,7 @@ class RdTaskTest : RdFrameworkTestBase() {
         val entity_id = 1
 
         val client_entity = RdCall<Int, String>().static(entity_id)
-        val server_entity = RdCall(null, Int::toString).static(entity_id)
+        val server_entity = RdCall(null, null, Int::toString).static(entity_id)
 
         //not bound
         assertFails { client_entity.sync(0) }

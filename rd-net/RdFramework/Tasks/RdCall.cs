@@ -35,7 +35,10 @@ namespace JetBrains.Rd.Tasks
 
 
     private Lifetime myBindLifetime;
-    private IScheduler myEndpointSchedulerForHandlerAndCancellation;
+    private IScheduler myCancellationScheduler;
+    private IScheduler myHandlerScheduler;
+
+    public override IScheduler WireScheduler => myHandlerScheduler ?? base.WireScheduler;
 
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
@@ -64,10 +67,11 @@ namespace JetBrains.Rd.Tasks
 
 
     [PublicAPI]
-    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationAndRequestScheduler = null)
+    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
     {
       Handler = handler;
-      myEndpointSchedulerForHandlerAndCancellation = cancellationAndRequestScheduler;
+      myCancellationScheduler = cancellationScheduler;
+      myHandlerScheduler = handlerScheduler;
     }
 
     [PublicAPI]
@@ -75,7 +79,7 @@ namespace JetBrains.Rd.Tasks
     {
       var taskId = RdId.Read(reader);
       
-      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(myBindLifetime, this, taskId, myEndpointSchedulerForHandlerAndCancellation ?? WireScheduler);
+      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(myBindLifetime, this, taskId, myCancellationScheduler ?? SynchronousScheduler.Instance);
       //subscribe for lifetime cancellation
       var externalCancellation = wiredTask.Lifetime;
 
