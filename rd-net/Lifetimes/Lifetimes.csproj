@@ -15,6 +15,8 @@
         <Configurations>Debug;Release;CrossTests</Configurations>
         
         <Platforms>AnyCPU</Platforms>
+        
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">
@@ -55,6 +57,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="PackageIcon.png" Pack="true" PackagePath=""/>
+        <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 </Project>
