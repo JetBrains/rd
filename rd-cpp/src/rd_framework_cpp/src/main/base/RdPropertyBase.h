@@ -5,8 +5,10 @@
 #include "serialization/Polymorphic.h"
 #include "reactive/Property.h"
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#endif
 
 namespace rd
 {
@@ -79,7 +81,7 @@ public:
 			get_wire()->send(rdid, [this, &v](Buffer& buffer) {
 				buffer.write_integral<int32_t>(master_version);
 				S::write(this->get_serialization_context(), buffer, v);
-				logSend->trace("SEND property {} + {}:: ver = {}, value = {}", to_string(location), to_string(rdid),
+				spdlog::get("logSend")->trace("SEND property {} + {}:: ver = {}, value = {}", to_string(location), to_string(rdid),
 					std::to_string(master_version), to_string(v));
 			});
 		});
@@ -103,7 +105,7 @@ public:
 		WT v = S::read(this->get_serialization_context(), buffer);
 
 		bool rejected = is_master && version < master_version;
-		logSend->trace("RECV property {} {}:: oldver={}, ver={}, value = {}{}", to_string(location), to_string(rdid),
+		spdlog::get("logSend")->trace("RECV property {} {}:: oldver={}, ver={}, value = {}{}", to_string(location), to_string(rdid),
 			master_version, version, to_string(v), (rejected ? ">> REJECTED" : ""));
 		if (rejected)
 		{
@@ -143,7 +145,9 @@ public:
 };
 }	 // namespace rd
 
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 
 static_assert(std::is_move_constructible<rd::RdPropertyBase<int>>::value, "Is move constructible from RdPropertyBase<int>");
 

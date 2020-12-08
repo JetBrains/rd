@@ -2,9 +2,11 @@ add_subdirectory(optional)
 add_subdirectory(ordered-map)
 add_subdirectory(variant)
 add_subdirectory(clsocket)
+set_property(TARGET clsocket PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(countdownlatch)
 add_subdirectory(string-view-lite)
 add_subdirectory(CTPL)
+set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build shared library" FORCE)
 add_subdirectory(spdlog)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/spdlog/include/

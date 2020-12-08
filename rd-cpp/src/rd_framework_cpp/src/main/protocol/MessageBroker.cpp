@@ -9,7 +9,7 @@ std::shared_ptr<spdlog::logger> MessageBroker::logger =
 
 static void execute(const IRdReactive* that, Buffer msg)
 {
-	int16_t context = msg.read_integral<int16_t>();	   // skip context
+	msg.read_integral<int16_t>();	   // skip context
 	that->on_wire_received(std::move(msg));
 }
 

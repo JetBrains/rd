@@ -2,14 +2,17 @@
 #define RD_CPP_RDSIGNAL_H
 
 #include "lifetime/Lifetime.h"
-#include "reactive/interfaces.h"
+#include "reactive/base/interfaces.h"
 #include "scheduler/base/IScheduler.h"
-#include "reactive/SignalX.h"
+#include "reactive/base/SignalX.h"
 #include "base/RdReactiveBase.h"
 #include "serialization/Polymorphic.h"
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#endif
+
 namespace rd
 {
 /**
@@ -79,7 +82,7 @@ public:
 	void on_wire_received(Buffer buffer) const override
 	{
 		auto value = S::read(this->get_serialization_context(), buffer);
-		logReceived->trace("RECV{}", logmsg(wrapper::get<T>(value)));
+		spdlog::get("logReceived")->trace("RECV{}", logmsg(wrapper::get<T>(value)));
 
 		signal.fire(wrapper::get<T>(value));
 	}
@@ -94,7 +97,7 @@ public:
 			assert_threading();
 		}
 		get_wire()->send(rdid, [this, &value](Buffer& buffer) {
-			logSend->trace("SEND{}", logmsg(value));
+			spdlog::get("logSend")->trace("SEND{}", logmsg(value));
 			S::write(get_serialization_context(), buffer, value);
 		});
 		signal.fire(value);
@@ -134,7 +137,9 @@ public:
 };
 }	 // namespace rd
 
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 
 static_assert(std::is_move_constructible<rd::RdSignal<int>>::value, "Is not move constructible from RdSignal<int>");
 

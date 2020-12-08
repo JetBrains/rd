@@ -5,12 +5,12 @@
 
 #include "guards.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class SynchronousScheduler : public IScheduler
+class RD_FRAMEWORK_API SynchronousScheduler : public IScheduler
 {
-	static thread_local int32_t active;
-
 public:
 	// region ctor/dtor
 
@@ -28,12 +28,17 @@ public:
 	void flush() override;
 
 	bool is_active() const override;
+
+	/**
+	 * \brief global synchronous scheduler for whole application.
+	 */
+	static SynchronousScheduler& Instance()
+	{
+		static SynchronousScheduler globalSynchronousScheduler;
+		return globalSynchronousScheduler;
+	}
 };
 
-/**
- * \brief global synchronous scheduler for whole application.
- */
-extern SynchronousScheduler globalSynchronousScheduler;
 }	 // namespace rd
 
 #endif	  // RD_CPP_SYNCHRONOUSSCHEDULER_H

@@ -6,8 +6,10 @@
 #include "serialization/Polymorphic.h"
 #include "std/allocator.h"
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#endif
 
 namespace rd
 {
@@ -71,7 +73,7 @@ public:
 					buffer.write_enum<AddRemove>(kind);
 					S::write(this->get_serialization_context(), buffer, v);
 
-					logSend->trace("SENDset {} {}:: {}:: {}", to_string(location), to_string(rdid), to_string(kind), to_string(v));
+					spdlog::get("logSend")->trace("SENDset {} {}:: {}:: {}", to_string(location), to_string(rdid), to_string(kind), to_string(v));
 				});
 			});
 		});
@@ -157,7 +159,9 @@ public:
 };
 }	 // namespace rd
 
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 
 static_assert(std::is_move_constructible<rd::RdSet<int>>::value, "Is move constructible RdSet<int>");
 

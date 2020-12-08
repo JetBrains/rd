@@ -5,9 +5,11 @@
 #include "scheduler/base/IScheduler.h"
 #include "protocol/Buffer.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class IRdWireable
+class RD_FRAMEWORK_API IRdWireable
 {
 public:
 	mutable RdId rdid = RdId::Null();

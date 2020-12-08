@@ -1,14 +1,21 @@
 #ifndef RD_CPP_RDBINDABLEBASE_H
 #define RD_CPP_RDBINDABLEBASE_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "IRdBindable.h"
 #include "base/IProtocol.h"
 
 #include "thirdparty.hpp"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class RdBindableBase : public virtual IRdBindable /*, IPrintable*/
+class RD_FRAMEWORK_API RdBindableBase : public virtual IRdBindable /*, IPrintable*/
 {
 protected:
 	mutable optional<Lifetime> bind_lifetime;
@@ -104,5 +111,9 @@ T& withIdFromName(T& that, std::string const& name)
 	return withId(that, RdId::Null().mix(name));
 }
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_RDBINDABLEBASE_H

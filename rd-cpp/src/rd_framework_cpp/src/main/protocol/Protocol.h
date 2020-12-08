@@ -1,11 +1,18 @@
 #ifndef RD_CPP_PROTOCOL_H
 #define RD_CPP_PROTOCOL_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "base/IProtocol.h"
 #include "protocol/Identities.h"
 #include "serialization/SerializationCtx.h"
 
 #include <memory>
+
+#include <rd_framework_export.h>
 
 namespace rd
 {
@@ -19,7 +26,7 @@ class InternRoot;
 /**
  * \brief Top level node in the object graph. It stores [SerializationCtx] for polymorphic "SerDes"
  */
-class Protocol : /*IRdDynamic, */ public IProtocol
+class RD_FRAMEWORK_API Protocol : /*IRdDynamic, */ public IProtocol
 {
 	constexpr static string_view InternRootName{"ProtocolInternRoot"};
 
@@ -52,5 +59,9 @@ public:
 	static std::shared_ptr<spdlog::logger> initializationLogger;
 };
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_PROTOCOL_H

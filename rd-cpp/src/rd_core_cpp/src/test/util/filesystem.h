@@ -2,8 +2,6 @@
 #define RD_CPP_FILESYSTEM_H
 
 #include <string>
-#include <cassert>
-#include <cstdlib>
 
 namespace rd
 {

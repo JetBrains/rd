@@ -3,6 +3,8 @@
 
 #include "scheduler/base/IScheduler.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 /**

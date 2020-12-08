@@ -6,8 +6,10 @@
 #include "serialization/Polymorphic.h"
 #include "std/allocator.h"
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#endif
 
 namespace rd
 {
@@ -102,7 +104,7 @@ public:
 					{
 						S::write(this->get_serialization_context(), buffer, *new_value);
 					}
-					logSend->trace(logmsg(op, next_version - 1, e.get_index(), new_value));
+					spdlog::get("logSend")->trace(logmsg(op, next_version - 1, e.get_index(), new_value));
 				});
 			});
 		});
@@ -136,7 +138,7 @@ public:
 			{
 				auto value = S::read(this->get_serialization_context(), buffer);
 
-				logReceived->trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
+				spdlog::get("logReceived")->trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
 
 				(index < 0) ? list::add(std::move(value)) : list::add(static_cast<size_t>(index), std::move(value));
 				break;
@@ -145,14 +147,14 @@ public:
 			{
 				auto value = S::read(this->get_serialization_context(), buffer);
 
-				logReceived->trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
+				spdlog::get("logReceived")->trace(logmsg(op, version, index, &(wrapper::get<T>(value))));
 
 				list::set(static_cast<size_t>(index), std::move(value));
 				break;
 			}
 			case Op::REMOVE:
 			{
-				logReceived->trace(logmsg(op, version, index));
+				spdlog::get("logReceived")->trace(logmsg(op, version, index));
 
 				list::removeAt(static_cast<size_t>(index));
 				break;
@@ -254,7 +256,10 @@ public:
 };
 }	 // namespace rd
 
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
+
 static_assert(std::is_move_constructible<rd::RdList<int>>::value, "Is move constructible RdList<int>");
 
 #endif	  // RD_CPP_RDLIST_H

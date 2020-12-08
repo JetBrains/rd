@@ -1,6 +1,11 @@
 #ifndef RD_CPP_MESSAGEBROKER_H
 #define RD_CPP_MESSAGEBROKER_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "base/IRdReactive.h"
 
 #include "std/unordered_map.h"
@@ -9,9 +14,11 @@
 
 #include <queue>
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
-class Mq
+class RD_FRAMEWORK_API Mq
 {
 public:
 	// region ctor/dtor
@@ -31,7 +38,7 @@ public:
 	std::vector<Buffer> custom_scheduler_messages;
 };
 
-class MessageBroker final
+class RD_FRAMEWORK_API MessageBroker final
 {
 private:
 	IScheduler* default_scheduler = nullptr;
@@ -55,5 +62,9 @@ public:
 	void advise_on(Lifetime lifetime, IRdReactive const* entity) const;
 };
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_MESSAGEBROKER_H

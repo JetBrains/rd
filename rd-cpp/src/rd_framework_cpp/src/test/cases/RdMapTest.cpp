@@ -3,7 +3,6 @@
 #include "impl/RdMap.h"
 #include "RdFrameworkTestBase.h"
 #include "DynamicEntity.Generated.h"
-#include "test_util.h"
 #include "entities_util.h"
 
 using namespace rd;

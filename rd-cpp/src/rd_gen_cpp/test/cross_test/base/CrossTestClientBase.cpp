@@ -1,7 +1,5 @@
 #include "CrossTestClientBase.h"
 
-#include "std/filesystem.h"
-
 namespace rd
 {
 namespace cross

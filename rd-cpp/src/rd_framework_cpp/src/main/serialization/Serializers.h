@@ -1,6 +1,11 @@
 #ifndef RD_CPP_SERIALIZERS_H
 #define RD_CPP_SERIALIZERS_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "protocol/RdId.h"
 #include "serialization/ISerializable.h"
 #include "protocol/Identities.h"
@@ -15,6 +20,8 @@
 #include <iostream>
 #include <unordered_set>
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 // region predeclared
@@ -22,7 +29,7 @@ namespace rd
 class SerializationCtx;
 // endregion
 
-class Serializers
+class RD_FRAMEWORK_API Serializers
 {
 private:
 	static RdId real_rd_id(IUnknownInstance const& value);
@@ -143,5 +150,9 @@ void Serializers::writePolymorphic(SerializationCtx& ctx, Buffer& stream, T cons
 	writePolymorphicNullable(ctx, stream, value);
 }
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_SERIALIZERS_H

@@ -1,6 +1,11 @@
 #ifndef RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 #define RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "protocol/Buffer.h"
 #include "protocol/RdId.h"
 
@@ -10,6 +15,8 @@
 #include <string>
 #include <utility>
 #include <regex>
+
+#include <rd_framework_export.h>
 
 namespace rd
 {
@@ -24,7 +31,7 @@ class InternRoot;
 class RdBindableBase;
 // endregion
 
-class SerializationCtx
+class RD_FRAMEWORK_API SerializationCtx
 {
 	Serializers const* serializers = nullptr;
 
@@ -98,4 +105,8 @@ void SerializationCtx::writeInterned(Buffer& buffer, const Wrapper<T>& value, F&
 	}
 }
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 #endif	  // RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

@@ -24,3 +24,5 @@ target_include_directories(rd_core_cpp_test PUBLIC cases)
 target_include_directories(rd_core_cpp_test PUBLIC util)
 
 target_link_libraries(rd_core_cpp_test gtest gtest_main rd_core_cpp rd_core_cpp_test_util)
+
+copy_shared_dependency_if_needed(rd_core_cpp_test rd_core_cpp spdlog)

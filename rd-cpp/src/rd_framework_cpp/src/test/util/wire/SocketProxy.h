@@ -26,8 +26,8 @@ class SocketProxy
 
 	SequentialLifetimes serverToClientLifetime;
 	SequentialLifetimes clientToServerLifetime;
-	std::unique_ptr<CActiveSocket> proxyServer = std::make_unique<CActiveSocket>();
-	std::unique_ptr<CPassiveSocket> proxyClient = std::make_unique<CPassiveSocket>();
+	std::unique_ptr<CActiveSocket> proxyServer;
+	std::unique_ptr<CPassiveSocket> proxyClient;
 
 	void connect(CSimpleSocket& proxyServer, CSimpleSocket& proxyClient);
 
@@ -38,6 +38,8 @@ public:
 	SocketProxy(std::string id, Lifetime lifetime, int serverPort);
 
 	SocketProxy(const std::string& id, Lifetime lifetime, IProtocol const* protocol);
+
+	~SocketProxy();
 
 	void start();
 

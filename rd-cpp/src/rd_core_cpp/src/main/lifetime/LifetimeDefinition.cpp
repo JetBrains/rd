@@ -1,6 +1,6 @@
 #include "LifetimeDefinition.h"
 
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 namespace rd
 {
@@ -35,7 +35,7 @@ LifetimeDefinition ETERNAL(true);
 
 std::shared_ptr<LifetimeDefinition> LifetimeDefinition::get_shared_eternal()
 {
-	return std::shared_ptr<LifetimeDefinition>(&ETERNAL, [](LifetimeDefinition* ld) {});
+	return std::shared_ptr<LifetimeDefinition>(&ETERNAL, [](LifetimeDefinition* /*ld*/) {});
 }
 
 LifetimeDefinition::~LifetimeDefinition()

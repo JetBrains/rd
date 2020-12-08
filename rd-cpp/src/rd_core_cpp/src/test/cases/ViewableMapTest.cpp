@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "reactive/ViewableMap.h"
-#include "test_util.h"
 
 using namespace rd;
-using namespace rd::test;
-using namespace rd::test::util;
+using namespace rd::util;
 
 TEST(viewable_map, advise)
 {

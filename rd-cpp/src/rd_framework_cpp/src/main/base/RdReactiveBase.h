@@ -7,8 +7,12 @@
 
 #include "spdlog/spdlog.h"
 
+#include <rd_framework_export.h>
+
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#endif
 
 namespace rd
 {
@@ -21,12 +25,9 @@ class IProtocol;
 class Serializers;
 // endregion
 
-class RdReactiveBase : public RdBindableBase, public IRdReactive
+class RD_FRAMEWORK_API RdReactiveBase : public RdBindableBase, public IRdReactive
 {
 public:
-	static std::shared_ptr<spdlog::logger> logReceived;
-	static std::shared_ptr<spdlog::logger> logSend;
-
 	// region ctor/dtor
 
 	RdReactiveBase() = default;
@@ -70,6 +71,8 @@ public:
 };
 }	 // namespace rd
 
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 
 #endif	  // RD_CPP_RDREACTIVEBASE_H

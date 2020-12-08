@@ -1,9 +1,11 @@
 #ifndef RD_CPP_CORE_SIGNAL_H
 #define RD_CPP_CORE_SIGNAL_H
 
-#include "lifetime/Lifetime.h"
-#include "reactive/interfaces.h"
-#include "util/core_util.h"
+#include "interfaces.h"
+#include "SignalCookie.h"
+
+#include <lifetime/Lifetime.h>
+#include <util/core_util.h>
 
 #include <utility>
 #include <functional>
@@ -11,8 +13,6 @@
 
 namespace rd
 {
-extern std::atomic<int32_t> cookie;
-
 /**
  * \brief complete class which has \a Signal<T> 's properties
  */
@@ -119,16 +119,16 @@ public:
 
 	static bool isPriorityAdvise()
 	{
-		return cookie > 0;
+		return rd_signal_cookie_get() > 0;
 	}
 };
 
 template <typename F>
 void priorityAdviseSection(F&& block)
 {
-	++cookie;
+	rd_signal_cookie_inc();
 	block();
-	--cookie;
+	rd_signal_cookie_dec();
 }
 }	 // namespace rd
 

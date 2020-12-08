@@ -3,12 +3,14 @@
 
 #include "scheduler/base/IScheduler.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 /**
  * \brief simple scheduler, which immediately invoke action on queue, and is always active.
  */
-class SimpleScheduler : public IScheduler
+class RD_FRAMEWORK_API SimpleScheduler : public IScheduler
 {
 public:
 	// region ctor/dtor

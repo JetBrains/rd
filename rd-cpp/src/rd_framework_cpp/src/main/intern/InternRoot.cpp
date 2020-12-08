@@ -52,7 +52,7 @@ void InternRoot::bind(Lifetime lf, IRdDynamic const* parent, string_view name) c
 	get_protocol()->get_wire()->advise(lf, this);
 }
 
-void InternRoot::identify(const Identities& identities, RdId const& id) const
+void InternRoot::identify(const Identities& /*identities*/, RdId const& id) const
 {
 	RD_ASSERT_MSG(rdid.isNull(), "Already has RdId: " + to_string(rdid) + ", entities: $this");
 	RD_ASSERT_MSG(!id.isNull(), "Assigned RdId mustn't be null, entities: $this");

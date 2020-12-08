@@ -1,10 +1,11 @@
 #ifndef RD_CPP_IPROPERTYBASE_H
 #define RD_CPP_IPROPERTYBASE_H
 
-#include "types/wrapper.h"
-#include "reactive/interfaces.h"
-#include "reactive/SignalX.h"
-#include "lifetime/SequentialLifetimes.h"
+#include "interfaces.h"
+#include "SignalX.h"
+
+#include <types/wrapper.h>
+#include <lifetime/SequentialLifetimes.h>
 
 #include "thirdparty.hpp"
 

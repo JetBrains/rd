@@ -25,13 +25,17 @@ namespace rd {
 
 #else
 
-#pragma warning(push)
-#pragma warning(disable:4583)
-#pragma warning(disable:4582)
+#if defined(_MSC_VER)
+	#pragma warning(push)
+	#pragma warning(disable:4583)
+	#pragma warning(disable:4582)
+#endif
 #include "optional.hpp"
 #include "mpark/variant.hpp"
 #include "nonstd/string_view.hpp"
-#pragma warning(pop)
+#if defined (_MSC_VER)
+  #pragma warning(pop)
+#endif
 
 namespace rd {
 	using tl::optional;

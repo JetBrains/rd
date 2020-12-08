@@ -1,6 +1,11 @@
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "types/DateTime.h"
 #include "util/core_util.h"
 #include "types/wrapper.h"
@@ -12,12 +17,14 @@
 #include <functional>
 #include <memory>
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 /**
  * \brief Simple data buffer. Allows to "SerDes" plenty of types, such as integrals, arrays, etc.
  */
-class Buffer final
+class RD_FRAMEWORK_API Buffer final
 {
 public:
 	friend class PkgInputStream;
@@ -311,5 +318,9 @@ public:
 	ByteArray& get_data();
 };
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_UNSAFEBUFFER_H

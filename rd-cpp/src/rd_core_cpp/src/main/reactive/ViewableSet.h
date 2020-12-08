@@ -1,12 +1,11 @@
 #ifndef RD_CPP_CORE_VIEWABLESET_H
 #define RD_CPP_CORE_VIEWABLESET_H
 
-#include "std/allocator.h"
 #include "base/IViewableSet.h"
-#include "reactive/SignalX.h"
-#include "util/core_util.h"
+#include "reactive/base/SignalX.h"
 
-#include "tsl/ordered_set.h"
+#include <std/allocator.h>
+#include <util/core_util.h>
 
 namespace rd
 {

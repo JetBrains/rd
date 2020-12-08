@@ -1,14 +1,15 @@
 #ifndef RD_CPP_IVIEWABLESET_H
 #define RD_CPP_IVIEWABLESET_H
 
-#include "lifetime/LifetimeDefinition.h"
-#include "reactive/interfaces.h"
-#include "util/core_util.h"
+#include "interfaces.h"
 #include "viewable_collections.h"
 
-#include "std/unordered_map.h"
+#include <lifetime/LifetimeDefinition.h>
+#include <util/core_util.h>
 
-#include "thirdparty.hpp"
+#include <std/unordered_map.h>
+
+#include <thirdparty.hpp>
 
 namespace rd
 {
@@ -69,10 +70,7 @@ public:
 	 * \param lifetime lifetime of subscription.
 	 * \param handler to be called.
 	 */
-	void advise(Lifetime lifetime, std::function<void(AddRemove, T const&)
-
-									   >
-									   handler) const
+	void advise(Lifetime lifetime, std::function<void(AddRemove, T const&)> handler) const
 	{
 		this->advise(lifetime, [handler](Event e) { handler(e.kind, *e.value); });
 	}
@@ -87,10 +85,7 @@ public:
 	 * \param lifetime
 	 * \param handler
 	 */
-	void view(Lifetime lifetime, std::function<void(Lifetime, T const&)
-
-									 >
-									 handler) const override
+	void view(Lifetime lifetime, std::function<void(Lifetime, T const&)> handler) const override
 	{
 		advise(lifetime, [this, lifetime, handler](AddRemove kind, T const& key) {
 			switch (kind)

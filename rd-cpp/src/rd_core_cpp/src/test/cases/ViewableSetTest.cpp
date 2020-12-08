@@ -2,8 +2,6 @@
 
 #include "reactive/ViewableSet.h"
 
-#include "test_util.h"
-
 using namespace rd;
 
 TEST(viewable_set, advise)

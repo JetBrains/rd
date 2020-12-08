@@ -2,8 +2,9 @@
 #define RD_CPP_CORE_PROPERTY_H
 
 #include "base/IProperty.h"
-#include "reactive/SignalX.h"
-#include "util/core_util.h"
+#include "reactive/base/SignalX.h"
+
+#include <util/core_util.h>
 
 namespace rd
 {

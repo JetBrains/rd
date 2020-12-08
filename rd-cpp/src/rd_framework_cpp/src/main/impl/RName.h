@@ -1,9 +1,15 @@
 #ifndef RD_CPP_FRAMEWORK_RNAME_H
 #define RD_CPP_FRAMEWORK_RNAME_H
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4251)
+#endif
+
 #include "thirdparty.hpp"
 
 #include <string>
+#include <rd_framework_export.h>
 
 namespace rd
 {
@@ -12,7 +18,7 @@ class RNameImpl;
 /**
  * \brief Recursive name. For constructs like Aaaa.Bbb::CCC
  */
-class RName
+class RD_FRAMEWORK_API RName
 {
 public:
 	// region ctor/dtor
@@ -39,11 +45,15 @@ public:
 		return impl != nullptr;
 	}
 
-	friend std::string to_string(RName const& value);
+	friend std::string RD_FRAMEWORK_API to_string(RName const& value);
 
 private:
 	std::shared_ptr<RNameImpl> impl;
 };
 }	 // namespace rd
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 
 #endif	  // RD_CPP_FRAMEWORK_RNAME_H

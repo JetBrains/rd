@@ -5,6 +5,8 @@
 #include "lifetime/Lifetime.h"
 #include "protocol/RdId.h"
 
+#include <rd_framework_export.h>
+
 namespace rd
 {
 class Identities;
@@ -16,7 +18,7 @@ namespace rd
  * \brief A non-root node in an object graph which can be synchronized with its remote copy over a network or
  * a similar connection.
  */
-class IRdBindable : public IRdDynamic
+class RD_FRAMEWORK_API IRdBindable : public IRdDynamic
 {
 public:
 	mutable RdId rdid = RdId::Null();

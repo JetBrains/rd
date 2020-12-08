@@ -8,8 +8,10 @@
 #include <vector>
 #include <atomic>
 #include <future>
+#include <locale>
+#include <codecvt>
 
-#include "thirdparty.hpp"
+#include <thirdparty.hpp>
 
 namespace rd
 {
@@ -17,17 +19,49 @@ namespace detail
 {
 using std::to_string;
 
-std::string to_string(std::string const& val);
+inline std::string to_string(std::string const& val)
+{
+	return val;
+}
 
-std::string to_string(char const val[]);
+inline std::string to_string(const char* val)
+{
+	return val;
+}
 
-std::string to_string(std::wstring const& val);
+inline std::string to_string(std::wstring const& val)
+{
+	using convert_type = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_type> converter;
+	return converter.to_bytes(val);
+}
 
-std::string to_string(std::thread::id const& id);
+inline std::string to_string(std::thread::id const& id)
+{
+	std::ostringstream ss;
+	ss << id;
+	return ss.str();
+}
 
-std::string to_string(std::exception const& e);
+inline std::string to_string(std::exception const& e)
+{
+	return std::string(e.what());
+}
 
-std::string to_string(std::future_status const& status);
+inline std::string to_string(std::future_status const& status)
+{
+	switch (status)
+	{
+		case std::future_status::ready:
+			return "ready";
+		case std::future_status::timeout:
+			return "timeout";
+		case std::future_status::deferred:
+			return "deferred";
+		default:
+			return "unknown";
+	}
+}
 
 template <typename Rep, typename Period>
 inline std::string to_string(std::chrono::duration<Rep, Period> const& time)
@@ -87,7 +121,11 @@ std::string as_string(T const& t)
 
 using std::to_wstring;
 
-std::wstring to_wstring(std::string const& s);
+inline std::wstring to_wstring(std::string const& s)
+{
+	// TODO: fix this wrong implementation
+	return std::wstring(s.begin(), s.end());
+}
 
 template <class T>
 std::wstring as_wstring(T const& t)

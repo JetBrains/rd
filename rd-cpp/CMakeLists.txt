@@ -12,6 +12,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Add path for custom modules.
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(utils)
+
 set(CMAKE_INSTALL_LIBS "${CMAKE_CURRENT_LIST_DIR}/export/libs")
 set(CMAKE_INSTALL_PUBLIC_HEADER "${CMAKE_CURRENT_LIST_DIR}/export/include")
 set(CMAKE_INSTALL_PUBLIC_HEADER_THIRDPARTY "${CMAKE_INSTALL_PUBLIC_HEADER}/thirdparty")
@@ -38,6 +42,8 @@ elseif (MSVC)
     add_compile_options(
             /wd4996     # POSIX name is deprecated
             /wd4250     # method inheritance via dominance
+            /wd4251
+            /wd4275
     )
 endif ()
 

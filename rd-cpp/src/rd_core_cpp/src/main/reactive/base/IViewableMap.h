@@ -3,7 +3,7 @@
 
 #include "lifetime/LifetimeDefinition.h"
 #include "util/overloaded.h"
-#include "reactive/interfaces.h"
+#include "interfaces.h"
 #include "viewable_collections.h"
 #include "util/core_util.h"
 
