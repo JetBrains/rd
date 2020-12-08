@@ -70,7 +70,7 @@ namespace tl {
       template<class T, class A>
       struct is_trivially_copy_constructible<std::vector<T,A>>
           : std::is_trivially_copy_constructible<T>{};
-#endif
+#endif      
   }
 }
 #endif
@@ -153,25 +153,25 @@ struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...)> : std::true_typ
 template <class T, class Ret, class... Args>
 struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...)&> : std::true_type{};
 template <class T, class Ret, class... Args>
-struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...)&&> : std::true_type{};
+struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...)&&> : std::true_type{};        
 template <class T, class Ret, class... Args>
 struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...) volatile> : std::true_type{};
 template <class T, class Ret, class... Args>
 struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...) volatile&> : std::true_type{};
 template <class T, class Ret, class... Args>
-struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...) volatile&&> : std::true_type{};
+struct is_pointer_to_non_const_member_func<Ret (T::*) (Args...) volatile&&> : std::true_type{};        
 
 template <class T> struct is_const_or_const_ref : std::false_type{};
 template <class T> struct is_const_or_const_ref<T const&> : std::true_type{};
-template <class T> struct is_const_or_const_ref<T const> : std::true_type{};
+template <class T> struct is_const_or_const_ref<T const> : std::true_type{};    
 #endif
 
 // std::invoke from C++17
 // https://stackoverflow.com/questions/38288042/c11-14-invoke-workaround
 template <typename Fn, typename... Args,
 #ifdef TL_OPTIONAL_LIBCXX_MEM_FN_WORKAROUND
-          typename = enable_if_t<!(is_pointer_to_non_const_member_func<Fn>::value
-                                 && is_const_or_const_ref<Args...>::value)>,
+          typename = enable_if_t<!(is_pointer_to_non_const_member_func<Fn>::value 
+                                 && is_const_or_const_ref<Args...>::value)>, 
 #endif
           typename = enable_if_t<std::is_member_pointer<decay_t<Fn>>::value>,
           int = 0>
@@ -278,7 +278,7 @@ using enable_assign_from_other = detail::enable_if_t<
     !std::is_assignable<T &, const optional<U> &>::value &&
     !std::is_assignable<T &, const optional<U> &&>::value>;
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 // TODO make a version which works with MSVC
 template <class T, class U = T> struct is_swappable : std::true_type {};
 
@@ -1334,7 +1334,7 @@ public:
   emplace(std::initializer_list<U> il, Args &&... args) {
     *this = nullopt;
     this->construct(il, std::forward<Args>(args)...);
-    return value();
+    return value();    
   }
 
   /// Swaps this optional with the other.

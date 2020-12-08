@@ -476,7 +476,7 @@ namespace mpark {
       struct base {
         template <std::size_t I, typename V>
         inline static constexpr AUTO_REFREF get_alt(V &&v)
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
           AUTO_REFREF_RETURN(recursive_union::get_alt(
               lib::forward<V>(v).data_, in_place_index_t<I>{}))
 #else
@@ -968,14 +968,14 @@ namespace mpark {
     struct alt {
       using value_type = T;
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #endif
       template <typename... Args>
       inline explicit constexpr alt(in_place_t, Args &&... args)
           : value(lib::forward<Args>(args)...) {}
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
@@ -1082,13 +1082,13 @@ namespace mpark {
     };
 
     struct dtor {
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4100)
 #endif
       template <typename Alt>
       inline void operator()(Alt &alt) const noexcept { alt.~Alt(); }
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
     };
@@ -1306,12 +1306,12 @@ namespace mpark {
       template <std::size_t I, typename T, typename Arg>
       inline void assign_alt(alt<I, T> &a, Arg &&arg) {
         if (this->index() == I) {
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #endif
           a.value = lib::forward<Arg>(arg);
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
         } else {
