@@ -1,7 +1,7 @@
 #ifndef RD_CPP_ISERIALIZERSOWNER_H
 #define RD_CPP_ISERIALIZERSOWNER_H
 
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable:4251)
 #endif
@@ -32,7 +32,7 @@ public:
 	virtual void registerSerializersCore(Serializers const& serializers) const = 0;
 };
 }	 // namespace rd
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 

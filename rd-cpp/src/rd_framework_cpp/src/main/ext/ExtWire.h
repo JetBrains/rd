@@ -1,7 +1,7 @@
 #ifndef RD_CPP_EXTWIRE_H
 #define RD_CPP_EXTWIRE_H
 
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable:4251)
 #endif
@@ -34,7 +34,7 @@ public:
 	void send(RdId const& id, std::function<void(Buffer& buffer)> writer) const override;
 };
 }	 // namespace rd
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 

@@ -1,7 +1,7 @@
 #ifndef RD_CPP_CORE_SEQUENTIAL_LIFETIMES_H
 #define RD_CPP_CORE_SEQUENTIAL_LIFETIMES_H
 
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable:4251)
 #endif
@@ -43,7 +43,7 @@ public:
 	void set_current_lifetime(std::shared_ptr<LifetimeDefinition> new_def);
 };
 }	 // namespace rd
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 

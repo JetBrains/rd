@@ -1,7 +1,7 @@
 #ifndef RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 #define RD_CPP_BYTEBUFFERASYNCPROCESSOR_H
 
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable:4251)
 #endif
@@ -103,7 +103,7 @@ public:
 
 std::string to_string(ByteBufferAsyncProcessor::StateKind state);
 }	 // namespace rd
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 

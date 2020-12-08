@@ -291,14 +291,14 @@ namespace mpark {
                                               lib::forward<Arg>(arg),
                                               lib::forward<Args>(args)...))
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4100)
 #endif
         template <typename F, typename... Args>
         inline constexpr auto invoke(F &&f, Args &&... args)
           MPARK_RETURN(lib::forward<F>(f)(lib::forward<Args>(args)...))
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
       }  // namespace detail

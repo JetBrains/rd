@@ -1,11 +1,6 @@
 #ifndef RD_CPP_RDEXTBASE_H
 #define RD_CPP_RDEXTBASE_H
 
-#if _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "base/RdReactiveBase.h"
 #include "ExtWire.h"
 
@@ -13,8 +8,12 @@
 
 #include <rd_framework_export.h>
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#pragma warning(disable : 4251)
+#endif
+
 namespace rd
 {
 /**
@@ -62,8 +61,7 @@ public:
 std::string to_string(RdExtBase::ExtState state);
 }	 // namespace rd
 
-#pragma warning(pop)
-#if _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 
