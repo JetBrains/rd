@@ -1,10 +1,12 @@
 #ifndef RD_CPP_RDLIST_H
 #define RD_CPP_RDLIST_H
 
-#include "reactive/ViewableList.h"
-#include "base/RdReactiveBase.h"
-#include "serialization/Polymorphic.h"
-#include "std/allocator.h"
+#include <base/RdReactiveBase.h>
+#include <reactive/ViewableList.h>
+#include <serialization/Polymorphic.h>
+#include <serialization/ISerializable.h>
+
+#include <std/allocator.h>
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -45,11 +47,11 @@ public:
 
 	RdList() = default;
 
-	RdList(RdList&&) = default;
+	RdList(RdList&&)  noexcept = default;
 
-	RdList& operator=(RdList&&) = default;
+	RdList& operator=(RdList&&)  noexcept = default;
 
-	virtual ~RdList() = default;
+	~RdList() override = default;
 	// endregion
 
 	static RdList<T, S> read(SerializationCtx& /*ctx*/, Buffer& buffer)
@@ -59,7 +61,7 @@ public:
 		RdId id = RdId::read(buffer);
 
 		result.next_version = next_version;
-		withId(result, std::move(id));
+		withId(result, id);
 		return result;
 	}
 

@@ -29,7 +29,8 @@ void InternRoot::on_wire_received(Buffer buffer) const
 
 void InternRoot::bind(Lifetime lf, IRdDynamic const* parent, string_view name) const
 {
-	RD_ASSERT_MSG(!is_bound(), "Trying to bound already bound "s + to_string(this->location) + " to " + to_string(parent->location))
+	RD_ASSERT_MSG(
+		!is_bound(), "Trying to bound already bound "s + to_string(this->location) + " to " + to_string(parent->location));
 
 	lf->bracket(
 		[this, parent, &name] {
@@ -62,7 +63,7 @@ void InternRoot::identify(const Identities& /*identities*/, RdId const& id) cons
 
 void InternRoot::set_interned_correspondence(int32_t id, InternedAny&& value) const
 {
-	RD_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?")
+	RD_ASSERT_MSG(!is_index_owned(id), "Setting interned correspondence for object that we should have written, bug?");
 
 	std::lock_guard<decltype(lock)> guard(lock);
 	other_items_list[id / 2] = value;

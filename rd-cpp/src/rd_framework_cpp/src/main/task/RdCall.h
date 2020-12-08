@@ -104,7 +104,7 @@ public:
 
 	void on_wire_received(Buffer buffer) const override
 	{
-		RD_ASSERT_MSG(false, "RdCall.on_wire_received called")
+		RD_ASSERT_MSG(false, "RdCall.on_wire_received called");
 	}
 
 private:
@@ -130,8 +130,8 @@ private:
 		}
 
 		get_wire()->send(rdid, [&](Buffer& buffer) {
-			spdlog::get("logSend")->trace("call {}::{} send {} request {} : {}", to_string(location), to_string(rdid), (sync ? "SYNC" : "ASYNC"),
-				to_string(task_id), to_string(request));
+			spdlog::get("logSend")->trace("call {}::{} send {} request {} : {}", to_string(location), to_string(rdid),
+				(sync ? "SYNC" : "ASYNC"), to_string(task_id), to_string(request));
 			task_id.write(buffer);
 			ReqSer::write(get_serialization_context(), buffer, request);
 		});

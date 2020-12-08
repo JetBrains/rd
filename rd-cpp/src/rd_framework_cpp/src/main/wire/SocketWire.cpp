@@ -77,7 +77,7 @@ bool SocketWire::Base::send0(Buffer::ByteArray const& msg, sequence_number_t seq
 			this->id +
 				": failed to send header over the network"
 				", reason: " +
-				socket_provider->DescribeError())
+				socket_provider->DescribeError());
 
 		RD_ASSERT_THROW_MSG(socket_provider->Send(msg.data(), msglen) == msglen, this->id +
 																					 ": failed to send package over the network"
@@ -180,7 +180,7 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 	int32_t ptr = 0;
 	while (ptr < msglen)
 	{
-		RD_ASSERT_MSG(hi >= lo, "hi >= lo")
+		RD_ASSERT_MSG(hi >= lo, "hi >= lo");
 
 		int32_t rest = msglen - ptr;
 		int32_t available = static_cast<int32_t>(hi - lo);
@@ -393,7 +393,7 @@ void SocketWire::Base::ping() const
 				return;
 			}
 			RD_ASSERT_THROW_MSG(sent == PACKAGE_HEADER_LENGTH,
-				fmt::format("{}: failed to send ping over the network, reason: {}", this->id, socket_provider->DescribeError()))
+				fmt::format("{}: failed to send ping over the network, reason: {}", this->id, socket_provider->DescribeError()));
 		}
 
 		++current_timestamp;
@@ -418,7 +418,7 @@ bool SocketWire::Base::send_ack(sequence_number_t seqn) const
 				this->id +
 					": failed to send ack over the network"
 					", reason: " +
-					socket_provider->DescribeError())
+					socket_provider->DescribeError());
 		}
 		return true;
 	}

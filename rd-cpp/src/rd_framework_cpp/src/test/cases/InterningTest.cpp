@@ -199,7 +199,7 @@ TEST_F(InterningTestBase, testNestedInternedObjectsOnSameData)
 	// property version
 	int32_t send_target = static_cast<int32_t>(sameString.length()) * 2 + 4 + 4 + 8 + 4 + 3 + 4 * 3 + 4;
 	RD_ASSERT_MSG(
-		first_send_bytes <= send_target, "Sent " + std::to_string(first_send_bytes) + ", expected " + std::to_string(send_target))
+		first_send_bytes <= send_target, "Sent " + std::to_string(first_send_bytes) + ", expected " + std::to_string(send_target));
 
 	AfterTest();
 }

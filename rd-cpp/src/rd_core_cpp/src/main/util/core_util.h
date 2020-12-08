@@ -1,6 +1,7 @@
 #ifndef RD_CPP_CORE_CPP_UTIL_H
 #define RD_CPP_CORE_CPP_UTIL_H
 
+#include "core_assert.h"
 #include "erase_if.h"
 #include "gen_util.h"
 #include "overloaded.h"
@@ -21,18 +22,6 @@
 #include <sstream>
 #include <cassert>
 
-#define RD_ASSERT_MSG(expr, msg)    \
-	if (!(expr))                    \
-	{                               \
-		spdlog::error("{}\n", msg); \
-		assert(expr);               \
-	}
-#define RD_ASSERT_THROW_MSG(expr, msg) \
-	if (!(expr))                       \
-	{                                  \
-		spdlog::error("{}\n", msg);    \
-		throw std::runtime_error(msg); \
-	}
 
 namespace rd
 {

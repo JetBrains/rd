@@ -76,7 +76,7 @@ void RdExtBase::on_wire_received(Buffer buffer) const
 		RD_ASSERT_MSG(false, "serializationHash of ext " + to_string(location) +
 								 " doesn't match to counterpart: maybe you forgot to generate models?\n"
 								 "our: " +
-								 to_string(serializationHash) + ", counterpart:" + to_string(counterpartSerializationHash))
+								 to_string(serializationHash) + ", counterpart:" + to_string(counterpartSerializationHash));
 	}
 }
 

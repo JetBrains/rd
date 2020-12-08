@@ -38,7 +38,7 @@ void PumpScheduler::assert_thread() const
 {
 	RD_ASSERT_MSG(created_thread_id == std::this_thread::get_id(),
 		"Illegal thread for current action, must be: " + to_string(created_thread_id) +
-			", current thread: " + to_string(std::this_thread::get_id()))
+			", current thread: " + to_string(std::this_thread::get_id()));
 }
 
 void PumpScheduler::pump_one_message()

@@ -31,6 +31,7 @@ add_library(rd_core_cpp SHARED
         types/Void.h
         types/wrapper.h
         #util
+        util/core_assert.h util/core_assert.cpp
         util/core_traits.h util/core_util.h
         util/enum.h util/erase_if.h
         util/gen_util.h util/overloaded.h

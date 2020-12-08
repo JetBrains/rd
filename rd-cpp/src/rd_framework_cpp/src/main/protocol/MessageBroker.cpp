@@ -9,7 +9,7 @@ std::shared_ptr<spdlog::logger> MessageBroker::logger =
 
 static void execute(const IRdReactive* that, Buffer msg)
 {
-	msg.read_integral<int16_t>();	   // skip context
+	msg.read_integral<int16_t>();	 // skip context
 	that->on_wire_received(std::move(msg));
 }
 
@@ -47,7 +47,7 @@ MessageBroker::MessageBroker(IScheduler* defaultScheduler) : default_scheduler(d
 
 void MessageBroker::dispatch(RdId id, Buffer message) const
 {
-	RD_ASSERT_MSG(!id.isNull(), "id mustn't be null")
+	RD_ASSERT_MSG(!id.isNull(), "id mustn't be null");
 
 	{	 // synchronized recursively
 		std::lock_guard<decltype(lock)> guard(lock);
@@ -94,7 +94,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 					for (auto& it : t.custom_scheduler_messages)
 					{
 						RD_ASSERT_MSG(subscription->get_wire_scheduler() != default_scheduler,
-							"require equals of wire and default schedulers")
+							"require equals of wire and default schedulers");
 						invoke(subscription, std::move(it));
 					}
 				}
@@ -129,7 +129,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 
 void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const* entity) const
 {
-	RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())))
+	RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())));
 
 	// advise MUST happen under default scheduler, not custom
 	default_scheduler->assert_thread();
