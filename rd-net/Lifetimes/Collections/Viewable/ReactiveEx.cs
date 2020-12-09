@@ -393,12 +393,33 @@ namespace JetBrains.Collections.Viewable
 
 
 #if !NET35
+    public static Task<T> NextNotNullValueAsync<T>(this ISource<T> source, Lifetime lifetime)
+    {
+      return source.NextValueAsync(lifetime, value => value != null);
+    }
+
+    public static Task<bool> NextTrueValueAsync(this ISource<bool> source, Lifetime lifetime)
+    {
+      return source.NextValueAsync(lifetime, value => value);
+    }
+    
+    public static Task<bool> NextFalseValueAsync(this ISource<bool> source, Lifetime lifetime)
+    {
+      return source.NextValueAsync(lifetime, value => !value);
+    }
+
     public static Task<T> NextValueAsync<T>(this ISource<T> source, Lifetime lifetime)
+    {
+      return source.NextValueAsync(lifetime, _ => true);
+    }
+
+    public static Task<T> NextValueAsync<T>(this ISource<T> source, Lifetime lifetime, Func<T, bool> condition)
     {
       var tcs = lifetime.CreateTaskCompletionSource<T>();
       source.AdviseOnce(lifetime, v =>
-      { 
-        tcs.TrySetResult(v);        
+      {
+        if (condition(v))
+          tcs.TrySetResult(v);
       });
       return tcs.Task;
     }
