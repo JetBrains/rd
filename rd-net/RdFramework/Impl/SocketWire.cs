@@ -111,14 +111,14 @@ namespace JetBrains.Rd.Impl
 
       private Timer StartHeartbeat()
       {
+        var timer = new Timer(HeartBeatInterval.TotalMilliseconds) { AutoReset = false };
         void OnTimedEvent(object sender, ElapsedEventArgs e)
         {
           Ping();
+          timer.Start();
         }
 
-        var timer = new Timer(HeartBeatInterval.TotalMilliseconds){AutoReset = true};
         timer.Elapsed += OnTimedEvent;
-        timer.Enabled = true;
         timer.Start();
         return timer;
       }
