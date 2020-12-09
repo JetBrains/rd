@@ -6,7 +6,6 @@ import org.gradle.api.Task
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.util.*
 import java.util.stream.Collectors
 
 @Deprecated("Use RdGenExtension instead", replaceWith = ReplaceWith("RdGenExtension"))
@@ -25,6 +24,7 @@ open class RdGenExtension(private val project: Project) {
         result.filter = mergeObject(defaults) { it.filter }
         result.force = mergeObject(defaults) { it.force }
         result.verbose = mergeObject(defaults) { it.verbose }
+        result.lineNumbersInComments = mergeObject(defaults) { it.lineNumbersInComments }
         result.clearOutput = mergeObject(defaults) { it.clearOutput }
         result.generators.addAll(mergeObject(defaults) { it.generators } ?: emptyList())
         return result
@@ -71,7 +71,8 @@ open class RdGenExtension(private val project: Project) {
             arguments.add(filter)
         }
         if (verbose == true) arguments.add("-v")
-        if (!lineNumbersInComments) arguments.add("--no-line-numbers")
+        val generateLineNumbersInComments = lineNumbersInComments ?: true
+        if (!generateLineNumbersInComments) arguments.add("--no-line-numbers")
         val generatorsFile = createGeneratorsFile()
         if (generatorsFile != null) {
             arguments.add("-g")
@@ -87,7 +88,7 @@ open class RdGenExtension(private val project: Project) {
     var packages: String? = null
     var filter: String? = null
     var verbose: Boolean? = null
-    var lineNumbersInComments = true
+    var lineNumbersInComments: Boolean? = null
 
     private val generators: MutableList<GradleGenerationSpec> = ArrayList()
     fun generator(closure: Closure<GradleGenerationSpec>) = GradleGenerationSpec().apply {
