@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Threading;
@@ -52,5 +53,7 @@ namespace JetBrains.Collections.Viewable
         e.WaitOne();
       }
     }
+
+    public static TaskScheduler AsTaskScheduler(this IScheduler scheduler) => scheduler as TaskScheduler ?? new SchedulerWrapper(scheduler);
   }
 }
