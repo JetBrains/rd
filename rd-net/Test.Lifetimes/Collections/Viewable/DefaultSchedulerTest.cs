@@ -17,7 +17,7 @@ namespace Test.Lifetimes.Collections.Viewable
 
       var thread = Thread.CurrentThread;
 
-      var hasValue = false;
+      var hasValue = new ManualResetEvent(false);
       scheduler.Queue(() =>
       {
         try
@@ -35,12 +35,11 @@ namespace Test.Lifetimes.Collections.Viewable
         }
         finally
         {
-          hasValue = true;
+          hasValue.Set();
         }
       });
 
-      SpinWait.SpinUntil(() => hasValue, TimeSpan.FromSeconds(10));
-      Assert.IsTrue(hasValue);
+      Assert.IsTrue(hasValue.WaitOne(TimeSpan.FromSeconds(1)));
     }
   }
 }
