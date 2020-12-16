@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
+using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
 
@@ -13,18 +14,24 @@ namespace Test.Lifetimes.Collections.Viewable
     [Test]
     public void SimpleTest()
     {
+      var log = Log.GetLog<SchedulerWrapperTest>();
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(TestLifetime, "Test Scheduler");
-      DoTest(TestLifetime, scheduler);
+      
+      DoTest(TestLifetime, scheduler, log.GetSublogger("1"));
 
       // IScheduler, but not TaskScheduler
       var schedulerWrapper = new MyTestSchedulerWrapper(scheduler);
-      DoTest(TestLifetime, schedulerWrapper);
+      DoTest(TestLifetime, schedulerWrapper, log.GetSublogger("2"));
 
-      static void DoTest(Lifetime lifetime, IScheduler scheduler)
+      static void DoTest(Lifetime lifetime, IScheduler scheduler, ILog log)
       {
+        log.Verbose("start");
+        
         var taskScheduler = scheduler.AsTaskScheduler();
         lifetime.StartAsync(taskScheduler, async () =>
         {
+          log.Verbose($"Point 1. Thread: {Thread.CurrentThread.ManagedThreadId}");
+          
           var count = 0;
           Assert.IsTrue(scheduler.IsActive);
           Assert.AreEqual(taskScheduler, TaskScheduler.Current);
@@ -32,18 +39,27 @@ namespace Test.Lifetimes.Collections.Viewable
           scheduler.Queue(() =>
           {
             count = 1;
+            log.Verbose($"Point 2. Thread: {Thread.CurrentThread.ManagedThreadId}");
             Assert.IsTrue(scheduler.IsActive);
             Assert.AreNotEqual(taskScheduler, TaskScheduler.Current);
           });
 
           Assert.AreEqual(0, count);
 
-          await lifetime.Start(TaskScheduler.Default, () => Assert.IsFalse(scheduler.IsActive));
+          await lifetime.Start(TaskScheduler.Default, () =>
+          {
+            log.Verbose($"Point 3. Thread: {Thread.CurrentThread.ManagedThreadId}");
+            Assert.IsFalse(scheduler.IsActive);
+          });
 
-          Assert.AreEqual(1, count);
-          Assert.IsTrue(scheduler.IsActive);
+          
+          log.Verbose($"Point 4. Thread: {Thread.CurrentThread.ManagedThreadId}");
           Assert.AreEqual(taskScheduler, TaskScheduler.Current);
+          Assert.IsTrue(scheduler.IsActive);
+          Assert.AreEqual(1, count);
         }).Wait(TimeSpan.FromSeconds(10));
+        
+        log.Verbose("end");
       }
     }
     
