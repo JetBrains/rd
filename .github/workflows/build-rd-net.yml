@@ -21,7 +21,7 @@ jobs:
     - name: Compile
       run: cd rd-net && dotnet build --configuration Release --no-restore
     - name: Tests
-      run: cd rd-net && dotnet test --no-restore --verbosity quiet --logger trx
+      run: cd rd-net && dotnet test --no-restore --verbosity quiet -l "console;verbosity=detailed"
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
