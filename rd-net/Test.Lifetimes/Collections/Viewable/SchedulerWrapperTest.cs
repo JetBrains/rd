@@ -57,8 +57,11 @@ namespace Test.Lifetimes.Collections.Viewable
           log.Verbose($"Point 3. Thread: {Thread.CurrentThread.ManagedThreadId}");
 
           await task;
-          
           log.Verbose($"Point 6. Thread: {Thread.CurrentThread.ManagedThreadId}");
+
+          await Task.Yield();
+          
+          log.Verbose($"Point 7. Thread: {Thread.CurrentThread.ManagedThreadId}");
           
           Assert.AreEqual(taskScheduler, TaskScheduler.Current);
           Assert.IsTrue(scheduler.IsActive);
