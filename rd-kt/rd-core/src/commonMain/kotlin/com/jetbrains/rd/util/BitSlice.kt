@@ -38,15 +38,9 @@ open class BitSlice(val lowBit: Int, val bitCount: Int) {
     }
 
 
-    private inline fun <reified T:Number> requireSliceFitsHostType() {
-        val kls = T::class
-        val maxBit = when (kls) {
-            Int::class -> 31
-            Long::class -> 63
-            else -> error ("Unsupported host type $kls")
-        }
-
-        require(highBit <= maxBit) { "$this doesn't fit into host type '${kls.simpleName}'; must be inside [0, $maxBit]"}
+    private fun requireSliceFitsIntType() {
+        val maxBit = 31
+        require(highBit <= maxBit) { "$this doesn't fit into host type 'Int'; must be inside [0, $maxBit]"}
     }
 
     private fun requireValueFitsSlice(value: Int) {
@@ -57,14 +51,14 @@ open class BitSlice(val lowBit: Int, val bitCount: Int) {
 
     //GET and SET
     fun getRaw(host: Int) : Int {
-        requireSliceFitsHostType<Int>()
+        requireSliceFitsIntType()
 
         return (host ushr lowBit) and mask
     }
 
 
     fun updatedRaw(host: Int, value: Int) : Int {
-        requireSliceFitsHostType<Int>()
+        requireSliceFitsIntType()
         requireValueFitsSlice(value)
 
         return (host and  ((mask shl lowBit) xor -1)) or (value shl lowBit)
