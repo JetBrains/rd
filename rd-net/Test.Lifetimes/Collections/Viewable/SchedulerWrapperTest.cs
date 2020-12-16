@@ -38,9 +38,16 @@ namespace Test.Lifetimes.Collections.Viewable
 
           Assert.AreEqual(0, count);
 
-          await lifetime.Start(TaskScheduler.Default, () => Assert.IsFalse(scheduler.IsActive));
+          await lifetime.Start(TaskScheduler.Default, () =>
+          {
+            Assert.IsFalse(scheduler.IsActive);
+            SpinWait.SpinUntil(() => Volatile.Read(ref count) == 1, TimeSpan.FromSeconds(10));
+            Assert.AreEqual(1, count);
 
-          Assert.AreEqual(1, count);
+            count++;
+          });
+
+          Assert.AreEqual(2, count);
           Assert.IsTrue(scheduler.IsActive);
           Assert.AreEqual(taskScheduler, TaskScheduler.Current);
         }).Wait(TimeSpan.FromSeconds(10));
