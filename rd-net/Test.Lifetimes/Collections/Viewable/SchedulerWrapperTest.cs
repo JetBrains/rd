@@ -39,21 +39,27 @@ namespace Test.Lifetimes.Collections.Viewable
           scheduler.Queue(() =>
           {
             count = 1;
-            log.Verbose($"Point 2. Thread: {Thread.CurrentThread.ManagedThreadId}");
+            log.Verbose($"Point 5. Thread: {Thread.CurrentThread.ManagedThreadId}");
             Assert.IsTrue(scheduler.IsActive);
             Assert.AreNotEqual(taskScheduler, TaskScheduler.Current);
           });
+          
+          log.Verbose($"Point 2. Thread: {Thread.CurrentThread.ManagedThreadId}");
 
           Assert.AreEqual(0, count);
 
-          await lifetime.Start(TaskScheduler.Default, () =>
+          var task = lifetime.Start(TaskScheduler.Default, () =>
           {
-            log.Verbose($"Point 3. Thread: {Thread.CurrentThread.ManagedThreadId}");
+            log.Verbose($"Point 4. Thread: {Thread.CurrentThread.ManagedThreadId}");
             Assert.IsFalse(scheduler.IsActive);
           });
-
           
-          log.Verbose($"Point 4. Thread: {Thread.CurrentThread.ManagedThreadId}");
+          log.Verbose($"Point 3. Thread: {Thread.CurrentThread.ManagedThreadId}");
+
+          await task;
+          
+          log.Verbose($"Point 6. Thread: {Thread.CurrentThread.ManagedThreadId}");
+          
           Assert.AreEqual(taskScheduler, TaskScheduler.Current);
           Assert.IsTrue(scheduler.IsActive);
           Assert.AreEqual(1, count);
