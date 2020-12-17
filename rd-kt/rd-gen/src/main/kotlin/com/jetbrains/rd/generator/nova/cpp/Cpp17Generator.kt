@@ -62,6 +62,8 @@ open class Cpp17Generator(
         object Files {
             const val PrecompiledHeaderCmake = """PrecompiledHeader.cmake"""
         }
+
+        private const val msvcCheckMacro = "_MSC_VER"
     }
 
     //region language specific properties
@@ -947,6 +949,30 @@ open class Cpp17Generator(
         return this.headerFileName().includeGuardName()
     }
 
+    private fun PrettyPrinter.withDisabledWarnings(disabledWarnings: IntArray, action: PrettyPrinter.() -> Unit)
+    {
+        if (disabledWarnings.isNotEmpty()) {
+            println()
+            ifDefDirective(msvcCheckMacro) {
+                +"#pragma warning( push )"
+                disabledWarnings.forEach {
+                    +"#pragma warning( disable:$it )"
+                }
+            }
+            println()
+        }
+
+        action()
+
+        if (disabledWarnings.isNotEmpty()) {
+            println()
+            ifDefDirective(msvcCheckMacro) {
+                +"#pragma warning( pop )"
+            }
+            println()
+        }
+    }
+
     //region files
     fun PrettyPrinter.header(decl: Declaration, instantiationsFileName: String) {
         withIncludeGuard(decl.includeGuardName()) {
@@ -958,29 +984,18 @@ open class Cpp17Generator(
             dependenciesDecl(decl)
             println()
 
-            VsWarningsDefault?.let {
-                +"#pragma warning( push )"
-                it.forEach { warn ->
-                    +"#pragma warning( disable:$warn )"
+            val disabledWarnings = VsWarningsDefault ?: intArrayOf()
+            withDisabledWarnings(disabledWarnings) {
+                if (decl is Toplevel && decl.isLibrary) {
+                    comment("library")
+                    surroundWithNamespaces(decl.namespace) {
+                        println()
+                        libdecl(decl)
+                        println()
+                    }
+                } else {
+                    typedecl(decl)
                 }
-                println()
-            }
-
-            if (decl is Toplevel && decl.isLibrary) {
-                comment("library")
-                surroundWithNamespaces(decl.namespace) {
-                    println()
-                    libdecl(decl)
-                    println()
-                }
-            } else {
-                typedecl(decl)
-            }
-
-            VsWarningsDefault?.let {
-                println()
-                +"#pragma warning( pop )"
-                println()
             }
 
             println()
@@ -1021,23 +1036,13 @@ open class Cpp17Generator(
             }
         }
 
-        VsWarningsDefault?.let {
-            +"#pragma warning( push )"
-            it.forEach { warn ->
-                +"#pragma warning( disable:$warn )"
+        val disabledWarnings = VsWarningsDefault ?: intArrayOf()
+        withDisabledWarnings(disabledWarnings) {
+            if (decl is Toplevel && decl.isLibrary) {
+                surroundWithNamespaces(decl.namespace) { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
+            } else {
+                surroundWithNamespaces(decl.namespace) { typedef(decl) }
             }
-        }
-
-        if (decl is Toplevel && decl.isLibrary) {
-            surroundWithNamespaces(decl.namespace) { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
-        } else {
-            surroundWithNamespaces(decl.namespace) { typedef(decl) }
-        }
-
-        VsWarningsDefault?.let {
-            println()
-            +"#pragma warning( pop )"
-            println()
         }
     }
 //endregion
