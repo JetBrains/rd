@@ -3,7 +3,6 @@ package com.jetbrains.rd.generator.nova.cpp
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.Features.__cpp_structured_bindings
 import com.jetbrains.rd.generator.nova.cpp.CppSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
@@ -1142,7 +1141,7 @@ open class Cpp17Generator(
                     if (shouldGenerateDeconstruct(decl)) {
                         println()
                         comment("deconstruct trait")
-                        ifDefDirective(__cpp_structured_bindings) {
+                        ifDefDirective(Features.__cpp_structured_bindings) {
                             deconstructTrait(decl)
                         }
                     }
@@ -1218,7 +1217,7 @@ open class Cpp17Generator(
 
         if (shouldGenerateDeconstruct(decl)) {
             println()
-            ifDefDirective(__cpp_structured_bindings) {
+            ifDefDirective(Features.__cpp_structured_bindings) {
                 comment("tuple trait")
                 tupleSpecialization(decl)
             }
