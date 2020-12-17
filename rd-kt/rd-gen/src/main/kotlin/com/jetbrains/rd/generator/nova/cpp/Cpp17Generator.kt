@@ -70,13 +70,9 @@ open class Cpp17Generator(
 
     private val Declaration.namespace: String
         get() {
-            return if (this is FakeDeclaration) {
-                decl.namespace
-            } else {
-                when (this) {
-                    is CppIntrinsicType -> namespace.orEmpty()
-                    else -> getSetting(Namespace) ?: defaultNamespace
-                }
+            return when (this) {
+                is CppIntrinsicType -> namespace.orEmpty()
+                else -> getSetting(Namespace) ?: defaultNamespace
             }
         }
 
@@ -594,21 +590,10 @@ open class Cpp17Generator(
         }
     //endregion
 
-    private class FakeDeclaration(val decl: Declaration) : Declaration(null) {
-        override val _name: String
-            get() = decl.name
-        override val cl_name: String
-            get() = decl.name
-    }
-
     //region Declaration.
     protected fun Declaration.sanitizedName(scope: Declaration): String {
-        return if (scope is FakeDeclaration) {
-            this.withNamespace()
-        } else {
-            val needQualification = namespace != scope.namespace
-            needQualification.condstr { "$namespace::" } + platformTypeName
-        }
+        val needQualification = namespace != scope.namespace
+        return needQualification.condstr { "$namespace::" } + platformTypeName
     }
 
     /**
