@@ -774,10 +774,6 @@ open class Cpp17Generator(
 
         val initializedEnums = collectInitializedEnums()
 
-        val classes = listOf(
-            "rd::Wrapper<std::wstring>"
-        )
-
         val header = File(this, "${instatiationFileName}.h").also { file ->
             FileSystemPrettyPrinter(file).use {
                 withIncludeGuard("${instatiationFileName}.h".includeGuardName()) {
@@ -794,10 +790,6 @@ open class Cpp17Generator(
                         .flatten()
                         .map { it.includeQuotes() }
                         .forEach { +it }
-                    println()
-                    classes.forEach {
-                        +"extern template class $it;"
-                    }
                     println()
                     initializedEnums.forEach { enum ->
                         predeclare(enum)
@@ -828,10 +820,6 @@ open class Cpp17Generator(
         val source = File(this, "${instatiationFileName}.cpp").also { file ->
             FileSystemPrettyPrinter(file).use {
                 +instatiationFileName.includeWithExtension("h")
-                println()
-                classes.forEach {
-                    +"template class $it;"
-                }
                 println()
                 withNamespace("rd") {
                     initializedEnums.forEach { enum ->
