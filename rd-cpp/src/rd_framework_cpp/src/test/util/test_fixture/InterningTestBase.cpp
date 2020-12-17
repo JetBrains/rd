@@ -1,7 +1,7 @@
 #include "InterningTestBase.h"
 
-#include "InterningProtocolLevelModel.Generated.h"
-#include "InterningTestModel.Generated.h"
+#include "InterningRoot1/InterningProtocolLevelModel.Generated.h"
+#include "InterningRoot1/InterningTestModel.Generated.h"
 
 #include <numeric>
 

@@ -3,9 +3,9 @@
 
 #include "RdFrameworkDynamicPolymorphicTestBase.h"
 
-#include "AbstractEntity.Generated.h"
-#include "AbstractEntity_Unknown.Generated.h"
-#include "FakeEntity.Generated.h"
+#include "DynamicExt/AbstractEntity.Generated.h"
+#include "DynamicExt/AbstractEntity_Unknown.Generated.h"
+#include "DynamicExt/FakeEntity.Generated.h"
 
 #include "serialization/AbstractPolymorphic.h"
 #include "serialization/ArraySerializer.h"
