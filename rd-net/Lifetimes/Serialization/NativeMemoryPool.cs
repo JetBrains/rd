@@ -64,7 +64,6 @@ namespace JetBrains.Serialization
           var block = ourBlocks[i];
           if (block != null && block.TryReserve())
           {
-            block.Free();
             block.Dispose();
 
             // make a hole

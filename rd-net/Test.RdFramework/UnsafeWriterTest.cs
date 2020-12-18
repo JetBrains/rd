@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using JetBrains.Serialization;
 using NUnit.Framework;
@@ -37,6 +39,33 @@ namespace Test.RdFramework
       using (var cookie = new UnsafeWriter.Cookie())
       {
       }
+    }
+
+    [Test]
+    public void TestFreeMemoryStress()
+    {
+      bool run = true;
+      var thread = new Thread(() =>
+      {
+        while (run) NativeMemoryPool.TryFreeMemory();
+      });
+      thread.Start();
+      var sw = Stopwatch.StartNew();
+      while (sw.ElapsedMilliseconds < 500)
+      {
+        using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+        {
+          cookie.Writer.Write(1);
+        }
+
+        using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+        {
+          cookie.Writer.Write(1);
+        }
+      }
+
+      run = false;
+      thread.Join();
     }
   }
 }
