@@ -463,6 +463,9 @@ namespace JetBrains.Threading
     }
 
 
+#if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions] // to force myLock to be unlocked even in case of corrupted state exception
+#endif
     [PublicAPI] public void Put(byte* start, int count)
     {
       if (count <= 0) return;
