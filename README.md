@@ -4,10 +4,10 @@ Reactive Distributed communication framework for .NET, Kotlin and C++ (experimen
 Inspired by JetBrains Rider IDE. 
 
 ## Structure
-The framework contains of several libraries for single process usage and cross process communication.
+The framework contains several libraries for single process usage and cross-process communication.
 
 ### Lifetimes
-JetBrains Core library for graceful disposal, concurrency and reactive programming. For single process usage.
+JetBrains Core library for graceful disposal, concurrency and reactive programming. For single-process usage.
 
 * Kotlin
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core
@@ -26,7 +26,7 @@ JetBrains Networking library for reactive distributed communication
 
 * .NET
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework
-  * Maven artifacts: https://www.nuget.org/packages/JetBrains.RdFramework
+  * NuGet artifacts: https://www.nuget.org/packages/JetBrains.RdFramework
   
 ### RdGen
 Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
@@ -39,7 +39,7 @@ Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
   
 # How to build
 
-Firstly decide which languages will be involved in protocol. It may be **Kotlin** and **C#**, Rider uses them for instance. 
+Firstly decide which languages will be involved in the protocol. It may be **Kotlin** and **C#**, Rider uses them for instance. 
 Or **C++** only, who knows. After that prepare the environment and build needed assemblies. Choose **separate** or **common** build based on needs.
 
 ## Separate build
@@ -116,7 +116,7 @@ and _com.jetbrains.rd.generator.test.cases.generator.example.ExampleModel_
 
 ### How to connect processes
 
-Generally it depends on the architecture. But in standard Client-Server architecture through localhost connection framework's classes are suitable.
+Generally, it depends on the architecture. But in standard Client-Server architecture through localhost connection framework's classes are suitable.
 
 ### C#
 
