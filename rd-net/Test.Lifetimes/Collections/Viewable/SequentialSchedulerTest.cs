@@ -104,7 +104,6 @@ namespace Test.Lifetimes.Collections.Viewable
     [Test]
     public void IsActiveTest()
     {
-      const int n = 1000;
       using var def = TestLifetime.CreateNested();
       
       var scheduler1 = CreateSequentialScheduler("TestScheduler1", def.Lifetime);

@@ -41,7 +41,7 @@ namespace Test.RdFramework.Reflection
         return arg;
       }
 
-      public async Task<int> GetInt(int arg, Lifetime cancellationLifetime) => 1;
+      public Task<int> GetInt(int arg, Lifetime cancellationLifetime) => Task.FromResult(1);
 
       public Task AlwaysCancelled()
       {

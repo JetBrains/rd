@@ -61,7 +61,7 @@ namespace Test.RdFramework.Reflection
         CFacade.ProxyGenerator.CreateType<T>();
         CFacade.ScalarSerializers.GetOrCreate(typeof(T));
       }
-      catch (Exception e)
+      catch (Exception)
       {
         return true;
       }
@@ -92,7 +92,7 @@ namespace Test.RdFramework.Reflection
           Assert.AreEqual(c.ViewableProperty.Value, s.ViewableProperty.Value);
         });
       }
-      catch (Exception e)
+      catch (Exception)
       {
         return;
       }

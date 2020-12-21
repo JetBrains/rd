@@ -219,12 +219,12 @@ namespace Test.RdFramework.Reflection
       Assert.Throws<ArgumentException>(() => { RunScalarTest(new NonScalarPtr(), (a, b) => { }); });
     }
 
-    private class NonScalarPtr
+    public class NonScalarPtr
     {
       public Action X;
     }
 
-    sealed class RedBlackList
+    public sealed class RedBlackList
     {
       public BlackNode Start;
       public sealed class BlackNode

@@ -12,7 +12,7 @@ namespace Test.RdFramework
     [Test]
     public void TestPolymorphicSimple()
     {
-      var serializers = new Serializers();
+      var serializers = new Serializers(TestLifetime, null, null);
       serializers.Register(MyTestObject.Read, MyTestObject.Write);
       var serializationCtx = new SerializationCtx(serializers);
       var testObject = new MyTestObject("Monomorphic");
