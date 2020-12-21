@@ -152,9 +152,9 @@ namespace Test.RdFramework.Reflection
     public async Task TestAsync()
     {
       string result = null;
-      await TestAsyncCalls(model =>
+      await TestAsyncCalls(async model =>
       {
-        model.GetStringAsync().ContinueWith(t => result = t.Result, TaskContinuationOptions.ExecuteSynchronously);
+        result = await model.GetStringAsync();
       });
 
 #if NET35
@@ -168,44 +168,45 @@ namespace Test.RdFramework.Reflection
     public async Task TestAsyncVoid()
     {
       // todo: really check long running task result
-      await TestAsyncCalls(model => { model.RunSomething(); });
+      await TestAsyncCalls(async model => await model.RunSomething());
     }
 
     [Test]
     public async Task TestAsyncModels()
     {
-      await TestTemplate<AsyncModelsTest, IAsyncModelsTestDifferentName>(proxy =>
+      await TestTemplate<AsyncModelsTest, IAsyncModelsTestDifferentName>(async proxy =>
       {
         proxy.SetPath(new AsyncModelsTest.FileSystemPath("C:\\hello"));
-        var queryColor = proxy.QueryColor();
-        Assert.AreEqual(queryColor.Result.R, 10);
-        Assert.AreEqual(queryColor.Result.G, 10);
-        Assert.AreEqual(queryColor.Result.B, 10);
+        var queryColor = await proxy.QueryColor();
+        Assert.AreEqual(queryColor.R, 10);
+        Assert.AreEqual(queryColor.G, 10);
+        Assert.AreEqual(queryColor.B, 10);
       });
     }
 
-    [Test] public async Task TestAsyncSum1() => await TestAsyncCalls(model => Assert.AreEqual(model.iSum(100, -150).Result, -50));
-    [Test] public async Task TestAsyncSum2() => await TestAsyncCalls(model => Assert.AreEqual(model.uiSum(uint.MaxValue, 0).Result, uint.MaxValue));
-    [Test] public async Task TestAsyncSum3() => await TestAsyncCalls(model => Assert.AreEqual(model.sSum(100, -150).Result, -50));
-    [Test] public async Task TestAsyncSum4() => await TestAsyncCalls(model => Assert.AreEqual(model.usSum(ushort.MaxValue, 1).Result, 0));
-    [Test] public async Task TestAsyncSum5() => await TestAsyncCalls(model => Assert.AreEqual(model.lSum(long.MaxValue, 0).Result, long.MaxValue));
-    [Test] public async Task TestAsyncSum6() => await TestAsyncCalls(model => Assert.AreEqual(model.ulSum(ulong.MaxValue, 0).Result, ulong.MaxValue));
-    [Test] public async Task TestAsyncSum7() => await TestAsyncCalls(model => Assert.AreEqual(model.bSum(byte.MaxValue, 1).Result, 0));
+    [Test] public async Task TestAsyncSum1() => await TestAsyncCalls(async model => Assert.AreEqual(await model.iSum(100, -150), -50));
+    [Test] public async Task TestAsyncSum2() => await TestAsyncCalls(async model => Assert.AreEqual(await model.uiSum(uint.MaxValue, 0), uint.MaxValue));
+    [Test] public async Task TestAsyncSum3() => await TestAsyncCalls(async model => Assert.AreEqual(await model.sSum(100, -150), -50));
+    [Test] public async Task TestAsyncSum4() => await TestAsyncCalls(async model => Assert.AreEqual(await model.usSum(ushort.MaxValue, 1), 0));
+    [Test] public async Task TestAsyncSum5() => await TestAsyncCalls(async model => Assert.AreEqual(await model.lSum(long.MaxValue, 0), long.MaxValue));
+    [Test] public async Task TestAsyncSum6() => await TestAsyncCalls(async model => Assert.AreEqual(await model.ulSum(ulong.MaxValue, 0), ulong.MaxValue));
+    [Test] public async Task TestAsyncSum7() => await TestAsyncCalls(async model => Assert.AreEqual(await model.bSum(byte.MaxValue, 1), 0));
 
     [Test, Description("Sync call in and asynchonous enviroment")]
     public async Task TestSyncCall()
     {
-      await TestSyncCalls(m =>
+      await TestSyncCalls(async m =>
       {
         CollectionAssert.IsEmpty(m.History);
         m.Concat("1", "2", "3");
-        CollectionAssert.AreEqual(m.History, new[] {"123"});
+        await Wait();
+        CollectionAssert.AreEqual(new[] {"123"}, m.History);
       });
     }
 
 
-    private async Task TestAsyncCalls(Action<IAsyncCallsTest> run) => await TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
-    private async Task TestSyncCalls(Action<ISyncCallsTest> run) => await TestTemplate<SyncCallsTest, ISyncCallsTest>(run);
+    private async Task TestAsyncCalls(Func<IAsyncCallsTest, Task> run) => await TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
+    private async Task TestSyncCalls(Func<ISyncCallsTest, Task> run) => await TestTemplate<SyncCallsTest, ISyncCallsTest>(run);
   }
 
 }

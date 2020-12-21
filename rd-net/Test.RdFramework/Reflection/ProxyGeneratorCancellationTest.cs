@@ -65,6 +65,7 @@ namespace Test.RdFramework.Reflection
 
         Task.Run(async () => { await Task.Delay(10); cancellationLifetimeDef.Terminate();});
         cancellationLifetimeDef.Terminate();
+        return Task.CompletedTask;
       });
 
       SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
@@ -79,6 +80,7 @@ namespace Test.RdFramework.Reflection
       {
         model.AlwaysCancelled().
           ContinueWith(t => isCancelled = t.IsCanceled, TaskContinuationOptions.ExecuteSynchronously);
+        return Task.CompletedTask;
       });
 
       SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
@@ -94,6 +96,7 @@ namespace Test.RdFramework.Reflection
         var cancellationLifetimeDef = new LifetimeDefinition();
         model.GetInt(100, cancellationLifetimeDef.Lifetime).
           ContinueWith(t => isCancelled = t.IsCanceled, TaskContinuationOptions.ExecuteSynchronously);
+        return Task.CompletedTask;
       });
 
       SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
@@ -101,6 +104,6 @@ namespace Test.RdFramework.Reflection
       Assert.AreEqual(false, isCancelled);
     }
 
-    private async Task TestAsyncCalls(Action<IAsyncCallsTest> run) => await TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
+    private async Task TestAsyncCalls(Func<IAsyncCallsTest, Task> run) => await TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);
   }
 }

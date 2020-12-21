@@ -14,7 +14,7 @@ namespace Test.RdFramework.Reflection
   {
     protected virtual bool IsAsync => false;
 
-    protected async Task TestTemplate<TImpl, TInterface>(Action<TInterface> runTest) where TImpl : RdBindableBase where TInterface : class
+    protected async Task TestTemplate<TImpl, TInterface>(Func<TInterface, Task> runTest) where TImpl : RdBindableBase where TInterface : class
     {
       await YieldToClient();
       var client = CFacade.Activator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
@@ -30,8 +30,8 @@ namespace Test.RdFramework.Reflection
       Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value,
         "((RdReflectionBindableBase)proxy).Connected.Value");
 
-      await Task.Run(() => runTest(proxy));
-
+      await runTest(proxy);
+      
       await Wait();
     }
 

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
+using JetBrains.Rd.Tasks;
 using NUnit.Framework;
 using Test.Lifetimes;
 
@@ -15,10 +16,15 @@ namespace Test.RdFramework.Reflection
     [Test]
     public async Task TestUnregisteredType()
     {
-      await TestTemplate<UnknownSerializer, IUnknownSerializer>(s =>
+      await TestTemplate<UnknownSerializer, IUnknownSerializer>(async s =>
       {
         var task = s.M(new Derived());
-        Assert.Throws<AggregateException>(() => task.Wait(1000));
+        try
+        {
+          await task;
+          Assert.Fail("should fail");
+        }
+        catch (RdFault) { }
       });
     }
 
