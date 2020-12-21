@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 
 namespace JetBrains.Rd.Tasks
@@ -62,6 +63,22 @@ namespace JetBrains.Rd.Tasks
       
       WarnAwaitTime = warnAwaitTime;
       ErrorAwaitTime = errorAwaitTime;
+    }
+
+    /// <summary>
+    /// Returns a mix of optionally provided timeouts and default one.
+    /// </summary>
+    [NotNull]
+    public static RpcTimeouts GetRpcTimeouts([CanBeNull] RpcTimeouts timeouts)
+    {
+      RpcTimeouts timeoutsToUse;
+      if (RespectRpcTimeouts)
+        timeoutsToUse = timeouts ?? Default;
+      else
+        timeoutsToUse = timeouts == null
+          ? Maximal
+          : Max(timeouts, Maximal);
+      return timeoutsToUse;
     }
   }
 }

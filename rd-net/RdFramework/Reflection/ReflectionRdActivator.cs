@@ -305,7 +305,9 @@ namespace JetBrains.Rd.Reflection
     }
 
     /// <summary>
-    ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
+    /// Wrapper method to simplify search with overload resolution for two methods in RdEndpoint.
+    ///
+    /// Used for async methods returning generic Task.
     /// </summary>
     public static void SetHandlerTask<TReq, TRes>(RdCall<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler)
     {
@@ -313,7 +315,9 @@ namespace JetBrains.Rd.Reflection
     }
 
     /// <summary>
-    ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
+    /// Wrapper method to simplify search with overload resolution for two methods in RdEndpoint.
+    ///
+    /// Used for async methods returning non-generic Task.
     /// </summary>
     public static void SetHandlerTaskVoid<TReq>(RdCall<TReq, Unit> endpoint, Func<Lifetime, TReq, Task> handler)
     {
@@ -321,11 +325,13 @@ namespace JetBrains.Rd.Reflection
     }
 
     /// <summary>
-    ///  Wrapper method to simplify search with overload resolution for two methods in RdEndpoint
+    /// Wrapper method to simplify search with overload resolution for two methods in RdEndpoint.
+    ///
+    /// Used for sync calls only.
     /// </summary>
     public static void SetHandler<TReq, TRes>(RdCall<TReq, TRes> endpoint, Func<Lifetime, TReq, RdTask<TRes>> handler)
     {
-      endpoint.Set(handler);
+      endpoint.Set(handler, null, new SwitchingScheduler(endpoint));
     }
     
     private object ActivateRdExtMember(MemberInfo mi)

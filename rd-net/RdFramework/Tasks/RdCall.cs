@@ -126,14 +126,7 @@ namespace JetBrains.Rd.Tasks
       var stopwatch = new Stopwatch();
       stopwatch.Start();
 
-      RpcTimeouts timeoutsToUse;
-      if (RpcTimeouts.RespectRpcTimeouts)
-        timeoutsToUse = timeouts ?? RpcTimeouts.Default;
-      else
-        timeoutsToUse = timeouts == null
-          ? RpcTimeouts.Maximal
-          : RpcTimeouts.Max(timeouts, RpcTimeouts.Maximal);
-
+      var timeoutsToUse = RpcTimeouts.GetRpcTimeouts(timeouts);
       if (!task.Wait(timeoutsToUse.ErrorAwaitTime))
       {
         throw new TimeoutException($"Sync execution of rpc `{Location}` is timed out in {timeoutsToUse.ErrorAwaitTime.TotalMilliseconds} ms");

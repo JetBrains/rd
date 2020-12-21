@@ -426,7 +426,7 @@ namespace JetBrains.Rd.Reflection
       {
         Assertion.Assert(lifetimeArgument == -1, "Unable to implement proxy method {0}. CancellationToken or Lifetime can't be used with sync methods.", method);
         ilgen.Emit(OpCodes.Ldnull); // RpcTimeouts
-        ilgen.Emit(OpCodes.Callvirt, fieldType.GetMethod(nameof(IRdCall<int,int>.Sync)).NotNull("fieldType.GetMethod(Sync) != null"));
+        ilgen.Emit(OpCodes.Call, typeof(ProxyGeneratorUtil).GetMethod(nameof(ProxyGeneratorUtil.SyncNested)).NotNull("GetMethod(nameof(ProxyGeneratorUtil.Sync)) != null").MakeGenericMethod(requestType, responseType));
       }
       else
       {
