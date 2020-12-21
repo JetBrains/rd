@@ -483,30 +483,38 @@ namespace JetBrains.Threading
 //          return;
 //        }
 
-        var ptr = 0;
-        while (ptr < count)
+        try
         {
-          Assertion.Assert(myChunkToFill.IsNotProcessed, "myChunkToFill.IsNotProcessed");
-          var rest = count - ptr;
-          var available = ChunkSize - myChunkToFill.Ptr;
-          if (available > 0)
+          var ptr = 0;
+          while (ptr < count)
           {
-            var copylen = Math.Min(rest, available);
-            Marshal.Copy((IntPtr)(start + ptr), myChunkToFill.Data, myChunkToFill.Ptr, copylen);
-            myChunkToFill.Ptr += copylen;
-            ptr += copylen;
+            Assertion.Assert(myChunkToFill.IsNotProcessed, "myChunkToFill.IsNotProcessed");
+            var rest = count - ptr;
+            var available = ChunkSize - myChunkToFill.Ptr;
+            if (available > 0)
+            {
+              var copylen = Math.Min(rest, available);
+              Marshal.Copy((IntPtr) (start + ptr), myChunkToFill.Data, myChunkToFill.Ptr, copylen);
+              myChunkToFill.Ptr += copylen;
+              ptr += copylen;
+            }
+            else
+            {
+              GrowConditionally();
+              myChunkToFill = myChunkToFill.Next;
+            }
           }
-          else
+
+          if (myAllDataProcessed) //speedup
           {
-            GrowConditionally();
-            myChunkToFill = myChunkToFill.Next;
+            myAllDataProcessed = false;
+            Monitor.Pulse(myLock);
           }
         }
-
-        if (myAllDataProcessed) //speedup
+        catch (Exception ex)
         {
-          myAllDataProcessed = false;
-          Monitor.Pulse(myLock);
+          LogLog.Error(ex);
+          throw;
         }
       }
     }
