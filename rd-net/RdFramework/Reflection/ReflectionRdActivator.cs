@@ -393,13 +393,13 @@ namespace JetBrains.Rd.Reflection
         return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
       }
 
-      if (genericDefinition == typeof(RdMap<,>) || genericDefinition == typeof(RdCall<,>) || genericDefinition == typeof(RdCall<,>))
+      if (genericArguments.Length == 2)
       {
         var argument2 = genericArguments[1];
         var serializerPair2 = GetProperSerializer(argument2);
         var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
         if (ourLog.IsTraceEnabled())
-          ourLog.Trace("Create RdCall: {0}.{1}, TReq poly: {2}, TRes poly: {3}", implementingType.FullName, memberName, serializerPair.IsPolymorphic, serializerPair2.IsPolymorphic);
+          ourLog.Trace("Create 2-generic: {0}.{1}, TReq poly: {2}, TRes poly: {3}", implementingType.FullName, memberName, serializerPair.IsPolymorphic, serializerPair2.IsPolymorphic);
         ((RdReactiveBase) instance).ValueCanBeNull = true;
         return instance;
       }
