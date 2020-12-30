@@ -1173,5 +1173,32 @@ namespace Test.Lifetimes.Lifetimes
     }
     
 #endif
+
+    [Test]
+    public void SimpleOnTerminationStressTest()
+    {
+      for (int i = 0; i < 100; i++)
+      {
+        using var lifetimeDefinition = new LifetimeDefinition();
+        var lifetime = lifetimeDefinition.Lifetime;
+        int count = 0;
+        const int threadsCount = 10;
+        const int iterations = 1000;
+        Task.Factory.StartNew(() =>
+        {
+          for (int j = 0; j < threadsCount; j++)
+          {
+            Task.Factory.StartNew(() =>
+            {
+              for (int k = 0; k < iterations; k++) 
+                lifetime.OnTermination(() => count++);
+            }, TaskCreationOptions.AttachedToParent | TaskCreationOptions.LongRunning);
+          }
+        }).Wait();
+
+        lifetimeDefinition.Terminate();
+        Assert.AreEqual(threadsCount * iterations, count);
+      }
+    }
   }
 }

@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +19,7 @@ namespace JetBrains.Lifetimes
   /// </summary>
   public class LifetimeDefinition : IDisposable
   {    
-    
+#pragma warning disable 420
     #region Statics
 
     internal static readonly ILog Log = JetBrains.Diagnostics.Log.GetLog<Lifetime>();
@@ -93,12 +91,13 @@ namespace JetBrains.Lifetimes
     private const int WaitForExecutingInTerminationTimeoutMsDefault = 500;
     [PublicAPI] public static int WaitForExecutingInTerminationTimeoutMs = WaitForExecutingInTerminationTimeoutMsDefault;  
 
-    private static readonly BitSlice<int> ourExecutingSlice = BitSlice.Int(20);
-    private static readonly BitSlice<LifetimeStatus> ourStatusSlice = BitSlice.Enum<LifetimeStatus>(ourExecutingSlice);
-    private static readonly BitSlice<bool> ourMutexSlice = BitSlice.Bool(ourStatusSlice);
-    private static readonly BitSlice<bool> ourVerboseDiagnosticsSlice = BitSlice.Bool(ourMutexSlice);
-    private static readonly BitSlice<bool> ourAllowTerminationUnderExecutionSlice = BitSlice.Bool(ourVerboseDiagnosticsSlice);
-    private static readonly BitSlice<bool> ourLogErrorAfterExecution = BitSlice.Bool(ourAllowTerminationUnderExecutionSlice);
+    // use real (sealed) types to allow devirtualization
+    private static readonly IntBitSlice ourExecutingSlice = BitSlice.Int(20);
+    private static readonly Enum32BitSlice<LifetimeStatus> ourStatusSlice = BitSlice.Enum<LifetimeStatus>(ourExecutingSlice);
+    private static readonly BoolBitSlice ourMutexSlice = BitSlice.Bool(ourStatusSlice);
+    private static readonly BoolBitSlice ourVerboseDiagnosticsSlice = BitSlice.Bool(ourMutexSlice);
+    private static readonly BoolBitSlice ourAllowTerminationUnderExecutionSlice = BitSlice.Bool(ourVerboseDiagnosticsSlice);
+    private static readonly BoolBitSlice ourLogErrorAfterExecution = BitSlice.Bool(ourAllowTerminationUnderExecutionSlice);
          
     
     #endregion
@@ -112,8 +111,23 @@ namespace JetBrains.Lifetimes
     private int myResCount;
     //in fact we could optimize footprint even better by changing `object[]` to `object` for single object 
     [CanBeNull] private object[] myResources = new object[ResourcesInitialCapacity];
-    
-    private int myState;
+
+    // myState must be volatile to avoid some jit optimizations
+    // for example:
+    //
+    // while(true)
+    // {
+    //    var s = myState
+    //    if (slice[s])
+    //      continue;
+    //
+    //    Interlocked.CompareExchange(ref myState, ...);
+    // }
+    //
+    // myState can be cached by jit and in this case there can be an infinite loop. 
+    //
+    // SimpleOnTerminationStressTest reproduces the problem (in Release mode)
+    private volatile int myState;
 
     /// <summary>
     /// Underlying lifetime for this definition.
@@ -271,11 +285,12 @@ namespace JetBrains.Lifetimes
     #region State change helpers
 
     //Without allocations
-    struct UnderMutexCookie : IDisposable
+    private readonly struct UnderMutexCookie : IDisposable
     {
       private readonly LifetimeDefinition myDef;
       internal readonly bool Success;
 
+      [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public UnderMutexCookie(LifetimeDefinition def, LifetimeStatus statusUpperBound)
       {
         myDef = def;
@@ -300,6 +315,7 @@ namespace JetBrains.Lifetimes
       }
       
       
+      [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
       public void Dispose()
       {
         if (!Success)
@@ -379,6 +395,7 @@ namespace JetBrains.Lifetimes
         Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
                         + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
                         + "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100");
+
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
       }
 
@@ -1014,5 +1031,6 @@ namespace JetBrains.Lifetimes
       }
     }
     #endregion
+#pragma warning restore 420
   }
 }

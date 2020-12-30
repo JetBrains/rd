@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -129,7 +128,7 @@ namespace JetBrains.Util.Util
     public override string ToString() => $"TypedBitSlice<{typeof(T).Name}>[{LoBit}, {HiBit}]";
   }
 
-  public class IntBitSlice : BitSlice<int>
+  public sealed class IntBitSlice : BitSlice<int>
   {
     public IntBitSlice(int loBit, int bitCount) : base(loBit, bitCount){}
         
@@ -139,10 +138,11 @@ namespace JetBrains.Util.Util
       get => GetRaw(host);
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]      
     public override int Updated(int host, int value) => UpdatedRaw(host, value);
   }
   
-  public class BoolBitSlice : BitSlice<bool>
+  public sealed class BoolBitSlice : BitSlice<bool>
   {
     public BoolBitSlice(int loBit, int bitCount) : base(loBit, bitCount){}
     public override bool this[int host]
@@ -151,10 +151,11 @@ namespace JetBrains.Util.Util
       get => GetRaw(host) != 0;
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]      
     public override int Updated(int host, bool value) => UpdatedRaw(host, value ? 1 : 0);
   }
   
-  public class Enum32BitSlice<T> : BitSlice<T> where T :
+  public sealed class Enum32BitSlice<T> : BitSlice<T> where T :
 #if !NET35
     unmanaged, 
 #endif
@@ -183,6 +184,7 @@ namespace JetBrains.Util.Util
       get => Cast32BitEnum<T>.FromInt(GetRaw(host));
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]      
     public override int Updated(int host, T value) => UpdatedRaw(host, Cast32BitEnum<T>.ToInt(value));
   }
 
