@@ -113,15 +113,16 @@ namespace JetBrains.Util.Util
     public abstract T this[int host] { get; }
     public abstract int Updated(int host, T value);
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void InterlockedUpdate(ref int host, T value)
     {
+      var s = host;
       while (true)
       {
-        var s = host;
-        if (Interlocked.CompareExchange(ref host, Updated(host, value), s) == s)
-        {
-          break;
-        }
+        var originalValue = Interlocked.CompareExchange(ref host, Updated(s, value), s);
+        if (originalValue == s) break;
+
+        s = originalValue;
       }
     }
     
