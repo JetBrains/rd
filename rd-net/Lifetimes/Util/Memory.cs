@@ -52,6 +52,7 @@ namespace JetBrains.Util.Internal
       }
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void Barrier()
     {
 #if (NET35)
@@ -59,7 +60,51 @@ namespace JetBrains.Util.Internal
 #else
   Interlocked.MemoryBarrier();
 #endif
-  
+    }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static T VolatileRead<T>(ref T location) where T : class
+    {
+#if (NET35)
+      Thread.MemoryBarrier();
+      return location;
+#else
+      return Volatile.Read(ref location);
+#endif
+    }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static void VolatileWrite<T>(ref T location, T value) where T : class
+    {
+#if (NET35)
+      Thread.MemoryBarrier();
+      location = value;
+#else
+      Volatile.Write(ref location, value);
+#endif
+    }
+    
+        
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static int VolatileRead(ref int location)
+    {
+#if (NET35)
+      Thread.MemoryBarrier();
+      return location;
+#else
+      return Volatile.Read(ref location);
+#endif
+    }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static void VolatileWrite(ref int location, int value)
+    {
+#if (NET35)
+      Thread.MemoryBarrier();
+      location = value;
+#else
+      Volatile.Write(ref location, value);
+#endif
     }
   }
 }
