@@ -66,8 +66,9 @@ namespace JetBrains.Util.Internal
     public static T VolatileRead<T>(ref T location) where T : class
     {
 #if (NET35)
+      var obj = location;
       Thread.MemoryBarrier();
-      return location;
+      return obj;
 #else
       return Volatile.Read(ref location);
 #endif
@@ -89,8 +90,7 @@ namespace JetBrains.Util.Internal
     public static int VolatileRead(ref int location)
     {
 #if (NET35)
-      Thread.MemoryBarrier();
-      return location;
+      return Thread.VolatileRead(ref location);
 #else
       return Volatile.Read(ref location);
 #endif
@@ -100,8 +100,7 @@ namespace JetBrains.Util.Internal
     public static void VolatileWrite(ref int location, int value)
     {
 #if (NET35)
-      Thread.MemoryBarrier();
-      location = value;
+      Thread.VolatileWrite(ref location, value);
 #else
       Volatile.Write(ref location, value);
 #endif
