@@ -51,7 +51,7 @@ namespace JetBrains.Lifetimes
           myCurValue = item;
 
           // double-check `IsAlive` because myCurValue may be partially cleared if ClearValuesIfNotAlive was called at the same time
-          Memory.Barrier(); // to suppress ordering
+          Memory.Barrier(); // to suppress reordering
           if (item.Lifetime.IsAlive)
             return true;
         }
@@ -59,7 +59,7 @@ namespace JetBrains.Lifetimes
         return false;
       }            
 
-      public void Reset() { myPos = -1; }
+      public void Reset() { throw new NotSupportedException(); }
       public ValueLifetimed<T> Current => myCurValue;
       object IEnumerator.Current => Current;
     }
@@ -67,7 +67,7 @@ namespace JetBrains.Lifetimes
     //in x64 we have one free 4-bytes slot in this structure so let we use it for something meaningful
     //1. Global lock (GlobalMutexSlice) for thread-safe insertion of a new element
     //2. Local lock (LocalMutexSlice) for fast thread-safe reading/writing of `mySize` and `myItems`
-    //3. Marker (MarkerMutexSlice) for delimits items into two parts: with high priority (< Marker) and normal (>= Marker)
+    //3. Marker (MarkerMutexSlice) to delimit items into two parts: with high priority (< Marker) and normal (>= Marker)
     private int myState;
     private int mySize;
     private ValueLifetimed<T>[] myItems;
@@ -176,12 +176,12 @@ namespace JetBrains.Lifetimes
       }
 
       if (newSize == 0) newSize = 1;
-      else if (priority) newSize++; // for new priority item
+      else newSize *= 2;
 
       // we have to make new array ALWAYS at this point, because this method could be called during enumeration and we want enumeration to work in a snapshot fashion      
       var countAfterCleaning = 0;
       var markerDecrement = 0;
-      var newItems = new ValueLifetimed<T>[newSize * 2];
+      var newItems = new ValueLifetimed<T>[newSize];
       
       for (var i = 0; i < marker; i++)
       {
