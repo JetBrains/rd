@@ -5,7 +5,10 @@ import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.reactive.OptProperty
+import com.jetbrains.rd.util.reactive.adviseOnce
+import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
@@ -131,12 +134,24 @@ class EndpointWiredRdTask<TReq, TRes>(
 }
 
 
-class RpcTimeouts(val warnAwaitTime : Long, val errorAwaitTime : Long)
-{
+class RpcTimeouts(val warnAwaitTimeMs: Long, val errorAwaitTimeMs: Long) {
     companion object {
+        private const val MaxMilliseconds = Long.MAX_VALUE / 1_000_000 // Long.MAX_VALUE nanoseconds in milliseconds
+
         val default = RpcTimeouts(200L, 3000L)
         val longRunning = RpcTimeouts(10000L, 15000L)
-        val infinite = RpcTimeouts(60000L, Long.MAX_VALUE / 1000000) // Long.MAX_VALUE nanoseconds in milliseconds
+        val infinite = RpcTimeouts(60000L, MaxMilliseconds)
+    }
+
+    @Deprecated("Use property with \"Ms\" suffix", ReplaceWith("warnAwaitTimeMs"))
+    val warnAwaitTime = warnAwaitTimeMs
+
+    @Deprecated("Use property with \"Ms\" suffix", ReplaceWith("errorAwaitTimeMs"))
+    val errorAwaitTime = errorAwaitTimeMs
+
+    init {
+        assert(warnAwaitTimeMs <= MaxMilliseconds) { "warnAwaitTimeMs value of $warnAwaitTimeMs is supposed to fit into Long when converted to nanoseconds" }
+        assert(errorAwaitTimeMs <= MaxMilliseconds) { "errorAwaitTimeMs value of $errorAwaitTimeMs is supposed to fit into Long when converted to nanoseconds" }
     }
 }
 
@@ -190,14 +205,14 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.infinite
 
         val freezeTime = measureTimeMillis {
-            if (!task.wait(effectiveTimeouts.errorAwaitTime) {
+            if (!task.wait(effectiveTimeouts.errorAwaitTimeMs) {
                     if (protocol.scheduler.isActive)
                         containingExt?.pumpScheduler()
                 }
             )
-                throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTime} ms")
+                throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTimeMs} ms")
         }
-        if (freezeTime > effectiveTimeouts.warnAwaitTime) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
+        if (freezeTime > effectiveTimeouts.warnAwaitTimeMs) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
         return task.result.valueOrThrow.unwrap()
 
     }
