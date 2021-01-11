@@ -797,16 +797,54 @@ open class Cpp17Generator(
                     println()
                     withNamespace("rd") {
                         initializedEnums.forEach { enum ->
+                            val map = enum.constants
+                                .mapIndexed { index, field ->
+                                    field.getSetting(EnumConstantValue)?.let { _ ->
+                                        Pair(index, field)
+                                    }
+                                }
+                                .filterNotNull()
+                                .toMap()
+
                             val enumTypeName = enum.withNamespace()
-                            block("""
+                            blockNoIndent("""
                                 |template <>
                                 |class Polymorphic<$enumTypeName> {
                             """.trimMargin(), "};") {
-                                +"public:"
-
-                                +"static $enumTypeName read(SerializationCtx& ctx, Buffer& buffer);"
-
-                                +"static void write(SerializationCtx& ctx, Buffer& buffer, $enumTypeName const& value);"
+                                publicBlock {
+                                    block("static $enumTypeName read(SerializationCtx& ctx, Buffer& buffer) {", "}") {
+                                        +"int32_t x = buffer.read_integral<int32_t>();"
+                                        blockNoIndent("switch (x) {", "}") {
+                                            map.forEach { (key, value) ->
+                                                +"""
+                                                |case $key:
+                                                |   return ${enumTypeName + "::" + value.name};
+                                                """.trimMargin()
+                                            }
+                                            +"""
+                                            |default:
+                                            |   return static_cast<${enumTypeName}>(x);
+                                            """.trimMargin()
+                                        }
+                                    }
+                                    println()
+                                    block("static void write(SerializationCtx& ctx, Buffer& buffer, $enumTypeName const& value) {", "}") {
+                                        blockNoIndent("switch (value) {", "}") {
+                                            map.forEach { (key, value) ->
+                                                +"""
+                                                |case ${enumTypeName + "::" + value.name}: {
+                                                |   buffer.write_integral<int32_t>($key);
+                                                |   return;
+                                                |}
+                                             """.trimMargin()
+                                            }
+                                            +"default:"
+                                            indent {
+                                                +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             println()
                             +"extern template class Polymorphic<$enumTypeName>;"
@@ -823,47 +861,7 @@ open class Cpp17Generator(
                 println()
                 withNamespace("rd") {
                     initializedEnums.forEach { enum ->
-                        val map = enum.constants
-                            .mapIndexed { index, field ->
-                                field.getSetting(EnumConstantValue)?.let { _ ->
-                                    Pair(index, field)
-                                }
-                            }
-                            .filterNotNull()
-                            .toMap()
-
                         val enumType = enum.withNamespace()
-                        block("$enumType Polymorphic<$enumType, void>::read(SerializationCtx& ctx, Buffer& buffer) {", "}") {
-                            +"int32_t x = buffer.read_integral<int32_t>();"
-                            block("switch (x) {", "}") {
-                                map.forEach { (key, value) ->
-                                    +"""
-                                |case $key:
-                                |   return ${enum.withNamespace() + "::" + value.name};
-                                """.trimMargin()
-                                }
-                                +"""
-                                |default:
-                                |   return static_cast<${enumType}>(x);
-                                """.trimMargin()
-                            }
-
-                        }
-                        println()
-                        block("void Polymorphic<$enumType, void>::write(SerializationCtx& ctx, Buffer& buffer, $enumType const& value) {", "}") {
-                            block("switch (value) {", "}") {
-                                map.forEach { (key, value) ->
-                                    +"""
-                                |case ${enum.withNamespace() + "::" + value.name}: {
-                                |   buffer.write_integral<int32_t>($key);
-                                |   return;
-                                |}
-                             """.trimMargin()
-                                }
-                                +"default:"
-                                +"buffer.write_integral<int32_t>(static_cast<int32_t>(value));"
-                            }
-                        }
                         +"template class Polymorphic<$enumType>;"
                     }
                 }
