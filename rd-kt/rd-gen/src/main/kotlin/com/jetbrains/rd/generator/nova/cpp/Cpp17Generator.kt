@@ -3,7 +3,6 @@ package com.jetbrains.rd.generator.nova.cpp
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator.Companion.Features.__cpp_structured_bindings
 import com.jetbrains.rd.generator.nova.cpp.CppSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
@@ -47,7 +46,6 @@ open class Cpp17Generator(
 
     @Suppress("ObjectPropertyName")
     companion object {
-        private const val INSTANTIATION_FILE_NAME = "instantiations"
         private const val polymorphicHeader = "serialization/Polymorphic"
 
         object LanguageVersion {
@@ -64,6 +62,8 @@ open class Cpp17Generator(
         object Files {
             const val PrecompiledHeaderCmake = """PrecompiledHeader.cmake"""
         }
+
+        private const val msvcCheckMacro = "_MSC_VER"
     }
 
     //region language specific properties
@@ -71,13 +71,9 @@ open class Cpp17Generator(
 
     private val Declaration.namespace: String
         get() {
-            return if (this is FakeDeclaration) {
-                decl.namespace
-            } else {
-                when (this) {
-                    is CppIntrinsicType -> namespace.orEmpty()
-                    else -> getSetting(Namespace) ?: defaultNamespace
-                }
+            return when (this) {
+                is CppIntrinsicType -> namespace.orEmpty()
+                else -> getSetting(Namespace) ?: defaultNamespace
             }
         }
 
@@ -135,6 +131,7 @@ open class Cpp17Generator(
 
     private fun fsExtension(isDefinition: Boolean) = if (isDefinition) "cpp" else "h"
 
+    private fun Declaration.sourceFileName() = this.fsName(true)
     private fun Declaration.headerFileName() = this.fsName(false)
 
     private fun Declaration.fsName(isDefinition: Boolean) =
@@ -594,21 +591,10 @@ open class Cpp17Generator(
         }
     //endregion
 
-    private class FakeDeclaration(val decl: Declaration) : Declaration(null) {
-        override val _name: String
-            get() = decl.name
-        override val cl_name: String
-            get() = decl.name
-    }
-
     //region Declaration.
     protected fun Declaration.sanitizedName(scope: Declaration): String {
-        return if (scope is FakeDeclaration) {
-            this.withNamespace()
-        } else {
-            val needQualification = namespace != scope.namespace
-            needQualification.condstr { "$namespace::" } + platformTypeName
-        }
+        val needQualification = namespace != scope.namespace
+        return needQualification.condstr { "$namespace::" } + platformTypeName
     }
 
     /**
@@ -688,7 +674,7 @@ open class Cpp17Generator(
         File(this, pchCppFile).writeText("#include \"${pchHeaderFile}\"")
     }
 
-    private fun File.cmakeLists(root: Root, fileNames: List<String>, toplevelsDependencies: List<Toplevel> = emptyList(), subdirectories: List<String> = emptyList()) {
+    private fun File.cmakeLists(root: Root, fileNames: List<String>) {
         val targetName = root.targetName()
         val usingPrecompiledHeaders = root.usePrecompiledHeaders()
         val generatePrecompiledHeaders = root.generatePrecompiledHeaders()
@@ -713,11 +699,7 @@ open class Cpp17Generator(
 
                     val pchOptionVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
 
-                    val targetFiles = (fileNames +
-                        listOf(
-                            "${INSTANTIATION_FILE_NAME}.h",
-                            "${INSTANTIATION_FILE_NAME}.cpp"
-                        )).toMutableList()
+                    val targetFiles = fileNames.toMutableList()
                     if (generatePrecompiledHeaders) {
                         val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
 
@@ -732,13 +714,9 @@ open class Cpp17Generator(
                         targetFiles.add("\${PCH_CPP_OPT}")
                     }
 
-                    println("add_library($targetName STATIC ${targetFiles.joinToString(separator = eol)})")
-                    val toplevelsDirectoryList = toplevelsDependencies.joinToString(separator = eol) { it.name }
-//                    val toplevelsLibraryList = toplevelsDependencies.joinToString(separator = " ") { name }
-                    println(subdirectories.joinToString(separator = eol) { s -> "add_subdirectory($s)" })
-                    println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR} $toplevelsDirectoryList)")
+                    println("add_library($targetName STATIC \n${targetFiles.joinToString(separator = eol)})")
+                    println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR})")
                     println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
-//                println("target_link_directories($targetName PUBLIC rd_framework_cpp $toplevelsLibraryList)")
 
                     if (generatePrecompiledHeaders) {
                         println("""
@@ -781,7 +759,7 @@ open class Cpp17Generator(
     object EnumConstantValue : ISetting<Int, Member.EnumConst>
     object IsNonScoped : ISetting<String, Enum>
 
-    private fun File.templateInstantiate(toplevels: List<Toplevel>) {
+    private fun File.templateInstantiate(toplevels: List<Toplevel>, instatiationFileName: String) : List<String> {
         fun collectInitializedEnums(): List<Enum> = toplevels.flatMap { tl ->
             tl.declaredTypes.filterIsInstance<Enum>()
                 .filter { enum ->
@@ -796,13 +774,9 @@ open class Cpp17Generator(
 
         val initializedEnums = collectInitializedEnums()
 
-        val classes = listOf(
-            "rd::Wrapper<std::wstring>"
-        )
-
-        File(this, "${INSTANTIATION_FILE_NAME}.h").let { file ->
+        val header = File(this, "${instatiationFileName}.h").also { file ->
             FileSystemPrettyPrinter(file).use {
-                withIncludeGuard("${INSTANTIATION_FILE_NAME}.h".includeGuardName()) {
+                withIncludeGuard("${instatiationFileName}.h".includeGuardName()) {
                     +polymorphicHeader.includeWithExtension("h")
                     println()
                     initializedEnums
@@ -816,10 +790,6 @@ open class Cpp17Generator(
                         .flatten()
                         .map { it.includeQuotes() }
                         .forEach { +it }
-                    println()
-                    classes.forEach {
-                        +"extern template class $it;"
-                    }
                     println()
                     initializedEnums.forEach { enum ->
                         predeclare(enum)
@@ -847,13 +817,9 @@ open class Cpp17Generator(
             }
         }
 
-        File(this, "${INSTANTIATION_FILE_NAME}.cpp").let { file ->
+        val source = File(this, "${instatiationFileName}.cpp").also { file ->
             FileSystemPrettyPrinter(file).use {
-                +INSTANTIATION_FILE_NAME.includeWithExtension("h")
-                println()
-                classes.forEach {
-                    +"template class $it;"
-                }
+                +instatiationFileName.includeWithExtension("h")
                 println()
                 withNamespace("rd") {
                     initializedEnums.forEach { enum ->
@@ -903,6 +869,8 @@ open class Cpp17Generator(
                 }
             }
         }
+
+        return listOf(header, source).map { f -> f.name }
     }
 
     protected open fun PrettyPrinter.autogenerated() {
@@ -917,42 +885,35 @@ open class Cpp17Generator(
     }
 
     override fun realGenerate(toplevels: List<Toplevel>) {
-        val allFilePaths = emptyList<String>().toMutableList()
+        if (toplevels.isEmpty()) return
+
+        val root = toplevels.first().root
+        val instantiationsFileName = "instantiations_${root.targetName()}"
+        val allFilePaths =
+            folder.templateInstantiate(toplevels, instantiationsFileName).toMutableList()
 
         toplevels.forEach { tl ->
             val directory = tl.fsPath()
             directory.mkdirs()
             val types = (tl.declaredTypes + tl + unknowns(tl.declaredTypes)).filter { !it.isIntrinsic }
-            val fileNames = types.map { it.fsName(true) } + types.map { it.headerFileName() }
+            val fileNames = types.flatMap { listOf(it.sourceFileName(), it.headerFileName()) }
             allFilePaths += fileNames.map { "${tl.name}/$it" }
 
-            val marshallerHeaders = tl.getSetting(AdditionalHeaders) ?: listOf()
             for (type in types) {
-                listOf(false, true).forEach { isDefinition ->
-                    FileSystemPrettyPrinter(type.fsPath(tl, isDefinition)).use {
-                        //actual generation
-
-                        autogenerated()
-
-                        if (isDefinition) {
-                            source(type, types)
-                        } else {
-                            header(type, marshallerHeaders)
-                        }
-                    }
+                FileSystemPrettyPrinter(type.fsPath(tl, false)).use {
+                    //actual generation
+                    autogenerated()
+                    header(type, instantiationsFileName)
+                }
+                FileSystemPrettyPrinter(type.fsPath(tl, true)).use {
+                    //actual generation
+                    autogenerated()
+                    source(type, types)
                 }
             }
         }
 
-
-
-
-        if (toplevels.isNotEmpty()) {
-            val root = toplevels.first().root
-            folder.cmakeLists(root, allFilePaths, toplevels/*, toplevels.map { it.name }*/)
-        }
-
-        folder.templateInstantiate(toplevels)
+        folder.cmakeLists(root, allFilePaths)
     }
 
     private fun PrettyPrinter.withIncludeGuard(includeGuardMacro: String, action: PrettyPrinter.() -> Unit) {
@@ -976,40 +937,53 @@ open class Cpp17Generator(
         return this.headerFileName().includeGuardName()
     }
 
+    private fun PrettyPrinter.withDisabledWarnings(disabledWarnings: IntArray, action: PrettyPrinter.() -> Unit)
+    {
+        if (disabledWarnings.isNotEmpty()) {
+            println()
+            ifDefDirective(msvcCheckMacro) {
+                +"#pragma warning( push )"
+                disabledWarnings.forEach {
+                    +"#pragma warning( disable:$it )"
+                }
+            }
+            println()
+        }
+
+        action()
+
+        if (disabledWarnings.isNotEmpty()) {
+            println()
+            ifDefDirective(msvcCheckMacro) {
+                +"#pragma warning( pop )"
+            }
+            println()
+        }
+    }
+
     //region files
-    fun PrettyPrinter.header(decl: Declaration, marshallerHeaders: List<String>) {
+    fun PrettyPrinter.header(decl: Declaration, instantiationsFileName: String) {
         withIncludeGuard(decl.includeGuardName()) {
             println()
 
-            includesDecl(marshallerHeaders)
+            includesDecl(instantiationsFileName)
             println()
 
             dependenciesDecl(decl)
             println()
 
-            VsWarningsDefault?.let {
-                +"#pragma warning( push )"
-                it.forEach { warn ->
-                    +"#pragma warning( disable:$warn )"
+            val disabledWarnings = VsWarningsDefault ?: intArrayOf()
+            withDisabledWarnings(disabledWarnings) {
+                if (decl is Toplevel && decl.isLibrary) {
+                    comment("library")
+                    surroundWithNamespaces(decl.namespace) {
+                        println()
+                        libdecl(decl)
+                        println()
+                    }
+                } else {
+                    typedecl(decl)
                 }
-                println()
-            }
-
-            if (decl is Toplevel && decl.isLibrary) {
-                comment("library")
-                surroundWithNamespaces(decl.namespace) {
-                    println()
-                    libdecl(decl)
-                    println()
-                }
-            } else {
-                typedecl(decl)
-            }
-
-            VsWarningsDefault?.let {
-                println()
-                +"#pragma warning( pop )"
-                println()
             }
 
             println()
@@ -1031,7 +1005,7 @@ open class Cpp17Generator(
         if (decl is Toplevel) {
             dependencies.filter { !(it.isAbstract || it.isOpen) }.filterIsInstance<IType>().println {
                 if (it is Declaration) {
-                    "../${it.pointcut!!.name}/${it.headerFileName()}".includeQuotes()
+                    "${it.pointcut!!.name}/${it.headerFileName()}".includeQuotes()
                 } else {
                     it.includeWithExtension()
                 }
@@ -1039,34 +1013,24 @@ open class Cpp17Generator(
         }
         println()
         if (decl is Toplevel) {
-            +"../${decl.root.name}/${decl.root.headerFileName()}".includeQuotes()
+            +"${decl.root.name}/${decl.root.headerFileName()}".includeQuotes()
         }
         if (decl.isAbstract || decl.isOpen) {
             +(unknown(decl)!!.includeWithExtension())
         }
         if (decl is Root) {
             decl.toplevels.forEach {
-                +"../${it.name}/${it.headerFileName()}".includeQuotes()
+                +"${it.name}/${it.headerFileName()}".includeQuotes()
             }
         }
 
-        VsWarningsDefault?.let {
-            +"#pragma warning( push )"
-            it.forEach { warn ->
-                +"#pragma warning( disable:$warn )"
+        val disabledWarnings = VsWarningsDefault ?: intArrayOf()
+        withDisabledWarnings(disabledWarnings) {
+            if (decl is Toplevel && decl.isLibrary) {
+                surroundWithNamespaces(decl.namespace) { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
+            } else {
+                surroundWithNamespaces(decl.namespace) { typedef(decl) }
             }
-        }
-
-        if (decl is Toplevel && decl.isLibrary) {
-            surroundWithNamespaces(decl.namespace) { libdef(decl, decl.declaredTypes + unknowns(decl.declaredTypes)) }
-        } else {
-            surroundWithNamespaces(decl.namespace) { typedef(decl) }
-        }
-
-        VsWarningsDefault?.let {
-            println()
-            +"#pragma warning( pop )"
-            println()
         }
     }
 //endregion
@@ -1170,7 +1134,7 @@ open class Cpp17Generator(
                     if (shouldGenerateDeconstruct(decl)) {
                         println()
                         comment("deconstruct trait")
-                        ifDefDirective(__cpp_structured_bindings) {
+                        ifDefDirective(Features.__cpp_structured_bindings) {
                             deconstructTrait(decl)
                         }
                     }
@@ -1246,7 +1210,7 @@ open class Cpp17Generator(
 
         if (shouldGenerateDeconstruct(decl)) {
             println()
-            ifDefDirective(__cpp_structured_bindings) {
+            ifDefDirective(Features.__cpp_structured_bindings) {
                 comment("tuple trait")
                 tupleSpecialization(decl)
             }
@@ -1317,7 +1281,7 @@ open class Cpp17Generator(
 //endregion
 
     //region TraitDecl
-    protected fun PrettyPrinter.includesDecl(marshallerHeaders: List<String>) {
+    protected fun PrettyPrinter.includesDecl(instantiationsFileName: String) {
 //        +"class ${decl.name};"
 
         val standardHeaders = listOf(
@@ -1365,16 +1329,14 @@ open class Cpp17Generator(
             "util/gen_util"
         )
 
-        +frameworkHeaders.joinToString(separator = eol) { s -> s.includeWithExtension("h") }
+        +frameworkHeaders.joinToString(separator = eolKind.value) { it.includeWithExtension("h") }
         println()
-        +standardHeaders.joinToString(separator = eolKind.value, transform = { "#include <$it>" })
+        +standardHeaders.joinToString(separator = eolKind.value, transform = { it.includeAngleBrackets() })
         println()
         //third-party
         +"thirdparty".includeWithExtension("hpp")
 
-        +("../$INSTANTIATION_FILE_NAME".includeWithExtension("h"))
-
-        marshallerHeaders.forEach { it.includeAngleBrackets() }
+        +instantiationsFileName.includeWithExtension("h")
     }
 
     private fun Declaration.parseType(type: IType, allowPredefined: Boolean): IType? {
@@ -1430,10 +1392,10 @@ open class Cpp17Generator(
             }
             return types.mapNotNull {
                 when (it) {
-                    is Root -> "../${it.name}/${it.headerFileName()}"
+                    is Root -> "${it.name}/${it.headerFileName()}"
                     is Declaration ->
                         if (!it.isIntrinsic) {
-                            "../${it.pointcut!!.name}/${it.headerFileName()}"
+                            "${it.pointcut!!.name}/${it.headerFileName()}"
                         } else {
                             it.getSetting(Intrinsic)!!.header
                         }
@@ -1457,8 +1419,12 @@ open class Cpp17Generator(
                 .distinct().toList()
         }
 
-        val extDecls = listOfNotNull(if (decl.isExtension) decl.pointcut else null)
-        extDecls.printlnWithBlankLine { it.includeWithExtension() }
+        val extDecl = if (decl.isExtension) decl.pointcut else null
+        if (extDecl != null) {
+            val extToplevel = if (extDecl is Toplevel) extDecl else extDecl.pointcut!!
+            +"${extToplevel.name}/${extDecl.headerFileName()}".includeQuotes()
+            println()
+        }
         dependentTypes(decl).printlnWithBlankLine { it.includeQuotes() }
 
         decl.getSetting(AdditionalHeaders)?.distinct()?.println { it.includeQuotes() }

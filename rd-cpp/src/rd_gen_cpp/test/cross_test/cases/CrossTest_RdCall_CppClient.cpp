@@ -1,6 +1,6 @@
 #include "CrossTestClientBase.h"
 
-#include "DemoModel.Generated.h"
+#include "DemoModel/DemoModel.Generated.h"
 
 #include "std/to_string.h"
 

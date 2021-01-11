@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "DynamicEntity.Generated.h"
+#include "DynamicExt/DynamicEntity.Generated.h"
 #include "entities_util.h"
 #include "SocketWireTestBase.h"
 #include "wire/SocketWire.h"
