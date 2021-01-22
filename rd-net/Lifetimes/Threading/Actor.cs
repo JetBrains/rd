@@ -101,7 +101,7 @@ namespace JetBrains.Threading
           {
             Assertion.Assert(IsEmpty, "Not empty: sent items: {0}, processed items: {1}", myChannel.TotalMessagesSent, myTotalMessagesProcessed);
           }
-        }, lifetime, TaskCreationOptions.None, scheduler ?? TaskScheduler.Current);
+        }, lifetime, TaskCreationOptions.None, scheduler ?? TaskScheduler.Default);
     }
 
 #if !NET35
