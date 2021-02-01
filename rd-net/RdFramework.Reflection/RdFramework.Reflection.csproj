@@ -2,25 +2,25 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net35;net461</TargetFrameworks>
-        <AssemblyName>JetBrains.RdFramework</AssemblyName>
-        <RootNamespace>JetBrains.Rd</RootNamespace>
-        
+        <AssemblyName>JetBrains.RdFramework.Reflection</AssemblyName>
+        <RootNamespace>JetBrains.Rd.Reflection</RootNamespace>
+
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        
+
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <NoWarn>1591,1570,1574</NoWarn>
 
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
-        
+
         <Configurations>Debug;Release;CrossTests</Configurations>
-        
+
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
 
     <PropertyGroup Label="NuGet">
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <PackageId>JetBrains.RdFramework</PackageId>
+        <PackageId>JetBrains.RdFramework.Reflection</PackageId>
         <PackageProjectUrl>https://github.com/JetBrains/rd</PackageProjectUrl>
         <RepositoryUrl>https://github.com/JetBrains/rd</RepositoryUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -28,7 +28,8 @@
         <Authors>JetBrains</Authors>
         <Copyright>Copyright © JetBrains 2019</Copyright>
         <PackageTags>rd reactive distributed protocol</PackageTags>
-        <Description>JetBrains Networking library for reactive distributed communication</Description>
+        <Description>Plugin for JetBrains Networking library (JetBrains.RdFramework) used for defining models using regular C# for C#-C# communications</Description>
+
 
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -38,13 +39,13 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
         <PackageIcon>PackageIcon.png</PackageIcon>
-        <PackageReleaseNotes>Fix memory leaks</PackageReleaseNotes>
+        <PackageReleaseNotes>Initial release</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'" Label="PackPdbIntoDebugNupkg">
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="all" />
     </ItemGroup>
@@ -54,11 +55,17 @@
         <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
+        <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.6.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="PackageIcon.png" Pack="true" PackagePath=""/>
+      <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
+      <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 </Project>

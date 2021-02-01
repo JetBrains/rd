@@ -20,7 +20,7 @@ namespace JetBrains.Rd.Scripts
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     public static string RiderFolderPath = "c:/work/Uber";
 
-    public static string[] Packages = {"JetBrains.Lifetimes", "JetBrains.RdFramework", "JetBrains.RdGen"};
+    public static string[] Packages = {"JetBrains.Lifetimes", "JetBrains.RdFramework", "JetBrains.RdFramework.Reflection", "JetBrains.RdGen"};
     
     static readonly Type t = typeof(Program);
     static readonly List<MethodInfo> ep = t.GetMethods().Where(mi => mi.IsStatic && mi.IsPublic && mi.ReturnType == typeof(void) && mi.GetParameters().Length == 0).ToList();

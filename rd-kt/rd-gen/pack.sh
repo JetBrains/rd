@@ -55,6 +55,9 @@ export BUILD_CONFIGURATION=$build_configuration
 ${build_dir}/.dotnet/dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Rd.sln
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/Lifetimes/Lifetimes.csproj
 ${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/RdFramework/RdFramework.csproj
+${build_dir}/.dotnet/dotnet pack --include-symbols /p:Configuration=$BUILD_CONFIGURATION /p:PackageVersion=$nuget_version ${build_dir}/../../../rd-net/RdFramework.Reflection/RdFramework.Reflection.csproj
+mv ${build_dir}/../../../rd-net/RdFramework.Reflection/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
+mv ${build_dir}/../../../rd-net/RdFramework.Reflection/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
 mv ${build_dir}/../../../rd-net/RdFramework/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir
 mv ${build_dir}/../../../rd-net/RdFramework/bin/$BUILD_CONFIGURATION/*.snupkg $build_dir
 mv ${build_dir}/../../../rd-net/Lifetimes/bin/$BUILD_CONFIGURATION/*.nupkg $build_dir

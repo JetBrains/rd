@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\RdFramework.Reflection\RdFramework.Reflection.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
         <ProjectReference Include="..\Test.Lifetimes\Test.Lifetimes.csproj" />
     </ItemGroup>
