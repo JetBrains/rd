@@ -12,7 +12,7 @@
         <projectUrl>https://github.com/JetBrains/rd</projectUrl>
         <description>Rd Generator: generates C# classes by Kotlin dsl model</description>
         <releaseNotes>First public version of RdGen</releaseNotes>
-        <copyright>Copyright © JetBrains 2019</copyright>
+        <copyright>Copyright © JetBrains 2021</copyright>
         <tags>rd reactive distributed protocol</tags>
         <repository type="git" url="https://github.com/JetBrains/rd"/>
 

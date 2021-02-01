@@ -27,7 +27,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryType>git</RepositoryType>
         <Authors>JetBrains</Authors>
-        <Copyright>Copyright © JetBrains 2019</Copyright>
+        <Copyright>Copyright © JetBrains 2021</Copyright>
         <PackageTags>rd lifetime reactive viewable</PackageTags>
         <Description>JetBrains Core library for graceful disposal, concurrency and reactive programming</Description>
 

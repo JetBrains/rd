@@ -26,7 +26,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryType>git</RepositoryType>
         <Authors>JetBrains</Authors>
-        <Copyright>Copyright © JetBrains 2019</Copyright>
+        <Copyright>Copyright © JetBrains 2021</Copyright>
         <PackageTags>rd reactive distributed protocol</PackageTags>
         <Description>JetBrains Networking library for reactive distributed communication</Description>
 
