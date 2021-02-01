@@ -15,6 +15,9 @@ echo "" > %NUGET_DIR%\lib\net\_._
 call dotnet build /p:Configuration=%CONFIGURATION% /p:PackageVersion=%NUGET_VERSION% %BUILD_DIR%\..\..\..\rd-net\Rd.sln
 call dotnet pack --include-symbols /p:Configuration=%CONFIGURATION% /p:PackageVersion=%NUGET_VERSION% %BUILD_DIR%\..\..\..\rd-net\Lifetimes\Lifetimes.csproj
 call dotnet pack --include-symbols /p:Configuration=Release /p:PackageVersion=%NUGET_VERSION% %BUILD_DIR%\..\..\..\rd-net\RdFramework\RdFramework.csproj
+call dotnet pack --include-symbols /p:Configuration=Release /p:PackageVersion=%NUGET_VERSION% %BUILD_DIR%\..\..\..\rd-net\RdFramework.Reflection\RdFramework.Reflection.csproj
+move %BUILD_DIR%\..\..\..\rd-net\RdFramework.Reflection\bin\Release\*.nupkg %NUGET_LOCAL_SOURCE%
+move %BUILD_DIR%\..\..\..\rd-net\RdFramework.Reflection\bin\Release\*.snupkg %NUGET_LOCAL_SOURCE%
 move %BUILD_DIR%\..\..\..\rd-net\RdFramework\bin\Release\*.nupkg %NUGET_LOCAL_SOURCE%
 move %BUILD_DIR%\..\..\..\rd-net\RdFramework\bin\Release\*.snupkg %NUGET_LOCAL_SOURCE%
 move %BUILD_DIR%\..\..\..\rd-net\Lifetimes\bin\Release\*.nupkg %NUGET_LOCAL_SOURCE%

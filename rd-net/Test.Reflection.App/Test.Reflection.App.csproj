@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RdFramework.Reflection\RdFramework.Reflection.csproj" />
     <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
   </ItemGroup>
 

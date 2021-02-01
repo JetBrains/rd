@@ -27,7 +27,14 @@ JetBrains Networking library for reactive distributed communication
 * .NET
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework
   * NuGet artifacts: https://www.nuget.org/packages/JetBrains.RdFramework
-  
+
+#### RdFramework.Reflection
+Plugin for RdFramework used for defining models using regular C#
+
+* .NET
+  * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework.Reflection
+  * NuGet artifacts: https://www.nuget.org/packages/JetBrains.RdFramework.Reflection
+
 ### RdGen
 Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
 * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-gen
