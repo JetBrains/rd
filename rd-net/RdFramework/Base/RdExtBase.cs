@@ -164,6 +164,8 @@ namespace JetBrains.Rd.Base
     
     private readonly Queue<QueueItem> mySendQ = new Queue<QueueItem>();
 
+    public bool IsStub => false;
+
     public ProtocolContexts Contexts
     {
       get => RealWire.Contexts;
@@ -202,7 +204,7 @@ namespace JetBrains.Rd.Base
     {
       lock (mySendQ)
       {
-        if (mySendQ.Count > 0 || !Connected.Value)
+        if (!RealWire.IsStub && (mySendQ.Count > 0 || !Connected.Value))
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
