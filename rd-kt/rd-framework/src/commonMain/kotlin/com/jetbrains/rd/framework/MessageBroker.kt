@@ -14,10 +14,35 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
         val log = Protocol.sublogger("MQ")
     }
 
+    constructor(defaultScheduler: IScheduler, queueMessages: Boolean) : this(defaultScheduler) {
+        isQueueingAllMessages = queueMessages
+    }
+
     private val lock = Any()
 
     private val subscriptions = hashMapOf<RdId, IRdWireable>()
     private val broker = hashMapOf<RdId, Mq>()
+
+    private var isQueueingAllMessages = false
+
+    fun startDeliveringMessages() {
+        require(isQueueingAllMessages) { "Already delivering messages" }
+
+        Sync.lock(lock) {
+            isQueueingAllMessages = false
+
+            val entries = broker.entries.toList()
+            broker.clear()
+
+            entries.forEach { (id, mq) ->
+                assert(mq.customSchedulerMessages.isEmpty()) { "Unexpected custom scheduler messages" }
+
+                mq.defaultSchedulerMessages.forEach {
+                    dispatch(id, it)
+                }
+            }
+        }
+    }
 
     private fun IRdWireable.invoke(msg: AbstractBuffer, sync: Boolean = false) {
         if (sync) { //todo think about scheduler.isActive()
@@ -52,10 +77,13 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
         Sync.lock(lock) {
 
             val s = subscriptions[id]
-            if (s == null) {
+            if (s == null || isQueueingAllMessages) {
                 val currentIdBroker = broker.getOrCreate(id) { Mq() }
 
                 currentIdBroker.defaultSchedulerMessages.add(buffer)
+
+                if(isQueueingAllMessages) return
+
                 defaultScheduler.queue {
                     val subscription = subscriptions[id] //no lock because can be changed only under default scheduler
 
