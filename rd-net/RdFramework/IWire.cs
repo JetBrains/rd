@@ -11,6 +11,13 @@ namespace JetBrains.Rd
 {
   public interface IWire
   {
+    /// <summary>
+    /// Used to indicate that the wire implementation is not supposed to be used with the remote counterpart.
+    /// These special wires can be used for local protocols instances to support working with the same models both from
+    /// reactive-distributed way and regular in-process synchronous reactive models.
+    /// </summary>
+    bool IsStub { get; }
+
     void Send<TParam>(RdId id, TParam param, [NotNull, InstantHandle] Action<TParam, UnsafeWriter> writer);
     void Advise([NotNull] Lifetime lifetime, [NotNull] IRdWireable entity);
     
@@ -29,6 +36,8 @@ namespace JetBrains.Rd
     private ProtocolContexts myContexts;
     
     private bool myBackwardsCompatibleWireFormat = false;
+
+    public bool IsStub => false;
 
     public ProtocolContexts Contexts
     {
