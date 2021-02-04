@@ -26,9 +26,9 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     private var isQueueingAllMessages = false
 
     fun startDeliveringMessages() {
-        require(isQueueingAllMessages) { "Already delivering messages" }
-
         Sync.lock(lock) {
+            require(isQueueingAllMessages) { "Already delivering messages" }
+
             isQueueingAllMessages = false
 
             val entries = broker.entries.toList()
