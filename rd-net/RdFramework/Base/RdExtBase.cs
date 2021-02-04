@@ -202,9 +202,12 @@ namespace JetBrains.Rd.Base
     
     public void Send<TContext>(RdId id, TContext param, Action<TContext, UnsafeWriter> writer)
     {
+      if (RealWire.IsStub)
+        return;
+
       lock (mySendQ)
       {
-        if (!RealWire.IsStub && (mySendQ.Count > 0 || !Connected.Value))
+        if (mySendQ.Count > 0 || !Connected.Value)
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
