@@ -68,6 +68,10 @@ interface IWire {
     fun setupContexts(newContexts: ProtocolContexts)
 }
 
+interface IWireWithDelayedDelivery : IWire {
+    fun startDeliveringMessages()
+}
+
 /**
  * Supports serializing and deserializing values of a specific type.
  */

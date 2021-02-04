@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -25,9 +26,18 @@ namespace JetBrains.Rd.Impl
     private readonly Dictionary<RdId, IRdWireable> mySubscriptions = new Dictionary<RdId, IRdWireable>();
     private readonly Dictionary<RdId, Mq> myBroker = new Dictionary<RdId, Mq>();
 
+    private bool myIsQueueingAllMessages;
+
     public MessageBroker(IScheduler scheduler)
     {
       myScheduler = scheduler;
+      myIsQueueingAllMessages = false;
+    }
+    
+    public MessageBroker(IScheduler scheduler, bool withholdMessageDeliveryInitially)
+    {
+      myScheduler = scheduler;
+      myIsQueueingAllMessages = withholdMessageDeliveryInitially;
     }
 
 
@@ -74,8 +84,27 @@ namespace JetBrains.Rd.Impl
             reactive.OnWireReceived(reader);
       }
     }
-    
-    
+
+    public void StartDeliveringMessages()
+    {
+      Assertion.Require(myIsQueueingAllMessages, "Already started delivering messages");
+
+      lock (myLock)
+      {
+        myIsQueueingAllMessages = false;
+
+        var entries = myBroker.ToList();
+        myBroker.Clear();
+        
+        foreach (var keyValuePair in entries)
+        {
+          Assertion.Assert(keyValuePair.Value.CustomSchedulerMessages.Count == 0, "Unexpected custom scheduler messages");
+          
+          foreach (var messageBytes in keyValuePair.Value.DefaultSchedulerMessages)
+            Dispatch(keyValuePair.Key, messageBytes);
+        }
+      }
+    }
 
     //on poller thread
     public void Dispatch(RdId id, byte[] msg)
@@ -85,11 +114,13 @@ namespace JetBrains.Rd.Impl
       lock (myLock)
       {
         var s = mySubscriptions.GetOrDefault(id);
-        if (s == null)
+        if (s == null || myIsQueueingAllMessages)
         {
           var currentBroker = myBroker.GetOrCreate(id, () => new Mq());
           currentBroker.DefaultSchedulerMessages.Add(msg);
 
+          if (myIsQueueingAllMessages) return;
+          
           myScheduler.Queue(() =>
           {
             byte[] msg1;

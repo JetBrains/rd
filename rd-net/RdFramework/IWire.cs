@@ -17,7 +17,12 @@ namespace JetBrains.Rd
     [NotNull] ProtocolContexts Contexts { get; set; }
   }
 
-  public abstract class WireBase : IWire
+  public interface IWireWithDelayedDelivery : IWire
+  {
+    void StartDeliveringMessages();
+  }
+
+  public abstract class WireBase : IWireWithDelayedDelivery
   {    
     protected readonly MessageBroker MessageBroker;
     protected IScheduler Scheduler { get; }
@@ -35,6 +40,8 @@ namespace JetBrains.Rd
       }
     }
 
+    public void StartDeliveringMessages() => MessageBroker.StartDeliveringMessages();
+
     public bool BackwardsCompatibleWireFormat
     {
       get => myBackwardsCompatibleWireFormat;
@@ -51,7 +58,7 @@ namespace JetBrains.Rd
       if (scheduler == null) throw new ArgumentNullException(nameof(scheduler));
 
       Scheduler = scheduler;
-      MessageBroker = new MessageBroker(scheduler);
+      MessageBroker = new MessageBroker(scheduler, true);
     }
 
     

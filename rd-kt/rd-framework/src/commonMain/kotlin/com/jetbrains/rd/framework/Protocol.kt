@@ -74,5 +74,8 @@ class Protocol internal constructor(
                 }
             }
         }
+
+        if (wire is IWireWithDelayedDelivery)
+            wire.startDeliveringMessages()
     }
 }

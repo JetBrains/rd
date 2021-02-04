@@ -50,6 +50,9 @@ namespace JetBrains.Rd.Impl
       if (parentContexts == null)
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
+      
+      if (wire is IWireWithDelayedDelivery wireWithMessageBroker)
+        wireWithMessageBroker.StartDeliveringMessages();
     }
 
     private InternRoot<object> CreateProtocolInternRoot(Lifetime lifetime)
