@@ -87,10 +87,10 @@ namespace JetBrains.Rd.Impl
 
     public void StartDeliveringMessages()
     {
-      Assertion.Require(myIsQueueingAllMessages, "Already started delivering messages");
-
       lock (myLock)
       {
+        Assertion.Require(myIsQueueingAllMessages, "Already started delivering messages");
+        
         myIsQueueingAllMessages = false;
 
         var entries = myBroker.ToList();
