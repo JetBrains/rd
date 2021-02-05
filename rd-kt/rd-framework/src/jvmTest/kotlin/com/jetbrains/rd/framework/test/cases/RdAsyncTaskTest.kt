@@ -7,25 +7,25 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
-import com.jetbrains.rd.framework.util.asCompletableFuture
-import com.jetbrains.rd.framework.util.await
-import com.jetbrains.rd.framework.util.awaitAll
-import com.jetbrains.rd.framework.util.toRdTask
+import com.jetbrains.rd.framework.util.*
 import com.jetbrains.rd.util.AtomicInteger
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
+import com.jetbrains.rd.util.lifetime.*
+import com.jetbrains.rd.util.reactive.RdFault
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.Linearization
+import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 class RdAsyncTaskTest : RdFrameworkTestBase() {
@@ -496,6 +496,138 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
 
         assertEquals("0", result.valueOrThrow.unwrap())
     }
+
+    @Test
+    fun startSuspendingTest() {
+        val entity_id = 1
+
+        val callsite = RdCall<Int, String>().static(entity_id)
+        val endpoint = RdCall<Int, String>(null) { x -> throw Exception() }.static(entity_id)
+
+        clientProtocol.bindStatic(callsite, "client")
+        serverProtocol.bindStatic(endpoint, "server")
+
+
+        Lifetime.using { lifetime ->
+            val scheduler = SingleThreadScheduler(lifetime, "TestScheduler")
+
+            // send receive
+            endpoint.set { _, req -> lifetime.startAsync(scheduler) { req.toString() }.toRdTask() }
+
+            runBlocking(scheduler.asCoroutineDispatcher) {
+                var res = callsite.startSuspending(Lifetime.Eternal, 0)
+                assertEquals("0", res)
+
+                res = callsite.startSuspending(Lifetime.Eternal, 1)
+                assertEquals("1", res)
+            }
+
+
+            // auto cancellation
+            var cancelled: Boolean? = null
+            endpoint.set { lf, req ->
+                lifetime.startAsync(scheduler) {
+                    lf.waitFor(Duration.ofSeconds(10)) { false } //
+                    cancelled = lf.isNotAlive
+                    assert(lf.isNotAlive)
+                    req.toString()
+                }.toRdTask()
+            }
+
+            runBlocking(scheduler.asCoroutineDispatcher) {
+                val job = launch {
+                    callsite.startSuspending(Lifetime.Eternal, 0)
+                }
+
+                yield() // wait for startSuspending asynchronously
+
+                job.cancel()
+                lifetime.waitFor(Duration.ofSeconds(1)) { cancelled != null } //non blocking wait
+                assertNotEquals(null, cancelled) { "cancelled must be initialized" }
+                assert(cancelled!!) { "cancelled must be true" }
+            }
+        }
+    }
+
+    @Test
+    fun setSuspendTest() {
+        val entity_id = 1
+
+        val callsite = RdCall<Int, String>().static(entity_id)
+        val endpoint = RdCall<Int, String>(null) { x -> throw Exception() }.static(entity_id)
+
+        clientProtocol.bindStatic(callsite, "client")
+        serverProtocol.bindStatic(endpoint, "server")
+
+        Lifetime.using { lifetime ->
+            val scheduler = SingleThreadScheduler(lifetime, "TestScheduler")
+
+            var count = 0
+            val cancelled = AtomicBoolean(false)
+            endpoint.setSuspend(handlerScheduler = scheduler) { lf, arg ->
+                scheduler.assertThread()
+                return@setSuspend when (arg) {
+                    1 -> {
+                        assertEquals(0, count)
+                        count = 1
+                        "1"
+                    }
+                    2 -> {
+                        assertEquals(2, count)
+                        delay(10)
+                        return@setSuspend "2"
+                    }
+                    3 -> {
+                        assertEquals(2, count)
+                        count = 3
+                        try {
+                            lf.waitFor(Duration.ofSeconds(10)) { false }
+                        } catch (e: CancellationException) {
+                            cancelled.set(true)
+                            throw e;
+                        }
+
+                        getLogger<RdTaskTest>().error { "Must not be reached" }
+                        return@setSuspend "3"
+                    }
+                    else -> {
+                        throw TestException()
+                    }
+                }
+            }
+
+            runBlocking {
+                val task = callsite.start(lifetime, 1)
+
+                scheduler.queue {
+                    assertEquals(1, count)
+                    count = 2
+                }
+
+                assertEquals("1", task.awaitInternal())
+
+                assertEquals("2", callsite.startSuspending(lifetime, 2))
+
+                lifetime.usingNested { nestedLifetime ->
+                    callsite.start(nestedLifetime, 3)
+                    withContext(scheduler) { assertEquals(3, count) } // sync with endpoint
+                }
+
+                lifetime.waitFor(Duration.ofSeconds(1)) { cancelled.get() }
+                assert(cancelled.get())
+
+                try {
+                    callsite.startSuspending(lifetime, 4)
+                    getLogger<RdTaskTest>().error { "Must not be reached" }
+                } catch (e: RdFault) {
+                    assert(e.reasonTypeFqn == "TestException")
+                    // ok
+                }
+            }
+        }
+    }
+
+    private class TestException : Exception()
 }
 
 
