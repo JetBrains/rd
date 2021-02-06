@@ -5,10 +5,7 @@ import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.OptProperty
-import com.jetbrains.rd.util.reactive.adviseOnce
-import com.jetbrains.rd.util.reactive.valueOrThrow
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
@@ -26,7 +23,7 @@ fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(lifetime: Lifetime, re
 
 
 open class RdTask<T> : IRdTask<T> {
-    override val result = OptProperty<RdTaskResult<T>>()
+    override val result = WriteOnceProperty<RdTaskResult<T>>()
     fun set(v : T) = result.set(RdTaskResult.Success(v))
 
     companion object {
