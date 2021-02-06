@@ -32,6 +32,9 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     override lateinit var wireScheduler: IScheduler
     override lateinit var serializationContext : SerializationCtx
 
+    override var scheduler: IScheduler
+        get() = wireScheduler
+        set(value) { wireScheduler = value }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val value = valueSerializer.read(serializationContext, buffer)
@@ -69,6 +72,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     }
 
 
+    // todo remove this counterintuitive method
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
         if (isBound) assertThreading() //even if listener on pool thread, advise must be on main thread
         this.wireScheduler = scheduler
