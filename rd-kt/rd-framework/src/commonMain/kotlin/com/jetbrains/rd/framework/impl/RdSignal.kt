@@ -73,6 +73,7 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
 
 
     // todo remove this counterintuitive method
+    @Deprecated("You should explicitly override the scheduler")
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
         if (isBound) assertThreading() //even if listener on pool thread, advise must be on main thread
         this.wireScheduler = scheduler
