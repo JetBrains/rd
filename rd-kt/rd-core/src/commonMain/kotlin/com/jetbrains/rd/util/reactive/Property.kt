@@ -66,7 +66,7 @@ class WriteOnceProperty<T : Any> : IOptProperty<T> {
 
     override fun set(newValue: T) {
         if (!setIfEmpty(newValue)) {
-            throw IllegalStateException("WriteOnceProperty already set with `${value}`, but you try to rewrite it to `${value}`")
+            throw IllegalStateException("WriteOnceProperty is already set with `${value}`, but you're trying to rewrite it with `${value}`")
         }
     }
 

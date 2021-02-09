@@ -20,6 +20,9 @@ open class RdCoroutineScope(lifetime: Lifetime) : CoroutineScope {
 
         val current: RdCoroutineScope get() = currentHost.get() ?: default
 
+        /**
+         * Should be called on start of the application to override the default behavior of the Rd-based coroutines (default dispatcher, exception handler, shutdown behavior).
+         */
         fun override(lifetime: Lifetime, host: RdCoroutineScope) {
             lifetime.bracket({
                 if (!currentHost.compareAndSet(null, host)) {
