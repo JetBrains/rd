@@ -6,7 +6,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.incrementCookie
 
-class Signal<T> : ISignal<T> {
+open class Signal<T> : ISignal<T> {
     companion object {
         private val cookie = TlsBoxed(0)
 

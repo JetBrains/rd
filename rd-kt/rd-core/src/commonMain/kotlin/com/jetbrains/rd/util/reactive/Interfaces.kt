@@ -152,7 +152,9 @@ interface ISignal<T> : ISource<T> {
     fun fire(value : T)
 }
 
-interface IAsyncSignal<T> : ISignal<T>, IAsyncSource<T>
+interface IAsyncSignal<T> : ISignal<T>, IAsyncSource<T>  {
+    var scheduler: IScheduler
+}
 
 typealias IVoidSignal = ISignal<Unit>
 typealias IAsyncVoidSignal = IAsyncSignal<Unit>

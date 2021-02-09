@@ -87,6 +87,7 @@ interface IRdTask<out T> {
 }
 
 expect inline fun <T> IRdTask<T>.wait(timeoutMs: Long, pump: () -> Unit) : Boolean
+internal expect suspend fun <T> IRdTask<T>.awaitInternal(): T
 
 val <T> IRdTask<T>.isSucceeded : Boolean get() = result.valueOrNull is RdTaskResult.Success
 val <T> IRdTask<T>.isCanceled : Boolean get() = result.valueOrNull is RdTaskResult.Cancelled
@@ -108,12 +109,15 @@ interface IRdCall<in TReq, out TRes> {
     @Deprecated("Use overload with Lifetime")
     fun start(request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
     fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
+
+    suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): TRes
 }
 
 /**
  * Counterpart of IRdCall.
  */
 interface IRdEndpoint<TReq, TRes> {
+    val protocol: IProtocol
 
     /**
      * Assigns a handler that executes the API asynchronously.

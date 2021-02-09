@@ -5,10 +5,7 @@ import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.OptProperty
-import com.jetbrains.rd.util.reactive.adviseOnce
-import com.jetbrains.rd.util.reactive.valueOrThrow
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
@@ -26,7 +23,7 @@ fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(lifetime: Lifetime, re
 
 
 open class RdTask<T> : IRdTask<T> {
-    override val result = OptProperty<RdTaskResult<T>>()
+    override val result = WriteOnceProperty<RdTaskResult<T>>()
     fun set(v : T) = result.set(RdTaskResult.Success(v))
 
     companion object {
@@ -59,8 +56,9 @@ class CallSiteWiredRdTask<TReq, TRes>(
     wireScheduler: IScheduler
 ) : WiredRdTask<TReq, TRes>(call, rdid, wireScheduler) {
 
+    private val taskWireSubscriptionDefinition = outerLifetime.createNested()
+
     init {
-        val taskWireSubscriptionDefinition = outerLifetime.createNested()
 
         call.wire.advise(taskWireSubscriptionDefinition.lifetime, this) //this lifetimeDef listen only one value
         taskWireSubscriptionDefinition.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
@@ -77,6 +75,10 @@ class CallSiteWiredRdTask<TReq, TRes>(
                 sendCancellation()
             }
         }
+    }
+
+    internal fun cancel() {
+        taskWireSubscriptionDefinition.terminate()
     }
 
     private fun sendCancellation() {
@@ -218,17 +220,31 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     }
 
 
+    @Deprecated("Use overload with lifetime", ReplaceWith("start(/*lifetime*/, request, responseScheduler)","com.jetbrains.rd.util.lifetime.Lifetime"))
     override fun start(request: TReq, responseScheduler: IScheduler?) : IRdTask<TRes> {
-        return startInternal(Lifetime.Eternal, request, false, responseScheduler ?: protocol.scheduler) as RdTask<TRes>
+        return start(Lifetime.Eternal, request, responseScheduler)
     }
 
-    fun start(request: TReq) = start(request, null)
+    @Deprecated("Use overload with lifetime", ReplaceWith("start(/*lifetime*/, request)", "com.jetbrains.rd.util.lifetime.Lifetime") )
+    fun start(request: TReq) = start(Lifetime.Eternal, request)
+
+    fun start(lifetime: Lifetime, request: TReq) = start(lifetime, request, null)
 
     override fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler?) : IRdTask<TRes> {
         return startInternal(lifetime, request, false, responseScheduler ?: protocol.scheduler)
     }
 
-    private fun startInternal(lifetime: Lifetime, request: TReq, sync: Boolean, scheduler: IScheduler) : IRdTask<TRes> {
+    override suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler?): TRes {
+        val task = startInternal(lifetime, request, false, responseScheduler ?: protocol.scheduler)
+        return try {
+            task.awaitInternal()
+        } catch (e: CancellationException) {
+            task.cancel() // send the cancellation to the backend if the coroutine has been cancelled
+            throw e;
+        }
+    }
+
+    private fun startInternal(lifetime: Lifetime, request: TReq, sync: Boolean, scheduler: IScheduler) : CallSiteWiredRdTask<TReq, TRes> {
         assertBound()
         if (!async) assertThreading()
 
@@ -243,6 +259,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
         return task
     }
+
     /**
      * Assigns a handler that executes the API asynchronously.
      */

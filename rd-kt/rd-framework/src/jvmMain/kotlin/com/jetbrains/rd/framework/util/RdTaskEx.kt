@@ -2,16 +2,17 @@ package com.jetbrains.rd.framework.util
 
 import com.jetbrains.rd.framework.IRdTask
 import com.jetbrains.rd.framework.RdTaskResult
+import com.jetbrains.rd.framework.awaitInternal
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.adviseOnce
 import kotlinx.coroutines.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
+import java.util.concurrent.CompletionStage
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-@ExperimentalCoroutinesApi
 fun <T> Deferred<T>.toRdTask() = RdTask<T>().also { rdTask ->
     invokeOnCompletion {
         when (it) {
@@ -22,7 +23,7 @@ fun <T> Deferred<T>.toRdTask() = RdTask<T>().also { rdTask ->
     }
 }
 
-fun <T> CompletableFuture<T>.toRdTask() = RdTask<T>().also { rdTask ->
+fun <T> CompletionStage<T>.toRdTask() = RdTask<T>().also { rdTask ->
     whenComplete { res, e ->
         when (e) {
             null -> rdTask.set(res)
@@ -37,15 +38,8 @@ fun <T> CompletableFuture<T>.toRdTask() = RdTask<T>().also { rdTask ->
     }
 }
 
-suspend fun <T> IRdTask<T>.await() = suspendCancellableCoroutine<T> { c ->
-    result.adviseOnce(Lifetime.Eternal) {
-        when (it) {
-            is RdTaskResult.Success -> c.resume(it.value)
-            is RdTaskResult.Cancelled -> c.cancel(CancellationException("Task finished in Cancelled state"))
-            is RdTaskResult.Fault -> c.resumeWithException(it.error)
-        }
-    }
-}
+@Deprecated("Use startSuspending instead of start().await()")
+suspend fun <T> IRdTask<T>.await() = awaitInternal()
 
 fun <T> IRdTask<T>.asCompletableFuture() = CompletableFuture<T>().also { future ->
     result.adviseOnce(Lifetime.Eternal) {
