@@ -550,6 +550,29 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
     }
 
     @Test
+    fun setSuspendNotBoundTest() {
+        val entity_id = 1
+
+        val callsite = RdCall<Int, String>().static(entity_id)
+        val endpoint = RdCall<Int, String>(null) { x -> throw Exception() }.static(entity_id)
+
+        endpoint.setSuspend { lifetime, arg ->
+            delay(1)
+            arg.toString()
+        }
+
+        clientProtocol.bindStatic(callsite, "client")
+        serverProtocol.bindStatic(endpoint, "server")
+
+        runBlocking {
+            withTimeout(1000) {
+                val  result = callsite.startSuspending(Lifetime.Eternal, 1)
+                assertEquals("1", result)
+            }
+        }
+    }
+
+    @Test
     fun setSuspendTest() {
         val entity_id = 1
 
