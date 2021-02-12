@@ -117,8 +117,6 @@ interface IRdCall<in TReq, out TRes> {
  * Counterpart of IRdCall.
  */
 interface IRdEndpoint<TReq, TRes> {
-    val protocol: IProtocol
-
     /**
      * Assigns a handler that executes the API asynchronously.
      */
