@@ -90,11 +90,28 @@ namespace JetBrains.Rd.Tasks
         {
           var value = ReadRequestDelegate(SerializationContext, reader);
           ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
-          rdTask = Handler(externalCancellation, value);
+          var handler = Handler;
+          if (handler == null)
+          {
+            var message = $"Handler is not set for {wiredTask} :: received request: {value.PrintToString()}";
+            ourLogReceived.Error(message);
+            rdTask = RdTask<TRes>.Faulted(new Exception(message));
+          }
+          else
+          {
+            try
+            {
+              rdTask = handler(externalCancellation, value);
+            }
+            catch (Exception ex)
+            {
+              rdTask = RdTask<TRes>.Faulted(ex);
+            }
+          }
         }
         catch (Exception e)
         {
-          rdTask = RdTask<TRes>.Faulted(e);
+          rdTask = RdTask<TRes>.Faulted(new Exception($"Unexpected exception in {wiredTask}", e));
         }
         
         rdTask.Result.Advise(Lifetime.Eternal, result =>
