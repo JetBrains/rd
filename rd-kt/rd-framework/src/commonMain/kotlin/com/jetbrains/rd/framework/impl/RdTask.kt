@@ -285,9 +285,21 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         val rdTask = try {
             val value = requestSzr.read(serializationContext, buffer)
             logReceived.trace { "endpoint `$location`::($rdid) taskId=($taskId) request = ${value.printToString()}" }
-            handler!!.invoke(externalCancellation, value)
+
+            val handlerLocal = handler
+            if (handlerLocal == null) {
+                val message = "Handler is not set for endpoint `$location`::($rdid) taskId=($taskId) :: received request:  ${value.printToString()}";
+                logReceived.error { message }
+                RdTask.faulted(Exception(message))
+            } else {
+                try {
+                    handlerLocal.invoke(externalCancellation, value)
+                } catch (e: Throwable) {
+                    RdTask.faulted(e)
+                }
+            }
         } catch (e: Throwable) {
-            RdTask.faulted<TRes>(e)
+            RdTask.faulted(Exception("Unexpected exception in endpoint `$location`::($rdid) taskId=($taskId)", e))
         }
 
         rdTask.result.advise(Lifetime.Eternal) { result ->
