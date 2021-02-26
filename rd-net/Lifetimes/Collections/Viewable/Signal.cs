@@ -28,20 +28,17 @@ namespace JetBrains.Collections.Viewable
     }
 
 
-    /// <summary>
-    /// Default implementation of <see cref="ISignal{T}"/>.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class Signal<T> : ISignal<T>, ITerminationHandler
+
+    public class SignalBase<T> : ISignal<T>, ITerminationHandler
     {
-        private LifetimedList<Action<T>> myListeners = new LifetimedList<Action<T>>();
+        private LifetimedList<Action<T>> myListeners;
 
 
         //todo for future use
         public IScheduler Scheduler { get; set; }
 
         
-        public void Fire(T value)
+        public virtual void Fire(T value)
         {
             foreach (var l in myListeners)
             {
@@ -60,7 +57,7 @@ namespace JetBrains.Collections.Viewable
             }
         }
 
-        public void Advise(Lifetime lifetime, Action<T> handler)
+        public virtual void Advise(Lifetime lifetime, Action<T> handler)
         {
             if (!lifetime.IsAlive) 
               return;
@@ -79,5 +76,13 @@ namespace JetBrains.Collections.Viewable
         {
           myListeners.ClearValuesIfNotAlive();
         }
+    }
+
+    /// <summary>
+    /// Default implementation of <see cref="ISignal{T}"/>.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public sealed /*to allow devirtualization*/ class Signal<T> : SignalBase<T>
+    {
     }
 }
