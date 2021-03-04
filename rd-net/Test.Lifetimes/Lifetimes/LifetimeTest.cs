@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Threading;
+using JetBrains.Util.Internal;
 using NUnit.Framework;
 
 namespace Test.Lifetimes.Lifetimes
@@ -257,6 +259,62 @@ namespace Test.Lifetimes.Lifetimes
       Assert.IsTrue(warningReceived, "Warning `{0}` must have been logged", expectedWarningText);
       Assert.IsTrue(exceptionReceived, "Exception `{0}` must have been logged", expectedExceptionText);
     }
+
+#if !NET35
+    [Test]
+    public void TestLongTryExecuteAsync()
+    {
+      const string expectedWarningText = "can't wait for `ExecuteIfAlive` completed on other thread";
+      const string expectedExceptionText = "ExecuteIfAlive after termination of";
+      bool warningReceived = false, exceptionReceived = false;
+
+      Lifetime.Using(lifetime =>
+      {
+        void LoggerHandler(LeveledMessage message)
+        {
+          if (message.Level == LoggingLevel.WARN && message.FormattedMessage.Contains(expectedWarningText)) 
+            warningReceived = true;
+        }
+
+        lifetime.Bracket(
+          () => TestLogger.ExceptionLogger.Handlers += LoggerHandler,
+          () => TestLogger.ExceptionLogger.Handlers -= LoggerHandler
+        );
+
+        var lifetimeDefinition = lifetime.CreateNested();
+        var lifetimeTerminatedEvent = new ManualResetEvent(false);
+        var backgroundThreadIsInTryExecuteEvent = new ManualResetEvent(false);
+        var thread = new Thread(() => lifetimeDefinition.Lifetime.TryExecute(() =>
+        {
+          backgroundThreadIsInTryExecuteEvent.Set();
+          lifetimeTerminatedEvent.WaitOne();
+        }));
+        thread.Start();
+        backgroundThreadIsInTryExecuteEvent.WaitOne();
+        
+        var terminationTask = lifetimeDefinition.TerminateAsync();
+        SpinWait.SpinUntil(() => terminationTask.IsCompleted);
+        
+        lifetimeTerminatedEvent.Set();
+        thread.Join();
+        try
+        {
+          TestLogger.ExceptionLogger.ThrowLoggedExceptions();
+        }
+        catch (Exception e)
+        {
+          if (!e.Message.Contains(expectedExceptionText))
+            throw;
+
+          exceptionReceived = true;
+        }
+      });
+
+      Assert.IsTrue(warningReceived, "Warning `{0}` must have been logged", expectedWarningText);
+      Assert.IsTrue(exceptionReceived, "Exception `{0}` must have been logged", expectedExceptionText);
+    }
+#endif
+
     
     [Test]
     public void TestBracketGood()
@@ -1170,6 +1228,547 @@ namespace Test.Lifetimes.Lifetimes
       
       Thread.Sleep(200);
       Assert.True(lf.IsNotAlive);
+    }
+
+    [Test]
+    public void DoubleAsyncTerminationTest()
+    {
+      {
+        var definition = new LifetimeDefinition();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+        definition.Terminate();
+        Assert.AreEqual(1, count);
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        definition.Terminate();
+        Assert.AreEqual(1, count);
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        Assert.AreEqual(1, count);
+        definition.Terminate();
+        definition.Terminate();
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        Assert.AreEqual(1, count);
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+        var e1 = new ManualResetEvent(false);
+        var e2 = new ManualResetEvent(false);
+        var task = TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          using (definition.Lifetime.UsingExecuteIfAlive())
+          {
+            e1.Set();
+            e2.WaitOne();
+          }
+        });
+
+        e1.WaitOne();
+        var t = definition.TerminateAsync();
+        Assert.IsFalse(t.IsCompleted);
+        
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        e2.Set();
+        
+        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
+        Assert.IsTrue(t.AsTask().Wait(TimeSpan.FromSeconds(10)));
+        
+        Assert.AreEqual(1, count);
+      }
+    }
+
+    [Test]
+    public void ConcurrentDoubleAsyncTermination()
+    {
+      for (var i = 0; i < 10000; i++)
+      {
+        var definition = new LifetimeDefinition();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+
+        const int threadsCount = 10;
+        var threads = 0;
+        var tasks = Enumerable.Range(0, threadsCount).Select(_ => TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          Interlocked.Increment(ref threads);
+          SpinWait.SpinUntil(() => Memory.VolatileRead(ref threads) == threadsCount); // sync threads
+
+          Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        })).ToArray();
+
+        Assert.IsTrue(Task.WaitAll(tasks, TimeSpan.FromMinutes(1)));
+        Assert.AreEqual(1, count);
+      }
+    }
+
+    [Test]
+    public void SimpleTerminateAsyncTest()
+    {
+      {
+        var definition = new LifetimeDefinition();
+        var currentThread = Thread.CurrentThread;
+        var called = false;
+        definition.Lifetime.OnTermination(() =>
+        {
+          Assert.AreEqual(currentThread, Thread.CurrentThread);
+          called = true;
+        });
+
+        var task = definition.TerminateAsync();
+        Assert.IsTrue(task.IsCompletedSuccessfully);
+        Assert.IsTrue(called);
+      }
+
+      {
+        var scheduler = SingleThreadScheduler.RunOnSeparateThread(TestLifetime, "TestScheduler");
+        
+        var definition = new LifetimeDefinition();
+        var called = false;
+        definition.Lifetime.OnTermination(() =>
+        {
+          scheduler.AssertThread();
+          called = true;
+        });
+
+        Task task;
+        var e1 = new SemaphoreSlim(0);
+        var e2 = new SemaphoreSlim(0);
+        using (var cookie = definition.Lifetime.UsingExecuteIfAlive())
+        {
+          Assert.IsTrue(cookie.Succeed);
+          task = TestLifetime.StartAsync(scheduler, async () =>
+          {
+            scheduler.AssertThread();
+            var task = definition.TerminateAsync();
+            Assert.IsFalse(task.IsCompletedSuccessfully);
+            Assert.IsFalse(called);
+
+            scheduler.Queue(() => e1.Release());
+            await e2.WaitAsync();
+            
+            scheduler.AssertThread();
+            Assert.IsTrue(task.IsCompletedSuccessfully);
+            Assert.IsTrue(called);
+          });
+          
+          e1.Wait();
+        }
+
+        e2.Release();
+        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
+        
+        Assert.AreEqual(TaskStatus.RanToCompletion, task.Status);
+        Assert.IsTrue(called);
+      }
+    }
+
+    [Test]
+    public void SimpleNestedAsyncTermination()
+    {
+      var def1 = new LifetimeDefinition();
+      var def2 = def1.Lifetime.CreateNested();
+      
+      var e1 = new ManualResetEvent(false);
+      var e2 = new ManualResetEvent(false);
+
+      TestLifetime.Start(TaskScheduler.Default, () =>
+      {
+        using (var cookie = def2.UsingExecuteIfAlive())
+        {
+          Assert.IsTrue(cookie.Succeed);
+
+          e1.Set();
+          e2.WaitOne();
+        }
+      });
+
+      e1.WaitOne();
+      
+      var task = def1.TerminateAsync();
+      Assert.IsFalse(task.IsCompleted);
+      Assert.AreEqual(LifetimeStatus.Terminating, def1.Status);
+      Assert.AreEqual(LifetimeStatus.Canceling, def2.Status);
+
+      e2.Set();
+      
+      Assert.IsTrue(task.AsTask().Wait(TimeSpan.FromSeconds(10)));
+      
+      Assert.IsTrue(task.IsCompletedSuccessfully);
+      Assert.AreEqual(LifetimeStatus.Terminated, def1.Status);
+      Assert.AreEqual(LifetimeStatus.Terminated, def2.Status);
+    }
+
+    [Test]
+    public void AsyncDisposableTerminationTest()
+    {
+      var disposable = new TestAsyncDisposable();
+      var definition = new LifetimeDefinition();
+      definition.Lifetime.OnTermination(disposable);
+
+      var scheduler = new SequentialScheduler("TestScheduler", TestLifetime);
+      var task = TestLifetime.StartAsync(scheduler, async () =>
+      {
+        var t = definition.TerminateAsync();
+        Assert.IsFalse(t.IsCompleted);
+        Assert.AreEqual(LifetimeStatus.Terminating, definition.Status);
+
+        Assert.IsTrue(disposable.Disposing);
+        Assert.IsFalse(disposable.Disposed);
+
+        await Task.Yield();
+        
+        Assert.IsTrue(disposable.Disposed);
+        Assert.IsTrue(t.IsCompletedSuccessfully);
+        Assert.AreEqual(LifetimeStatus.Terminated, definition.Status);
+      });
+      
+      Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
+      Assert.AreEqual(TaskStatus.RanToCompletion, task.Status);
+      Assert.AreEqual(LifetimeStatus.Terminated, definition.Status);
+    }
+
+    [Test]
+    public void AllowAsyncTerminationTest()
+    {
+      var definition = new LifetimeDefinition {AllowTerminationUnderExecution = true};
+      var called = false;
+      definition.Lifetime.OnTermination(() => called = true);
+      using (definition.Lifetime.UsingExecuteIfAlive())
+      {
+        definition.TerminateAsync();
+        Assert.IsTrue(called);
+      }
+    }
+
+    [Test]
+    public void AsyncTerminationUnderExecutionErrorTest()
+    {
+      var definition = new LifetimeDefinition();
+      var called = false;
+      var thread = Thread.CurrentThread;
+      definition.Lifetime.OnTermination(() =>
+      {
+        Assert.AreEqual(thread, Thread.CurrentThread);
+        called = true;
+      });
+      using (definition.Lifetime.UsingExecuteIfAlive())
+      {
+        Assert.Throws<InvalidOperationException>(() => definition.TerminateAsync());
+        Assert.IsFalse(called);
+      }
+      Assert.IsFalse(called);
+      
+      Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+      Assert.IsTrue(called);
+    }
+
+    [Test]
+    public void CancellationTokenAsyncTerminationTest()
+    {
+      {
+        var definition = new LifetimeDefinition();
+        var token = definition.Lifetime.ToCancellationToken();
+        definition.TerminateAsync();
+        Assert.IsTrue(token.IsCancellationRequested);
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        definition.TerminateAsync();
+        var token = definition.Lifetime.ToCancellationToken();
+        Assert.IsTrue(token.IsCancellationRequested);
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var token = definition.Lifetime.ToCancellationToken();
+        var e1 = new ManualResetEvent(false);
+        var e2 = new ManualResetEvent(false);
+        TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          using (definition.Lifetime.UsingExecuteIfAlive())
+          {
+            e1.Set();
+            e2.WaitOne();
+          }
+        });
+        
+        var task = definition.TerminateAsync();
+        Assert.IsTrue(token.IsCancellationRequested);
+        e2.Set();
+        Assert.IsTrue(task.AsTask().Wait(TimeSpan.FromSeconds(10)));
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var e1 = new ManualResetEvent(false);
+        var e2 = new ManualResetEvent(false);
+        TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          using (definition.Lifetime.UsingExecuteIfAlive())
+          {
+            e1.Set();
+            e2.WaitOne();
+          }
+        });
+        
+        var task = definition.TerminateAsync();
+        var token = definition.Lifetime.ToCancellationToken();
+        Assert.IsTrue(token.IsCancellationRequested);
+        e2.Set();
+        Assert.IsTrue(task.AsTask().Wait(TimeSpan.FromSeconds(10)));
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var e1 = new ManualResetEvent(false);
+        var e2 = new ManualResetEvent(false);
+        TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          using (definition.Lifetime.UsingExecuteIfAlive())
+          {
+            e1.Set();
+            e2.WaitOne();
+          }
+        });
+        
+        var task = definition.TerminateAsync();
+        e2.Set();
+        Assert.IsTrue(task.AsTask().Wait(TimeSpan.FromSeconds(10)));
+        var token = definition.Lifetime.ToCancellationToken();
+        Assert.IsTrue(token.IsCancellationRequested);
+      }
+    }
+
+    [Test]
+    public void ConcurrentCancellationTokenAndAsyncTerminationTest()
+    {
+      for (int i = 0; i < 10000; i++)
+      {
+        var definition = new LifetimeDefinition();
+        var e1 = new ManualResetEvent(false);
+        var e2 = new ManualResetEvent(false);
+
+        var executionTask = TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          using (definition.Lifetime.UsingExecuteIfAlive())
+          {
+            e1.Set();
+            e2.WaitOne();
+          }
+        });
+
+        e1.WaitOne();
+
+        const int threadsCount = 10;
+        var threads = 0;
+        
+        var tasks = Enumerable.Range(0, threadsCount).Select(num => TestLifetime.StartAsync(TaskScheduler.Default, async () =>
+        {
+          Interlocked.Increment(ref threads);
+          SpinWait.SpinUntil(() => Memory.VolatileRead(ref threads) == threadsCount);
+
+          if (num % 2 == 0)
+            return definition.ToCancellationToken();
+
+          await definition.TerminateAsync();
+          return definition.ToCancellationToken();
+        })).ToArray();
+
+        e2.Set();
+        
+        var whenAllTask = Task.WhenAll(tasks);
+        Assert.IsTrue(whenAllTask.Wait(TimeSpan.FromMinutes(1)));
+        
+        var tokens = whenAllTask.Result;
+        Assert.IsTrue(tokens.All(x => x.IsCancellationRequested));
+
+        executionTask.Wait(TimeSpan.FromSeconds(10));
+      }
+    }
+    
+    [Test]
+    public void ConcurrentCancellationTokenAndTerminationTest()
+    {
+      for (int i = 0; i < 10000; i++)
+      {
+        var definition = new LifetimeDefinition();
+        var e1 = new ManualResetEvent(false);
+        var e2 = new ManualResetEvent(false);
+
+        var executionTask = TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          using (definition.Lifetime.UsingExecuteIfAlive())
+          {
+            e1.Set();
+            e2.WaitOne();
+          }
+        });
+
+        e1.WaitOne();
+
+        const int threadsCount = 10;
+        var threads = 0;
+        
+        var tasks = Enumerable.Range(0, threadsCount).Select(num => TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          Interlocked.Increment(ref threads);
+          SpinWait.SpinUntil(() => Memory.VolatileRead(ref threads) == threadsCount);
+
+          if (num % 2 == 0)
+            return definition.ToCancellationToken();
+
+          definition.Terminate();
+          return definition.ToCancellationToken();
+        })).ToArray();
+
+        e2.Set();
+        
+        var whenAllTask = Task.WhenAll(tasks);
+        Assert.IsTrue(whenAllTask.Wait(TimeSpan.FromMinutes(1)));
+        
+        var tokens = whenAllTask.Result;
+        Assert.IsTrue(tokens.All(x => x.IsCancellationRequested));
+
+        executionTask.Wait(TimeSpan.FromSeconds(10));
+      }
+    }
+
+
+    [Test]
+    public void ConcurrentToCancellationTokenTest()
+    {
+      for (int i = 0; i < 10000; i++)
+      {
+        var definition = new LifetimeDefinition();
+        
+        const int threadsCount = 10;
+        var threads = 0;
+        
+        var tasks = Enumerable.Range(0, threadsCount).Select(num => TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          Interlocked.Increment(ref threads);
+          SpinWait.SpinUntil(() => Memory.VolatileRead(ref threads) == threadsCount);
+
+          return definition.ToCancellationToken();
+        })).ToArray();
+
+        var whenAllTask = Task.WhenAll(tasks);
+        Assert.IsTrue(whenAllTask.Wait(TimeSpan.FromMinutes(1)));
+        
+        var tokens = whenAllTask.Result;
+        var singleToken = tokens.Distinct().Single();
+        Assert.IsFalse(singleToken.IsCancellationRequested);
+
+        if (i % 2 == 0)
+          Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        else
+          definition.Terminate();
+        
+        Assert.IsTrue(singleToken.IsCancellationRequested);
+      }
+    }
+
+    [Test]
+    public void TerminatedToCancellationToken()
+    {
+      var token = LifetimeDefinition.Terminated.ToCancellationToken();
+      Assert.AreEqual(token, new CancellationToken(true));
+    }
+
+    [Test]
+    public void RecursiveTerminateAsync()
+    {
+      {
+        var definition = new LifetimeDefinition();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+        definition.Lifetime.OnTermination(() => definition.Terminate());
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        Assert.AreEqual(1, count);
+        Assert.AreEqual(LifetimeStatus.Terminated, definition.Status);
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+        definition.Lifetime.OnTermination(() =>
+        {
+          Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        });
+        
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        Assert.AreEqual(1, count);
+        Assert.AreEqual(LifetimeStatus.Terminated, definition.Status);
+      }
+      
+      {
+        var definition = new LifetimeDefinition();
+        var nested = definition.Lifetime.CreateNested();
+        var count = 0;
+        definition.Lifetime.OnTermination(() => count++);
+        nested.Lifetime.OnTermination(() =>
+        {
+          Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        });
+        
+        Assert.IsTrue(definition.TerminateAsync().IsCompletedSuccessfully);
+        Assert.AreEqual(1, count);
+        Assert.AreEqual(LifetimeStatus.Terminated, definition.Status);
+        Assert.AreEqual(LifetimeStatus.Terminated, nested.Status);
+      }
+    }
+
+    [Test]
+    public void NonAsyncDisposableTerminationTest()
+    {
+      var definition = new LifetimeDefinition();
+      var disposable = new TestNonAsyncDisposable();
+      definition.Lifetime.OnTermination(disposable);
+      Assert.IsFalse(disposable.Disposed);
+      
+      definition.Terminate();
+      Assert.IsTrue(disposable.Disposed);
+    }
+    
+    private class TestNonAsyncDisposable : IDisposable, IAsyncDisposable
+    {
+      public bool Disposing { get; private set; }
+      public bool Disposed { get; private set; }
+
+      public void Dispose()
+      {
+        Disposing = true;
+        Disposed = true;
+      }
+
+      public ValueTask DisposeAsync() => throw new NotImplementedException(); // must not be called
+    }
+
+    
+    private class TestAsyncDisposable : IDisposable, IAsyncDisposable
+    {
+      public bool Disposing { get; private set; }
+      public bool Disposed { get; private set; }
+      
+      public void Dispose() => throw new NotImplementedException(); // must not be called
+
+      public async ValueTask DisposeAsync()
+      {
+        Disposing = true;
+        await Task.Yield();
+        Disposed = true;
+      }
     }
     
 #endif
