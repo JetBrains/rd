@@ -152,13 +152,13 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    [Obsolete("Use NewThreadLocalWriterImpl()")]
+    [Obsolete("Use NewThreadLocalWriter()")]
     public static Cookie NewThreadLocalWriterNoCaching()
     {
       return NewThreadLocalWriterImpl(false);
     }
 
-    [Obsolete("Use NewThreadLocalWriterImpl()")]
+    [Obsolete("Use NewThreadLocalWriter()")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static Cookie NewThreadLocalWriterImpl(bool allowCaching)
     {
