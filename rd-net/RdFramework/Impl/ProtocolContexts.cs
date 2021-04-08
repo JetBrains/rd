@@ -203,6 +203,17 @@ namespace JetBrains.Rd.Impl
     }
 
     /// <summary>
+    /// Adds current values of registered contexts to their respective value sets without writing them to the wire
+    /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "sync is for atomicity of write/send pairs, not access")]
+    public void RegisterCurrentValuesInValueSets()
+    {
+      var count = myHandlerOrder.Count;
+      for (var i = 0; i < count; i++) 
+        myHandlerOrder[i].RegisterValueInValueSet();
+    }
+
+    /// <summary>
     /// Writes an empty context
     /// </summary>
     public static void WriteEmptyContexts(UnsafeWriter writer)

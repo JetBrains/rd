@@ -22,6 +22,11 @@ namespace JetBrains.Rd.Impl
         Context.WriteDelegate(context, writer, value);
     }
 
+    public void RegisterValueInValueSet()
+    {
+      // no-op
+    }
+
     public T ReadValue(SerializationCtx context, UnsafeReader reader)
     {
       var hasValue = reader.ReadBool();
