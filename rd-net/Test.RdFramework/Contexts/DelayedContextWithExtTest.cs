@@ -31,6 +31,7 @@ namespace Test.RdFramework.Contexts
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
 
+      var barrierRegister = new Barrier(2);
       var barrier0 = new Barrier(2);
       var barrier1 = new Barrier(2);
       var barrier2 = new Barrier(2);
@@ -39,7 +40,10 @@ namespace Test.RdFramework.Contexts
       
       ServerProtocol.Scheduler.Queue(() =>
       {
+        barrierRegister.SignalAndWait();
+        
         context.RegisterOn(ServerProtocol.Contexts);
+
         var serverModel = new InterningRoot1(LifetimeDefinition.Lifetime, ServerProtocol);
         
         ServerWire.TransmitAllMessages();
@@ -63,6 +67,9 @@ namespace Test.RdFramework.Contexts
       ClientProtocol.Scheduler.Queue(() =>
       {
         context.RegisterOn(ClientProtocol.Serializers);
+        
+        barrierRegister.SignalAndWait();
+
         var clientModel = new InterningRoot1(LifetimeDefinition.Lifetime, ClientProtocol);
 
         barrier0.SignalAndWait();
