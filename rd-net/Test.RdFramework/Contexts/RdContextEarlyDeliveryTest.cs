@@ -108,6 +108,8 @@ namespace Test.RdFramework.Contexts
       myClientWire = clientWire;
       myClientWire.Connection = myServerWire;
       myServerWire.Connection = myClientWire;
+      
+      myClientProtocol = new Protocol(clientIdea, CreateSerializers(), identities, clientDispatcher, clientWire, LifetimeDefinition.Lifetime, key);
 
       myServerWire.AutoTransmitMode = true;
       myClientWire.AutoTransmitMode = true;
@@ -117,8 +119,6 @@ namespace Test.RdFramework.Contexts
       key.Value = "1";
       
       serverSignal.Fire("");
-
-      myClientProtocol = new Protocol(clientIdea, CreateSerializers(), identities, clientDispatcher, clientWire, LifetimeDefinition.Lifetime, key);
 
       var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
 
