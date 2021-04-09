@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.impl.HeavySingleContextHandler
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
 import com.jetbrains.rd.util.Logger
@@ -228,6 +229,13 @@ class ExtWire : IWire {
                 writer(buffer)
                 @Suppress("UNCHECKED_CAST")
                 sendQ.offer(QueueItem(id, buffer.position, buffer.getArray(), contexts.registeredContexts.map { (it as RdContext<Any>) to it.value }))
+                contexts.sendWithoutContexts {
+                    // trigger value set addition here to replicate normal wire behavior
+                    contexts.registeredContexts.map { contexts.getContextHandler(it) }
+                        .filterIsInstance<HeavySingleContextHandler<Any>>().forEach { handler ->
+                            handler.context.value?.let { value -> handler.valueSet.add(value) }
+                        }
+                }
                 return
             }
 

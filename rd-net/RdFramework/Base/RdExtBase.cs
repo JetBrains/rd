@@ -215,6 +215,7 @@ namespace JetBrains.Rd.Base
             var storedContext = Contexts.RegisteredContexts
               .Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
             mySendQ.Enqueue(new QueueItem(id, cookie.CloneData(), storedContext));
+            Contexts.RegisterCurrentValuesInValueSets();
           }
 
           return;

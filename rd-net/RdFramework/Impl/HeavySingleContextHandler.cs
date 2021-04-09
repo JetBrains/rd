@@ -69,11 +69,7 @@ namespace JetBrains.Rd.Impl
       {
         using (myHandler.CreateSendWithoutContextsCookie())
         {
-          if (!myProtocolValueSet.Contains(value))
-          {
-            Assertion.Require(Proto.Scheduler.IsActive, "Attempting to use previously unused context value {0} on a background thread for key {1}", value, Context.Key);
-            myProtocolValueSet.Add(Context.Value);
-          }
+          AddValueToProtocolValueSetImpl(value);
 
           var internedId = myInternRoot.Intern(value);
           InternId.Write(writer, internedId);
@@ -84,6 +80,22 @@ namespace JetBrains.Rd.Impl
           }
         }
       }
+    }
+
+    private void AddValueToProtocolValueSetImpl(T value)
+    {
+      if (myProtocolValueSet.Contains(value)) return;
+      
+      Assertion.Require(Proto.Scheduler.IsActive, "Attempting to use previously unused context value {0} on a background thread for key {1}", value, Context.Key);
+      myProtocolValueSet.Add(Context.Value);
+    }
+
+    public void RegisterValueInValueSet()
+    {
+      var value = Context.Value;
+      if (value == null) return;
+      using (myHandler.CreateSendWithoutContextsCookie()) 
+        AddValueToProtocolValueSetImpl(value);
     }
 
     public T ReadValue(SerializationCtx context, UnsafeReader reader)
