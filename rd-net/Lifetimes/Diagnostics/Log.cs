@@ -282,7 +282,7 @@ namespace JetBrains.Diagnostics
         var writer = new StreamWriter(fileStream, Encoding.UTF8);
         lifetime.OnTermination(writer);
 
-        return new TextWriterLogFactory(writer, enabledLevel);
+        return new TextWriterLogFactory(TextWriter.Synchronized(writer), enabledLevel);
       }
       catch (Exception ex)
       {
