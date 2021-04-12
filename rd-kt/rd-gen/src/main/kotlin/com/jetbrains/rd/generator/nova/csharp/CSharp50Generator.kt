@@ -900,7 +900,7 @@ open class CSharp50Generator(
         indent {
             +decl.allMembers
                     .joinToString(",\n") {
-                        val defValue = getDefaultValue(decl, it)
+                        val defValue = getDefaultValue(decl, it) ?: ""
                         if (!it.hasEmptyConstructor) sanitize(it.name)
                         else "${it.ctorSubstitutedName(decl)}(${(it as? Member.Reactive)?.customSerializers(decl, leadingComma = false)
                                 ?: ""}$defValue)"
