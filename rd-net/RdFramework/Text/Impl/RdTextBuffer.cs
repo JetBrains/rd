@@ -15,7 +15,7 @@ namespace JetBrains.Rd.Text.Impl
 {
   public class RdTextBuffer : RdDelegateBase<RdTextBufferState>, ITextBufferWithTypingSession
   {
-    public bool IsMaster => false;
+    public bool IsMaster { get; }
     private readonly RdChangeOrigin myLocalOrigin;
 
     private readonly List<RdTextBufferChange> myChangesToConfirmOrRollback;
@@ -23,6 +23,8 @@ namespace JetBrains.Rd.Text.Impl
 
     [CanBeNull]
     private TextBufferTypingSession myActiveSession;
+
+    public bool IsCommitting => myActiveSession != null && myActiveSession.IsCommitting;
 
     public TextBufferVersion BufferVersion { get; private set; }
 
@@ -33,8 +35,9 @@ namespace JetBrains.Rd.Text.Impl
     {
     }
 
-    public RdTextBuffer(RdTextBufferState state) : base(state)
+    public RdTextBuffer(RdTextBufferState state, bool isMaster = false) : base(state)
     {
+      IsMaster = isMaster;
       myTextChanged = new ViewableProperty<RdTextChange>();
       myChangesToConfirmOrRollback = new List<RdTextBufferChange>();
       BufferVersion = TextBufferVersion.InitVersion;
@@ -125,7 +128,11 @@ namespace JetBrains.Rd.Text.Impl
       }
 
       BufferVersion = newVersion;
-      myTextChanged.SetValue(change);
+
+      if (!IsMaster || myActiveSession == null || !myActiveSession.IsCommitting)
+      {
+        myTextChanged.SetValue(change);
+      }
     }
 
     private void ClearState()
@@ -137,8 +144,14 @@ namespace JetBrains.Rd.Text.Impl
 
     public void Fire(RdTextChange change)
     {
-      Assertion.Assert(Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion, "Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion");
+      Assertion.Assert(Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion,
+        "Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion");
       if (Delegate.IsBound) Proto.Scheduler.AssertThread();
+
+      if (IsMaster && myActiveSession != null && myActiveSession.IsCommitting)
+      {
+        return;
+      }
 
       IncrementBufferVersion();
       var bufferChange = new RdTextBufferChange(BufferVersion, myLocalOrigin, change);
@@ -193,13 +206,14 @@ namespace JetBrains.Rd.Text.Impl
       return myActiveSession;
     }
 
-    private class TextBufferTypingSession : ITypingSession
+    public class TextBufferTypingSession : ITypingSession
     {
       private enum State
       {
         Opened,
         Committing
       }
+
       private readonly RdTextBuffer myBuffer;
       private readonly List<RdTextBufferChange> myRemoteChanges = new List<RdTextBufferChange>();
       private readonly List<RdTextChange> myLocalChanges = new List<RdTextChange>();
@@ -207,41 +221,69 @@ namespace JetBrains.Rd.Text.Impl
       private readonly TextBufferVersion myInitialBufferVersion;
       private State myState = State.Opened;
 
+      public readonly Signal<RdTextChange> OnLocalChange = new Signal<RdTextChange>();
+      public readonly Signal<RdTextChange> OnRemoteChange = new Signal<RdTextChange>();
 
       public TextBufferTypingSession(RdTextBuffer buffer)
       {
-        Assertion.Assert(!buffer.IsMaster, "Master version is not implemented");
         myBuffer = buffer;
         myInitialBufferVersion = myBuffer.BufferVersion;
-        myVersionBeforeOpening = myBuffer.Delegate.VersionBeforeTypingSession.Value;
+
+        if (buffer.IsMaster)
+        {
+          myVersionBeforeOpening = myBuffer.BufferVersion;
+          myBuffer.Delegate.VersionBeforeTypingSession.Value = myInitialBufferVersion;
+        }
+        else
+        {
+          myVersionBeforeOpening = buffer.Delegate.VersionBeforeTypingSession.Value;
+        }
       }
+
+      public bool IsCommitting => myState == State.Committing;
 
       public bool TryPushLocalChange(RdTextChange change)
       {
         if (myState != State.Opened) return false;
 
+        OnLocalChange.Fire(change);
         myLocalChanges.Add(change);
         return true;
+      }
+
+      private static int CompareVersions(TextBufferVersion first, TextBufferVersion second)
+      {
+        if (first.Master != second.Master)
+          return first.Master - second.Master;
+        return first.Slave - second.Slave;
       }
 
       public bool TryPushRemoteChange(RdTextBufferChange change)
       {
         if (myState != State.Opened) return false;
-        if (change.Version.Master <= myVersionBeforeOpening.Master) return false;
+        if (!myBuffer.IsMaster && change.Version.Master <= myVersionBeforeOpening.Master) return false;
+        if (myBuffer.IsMaster && CompareVersions(change.Version, myVersionBeforeOpening) <= 0) return false;
 
+        OnRemoteChange.Fire(change.Change);
         myRemoteChanges.Add(change);
         return true;
       }
 
       public void CommitRemoteChanges()
       {
-        Assertion.Assert(myState == State.Opened, "myState == State.Opened");
-        myState = State.Committing;
+        StartCommitRemoteVersion();
+        FinishCommitRemoteVersion();
+      }
 
-        for (var i = myLocalChanges.Count - 1; i >= 0; i--)
+      public void FinishCommitRemoteVersion()
+      {
+        if (!myBuffer.IsMaster)
         {
-          var change = myLocalChanges[i];
-          myBuffer.myTextChanged.SetValue(change.Reverse());
+          for (var i = myLocalChanges.Count - 1; i >= 0; i--)
+          {
+            var change = myLocalChanges[i];
+            myBuffer.myTextChanged.SetValue(change.Reverse());
+          }
         }
 
         myBuffer.BufferVersion = myInitialBufferVersion;
@@ -250,6 +292,12 @@ namespace JetBrains.Rd.Text.Impl
         {
           myBuffer.ReceiveChange(bufferChange);
         }
+      }
+
+      public void StartCommitRemoteVersion()
+      {
+        Assertion.Assert(myState == State.Opened, "myState == State.Opened");
+        myState = State.Committing;
       }
     }
   }
