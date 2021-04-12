@@ -51,7 +51,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
             val klass: KClass<out IGenerator>,
             val flowTransform: FlowTransform?,
             val delegateFqn: String,
-            val factoryFqn: String = delegateFqn
+            val factoryFqn: String? = null
     )
 
     sealed class Reactive(name: String, vararg val genericParams: IType) : Member(name, genericParams.toList()) {
@@ -82,10 +82,11 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
                 }
 
                 fun factoryFqn(generator: IGenerator, flowTransform: FlowTransform) : String {
-                    return findDelegate(generator, flowTransform)?.factoryFqn ?: javaClass.simpleName
+                    val delegate = findDelegate(generator, flowTransform) ?: return javaClass.simpleName
+                    return delegate.factoryFqn ?: delegate.delegateFqn;
                 }
 
-                private fun findDelegate(generator: IGenerator, flowTransform: FlowTransform): ExtensionDelegate? {
+                fun findDelegate(generator: IGenerator, flowTransform: FlowTransform): ExtensionDelegate? {
                     return delegates.firstOrNull {
                         it.klass.safeCast(generator) != null && (it.flowTransform == null || it.flowTransform == flowTransform)
                     }
