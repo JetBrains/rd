@@ -66,8 +66,8 @@ namespace Org.TestRoot1
     //secondary constructor
     private Solution2 (
     ) : this (
-      new RdCall<int, MyClass>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt, MyClass.Read, MyClass.Writenull),
-      new RdProperty<RdDocumentModel>(RdDocumentModel.Read, RdDocumentModel.Writenull)
+      new RdCall<int, MyClass>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt, MyClass.Read, MyClass.Write),
+      new RdProperty<RdDocumentModel>(RdDocumentModel.Read, RdDocumentModel.Write)
     ) {}
     //deconstruct trait
     //statics
@@ -141,7 +141,7 @@ namespace Org.TestRoot1
     //secondary constructor
     public MyClass (
     ) : this (
-      new RdSet<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteStringnull)
+      new RdSet<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString)
     ) {}
     //deconstruct trait
     //statics
