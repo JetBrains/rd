@@ -46,7 +46,8 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
         serializationContext = super.serializationContext
-        wireScheduler = defaultScheduler
+        if (!this::wireScheduler.isInitialized)
+            wireScheduler = defaultScheduler
         wire.advise(lifetime, this)
 
     }

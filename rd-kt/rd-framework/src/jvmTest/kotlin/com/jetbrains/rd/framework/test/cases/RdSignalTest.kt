@@ -11,6 +11,7 @@ import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.threading.SynchronousScheduler
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.reflect.KClass
@@ -220,6 +221,29 @@ class RdSignalTest : RdFrameworkTestBase() {
         server_property.fire(Foo(false, 3))
         assertEquals(Foo(false, 3), clientLog)
         assertEquals(Foo(false, 3), serverLog)
+    }
+
+    @Test
+    fun testAssignedSchedulerAfterBind() {
+        require(clientProtocol.scheduler !== SynchronousScheduler) { "Test assumes protocol default scheduler is not Sync" }
+
+        val signal = RdSignal<Unit>()
+        signal.wireScheduler = SynchronousScheduler
+        clientProtocol.bindStatic(signal.static(1), "top")
+
+        assertEquals(SynchronousScheduler, signal.wireScheduler)
+    }
+
+    // this test can be removed together with the deprecated method it tests
+    @Test
+    fun testAdvisedSchedulerAfterBind() {
+        require(clientProtocol.scheduler !== SynchronousScheduler) { "Test assumes protocol default scheduler is not Sync" }
+
+        val signal = RdSignal<Unit>()
+        signal.adviseOn(Lifetime.Eternal, SynchronousScheduler) { _ -> }
+        clientProtocol.bindStatic(signal.static(1), "top")
+
+        assertEquals(SynchronousScheduler, signal.wireScheduler)
     }
 
     private class VoidSignalEntity(private val _foo: RdSignal<Unit>) : RdBindableBase() {
