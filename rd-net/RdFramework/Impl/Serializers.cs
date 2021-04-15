@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Serialization;
-using JetBrains.Threading;
 using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Impl
@@ -35,41 +32,33 @@ namespace JetBrains.Rd.Impl
 
     [CanBeNull] private readonly ITypesRegistrar myRegistrar;
     private readonly object myLock = new object();
-
-    struct ToplevelRegistration
-    {
-      internal Type Type { get; }
-      internal Action<ISerializers> Action { get; }
-
-      public ToplevelRegistration(Type type, Action<ISerializers> action)
-      {
-        Type = type;
-        Action = action;
-      }
-    }
     
-  
 #if !NET35
-    private readonly Actor<ToplevelRegistration> myBackgroundRegistrar;
+    private readonly StealingScheduler myBackgroundRegistrar;
 
-    [Obsolete("Provide Lifetime and TaskScheduler. An active Task will leak in case of missing Lifetime (via Actor)", false)]
-    public Serializers() : this(Lifetime.Eternal, null, null)
+    public Serializers() : this(null, null)
     {
     }
 
-    public Serializers(Lifetime lifetime, [CanBeNull] TaskScheduler scheduler, [CanBeNull] ITypesRegistrar registrar)
+    public Serializers([CanBeNull] TaskScheduler scheduler, [CanBeNull] ITypesRegistrar registrar)
     {
       myRegistrar = registrar;
-      myBackgroundRegistrar = new Actor<ToplevelRegistration>("RegisterSerializers", lifetime, RegisterToplevelInternal, scheduler);
-      myBackgroundRegistrar.SendBlocking(new ToplevelRegistration(typeof(Serializers), RegisterFrameworkMarshallers));
+      myBackgroundRegistrar = new StealingScheduler(new ConcurrentExclusiveSchedulerPair(scheduler ?? TaskScheduler.Default).ExclusiveScheduler, false);
+      RegisterToplevelOnce(typeof(Serializers), RegisterFrameworkMarshallers);
     }
 
-    [Obsolete("Provide Lifetime and TaskScheduler. An active Task will leak in case of missing Lifetime (via Actor)", false)]
     public Serializers([CanBeNull] ITypesRegistrar registrar)
       : this()
     {
       myRegistrar = registrar;
     }
+
+    [Obsolete("Lifetime is not required anymore", false)]
+    public Serializers(Lifetime lifetime, [CanBeNull] TaskScheduler scheduler, [CanBeNull] ITypesRegistrar registrar)
+    : this(scheduler, registrar)
+    {
+    }
+
 #else
     public Serializers() => RegisterFrameworkMarshallers(this);
 
@@ -271,7 +260,7 @@ namespace JetBrains.Rd.Impl
           return myReaders.TryGetValue(rdId, out readDelegate);
       }
 #if !NET35
-      myBackgroundRegistrar.WaitForEmpty();
+      myBackgroundRegistrar.Join();
 #endif
       
       var typeId = RdId.Read(reader);
@@ -315,7 +304,7 @@ namespace JetBrains.Rd.Impl
       }
 
 #if !NET35
-      myBackgroundRegistrar.WaitForEmpty();
+      myBackgroundRegistrar.Join();
 #endif
 
       if (value == null)
@@ -351,21 +340,19 @@ namespace JetBrains.Rd.Impl
     private readonly HashSet<Type> myRegisteredToplevels = new HashSet<Type>();
     public void RegisterToplevelOnce(Type toplevelType, Action<ISerializers> registerDeclaredTypesSerializers)
     {
-      var r = new ToplevelRegistration(toplevelType, registerDeclaredTypesSerializers);
 #if !NET35
-      var task = myBackgroundRegistrar.SendOrExecuteInline(r);
-      Assertion.Assert(task.IsCompleted, "task.IsCompleted: {0}", task.Status);
+      new Task(() => RegisterToplevelInternal(toplevelType, registerDeclaredTypesSerializers)).Start(myBackgroundRegistrar);
 #else
-      RegisterToplevelInternal(r);
- #endif
+      RegisterToplevelInternal(toplevelType, registerDeclaredTypesSerializers);
+#endif
     }
 
-    private void RegisterToplevelInternal(ToplevelRegistration r)
+    private void RegisterToplevelInternal(Type type, Action<ISerializers> register)
     {
-      if (!myRegisteredToplevels.Add(r.Type)) return;
-      Protocol.InitTrace?.Log($"REGISTER serializers for {r.Type.Name}");
+      if (!myRegisteredToplevels.Add(type)) return;
+      Protocol.InitTrace?.Log($"REGISTER serializers for {type.Name}");
 
-      r.Action(this);
+      register(this);
     }
   }
 }

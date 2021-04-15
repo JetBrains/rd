@@ -53,7 +53,7 @@ namespace Test.Reflection.App
       var lifetime = lifetimeDefinition.Lifetime;
 
       var reflectionSerializers = new ReflectionSerializersFacade();
-      var serializers = new Serializers(lifetime, TaskScheduler.Default, reflectionSerializers.Registrar);
+      var serializers = new Serializers(TaskScheduler.Default, reflectionSerializers.Registrar);
 
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, "Scheduler");
       Protocol protocol;

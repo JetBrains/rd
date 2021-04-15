@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Diagnostics;
 using JetBrains.dotMemoryUnit;
-using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
@@ -81,7 +79,7 @@ namespace Test.RdFramework.Reflection
       var checkpoint = dotMemory.Check();
       for (int i = 0; i < 100000; i++)
       {
-        var serializers = new Serializers(Lifetime.Eternal, null, null);
+        var serializers = new Serializers();
       }
       dotMemory.Check(m => Assert.Less(m.GetDifference(checkpoint).GetNewObjects().SizeInBytes, 128_000));
     }

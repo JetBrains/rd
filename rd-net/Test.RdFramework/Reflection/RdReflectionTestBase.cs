@@ -45,7 +45,7 @@ namespace Test.RdFramework.Reflection
 
     protected override Serializers CreateSerializers(bool isServer)
     {
-      return new Serializers(TestLifetime, TaskScheduler.Default, isServer ? SFacade.Registrar : CFacade.Registrar);
+      return new Serializers(TaskScheduler.Default, isServer ? SFacade.Registrar : CFacade.Registrar);
     }
 
     protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase
