@@ -14,6 +14,7 @@ import java.lang.IllegalArgumentException
 val ProtocolInternScope = InternScope(null, "Protocol")
 
 fun Struct.field(name : String, type : IScalar) = append(Field(name, type))
+fun Struct.field(name : String, type : ScalarAttributedType<IScalar>) = append(Field(name, type))
 fun Class.field(name : String, type : IType) = append(Field(name, type))
 fun Toplevel.field(name : String, type : Aggregate) = append(Field(name, type))
 fun Aggregate.field(name : String, type : Aggregate) = append(Field(name, type))
@@ -24,6 +25,7 @@ fun Declaration.const(name: String, type: Enum, value: Member.EnumConst) = appen
 fun Declaration.const(name: String, type: PredefinedType.bool, value: Boolean) = appendConst(Member.Const.Integral(name, type, value.toString()))
 fun Declaration.const(name: String, type: PredefinedType.char, value: Char) = appendConst(Member.Const.Integral(name, type, value.toString()))
 fun Declaration.const(name: String, type: PredefinedType.string, value: String) = appendConst(Member.Const.Integral(name, type, value))
+fun Declaration.const(name: String, type: ScalarAttributedType<PredefinedType>, value: String) = appendConst(Member.Const.Integral(name, type, value))
 fun Declaration.const(name: String, type: Enum, value: Int) = appendConst(Member.Const.Enum(name, type, type.constants[value]))
 fun Declaration.const(name: String, type: Enum, value: String) {
     type.constants.find { it.name == value}?.let {
@@ -65,11 +67,14 @@ fun BindableDeclaration.callback(name : String, paramType : IScalar, resultType 
 
 
 fun BindableDeclaration.property(name : String, valueType : IType) = append(Property(name, valueType))
+fun BindableDeclaration.property(name: String, defaultValue: TypeWithValue) = append(Property(name, defaultValue.type, defaultValue.defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Boolean) = append(Property(name, PredefinedType.bool, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Int) = append(Property(name, PredefinedType.int, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Double) = append(Property(name, PredefinedType.double, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: String) = append(Property(name, PredefinedType.string, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Member.Const) = append(Property(name, PredefinedType.string, defaultValue))
+fun BindableDeclaration.property(name: String, defaultValue: Member.Const, vararg attributes: KnownAttrs) =
+    append(Property(name, PredefinedType.string.attrs(*attributes), defaultValue))
 
 fun BindableDeclaration.list(name : String, itemType : IType) = append(List(name, itemType))
 fun BindableDeclaration.set(name : String, itemType : INonNullableScalar) = append(Set(name, itemType))
@@ -128,6 +133,23 @@ fun Class.internRoot(scope: InternScope) {
     internRootForScopes.add(scope.keyName)
 }
 
+private fun Array<out KnownAttrs>.mapAttrs() = this.map {
+    when (it) {
+        KnownAttrs.Nls -> listOf(Lang.Kotlin to "org.jetbrains.annotations.Nls")
+        KnownAttrs.NonNls -> listOf(Lang.Kotlin to "org.jetbrains.annotations.NonNls")
+        KnownAttrs.NlsSafe -> listOf(Lang.Kotlin to "com.intellij.openapi.util.NlsSafe")
+    }
+}.flatten().groupBy { it.first }.map { g -> g.key to g.value.map { it.second }}.toMap()
+
+fun <T> T.attrs(vararg attributes: KnownAttrs): ScalarAttributedType<T> where T : IScalar {
+    val attrs = attributes.mapAttrs()
+    return ScalarAttributedType(this, attrs)
+}
+
+val nlsString: ScalarAttributedType<PredefinedType> get() = PredefinedType.string.attrs(KnownAttrs.Nls)
+val nonNlsString: ScalarAttributedType<PredefinedType> get() = PredefinedType.string.attrs(KnownAttrs.NonNls)
+val nlsSafeString: ScalarAttributedType<PredefinedType> get() = PredefinedType.string.attrs(KnownAttrs.NlsSafe)
+
 /**
  * Marks this key a light key. Light keys don't maintain a value set and send values un-interned.
  */
@@ -136,3 +158,5 @@ val Context.Generated.light: Context
         isHeavyKey = false
         return this
     }
+
+enum class KnownAttrs { Nls, NlsSafe, NonNls }

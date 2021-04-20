@@ -87,7 +87,6 @@ abstract class GeneratorBase(protected open val flowTransform: FlowTransform, pr
         get() = this is Struct.Concrete && base == null && allMembers.isNotEmpty()
 }
 
-
-
+enum class Lang { Kotlin, CSharp, Cpp}
 
 

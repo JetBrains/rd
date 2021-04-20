@@ -3,14 +3,17 @@ package com.jetbrains.rd.generator.test.cases.generator.example
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
+import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.generator.nova.util.syspropertyOrInvalid
+import com.jetbrains.rd.util.reflection.scanForResourcesContaining
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import java.io.File
 
 object ExampleRootNova : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrInvalid("model.out.src.kt.dir"))),
-        Cpp17Generator(FlowTransform.AsIs, "org.example", File(syspropertyOrInvalid("model.out.src.cpp.dir")))
-//    CSharp50Generator(FlowTransform.Reversed, "org.example", File("C:/work/Rider/Platform/RdProtocol/rider-generated/Src//com/jetbrains/rider/model.cSharp"), "[ShellComponent]")
+        Kotlin11Generator(FlowTransform.AsIs, "org.example", File("build/testOutputKotlin")),
+        Cpp17Generator(FlowTransform.AsIs, "org.example", File("build/testOutputCpp")),
+        CSharp50Generator(FlowTransform.AsIs, "org.example", File("build/testOutputCSharp"))
 )
 
 @Suppress("unused")
@@ -25,6 +28,7 @@ object ExampleModelNova : Ext(ExampleRootNova) {
             +"b"
             +"c"
         })
+        field("nls_field", nlsString)
     }
 
     val foo = baseclass {
@@ -47,10 +51,20 @@ object ExampleModelNova : Ext(ExampleRootNova) {
     val baz = classdef extends Bar {
         field("foo", immutableList(foo))
         field("bar", immutableList(Bar.nullable))
+        field("nls_field", nlsString)
+        field("nls_nullable_field", string.nullable.attrs(KnownAttrs.Nls))
         property("foo1", foo.nullable)
         property("bar1", Bar.nullable)
         map("mapScalar", int, scalarFoo).readonly.async
         map("mapBindable", int, FooBar)
+        const("const_nls", nlsString, "const_nls_value")
+
+        val ccNls = const("const_for_default_nls", nlsString, "291")
+        property("property_with_default_nls", ccNls, KnownAttrs.Nls)
+
+        property("property_with_several_attrs", string.attrs(KnownAttrs.Nls, KnownAttrs.NonNls))
+        property("nls_prop", nlsString)
+        field("non_nls_open_field", nonNlsString)
     }
 
     val FooBar: Class.Concrete = classdef {
@@ -92,11 +106,37 @@ object ExampleModelNova : Ext(ExampleRootNova) {
 }
 
 class TestExample {
+
+    companion object {
+        val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
+    }
+
     //    @Test
     fun test() {
         val pkg1 = javaClass.`package`.name.apply { println(this) }
         val pkg2 = "com.jetbrains.rd.modeltemplate"
         val classloader = javaClass.classLoader
         generateRdModel(classloader, arrayOf(pkg1, pkg2), true)
+    }
+
+
+    @Test
+    fun test1() {
+        val classloader: ClassLoader = ExampleModelNova::class.java.classLoader
+
+        val files = generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator.example"), true)
+        assert(files.isNotEmpty()) { "No files generated, bug?" }
+
+        val rdgen = RdGen()
+
+        val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rd.framework") +
+            classloader.scanForResourcesContaining("com.jetbrains.rd.util") +
+            classloader.scanForResourcesContaining("org.jetbrains.annotations")
+
+        rdgen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
+
+        val generatedSources = File(kotlinGeneratedSourcesDir).walk().toList()
+        val compiledClassesLoader = rdgen.compileDsl(generatedSources)
+        Assertions.assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdgen.error}")
     }
 }

@@ -41,7 +41,10 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
     class Method(override val name: String, val resultType: IType,  val args: List<Pair<String, IType>>) : Member(name, args.map { it.second } + resultType)
 
     sealed class Const(name : String, val type: IScalar, val value: String) : Member(name, listOf<IType>(type)){
-        class Integral(name : String, type: PredefinedType, value: String) : Const(name, type, value)
+        class Integral : Const {
+            constructor(name : String, type: PredefinedType, value: String) : super(name, type, value)
+            constructor(name : String, type: ScalarAttributedType<PredefinedType>, value: String) : super(name, type, value)
+        }
 
         class Enum(name: String, type: com.jetbrains.rd.generator.nova.Enum, value: EnumConst) : Const(name, type, value.name)
     }

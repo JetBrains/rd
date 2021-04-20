@@ -43,6 +43,30 @@ data class ImmutableListOfScalars(override val itemType : IScalar) : INonNullabl
 data class ImmutableListOfBindables(override val itemType : IBindable) : INonNullableBindable, IImmutableList
 
 
+interface IAttributedType : IHasItemType {
+    val attributes: Map<Lang, List<String>>
+}
+
+data class ScalarAttributedType<out T> internal constructor(override val itemType: T, override val attributes: Map<Lang, List<String>>) : IAttributedType, IScalar where T : IScalar {
+    override val name: String get() = itemType.name
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ScalarAttributedType<*>
+
+        if (itemType != other.itemType) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return itemType.hashCode()
+    }
+
+}
+
 interface INullable : IHasItemType {
     override val itemType: INonNullable
     override val name : String get() = itemType.name + "Nullable"
@@ -595,3 +619,5 @@ val IType.hasEmptyConstructor : Boolean get() = when (this) {
 
     else -> false
 }
+
+class TypeWithValue internal constructor(val type: IType, val defaultValue: Any)

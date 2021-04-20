@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":rd-core:"))
     implementation(gradleApi())
     testImplementation(project(":rd-framework"))
+    testImplementation("org.jetbrains:annotations:20.1.0")
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
     implementation("org.jetbrains.intellij.deps:trove4j:1.0.20181211")

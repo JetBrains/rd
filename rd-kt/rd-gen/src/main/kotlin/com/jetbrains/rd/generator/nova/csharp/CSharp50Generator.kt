@@ -121,6 +121,7 @@ open class CSharp50Generator(
             is Declaration -> sanitizedName(scope)
             is InternedScalar -> itemType.substitutedName(scope)
             is INullable -> itemType.substitutedName(scope) + itemType.isValueType.condstr { "?" }
+            is IAttributedType -> itemType.substitutedName(scope)
             is IArray -> itemType.substitutedName(scope) + "[]"
             is IImmutableList -> "List<${itemType.substitutedName(scope)}>"
             is PredefinedType -> {
@@ -820,8 +821,11 @@ open class CSharp50Generator(
                             + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerContextMap => ${member.encapsulatedName};"
                         } else
                         +"$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"}
-                is Member.Field ->
-                    +"$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}"
+                is Member.Field -> {
+                    val attrs = (member.type as? IAttributedType)?.getAttrsStr()
+                    val attrsStr = if(attrs != null) "$attrs " else ""
+                    +"$attrsStr$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}"
+                }
                 else -> fail("Unsupported member: $member")
             }
         }
@@ -1055,6 +1059,17 @@ open class CSharp50Generator(
         +"}"
     }
 
+    private fun IAttributedType.getAttrsStr(): String? =
+        this.attributes.getOrDefault(Lang.CSharp, null)?.toTypedArray()
+            ?.joinToOptString(" ", "[", "]") { it }
+
+    private fun Member.getIncludedTypeAttributes(): String? = when(this) {
+        is Member.Field -> (type as? IAttributedType)?.getAttrsStr()
+        is Member.Const -> (type as? IAttributedType)?.getAttrsStr()
+
+        else -> null
+    }
+
 
     private fun PrettyPrinter.primaryConstructor(decl: Declaration) {
         if (decl !is Toplevel && decl.allMembers.isEmpty()) return //no constructors
@@ -1081,8 +1096,10 @@ open class CSharp50Generator(
                 .joinToString(",\r\n") {
                     val member = it.value
                     val typeName = member.implSubstitutedName(decl)
+                    val attributes = member.getIncludedTypeAttributes()?:""
 
                     printer {
+                        p(attributes)
                         p(member.nullAttr(true)) // [Null], [NotNull], [CanBeNull]
                         p(typeName)
                         p(" ")

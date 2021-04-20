@@ -383,6 +383,7 @@ open class Cpp17Generator(
         }
         is IArray -> "${scope.listType.withNamespace()}<${itemType.substitutedName(scope, false, omitNullability)}>"
         is IImmutableList -> "${scope.listType.withNamespace()}<${itemType.substitutedName(scope, false, omitNullability)}>"
+        is IAttributedType -> itemType.substitutedName(scope, rawType, omitNullability)
 
         is PredefinedType.char -> "wchar_t"
         is PredefinedType.byte -> "uint8_t"
@@ -1348,6 +1349,9 @@ open class Cpp17Generator(
             is INullable -> {
                 parseType(type.itemType, allowPredefined)
             }
+            is IAttributedType -> {
+                parseType(type.itemType, allowPredefined)
+            }
             is InternedScalar -> {
                 parseType(type.itemType, allowPredefined)
             }
@@ -1455,6 +1459,7 @@ open class Cpp17Generator(
             is IArray -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
             is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
             is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
+            is IAttributedType -> itemType.serializerBuilder()
             is InternedScalar -> """InternedSerializer<${itemType.serializerBuilder()}, ${internKey.hash()}>"""
             else -> fail("Unknown type: $this")
         }
@@ -1865,6 +1870,7 @@ open class Cpp17Generator(
                 val lambda = lambda(null, "return ${itemType.reader()}")
                 """buffer.read_nullable<${itemType.templateName(decl)}>($lambda)"""
             }
+            is IAttributedType -> itemType.reader()
             is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                 this as IHasItemType
                 val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
@@ -2055,6 +2061,7 @@ open class Cpp17Generator(
                     val lambda = lambda("${itemType.substitutedName(decl)} const & it", itemType.writer("it"), "void")
                     "buffer.write_nullable<${itemType.templateName(decl)}>($field, $lambda)"
                 }
+                is IAttributedType -> itemType.writer(field)
                 is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                     this as IHasItemType
                     if (isPrimitivesArray) {
