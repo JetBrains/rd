@@ -83,7 +83,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
 
                 fun factoryFqn(generator: IGenerator, flowTransform: FlowTransform) : String {
                     val delegate = findDelegate(generator, flowTransform) ?: return javaClass.simpleName
-                    return delegate.factoryFqn ?: delegate.delegateFqn;
+                    return delegate.factoryFqn ?: delegate.delegateFqn
                 }
 
                 fun findDelegate(generator: IGenerator, flowTransform: FlowTransform): ExtensionDelegate? {

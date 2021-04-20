@@ -245,12 +245,12 @@ open class CSharp50Generator(
         is Member.Method -> publicName
     }
 
-    protected open fun Member.ctorSubstitutedName(scope: Declaration) = when (this) {
-        is Member.Reactive.Stateful.Extension -> ctorSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+    protected open fun Member.creationExpressionSubstituted(scope: Declaration) = when (this) {
+        is Member.Reactive.Stateful.Extension -> simpleCreationExpression + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         else -> "new " + implSubstitutedName(scope)
     }
 
-    protected open val Member.Reactive.ctorSimpleName : String get () = when (this) {
+    protected open val Member.Reactive.simpleCreationExpression : String get () = when (this) {
         is Member.Reactive.Stateful.Extension -> {
             val delegate = findDelegate(this@CSharp50Generator, flowTransform) ?: fail("Could not find delegate: $this")
             delegate.factoryFqn ?: "new " + delegate.delegateFqn
@@ -673,7 +673,7 @@ open class CSharp50Generator(
 
         fun Member.reader(): String = when (this) {
             is Member.Field -> type.reader()
-            is Member.Reactive.Stateful.Extension -> "${ctorSubstitutedName(decl)}(${delegatedBy.reader()})"
+            is Member.Reactive.Stateful.Extension -> "${creationExpressionSubstituted(decl)}(${delegatedBy.reader()})"
             is Member.Reactive -> "${implSubstitutedName(decl)}.Read(ctx, reader${customSerializers(decl, leadingComma = true)})"
 
             else -> fail("Unknown member: $this")
@@ -902,7 +902,7 @@ open class CSharp50Generator(
                     .joinToString(",\n") {
                         val defValue = getDefaultValue(decl, it) ?: ""
                         if (!it.hasEmptyConstructor) sanitize(it.name)
-                        else "${it.ctorSubstitutedName(decl)}(${(it as? Member.Reactive)?.customSerializers(decl, leadingComma = false)
+                        else "${it.creationExpressionSubstituted(decl)}(${(it as? Member.Reactive)?.customSerializers(decl, leadingComma = false)
                                 ?: ""}$defValue)"
                     }
         }
