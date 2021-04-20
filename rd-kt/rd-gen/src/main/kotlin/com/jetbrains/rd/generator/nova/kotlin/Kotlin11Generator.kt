@@ -70,6 +70,7 @@ open class Kotlin11Generator(
             if (isPrimitivesArray) itemType.substitutedName(scope) + "Array"
             else "Array<${itemType.substitutedName(scope)}>"
         is IImmutableList -> "List<${itemType.substitutedName(scope)}>"
+        is IAttributedType -> "${getAttrsStr()} ${itemType.substitutedName(scope)}"
 
         is PredefinedType.bool -> "Boolean"
         is PredefinedType.dateTime -> "Date"
@@ -152,6 +153,8 @@ open class Kotlin11Generator(
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration) =
         "IPerContextMap<${context!!.type.substitutedName(scope)}, " + intfSubstitutedName(scope) + ">"
 
+    private fun Member.getAttrsStr(eolKind: String) = this.getSetting(Attributes)?.toList()?.fold("") { acc, attr -> "$acc@$attr$eolKind" }
+    private fun IAttributedType.getAttrsStr() = this.attributes.getOrDefault(Lang.Kotlin, null)?.joinToString(" ") { "@$it" }
 
     protected open fun Member.implSubstitutedName(scope: Declaration, perContextRawName: Boolean = false) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
@@ -458,7 +461,9 @@ open class Kotlin11Generator(
             + if (it.type is Enum) {
                 "val $name : $type = $value"
             } else {
-                "const val $name : $type = $value"
+                val memberAttrs = it.getAttrsStr(eolKind.value)?:""
+                val typeAttrs = (it as? IAttributedType)?.getAttrsStr()?:""
+                "${memberAttrs}${typeAttrs}const val $name : $type = $value"
             }
         }
     }
@@ -532,6 +537,7 @@ open class Kotlin11Generator(
             is IImmutableList -> itemType.serializerBuilder() + ".list()"
             is INullable -> itemType.serializerBuilder() + ".nullable()"
             is InternedScalar -> itemType.serializerBuilder() + ".interned(\"${internKey.keyName}\")"
+            is IAttributedType -> itemType.serializerBuilder()
             else -> fail("Unknown type: $this")
         }
 
@@ -610,6 +616,7 @@ open class Kotlin11Generator(
                         is PredefinedType.float -> "${value}f"
                         is PredefinedType.UnsignedIntegral -> "${value}u"
                         is Enum -> "${member.type.substitutedName(containing)}.$value"
+                        is IAttributedType -> "\"$value\""
                         else -> value
                     }
                 }
@@ -645,6 +652,7 @@ open class Kotlin11Generator(
                 if (isPrimitivesArray) "buffer.read${substitutedName(decl)}()"
                 else "buffer.readArray {${itemType.reader()}}"
             is IImmutableList -> "buffer.readList { ${itemType.reader()} }"
+            is IAttributedType -> itemType.reader()
 
             else -> fail("Unknown declaration: $decl")
         }
@@ -706,6 +714,7 @@ open class Kotlin11Generator(
                 if (isPrimitivesArray) "buffer.write${substitutedName(decl)}($field)"
                 else "buffer.writeArray($field) { ${itemType.writer("it")} }"
             is IImmutableList -> "buffer.writeList($field) { v -> ${itemType.writer("v")} }"
+            is IAttributedType -> itemType.writer(field)
 
             else -> fail("Unknown declaration: $decl")
         }
@@ -949,7 +958,7 @@ open class Kotlin11Generator(
         fun ctorParamAccessModifier(member: Member) = member.isEncapsulated.condstr { if (decl.isSealed) "private " else "protected " }
 
         val own = decl.ownMembers.map {
-            val attrs = it.getSetting(Attributes)?.fold("") { acc,attr -> "$acc@$attr${eolKind.value}" }
+            val attrs = it.getAttrsStr(eolKind.value)
             (attrs?:"") + "${ctorParamAccessModifier(it)}val ${it.ctorParam(decl)}"
         }
         val base = decl.membersOfBaseClasses.map { it.ctorParam(decl) }
