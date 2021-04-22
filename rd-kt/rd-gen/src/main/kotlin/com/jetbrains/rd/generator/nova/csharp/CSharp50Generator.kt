@@ -245,6 +245,18 @@ open class CSharp50Generator(
         is Member.Method -> publicName
     }
 
+    protected open fun Member.creationExpressionSubstituted(scope: Declaration) = when (this) {
+        is Member.Reactive.Stateful.Extension -> simpleCreationExpression + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        else -> "new " + implSubstitutedName(scope)
+    }
+
+    protected open val Member.Reactive.simpleCreationExpression : String get () = when (this) {
+        is Member.Reactive.Stateful.Extension -> {
+            val delegate = findDelegate(this@CSharp50Generator, flowTransform) ?: fail("Could not find delegate: $this")
+            delegate.factoryFqn ?: "new " + delegate.delegateFqn
+        }
+        else -> implSimpleName
+    }
 
     protected open val Member.hasEmptyConstructor: Boolean
         get() = when (this) {
@@ -513,8 +525,19 @@ open class CSharp50Generator(
         println()
     }
 
-    private fun getDefaultValue(containing: Declaration, member: Member): String? =
+    private fun getDefaultValue(containing: Declaration, member: Member, ignorePerClientId: Boolean = false): String? =
+        if (!ignorePerClientId && member is Member.Reactive && member.context != null)
+            null
+        else
+
             when (member) {
+                is Member.Reactive.Stateful.Property -> when {
+                    member.defaultValue is String -> "\"" + member.defaultValue + "\""
+                    member.defaultValue is Member.Const -> member.defaultValue.name
+                    member.defaultValue != null -> member.defaultValue.toString()
+                    member.isNullable -> "null"
+                    else -> null
+                }
                 is Member.Const -> {
                     val value = member.value
                     when (member.type) {
@@ -528,6 +551,7 @@ open class CSharp50Generator(
                         else -> value
                     }
                 }
+                is Member.Reactive.Stateful.Extension -> "new " + member.delegatedBy.sanitizedName(containing) + "()"
                 else -> null
             }
 
@@ -649,7 +673,7 @@ open class CSharp50Generator(
 
         fun Member.reader(): String = when (this) {
             is Member.Field -> type.reader()
-            is Member.Reactive.Stateful.Extension -> "new ${implSubstitutedName(decl)}(${delegatedBy.reader()})"
+            is Member.Reactive.Stateful.Extension -> "${creationExpressionSubstituted(decl)}(${delegatedBy.reader()})"
             is Member.Reactive -> "${implSubstitutedName(decl)}.Read(ctx, reader${customSerializers(decl, leadingComma = true)})"
 
             else -> fail("Unknown member: $this")
@@ -876,9 +900,9 @@ open class CSharp50Generator(
         indent {
             +decl.allMembers
                     .joinToString(",\n") {
-                        val defValue = it.defaultValueAsString()
+                        val defValue = getDefaultValue(decl, it) ?: ""
                         if (!it.hasEmptyConstructor) sanitize(it.name)
-                        else "new ${it.implSubstitutedName(decl)}(${(it as? Member.Reactive)?.customSerializers(decl, leadingComma = false)
+                        else "${it.creationExpressionSubstituted(decl)}(${(it as? Member.Reactive)?.customSerializers(decl, leadingComma = false)
                                 ?: ""}$defValue)"
                     }
         }
