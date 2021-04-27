@@ -283,7 +283,7 @@ class SocketWireTest : TestBase() {
         val serverSocket = SocketWire.Server(lifetime, TestScheduler, 0, allowRemoteConnections = true)
         val clientSocket = SocketWire.Client(lifetime, TestScheduler, serverSocket.port, hostAddress = InetAddress.getLocalHost())
 
-        spinUntil { clientSocket.connected.value }
+        assertTrue(spinUntil(60000L) { clientSocket.connected.value })
     }
 
 
