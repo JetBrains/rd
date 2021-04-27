@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 object ExampleRootNova : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "org.example", File("build/testOutputKotlin")),
-        Cpp17Generator(FlowTransform.AsIs, "org.example", File("build/testOutputCpp")),
-        CSharp50Generator(FlowTransform.AsIs, "org.example", File("build/testOutputCSharp"))
+        Kotlin11Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputKotlin")),
+        Cpp17Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCpp")),
+        CSharp50Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCSharp"))
 )
 
 @Suppress("unused")
