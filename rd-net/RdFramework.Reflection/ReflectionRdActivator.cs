@@ -289,7 +289,7 @@ namespace JetBrains.Rd.Reflection
         reflectionBindable.EnsureBindableChildren();
         if (reflectionBindable.BindableChildren.Count == 0)
         {
-          ourLog.Error($"{reflectionBindable.GetType().ToString(true)} Attempt to activate RdExt without bindable children. Most likely it indicates an error.");
+          ourLog.Warn($"{reflectionBindable.GetType().ToString(true)} RdExt without bindable children was activated.");
         }
 
         reflectionBindable.OnActivated();
