@@ -9,11 +9,10 @@ namespace JetBrains.Rd.Impl
 {
   public class RdSignal<T> : RdReactiveBase, ISignal<T>
   {
-
     #region Serializers
 
-    private readonly CtxReadDelegate<T> myReadValue;
-    private readonly CtxWriteDelegate<T> myWriteValue;
+    public CtxReadDelegate<T> ReadValueDelegate { get; }
+    public CtxWriteDelegate<T> WriteValueDelegate { get; }
 
     public static RdSignal<T> Read(SerializationCtx ctx, UnsafeReader reader)
     {
@@ -48,8 +47,8 @@ namespace JetBrains.Rd.Impl
 
     public RdSignal(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
     {
-      myReadValue = readValue;
-      myWriteValue = writeValue;
+      ReadValueDelegate = readValue;
+      WriteValueDelegate = writeValue;
     }
 
 
@@ -63,7 +62,7 @@ namespace JetBrains.Rd.Impl
 
     public override void OnWireReceived(UnsafeReader reader)
     {
-      var value = myReadValue(SerializationContext, reader);
+      var value = ReadValueDelegate(SerializationContext, reader);
       ReceiveTrace?.Log($"{this} :: value = {value.PrintToString()}");
       using (UsingDebugInfo())
         mySignal.Fire(value);
@@ -88,7 +87,7 @@ namespace JetBrains.Rd.Impl
         var me = sendContext.This;
         SendTrace?.Log($"{me} :: value = {sendContext.Event.PrintToString()}");
 
-        me.myWriteValue(sendContext.SzrCtx, stream, sendContext.Event);
+        me.WriteValueDelegate(sendContext.SzrCtx, stream, sendContext.Event);
       });
       
       using (UsingDebugInfo())
