@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
@@ -12,7 +11,6 @@ using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 using JetBrains.Util;
 using JetBrains.Util.Util;
-using static JetBrains.Rd.Reflection.ReflectionSerializersFactory;
 
 
 #if NET35
@@ -233,14 +231,9 @@ namespace JetBrains.Rd.Reflection
 
       if (!mySerializers.TryGetValue(serializerType, out var serializerPair))
       {
-        try
-        {
+        using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(serializerType.FullName))
           ReflectionUtil.InvokeGenericThis(this, nameof(RegisterScalar), serializerType);
-        }
-        catch (Exception e)
-        {
-          throw new Exception($"Unable to create serializer for {e.Data[FirstChanceExceptionInterceptor.ExceptionDataKey]}. {e.Message}", e);
-        }
+     
         serializerPair = mySerializers[serializerType];
         if (serializerPair == null)
           Assertion.Fail($"Unable to Create serializer for scalar type {serializerType.ToString(true)}");
