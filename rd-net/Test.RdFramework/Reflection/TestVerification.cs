@@ -15,10 +15,15 @@ namespace Test.RdFramework.Reflection
     [TestCase(typeof(MyEnum), Description = "Enum can't be toplevel types")]
 //     [TestCase(typeof(NotSealedRdModelData))]
     [TestCase(typeof(NoBaseType))]
+
+    // Nested RdExt not supported anymore.
+    // Supporting of nested RdExt leads to complicated relations in ReSharper component container. One RdExt can be
+    // injected into another, but the activation for each of RdExt should be processed independently.
     // [TestCase(typeof(CircularDependencyExtError))]
     // [TestCase(typeof(CircularDependencyExt2Error))]
+    
+    [TestCase(typeof(CircularDependencyInModelError))]
     [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
-    // [TestCase(typeof(CircularDependencyInModelError))]
     public void TestError(Type type)
     {
       var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
@@ -51,7 +56,6 @@ namespace Test.RdFramework.Reflection
       Assert.NotNull(model.FieldsNullableOk);
       Assert.Null(model.Nested); // nested models not supported anymore
       Assert.NotNull(model.PropertiesNotNullOk);
-      Assert.NotNull(model.PropertiesNullOk);
     }
   }
 }
