@@ -904,10 +904,17 @@ open class CSharp50Generator(
         indent {
             +decl.allMembers
                     .joinToString(",\n") {
-                        val defValue = getDefaultValue(decl, it) ?: ""
-                        if (!it.hasEmptyConstructor) sanitize(it.name)
-                        else "${it.creationExpressionSubstituted(decl)}(${(it as? Member.Reactive)?.customSerializers(decl, leadingComma = false)
-                                ?: ""}$defValue)"
+                        if (!it.hasEmptyConstructor) {
+                            sanitize(it.name)
+                        } else {
+                            val arguments = (it as? Member.Reactive)?.customSerializers(decl, leadingComma = false) ?: ""
+                            val defValue = when (val rawDefaultValue = getDefaultValue(decl, it)) {
+                                "null" -> ""
+                                null -> ""
+                                else -> (if (arguments.isEmpty()) "" else ", ") + rawDefaultValue
+                            }
+                            "${it.creationExpressionSubstituted(decl)}($arguments$defValue)"
+                        }
                     }
         }
         +") {}"
