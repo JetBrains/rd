@@ -194,6 +194,10 @@ namespace JetBrains.Rd.Reflection
       if (hasRdExt)
         return true;
 
+      var hasRdModel = typeInfo.GetCustomAttribute<RdModelAttribute>() != null;
+      if (hasRdModel)
+        return true;
+
       return false;
     }
 

@@ -23,6 +23,7 @@ namespace Test.RdFramework.Reflection
     // [TestCase(typeof(CircularDependencyExt2Error))]
     
     [TestCase(typeof(CircularDependencyInModelError))]
+    [TestCase(typeof(CircularDependencyNestedModel1Error))]
     [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
     public void TestError(Type type)
     {
@@ -33,7 +34,7 @@ namespace Test.RdFramework.Reflection
       Console.WriteLine(exception);
     }
 
-
+    [Test]
     public void TestActivation()
     {
       var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
@@ -44,6 +45,7 @@ namespace Test.RdFramework.Reflection
       Assert.NotNull(model.Rpc2);
     }
 
+    [Test]
     public void TestActivation2()
     {
       var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());

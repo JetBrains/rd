@@ -20,4 +20,16 @@ namespace Test.RdFramework.Reflection
   {
     public IViewableProperty<CircularDependencyModel2Error> Value;
   }
+
+  [RdModel]
+  public class CircularDependencyNestedModel2Error : RdReflectionBindableBase
+  {
+    public CircularDependencyNestedModel1Error Value;
+  }
+
+  [RdModel]
+  public class CircularDependencyNestedModel1Error : RdReflectionBindableBase
+  {
+    public CircularDependencyNestedModel2Error Value;
+  }
 }
