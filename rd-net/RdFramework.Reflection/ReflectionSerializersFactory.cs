@@ -202,7 +202,7 @@ namespace JetBrains.Rd.Reflection
 
       if (typeInfo.IsGenericType && !(ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || ReflectionSerializerVerifier.HasRdExtAttribute(typeInfo)))
       {
-        return CreateGenericSerializer(mi, typeInfo, implementingType);
+        return CreateGenericSerializer(typeInfo, implementingType);
       }
       else if (ReflectionSerializerVerifier.IsScalar(serializerType))
       {
@@ -370,69 +370,14 @@ namespace JetBrains.Rd.Reflection
       mySerializers[type] = new SerializerPair(readerDelegate, writerDelegate);
     }
 
-    public SerializerPair CreateGenericSerializer(MemberInfo member, TypeInfo typeInfo, Type implementingType)
+    public SerializerPair CreateGenericSerializer(TypeInfo typeInfo, Type implementingType)
     {
-      var genericDefinition = implementingType.GetGenericTypeDefinition();
-
       var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingType.GetTypeInfo(), t => GetOrRegisterStaticSerializerInternal(t, true));
       if (intrinsic != null)
         return intrinsic;
 
-      if (typeof(IViewableProperty<>).IsAssignableFrom(genericDefinition))
-      {
-        return CreateStaticReaderSingleGeneric(member, typeInfo.AsType(), implementingType, allowNullable: true);
-      }
-
-      if (genericDefinition == typeof(RdSignal<>) ||
-          genericDefinition == typeof(RdList<>) ||
-          genericDefinition == typeof(RdSet<>))
-      {
-        return CreateStaticReaderSingleGeneric(member, typeInfo.AsType(), implementingType, allowNullable: false);
-      }
-
-      if (genericDefinition == typeof(RdMap<,>))
-      {
-        return CreateStaticReaderTwoGeneric(member, typeInfo.AsType(), implementingType);
-      }
-
-      throw new Exception($"Unable to register generic type: {typeInfo}");
+      throw new Exception($"Unable to register generic type: {typeInfo}. Generics types are expected to have Read and Write static methods for serialization.");
     }
-
-    private SerializerPair CreateStaticReaderSingleGeneric(MemberInfo memberInfo, Type type, Type implementingType, bool allowNullable)
-    {
-      var argumentType = type.GetTypeInfo().GetGenericArguments()[0];
-
-      var readPropertyMethod = SerializerReflectionUtil.GetReadStaticSerializer(implementingType.GetTypeInfo(), argumentType);
-      var writePropertyMethod = SerializerReflectionUtil.GetWriteStaticDeserializer(implementingType.GetTypeInfo());
-
-      var argumentSerializerPair = GetOrCreateMemberSerializer(memberInfo, argumentType, true);
-      return SerializerPair.CreateFromMethods(readPropertyMethod, writePropertyMethod, argumentSerializerPair);
-    }
-
-    private SerializerPair CreateStaticReaderTwoGeneric([NotNull] MemberInfo memberInfo, [NotNull] Type type, [NotNull] Type implementingType)
-    {
-      var keyType = type.GetTypeInfo().GetGenericArguments()[0];
-      var valueType = type.GetTypeInfo().GetGenericArguments()[1];
-
-      var types = new[]
-      {
-        typeof(SerializationCtx),
-        typeof(UnsafeReader),
-        typeof(CtxReadDelegate<>).MakeGenericType(keyType),
-        typeof(CtxWriteDelegate<>).MakeGenericType(keyType),
-        typeof(CtxReadDelegate<>).MakeGenericType(valueType),
-        typeof(CtxWriteDelegate<>).MakeGenericType(valueType)
-      };
-      var methodInfo = implementingType.GetTypeInfo().GetMethod("Read", types);
-      var readPropertyMethod = methodInfo.NotNull();
-
-      var writeStaticDeserializer = SerializerReflectionUtil.GetWriteStaticDeserializer(implementingType.GetTypeInfo());
-
-      var keySerializer = GetOrCreateMemberSerializer(memberInfo, keyType, true);
-      var valueSerializer = GetOrCreateMemberSerializer(memberInfo, valueType, true);
-      return SerializerPair.CreateFromMethods(readPropertyMethod, writeStaticDeserializer, keySerializer, valueSerializer);
-    }
-
 
     private class SerializersContainer : ISerializersContainer
     {

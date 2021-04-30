@@ -9,7 +9,6 @@ namespace Test.RdFramework.Reflection
   public class TestVerification
   {
     [TestCase(typeof(NotRdModelData))]
-    [TestCase(typeof(CantHaveNonRdError))]
     // [TestCase(typeof(CantHavePrivateFieldError))]
     [TestCase(typeof(NotRdModelData))]
     [TestCase(typeof(MyEnum), Description = "Enum can't be toplevel types")]

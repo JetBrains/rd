@@ -14,7 +14,7 @@ namespace Test.RdFramework.Reflection
     {
       public IViewableProperty<bool> Primitive { get; }
       public IViewableProperty<EmptyOK> EmptyOK { get; }
-      public IViewableProperty<ModelSample> FieldsNotNullOk { get; }
+      public IViewableProperty<ModelSample> ModelProp { get; }
       public IViewableProperty<FieldsNullableOk> FieldsNullableOk { get; }
       public IViewableProperty<PropertiesNotNullOk> PropertiesNotNullOk { get; }
       public IViewableProperty<Animal> PolyProperty { get; }
@@ -62,12 +62,27 @@ namespace Test.RdFramework.Reflection
     {
       var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
       var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
-      
+
       var animal = CFacade.Activator.Activate<Animal>();
-      animal.NestedRdModel.FieldOne.Add(2);
-      c.PolyProperty.Value = animal;
+      var cm = animal.NestedRdModel;
+      cm.IList.Add(2);
+      cm.Prop.Value = "val";
+      cm.List.Add("val2");
+      cm.Set.Add("val3");
+      cm.Map["x"] = "val";
+      cm.RegularFieldInModel = "f";
       
-      Assert.AreEqual(2, s.PolyProperty.Value.NestedRdModel.FieldOne.Single());
+      c.PolyProperty.Value = animal;
+      var sm = s.PolyProperty.Value.NestedRdModel;
+      Assert.NotNull(sm);
+      Assert.AreNotSame(sm, cm);
+
+      CollectionAssert.AreEqual(cm.IList, sm.IList);
+      CollectionAssert.AreEqual(cm.List, sm.List);
+      CollectionAssert.AreEqual(cm.Set, sm.Set);
+      CollectionAssert.AreEqual(cm.Map, sm.Map);
+      Assert.AreEqual(cm.Prop.Value, sm.Prop.Value);
+      Assert.AreEqual(cm.RegularFieldInModel, sm.RegularFieldInModel);
     }
 
     [Test]

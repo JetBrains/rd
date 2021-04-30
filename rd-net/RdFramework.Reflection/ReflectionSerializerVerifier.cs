@@ -190,6 +190,9 @@ namespace JetBrains.Rd.Reflection
                (typeInfo.IsClass && typeInfo.IsSealed && typeof(IRdBindable).IsAssignableFrom(typeInfo));
       }
 
+      if (IsScalar(typeInfo))
+        return true;
+
       var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
       if (hasRdExt)
         return true;
