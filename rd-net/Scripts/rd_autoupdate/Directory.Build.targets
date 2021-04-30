@@ -3,45 +3,29 @@
     <DotnetProducts>C:\work\main</DotnetProducts>
     <DotnetHive>Main</DotnetHive>
     <DotnetProductsOut>$(DotnetProducts)\Bin.$(DotnetHive)</DotnetProductsOut>
+    <CopyFromTargetFramework>net461</CopyFromTargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <RdFrameworkPackage Include="$(DotnetProducts)\Packages\JetBrains.RdFramework.2*\*.nupkg"/>
-    <RdFrameworkPackageNet461 Include="$(DotnetProducts)\Packages\JetBrains.RdFramework.2*\lib\net461\JetBrains.RdFramework.2*"/>
-    <RdFrameworkOutput Include="$(OutputPath)\JetBrains.RdFramework.2*" />
-    <RdFrameworkReflectionPackage Include="$(DotnetProducts)\Packages\JetBrains.RdFramework.Reflection.*\*.nupkg"/>
-    <RdFrameworkReflectionPackageNet461 Include="$(DotnetProducts)\Packages\JetBrains.RdFramework.Reflection.*\lib\net461\JetBrains.RdFramework.Reflection.*"/>
-    <RdFrameworkReflectionOutput Include="$(OutputPath)\JetBrains.RdFramework.Reflection.*" />
-    <LifetimesPackage Include="$(DotnetProducts)\Packages\JetBrains.Lifetimes.*\*.nupkg"/>
-    <LifetimesPackageNet461 Include="$(DotnetProducts)\Packages\JetBrains.Lifetimes.*\lib\net461\JetBrains.Lifetimes.*"/>
-    <LifetimesOutput Include="$(OutputPath)\JetBrains.Lifetimes.*" />
+    <DotnetProductsNuPkg Include="$(DotnetProducts)\Packages\$(PackageId).2*\*.nupkg"/>
+    <DotnetProductsAssembly Include="$(DotnetProducts)\Packages\$(PackageId).2*\lib\$(CopyFromTargetFramework)\$(AssemblyName).dll"/>
+    <DotnetProductsOutput Include="$(OutputPath)\$(AssemblyName).*" />
   </ItemGroup>
-  <Target Name="CopyToRd" AfterTargets="AfterBuild"  Condition="'$(TargetFramework)' == 'net461'">
-    <Copy SourceFiles="@(RdFrameworkOutput)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
-    <CombinePath BasePath="@(RdFrameworkPackage->'%(RootDir)%(Directory)')" Paths="lib\net461">
-        <Output TaskParameter="CombinedPaths" ItemName="RdFrameworkNet461Dir" />
-    </CombinePath>
-    <Copy SourceFiles="@(RdFrameworkOutput)" DestinationFolder="@(RdFrameworkNet461Dir)" ContinueOnError="false" />
+  <Target Name="CopyToRd" AfterTargets="AfterBuild"  Condition="'$(IsPackable)' != 'false' AND '$(PackageId)' != '' AND '$(TargetFramework)' == '$(CopyFromTargetFramework)'">
+    <Error Text="$(PackageId) package is not found in $(DotnetProducts)\Packages"
+      Condition="'@(DotnetProductsNuPkg)' == ''" />
+    <Error Text="$(AssemblyName).dll is not found in $(DotnetProducts)\Packages\$(PackageId)\lib\$(CopyFromTargetFramework)" 
+      Condition="'@(DotnetProductsAssembly)' == ''" />
+    <Error Text="Files by mask $(AssemblyName).* are not found in $(OutputPath)"
+      Condition="'@(DotnetProductsOutput)' == ''" />
 
-    <Copy SourceFiles="@(RdFrameworkReflectionOutput)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
-    <CombinePath BasePath="@(RdFrameworkReflectionPackage->'%(RootDir)%(Directory)')" Paths="lib\net461">
-        <Output TaskParameter="CombinedPaths" ItemName="RdFrameworkReflectionNet461Dir" />
+    <Copy SourceFiles="@(DotnetProductsOutput)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
+    <CombinePath BasePath="@(DotnetProductsNuPkg->'%(RootDir)%(Directory)')" Paths="lib\$(CopyFromTargetFramework)">
+      <Output TaskParameter="CombinedPaths" ItemName="DotnetProductsPackageLibDir" />
     </CombinePath>
-    <Copy SourceFiles="@(RdFrameworkReflectionOutput)" DestinationFolder="@(RdFrameworkReflectionNet461Dir)" ContinueOnError="false" />
-
-    <Copy SourceFiles="@(LifetimesOutput)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
-    <CombinePath BasePath="@(LifetimesPackage->'%(RootDir)%(Directory)')" Paths="lib\net461">
-        <Output TaskParameter="CombinedPaths" ItemName="LifetimesNet461Dir" />
-    </CombinePath>
-    <Copy SourceFiles="@(LifetimesOutput)" DestinationFolder="@(LifetimesNet461Dir)" ContinueOnError="false" />
+    <Copy SourceFiles="@(DotnetProductsOutput)" DestinationFolder="@(DotnetProductsPackageLibDir)" ContinueOnError="false" />
   </Target>
-  <Target Name="CleanRd" AfterTargets="Clean"  Condition="'$(TargetFramework)' == 'net461'">
-    <Unzip SourceFiles="@(RdFrameworkPackage)" DestinationFolder="@(RdFrameworkPackage->'%(RootDir)%(Directory)')"/>
-    <Copy SourceFiles="@(RdFrameworkPackageNet461)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
-
-    <Unzip SourceFiles="@(RdFrameworkReflectionPackage)" DestinationFolder="@(RdFrameworkReflectionPackage->'%(RootDir)%(Directory)')"/>
-    <Copy SourceFiles="@(RdFrameworkReflectionPackageNet461)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
-
-    <Unzip SourceFiles="@(LifetimesPackage)" DestinationFolder="@(LifetimesPackage->'%(RootDir)%(Directory)')"/>
-    <Copy SourceFiles="@(LifetimesPackageNet461)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
+  <Target Name="CleanRd" AfterTargets="Clean"  Condition="'$(TargetFramework)' == '$(CopyFromTargetFramework)'">
+    <Unzip SourceFiles="@(DotnetProductsNuPkg)" DestinationFolder="@(DotnetProductsNuPkg->'%(RootDir)%(Directory)')"/>
+    <Copy SourceFiles="@(DotnetProductsAssembly)" DestinationFolder="$(DotnetProductsOut)" ContinueOnError="false" />
   </Target>
 </Project>
