@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
+using JetBrains.Diagnostics;
 using JetBrains.Rd.Reflection;
 using JetBrains.Rd.Tasks;
 using NUnit.Framework;
@@ -108,7 +109,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestUnexpectedInterfaceType()
     {
-      Assert.Throws<Exception>(() =>
+      Assert.Throws<Assertion.AssertionException>(() =>
       {
         try
         {

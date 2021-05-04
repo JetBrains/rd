@@ -18,4 +18,10 @@ namespace Test.RdFramework.Reflection
       public IRdCall<Animal, Animal> Rpc3 { get; }
     }
   }
+
+  public enum MyEnum
+  {
+    First,
+    Second
+  }
 }

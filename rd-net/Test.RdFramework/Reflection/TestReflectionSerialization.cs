@@ -1,4 +1,5 @@
-﻿using JetBrains.Collections.Viewable;
+﻿using System.Linq;
+using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -11,14 +12,11 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     public sealed class RootModel : RdExtReflectionBindableBase
     {
-      // public NestedModel Nested { get; }
-
       public IViewableProperty<bool> Primitive { get; }
       public IViewableProperty<EmptyOK> EmptyOK { get; }
-      public IViewableProperty<FieldsNotNullOk> FieldsNotNullOk { get; }
+      public IViewableProperty<ModelSample> ModelProp { get; }
       public IViewableProperty<FieldsNullableOk> FieldsNullableOk { get; }
       public IViewableProperty<PropertiesNotNullOk> PropertiesNotNullOk { get; }
-      public IViewableProperty<PropertiesNullOk> PropertiesNullOk { get; }
       public IViewableProperty<Animal> PolyProperty { get; }
     }
 
@@ -57,6 +55,40 @@ namespace Test.RdFramework.Reflection
 
       Assert.AreEqual(nameof(Bear), result.GetType().Name);
       Assert.AreNotSame(requestBear, result);
+    }
+
+    [Test]
+    public void TestNestedRdModels()
+    {
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
+
+      var animal = CFacade.Activator.Activate<Animal>();
+      var cm = animal.NestedRdModel;
+      cm.IList.Add(2);
+      cm.Prop.Value = "val";
+      cm.List.Add("val2");
+      cm.Set.Add("val3");
+      cm.Map["x"] = "val";
+      cm.RegularFieldInModel = "f";
+      
+      c.PolyProperty.Value = animal;
+      var sm = s.PolyProperty.Value.NestedRdModel;
+      Assert.NotNull(sm);
+      Assert.AreNotSame(sm, cm);
+
+      CollectionAssert.AreEqual(cm.IList, sm.IList);
+      CollectionAssert.AreEqual(cm.List, sm.List);
+      CollectionAssert.AreEqual(cm.Set, sm.Set);
+      CollectionAssert.AreEqual(cm.Map, sm.Map);
+      Assert.AreEqual(cm.Prop.Value, sm.Prop.Value);
+      Assert.AreEqual(cm.RegularFieldInModel, sm.RegularFieldInModel);
+    }
+
+    [Test]
+    public void TestNestedRdModelsCircular()
+    {
+      var animal = CFacade.Activator.Activate<Animal>();
     }
 
     [Test]

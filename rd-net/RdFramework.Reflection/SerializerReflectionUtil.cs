@@ -75,6 +75,28 @@ namespace JetBrains.Rd.Reflection
     }
 
     [NotNull]
+    public static MethodInfo GetReadStaticSerializer([NotNull] TypeInfo typeInfo, Type key, Type value)
+    {
+      var types = new[]
+      {
+        typeof(SerializationCtx),
+        typeof(UnsafeReader),
+        typeof(CtxReadDelegate<>).MakeGenericType(key),
+        typeof(CtxWriteDelegate<>).MakeGenericType(key),
+        typeof(CtxReadDelegate<>).MakeGenericType(value),
+        typeof(CtxWriteDelegate<>).MakeGenericType(value)
+      };
+      var methodInfo = typeInfo.GetMethod("Read", types);
+
+      if (methodInfo == null)
+      {
+        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public static Read({String.Join(", ", types.Select(t => t.ToString(true)).ToArray())})");
+      }
+
+      return methodInfo;
+    }
+
+    [NotNull]
     public static MethodInfo GetWriteStaticDeserializer([NotNull] TypeInfo typeInfo)
     {
       var types = new[]

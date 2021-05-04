@@ -41,22 +41,32 @@ namespace JetBrains.Rd.Reflection
       if (ReflectionSerializerVerifier.HasIntrinsicProtocolMethods(typeInfo))
       {
         var genericArguments = typeInfo.GetGenericArguments();
-        if (genericArguments.Length == 1)
+        switch (genericArguments.Length)
         {
-          var argument = genericArguments[0];
-          var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo, argument);
-          var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
-          return SerializerPair.CreateFromMethods(staticRead, staticWrite, getInstanceSerializer(argument));
+          case 2:
+          {
+            var key = genericArguments[0];
+            var value = genericArguments[1];
+            var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo, key, value);
+            var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
+            return SerializerPair.CreateFromMethods(staticRead, staticWrite, getInstanceSerializer(key), getInstanceSerializer(value));
+          }
+          case 1:
+          {
+            var argument = genericArguments[0];
+            var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo, argument);
+            var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
+            return SerializerPair.CreateFromMethods(staticRead, staticWrite, getInstanceSerializer(argument));
+          }
+          case 0:
+          {
+            var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo);
+            var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
+            return SerializerPair.CreateFromMethods(staticRead, staticWrite);
+          }
+          default:
+            return null;
         }
-
-        if (genericArguments.Length == 0)
-        {
-          var staticRead = SerializerReflectionUtil.GetReadStaticSerializer(typeInfo);
-          var staticWrite = SerializerReflectionUtil.GetWriteStaticDeserializer(typeInfo);
-          return SerializerPair.CreateFromMethods(staticRead, staticWrite);
-        }
-
-        return null;
       }
       else if (ReflectionSerializerVerifier.HasIntrinsicFields(typeInfo))
       {

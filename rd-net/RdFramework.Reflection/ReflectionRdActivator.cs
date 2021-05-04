@@ -289,7 +289,7 @@ namespace JetBrains.Rd.Reflection
         reflectionBindable.EnsureBindableChildren();
         if (reflectionBindable.BindableChildren.Count == 0)
         {
-          ourLog.Error($"{reflectionBindable.GetType().ToString(true)} Attempt to activate RdExt without bindable children. Most likely it indicates an error.");
+          ourLog.Warn($"{reflectionBindable.GetType().ToString(true)} RdExt without bindable children was activated.");
         }
 
         reflectionBindable.OnActivated();
@@ -334,6 +334,7 @@ namespace JetBrains.Rd.Reflection
       endpoint.Set(handler, null, new SwitchingScheduler(endpoint));
     }
     
+    [CanBeNull]
     private object ActivateRdExtMember(MemberInfo mi)
     {
       var returnType = ReflectionUtil.GetReturnType(mi);
@@ -345,9 +346,13 @@ namespace JetBrains.Rd.Reflection
       {
         result = ActivateGenericMember(mi.Name, typeInfo);
       }
-      else
+      else if (!ReflectionSerializerVerifier.IsScalar(returnType))
       {
         result = ActivateRd(returnType);
+      }
+      else
+      {
+        result = null;
       }
 
       SetAsync(mi, result);
@@ -400,7 +405,8 @@ namespace JetBrains.Rd.Reflection
         var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
         if (ourLog.IsTraceEnabled())
           ourLog.Trace("Create 2-generic: {0}.{1}, TReq poly: {2}, TRes poly: {3}", implementingType.FullName, memberName, serializerPair.IsPolymorphic, serializerPair2.IsPolymorphic);
-        ((RdReactiveBase) instance).ValueCanBeNull = true;
+        if (instance is RdReactiveBase reactive)
+          reactive.ValueCanBeNull = true;
         return instance;
       }
 
