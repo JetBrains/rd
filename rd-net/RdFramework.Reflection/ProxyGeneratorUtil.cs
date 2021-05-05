@@ -46,6 +46,14 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     public static TRes SyncNested<TReq, TRes>(RdCall<TReq, TRes> call, TReq request, RpcTimeouts timeouts = null)
     {
+      return SyncNested(call, Lifetime.Eternal, request, timeouts);
+    }
+
+    /// <summary>
+    /// Sync call which allow nested call execution with help of <see cref="SwitchingScheduler"/>
+    /// </summary>
+    public static TRes SyncNested<TReq, TRes>(RdCall<TReq, TRes> call, Lifetime lifetime, TReq request, RpcTimeouts timeouts = null)
+    {
       Assertion.Require(call.IsBound, "Not bound: {0}", call);
 
       // Sync calls can called only under the protocol's scheduler.
@@ -59,7 +67,7 @@ namespace JetBrains.Rd.Reflection
 
       using (new SwitchingScheduler.SwitchCookie(responseScheduler))
       {
-        var task = call.Start(Lifetime.Eternal, request, responseScheduler);
+        var task = call.Start(lifetime, request, responseScheduler);
 
         task.Result.Advise(nestedCallsScheduler.Lifetime, result => { nestedCallsScheduler.Terminate(); });
 

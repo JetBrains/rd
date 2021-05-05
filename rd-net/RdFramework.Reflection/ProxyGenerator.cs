@@ -379,26 +379,22 @@ namespace JetBrains.Rd.Reflection
       ilgen.Emit(OpCodes.Ldfld, field);
 
       int lifetimeArgument = -1;
-      if (!isSyncCall)
+      // Lifetime
+      for (int i = 0; i < parameters.Length; i++)
       {
-        // Lifetime
-        for (int i = 0; i < parameters.Length; i++)
+        if (parameters[i].ParameterType == typeof(Lifetime))
         {
-          if (parameters[i].ParameterType == typeof(Lifetime))
-          {
-            Assertion.Assert(lifetimeArgument == -1, "Only one lifetime parameter is allowed");
-            lifetimeArgument = i;
-          }
+          Assertion.Assert(lifetimeArgument == -1, "Only one lifetime parameter is allowed");
+          lifetimeArgument = i;
         }
-
-        if (lifetimeArgument != -1)
-          LoadArgument(ilgen, lifetimeArgument + 1);
-        else
-        {
-          var getEternalLifetimeMethod = typeof(Lifetime)
-            .GetProperty(nameof(Lifetime.Eternal), BindingFlags.Static | BindingFlags.Public)?.GetGetMethod();
-          ilgen.Emit(OpCodes.Call, getEternalLifetimeMethod);
-        }
+      }
+      if (lifetimeArgument != -1)
+        LoadArgument(ilgen, lifetimeArgument + 1);
+      else
+      {
+        var getEternalLifetimeMethod = typeof(Lifetime)
+          .GetProperty(nameof(Lifetime.Eternal), BindingFlags.Static | BindingFlags.Public)?.GetGetMethod();
+        ilgen.Emit(OpCodes.Call, getEternalLifetimeMethod);
       }
 
       // TReq
@@ -424,9 +420,8 @@ namespace JetBrains.Rd.Reflection
 
       if (isSyncCall)
       {
-        Assertion.Assert(lifetimeArgument == -1, "Unable to implement proxy method {0}. CancellationToken or Lifetime can't be used with sync methods.", method);
         ilgen.Emit(OpCodes.Ldnull); // RpcTimeouts
-        ilgen.Emit(OpCodes.Call, typeof(ProxyGeneratorUtil).GetMethod(nameof(ProxyGeneratorUtil.SyncNested)).NotNull("GetMethod(nameof(ProxyGeneratorUtil.Sync)) != null").MakeGenericMethod(requestType, responseType));
+        ilgen.Emit(OpCodes.Call, typeof(ProxyGeneratorUtil).GetMethods().Single(m => m.Name == nameof(ProxyGeneratorUtil.SyncNested) && m.GetParameters().Length == 4).MakeGenericMethod(requestType, responseType));
       }
       else
       {
