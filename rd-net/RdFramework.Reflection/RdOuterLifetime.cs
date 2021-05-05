@@ -46,7 +46,8 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     public void AttachToLifetime(Lifetime lifetime)
     {
-      lifetime.OnTermination(myLifetimeDefinition);
+      if (!lifetime.TryOnTermination(myLifetimeDefinition))
+        myLifetimeDefinition.Terminate();
     }
 
     #region Intrinsic

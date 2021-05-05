@@ -47,5 +47,23 @@ namespace Test.RdFramework
         Assert.IsTrue(sTerminated, "sTerminated");
       });
     }
+
+    [Test]
+    public void TestTerminatedLifetime01()
+    {
+      Lifetime.Using(lifetime =>
+      {
+        bool sTerminated = false;
+        var m = CFacade.Activator.Activate<Model>();
+        myC.PolyProperty.Value = m;
+        var ld2 = OuterLifetime.DefineIntersection(lifetime, myS.PolyProperty.Value.OuterLifetime);
+        ld2.Lifetime.OnTermination(() => sTerminated = true);
+
+        var lifetimeDefinition = Lifetime.Define(lifetime);
+        lifetimeDefinition.Terminate();
+        m.OuterLifetime.AttachToLifetime(lifetimeDefinition.Lifetime);
+        Assert.IsTrue(sTerminated, "sTerminated");
+      });
+    }
   }
 }
