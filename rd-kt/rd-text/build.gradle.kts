@@ -1,5 +1,4 @@
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 applyKotlinJVM()
 
@@ -7,10 +6,15 @@ plugins {
     kotlin("jvm")
 }
 
+repositories {
+    maven {
+        url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    }
+}
+
 dependencies {
     implementation(project(":rd-framework"))
 
-    testImplementation("com.github.JetBrains:jetCheck:b5bc810e71")
-    testImplementation("com.github.JetBrains:jetCheck:b5bc810e71:sources")
+    testImplementation("org.jetbrains:jetCheck:0.2.2")
 }
 

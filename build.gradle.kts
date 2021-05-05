@@ -13,9 +13,6 @@ buildscript {
     }
 }
 
-repositories {
-}
-
 plugins {
     base
 }
@@ -28,17 +25,12 @@ allprojects {
             force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
             force("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
             force("org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion")
-            force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
-            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
             force("org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion")
         }
     }
 
     repositories {
-        mavenLocal()
         mavenCentral()
-        jcenter()
-        maven { setUrl("https://jitpack.io") }
     }
 
     tasks {

@@ -5,10 +5,6 @@ plugins {
     kotlin("multiplatform")
 }
 
-repositories {
-
-}
-
 applyMultiplatform()
 
 kotlin {
