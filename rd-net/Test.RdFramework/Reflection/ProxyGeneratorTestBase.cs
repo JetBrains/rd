@@ -35,10 +35,11 @@ namespace Test.RdFramework.Reflection
       await Wait();
     }
 
-    protected Task Wait()
+    protected async Task Wait()
     {
-      bool IsIdle(IRdDynamic p) => ((SingleThreadScheduler) p.Proto.Scheduler).IsIdle;
-      return Task.Run(() => SpinWaitEx.SpinUntil(() => IsIdle(ServerProtocol) && IsIdle(ClientProtocol)));
+      await YieldToClient();
+      await YieldToServer();
+      await Task.Run(() => { });
     }
 
     protected SchedulerAwaitable YieldToClient() => new SchedulerAwaitable(ClientProtocol.Scheduler);

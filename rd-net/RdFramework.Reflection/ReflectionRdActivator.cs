@@ -331,7 +331,8 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     public static void SetHandler<TReq, TRes>(RdCall<TReq, TRes> endpoint, Func<Lifetime, TReq, RdTask<TRes>> handler)
     {
-      endpoint.Set(handler, null, new SwitchingScheduler(endpoint));
+      var scheduler = new SwitchingScheduler(endpoint);
+      endpoint.Set(handler, scheduler, scheduler);
     }
     
     [CanBeNull]

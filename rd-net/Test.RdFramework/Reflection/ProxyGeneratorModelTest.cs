@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
@@ -54,11 +55,6 @@ namespace Test.RdFramework.Reflection
     public class LiveModel : RdReflectionBindableBase
     {
       public IViewableList<string> Values { get; }
-
-      public LiveModel()
-      {
-        
-      }
     }
 
     [Test]
@@ -84,9 +80,11 @@ namespace Test.RdFramework.Reflection
     [Test, Repeat(10), Description("Repeat test as it reveal cancellation race")]
     public async Task TestSyncCall()
     {
+      SwitchingScheduler.Disable(TestLifetime);
+
       await YieldToClient();
       var client = CFacade.ActivateProxy<IModelOwner>(TestLifetime, ClientProtocol);
-
+      
       await YieldToServer();
       var server = SFacade.InitBind(new ModelOwner(SFacade.Activator), TestLifetime, ServerProtocol);
 
@@ -96,16 +94,10 @@ namespace Test.RdFramework.Reflection
       using (var modelLifetimeDef = new LifetimeDefinition(TestLifetime))
       {
         await YieldToClient();
-        
-        // hack to disable nested scheduler.
-        var syncHandler = ((IReflectionBindable)server).BindableChildren.Where(b => b.Key.Contains("Sync")).Select(b => b.Value).OfType<RdCall<Unit, LiveModel>>().Single();
-        syncHandler.Set(syncHandler.Handler);
-
         liveModel = client.QueryModelSync(modelLifetimeDef.Lifetime);
         liveModel.Values.Add("proper set");
       }
       liveModel.Values.Add("unbound set");
-
       await Wait();
       Assert.AreEqual("proper set", server.State);
     }
