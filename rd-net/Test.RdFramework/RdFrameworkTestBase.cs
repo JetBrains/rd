@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -58,7 +59,12 @@ namespace Test.RdFramework
         throw new InvalidOperationException("There is messages in ServerWire");
       if (ClientWire.HasMessages)
         throw new InvalidOperationException("There is messages in ClientWire");
-      
+
+      int barrier = 0;
+      ServerProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
+      ClientProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
+      if (!SpinWait.SpinUntil(() => barrier == 2, 100))
+        Log.Root.Error("Either Server or Client scheduler is not empty in 100ms!");
       base.TearDown();
     }
 
