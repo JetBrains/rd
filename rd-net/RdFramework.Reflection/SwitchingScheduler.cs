@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Collections.Viewable;
+using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 
 namespace JetBrains.Rd.Reflection
@@ -13,6 +14,7 @@ namespace JetBrains.Rd.Reflection
     private readonly IRdDynamic myFallbackSchedulerSource;
 
     private static readonly object ourLock = new object();
+    private static int ourDisable;
     private static readonly Stack<IScheduler> ourSchedulersOverride = new Stack<IScheduler>();
 
     public bool IsActive  => ActiveScheduler.IsActive;
@@ -26,7 +28,7 @@ namespace JetBrains.Rd.Reflection
         lock (ourLock)
         {
           scheduler = myFallbackSchedulerSource.Proto.Scheduler;
-          if (ourSchedulersOverride.Count > 0)
+          if (ourSchedulersOverride.Count > 0 && ourDisable == 0)
             scheduler = ourSchedulersOverride.Peek();
         }
 
@@ -42,6 +44,13 @@ namespace JetBrains.Rd.Reflection
     public void Queue(Action action)
     {
       ActiveScheduler.Queue(action);
+    }
+
+    public static void Disable(Lifetime time)
+    {
+      time.Bracket(
+        () => { lock (ourLock) ourDisable++; },
+        () => { lock (ourLock) ourDisable--; });
     }
 
     public readonly struct SwitchCookie : IDisposable

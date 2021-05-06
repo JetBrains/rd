@@ -81,7 +81,7 @@ namespace Test.RdFramework.Reflection
       Assert.AreEqual("Test", server.State);
     }
 
-    [Test]
+    [Test, Repeat(10), Description("Repeat test as it reveal cancellation race")]
     public async Task TestSyncCall()
     {
       await YieldToClient();
