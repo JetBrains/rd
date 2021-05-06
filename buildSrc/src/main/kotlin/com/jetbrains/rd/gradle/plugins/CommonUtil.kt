@@ -8,20 +8,6 @@ import org.gradle.kotlin.dsl.getting
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.gradle.kotlin.dsl.*
 
-fun PublishingExtension.setRemoteRepositories() {
-    publications {
-        repositories {
-            maven {
-                setUrl("https://www.myget.org/F/rd-snapshots/maven/")
-                credentials {
-                    username = System.getenv("MYGET_USERNAME")
-                    password = System.getenv("MYGET_PASSWORD")
-                }
-            }
-        }
-    }
-}
-
 fun Project.createPackageJavaDoc(files: ConfigurableFileCollection): Jar {
     val dokka by tasks.getting(DokkaTask::class) {
         outputFormat = "html"

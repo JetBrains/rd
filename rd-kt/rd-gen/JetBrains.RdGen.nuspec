@@ -36,10 +36,10 @@
     </metadata>
     <files>
         <file src="JetBrains.RdGen.targets" target="build\JetBrains.RdGen.targets"/>
-        <file src="build\libs\rd.jar" target="build\rd.jar"/>
+        <file src="build\libs\rd-$version$.jar" target="build\rd.jar"/>
 
         <!-- Special marker for library-less NuGet (it must contain "net" word inside) -->
-        <file src="build\nuget\lib\net\_._" target="lib\net\_._"/>
+        <file src="..\..\build\temp\lib\net\_._" target="lib\net\_._"/>
         <file src="PackageIcon.png" target="" />
     </files>
 </package>

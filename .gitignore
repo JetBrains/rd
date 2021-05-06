@@ -20,6 +20,7 @@ cmake-build-*
 
 /rd-kt/gradle
 /rd-kt/rd-gen/out/
+/rd-kt/rd-gen/obj/
 /rd-kt/rd-gen/out/production/classes/
 /rd-kt/rd-gen/out/test/classes/
 /rd-kt/rd-swing/out/

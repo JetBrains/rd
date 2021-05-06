@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.1.0">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <NuspecFile>$(MSBuildThisFileDirectory)\JetBrains.RdGen.nuspec</NuspecFile>
+    <NuspecProperties>version=$(PackageVersion)</NuspecProperties>
+  </PropertyGroup>
+</Project>

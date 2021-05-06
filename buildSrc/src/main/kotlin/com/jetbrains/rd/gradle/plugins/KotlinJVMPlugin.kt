@@ -74,13 +74,29 @@ open class KotlinJVMPlugin : Plugin<Project> {
                     }
                 }
 
+                val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
                 project.configure<SigningExtension> {
-                    if (System.getenv("TEAMCITY_VERSION") != null) {
+                    if (isUnderTeamCity) {
                         sign(publications)
                         signatories = GpgSignSignatoryProvider()
                     }
+                }
 
-                    setRemoteRepositories()
+                repositories {
+                    maven {
+                        name = "artifacts"
+                        url = uri(rootProject.projectDir.resolve("build").resolve("artifacts").resolve("maven"))
+                    }
+                    if (isUnderTeamCity) {
+                        maven {
+                            name = "maven-central"
+                            url = uri("https://oss.sonatype.org/content/groups/staging/")
+                            credentials {
+                                username = rootProject.extra["sonatypeUser"].toString()
+                                password = rootProject.extra["sonatypePassword"].toString()
+                            }
+                        }
+                    }
                 }
             }
 
