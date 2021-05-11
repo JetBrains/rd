@@ -133,7 +133,7 @@ fun Class.internRoot(scope: InternScope) {
     internRootForScopes.add(scope.keyName)
 }
 
-private fun Array<out KnownAttrs>.mapAttrs() = this.map {
+private fun Array<out KnownAttrs>.mapAttrs() = this.asSequence().map {
     when (it) {
         KnownAttrs.Nls -> listOf(Lang.Kotlin to "org.jetbrains.annotations.Nls")
         KnownAttrs.NonNls -> listOf(Lang.Kotlin to "org.jetbrains.annotations.NonNls")

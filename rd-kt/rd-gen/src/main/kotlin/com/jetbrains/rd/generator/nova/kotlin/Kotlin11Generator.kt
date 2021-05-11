@@ -153,7 +153,7 @@ open class Kotlin11Generator(
     protected open fun Member.Reactive.intfSubstitutedMapName(scope: Declaration) =
         "IPerContextMap<${context!!.type.substitutedName(scope)}, " + intfSubstitutedName(scope) + ">"
 
-    private fun Member.getAttrsStr(eolKind: String) = this.getSetting(Attributes)?.toList()?.fold("") { acc, attr -> "$acc@$attr$eolKind" }
+    private fun Member.getAttrsStr(eolKind: String) = this.getSetting(Attributes)?.joinToString { "@$it$eolKind" }
     private fun IAttributedType.getAttrsStr() = this.attributes.getOrDefault(Lang.Kotlin, null)?.joinToString(" ") { "@$it" }
 
     protected open fun Member.implSubstitutedName(scope: Declaration, perContextRawName: Boolean = false) = when (this) {
