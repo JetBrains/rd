@@ -1061,7 +1061,7 @@ open class CSharp50Generator(
 
     private fun IAttributedType.getAttrsStr(): String? =
         this.attributes.getOrDefault(Lang.CSharp, null)?.toTypedArray()
-            ?.joinToOptString(" ", "[", "]") { it }
+            ?.joinToOptString(", ", "[", "]") { it }
 
     private fun Member.getIncludedTypeAttributes(): String? = when(this) {
         is Member.Field -> (type as? IAttributedType)?.getAttrsStr()

@@ -50,6 +50,8 @@ interface IAttributedType : IHasItemType {
 data class ScalarAttributedType<out T> internal constructor(override val itemType: T, override val attributes: Map<Lang, List<String>>) : IAttributedType, IScalar where T : IScalar {
     override val name: String get() = itemType.name
 
+    // Ignore attributes intentionally
+    // Equality on nested type only
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
