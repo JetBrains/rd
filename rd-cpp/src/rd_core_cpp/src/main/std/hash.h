@@ -1,6 +1,7 @@
 #ifndef RD_CPP_HASH_H
 #define RD_CPP_HASH_H
 
+#include <cstddef>
 #include <functional>
 
 namespace rd
