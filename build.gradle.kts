@@ -1,4 +1,5 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 version = System.getenv("RELEASE_VERSION_NUMBER") ?: "SNAPSHOT"
 
@@ -38,6 +39,15 @@ allprojects {
         mavenCentral()
         jcenter()
         maven { setUrl("https://jitpack.io") }
+    }
+
+    tasks {
+        withType<Test> {
+            testLogging {
+                showStandardStreams = true
+                exceptionFormat = TestExceptionFormat.FULL
+            }
+        }
     }
 }
 
