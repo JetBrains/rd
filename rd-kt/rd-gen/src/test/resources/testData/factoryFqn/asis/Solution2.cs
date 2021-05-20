@@ -43,38 +43,49 @@ namespace Org.TestRoot1
     //fields
     //public fields
     [NotNull] public IRdCall<int, MyClass> Get => _Get;
+    [NotNull] public IViewableProperty<string> Version => _Version;
     [NotNull] public IViewableProperty<RdDocumentModel> TestBuffer => _TestBuffer;
     
     //private fields
     [NotNull] private readonly RdCall<int, MyClass> _Get;
+    [NotNull] private readonly RdProperty<string> _Version;
     [NotNull] private readonly RdProperty<RdDocumentModel> _TestBuffer;
     
     //primary constructor
     private Solution2(
       [NotNull] RdCall<int, MyClass> get,
+      [NotNull] RdProperty<string> version,
       [NotNull] RdProperty<RdDocumentModel> testBuffer
     )
     {
       if (get == null) throw new ArgumentNullException("get");
+      if (version == null) throw new ArgumentNullException("version");
       if (testBuffer == null) throw new ArgumentNullException("testBuffer");
       
       _Get = get;
+      _Version = version;
       _TestBuffer = testBuffer;
+      _Version.OptimizeNested = true;
+      _Version.ValueCanBeNull = true;
       BindableChildren.Add(new KeyValuePair<string, object>("get", _Get));
+      BindableChildren.Add(new KeyValuePair<string, object>("version", _Version));
       BindableChildren.Add(new KeyValuePair<string, object>("testBuffer", _TestBuffer));
     }
     //secondary constructor
     private Solution2 (
     ) : this (
       new RdCall<int, MyClass>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt, MyClass.Read, MyClass.Write),
+      new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       new RdProperty<RdDocumentModel>(RdDocumentModel.Read, RdDocumentModel.Write)
     ) {}
     //deconstruct trait
     //statics
     
+    public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
     
+    public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     
-    protected override long SerializationHash => -4893872890057629939L;
+    protected override long SerializationHash => 1973460303951928540L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -101,6 +112,7 @@ namespace Org.TestRoot1
       printer.Println("Solution2 (");
       using (printer.IndentCookie()) {
         printer.Print("get = "); _Get.PrintEx(printer); printer.Println();
+        printer.Print("version = "); _Version.PrintEx(printer); printer.Println();
         printer.Print("testBuffer = "); _TestBuffer.PrintEx(printer); printer.Println();
       }
       printer.Print(")");

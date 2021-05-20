@@ -4,7 +4,6 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
 import com.jetbrains.rd.util.reflection.toPath
-import org.jetbrains.kotlin.util.collectionUtils.concat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -60,6 +59,7 @@ class FactoryFqnTestDataModel {
                 set("mySet", PredefinedType.string)
             })
 
+            property("version", PredefinedType.string.nullable)
             property("testBuffer", RdDocumentModel)
         }
 
