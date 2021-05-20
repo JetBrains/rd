@@ -97,6 +97,7 @@ class FactoryFqnTestDataModel {
         }
     }
 
-    fun processText(s : List<String>) = s.filter { !it.startsWith("//") }.joinToString("\n") { it }
+    fun processText(s : List<String>) = s.filter { !it.startsWith("//") && !it.startsWith("  ///") }
+        .joinToString("\n") { it }
 }
 
