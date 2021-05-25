@@ -37,7 +37,7 @@ namespace Test.RdFramework.Contexts
 
     private Serializers CreateSerializers()
     {
-      return new Serializers(TestLifetime, null, null);
+      return new Serializers();
     }
 
     public override void TearDown()

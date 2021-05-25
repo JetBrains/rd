@@ -50,7 +50,7 @@ namespace Test.RdFramework
 
     protected virtual Serializers CreateSerializers(bool isServer)
     {
-      return new Serializers(TestLifetime, null, null);
+      return new Serializers();
     }
 
     public override void TearDown()

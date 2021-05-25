@@ -14,7 +14,6 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Threading;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 using Test.Lifetimes;
 
 namespace Test.RdFramework
@@ -56,14 +55,14 @@ namespace Test.RdFramework
     {
       var id = "TestServer";
       var server = new SocketWire.Server(lifetime, SynchronousScheduler.Instance, new IPEndPoint(IPAddress.Loopback, port ?? 0), id);
-      return new Protocol(id, new Serializers(lifetime, null, null), new Identities(IdKind.Server), SynchronousScheduler.Instance, server, lifetime);
+      return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance, server, lifetime);
     }
 
     internal static IProtocol Client(Lifetime lifetime, int port)
     {
       var id = "TestClient";
       var client = new SocketWire.Client(lifetime, SynchronousScheduler.Instance, port, id);
-      return new Protocol(id, new Serializers(lifetime, null, null), new Identities(IdKind.Server), SynchronousScheduler.Instance, client, lifetime);
+      return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance, client, lifetime);
     }
 
     internal static IProtocol Client(Lifetime lifetime, IProtocol serverProtocol)
