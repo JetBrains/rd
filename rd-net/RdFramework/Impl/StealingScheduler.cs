@@ -12,12 +12,12 @@ namespace JetBrains.Rd.Impl
   /// </summary>
   public class StealingScheduler : TaskScheduler
   {
-    private readonly bool myAllowParallelProcessing;
+    private readonly bool myAllowParallelJoin;
     [NotNull] private readonly TaskScheduler myScheduler;
 
     /// <summary>
     /// >0: The number of currently simultaneously running tasks.
-    /// -1: exclusive mode taken by Join when <see cref="myAllowParallelProcessing"/> is false, no tasks allowed to process 
+    /// -1: exclusive mode taken by Join when <see cref="myAllowParallelJoin"/> is false, no tasks allowed to process 
     /// </summary>
     private volatile int myActive;
     [NotNull] private readonly ConcurrentQueue<Task> myActions = new ConcurrentQueue<Task>();
@@ -26,13 +26,13 @@ namespace JetBrains.Rd.Impl
     /// Creates stealing scheduler
     /// </summary>
     /// <param name="scheduler">Scheduler which used to queue actions in <see cref="ConcurrentQueue"/></param>
-    /// <param name="allowParallelProcessing">
+    /// <param name="allowParallelJoin">
     /// Indicates whether is it safe to execute tasks simultaneously in <see cref="Join"/> method and provided scheduler.
     /// Note, that this is your responsibility to provide limited concurrency scheduler when concurrent processing is forbidden.
     /// </param>
-    public StealingScheduler([CanBeNull] TaskScheduler scheduler, bool allowParallelProcessing = true)
+    public StealingScheduler([CanBeNull] TaskScheduler scheduler, bool allowParallelJoin = true)
     {
-      myAllowParallelProcessing = allowParallelProcessing;
+      myAllowParallelJoin = allowParallelJoin;
       myScheduler = scheduler ?? Default;
     }
 
@@ -60,7 +60,7 @@ namespace JetBrains.Rd.Impl
         if (myActions.Count == 0 && myActive == 0)
           return;
 
-        if (myAllowParallelProcessing)
+        if (myAllowParallelJoin)
         {
           ProcessTasks();
         }
