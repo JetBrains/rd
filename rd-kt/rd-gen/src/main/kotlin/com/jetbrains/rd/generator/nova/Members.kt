@@ -69,7 +69,13 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
         sealed class Stateful(name : String, vararg genericParams: IType)  : Reactive(name, *genericParams) {
             class Property  (name: String, valueType: IType, val defaultValue: Any? = null) : Stateful(name, valueType) {
                 val isNullable
-                    get() = referencedTypes.first() is INullable
+                    get() = referencedTypes.first().isNullable()
+
+                private fun IType.isNullable() : Boolean = when(this) {
+                    is INullable -> true
+                    is IAttributedType -> itemType.isNullable()
+                    else -> false
+                }
             }
             class List      (name : String, itemType : IType) : Stateful(name, itemType)
             class Set       (name : String, itemType : INonNullableScalar) : Stateful(name, itemType)

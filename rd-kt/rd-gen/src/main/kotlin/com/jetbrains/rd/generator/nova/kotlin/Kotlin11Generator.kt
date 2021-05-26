@@ -547,7 +547,10 @@ open class Kotlin11Generator(
             .distinct()
             .filter { it.leafSerializerRef(decl) == null }
 
-        allTypesForDelegation.println { "private val ${it.serializerRef(decl)} = ${it.serializerBuilder()}" }
+        allTypesForDelegation
+            .map { "private val ${it.serializerRef(decl)} = ${it.serializerBuilder()}" }
+            .distinct()
+            .forEach { println(it) }
     }
 
     protected fun PrettyPrinter.abstractDeclarationTrait(decl: Declaration) {
@@ -863,11 +866,12 @@ open class Kotlin11Generator(
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IScalar.hc(v : String) : String = when (this) {
+        fun IScalar.hc(v : String, f : Member.Field) : String = when (this) {
             is IArray ->
                 if (isPrimitivesArray) "$v.contentHashCode()"
                 else "$v.contentDeepHashCode()"
-            is INullable -> "if ($v != null) " + (itemType as IScalar).hc(v) + " else 0"
+            is INullable -> "if ($v != null) " + (itemType as IScalar).hc(v, f) + " else 0"
+            is IAttributedType -> (itemType as? IScalar)?.hc(v, f) ?: fail("Field $decl.`$f` must have scalar type but was $itemType")
             else -> "$v.hashCode()"
         }
 
@@ -879,7 +883,7 @@ open class Kotlin11Generator(
                 val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                 val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
                 if (f.usedInEquals)
-                    "__r = __r*31 + ${t.hc(f.encapsulatedName)}"
+                    "__r = __r*31 + ${t.hc(f.encapsulatedName, f)}"
                 else
                     ""
             }

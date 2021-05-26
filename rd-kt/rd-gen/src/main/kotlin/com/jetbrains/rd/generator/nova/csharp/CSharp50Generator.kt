@@ -96,13 +96,14 @@ open class CSharp50Generator(
 
 
     protected fun Declaration.allTypesForDelegation(): Iterable<IType> {
-        fun needDelegate(type: IType, memberIsReactive: Boolean) =
+        fun needDelegate(type: IType, memberIsReactive: Boolean) : Boolean =
                 type is IArray && !(type.isPrimitivesArray)
                         || type is IImmutableList
                         || type is INullable
                         || type is InternedScalar
                         || type is Enum && memberIsReactive
                         || type is Declaration && type.isOpen
+                        || type is IAttributedType && needDelegate(type.itemType, memberIsReactive)
 
 
         return allMembers.flatMap {
@@ -161,16 +162,27 @@ open class CSharp50Generator(
     val Member.Reactive.actualFlow: FlowKind get() = memberFlowTransform.transform(flow)
 
 
-    fun Member.needNullCheck() = (this !is Member.Field) || (this.type !is INullable && !this.type.isValueType)
+    fun Member.needNullCheck(): Boolean {
+        fun IType.needNullCheck() : Boolean = when {
+            this is IAttributedType -> itemType.needNullCheck()
+            (this !is INullable && !this.isValueType) -> true
+
+            else -> false
+        }
+        return (this !is Member.Field) || this.type.needNullCheck()
+    }
 
     val notnull = "[NotNull]"
-    fun Member.nullAttr(isCtorParam: Boolean = false) =
-            if (this !is Member.Field) "$notnull "
-            else if (this.type is INullable)
-                if (isCtorParam && isOptional) "[CanBeNull] "
-                else "[CanBeNull] "
-            else if (this.type.isValueType) ""
-            else "$notnull "
+    fun Member.nullAttr(isCtorParam: Boolean = false): String {
+
+        fun IType.attr(field: Member.Field) : String = when(this) {
+            is INullable -> if (isCtorParam && field.isOptional) "[CanBeNull] " else "[CanBeNull] "
+            is IAttributedType -> itemType.attr(field)
+            else -> if (this.isValueType) "" else "$notnull "
+        }
+
+        return if (this !is Member.Field) "$notnull " else this.type.attr(this)
+    }
 
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
@@ -657,6 +669,7 @@ open class CSharp50Generator(
             is IImmutableList -> itemType.complexDelegateBuilder() + ".List()"
             is INullable -> itemType.complexDelegateBuilder() +
                     ".Nullable" + (if (itemType.isValueType) "Struct" else "Class") + "()"
+            is IAttributedType -> itemType.complexDelegateBuilder()
             is Declaration -> {
                 assert(isOpen)
                 "Polymorphic<${sanitizedName(decl)}>.ReadAbstract(${sanitizedName(decl)}_Unknown.Read)"
@@ -669,6 +682,7 @@ open class CSharp50Generator(
             is Enum -> "(${sanitizedName(decl)})reader.ReadInt()"
             is PredefinedType -> "reader.Read$name()"
             is InternedScalar -> "ctx.ReadInterned(reader, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
+            is IAttributedType -> itemType.reader()
             else -> readerDelegateRef(decl, false) + "(ctx, reader)"
         }
 
@@ -710,9 +724,9 @@ open class CSharp50Generator(
             +"};"
         }
 
-        decl.allTypesForDelegation().forEach {
-            +"public static${it.hideOverloadAttribute(decl)} CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl, false)} = ${it.complexDelegateBuilder()};"
-        }
+        decl.allTypesForDelegation().map {
+            "public static${it.hideOverloadAttribute(decl)} CtxReadDelegate<${it.substitutedName(decl)}> ${it.readerDelegateRef(decl, false)} = ${it.complexDelegateBuilder()};"
+        }.distinct().forEach { + it}
     }
 
 
@@ -739,6 +753,7 @@ open class CSharp50Generator(
             is InternedScalar -> itemType.complexDelegateBuilder() + ".Interned(\"${internKey.keyName}\")"
             is INullable -> itemType.complexDelegateBuilder() +
                     ".Nullable" + (if (itemType.isValueType) "Struct" else "Class") + "()"
+            is IAttributedType -> itemType.complexDelegateBuilder()
             is Declaration -> {
                 assert(isOpen)
                 "Polymorphic<${sanitizedName(decl)}>.Write"
@@ -751,6 +766,7 @@ open class CSharp50Generator(
             is Enum -> "writer.Write((int)$field)"
             is PredefinedType -> "writer.Write($field)"
             is InternedScalar -> "ctx.WriteInterned(writer, $field, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
+            is IAttributedType -> itemType.writer(field)
             else -> writerDelegateRef(decl, false) + "(ctx, writer, $field)"
         }
 
@@ -785,9 +801,9 @@ open class CSharp50Generator(
             +"};"
         }
 
-        decl.allTypesForDelegation().forEach {
-            +"public static ${it.hideOverloadAttribute(decl)} CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl, false)} = ${it.complexDelegateBuilder()};"
-        }
+        decl.allTypesForDelegation().map {
+            "public static ${it.hideOverloadAttribute(decl)} CtxWriteDelegate<${it.substitutedName(decl)}> ${it.writerDelegateRef(decl, false)} = ${it.complexDelegateBuilder()};"
+        }.distinct().forEach { + it }
     }
 
     private fun IType.hideOverloadAttribute(decl : Declaration): String{
@@ -949,9 +965,11 @@ open class CSharp50Generator(
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IScalar.eq(v: String) = when (this) {
+        fun IType.eq(v: String, f : Member.Field) : String = when (this) {
+            !is IScalar -> fail("Field $decl.`$f` must have scalar type but was ${f.type}")
             is IArray, is IImmutableList -> "$v.SequenceEqual(other.$v)"
             is Enum, is PredefinedType -> "$v == other.$v"
+            is IAttributedType -> itemType.eq(v, f)
             else -> "Equals($v, other.$v)"
         }
 
@@ -979,11 +997,8 @@ open class CSharp50Generator(
                 else
                     emptyList()
 
-            }.joinToString(" && ") { f ->
-                val t = f.type as? IScalar ?: fail("Field $decl.`$f` must have scalar type but was ${f.type}")
-                t.eq(f.encapsulatedName)
-
-            }.takeIf { it.isNotBlank() } ?: "true"
+            }.joinToString(" && ") { f -> f.type.eq(f.encapsulatedName, f) }
+                .takeIf { it.isNotBlank() } ?: "true"
 
             +"return $res;"
         }
@@ -994,10 +1009,11 @@ open class CSharp50Generator(
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IScalar.hc(v: String): String = when (this) {
+        fun IScalar.hc(v: String, f: Member.Field): String = when (this) {
             is Enum -> "(int) $v"
             is IArray, is IImmutableList -> "$v.ContentHashCode()"
-            is INullable -> "($v != null ? " + (itemType as IScalar).hc(v) + " : 0)"
+            is INullable -> "($v != null ? " + (itemType as IScalar).hc(v, f) + " : 0)"
+            is ScalarAttributedType<IScalar> -> (itemType as? IScalar)?.hc(v, f) ?: fail("Field $decl.`$f` must have scalar type but was $itemType")
             else -> "$v.GetHashCode()"
         }
 
@@ -1013,7 +1029,7 @@ open class CSharp50Generator(
                     val f = m as? Member.Field ?: fail("Must be field but was `$m`")
                     val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
                     if (f.usedInEquals)
-                        "hash = hash * 31 + ${t.hc(f.encapsulatedName)};"
+                        "hash = hash * 31 + ${t.hc(f.encapsulatedName, f)};"
                     else
                         ""
                 }
@@ -1080,6 +1096,12 @@ open class CSharp50Generator(
 
     private fun PrettyPrinter.primaryConstructor(decl: Declaration) {
         if (decl !is Toplevel && decl.allMembers.isEmpty()) return //no constructors
+
+        fun IType.isNullable() : Boolean = when(this) {
+            is INullable -> true
+            is IAttributedType -> itemType.isNullable()
+            else -> false
+        }
 
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
@@ -1155,7 +1177,7 @@ open class CSharp50Generator(
 
             decl.ownMembers
                     .filterIsInstance<Member.Reactive>()
-                    .filter { it.genericParams.any { it is INullable } }.println { "${it.encapsulatedName}.ValueCanBeNull = true;" }
+                    .filter { it.genericParams.any { it.isNullable() } }.println { "${it.encapsulatedName}.ValueCanBeNull = true;" }
 
             decl.ownMembers
                     .filter { it.isBindable }

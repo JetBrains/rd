@@ -2234,6 +2234,7 @@ open class Cpp17Generator(
             is INullable -> {
                 "(static_cast<bool>($v)) ? " + (itemType as IScalar).hc("*$v") + " : 0"
             }
+            is ScalarAttributedType<IScalar> -> itemType.hc(v)
             else -> {
                 if (this.isAbstract()) {
                     "rd::hash<${this.templateName(decl)}>()($v)"
