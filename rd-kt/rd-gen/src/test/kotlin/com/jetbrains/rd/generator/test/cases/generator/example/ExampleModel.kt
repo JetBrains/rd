@@ -53,6 +53,8 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         field("bar", immutableList(Bar.nullable))
         field("nls_field", nlsString)
         field("nls_nullable_field", string.nullable.attrs(KnownAttrs.Nls))
+        field("string_list_field", immutableList(string))
+        field("nls_list_field", immutableList(nlsString))
         property("foo1", foo.nullable)
         property("bar1", Bar.nullable)
         map("mapScalar", int, scalarFoo).readonly.async
@@ -64,6 +66,7 @@ object ExampleModelNova : Ext(ExampleRootNova) {
 
         property("property_with_several_attrs", string.attrs(KnownAttrs.Nls, KnownAttrs.NonNls))
         property("nls_prop", nlsString)
+        property("nullable_nls_prop", string.nullable.attrs(KnownAttrs.Nls))
         field("non_nls_open_field", nonNlsString)
     }
 

@@ -52,6 +52,11 @@ class FactoryFqnTestDataModel {
 
         val RdDocumentModel = classdef {
             append(RdTextBuffer("text"))
+
+            field("nls_field", nlsString)
+            field("nullable_nls_field", PredefinedType.string.nullable.attrs(KnownAttrs.Nls))
+            field("string_list_field", immutableList(PredefinedType.string))
+            field("nls_list_field", immutableList(nlsString))
         }
 
         init {
@@ -61,6 +66,11 @@ class FactoryFqnTestDataModel {
 
             property("version", PredefinedType.string.nullable)
             property("testBuffer", RdDocumentModel)
+            property("string_list_prop", immutableList(PredefinedType.string))
+            property("nls_prop", nlsString)
+            property("nls_list_prop", immutableList(nlsString))
+            property("nullable_nls_prop", PredefinedType.string.nullable.attrs(KnownAttrs.Nls))
+            property("nullable_nls_list_prop", immutableList(PredefinedType.string.nullable.attrs(KnownAttrs.Nls)))
         }
 
         val rdTextBufferState = classdef {

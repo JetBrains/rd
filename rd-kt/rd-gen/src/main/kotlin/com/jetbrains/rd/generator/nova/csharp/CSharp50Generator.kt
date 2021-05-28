@@ -646,11 +646,12 @@ open class CSharp50Generator(
     }
 
 
-    fun IType.readerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean) = when (this) {
+    fun IType.readerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean): String? = when (this) {
         is Enum -> null //to overwrite Declaration
         is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Read$name"
         is Declaration -> if(this.isOpen && !allowSpecificOpenTypeReference) null else (this.getSetting(Intrinsic)?.readDelegateFqn ?: "${sanitizedName(containing)}.Read")
         is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Read$name" else null
+        is IAttributedType -> itemType.readerDeclaredElsewhereDelegateRef(containing, allowSpecificOpenTypeReference)
         else -> null
     }
 
@@ -730,11 +731,12 @@ open class CSharp50Generator(
     }
 
 
-    fun IType.writerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean) = when (this) {
+    fun IType.writerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean): String? = when (this) {
         is Enum -> null //to overwrite Declaration
         is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Write$name"
         is Declaration -> if(isOpen && !allowSpecificOpenTypeReference) null else (this.getSetting(Intrinsic)?.writeDelegateFqn ?: "${sanitizedName(containing)}.Write")
         is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Write$name" else null
+        is IAttributedType -> itemType.writerDeclaredElsewhereDelegateRef(containing, allowSpecificOpenTypeReference)
         else -> null
     }
 

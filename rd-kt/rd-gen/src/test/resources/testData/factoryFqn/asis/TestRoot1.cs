@@ -36,7 +36,7 @@ namespace Org.TestRoot1
   
   
   /// <summary>
-  /// <p>Generated from: FactoryFqnTestDataModel.kt:24</p>
+  /// <p>Generated from: FactoryFqnTestDataModel.kt:23</p>
   /// </summary>
   public class TestRoot1 : RdExtBase
   {
