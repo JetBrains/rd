@@ -19,18 +19,18 @@ echo $cache_dir
 
 if [[ ! -f "${cache_dir}/jdk.lin.tar.gz" ]]
 then
-  wget -O "${cache_dir}/jdk.lin.tar.gz.tmp" https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-linux-x64.tar.gz
+  wget -q -O "${cache_dir}/jdk.lin.tar.gz.tmp" https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-linux-x64.tar.gz
   mv "${cache_dir}/jdk.lin.tar.gz.tmp" "${cache_dir}/jdk.lin.tar.gz"
 fi
 
 if [[ ! -f "${cache_dir}/nuget.exe" ]]
 then
-  wget -O "${cache_dir}/nuget.exe.tmp" https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+  wget -q -O "${cache_dir}/nuget.exe.tmp" https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
   mv "${cache_dir}/nuget.exe.tmp" "${cache_dir}/nuget.exe"
 fi
 if [[ ! -f "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz" ]]
 then
-  wget -O "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz.tmp" https://download.visualstudio.microsoft.com/download/pr/f65a8eb0-4537-4e69-8ff3-1a80a80d9341/cc0ca9ff8b9634f3d9780ec5915c1c66/dotnet-sdk-3.1.201-linux-x64.tar.gz
+  wget -q -O "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz.tmp" https://download.visualstudio.microsoft.com/download/pr/f65a8eb0-4537-4e69-8ff3-1a80a80d9341/cc0ca9ff8b9634f3d9780ec5915c1c66/dotnet-sdk-3.1.201-linux-x64.tar.gz
   mv "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz.tmp" "${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz"
 fi
 
