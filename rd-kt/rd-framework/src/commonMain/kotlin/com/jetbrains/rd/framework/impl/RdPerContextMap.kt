@@ -47,7 +47,7 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
     }
 
     override fun getForCurrentContext(): V {
-        val currentId = context.value ?: error("No ${context.key} set for getting value for it")
+        val currentId = context.valueForPerContextEntity ?: error("No ${context.key} set for getting value for it")
         return this[currentId] ?: error("No value in ${this.location} for ${context.key} = $currentId")
     }
 
