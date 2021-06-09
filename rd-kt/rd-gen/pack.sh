@@ -19,7 +19,7 @@ echo $cache_dir
 
 if [[ ! -f "${cache_dir}/jdk.lin.tar.gz" ]]
 then
-  wget -O "${cache_dir}/jdk.lin.tar.gz.tmp" https://jetbrains.bintray.com/intellij-jbr/jbrsdk-8u202-linux-x64-b1514.23.tar.gz
+  wget -O "${cache_dir}/jdk.lin.tar.gz.tmp" https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-linux-x64.tar.gz
   mv "${cache_dir}/jdk.lin.tar.gz.tmp" "${cache_dir}/jdk.lin.tar.gz"
 fi
 
