@@ -40,7 +40,7 @@ tar xf ${cache_dir}/jdk.lin.tar.gz -C ${build_dir}/jdk
 mkdir -p ${build_dir}/.dotnet
 tar xf ${cache_dir}/dotnet-sdk-3.1.201-linux-x64.tar.gz -C ${build_dir}/.dotnet
 
-export JAVA_HOME=${build_dir}/jdk
+export JAVA_HOME=${build_dir}/jdk/amazon-corretto-11.0.9.12.1-linux-x64
 chmod +x ${JAVA_HOME}/bin/*
 ${build_dir}/../../../gradlew -Dorg.gradle.daemon=false fatJar
 
