@@ -101,6 +101,15 @@ namespace JetBrains.Rd
       set => myValue.Value = value;
     }
 
+    /// <summary>
+    /// Value which is used as a key inside per-context entities like <see cref="RdPerContextMap{K,V}"/>
+    /// </summary>
+    public virtual T ValueForPerContextEntity
+    {
+      get => Value;
+      set => Value = value;
+    }
+
     internal sealed override object ValueBoxed
     {
       get => Value;

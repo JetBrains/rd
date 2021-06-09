@@ -52,6 +52,13 @@ abstract class RdContext<T : Any>(val key: String, val heavy: Boolean, val seria
         get() = internalValue.get()
         set(value) = internalValue.set(value)
 
+    /**
+     * Value which is used as a key inside per-context entities like [RdPerContextMap][com.jetbrains.rd.framework.impl.RdPerContextMap]
+     */
+    open var valueForPerContextEntity: T?
+        get() = value
+        set(value) { this.value = value }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if(other == null)
