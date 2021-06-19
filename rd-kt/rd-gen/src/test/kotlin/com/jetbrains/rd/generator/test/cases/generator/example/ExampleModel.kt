@@ -136,6 +136,7 @@ class TestExample {
             classloader.scanForResourcesContaining("com.jetbrains.rd.util") +
             classloader.scanForResourcesContaining("org.jetbrains.annotations")
 
+        rdgen.verbose *= true
         rdgen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
 
         val generatedSources = File(kotlinGeneratedSourcesDir).walk().toList()
