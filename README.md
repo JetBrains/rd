@@ -107,6 +107,34 @@ To build packages locally please use: `rd-kt/rd-gen/pack.sh`
 
 *\* Right now it works only on Linux. Please use Docker for Windows or macOS.*
 
+## Run tests (Kotlin part only)
+
+### On a local computer
+
+Don't forget to set `TEAMCITY_VERSION=1` (temporary measure for now) before running any tests.
+
+```console
+$ ./gradlew build
+```
+
+### In a Docker container
+
+```console
+$ docker build . -t rd && docker rm rd && docker run -it --name rd rd
+```
+
+To run particular tests (e.g. `:rd-gen:test`):
+
+```console
+$ docker build . -t rd && docker rm rd && docker run -it --name rd rd --entrypoint ./gradlew :rd-gen:test
+```
+
+To extract test results afterwards:
+
+```console
+$ docker cp rd:/rd/rd-kt/rd-gen/build/reports/ T:\Temp\reports
+```
+
 # How to generate models (stubs)
 
 Generate models in each language you have chosen. 
