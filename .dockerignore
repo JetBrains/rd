@@ -1,0 +1,16 @@
+**/.gradle/
+**/build/
+
+.github/
+.idea/
+rd-cpp/
+rd-net/
+
+.dockerignore
+.editorconfig
+.gitignore
+.gitmodules
+Dockerfile
+LICENSE
+NuGet.Config
+README.md
