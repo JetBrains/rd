@@ -73,6 +73,9 @@ class RdGen : Kli() {
 //    val sourcePaths = mutableListOf<File>()
 
     private fun compile0(src: List<File>, dst: Path) : String? {
+        if (src.isEmpty()) {
+            throw Exception("Input file list is empty, compilation aborted")
+        }
 
         v("Searching for Kotlin compiler")
         try {
