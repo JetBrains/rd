@@ -64,7 +64,7 @@ class SimpleModelTest {
         generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator"), true)
         val generatedCodeTestFile = classloader.getResource("GeneratedCodeTest.kt").toPath()
 
-        val rdgen = RdGen()
+        val rdgen = RdGen().apply { verbose *= true }
 
         val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rd.framework") +
                 classloader.scanForResourcesContaining("com.jetbrains.rd.util")

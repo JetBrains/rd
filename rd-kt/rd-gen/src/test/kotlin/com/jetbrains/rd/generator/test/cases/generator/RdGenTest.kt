@@ -14,7 +14,7 @@ enum class Configuration {
 
 
 fun main() {
-    val rdgen = RdGen()
+    val rdgen = RdGen().apply { verbose *= true }
     rdgen.verbose *= true
 //    rdgen.force *= true
     rdgen.clearOutput *= true

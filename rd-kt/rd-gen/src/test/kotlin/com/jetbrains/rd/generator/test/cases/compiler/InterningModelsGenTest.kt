@@ -21,7 +21,7 @@ class InterningModelsGenTest {
         val files = generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator"), true)
         assert(files.isNotEmpty()) { "No files generated, bug?" }
 
-        val rdgen = RdGen()
+        val rdgen = RdGen().apply { verbose *= true }
 
         val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rd.framework") +
                 classloader.scanForResourcesContaining("com.jetbrains.rd.util")
