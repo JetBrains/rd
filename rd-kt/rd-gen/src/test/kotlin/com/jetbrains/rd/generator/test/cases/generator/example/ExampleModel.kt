@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.io.File
 
+val outputKotlinDir = "build/exampleModelGenerated/testOutputKotlin"
+
 object ExampleRootNova : Root(
-        Kotlin11Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputKotlin")),
+        Kotlin11Generator(FlowTransform.AsIs, "org.example", File(outputKotlinDir)),
         Cpp17Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCpp")),
         CSharp50Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCSharp"))
 )
@@ -110,10 +112,6 @@ object ExampleModelNova : Ext(ExampleRootNova) {
 
 class TestExample {
 
-    companion object {
-        val kotlinGeneratedSourcesDir = "build/testOutputKotlin"
-    }
-
     //    @Test
     fun test() {
         val pkg1 = javaClass.`package`.name.apply { println(this) }
@@ -139,7 +137,7 @@ class TestExample {
         rdgen.verbose *= true
         rdgen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
 
-        val generatedSources = File(kotlinGeneratedSourcesDir).walk().toList()
+        val generatedSources = File(outputKotlinDir).walk().toList()
         val compiledClassesLoader = rdgen.compileDsl(generatedSources)
         Assertions.assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdgen.error}")
     }
