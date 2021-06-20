@@ -128,7 +128,7 @@ class TestExample {
         val files = generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.generator.example"), true)
         assert(files.isNotEmpty()) { "No files generated, bug?" }
 
-        val rdgen = RdGen()
+        val rdgen = RdGen().apply { verbose *= true }
 
         val rdFrameworkClasspath = classloader.scanForResourcesContaining("com.jetbrains.rd.framework") +
             classloader.scanForResourcesContaining("com.jetbrains.rd.util") +
