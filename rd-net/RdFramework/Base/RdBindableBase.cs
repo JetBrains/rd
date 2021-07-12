@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -9,7 +10,7 @@ using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Base
 {
-  public abstract class RdBindableBase : IRdBindable
+  public abstract class RdBindableBase : IRdBindable, INotifyPropertyChanged
   {
     #region Bound state: main
     
@@ -178,6 +179,9 @@ namespace JetBrains.Rd.Base
         return res;
       }
     }
-    
+
+    // NOTE: dummy implementation which prevents WPF from hanging the viewmodel forever on reflection property descriptor fabricated change events:
+    //       when it sees PropertyChanged, it does not look for property descriptor events
+    public virtual event PropertyChangedEventHandler PropertyChanged { add { } remove { } }
   }
 }

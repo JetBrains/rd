@@ -15,7 +15,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
-  public class RdList<V> : RdReactiveBase, IViewableList<V>, INotifyPropertyChanged
+  public class RdList<V> : RdReactiveBase, IViewableList<V>
 #if !NET35
     , INotifyCollectionChanged
 #endif
@@ -49,7 +49,7 @@ namespace JetBrains.Rd.Impl
 #if !NET35    
     public event NotifyCollectionChangedEventHandler CollectionChanged;
 #endif
-    public event PropertyChangedEventHandler PropertyChanged;
+    public override event PropertyChangedEventHandler PropertyChanged;
 
 
 
