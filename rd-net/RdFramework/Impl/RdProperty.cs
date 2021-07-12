@@ -12,11 +12,11 @@ using JetBrains.Annotations;
 namespace JetBrains.Rd.Impl
 {
   public abstract class RdPropertyBase : RdReactiveBase {}
-  public class RdProperty<T> : RdPropertyBase, IViewableProperty<T>, INotifyPropertyChanged
+  public class RdProperty<T> : RdPropertyBase, IViewableProperty<T>
   {
     #region Constructor
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public override event PropertyChangedEventHandler PropertyChanged;
 
     public RdProperty() : this(Polymorphic<T>.Read, Polymorphic<T>.Write) {}
 
