@@ -15,22 +15,24 @@ namespace JetBrains.Collections
     /// In current implementation polynomial factor is 31.
     /// </summary>
     /// <param name="collection"></param>
+    /// <param name="comparer">If comparer is null then `EqualityComparer.Default` will be used</param>
     /// <typeparam name="T"></typeparam>
-    /// <returns>((seed * factor + collection[0]?.GetHashCode() ?? 0) * factor + collection[1]?.GetHashCode() ?? 0) * factor + ... </returns>
+    /// <returns>((seed * factor + hash(collection[0])) * factor + hash(collection[1])) * factor + ... </returns>
     [Pure, CollectionAccess(CollectionAccessType.Read)]
-    public static int ContentHashCode<T>([CanBeNull] this ICollection<T> collection)
+    public static int ContentHashCode<T>([CanBeNull] this ICollection<T> collection,
+      [CanBeNull] IEqualityComparer<T> comparer = null)
     {
       if (collection == null) return 0;
 
+      comparer ??= EqualityComparer<T>.Default;
       var hashCode = 0x2D2816FE;
       foreach (var item in collection)
       {
-        hashCode = hashCode * 31 + (item == null ? 0 : item.GetHashCode());
+        hashCode = hashCode * 31 + (item == null ? 0 : comparer.GetHashCode(item));
       }
 
       return hashCode;
     }
-
 
     /// <summary>
     /// Dequeue <paramref name="queue"/> if it's not empty (or do nothing).
