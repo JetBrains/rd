@@ -344,7 +344,7 @@ namespace JetBrains.Core
     }
 
     /// <summary>
-    /// !<see cref="Succeed"/> and <see cref="Canceled"/>
+    /// Is result successful
     /// </summary>
     public bool Succeed => ExceptionOrExceptionDispatchInfo == null;
     
