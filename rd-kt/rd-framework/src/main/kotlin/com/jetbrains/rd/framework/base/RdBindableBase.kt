@@ -26,8 +26,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     protected var parent : IRdDynamic? = null
 
-    private var bindLifetime: Lifetime? = null
-
+    lateinit var bindLifetime: Lifetime
+        private set
 
     //bound state: inferred
 
@@ -67,7 +67,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 bindLifetime = lf
             },
             {
-                bindLifetime = lf
+                bindLifetime = Lifetime.Terminated
                 location = location.sub("<<unbound>>","::")
                 this.parent = null
                 rdid = RdId.Null
@@ -95,10 +95,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 val newExtension = create()
                 if (newExtension is IRdBindable) {
                     bindableChildren.add(if (highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
-                    bindLifetime?.let {
-                        newExtension.identify(protocol.identity, rdid.mix(".$name"))
-                        newExtension.bind(it, this, name)
-                    }
+                    newExtension.identify(protocol.identity, rdid.mix(".$name"))
+                    newExtension.bind(bindLifetime, this, name)
                 }
 
                 newExtension
@@ -116,6 +114,22 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
+    open fun findByRName(rName: RName): RdBindableBase? {
+        val rootName = rName.getNonEmptyRoot()
+        val child = bindableChildren
+            .asSequence()
+            .map { it.second }
+            .filterIsInstance<RdBindableBase>()
+            .find { it.location.separator == rootName.separator &&
+                    it.location.localName == rootName.localName }
+            ?: return null
+        
+        if (rootName == rName)
+            return child
+        
+        return child.findByRName(rName.dropNonEmptyRoot())
+    }
+    
     override fun identify(identities: IIdentities, id: RdId) {
         require(rdid.isNull) { "Already has RdId: $rdid, entity: $this" }
         require(!id.isNull) { "Assigned RdId mustn't be null, entity: $this" }

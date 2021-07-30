@@ -6,10 +6,7 @@ import com.jetbrains.rd.framework.base.bindPolymorphic
 import com.jetbrains.rd.framework.base.identifyPolymorphic
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
-import com.jetbrains.rd.util.string.PrettyPrinter
-import com.jetbrains.rd.util.string.condstr
-import com.jetbrains.rd.util.string.print
-import com.jetbrains.rd.util.string.printToString
+import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.trace
 
 abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReactiveBase(), IMutablePropertyBase<T> {
@@ -142,6 +139,21 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
         super<RdPropertyBase>.advise(lifetime, handler)
+    }
+
+    override fun findByRName(rName: RName): RdBindableBase? {
+        val rootName = rName.getNonEmptyRoot()
+        val localName = rootName.localName
+        if (localName != "$")
+            return null
+
+        val value = property.valueOrNull as? RdBindableBase
+            ?: return null
+
+        if (rootName == rName)
+            return value
+
+        return value.findByRName(rName.dropNonEmptyRoot())
     }
 
     //pretty printing

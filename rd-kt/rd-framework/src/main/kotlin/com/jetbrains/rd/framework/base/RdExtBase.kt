@@ -51,8 +51,11 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts).also {
+                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreatedLocal, createExtSignal()).also {
                     it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
+                    parentProtocol.extCreatedNetworked.localChange {
+                        parentProtocol.extCreatedNetworked.fire(Triple(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash))
+                    }
                 }
             },
             {
@@ -255,4 +258,7 @@ class ExtWire : IWire {
         realWire.send(id, writer)
     }
 
+    override fun tryGetById(rdId: RdId): IRdWireable? {
+        return realWire.tryGetById(rdId)
+    }
 }
