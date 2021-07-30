@@ -33,3 +33,7 @@ interface IScheduler {
 
     fun flush()
 }
+
+interface ISchedulerWithBackground : IScheduler {
+    val backgroundScheduler: IScheduler
+}

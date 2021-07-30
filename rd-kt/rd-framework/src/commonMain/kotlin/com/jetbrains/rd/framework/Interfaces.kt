@@ -6,11 +6,9 @@ import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternId
 import com.jetbrains.rd.framework.impl.ProtocolContexts
+import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.ViewableSet
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
 import kotlin.reflect.KClass
 
@@ -38,6 +36,10 @@ interface IProtocol : IRdDynamic {
     val outOfSyncModels: ViewableSet<RdExtBase>
 
     val contexts : ProtocolContexts
+
+    val extCreatedNetworked: RdSignal<Triple<RName, RdId?, Long>>
+
+    val extCreatedLocal: Signal<Triple<RName, RdId?, Long>>
 }
 
 /**
@@ -66,6 +68,8 @@ interface IWire {
     val contexts: ProtocolContexts
 
     fun setupContexts(newContexts: ProtocolContexts)
+    
+    fun tryGetById(rdId: RdId): IRdWireable?
 }
 
 interface IWireWithDelayedDelivery : IWire {

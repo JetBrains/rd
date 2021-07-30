@@ -316,6 +316,7 @@ open class Kotlin11Generator(
         + "import com.jetbrains.rd.util.string.*"
         + "import com.jetbrains.rd.util.*"
         + "import kotlin.reflect.KClass"
+        + "import kotlin.jvm.JvmStatic"
 
 //        tl.referencedTypes.plus(tl.declaredTypes.flatMap { it.referencedTypes })
 //            .filterIsInstance(Declaration::class.java)
@@ -582,6 +583,7 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (decl.isExtension) return
 
+        + "@JvmStatic"
         block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()

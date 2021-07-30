@@ -8,10 +8,7 @@ import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.parseFromOrdinal
 import com.jetbrains.rd.util.reactive.*
-import com.jetbrains.rd.util.string.PrettyPrinter
-import com.jetbrains.rd.util.string.condstr
-import com.jetbrains.rd.util.string.print
-import com.jetbrains.rd.util.string.printToString
+import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.trace
 
 
@@ -91,6 +88,23 @@ class RdMap<K : Any, V : Any> private constructor(
             view(lifetime) { lf, entry -> (entry.value).bindPolymorphic(lf, this, "[${entry.key}]") }
     }
 
+    override fun findByRName(rName: RName): RdBindableBase? {
+        val rootName = rName.getNonEmptyRoot()
+        val localName = rootName.localName
+        if (!localName.startsWith('[') || !localName.endsWith(']'))
+            return null
+
+        val stringKey = localName.removeSurrounding("[", "]")
+
+        val entry = map.entries.find { (key, _) -> key.toString() == stringKey }
+        val value = entry?.value as? RdBindableBase 
+            ?: return null
+
+        if (rootName == rName)
+            return value
+
+        return value.findByRName(rName.dropNonEmptyRoot())
+    }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val header = buffer.readInt()
