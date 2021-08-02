@@ -26,4 +26,6 @@ internal class LightSingleContextHandler<T: Any>(override val context: RdContext
         if(!hasValue) return null
         return context.serializer.read(ctx, buffer)
     }
+
+    override fun registerValueInValueSet() = Unit
 }

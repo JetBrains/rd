@@ -71,10 +71,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
             buffer.writeBoolean(false)
         } else {
             sendWithoutContexts {
-                if (!protocolValueSet.contains(value)) {
-                    require(protocol.scheduler.isActive) { "Attempting to use previously unused context value $value on a background thread for key ${context.key}" }
-                    protocolValueSet.add(value)
-                }
+                addCurrentValueToValueSet(value)
 
                 val internedId = internRoot.intern(value)
                 buffer.writeInternId(internedId)
@@ -83,6 +80,23 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
                     context.serializer.write(ctx, buffer, value)
                 }
             }
+        }
+    }
+
+    override fun registerValueInValueSet() {
+        val value = context.value ?: return
+
+        sendWithoutContexts {
+            addCurrentValueToValueSet(value)
+        }
+    }
+
+    private fun addCurrentValueToValueSet(value: T) {
+        assert(contexts.isSendWithoutContexts) { "Values must be added to value set only when sending without contexts" }
+
+        if (!protocolValueSet.contains(value)) {
+            require(protocol.scheduler.isActive) { "Attempting to use previously unused context value $value on a background thread for key ${context.key}" }
+            protocolValueSet.add(value)
         }
     }
 

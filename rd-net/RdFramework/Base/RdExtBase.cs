@@ -7,6 +7,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
+using JetBrains.Util;
 
 namespace JetBrains.Rd.Base
 {
@@ -182,6 +183,14 @@ namespace JetBrains.Rd.Base
           while (mySendQ.Count > 0)
           {
             var p = mySendQ.Dequeue();
+
+            if (p.StoredContext.Length == 0)
+            {
+              using (Contexts.CreateSendWithoutContextsCookie())
+                RealWire.Send(p.Id, writer => writer.WriteRaw(p.Bytes, 0, p.Bytes.Length));
+              continue;
+            }
+            
             foreach (var keyValuePair in p.StoredContext)
               keyValuePair.Key.PushContextBoxed(keyValuePair.Value);
 
@@ -212,10 +221,12 @@ namespace JetBrains.Rd.Base
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
             writer(param, cookie.Writer);
-            var storedContext = Contexts.RegisteredContexts
-              .Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
+            var storedContext = Contexts.IsSendWithoutContexts 
+              ? EmptyArray<KeyValuePair<RdContextBase, object>>.Instance 
+              : Contexts.RegisteredContexts.Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
             mySendQ.Enqueue(new QueueItem(id, cookie.CloneData(), storedContext));
-            Contexts.RegisterCurrentValuesInValueSets();
+            if (!RealWire.Contexts.IsSendWithoutContexts)
+              Contexts.RegisterCurrentValuesInValueSets();
           }
 
           return;

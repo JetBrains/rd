@@ -11,4 +11,6 @@ internal interface ISingleContextHandler<T: Any> {
     fun writeValue(ctx: SerializationCtx, buffer: AbstractBuffer)
 
     fun readValue(ctx: SerializationCtx, buffer: AbstractBuffer): T?
+
+    fun registerValueInValueSet()
 }

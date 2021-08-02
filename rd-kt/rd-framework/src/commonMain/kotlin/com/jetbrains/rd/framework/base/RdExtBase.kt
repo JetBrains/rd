@@ -203,6 +203,13 @@ class ExtWire : IWire {
                 while (true) {
                     val (id, count, payload, context) = sendQ.poll() ?: return@lock
 
+                    if (context.isEmpty()) {
+                        realWire.contexts.sendWithoutContexts {
+                            realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
+                        }
+                        continue
+                    }
+
                     val prevValues = ArrayList<Any?>(context.size)
                     context.forEach { (ctx, value) ->
                         prevValues.add(ctx.value)
@@ -228,13 +235,17 @@ class ExtWire : IWire {
                 val buffer = createAbstractBuffer()
                 writer(buffer)
                 @Suppress("UNCHECKED_CAST")
-                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray(), contexts.registeredContexts.map { (it as RdContext<Any>) to it.value }))
-                contexts.sendWithoutContexts {
+                sendQ.offer(QueueItem(id, buffer.position, buffer.getArray(),
+                    if (contexts.isSendWithoutContexts)
+                        emptyList()
+                    else
+                        contexts.registeredContexts.map { (it as RdContext<Any>) to it.value })
+                )
+                if(!contexts.isSendWithoutContexts) {
                     // trigger value set addition here to replicate normal wire behavior
-                    contexts.registeredContexts.map { contexts.getContextHandler(it) }
-                        .filterIsInstance<HeavySingleContextHandler<Any>>().forEach { handler ->
-                            handler.context.value?.let { value -> handler.valueSet.add(value) }
-                        }
+                    contexts.registeredContexts.forEach { context ->
+                        contexts.getContextHandler(context).registerValueInValueSet()
+                    }
                 }
                 return
             }
