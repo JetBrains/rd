@@ -592,18 +592,22 @@ abstract class Root(vararg val hardcodedGenerators: IGenerator) : Toplevel(null)
 
     override fun validate(errors: MutableList<String>) {
         super.validate(errors)
-
-        val decls = toplevels.flatMap {
-            listOf(it) + it.declaredTypes
+        for ((name, lst) in toplevels.groupBy { it.name }) {
+            if (lst.size > 1) {
+                errors.add("Root '${this.name}' has duplicated top-level declaration '$name' in files: [${lst.joinToString(separator = ", ") { it.sourceFileAndLine.orEmpty() }}]")
+            }
         }
-
-        decls.forEach {
-            if (it !== this)
-                it.validate(errors)
-        }
-
-        for ((name, lst) in decls.groupBy { it.name }) {
-            if (lst.size > 1) errors.add("Duplicated declaration name: '$name'")
+        for(tl in toplevels) {
+            val declarations = listOf(tl) + tl.declaredTypes
+            declarations.forEach {
+                if (it !== this)
+                    it.validate(errors)
+            }
+            for ((name, lst) in declarations.groupBy { it.name }) {
+                if (lst.size > 1) {
+                    errors.add("Root '${this.name}' has duplicated declaration '$name' in files: [${lst.joinToString(separator = ", ") { it.sourceFileAndLine.orEmpty() }}]")
+                }
+            }
         }
     }
 }
