@@ -5,7 +5,7 @@
         <version>$version$</version>
         <authors>JetBrains</authors>
         <owners>JetBrains</owners>
-        <license type="expression">Apache-2.0</license>
+        <license type="expression">(GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0)</license>
         <projectUrl>https://github.com/JetBrains/JetBrainsRuntime</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>JetBrains Java Runtime</description>
