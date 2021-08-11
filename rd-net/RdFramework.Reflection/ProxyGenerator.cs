@@ -15,6 +15,7 @@ namespace JetBrains.Rd.Reflection
 {
   public class ProxyGenerator : IProxyGenerator
   {
+    private const String DynamicAssemblyName = "JetBrains.Rd.ProxyGenerator";
     private readonly bool myAllowSave;
 
     /*
@@ -78,14 +79,14 @@ namespace JetBrains.Rd.Reflection
     {
       myAllowSave = allowSave;
 #if NETSTANDARD
-     myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
-     myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
+     myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule(DynamicAssemblyName));
+     myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), AssemblyBuilderAccess.Run));
 #else
-      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), allowSave ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run));
+      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), allowSave ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run));
       if (allowSave)
-        myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator", "RdProxy.dll"));
+        myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule(DynamicAssemblyName, "RdProxy.dll"));
       else
-        myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
+        myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule(DynamicAssemblyName));
 #endif
     }
 
