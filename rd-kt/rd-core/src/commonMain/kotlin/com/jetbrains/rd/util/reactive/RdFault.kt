@@ -1,12 +1,21 @@
 package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.ExecutionException
-import com.jetbrains.rd.util.getThrowableText
 
+expect class RdFault constructor(
+    reasonTypeFqn: String,
+    reasonMessage: String,
+    localizedReasonMessage: String,
+    reasonAsText: String,
+    reason: Throwable? = null
+) : ExecutionException {
+    val reasonTypeFqn: String
+    val reasonMessage: String
+    val localizedReasonMessage: String
+    val reasonAsText: String
 
-class RdFault constructor(val reasonTypeFqn: String, val reasonMessage: String, val reasonAsText: String, reason: Throwable? = null)
-    : ExecutionException(reasonMessage + if (reason == null)  ", reason: $reasonAsText" else "", reason) {
+    constructor(reason: Throwable)
 
-    constructor (reason: Throwable) : this (reason::class.simpleName?:"", reason.message ?: "-- no message --", reason.getThrowableText(), reason) {
-    }
+    @Deprecated("Use the override with localizedReasonMessage")
+    constructor(reasonTypeFqn: String, reasonMessage: String, reasonAsText: String, reason: Throwable? = null)
 }
