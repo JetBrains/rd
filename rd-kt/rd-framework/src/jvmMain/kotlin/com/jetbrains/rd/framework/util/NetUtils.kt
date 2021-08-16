@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.util
 
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 
 object NetUtils {
@@ -8,8 +9,9 @@ object NetUtils {
         if (port == null) return true
         var socket: ServerSocket? = null
         try {
-            socket = ServerSocket(port, 0, InetAddress.getByName("127.0.0.1"))
+            socket = ServerSocket()
             socket.reuseAddress = true
+            socket.bind(InetSocketAddress("127.0.0.1", port), 0)
             return true
         } catch (e: Exception) {
             return false
@@ -21,10 +23,11 @@ object NetUtils {
     fun findFreePort(port: Int): Int {
         if (port > 0 && isPortFree(port))
             return port
-        val socket1 = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
-        val result = socket1.localPort
+        val socket1 = ServerSocket()
         socket1.reuseAddress = true
+        socket1.bind(InetSocketAddress("127.0.0.1", 0), 0)
         socket1.close()
+        val result = socket1.localPort
         return result
     }
 
