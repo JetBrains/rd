@@ -187,7 +187,7 @@ namespace JetBrains.Rd.Reflection
                genericDefinition == typeof(RdMap<,>) ||                          // TResponse can be LiveModel
                (genericDefinition == typeof(RdCall<,>) && IsScalar(arguments[0]) /*&& IsScalar(arguments[1])*/) ||
                // Custom classes support
-               (typeInfo.IsClass && typeInfo.IsSealed && typeof(IRdBindable).IsAssignableFrom(typeInfo));
+               (IsSealedClassAssignableFromIRdBindable(typeInfo));
       }
 
       if (IsScalar(typeInfo))
@@ -201,7 +201,16 @@ namespace JetBrains.Rd.Reflection
       if (hasRdModel)
         return true;
 
+      // Custom classes support
+      if (IsSealedClassAssignableFromIRdBindable(typeInfo))
+        return true;
+
       return false;
+    }
+
+    public static bool IsSealedClassAssignableFromIRdBindable(TypeInfo typeInfo)
+    {
+      return typeInfo.IsClass && typeInfo.IsSealed && typeof(IRdBindable).IsAssignableFrom(typeInfo);
     }
 
     public static bool IsScalar(Type type)
@@ -212,7 +221,7 @@ namespace JetBrains.Rd.Reflection
     public static void AssertEitherExtModelAttribute(TypeInfo type)
     {
       /*Assertion.Assert((HasRdExtAttribute(type) || HasRdModelAttribute(type)), $"Invalid RdModel: expected to have either {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)} ({type.ToString(true)}).");*/
-      Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
+      Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)} or be a sealed class assignable from {nameof(IRdBindable)}.");
     }
 
     public static void AssertRoot(TypeInfo type)
