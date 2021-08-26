@@ -2,11 +2,14 @@ package com.jetbrains.rd.generator.gradle
 
 import org.gradle.api.tasks.JavaExec
 import java.io.File
-import java.util.*
 
 open class RdGenTask : JavaExec() {
     private val local = extensions.create("params", RdGenExtension::class.java, this)
     private val global = project.extensions.findByType(RdGenExtension::class.java)
+
+    fun rdGenOptions(action: (RdGenExtension) -> Unit) {
+        local.apply(action)
+    }
 
     override fun exec() {
         args(generateArgs())
