@@ -7,6 +7,7 @@
         <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <RollForward>LatestMajor</RollForward>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
