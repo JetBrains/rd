@@ -43,7 +43,6 @@ open class MultiplatformPlugin : Plugin<Project> {
                     }
                 }
             }
-            js {}
             metadata {}
 
             sourceSets {
@@ -73,16 +72,6 @@ open class MultiplatformPlugin : Plugin<Project> {
                         implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
                         implementation("org.jetbrains.kotlin:kotlin-test")
                         implementation("org.jetbrains.kotlin:kotlin-test-junit5")
-                    }
-                }
-                val jsMain by getting {
-                    dependencies {
-                        implementation("org.jetbrains.kotlin:kotlin-stdlib-js")
-                    }
-                }
-                val jsTest by getting {
-                    dependencies {
-                        implementation("org.jetbrains.kotlin:kotlin-test-js")
                     }
                 }
             }
