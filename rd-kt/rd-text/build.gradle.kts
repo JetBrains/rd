@@ -16,5 +16,6 @@ dependencies {
     implementation(project(":rd-framework"))
 
     testImplementation("org.jetbrains:jetCheck:0.2.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
 }
 

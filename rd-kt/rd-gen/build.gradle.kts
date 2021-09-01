@@ -17,6 +17,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
     implementation("org.jetbrains.intellij.deps:trove4j:1.0.20181211")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
 }
 
 val fatJar = task<Jar>("fatJar") {

@@ -2,6 +2,7 @@ package com.jetbrains.rd.gradle.plugins
 
 import com.jetbrains.rd.gradle.dependencies.junitVersion
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
+import jetbrains.sign.GpgSignSignatoryProvider
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
@@ -10,6 +11,7 @@ import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
+import org.gradle.plugins.signing.SigningExtension
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -24,6 +26,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
         apply(plugin = "jacoco")
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
+        apply(plugin = "signing")
 
         configure<JacocoPluginExtension> {
             toolVersion = "0.8.2"
@@ -57,21 +60,24 @@ open class KotlinJVMPlugin : Plugin<Project> {
 
             configure<PublishingExtension> {
                 publications {
-                    var mvnId = project.name
-                    if (mvnId.endsWith("-jvm"))
-                        mvnId = mvnId.dropLast(4)
-                    else if (mvnId.endsWith("-core") || mvnId.endsWith("-framework"))
-                        mvnId = "$mvnId-common"
+                    if (project.name != "rd-cross") {
+                        register("pluginMaven", MavenPublication::class.java) {
+                            groupId = "com.jetbrains.rd"
+                            artifactId = project.name
+                            version = rootProject.version as String
 
-                    register("pluginMaven", MavenPublication::class.java) {
-                        groupId = "com.jetbrains.rd"
-                        artifactId = mvnId
-                        version = rootProject.version as String
+                            from(components["kotlin"])
 
-                        from(components["kotlin"])
+                            artifact(sourceJar)
+                            artifact(packageJavadoc)
+                        }
+                    }
+                }
 
-                        artifact(sourceJar)
-                        artifact(packageJavadoc)
+                project.configure<SigningExtension> {
+                    if (System.getenv("TEAMCITY_VERSION") != null) {
+                        sign(publications)
+                        signatories = GpgSignSignatoryProvider()
                     }
 
                     setRemoteRepositories()
@@ -95,7 +101,6 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
                 "testImplementation"("org.junit.jupiter:junit-jupiter-params:$junitVersion")
                 "testImplementation"("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
-                "testImplementation"("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
             }
         }
     }
