@@ -30,3 +30,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${com.jetbrains.rd.gradle.dependencies.kotlinxCoroutinesVersion}")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
 }
+
+publishing.publications.named<MavenPublication>("pluginMaven") {
+    pom {
+        name.set("rd-framework")
+        description.set("Implementation of the RD protocol.")
+    }
+}

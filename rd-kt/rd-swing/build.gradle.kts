@@ -9,3 +9,10 @@ plugins {
 dependencies {
     implementation(project(":rd-core"))
 }
+
+publishing.publications.named<MavenPublication>("pluginMaven") {
+    pom {
+        name.set("rd-swing")
+        description.set("Utilities for integration of Swing UI framework with the reactive entities.")
+    }
+}

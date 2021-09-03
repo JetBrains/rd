@@ -66,6 +66,28 @@ open class KotlinJVMPlugin : Plugin<Project> {
                             artifactId = project.name
                             version = rootProject.version as String
 
+                            pom {
+                                url.set("https://github.com/JetBrains/rd")
+                                licenses {
+                                    license {
+                                        name.set("The Apache License, Version 2.0")
+                                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                                    }
+                                }
+                                developers {
+                                    // According to the reference, this should be the person(s) to be contacted about the project.
+                                    developer {
+                                        id.set("ivan.migalev")
+                                        name.set("Ivan Migalev")
+                                        email.set("ivan.migalev@jetbrains.com")
+                                    }
+                                }
+                                scm {
+                                    connection.set("scm:git:https://github.com/JetBrains/rd.git")
+                                    url.set("https://github.com/JetBrains/rd")
+                                }
+                            }
+
                             from(components["kotlin"])
 
                             artifact(sourceJar)

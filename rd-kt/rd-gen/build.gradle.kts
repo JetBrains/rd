@@ -78,3 +78,10 @@ tasks {
 val modelsImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
 }
+
+publishing.publications.named<MavenPublication>("pluginMaven") {
+    pom {
+        name.set("rd-gen")
+        description.set("Code generator for the RD protocol.")
+    }
+}
