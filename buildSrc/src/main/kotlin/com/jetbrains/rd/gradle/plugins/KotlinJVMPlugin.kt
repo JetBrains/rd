@@ -81,6 +81,11 @@ open class KotlinJVMPlugin : Plugin<Project> {
                                         name.set("Ivan Migalev")
                                         email.set("ivan.migalev@jetbrains.com")
                                     }
+                                    developer {
+                                        id.set("mikhail.filippov")
+                                        name.set("Mikhail Filippov")
+                                        email.set("Mikhail.Filippov@jetbrains.com")
+                                    }
                                 }
                                 scm {
                                     connection.set("scm:git:https://github.com/JetBrains/rd.git")
