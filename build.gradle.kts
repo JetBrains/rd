@@ -160,7 +160,7 @@ tasks {
     val publishNuGet by registering {
         group = publishingGroup
         dependsOn(createNuGetPackages)
-        val deployToProduction = rootProject.extra["deployToProduction"].toString().toBoolean()
+        val deployToProduction = rootProject.extra["deployNuGetToProduction"].toString().toBoolean()
         doLast {
             if (deployToProduction) {
                 for (file in nuGetTargetDir.listFiles().filter { it.extension == "nupkg" }) {

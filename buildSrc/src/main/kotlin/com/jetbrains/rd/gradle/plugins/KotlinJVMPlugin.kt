@@ -81,7 +81,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                         signatories = GpgSignSignatoryProvider()
                     }
                 }
-                val deployToProduction = rootProject.extra["deployToProduction"].toString().toBoolean()
+                val deployToProduction = rootProject.extra["deployMavenToProduction"].toString().toBoolean()
                 repositories {
                     maven {
                         name = "artifacts"
@@ -90,7 +90,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                     if (deployToProduction) {
                         maven {
                             name = "maven-central"
-                            url = uri("https://oss.sonatype.org/content/groups/staging/")
+                            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
                             credentials {
                                 username = rootProject.extra["sonatypeUser"].toString()
                                 password = rootProject.extra["sonatypePassword"].toString()
