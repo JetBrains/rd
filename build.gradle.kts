@@ -160,9 +160,9 @@ tasks {
     val publishNuGet by registering {
         group = publishingGroup
         dependsOn(createNuGetPackages)
+        val deployToProduction = rootProject.extra["deployToProduction"].toString().toBoolean()
         doLast {
-            val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
-            if (isUnderTeamCity) {
+            if (deployToProduction) {
                 for (file in nuGetTargetDir.listFiles().filter { it.extension == "nupkg" }) {
                     exec {
                         commandLine(

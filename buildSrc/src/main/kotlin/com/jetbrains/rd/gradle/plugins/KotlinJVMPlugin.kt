@@ -81,13 +81,13 @@ open class KotlinJVMPlugin : Plugin<Project> {
                         signatories = GpgSignSignatoryProvider()
                     }
                 }
-
+                val deployToProduction = rootProject.extra["deployToProduction"].toString().toBoolean()
                 repositories {
                     maven {
                         name = "artifacts"
                         url = uri(rootProject.projectDir.resolve("build").resolve("artifacts").resolve("maven"))
                     }
-                    if (isUnderTeamCity) {
+                    if (deployToProduction) {
                         maven {
                             name = "maven-central"
                             url = uri("https://oss.sonatype.org/content/groups/staging/")
