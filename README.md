@@ -13,7 +13,7 @@ JetBrains Core library for graceful disposal, concurrency and reactive programmi
 
 * Kotlin
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core
-  * Artifacts: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-core/0.201.40 
+  * Artifacts: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-core
 
 * .NET
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/Lifetimes
@@ -24,7 +24,7 @@ JetBrains Networking library for reactive distributed communication
 
 * Kotlin
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-framework
-  * Maven artifacts: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-framework/0.201.40 
+  * Maven artifacts: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-framework
 
 * .NET
   * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework
@@ -40,7 +40,7 @@ Plugin for RdFramework used for defining models using regular C#
 ### RdGen
 Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
 * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-gen
-* Gradle: https://www.myget.org/feed/rd-snapshots/package/maven/com.jetbrains.rd/rd-gen/0.201.40
+* Gradle: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-gen
 * NuGet: https://www.nuget.org/packages/JetBrains.RdGen
 
 
