@@ -200,6 +200,26 @@ namespace JetBrains.Rd.Impl
         myProperty.Advise(lifetime, handler);
     }
 
+    public override RdBindableBase FindByRName(RName rName)
+    {
+      var rootName = rName.GetNonEmptyRoot();
+      var localName = rootName.LocalName.ToString();
+      if (localName != "$")
+        return null;
+
+      var maybe = myProperty.Maybe;
+      if (!maybe.HasValue)
+        return null;
+
+      if (!(maybe.Value is RdBindableBase value))
+        return null;
+
+      if (rootName == rName)
+        return value;
+
+      return value.FindByRName(rName.DropNonEmptyRoot());
+    }
+
     #endregion
 
 

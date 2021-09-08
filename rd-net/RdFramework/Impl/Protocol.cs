@@ -19,6 +19,7 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     const string ProtocolInternRootRdId = "ProtocolInternRoot";
     const string ContextHandlerRdId = "ProtocolContextHandler";
+    internal const string ProtocolExtCreatedRdId = "ProtocolExtCreated";
     
     /// <summary>
     /// Should match whatever is in rd-gen for ProtocolInternScope
@@ -27,11 +28,12 @@ namespace JetBrains.Rd.Impl
 
     public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler, 
       [NotNull] IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
-      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, initialContexts)
+      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, null, null, initialContexts)
     { }
 
     internal Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, params RdContextBase[] initialContexts)
+      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, 
+      [CanBeNull] Signal<CreatedExtInfo> parentExtCreatedLocal = null, [CanBeNull] RdSignal<CreatedExtInfo> parentExtCreatedNetworked = null, params RdContextBase[] initialContexts)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -50,6 +52,17 @@ namespace JetBrains.Rd.Impl
       if (parentContexts == null)
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
+      ExtCreatedLocal = parentExtCreatedLocal ?? new Signal<CreatedExtInfo>();
+      ExtCreatedNetworked = parentExtCreatedNetworked ?? this.CreateExtSignal();
+      scheduler.InvokeOrQueue(() =>
+      {
+        ExtCreatedNetworked.Bind(lifetime, this, ProtocolExtCreatedRdId);
+        ExtCreatedNetworked.Advise(lifetime, message =>
+        {
+          if (ExtCreatedNetworked.IsLocalChange) return;
+          ExtCreatedLocal.Fire(message);
+        });
+      });
       
       if (wire is IWireWithDelayedDelivery wireWithMessageBroker)
         wireWithMessageBroker.StartDeliveringMessages();
@@ -83,6 +96,9 @@ namespace JetBrains.Rd.Impl
     public ViewableSet<RdExtBase> OutOfSyncModels { get; }
 
     public ProtocolContexts Contexts { get; }
+    
+    public RdSignal<CreatedExtInfo> ExtCreatedNetworked { get; }
+    public Signal<CreatedExtInfo> ExtCreatedLocal { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     

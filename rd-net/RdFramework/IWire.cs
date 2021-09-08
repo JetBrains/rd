@@ -22,6 +22,8 @@ namespace JetBrains.Rd
     void Advise([NotNull] Lifetime lifetime, [NotNull] IRdWireable entity);
     
     [NotNull] ProtocolContexts Contexts { get; set; }
+
+    [CanBeNull] IRdWireable TryGetById(RdId rdId);
   }
 
   public interface IWireWithDelayedDelivery : IWire
@@ -114,6 +116,11 @@ namespace JetBrains.Rd
     public void Advise(Lifetime lifetime, IRdWireable reactive)
     {
       MessageBroker.Advise(lifetime, reactive);
+    }
+
+    public IRdWireable TryGetById(RdId rdId)
+    {
+      return MessageBroker.TryGetById(rdId);
     }
   }
 }
