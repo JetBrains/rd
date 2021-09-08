@@ -10,6 +10,10 @@ plugins {
     kotlin("jvm")
 }
 
+dependencies {
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
+}
+
 val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.main, evaluationDependsOn(":rd-gen").sourceSets["models"])
 
 tasks {
