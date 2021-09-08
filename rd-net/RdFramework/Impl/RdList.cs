@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -309,6 +310,26 @@ namespace JetBrains.Rd.Impl
 
       using (UsingDebugInfo())
         myList.Advise(lifetime, handler);
+    }
+
+    public override RdBindableBase FindByRName(RName rName)
+    {
+      var rootName = rName.GetNonEmptyRoot();
+      var localName = rootName.LocalName.ToString();
+      if (!localName.StartsWith("[") || !localName.EndsWith("]"))
+        return null;
+
+      var stringIndex = localName.Substring(1, localName.Length - 2);
+      if (!int.TryParse(stringIndex, out var index))
+        return null;
+
+      if (!(myList.ElementAtOrDefault(index) is RdBindableBase element))
+        return null;
+
+      if (rootName == rName)
+        return element;
+
+      return element.FindByRName(rName.DropNonEmptyRoot());
     }
 
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -36,6 +37,21 @@ namespace JetBrains.Rd.Base
     public virtual IProtocol Proto => Parent.NotNull(this).Proto;
     
     public virtual SerializationCtx SerializationContext => Parent.NotNull(this).SerializationContext;
+
+    [CanBeNull]
+    public RdExtBase ContainingExt
+    {
+      get
+      {
+        IRdDynamic cur = this;
+        while (cur is RdBindableBase bindable)
+        {
+          if (cur is RdExtBase ext) return ext;
+          cur = bindable.Parent;
+        }
+        return null;
+      }
+    }
 
     #endregion
     
@@ -99,6 +115,25 @@ namespace JetBrains.Rd.Base
       {
         pair.Value?.IdentifyPolymorphic(identities, id.Mix("." + pair.Key));
       }
+    }
+
+    [CanBeNull]
+    public virtual RdBindableBase FindByRName([NotNull] RName rName)
+    {
+      var rootName = rName.GetNonEmptyRoot();
+      var child = BindableChildren
+        .Select(child => child.Value)
+        .OfType<RdBindableBase>()
+        .FirstOrDefault(child => child.Location.Separator == rootName.Separator &&
+                        child.Location.LocalName == rootName.LocalName);
+
+      if (child == null)
+        return null;
+      
+      if (rootName == rName)
+        return child;
+
+      return child.FindByRName(rName.DropNonEmptyRoot());
     }
     
     

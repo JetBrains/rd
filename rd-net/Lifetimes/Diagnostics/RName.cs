@@ -43,6 +43,24 @@ namespace JetBrains.Diagnostics
       return new RName(this, localName, separator ?? "");
     }
 
+    [NotNull]
+    public RName GetNonEmptyRoot()
+    {
+      if (!(Parent is RName parent) || Parent == Empty)
+        return this;
+
+      return parent.GetNonEmptyRoot();
+    }
+
+    [NotNull]
+    public RName DropNonEmptyRoot()
+    {
+      if (!(Parent is RName parent) || parent == Empty)
+        return Empty;
+
+      var tail = parent.DropNonEmptyRoot();
+      return tail.Sub(LocalName, Separator);
+    }
 
     public override string ToString()
     {
