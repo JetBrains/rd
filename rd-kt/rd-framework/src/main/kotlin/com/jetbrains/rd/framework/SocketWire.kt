@@ -442,8 +442,11 @@ class SocketWire {
 
         companion object {
             internal fun createServerSocket(lifetime: Lifetime, port : Int?, allowRemoteConnections: Boolean) : ServerSocket {
-                val address = if (allowRemoteConnections) null else InetAddress.getByName("127.0.0.1")
-                val res = ServerSocket(port?:0, 0, address)
+                val address = if (allowRemoteConnections) InetAddress.getByName("0.0.0.0") else InetAddress.getByName("127.0.0.1")
+                val portToBind = port ?: 0
+                val res = ServerSocket()
+                res.reuseAddress = true
+                res.bind(InetSocketAddress(address, portToBind), 0)
                 lifetime.onTermination {
                     res.close()
                 }
