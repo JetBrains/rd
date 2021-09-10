@@ -186,6 +186,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
     private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
 
+    private lateinit var bindLifetime: Lifetime
     private var cancellationScheduler: IScheduler? = null
     private var handlerScheduler: IScheduler? = null
 
@@ -193,6 +194,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
+        bindLifetime = lifetime
 
         //Because we advise on Synchronous Scheduler: RIDER-10986
         serializationContext = super.serializationContext

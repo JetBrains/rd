@@ -37,13 +37,13 @@ object RNameMarshaller : IMarshaller<RName> {
     }
 }
 
-internal fun IRdDynamic.createExtSignal(): RdSignal<Triple<RName, RdId?, Long>> {
+internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
     val marshaller = FrameworkMarshallers.create(
         { buffer ->
             val rName = RNameMarshaller.read(serializationContext, buffer)
             val rdId = buffer.readNullable { buffer.readRdId() }
             val hash = buffer.readLong()
-            Triple(rName, rdId, hash)
+            ExtCreationInfo(rName, rdId, hash)
         },
         { buffer, (rName, rdId, hash) ->
             RNameMarshaller.write(serializationContext, buffer, rName)

@@ -2,13 +2,13 @@
 
 namespace JetBrains.Rd
 {
-  public struct CreatedExtInfo
+  public struct ExtCreationInfo
   {
     public RName Name;
     public RdId? Id;
     public long Hash;
 
-    public CreatedExtInfo(RName name, RdId? id, long hash)
+    public ExtCreationInfo(RName name, RdId? id, long hash)
     {
       Name = name;
       Id = id;

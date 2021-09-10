@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.impl.HeavySingleContextHandler
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
 import com.jetbrains.rd.util.Logger
@@ -51,10 +50,10 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreatedLocal, createExtSignal()).also {
+                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreatedLocally, createExtSignal()).also {
                     it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
-                    parentProtocol.extCreatedNetworked.localChange {
-                        parentProtocol.extCreatedNetworked.fire(Triple(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash))
+                    parentProtocol.extCreatedRemotely.localChange {
+                        parentProtocol.extCreatedRemotely.fire(ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash))
                     }
                 }
             },

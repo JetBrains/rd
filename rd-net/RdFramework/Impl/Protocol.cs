@@ -33,7 +33,7 @@ namespace JetBrains.Rd.Impl
 
     internal Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
       [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, 
-      [CanBeNull] Signal<CreatedExtInfo> parentExtCreatedLocal = null, [CanBeNull] RdSignal<CreatedExtInfo> parentExtCreatedNetworked = null, params RdContextBase[] initialContexts)
+      [CanBeNull] Signal<ExtCreationInfo> parentExtCreatedLocal = null, [CanBeNull] RdSignal<ExtCreationInfo> parentExtCreatedNetworked = null, params RdContextBase[] initialContexts)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -52,7 +52,7 @@ namespace JetBrains.Rd.Impl
       if (parentContexts == null)
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
-      ExtCreatedLocal = parentExtCreatedLocal ?? new Signal<CreatedExtInfo>();
+      ExtCreatedLocal = parentExtCreatedLocal ?? new Signal<ExtCreationInfo>();
       ExtCreatedNetworked = parentExtCreatedNetworked ?? this.CreateExtSignal();
       scheduler.InvokeOrQueue(() =>
       {
@@ -97,8 +97,8 @@ namespace JetBrains.Rd.Impl
 
     public ProtocolContexts Contexts { get; }
     
-    public RdSignal<CreatedExtInfo> ExtCreatedNetworked { get; }
-    public Signal<CreatedExtInfo> ExtCreatedLocal { get; }
+    public RdSignal<ExtCreationInfo> ExtCreatedNetworked { get; }
+    public Signal<ExtCreationInfo> ExtCreatedLocal { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     

@@ -232,7 +232,10 @@ namespace JetBrains.Rd.Impl
     [CanBeNull]
     public IRdWireable TryGetById(RdId rdId)
     {
-      return mySubscriptions.TryGetValue(rdId, out var value) ? value : null;
+      lock (myLock)
+      {
+        return mySubscriptions.TryGetValue(rdId, out var value) ? value : null;
+      }
     }
   }
 }

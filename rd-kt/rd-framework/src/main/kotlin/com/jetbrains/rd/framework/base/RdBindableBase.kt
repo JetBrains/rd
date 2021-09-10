@@ -26,8 +26,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     protected var parent : IRdDynamic? = null
 
-    lateinit var bindLifetime: Lifetime
-        private set
+    private var bindLifetime: Lifetime? = null
 
     //bound state: inferred
 
@@ -67,7 +66,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 bindLifetime = lf
             },
             {
-                bindLifetime = Lifetime.Terminated
+                bindLifetime = null
                 location = location.sub("<<unbound>>","::")
                 this.parent = null
                 rdid = RdId.Null
@@ -95,8 +94,10 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 val newExtension = create()
                 if (newExtension is IRdBindable) {
                     bindableChildren.add(if (highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
-                    newExtension.identify(protocol.identity, rdid.mix(".$name"))
-                    newExtension.bind(bindLifetime, this, name)
+                    bindLifetime?.let {
+                        newExtension.identify(protocol.identity, rdid.mix(".$name"))
+                        newExtension.bind(it, this, name)
+                    }
                 }
 
                 newExtension

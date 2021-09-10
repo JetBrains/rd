@@ -63,7 +63,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
     }
 
     fun tryGetById(rdId: RdId): IRdWireable? {
-        return subscriptions[rdId]
+        return Sync.lock(lock) { subscriptions[rdId] }
     }
 
 

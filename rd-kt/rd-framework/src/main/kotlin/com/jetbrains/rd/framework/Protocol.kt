@@ -6,10 +6,7 @@ import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.ISchedulerWithBackground
-import com.jetbrains.rd.util.reactive.Signal
-import com.jetbrains.rd.util.reactive.ViewableSet
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
 
 
@@ -22,8 +19,8 @@ class Protocol internal constructor(
     val lifetime: Lifetime,
     serializationCtx: SerializationCtx? = null,
     parentContexts: ProtocolContexts? = null,
-    parentExtCreatedLocal: Signal<Triple<RName, RdId?, Long>>? = null,
-    parentExtCreatedNetworked: RdSignal<Triple<RName, RdId?, Long>>? = null,
+    parentExtCreatedLocally: ISignal<ExtCreationInfo>? = null,
+    parentExtCreatedRemotely: RdSignal<ExtCreationInfo>? = null,
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
 
@@ -60,9 +57,9 @@ class Protocol internal constructor(
 
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
-    override val extCreatedNetworked: RdSignal<Triple<RName, RdId?, Long>>
+    override val extCreatedLocally: ISignal<ExtCreationInfo>
     
-    override val extCreatedLocal: Signal<Triple<RName, RdId?, Long>> = parentExtCreatedLocal ?: Signal()
+    override val extCreatedRemotely: RdSignal<ExtCreationInfo>
     
     init {
         wire.setupContexts(contexts)
@@ -84,14 +81,15 @@ class Protocol internal constructor(
             }
         }
 
-        extCreatedNetworked = parentExtCreatedNetworked ?: createExtSignal().apply { 
+        extCreatedLocally = parentExtCreatedLocally ?: Signal()
+        extCreatedRemotely = parentExtCreatedRemotely ?: createExtSignal().apply { 
             wireScheduler = (scheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: scheduler
         }
         scheduler.invokeOrQueue {
-            extCreatedNetworked.bind(lifetime, this, "ProtocolExtCreated")
-            extCreatedNetworked.advise(lifetime) { message ->
-                if (extCreatedNetworked.isLocalChange) return@advise
-                extCreatedLocal.fire(message)
+            extCreatedRemotely.bind(lifetime, this, "ProtocolExtCreated")
+            extCreatedRemotely.advise(lifetime) { message ->
+                if (extCreatedRemotely.isLocalChange) return@advise
+                extCreatedLocally.fire(message)
             }
         }
 

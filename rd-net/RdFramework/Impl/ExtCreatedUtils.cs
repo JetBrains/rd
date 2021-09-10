@@ -9,15 +9,15 @@ namespace JetBrains.Rd.Impl
   public static class ExtCreatedUtils
   {
     [NotNull]
-    public static RdSignal<CreatedExtInfo> CreateExtSignal(this IRdDynamic @this)
+    public static RdSignal<ExtCreationInfo> CreateExtSignal(this IRdDynamic @this)
     {
-      var signal = new RdSignal<CreatedExtInfo>(
+      var signal = new RdSignal<ExtCreationInfo>(
         (ctx, reader) =>
         {
           var rName = ReadRName(reader);
           var rdId = reader.ReadNullableStruct((_, r) => r.ReadRdId(), ctx);
           var hash = reader.ReadLong();
-          return new CreatedExtInfo(rName, rdId, hash);
+          return new ExtCreationInfo(rName, rdId, hash);
         },
         (ctx, writer, value) =>
         {

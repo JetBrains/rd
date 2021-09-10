@@ -58,7 +58,7 @@ namespace JetBrains.Rd.Base
       using (parentProtocol.ExtCreatedNetworked.UsingLocalChange())
       {
         var bindableParent = Parent is RdBindableBase bindable ? bindable : null;
-        parentProtocol.ExtCreatedNetworked.Fire(new CreatedExtInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash));
+        parentProtocol.ExtCreatedNetworked.Fire(new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash));
       }
       parentWire.Advise(lifetime, this);
             

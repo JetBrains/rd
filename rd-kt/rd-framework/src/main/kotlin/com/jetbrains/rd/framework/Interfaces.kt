@@ -37,9 +37,9 @@ interface IProtocol : IRdDynamic {
 
     val contexts : ProtocolContexts
 
-    val extCreatedNetworked: RdSignal<Triple<RName, RdId?, Long>>
+    val extCreatedLocally: ISignal<ExtCreationInfo>
 
-    val extCreatedLocal: Signal<Triple<RName, RdId?, Long>>
+    val extCreatedRemotely: RdSignal<ExtCreationInfo>
 }
 
 /**
