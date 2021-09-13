@@ -76,19 +76,19 @@ namespace JetBrains.Util.Util
 
     #region Static API
 
-    private static int NextSliceLoBit([CanBeNull] BitSlice slice) => slice?.HiBit + 1 ?? 0; 
+    private static int NextSliceLoBit(BitSlice? slice) => slice?.HiBit + 1 ?? 0; 
     
-    public static IntBitSlice Int(int bitCount, [CanBeNull] BitSlice previousSlice = null)
+    public static IntBitSlice Int(int bitCount, BitSlice? previousSlice = null)
     {
       return new IntBitSlice(NextSliceLoBit(previousSlice), bitCount);
     }
 
-    public static BoolBitSlice Bool([CanBeNull] BitSlice previousSlice = null)
+    public static BoolBitSlice Bool(BitSlice? previousSlice = null)
     {
       return new BoolBitSlice(NextSliceLoBit(previousSlice), 1);
     }
     
-    public static Enum32BitSlice<T> Enum<T>([CanBeNull] BitSlice previousSlice = null) where T  :
+    public static Enum32BitSlice<T> Enum<T>(BitSlice? previousSlice = null) where T  :
 #if !NET35
     unmanaged, 
 #endif

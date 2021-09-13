@@ -15,11 +15,11 @@ namespace JetBrains.Collections
   /// <typeparam name="T"></typeparam>
   public struct CompactList<T> : IEnumerable<T>
   {
-    internal static readonly List<T> SingleMarker = new List<T>();
+    internal static readonly List<T?> SingleMarker = new List<T?>();
 
-    private T mySingleValue;
+    private T? mySingleValue;
     // or or
-    private List<T> myMultipleValues;    
+    private List<T?>? myMultipleValues;
     
     public CompactListEnumerator<T> GetEnumerator()
     {
@@ -54,10 +54,11 @@ namespace JetBrains.Collections
           myMultipleValues = SingleMarker;
           break;
         case 1: 
-          myMultipleValues = new List<T> { mySingleValue, item };
+          myMultipleValues = new List<T?> { mySingleValue, item };
           mySingleValue = default(T);
           break;
-        default: 
+        default:
+          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
           myMultipleValues.Add(item);
           break;
       }
@@ -69,13 +70,14 @@ namespace JetBrains.Collections
       myMultipleValues = null;
     }
 
-    public int LastIndexOf(T item, IEqualityComparer<T> comparer)
+    public int LastIndexOf(T item, IEqualityComparer<T?> comparer)
     {
       switch (Count)      
       {
         case 0: return -1;
         case 1: return comparer.Equals(mySingleValue, item) ? 0 : -1;          
         default:
+          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
           for (var i = myMultipleValues.Count - 1; i >= 0; i--)
           {
             if (comparer.Equals(myMultipleValues[i], item)) return i;
@@ -97,17 +99,19 @@ namespace JetBrains.Collections
           return true;
           
         case 2:
+          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
           mySingleValue = myMultipleValues[1-index];
           myMultipleValues = SingleMarker;
           return true;
             
         default:
+          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
           myMultipleValues.RemoveAt(index);
           return true;
       }      
     }
 
-    public T[] ToArray()
+    public T?[] ToArray()
     {
       switch (Count)      
       {
@@ -116,11 +120,12 @@ namespace JetBrains.Collections
         case 1:
           return new [] {mySingleValue};
         default:
+          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
           return myMultipleValues.ToArray();
       }
     }
     
-    public T this[int index]
+    public T? this[int index]
     {
       get
       {
@@ -139,24 +144,24 @@ namespace JetBrains.Collections
     }        
   }
   
-  public struct CompactListEnumerator<T> : IEnumerator<T>
+  public struct CompactListEnumerator<T> : IEnumerator<T?>
   {
-    private readonly T mySingleValue;
-    private readonly List<T> myMultipleValues;
+    private readonly T? mySingleValue;
+    private readonly List<T?>? myMultipleValues;
     private int myIndex;
-    private T myCurrent;
+    private T? myCurrent;
       
-    internal CompactListEnumerator(T singleValue, List<T> multipleValues)
+    internal CompactListEnumerator(T? singleValue, List<T?>? multipleValues)
     {
       mySingleValue = singleValue;
       myMultipleValues = multipleValues;
       myIndex = -1;
-      myCurrent = default(T);
+      myCurrent = default;
     }
 
-    object IEnumerator.Current => myCurrent;
+    object? IEnumerator.Current => myCurrent;
       
-    public T Current => myCurrent;
+    public T? Current => myCurrent;
 
     public bool MoveNext()
     {

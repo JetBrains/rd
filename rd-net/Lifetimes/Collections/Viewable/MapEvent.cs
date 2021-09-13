@@ -1,4 +1,4 @@
-using JetBrains.Annotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace JetBrains.Collections.Viewable
 {
@@ -7,14 +7,24 @@ namespace JetBrains.Collections.Viewable
   /// </summary>
   /// <typeparam name="K"></typeparam>
   /// <typeparam name="V"></typeparam>
-  public struct MapEvent<K, V>
+  public struct MapEvent<K, V> where K : notnull
   {    
     public AddUpdateRemove Kind { get; private set; }
-    public K Key { [NotNull] get; private set; }
-    public V OldValue { [CanBeNull] get; private set; }
-    public V NewValue { [CanBeNull] get; private set; }
+    public K Key { get; private set; }
+    public V? OldValue { get; private set; }
+    public V? NewValue { get; private set; }
 
-    private MapEvent(AddUpdateRemove kind, [NotNull] K key, [CanBeNull] V oldValue, [CanBeNull] V newValue)
+    [MemberNotNullWhen(true, nameof(NewValue))]
+    public bool IsAdd => Kind == AddUpdateRemove.Add;
+
+    [MemberNotNullWhen(true, nameof(NewValue))]
+    [MemberNotNullWhen(true, nameof(OldValue))]
+    public bool IsUpdate => Kind == AddUpdateRemove.Update;
+
+    [MemberNotNullWhen(true, nameof(OldValue))]
+    public bool IsRemove => Kind == AddUpdateRemove.Remove;
+
+    private MapEvent(AddUpdateRemove kind, K key, V oldValue, V newValue)
       : this()
     {
       Kind = kind;
@@ -23,19 +33,19 @@ namespace JetBrains.Collections.Viewable
       NewValue = newValue;
     }
 
-    public static MapEvent<K, V> Add([NotNull] K key, [NotNull] V newValue)
+    public static MapEvent<K, V> Add(K key, V newValue)
     {
-      return new MapEvent<K, V>(AddUpdateRemove.Add, key, default(V), newValue);
+      return new MapEvent<K, V>(AddUpdateRemove.Add, key, default!, newValue);
     }
 
-    public static MapEvent<K, V> Update([NotNull] K key, [NotNull] V oldValue, [NotNull] V newValue)
+    public static MapEvent<K, V> Update(K key, V oldValue, V newValue)
     {
       return new MapEvent<K, V>(AddUpdateRemove.Update, key, oldValue, newValue);
     }
 
-    public static MapEvent<K, V> Remove([NotNull] K key, [NotNull] V oldValue)
+    public static MapEvent<K, V> Remove(K key, V oldValue)
     {
-      return new MapEvent<K, V>(AddUpdateRemove.Remove, key, oldValue, default(V));
+      return new MapEvent<K, V>(AddUpdateRemove.Remove, key, oldValue, default!);
     }
 
     public override string ToString()

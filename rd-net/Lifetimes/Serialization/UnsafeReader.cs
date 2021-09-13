@@ -261,9 +261,8 @@ namespace JetBrains.Serialization
       return new Uri(Uri.UnescapeDataString(ReadString()), UriKind.RelativeOrAbsolute);
     }
 
-    [CanBeNull]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public string ReadString()
+    public string? ReadString()
     {
       int len = ReadInt32();
 
@@ -297,9 +296,8 @@ namespace JetBrains.Serialization
       }
     }
 
-    [CanBeNull]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public string ReadStringInterned(IRawStringIntern intern)
+    public string? ReadStringInterned(IRawStringIntern intern)
     {
       int len = ReadInt32();
 
@@ -337,11 +335,11 @@ namespace JetBrains.Serialization
     public static readonly ReadDelegate<UInt64> UInt64Delegate = reader => reader.ReadUInt64();
     public static readonly ReadDelegate<DateTime> DateTimeDelegate = reader => reader.ReadDateTime();
     public static readonly ReadDelegate<Uri> UriDelegate = reader => reader.ReadUri();
-    public static readonly ReadDelegate<string> StringDelegate = reader => reader.ReadString();
-    public static readonly ReadDelegate<byte[]> ByteArrayDelegate = reader => reader.ReadByteArray();
-    public static readonly ReadDelegate<bool[]> BoolArrayDelegate = reader => reader.ReadArray(BooleanDelegate);
-    public static readonly ReadDelegate<int[]> IntArrayDelegate = reader => reader.ReadIntArray();
-    public static readonly ReadDelegate<string[]> StringArrayDelegate = reader => reader.ReadArray(StringDelegate);
+    public static readonly ReadDelegate<string?> StringDelegate = reader => reader.ReadString();
+    public static readonly ReadDelegate<byte[]?> ByteArrayDelegate = reader => reader.ReadByteArray();
+    public static readonly ReadDelegate<bool[]?> BoolArrayDelegate = reader => reader.ReadArray(BooleanDelegate);
+    public static readonly ReadDelegate<int[]?> IntArrayDelegate = reader => reader.ReadIntArray();
+    public static readonly ReadDelegate<string?[]?> StringArrayDelegate = reader => reader.ReadArray(StringDelegate);
 
     #endregion
 
@@ -349,19 +347,19 @@ namespace JetBrains.Serialization
     #region Collection readers
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public T[] ReadArray<T>(ReadDelegate<T> readDelegate)
+    public T?[]? ReadArray<T>(ReadDelegate<T?> readDelegate)
     {
       int len = ReadInt32();
       if (len < 0) return null;
       if (len == 0) return EmptyArray<T>.Instance;
 
-      var res = new T[len];
+      var res = new T?[len];
       for (int i = 0; i < len; i++) res[i] = readDelegate(this);
       return res;
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public int[] ReadIntArray()
+    public int[]? ReadIntArray()
     {
       int len = ReadInt32();
       if (len < 0) return null;
@@ -377,7 +375,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public byte[] ReadByteArray()
+    public byte[]? ReadByteArray()
     {
       int len = ReadInt32();
       if (len < 0) return null;
@@ -401,7 +399,7 @@ namespace JetBrains.Serialization
     /// <param name="constructor"></param>
     /// <returns></returns>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public TCol ReadCollection<T, TCol>(ReadDelegate<T> readDelegate, Func<int, TCol> constructor) where TCol : ICollection<T>
+    public TCol? ReadCollection<T, TCol>(ReadDelegate<T> readDelegate, Func<int, TCol> constructor) where TCol : ICollection<T>
     {
       int count = ReadInt32();
       if (count < 0) return default(TCol);
@@ -415,7 +413,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public TDict ReadDictionary<TK, TV, TDict>(ReadDelegate<TK> readKeyDelegate, ReadDelegate<TV> readValueDelegate,
+    public TDict? ReadDictionary<TK, TV, TDict>(ReadDelegate<TK> readKeyDelegate, ReadDelegate<TV> readValueDelegate,
       Func<int, TDict> constructor) where TDict : IDictionary<TK, TV>
     {
       int count = ReadInt32();

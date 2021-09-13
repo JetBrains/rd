@@ -13,7 +13,7 @@ namespace JetBrains.Lifetimes
   public class SequentialLifetimes
   {
     private readonly Lifetime myParentLifetime;
-    [NotNull] private LifetimeDefinition myCurrentDef = LifetimeDefinition.Terminated;
+    private LifetimeDefinition myCurrentDef = LifetimeDefinition.Terminated;
 
     /// <summary>Creates and binds to the lifetime.</summary>
     /// <param name="lifetime">When this lifetime is closed, the last of the sequential lifetimes is closed too.</param>
@@ -37,7 +37,7 @@ namespace JetBrains.Lifetimes
     /// Terminates the current lifetime, calls your handler with the new lifetime and tries to set it as current.
     /// Similar to <see cref="DefineNext"/>
     /// </summary>
-    public void Next([NotNull] Action<Lifetime> atomicAction)
+    public void Next(Action<Lifetime> atomicAction)
     {
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
       DefineNext(lifetimeDefinition => atomicAction(lifetimeDefinition.Lifetime));
@@ -47,7 +47,7 @@ namespace JetBrains.Lifetimes
     /// Terminates the current lifetime, calls your handler with the new lifetime and tries to set it as current.
     /// Similar to <see cref="Next(System.Action{JetBrains.Lifetimes.Lifetime})"/>
     /// </summary>
-    public void DefineNext([NotNull] Action<LifetimeDefinition> atomicAction)
+    public void DefineNext(Action<LifetimeDefinition> atomicAction)
     {
       if (atomicAction == null) throw new ArgumentNullException(nameof(atomicAction));
       
@@ -81,7 +81,7 @@ namespace JetBrains.Lifetimes
     /// <param name="newLifetimeDefinition">New lifetime definition to set</param>
     /// <param name="actionWithNewLifetime">Action to perform once new lifetime is set</param>
     /// <returns>New lifetime definition which can be terminated in case of a race condition</returns>
-    private LifetimeDefinition TrySetNewAndTerminateOld(LifetimeDefinition newLifetimeDefinition, [CanBeNull] Action<LifetimeDefinition> actionWithNewLifetime = null)
+    private LifetimeDefinition TrySetNewAndTerminateOld(LifetimeDefinition newLifetimeDefinition, Action<LifetimeDefinition>? actionWithNewLifetime = null)
     {
       void TerminateLifetimeDefinition(LifetimeDefinition lifetimeDefinition)
       {

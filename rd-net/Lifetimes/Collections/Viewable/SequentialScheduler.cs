@@ -24,7 +24,7 @@ namespace JetBrains.Collections.Viewable
       return new SequentialScheduler(id, lifetime, scheduler as TaskScheduler ?? new SchedulerWrapper(scheduler));
     }
 
-    public SequentialScheduler(string id, Lifetime lifetime, TaskScheduler scheduler = null)
+    public SequentialScheduler(string id, Lifetime lifetime, TaskScheduler? scheduler = null)
     {
       myLifetime = lifetime;
       mySyncContext = new SyncContext(this);
@@ -61,7 +61,7 @@ namespace JetBrains.Collections.Viewable
     }
 
     protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => false;
-    protected override IEnumerable<Task> GetScheduledTasks() => null;
+    protected override IEnumerable<Task> GetScheduledTasks() => Array.Empty<Task>();
 
     private class SyncContext : SynchronizationContext
     {
@@ -90,7 +90,7 @@ namespace JetBrains.Collections.Viewable
 
       protected override void QueueTask(Task task) => myScheduler.Queue(() => TryExecuteTask(task));
       protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => false;
-      protected override IEnumerable<Task> GetScheduledTasks() => null;
+      protected override IEnumerable<Task> GetScheduledTasks() => Array.Empty<Task>();
     }
   }
 #endif

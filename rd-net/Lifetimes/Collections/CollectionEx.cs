@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 
 namespace JetBrains.Collections
@@ -19,8 +20,8 @@ namespace JetBrains.Collections
     /// <typeparam name="T"></typeparam>
     /// <returns>((seed * factor + hash(collection[0])) * factor + hash(collection[1])) * factor + ... </returns>
     [Pure, CollectionAccess(CollectionAccessType.Read)]
-    public static int ContentHashCode<T>([CanBeNull] this ICollection<T> collection,
-      [CanBeNull] IEqualityComparer<T> comparer = null)
+    public static int ContentHashCode<T>(this ICollection<T>? collection,
+      IEqualityComparer<T>? comparer = null)
     {
       if (collection == null) return 0;
 
@@ -41,7 +42,7 @@ namespace JetBrains.Collections
     /// <param name="res"><see cref="Queue{T}.Dequeue"/> if <paramref name="queue"/>.Count > 0 at method start, `default{T}` otherwise</param>
     /// <typeparam name="T"></typeparam>
     /// <returns>`true` if <paramref name="queue"/>.Count > 0 at method start, `false` otherwise</returns>
-    public static bool TryDequeue<T>(this Queue<T> queue, out T res)
+    public static bool TryDequeue<T>(this Queue<T> queue, [MaybeNullWhen(false)] out T res)
     {
       if (queue.Count > 0)
       {

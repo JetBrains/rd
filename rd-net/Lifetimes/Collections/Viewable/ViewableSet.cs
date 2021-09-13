@@ -11,8 +11,8 @@ namespace JetBrains.Collections.Viewable
   /// Default implementation for <see cref="IViewableSet{T}"/>
   /// </summary>
   /// <typeparam name="T"></typeparam>
-    public class ViewableSet<T> : IViewableSet<T>
-    {
+    public class ViewableSet<T> : IViewableSet<T> where T : notnull
+  {
         private readonly Signal<SetEvent<T>> myChange = new Signal<SetEvent<T>>();
 #if !NET35
     private readonly ISet<T> myStorage;

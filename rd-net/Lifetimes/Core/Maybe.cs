@@ -30,7 +30,7 @@ namespace JetBrains.Core
       }
     }
 
-    public T ValueOrDefault => !HasValue ? default : myValue;
+    public T? ValueOrDefault => !HasValue ? default : myValue;
 
     public Maybe(T value) : this()
     {

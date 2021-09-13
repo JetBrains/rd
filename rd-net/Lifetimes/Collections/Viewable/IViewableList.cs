@@ -14,7 +14,7 @@ namespace JetBrains.Collections.Viewable
   /// </remarks> 
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  public interface IViewableList<T> : IList<T>, ISource<ListEvent<T>>
+  public interface IViewableList<T> : IList<T>, ISource<ListEvent<T>> where T : notnull
   {
     /// <summary>
     /// Advise this source if you don't want synchronous execution of <c>handler</c> on existing

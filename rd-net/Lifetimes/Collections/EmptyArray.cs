@@ -10,7 +10,7 @@ namespace JetBrains.Util
   [DebuggerDisplay("Length = 0")]
   public static class EmptyArray<T>
   {
-    [NotNull] public static readonly T[] Instance = new T[0];
+    public static readonly T[] Instance = new T[0];
   }
 
   /// <summary>
@@ -19,7 +19,7 @@ namespace JetBrains.Util
   public static class EmptyArray
   {
     /// <summary>Synonym for <see cref="EmptyArray{T}.Instance"/></summary>
-    [NotNull, Pure]
+    [Pure]
     public static T[] GetInstance<T>()
     {
       return EmptyArray<T>.Instance;

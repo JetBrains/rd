@@ -16,6 +16,7 @@
         
         <Platforms>AnyCPU</Platforms>
         
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">

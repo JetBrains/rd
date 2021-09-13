@@ -142,7 +142,7 @@ namespace JetBrains.Threading
     }
         
 
-    [PublicAPI, NotNull]
+    [PublicAPI]
     public Task<T> ReceiveAsync()
     {      
       lock (myLock)

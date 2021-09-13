@@ -19,7 +19,7 @@ namespace JetBrains.Diagnostics
   /// </summary>
   public static class FirstChanceExceptionInterceptor
   {
-    [ThreadStatic] private static Stack ourThreadLocalDebugInfo;
+    [ThreadStatic] private static Stack? ourThreadLocalDebugInfo;
 
     public const string ExceptionDataKey = "ThreadLocalDebugInfo"; 
     
@@ -54,7 +54,6 @@ namespace JetBrains.Diagnostics
       }
     }
 
-    [NotNull]
     private static object[] GetThreadLocalDebugInfo()
     {
       var info = ourThreadLocalDebugInfo;

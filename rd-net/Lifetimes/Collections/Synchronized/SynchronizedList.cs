@@ -14,7 +14,7 @@ namespace JetBrains.Collections.Synchronized
   {
     private readonly List<T> myList;
 
-    public SynchronizedList(IEnumerable<T> values = null, int capacity = 0)
+    public SynchronizedList(IEnumerable<T>? values = null, int capacity = 0)
     {
       myList = new List<T>(capacity > 0 ? capacity : 10);
       if (values != null) 

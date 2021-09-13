@@ -200,8 +200,7 @@ namespace JetBrains.Annotations
             ParameterName = parameterName;
         }
 
-        [CanBeNull]
-        public string ParameterName { get; private set; }
+        public string? ParameterName { get; private set; }
     }
 
     /// <summary>
@@ -431,8 +430,7 @@ namespace JetBrains.Annotations
             Comment = comment;
         }
 
-        [CanBeNull]
-        public string Comment { get; private set; }
+        public string? Comment { get; private set; }
     }
 
     /// <summary>
@@ -469,8 +467,7 @@ namespace JetBrains.Annotations
             Justification = justification;
         }
 
-        [CanBeNull]
-        public string Justification { get; private set; }
+        public string? Justification { get; private set; }
     }
 
     /// <summary>
@@ -506,8 +503,7 @@ namespace JetBrains.Annotations
             BasePath = basePath;
         }
 
-        [CanBeNull]
-        public string BasePath { get; private set; }
+        public string? BasePath { get; private set; }
     }
     
 

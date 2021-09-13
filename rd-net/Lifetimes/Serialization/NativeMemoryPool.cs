@@ -1,10 +1,9 @@
 using System;
-using System.IO;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
 
@@ -17,15 +16,15 @@ namespace JetBrains.Serialization
 
     private const string LogCategory = nameof(NativeMemoryPool);
 
-    [ThreadStatic] private static ThreadMemoryHolder ourThreadMemory;
+    [ThreadStatic] private static ThreadMemoryHolder? ourThreadMemory;
 
     /// <summary>
     /// All allocated holders of native blocks. The array should be filled from the start.
     /// Lock policy: any modification of this array should be protected by <see cref="ourLock"/>
-    /// It is mandatory to reserve block before removing or replacing it from the array. Be aware that there are readers
-    /// of this array that do not required to use a lock.
+    /// It is mandatory to reserve block before removing or replacing it from the array. Be aware, that it is valid to
+    /// read this array without taking any lock
     /// </summary>
-    private static ThreadMemoryHolder[] ourBlocks = new ThreadMemoryHolder[Environment.ProcessorCount];
+    private static ThreadMemoryHolder?[] ourBlocks = new ThreadMemoryHolder[Environment.ProcessorCount];
     private static readonly object ourLock = new object();
 
     public static int SampleUsed() => ourBlocks.Count(b => b != null && b.IsUsed);
@@ -89,7 +88,7 @@ namespace JetBrains.Serialization
     internal static Cookie ReserveMiss()
     {
       // try to search in the array of all memory blocks
-      ThreadMemoryHolder h;
+      ThreadMemoryHolder? h;
       if (SearchAndReserve(out h))
         return new Cookie(h);
       if (AllocateNew(out h))
@@ -112,29 +111,29 @@ namespace JetBrains.Serialization
       return new Cookie();
 
 
-      bool SearchAndReserve(out ThreadMemoryHolder holder)
+      bool SearchAndReserve([MaybeNullWhen(false)] out ThreadMemoryHolder holder)
       {
         var blocks = ourBlocks;
         var start = Thread.CurrentThread.ManagedThreadId % blocks.Length;
         for (int i = start; i < blocks.Length; i++)
         {
-          holder = blocks[i];
-          if (holder == null)
+          var candidate = blocks[i];
+          if (candidate == null)
             break;
-          if (holder.TryReserve())
+          if (candidate.TryReserve())
           {
-            ourThreadMemory = holder;
+            ourThreadMemory = holder = candidate;
             return true;
           }
         }
         for (int i = 0; i < start; i++)
         {
-          holder = blocks[i];
-          if (holder == null)
+          var candidate = blocks[i];
+          if (candidate == null)
             break;
-          if (holder.TryReserve())
+          if (candidate.TryReserve())
           {
-            ourThreadMemory = holder;
+            ourThreadMemory = holder = candidate;
             return true;
           }
         }
@@ -143,7 +142,7 @@ namespace JetBrains.Serialization
         return false;
       }
 
-      bool AllocateNew(out ThreadMemoryHolder holder)
+      bool AllocateNew([MaybeNullWhen(false)] out ThreadMemoryHolder holder)
       {
         lock (ourLock)
         {
@@ -194,6 +193,7 @@ namespace JetBrains.Serialization
       /// <see cref="NativeMemoryPool.TryFreeMemory"/> after lifetime of your feature has over.
       /// </summary>
       public readonly bool CausedAllocation;
+      // ReSharper disable once ConditionIsAlwaysTrueOrFalse RSRP-486051
       public bool IsValid => myHolder != null;
 
       public IntPtr Data => myHolder.Data;
@@ -204,7 +204,7 @@ namespace JetBrains.Serialization
         return myHolder.Realloc(size);
       }
 
-      internal Cookie([NotNull] ThreadMemoryHolder holder, bool causedAllocation = false)
+      internal Cookie(ThreadMemoryHolder holder, bool causedAllocation = false)
       {
         myHolder = holder ?? throw new ArgumentNullException(nameof(holder));
         CausedAllocation = causedAllocation;
@@ -269,7 +269,7 @@ namespace JetBrains.Serialization
           throw new ArgumentException($"Can't allocate more memory: {size:N0} bytes, max: {MaxAllocSize:N0}");
 
         myPtr = Marshal.ReAllocHGlobal(myPtr, new IntPtr(size));
-        if (myPtr == null)
+        if (myPtr == default)
           ErrorOomOldMono();
         Length = size;
         return myPtr;

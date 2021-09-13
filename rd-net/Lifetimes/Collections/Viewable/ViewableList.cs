@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using JetBrains.Collections.Synchronized;
 using JetBrains.Diagnostics;
@@ -12,7 +13,7 @@ namespace JetBrains.Collections.Viewable
   /// Default implementation if <see cref="IViewableList{T}"/>. 
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  public class ViewableList<T> : IViewableList<T>
+  public class ViewableList<T> : IViewableList<T> where T : notnull
   {
     private readonly IList<T> myStorage;
     private readonly Signal<ListEvent<T>> myChange = new Signal<ListEvent<T>>();
@@ -43,8 +44,12 @@ namespace JetBrains.Collections.Viewable
       return GetEnumerator();
     }
 
-    // ReSharper disable once AnnotationConflictInHierarchy
-    public void Add([NotNull] T item)
+    void ICollection<T>.Add(T item)
+    {
+      Add(item!);
+    }
+
+    public void Add([DisallowNull] T item)
     {
       if (item == null) throw new ArgumentNullException(nameof(item));
       myStorage.Add(item);
@@ -88,7 +93,6 @@ namespace JetBrains.Collections.Viewable
     }
     
 
-    [NotNull]
     public T this[int index]
     {
       get => myStorage[index];
@@ -125,8 +129,7 @@ namespace JetBrains.Collections.Viewable
       return myStorage.IndexOf(item);
     }
 
-    // ReSharper disable once AnnotationConflictInHierarchy
-    public void Insert(int index, [NotNull] T item)
+    public void Insert(int index, T item)
     {
       if (item == null) 
         throw new ArgumentNullException(nameof(item));

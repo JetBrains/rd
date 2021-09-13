@@ -12,12 +12,12 @@ namespace JetBrains.Diagnostics.Internal
   {
     [PublicAPI] public TextWriter Writer { get; }
 
-    protected override string Format(LoggingLevel level, string message, Exception exception)
+    protected override string Format(LoggingLevel level, string? message, Exception? exception)
     {
       return Diagnostics.Log.DefaultFormat(DateTime.Now, level, Category, Thread.CurrentThread, message, exception);      
     }
                
-    public TextWriterLog([NotNull] TextWriter writer, [NotNull] string category, LoggingLevel enabledLevel = LoggingLevel.VERBOSE) : base(category, enabledLevel)
+    public TextWriterLog(TextWriter writer, string category, LoggingLevel enabledLevel = LoggingLevel.VERBOSE) : base(category, enabledLevel)
     {
       Writer = TextWriter.Synchronized(writer ?? throw new ArgumentNullException(nameof(writer)));
       Handlers += WriteMessage;
@@ -39,7 +39,7 @@ namespace JetBrains.Diagnostics.Internal
     public LoggingLevel EnabledLevel { get; }
     public TextWriter Writer { get; }
     
-    public TextWriterLogFactory([NotNull] TextWriter writer, LoggingLevel enabledLevel = LoggingLevel.VERBOSE)
+    public TextWriterLogFactory(TextWriter writer, LoggingLevel enabledLevel = LoggingLevel.VERBOSE)
     {
       EnabledLevel = enabledLevel;
       Writer = writer ?? throw new ArgumentNullException(nameof(writer));

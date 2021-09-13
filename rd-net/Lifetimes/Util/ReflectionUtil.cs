@@ -22,8 +22,7 @@ namespace JetBrains.Util
     /// <summary>
     /// Return setter for either field or property info
     /// </summary>
-    [NotNull]
-    public static SetValueDelegate GetSetter([NotNull] MemberInfo mi)
+    public static SetValueDelegate GetSetter(MemberInfo mi)
     {
       return TryGetSetter(mi) ?? throw new ArgumentOutOfRangeException($"Entity: {mi} is not supported");
     }
@@ -31,8 +30,7 @@ namespace JetBrains.Util
     /// <summary>
     /// Return setter for either field or property info, or null if can't be set.
     /// </summary>
-    [CanBeNull]
-    public static SetValueDelegate TryGetSetter(MemberInfo mi)
+    public static SetValueDelegate? TryGetSetter(MemberInfo mi)
     {
       SetValueDelegate GetFieldSetter(FieldInfo backingField)
       {
@@ -64,8 +62,7 @@ namespace JetBrains.Util
     /// <summary>
     /// Return getter for either field or property
     /// </summary>
-    [NotNull]
-    public static Func<object, object> GetGetter([NotNull] MemberInfo mi)
+    public static Func<object, object?> GetGetter(MemberInfo mi)
     {
       switch (mi)
       {
@@ -81,8 +78,7 @@ namespace JetBrains.Util
     /// <summary>
     /// Get field or property type.
     /// </summary>
-    [NotNull]
-    public static Type GetReturnType([NotNull] MemberInfo mi)
+    public static Type GetReturnType(MemberInfo mi)
     {
       switch (mi)
       {
@@ -95,8 +91,7 @@ namespace JetBrains.Util
       }
     }
 
-    [CanBeNull]
-    public static object InvokeGenericThis(object self, string methodName, Type argument, [CanBeNull] object[] parameters = null)
+    public static object? InvokeGenericThis(object self, string methodName, Type argument, object?[]? parameters = null)
     {
       var methodInfo = self.GetType().OptionalTypeInfo().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
       try
@@ -113,8 +108,7 @@ namespace JetBrains.Util
       }
     }
 
-    [CanBeNull]
-    public static object InvokeStaticGeneric(Type type, string methodName, Type argument, [CanBeNull] params object[] parameters)
+    public static object? InvokeStaticGeneric(Type type, string methodName, Type argument, params object?[]? parameters)
     {
       var methodInfo = type.OptionalTypeInfo().GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
       try
@@ -131,8 +125,7 @@ namespace JetBrains.Util
       }
     }
 
-    [CanBeNull]
-    public static object InvokeStaticGeneric2(Type type, string methodName, Type argument1, Type argument2, [CanBeNull] params object[] parameters)
+    public static object? InvokeStaticGeneric2(Type type, string methodName, Type argument1, Type argument2, params object?[]? parameters)
     {
       var methodInfo = type.OptionalTypeInfo().GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
       try
@@ -150,8 +143,7 @@ namespace JetBrains.Util
     }
 
 
-    [CanBeNull]
-    public static object TryGetNonStaticField(object ownerObject, string memberName)
+    public static object? TryGetNonStaticField(object ownerObject, string memberName)
     {
       try
       {
@@ -164,8 +156,7 @@ namespace JetBrains.Util
       }
     }
     
-    [CanBeNull]
-    public static object TryGetNonStaticProperty(object ownerObject, string memberName)
+    public static object? TryGetNonStaticProperty(object ownerObject, string memberName)
     {
       try
       {
@@ -194,9 +185,9 @@ namespace JetBrains.Util
     /// <param name="defaultValue">Default value to return if failed</param>
     /// <typeparam name="T">Expected return type</typeparam>
     /// <returns>Evaluated property value or default value</returns>
-    public static T GetPropertyValueSafe<T>([NotNull] this object o, string propertyName, T defaultValue = default(T))
+    public static T? GetPropertyValueSafe<T>(this object o, string propertyName, T? defaultValue = default(T))
     {
-      T result = defaultValue;
+      T? result = defaultValue;
       try
       {
         var type = o.GetType();

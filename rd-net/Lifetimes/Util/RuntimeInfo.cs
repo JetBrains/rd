@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using JetBrains.Annotations;
 
@@ -6,8 +7,7 @@ namespace JetBrains.Util
 {
   public static class RuntimeInfo
   {
-    [CanBeNull]
-    public static Version CurrentMonoVersion;
+    public static Version? CurrentMonoVersion;
     public static readonly bool IsRunningOnMono; 
     public static readonly bool IsRunningUnderWindows;
     public static readonly bool IsRunningOnCore;
@@ -50,7 +50,7 @@ namespace JetBrains.Util
     }
 
 #if NET35
-    private static bool TryParseVersion(string input, out Version version)
+    private static bool TryParseVersion(string input, [MaybeNullWhen(false)] out Version version)
     {
       if (string.IsNullOrEmpty(input))
       {

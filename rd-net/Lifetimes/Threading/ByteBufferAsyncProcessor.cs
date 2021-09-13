@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Serialization;
 using JetBrains.Util.Internal;
+#nullable disable
 
 namespace JetBrains.Threading
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using JetBrains.Core;
 using JetBrains.Lifetimes;
 
@@ -26,7 +26,7 @@ namespace JetBrains.Collections.Viewable
       me.Advise(lifetime, _ => { handler(); });
     }
 
-    public static void AdviseNotNull<T>(this ISource<T> me, Lifetime lifetime, Action<T> handler) where T : class
+    public static void AdviseNotNull<T>(this ISource<T?> me, Lifetime lifetime, Action<T> handler) where T : class
     {
       me.Advise(lifetime, v => { if  (v != null) handler(v); });
     }
@@ -101,32 +101,26 @@ namespace JetBrains.Collections.Viewable
       });
     }
 
-    public static void View<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, Action<Lifetime, KeyValuePair<K, V>> handler)
+    public static void View<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, Action<Lifetime, KeyValuePair<K, V>> handler) where K: notnull
     {
       View(me, lifetime, (lf, k, v) => handler(lf, JetKeyValuePair.Of(k, v)));
     }
 
-    public static void FlowInto<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, IDictionary<K, V> storage)
+    public static void FlowInto<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, IDictionary<K, V> storage) where K : notnull
     {
       me.Advise(lifetime, e =>
       {
-        switch (e.Kind)
-        {
-          case AddUpdateRemove.Add:
-          case AddUpdateRemove.Update:
-            storage[e.Key] = e.NewValue;
-            break;
-          case AddUpdateRemove.Remove:
-            storage.Remove(e.Key);
-            break;
-          default:
-            throw new ArgumentOutOfRangeException($"Unexpected kind: {e.Kind}");
-        }
+        if (e.IsAdd || e.IsUpdate)
+          storage[e.Key] = e.NewValue;
+        else if (e.IsRemove)
+          storage.Remove(e.Key);
+        else
+          throw new ArgumentOutOfRangeException($"Unexpected kind: {e.Kind}");
       });
     }
 
     [Obsolete("This method has horrible performance when adding 100+ items")]
-    public static void AddOrReplaceLifetimed<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, K k, Func<Lifetime, V> vfun)
+    public static void AddOrReplaceLifetimed<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, K k, Func<Lifetime, V> vfun) where K : notnull
     {
       var def = lifetime.CreateNested();
       me[k] = vfun(def.Lifetime);
@@ -136,7 +130,7 @@ namespace JetBrains.Collections.Viewable
       });
     }
 
-    public static void AdviseAddRemove<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, Action<AddRemove, K, V> handler)
+    public static void AdviseAddRemove<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, Action<AddRemove, K, V?> handler) where K : notnull
     {
       me.Advise(lifetime, e =>
       {
@@ -158,12 +152,12 @@ namespace JetBrains.Collections.Viewable
       });
     }
 
-    public static void Advise<T>(this IViewableSet<T> me, Lifetime lifetime, Action<AddRemove, T> handler)
+    public static void Advise<T>(this IViewableSet<T> me, Lifetime lifetime, Action<AddRemove, T> handler) where T: notnull
     {
       me.Advise(lifetime, e => handler(e.Kind, e.Value));
     }
 
-    public static void View<T>(this IViewableSet<T> me, Lifetime lifetime, Action<Lifetime, T> handler)
+    public static void View<T>(this IViewableSet<T> me, Lifetime lifetime, Action<Lifetime, T> handler) where T : notnull
     {
       var lifetimes = new Dictionary<T, LifetimeDefinition>();
 
@@ -189,8 +183,9 @@ namespace JetBrains.Collections.Viewable
       });
     }
 
-    public static void View<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, Action<Lifetime, K, V> handler)
+    public static void View<K, V>(this IViewableMap<K, V> me, Lifetime lifetime, Action<Lifetime, K, V> handler) where K : notnull
     {
+#nullable disable
       var lifetimes = new Dictionary<KeyValuePair<K, V>, LifetimeDefinition>();
 
       me.AdviseAddRemove(lifetime, (kind, key, value) =>
@@ -215,6 +210,7 @@ namespace JetBrains.Collections.Viewable
             throw new ArgumentOutOfRangeException($"Illegal enum value: {kind}");
         }
       });
+#nullable enable
     }
     
     /// <summary>
@@ -226,8 +222,9 @@ namespace JetBrains.Collections.Viewable
     /// <param name="handler"></param>
     /// <typeparam name="V"></typeparam>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static void AdviseAddRemove<V>(this IViewableList<V> me, Lifetime lifetime, Action<AddRemove, int, V> handler)
+    public static void AdviseAddRemove<V>(this IViewableList<V> me, Lifetime lifetime, Action<AddRemove, int, V> handler) where V : notnull
     {
+#nullable disable
       me.Advise(lifetime, e =>
       {
         switch (e.Kind)
@@ -246,6 +243,7 @@ namespace JetBrains.Collections.Viewable
             throw new ArgumentOutOfRangeException($"Illegal enum value: {e.Kind}");
         }
       });
+#nullable enable
     }
 
     
@@ -259,7 +257,7 @@ namespace JetBrains.Collections.Viewable
     /// <param name="handler"></param>
     /// <typeparam name="V"></typeparam>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static void View<V>(this IViewableList<V> me, Lifetime lifetime, Action<Lifetime, int, V> handler)
+    public static void View<V>(this IViewableList<V> me, Lifetime lifetime, Action<Lifetime, int, V> handler) where V : notnull
     {
       var lifetimes = new List<LifetimeDefinition>();
 
@@ -323,7 +321,7 @@ namespace JetBrains.Collections.Viewable
       return res;
     }
 
-    public static void WhenTrue([NotNull] this IReadonlyProperty<bool> property, Lifetime lifetime, [NotNull] Action<Lifetime> handler)
+    public static void WhenTrue(this IReadonlyProperty<bool> property, Lifetime lifetime, Action<Lifetime> handler)
     {
       if (property == null) throw new ArgumentNullException(nameof(property));
       
@@ -335,7 +333,7 @@ namespace JetBrains.Collections.Viewable
       });
     }
 
-    public static void WhenFalse([NotNull] this IReadonlyProperty<bool> property, Lifetime lifetime, [NotNull] Action<Lifetime> handler)
+    public static void WhenFalse(this IReadonlyProperty<bool> property, Lifetime lifetime, Action<Lifetime> handler)
     {
       if (property == null) throw new ArgumentNullException(nameof(property));
       

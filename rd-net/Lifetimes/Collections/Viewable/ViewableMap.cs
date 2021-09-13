@@ -14,13 +14,13 @@ namespace JetBrains.Collections.Viewable
   /// </summary>
   /// <typeparam name="TK"></typeparam>
   /// <typeparam name="TV"></typeparam>
-  public class ViewableMap<TK, TV> : IViewableMap<TK, TV>
+  public class ViewableMap<TK, TV> : IViewableMap<TK, TV> where TK : notnull
   {
-    [NotNull] private readonly IDictionary<TK, TV> myStorage;
-    [NotNull] private readonly IEqualityComparer<TV> myValueComparer;
-    [NotNull] private readonly Signal<MapEvent<TK, TV>> myChange = new Signal<MapEvent<TK, TV>>();
+    private readonly IDictionary<TK, TV> myStorage;
+    private readonly IEqualityComparer<TV> myValueComparer;
+    private readonly Signal<MapEvent<TK, TV>> myChange = new Signal<MapEvent<TK, TV>>();
 
-    [NotNull] public ISource<MapEvent<TK, TV>> Change => myChange;
+    public ISource<MapEvent<TK, TV>> Change => myChange;
     
     [PublicAPI] public ViewableMap() : this(new Dictionary<TK, TV>()) {}
 
@@ -31,7 +31,7 @@ namespace JetBrains.Collections.Viewable
     /// </summary>
     /// <param name="storage"></param>
     /// <param name="valueComparer"></param>
-    [PublicAPI] public ViewableMap([NotNull] IDictionary<TK, TV> storage, [CanBeNull] IEqualityComparer<TV> valueComparer = null)
+    [PublicAPI] public ViewableMap(IDictionary<TK, TV> storage, IEqualityComparer<TV>? valueComparer = null)
     {
       myStorage = storage ?? throw new ArgumentNullException(nameof(storage));
       myValueComparer = valueComparer ?? EqualityComparer<TV>.Default;

@@ -33,6 +33,6 @@ namespace JetBrains.Collections
 
     public T Current { get; }
 
-    object IEnumerator.Current => Current;
+    object? IEnumerator.Current => Current;
   }
 }

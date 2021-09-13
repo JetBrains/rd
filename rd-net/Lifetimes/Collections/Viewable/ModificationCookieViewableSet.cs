@@ -11,7 +11,7 @@ namespace JetBrains.Collections.Viewable
   /// </summary>
   /// <typeparam name="T"></typeparam>
   /// <typeparam name="TCookie"></typeparam>
-  public class ModificationCookieViewableSet<T, TCookie> : IViewableSet<T> where TCookie: struct, IDisposable
+  public class ModificationCookieViewableSet<T, TCookie> : IViewableSet<T> where T: notnull where TCookie: struct, IDisposable
   {
     private readonly Func<TCookie> myCookieFactory;
     private readonly IViewableSet<T> myBackingSet;

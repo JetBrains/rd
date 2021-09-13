@@ -18,7 +18,7 @@ namespace JetBrains.Core
 
     public bool Equals(Unit other) => true;
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       if (ReferenceEquals(null, obj)) return false;
       if (ReferenceEquals(this, obj)) return true;
@@ -28,12 +28,12 @@ namespace JetBrains.Core
     public override int GetHashCode() => 0; 
     
 
-    public static bool operator ==(Unit left, Unit right)
+    public static bool operator ==(Unit? left, Unit? right)
     {
       return Equals(left, right);
     }
 
-    public static bool operator !=(Unit left, Unit right)
+    public static bool operator !=(Unit? left, Unit? right)
     {
       return !Equals(left, right);
     }

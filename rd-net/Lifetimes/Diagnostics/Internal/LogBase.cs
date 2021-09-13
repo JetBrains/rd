@@ -1,5 +1,4 @@
 using System;
-using JetBrains.Annotations;
 
 namespace JetBrains.Diagnostics.Internal
 {
@@ -18,11 +17,11 @@ namespace JetBrains.Diagnostics.Internal
 
   public abstract class LogBase : ILog
   {
-    public event Action<LeveledMessage> Handlers;
+    public event Action<LeveledMessage>? Handlers;
     public string Category { get; }
     public LoggingLevel EnabledLevel { get; set; }
 
-    protected LogBase([NotNull] string category, LoggingLevel enabledLevel = LoggingLevel.INFO)
+    protected LogBase(string category, LoggingLevel enabledLevel = LoggingLevel.INFO)
     {
       Category = category ?? throw new ArgumentNullException(nameof(category));
       EnabledLevel = enabledLevel;
@@ -33,9 +32,9 @@ namespace JetBrains.Diagnostics.Internal
       return EnabledLevel >= level;
     }
 
-    protected abstract string Format(LoggingLevel level, string message, Exception exception);
+    protected abstract string Format(LoggingLevel level, string? message, Exception? exception);
 
-    public virtual void Log(LoggingLevel level, string message, Exception exception = null)
+    public virtual void Log(LoggingLevel level, string? message, Exception? exception = null)
     {
       if (!IsEnabled(level))
         return;
@@ -51,7 +50,7 @@ namespace JetBrains.Diagnostics.Internal
 
   public abstract class LogFactoryBase : ILogFactory
   {
-    public event Action<LeveledMessage> Handlers;
+    public event Action<LeveledMessage>? Handlers;
 
     public ILog GetLog(string category)
     {

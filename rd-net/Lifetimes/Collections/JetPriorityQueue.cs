@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
@@ -21,8 +22,8 @@ namespace JetBrains.Collections
   {
     new int Count { get; }
 
-    bool TryExtract(out T res);
-    bool TryPeek(out T res);
+    bool TryExtract(out T? res);
+    bool TryPeek(out T? res);
   }
 
   /// <summary>
@@ -32,18 +33,18 @@ namespace JetBrains.Collections
   public class JetPriorityQueue<T> : IPriorityQueue<T>
   {
     public const int DefaultCapacity = 10;
-    private readonly List<T> myStorage;
+    private readonly List<T?> myStorage;
     private readonly List<long> myVersions;
-    private readonly IComparer<T> myComparer;
+    private readonly IComparer<T?> myComparer;
     private long myVersionAcc;
     
 
-    public JetPriorityQueue(int initialCapacity = DefaultCapacity, IComparer<T> comparer = null)
+    public JetPriorityQueue(int initialCapacity = DefaultCapacity, IComparer<T?>? comparer = null)
     {
       if (initialCapacity <= 0) initialCapacity = DefaultCapacity;
-      myStorage = new List<T>(initialCapacity + 1) { default(T) }; //first elem is always false to simplify `left` and `right`
+      myStorage = new List<T?>(initialCapacity + 1) { default(T) }; //first elem is always false to simplify `left` and `right`
       myVersions = new List<long>(initialCapacity + 1) {0};
-      myComparer = comparer ?? Comparer<T>.Default;
+      myComparer = comparer ?? Comparer<T?>.Default;
     }
 
     #region ICollection implementation
@@ -99,7 +100,7 @@ namespace JetBrains.Collections
     #region Priority related methods
 
 
-    public bool TryExtract(out T res)
+    public bool TryExtract(out T? res)
     {
       if (!TryPeek(out res)) return false;
 
@@ -115,7 +116,7 @@ namespace JetBrains.Collections
       return true;
     }
 
-    public bool TryPeek(out T res)
+    public bool TryPeek(out T? res)
     {
       if (myStorage.Count <= 1)
       {
@@ -202,7 +203,7 @@ namespace JetBrains.Collections
     private readonly JetPriorityQueue<T> myQueue;
     private readonly object mySentry = new object();
 
-    public BlockingPriorityQueue(Lifetime lifetime, int initialCapacity = JetPriorityQueue<T>.DefaultCapacity, IComparer<T> comparer = null)
+    public BlockingPriorityQueue(Lifetime lifetime, int initialCapacity = JetPriorityQueue<T>.DefaultCapacity, IComparer<T?>? comparer = null)
     {
       myLifetime = lifetime;
       myQueue = new JetPriorityQueue<T>(initialCapacity, comparer);
@@ -254,17 +255,17 @@ namespace JetBrains.Collections
     public int Count { get { lock (mySentry) return myQueue.Count; }  }
     public bool IsReadOnly { get { lock (mySentry) return myQueue.IsReadOnly; } }
 
-    public bool TryExtract(out T res)
+    public bool TryExtract(out T? res)
     {
       lock (mySentry) return myQueue.TryExtract(out res);
     }
 
-    public bool TryPeek(out T res)
+    public bool TryPeek(out T? res)
     {
       lock (mySentry) return myQueue.TryPeek(out res);
     }
 
-    [PublicAPI] public bool TryExtract(out T res, int intervalMs)
+    [PublicAPI] public bool TryExtract(out T? res, int intervalMs)
     {
       lock (mySentry)
       {
@@ -291,7 +292,7 @@ namespace JetBrains.Collections
       }
     }
 
-    [PublicAPI] public bool TryPeek(out T res, int intervalMs)
+    [PublicAPI] public bool TryPeek(out T? res, int intervalMs)
     {      
       lock (mySentry)
       {
@@ -323,7 +324,7 @@ namespace JetBrains.Collections
     /// Returns first element from queue or waits until it appears. In case of lifetime termination throws PCE.
     /// </summary>
     /// <returns>First element in queue</returns>
-    [PublicAPI] public T ExtractOrBlock()
+    [PublicAPI] public T? ExtractOrBlock()
     {
       lock (mySentry)
       {
@@ -380,12 +381,12 @@ namespace JetBrains.Collections
     }
   
 
-    [PublicAPI] public static T ExtractOrDefault<T>(this IPriorityQueue<T> queue)
+    [PublicAPI] public static T? ExtractOrDefault<T>(this IPriorityQueue<T> queue)
     {
       return !queue.TryExtract(out var res) ? default(T) : res;
     }
 
-    [PublicAPI] public static T Extract<T>(this IPriorityQueue<T> queue)
+    [PublicAPI] public static T? Extract<T>(this IPriorityQueue<T> queue)
     {
       if (!queue.TryExtract(out var res))
       {
@@ -394,7 +395,7 @@ namespace JetBrains.Collections
       return res;
     }
 
-    [PublicAPI] public static T Peek<T>(this IPriorityQueue<T> queue)
+    [PublicAPI] public static T? Peek<T>(this IPriorityQueue<T> queue)
     {
       if (!queue.TryPeek(out var res))
       {
