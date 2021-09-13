@@ -6,6 +6,7 @@ using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Util;
 
 namespace JetBrains.Collections
 {
@@ -266,11 +267,25 @@ namespace JetBrains.Collections
     [PublicAPI] public bool TryExtract(out T res, int intervalMs)
     {
       lock (mySentry)
-      {        
-        if (myQueue.TryExtract(out res)) return true;
+      {
+        var localIntervalMs = intervalMs;
+        var stopwatch = LocalStopwatch.StartNew();
+        
+        do
+        {
+          if (myQueue.TryExtract(out res)) return true;
 
-        if (myLifetime.Status >= LifetimeStatus.Terminating) return false;
-        Monitor.Wait(mySentry, intervalMs);
+          if (myLifetime.Status >= LifetimeStatus.Terminating) return false;
+
+          if (!Monitor.Wait(mySentry, localIntervalMs))
+            break;
+
+          var elapsed = stopwatch.ElapsedMilliseconds;
+          if (elapsed >= intervalMs)
+            break;
+
+          localIntervalMs = intervalMs - (int)elapsed;
+        } while (true);
 
         return myQueue.TryExtract(out res);
       }
@@ -279,11 +294,25 @@ namespace JetBrains.Collections
     [PublicAPI] public bool TryPeek(out T res, int intervalMs)
     {      
       lock (mySentry)
-      {        
-        if (myQueue.TryPeek(out res)) return true;
+      {
+        var localIntervalMs = intervalMs;
+        var stopwatch = LocalStopwatch.StartNew();
+        
+        do
+        {
+          if (myQueue.TryPeek(out res)) return true;
 
-        if (myLifetime.Status >= LifetimeStatus.Terminating) return false;
-        Monitor.Wait(mySentry, intervalMs);
+          if (myLifetime.Status >= LifetimeStatus.Terminating) return false;
+          
+          if (!Monitor.Wait(mySentry, localIntervalMs))
+            break;
+
+          var elapsed = stopwatch.ElapsedMilliseconds;
+          if (elapsed >= intervalMs)
+            break;
+
+          localIntervalMs = intervalMs - (int)elapsed;
+        } while (true);
 
         return myQueue.TryPeek(out res);
       }
@@ -298,15 +327,15 @@ namespace JetBrains.Collections
     {
       lock (mySentry)
       {
-        if (myLifetime.Status >= LifetimeStatus.Terminating) throw new OperationCanceledException();
+        while (true)
+        {
+          if (myLifetime.Status >= LifetimeStatus.Terminating) throw new OperationCanceledException();
 
-        if (myQueue.TryExtract(out var res)) return res;
+          if (myQueue.TryExtract(out var res)) return res;
 
-        //no luck, wait for value
-        Monitor.Wait(mySentry);
-
-        if (myLifetime.Status >= LifetimeStatus.Terminating) throw new OperationCanceledException();
-        return myQueue.Extract();
+          //no luck, wait for value
+          Monitor.Wait(mySentry);
+        }
       }
     }
 
