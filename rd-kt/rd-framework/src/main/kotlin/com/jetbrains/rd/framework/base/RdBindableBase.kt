@@ -26,7 +26,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     protected var parent : IRdDynamic? = null
 
-    private var bindLifetime: Lifetime? = null
+    var bindLifetime: Lifetime? = null
+        private set
 
     //bound state: inferred
 

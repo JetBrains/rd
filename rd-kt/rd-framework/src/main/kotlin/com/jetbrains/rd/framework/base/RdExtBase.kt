@@ -50,12 +50,12 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreatedLocally, createExtSignal()).also {
+                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreated, createExtSignal()).also {
                     it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
-                    parentProtocol.extCreatedRemotely.localChange {
-                        parentProtocol.extCreatedRemotely.fire(ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash))
-                    }
                 }
+
+                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash)
+                (parentProtocol as Protocol).submitExtCreated(info)
             },
             {
                 extProtocol = null

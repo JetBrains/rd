@@ -19,8 +19,8 @@ class Protocol internal constructor(
     val lifetime: Lifetime,
     serializationCtx: SerializationCtx? = null,
     parentContexts: ProtocolContexts? = null,
-    parentExtCreatedLocally: ISignal<ExtCreationInfo>? = null,
-    parentExtCreatedRemotely: RdSignal<ExtCreationInfo>? = null,
+    parentExtCreated: ISignal<ExtCreationInfo>? = null,
+    parentExtConfirmation: RdSignal<ExtCreationInfo>? = null,
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
 
@@ -57,10 +57,10 @@ class Protocol internal constructor(
 
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
-    override val extCreatedLocally: ISignal<ExtCreationInfo>
-    
-    override val extCreatedRemotely: RdSignal<ExtCreationInfo>
-    
+    override val extCreated: ISignal<ExtCreationInfo>
+
+    private val extConfirmation: RdSignal<ExtCreationInfo>
+
     init {
         wire.setupContexts(contexts)
 
@@ -81,19 +81,27 @@ class Protocol internal constructor(
             }
         }
 
-        extCreatedLocally = parentExtCreatedLocally ?: Signal()
-        extCreatedRemotely = parentExtCreatedRemotely ?: createExtSignal().apply { 
-            wireScheduler = (scheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: scheduler
+        extCreated = parentExtCreated ?: Signal()
+        extConfirmation = parentExtConfirmation ?: createExtSignal().also { signal ->
+            val protocolScheduler = scheduler
+            signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
         }
         scheduler.invokeOrQueue {
-            extCreatedRemotely.bind(lifetime, this, "ProtocolExtCreated")
-            extCreatedRemotely.advise(lifetime) { message ->
-                if (extCreatedRemotely.isLocalChange) return@advise
-                extCreatedLocally.fire(message)
+            extConfirmation.bind(lifetime, this, "ProtocolExtCreated")
+            extConfirmation.advise(lifetime) { message ->
+                if (extConfirmation.isLocalChange) return@advise
+                // ext confirmed on the other side
+                extCreated.fire(message)
             }
         }
 
         if (wire is IWireWithDelayedDelivery)
             wire.startDeliveringMessages()
+    }
+
+    internal fun submitExtCreated(info: ExtCreationInfo) {
+        extConfirmation.localChange {
+            extConfirmation.fire(info)
+        }
     }
 }
