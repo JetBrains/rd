@@ -33,7 +33,7 @@ namespace JetBrains.Rd.Impl
 
     internal Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
       [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, 
-      [CanBeNull] Signal<ExtCreationInfo> parentExtCreatedLocal = null, [CanBeNull] RdSignal<ExtCreationInfo> parentExtCreatedNetworked = null, params RdContextBase[] initialContexts)
+      [CanBeNull] ISignal<ExtCreationInfo> parentExtCreated = null, [CanBeNull] RdSignal<ExtCreationInfo> parentExtConfirmation = null, params RdContextBase[] initialContexts)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -52,15 +52,15 @@ namespace JetBrains.Rd.Impl
       if (parentContexts == null)
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
-      ExtCreatedLocal = parentExtCreatedLocal ?? new Signal<ExtCreationInfo>();
-      ExtCreatedNetworked = parentExtCreatedNetworked ?? this.CreateExtSignal();
+      ExtCreated = parentExtCreated ?? new Signal<ExtCreationInfo>();
+      ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal();
       scheduler.InvokeOrQueue(() =>
       {
-        ExtCreatedNetworked.Bind(lifetime, this, ProtocolExtCreatedRdId);
-        ExtCreatedNetworked.Advise(lifetime, message =>
+        ExtConfirmation.Bind(lifetime, this, ProtocolExtCreatedRdId);
+        ExtConfirmation.Advise(lifetime, message =>
         {
-          if (ExtCreatedNetworked.IsLocalChange) return;
-          ExtCreatedLocal.Fire(message);
+          if (ExtConfirmation.IsLocalChange) return;
+          ExtCreated.Fire(message);
         });
       });
       
@@ -85,6 +85,14 @@ namespace JetBrains.Rd.Impl
         Contexts.Bind(lifetime, this, ContextHandlerRdId);
       });
     }
+    
+    internal void SubmitExtCreated(ExtCreationInfo info)
+    {
+      using (ExtConfirmation.UsingLocalChange())
+      {
+        ExtConfirmation.Fire(info);
+      }
+    }
       
     public string Name { get; }
     
@@ -97,8 +105,9 @@ namespace JetBrains.Rd.Impl
 
     public ProtocolContexts Contexts { get; }
     
-    public RdSignal<ExtCreationInfo> ExtCreatedNetworked { get; }
-    public Signal<ExtCreationInfo> ExtCreatedLocal { get; }
+    public ISignal<ExtCreationInfo> ExtCreated { get; }
+    
+    private RdSignal<ExtCreationInfo> ExtConfirmation { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     

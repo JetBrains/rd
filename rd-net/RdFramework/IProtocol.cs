@@ -14,7 +14,6 @@ namespace JetBrains.Rd
     [NotNull] IScheduler Scheduler { get; }
     [NotNull] IWire Wire { get; }    
     [NotNull] ProtocolContexts Contexts { get; }
-    [NotNull] RdSignal<ExtCreationInfo> ExtCreatedNetworked { get; }
-    [NotNull] Signal<ExtCreationInfo> ExtCreatedLocal { get; }
+    [NotNull] ISignal<ExtCreationInfo> ExtCreated { get; }
   }
 }
