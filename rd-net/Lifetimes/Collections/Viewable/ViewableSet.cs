@@ -29,7 +29,7 @@ namespace JetBrains.Collections.Viewable
         /// Special delegating constructor that accepts storage backend (e.g. <see cref="JetBrains.Collections.Synchronized.SynchronizedSet{T}"/>)
         /// </summary>
         /// <param name="storage"></param>
-        [PublicAPI] public ViewableSet([NotNull]
+        [PublicAPI] public ViewableSet(
 #if !NET35
             ISet<T> storage
 #else

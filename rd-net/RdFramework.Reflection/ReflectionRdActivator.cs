@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -33,18 +32,15 @@ namespace JetBrains.Rd.Reflection
   {
     private static readonly ILog ourLog = Log.GetLog<ReflectionRdActivator>();
 
-    [NotNull] private readonly ReflectionSerializersFactory mySerializersFactory;
-    [NotNull] private readonly IProxyGenerator myProxyGenerator;
-    [CanBeNull] private readonly ITypesCatalog myTypesCatalog;
+    private readonly ReflectionSerializersFactory mySerializersFactory;
+    private readonly IProxyGenerator myProxyGenerator;
+    private readonly ITypesCatalog? myTypesCatalog;
 
-    [NotNull]
     public ReflectionSerializersFactory SerializersFactory => mySerializersFactory;
 
-    [NotNull]
     public IProxyGenerator Generator => myProxyGenerator;
 
-    [CanBeNull]
-    public ITypesCatalog TypesCatalog => myTypesCatalog;
+    public ITypesCatalog? TypesCatalog => myTypesCatalog;
 
 #if JET_MODE_ASSERT
     /// <summary>
@@ -53,16 +49,16 @@ namespace JetBrains.Rd.Reflection
     /// used to protect from circular dependencies only.
     /// </summary>
     [ThreadStatic]
-    private static Queue<Type> myCurrentActivationChain;
+    private static Queue<Type>? myCurrentActivationChain;
 
 #endif
 
-    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [CanBeNull] ITypesCatalog typesCatalog)
+    public ReflectionRdActivator(ReflectionSerializersFactory serializersFactory, ITypesCatalog? typesCatalog)
       : this(serializersFactory, new ProxyGenerator(), typesCatalog)
     {
     }
 
-    public ReflectionRdActivator([NotNull] ReflectionSerializersFactory serializersFactory, [NotNull] IProxyGenerator proxyGenerator, [CanBeNull] ITypesCatalog typesCatalog)
+    public ReflectionRdActivator(ReflectionSerializersFactory serializersFactory, IProxyGenerator proxyGenerator, ITypesCatalog? typesCatalog)
     {
       mySerializersFactory = serializersFactory;
       myTypesCatalog = typesCatalog;
@@ -74,8 +70,7 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    [NotNull]
-    public T ActivateBind<T>(Lifetime lifetime, [NotNull] IProtocol protocol) where T : RdBindableBase
+    public T ActivateBind<T>(Lifetime lifetime, IProtocol protocol) where T : RdBindableBase
     {
       var instance = Activate<T>();
 
@@ -90,8 +85,8 @@ namespace JetBrains.Rd.Reflection
     /// Create and bind class with <see cref="RdExtAttribute"/>
     /// </summary>
     /// <returns></returns>
-    [NotNull, PublicAPI]
-    public RdExtReflectionBindableBase ActivateBind(Type type, Lifetime lifetime, [NotNull] IProtocol protocol)
+    [PublicAPI]
+    public RdExtReflectionBindableBase ActivateBind(Type type, Lifetime lifetime, IProtocol protocol)
     {
       var instance = Activate(type);
 
@@ -120,7 +115,6 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    [NotNull]
     public object Activate(Type type)
     {
       #if JET_MODE_ASSERT
@@ -137,6 +131,7 @@ namespace JetBrains.Rd.Reflection
     private object ActivateRd(Type type)
     {
 #if JET_MODE_ASSERT
+      Assertion.Assert(myCurrentActivationChain != null, "myCurrentActivationChain != null");
       Assertion.Assert(!myCurrentActivationChain.Contains(type),
         $"Unable to activate {type.FullName}: circular dependency detected: {string.Join(" -> ", myCurrentActivationChain.Select(t => t.FullName).ToArray())}");
       myCurrentActivationChain.Enqueue(type);
@@ -189,7 +184,6 @@ namespace JetBrains.Rd.Reflection
         if (currentValue == null)
         {
           currentValue = ActivateRdExtMember(mi);
-
           var memberSetter = ReflectionUtil.GetSetter(mi);
           memberSetter(instance, currentValue);
         }
@@ -219,8 +213,10 @@ namespace JetBrains.Rd.Reflection
           interfaceMethods.AddRange(typeInfo.GetInterfaceMap(baseInterface).InterfaceMethods);
           foreach (var propertyInfo in baseInterface.GetProperties(BindingFlags.Instance | BindingFlags.Public))
           {
-            ignoreMethods.Add(propertyInfo.GetSetMethod()?.Name);
-            ignoreMethods.Add(propertyInfo.GetGetMethod()?.Name);
+            var getterName = propertyInfo.GetSetMethod()?.Name;
+            if (getterName != null) ignoreMethods.Add(getterName);
+            var setterName = propertyInfo.GetGetMethod()?.Name;
+            if (setterName != null) ignoreMethods.Add(setterName);
           }
         }
 
@@ -243,6 +239,7 @@ namespace JetBrains.Rd.Reflection
           var responseType = ProxyGenerator.GetResponseType(interfaceMethod, unwrapTask: false);
           var endPointType = typeof(RdCall<,>).MakeGenericType(requestType, responseNonTaskType);
           var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
+          Assertion.Assert(endpoint != null, "endpoint != null");
           SetAsync(interfaceMethod, endpoint);
           if (endpoint is RdReactiveBase reactiveBase)
             reactiveBase.ValueCanBeNull = true;
@@ -300,7 +297,7 @@ namespace JetBrains.Rd.Reflection
 
     private void EnsureFakeTupleRegistered(Type type)
     {
-      Assertion.AssertNotNull(myTypesCatalog, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
+      Assertion.Assert(myTypesCatalog != null, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
       myTypesCatalog.AddType(type);
     }
 
@@ -335,14 +332,13 @@ namespace JetBrains.Rd.Reflection
       endpoint.Set(handler, scheduler, scheduler);
     }
     
-    [CanBeNull]
-    private object ActivateRdExtMember(MemberInfo mi)
+    private object? ActivateRdExtMember(MemberInfo mi)
     {
       var returnType = ReflectionUtil.GetReturnType(mi);
       var typeInfo = returnType.GetTypeInfo();
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
 
-      object result;
+      object? result;
       if (implementingType.GetTypeInfo().IsGenericType)
       {
         result = ActivateGenericMember(mi.Name, typeInfo);
@@ -361,7 +357,7 @@ namespace JetBrains.Rd.Reflection
       return result;
     }
 
-    private static void SetAsync(MemberInfo mi, object result)
+    private static void SetAsync(MemberInfo mi, object? result)
     {
       if (result is IRdReactive activatedBindable)
       {
@@ -378,7 +374,7 @@ namespace JetBrains.Rd.Reflection
       return mySerializersFactory.GetOrRegisterSerializerPair(type, true);
     }
 
-    private object ActivateGenericMember(string memberName, TypeInfo memberType)
+    private object? ActivateGenericMember(string memberName, TypeInfo memberType)
     {
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(memberType);
       var genericDefinition = implementingType.GetGenericTypeDefinition();

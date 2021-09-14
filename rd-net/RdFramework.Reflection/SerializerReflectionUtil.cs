@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
@@ -19,8 +18,7 @@ namespace JetBrains.Rd.Reflection
     private static readonly MethodInfo ourConvertTypedCtxRead = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxReadTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
     private static readonly MethodInfo ourConvertTypedCtxWrite = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxWriteTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
 
-    [NotNull]
-    public static MethodInfo GetReadStaticSerializer([NotNull] TypeInfo typeInfo)
+    public static MethodInfo GetReadStaticSerializer(TypeInfo typeInfo)
     {
       var types = new[]
       {
@@ -37,8 +35,7 @@ namespace JetBrains.Rd.Reflection
       return methodInfo;
     }
 
-    [NotNull]
-    public static MethodInfo GetReadStaticNonProtocolSerializer([NotNull] TypeInfo typeInfo)
+    public static MethodInfo GetReadStaticNonProtocolSerializer(TypeInfo typeInfo)
     {
       var types = new[]
       {
@@ -54,8 +51,7 @@ namespace JetBrains.Rd.Reflection
       return methodInfo;
     }
 
-    [NotNull]
-    public static MethodInfo GetReadStaticSerializer([NotNull] TypeInfo typeInfo, Type argumentType)
+    public static MethodInfo GetReadStaticSerializer(TypeInfo typeInfo, Type argumentType)
     {
       var types = new[]
       {
@@ -74,8 +70,7 @@ namespace JetBrains.Rd.Reflection
       return methodInfo;
     }
 
-    [NotNull]
-    public static MethodInfo GetReadStaticSerializer([NotNull] TypeInfo typeInfo, Type key, Type value)
+    public static MethodInfo GetReadStaticSerializer(TypeInfo typeInfo, Type key, Type value)
     {
       var types = new[]
       {
@@ -96,8 +91,7 @@ namespace JetBrains.Rd.Reflection
       return methodInfo;
     }
 
-    [NotNull]
-    public static MethodInfo GetWriteStaticDeserializer([NotNull] TypeInfo typeInfo)
+    public static MethodInfo GetWriteStaticDeserializer(TypeInfo typeInfo)
     {
       var types = new[]
       {
@@ -115,8 +109,7 @@ namespace JetBrains.Rd.Reflection
       return methodInfo;
     }
 
-    [NotNull]
-    public static MethodInfo GetWriteNonProtocolDeserializer([NotNull] TypeInfo typeInfo)
+    public static MethodInfo GetWriteNonProtocolDeserializer(TypeInfo typeInfo)
     {
       var types = new[]
       {
@@ -137,7 +130,6 @@ namespace JetBrains.Rd.Reflection
     /// Get lists of members which take part in object serialization.
     /// Can be used for RdExt, RdModel and any RdScalar.
     /// </summary>
-    [NotNull]
     internal static FieldInfo[] GetBindableMembers(TypeInfo typeInfo)
     {
 /*
@@ -211,16 +203,16 @@ namespace JetBrains.Rd.Reflection
       return (CtxReadDelegate<object>)result;
     }
 
-    internal static CtxWriteDelegate<object> ConvertWriter(Type returnType, object writer)
+    internal static CtxWriteDelegate<object?> ConvertWriter(Type returnType, object writer)
     {
-      if (writer is CtxWriteDelegate<object> objWriter)
+      if (writer is CtxWriteDelegate<object?> objWriter)
         return objWriter;
 
-      return (CtxWriteDelegate<object>)ourConvertTypedCtxWrite.MakeGenericMethod(returnType).Invoke(null, new[] { writer });
+      return (CtxWriteDelegate<object?>)ourConvertTypedCtxWrite.MakeGenericMethod(returnType).Invoke(null, new[] { writer });
     }
 
 
-    private static CtxReadDelegate<object> CtxReadTypedToObject<T>(CtxReadDelegate<T> typedDelegate)
+    private static CtxReadDelegate<object?> CtxReadTypedToObject<T>(CtxReadDelegate<T> typedDelegate)
     {
       return (ctx, unsafeReader) => typedDelegate(ctx, unsafeReader);
     }

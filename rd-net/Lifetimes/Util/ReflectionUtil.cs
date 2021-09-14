@@ -17,7 +17,7 @@ namespace JetBrains.Util
 {
   public static class ReflectionUtil
   {
-    public delegate void SetValueDelegate(object instance, object value);
+    public delegate void SetValueDelegate(object instance, object? value);
 
     /// <summary>
     /// Return setter for either field or property info
@@ -62,7 +62,7 @@ namespace JetBrains.Util
     /// <summary>
     /// Return getter for either field or property
     /// </summary>
-    public static Func<object, object?> GetGetter(MemberInfo mi)
+    public static Func<object, object?> GetGetter([NotNull] MemberInfo mi)
     {
       switch (mi)
       {

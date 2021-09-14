@@ -79,8 +79,8 @@ namespace JetBrains.Rd.Reflection
     {
       myAllowSave = allowSave;
 #if NETSTANDARD
-     myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule(DynamicAssemblyName));
      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), AssemblyBuilderAccess.Run));
+     myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule(DynamicAssemblyName));
 #else
       myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), allowSave ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run));
       if (allowSave)
@@ -137,9 +137,9 @@ namespace JetBrains.Rd.Reflection
       }
 
 #if NET35
-      return typebuilder.CreateType();
+      return typebuilder.CreateType().NotNull("Unable to create type");
 #else
-      return typebuilder.CreateTypeInfo();
+      return typebuilder.CreateTypeInfo().NotNull("Unable to create type");
 #endif
     }
 

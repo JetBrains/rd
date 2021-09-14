@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reflection;
 using System.Reflection.Emit;
-using JetBrains.Annotations;
 
 namespace JetBrains.Rd.Reflection
 {
@@ -13,7 +12,7 @@ namespace JetBrains.Rd.Reflection
 
   public static class ProxyGeneratorEx
   {
-    public static Type CreateType<TInterface>([NotNull] this IProxyGenerator proxyGenerator) where TInterface : class
+    public static Type CreateType<TInterface>(this IProxyGenerator proxyGenerator) where TInterface : class
     {
       return proxyGenerator.CreateType(typeof(TInterface));
     }
