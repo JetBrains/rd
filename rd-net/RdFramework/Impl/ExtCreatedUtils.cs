@@ -32,8 +32,12 @@ namespace JetBrains.Rd.Impl
     }
     
     [NotNull]
-    private static RName ReadRName([NotNull] UnsafeReader reader)
+    internal static RName ReadRName([NotNull] UnsafeReader reader)
     {
+      var isEmpty = reader.ReadBool();
+      if (isEmpty)
+        return RName.Empty;
+      
       var rootName = reader.ReadString() ?? throw new InvalidOperationException();
       var last = reader.ReadBoolean();
       var rName = new RName(rootName);
@@ -47,8 +51,9 @@ namespace JetBrains.Rd.Impl
       return rName;
     }
 
-    private static void WriteRName([NotNull] UnsafeWriter writer, [NotNull] RName value)
+    internal static void WriteRName([NotNull] UnsafeWriter writer, [NotNull] RName value)
     {
+      writer.Write(value == RName.Empty);
       TraverseRName(value, true, (rName, last) =>
       {
         if (rName == RName.Empty) return;

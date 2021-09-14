@@ -4,10 +4,12 @@ import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.string.RName
 
-object RNameMarshaller : IMarshaller<RName> {
-    override val _type = RName::class
-    
-    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RName {
+object RNameMarshaller {
+    fun read(buffer: AbstractBuffer): RName {
+        val isEmpty = buffer.readBoolean()
+        if (isEmpty)
+            return RName.Empty
+        
         val rootName = buffer.readString()
         var last = buffer.readBoolean()
         var rName = RName(rootName)
@@ -20,7 +22,8 @@ object RNameMarshaller : IMarshaller<RName> {
         return rName
     }
 
-    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RName) {
+    fun write(buffer: AbstractBuffer, value: RName) {
+        buffer.writeBoolean(value == RName.Empty)
         traverseRName(value) { rName, last ->
             if (rName == RName.Empty) return@traverseRName
             if (rName.parent != RName.Empty) {
@@ -40,13 +43,13 @@ object RNameMarshaller : IMarshaller<RName> {
 internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
     val marshaller = FrameworkMarshallers.create(
         { buffer ->
-            val rName = RNameMarshaller.read(serializationContext, buffer)
+            val rName = RNameMarshaller.read(buffer)
             val rdId = buffer.readNullable { buffer.readRdId() }
             val hash = buffer.readLong()
             ExtCreationInfo(rName, rdId, hash)
         },
         { buffer, (rName, rdId, hash) ->
-            RNameMarshaller.write(serializationContext, buffer, rName)
+            RNameMarshaller.write(buffer, rName)
             buffer.writeNullable(rdId) { buffer.writeRdId(it) }
             buffer.writeLong(hash)
         }
