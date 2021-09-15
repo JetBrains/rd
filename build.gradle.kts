@@ -46,6 +46,10 @@ val clean by tasks.getting(Delete::class) {
     delete(rootProject.buildDir)
 }
 
+if (System.getenv("TEAMCITY_VERSION") == null) {
+    version = "SNAPSHOT"
+}
+
 tasks {
     val nuGetTargetDir = buildDir.resolve("artifacts").resolve("nuget")
     val publishingGroup = "publishing"
