@@ -137,11 +137,11 @@ namespace JetBrains.Rd.Impl
       Wire.Advise(lifetime, this);
 
 
-      if (!OptimizeNested) //means values must be bindable
+      if (!OptimizeNested && !typeof(V).IsValueType) //means values must be bindable
       {
         this.View(lifetime, (lf, k, v) =>
         {
-          v.BindPolymorphic(lf, this, "["+k+"]");
+          RdBindableEx.BindPolymorphic(v!, lf, this, "["+k+"]");
         });
       }
     }
