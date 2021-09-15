@@ -5,10 +5,14 @@ using JetBrains.Diagnostics;
 
 namespace JetBrains.Util
 {
+  /// <summary>
+  /// This structure can be used as a non-allocated version of the <see cref="Stopwatch"/>
+  /// </summary>
   public readonly struct LocalStopwatch
   {
     #region Statics
 
+    /// TicksPerMillisecond and TicksPerSecond values are synchronized with the internal values of <see cref="Stopwatch"/> 
     private const long TicksPerMillisecond = 10000;
     private const long TicksPerSecond = TicksPerMillisecond * 1000;
 
