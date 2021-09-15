@@ -23,13 +23,12 @@ namespace Test.RdFramework.Reflection
         RName.Empty.Sub("", "").Sub("", "").Sub("", "").Sub("", "").Sub("", "")
       };
 
-      using var cookie = UnsafeWriter.NewThreadLocalWriter();
-      var writer = cookie.Writer;
       foreach (var name in testNames)
       {
-        var start = writer.Ptr;
+        using var cookie = UnsafeWriter.NewThreadLocalWriter();
+        var writer = cookie.Writer;
         ExtCreatedUtils.WriteRName(writer, name);
-        var reader = UnsafeReader.CreateReader(start, 1000);
+        var reader = UnsafeReader.CreateReader(cookie.Data, cookie.Count);
         var value = ExtCreatedUtils.ReadRName(reader);
 
         Assert.True(RNameEquals(name, value), $"expected \"{name}\" but got \"{value}\"");
