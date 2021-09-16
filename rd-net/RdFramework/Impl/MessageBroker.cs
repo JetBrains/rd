@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -228,6 +229,13 @@ namespace JetBrains.Rd.Impl
         });
     }
 
-
+    [CanBeNull]
+    public IRdWireable TryGetById(RdId rdId)
+    {
+      lock (myLock)
+      {
+        return mySubscriptions.TryGetValue(rdId, out var value) ? value : null;
+      }
+    }
   }
 }

@@ -33,3 +33,10 @@ interface IScheduler {
 
     fun flush()
 }
+
+interface ISchedulerWithBackground : IScheduler {
+    /**
+     * An associated scheduler which executes all tasks outside of the main thread
+     */
+    val backgroundScheduler: IScheduler
+}

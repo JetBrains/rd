@@ -8,10 +8,7 @@ import com.jetbrains.rd.util.reactive.IMutableViewableList
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.IViewableList
 import com.jetbrains.rd.util.reactive.ViewableList
-import com.jetbrains.rd.util.string.PrettyPrinter
-import com.jetbrains.rd.util.string.condstr
-import com.jetbrains.rd.util.string.print
-import com.jetbrains.rd.util.string.printToString
+import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.trace
 
 
@@ -74,6 +71,24 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             view(lifetime) { lf, index, value -> value.bindPolymorphic(lf, this, "[$index]") }
     }
 
+    override fun findByRName(rName: RName): RdBindableBase? {
+        val rootName = rName.getNonEmptyRoot()
+        val localName = rootName.localName
+        if (!localName.startsWith('[') || !localName.endsWith(']'))
+            return null
+        
+        val stringIndex = localName.removeSurrounding("[", "]")
+        val index = stringIndex.toIntOrNull() 
+            ?: return null
+
+        val element = list.getOrNull(index) as? RdBindableBase
+            ?: return null
+        
+        if (rootName == rName)
+            return element
+        
+        return element.findByRName(rName.dropNonEmptyRoot())
+    }
 
     override fun onWireReceived(buffer: AbstractBuffer) {
         val header = buffer.readLong()

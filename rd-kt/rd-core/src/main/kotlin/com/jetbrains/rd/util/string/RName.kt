@@ -16,6 +16,21 @@ class RName private constructor(val parent:RName?, val localName: String, val se
      */
     fun sub(localName: String, separator: String) = RName(this, localName, separator)
 
+    fun getNonEmptyRoot(): RName {
+        if (parent == null || parent == Empty)
+            return this
+        
+        return parent.getNonEmptyRoot()
+    }
+    
+    fun dropNonEmptyRoot(): RName {
+        if (parent == null || parent == Empty)
+            return Empty
+        
+        val tail = parent.dropNonEmptyRoot()
+        return tail.sub(localName, separator)
+    }
+    
     override fun toString(): String {
         return parent?.toString()?.let {
             if (it.isEmpty())

@@ -10,6 +10,7 @@ import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
+import java.lang.IllegalStateException
 
 fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(request: TReq, onSuccess: (TRes) -> Unit) {
     startAndAdviseSuccess(Lifetime.Eternal, request, onSuccess)
@@ -186,7 +187,6 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
     private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
 
-    lateinit var bindLifetime : Lifetime
     private var cancellationScheduler: IScheduler? = null
     private var handlerScheduler: IScheduler? = null
 
@@ -194,7 +194,6 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
     override fun init(lifetime: Lifetime) {
         super.init(lifetime)
-        bindLifetime = lifetime
 
         //Because we advise on Synchronous Scheduler: RIDER-10986
         serializationContext = super.serializationContext
@@ -249,6 +248,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         if (!async) assertThreading()
 
         val taskId = protocol.identity.next(RdId.Null)
+        val bindLifetime = bindLifetime ?: throw IllegalStateException("Bind lifetime is not initialized yet")
         val task = CallSiteWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler)
 
         wire.send(rdid) { buffer ->
@@ -279,6 +279,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     override fun onWireReceived(buffer: AbstractBuffer) {
         val taskId = RdId.read(buffer)
 
+        val bindLifetime = bindLifetime ?: throw IllegalStateException("Bind lifetime is not initialized yet")
         val wiredTask = EndpointWiredRdTask(bindLifetime, this, taskId, cancellationScheduler ?: SynchronousScheduler)
         val externalCancellation = wiredTask.lifetime
 

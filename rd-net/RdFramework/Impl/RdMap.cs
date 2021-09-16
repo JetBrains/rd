@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
+using JetBrains.Collections;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -359,6 +361,32 @@ namespace JetBrains.Rd.Impl
       {
         myMap.Advise(lifetime, handler);
       }
+    }
+
+    public override RdBindableBase FindByRName(RName rName)
+    {
+      var rootName = rName.GetNonEmptyRoot();
+      var localName = rootName.LocalName.ToString();
+      if (!localName.StartsWith("[") || !localName.EndsWith("]"))
+        return null;
+
+      var stringKey = localName.Substring(1, localName.Length - 2);
+
+      foreach (var (key, value) in myMap)
+      {
+        if (key.ToString() != stringKey)
+          continue;
+
+        if (!(value is RdBindableBase bindableValue))
+          break;
+
+        if (rootName == rName)
+          return bindableValue;
+
+        return bindableValue.FindByRName(rName.DropNonEmptyRoot());
+      }
+
+      return null;
     }
 
     protected override string ShortName => "map";

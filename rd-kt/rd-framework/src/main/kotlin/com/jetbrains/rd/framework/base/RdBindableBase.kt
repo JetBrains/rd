@@ -26,8 +26,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     protected var parent : IRdDynamic? = null
 
-    private var bindLifetime: Lifetime? = null
-
+    var bindLifetime: Lifetime? = null
+        private set
 
     //bound state: inferred
 
@@ -67,7 +67,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 bindLifetime = lf
             },
             {
-                bindLifetime = lf
+                bindLifetime = null
                 location = location.sub("<<unbound>>","::")
                 this.parent = null
                 rdid = RdId.Null
@@ -116,6 +116,22 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
+    open fun findByRName(rName: RName): RdBindableBase? {
+        val rootName = rName.getNonEmptyRoot()
+        val child = bindableChildren
+            .asSequence()
+            .map { it.second }
+            .filterIsInstance<RdBindableBase>()
+            .find { it.location.separator == rootName.separator &&
+                    it.location.localName == rootName.localName }
+            ?: return null
+        
+        if (rootName == rName)
+            return child
+        
+        return child.findByRName(rName.dropNonEmptyRoot())
+    }
+    
     override fun identify(identities: IIdentities, id: RdId) {
         require(rdid.isNull) { "Already has RdId: $rdid, entity: $this" }
         require(!id.isNull) { "Assigned RdId mustn't be null, entity: $this" }

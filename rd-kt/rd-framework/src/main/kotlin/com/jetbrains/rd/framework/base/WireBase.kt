@@ -34,4 +34,8 @@ abstract class WireBase(val scheduler: IScheduler) : IWireWithDelayedDelivery {
         require(!this::contextsInternal.isInitialized) { "Can't replace ProtocolContexts in IWire"}
         contextsInternal = newContexts
     }
+
+    override fun tryGetById(rdId: RdId): IRdWireable? {
+        return messageBroker.tryGetById(rdId)
+    }
 }

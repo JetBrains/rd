@@ -3,10 +3,10 @@ package com.jetbrains.rd.framework
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.ProtocolContexts
+import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.ViewableSet
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
 
 
@@ -19,6 +19,8 @@ class Protocol internal constructor(
     val lifetime: Lifetime,
     serializationCtx: SerializationCtx? = null,
     parentContexts: ProtocolContexts? = null,
+    parentExtCreated: ISignal<ExtCreationInfo>? = null,
+    parentExtConfirmation: RdSignal<ExtCreationInfo>? = null,
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
 
@@ -35,7 +37,7 @@ class Protocol internal constructor(
                 scheduler: IScheduler,
                 wire: IWire, //to initialize field with circular dependencies
                 lifetime: Lifetime,
-                vararg initialContexts: RdContext<*>) : this(name, serializers, identity, scheduler, wire, lifetime, null, null, *initialContexts)
+                vararg initialContexts: RdContext<*>) : this(name, serializers, identity, scheduler, wire, lifetime, null, null, null, null, *initialContexts)
 
     override val location: RName = RName(name)
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet()
@@ -54,6 +56,10 @@ class Protocol internal constructor(
     }))
 
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
+
+    override val extCreated: ISignal<ExtCreationInfo>
+
+    private val extConfirmation: RdSignal<ExtCreationInfo>
 
     init {
         wire.setupContexts(contexts)
@@ -75,7 +81,27 @@ class Protocol internal constructor(
             }
         }
 
+        extCreated = parentExtCreated ?: Signal()
+        extConfirmation = parentExtConfirmation ?: createExtSignal().also { signal ->
+            val protocolScheduler = scheduler
+            signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
+        }
+        scheduler.invokeOrQueue {
+            extConfirmation.bind(lifetime, this, "ProtocolExtCreated")
+            extConfirmation.advise(lifetime) { message ->
+                if (extConfirmation.isLocalChange) return@advise
+                // ext confirmed on the other side
+                extCreated.fire(message)
+            }
+        }
+
         if (wire is IWireWithDelayedDelivery)
             wire.startDeliveringMessages()
+    }
+
+    internal fun submitExtCreated(info: ExtCreationInfo) {
+        extConfirmation.localChange {
+            extConfirmation.fire(info)
+        }
     }
 }

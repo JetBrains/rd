@@ -19,6 +19,7 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     const string ProtocolInternRootRdId = "ProtocolInternRoot";
     const string ContextHandlerRdId = "ProtocolContextHandler";
+    internal const string ProtocolExtCreatedRdId = "ProtocolExtCreated";
     
     /// <summary>
     /// Should match whatever is in rd-gen for ProtocolInternScope
@@ -27,11 +28,12 @@ namespace JetBrains.Rd.Impl
 
     public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler, 
       [NotNull] IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
-      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, initialContexts)
+      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, null, null, initialContexts)
     { }
 
     internal Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, params RdContextBase[] initialContexts)
+      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, 
+      [CanBeNull] ISignal<ExtCreationInfo> parentExtCreated = null, [CanBeNull] RdSignal<ExtCreationInfo> parentExtConfirmation = null, params RdContextBase[] initialContexts)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -50,6 +52,17 @@ namespace JetBrains.Rd.Impl
       if (parentContexts == null)
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
+      ExtCreated = parentExtCreated ?? new Signal<ExtCreationInfo>();
+      ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal();
+      scheduler.InvokeOrQueue(() =>
+      {
+        ExtConfirmation.Bind(lifetime, this, ProtocolExtCreatedRdId);
+        ExtConfirmation.Advise(lifetime, message =>
+        {
+          if (ExtConfirmation.IsLocalChange) return;
+          ExtCreated.Fire(message);
+        });
+      });
       
       if (wire is IWireWithDelayedDelivery wireWithMessageBroker)
         wireWithMessageBroker.StartDeliveringMessages();
@@ -72,6 +85,14 @@ namespace JetBrains.Rd.Impl
         Contexts.Bind(lifetime, this, ContextHandlerRdId);
       });
     }
+    
+    internal void SubmitExtCreated(ExtCreationInfo info)
+    {
+      using (ExtConfirmation.UsingLocalChange())
+      {
+        ExtConfirmation.Fire(info);
+      }
+    }
       
     public string Name { get; }
     
@@ -83,6 +104,10 @@ namespace JetBrains.Rd.Impl
     public ViewableSet<RdExtBase> OutOfSyncModels { get; }
 
     public ProtocolContexts Contexts { get; }
+    
+    public ISignal<ExtCreationInfo> ExtCreated { get; }
+    
+    private RdSignal<ExtCreationInfo> ExtConfirmation { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     

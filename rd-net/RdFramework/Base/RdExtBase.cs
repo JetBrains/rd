@@ -51,10 +51,13 @@ namespace JetBrains.Rd.Base
       //todo ExtScheduler
       myExtWire.RealWire = parentWire;
       lifetime.Bracket(
-        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.Contexts); },
+        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.Contexts, parentProtocol.ExtCreated, this.CreateExtSignal()); },
         () => { myExtProtocol = null; }
         );
-        
+
+      var bindableParent = Parent is RdBindableBase bindable ? bindable : null;
+      var info = new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash);
+      ((Protocol) parentProtocol).SubmitExtCreated(info);
       parentWire.Advise(lifetime, this);
             
       
@@ -239,6 +242,11 @@ namespace JetBrains.Rd.Base
     public void Advise(Lifetime lifetime, IRdWireable entity)
     {
       RealWire.Advise(lifetime, entity);
+    }
+
+    public IRdWireable TryGetById(RdId rdId)
+    {
+      return RealWire.TryGetById(rdId);
     }
   }
 

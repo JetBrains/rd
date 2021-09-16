@@ -51,11 +51,12 @@ namespace Test.RdFramework.Contexts
         receivedContexts.Add(context.Value);
       });
 
-      ClientWire.AutoTransmitMode = true;
-      ServerWire.AutoTransmitMode = true;
-      ClientWire.TransmitAllMessages();
-      ServerWire.TransmitAllMessages();
-      
+      while (ClientWire.HasMessages || ServerWire.HasMessages)
+      {
+        ClientWire.TransmitAllMessages();
+        ServerWire.TransmitAllMessages();
+      }
+
       Assert.AreEqual(3, numReceives);
       Assert.AreEqual(fireValues, receivedContexts);
     }

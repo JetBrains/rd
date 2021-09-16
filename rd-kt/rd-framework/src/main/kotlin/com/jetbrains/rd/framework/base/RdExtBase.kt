@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.impl.HeavySingleContextHandler
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
 import com.jetbrains.rd.util.Logger
@@ -51,9 +50,12 @@ abstract class RdExtBase : RdReactiveBase() {
         lifetime.bracket(
             {
 //                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts).also {
+                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreated, createExtSignal()).also {
                     it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
                 }
+
+                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash)
+                (parentProtocol as Protocol).submitExtCreated(info)
             },
             {
                 extProtocol = null
@@ -255,4 +257,7 @@ class ExtWire : IWire {
         realWire.send(id, writer)
     }
 
+    override fun tryGetById(rdId: RdId): IRdWireable? {
+        return realWire.tryGetById(rdId)
+    }
 }
