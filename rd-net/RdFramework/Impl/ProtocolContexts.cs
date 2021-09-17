@@ -118,7 +118,7 @@ namespace JetBrains.Rd.Impl
     /// <summary>
     /// Get a value set for a given key. The values are local relative to transform
     /// </summary>
-    public IViewableSet<T> GetValueSet<T>(RdContext<T> context)
+    public IViewableSet<T> GetValueSet<T>(RdContext<T> context) where T : notnull
     {
       Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
       return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).LocalValueSet;

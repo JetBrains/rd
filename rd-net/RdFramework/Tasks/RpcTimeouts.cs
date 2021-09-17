@@ -68,8 +68,7 @@ namespace JetBrains.Rd.Tasks
     /// <summary>
     /// Returns a mix of optionally provided timeouts and default one.
     /// </summary>
-    [NotNull]
-    public static RpcTimeouts GetRpcTimeouts([CanBeNull] RpcTimeouts timeouts)
+    public static RpcTimeouts GetRpcTimeouts(RpcTimeouts? timeouts)
     {
       RpcTimeouts timeoutsToUse;
       if (RespectRpcTimeouts)

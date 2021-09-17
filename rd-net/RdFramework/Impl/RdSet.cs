@@ -11,13 +11,13 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
-  public class RdSet<T> : RdReactiveBase, IViewableSet<T>
+  public class RdSet<T> : RdReactiveBase, IViewableSet<T> where T: notnull
   {
     private readonly IViewableSet<T> mySet;
 
     public RdSet() : this(Polymorphic<T>.Read, Polymorphic<T>.Write) {}
 
-    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, IViewableSet<T> backingSet)
+    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, IViewableSet<T>? backingSet)
     {
       ValueCanBeNull = false;
       ReadValueDelegate = readValue;

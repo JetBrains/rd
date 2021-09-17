@@ -102,8 +102,7 @@ namespace JetBrains.Rd.Util
 
   public static class PrintableEx
   {
-    [NotNull]
-    public static string PrintToString([CanBeNull] this IPrintable printable, int? collectionMaxLength = null)
+    public static string PrintToString(this IPrintable? printable, int? collectionMaxLength = null)
     {
       if (printable == null)
       {

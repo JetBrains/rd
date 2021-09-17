@@ -18,6 +18,6 @@ namespace JetBrains.Rd.Base
   {
     RdContext<T> Context { get; }
 
-    T ReadValue(SerializationCtx context, UnsafeReader reader);
+    T? ReadValue(SerializationCtx context, UnsafeReader reader);
   }
 }

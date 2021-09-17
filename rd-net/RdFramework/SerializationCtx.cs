@@ -4,6 +4,8 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 
+#nullable disable
+
 namespace JetBrains.Rd
 {
   public struct SerializationCtx

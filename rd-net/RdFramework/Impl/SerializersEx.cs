@@ -9,7 +9,7 @@ namespace JetBrains.Rd.Impl
   public static class SerializersEx
   {
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static List<T> ReadList<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx)
+    public static List<T>? ReadList<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx)
     {
       int count = reader.ReadInt32();
       if (count < 0) return null;
@@ -21,7 +21,7 @@ namespace JetBrains.Rd.Impl
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static void WriteList<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, List<T> value)
+    public static void WriteList<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, List<T>? value)
     {
       if (value == null)
       {
@@ -59,7 +59,7 @@ namespace JetBrains.Rd.Impl
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T[] ReadArray<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx)
+    public static T[]? ReadArray<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx)
     {
       int count = reader.ReadInt32();
       if (count < 0) return null;
@@ -71,7 +71,7 @@ namespace JetBrains.Rd.Impl
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static void WriteArray<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, T[] value)
+    public static void WriteArray<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, T[]? value)
     {
       if (value == null)
       {
@@ -89,7 +89,7 @@ namespace JetBrains.Rd.Impl
 
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T ReadNullableClass<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx) where T:class
+    public static T? ReadNullableClass<T>(this UnsafeReader reader, CtxReadDelegate<T> itemReader, SerializationCtx ctx) where T:class
     {
       return reader.ReadNullness() ? itemReader(ctx, reader) : null;
     }
@@ -101,7 +101,7 @@ namespace JetBrains.Rd.Impl
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static void WriteNullableClass<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, T value) where T:class
+    public static void WriteNullableClass<T>(this UnsafeWriter writer, CtxWriteDelegate<T> itemWriter, SerializationCtx ctx, T? value) where T:class
     {
       if (writer.WriteNullness(value)) itemWriter(ctx, writer, value);
     }
@@ -115,7 +115,9 @@ namespace JetBrains.Rd.Impl
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static RdSecureString ReadSecureString(this UnsafeReader reader)
     {
-      return new RdSecureString(reader.ReadString());
+      var str = reader.ReadString();
+      if (str == null) return default;
+      return new RdSecureString(str);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -145,17 +147,17 @@ namespace JetBrains.Rd.Impl
     // Composition functors
 
     //Readers
-    public static CtxReadDelegate<T[]> Array<T>(this CtxReadDelegate<T> inner)
+    public static CtxReadDelegate<T[]?> Array<T>(this CtxReadDelegate<T> inner)
     {
       return (ctx, reader) => reader.ReadArray(inner, ctx);
     }
 
-    public static CtxReadDelegate<List<T>> List<T>(this CtxReadDelegate<T> inner)
+    public static CtxReadDelegate<List<T>?> List<T>(this CtxReadDelegate<T> inner)
     {
       return (ctx, reader) => reader.ReadList(inner, ctx);
     }
 
-    public static CtxReadDelegate<T> NullableClass<T>(this CtxReadDelegate<T> inner) where T : class
+    public static CtxReadDelegate<T?> NullableClass<T>(this CtxReadDelegate<T> inner) where T : class
     {
       return (ctx, reader) => reader.ReadNullableClass(inner, ctx);
     }
@@ -182,7 +184,7 @@ namespace JetBrains.Rd.Impl
       return (ctx, reader, value) => reader.WriteList(inner, ctx, value);
     }
 
-    public static CtxWriteDelegate<T> NullableClass<T>(this CtxWriteDelegate<T> inner) where T:class
+    public static CtxWriteDelegate<T?> NullableClass<T>(this CtxWriteDelegate<T> inner) where T:class
     {
       return (ctx, reader, value) => reader.WriteNullableClass(inner, ctx, value);
     }

@@ -7,13 +7,13 @@ namespace JetBrains.Rd
 {
   public interface IProtocol : IRdDynamic
   {
-    [NotNull] ViewableSet<RdExtBase> OutOfSyncModels { get; }
-    [NotNull] string Name { get; }
-    [NotNull] ISerializers Serializers { get; }
-    [NotNull] IIdentities Identities { get; }
-    [NotNull] IScheduler Scheduler { get; }
-    [NotNull] IWire Wire { get; }    
-    [NotNull] ProtocolContexts Contexts { get; }
-    [NotNull] ISignal<ExtCreationInfo> ExtCreated { get; }
+    ViewableSet<RdExtBase> OutOfSyncModels { get; }
+    string Name { get; }
+    ISerializers Serializers { get; }
+    IIdentities Identities { get; }
+    IScheduler Scheduler { get; }
+    IWire Wire { get; }    
+    ProtocolContexts Contexts { get; }
+    ISignal<ExtCreationInfo> ExtCreated { get; }
   }
 }

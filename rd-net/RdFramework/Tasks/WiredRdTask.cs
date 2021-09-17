@@ -33,7 +33,7 @@ namespace JetBrains.Rd.Tasks
     //received response from wire
     public abstract void OnWireReceived(UnsafeReader reader);
 
-    protected void Trace(ILog log, string message, object additional = null)
+    protected void Trace(ILog log, string message, object? additional = null)
     {
       if (!log.IsTraceEnabled())
         return;

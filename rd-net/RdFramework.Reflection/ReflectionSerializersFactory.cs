@@ -158,7 +158,7 @@ namespace JetBrains.Rd.Reflection
             var intrinsic = Intrinsic.TryGetIntrinsicSerializer(
               type.GetTypeInfo(), 
               t => GetOrRegisterStaticSerializerInternal(t, true));
-            Assertion.Assert(intrinsic != null, "Unable to get intrinsic serializer for type {0}, thought API detect the presense of it. Probably it was only partially implemeted", type);
+            Assertion.Assert(intrinsic != null, "Unable to get intrinsic serializer for type {0}, thought API detect the presense of it. Probably it was only partially implemented", type);
             mySerializers.Add(type, intrinsic);
           }
           else

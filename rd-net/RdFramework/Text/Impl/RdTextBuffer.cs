@@ -21,8 +21,7 @@ namespace JetBrains.Rd.Text.Impl
     private readonly List<RdTextBufferChange> myChangesToConfirmOrRollback;
     private readonly IViewableProperty<RdTextChange> myTextChanged;
 
-    [CanBeNull]
-    private TextBufferTypingSession myActiveSession;
+    private TextBufferTypingSession? myActiveSession;
 
     public bool IsCommitting => myActiveSession != null && myActiveSession.IsCommitting;
 
@@ -140,7 +139,7 @@ namespace JetBrains.Rd.Text.Impl
       myChangesToConfirmOrRollback.Clear();
     }
 
-    public IScheduler Scheduler { get; set; }
+    public IScheduler? Scheduler { get; set; }
 
     public void Fire(RdTextChange change)
     {

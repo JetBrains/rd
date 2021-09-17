@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
@@ -12,7 +13,7 @@ namespace JetBrains.Rd.Tasks
     public string ReasonText { get; private set; }
     public string ReasonMessage { get; private set; }
 
-    public RdFault([NotNull] Exception inner) : base(inner.Message, inner)
+    public RdFault(Exception inner) : base(inner.Message, inner)
     {
       ReasonTypeFqn = inner.GetType().FullName;
       ReasonMessage = inner.Message;
@@ -21,7 +22,7 @@ namespace JetBrains.Rd.Tasks
 
     
     
-    public RdFault([NotNull] string reasonTypeFqn, [NotNull] string reasonMessage, [NotNull] string reasonText, Exception reason = null) 
+    public RdFault(string reasonTypeFqn, string reasonMessage, string reasonText, Exception? reason = null) 
       : base(reasonMessage + (reason == null ? ", reason: " + reasonText : ""), reason)
     {
       ReasonTypeFqn = reasonTypeFqn;
@@ -32,9 +33,9 @@ namespace JetBrains.Rd.Tasks
     
     public static RdFault Read(SerializationCtx ctx, UnsafeReader reader)
     {
-      var typeFqn = reader.ReadString();
-      var message = reader.ReadString();
-      var body = reader.ReadString();
+      var typeFqn = reader.ReadString().NotNull("typeFqn");
+      var message = reader.ReadString().NotNull("message");
+      var body = reader.ReadString().NotNull("body");
       
       return new RdFault(typeFqn, message, body);
     }

@@ -10,6 +10,8 @@ using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 using JetBrains.Util.Util;
 
+#nullable disable
+
 namespace JetBrains.Rd.Impl
 {
   public class InternRoot<TBase> : IInternRoot<TBase>

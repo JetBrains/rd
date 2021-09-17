@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -11,13 +10,12 @@ using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Impl
 {
-
   public static class Polymorphic<T>
   {
-    public static readonly CtxReadDelegate<T> Read = (ctx, reader) => ctx.Serializers.Read<T>(ctx, reader);
+    public static readonly CtxReadDelegate<T> Read = (ctx, reader) => ctx.Serializers.Read<T>(ctx, reader)!;
     public static readonly CtxWriteDelegate<T> Write = (ctx, writer, value) => ctx.Serializers.Write(ctx, writer, value);
 
-    public static CtxReadDelegate<T> ReadAbstract(CtxReadDelegate<T> unknownInstanceReader)
+    public static CtxReadDelegate<T?> ReadAbstract(CtxReadDelegate<T> unknownInstanceReader)
     {
       return (ctx, reader) => ctx.Serializers.Read<T>(ctx, reader, unknownInstanceReader);
     }
@@ -27,10 +25,10 @@ namespace JetBrains.Rd.Impl
   public class Serializers : ISerializers
   {
     private readonly Dictionary<Type, RdId> myTypeMapping = new Dictionary<Type, RdId>();
-    private readonly Dictionary<RdId, CtxReadDelegate<object>> myReaders = new Dictionary<RdId, CtxReadDelegate<object>>();
-    private readonly Dictionary<RdId, CtxWriteDelegate<object>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object>>();
+    private readonly Dictionary<RdId, CtxReadDelegate<object?>> myReaders = new Dictionary<RdId, CtxReadDelegate<object?>>();
+    private readonly Dictionary<RdId, CtxWriteDelegate<object?>> myWriters = new Dictionary<RdId, CtxWriteDelegate<object?>>();
 
-    [CanBeNull] private readonly ITypesRegistrar myRegistrar;
+    private readonly ITypesRegistrar? myRegistrar;
     private readonly object myLock = new object();
     
 #if !NET35
@@ -40,21 +38,21 @@ namespace JetBrains.Rd.Impl
     {
     }
 
-    public Serializers([CanBeNull] TaskScheduler scheduler, [CanBeNull] ITypesRegistrar registrar)
+    public Serializers(TaskScheduler? scheduler, ITypesRegistrar? registrar)
     {
       myRegistrar = registrar;
       myBackgroundRegistrar = new StealingScheduler(new ConcurrentExclusiveSchedulerPair(scheduler ?? TaskScheduler.Default).ExclusiveScheduler, false);
       RegisterToplevelOnce(typeof(Serializers), RegisterFrameworkMarshallers);
     }
 
-    public Serializers([CanBeNull] ITypesRegistrar registrar)
+    public Serializers(ITypesRegistrar? registrar)
       : this()
     {
       myRegistrar = registrar;
     }
 
     [Obsolete("Lifetime is not required anymore", false)]
-    public Serializers(Lifetime lifetime, [CanBeNull] TaskScheduler scheduler, [CanBeNull] ITypesRegistrar registrar)
+    public Serializers(Lifetime lifetime, TaskScheduler? scheduler, ITypesRegistrar? registrar)
     : this(scheduler, registrar)
     {
     }
@@ -62,7 +60,7 @@ namespace JetBrains.Rd.Impl
 #else
     public Serializers() => RegisterFrameworkMarshallers(this);
 
-    public Serializers([CanBeNull] ITypesRegistrar registrar)
+    public Serializers(ITypesRegistrar? registrar)
       : this()
     {
       myRegistrar = registrar;
@@ -80,22 +78,22 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxReadDelegate<bool> ReadBool = (ctx, reader) => reader.ReadBool();
     public static readonly CtxReadDelegate<Unit> ReadVoid = (ctx, reader) => reader.ReadVoid();
 
-    public static readonly CtxReadDelegate<string> ReadString = (ctx, reader) => reader.ReadString();
+    public static readonly CtxReadDelegate<string?> ReadString = (ctx, reader) => reader.ReadString();
     public static readonly CtxReadDelegate<Guid> ReadGuid = (ctx, reader) => reader.ReadGuid();
     public static readonly CtxReadDelegate<DateTime> ReadDateTime = (ctx, reader) => reader.ReadDateTime();
     public static readonly CtxReadDelegate<Uri> ReadUri = (ctx, reader) => reader.ReadUri();
     public static readonly CtxReadDelegate<RdId> ReadRdId = (ctx, reader) => reader.ReadRdId();
     
-    public static readonly CtxReadDelegate<RdSecureString> ReadSecureString = (ctx, reader) => new RdSecureString(reader.ReadString());
+    public static readonly CtxReadDelegate<RdSecureString> ReadSecureString = (ctx, reader) => reader.ReadSecureString();
 
-    public static readonly CtxReadDelegate<byte[]> ReadByteArray = (ctx, reader) => reader.ReadArray(ReadByte, ctx);
-    public static readonly CtxReadDelegate<short[]> ReadShortArray = (ctx, reader) => reader.ReadArray(ReadShort, ctx);
-    public static readonly CtxReadDelegate<int[]> ReadIntArray = (ctx, reader) => reader.ReadArray(ReadInt, ctx);
-    public static readonly CtxReadDelegate<long[]> ReadLongArray = (ctx, reader) => reader.ReadArray(ReadLong, ctx);
-    public static readonly CtxReadDelegate<float[]> ReadFloatArray = (ctx, reader) => reader.ReadArray(ReadFloat, ctx);
-    public static readonly CtxReadDelegate<double[]> ReadDoubleArray = (ctx, reader) => reader.ReadArray(ReadDouble, ctx);
-    public static readonly CtxReadDelegate<char[]> ReadCharArray = (ctx, reader) => reader.ReadArray(ReadChar, ctx);
-    public static readonly CtxReadDelegate<bool[]> ReadBoolArray = (ctx, reader) => reader.ReadArray(ReadBool, ctx);
+    public static readonly CtxReadDelegate<byte[]?> ReadByteArray = (ctx, reader) => reader.ReadArray(ReadByte, ctx);
+    public static readonly CtxReadDelegate<short[]?> ReadShortArray = (ctx, reader) => reader.ReadArray(ReadShort, ctx);
+    public static readonly CtxReadDelegate<int[]?> ReadIntArray = (ctx, reader) => reader.ReadArray(ReadInt, ctx);
+    public static readonly CtxReadDelegate<long[]?> ReadLongArray = (ctx, reader) => reader.ReadArray(ReadLong, ctx);
+    public static readonly CtxReadDelegate<float[]?> ReadFloatArray = (ctx, reader) => reader.ReadArray(ReadFloat, ctx);
+    public static readonly CtxReadDelegate<double[]?> ReadDoubleArray = (ctx, reader) => reader.ReadArray(ReadDouble, ctx);
+    public static readonly CtxReadDelegate<char[]?> ReadCharArray = (ctx, reader) => reader.ReadArray(ReadChar, ctx);
+    public static readonly CtxReadDelegate<bool[]?> ReadBoolArray = (ctx, reader) => reader.ReadArray(ReadBool, ctx);
     
     
     
@@ -104,10 +102,10 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxReadDelegate<uint> ReadUInt = (ctx, reader) => reader.ReadUInt();
     public static readonly CtxReadDelegate<ulong> ReadULong = (ctx, reader) => reader.ReadULong();
     
-    public static readonly CtxReadDelegate<byte[]> ReadUByteArray = (ctx, reader) => reader.ReadArray(ReadByte, ctx);
-    public static readonly CtxReadDelegate<ushort[]> ReadUShortArray = (ctx, reader) => reader.ReadArray(ReadUShort, ctx);
-    public static readonly CtxReadDelegate<uint[]> ReadUIntArray = (ctx, reader) => reader.ReadArray(ReadUInt, ctx);
-    public static readonly CtxReadDelegate<ulong[]> ReadULongArray = (ctx, reader) => reader.ReadArray(ReadULong, ctx);
+    public static readonly CtxReadDelegate<byte[]?> ReadUByteArray = (ctx, reader) => reader.ReadArray(ReadByte, ctx);
+    public static readonly CtxReadDelegate<ushort[]?> ReadUShortArray = (ctx, reader) => reader.ReadArray(ReadUShort, ctx);
+    public static readonly CtxReadDelegate<uint[]?> ReadUIntArray = (ctx, reader) => reader.ReadArray(ReadUInt, ctx);
+    public static readonly CtxReadDelegate<ulong[]?> ReadULongArray = (ctx, reader) => reader.ReadArray(ReadULong, ctx);
     
 
 
@@ -122,7 +120,7 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxWriteDelegate<bool> WriteBool = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<Unit> WriteVoid = (ctx, writer, value) => writer.Write(value);
 
-    public static readonly CtxWriteDelegate<string> WriteString = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<string?> WriteString = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<Guid> WriteGuid = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<DateTime> WriteDateTime = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<Uri> WriteUri = (ctx, writer, value) => writer.Write(value);
@@ -130,14 +128,14 @@ namespace JetBrains.Rd.Impl
     
     public static readonly CtxWriteDelegate<RdSecureString> WriteSecureString = (ctx, writer, value) => writer.Write(value.Contents);
 
-    public static readonly CtxWriteDelegate<byte[]> WriteByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
-    public static readonly CtxWriteDelegate<short[]> WriteShortArray = (ctx, writer, value) => writer.WriteArray(WriteShort, ctx, value);
-    public static readonly CtxWriteDelegate<int[]> WriteIntArray = (ctx, writer, value) => writer.WriteArray(WriteInt, ctx, value);
-    public static readonly CtxWriteDelegate<long[]> WriteLongArray = (ctx, writer, value) => writer.WriteArray(WriteLong, ctx, value);
-    public static readonly CtxWriteDelegate<float[]> WriteFloatArray = (ctx, writer, value) => writer.WriteArray(WriteFloat, ctx, value);
-    public static readonly CtxWriteDelegate<double[]> WriteDoubleArray = (ctx, writer, value) => writer.WriteArray(WriteDouble, ctx, value);
-    public static readonly CtxWriteDelegate<char[]> WriteCharArray = (ctx, writer, value) => writer.WriteArray(WriteChar, ctx, value);
-    public static readonly CtxWriteDelegate<bool[]> WriteBoolArray = (ctx, writer, value) => writer.WriteArray(WriteBool, ctx, value);
+    public static readonly CtxWriteDelegate<byte[]?> WriteByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
+    public static readonly CtxWriteDelegate<short[]?> WriteShortArray = (ctx, writer, value) => writer.WriteArray(WriteShort, ctx, value);
+    public static readonly CtxWriteDelegate<int[]?> WriteIntArray = (ctx, writer, value) => writer.WriteArray(WriteInt, ctx, value);
+    public static readonly CtxWriteDelegate<long[]?> WriteLongArray = (ctx, writer, value) => writer.WriteArray(WriteLong, ctx, value);
+    public static readonly CtxWriteDelegate<float[]?> WriteFloatArray = (ctx, writer, value) => writer.WriteArray(WriteFloat, ctx, value);
+    public static readonly CtxWriteDelegate<double[]?> WriteDoubleArray = (ctx, writer, value) => writer.WriteArray(WriteDouble, ctx, value);
+    public static readonly CtxWriteDelegate<char[]?> WriteCharArray = (ctx, writer, value) => writer.WriteArray(WriteChar, ctx, value);
+    public static readonly CtxWriteDelegate<bool[]?> WriteBoolArray = (ctx, writer, value) => writer.WriteArray(WriteBool, ctx, value);
 
 
     public static readonly CtxWriteDelegate<byte> WriteUByte = (ctx, writer, value) => writer.Write(value);
@@ -145,12 +143,12 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxWriteDelegate<uint> WriteUInt = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<ulong> WriteULong = (ctx, writer, value) => writer.Write(value);
     
-    public static readonly CtxWriteDelegate<byte[]> WriteUByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
-    public static readonly CtxWriteDelegate<ushort[]> WriteUShortArray = (ctx, writer, value) => writer.WriteArray(WriteUShort, ctx, value);
-    public static readonly CtxWriteDelegate<uint[]> WriteUIntArray = (ctx, writer, value) => writer.WriteArray(WriteUInt, ctx, value);
-    public static readonly CtxWriteDelegate<ulong[]> WriteULongArray = (ctx, writer, value) => writer.WriteArray(WriteULong, ctx, value);
+    public static readonly CtxWriteDelegate<byte[]?> WriteUByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
+    public static readonly CtxWriteDelegate<ushort[]?> WriteUShortArray = (ctx, writer, value) => writer.WriteArray(WriteUShort, ctx, value);
+    public static readonly CtxWriteDelegate<uint[]?> WriteUIntArray = (ctx, writer, value) => writer.WriteArray(WriteUInt, ctx, value);
+    public static readonly CtxWriteDelegate<ulong[]?> WriteULongArray = (ctx, writer, value) => writer.WriteArray(WriteULong, ctx, value);
     
-    public static void RegisterFrameworkMarshallers([NotNull] ISerializersContainer serializers)
+    public static void RegisterFrameworkMarshallers(ISerializersContainer serializers)
     {
       serializers.Register(ReadByte, WriteByte, 1);
       serializers.Register(ReadShort, WriteShort, 2);
@@ -247,14 +245,14 @@ namespace JetBrains.Rd.Impl
         
           myTypeMapping[typeof(T)] = typeId;
           myReaders[typeId] = (ctx, unsafeReader) => reader(ctx, unsafeReader);
-          myWriters[typeId] = (ctx, unsafeWriter, value) => writer(ctx, unsafeWriter, (T)value);
+          myWriters[typeId] = (ctx, unsafeWriter, value) => writer(ctx, unsafeWriter, (T)value!);
         }
       }
     }
 
-    public T Read<T>(SerializationCtx ctx, UnsafeReader reader, [CanBeNull] CtxReadDelegate<T> unknownInstanceReader = null)
+    public T? Read<T>(SerializationCtx ctx, UnsafeReader reader, CtxReadDelegate<T>? unknownInstanceReader = null)
     {
-      bool TryGetReader(RdId rdId, out CtxReadDelegate<object> readDelegate)
+      bool TryGetReader(RdId rdId, out CtxReadDelegate<object?> readDelegate)
       {
         lock (myLock)
           return myReaders.TryGetValue(rdId, out readDelegate);
@@ -265,7 +263,7 @@ namespace JetBrains.Rd.Impl
       
       var typeId = RdId.Read(reader);
       if (typeId.IsNil)
-        return default(T);
+        return default;
       var size = reader.ReadInt();
 
       if (!TryGetReader(typeId, out var ctxReadDelegate))

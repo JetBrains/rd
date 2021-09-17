@@ -21,9 +21,9 @@ namespace JetBrains.Rd.Text.Intrinsics
     public readonly int FullTextLength;
     public readonly RdTextChangeKind Kind;
 
-    [NotNull] public readonly string New;
+    public readonly string New;
 
-    [NotNull] public readonly string Old;
+    public readonly string Old;
 
     public readonly int StartOffset;
 

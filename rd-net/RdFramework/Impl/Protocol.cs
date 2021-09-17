@@ -27,14 +27,14 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     const string ProtocolInternScopeStringId = "Protocol";
 
-    public Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler, 
-      [NotNull] IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
+    public Protocol(string name, ISerializers serializers, IIdentities identities, IScheduler scheduler, 
+      IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
       : this(name, serializers, identities, scheduler, wire, lifetime, null, null, null, null, initialContexts)
     { }
 
-    internal Protocol([NotNull] string name, [NotNull] ISerializers serializers, [NotNull] IIdentities identities, [NotNull] IScheduler scheduler,
-      [NotNull] IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, [CanBeNull] ProtocolContexts parentContexts = null, 
-      [CanBeNull] ISignal<ExtCreationInfo> parentExtCreated = null, [CanBeNull] RdSignal<ExtCreationInfo> parentExtConfirmation = null, params RdContextBase[] initialContexts)
+    internal Protocol(string name, ISerializers serializers, IIdentities identities, IScheduler scheduler,
+      IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, ProtocolContexts? parentContexts = null, 
+      ISignal<ExtCreationInfo>? parentExtCreated = null, RdSignal<ExtCreationInfo>? parentExtConfirmation = null, params RdContextBase[] initialContexts)
     {
       
       Name = name ?? throw new ArgumentNullException(nameof(name));

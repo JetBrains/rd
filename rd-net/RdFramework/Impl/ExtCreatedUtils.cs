@@ -8,7 +8,6 @@ namespace JetBrains.Rd.Impl
 {
   public static class ExtCreatedUtils
   {
-    [NotNull]
     public static RdSignal<ExtCreationInfo> CreateExtSignal(this IRdDynamic @this)
     {
       var signal = new RdSignal<ExtCreationInfo>(
@@ -31,8 +30,7 @@ namespace JetBrains.Rd.Impl
       return signal;
     }
     
-    [NotNull]
-    internal static RName ReadRName([NotNull] UnsafeReader reader)
+    internal static RName ReadRName(UnsafeReader reader)
     {
       var isEmpty = reader.ReadBool();
       if (isEmpty)
@@ -51,7 +49,7 @@ namespace JetBrains.Rd.Impl
       return rName;
     }
 
-    internal static void WriteRName([NotNull] UnsafeWriter writer, [NotNull] RName value)
+    internal static void WriteRName(UnsafeWriter writer, RName value)
     {
       writer.Write(value == RName.Empty);
       TraverseRName(value, true, (rName, last) =>
@@ -66,7 +64,7 @@ namespace JetBrains.Rd.Impl
       });
     }
 
-    private static void TraverseRName([NotNull] RName rName, bool last, [NotNull] Action<RName, bool> handler)
+    private static void TraverseRName(RName rName, bool last, Action<RName, bool> handler)
     {
       if (rName.Parent is RName rParent)
       {

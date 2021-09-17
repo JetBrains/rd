@@ -28,15 +28,15 @@ namespace JetBrains.Rd.Tasks
     internal new SerializationCtx SerializationContext;
 
     //set via Set method
-    [PublicAPI] public Func<Lifetime, TReq, RdTask<TRes>> Handler { get; private set; }
+    [PublicAPI] public Func<Lifetime, TReq, RdTask<TRes>>? Handler { get; private set; }
 
 
 
 
 
     private Lifetime myBindLifetime;
-    private IScheduler myCancellationScheduler;
-    private IScheduler myHandlerScheduler;
+    private IScheduler? myCancellationScheduler;
+    private IScheduler? myHandlerScheduler;
 
     public override IScheduler WireScheduler => myHandlerScheduler ?? base.WireScheduler;
 
@@ -67,7 +67,7 @@ namespace JetBrains.Rd.Tasks
 
 
     [PublicAPI]
-    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
+    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       Handler = handler;
       myCancellationScheduler = cancellationScheduler;
@@ -133,7 +133,7 @@ namespace JetBrains.Rd.Tasks
     }
     
 
-    public TRes Sync(TReq request, RpcTimeouts timeouts = null)
+    public TRes Sync(TReq request, RpcTimeouts? timeouts = null)
     {
       AssertBound();
       if (!Async) AssertThreading();
@@ -161,14 +161,14 @@ namespace JetBrains.Rd.Tasks
     }
 
 
-    public IRdTask<TRes> Start(TReq request, IScheduler responseScheduler = null)
+    public IRdTask<TRes> Start(TReq request, IScheduler? responseScheduler = null)
       => StartInternal(Lifetime.Eternal, request, responseScheduler ?? Proto.Scheduler);
 
-    public IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler responseScheduler = null)
+    public IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler? responseScheduler = null)
       => StartInternal(lifetime, request, responseScheduler ?? Proto.Scheduler);
 
 
-    private IRdTask<TRes> StartInternal(Lifetime requestLifetime, TReq request, [NotNull] IScheduler scheduler)
+    private IRdTask<TRes> StartInternal(Lifetime requestLifetime, TReq request, IScheduler scheduler)
     {
       AssertBound();
       if (!Async) AssertThreading();

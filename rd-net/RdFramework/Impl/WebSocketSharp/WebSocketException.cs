@@ -25,7 +25,7 @@
  */
 
 using System;
-
+#nullable disable
 namespace JetBrains.Rd.Impl.WebSocketSharp
 {
   /// <summary>

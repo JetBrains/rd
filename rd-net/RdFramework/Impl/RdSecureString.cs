@@ -9,10 +9,9 @@ namespace JetBrains.Rd.Impl
   /// </summary>
   public struct RdSecureString : IEquatable<RdSecureString>
   {
-    [NotNull]
     public readonly string Contents;
 
-    public RdSecureString([NotNull] string contents)
+    public RdSecureString(string contents)
     {
       Contents = contents;
     }

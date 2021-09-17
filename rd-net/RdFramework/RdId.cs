@@ -56,7 +56,7 @@ namespace JetBrains.Rd
       return new RdId(myValue * 31 + (tail + 1));
     }
 
-    public static long Hash(string s, long initValue = 19)
+    public static long Hash(string? s, long initValue = 19)
     {
       if (s == null) return 0;
 
@@ -82,7 +82,7 @@ namespace JetBrains.Rd
       return myValue == other.myValue;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       if (ReferenceEquals(null, obj)) return false;
       return obj is RdId && Equals((RdId) obj);

@@ -124,7 +124,7 @@ namespace JetBrains.Rd.Impl
           
           myScheduler.Queue(() =>
           {
-            byte[] msg1;
+            byte[]? msg1;
 
             IRdWireable subscription;
             bool hasSubscription;
@@ -229,8 +229,7 @@ namespace JetBrains.Rd.Impl
         });
     }
 
-    [CanBeNull]
-    public IRdWireable TryGetById(RdId rdId)
+    public IRdWireable? TryGetById(RdId rdId)
     {
       lock (myLock)
       {

@@ -12,15 +12,17 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
+#nullable disable
+
 // ReSharper disable InconsistentNaming
 
 namespace JetBrains.Rd.Impl
 {
-  public class RdList<V> : RdReactiveBase, IViewableList<V>
+  public class  RdList<V> : RdReactiveBase, IViewableList<V>
 #if !NET35
     , INotifyCollectionChanged
 #endif
-  
+    where V : notnull
   {
     private readonly ViewableList<V> myList = new ViewableList<V>();
        

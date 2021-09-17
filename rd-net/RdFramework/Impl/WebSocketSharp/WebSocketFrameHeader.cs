@@ -28,7 +28,7 @@
  * Contributors:
  * - Chris Swiedler
  */
-
+#nullable disable
 using System.Security.Cryptography;
 using JetBrains.Serialization;
 

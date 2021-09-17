@@ -38,7 +38,7 @@ namespace JetBrains.Rd.Impl
     
     public override IScheduler WireScheduler => Scheduler ?? DefaultScheduler;
 
-    public IScheduler Scheduler { get; set; }
+    public IScheduler? Scheduler { get; set; }
 
 
     public RdSignal() : this(Polymorphic<T>.Read, Polymorphic<T>.Write)

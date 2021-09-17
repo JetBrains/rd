@@ -11,7 +11,7 @@ namespace JetBrains.Rd
     /// </summary>
     /// <param name="id"></param>
     /// <param name="serializers"></param>
-    void TryRegister(RdId id, [NotNull] ISerializers serializers);
-    void TryRegister([NotNull] Type clrType, [NotNull] ISerializers serializers);
+    void TryRegister(RdId id, ISerializers serializers);
+    void TryRegister(Type clrType, ISerializers serializers);
   }
 }

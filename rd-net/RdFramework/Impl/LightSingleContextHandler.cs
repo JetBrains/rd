@@ -1,6 +1,8 @@
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
 
+#nullable disable
+
 namespace JetBrains.Rd.Impl
 {
   internal class LightSingleContextHandler<T> : ISingleContextHandler<T>
