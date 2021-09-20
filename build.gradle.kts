@@ -161,26 +161,41 @@ tasks {
         dependsOn(cleanupArtifacts, copyNuGetLifetimes, copyNuGetRdFramework, copyNuGetRdFrameworkReflection, copyRdGen)
     }
 
+    fun enableNuGetPublishing(url: String, apiKey: String?) {
+        val args = mutableListOf<Any>(
+            project.projectDir.resolve("rd-net").resolve("dotnet.cmd").canonicalPath,
+            "nuget",
+            "push",
+            "--source", url
+        )
+        if (apiKey != null) {
+            args.add("--api-key")
+            args.add(apiKey)
+        }
+
+        for (file in nuGetTargetDir.listFiles().filter { it.extension == "nupkg" }) {
+            exec {
+                val argsForCurrentFile = (args + file).toTypedArray()
+                commandLine(*argsForCurrentFile)
+            }
+        }
+    }
+
     val publishNuGet by registering {
         group = publishingGroup
         dependsOn(createNuGetPackages)
-        val deployToProduction = rootProject.extra["deployNuGetToProduction"].toString().toBoolean()
+
+        val deployToNuGetOrg = rootProject.extra["deployNuGetToNuGetOrg"].toString().toBoolean()
+        val deployToInternal = rootProject.extra["deployNuGetToInternal"].toString().toBoolean()
+
         doLast {
-            if (deployToProduction) {
-                for (file in nuGetTargetDir.listFiles().filter { it.extension == "nupkg" }) {
-                    exec {
-                        commandLine(
-                            project.projectDir.resolve("rd-net").resolve("dotnet.cmd").canonicalPath,
-                            "nuget",
-                            "push",
-                            "--source",
-                            "https://api.nuget.org/v3/index.json",
-                            "--api-key",
-                            rootProject.extra["nuGetApiKey"].toString(),
-                            file
-                        )
-                    }
-                }
+            if (deployToNuGetOrg) {
+                val nuGetOrgApiKey = rootProject.extra["nuGetOrgApiKey"].toString()
+                enableNuGetPublishing("https://api.nuget.org/v3/index.json", nuGetOrgApiKey)
+            }
+            if (deployToInternal) {
+                val internalFeedUrl = rootProject.extra["internalNuGetFeedUrl"].toString()
+                enableNuGetPublishing(internalFeedUrl, null)
             }
         }
     }
