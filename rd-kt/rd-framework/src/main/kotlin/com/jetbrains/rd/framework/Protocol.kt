@@ -60,6 +60,7 @@ class Protocol internal constructor(
     override val extCreated: ISignal<ExtCreationInfo>
 
     private val extConfirmation: RdSignal<ExtCreationInfo>
+    private val extIsLocal: ThreadLocal<Boolean>
 
     init {
         wire.setupContexts(contexts)
@@ -86,10 +87,11 @@ class Protocol internal constructor(
             val protocolScheduler = scheduler
             signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
         }
+        extIsLocal = ThreadLocal.withInitial { false }
         scheduler.invokeOrQueue {
             extConfirmation.bind(lifetime, this, "ProtocolExtCreated")
             extConfirmation.advise(lifetime) { message ->
-                if (extConfirmation.isLocalChange) return@advise
+                if (extIsLocal.get() == true) return@advise
                 // ext confirmed on the other side
                 extCreated.fire(message)
             }
@@ -100,8 +102,12 @@ class Protocol internal constructor(
     }
 
     internal fun submitExtCreated(info: ExtCreationInfo) {
-        extConfirmation.localChange {
+        require(extIsLocal.get() == false) { "!extIsLocal" }
+        extIsLocal.set(true)
+        try {
             extConfirmation.fire(info)
+        } finally {
+            extIsLocal.set(false)
         }
     }
 }

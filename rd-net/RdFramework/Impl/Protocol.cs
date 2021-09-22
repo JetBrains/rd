@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -54,12 +55,13 @@ namespace JetBrains.Rd.Impl
       OutOfSyncModels = new ViewableSet<RdExtBase>();
       ExtCreated = parentExtCreated ?? new Signal<ExtCreationInfo>();
       ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal();
+      ExtIsLocal = new ThreadLocal<bool>(() => false);
       scheduler.InvokeOrQueue(() =>
       {
         ExtConfirmation.Bind(lifetime, this, ProtocolExtCreatedRdId);
         ExtConfirmation.Advise(lifetime, message =>
         {
-          if (ExtConfirmation.IsLocalChange) return;
+          if (ExtIsLocal.Value) return;
           ExtCreated.Fire(message);
         });
       });
@@ -88,9 +90,15 @@ namespace JetBrains.Rd.Impl
     
     internal void SubmitExtCreated(ExtCreationInfo info)
     {
-      using (ExtConfirmation.UsingLocalChange())
+      Assertion.Assert(!ExtIsLocal.Value, "!ExtIsLocal");
+      ExtIsLocal.Value = true;
+      try
       {
         ExtConfirmation.Fire(info);
+      }
+      finally
+      {
+        ExtIsLocal.Value = false;
       }
     }
       
@@ -108,6 +116,8 @@ namespace JetBrains.Rd.Impl
     public ISignal<ExtCreationInfo> ExtCreated { get; }
     
     private RdSignal<ExtCreationInfo> ExtConfirmation { get; }
+
+    private ThreadLocal<bool> ExtIsLocal { get; }
 
     [PublicAPI] public bool ThrowErrorOnOutOfSyncModels = true;
     
