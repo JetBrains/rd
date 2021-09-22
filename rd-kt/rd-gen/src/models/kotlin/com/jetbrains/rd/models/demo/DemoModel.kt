@@ -125,6 +125,10 @@ object DemoModel : Ext(DemoRoot) {
     }.apply {
         setting(GeneratorBase.AllowDeconstruct)
     }
+    
+    internal var classWithExt = classdef {
+        field("key", PredefinedType.int)
+    }
 
     init {
         property("boolean_property", PredefinedType.bool)
@@ -170,6 +174,8 @@ object DemoModel : Ext(DemoRoot) {
         property("list_of_base", immutableList(Base))
 
         property("struct_with_open_field", StructWithOpenStructField)
+        
+        list("extList", classWithExt)
     }
 }
 
@@ -177,5 +183,12 @@ object DemoModel : Ext(DemoRoot) {
 object ExtModel : Ext(DemoModel) {
     init {
         signal("checker", PredefinedType.void)
+    }
+}
+
+@ExperimentalUnsignedTypes
+object ClassExtModel : Ext(DemoModel.classWithExt) {
+    init {
+        signal("values", PredefinedType.int)
     }
 }
