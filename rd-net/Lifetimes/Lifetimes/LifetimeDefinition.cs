@@ -18,6 +18,9 @@ namespace JetBrains.Lifetimes
   /// You can terminate this definition by <see cref="Terminate"/> method (or <see cref="Dispose"/> which is the same). 
   /// </summary>
   public class LifetimeDefinition : IDisposable
+#if !NET35    
+    ,IAsyncDisposable
+#endif
   {    
 #pragma warning disable 420
     #region Statics
@@ -27,9 +30,10 @@ namespace JetBrains.Lifetimes
     [PublicAPI] internal static readonly LifetimeDefinition Eternal = new LifetimeDefinition { Id = nameof(Eternal) };
     [PublicAPI] internal static readonly LifetimeDefinition Terminated = new LifetimeDefinition { Id = nameof(Terminated) };
 
+    private static CancellationToken CancelledToken => new CancellationToken(canceled: true);
+
     static LifetimeDefinition()
     {
-      Terminated.ToCancellationToken(); //to create cts
       Terminated.Terminate();
     }
 
@@ -90,6 +94,9 @@ namespace JetBrains.Lifetimes
     
     private const int WaitForExecutingInTerminationTimeoutMsDefault = 500;
     [PublicAPI] public static int WaitForExecutingInTerminationTimeoutMs = WaitForExecutingInTerminationTimeoutMsDefault;  
+#if !NET35    
+    [PublicAPI] public static int WaitForExecutingInAsyncTerminationTimeoutMs = WaitForExecutingInTerminationTimeoutMsDefault;
+#endif
 
     // use real (sealed) types to allow devirtualization
     private static readonly IntBitSlice ourExecutingSlice = BitSlice.Int(20);
@@ -359,6 +366,9 @@ namespace JetBrains.Lifetimes
     #region Termination
 
     public void Dispose() => Terminate();
+#if !NET35    
+    public ValueTask DisposeAsync() => TerminateAsync();
+#endif
 
     [Obsolete("Use `Lifetime.IsAlive` or `Status` field instead")]
     public bool IsTerminated => Status >= LifetimeStatus.Terminating;
@@ -392,26 +402,94 @@ namespace JetBrains.Lifetimes
       
       if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), WaitForExecutingInTerminationTimeoutMs))
       {
-        Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
-                        + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
-                        + "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100");
-
-        ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
+        ErrorAfterExecutions();
       }
 
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Canceling))
         return;
+
+      DisposeCtsOrExecutionsAwaiter();
+      
+      Diagnostics(nameof(LifetimeStatus.Terminating));
+      //Now status is 'Terminating' and we have to wait for all resource modifications to complete. No mutex acquire is possible beyond this point.
+      if (ourMutexSlice[myState]) //optimization
+        SpinWaitEx.SpinUntil(() => !ourMutexSlice[myState]);
+
+      Destruct();
+      Assertion.Assert(Status == LifetimeStatus.Terminated, "{0}: bad status for termination finish", this);
+      Diagnostics(nameof(LifetimeStatus.Terminated));
+    }
+    
+#if !NET35
+    /// <summary>
+    /// <para>Asynchronously waits for all <see cref="ExecuteIfAliveCookie"/> before terminating</para>
+    /// <para>All nested lifetimes and <see cref="IAsyncDisposable"/> will be terminated asynchronously</para>
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException">if called under <see cref="JetBrains.Lifetimes.Lifetime.UsingExecuteIfAlive"/></exception>
+    [PublicAPI]
+    public ValueTask TerminateAsync()
+    {
+      if (IsEternal || Status > LifetimeStatus.Canceling)
+        return new ValueTask();
+
+      Diagnostics(nameof(LifetimeStatus.Canceling));
+      
+      //parent could ask for canceled already
+      MarkCancelingRecursively();      
+      
+      var supportsTerminationUnderExecuting = AllowTerminationUnderExecution;
+      if (!supportsTerminationUnderExecuting && ThreadLocalExecuting() > 0)
+        throw new InvalidOperationException($"{this}: can't terminate under `ExecuteIfAlive` because termination doesn't support this. Use `{nameof(AllowTerminationUnderExecution)}`.");
+
+      return TerminateAsync(supportsTerminationUnderExecuting);
+    }
+
+    private async ValueTask TerminateAsync(bool supportsTerminationUnderExecuting)
+    {
+      if (!supportsTerminationUnderExecuting && ourExecutingSlice[myState] > 0)
+      {
+        var value = myCtsOrExecutionsAwaiter;
+        if (value is Disposed || value is ExecutionsAwaiter || Status >= LifetimeStatus.Terminating)
+          return; // termination already started
+
+        var awaiter = new ExecutionsAwaiter();
+        while (true)
+        {
+          if (value is Disposed || value is ExecutionsAwaiter || Status >= LifetimeStatus.Terminating)
+            return; // termination already started
+
+          var originalValue = Interlocked.CompareExchange(ref myCtsOrExecutionsAwaiter, awaiter, value);
+          if (originalValue == value) break;
+
+          value = originalValue;
+        }
+        
+        if (value is CancellationTokenSource source) 
+          source.Cancel();
+
+        if (ourExecutingSlice[myState] > 0)
+        {
+          var succeeded = await awaiter.WaitAsync(WaitForExecutingInAsyncTerminationTimeoutMs);
+          if (!succeeded) ErrorAfterExecutions();
+        }
+      }
+      
+      if (!IncrementStatusIfEqualsTo(LifetimeStatus.Canceling))
+        return;
+
+      DisposeCtsOrExecutionsAwaiter();
       
       Diagnostics(nameof(LifetimeStatus.Terminating));
       //Now status is 'Terminating' and we have to wait for all resource modifications to complete. No mutex acquire is possible beyond this point.
       if (ourMutexSlice[myState]) //optimization
         SpinWaitEx.SpinUntil(() => !ourMutexSlice[myState]);
       
-      Destruct();      
+      await DestructAsync();      
       Assertion.Assert(Status == LifetimeStatus.Terminated, "{0}: bad status for termination finish", this);
       Diagnostics(nameof(LifetimeStatus.Terminated));
     }
-    
+#endif
     
     private void MarkCancelingRecursively()
     {
@@ -419,8 +497,8 @@ namespace JetBrains.Lifetimes
 
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Alive))
         return;
-      
-      myCts?.Cancel();
+
+      (myCtsOrExecutionsAwaiter as CancellationTokenSource)?.Cancel();
       
       // Some other thread can already begin destructuring
       // Then children lifetimes become canceled in their termination 
@@ -436,7 +514,75 @@ namespace JetBrains.Lifetimes
       }
     }
 
+    private void ErrorAfterExecutions()
+    {
+      ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
+      
+      Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
+        + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
+        + "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100");
+    }
+    
 #if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+    private async ValueTask DestructAsync()
+    {
+      var status = Status;
+      Assertion.Assert(status == LifetimeStatus.Terminating, "{0}: bad status for destructuring start", this);
+      Assertion.Assert(ourMutexSlice[myState] == false, "{0}: mutex must be released in this point", this);
+      //no one can take mutex after this point
+
+      var resources = myResources;
+      Assertion.AssertNotNull(resources, "{0}: `resources` can't be null on destructuring stage", this);
+      
+      Assertion.Assert(myCtsOrExecutionsAwaiter == Disposed.Instance, "myCtsOrExecutionsAwaiter == DisposedAwaiter.Instance"); 
+      
+      for (var i = myResCount - 1; i >= 0; i--)
+      {
+        try
+        {
+          switch (resources[i])
+          {
+            case Action a:
+              a();
+              break;
+
+            case LifetimeDefinition ld:
+              await ld.TerminateAsync();
+              break;
+
+            case IAsyncDisposable ad:
+              await ad.DisposeAsync();
+              break;
+            
+            case IDisposable d:
+              d.Dispose();
+              break;
+
+            case ITerminationHandler th:
+              th.OnTermination(Lifetime);
+              break;
+
+            default:
+              Log.Error("{0}: unknown type of termination resource: {1}", this, resources[i]);
+              break;
+          }
+        }
+        catch (Exception e)
+        {
+          Log.Error(e, $"{this}: exception on termination of resource[{i}]: ${resources[i]}");
+        }
+      }
+
+      myResources = null;
+      myResCount = 0;
+
+      var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
+      Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
+    }
+#endif
+    
+    #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif  
     private void Destruct()
@@ -448,6 +594,8 @@ namespace JetBrains.Lifetimes
 
       var resources = myResources;
       Assertion.AssertNotNull(resources, "{0}: `resources` can't be null on destructuring stage", this);
+      
+      Assertion.Assert(myCtsOrExecutionsAwaiter == Disposed.Instance, "myCtsOrExecutionsAwaiter == DisposedAwaiter.Instance"); 
       
       for (var i = myResCount - 1; i >= 0; i--)
       {
@@ -485,13 +633,24 @@ namespace JetBrains.Lifetimes
       myResources = null;
       myResCount = 0;
       
-      //In fact we shouldn't make cts null, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
-      //But to avoid memory leaks we must do it. So if you 1) run task with alive lifetime 2) terminate lifetime 3) in task invoke ThrowIfNotAlive() you can obtain `Faulted` state rather than `Canceled`. But it doesn't matter in `async-await` programming.     
-      if (!ReferenceEquals(this, Terminated))
-        myCts = null;
-      
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
       Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
+    }
+
+    private void DisposeCtsOrExecutionsAwaiter()
+    {
+      Assertion.Assert(myCtsOrExecutionsAwaiter != Disposed.Instance, "myCtsOrExecutionsAwaiter != Disposed.Instance");
+      
+      var originValue = Interlocked.Exchange(ref myCtsOrExecutionsAwaiter, Disposed.Instance);
+      if (originValue is CancellationTokenSource source) source.Cancel();
+#if !NET35
+      else if (originValue is ExecutionsAwaiter awaiter) awaiter.TryFire();
+#endif
+    }
+    
+    private class Disposed
+    {
+      public static readonly Disposed Instance = new Disposed();
     }
 
     
@@ -662,10 +821,40 @@ namespace JetBrains.Lifetimes
       return wrap ? Result.Wrap(action) : Result.Success(action());
     }
     
+    private class ExecutionsAwaiter
+    {
+#if !NET35
+      private readonly TaskCompletionSource<bool> myTcs;
+
+      public ExecutionsAwaiter()
+      {
+        myTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+      }
+
+      public Task<bool> WaitAsync(int timeoutMs)
+      {
+        var task = myTcs.Task;
+        if (task.IsCompleted)
+          return task;
+
+        var timer = new System.Timers.Timer(timeoutMs) {AutoReset = false};
+        timer.Elapsed += (_, __) => myTcs.TrySetResult(false);
+        timer.Start();
+
+        task.ContinueWith(t => timer.Dispose(), TaskScheduler.Default);
+        return task;
+      }
+
+      public bool TryFire() => myTcs.TrySetResult(true) || myTcs.Task.Result;
+#else
+      public ExecutionsAwaiter() => throw new NotSupportedException("Must not be created for NET35");
+#endif
+    }
+    
     /// <summary>
     /// Must be used only by <see cref="Lifetime.UsingExecuteIfAlive"/>
     /// </summary>
-    public struct ExecuteIfAliveCookie : IDisposable
+    public readonly struct ExecuteIfAliveCookie : IDisposable
     {
       [NotNull] 
       private readonly LifetimeDefinition myDef;
@@ -708,7 +897,7 @@ namespace JetBrains.Lifetimes
         if (!Succeed)
           return;
         
-        Interlocked.Decrement(ref myDef.myState);
+        var state = Interlocked.Decrement(ref myDef.myState);
         
         if (!myDisableIncrementThreadLocalExecuting)
           myDef.ThreadLocalExecuting(-1);
@@ -716,10 +905,16 @@ namespace JetBrains.Lifetimes
         if (myAllowTerminationUnderExecuting)
           ourAllowTerminationUnderExecutionThreadStatic--;
 
-        if (ourLogErrorAfterExecution[myDef.myState])
+        var shouldLogError = ourLogErrorAfterExecution[state];
+#if !NET35
+        if (ourExecutingSlice[state] == 0 && Memory.VolatileRead(ref myDef.myCtsOrExecutionsAwaiter) is ExecutionsAwaiter awaiter)
+          shouldLogError = !awaiter.TryFire() || shouldLogError;
+#endif        
+        
+        if (shouldLogError)
         {
           Log.Error($"ExecuteIfAlive after termination of {myDef} took too much time (>{WaitForExecutingInTerminationTimeoutMs}ms)");
-        } 
+        }
       }
     }
 
@@ -897,7 +1092,7 @@ namespace JetBrains.Lifetimes
     
     #region Cancellation    
     
-    private CancellationTokenSource myCts;
+    private object myCtsOrExecutionsAwaiter;
     
         
     //Only if state >= Canceling
@@ -907,18 +1102,26 @@ namespace JetBrains.Lifetimes
     private Result<Nothing> CanceledResult() => Result.Canceled(CanceledException());
     
 
-    private void CreateCtsLazily()
+    private CancellationToken CreateCancellationToken()
     {
-      if (myCts != null) return;
-      
+      Assertion.Assert(!ReferenceEquals(this, Terminated), "Mustn't reach this point on lifetime `Terminated`");
+
       var cts = new CancellationTokenSource();
-      Memory.Barrier();
-      //to suppress reordering of init and ctor visible from outside
-      myCts = cts;
       
-      //But MarkCanceledRecursively may already happen, so we need to help Cancel source
-      if (Status != LifetimeStatus.Alive)
-        myCts.Cancel();            
+      var originalValue = Interlocked.CompareExchange(ref myCtsOrExecutionsAwaiter, cts, null);
+      if (originalValue is CancellationTokenSource source)
+      {
+        cts.Cancel();
+        return source.Token;
+      }
+      
+      if (originalValue != null || Status != LifetimeStatus.Alive)
+      {
+        cts.Cancel();
+        return CancelledToken;
+      }
+
+      return cts.Token;
     }
     
     /// <summary>
@@ -933,24 +1136,13 @@ namespace JetBrains.Lifetimes
     
     internal CancellationToken ToCancellationToken(bool doNotCreateCts = false)
     {
-      if (myCts == null)
-      {
-        if (doNotCreateCts)
-          return Terminated.ToCancellationToken();
-        
-        using (var mutex = new UnderMutexCookie(this, LifetimeStatus.Alive))
-        {
-          if (!mutex.Success)
-          {
-            Assertion.Assert(!ReferenceEquals(this, Terminated), "Mustn't reach this point on lifetime `Terminated`");
-            return Terminated.ToCancellationToken(); //to get stable CancellationTokenSource (for tasks to finish in Canceling state, rather than Faulted)
-          }
-          
-          CreateCtsLazily();
-        }
-      }
-      
-      return myCts.Token;
+      if (myCtsOrExecutionsAwaiter is CancellationTokenSource source)
+        return source.Token;
+
+      if (doNotCreateCts || Status != LifetimeStatus.Alive)
+        return CancelledToken;
+
+      return CreateCancellationToken();
     }
     
     

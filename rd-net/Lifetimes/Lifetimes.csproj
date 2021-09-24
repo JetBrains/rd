@@ -59,4 +59,8 @@
     <ItemGroup>
         <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' != 'net35'">
+      <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
+    </ItemGroup>
 </Project>
