@@ -114,7 +114,7 @@ namespace InheritsAutomationRoot
     //constants
     
     //custom body
-    public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+    public override event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
     //methods
     //equals trait
     //hash code trait

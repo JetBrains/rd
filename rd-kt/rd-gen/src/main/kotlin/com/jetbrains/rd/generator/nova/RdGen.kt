@@ -21,7 +21,7 @@ class RdGen : Kli() {
         /**
          * Moving this field forward you trigger rebuild even if inputs and output of generator hasn't changed.
          */
-        const val version = "1.07"
+        const val version = "1.08"
 
         /**
          * File to store all information for incremental work

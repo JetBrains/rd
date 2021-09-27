@@ -859,7 +859,7 @@ open class CSharp50Generator(
 
     protected fun PrettyPrinter.customBodyTrait(decl: Declaration) {
         if (decl.getSetting(InheritsAutomation) == true) {
-            +"public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;"
+            +"public override event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;"
         }
     }
 
