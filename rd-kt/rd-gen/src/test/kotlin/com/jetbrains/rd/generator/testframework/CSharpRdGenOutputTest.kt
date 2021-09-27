@@ -31,7 +31,7 @@ abstract class CSharpRdGenOutputTest {
     private val testFolder
         get() = File("build/$testName")
 
-    protected inline fun <reified TModel> doTest(models: List<Class<*>>) {
+    protected inline fun <reified TModel> doTest(vararg models: Class<*>) {
         val classLoader = TModel::class.java.classLoader
         val containingPackage = TModel::class.java.`package`.name
         val transformations = listOf("asis", "reversed")

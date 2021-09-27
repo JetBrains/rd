@@ -1,4 +1,4 @@
-package com.jetbrains.rd.generator.test.cases.factoryFqn
+package com.jetbrains.rd.generator.test.cases.generator.csharp
 
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
@@ -68,6 +68,6 @@ class FactoryFqnTestDataModel : CSharpRdGenOutputTest() {
     }
 
     @Test
-    fun test1() = doTest<FactoryFqnTestDataModel>(listOf(Solution2::class.java, TestRoot1::class.java))
+    fun test1() = doTest<FactoryFqnTestDataModel>(Solution2::class.java, TestRoot1::class.java)
 }
 
