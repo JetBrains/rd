@@ -266,7 +266,7 @@ open class CSharp50Generator(
     protected open val Member.Reactive.simpleCreationExpression : String get () = when (this) {
         is Member.Reactive.Stateful.Extension -> {
             val delegate = findDelegate(this@CSharp50Generator, flowTransform) ?: fail("Could not find delegate: $this")
-            delegate.factoryFqn ?: "new " + delegate.delegateFqn
+            delegate.factoryFqn ?: ("new " + delegate.delegateFqn)
         }
         else -> implSimpleName
     }
@@ -634,15 +634,11 @@ open class CSharp50Generator(
         +"public ${decl.name}(Lifetime lifetime, IProtocol protocol) : this()"
         +"{"
 
-
-        val protocol = decl.namespace.contains(".Protocol").condstr { "JetBrains.Rd.Impl." } + "Protocol"
-
         indent {
             +"Identify(protocol.Identities, RdId.Root.Mix(\"${decl.name}\"));"
             +"Bind(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
         }
         +"}"
-
     }
 
 
@@ -862,7 +858,7 @@ open class CSharp50Generator(
 
 
     protected fun PrettyPrinter.customBodyTrait(decl: Declaration) {
-        if (decl.getSetting(InheritsAutomation) ?: false) {
+        if (decl.getSetting(InheritsAutomation) == true) {
             +"public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;"
         }
     }
