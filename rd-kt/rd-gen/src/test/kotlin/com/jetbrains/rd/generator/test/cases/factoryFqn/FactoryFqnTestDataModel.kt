@@ -3,34 +3,20 @@ package com.jetbrains.rd.generator.test.cases.factoryFqn
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.util.reflection.toPath
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
+import com.jetbrains.rd.generator.testframework.CSharpRdGenOutputTest
 import org.junit.jupiter.api.Test
-import java.io.File
 
-
-class FactoryFqnTestDataModel {
+class FactoryFqnTestDataModel : CSharpRdGenOutputTest() {
     companion object {
-        const val testFolder = "build/factoryFqn"
-        const val csGeneratedSourcesDir = "$testFolder/testOutputCs/"
-        const val csAsIsGeneratedSourcesDir = "$csGeneratedSourcesDir/asis"
-        const val csReversedGeneratedSourcesDir = "$csGeneratedSourcesDir/reversed"
-        const val ktReversedGeneratedSourcesDir = "$testFolder/testOutputKtReversed"
-        const val ktGeneratedSourcesDir = "$testFolder/testOutputKt"
+        const val testName = "factoryFqn"
     }
 
-    object TestRoot1 : Root(
-        CSharp50Generator(FlowTransform.AsIs, "Org.TestRoot1", File(csAsIsGeneratedSourcesDir)),
-        CSharp50Generator(FlowTransform.Reversed, "Org.TestRoot1", File(csReversedGeneratedSourcesDir)),
-        Kotlin11Generator(FlowTransform.AsIs, "Org.TestRoot1", File(ktGeneratedSourcesDir)),
-        Kotlin11Generator(FlowTransform.Reversed, "Org.TestRoot1", File(ktReversedGeneratedSourcesDir))
+    override val testName = Companion.testName
 
-   )
+    object TestRoot1 : Root(*generators(testName, "Org.TestRoot1"))
 
     @Suppress("unused")
     class TestRoot2 : Root()
-
 
     class RdTextBuffer(name: String) : Member.Reactive.Stateful.Extension(name, Solution2.rdTextBufferState,
         ExtensionDelegate(CSharp50Generator::class, FlowTransform.Reversed,
@@ -81,33 +67,7 @@ class FactoryFqnTestDataModel {
         }
     }
 
-    val classloader: ClassLoader = FactoryFqnTestDataModel::class.java.classLoader
-
-    @BeforeEach
-    fun cleanup() {
-        File(testFolder).deleteRecursively()
-    }
-
     @Test
-    fun test1() {
-        generateRdModel(classloader, arrayOf("com.jetbrains.rd.generator.test.cases.factoryFqn"), true)
-
-        for (transform in arrayOf("asis", "reversed")) {
-            val goldText1 = processText(
-                classloader.getResource("testData/factoryFqn/$transform/Solution2.cs").toPath().readLines()
-            )
-            val generatedText1 = processText(File("$csGeneratedSourcesDir$transform/Solution2.Generated.cs").readLines())
-            assertEquals(goldText1, generatedText1, "Solution2 is not same for transform: $transform")
-
-            val goldText2 = processText(
-                classloader.getResource("testData/factoryFqn/reversed/TestRoot1.cs").toPath().readLines()
-            )
-            val generatedText2 = processText(File("$csGeneratedSourcesDir$transform/TestRoot1.Generated.cs").readLines())
-            assertEquals(goldText2, generatedText2, "TestRoot1 is not same for transform: $transform")
-        }
-    }
-
-    fun processText(s : List<String>) = s.filter { !it.startsWith("//") && !it.startsWith("  ///") }
-        .joinToString("\n") { it }
+    fun test1() = doTest<FactoryFqnTestDataModel>(listOf(Solution2::class.java, TestRoot1::class.java))
 }
 
