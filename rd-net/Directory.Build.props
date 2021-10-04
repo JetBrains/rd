@@ -5,6 +5,7 @@
     <AssemblyVersion>777.0.0</AssemblyVersion>
     <FileVersion>777.0.0</FileVersion>
     <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net461" Condition="'$(TargetFramework)' == 'net461'" Version="1.0.2">

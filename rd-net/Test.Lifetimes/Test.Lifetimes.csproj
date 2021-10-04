@@ -9,6 +9,7 @@
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
         <RollForward>LatestMajor</RollForward>
+        <Nullable>disable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

@@ -5,6 +5,7 @@
     <TargetFramework>net461</TargetFramework>
     <IsPackable>false</IsPackable>
     <RollForward>LatestMajor</RollForward>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
