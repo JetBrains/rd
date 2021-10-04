@@ -62,7 +62,7 @@ namespace JetBrains.Util
     /// <summary>
     /// Return getter for either field or property
     /// </summary>
-    public static Func<object, object?> GetGetter([NotNull] MemberInfo mi)
+    public static Func<object, object?> GetGetter(MemberInfo mi)
     {
       switch (mi)
       {

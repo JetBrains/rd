@@ -61,7 +61,7 @@ namespace JetBrains.Threading
 
     void SetCanceledIsolated<TResult>(TaskCompletionSource<TResult> tcs) { try { tcs.SetCanceled(); } catch (Exception e) { Log.Root.Error(e);}}
     
-    public AsyncChannel([NotNull] Lifetime lifetime, int sendBufferSize = Int32.MaxValue)
+    public AsyncChannel(Lifetime lifetime, int sendBufferSize = Int32.MaxValue)
     {
       
       myLifetime = lifetime;

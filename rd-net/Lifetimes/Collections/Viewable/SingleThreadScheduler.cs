@@ -76,7 +76,7 @@ namespace JetBrains.Collections.Viewable
 
 
     [PublicAPI]
-    public static void RunInCurrentStackframe([NotNull] Lifetime lifetime, string name, Action<SingleThreadScheduler>? beforeStart = null)
+    public static void RunInCurrentStackframe(Lifetime lifetime, string name, Action<SingleThreadScheduler>? beforeStart = null)
     {
       var res = new SingleThreadScheduler(name, new ActionQueue(lifetime)) { Thread = Thread.CurrentThread };
 
@@ -86,7 +86,7 @@ namespace JetBrains.Collections.Viewable
     }
 
     [PublicAPI]
-    public static SingleThreadScheduler RunOnSeparateThread([NotNull] Lifetime lifetime, string name, Action<SingleThreadScheduler>? beforeStart = null)
+    public static SingleThreadScheduler RunOnSeparateThread(Lifetime lifetime, string name, Action<SingleThreadScheduler>? beforeStart = null)
     {
 
       var res = new SingleThreadScheduler(name, new ActionQueue(lifetime));
