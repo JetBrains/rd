@@ -34,7 +34,7 @@ namespace JetBrains.Lifetimes
     }
 
     //Dictionary is used only for thread-local termination check. Maybe it's not worth it an we should remove map.
-    [ThreadStatic] private static Dictionary<LifetimeDefinition, int> ourThreadLocalExecuting;
+    [ThreadStatic] private static Dictionary<LifetimeDefinition, int>? ourThreadLocalExecuting;
     [ThreadStatic] private static int ourAllowTerminationUnderExecutionThreadStatic; 
       
     
@@ -43,7 +43,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     public struct AllowTerminationUnderExecutionCookie : IDisposable
     {
-      private Thread myDisposeThread;
+      private Thread? myDisposeThread;
 
       internal AllowTerminationUnderExecutionCookie(Thread disposeThread)
       {
@@ -110,7 +110,7 @@ namespace JetBrains.Lifetimes
     
     private int myResCount;
     //in fact we could optimize footprint even better by changing `object[]` to `object` for single object 
-    [CanBeNull] private object[] myResources = new object[ResourcesInitialCapacity];
+    private object?[]? myResources = new object[ResourcesInitialCapacity];
 
     // myState must be volatile to avoid some jit optimizations
     // for example:
@@ -200,7 +200,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="parent"></param>
     /// <param name="atomicAction"></param>
-    public LifetimeDefinition(Lifetime parent, [CanBeNull, InstantHandle] Action<LifetimeDefinition> atomicAction) : this(parent)
+    public LifetimeDefinition(Lifetime parent, [InstantHandle] Action<LifetimeDefinition>? atomicAction) : this(parent)
     {
       ExecuteOrTerminateOnFail(atomicAction);
     }
@@ -210,7 +210,7 @@ namespace JetBrains.Lifetimes
     /// </summary>
     /// <param name="parent"></param>
     /// <param name="atomicAction"></param>
-    public LifetimeDefinition(Lifetime parent, [CanBeNull, InstantHandle] Action<Lifetime> atomicAction) : this(parent)
+    public LifetimeDefinition(Lifetime parent, [InstantHandle] Action<Lifetime>? atomicAction) : this(parent)
     {
       ExecuteOrTerminateOnFail(atomicAction);
     }
@@ -218,7 +218,7 @@ namespace JetBrains.Lifetimes
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
-    internal void ExecuteOrTerminateOnFail([CanBeNull] Action<LifetimeDefinition> atomicAction)
+    internal void ExecuteOrTerminateOnFail(Action<LifetimeDefinition>? atomicAction)
     {
       try
       {
@@ -238,7 +238,7 @@ namespace JetBrains.Lifetimes
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
-    internal void ExecuteOrTerminateOnFail([CanBeNull] Action<Lifetime> atomicAction)
+    internal void ExecuteOrTerminateOnFail(Action<Lifetime>? atomicAction)
     {
       try
       {
@@ -266,7 +266,7 @@ namespace JetBrains.Lifetimes
     /// <summary>
     /// You can optionally set this identification information to see logs with lifetime's id other than <see cref="AnonymousLifetimeId"/>
     /// </summary>
-    [PublicAPI, CanBeNull] public object Id { get; set; }    
+    [PublicAPI] public object? Id { get; set; }    
     
     private bool IsVerboseLoggingEnabled => ourVerboseDiagnosticsSlice[myState];
     
@@ -447,7 +447,7 @@ namespace JetBrains.Lifetimes
       //no one can take mutex after this point
 
       var resources = myResources;
-      Assertion.AssertNotNull(resources, "{0}: `resources` can't be null on destructuring stage", this);
+      Assertion.Assert(resources != null, "{0}: `resources` can't be null on destructuring stage", this);
       
       for (var i = myResCount - 1; i >= 0; i--)
       {
@@ -504,7 +504,7 @@ namespace JetBrains.Lifetimes
     
     #region Add termination actions
 
-    internal bool TryAdd([NotNull] object action)
+    internal bool TryAdd(object action)
     {
       CheckNotNull(action);
       
@@ -518,7 +518,7 @@ namespace JetBrains.Lifetimes
           return false;
 
         var resources = myResources;
-        Assertion.AssertNotNull(resources, "{0}: `resources` can't be null under mutex while status < Terminating", this);
+        Assertion.Assert(resources != null, "{0}: `resources` can't be null under mutex while status < Terminating", this);
         
         if (myResCount == resources.Length)
         {
@@ -537,8 +537,7 @@ namespace JetBrains.Lifetimes
             Array.Resize(ref myResources, countAfterCleaning * 2); //must be more than 1, so it always should be room for one more resource
         }
 
-        // ReSharper disable once PossibleNullReferenceException
-        myResources[myResCount++] = action;
+        myResources![myResCount++] = action;
         return true;
       }
     }
@@ -578,7 +577,7 @@ namespace JetBrains.Lifetimes
     }
 
     
-    internal void Attach([NotNull] LifetimeDefinition child)
+    internal void Attach(LifetimeDefinition child)
     {
       if (child == null) throw new ArgumentNullException(nameof(child));
       Assertion.Require(!child.IsEternal, "{0}: can't attach eternal lifetime", this);
@@ -592,7 +591,7 @@ namespace JetBrains.Lifetimes
       
 
     
-    internal void OnTermination([NotNull] object action)
+    internal void OnTermination(object action)
     {
       if (TryAdd(action)) return;
       
@@ -641,13 +640,13 @@ namespace JetBrains.Lifetimes
     
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void CheckNotNull([NotNull] object action)
+    private void CheckNotNull(object action)
     {
       if (action == null) throw new ArgumentNullException(nameof(action));      
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private static Result<Unit> WrapOrThrow([NotNull] Action action, bool wrap)
+    private static Result<Unit> WrapOrThrow(Action action, bool wrap)
     {
       if (wrap)
         return Result.Wrap(action);
@@ -657,7 +656,7 @@ namespace JetBrains.Lifetimes
     }
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private static Result<T> WrapOrThrow<T>([NotNull] Func<T> action, bool wrap)
+    private static Result<T> WrapOrThrow<T>(Func<T> action, bool wrap)
     {
       return wrap ? Result.Wrap(action) : Result.Success(action());
     }
@@ -667,14 +666,13 @@ namespace JetBrains.Lifetimes
     /// </summary>
     public struct ExecuteIfAliveCookie : IDisposable
     {
-      [NotNull] 
       private readonly LifetimeDefinition myDef;
 
       private readonly bool myAllowTerminationUnderExecuting;
       private readonly bool myDisableIncrementThreadLocalExecuting;
       public readonly bool Succeed;
 
-      internal ExecuteIfAliveCookie([NotNull] LifetimeDefinition def, bool allowTerminationUnderExecuting, bool disableIncrementThreadLocalExecuting)
+      internal ExecuteIfAliveCookie(LifetimeDefinition def, bool allowTerminationUnderExecuting, bool disableIncrementThreadLocalExecuting)
       {
         
         myDef = def;
@@ -730,7 +728,7 @@ namespace JetBrains.Lifetimes
     }
     
     
-    internal Result<T> TryExecute<T>([NotNull] Func<T> action, bool wrapExceptions = false)
+    internal Result<T> TryExecute<T>(Func<T> action, bool wrapExceptions = false)
     {
       CheckNotNull(action);
       
@@ -740,7 +738,7 @@ namespace JetBrains.Lifetimes
       }
     }
 
-    internal Result<Unit> TryExecute([NotNull] Action action, bool wrapExceptions = false)
+    internal Result<Unit> TryExecute(Action action, bool wrapExceptions = false)
     {
       CheckNotNull(action);
       
@@ -751,11 +749,11 @@ namespace JetBrains.Lifetimes
     }
 
     #if !NET35
-    internal Task TryExecuteAsync([NotNull] Func<Task> closure, bool wrapExceptions = false) => Attached(TryExecute(closure, wrapExceptions).UnwrapTask());
-    internal Task<T> TryExecuteAsync<T>([NotNull] Func<Task<T>> closure, bool wrapExceptions = false) => Attached(TryExecute(closure, wrapExceptions).UnwrapTask());
+    internal Task TryExecuteAsync(Func<Task> closure, bool wrapExceptions = false) => Attached(TryExecute(closure, wrapExceptions).UnwrapTask());
+    internal Task<T> TryExecuteAsync<T>(Func<Task<T>> closure, bool wrapExceptions = false) => Attached(TryExecute(closure, wrapExceptions).UnwrapTask());
     #endif
     
-    internal T Execute<T>([NotNull] Func<T> action)
+    internal T Execute<T>(Func<T> action)
     {      
       CheckNotNull(action);
       
@@ -765,7 +763,7 @@ namespace JetBrains.Lifetimes
       }
     }
 
-    internal void Execute([NotNull] Action action)
+    internal void Execute(Action action)
     {       
       CheckNotNull(action);
       
@@ -778,8 +776,8 @@ namespace JetBrains.Lifetimes
       }
     }
 
-    internal Task ExecuteAsync([NotNull] Func<Task> closure) => Attached(Execute(closure));
-    internal Task<T> ExecuteAsync<T>([NotNull] Func<Task<T>> closure) => Attached(Execute(closure));
+    internal Task ExecuteAsync(Func<Task> closure) => Attached(Execute(closure));
+    internal Task<T> ExecuteAsync<T>(Func<Task<T>> closure) => Attached(Execute(closure));
     
     #endregion
 
@@ -789,13 +787,13 @@ namespace JetBrains.Lifetimes
     #region Bracket
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void CheckNotNull([NotNull] object opening, [NotNull] object closing)
+    private void CheckNotNull(object opening, object closing)
     {
       if (opening == null) throw new ArgumentNullException(nameof(opening));      
       if (closing == null) throw new ArgumentNullException(nameof(closing));      
     } 
         
-    internal Result<Unit> TryBracket([NotNull] Action opening, [NotNull] Action closing, bool wrapExceptions = false)
+    internal Result<Unit> TryBracket(Action opening, Action closing, bool wrapExceptions = false)
     {
       CheckNotNull(opening, closing);
       
@@ -808,7 +806,7 @@ namespace JetBrains.Lifetimes
       }
     }
 
-    internal Result<T> TryBracket<T>([NotNull] Func<T> opening, [NotNull] Action closing, bool wrapExceptions = false)
+    internal Result<T> TryBracket<T>(Func<T> opening, Action closing, bool wrapExceptions = false)
     {
       CheckNotNull(opening, closing);
       
@@ -820,7 +818,7 @@ namespace JetBrains.Lifetimes
         return result.Succeed && !TryAdd(closing) ? WrapOrThrow(closing, wrapExceptions).Map(result.Value) : result;
       }
     }
-    internal Result<T> TryBracket<T>([NotNull] Func<T> opening, [NotNull] Action<T> closing, bool wrapExceptions = false)
+    internal Result<T> TryBracket<T>(Func<T> opening, Action<T> closing, bool wrapExceptions = false)
     {
       CheckNotNull(opening, closing);
       
@@ -835,7 +833,7 @@ namespace JetBrains.Lifetimes
     }
 
 
-    internal void Bracket([NotNull] Action opening, [NotNull] Action closing)
+    internal void Bracket(Action opening, Action closing)
     {
       CheckNotNull(opening, closing);
       
@@ -852,7 +850,7 @@ namespace JetBrains.Lifetimes
       }            
     }
     
-    internal T Bracket<T>([NotNull] Func<T> opening, [NotNull] Action closing)
+    internal T Bracket<T>(Func<T> opening, Action closing)
     {
       CheckNotNull(opening, closing);
       
@@ -870,7 +868,7 @@ namespace JetBrains.Lifetimes
       }            
     }
     
-    internal T Bracket<T>([NotNull] Func<T> opening, [NotNull] Action<T> closing)
+    internal T Bracket<T>(Func<T> opening, Action<T> closing)
     {      
       CheckNotNull(opening, closing);
       
@@ -897,7 +895,7 @@ namespace JetBrains.Lifetimes
     
     #region Cancellation    
     
-    private CancellationTokenSource myCts;
+    private CancellationTokenSource? myCts;
     
         
     //Only if state >= Canceling
@@ -907,9 +905,9 @@ namespace JetBrains.Lifetimes
     private Result<Nothing> CanceledResult() => Result.Canceled(CanceledException());
     
 
-    private void CreateCtsLazily()
+    private CancellationTokenSource CreateCtsLazily()
     {
-      if (myCts != null) return;
+      if (myCts != null) return myCts;
       
       var cts = new CancellationTokenSource();
       Memory.Barrier();
@@ -918,7 +916,9 @@ namespace JetBrains.Lifetimes
       
       //But MarkCanceledRecursively may already happen, so we need to help Cancel source
       if (Status != LifetimeStatus.Alive)
-        myCts.Cancel();            
+        myCts.Cancel();
+
+      return myCts;
     }
     
     /// <summary>
@@ -946,7 +946,7 @@ namespace JetBrains.Lifetimes
             return Terminated.ToCancellationToken(); //to get stable CancellationTokenSource (for tasks to finish in Canceling state, rather than Faulted)
           }
           
-          CreateCtsLazily();
+          return CreateCtsLazily().Token;
         }
       }
       
@@ -964,7 +964,7 @@ namespace JetBrains.Lifetimes
     /// Adds finalizer that logs error (via <see cref="Log.Error"/>) if this definition is garbage collected without being terminated.  
     /// </summary>
     /// <param name="comment"></param>
-    [PublicAPI] public void AssertEverTerminated(string comment = null)
+    [PublicAPI] public void AssertEverTerminated(string? comment = null)
     {
       OnTermination(new FinalizableGuard(this, comment));
     }
@@ -972,9 +972,9 @@ namespace JetBrains.Lifetimes
     private class FinalizableGuard : IDisposable
     {
       private readonly LifetimeDefinition myDef;
-      private readonly string myComment;
+      private readonly string? myComment;
 
-      internal FinalizableGuard([NotNull] LifetimeDefinition def, [CanBeNull] string comment)
+      internal FinalizableGuard(LifetimeDefinition def, string? comment)
       {
         myDef = def;
         myComment = comment;
@@ -1010,7 +1010,7 @@ namespace JetBrains.Lifetimes
     /// <param name="taskCompletionSource"></param>
     /// <typeparam name="T"></typeparam>
     /// <exception cref="ArgumentNullException"></exception>
-    [PublicAPI] public void SynchronizeWith<T>([NotNull] TaskCompletionSource<T> taskCompletionSource)
+    [PublicAPI] public void SynchronizeWith<T>(TaskCompletionSource<T> taskCompletionSource)
     {
       if (taskCompletionSource == null) throw new ArgumentNullException(nameof(taskCompletionSource));
 

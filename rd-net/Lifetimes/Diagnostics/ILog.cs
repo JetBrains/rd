@@ -18,8 +18,8 @@ namespace JetBrains.Diagnostics
   /// </summary>
   public interface ILog
   {    
-    [NotNull] string Category { get; }
+    string Category { get; }
     bool IsEnabled(LoggingLevel level);
-    void Log(LoggingLevel level, [CanBeNull] string message, [CanBeNull] Exception exception = null);
+    void Log(LoggingLevel level, string? message, Exception? exception = null);
   }
 }

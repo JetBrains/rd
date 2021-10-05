@@ -3,6 +3,8 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
+#nullable disable
+
 namespace JetBrains.Rd.Tasks
 {
   //todo Union with Result

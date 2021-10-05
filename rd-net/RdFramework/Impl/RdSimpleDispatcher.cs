@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -11,15 +10,15 @@ namespace JetBrains.Rd.Impl
   public class RdSimpleDispatcher : IScheduler
   {
     private readonly Lifetime myLifetime;
-    [NotNull] private readonly ILog myLogger;
-    private readonly string myId;
+    private readonly ILog myLogger;
+    private readonly string? myId;
 
     private readonly Queue<Action> myTasks = new Queue<Action>();
     private readonly AutoResetEvent myEvent = new AutoResetEvent(false);
 
     public TimeSpan? MessageTimeout = null;
 
-    public RdSimpleDispatcher(Lifetime lifetime, [NotNull] ILog logger, string id = null)
+    public RdSimpleDispatcher(Lifetime lifetime, ILog logger, string? id = null)
     {
       myLogger = logger;
       myId = id;
@@ -35,7 +34,7 @@ namespace JetBrains.Rd.Impl
     {
       while (myLifetime.IsAlive)
       {
-        Action nextTask = null;
+        Action? nextTask = null;
         lock (myTasks)
         {
           if (myTasks.Count > 0)

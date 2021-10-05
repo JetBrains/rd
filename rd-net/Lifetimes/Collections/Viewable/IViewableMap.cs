@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using JetBrains.Annotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace JetBrains.Collections.Viewable
 {
@@ -15,16 +15,16 @@ namespace JetBrains.Collections.Viewable
   /// </summary>
   /// <typeparam name="K"></typeparam>
   /// <typeparam name="V"></typeparam>
-  public interface IViewableMap<K, V> : IDictionary<K, V>, ISource<MapEvent<K, V>>
+  public interface IViewableMap<K, V> : IDictionary<K, V>, ISource<MapEvent<K, V>> where K : notnull
   {
     ISource<MapEvent<K, V>> Change { get; }
 
     // note: solve interface ambiguity
     new int Count { get; }
-    [NotNull] new ICollection<K> Keys { get; }
-    [NotNull] new ICollection<V> Values { get; }
-    new bool ContainsKey([NotNull] K key);
-    new V this[[NotNull] K key] { get; set; }
-    new bool TryGetValue([NotNull] K key, out V value);
+    new ICollection<K> Keys { get; }
+    new ICollection<V> Values { get; }
+    new bool ContainsKey(K key);
+    new V this[K key] { get; set; }
+    new bool TryGetValue(K key, out V value);
   }
 }

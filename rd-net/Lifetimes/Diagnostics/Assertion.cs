@@ -1,12 +1,13 @@
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Threading;
 using JetBrains.Util;
+using System.Diagnostics.CodeAnalysis;
+using CodeAnalysis = System.Diagnostics.CodeAnalysis;
 
 namespace JetBrains.Diagnostics
 {
@@ -16,7 +17,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert(bool condition, [NotNull] string message)
+    public static void Assert([DoesNotReturnIf(false)] bool condition, string message)
     {
       if (!condition)
       {
@@ -26,7 +27,7 @@ namespace JetBrains.Diagnostics
 
     [AssertionMethod]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertCurrentThread([NotNull] Thread thread)
+    public static void AssertCurrentThread(Thread thread)
     {
       if (Thread.CurrentThread != thread)
       {
@@ -37,18 +38,18 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert<T>(bool condition, [NotNull] string message, T arg)
+    public static void Assert<T>([DoesNotReturnIf(false)] bool condition, string message, T? arg)
     {
       if (!condition)
       {
         Fail(message, arg);
       }
     }
-
+    
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert<T1,T2>(bool condition, [NotNull] string message, T1 arg1, T2 arg2)
+    public static void Assert<T1,T2>([DoesNotReturnIf(false)] bool condition, string message, T1? arg1, T2? arg2)
     {
       if (!condition)
       {
@@ -59,7 +60,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert<T1, T2, T3>(bool condition, [NotNull] string message, T1 arg1, T2 arg2, T3 arg3)
+    public static void Assert<T1, T2, T3>([DoesNotReturnIf(false)] bool condition, string message, T1? arg1, T2? arg2, T3? arg3)
     {
       if (!condition)
       {
@@ -70,7 +71,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert<T1, T2, T3, T4>(bool condition, [NotNull] string message, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+    public static void Assert<T1, T2, T3, T4>([DoesNotReturnIf(false)] bool condition, string message, T1? arg1, T2? arg2, T3? arg3, T4? arg4)
     {
       if (!condition)
       {
@@ -81,7 +82,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert(bool condition, [NotNull] string message, params object[] args)
+    public static void Assert([DoesNotReturnIf(false)] bool condition, string message, params object?[] args)
     {
       if (!condition)
       {
@@ -91,35 +92,40 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("=>void")]
     [AssertionMethod]
-    public static void Fail([NotNull] string message)
+    [DoesNotReturn]
+    public static void Fail(string message)
     {
       throw new AssertionException(message);
     }
 
     [ContractAnnotation("=>void")]
     [AssertionMethod, StringFormatMethod("message")]
-    public static void Fail([NotNull] string message, object arg)
+    [DoesNotReturn]
+    public static void Fail(string message, object? arg)
     {
       Fail(string.Format(message, arg));
     }
 
     [ContractAnnotation("=>void")]
     [AssertionMethod, StringFormatMethod("message")]
-    public static void Fail([NotNull] string message, object arg1, object arg2)
+    [DoesNotReturn]
+    public static void Fail(string message, object? arg1, object? arg2)
     {
       Fail(string.Format(message, arg1, arg2));
     }
 
     [ContractAnnotation("=>void")]
     [AssertionMethod, StringFormatMethod("message")]
-    public static void Fail([NotNull] string message, object arg1, object arg2, object arg3)
+    [DoesNotReturn]
+    public static void Fail(string message, object? arg1, object? arg2, object? arg3)
     {
       Fail(string.Format(message, arg1, arg2, arg3));
     }
 
     [ContractAnnotation("=>void")]
     [AssertionMethod, StringFormatMethod("message")]
-    public static void Fail([NotNull] string message, params object[] args)
+    [DoesNotReturn]
+    public static void Fail(string message, params object?[] args)
     {
       Fail(args == null || args.Length == 0 ? message : String.Format(message, args));
     }
@@ -127,7 +133,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertNotNull(object condition, [NotNull] string message)
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, string message)
     {
       if (condition == null)
       {
@@ -139,7 +145,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertNotNull(object condition, [NotNull] string message, object arg)
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, string message, object? arg)
     {
       if (condition == null)
       {
@@ -150,7 +156,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertNotNull(object condition, [NotNull] string message, object arg1, object arg2)
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, string message, object? arg1, object? arg2)
     {
       if (condition == null)
       {
@@ -161,7 +167,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertNotNull(object condition, [NotNull] string message, object arg1, object arg2, object arg3)
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, string message, object? arg1, object? arg2, object? arg3)
     {
       if (condition == null)
       {
@@ -172,7 +178,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertNotNull(object condition, [NotNull] string message, params object[] args)
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, string message, params object?[] args)
     {
       if (condition == null)
       {
@@ -182,7 +188,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T value, [NotNull] object debugMessage) where T : class
+    public static T NotNull<T>(this T? value, object debugMessage) where T : class
     {
       if (value == null)
       {
@@ -194,7 +200,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T value, [NotNull] string message) where T : class
+    public static T NotNull<T>(this T? value, string message) where T : class
     {
       if (value == null)
       {
@@ -207,7 +213,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [StringFormatMethod("args")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T value, [NotNull] string message, params object[] args) where T : class
+    public static T NotNull<T>(this T? value, string message, params object?[] args) where T : class
     {
       if (value == null)
       {
@@ -219,7 +225,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T value) where T : class
+    public static T NotNull<T>(this T? value) where T : class
     {
       if (value == null)
       {
@@ -231,7 +237,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [NotNull] string message) where T : struct
+    public static T NotNull<T>(this T? value, string message) where T : struct
     {
       if (value == null)
       {
@@ -254,7 +260,7 @@ namespace JetBrains.Diagnostics
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
-    public static void Require(bool value, [NotNull] string message)
+    public static void Require([DoesNotReturnIf(false)] bool value, string message)
     {
       if (!value)
       {
@@ -263,7 +269,7 @@ namespace JetBrains.Diagnostics
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
-    public static void Require(bool value, [NotNull] string message, object arg1)
+    public static void Require([DoesNotReturnIf(false)] bool value, string message, object? arg1)
     {
       if (!value)
       {
@@ -272,7 +278,7 @@ namespace JetBrains.Diagnostics
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
-    public static void Require(bool value, [NotNull] string message, object arg1, object arg2)
+    public static void Require([DoesNotReturnIf(false)] bool value, string message, object? arg1, object? arg2)
     {
       if (!value)
       {
@@ -281,7 +287,7 @@ namespace JetBrains.Diagnostics
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
-    public static void Require(bool value, [NotNull] string message, params object[] args)
+    public static void Require([DoesNotReturnIf(false)] bool value, string message, params object?[] args)
     {
       if (!value)
       {

@@ -5,6 +5,8 @@ using JetBrains.Annotations;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 
+#nullable disable
+
 namespace JetBrains.Rd
 {
   public abstract class RdContextBase : IEquatable<RdContextBase>

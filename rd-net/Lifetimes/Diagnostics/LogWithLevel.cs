@@ -22,7 +22,7 @@ namespace JetBrains.Diagnostics
     [PublicAPI] public ILog Logger { get; }
     [PublicAPI] public LoggingLevel Level {get; }
 
-    [PublicAPI] public LogWithLevel([NotNull] ILog logger, LoggingLevel level)
+    [PublicAPI] public LogWithLevel(ILog logger, LoggingLevel level)
     {
       Logger = logger ?? throw new ArgumentNullException(nameof(logger));
       Level = level;
@@ -41,7 +41,7 @@ namespace JetBrains.Diagnostics
     /// <param name="level"/>
     /// <returns><see cref="LogWithLevel"/>(<paramref name="logger"/>, <paramref name="level"/>) if <see cref="ILog.IsEnabled"/> for given level;
     /// null otherwise</returns>
-    [PublicAPI] public static LogWithLevel? CreateIfEnabled([NotNull] ILog logger, LoggingLevel level) => 
+    [PublicAPI] public static LogWithLevel? CreateIfEnabled(ILog logger, LoggingLevel level) => 
       logger.IsEnabled(level) ? new LogWithLevel(logger, level) : (LogWithLevel?) null;
   }
 }

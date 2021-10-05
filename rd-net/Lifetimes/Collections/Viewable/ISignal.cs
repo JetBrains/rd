@@ -11,7 +11,7 @@ namespace JetBrains.Collections.Viewable
     /// Currently all subscribers gets events on the same thread that <see cref="Fire"/> happened.
     /// This scheduler is reserved for future use.
     /// </summary>
-    IScheduler Scheduler { get; set; }
+    IScheduler? Scheduler { get; set; }
     
     /// <summary>
     /// Fires value that will be seen by all handlers who subscribed by <see cref="ISource{T}.Advise"/>

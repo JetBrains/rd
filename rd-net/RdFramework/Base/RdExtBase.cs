@@ -9,6 +9,8 @@ using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 using JetBrains.Util;
 
+#nullable disable
+
 namespace JetBrains.Rd.Base
 {
   public abstract class RdExtBase : RdReactiveBase

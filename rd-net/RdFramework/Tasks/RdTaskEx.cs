@@ -26,7 +26,7 @@ namespace JetBrains.Rd.Tasks
         if (t.IsOperationCanceled())
           res.SetCancelled();
         else if (t.IsFaulted)
-          res.Set(t.Exception?.Flatten().GetBaseException());
+          res.Set(t.Exception?.Flatten().GetBaseException() ?? new Exception("Unknown exception"));
         else
           res.Set(t.Result);
       }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
@@ -41,7 +41,7 @@ namespace JetBrains.Rd.Tasks
         if (t.IsOperationCanceled())
           res.SetCancelled();
         else if (t.IsFaulted)
-          res.Set(t.Exception?.Flatten().GetBaseException());
+          res.Set(t.Exception?.Flatten().GetBaseException() ?? new Exception("Unknown exception"));
         else
           res.Set(Unit.Instance);
       }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
@@ -49,22 +49,22 @@ namespace JetBrains.Rd.Tasks
     }
 
 
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask(), cancellationScheduler, handlerScheduler);
     }
     
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, TRes> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       endpoint.Set((lifetime, req) => RdTask<TRes>.Successful(handler(lifetime, req)), cancellationScheduler, handlerScheduler);
     }
     
-    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
+    [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)), cancellationScheduler, handlerScheduler);
     }
     
-    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
+    [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       endpoint.Set(req =>
       {
@@ -74,7 +74,7 @@ namespace JetBrains.Rd.Tasks
     }
     
     [PublicAPI]
-    public static Task<T> AsTask<T>([NotNull] this IRdTask<T> task)
+    public static Task<T> AsTask<T>(this IRdTask<T> task)
     {
       if (task == null) throw new ArgumentNullException(nameof(task));
       var tcs = new TaskCompletionSource<T>();

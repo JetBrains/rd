@@ -16,7 +16,7 @@ namespace JetBrains.Collections.Viewable
     public const int NormalPriority = 0;
     public const int LowPriority = -32;
     
-    public PrioritizedAction([NotNull] Action action, int priority = NormalPriority)
+    public PrioritizedAction(Action action, int priority = NormalPriority)
     {
       Priority = priority;
       Action = action ?? throw new ArgumentNullException(nameof(action));
@@ -25,7 +25,7 @@ namespace JetBrains.Collections.Viewable
     public int Priority { get; }
     public Action Action { get; }
 
-    public int CompareTo(PrioritizedAction other)
+    public int CompareTo(PrioritizedAction? other)
     {
       if (ReferenceEquals(this, other)) return 0;
       if (ReferenceEquals(null, other)) return 1;
@@ -55,12 +55,16 @@ namespace JetBrains.Collections.Viewable
     
     public string Name { get; }        
     public int ActionPriority { get; }
-    public Thread Thread { get; private set; }
+
+    /// <summary>
+    /// Thread is expected to be initialized from factory methods
+    /// </summary>
+    public Thread Thread { get; private set; } = null!;
 
     private ActionQueue myQueue;
 
 
-    private SingleThreadScheduler([NotNull] string name, [NotNull] ActionQueue queue, int actionPriority = PrioritizedAction.NormalPriority)
+    private SingleThreadScheduler(string name, ActionQueue queue, int actionPriority = PrioritizedAction.NormalPriority)
     {
       myQueue = queue ?? throw new ArgumentNullException(nameof(queue));
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -72,7 +76,7 @@ namespace JetBrains.Collections.Viewable
 
 
     [PublicAPI]
-    public static void RunInCurrentStackframe([NotNull] Lifetime lifetime, [NotNull] string name, Action<SingleThreadScheduler> beforeStart = null)
+    public static void RunInCurrentStackframe(Lifetime lifetime, string name, Action<SingleThreadScheduler>? beforeStart = null)
     {
       var res = new SingleThreadScheduler(name, new ActionQueue(lifetime)) { Thread = Thread.CurrentThread };
 
@@ -82,7 +86,7 @@ namespace JetBrains.Collections.Viewable
     }
 
     [PublicAPI]
-    public static SingleThreadScheduler RunOnSeparateThread([NotNull] Lifetime lifetime, [NotNull] string name, Action<SingleThreadScheduler> beforeStart = null)
+    public static SingleThreadScheduler RunOnSeparateThread(Lifetime lifetime, string name, Action<SingleThreadScheduler>? beforeStart = null)
     {
 
       var res = new SingleThreadScheduler(name, new ActionQueue(lifetime));
@@ -96,7 +100,7 @@ namespace JetBrains.Collections.Viewable
     }
 
 
-    public static SingleThreadScheduler CreateOverExisting([NotNull] SingleThreadScheduler existingScheduler, [NotNull] string name, int actionPriority = PrioritizedAction.NormalPriority)
+    public static SingleThreadScheduler CreateOverExisting(SingleThreadScheduler existingScheduler, string name, int actionPriority = PrioritizedAction.NormalPriority)
     {
       if (existingScheduler == null) throw new ArgumentNullException(nameof(existingScheduler));
       if (name == null) throw new ArgumentNullException(nameof(name));
@@ -114,7 +118,7 @@ namespace JetBrains.Collections.Viewable
     {
       Assertion.AssertCurrentThread(Thread);
 
-      PrioritizedAction prioritizedAction = blockIfNoActionAvailable ? myQueue.Storage.ExtractOrBlock() : myQueue.Storage.ExtractOrDefault();
+      PrioritizedAction? prioritizedAction = blockIfNoActionAvailable ? myQueue.Storage.ExtractOrBlock() : myQueue.Storage.ExtractOrDefault();
 
       if (prioritizedAction == null) return;
       var action = prioritizedAction.Action;
@@ -191,7 +195,7 @@ namespace JetBrains.Collections.Viewable
       return $"Scheduler: '{Name}' on thread `{Thread.ToThreadString()}`";
     }
 
-    public void Queue([NotNull] Action action)
+    public void Queue(Action action)
     {
       if (action == null) throw new ArgumentNullException(nameof(action));
 

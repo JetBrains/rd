@@ -13,9 +13,9 @@ namespace JetBrains.Rd.Base
 {
   public interface IRdDynamic
   {
-    [NotNull] IProtocol Proto { get; }
+    IProtocol Proto { get; }
     SerializationCtx SerializationContext { get; }
-    [NotNull] RName Location { get; }
+    RName Location { get; }
   }
 
 
@@ -50,7 +50,7 @@ namespace JetBrains.Rd.Base
     #region Bind
 
 
-    internal static void BindPolymorphic(this object value, Lifetime lifetime, IRdDynamic parent, string name)
+    internal static void BindPolymorphic(this object? value, Lifetime lifetime, IRdDynamic parent, string name)
     {
       if (value is IRdBindable rdBindable) 
         rdBindable.Bind(lifetime, parent, name);
@@ -78,7 +78,7 @@ namespace JetBrains.Rd.Base
     }
 
 
-    private static void Bind0([CanBeNull] this IEnumerable items, Lifetime lifetime, IRdDynamic parent, string name)
+    private static void Bind0(this IEnumerable? items, Lifetime lifetime, IRdDynamic parent, string name)
     {
       if (items == null) return;
 
@@ -88,18 +88,18 @@ namespace JetBrains.Rd.Base
     }
 
 
-    public static void BindEx<T>([CanBeNull] this T value, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
+    public static void BindEx<T>(this T? value, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
     {
       if (value != null) value.Bind(lifetime, parent, name);
     }
 
     // ASSHEATING C# OVERLOAD RESOLUTION
-    public static void BindEx<T>([CanBeNull] this List<T> items, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
+    public static void BindEx<T>(this List<T>? items, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
     {
       Bind0(items, lifetime, parent, name);
     }
 
-    public static void BindEx<T>([CanBeNull] this T[] items, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
+    public static void BindEx<T>(this T[]? items, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
     {
       Bind0(items, lifetime, parent, name);
     }
@@ -110,7 +110,7 @@ namespace JetBrains.Rd.Base
 
     #region Identify
 
-    internal static void IdentifyPolymorphic(this object value, IIdentities ids, RdId id)
+    internal static void IdentifyPolymorphic(this object? value, IIdentities ids, RdId id)
     {  
       if (value is IRdBindable rdBindable)
         rdBindable.Identify(ids, id);
@@ -120,7 +120,7 @@ namespace JetBrains.Rd.Base
     
 
 
-    private static void Identify0([CanBeNull] this IEnumerable items, IIdentities ids, RdId id)
+    private static void Identify0(this IEnumerable? items, IIdentities ids, RdId id)
     {
       if (items == null) return;
 
@@ -132,18 +132,18 @@ namespace JetBrains.Rd.Base
     }
 
 
-    public static void IdentifyEx<T>([CanBeNull] this T value, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this T? value, IIdentities ids, RdId id) where T : IRdBindable
     {
       if (value != null) value.Identify(ids, id);
     }
 
     //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just believe me
-    public static void IdentifyEx<T>([CanBeNull] this List<T> items, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this List<T>? items, IIdentities ids, RdId id) where T : IRdBindable
     {
       items.Identify0(ids, id);
     }
 
-    public static void IdentifyEx<T>([CanBeNull] this T[] items, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this T[]? items, IIdentities ids, RdId id) where T : IRdBindable
     {
       items.Identify0(ids, id);
     }
@@ -155,7 +155,7 @@ namespace JetBrains.Rd.Base
 
   public static class PrintableEx
   {
-    public static void PrintEx(this object me, PrettyPrinter printer)
+    public static void PrintEx(this object? me, PrettyPrinter printer)
     {
       var printable = me as IPrintable;
       if (printer.BufferExceeded)
@@ -211,14 +211,14 @@ namespace JetBrains.Rd.Base
       }
     }
 
-    public static string PrintToString(this object me)
+    public static string PrintToString(this object? me)
     {
       var prettyPrinter = new PrettyPrinter();
       me.PrintEx(prettyPrinter);
       return prettyPrinter.ToString();
     }
 
-    public static string PrintToStringNoLimits(this object me)
+    public static string PrintToStringNoLimits(this object? me)
     {
       var prettyPrinter = new PrettyPrinter { CollectionMaxLength = Int32.MaxValue };
       me.PrintEx(prettyPrinter);

@@ -10,6 +10,7 @@ using JetBrains.Threading;
 #if !NET35
 using System.Runtime.ExceptionServices;
 #endif
+#nullable disable
 
 namespace JetBrains.Core
 {

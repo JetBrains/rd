@@ -27,7 +27,7 @@ namespace JetBrains.Threading
     private readonly ILog myLog;
 
 
-    private readonly AsyncLocal<Unit> myInsideProcessingFlow = new AsyncLocal<Unit>(); 
+    private readonly AsyncLocal<Unit?> myInsideProcessingFlow = new(); 
 
     private long myTotalMessagesProcessed;
 
@@ -69,7 +69,7 @@ namespace JetBrains.Threading
     /// <param name="processor">handler of messages</param>
     /// <param name="scheduler"><paramref name="processor"/>'s body scheduler</param>
     /// <param name="maxQueueSize">upper bound for channel after that <see cref="SendBlocking"/> will block</param>
-    public Actor(string id, Lifetime lifetime, Action<T> processor, TaskScheduler scheduler = null,
+    public Actor(string id, Lifetime lifetime, Action<T> processor, TaskScheduler? scheduler = null,
       int maxQueueSize = int.MaxValue) :
       this(id, lifetime, async item => processor(item), scheduler, maxQueueSize) {}
     
@@ -82,7 +82,7 @@ namespace JetBrains.Threading
     /// <param name="scheduler"></param>
     /// <param name="maxQueueSize"></param>
     //todo move lifetime into Send
-    public Actor(string id, Lifetime lifetime, Func<T, Task> processor, TaskScheduler scheduler = null, int maxQueueSize = int.MaxValue)
+    public Actor(string id, Lifetime lifetime, Func<T, Task> processor, TaskScheduler? scheduler = null, int maxQueueSize = int.MaxValue)
     {
       Id = id;
       myProcessor = processor;

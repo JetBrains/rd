@@ -12,14 +12,13 @@ namespace JetBrains.Collections
   public sealed class ReferenceEqualityComparer<T> : IEqualityComparer<T>
     where T : class
   {
-    [NotNull] private static readonly ReferenceEqualityComparer<T> ourDefault = new ReferenceEqualityComparer<T>();
+    private static readonly ReferenceEqualityComparer<T> ourDefault = new ReferenceEqualityComparer<T>();
     private ReferenceEqualityComparer() { }
 
     public bool Equals(T x, T y) => ReferenceEquals(x, y);
 
     public int GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
 
-    [NotNull]
     public static IEqualityComparer<T> Default => ourDefault;
   }
 }

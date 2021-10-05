@@ -25,7 +25,6 @@ namespace JetBrains.Diagnostics
     #region Set factory settings via Statics helpers
 
     private static readonly StaticsForType<ILogFactory> ourStatics = Statics.For<ILogFactory>();
-    [NotNull]
     private static volatile ILogFactory ourCurrentFactory;
 
     
@@ -74,7 +73,7 @@ namespace JetBrains.Diagnostics
     /// <param name="factory">Factory to use as global  util returned object is not disposed</param>
     /// <returns>IDisposable, that should be disposed to return old logger factory. </returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IDisposable UsingLogFactory([NotNull]ILogFactory factory)
+    public static IDisposable UsingLogFactory(ILogFactory factory)
     {
       if (factory == null) throw new ArgumentNullException(nameof(factory));
 
@@ -94,7 +93,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="category"></param>
     /// <returns></returns>
-    public static ILog GetLog([NotNull]string category)
+    public static ILog GetLog(string category)
     {
       return new SwitchingLog(category);
     }
@@ -134,43 +133,35 @@ namespace JetBrains.Diagnostics
 
       private 
         // todo volatile : think about it when we target ARM  
-        ILogFactory myFactory;
+        ILogFactory? myFactory;
 
-      private ILog myLog;
+      private ILog? myLog;
 
       public SwitchingLog(string category)
       {
         myCategory = category;
       }
 
-      public string Category
-      {
-        get
-        {
-          CheckImplementationSwitched();
-          return myLog.Category;
-        }
-      }
+      public string Category => CheckImplementationSwitched().Category;
 
       bool ILog.IsEnabled(LoggingLevel level)
       {
-        CheckImplementationSwitched();
-        return myLog.IsEnabled(level);
+        return CheckImplementationSwitched().IsEnabled(level);
       }
 
-      void ILog.Log(LoggingLevel level, string message, Exception exception)
+      void ILog.Log(LoggingLevel level, string? message, Exception? exception)
       {
-        CheckImplementationSwitched();
-        myLog.Log(level, message, exception);
+        CheckImplementationSwitched().Log(level, message, exception);
       }
 
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      private void CheckImplementationSwitched()
+      private ILog CheckImplementationSwitched()
       {
-        if (myFactory == ourCurrentFactory) return;
+        if (myFactory == ourCurrentFactory) return myLog!;
 
         myLog = ourCurrentFactory.GetLog(myCategory).NotNull("Logger mustn't be null!");
         myFactory = ourCurrentFactory;
+        return myLog;
       }
     }
     #endregion
@@ -198,12 +189,12 @@ namespace JetBrains.Diagnostics
     /// <param name="exception"></param>
     /// <returns></returns>
     public static string DefaultFormat(
-      [CanBeNull] DateTime? date,
+      DateTime? date,
       LoggingLevel loggingLevel,
-      [CanBeNull] string category,
-      [CanBeNull] Thread thread,
-      [CanBeNull] string message,
-      [CanBeNull] Exception exception = null
+      string? category,
+      Thread? thread,
+      string? message,
+      Exception? exception = null
     )
     {
       var builder = new StringBuilder();
@@ -257,7 +248,7 @@ namespace JetBrains.Diagnostics
     /// <returns>created factory</returns>
     /// <exception cref="Exception"></exception>
     /// <exception cref="IOException"></exception>
-    public static TextWriterLogFactory CreateFileLogFactory([NotNull]Lifetime lifetime, [NotNull]string path, bool append = false, LoggingLevel enabledLevel = LoggingLevel.VERBOSE)
+    public static TextWriterLogFactory CreateFileLogFactory(Lifetime lifetime, string path, bool append = false, LoggingLevel enabledLevel = LoggingLevel.VERBOSE)
     {      
       Assertion.Assert(lifetime.IsAlive, "lifetime.IsTerminated");
       

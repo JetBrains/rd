@@ -16,7 +16,7 @@ using JetBrains.Serialization;
 namespace JetBrains.Rd.Impl
 {
 
-  public class RdMap<K, V> : RdReactiveBase, IViewableMap<K, V>
+  public class RdMap<K, V> : RdReactiveBase, IViewableMap<K, V> where K : notnull
   {
     private readonly ViewableMap<K, V> myMap = new ViewableMap<K, V>();
 
@@ -122,7 +122,7 @@ namespace JetBrains.Rd.Impl
             }              
             
             me.WriteKeyDelegate(sContext, stream, evt.Key);
-            if (evt.Kind != AddUpdateRemove.Remove) 
+            if (evt.IsUpdate || evt.IsAdd) 
               me.WriteValueDelegate(sContext, stream, evt.NewValue);
 
 
@@ -159,7 +159,7 @@ namespace JetBrains.Rd.Impl
 
       if (opType == Ack)
       {
-        string error = null;
+        string? error = null;
 
         if (!msgVersioned) error = "Received ACK while msg hasn't versioned flag set";
         else if (!IsMaster) error = "Received ACK when not a Master";
@@ -363,7 +363,7 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    public override RdBindableBase FindByRName(RName rName)
+    public override RdBindableBase? FindByRName(RName rName)
     {
       var rootName = rName.GetNonEmptyRoot();
       var localName = rootName.LocalName.ToString();

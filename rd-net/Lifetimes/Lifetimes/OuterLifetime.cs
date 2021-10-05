@@ -81,7 +81,7 @@ namespace JetBrains.Lifetimes
     ///   <para>The parent lifetime which might cause premature termination of our lifetime (and, supposedly, the chain of tasks executed under the lifetime, if started correctly).</para>
     /// </summary>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public Task<TRetVal> UsingNestedAsync<TRetVal>([NotNull] [InstantHandle] Func<Lifetime, Task<TRetVal>> action) => myLifetime.UsingNestedAsync(action);
+    public Task<TRetVal> UsingNestedAsync<TRetVal>([InstantHandle] Func<Lifetime, Task<TRetVal>> action) => myLifetime.UsingNestedAsync(action);
 
     /// <summary>
     ///   <para>Scopes your code in <paramref name="action" /> with a lifetime that is terminated automatically when <paramref name="action" /> completes execution, or when its execution is aborted by an exception.</para>
@@ -89,15 +89,14 @@ namespace JetBrains.Lifetimes
     ///   <para>The parent lifetime which might cause premature termination of our lifetime (and, supposedly, the chain of tasks executed under the lifetime, if started correctly).</para>
     /// </summary>
     /// <param name="action">The code to execute with a temporary lifetime.</param>
-    public Task UsingNestedAsync([NotNull] [InstantHandle] Func<Lifetime, Task> action) => myLifetime.UsingNestedAsync(action);
+    public Task UsingNestedAsync([InstantHandle] Func<Lifetime, Task> action) => myLifetime.UsingNestedAsync(action);
     
     internal LifetimeDefinition Def => myLifetime.Definition;
 
     /// <summary>
     ///   <para>See documentation on an overload which takes a <see cref="Lifetime" />.</para>
     /// </summary>
-    [NotNull]
-    public static LifetimeDefinition Define(OuterLifetime lifetime, [CanBeNull] string id = null, [CanBeNull] [InstantHandle] Action<LifetimeDefinition, Lifetime> atomicAction = null)
+    public static LifetimeDefinition Define(OuterLifetime lifetime, string? id = null, [InstantHandle] Action<LifetimeDefinition, Lifetime>? atomicAction = null)
     {
       lifetime.AssertNotNull();
 
@@ -129,8 +128,8 @@ namespace JetBrains.Lifetimes
     /// <summary>
     /// Creates an intersection of some lifetimes — a lifetime to terminate when either one terminates.
     /// </summary>
-    [PublicAPI, NotNull]
-    public static LifetimeDefinition DefineIntersection([NotNull] params OuterLifetime[] lifetimes)
+    [PublicAPI]
+    public static LifetimeDefinition DefineIntersection(params OuterLifetime[] lifetimes)
     {
       var res = new LifetimeDefinition();
       foreach (var lf in lifetimes)

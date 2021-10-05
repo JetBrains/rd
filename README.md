@@ -174,4 +174,6 @@ Look at cross tests
 * _Test.RdCross_ at C# side
 * _rd::cross_ at C++ side
 
- 
+## License
+
+Rd is licensed under the [Apache 2.0](LICENSE) license. Rd distributions may include third-party software licensed separately; see [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.TXT) for details.

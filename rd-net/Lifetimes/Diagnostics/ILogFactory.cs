@@ -9,7 +9,6 @@ namespace JetBrains.Diagnostics
   /// </summary>
   public interface ILogFactory
   {
-    [NotNull]
     ILog GetLog(string category);
   }
 }

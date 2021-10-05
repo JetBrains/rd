@@ -9,7 +9,7 @@ namespace JetBrains.Collections.Viewable
 {
   public static class SchedulerEx
   {
-    public static void AssertThread(this IScheduler scheduler, object debugInfo = null)
+    public static void AssertThread(this IScheduler scheduler, object? debugInfo = null)
     {
       if (!scheduler.IsActive)
         Log.Root.Error("Illegal scheduler for current action, must be: {0}, current thread: {1}{2}", scheduler, Thread.CurrentThread.ToThreadString(), 

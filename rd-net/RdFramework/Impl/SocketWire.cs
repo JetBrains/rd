@@ -61,12 +61,13 @@ namespace JetBrains.Rd.Impl
       private readonly Actor<long> myAcktor;
       const string DisconnectedPauseReason = "Disconnected";
 
-      protected Base(string id, Lifetime lifetime, [NotNull] IScheduler scheduler) : base(scheduler)
+      protected Base(string id, Lifetime lifetime, IScheduler scheduler) : base(scheduler)
       {
         Id = id;
         Log = Diagnostics.Log.GetLog(GetType());
         myLifetime = lifetime;
         myAcktor = new Actor<long>(id+"-ACK", lifetime, SendAck);
+        Socket = null!; // inheritor must initialize socket before use
 
         SendBuffer = new ByteBufferAsyncProcessor(id+"-Sender", Send0);
         SendBuffer.Pause(DisconnectedPauseReason);
@@ -124,7 +125,7 @@ namespace JetBrains.Rd.Impl
       }
 
 
-      public static void CloseSocket([CanBeNull] Socket socket)
+      public static void CloseSocket(Socket? socket)
       {
         if (socket == null)
           return;
@@ -482,7 +483,7 @@ namespace JetBrains.Rd.Impl
 
 
       //can't take socket from mySocketProvider: it could be not set yet
-      protected void AddTerminationActions([NotNull] Thread receiverThread)
+      protected void AddTerminationActions(Thread receiverThread)
       {
         // ReSharper disable once ImpureMethodCallOnReadonlyValueField
         myLifetime.OnTermination(() =>
@@ -520,10 +521,10 @@ namespace JetBrains.Rd.Impl
 
     public class Client : Base
     {
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) :
+      public Client(Lifetime lifetime, IScheduler scheduler, int port, string? optId = null) :
         this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
 
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) :
+      public Client(Lifetime lifetime, IScheduler scheduler, IPEndPoint endPoint, string? optId = null) :
         base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         var thread = new Thread(() =>
@@ -595,7 +596,7 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, optId)
+      public Server(Lifetime lifetime, IScheduler scheduler, IPEndPoint? endPoint = null, string? optId = null) : this(lifetime, scheduler, optId)
       {
         var serverSocket = CreateServerSocket(endPoint);
 
@@ -613,15 +614,15 @@ namespace JetBrains.Rd.Impl
       /// Creates a server wire with an externally-provided socket. By using this constructor, you are not transferring
       /// ownership of the provided socket to created wire. It is consumer's responsibility to manager socket's lifetime.
       /// </summary>
-      public Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string optId = null) : this(lifetime, scheduler, optId)
+      public Server(Lifetime lifetime, IScheduler scheduler, Socket serverSocket, string? optId = null) : this(lifetime, scheduler, optId)
       {
         StartServerSocket(lifetime, serverSocket);
       }
 
-      private Server(Lifetime lifetime, IScheduler scheduler, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
+      private Server(Lifetime lifetime, IScheduler scheduler, string? optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {}
 
-      public static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
+      public static Socket CreateServerSocket(IPEndPoint? endPoint)
       {
         Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
@@ -636,7 +637,7 @@ namespace JetBrains.Rd.Impl
         return serverSocket;
       }
 
-      private void StartServerSocket(Lifetime lifetime, [NotNull] Socket serverSocket)
+      private void StartServerSocket(Lifetime lifetime, Socket serverSocket)
       {
         if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
         Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
@@ -699,15 +700,15 @@ namespace JetBrains.Rd.Impl
     public struct WireParameters
     {
       public readonly IScheduler Scheduler;
-      public readonly string Id;
+      public readonly string? Id;
 
-      public WireParameters([NotNull] IScheduler scheduler, [CanBeNull] string id)
+      public WireParameters(IScheduler scheduler, string? id)
       {
         Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
         Id = id;
       }
 
-      public void Deconstruct(out IScheduler scheduler, out string id)
+      public void Deconstruct(out IScheduler scheduler, out string? id)
       {
         scheduler = Scheduler;
         id = Id;
@@ -723,14 +724,14 @@ namespace JetBrains.Rd.Impl
       [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
 
 
-      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint endpoint = null)
+      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint? endpoint = null)
         : this(lifetime, () => new WireParameters(scheduler, null), endpoint) {}
 
 
       public ServerFactory(
         Lifetime lifetime,
-        [NotNull] Func<WireParameters> wireParametersFactory,
-        IPEndPoint endpoint = null
+        Func<WireParameters> wireParametersFactory,
+        IPEndPoint? endpoint = null
       )
       {
         var serverSocket = Server.CreateServerSocket(endpoint);

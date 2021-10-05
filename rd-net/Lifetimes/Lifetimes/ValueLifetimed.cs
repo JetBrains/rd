@@ -6,14 +6,14 @@ namespace JetBrains.Lifetimes
   /// <typeparam name="T"></typeparam>
   public struct ValueLifetimed<T>
   {
-    public void Deconstruct(out Lifetime lifetime, out T value)
+    public void Deconstruct(out Lifetime lifetime, out T? value)
     {
       lifetime = Lifetime;
       value = Value;
     }
 
     public Lifetime Lifetime { get; }
-    public T Value { get; private set; }
+    public T? Value { get; private set; }
 
     public ValueLifetimed(Lifetime lifetime, T value)
     {

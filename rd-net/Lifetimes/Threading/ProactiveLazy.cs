@@ -12,9 +12,9 @@ namespace JetBrains.Threading
     /// <typeparam name="T"></typeparam>
     public class ProactiveLazy<T>
     {
-        [NotNull] private readonly Task<T> myTask; //todo Not very footprint-friendly. Need to clear task after execution.
+        private readonly Task<T> myTask; //todo Not very footprint-friendly. Need to clear task after execution.
 
-        public ProactiveLazy(Lifetime lifetime, Func<T> factory, TaskScheduler taskScheduler = null)
+        public ProactiveLazy(Lifetime lifetime, Func<T> factory, TaskScheduler? taskScheduler = null)
         {
             myTask = Task.Factory.StartNew(factory, lifetime, TaskCreationOptions.None, taskScheduler ?? TaskScheduler.Default);
         }

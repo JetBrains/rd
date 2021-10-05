@@ -7,7 +7,7 @@ namespace JetBrains.Rd.Reflection
   {
     private readonly Dictionary<RdId, Type> myRdIdToTypeMapping = new Dictionary<RdId, Type>();
 
-    public Type GetById(RdId id)
+    public Type? GetById(RdId id)
     {
       if (myRdIdToTypeMapping.TryGetValue(id, out var type))
       {

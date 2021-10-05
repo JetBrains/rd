@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
 using JetBrains.Util.Util;
@@ -13,8 +12,7 @@ namespace JetBrains.Rd.Reflection
 {
   public static class Intrinsic
   {
-    [CanBeNull]
-    public static SerializerPair TryGetIntrinsicSerializer(TypeInfo typeInfo, Func<Type, SerializerPair> getInstanceSerializer)
+    public static SerializerPair? TryGetIntrinsicSerializer(TypeInfo typeInfo, Func<Type, SerializerPair> getInstanceSerializer)
     {
       if (ReflectionSerializerVerifier.HasIntrinsicNonProtocolMethods(typeInfo))
       {
@@ -84,7 +82,7 @@ namespace JetBrains.Rd.Reflection
       {
         var marshallerType = typeInfo.GetCustomAttribute<RdScalarAttribute>().NotNull().Marshaller;
         var marshaller = Activator.CreateInstance(marshallerType);
-        return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(SerializerPair.FromMarshaller), typeInfo, marshaller);
+        return (SerializerPair?) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(SerializerPair.FromMarshaller), typeInfo, marshaller);
       }
 
       return null;

@@ -8,8 +8,8 @@
         <RootNamespace>Test.Lifetimes</RootNamespace>
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <LangVersion>8</LangVersion>
         <RollForward>LatestMajor</RollForward>
+        <Nullable>disable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

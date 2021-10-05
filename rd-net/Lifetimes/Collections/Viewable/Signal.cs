@@ -35,7 +35,7 @@ namespace JetBrains.Collections.Viewable
 
 
         //todo for future use
-        public IScheduler Scheduler { get; set; }
+        public IScheduler? Scheduler { get; set; }
 
         
         public virtual void Fire(T value)

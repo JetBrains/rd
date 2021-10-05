@@ -11,7 +11,7 @@ namespace JetBrains.Util.Util
   public class StaticsForType<T> where T:class
   {     
     private readonly List<T> myList = new List<T>();
-    private event Action Changed;
+    private event Action? Changed;
 
     private void FireChanged()
     {
@@ -31,7 +31,7 @@ namespace JetBrains.Util.Util
     
     
     
-    public void AddLast([NotNull]T value)
+    public void AddLast(T value)
     {
       lock (myList)
       {
@@ -41,7 +41,7 @@ namespace JetBrains.Util.Util
     }
 
     
-    public void AddFirst([NotNull]T value)
+    public void AddFirst(T value)
     {
       lock (myList)
       {
@@ -50,8 +50,7 @@ namespace JetBrains.Util.Util
       FireChanged();
     }
 
-    [CanBeNull]
-    public T PeekFirst()
+    public T? PeekFirst()
     {
       lock (myList)
       {
@@ -59,8 +58,7 @@ namespace JetBrains.Util.Util
       }
     }
     
-    [CanBeNull]
-    public T PeekLast()
+    public T? PeekLast()
     {
       lock (myList)
       {
@@ -68,7 +66,7 @@ namespace JetBrains.Util.Util
       }
     }
 
-    public void ReplaceFirst([NotNull]T value)
+    public void ReplaceFirst(T value)
     {
       lock (myList)
       {
@@ -78,7 +76,7 @@ namespace JetBrains.Util.Util
       FireChanged();
     }
 
-    public bool RemoveLastReferenceEqual([NotNull]T value, bool failIfNotLast = false)
+    public bool RemoveLastReferenceEqual(T value, bool failIfNotLast = false)
     {
       var result = false;
       

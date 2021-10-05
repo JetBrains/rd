@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using JetBrains.Util;
 
 namespace JetBrains.Rd.Reflection
@@ -9,7 +8,7 @@ namespace JetBrains.Rd.Reflection
     private readonly ITypesCatalog myCatalog;
     private readonly ReflectionSerializersFactory myReflectionSerializersFactory;
 
-    public TypesRegistrar([NotNull] ITypesCatalog catalog, [NotNull] ReflectionSerializersFactory reflectionSerializersFactory)
+    public TypesRegistrar(ITypesCatalog catalog, ReflectionSerializersFactory reflectionSerializersFactory)
     {
       myCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
       myReflectionSerializersFactory = reflectionSerializersFactory ?? throw new ArgumentNullException(nameof(reflectionSerializersFactory));

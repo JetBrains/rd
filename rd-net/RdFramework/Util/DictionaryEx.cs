@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -9,8 +10,8 @@ namespace JetBrains.Rd.Util
   static class DictionaryEx
   {
     [Pure]
-    internal static TValue GetOrDefault<TKey, TValue>(
-      [NotNull] this Dictionary<TKey, TValue> dictionary, [NotNull] TKey key, TValue @default = default(TValue))
+    internal static TValue? GetOrDefault<TKey, TValue>(
+      this Dictionary<TKey, TValue> dictionary, [DisallowNull] TKey key, TValue? @default = default(TValue))
     {
       if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
 
@@ -20,7 +21,7 @@ namespace JetBrains.Rd.Util
     
     [MustUseReturnValue]
     internal static TValue GetOrCreate<TKey, TValue>(
-      [NotNull] this IDictionary<TKey, TValue> dictionary, [NotNull] TKey key, [InstantHandle, NotNull] Func<TValue> factory)
+      this IDictionary<TKey, TValue> dictionary, [DisallowNull] TKey key, [InstantHandle] Func<TValue> factory)
     {
       if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
       if (factory == null) throw new ArgumentNullException(nameof(factory));
@@ -31,8 +32,8 @@ namespace JetBrains.Rd.Util
     }
 
     public static void BlockingAddUnique<TKey, TValue>(
-      [NotNull] this IDictionary<TKey, TValue> dictionary, Lifetime lifetime, [NotNull] object @lock, TKey key,
-      TValue value)
+      this IDictionary<TKey, TValue> dictionary, Lifetime lifetime, object @lock, TKey key,
+      TValue value) where TKey: notnull
     {
 
       lifetime.TryBracket(() =>

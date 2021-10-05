@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -137,7 +138,7 @@ namespace JetBrains.Serialization
     /// <summary>
     /// Cached <see cref="UnsafeWriter"/> for reuse
     /// </summary>
-    [ThreadStatic] private static UnsafeWriter ourWriter;
+    [ThreadStatic] private static UnsafeWriter? ourWriter;
 
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -186,7 +187,7 @@ namespace JetBrains.Serialization
     /// Stores the last used memory holder. Be aware that this holder is not reserved for current unsafe writer only and
     /// in some circumstances may be used and reserved by other consumer (when it's free)
     /// </summary>
-    private NativeMemoryPool.ThreadMemoryHolder myMemory;
+    private NativeMemoryPool.ThreadMemoryHolder? myMemory;
     private int myRecursionLevel = 0;
 
     /// <summary>
@@ -221,7 +222,7 @@ namespace JetBrains.Serialization
     {
       if (--myRecursionLevel == 0)
       {
-        myMemory.Free();
+        myMemory!.Free();
         myCurrentAllocSize = 0;
         // Setting current alloc size to zero have a special semantic of making current UnsafeWriter invalid.
         // There is no need to additionally resetting these pointers as write will check available memory and raise an 
@@ -303,6 +304,7 @@ namespace JetBrains.Serialization
         LogLog.Verbose(LogCategory, "Realloc UnsafeWriter, current: {0:N0} bytes, new: {1:N0}", myCurrentAllocSize, reallocSize);
         if (myStartPtr != null) //already terminated
         {
+          Assertion.Assert(myMemory != null, "myMemory != null");
           myStartPtr = (byte*) myMemory.Realloc(reallocSize);
           myPtr = myStartPtr + myCount;
           myCurrentAllocSize = reallocSize;
@@ -450,7 +452,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(string value)
+    public void Write(string? value)
     {
       if (value == null) Write(-1);
       else
@@ -466,7 +468,7 @@ namespace JetBrains.Serialization
     /// </summary>
     /// <param name="value"></param>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteStringContent(string value)
+    public void WriteStringContent(string? value)
     {
       if (value == null) return;
       WriteStringContentInternal(this, value, 0, value.Length);
@@ -479,7 +481,7 @@ namespace JetBrains.Serialization
     /// <param name="offset"></param>
     /// <param name="count"></param>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteStringContent(string value, int offset, int count)
+    public void WriteStringContent(string? value, int offset, int count)
     {
       if (value == null) return;
       if (offset < 0 || count < 0 || offset + count > value.Length) throw new ArgumentException(string.Format("string.length={0}, offset={1}, count={2}", value.Length, offset, count));
@@ -582,7 +584,7 @@ namespace JetBrains.Serialization
     }*/
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(int[] value)
+    public void Write(int[]? value)
     {
       if (value == null) Write(-1);
       else
@@ -596,7 +598,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(byte[] value)
+    public void Write(byte[]? value)
     {
       if(value == null)
         Write(-1);
@@ -611,7 +613,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteRaw([NotNull] byte[] value)
+    public void WriteRaw(byte[] value)
     {
       if(value == null)
         throw new ArgumentNullException("value");
@@ -622,7 +624,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteRaw([NotNull] byte[] value, int start, int length)
+    public void WriteRaw(byte[] value, int start, int length)
     {
       if(value == null)
         throw new ArgumentNullException("value");
@@ -647,7 +649,7 @@ namespace JetBrains.Serialization
     /// Non optimal collection serialization. You can serialize internal structure (eg. array) instead.
     /// </summary>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write<T, TCol>(WriteDelegate<T> writeDelegate, TCol value) where TCol : ICollection<T>
+    public void Write<T, TCol>(WriteDelegate<T> writeDelegate, TCol? value) where TCol : ICollection<T>
     {
       if (value == null) Write(-1);
       else
@@ -678,7 +680,7 @@ namespace JetBrains.Serialization
 
     [ContractAnnotation("null=>false")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public bool WriteNullness<T>(T? value) where T : struct
+    public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : struct
     {
       var res = value != null;
       Write(res);
@@ -687,7 +689,7 @@ namespace JetBrains.Serialization
 
     [ContractAnnotation("null=>false")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public bool WriteNullness<T>([CanBeNull] T value) where T : class
+    public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : class
     {
       var res = value != null;
       Write(res);

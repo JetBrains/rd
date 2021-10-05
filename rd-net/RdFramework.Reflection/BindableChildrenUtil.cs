@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Util;
@@ -81,7 +82,9 @@ namespace JetBrains.Rd.Reflection
           for (int i = 0; i < bindableMembers.Length; i++)
           {
             var value = getters[i](obj);
-            obj.BindableChildren.Add(new KeyValuePair<string, object>(bindableMembers[i].Name, value));
+            // value can be null for fields primitive types in RdModels. They are used in serializations, but send their value on bind
+            if (value != null)
+              obj.BindableChildren.Add(new KeyValuePair<string, object>(bindableMembers[i].Name, value));
           }
         };
         lock (ourFillBindableChildren)

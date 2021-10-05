@@ -16,7 +16,7 @@ namespace JetBrains.Rd.Impl
   {
     #region Constructor
 
-    public override event PropertyChangedEventHandler PropertyChanged;
+    public override event PropertyChangedEventHandler? PropertyChanged;
 
     public RdProperty() : this(Polymorphic<T>.Read, Polymorphic<T>.Write) {}
 
@@ -200,7 +200,7 @@ namespace JetBrains.Rd.Impl
         myProperty.Advise(lifetime, handler);
     }
 
-    public override RdBindableBase FindByRName(RName rName)
+    public override RdBindableBase? FindByRName(RName rName)
     {
       var rootName = rName.GetNonEmptyRoot();
       var localName = rootName.LocalName.ToString();

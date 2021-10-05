@@ -9,7 +9,7 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Impl
 {
-    public class RdPerContextMap<K, V> : RdReactiveBase, IPerContextMap<K, V> where V : RdBindableBase
+    public class RdPerContextMap<K, V> : RdReactiveBase, IPerContextMap<K, V> where V : RdBindableBase where K: notnull
     {
         public RdContext<K> Context { get; }
         private readonly Func<Boolean, V> myValueFactory;

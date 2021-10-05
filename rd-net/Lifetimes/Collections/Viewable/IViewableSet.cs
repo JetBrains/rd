@@ -16,6 +16,7 @@ namespace JetBrains.Collections.Viewable
     #else
       ISet<T>
     #endif
+  where T: notnull
   {
     ISource<SetEvent<T>> Change { get; }
   }

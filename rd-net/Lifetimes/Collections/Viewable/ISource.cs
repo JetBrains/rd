@@ -21,6 +21,6 @@ namespace JetBrains.Collections.Viewable
     /// </summary>
     /// <param name="lifetime">if lifetime <see cref="Lifetime.IsNotAlive"/> then no subscription will be done</param>
     /// <param name="handler">handler of events</param>
-    void Advise(Lifetime lifetime, [NotNull] Action<T> handler);
+    void Advise(Lifetime lifetime, Action<T> handler);
   }
 }

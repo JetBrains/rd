@@ -20,9 +20,9 @@ namespace JetBrains.Rd.Base
     internal static readonly RName NotBound = new RName("<<not bound>>");
     public RName Location { get; private set; } = NotBound;   
     
-    [CanBeNull] protected IRdDynamic Parent;
+    protected IRdDynamic? Parent;
     
-    [CanBeNull] private Lifetime myBindLifetime = Lifetime.Terminated;
+    private Lifetime myBindLifetime = Lifetime.Terminated;
     
     #endregion
         
@@ -38,12 +38,11 @@ namespace JetBrains.Rd.Base
     
     public virtual SerializationCtx SerializationContext => Parent.NotNull(this).SerializationContext;
 
-    [CanBeNull]
-    public RdExtBase ContainingExt
+    public RdExtBase? ContainingExt
     {
       get
       {
-        IRdDynamic cur = this;
+        IRdDynamic? cur = this;
         while (cur is RdBindableBase bindable)
         {
           if (cur is RdExtBase ext) return ext;
@@ -117,8 +116,7 @@ namespace JetBrains.Rd.Base
       }
     }
 
-    [CanBeNull]
-    public virtual RdBindableBase FindByRName([NotNull] RName rName)
+    public virtual RdBindableBase? FindByRName(RName rName)
     {
       var rootName = rName.GetNonEmptyRoot();
       var child = BindableChildren
@@ -159,7 +157,7 @@ namespace JetBrains.Rd.Base
     private readonly IDictionary<string, object> myExtensions = new Dictionary<string, object>();
 
 
-    public T GetExtension<T>([NotNull] string name) where T:class
+    public T? GetExtension<T>(string name) where T:class
     {
       lock (myExtensions)
       {
@@ -174,13 +172,13 @@ namespace JetBrains.Rd.Base
       }
     }
 
-    public T GetOrCreateExtension<T>([NotNull] string name, [NotNull] Func<T> create) where T : class =>
+    public T GetOrCreateExtension<T>(string name, Func<T> create) where T : class =>
       GetOrCreateExtension(name, false, create);
     
-    internal T GetOrCreateHighPriorityExtension<T>([NotNull] string name, [NotNull] Func<T> create) where T : class =>
+    internal T GetOrCreateHighPriorityExtension<T>(string name, Func<T> create) where T : class =>
       GetOrCreateExtension(name, true, create);
     
-    private T GetOrCreateExtension<T>([NotNull] string name, bool highPriorityExtension, [NotNull] Func<T> create) where T:class
+    private T GetOrCreateExtension<T>(string name, bool highPriorityExtension, Func<T> create) where T:class
     {
       if (name == null) throw new ArgumentNullException(nameof(name));
       if (create == null) throw new ArgumentNullException(nameof(create));
@@ -191,17 +189,17 @@ namespace JetBrains.Rd.Base
         T res;
         if (myExtensions.TryGetValue(name, out existing))
         {
-          res = existing.NotNull("Found null value for key: '{0}'", name) as T;
-          Assertion.Require(res != null, "Found bad value for key '{0}'. Expected type: '{1}', actual:'{2}", name, typeof(T).FullName, existing.GetType().FullName);
+          var val = existing.NotNull("Found null value for key: '{0}'", name) as T;
+          Assertion.Require(val != null, "Found bad value for key '{0}'. Expected type: '{1}', actual:'{2}", name, typeof(T).FullName, existing.GetType().FullName);
+          res = val;
         }
         else
         {
           res = create().NotNull("'Create' result must not be null");
           
           myExtensions[name] = res;
-          if (res is IRdBindable)
+          if (res is IRdBindable bindable)
           {
-            var bindable = res as IRdBindable;
             BindableChildren.Insert(highPriorityExtension ? 0 : BindableChildren.Count, new KeyValuePair<string, object>(name, bindable));
             if (myBindLifetime != Lifetime.Terminated)
             {

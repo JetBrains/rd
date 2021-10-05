@@ -39,8 +39,8 @@ namespace JetBrains.Collections.Viewable
         SynchronizationContext.SetSynchronizationContext(old);
       }
     }
-
-    protected override IEnumerable<Task> GetScheduledTasks() => null;
+    
+    protected override IEnumerable<Task> GetScheduledTasks() => new Task[0];
     
     private class SyncContext : SynchronizationContext
     {

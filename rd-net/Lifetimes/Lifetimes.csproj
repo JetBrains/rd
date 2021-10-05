@@ -15,8 +15,6 @@
         <Configurations>Debug;Release;CrossTests</Configurations>
         
         <Platforms>AnyCPU</Platforms>
-        
-        <LangVersion>8</LangVersion>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">

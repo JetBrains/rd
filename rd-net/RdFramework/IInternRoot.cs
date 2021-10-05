@@ -1,6 +1,7 @@
 ﻿using System;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
+#nullable disable
 
 namespace JetBrains.Rd
 {

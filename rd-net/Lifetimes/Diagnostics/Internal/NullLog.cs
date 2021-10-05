@@ -16,6 +16,6 @@ namespace JetBrains.Diagnostics.Internal
       return false;
     }
 
-    void ILog.Log(LoggingLevel level, string message, Exception exception) {}
+    void ILog.Log(LoggingLevel level, string? message, Exception? exception) {}
   }
 }

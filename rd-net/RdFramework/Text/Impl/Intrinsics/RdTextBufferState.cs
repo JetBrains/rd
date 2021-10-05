@@ -13,23 +13,23 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
   {
     //fields
     //public fields
-    [NotNull] public IViewableProperty<RdTextBufferChange> Changes { get { return _Changes; }}
-    [NotNull] public IViewableProperty<TextBufferVersion> VersionBeforeTypingSession { get { return _VersionBeforeTypingSession; }}
-    [NotNull] public IViewableProperty<RdAssertion> AssertedMasterText { get { return _AssertedMasterText; }}
-    [NotNull] public IViewableProperty<RdAssertion> AssertedSlaveText { get { return _AssertedSlaveText; }}
+    public IViewableProperty<RdTextBufferChange?> Changes { get { return _Changes; }}
+    public IViewableProperty<TextBufferVersion> VersionBeforeTypingSession { get { return _VersionBeforeTypingSession; }}
+    public IViewableProperty<RdAssertion> AssertedMasterText { get { return _AssertedMasterText; }}
+    public IViewableProperty<RdAssertion> AssertedSlaveText { get { return _AssertedSlaveText; }}
 
     //private fields
-    [NotNull] private readonly RdProperty<RdTextBufferChange> _Changes;
-    [NotNull] private readonly RdProperty<TextBufferVersion> _VersionBeforeTypingSession;
-    [NotNull] private readonly RdProperty<RdAssertion> _AssertedMasterText;
-    [NotNull] private readonly RdProperty<RdAssertion> _AssertedSlaveText;
+    private readonly RdProperty<RdTextBufferChange?> _Changes;
+    private readonly RdProperty<TextBufferVersion> _VersionBeforeTypingSession;
+    private readonly RdProperty<RdAssertion> _AssertedMasterText;
+    private readonly RdProperty<RdAssertion> _AssertedSlaveText;
 
     //primary constructor
     private RdTextBufferState(
-      [NotNull] RdProperty<RdTextBufferChange> changes,
-      [NotNull] RdProperty<TextBufferVersion> versionBeforeTypingSession,
-      [NotNull] RdProperty<RdAssertion> assertedMasterText,
-      [NotNull] RdProperty<RdAssertion> assertedSlaveText
+      RdProperty<RdTextBufferChange?> changes,
+      RdProperty<TextBufferVersion> versionBeforeTypingSession,
+      RdProperty<RdAssertion> assertedMasterText,
+      RdProperty<RdAssertion> assertedSlaveText
     )
     {
       if (changes == null) throw new ArgumentNullException("changes");
@@ -54,33 +54,36 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     //secondary constructor
     public RdTextBufferState (
     ) : this (
-      new RdProperty<RdTextBufferChange>(ReadRdTextBufferChangeNullable, WriteRdTextBufferChangeNullable),
+      new RdProperty<RdTextBufferChange?>(ReadRdTextBufferChangeNullable, WriteRdTextBufferChangeNullable),
       new RdProperty<TextBufferVersion>(TextBufferVersionSerializer.ReadDelegate, TextBufferVersionSerializer.WriteDelegate),
       new RdProperty<RdAssertion>(RdAssertion.Read, RdAssertion.Write),
       new RdProperty<RdAssertion>(RdAssertion.Read, RdAssertion.Write)
     ) {}
     //statics
 
+    public static CtxReadDelegate<RdTextBufferChange?> ReadRdTextBufferChangeNullable = RdTextBufferChange.ReadDelegate.NullableClass();
+    public static CtxWriteDelegate<RdTextBufferChange?> WriteRdTextBufferChangeNullable = RdTextBufferChange.WriteDelegate.NullableClass();
+
     public static CtxReadDelegate<RdTextBufferState> Read = (ctx, reader) =>
     {
       var _id = RdId.Read(reader);
-      var changes = RdProperty<RdTextBufferChange>.Read(ctx, reader, ReadRdTextBufferChangeNullable, WriteRdTextBufferChangeNullable);
+      var writeRdTextBufferChangeNullable = WriteRdTextBufferChangeNullable;
+      var changes = RdProperty<RdTextBufferChange?>.Read(ctx, reader, ReadRdTextBufferChangeNullable!, writeRdTextBufferChangeNullable);
       var versionBeforeTypingSession = RdProperty<TextBufferVersion>.Read(ctx, reader, TextBufferVersionSerializer.ReadDelegate, TextBufferVersionSerializer.WriteDelegate);
       var assertedMasterText = RdProperty<RdAssertion>.Read(ctx, reader, RdAssertion.Read, RdAssertion.Write);
       var assertedSlaveText = RdProperty<RdAssertion>.Read(ctx, reader, RdAssertion.Read, RdAssertion.Write);
       return new RdTextBufferState(changes, versionBeforeTypingSession, assertedMasterText, assertedSlaveText).WithId(_id);
     };
-    public static CtxReadDelegate<RdTextBufferChange> ReadRdTextBufferChangeNullable = RdTextBufferChange.ReadDelegate.NullableClass();
 
     public static CtxWriteDelegate<RdTextBufferState> Write = (ctx, writer, value) =>
     {
       value.RdId.Write(writer);
-      RdProperty<RdTextBufferChange>.Write(ctx, writer, value._Changes);
+      RdProperty<RdTextBufferChange?>.Write(ctx, writer, value._Changes);
       RdProperty<TextBufferVersion>.Write(ctx, writer, value._VersionBeforeTypingSession);
       RdProperty<RdAssertion>.Write(ctx, writer, value._AssertedMasterText);
       RdProperty<RdAssertion>.Write(ctx, writer, value._AssertedSlaveText);
     };
-    public static CtxWriteDelegate<RdTextBufferChange> WriteRdTextBufferChangeNullable = RdTextBufferChange.WriteDelegate.NullableClass();
+
     //custom body
     //equals trait
     //hash code trait

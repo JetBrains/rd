@@ -18,12 +18,12 @@ namespace JetBrains.Rd
     /// </summary>
     bool IsStub { get; }
 
-    void Send<TParam>(RdId id, TParam param, [NotNull, InstantHandle] Action<TParam, UnsafeWriter> writer);
-    void Advise([NotNull] Lifetime lifetime, [NotNull] IRdWireable entity);
+    void Send<TParam>(RdId id, TParam param, [InstantHandle] Action<TParam, UnsafeWriter> writer);
+    void Advise(Lifetime lifetime, IRdWireable entity);
     
-    [NotNull] ProtocolContexts Contexts { get; set; }
+    ProtocolContexts Contexts { get; set; }
 
-    [CanBeNull] IRdWireable TryGetById(RdId rdId);
+    IRdWireable? TryGetById(RdId rdId);
   }
 
   public interface IWireWithDelayedDelivery : IWire
@@ -64,8 +64,10 @@ namespace JetBrains.Rd
     }
 
 
-    protected WireBase([NotNull] IScheduler scheduler)
+    protected WireBase(IScheduler scheduler)
     {
+      // contexts is initialized when protocol is created.
+      myContexts = null!;
       if (scheduler == null) throw new ArgumentNullException(nameof(scheduler));
 
       Scheduler = scheduler;
@@ -118,7 +120,7 @@ namespace JetBrains.Rd
       MessageBroker.Advise(lifetime, reactive);
     }
 
-    public IRdWireable TryGetById(RdId rdId)
+    public IRdWireable? TryGetById(RdId rdId)
     {
       return MessageBroker.TryGetById(rdId);
     }

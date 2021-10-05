@@ -32,6 +32,8 @@ using System.Text;
 using System.Threading;
 using JetBrains.Diagnostics;
 
+#nullable disable
+
 namespace JetBrains.Rd.Impl.WebSocketSharp
 {
   internal static class HttpHeaders

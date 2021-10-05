@@ -1,4 +1,3 @@
-using System;
 using JetBrains.Annotations;
 
 namespace JetBrains.Lifetimes
@@ -11,14 +10,14 @@ namespace JetBrains.Lifetimes
   /// <typeparam name="T"></typeparam>
   public class Lifetimed<T> : ITerminationHandler
   {
-    [PublicAPI] public void Deconstruct(out Lifetime lifetime, out T value)
+    [PublicAPI] public void Deconstruct(out Lifetime lifetime, out T? value)
     {
       lifetime = Lifetime;
       value = Value;
     }
 
     public Lifetime Lifetime { get; }
-    public T Value { get; private set; }
+    public T? Value { get; private set; }
 
     public Lifetimed(Lifetime lifetime, T value)
     {

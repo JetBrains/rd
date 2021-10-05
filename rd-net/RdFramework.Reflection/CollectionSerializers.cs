@@ -12,7 +12,7 @@ namespace JetBrains.Rd.Reflection
   {
     public static SerializerPair CreateListSerializerPair<T>(SerializerPair itemSerializer)
     {
-      CtxReadDelegate<List<T>> readListSerializer = (ctx, reader) => reader.ReadList(itemSerializer.GetReader<T>(), ctx);
+      CtxReadDelegate<List<T>?> readListSerializer = (ctx, reader) => reader.ReadList(itemSerializer.GetReader<T>(), ctx);
       CtxWriteDelegate<IEnumerable<T>> writeListSerializer =(ctx, writer, value) => writer.WriteEnumerable(itemSerializer.GetWriter<T>(), ctx, value);
       return new SerializerPair(readListSerializer, writeListSerializer);
     }
@@ -20,7 +20,7 @@ namespace JetBrains.Rd.Reflection
     public static SerializerPair CreateDictionarySerializerPair<TKey, TValue>(SerializerPair keySerializer, SerializerPair valueSerializer)
     {
       var read = CreateReadDictionary<TKey, TValue>(keySerializer, valueSerializer);
-      CtxWriteDelegate<IDictionary<TKey, TValue>> write = (ctx, writer, value) =>
+      CtxWriteDelegate<IDictionary<TKey, TValue>?> write = (ctx, writer, value) =>
       {
         if (value is Dictionary<TKey, TValue> val && !Equals(val.Comparer, EqualityComparer<TKey>.Default))
           throw new Exception($"Unable to serialize {value.GetType().ToString(true)}. Custom equality comparers are not supported");
@@ -47,7 +47,7 @@ namespace JetBrains.Rd.Reflection
       throw new NotSupportedException();
 #else
       var read = CreateReadDictionary<TKey, TValue>(keySerializer, valueSerializer);
-      CtxWriteDelegate<IReadOnlyDictionary<TKey, TValue>> write = (ctx, writer, value) =>
+      CtxWriteDelegate<IReadOnlyDictionary<TKey, TValue>?> write = (ctx, writer, value) =>
       {
         if (value is Dictionary<TKey, TValue> val && !Equals(val.Comparer, EqualityComparer<TKey>.Default))
           throw new Exception($"Unable to serialize {value.GetType().ToString(true)}. Custom equality comparers are not supported");
@@ -70,9 +70,9 @@ namespace JetBrains.Rd.Reflection
     }
 
 
-    private static CtxReadDelegate<Dictionary<TKey, TValue>> CreateReadDictionary<TKey, TValue>(SerializerPair keySerializer, SerializerPair valueSerializer)
+    private static CtxReadDelegate<Dictionary<TKey, TValue>?> CreateReadDictionary<TKey, TValue>(SerializerPair keySerializer, SerializerPair valueSerializer)
     {
-      CtxReadDelegate<Dictionary<TKey, TValue>> read = (ctx, reader) =>
+      CtxReadDelegate<Dictionary<TKey, TValue>?> read = (ctx, reader) =>
       {
         int count = reader.ReadInt();
         if (count == -1)

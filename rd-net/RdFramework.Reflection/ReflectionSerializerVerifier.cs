@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -157,7 +156,7 @@ namespace JetBrains.Rd.Reflection
              IsNullable(typeInfo, type => IsPrimitive(type) || type.GetTypeInfo().IsEnum);
     }
 
-    private static bool IsNullable([NotNull] TypeInfo typeInfo, Func<Type, bool> filter)
+    private static bool IsNullable(TypeInfo typeInfo, Func<Type, bool> filter)
     {
       return typeInfo.IsValueType &&
              typeInfo.IsGenericType &&
@@ -288,7 +287,7 @@ namespace JetBrains.Rd.Reflection
         "only (RdProperty | RdList | RdSet | RdMap | RdModel | RdCall | custom sealed bindable types) allowed in RdModel or RdExt!");
     }
 
-    public static void AssertValidRdModel([NotNull] TypeInfo type)
+    public static void AssertValidRdModel(TypeInfo type)
     {
       var isDataModel = HasRdModelAttribute(type);
       Assertion.Assert(isDataModel, $"Error in {type.ToString(true)} model: no {nameof(RdModelAttribute)} attribute specified");

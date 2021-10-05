@@ -12,7 +12,7 @@ namespace JetBrains.Diagnostics
   /// </summary>
   public class LogLogRecord
   {
-    public LogLogRecord(string category, LoggingLevel severity, [NotNull] string message)
+    public LogLogRecord(string? category, LoggingLevel severity, string message)
     {
       Time = DateTime.Now.ToLocalTime(); //no need for UTC, because we want to display dates in local format
       Category = category;
@@ -21,10 +21,9 @@ namespace JetBrains.Diagnostics
     }
 
     public DateTime Time { get; }
-    public string Category { get; }
+    public string? Category { get; }
     public LoggingLevel Severity { get; }
 
-    [NotNull]
     public string Message { get; }
 
     public string Format(bool includeDate)
@@ -83,7 +82,7 @@ namespace JetBrains.Diagnostics
     [ThreadStatic]
     private static bool ourReentrancyGuard;
 
-    private static void Fire([CanBeNull] string category, [NotNull] string msg, LoggingLevel severity)
+    private static void Fire(string? category, string msg, LoggingLevel severity)
     {
       if (ourReentrancyGuard)
       {
@@ -184,7 +183,7 @@ namespace JetBrains.Diagnostics
 
     #region API for logloging
 
-    public static void Error([NotNull] Exception ex, string comment = null)
+    public static void Error(Exception ex, string? comment = null)
     {
       if (ex == null) throw new ArgumentException("ex is null");
 
@@ -192,7 +191,7 @@ namespace JetBrains.Diagnostics
       Fire(null, msg, LoggingLevel.ERROR);
     }
 
-    public static void Error([NotNull] string error)
+    public static void Error(string error)
     {
       if (error == null) throw new ArgumentNullException(nameof(error));
 
@@ -201,7 +200,7 @@ namespace JetBrains.Diagnostics
     }
     
     [StringFormatMethod("format")]
-    public static void Warn([NotNull] string format, params object[] args)
+    public static void Warn(string format, params object[] args)
     {
       if (format == null) throw new ArgumentException("message is null");
 
@@ -210,7 +209,7 @@ namespace JetBrains.Diagnostics
     }
 
     [StringFormatMethod("format")]
-    public static void Info([NotNull] string format, params object[] args)
+    public static void Info(string format, params object[] args)
     {
       if (format == null) throw new ArgumentException("message is null");
 
@@ -219,7 +218,7 @@ namespace JetBrains.Diagnostics
     }
 
     [StringFormatMethod("format")]
-    public static void Verbose([CanBeNull] string category, [NotNull] string format, params object[] args)
+    public static void Verbose(string? category, string format, params object[] args)
     {
       if (format == null) throw new ArgumentException("message is null");
 
@@ -228,7 +227,7 @@ namespace JetBrains.Diagnostics
     }
     
     [StringFormatMethod("format")]
-    public static void Trace([CanBeNull] string category, [NotNull] string format, params object[] args)
+    public static void Trace(string? category, string format, params object[] args)
     {
       if (format == null) throw new ArgumentException("message is null");
 
@@ -240,7 +239,7 @@ namespace JetBrains.Diagnostics
     }
     
     [StringFormatMethod("format")]
-    public static void Trace<T1>([CanBeNull] string category, [NotNull] string format, T1 arg) //to suppress array creation
+    public static void Trace<T1>(string? category, string format, T1 arg) //to suppress array creation
     {
       if (format == null) throw new ArgumentException("message is null");
 
@@ -252,7 +251,7 @@ namespace JetBrains.Diagnostics
     }
     
     [StringFormatMethod("format")]
-    public static void Trace<T1, T2>([CanBeNull] string category, [NotNull] string format, T1 arg1, T2 arg2) //to suppress array creation 
+    public static void Trace<T1, T2>(string? category, string format, T1 arg1, T2 arg2) //to suppress array creation 
     {
       if (format == null) throw new ArgumentException("message is null");
 
@@ -267,7 +266,7 @@ namespace JetBrains.Diagnostics
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif    
     
-    public static void Catch([NotNull] string comment, [NotNull] Action action)
+    public static void Catch(string comment, Action action)
     {
       try
       {
@@ -283,7 +282,7 @@ namespace JetBrains.Diagnostics
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
     
-    public static void Catch([NotNull] Action action)
+    public static void Catch(Action action)
     {
       try
       {
@@ -299,7 +298,7 @@ namespace JetBrains.Diagnostics
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
     
-    public static T Catch<T>([NotNull] Func<T> action)
+    public static T? Catch<T>(Func<T> action)
     {
       try
       {

@@ -6,6 +6,8 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 
+#nullable disable
+
 namespace JetBrains.Rd.Impl
 {
   internal class HeavySingleContextHandler<T> : RdReactiveBase, ISingleContextHandler<T>

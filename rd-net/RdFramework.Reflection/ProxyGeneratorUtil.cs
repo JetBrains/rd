@@ -44,7 +44,7 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     /// Sync call which allow nested call execution with help of <see cref="SwitchingScheduler"/>
     /// </summary>
-    public static TRes SyncNested<TReq, TRes>(RdCall<TReq, TRes> call, TReq request, RpcTimeouts timeouts = null)
+    public static TRes SyncNested<TReq, TRes>(RdCall<TReq, TRes> call, TReq request, RpcTimeouts? timeouts = null)
     {
       return SyncNested(call, Lifetime.Eternal, request, timeouts);
     }
@@ -52,7 +52,7 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     /// Sync call which allow nested call execution with help of <see cref="SwitchingScheduler"/>
     /// </summary>
-    public static TRes SyncNested<TReq, TRes>(RdCall<TReq, TRes> call, Lifetime lifetime, TReq request, RpcTimeouts timeouts = null)
+    public static TRes SyncNested<TReq, TRes>(RdCall<TReq, TRes> call, Lifetime lifetime, TReq request, RpcTimeouts? timeouts = null)
     {
       Assertion.Require(call.IsBound, "Not bound: {0}", call);
 

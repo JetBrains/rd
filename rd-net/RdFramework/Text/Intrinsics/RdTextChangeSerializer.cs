@@ -1,3 +1,5 @@
+using JetBrains.Diagnostics;
+
 namespace JetBrains.Rd.Text.Intrinsics
 {
   public static class RdTextChangeSerializer
@@ -6,8 +8,8 @@ namespace JetBrains.Rd.Text.Intrinsics
     {
       var kind = (RdTextChangeKind)stream.ReadInt();
       var startOffset = stream.ReadInt();
-      var oldText = stream.ReadString();
-      var newText = stream.ReadString();
+      var oldText = stream.ReadString().NotNull("oldText");
+      var newText = stream.ReadString().NotNull("newText");
       var fullTextLength = stream.ReadInt();
       return new RdTextChange(kind, startOffset, oldText, newText, fullTextLength);
     };

@@ -4,11 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
-using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
-using JetBrains.Serialization;
 using JetBrains.Util;
 using JetBrains.Util.Util;
 
@@ -26,12 +24,12 @@ namespace JetBrains.Rd.Reflection
     /// Types catalog required for providing information about statically discovered types during concrete serializer
     /// construction for sake of possibility for Rd serializers to lookup real type by representing RdId
     /// </summary>
-    [CanBeNull] private readonly ITypesCatalog myTypesCatalog;
+    private readonly ITypesCatalog? myTypesCatalog;
 
     /// <summary>
     /// Collection static serializers (polymorphic is not possible here! Only instance serializer can be polymorphic)
     /// </summary>
-    [NotNull] private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
+    private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
 
     /// <summary>
     /// Collection of specific polymorphic serializers. These serializers should be register before activating any Rd
@@ -53,16 +51,16 @@ namespace JetBrains.Rd.Reflection
     ///
     /// This predicate should return true only for blacklisted type
     /// </summary>
-    [NotNull] private readonly Predicate<Type> myBlackListChecker;
+    private readonly Predicate<Type> myBlackListChecker;
 
-    public ScalarSerializer([NotNull] ITypesCatalog typesCatalog, Predicate<Type> blackListChecker = null)
+    public ScalarSerializer(ITypesCatalog typesCatalog, Predicate<Type>? blackListChecker = null)
     {
       myTypesCatalog = typesCatalog ?? throw new ArgumentNullException(nameof(typesCatalog));
       myBlackListChecker = blackListChecker ?? (_ => false);
       Serializers.RegisterFrameworkMarshallers(this);
     }
 
-    public void RegisterPolymorphicSerializer([NotNull] Type type, SerializerPair serializers)
+    public void RegisterPolymorphicSerializer(Type type, SerializerPair serializers)
     {
       Assertion.Assert(CanBePolymorphic(type), $"Unable to register polymorphic serializer: {type.ToString(true)} is not a polymorphic type (it should be not sealed class or an interface)");
       Assertion.Assert(!myStaticSerializers.ContainsKey(type), $"Unable to register polymorphic serializer: a static serializer for type {type.ToString(true)} already exists");
@@ -103,7 +101,7 @@ namespace JetBrains.Rd.Reflection
         var intrinsic = Intrinsic.TryGetIntrinsicSerializer(typeInfo, GetInstanceSerializer);
         if (intrinsic != null)
         {
-          myTypesCatalog.AddType(type);
+          myTypesCatalog?.AddType(type);
           return intrinsic;
         }
 
@@ -111,7 +109,7 @@ namespace JetBrains.Rd.Reflection
         {
           var genericTypeArgument = t.GetGenericArguments()[0];
           var argumentTypeSerializerPair = GetInstanceSerializer(genericTypeArgument);
-          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(CollectionSerializers), nameof(CollectionSerializers.CreateListSerializerPair), genericTypeArgument, argumentTypeSerializerPair);
+          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(CollectionSerializers), nameof(CollectionSerializers.CreateListSerializerPair), genericTypeArgument, argumentTypeSerializerPair)!;
         }
         else if (IsDictionary(t) || IsReadOnlyDictionary(t))
         {
@@ -121,33 +119,33 @@ namespace JetBrains.Rd.Reflection
           var keySerializer = GetInstanceSerializer(tkey);
           var valueSerializer = GetInstanceSerializer(tvalue);
           var serializersFactoryName = IsReadOnlyDictionary(t) ? nameof(CollectionSerializers.CreateReadOnlyDictionarySerializerPair) : nameof(CollectionSerializers.CreateDictionarySerializerPair);
-          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric2(typeof(CollectionSerializers), serializersFactoryName, tkey, tvalue, keySerializer, valueSerializer);
+          return (SerializerPair) ReflectionUtil.InvokeStaticGeneric2(typeof(CollectionSerializers), serializersFactoryName, tkey, tvalue, keySerializer, valueSerializer)!;
         }
         else if (t.IsArray)
         {
-          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), t.GetElementType());
+          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateArraySerializer), t.GetElementType())!;
         }
         else if (t.IsEnum)
         {
           var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateEnumSerializer), t);
-          return (SerializerPair) serializer;
+          return (SerializerPair) serializer!;
         }
         else if (ReflectionSerializerVerifier.IsValueTuple(typeInfo))
         {
-          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateValueTupleSerializer), type);
+          return (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(CreateValueTupleSerializer), type)!;
         }
         else if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
           var genericTypeArgument = typeInfo.GetGenericArguments()[0];
-          var nullableSerializer = (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(RegisterNullable), genericTypeArgument);
+          var nullableSerializer = (SerializerPair) ReflectionUtil.InvokeGenericThis(this, nameof(RegisterNullable), genericTypeArgument)!;
           return nullableSerializer;
           // return CreateGenericSerializer(member, typeInfo, implementingType, implementingTypeInfo);
         }
         else
         {
-          myTypesCatalog.AddType(type);
+          myTypesCatalog?.AddType(type);
           var serializer = ReflectionUtil.InvokeGenericThis(this, nameof(CreateCustomScalar), t);
-          return (SerializerPair) serializer;
+          return (SerializerPair) serializer!;
         }
       }
     }
@@ -210,9 +208,9 @@ namespace JetBrains.Rd.Reflection
 
       // todo: consider using IL emit
       var memberDeserializers = new CtxReadDelegate<object>[memberInfos.Length];
-      var memberSerializers = new CtxWriteDelegate<object>[memberInfos.Length];
+      var memberSerializers = new CtxWriteDelegate<object?>[memberInfos.Length];
 
-      CtxReadDelegate<T> readerDelegate = (ctx, unsafeReader) =>
+      CtxReadDelegate<T?> readerDelegate = (ctx, unsafeReader) =>
       {
         if (allowNullable && !unsafeReader.ReadNullness())
           return default;
@@ -237,7 +235,7 @@ namespace JetBrains.Rd.Reflection
         }
         for (var i = 0; i < memberDeserializers.Length; i++)
         {
-          var memberValue = memberGetters[i](value);
+          var memberValue = memberGetters[i](value!);
           memberSerializers[i](ctx, unsafeWriter, memberValue);
         }
       };
@@ -282,7 +280,7 @@ namespace JetBrains.Rd.Reflection
       var itemReader = serializers.GetReader<T>();
       var itemWriter = serializers.GetWriter<T>();
 
-      CtxReadDelegate<T[]> reader = (ctx, unsafeReader) => unsafeReader.ReadArray(itemReader, ctx);
+      CtxReadDelegate<T[]?> reader = (ctx, unsafeReader) => unsafeReader.ReadArray(itemReader, ctx);
       CtxWriteDelegate<T[]> writer = (ctx, unsafeWriter, value) => unsafeWriter.WriteArray(itemWriter, ctx, value);
       return new SerializerPair(reader, writer);
     }
@@ -326,7 +324,7 @@ namespace JetBrains.Rd.Reflection
       var memberGetters = typeInfo.GetFields().Select(ReflectionUtil.GetGetter).ToArray();
 
       var memberDeserializers = new CtxReadDelegate<object>[argumentTypes.Length];
-      var memberSerializers = new CtxWriteDelegate<object>[argumentTypes.Length];
+      var memberSerializers = new CtxWriteDelegate<object?>[argumentTypes.Length];
       for (var index = 0; index < argumentTypes.Length; index++)
       {
         var argumentType = argumentTypes[index];
@@ -352,9 +350,10 @@ namespace JetBrains.Rd.Reflection
 
       CtxWriteDelegate<T> writerDelegate = (ctx, unsafeWriter, value) =>
       {
+        // nrt suppression: value tuple cannot be null
         for (var i = 0; i < argumentTypes.Length; i++)
         {
-          var memberValue = memberGetters[i](value);
+          var memberValue = memberGetters[i](value!);
           memberSerializers[i](ctx, unsafeWriter, memberValue);
         }
       };

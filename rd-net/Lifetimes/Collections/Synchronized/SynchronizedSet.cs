@@ -30,7 +30,7 @@ namespace JetBrains.Collections.Synchronized
     public SynchronizedSet() : this(null, null) {}
     public SynchronizedSet(IEnumerable<T> values) : this(values, null) {}
     public SynchronizedSet(IEqualityComparer<T> comparer) : this(null, comparer) {}
-    public SynchronizedSet(IEnumerable<T> values, IEqualityComparer<T> comparer)
+    public SynchronizedSet(IEnumerable<T>? values, IEqualityComparer<T>? comparer)
     {
       mySet = new HashSet<T>(comparer);
       if (values == null) return;
@@ -234,12 +234,11 @@ namespace JetBrains.Collections.Synchronized
       }
     }
     
-    [CanBeNull]
-    public T ExtractOneOrDefault()
+    public T? ExtractOneOrDefault()
     {
       lock (mySet)
       {
-        if (mySet.Count == 0) return default(T);
+        if (mySet.Count == 0) return default;
 
         var item = mySet.First();
         mySet.Remove(item);

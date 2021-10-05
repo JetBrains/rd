@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 
@@ -10,14 +11,14 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     //public fields
     public int MasterVersion {get; private set;}
     public int SlaveVersion {get; private set;}
-    [NotNull] public string Text {get; private set;}
+    public string Text {get; private set;}
     
     //private fields
     //primary constructor
     public RdAssertion(
       int masterVersion,
       int slaveVersion,
-      [NotNull] string text
+      string text
     )
     {
       if (text == null) throw new ArgumentNullException("text");
@@ -33,7 +34,7 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     {
       var masterVersion = reader.ReadInt();
       var slaveVersion = reader.ReadInt();
-      var text = reader.ReadString();
+      var text = reader.ReadString().NotNull("text");
       return new RdAssertion(masterVersion, slaveVersion, text);
     };
     
@@ -45,14 +46,14 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     };
     //custom body
     //equals trait
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       if (ReferenceEquals(null, obj)) return false;
       if (ReferenceEquals(this, obj)) return true;
       if (obj.GetType() != GetType()) return false;
       return Equals((RdAssertion) obj);
     }
-    public bool Equals(RdAssertion other)
+    public bool Equals(RdAssertion? other)
     {
       if (ReferenceEquals(null, other)) return false;
       if (ReferenceEquals(this, other)) return true;

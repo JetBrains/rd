@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
@@ -53,7 +54,8 @@ namespace JetBrains.Util.Util
     [ContractAnnotation("thisType:null=>null;=>notnull")]
     public static string ToString(this Type thisType, bool withNamespaces, bool withGenericArguments = true)
     {
-      string Present(Type type, Type[] genericArguments = null)
+      [return: NotNullIfNotNull("type")]
+      string? Present(Type? type, Type[]? genericArguments = null)
       {
         if (type == null)
           return null;

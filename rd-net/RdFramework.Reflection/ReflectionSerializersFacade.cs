@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Reflection;
-using JetBrains.Annotations;
+using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 
@@ -8,29 +7,23 @@ namespace JetBrains.Rd.Reflection
 {
   public class ReflectionSerializersFacade
   {
-    [NotNull]
     public ReflectionRdActivator Activator { get; }
 
-    [NotNull]
     public ITypesCatalog TypesCatalog { get; }
 
-    [NotNull]
     public IScalarSerializers ScalarSerializers { get; }
 
-    [NotNull]
     public ReflectionSerializersFactory SerializersFactory { get; }
 
-    [NotNull]
     public IProxyGenerator ProxyGenerator { get; }
 
-    [NotNull]
     public ITypesRegistrar Registrar { get; }
 
     public ReflectionSerializersFacade() : this(null)
     {
     }
 
-    public ReflectionSerializersFacade([CanBeNull] ITypesCatalog typesCatalog = null, [CanBeNull] IScalarSerializers scalarSerializers = null, [CanBeNull] ReflectionSerializersFactory reflectionSerializers = null, [CanBeNull] IProxyGenerator proxyGenerator = null, [CanBeNull] ReflectionRdActivator activator = null, [CanBeNull] TypesRegistrar registrar = null, bool allowSave = false, [CanBeNull] Predicate<Type> blackListChecker = null)
+    public ReflectionSerializersFacade(ITypesCatalog? typesCatalog = null, IScalarSerializers? scalarSerializers = null, ReflectionSerializersFactory? reflectionSerializers = null, IProxyGenerator? proxyGenerator = null, ReflectionRdActivator? activator = null, TypesRegistrar? registrar = null, bool allowSave = false, Predicate<Type>? blackListChecker = null)
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
       ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog, blackListChecker);
@@ -45,6 +38,7 @@ namespace JetBrains.Rd.Reflection
     {
       var type = ProxyGenerator.CreateType<TInterface>();
       var proxyInstance = Activator.ActivateBind(type, lifetime, protocol) as TInterface;
+      Assertion.Assert(proxyInstance != null, "Unable to cast proxy to desired interface ({0})", typeof(TInterface));
       return proxyInstance;
     }
 
