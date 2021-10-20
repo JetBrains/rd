@@ -9,7 +9,6 @@ import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Map
 import com.jetbrains.rd.generator.nova.Member.Reactive.Stateful.Set
 import com.jetbrains.rd.generator.nova.Member.Reactive.Task
 import com.jetbrains.rd.util.PublicApi
-import java.lang.IllegalArgumentException
 
 val ProtocolInternScope = InternScope(null, "Protocol")
 
@@ -72,6 +71,7 @@ fun BindableDeclaration.property(name: String, defaultValue: Boolean) = append(P
 fun BindableDeclaration.property(name: String, defaultValue: Int) = append(Property(name, PredefinedType.int, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Double) = append(Property(name, PredefinedType.double, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: String) = append(Property(name, PredefinedType.string, defaultValue))
+fun BindableDeclaration.property(name: String, valueType: ScalarAttributedType<PredefinedType.string>, defaultValue: String) = append(Property(name, valueType, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Member.Const) = append(Property(name, PredefinedType.string, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Member.Const, vararg attributes: KnownAttrs) =
     append(Property(name, PredefinedType.string.attrs(*attributes), defaultValue))
@@ -146,9 +146,9 @@ fun <T> T.attrs(vararg attributes: KnownAttrs): ScalarAttributedType<T> where T 
     return ScalarAttributedType(this, attrs)
 }
 
-val nlsString: ScalarAttributedType<PredefinedType> get() = PredefinedType.string.attrs(KnownAttrs.Nls)
-val nonNlsString: ScalarAttributedType<PredefinedType> get() = PredefinedType.string.attrs(KnownAttrs.NonNls)
-val nlsSafeString: ScalarAttributedType<PredefinedType> get() = PredefinedType.string.attrs(KnownAttrs.NlsSafe)
+val nlsString: ScalarAttributedType<PredefinedType.string> get() = PredefinedType.string.attrs(KnownAttrs.Nls)
+val nonNlsString: ScalarAttributedType<PredefinedType.string> get() = PredefinedType.string.attrs(KnownAttrs.NonNls)
+val nlsSafeString: ScalarAttributedType<PredefinedType.string> get() = PredefinedType.string.attrs(KnownAttrs.NlsSafe)
 
 /**
  * Marks this key a light key. Light keys don't maintain a value set and send values un-interned.
