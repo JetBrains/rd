@@ -147,11 +147,15 @@ fun Member.Field.default(value: Long) : Member.Field {
 }
 
 fun Member.Field.default(value: String) : Member.Field {
-    if (type !== PredefinedType.string && type !is Enum) {
-        throw GeneratorException("Default value string does not match field type")
+    if (type === PredefinedType.string
+        || (type is ScalarAttributedType<*> && type.itemType === PredefinedType.string)
+        || type is Enum
+    ) {
+        defaultValue = value
+        return this
     }
-    defaultValue = value
-    return this
+
+    throw GeneratorException("Default value string does not match field type")
 }
 
 fun Member.Field.default(value: Boolean) : Member.Field {
