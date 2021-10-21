@@ -23,17 +23,25 @@ constexpr int32_t SocketWire::Base::ACK_MESSAGE_LENGTH;
 constexpr int32_t SocketWire::Base::PING_MESSAGE_LENGTH;
 constexpr int32_t SocketWire::Base::PACKAGE_HEADER_LENGTH;
 
-SocketWire::Base::Base(std::string id, Lifetime lifetime, IScheduler* scheduler)
-	: WireBase(scheduler), id(std::move(id)), lifetime(lifetime), scheduler(scheduler), local_send_buffer(SEND_BUFFER_SIZE)
+SocketWire::Base::Base(std::string id, Lifetime parentLifetime, IScheduler* scheduler)
+	: WireBase(scheduler), id(std::move(id)), scheduler(scheduler), local_send_buffer(SEND_BUFFER_SIZE), lifetimeDef(parentLifetime)
 {
 	async_send_buffer.pause("initial");
 	async_send_buffer.start();
 	ping_pkg_header.write_integral(PING_MESSAGE_LENGTH);
 }
 
+SocketWire::Base::~Base()
+{
+	if (!lifetimeDef.is_terminated())
+	{
+		lifetimeDef.terminate();
+	}
+}
+
 void SocketWire::Base::receiverProc() const
 {
-	while (!lifetime->is_terminated())
+	while (!lifetimeDef.lifetime->is_terminated())
 	{
 		try
 		{
@@ -99,6 +107,7 @@ void SocketWire::Base::send(RdId const& rd_id, std::function<void(Buffer& buffer
 {
 	RD_ASSERT_MSG(!rd_id.isNull(), "{}: id mustn't be null");
 
+	std::lock_guard<decltype(wire_send_lock)> lock(wire_send_lock);
 	local_send_buffer.write_integral<int32_t>(0);	 // placeholder for length
 
 	rd_id.write(local_send_buffer);					 // write id
@@ -123,7 +132,7 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 	}
 	{
 		std::lock_guard<decltype(lock)> guard(lock);
-		if (lifetime->is_terminated())
+		if (lifetimeDef.lifetime->is_terminated())
 		{
 			return;
 		}
@@ -169,7 +178,7 @@ std::future<void> SocketWire::Base::start_heartbeat(Lifetime lifetime)
 	return std::async([this, lifetime] {
 		while (!lifetime->is_terminated())
 		{
-			std::this_thread::sleep_for(heartbeatInterval);
+			std::this_thread::sleep_for(heartBeatInterval);
 			ping();
 		}
 	});
@@ -438,11 +447,10 @@ bool SocketWire::Base::try_shutdown_connection() const
 	return s->Shutdown(CSimpleSocket::Both);
 }
 
-SocketWire::Base::~Base() = default;
-
-SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t port, const std::string& id)
-	: Base(id, lifetime, scheduler), port(port)
+SocketWire::Client::Client(Lifetime parentLifetime, IScheduler* scheduler, uint16_t port, const std::string& id)
+	: Base(id, parentLifetime, scheduler), port(port), clientLifetimeDefinition(parentLifetime)
 {
+	Lifetime lifetime = clientLifetimeDefinition.lifetime;
 	thread = std::thread([this, lifetime]() mutable {
 		rd::util::set_thread_name(this->id.empty() ? "SocketWire::Client Thread" : this->id.c_str());
 
@@ -533,10 +541,16 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	});
 }
 
-SocketWire::Client::~Client() = default;
+SocketWire::Client::~Client()
+{
+	if (!clientLifetimeDefinition.is_terminated())
+	{
+		clientLifetimeDefinition.terminate();
+	}
+}
 
-SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t port, const std::string& id)
-	: Base(id, lifetime, scheduler), ss(std::make_unique<CPassiveSocket>())
+SocketWire::Server::Server(Lifetime parentLifetime, IScheduler* scheduler, uint16_t port, const std::string& id)
+	: Base(id, parentLifetime, scheduler), ss(std::make_unique<CPassiveSocket>()), serverLifetimeDefinition(parentLifetime)
 {
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
@@ -549,6 +563,7 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	RD_ASSERT_MSG(this->port != 0, fmt::format("{}: port wasn't chosen", this->id));
 
 	logger->info("{}: listening 127.0.0.1/{}", this->id, this->port);
+	Lifetime lifetime = serverLifetimeDefinition.lifetime;
 
 	thread = std::thread([this, lifetime]() mutable {
 		rd::util::set_thread_name(this->id.empty() ? "SocketWire::Server Thread" : this->id.c_str());
@@ -558,6 +573,13 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 			try
 			{
 				logger->info("{}: accepting started", this->id);
+				
+				// [HACK]: Fix RIDER-51111.
+				// winsock blocking accept hangs after creating new process with createprocess with inheritHandles=true
+				// property. Unreal Engine uses the same logic for handling sockets where they wait for timeout on select
+				// before trying to accept connection.
+				while(ss->IsSocketValid() && !ss->Select(0, 300)){}
+				
 				CActiveSocket* accepted = ss->Accept();
 				RD_ASSERT_THROW_MSG(
 					accepted != nullptr, fmt::format("{}: accepting failed, reason: {}", this->id, ss->DescribeError()));
@@ -621,6 +643,12 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	});
 }
 
-SocketWire::Server::~Server() = default;
+SocketWire::Server::~Server()
+{
+	if (!serverLifetimeDefinition.is_terminated())
+	{
+		serverLifetimeDefinition.terminate();
+	}
+}
 
 }	 // namespace rd

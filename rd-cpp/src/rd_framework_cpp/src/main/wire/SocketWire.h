@@ -35,11 +35,11 @@ public:
 
 		std::timed_mutex lock;
 		mutable std::mutex socket_send_lock;
+		mutable std::mutex wire_send_lock;
 
 		std::thread thread{};
 
 		std::string id;
-		Lifetime lifetime;
 		IScheduler* scheduler = nullptr;
 		std::shared_ptr<CSimpleSocket> socket_provider;
 
@@ -62,7 +62,7 @@ public:
 		mutable Buffer ack_buffer{PACKAGE_HEADER_LENGTH};
 
 		/**
-		 * \brief Timestamp of this wire which increases at intervals of [heartbeatInterval].
+		 * \brief Timestamp of this wire which increases at intervals of [heartBeatInterval].
 		 */
 		mutable int32_t current_timestamp = 0;
 
@@ -107,13 +107,13 @@ public:
 
 	public:
 		static constexpr int32_t MaximumHeartbeatDelay = 3;
-		std::chrono::milliseconds heartbeatInterval = std::chrono::milliseconds(500);
+		std::chrono::milliseconds heartBeatInterval = std::chrono::milliseconds(500);
 
 		// region ctor/dtor
 
 		Base(std::string id, Lifetime lifetime, IScheduler* scheduler);
 
-		~Base() override;
+		virtual ~Base() override;
 
 		// endregion
 
@@ -138,6 +138,9 @@ public:
 		bool send_ack(sequence_number_t seqn) const;
 
 		bool try_shutdown_connection() const;
+		
+	private:		
+		LifetimeDefinition lifetimeDef;
 	};
 
 	class RD_FRAMEWORK_API Client : public Base
@@ -147,12 +150,14 @@ public:
 
 		// region ctor/dtor
 
-		Client(Lifetime lifetime, IScheduler* scheduler, uint16_t port = 0, const std::string& id = "ClientSocket");
+		Client(Lifetime parentLifetime, IScheduler* scheduler, uint16_t port = 0, const std::string& id = "ClientSocket");
 
-		~Client() override;
+		virtual ~Client() override;
 		// endregion
 
 		std::condition_variable_any cv;
+	private:		
+		LifetimeDefinition clientLifetimeDefinition;
 	};
 
 	class RD_FRAMEWORK_API Server : public Base
@@ -166,8 +171,10 @@ public:
 
 		Server(Lifetime lifetime, IScheduler* scheduler, uint16_t port = 0, const std::string& id = "ServerSocket");
 
-		~Server() override;
+		virtual ~Server() override;
 		// endregion
+	private:
+		LifetimeDefinition serverLifetimeDefinition;
 	};
 };
 }	 // namespace rd
