@@ -515,10 +515,10 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
             endpoint.set { _, req -> lifetime.startAsync(scheduler) { req.toString() }.toRdTask() }
 
             runBlocking(scheduler.asCoroutineDispatcher) {
-                var res = callsite.startSuspending(Lifetime.Eternal, 0)
+                var res = callsite.startSuspending(0)
                 assertEquals("0", res)
 
-                res = callsite.startSuspending(Lifetime.Eternal, 1)
+                res = callsite.startSuspending(1)
                 assertEquals("1", res)
             }
 
@@ -536,7 +536,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
 
             runBlocking(scheduler.asCoroutineDispatcher) {
                 val job = launch {
-                    callsite.startSuspending(Lifetime.Eternal, 0)
+                    callsite.startSuspending(0)
                 }
 
                 yield() // wait for startSuspending asynchronously
@@ -566,7 +566,7 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
 
         runBlocking {
             withTimeout(1000) {
-                val  result = callsite.startSuspending(Lifetime.Eternal, 1)
+                val  result = callsite.startSuspending(1)
                 assertEquals("1", result)
             }
         }

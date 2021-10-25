@@ -91,7 +91,25 @@ class CoroutineTest : CoroutineTestBase() {
                 assert(!task.isCompleted)
                 signal.fire("1")
                 assert(task.isCompleted)
-                assertEquals("1", task.await())
+                val result: String = task.await()
+                assertEquals("1", result)
+            }
+
+            kotlin.run {
+                val task = async {
+                    val result: String = signal.nextNotNullValue()
+                    assertEquals("1", result)
+                    return@async result
+                }
+                signal.fire(null)
+                yield()
+                assert(!task.isCompleted)
+
+                signal.fire("1")
+                yield()
+                assert(task.isCompleted)
+                val result: String = task.await()
+                assertEquals("1", result)
             }
         }
 

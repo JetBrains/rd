@@ -131,6 +131,7 @@ interface IRdCall<in TReq, out TRes> {
     fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
 
     suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): TRes
+    suspend fun startSuspending(request: TReq, responseScheduler: IScheduler? = null) = startSuspending(Lifetime.Eternal, request, responseScheduler)
 }
 
 /**
