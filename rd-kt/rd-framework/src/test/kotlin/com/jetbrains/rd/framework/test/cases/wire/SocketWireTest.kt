@@ -8,7 +8,6 @@ import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -290,16 +289,20 @@ class SocketWireTest : TestBase() {
 
     @Test
     fun testSocketFactory() {
+        val spinTimeoutMs = 5000L
+        val spinUntil = { condition: () -> Boolean ->
+            assertTrue(spinUntil(spinTimeoutMs, condition), "Timeout of $spinTimeoutMs ms.")
+        }
 
-        val sLifetime = LifetimeDefinition()
+        val sLifetime = lifetime.createNested()
         val factory = SocketWire.ServerFactory(sLifetime, TestScheduler, 0)
 
-        val lf1 = LifetimeDefinition()
+        val lf1 = sLifetime.createNested()
         SocketWire.Client(lf1, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 1 }
 
-        val lf2 = LifetimeDefinition()
+        val lf2 = sLifetime.createNested()
         SocketWire.Client(lf2, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 2 }
