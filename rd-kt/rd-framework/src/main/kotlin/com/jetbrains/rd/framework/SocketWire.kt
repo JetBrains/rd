@@ -365,6 +365,7 @@ class SocketWire {
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
                 try {
+                    var lastReportedErrorHash = 0
                     while (lifetime.isAlive) {
                         try {
                             val s = Socket()
@@ -392,6 +393,20 @@ class SocketWire {
                             logger.debug { "$id: receiverProc finished " }
 
                         } catch (e: ConnectException) {
+                            val errorSource = Pair(e.message, e.stackTraceToString())
+                            val errorHashCode = errorSource.hashCode()
+                            if (lastReportedErrorHash != errorHashCode) {
+                                lastReportedErrorHash = errorHashCode
+                                if (logger.isEnabled(LogLevel.Debug)) {
+                                    logger.log(
+                                        LogLevel.Debug,
+                                        "$id: connection error for endpoint $hostAddress:$port.",
+                                        e
+                                    )
+                                }
+                            } else {
+                                logger.debug { "$id: connection error for endpoint $hostAddress:$port (${e.message})." }
+                            }
 
                             val shouldReconnect = synchronized(lock) {
                                 if (lifetime.isAlive) {
@@ -409,6 +424,10 @@ class SocketWire {
 
                 } catch (ex: SocketException) {
                     logger.info {"$id: closed with exception: $ex"}
+                } catch (ex: Throwable) {
+                    logger.error("$id: unhandled exception.", ex)
+                } finally {
+                    logger.debug { "$id: terminated." }
                 }
             }
 
@@ -459,33 +478,40 @@ class SocketWire {
         init {
             var socket : Socket? = null
             val thread = thread(name = id, isDaemon = true) {
-                while (lifetime.isAlive) {
-                    try {
-                        logger.debug { "$id: listening ${ss.localSocketAddress}" }
-                        val s = ss.accept() //could be terminated by close
-                        s.tcpNoDelay = true
+                logger.catch {
+                    while (lifetime.isAlive) {
+                        try {
+                            logger.debug { "$id: listening ${ss.localSocketAddress}" }
+                            val s = ss.accept() //could be terminated by close
+                            s.tcpNoDelay = true
 
-                        synchronized(lock) {
-                            if (!lifetime.isAlive) {
-                                logger.debug { "$id : connected, but lifetime is already canceled, closing socket" }
-                                catch { s.close() }
-                                return@thread
-                            } else
-                                socket = s
+                            synchronized(lock) {
+                                if (!lifetime.isAlive) {
+                                    logger.debug { "$id : connected, but lifetime is already canceled, closing socket" }
+                                    catch { s.close() }
+                                    return@thread
+                                } else
+                                    socket = s
+                            }
+
+
+                            socketProvider.set(s)
+                        } catch (ex: SocketException) {
+                            logger.debug { "$id closed with exception: $ex" }
+                        } catch (ex: Exception) {
+                            logger.error("$id closed with exception", ex)
                         }
 
-
-                        socketProvider.set(s)
-                    } catch (ex: SocketException) {
-                        logger.debug { "$id closed with exception: $ex" }
-                    } catch (ex: Exception) {
-                        logger.error("$id closed with exception", ex)
+                        if (!allowReconnect) {
+                            logger.debug { "$id: finished listening on ${ss.localSocketAddress}." }
+                            break
+                        } else {
+                            logger.debug { "$id: waiting for reconnection on ${ss.localSocketAddress}." }
+                        }
                     }
-
-                    if (!allowReconnect)
-                        break
                 }
 
+                logger.debug { "$id: terminated." }
             }
 
 
