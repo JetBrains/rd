@@ -532,6 +532,7 @@ namespace JetBrains.Rd.Impl
           try
           {
             Log.Verbose("{0} : started", Id);
+            var lastReportedErrorHash = 0;
 
             while (lifetime.IsAlive)
             {
@@ -541,7 +542,7 @@ namespace JetBrains.Rd.Impl
                 Socket = s;
 
                 SetSocketOptions(s);
-                Log.Verbose("{0} : connecting", Id);
+                Log.Verbose("{0}: connecting to {1}.", Id, endPoint);
                 s.Connect(endPoint);
 
                 lock (Lock)
@@ -561,8 +562,20 @@ namespace JetBrains.Rd.Impl
                 SocketProvider.Value = Socket;
               }
 
-              catch (SocketException)
+              catch (SocketException ex)
               {
+                var errorHashCode = (ex.Message?.GetHashCode() ?? 0) ^ (ex.StackTrace?.GetHashCode() ?? 0);
+                if (lastReportedErrorHash != errorHashCode)
+                {
+                  lastReportedErrorHash = errorHashCode;
+                  if (Log.IsVersboseEnabled())
+                    Log.Verbose(ex, $"{Id}: connection error for endpoint \"{endPoint}\".");
+                }
+                else
+                {
+                  Log.Verbose("{0}: connection error for endpoint \"{1}\" ({2}).", Id, endPoint, ex.Message);
+                }
+
                 lock (Lock)
                 {
                   if (!lifetime.IsAlive) break;
@@ -585,6 +598,10 @@ namespace JetBrains.Rd.Impl
           catch (Exception e)
           {
             Log.Error(e, Id);
+          }
+          finally
+          {
+            Log.Verbose("{0}: terminated.", Id);
           }
         }) {Name = Id+"-Receiver", IsBackground = true};
 
@@ -645,49 +662,53 @@ namespace JetBrains.Rd.Impl
 
         var thread = new Thread(() =>
         {
-
-          while (lifetime.IsAlive)
+          Log.Catch(() =>
           {
-            try
+            while (lifetime.IsAlive)
             {
-              Log.Verbose("{0} : accepting, port: {1}", Id, Port);
-              var s = serverSocket.Accept();
-              lock (Lock)
+              try
               {
-                if (!lifetime.IsAlive)
+                Log.Verbose("{0} : accepting, port: {1}", Id, Port);
+                var s = serverSocket.Accept();
+                lock (Lock)
                 {
-                  Log.Verbose("{0} : connected, but lifetime is already canceled, closing socket", Id);
-                  CloseSocket(s);
-                  return;
+                  if (!lifetime.IsAlive)
+                  {
+                    Log.Verbose("{0} : connected, but lifetime is already canceled, closing socket", Id);
+                    CloseSocket(s);
+                    return;
+                  }
+                  else
+                  {
+                    Log.Verbose("{0} : accepted", Id);
+                    if (!AcceptHandshake(s))
+                      continue;
+                    Socket = s;
+                    Log.Verbose("{0} : connected", Id);
+                  }
                 }
-                else
-                {
-                  Log.Verbose("{0} : accepted", Id);
-                  if (!AcceptHandshake(s))
-                    continue;
-                  Socket = s;
-                  Log.Verbose("{0} : connected", Id);
-                }
+
+                SocketProvider.Value = s;
               }
+              catch (SocketException e)
+              {
+                var errcode = e.SocketErrorCode;
+                if (errcode == SocketError.TimedOut || errcode == SocketError.WouldBlock) continue; //expected, Linux
 
-              SocketProvider.Value = s;
+                Log.Verbose("{0}: SocketException with message {1}", Id, e.Message);
+              }
+              catch (ObjectDisposedException e)
+              {
+                Log.Verbose("{0}: ObjectDisposedException with message {1}", Id, e.Message);
+              }
+              catch (Exception e)
+              {
+                Log.Error(e, Id);
+              }
             }
-            catch (SocketException e)
-            {
-              var errcode = e.SocketErrorCode;
-              if (errcode == SocketError.TimedOut || errcode == SocketError.WouldBlock) continue; //expected, Linux
+          });
 
-              Log.Verbose("{0}: SocketException with message {1}", Id, e.Message);
-            }
-            catch (ObjectDisposedException e)
-            {
-              Log.Verbose("{0}: ObjectDisposedException with message {1}", Id, e.Message);
-            }
-            catch (Exception e)
-            {
-              Log.Error(e, Id);
-            }
-          }
+          Log.Verbose("{0}: terminated.", Id);
         }) {Name = Id + "-Receiver", IsBackground = true};
 
         thread.Start();
