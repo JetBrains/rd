@@ -2,12 +2,22 @@ package com.jetbrains.rd.framework.test.cases.serialization
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.string.RName
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class SerializersTest {
 
+    @Test
+    fun read_date_should_floor_negative_millis() {
+        val buffer = UnsafeBuffer(ByteArray(100))
+        buffer.writeLong(621355950301790001) // 1969-12-31 23:30:30.1790001 in ticks
+        buffer.rewind()
 
+        val dateTime = buffer.readDateTime()
+
+        assertEquals (dateTime.time, -1769821) // 1969-12-31 23:30:30.179, NOT 1969-12-31 23:30:30.180
+    }
 
     @Test
     fun testReadArray() {
