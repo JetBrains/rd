@@ -35,6 +35,7 @@ open class TestBase {
     }
 
     @AfterEach
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
     fun teardownLogger() {
         SequentialPumpingScheduler.flush()
         lifetimeDef.terminate()

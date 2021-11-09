@@ -15,6 +15,8 @@ import test.synchronization.Clazz
 import test.synchronization.SyncModelRoot
 import test.synchronization.extToClazz
 
+private val serverId = AtomicInteger()
+
 class TestTwoClients : TestBase() {
 
 
@@ -29,13 +31,16 @@ class TestTwoClients : TestBase() {
 
         val sc = SequentialPumpingScheduler
 
-        val wireFactory = SocketWire.ServerFactory(lifetime, sc, null, false)
+        val parametersFactory = {
+            val newId = serverId.incrementAndGet()
+            SocketWire.WireParameters(sc, "ServerSocket[$newId]")
+        }
+        val wireFactory = SocketWire.ServerFactory(lifetime, parametersFactory, null, false)
         val port = wireFactory.localPort
 
         val sp = mutableListOf<Protocol>()
-        var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelRoot.ClientId)
+            val protocol = Protocol("${wire.id}.Protocol", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelRoot.ClientId)
             sp.addUnique(lf, protocol)
         }
 
