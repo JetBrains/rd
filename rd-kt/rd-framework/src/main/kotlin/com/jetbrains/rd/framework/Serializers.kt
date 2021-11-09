@@ -155,7 +155,7 @@ fun AbstractBuffer.readGuid(): UUID = this.readUuid()
 
 fun AbstractBuffer.readDateTime(): Date {
     val timeInTicks = readLong()
-    val timeInMillisecondsSinceEpoch = (timeInTicks - TICKS_AT_EPOCH) / TICKS_PER_MILLISECOND
+    val timeInMillisecondsSinceEpoch = timeInTicks / TICKS_PER_MILLISECOND - TICKS_AT_EPOCH / TICKS_PER_MILLISECOND
     return Date(timeInMillisecondsSinceEpoch)
 }
 

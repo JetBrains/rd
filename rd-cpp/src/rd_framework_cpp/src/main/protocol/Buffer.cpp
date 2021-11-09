@@ -190,7 +190,7 @@ int64_t TICKS_PER_MILLISECOND = 10000000;
 DateTime Buffer::read_date_time()
 {
 	int64_t time_in_ticks = read_integral<int64_t>();
-	time_t t = static_cast<time_t>((time_in_ticks - TICKS_AT_EPOCH) / TICKS_PER_MILLISECOND);
+	time_t t = static_cast<time_t>(time_in_ticks / TICKS_PER_MILLISECOND - TICKS_AT_EPOCH / TICKS_PER_MILLISECOND);
 	return DateTime{t};
 }
 
