@@ -965,6 +965,43 @@ namespace Test.Lifetimes.Lifetimes
       }
 
     }
+    
+    [Test]
+    public void TestTerminationTimeout()
+    {
+      var defA = new LifetimeDefinition(lt, LifetimeTerminationTimeout.Long);
+      var defB = new LifetimeDefinition(defA.Lifetime);
+      var defC = new LifetimeDefinition(defA.Lifetime, LifetimeTerminationTimeout.Short);
+      
+      Assert.AreEqual(LifetimeTerminationTimeout.Long, defB.TerminationTimeout);
+      Assert.AreEqual(LifetimeTerminationTimeout.Long, defA.TerminationTimeout);
+      Assert.AreEqual(LifetimeTerminationTimeout.Short, defC.TerminationTimeout);
+    }
+    
+    [TestCase(LifetimeTerminationTimeout.Default)]
+    [TestCase(LifetimeTerminationTimeout.Short)]
+    [TestCase(LifetimeTerminationTimeout.Long)]
+    [TestCase(LifetimeTerminationTimeout.ExtraLong)]
+    public void TestSetTestTerminationTimeout(LifetimeTerminationTimeout timeout)
+    {
+      var oldTimeoutMs = LifetimeDefinition.GetTerminationTimeoutMs(timeout);
+      try
+      {
+        LifetimeDefinition.SetTerminationTimeoutMs(timeout, 2000);
+
+        var subDef = new LifetimeDefinition(lt, timeout);
+        var subLt = subDef.Lifetime;
+      
+        subLt.ExecuteAsync(() => Task.Delay(750));
+        subDef.Terminate();
+
+        Assert.DoesNotThrow(ThrowLoggedExceptions);
+      }
+      finally
+      {
+        LifetimeDefinition.SetTerminationTimeoutMs(timeout, oldTimeoutMs);
+      }
+    }
 #endif
     
     

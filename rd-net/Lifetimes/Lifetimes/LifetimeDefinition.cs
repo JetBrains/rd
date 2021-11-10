@@ -24,11 +24,13 @@ namespace JetBrains.Lifetimes
 
     internal static readonly ILog Log = JetBrains.Diagnostics.Log.GetLog<Lifetime>();
     
-    [PublicAPI] internal static readonly LifetimeDefinition Eternal = new LifetimeDefinition { Id = nameof(Eternal) };
-    [PublicAPI] internal static readonly LifetimeDefinition Terminated = new LifetimeDefinition { Id = nameof(Terminated) };
+    [PublicAPI] internal static readonly LifetimeDefinition Eternal;
+    [PublicAPI] internal static readonly LifetimeDefinition Terminated;
 
     static LifetimeDefinition()
     {
+      Eternal = new LifetimeDefinition { Id = nameof(Eternal) };
+      Terminated = new LifetimeDefinition { Id = nameof(Terminated) };
       Terminated.ToCancellationToken(); //to create cts
       Terminated.Terminate();
     }
@@ -89,7 +91,32 @@ namespace JetBrains.Lifetimes
     }
     
     private const int WaitForExecutingInTerminationTimeoutMsDefault = 500;
-    [PublicAPI] public static int WaitForExecutingInTerminationTimeoutMs = WaitForExecutingInTerminationTimeoutMsDefault;  
+    [PublicAPI] public static int WaitForExecutingInTerminationTimeoutMs = WaitForExecutingInTerminationTimeoutMsDefault;
+
+    /// <summary>
+    /// Gets the actual value in milliseconds for semantic (short, long, etc) termination timeout.
+    /// </summary>
+    /// <param name="timeout">semantic timeout as defined by <see cref="LifetimeTerminationTimeout"/></param>
+    /// <returns>timeout value in milliseconds</returns>
+    [PublicAPI]
+    public static int GetTerminationTimeoutMs(LifetimeTerminationTimeout timeout) =>
+      timeout == LifetimeTerminationTimeout.Default
+        ? WaitForExecutingInTerminationTimeoutMs
+        : ourTerminationTimeoutMs[(int)timeout - 1];
+
+    /// <summary>
+    /// Sets the actual value in milliseconds for semantic (short, long, etc) termination timeout.
+    /// </summary>
+    /// <param name="timeout">semantic timeout as defined by <see cref="LifetimeTerminationTimeout"/></param>
+    /// <param name="milliseconds">timeout value in milliseconds</param>
+    [PublicAPI]
+    public static void SetTerminationTimeoutMs(LifetimeTerminationTimeout timeout, int milliseconds)
+    {
+      if (timeout == LifetimeTerminationTimeout.Default)
+        WaitForExecutingInTerminationTimeoutMs = milliseconds;
+      else
+        ourTerminationTimeoutMs[(int)timeout - 1] = milliseconds;
+    }
 
     // use real (sealed) types to allow devirtualization
     private static readonly IntBitSlice ourExecutingSlice = BitSlice.Int(20);
@@ -98,7 +125,9 @@ namespace JetBrains.Lifetimes
     private static readonly BoolBitSlice ourVerboseDiagnosticsSlice = BitSlice.Bool(ourMutexSlice);
     private static readonly BoolBitSlice ourAllowTerminationUnderExecutionSlice = BitSlice.Bool(ourVerboseDiagnosticsSlice);
     private static readonly BoolBitSlice ourLogErrorAfterExecution = BitSlice.Bool(ourAllowTerminationUnderExecutionSlice);
-         
+    private static readonly Enum32BitSlice<LifetimeTerminationTimeout> ourTerminationTimeoutSlice = BitSlice.Enum<LifetimeTerminationTimeout>(ourLogErrorAfterExecution);
+
+    private static readonly int[] ourTerminationTimeoutMs = { 250, 5000, 30000 };
     
     #endregion
     
@@ -160,34 +189,57 @@ namespace JetBrains.Lifetimes
       [PublicAPI] set => ourAllowTerminationUnderExecutionSlice.InterlockedUpdate(ref myState, value);
     }
     
+    public LifetimeTerminationTimeout TerminationTimeout => ourTerminationTimeoutSlice[myState];
+    
     #endregion
 
     
     
     #region Init
-    
+
     /// <summary>
-    /// Creates toplevel lifetime definition with no parent. <see cref="Status"/> will always be <see cref="LifetimeStatus.Alive"/>.
+    /// Creates toplevel lifetime definition with no parent. <see cref="Status"/> will always be <see cref="LifetimeStatus.Alive"/>.<br/>
+    /// Created definition and all its children (if not explicitly overriden) will have specified termination timeout (see <see cref="LifetimeTerminationTimeout"/>). 
     /// </summary>
-    public LifetimeDefinition() {}    
-    
+    public LifetimeDefinition(LifetimeTerminationTimeout terminationTimeout = LifetimeTerminationTimeout.Default)
+    {
+      myState = ourTerminationTimeoutSlice.Updated(0, terminationTimeout);
+    }
+
     /// <summary>
+    /// <para>
     /// Created definition nested into <paramref name="parent"/>, i.e. this definition is attached to parent as termination resource.  
     /// If parent <see cref="Lifetimes.Lifetime.Alive"/> than status of new definition is <see cref="LifetimeStatus.Alive"/>.
     /// If parent <see cref="Lifetimes.Lifetime.IsNotAlive"/> than status of new definition is <see cref="LifetimeStatus.Terminated"/>.
-    ///
+    /// </para>
+    /// 
     /// <para>
     /// <see cref="parent"/>'s termination (via <see cref="Terminate"/> method) will instantly propagate <c>Canceling</c> signal
     /// to all descendants, i.e all statuses of parent's children, children's children, ... will become <see cref="LifetimeStatus.Canceling"/>
     /// instantly. And then resources destructure will begin from the most recently connected children to the last (stack's like LIFO way).
     /// </para>
+    ///
+    /// <para>
+    /// Created definition inherits termination timeout from <paramref name="parent"/>.
+    /// </para>
     /// </summary>
     ///
     /// <param name="parent"></param>
-    public LifetimeDefinition(Lifetime parent) : this()
+    public LifetimeDefinition(Lifetime parent) : this(parent.Definition.TerminationTimeout)
     {
       parent.Definition.Attach(this);
-    }   
+    }
+    
+    
+    /// <summary>
+    /// The same as <see cref="LifetimeDefinition(Lifetimes.Lifetime)"/> but with overriden termination timeout.
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <param name="terminationTimeout"></param>
+    public LifetimeDefinition(Lifetime parent, LifetimeTerminationTimeout terminationTimeout) : this(terminationTimeout)
+    {
+      parent.Definition.Attach(this);
+    }
   
     /// <summary>
     /// <inheritdoc cref="LifetimeDefinition(Lifetimes.Lifetime)"/>
@@ -206,11 +258,41 @@ namespace JetBrains.Lifetimes
     }
     
     /// <summary>
+    /// The same as <see cref="LifetimeDefinition(Lifetimes.Lifetime, Action{LifetimeDefinition})"/> but with overriden termination timeout.
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <param name="atomicAction"></param>
+    /// <param name="terminationTimeout"></param>
+    public LifetimeDefinition(
+      Lifetime parent, 
+      [InstantHandle] Action<LifetimeDefinition>? atomicAction,
+      LifetimeTerminationTimeout terminationTimeout) 
+      : this(parent, terminationTimeout)
+    {
+      ExecuteOrTerminateOnFail(atomicAction);
+    }
+    
+    /// <summary>
     /// <inheritdoc cref="LifetimeDefinition(Lifetimes.Lifetime, Action{LifetimeDefinition})"/>
     /// </summary>
     /// <param name="parent"></param>
     /// <param name="atomicAction"></param>
     public LifetimeDefinition(Lifetime parent, [InstantHandle] Action<Lifetime>? atomicAction) : this(parent)
+    {
+      ExecuteOrTerminateOnFail(atomicAction);
+    }
+    
+    /// <summary>
+    /// The same as <see cref="LifetimeDefinition(Lifetimes.Lifetime, Action{Lifetimes.Lifetime})"/> but with overriden termination timeout.
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <param name="atomicAction"></param>
+    /// <param name="terminationTimeout"></param>
+    public LifetimeDefinition(
+      Lifetime parent, 
+      [InstantHandle] Action<Lifetime>? atomicAction,
+      LifetimeTerminationTimeout terminationTimeout) 
+      : this(parent, terminationTimeout)
     {
       ExecuteOrTerminateOnFail(atomicAction);
     }
@@ -388,11 +470,12 @@ namespace JetBrains.Lifetimes
       
       
       //parent could ask for canceled already
-      MarkCancelingRecursively();      
-      
-      if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), WaitForExecutingInTerminationTimeoutMs))
+      MarkCancelingRecursively();
+
+      var terminationTimeoutMs = GetTerminationTimeoutMs(TerminationTimeout);
+      if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), terminationTimeoutMs))
       {
-        Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {WaitForExecutingInTerminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
+        Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {terminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
                         + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
                         + "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100");
 
@@ -716,7 +799,8 @@ namespace JetBrains.Lifetimes
 
         if (ourLogErrorAfterExecution[myDef.myState])
         {
-          Log.Error($"ExecuteIfAlive after termination of {myDef} took too much time (>{WaitForExecutingInTerminationTimeoutMs}ms)");
+          var terminationTimeoutMs = GetTerminationTimeoutMs(myDef.TerminationTimeout);
+          Log.Error($"ExecuteIfAlive after termination of {myDef} took too much time (>{terminationTimeoutMs}ms)");
         } 
       }
     }
