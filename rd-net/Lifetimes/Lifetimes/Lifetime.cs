@@ -50,6 +50,36 @@ namespace JetBrains.Lifetimes
     /// </summary>
     Terminated
   }
+
+  /// <summary>
+  /// Lifetime's semantic termination timeout. The actual milliseconds value can be assigned via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>. 
+  /// </summary>
+  public enum LifetimeTerminationTimeout
+  {
+    /// <summary>
+    /// Default timeout (500ms).<br/>
+    /// The actual value defined by <see cref="LifetimeDefinition.WaitForExecutingInTerminationTimeoutMs"/> (compatibility mode).
+    /// </summary>
+    Default,
+    
+    /// <summary>
+    /// Short timeout (250ms).<br/>
+    /// The actual value can be overriden via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>.
+    /// </summary>
+    Short,
+    
+    /// <summary>
+    /// Long timeout (5s).<br/>
+    /// The actual value can be overriden via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>.
+    /// </summary>
+    Long,
+    
+    /// <summary>
+    /// Extra long timeout (30s).<br/>
+    /// The actual value can be overriden via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>.
+    /// </summary>
+    ExtraLong
+  }
   
   
   /// <summary>
