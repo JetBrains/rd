@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 class SerializersTest {
 
     @Test
-    fun read_date_should_floor_negative_millis() {
+    fun readDateShouldFloorNegativeMillis() {
         val buffer = UnsafeBuffer(ByteArray(100))
         buffer.writeLong(621355950301790001) // 1969-12-31 23:30:30.1790001 in ticks
         buffer.rewind()
