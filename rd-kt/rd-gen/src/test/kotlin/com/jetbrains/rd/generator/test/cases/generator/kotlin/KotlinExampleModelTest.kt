@@ -5,7 +5,7 @@ import com.jetbrains.rd.generator.test.cases.generator.testModels.ExampleRootNov
 import com.jetbrains.rd.generator.testframework.KotlinRdGenOutputTest
 import org.junit.jupiter.api.Test
 
-class ExampleModelTest : KotlinRdGenOutputTest() {
+class KotlinExampleModelTest : KotlinRdGenOutputTest() {
     companion object {
         const val testName = "exampleModelTest"
     }
