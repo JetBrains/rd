@@ -37,6 +37,13 @@ abstract class RdGenOutputTestBase {
                 Assertions.assertNotNull(goldFile, "Resource $goldFileResourcePath should exist")
                 val generatedFile = transformGeneratedFilesDir.resolve("${model.simpleName}.Generated.$fileExtensionNoDot").toFile()
 
+                val createGoldVar = System.getenv("CREATE_GOLD") ?: ""
+                if (createGoldVar.equals("true", ignoreCase = true) || createGoldVar == "1") {
+                    val targetFile = goldFile!!.toResourceSourceFile()
+                    generatedFile.copyTo(targetFile, overwrite = true)
+                    generatedFile.copyTo(goldFile, overwrite = true)
+                }
+
                 val goldText = processText(goldFile!!.readLines())
                 val generatedText = processText(generatedFile.readLines())
 
@@ -71,4 +78,25 @@ abstract class RdGenOutputTestBase {
 
     protected open fun processLines(lines: List<String>) = lines.map { it.trimEnd() }
     protected fun processText(lines: List<String>) = processLines(lines).joinToString("\n")
+
+    protected fun File.toResourceSourceFile(): File {
+        fun String.replaceLast(original: String, replacement: String): String {
+            val index = lastIndexOf(original)
+            if (index == -1) throw Exception("Couldn't find substring \"$original\" in string \"$this\".")
+            return substring(0, index) + replacement + substring(index + original.length, length)
+        }
+
+        fun systemDependentPath(path: String) = path.replace("/", File.separator)
+
+        // Since we're in the build/resources dir during the Gradle test run, replace this with the actual source dir:
+        val filePath = toString()
+        return File(
+            filePath.replaceLast(
+                systemDependentPath("/build/resources/test/"),
+                systemDependentPath("/src/test/resources/")
+            )
+        )
+    }
+
+
 }
