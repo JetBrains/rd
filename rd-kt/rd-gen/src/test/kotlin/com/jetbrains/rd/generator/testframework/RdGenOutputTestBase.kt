@@ -21,7 +21,10 @@ abstract class RdGenOutputTestBase {
 
     protected open fun expectedFileCount(model: Class<*>): Int = 1
 
-    protected inline fun <reified TModel> doTest(vararg models: Class<*>) {
+    protected inline fun <reified TModel> doTest(
+        vararg models: Class<*>,
+        noinline afterCompileAction: ((ClassLoader) -> Unit)? = null
+    ) {
         val classLoader = TModel::class.java.classLoader
         val containingPackage = TModel::class.java.`package`.name
         val transformations = listOf("asis", "reversed")
@@ -63,10 +66,13 @@ abstract class RdGenOutputTestBase {
                 )
                 rdGen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
 
-                val generatedSources = Paths.get(generatedSourcesDir, transform).toFile().walk().toList()
+                val generatedSources = File(generatedSourcesDir, transform).walk().toList() + customGeneratedSources()
                 val compiledClassesLoader = rdGen.compileDsl(generatedSources)
                 Assertions.assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdGen.error}")
-            }
+
+                afterCompileAction?.invoke(compiledClassesLoader!!)
+            } else
+                Assertions.assertNull(afterCompileAction)
         }
     }
 
@@ -79,6 +85,8 @@ abstract class RdGenOutputTestBase {
         val goldFileRelativePath = "testData/$testName/$transform/${model.simpleName}.$fileExtensionNoDot"
         return getGoldFile(goldFileRelativePath)
     }
+
+    protected open fun customGeneratedSources(): List<File> = emptyList()
 
     @BeforeEach
     fun cleanup() {
