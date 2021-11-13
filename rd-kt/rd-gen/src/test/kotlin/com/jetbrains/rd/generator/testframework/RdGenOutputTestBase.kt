@@ -3,7 +3,6 @@ package com.jetbrains.rd.generator.testframework
 import com.jetbrains.rd.generator.nova.RdGen
 import com.jetbrains.rd.generator.nova.generateRdModel
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
-import com.jetbrains.rd.util.reflection.toPath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.io.File
@@ -32,19 +31,16 @@ abstract class RdGenOutputTestBase {
             val transformGeneratedFilesDir = Paths.get(generatedSourcesDir, transform)
 
             for (model in models) {
-                val goldFileResourcePath = "testData/$testName/$transform/${model.simpleName}.$fileExtensionNoDot"
-                val goldFile = classLoader.getResource(goldFileResourcePath)?.toPath()
-                Assertions.assertNotNull(goldFile, "Resource $goldFileResourcePath should exist")
+                val goldFileRelativePath = "testData/$testName/$transform/${model.simpleName}.$fileExtensionNoDot"
+                val goldFile = getGoldFile(goldFileRelativePath)
                 val generatedFile = transformGeneratedFilesDir.resolve("${model.simpleName}.Generated.$fileExtensionNoDot").toFile()
 
                 val createGoldVar = System.getenv("CREATE_GOLD") ?: ""
                 if (createGoldVar.equals("true", ignoreCase = true) || createGoldVar == "1") {
-                    val targetFile = goldFile!!.toResourceSourceFile()
-                    generatedFile.copyTo(targetFile, overwrite = true)
                     generatedFile.copyTo(goldFile, overwrite = true)
                 }
 
-                val goldText = processText(goldFile!!.readLines())
+                val goldText = processText(goldFile.readLines())
                 val generatedText = processText(generatedFile.readLines())
 
                 Assertions.assertEquals(
@@ -79,23 +75,18 @@ abstract class RdGenOutputTestBase {
     protected open fun processLines(lines: List<String>) = lines.map { it.trimEnd() }
     protected fun processText(lines: List<String>) = processLines(lines).joinToString("\n")
 
-    protected fun File.toResourceSourceFile(): File {
-        fun String.replaceLast(original: String, replacement: String): String {
-            val index = lastIndexOf(original)
-            if (index == -1) throw Exception("Couldn't find substring \"$original\" in string \"$this\".")
-            return substring(0, index) + replacement + substring(index + original.length, length)
+    protected fun getGoldFile(resourceRelativePath: String): File {
+        val testDirectory = File(".").canonicalFile
+        var currentDirectory = testDirectory
+        while (currentDirectory.name != "rd-gen") {
+            val parent = currentDirectory.parentFile
+                ?: throw Exception("Wasn't able to find parent directory \"rd-gen\" from \"$testDirectory\".")
+
+            currentDirectory = parent
         }
 
-        fun systemDependentPath(path: String) = path.replace("/", File.separator)
-
-        // Since we're in the build/resources dir during the Gradle test run, replace this with the actual source dir:
-        val filePath = toString()
-        return File(
-            filePath.replaceLast(
-                systemDependentPath("/build/resources/test/"),
-                systemDependentPath("/src/test/resources/")
-            )
-        )
+        val rdGen = currentDirectory
+        return rdGen.resolve("src/test/resources").resolve(resourceRelativePath)
     }
 
 

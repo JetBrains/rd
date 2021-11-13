@@ -3,13 +3,14 @@ package com.jetbrains.rd.generator.test.cases.generator.testModels
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
-import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rd.generator.test.cases.generator.kotlin.ExampleModelTest
+import com.jetbrains.rd.generator.testframework.KotlinRdGenOutputTest
 import java.io.File
 
 val outputKotlinDir = "build/exampleModelGenerated/testOutputKotlin"
 
 object ExampleRootNova : Root(
-    Kotlin11Generator(FlowTransform.AsIs, "org.example", File(outputKotlinDir)),
+    *KotlinRdGenOutputTest.generators(ExampleModelTest.testName, "org.example"),
     Cpp17Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCpp")),
     CSharp50Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCSharp"))
 )
