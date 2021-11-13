@@ -4,14 +4,12 @@ import com.jetbrains.rd.generator.nova.RdGen
 import java.io.File
 import java.net.URLClassLoader
 
-
 enum class Configuration {
     EXAMPLE,
     DEMO_MODEL,
     RIDER_MODEL,
     ENTITY_MODEL
 }
-
 
 fun main() {
     val rdgen = RdGen().apply { verbose *= true }
