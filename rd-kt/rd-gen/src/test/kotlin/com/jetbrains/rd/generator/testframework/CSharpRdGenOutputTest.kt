@@ -20,7 +20,4 @@ abstract class CSharpRdGenOutputTest : RdGenOutputTestBase() {
     override val fileExtensionNoDot = "cs"
     override val generatedSourcesDir
         get() = csGeneratedSourcesDir(testName)
-
-    override fun processLines(lines: List<String>) =
-        lines.filter { !it.startsWith("//") && !it.startsWith("  ///") }
 }

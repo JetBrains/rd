@@ -85,7 +85,9 @@ abstract class RdGenOutputTestBase {
         testFolder.deleteRecursively()
     }
 
-    protected open fun processLines(lines: List<String>) = lines.map { it.trimEnd() }
+    private fun processLines(lines: List<String>) = lines
+        .map { it.trimEnd() }
+        .filter { !it.trim().startsWith("//") }
     protected fun processText(lines: List<String>) = processLines(lines).joinToString("\n")
 
     protected fun getGoldFile(resourceRelativePath: String): File {
