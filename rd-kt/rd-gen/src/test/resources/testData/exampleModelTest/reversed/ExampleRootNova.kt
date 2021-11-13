@@ -15,7 +15,7 @@ import kotlin.jvm.JvmStatic
 
 
 /**
- * #### Generated from [Example.kt:12]
+ * #### Generated from [Example.kt:13]
  */
 class ExampleRootNova private constructor(
 ) : RdExtBase() {

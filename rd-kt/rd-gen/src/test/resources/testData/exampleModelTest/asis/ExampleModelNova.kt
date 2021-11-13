@@ -15,7 +15,7 @@ import kotlin.jvm.JvmStatic
 
 
 /**
- * #### Generated from [Example.kt:19]
+ * #### Generated from [Example.kt:20]
  */
 class ExampleModelNova private constructor(
     private val _push: RdSignal<Int>,
@@ -114,7 +114,7 @@ class ExampleModelNova private constructor(
 
 
 /**
- * #### Generated from [Example.kt:42]
+ * #### Generated from [Example.kt:43]
  */
 abstract class A (
     protected val _y: RdOptionalProperty<String>,
@@ -246,7 +246,7 @@ class A_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:50]
+ * #### Generated from [Example.kt:51]
  */
 class Baz private constructor(
     val foo: List<Foo>,
@@ -460,7 +460,7 @@ class Baz private constructor(
 
 
 /**
- * #### Generated from [Example.kt:88]
+ * #### Generated from [Example.kt:89]
  */
 class Completion private constructor(
     private val _lookupItems: RdMap<Int, Boolean>
@@ -523,7 +523,7 @@ class Completion private constructor(
 
 
 /**
- * #### Generated from [Example.kt:83]
+ * #### Generated from [Example.kt:84]
  */
 class Document private constructor(
     val moniker: FooBar,
@@ -618,7 +618,7 @@ class Document private constructor(
 
 
 /**
- * #### Generated from [Example.kt:25]
+ * #### Generated from [Example.kt:26]
  */
 enum class EnumSetTest {
     a, 
@@ -633,7 +633,7 @@ enum class EnumSetTest {
 
 
 /**
- * #### Generated from [Example.kt:33]
+ * #### Generated from [Example.kt:34]
  */
 abstract class Foo (
     val x: Int,
@@ -676,7 +676,7 @@ abstract class Foo (
 
 
 /**
- * #### Generated from [Example.kt:72]
+ * #### Generated from [Example.kt:73]
  */
 class FooBar (
     val a: Baz
@@ -796,7 +796,7 @@ class Foo_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:97]
+ * #### Generated from [Example.kt:98]
  */
 data class ScalarExample (
     val intfield: Int
@@ -853,7 +853,7 @@ data class ScalarExample (
 
 
 /**
- * #### Generated from [Example.kt:38]
+ * #### Generated from [Example.kt:39]
  */
 abstract class ScalarPrimer (
     val x: Int
@@ -944,7 +944,7 @@ class ScalarPrimer_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:21]
+ * #### Generated from [Example.kt:22]
  */
 data class Selection (
     val start: Int,
@@ -1025,7 +1025,7 @@ data class Selection (
 
 
 /**
- * #### Generated from [Example.kt:100]
+ * #### Generated from [Example.kt:101]
  */
 class TextControl private constructor(
     private val _selection: RdOptionalProperty<Selection>,
@@ -1112,7 +1112,7 @@ class TextControl private constructor(
 
 
 /**
- * #### Generated from [Example.kt:44]
+ * #### Generated from [Example.kt:45]
  */
 enum class Z {
     Bar, 

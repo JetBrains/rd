@@ -19,6 +19,8 @@ abstract class RdGenOutputTestBase {
     protected abstract val fileExtensionNoDot: String
     protected abstract val generatedSourcesDir: String
 
+    protected open fun expectedFileCount(model: Class<*>): Int = 1
+
     protected inline fun <reified TModel> doTest(vararg models: Class<*>) {
         val classLoader = TModel::class.java.classLoader
         val containingPackage = TModel::class.java.`package`.name
@@ -28,26 +30,27 @@ abstract class RdGenOutputTestBase {
         assert(files.isNotEmpty()) { "No files generated!" }
 
         for (transform in transformations) {
-            val transformGeneratedFilesDir = Paths.get(generatedSourcesDir, transform)
-
             for (model in models) {
-                val goldFileRelativePath = "testData/$testName/$transform/${model.simpleName}.$fileExtensionNoDot"
-                val goldFile = getGoldFile(goldFileRelativePath)
-                val generatedFile = transformGeneratedFilesDir.resolve("${model.simpleName}.Generated.$fileExtensionNoDot").toFile()
+                val generatedFiles = enumerateGeneratedFiles(transform, model)
+                Assertions.assertEquals(expectedFileCount(model), generatedFiles.size, "file count for model $model")
 
-                val createGoldVar = System.getenv("CREATE_GOLD") ?: ""
-                if (createGoldVar.equals("true", ignoreCase = true) || createGoldVar == "1") {
-                    generatedFile.copyTo(goldFile, overwrite = true)
+                for (generatedFile in generatedFiles) {
+                    val goldFile = getGoldFile(transform, model, generatedFile)
+
+                    val createGoldVar = System.getenv("CREATE_GOLD") ?: ""
+                    if (createGoldVar.equals("true", ignoreCase = true) || createGoldVar == "1") {
+                        generatedFile.copyTo(goldFile, overwrite = true)
+                    }
+
+                    val goldText = processText(goldFile.readLines())
+                    val generatedText = processText(generatedFile.readLines())
+
+                    Assertions.assertEquals(
+                        goldText,
+                        generatedText,
+                        "Generated and gold sources should be the same for model class ${model.simpleName}, transformation $transform"
+                    )
                 }
-
-                val goldText = processText(goldFile.readLines())
-                val generatedText = processText(generatedFile.readLines())
-
-                Assertions.assertEquals(
-                    goldText,
-                    generatedText,
-                    "Generated and gold sources should be the same for model class ${model.simpleName}, transformation $transform"
-                )
             }
 
             if (compileAfterGenerate) {
@@ -65,6 +68,16 @@ abstract class RdGenOutputTestBase {
                 Assertions.assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdGen.error}")
             }
         }
+    }
+
+    protected open fun enumerateGeneratedFiles(transform: String, model: Class<*>): List<File> {
+        val transformGeneratedFilesDir = Paths.get(generatedSourcesDir, transform)
+        return listOf(transformGeneratedFilesDir.resolve("${model.simpleName}.Generated.$fileExtensionNoDot").toFile())
+    }
+
+    protected open fun getGoldFile(transform: String, model: Class<*>, generatedFile: File): File {
+        val goldFileRelativePath = "testData/$testName/$transform/${model.simpleName}.$fileExtensionNoDot"
+        return getGoldFile(goldFileRelativePath)
     }
 
     @BeforeEach
@@ -88,6 +101,4 @@ abstract class RdGenOutputTestBase {
         val rdGen = currentDirectory
         return rdGen.resolve("src/test/resources").resolve(resourceRelativePath)
     }
-
-
 }

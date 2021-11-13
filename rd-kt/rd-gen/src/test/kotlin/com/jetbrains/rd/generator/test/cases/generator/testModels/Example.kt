@@ -1,18 +1,18 @@
 package com.jetbrains.rd.generator.test.cases.generator.testModels
 
 import com.jetbrains.rd.generator.nova.*
-import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
+import com.jetbrains.rd.generator.test.cases.generator.cpp.CppExampleModelTest
 import com.jetbrains.rd.generator.test.cases.generator.csharp.CSharpExampleModelTest
 import com.jetbrains.rd.generator.test.cases.generator.kotlin.KotlinExampleModelTest
 import com.jetbrains.rd.generator.testframework.CSharpRdGenOutputTest
+import com.jetbrains.rd.generator.testframework.CppRdGenOutputTest
 import com.jetbrains.rd.generator.testframework.KotlinRdGenOutputTest
-import java.io.File
 
 val outputKotlinDir = "build/exampleModelGenerated/testOutputKotlin"
 
 object ExampleRootNova : Root(
     *KotlinRdGenOutputTest.generators(KotlinExampleModelTest.testName, "org.example"),
-    Cpp17Generator(FlowTransform.AsIs, "org.example", File("build/exampleModelGenerated/testOutputCpp")),
+    *CppRdGenOutputTest.generators(CppExampleModelTest.testName, "org.example"),
     *CSharpRdGenOutputTest.generators(CSharpExampleModelTest.testName, "org.example")
 )
 
