@@ -1,6 +1,8 @@
 package com.jetbrains.rd.generator.testframework
 
+import com.jetbrains.rd.generator.nova.RdGen
 import com.jetbrains.rd.generator.nova.generateRdModel
+import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import com.jetbrains.rd.util.reflection.toPath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -13,6 +15,8 @@ abstract class RdGenOutputTestBase {
     private val testFolder
         get() = File("build/$testName")
 
+    protected open val compileAfterGenerate: Boolean = false
+
     protected abstract val fileExtensionNoDot: String
     protected abstract val generatedSourcesDir: String
 
@@ -21,14 +25,17 @@ abstract class RdGenOutputTestBase {
         val containingPackage = TModel::class.java.`package`.name
         val transformations = listOf("asis", "reversed")
 
-        generateRdModel(classLoader, arrayOf(containingPackage), true)
+        val files = generateRdModel(classLoader, arrayOf(containingPackage), true)
+        assert(files.isNotEmpty()) { "No files generated!" }
 
         for (transform in transformations) {
+            val transformGeneratedFilesDir = Paths.get(generatedSourcesDir, transform)
+
             for (model in models) {
                 val goldFileResourcePath = "testData/$testName/$transform/${model.simpleName}.$fileExtensionNoDot"
                 val goldFile = classLoader.getResource(goldFileResourcePath)?.toPath()
                 Assertions.assertNotNull(goldFile, "Resource $goldFileResourcePath should exist")
-                val generatedFile = Paths.get(generatedSourcesDir, transform, "${model.simpleName}.Generated.$fileExtensionNoDot").toFile()
+                val generatedFile = transformGeneratedFilesDir.resolve("${model.simpleName}.Generated.$fileExtensionNoDot").toFile()
 
                 val goldText = processText(goldFile!!.readLines())
                 val generatedText = processText(generatedFile.readLines())
@@ -38,6 +45,21 @@ abstract class RdGenOutputTestBase {
                     generatedText,
                     "Generated and gold sources should be the same for model class ${model.simpleName}, transformation $transform"
                 )
+            }
+
+            if (compileAfterGenerate) {
+                val rdGen = RdGen().apply { verbose *= true }
+
+                val rdFrameworkClasspath = classLoader.scanForResourcesContaining(
+                    "org.jetbrains.annotations",
+                    "com.jetbrains.rd.framework",
+                    "com.jetbrains.rd.util"
+                )
+                rdGen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
+
+                val generatedSources = Paths.get(generatedSourcesDir, transform).toFile().walk().toList()
+                val compiledClassesLoader = rdGen.compileDsl(generatedSources)
+                Assertions.assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdGen.error}")
             }
         }
     }
