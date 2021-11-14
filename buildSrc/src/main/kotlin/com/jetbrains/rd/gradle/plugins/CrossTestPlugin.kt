@@ -52,6 +52,9 @@ class CrossTestPlugin : Plugin<Project> {
                 classpath += configurations["compileClasspath"]
                 classpath += configurations["runtimeClasspath"]
                 classpath = classpath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
+
+                val extraArguments = project.extra["crossTestsJavaAdditionalArgs"]?.toString().orEmpty().split(' ')
+                jvmArgs(extraArguments)
             }
 
             fun creatingCrossTestRdTask() =
