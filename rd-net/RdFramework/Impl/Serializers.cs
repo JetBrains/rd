@@ -323,7 +323,6 @@ namespace JetBrains.Rd.Impl
       }
       typeId.Write(writer);
 
-      // Don't dispose this cookie, otherwise it will delete all written data
       var bookmark = new UnsafeWriter.Bookmark(writer);
       writer.Write(0);
       CtxWriteDelegate<object> writerDelegate;
