@@ -2,11 +2,14 @@
 
 package com.jetbrains.rd.gradle.plugins
 
-import com.jetbrains.rd.gradle.tasks.*
+import com.jetbrains.rd.gradle.tasks.CrossTestCsTask
+import com.jetbrains.rd.gradle.tasks.CrossTestTaskKt
+import com.jetbrains.rd.gradle.tasks.InteropTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
+import java.io.File
 
 fun Project.applyCrossTest() = apply<CrossTestPlugin>()
 
@@ -48,6 +51,10 @@ class CrossTestPlugin : Plugin<Project> {
                 classpath += sourceSets["main"].output
                 classpath += configurations["compileClasspath"]
                 classpath += configurations["runtimeClasspath"]
+                classpath = classpath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
+
+                val extraArguments = project.extra["crossTestsJavaAdditionalArgs"]?.toString().orEmpty().split(' ')
+                jvmArgs(extraArguments)
             }
 
             fun creatingCrossTestRdTask() =

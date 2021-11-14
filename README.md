@@ -113,8 +113,6 @@ To build packages locally please use: `rd-kt/rd-gen/pack.sh`
 
 ### On a local computer
 
-Don't forget to set `TEAMCITY_VERSION=1` (temporary measure for now) before running any tests.
-
 ```console
 $ ./gradlew build
 ```

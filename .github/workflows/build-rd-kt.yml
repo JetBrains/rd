@@ -14,7 +14,6 @@ jobs:
         os: [macos-10.15, windows-2019]
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.github/gradle
-      TEAMCITY_VERSION: 1 # temporary; to disable cross tests
     timeout-minutes: 25
     steps:
     - uses: actions/checkout@v2

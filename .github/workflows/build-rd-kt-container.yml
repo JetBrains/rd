@@ -12,7 +12,6 @@ jobs:
     container: adoptopenjdk/openjdk11:x86_64-ubuntu-jdk-11.0.11_9
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.github/gradle
-      TEAMCITY_VERSION: 1 # temporary; to disable cross tests
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v2
