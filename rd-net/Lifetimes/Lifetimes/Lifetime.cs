@@ -52,9 +52,9 @@ namespace JetBrains.Lifetimes
   }
 
   /// <summary>
-  /// Lifetime's semantic termination timeout. The actual milliseconds value can be assigned via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>. 
+  /// Lifetime's termination timeout kind. The actual milliseconds value can be assigned via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>. 
   /// </summary>
-  public enum LifetimeTerminationTimeout
+  public enum LifetimeTerminationTimeoutKind
   {
     /// <summary>
     /// Default timeout (500ms).<br/>
