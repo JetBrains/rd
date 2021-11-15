@@ -94,28 +94,28 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public static int WaitForExecutingInTerminationTimeoutMs = WaitForExecutingInTerminationTimeoutMsDefault;
 
     /// <summary>
-    /// Gets the actual value in milliseconds for semantic (short, long, etc) termination timeout.
+    /// Gets the actual value in milliseconds for termination timeout kind (short, long, etc).
     /// </summary>
-    /// <param name="timeout">semantic timeout as defined by <see cref="LifetimeTerminationTimeout"/></param>
+    /// <param name="timeoutKind">timeout kind as defined by <see cref="LifetimeTerminationTimeoutKind"/></param>
     /// <returns>timeout value in milliseconds</returns>
     [PublicAPI]
-    public static int GetTerminationTimeoutMs(LifetimeTerminationTimeout timeout) =>
-      timeout == LifetimeTerminationTimeout.Default
+    public static int GetTerminationTimeoutMs(LifetimeTerminationTimeoutKind timeoutKind) =>
+      timeoutKind == LifetimeTerminationTimeoutKind.Default
         ? WaitForExecutingInTerminationTimeoutMs
-        : ourTerminationTimeoutMs[(int)timeout - 1];
+        : ourTerminationTimeoutMs[(int)timeoutKind - 1];
 
     /// <summary>
-    /// Sets the actual value in milliseconds for semantic (short, long, etc) termination timeout.
+    /// Sets the actual value in milliseconds for termination timeout kind (short, long, etc).
     /// </summary>
-    /// <param name="timeout">semantic timeout as defined by <see cref="LifetimeTerminationTimeout"/></param>
+    /// <param name="timeoutKind">timeout kind as defined by <see cref="LifetimeTerminationTimeoutKind"/></param>
     /// <param name="milliseconds">timeout value in milliseconds</param>
     [PublicAPI]
-    public static void SetTerminationTimeoutMs(LifetimeTerminationTimeout timeout, int milliseconds)
+    public static void SetTerminationTimeoutMs(LifetimeTerminationTimeoutKind timeoutKind, int milliseconds)
     {
-      if (timeout == LifetimeTerminationTimeout.Default)
+      if (timeoutKind == LifetimeTerminationTimeoutKind.Default)
         WaitForExecutingInTerminationTimeoutMs = milliseconds;
       else
-        ourTerminationTimeoutMs[(int)timeout - 1] = milliseconds;
+        ourTerminationTimeoutMs[(int)timeoutKind - 1] = milliseconds;
     }
 
     // use real (sealed) types to allow devirtualization
@@ -125,7 +125,7 @@ namespace JetBrains.Lifetimes
     private static readonly BoolBitSlice ourVerboseDiagnosticsSlice = BitSlice.Bool(ourMutexSlice);
     private static readonly BoolBitSlice ourAllowTerminationUnderExecutionSlice = BitSlice.Bool(ourVerboseDiagnosticsSlice);
     private static readonly BoolBitSlice ourLogErrorAfterExecution = BitSlice.Bool(ourAllowTerminationUnderExecutionSlice);
-    private static readonly Enum32BitSlice<LifetimeTerminationTimeout> ourTerminationTimeoutSlice = BitSlice.Enum<LifetimeTerminationTimeout>(ourLogErrorAfterExecution);
+    private static readonly Enum32BitSlice<LifetimeTerminationTimeoutKind> ourTerminationTimeoutKindSlice = BitSlice.Enum<LifetimeTerminationTimeoutKind>(ourLogErrorAfterExecution);
 
     private static readonly int[] ourTerminationTimeoutMs = { 250, 5000, 30000 };
     
@@ -188,8 +188,17 @@ namespace JetBrains.Lifetimes
       [PublicAPI] get => ourAllowTerminationUnderExecutionSlice[myState];
       [PublicAPI] set => ourAllowTerminationUnderExecutionSlice.InterlockedUpdate(ref myState, value);
     }
-    
-    public LifetimeTerminationTimeout TerminationTimeout => ourTerminationTimeoutSlice[myState];
+
+    /// <summary>
+    /// Gets or sets termination timeout kind for the definition.<br/>
+    /// The sub-definitions inherit this value at the moment of creation.
+    /// The changing of <c>TerminationTimeoutKind</c> doesn't affect already created sub-definitions.
+    /// </summary>
+    public LifetimeTerminationTimeoutKind TerminationTimeoutKind
+    {
+      get => ourTerminationTimeoutKindSlice[myState];
+      set => myState = ourTerminationTimeoutKindSlice.Updated(myState, value);
+    }
     
     #endregion
 
@@ -199,12 +208,9 @@ namespace JetBrains.Lifetimes
 
     /// <summary>
     /// Creates toplevel lifetime definition with no parent. <see cref="Status"/> will always be <see cref="LifetimeStatus.Alive"/>.<br/>
-    /// Created definition and all its children (if not explicitly overriden) will have specified termination timeout (see <see cref="LifetimeTerminationTimeout"/>). 
+    /// Created definition and all its children (if not explicitly overriden) will have specified termination timeout (see <see cref="LifetimeTerminationTimeoutKind"/>). 
     /// </summary>
-    public LifetimeDefinition(LifetimeTerminationTimeout terminationTimeout = LifetimeTerminationTimeout.Default)
-    {
-      myState = ourTerminationTimeoutSlice.Updated(0, terminationTimeout);
-    }
+    public LifetimeDefinition() { }
 
     /// <summary>
     /// <para>
@@ -220,27 +226,18 @@ namespace JetBrains.Lifetimes
     /// </para>
     ///
     /// <para>
-    /// Created definition inherits termination timeout from <paramref name="parent"/>.
+    /// Created definition inherits current value of <paramref name="parent"/>.<see cref="TerminationTimeoutKind"/>.<br/>
+    /// Note: subsequent change of <c>TerminationTimeoutKind</c> doesn't affect already created sub-definitions.
     /// </para>
     /// </summary>
     ///
     /// <param name="parent"></param>
-    public LifetimeDefinition(Lifetime parent) : this(parent.Definition.TerminationTimeout)
+    public LifetimeDefinition(Lifetime parent)
     {
       parent.Definition.Attach(this);
+      TerminationTimeoutKind = parent.Definition.TerminationTimeoutKind;
     }
-    
-    
-    /// <summary>
-    /// The same as <see cref="LifetimeDefinition(Lifetimes.Lifetime)"/> but with overriden termination timeout.
-    /// </summary>
-    /// <param name="parent"></param>
-    /// <param name="terminationTimeout"></param>
-    public LifetimeDefinition(Lifetime parent, LifetimeTerminationTimeout terminationTimeout) : this(terminationTimeout)
-    {
-      parent.Definition.Attach(this);
-    }
-  
+
     /// <summary>
     /// <inheritdoc cref="LifetimeDefinition(Lifetimes.Lifetime)"/>
     ///
@@ -256,22 +253,7 @@ namespace JetBrains.Lifetimes
     {
       ExecuteOrTerminateOnFail(atomicAction);
     }
-    
-    /// <summary>
-    /// The same as <see cref="LifetimeDefinition(Lifetimes.Lifetime, Action{LifetimeDefinition})"/> but with overriden termination timeout.
-    /// </summary>
-    /// <param name="parent"></param>
-    /// <param name="atomicAction"></param>
-    /// <param name="terminationTimeout"></param>
-    public LifetimeDefinition(
-      Lifetime parent, 
-      [InstantHandle] Action<LifetimeDefinition>? atomicAction,
-      LifetimeTerminationTimeout terminationTimeout) 
-      : this(parent, terminationTimeout)
-    {
-      ExecuteOrTerminateOnFail(atomicAction);
-    }
-    
+
     /// <summary>
     /// <inheritdoc cref="LifetimeDefinition(Lifetimes.Lifetime, Action{LifetimeDefinition})"/>
     /// </summary>
@@ -281,22 +263,7 @@ namespace JetBrains.Lifetimes
     {
       ExecuteOrTerminateOnFail(atomicAction);
     }
-    
-    /// <summary>
-    /// The same as <see cref="LifetimeDefinition(Lifetimes.Lifetime, Action{Lifetimes.Lifetime})"/> but with overriden termination timeout.
-    /// </summary>
-    /// <param name="parent"></param>
-    /// <param name="atomicAction"></param>
-    /// <param name="terminationTimeout"></param>
-    public LifetimeDefinition(
-      Lifetime parent, 
-      [InstantHandle] Action<Lifetime>? atomicAction,
-      LifetimeTerminationTimeout terminationTimeout) 
-      : this(parent, terminationTimeout)
-    {
-      ExecuteOrTerminateOnFail(atomicAction);
-    }
-    
+
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
@@ -472,7 +439,7 @@ namespace JetBrains.Lifetimes
       //parent could ask for canceled already
       MarkCancelingRecursively();
 
-      var terminationTimeoutMs = GetTerminationTimeoutMs(TerminationTimeout);
+      var terminationTimeoutMs = GetTerminationTimeoutMs(TerminationTimeoutKind);
       if (ourExecutingSlice[myState] > 0 /*optimization*/ && !SpinWait.SpinUntil(() => ourExecutingSlice[myState] <= ThreadLocalExecuting(), terminationTimeoutMs))
       {
         Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {terminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
@@ -799,7 +766,7 @@ namespace JetBrains.Lifetimes
 
         if (ourLogErrorAfterExecution[myDef.myState])
         {
-          var terminationTimeoutMs = GetTerminationTimeoutMs(myDef.TerminationTimeout);
+          var terminationTimeoutMs = GetTerminationTimeoutMs(myDef.TerminationTimeoutKind);
           Log.Error($"ExecuteIfAlive after termination of {myDef} took too much time (>{terminationTimeoutMs}ms)");
         } 
       }

@@ -969,27 +969,27 @@ namespace Test.Lifetimes.Lifetimes
     [Test]
     public void TestTerminationTimeout()
     {
-      var defA = new LifetimeDefinition(lt, LifetimeTerminationTimeout.Long);
+      var defA = new LifetimeDefinition(lt) { TerminationTimeoutKind = LifetimeTerminationTimeoutKind.Long };
       var defB = new LifetimeDefinition(defA.Lifetime);
-      var defC = new LifetimeDefinition(defA.Lifetime, LifetimeTerminationTimeout.Short);
+      var defC = new LifetimeDefinition(defA.Lifetime) { TerminationTimeoutKind = LifetimeTerminationTimeoutKind.Short };
       
-      Assert.AreEqual(LifetimeTerminationTimeout.Long, defB.TerminationTimeout);
-      Assert.AreEqual(LifetimeTerminationTimeout.Long, defA.TerminationTimeout);
-      Assert.AreEqual(LifetimeTerminationTimeout.Short, defC.TerminationTimeout);
+      Assert.AreEqual(LifetimeTerminationTimeoutKind.Long, defB.TerminationTimeoutKind);
+      Assert.AreEqual(LifetimeTerminationTimeoutKind.Long, defA.TerminationTimeoutKind);
+      Assert.AreEqual(LifetimeTerminationTimeoutKind.Short, defC.TerminationTimeoutKind);
     }
     
-    [TestCase(LifetimeTerminationTimeout.Default)]
-    [TestCase(LifetimeTerminationTimeout.Short)]
-    [TestCase(LifetimeTerminationTimeout.Long)]
-    [TestCase(LifetimeTerminationTimeout.ExtraLong)]
-    public void TestSetTestTerminationTimeout(LifetimeTerminationTimeout timeout)
+    [TestCase(LifetimeTerminationTimeoutKind.Default)]
+    [TestCase(LifetimeTerminationTimeoutKind.Short)]
+    [TestCase(LifetimeTerminationTimeoutKind.Long)]
+    [TestCase(LifetimeTerminationTimeoutKind.ExtraLong)]
+    public void TestSetTestTerminationTimeout(LifetimeTerminationTimeoutKind timeoutKind)
     {
-      var oldTimeoutMs = LifetimeDefinition.GetTerminationTimeoutMs(timeout);
+      var oldTimeoutMs = LifetimeDefinition.GetTerminationTimeoutMs(timeoutKind);
       try
       {
-        LifetimeDefinition.SetTerminationTimeoutMs(timeout, 2000);
+        LifetimeDefinition.SetTerminationTimeoutMs(timeoutKind, 2000);
 
-        var subDef = new LifetimeDefinition(lt, timeout);
+        var subDef = new LifetimeDefinition(lt) { TerminationTimeoutKind = timeoutKind };
         var subLt = subDef.Lifetime;
       
         subLt.ExecuteAsync(() => Task.Delay(750));
@@ -999,7 +999,7 @@ namespace Test.Lifetimes.Lifetimes
       }
       finally
       {
-        LifetimeDefinition.SetTerminationTimeoutMs(timeout, oldTimeoutMs);
+        LifetimeDefinition.SetTerminationTimeoutMs(timeoutKind, oldTimeoutMs);
       }
     }
 #endif
