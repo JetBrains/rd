@@ -197,7 +197,7 @@ namespace JetBrains.Lifetimes
     public LifetimeTerminationTimeoutKind TerminationTimeoutKind
     {
       get => ourTerminationTimeoutKindSlice[myState];
-      set => myState = ourTerminationTimeoutKindSlice.Updated(myState, value);
+      set => ourTerminationTimeoutKindSlice.InterlockedUpdate(ref myState, value);
     }
     
     #endregion
