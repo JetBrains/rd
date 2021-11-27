@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -30,8 +31,8 @@ namespace JetBrains.Util.Util
     
     #region Assertions
 
-    [AssertionMethod]
-    private void AssertSliceFitsHostType<T>()
+    [AssertionMethod, Conditional("JET_MODE_ASSERT")]
+    protected void AssertSliceFitsHostType<T>()
     {
       var type = typeof(T);      
       var maxBit = type == typeof(int) ? 31
@@ -42,7 +43,7 @@ namespace JetBrains.Util.Util
       Assertion.Assert(HiBit <= maxBit, "{0} doesn't fit into host type {1}; must be inside [0, {2}]", this, type, maxBit);
     }
 
-    [AssertionMethod]
+    [AssertionMethod, Conditional("JET_MODE_ASSERT")]
     private void AssertValueFitsSlice(int value)
     {
       Assertion.Assert(value >= 0, "[{0}] must be >= 0; actual: {1}", nameof(value), value);
@@ -57,16 +58,13 @@ namespace JetBrains.Util.Util
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     protected int GetRaw(int host)
     {
-//      AssertSliceFitsHostType<int>();
-      
       return (host >> LoBit) & Mask;
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     protected int UpdatedRaw(int host, int value)
     {
-//      AssertSliceFitsHostType<int>();
-//      AssertValueFitsSlice(value);
+      AssertValueFitsSlice(value);
       
       return (host & ((Mask << LoBit) ^ -1)) | (value << LoBit);
     }
@@ -130,7 +128,10 @@ namespace JetBrains.Util.Util
 
   public sealed class IntBitSlice : BitSlice<int>
   {
-    public IntBitSlice(int loBit, int bitCount) : base(loBit, bitCount){}
+    public IntBitSlice(int loBit, int bitCount) : base(loBit, bitCount)
+    {
+      AssertSliceFitsHostType<int>();
+    }
         
     public override int this[int host]
     {
@@ -144,7 +145,11 @@ namespace JetBrains.Util.Util
   
   public sealed class BoolBitSlice : BitSlice<bool>
   {
-    public BoolBitSlice(int loBit, int bitCount) : base(loBit, bitCount){}
+    public BoolBitSlice(int loBit, int bitCount) : base(loBit, bitCount)
+    {
+      AssertSliceFitsHostType<int>();
+    }
+
     public override bool this[int host]
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]      
@@ -176,8 +181,12 @@ namespace JetBrains.Util.Util
 
       return res;
     }
-    
-    public Enum32BitSlice(int loBit) : base(loBit, CalculateBitCount()){}
+
+    public Enum32BitSlice(int loBit) : base(loBit, CalculateBitCount())
+    {
+      AssertSliceFitsHostType<int>();
+    }
+
     public override T this[int host]
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]

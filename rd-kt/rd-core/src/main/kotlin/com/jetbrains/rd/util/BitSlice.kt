@@ -4,6 +4,8 @@ open class BitSlice(val lowBit: Int, val bitCount: Int) {
     init {
         require(lowBit >= 0)  { "[lowBit] must be >= 0, actual: '$lowBit'"}
         require(bitCount > 0) { "[bitCount] must be > 0, actual '$bitCount'"}
+
+        requireSliceFitsIntType()
     }
 
     val highBit: Int get() = lowBit + bitCount - 1
@@ -51,14 +53,11 @@ open class BitSlice(val lowBit: Int, val bitCount: Int) {
 
     //GET and SET
     fun getRaw(host: Int) : Int {
-        requireSliceFitsIntType()
-
         return (host ushr lowBit) and mask
     }
 
 
     fun updatedRaw(host: Int, value: Int) : Int {
-        requireSliceFitsIntType()
         requireValueFitsSlice(value)
 
         return (host and  ((mask shl lowBit) xor -1)) or (value shl lowBit)
