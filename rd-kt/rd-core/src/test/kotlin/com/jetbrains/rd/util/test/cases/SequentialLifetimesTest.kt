@@ -2,6 +2,8 @@ package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.test.framework.RdTestBase
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -117,6 +119,41 @@ class SequentialLifetimesTest : RdTestBase()  {
         }
 
         assertEquals("T1N2", sb.toString())
+    }
+
+    @Test
+    fun nestedLifetimesLeakageTest() {
+        var p1 = false
+        var p2 = false
+        var p3 = false
+        Lifetime.using { lifetime ->
+            val seq = SequentialLifetimes(lifetime)
+
+            var prev: LifetimeDefinition? = null
+
+            lifetime.onTermination { p1 = true }
+            for (i in 0..10_000) {
+                seq.next()
+
+                if (i == 5000)
+                    lifetime.onTermination { p2 = true }
+
+                prev?.terminate()
+                prev = lifetime.createNested()
+
+                if (i == 7000)
+                    lifetime.onTermination { p3 = true }
+            }
+
+            val r = lifetime::class.declaredMemberProperties.single { it.name == "resources" }
+            r.isAccessible = true
+            val resources = r.getter.call(lifetime) as Array<*>
+            assert(resources.size <= 12)
+        }
+
+        assert(p1) { "p1" }
+        assert(p2) { "p2" }
+        assert(p3) { "p3" }
     }
 }
 

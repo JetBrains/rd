@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.concurrent.thread
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 
 class LifetimeTest : RdTestBase() {
 
@@ -145,6 +147,40 @@ class LifetimeTest : RdTestBase() {
     fun testEternal() {
         assertTrue { Lifetime.Eternal.onTerminationIfAlive {} }
     }
+
+    @Test
+    fun nestedLifetimesLeakageTest() {
+        var p1 = false
+        var p2 = false
+        var p3 = false
+        Lifetime.using { lifetime ->
+            var prev: LifetimeDefinition? = null
+
+            lifetime.onTermination { p1 = true }
+            for (i in 0..10_000) {
+                lifetime.usingNested {
+                    if (i == 5000)
+                        lifetime.onTermination { p2 = true }
+
+                    prev?.terminate()
+                    prev = lifetime.createNested()
+
+                    if (i == 7000)
+                        lifetime.onTermination { p3 = true }
+                }
+            }
+
+            val r = lifetime::class.declaredMemberProperties.single { it.name == "resources" }
+            r.isAccessible = true
+            val resources = r.getter.call(lifetime) as Array<*>
+            assert(resources.size <= 12)
+        }
+
+        assert(p1) { "p1" }
+        assert(p2) { "p2" }
+        assert(p3) { "p3" }
+    }
+
 
 
 }
