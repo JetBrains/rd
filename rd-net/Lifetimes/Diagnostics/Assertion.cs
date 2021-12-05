@@ -17,11 +17,11 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod]
     [Conditional("JET_MODE_ASSERT")]
-    public static void Assert([DoesNotReturnIf(false)] bool condition, string message)
+    public static void Assert([DoesNotReturnIf(false)] bool condition, [CallerArgumentExpression("condition")] string? message = null)
     {
       if (!condition)
       {
-        Fail(message);
+        Fail(message ?? "");
       }
     }
 
@@ -45,7 +45,7 @@ namespace JetBrains.Diagnostics
         Fail(message, arg);
       }
     }
-    
+
     [ContractAnnotation("condition:false=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
@@ -127,20 +127,19 @@ namespace JetBrains.Diagnostics
     [DoesNotReturn]
     public static void Fail(string message, params object?[] args)
     {
-      Fail(args == null || args.Length == 0 ? message : String.Format(message, args));
+      Fail(args == null || args.Length == 0 ? message : string.Format(message, args));
     }
 
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod]
     [Conditional("JET_MODE_ASSERT")]
-    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, string message)
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, [CallerArgumentExpression("condition")] string? message = null)
     {
       if (condition == null)
       {
-        Fail(message);
+        Fail(message ?? "");
       }
     }
-
 
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod, StringFormatMethod("message")]
@@ -299,7 +298,7 @@ namespace JetBrains.Diagnostics
     public class AssertionException : Exception
     {
       public AssertionException(string message) : base(message) { }
-      
+
       protected AssertionException(SerializationInfo info, StreamingContext context) : base(info, context)
       {
       }

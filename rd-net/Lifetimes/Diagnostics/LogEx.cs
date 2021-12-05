@@ -6,14 +6,11 @@ namespace JetBrains.Diagnostics
 {
   public static class LogEx
   {
-
     public static ILog GetSublogger(this ILog log, string subcategory)
     {
       return Log.GetLog(log.Category + "." + subcategory);
     }
 
-
-    
     #region IsEnabled
 
     public static bool IsTraceEnabled(this ILog @this)
@@ -25,60 +22,63 @@ namespace JetBrains.Diagnostics
     {
       return @this.IsEnabled(LoggingLevel.VERBOSE);
     }
-    
 
     #endregion
-    
-    
-    
     #region LogFormat
-    
+
     [StringFormatMethod("message")]
     public static void LogFormat<T1>(this ILog @this, LoggingLevel level, string message, T1 t1)
     {
-      if(@this.IsEnabled(level))
+      if (@this.IsEnabled(level))
+      {
         @this.Log(level, message.FormatEx(t1));
+      }
     }
 
     [StringFormatMethod("message")]
     public static void LogFormat<T1, T2>(this ILog @this, LoggingLevel level, string message, T1 t1, T2 t2)
     {
-      if(@this.IsEnabled(level))
+      if (@this.IsEnabled(level))
+      {
         @this.Log(level, message.FormatEx(t1, t2));
+      }
     }
 
     [StringFormatMethod("message")]
     public static void LogFormat<T1, T2, T3>(this ILog @this, LoggingLevel level, string message, T1 t1, T2 t2, T3 t3)
     {
-      if(@this.IsEnabled(level))
+      if (@this.IsEnabled(level))
+      {
         @this.Log(level, message.FormatEx(t1, t2, t3));
+      }
     }
 
     [StringFormatMethod("message")]
     public static void LogFormat<T1, T2, T3, T4>(this ILog @this, LoggingLevel level, string message, T1 t1, T2 t2, T3 t3, T4 t4)
     {
-      if(@this.IsEnabled(level))
+      if (@this.IsEnabled(level))
+      {
         @this.Log(level, message.FormatEx(t1, t2, t3, t4));
+      }
     }
 
     //Universal method for many parameter
     [StringFormatMethod("message")]
     public static void LogFormat(this ILog @this, LoggingLevel level, string message, params object?[] args)
     {
-      if(@this.IsEnabled(level))
+      if (@this.IsEnabled(level))
+      {
         @this.Log(level, message.FormatEx(args));
+      }
     }
+
     #endregion
-    
-    
-    
-    
     #region Trace
 
     public static void Trace(this ILog @this, string message)
     {
-      @this.Log(LoggingLevel.TRACE, message);      
-    }    
+      @this.Log(LoggingLevel.TRACE, message);
+    }
 
     [StringFormatMethod("message")]
     public static void Trace<T1>(this ILog @this, string message, T1 t1)
@@ -117,11 +117,8 @@ namespace JetBrains.Diagnostics
     }
 
     #endregion
-
-    
-    
     #region Verbose
-       
+
     public static void Verbose(this ILog @this, string message)
     {
       @this.Log(LoggingLevel.VERBOSE, message);
@@ -175,8 +172,8 @@ namespace JetBrains.Diagnostics
     }
 
     #endregion
-
     #region Info
+
     public static void Info(this ILog @this, string message)
     {
       @this.Log(LoggingLevel.INFO, message);
@@ -195,142 +192,133 @@ namespace JetBrains.Diagnostics
 
 
     #endregion
+    #region Warn
 
-
-    #region Warn    
     public static void Warn(this ILog @this, string message)
     {
       @this.Log(LoggingLevel.WARN, message);
-    } 
-    
+    }
+
     [StringFormatMethod("message")]
     public static void Warn(this ILog @this, string message, params object[] args)
     {
       @this.LogFormat(LoggingLevel.WARN, message, args);
     }
-    
+
     public static void Warn(this ILog @this, Exception ex, string? message = null)
     {
       @this.Log(LoggingLevel.WARN, message, ex);
     }
 
-    
+
     #endregion
-    
-    
-    #region Error    
+    #region Error
+
     [StringFormatMethod("message")]
     public static void Error(this ILog @this, string message)
     {
       @this.Log(LoggingLevel.ERROR, message);
-    } 
-    
+    }
+
     [StringFormatMethod("message")]
     public static void Error(this ILog @this, string message, params object?[] args)
     {
       @this.LogFormat(LoggingLevel.ERROR, message, args);
     }
-    
+
     [StringFormatMethod("message")]
     public static void Error(this ILog @this, string message, Exception e)
     {
       @this.Log(LoggingLevel.ERROR, message, e);
     }
-    
+
     [StringFormatMethod("message")]
     public static void Error(this ILog @this, Exception ex, string? message = null)
     {
       @this.Log(LoggingLevel.ERROR, message, ex);
     }
-    
+
     #endregion
-    
-    
-    
-    
     #region Assert
-    
-    public static void Assert(this ILog @this, bool condition, string message)
+
+    public static void Assert(this ILog @this, bool condition, [CallerArgumentExpression("condition")] string? message = null)
     {
       if (!condition)
       {
-        @this.Error(message);
+        @this.Error(message ?? "");
       }
     }
-    
-    public static void Assert<T1>(this ILog @this, bool condition, string message, T1 t1)
+
+    public static void Assert<T>(this ILog @this, bool condition, string message, T t1)
     {
       if (!condition)
       {
         @this.Error(message, t1);
       }
-    } 
-    
+    }
+
     public static void Assert(this ILog @this, bool condition, string message, params object[] args)
     {
       if (!condition)
       {
         @this.Error(message, args);
       }
-    } 
-    
+    }
+
     #endregion
-
-    
-
     #region Catch
-       
-    /// <summary>
-    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == ERROR. Do not throw exception (if any). 
-    /// </summary>
-    /// <param name="log"></param>
-    /// <param name="action"></param>
-#if !NET35
-    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
-    public static void Catch(this ILog log, Action action)
-    {
-      try
-      {
-        action();
-      }
-      catch(Exception e)
-      {
-        log.Error(e);
-      }            
-    }
-    
-    /// <summary>
-    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == ERROR. Do not throw exception (if any). 
-    /// </summary>
-    /// <param name="log"></param>
-    /// <param name="action"></param>
-    /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
-#if !NET35
-    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
-    [PublicAPI] public static T? Catch<T>(this ILog log, Func<T> action)
-    {
-      try
-      {
-        return action();
-      }
-      catch(Exception e)
-      {
-        log.Error(e);
-        return default;
-      }            
-    }    
 
     /// <summary>
-    /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any). 
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == ERROR. Do not throw exception (if any).
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
-    [PublicAPI] public static void CatchAndDrop(this ILog log, Action action)
+#endif
+    public static void Catch(this ILog log, [InstantHandle] Action action)
+    {
+      try
+      {
+        action();
+      }
+      catch(Exception e)
+      {
+        log.Error(e);
+      }
+    }
+
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == ERROR. Do not throw exception (if any).
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
+    /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
+    [PublicAPI] public static T? Catch<T>(this ILog log, [InstantHandle] Func<T> action)
+    {
+      try
+      {
+        return action();
+      }
+      catch(Exception e)
+      {
+        log.Error(e);
+        return default;
+      }
+    }
+
+    /// <summary>
+    /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any).
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="action"></param>
+#if !NET35
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
+    [PublicAPI] public static void CatchAndDrop(this ILog log, [InstantHandle] Action action)
     {
       try
       {
@@ -339,19 +327,19 @@ namespace JetBrains.Diagnostics
       catch(Exception e)
       {
         DropException(e);
-      }            
+      }
     }
-    
+
     /// <summary>
-    /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any). 
+    /// Run <paramref name="action"/> and in case of exception discard it. Do not throw exception (if any).
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
-    [PublicAPI] public static T? CatchAndDrop<T>(this ILog log, Func<T> action)
+#endif
+    [PublicAPI] public static T? CatchAndDrop<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try
       {
@@ -361,18 +349,18 @@ namespace JetBrains.Diagnostics
       {
         DropException(e);
         return default;
-      }            
+      }
     }
-    
+
     /// <summary>
-    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any). 
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any).
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
-    [PublicAPI] public static void CatchWarn(this ILog log, Action action)
+    [PublicAPI] public static void CatchWarn(this ILog log, [InstantHandle] Action action)
     {
       try
       {
@@ -381,11 +369,11 @@ namespace JetBrains.Diagnostics
       catch(Exception e)
       {
         log.Warn(e);
-      }            
+      }
     }
-    
+
     /// <summary>
-    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any). 
+    /// Run <paramref name="action"/> and in case of exception log it with <see cref="LoggingLevel"/> == WARN. Do not throw exception (if any).
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
@@ -393,7 +381,7 @@ namespace JetBrains.Diagnostics
 #if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
 #endif
-    [PublicAPI] public static T? CatchWarn<T>(this ILog log, Func<T> action)
+    [PublicAPI] public static T? CatchWarn<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try
       {
@@ -403,22 +391,17 @@ namespace JetBrains.Diagnostics
       {
         log.Warn(e);
         return default;
-      }            
+      }
     }
-    
 
     private static void DropException(Exception e)
     {
       //do nothing
     }
-    
+
     #endregion
-    
-    
-    
     #region Helpers
-    
-      
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     [StringFormatMethod("s")]
     private static string FormatEx(this string s, params object?[] p)
@@ -427,10 +410,8 @@ namespace JetBrains.Diagnostics
     }
 
     #endregion
-
-
     #region LogWithLevel
-    
+
     /// <summary>
     /// One-line shortcut builder to replace common pattern:
     /// <code>
@@ -445,8 +426,11 @@ namespace JetBrains.Diagnostics
     /// <param name="logger"/>
     /// <returns>struct <see cref="LogWithLevel"/>(<paramref name="logger"/>, <see cref="LoggingLevel.TRACE"/>) if <see cref="IsTraceEnabled"/>;
     /// null otherwise</returns>
-    [PublicAPI] public static LogWithLevel? Trace(this ILog logger) => LogWithLevel.CreateIfEnabled(logger, LoggingLevel.TRACE);
-    
+    [PublicAPI] public static LogWithLevel? Trace(this ILog logger)
+    {
+      return LogWithLevel.CreateIfEnabled(logger, LoggingLevel.TRACE);
+    }
+
     /// <summary>
     /// One-line shortcut builder to replace common pattern:
     /// <code>
@@ -461,8 +445,11 @@ namespace JetBrains.Diagnostics
     /// <param name="logger"></param>
     /// <returns>struct <see cref="LogWithLevel"/>(<paramref name="logger"/>, <see cref="LoggingLevel.VERBOSE"/>) if <see cref="IsVersboseEnabled"/>;
     /// null otherwise</returns>
-    [PublicAPI] public static LogWithLevel? Verbose(this ILog logger) => LogWithLevel.CreateIfEnabled(logger, LoggingLevel.VERBOSE);
-    
+    [PublicAPI] public static LogWithLevel? Verbose(this ILog logger)
+    {
+      return LogWithLevel.CreateIfEnabled(logger, LoggingLevel.VERBOSE);
+    }
+
     #endregion
   }
 }
