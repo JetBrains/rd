@@ -448,6 +448,8 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 
 		try
 		{
+			logger->info("{}: started, port: {}.", this->id, this->port);
+
 			while (!lifetime->is_terminated())
 			{
 				try
@@ -483,7 +485,8 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 				}
 				catch (std::exception const& e)
 				{
-					(void) e;
+					logger->debug("{}: connection error for port {} ({}).", this->id, this->port, e.what());
+
 					std::lock_guard<decltype(lock)> guard(lock);
 					bool should_reconnect = false;
 					if (!lifetime->is_terminated())
@@ -503,7 +506,7 @@ SocketWire::Client::Client(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 		{
 			logger->info("{}: closed with exception: {}", this->id, e.what());
 		}
-		logger->debug("{}: thread expired", this->id);
+		logger->info("{}: terminated, port: {}.", this->id, this->port);
 	});
 
 	lifetime->add_action([this]() {
@@ -553,41 +556,51 @@ SocketWire::Server::Server(Lifetime lifetime, IScheduler* scheduler, uint16_t po
 	thread = std::thread([this, lifetime]() mutable {
 		rd::util::set_thread_name(this->id.empty() ? "SocketWire::Server Thread" : this->id.c_str());
 
-		while (!lifetime->is_terminated())
+		logger->info("{}: started, port: {}.", this->id, this->port);
+
+		try
 		{
-			try
+			while (!lifetime->is_terminated())
 			{
-				logger->info("{}: accepting started", this->id);
-				CActiveSocket* accepted = ss->Accept();
-				RD_ASSERT_THROW_MSG(
-					accepted != nullptr, fmt::format("{}: accepting failed, reason: {}", this->id, ss->DescribeError()));
-				socket.reset(accepted);
-				logger->info("{}: accepted passive socket {}/{}", this->id, socket->GetClientAddr(), socket->GetClientPort());
-				RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
-					fmt::format("{}: tcpNoDelay failed, reason: {}", this->id, socket->DescribeError()));
-
+				try
 				{
-					std::lock_guard<decltype(lock)> guard(lock);
-					if (lifetime->is_terminated())
-					{
-						logger->debug("{}: closing passive socket", this->id);
-						if (!socket->Close())
-						{
-							logger->error("{}: failed to close socket", this->id);
-						}
-						logger->info("{}: close passive socket", this->id);
-					}
-				}
+					logger->info("{}: accepting started", this->id);
+					CActiveSocket* accepted = ss->Accept();
+					RD_ASSERT_THROW_MSG(
+						accepted != nullptr, fmt::format("{}: accepting failed, reason: {}", this->id, ss->DescribeError()));
+					socket.reset(accepted);
+					logger->info("{}: accepted passive socket {}/{}", this->id, socket->GetClientAddr(), socket->GetClientPort());
+					RD_ASSERT_THROW_MSG(socket->DisableNagleAlgoritm(),
+						fmt::format("{}: tcpNoDelay failed, reason: {}", this->id, socket->DescribeError()));
 
-				logger->debug("{}: setting socket provider", this->id);
-				set_socket_provider(socket);
-			}
-			catch (std::exception const& e)
-			{
-				logger->info("{}: closed with exception: {}", this->id, e.what());
+					{
+						std::lock_guard<decltype(lock)> guard(lock);
+						if (lifetime->is_terminated())
+						{
+							logger->debug("{}: closing passive socket", this->id);
+							if (!socket->Close())
+							{
+								logger->error("{}: failed to close socket", this->id);
+							}
+							logger->info("{}: close passive socket", this->id);
+						}
+					}
+
+					logger->debug("{}: setting socket provider", this->id);
+					set_socket_provider(socket);
+				}
+				catch (std::exception const& e)
+				{
+					logger->info("{}: closed with exception: {}", this->id, e.what());
+				}
 			}
 		}
-		logger->debug("{}: thread expired", this->id);
+		catch (std::exception const& e)
+		{
+			logger->error("{}: terminal socket error ({}).", this->id, e.what());
+		}
+
+		logger->info("{}: terminated, port: {}.", this->id, this->port);
 	});
 
 	lifetime->add_action([this] {
