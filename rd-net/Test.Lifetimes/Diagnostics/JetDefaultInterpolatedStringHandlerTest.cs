@@ -1,63 +1,68 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+// This was copied from https://github.com/dotnet/runtime/blob/f54ab52d24ee524a246e463d754e526832850d4a/src/libraries/System.Private.CoreLib/src/System/Runtime/CompilerServices/DefaultInterpolatedStringHandler.cs.
+// and updated to test JetDefaultInterpolatedStringHandler and fix compilation
+
+#if !NET35
 using System.Globalization;
 using System.Text;
-using Xunit;
+using JetBrains.Diagnostics.StringInterpolation;
+using NUnit.Framework;
 
 namespace System.Runtime.CompilerServices.Tests
 {
-    public class DefaultInterpolatedStringHandlerTests
+    public class JetDefaultInterpolatedStringHandlerTests
     {
-        [Theory]
-        [InlineData(0, 0)]
-        [InlineData(1, 1)]
-        [InlineData(42, 84)]
-        [InlineData(-1, 0)]
-        [InlineData(-1, -1)]
-        [InlineData(-16, 1)]
+        [Test]
+        [TestCase(0, 0)]
+        [TestCase(1, 1)]
+        [TestCase(42, 84)]
+        [TestCase(-1, 0)]
+        [TestCase(-1, -1)]
+        [TestCase(-16, 1)]
         public void LengthAndHoleArguments_Valid(int literalLength, int formattedCount)
         {
-            new DefaultInterpolatedStringHandler(literalLength, formattedCount);
+            new JetDefaultInterpolatedStringHandler(literalLength, formattedCount);
 
             Span<char> scratch1 = stackalloc char[1];
             foreach (IFormatProvider provider in new IFormatProvider[] { null, new ConcatFormatter(), CultureInfo.InvariantCulture, CultureInfo.CurrentCulture, new CultureInfo("en-US"), new CultureInfo("fr-FR") })
             {
-                new DefaultInterpolatedStringHandler(literalLength, formattedCount, provider);
+                new JetDefaultInterpolatedStringHandler(literalLength, formattedCount, provider);
 
-                new DefaultInterpolatedStringHandler(literalLength, formattedCount, provider, default);
-                new DefaultInterpolatedStringHandler(literalLength, formattedCount, provider, scratch1);
-                new DefaultInterpolatedStringHandler(literalLength, formattedCount, provider, Array.Empty<char>());
-                new DefaultInterpolatedStringHandler(literalLength, formattedCount, provider, new char[256]);
+                new JetDefaultInterpolatedStringHandler(literalLength, formattedCount, provider, default);
+                new JetDefaultInterpolatedStringHandler(literalLength, formattedCount, provider, scratch1);
+                new JetDefaultInterpolatedStringHandler(literalLength, formattedCount, provider, Array.Empty<char>());
+                new JetDefaultInterpolatedStringHandler(literalLength, formattedCount, provider, new char[256]);
             }
         }
 
-        [Fact]
+        [Test]
         public void ToString_DoesntClear()
         {
-            DefaultInterpolatedStringHandler handler = new DefaultInterpolatedStringHandler(0, 0);
+            JetDefaultInterpolatedStringHandler handler = new JetDefaultInterpolatedStringHandler(0, 0);
             handler.AppendLiteral("hi");
             for (int i = 0; i < 3; i++)
             {
-                Assert.Equal("hi", handler.ToString());
+                Assert.AreEqual("hi", handler.ToString());
             }
-            Assert.Equal("hi", handler.ToStringAndClear());
+            Assert.AreEqual("hi", handler.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void ToStringAndClear_Clears()
         {
-            DefaultInterpolatedStringHandler handler = new DefaultInterpolatedStringHandler(0, 0);
+            JetDefaultInterpolatedStringHandler handler = new JetDefaultInterpolatedStringHandler(0, 0);
             handler.AppendLiteral("hi");
-            Assert.Equal("hi", handler.ToStringAndClear());
-            Assert.Equal(string.Empty, handler.ToStringAndClear());
+            Assert.AreEqual("hi", handler.ToStringAndClear());
+            Assert.AreEqual(string.Empty, handler.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void AppendLiteral()
         {
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0);
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
 
             foreach (string s in new[] { "", "a", "bc", "def", "this is a long string", "!" })
             {
@@ -65,45 +70,45 @@ namespace System.Runtime.CompilerServices.Tests
                 actual.AppendLiteral(s);
             }
 
-            Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_ReadOnlySpanChar()
         {
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0);
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
 
             foreach (string s in new[] { "", "a", "bc", "def", "this is a longer string", "!" })
             {
                 // span
                 expected.Append(s);
-                actual.AppendFormatted((ReadOnlySpan<char>)s);
+                actual.AppendFormatted(s.AsSpan());
 
                 // span, format
                 expected.AppendFormat("{0:X2}", s);
-                actual.AppendFormatted((ReadOnlySpan<char>)s, format: "X2");
+                actual.AppendFormatted(s.AsSpan(), format: "X2");
 
                 foreach (int alignment in new[] { 0, 3, -3 })
                 {
                     // span, alignment
                     expected.AppendFormat("{0," + alignment.ToString(CultureInfo.InvariantCulture) + "}", s);
-                    actual.AppendFormatted((ReadOnlySpan<char>)s, alignment);
+                    actual.AppendFormatted(s.AsSpan(), alignment);
 
                     // span, alignment, format
                     expected.AppendFormat("{0," + alignment.ToString(CultureInfo.InvariantCulture) + ":X2}", s);
-                    actual.AppendFormatted((ReadOnlySpan<char>)s, alignment, "X2");
+                    actual.AppendFormatted(s.AsSpan(), alignment, "X2");
                 }
             }
 
-            Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_String()
         {
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0);
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
 
             foreach (string s in new[] { null, "", "a", "bc", "def", "this is a longer string", "!" })
             {
@@ -127,16 +132,16 @@ namespace System.Runtime.CompilerServices.Tests
                 }
             }
 
-            Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_String_ICustomFormatter()
         {
             var provider = new ConcatFormatter();
 
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0, provider);
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0, provider);
 
             foreach (string s in new[] { null, "", "a" })
             {
@@ -157,14 +162,14 @@ namespace System.Runtime.CompilerServices.Tests
                 actual.AppendFormatted(s, -3, "X2");
             }
 
-            Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_ReferenceTypes()
         {
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0);
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
 
             foreach (string rawInput in new[] { null, "", "a", "bc", "def", "this is a longer string", "!" })
             {
@@ -173,7 +178,7 @@ namespace System.Runtime.CompilerServices.Tests
                     rawInput, // raw string directly; ToString will return itself
                     new StringWrapper(rawInput), // wrapper object that returns string from ToString
                     new FormattableStringWrapper(rawInput), // IFormattable wrapper around string
-                    new SpanFormattableStringWrapper(rawInput) // ISpanFormattable wrapper around string
+                    // new SpanFormattableStringWrapper(rawInput) // ISpanFormattable wrapper around string
                 })
                 {
                     // object
@@ -190,7 +195,7 @@ namespace System.Runtime.CompilerServices.Tests
                     actual.AppendFormatted(o,  "X2");
                     if (o is IHasToStringState tss2)
                     {
-                        Assert.Equal("X2", tss2.ToStringState.LastFormat);
+                        Assert.AreEqual("X2", tss2.ToStringState.LastFormat);
                         AssertModeMatchesType(tss2);
                     }
 
@@ -210,59 +215,59 @@ namespace System.Runtime.CompilerServices.Tests
                         actual.AppendFormatted(o, alignment, "X2");
                         if (o is IHasToStringState tss4)
                         {
-                            Assert.Equal("X2", tss4.ToStringState.LastFormat);
+                            Assert.AreEqual("X2", tss4.ToStringState.LastFormat);
                             AssertModeMatchesType(tss4);
                         }
                     }
                 }
             }
 
-            Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
+        [Test]
+        [TestCase(false)]
+        [TestCase(true)]
         public void AppendFormatted_ReferenceTypes_CreateProviderFlowed(bool useScratch)
         {
             var provider = new CultureInfo("en-US");
-            DefaultInterpolatedStringHandler handler = useScratch ?
-                new DefaultInterpolatedStringHandler(1, 2, provider, stackalloc char[16]) :
-                new DefaultInterpolatedStringHandler(1, 2, provider);
+            JetDefaultInterpolatedStringHandler handler = useScratch ?
+                new JetDefaultInterpolatedStringHandler(1, 2, provider, stackalloc char[16]) :
+                new JetDefaultInterpolatedStringHandler(1, 2, provider);
 
-            foreach (IHasToStringState tss in new IHasToStringState[] { new FormattableStringWrapper("hello"), new SpanFormattableStringWrapper("hello") })
+            foreach (IHasToStringState tss in new IHasToStringState[] { new FormattableStringWrapper("hello"), /*new SpanFormattableStringWrapper("hello")*/ })
             {
                 handler.AppendFormatted(tss);
-                Assert.Same(provider, tss.ToStringState.LastProvider);
+                Assert.AreSame(provider, tss.ToStringState.LastProvider);
 
                 handler.AppendFormatted(tss, 1);
-                Assert.Same(provider, tss.ToStringState.LastProvider);
+                Assert.AreSame(provider, tss.ToStringState.LastProvider);
 
                 handler.AppendFormatted(tss, "X2");
-                Assert.Same(provider, tss.ToStringState.LastProvider);
+                Assert.AreSame(provider, tss.ToStringState.LastProvider);
 
                 handler.AppendFormatted(tss, 1, "X2");
-                Assert.Same(provider, tss.ToStringState.LastProvider);
+                Assert.AreSame(provider, tss.ToStringState.LastProvider);
             }
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_ReferenceTypes_ICustomFormatter()
         {
             var provider = new ConcatFormatter();
 
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0, provider);
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0, provider);
 
             foreach (string s in new[] { null, "", "a" })
             {
-                foreach (IHasToStringState tss in new IHasToStringState[] { new FormattableStringWrapper(s), new SpanFormattableStringWrapper(s) })
+                foreach (IHasToStringState tss in new IHasToStringState[] { new FormattableStringWrapper(s), /*new SpanFormattableStringWrapper(s)*/ })
                 {
                     void AssertTss(IHasToStringState tss, string format)
                     {
-                        Assert.Equal(format, tss.ToStringState.LastFormat);
-                        Assert.Same(provider, tss.ToStringState.LastProvider);
-                        Assert.Equal(ToStringMode.ICustomFormatterFormat, tss.ToStringState.ToStringMode);
+                        Assert.AreEqual(format, tss.ToStringState.LastFormat);
+                        Assert.AreSame(provider, tss.ToStringState.LastProvider);
+                        Assert.AreEqual(ToStringMode.ICustomFormatterFormat, tss.ToStringState.ToStringMode);
                     }
 
                     // object
@@ -287,16 +292,16 @@ namespace System.Runtime.CompilerServices.Tests
                 }
             }
 
-            Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_ValueTypes()
         {
             void Test<T>(T t)
             {
                 var expected = new StringBuilder();
-                DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0);
+                JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
 
                 // struct
                 expected.AppendFormat("{0}", t);
@@ -307,7 +312,7 @@ namespace System.Runtime.CompilerServices.Tests
                 // struct, format
                 expected.AppendFormat("{0:X2}", t);
                 actual.AppendFormatted(t, "X2");
-                Assert.Equal("X2", ((IHasToStringState)t).ToStringState.LastFormat);
+                Assert.AreEqual("X2", ((IHasToStringState)t).ToStringState.LastFormat);
                 AssertModeMatchesType(((IHasToStringState)t));
 
                 foreach (int alignment in new[] { 0, 3, -3 })
@@ -321,51 +326,51 @@ namespace System.Runtime.CompilerServices.Tests
                     // struct, alignment, format
                     expected.AppendFormat("{0," + alignment.ToString(CultureInfo.InvariantCulture) + ":X2}", t);
                     actual.AppendFormatted(t, alignment, "X2");
-                    Assert.Equal("X2", ((IHasToStringState)t).ToStringState.LastFormat);
+                    Assert.AreEqual("X2", ((IHasToStringState)t).ToStringState.LastFormat);
                     AssertModeMatchesType(((IHasToStringState)t));
                 }
 
-                Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+                Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
             }
 
             Test(new FormattableInt32Wrapper(42));
-            Test(new SpanFormattableInt32Wrapper(84));
+            // Test(new SpanFormattableInt32Wrapper(84));
             Test((FormattableInt32Wrapper?)new FormattableInt32Wrapper(42));
-            Test((SpanFormattableInt32Wrapper?)new SpanFormattableInt32Wrapper(84));
+            // Test((SpanFormattableInt32Wrapper?)new SpanFormattableInt32Wrapper(84));
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
+        [Test]
+        [TestCase(false)]
+        [TestCase(true)]
         public void AppendFormatted_ValueTypes_CreateProviderFlowed(bool useScratch)
         {
             void Test<T>(T t)
             {
                 var provider = new CultureInfo("en-US");
-                DefaultInterpolatedStringHandler handler = useScratch ?
-                    new DefaultInterpolatedStringHandler(1, 2, provider, stackalloc char[16]) :
-                    new DefaultInterpolatedStringHandler(1, 2, provider);
+                JetDefaultInterpolatedStringHandler handler = useScratch ?
+                    new JetDefaultInterpolatedStringHandler(1, 2, provider, stackalloc char[16]) :
+                    new JetDefaultInterpolatedStringHandler(1, 2, provider);
 
                 handler.AppendFormatted(t);
-                Assert.Same(provider, ((IHasToStringState)t).ToStringState.LastProvider);
+                Assert.AreSame(provider, ((IHasToStringState)t).ToStringState.LastProvider);
 
                 handler.AppendFormatted(t, 1);
-                Assert.Same(provider, ((IHasToStringState)t).ToStringState.LastProvider);
+                Assert.AreSame(provider, ((IHasToStringState)t).ToStringState.LastProvider);
 
                 handler.AppendFormatted(t, "X2");
-                Assert.Same(provider, ((IHasToStringState)t).ToStringState.LastProvider);
+                Assert.AreSame(provider, ((IHasToStringState)t).ToStringState.LastProvider);
 
                 handler.AppendFormatted(t, 1, "X2");
-                Assert.Same(provider, ((IHasToStringState)t).ToStringState.LastProvider);
+                Assert.AreSame(provider, ((IHasToStringState)t).ToStringState.LastProvider);
             }
 
             Test(new FormattableInt32Wrapper(42));
-            Test(new SpanFormattableInt32Wrapper(84));
+            // Test(new SpanFormattableInt32Wrapper(84));
             Test((FormattableInt32Wrapper?)new FormattableInt32Wrapper(42));
-            Test((SpanFormattableInt32Wrapper?)new SpanFormattableInt32Wrapper(84));
+            // Test((SpanFormattableInt32Wrapper?)new SpanFormattableInt32Wrapper(84));
         }
 
-        [Fact]
+        [Test]
         public void AppendFormatted_ValueTypes_ICustomFormatter()
         {
             var provider = new ConcatFormatter();
@@ -374,13 +379,13 @@ namespace System.Runtime.CompilerServices.Tests
             {
                 void AssertTss(T tss, string format)
                 {
-                    Assert.Equal(format, ((IHasToStringState)tss).ToStringState.LastFormat);
-                    Assert.Same(provider, ((IHasToStringState)tss).ToStringState.LastProvider);
-                    Assert.Equal(ToStringMode.ICustomFormatterFormat, ((IHasToStringState)tss).ToStringState.ToStringMode);
+                    Assert.AreEqual(format, ((IHasToStringState)tss).ToStringState.LastFormat);
+                    Assert.AreSame(provider, ((IHasToStringState)tss).ToStringState.LastProvider);
+                    Assert.AreEqual(ToStringMode.ICustomFormatterFormat, ((IHasToStringState)tss).ToStringState.ToStringMode);
                 }
 
                 var expected = new StringBuilder();
-                DefaultInterpolatedStringHandler actual = new DefaultInterpolatedStringHandler(0, 0, provider);
+                JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0, provider);
 
                 // struct
                 expected.AppendFormat(provider, "{0}", t);
@@ -402,24 +407,24 @@ namespace System.Runtime.CompilerServices.Tests
                 actual.AppendFormatted(t, -3, "X2");
                 AssertTss(t, "X2");
 
-                Assert.Equal(expected.ToString(), actual.ToStringAndClear());
+                Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
             }
 
             Test(new FormattableInt32Wrapper(42));
-            Test(new SpanFormattableInt32Wrapper(84));
+            // Test(new SpanFormattableInt32Wrapper(84));
             Test((FormattableInt32Wrapper?)new FormattableInt32Wrapper(42));
-            Test((SpanFormattableInt32Wrapper?)new SpanFormattableInt32Wrapper(84));
+            // Test((SpanFormattableInt32Wrapper?)new SpanFormattableInt32Wrapper(84));
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
+        [Test]
+        [TestCase(false)]
+        [TestCase(true)]
         public void Grow_Large(bool useScratch)
         {
             var expected = new StringBuilder();
-            DefaultInterpolatedStringHandler handler = useScratch ?
-                new DefaultInterpolatedStringHandler(3, 1000, null, stackalloc char[16]) :
-                new DefaultInterpolatedStringHandler(3, 1000);
+            JetDefaultInterpolatedStringHandler handler = useScratch ?
+                new JetDefaultInterpolatedStringHandler(3, 1000, null, stackalloc char[16]) :
+                new JetDefaultInterpolatedStringHandler(3, 1000);
 
             for (int i = 0; i < 1000; i++)
             {
@@ -430,101 +435,101 @@ namespace System.Runtime.CompilerServices.Tests
                 expected.AppendFormat("{0,3}", i);
             }
 
-            Assert.Equal(expected.ToString(), handler.ToStringAndClear());
+            Assert.AreEqual(expected.ToString(), handler.ToStringAndClear());
         }
 
         private static void AssertModeMatchesType<T>(T tss) where T : IHasToStringState
         {
             ToStringMode expected =
-                tss is ISpanFormattable ? ToStringMode.ISpanFormattableTryFormat :
+                // tss is ISpanFormattable ? ToStringMode.ISpanFormattableTryFormat :
                 tss is IFormattable ? ToStringMode.IFormattableToString :
                 ToStringMode.ObjectToString;
-            Assert.Equal(expected, tss.ToStringState.ToStringMode);
+            Assert.AreEqual(expected, tss.ToStringState.ToStringMode);
         }
 
-        private sealed class SpanFormattableStringWrapper : ISpanFormattable, IHasToStringState
-        {
-            private readonly string _value;
-            public ToStringState ToStringState { get; } = new ToStringState();
+        // private sealed class SpanFormattableStringWrapper : ISpanFormattable, IHasToStringState
+        // {
+        //     private readonly string _value;
+        //     public ToStringState ToStringState { get; } = new ToStringState();
+        //
+        //     public SpanFormattableStringWrapper(string value) => _value = value;
+        //
+        //     public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider provider)
+        //     {
+        //         ToStringState.LastFormat = format.ToString();
+        //         ToStringState.LastProvider = provider;
+        //         ToStringState.ToStringMode = ToStringMode.ISpanFormattableTryFormat;
+        //
+        //         if (_value is null)
+        //         {
+        //             charsWritten = 0;
+        //             return true;
+        //         }
+        //
+        //         if (_value.Length > destination.Length)
+        //         {
+        //             charsWritten = 0;
+        //             return false;
+        //         }
+        //
+        //         charsWritten = _value.Length;
+        //         _value.AsSpan().CopyTo(destination);
+        //         return true;
+        //     }
+        //
+        //     public string ToString(string format, IFormatProvider formatProvider)
+        //     {
+        //         ToStringState.LastFormat = format;
+        //         ToStringState.LastProvider = formatProvider;
+        //         ToStringState.ToStringMode = ToStringMode.IFormattableToString;
+        //         return _value;
+        //     }
+        //
+        //     public override string ToString()
+        //     {
+        //         ToStringState.LastFormat = null;
+        //         ToStringState.LastProvider = null;
+        //         ToStringState.ToStringMode = ToStringMode.ObjectToString;
+        //         return _value;
+        //     }
+        // }
 
-            public SpanFormattableStringWrapper(string value) => _value = value;
-
-            public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider provider)
-            {
-                ToStringState.LastFormat = format.ToString();
-                ToStringState.LastProvider = provider;
-                ToStringState.ToStringMode = ToStringMode.ISpanFormattableTryFormat;
-
-                if (_value is null)
-                {
-                    charsWritten = 0;
-                    return true;
-                }
-
-                if (_value.Length > destination.Length)
-                {
-                    charsWritten = 0;
-                    return false;
-                }
-
-                charsWritten = _value.Length;
-                _value.AsSpan().CopyTo(destination);
-                return true;
-            }
-
-            public string ToString(string format, IFormatProvider formatProvider)
-            {
-                ToStringState.LastFormat = format;
-                ToStringState.LastProvider = formatProvider;
-                ToStringState.ToStringMode = ToStringMode.IFormattableToString;
-                return _value;
-            }
-
-            public override string ToString()
-            {
-                ToStringState.LastFormat = null;
-                ToStringState.LastProvider = null;
-                ToStringState.ToStringMode = ToStringMode.ObjectToString;
-                return _value;
-            }
-        }
-
-        private struct SpanFormattableInt32Wrapper : ISpanFormattable, IHasToStringState
-        {
-            private readonly int _value;
-            public ToStringState ToStringState { get; }
-
-            public SpanFormattableInt32Wrapper(int value)
-            {
-                ToStringState = new ToStringState();
-                _value = value;
-            }
-
-            public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider provider)
-            {
-                ToStringState.LastFormat = format.ToString();
-                ToStringState.LastProvider = provider;
-                ToStringState.ToStringMode = ToStringMode.ISpanFormattableTryFormat;
-
-                return _value.TryFormat(destination, out charsWritten, format, provider);
-            }
-
-            public string ToString(string format, IFormatProvider formatProvider)
-            {
-                ToStringState.LastFormat = format;
-                ToStringState.LastProvider = formatProvider;
-                ToStringState.ToStringMode = ToStringMode.IFormattableToString;
-                return _value.ToString(format, formatProvider);
-            }
-
-            public override string ToString()
-            {
-                ToStringState.LastFormat = null;
-                ToStringState.LastProvider = null;
-                ToStringState.ToStringMode = ToStringMode.ObjectToString;
-                return _value.ToString();
-            }
-        }
+        // private struct SpanFormattableInt32Wrapper : ISpanFormattable, IHasToStringState
+        // {
+        //     private readonly int _value;
+        //     public ToStringState ToStringState { get; }
+        //
+        //     public SpanFormattableInt32Wrapper(int value)
+        //     {
+        //         ToStringState = new ToStringState();
+        //         _value = value;
+        //     }
+        //
+        //     public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider provider)
+        //     {
+        //         ToStringState.LastFormat = format.ToString();
+        //         ToStringState.LastProvider = provider;
+        //         ToStringState.ToStringMode = ToStringMode.ISpanFormattableTryFormat;
+        //
+        //         return _value.TryFormat(destination, out charsWritten, format, provider);
+        //     }
+        //
+        //     public string ToString(string format, IFormatProvider formatProvider)
+        //     {
+        //         ToStringState.LastFormat = format;
+        //         ToStringState.LastProvider = formatProvider;
+        //         ToStringState.ToStringMode = ToStringMode.IFormattableToString;
+        //         return _value.ToString(format, formatProvider);
+        //     }
+        //
+        //     public override string ToString()
+        //     {
+        //         ToStringState.LastFormat = null;
+        //         ToStringState.LastProvider = null;
+        //         ToStringState.ToStringMode = ToStringMode.ObjectToString;
+        //         return _value.ToString();
+        //     }
+        // }
 
         private sealed class FormattableStringWrapper : IFormattable, IHasToStringState
         {
@@ -628,3 +633,4 @@ namespace System.Runtime.CompilerServices.Tests
         }
     }
 }
+#endif

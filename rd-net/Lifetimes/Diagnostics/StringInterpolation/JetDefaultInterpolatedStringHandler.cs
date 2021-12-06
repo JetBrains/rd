@@ -2,18 +2,25 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 // This was copied from https://github.com/dotnet/runtime/blob/f54ab52d24ee524a246e463d754e526832850d4a/src/libraries/System.Private.CoreLib/src/System/Runtime/CompilerServices/DefaultInterpolatedStringHandler.cs.
+// and updated to fix compilation
 
+#if !NET35
+using System;
 using System.Buffers;
-using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace System.Runtime.CompilerServices
+namespace JetBrains.Diagnostics.StringInterpolation
 {
     /// <summary>Provides a handler used by the language compiler to process interpolated strings into <see cref="string"/> instances.</summary>
     [InterpolatedStringHandler]
-    public ref struct DefaultInterpolatedStringHandler
+    public ref struct JetDefaultInterpolatedStringHandler
     {
+        /// <summary>Maximum length allowed for a string.</summary>
+        /// <remarks>Keep in sync with AllocateString in gchelpers.cpp.</remarks>
+        private const int StringMaxLength = 0x3FFFFFDF;
+      
         // Implementation note:
         // As this type lives in CompilerServices and is only intended to be targeted by the compiler,
         // public APIs eschew argument validation logic in a variety of places, e.g. allowing a null input
@@ -54,7 +61,7 @@ namespace System.Runtime.CompilerServices
         /// <param name="literalLength">The number of constant characters outside of interpolation expressions in the interpolated string.</param>
         /// <param name="formattedCount">The number of interpolation expressions in the interpolated string.</param>
         /// <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
-        public DefaultInterpolatedStringHandler(int literalLength, int formattedCount)
+        public JetDefaultInterpolatedStringHandler(int literalLength, int formattedCount)
         {
             _provider = null;
             _chars = _arrayToReturnToPool = ArrayPool<char>.Shared.Rent(GetDefaultLength(literalLength, formattedCount));
@@ -67,7 +74,7 @@ namespace System.Runtime.CompilerServices
         /// <param name="formattedCount">The number of interpolation expressions in the interpolated string.</param>
         /// <param name="provider">An object that supplies culture-specific formatting information.</param>
         /// <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
-        public DefaultInterpolatedStringHandler(int literalLength, int formattedCount, IFormatProvider? provider)
+        public JetDefaultInterpolatedStringHandler(int literalLength, int formattedCount, IFormatProvider? provider)
         {
             _provider = provider;
             _chars = _arrayToReturnToPool = ArrayPool<char>.Shared.Rent(GetDefaultLength(literalLength, formattedCount));
@@ -81,7 +88,7 @@ namespace System.Runtime.CompilerServices
         /// <param name="provider">An object that supplies culture-specific formatting information.</param>
         /// <param name="initialBuffer">A buffer temporarily transferred to the handler for use as part of its formatting.  Contents may be overwritten.</param>
         /// <remarks>This is intended to be called only by compiler-generated code. Arguments are not validated as they'd otherwise be for members intended to be used directly.</remarks>
-        public DefaultInterpolatedStringHandler(int literalLength, int formattedCount, IFormatProvider? provider, Span<char> initialBuffer)
+        public JetDefaultInterpolatedStringHandler(int literalLength, int formattedCount, IFormatProvider? provider, Span<char> initialBuffer)
         {
             _provider = provider;
             _chars = initialBuffer;
@@ -99,7 +106,8 @@ namespace System.Runtime.CompilerServices
 
         /// <summary>Gets the built <see cref="string"/>.</summary>
         /// <returns>The built string.</returns>
-        public override string ToString() => new string(Text);
+        // public override string ToString() => new string(Text);
+        public override string ToString() => Text.ToString();
 
         /// <summary>Gets the built <see cref="string"/> and clears the handler.</summary>
         /// <returns>The built string.</returns>
@@ -111,7 +119,8 @@ namespace System.Runtime.CompilerServices
         /// </remarks>
         public string ToStringAndClear()
         {
-            string result = new string(Text);
+            // string result = new string(Text);
+            string result = Text.ToString();
             Clear();
             return result;
         }
@@ -178,7 +187,8 @@ namespace System.Runtime.CompilerServices
                 {
                     Unsafe.WriteUnaligned(
                         ref Unsafe.As<char, byte>(ref Unsafe.Add(ref MemoryMarshal.GetReference(chars), pos)),
-                        Unsafe.ReadUnaligned<int>(ref Unsafe.As<char, byte>(ref value.GetRawStringData())));
+                        // Unsafe.ReadUnaligned<int>(ref Unsafe.As<char, byte>(ref value.GetRawStringData())));
+                        Unsafe.ReadUnaligned<int>(ref Unsafe.As<char, byte>(ref MemoryMarshal.GetReference(value.AsSpan()))));
                     _pos = pos + 2;
                 }
                 else
@@ -195,14 +205,16 @@ namespace System.Runtime.CompilerServices
         /// <param name="value">The string to write.</param>
         private void AppendStringDirect(string value)
         {
-            if (value.TryCopyTo(_chars.Slice(_pos)))
-            {
-                _pos += value.Length;
-            }
-            else
-            {
-                GrowThenCopyString(value);
-            }
+            // if (value.TryCopyTo(_chars.Slice(_pos)))
+            // {
+            //     _pos += value.Length;
+            // }
+            // else
+            // {
+            //     GrowThenCopyString(value);
+            // }
+            
+            AppendFormatted(value.AsSpan());
         }
 
         #region AppendFormatted
@@ -308,17 +320,18 @@ namespace System.Runtime.CompilerServices
             if (value is IFormattable)
             {
                 // If the value can format itself directly into our buffer, do so.
-                if (value is ISpanFormattable)
-                {
-                    int charsWritten;
-                    while (!((ISpanFormattable)value).TryFormat(_chars.Slice(_pos), out charsWritten, default, _provider)) // constrained call avoiding boxing for value types
-                    {
-                        Grow();
-                    }
-
-                    _pos += charsWritten;
-                    return;
-                }
+                
+                // if (value is ISpanFormattable)
+                // {
+                //     int charsWritten;
+                //     while (!((ISpanFormattable)value).TryFormat(_chars.Slice(_pos), out charsWritten, default, _provider)) // constrained call avoiding boxing for value types
+                //     {
+                //         Grow();
+                //     }
+                //
+                //     _pos += charsWritten;
+                //     return;
+                // }
 
                 s = ((IFormattable)value).ToString(format: null, _provider); // constrained call avoiding boxing for value types
             }
@@ -356,17 +369,17 @@ namespace System.Runtime.CompilerServices
             if (value is IFormattable)
             {
                 // If the value can format itself directly into our buffer, do so.
-                if (value is ISpanFormattable)
-                {
-                    int charsWritten;
-                    while (!((ISpanFormattable)value).TryFormat(_chars.Slice(_pos), out charsWritten, format, _provider)) // constrained call avoiding boxing for value types
-                    {
-                        Grow();
-                    }
-
-                    _pos += charsWritten;
-                    return;
-                }
+                // if (value is ISpanFormattable)
+                // {
+                //     int charsWritten;
+                //     while (!((ISpanFormattable)value).TryFormat(_chars.Slice(_pos), out charsWritten, format, _provider)) // constrained call avoiding boxing for value types
+                //     {
+                //         Grow();
+                //     }
+                //
+                //     _pos += charsWritten;
+                //     return;
+                // }
 
                 s = ((IFormattable)value).ToString(format, _provider); // constrained call avoiding boxing for value types
             }
@@ -474,11 +487,15 @@ namespace System.Runtime.CompilerServices
         public void AppendFormatted(string? value)
         {
             // Fast-path for no custom formatter and a non-null string that fits in the current destination buffer.
-            if (!_hasCustomFormatter &&
-                value is not null &&
-                value.TryCopyTo(_chars.Slice(_pos)))
+            // if (!_hasCustomFormatter &&
+            //     value is not null &&
+            //     value.TryCopyTo(_chars.Slice(_pos)))
+            // {
+            //     _pos += value.Length;
+            // }
+            if (!_hasCustomFormatter && value is not null)
             {
-                _pos += value.Length;
+                AppendFormatted(value.AsSpan());
             }
             else
             {
@@ -501,9 +518,11 @@ namespace System.Runtime.CompilerServices
             }
             else if (value is not null)
             {
-                EnsureCapacityForAdditionalChars(value.Length);
-                value.CopyTo(_chars.Slice(_pos));
-                _pos += value.Length;
+                // EnsureCapacityForAdditionalChars(value.Length);
+                // value.CopyTo(_chars.Slice(_pos));
+                // _pos += value.Length;
+
+                AppendFormatted(value.AsSpan());
             }
         }
 
@@ -535,8 +554,8 @@ namespace System.Runtime.CompilerServices
         [MethodImpl(MethodImplOptions.AggressiveInlining)] // only used in a few hot path call sites
         internal static bool HasCustomFormatter(IFormatProvider provider)
         {
-            Debug.Assert(provider is not null);
-            Debug.Assert(provider is not CultureInfo || provider.GetFormat(typeof(ICustomFormatter)) is null, "Expected CultureInfo to not provide a custom formatter");
+            Assertion.Assert(provider is not null);
+            Assertion.Assert(provider is not CultureInfo || provider.GetFormat(typeof(ICustomFormatter)) is null, "Expected CultureInfo to not provide a custom formatter");
             return
                 provider.GetType() != typeof(CultureInfo) && // optimization to avoid GetFormat in the majority case
                 provider.GetFormat(typeof(ICustomFormatter)) != null;
@@ -553,11 +572,11 @@ namespace System.Runtime.CompilerServices
             // a provider was used that supplied an ICustomFormatter which wanted to intercept the particular value.
             // We do the cast here rather than in the ctor, even though this could be executed multiple times per
             // formatting, to make the cast pay for play.
-            Debug.Assert(_hasCustomFormatter);
-            Debug.Assert(_provider != null);
+            Assertion.Assert(_hasCustomFormatter);
+            Assertion.Assert(_provider != null);
 
             ICustomFormatter? formatter = (ICustomFormatter?)_provider.GetFormat(typeof(ICustomFormatter));
-            Debug.Assert(formatter != null, "An incorrectly written provider said it implemented ICustomFormatter, and then didn't");
+            Assertion.Assert(formatter != null, "An incorrectly written provider said it implemented ICustomFormatter, and then didn't");
 
             if (formatter is not null && formatter.Format(format, value, _provider) is string customFormatted)
             {
@@ -570,8 +589,8 @@ namespace System.Runtime.CompilerServices
         /// <param name="alignment">Non-zero minimum number of characters that should be written for this value.  If the value is negative, it indicates left-aligned and the required minimum is the absolute value.</param>
         private void AppendOrInsertAlignmentIfNeeded(int startingPos, int alignment)
         {
-            Debug.Assert(startingPos >= 0 && startingPos <= _pos);
-            Debug.Assert(alignment != 0);
+            Assertion.Assert(startingPos >= 0 && startingPos <= _pos);
+            Assertion.Assert(alignment != 0);
 
             int charsWritten = _pos - startingPos;
 
@@ -617,7 +636,8 @@ namespace System.Runtime.CompilerServices
         private void GrowThenCopyString(string value)
         {
             Grow(value.Length);
-            value.CopyTo(_chars.Slice(_pos));
+            // value.CopyTo(_chars.Slice(_pos));
+            value.AsSpan().CopyTo(_chars.Slice(_pos));
             _pos += value.Length;
         }
 
@@ -639,7 +659,7 @@ namespace System.Runtime.CompilerServices
             // insufficient to store a specific number of additional characters.  Thus, we
             // need to grow to at least that new total. GrowCore will handle growing by more
             // than that if possible.
-            Debug.Assert(additionalChars > _chars.Length - _pos);
+            Assertion.Assert(additionalChars > _chars.Length - _pos);
             GrowCore((uint)_pos + (uint)additionalChars);
         }
 
@@ -662,8 +682,8 @@ namespace System.Runtime.CompilerServices
             // ints that could technically overflow if someone tried to, for example, append a huge string to a huge string, we also clamp to int.MaxValue.
             // Even if the array creation fails in such a case, we may later fail in ToStringAndClear.
 
-            uint newCapacity = Math.Max(requiredMinCapacity, Math.Min((uint)_chars.Length * 2, string.MaxLength));
-            int arraySize = (int)Math.Clamp(newCapacity, MinimumArrayPoolLength, int.MaxValue);
+            uint newCapacity = Math.Max(requiredMinCapacity, Math.Min((uint)_chars.Length * 2, StringMaxLength));
+            int arraySize = (int)Clamp(newCapacity, MinimumArrayPoolLength, int.MaxValue);
 
             char[] newArray = ArrayPool<char>.Shared.Rent(arraySize);
             _chars.Slice(0, _pos).CopyTo(newArray);
@@ -676,5 +696,21 @@ namespace System.Runtime.CompilerServices
                 ArrayPool<char>.Shared.Return(toReturn);
             }
         }
+    
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static uint Clamp(uint value, uint min, uint max)
+        {
+          if (min > max)
+            throw new ArgumentException($"{nameof(max)}:{max} must be more or equal than {nameof(min)}:{min}");
+
+          if (value < min)
+            return min;
+      
+          if (value > max)
+            return max;
+
+          return value;
+        }
     }
 }
+#endif
