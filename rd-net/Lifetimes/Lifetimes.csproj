@@ -15,6 +15,8 @@
         <Configurations>Debug;Release;CrossTests</Configurations>
         
         <Platforms>AnyCPU</Platforms>
+        
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
     
     <PropertyGroup Label="NuGet">
@@ -58,11 +60,7 @@
         <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-      <PackageReference Include="System.Memory" Version="4.5.4" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <ItemGroup Condition="'$(TargetFramework)' != 'net35'">
       <PackageReference Include="System.Memory" Version="4.5.4" />
     </ItemGroup>
 </Project>

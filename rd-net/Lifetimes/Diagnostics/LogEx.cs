@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+#if !NET35
+using JetBrains.Diagnostics.StringInterpolation;
+#endif
 
 namespace JetBrains.Diagnostics
 {
@@ -79,6 +82,16 @@ namespace JetBrains.Diagnostics
     {
       @this.Log(LoggingLevel.TRACE, message);
     }
+
+#if !NET35
+    public static void Trace(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogTraceInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Log(LoggingLevel.TRACE, messageHandler.ToStringAndClear());
+      }      
+    }    
+#endif
 
     [StringFormatMethod("message")]
     public static void Trace<T1>(this ILog @this, string message, T1 t1)

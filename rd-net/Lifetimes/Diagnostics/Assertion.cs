@@ -9,6 +9,10 @@ using JetBrains.Util;
 using System.Diagnostics.CodeAnalysis;
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
 
+#if !NET35
+using JetBrains.Diagnostics.StringInterpolation;
+#endif
+
 namespace JetBrains.Diagnostics
 {
   [System.ComponentModel.Localizable(false)]
@@ -24,6 +28,19 @@ namespace JetBrains.Diagnostics
         Fail(message ?? "");
       }
     }
+
+#if !NET35
+    [ContractAnnotation("condition:false=>void")]
+    [AssertionMethod]
+    [Conditional("JET_MODE_ASSERT")]
+    public static void Assert([DoesNotReturnIf(false)] bool condition, [InterpolatedStringHandlerArgument("condition")] ref JetConditionalInterpolatedStringHandler handler)
+    {
+      if (!condition)
+      {
+        Fail(handler.ToStringAndClear());
+      }
+    }
+#endif
 
     [AssertionMethod]
     [Conditional("JET_MODE_ASSERT")]
@@ -141,6 +158,19 @@ namespace JetBrains.Diagnostics
       }
     }
 
+#if !NET35
+    [ContractAnnotation("condition:null=>void")]
+    [AssertionMethod]
+    [Conditional("JET_MODE_ASSERT")]
+    public static void AssertNotNull([CodeAnalysis.NotNull] object? condition, [InterpolatedStringHandlerArgument("condition")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
+    {
+      if (condition == null)
+      {
+        Fail(messageHandler.ToStringAndClear());
+      }
+    }
+#endif
+
     [ContractAnnotation("condition:null=>void")]
     [AssertionMethod, StringFormatMethod("message")]
     [Conditional("JET_MODE_ASSERT")]
@@ -208,6 +238,20 @@ namespace JetBrains.Diagnostics
 
       return value;
     }
+    
+#if !NET35
+    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler) where T : class
+    {
+      if (value == null)
+      {
+        Fail(messageHandler.ToStringAndClear());
+      }
+
+      return value;
+    }
+#endif
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [StringFormatMethod("args")]
@@ -245,6 +289,20 @@ namespace JetBrains.Diagnostics
 
       return value.GetValueOrDefault();
     }
+    
+#if !NET35
+    [ContractAnnotation("value:null => void; => value:notnull")]
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler) where T : struct
+    {
+      if (value == null)
+      {
+        Fail(messageHandler.ToStringAndClear());
+      }
+
+      return value.GetValueOrDefault();
+    }
+#endif
 
     [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -266,6 +324,17 @@ namespace JetBrains.Diagnostics
         Fail(message);
       }
     }
+    
+#if !NET35
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
+    public static void Require([DoesNotReturnIf(false)] bool value, [InterpolatedStringHandlerArgument("value")] ref JetConditionalInterpolatedStringHandler messageHandler)
+    {
+      if (!value)
+      {
+        Fail(messageHandler.ToStringAndClear());
+      }
+    }
+#endif
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
     public static void Require([DoesNotReturnIf(false)] bool value, string message, object? arg1)
