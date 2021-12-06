@@ -72,6 +72,53 @@ namespace System.Runtime.CompilerServices.Tests
 
             Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
         }
+        
+        [Test]
+        public void AppendLiteral_GrowThenCopyString()
+        {
+          {
+            var expected = new StringBuilder();
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
+
+            for (int i = 0; i < 10_000; i++)
+            {
+              var value = "a";
+              expected.Append(value);
+              actual.AppendLiteral(value);
+            }
+
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
+          }
+          
+          {
+            var expected = new StringBuilder();
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
+            
+            for (int i = 0; i < 10_000; i++)
+            {
+              var value = "aa";
+              expected.Append(value);
+              actual.AppendLiteral(value);
+            }
+
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
+          }
+          
+          {
+            
+            var expected = new StringBuilder();
+            JetDefaultInterpolatedStringHandler actual = new JetDefaultInterpolatedStringHandler(0, 0);
+            for (int i = 0; i < 10_000; i++)
+            {
+              var value = "aaa";
+              expected.Append(value);
+              actual.AppendLiteral(value);
+            }
+
+
+            Assert.AreEqual(expected.ToString(), actual.ToStringAndClear());
+          }
+        }
 
         [Test]
         public void AppendFormatted_ReadOnlySpanChar()
