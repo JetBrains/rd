@@ -10,6 +10,7 @@
         <Platforms>AnyCPU</Platforms>
         <RollForward>LatestMajor</RollForward>
         <Nullable>disable</Nullable>
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
