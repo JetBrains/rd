@@ -4,10 +4,12 @@ import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdSignal
+import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
+import kotlin.reflect.KClass
 
 
 class Protocol internal constructor(
@@ -16,7 +18,7 @@ class Protocol internal constructor(
     override val identity: IIdentities,
     override val scheduler: IScheduler,
     override val wire: IWire, //to initialize field with circular dependencies
-    val lifetime: Lifetime,
+    override val lifetime: Lifetime,
     serializationCtx: SerializationCtx? = null,
     parentContexts: ProtocolContexts? = null,
     parentExtCreated: ISignal<ExtCreationInfo>? = null,
@@ -61,6 +63,8 @@ class Protocol internal constructor(
 
     private val extConfirmation: RdSignal<ExtCreationInfo>
     private val extIsLocal: ThreadLocal<Boolean>
+
+    private val extensions = mutableMapOf<KClass<*>, Any>()
 
     init {
         wire.setupContexts(contexts)
@@ -108,6 +112,15 @@ class Protocol internal constructor(
             extConfirmation.fire(info)
         } finally {
             extIsLocal.set(false)
+        }
+    }
+
+    override fun <T: Any> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T {
+        Sync.lock(extensions) {
+            val res = extensions.getOrPut(clazz) { create() }
+            @Suppress("UNCHECKED_CAST")
+            return res as? T
+                ?: error("Wrong class found in top level extension, expected `${clazz.simpleName}` but found `${res::class.simpleName}`")
         }
     }
 }

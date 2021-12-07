@@ -6,7 +6,6 @@ import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.base.RdExtBase
 import com.jetbrains.rd.framework.impl.InternId
 import com.jetbrains.rd.framework.impl.ProtocolContexts
-import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
@@ -30,6 +29,7 @@ interface IProtocol : IRdDynamic {
     val identity: IIdentities
     val scheduler: IScheduler
     val wire: IWire
+    val lifetime: Lifetime
     val isMaster : Boolean
 
     // Models for which the serialization hash does not match that on the other side
@@ -38,6 +38,8 @@ interface IProtocol : IRdDynamic {
     val contexts : ProtocolContexts
 
     val extCreated: ISignal<ExtCreationInfo>
+
+    fun <T: Any> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T
 }
 
 /**
