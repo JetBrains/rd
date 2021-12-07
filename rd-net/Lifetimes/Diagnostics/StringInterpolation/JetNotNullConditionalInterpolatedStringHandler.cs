@@ -1,5 +1,4 @@
 #if !NET35
-using System;
 using System.Runtime.CompilerServices;
 
 namespace JetBrains.Diagnostics.StringInterpolation;
@@ -32,8 +31,9 @@ public ref struct JetNotNullConditionalInterpolatedStringHandler
   public void AppendFormatted<T>(T value, int alignment) => myHandler.AppendFormatted(value, alignment);
   public void AppendFormatted<T>(T value, int alignment, string? format) => myHandler.AppendFormatted(value, alignment, format);
   
-  public void AppendFormatted(ReadOnlySpan<char> value) => myHandler.AppendFormatted(value);
-  public void AppendFormatted(ReadOnlySpan<char> value, int alignment = 0, string? format = null) => myHandler.AppendFormatted(value, alignment, format);
+  // Commented out, because the compiler will require System.Memory for a project that uses string interpolation 
+  // public void AppendFormatted(ReadOnlySpan<char> value) => myHandler.AppendFormatted(value);
+  // public void AppendFormatted(ReadOnlySpan<char> value, int alignment = 0, string? format = null) => myHandler.AppendFormatted(value, alignment, format);
   
   public void AppendFormatted(string? value) => myHandler.AppendFormatted(value);
   public void AppendFormatted(string? value, int alignment = 0, string? format = null) => myHandler.AppendFormatted(value, alignment, format);
