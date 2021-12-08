@@ -522,6 +522,10 @@ open class Kotlin11Generator(
                 println()
                 getOrCreateMethodTrait(decl)
                 println()
+                getOrNullMethodTrait(decl)
+                println()
+                createOrThrowMethodTrait(decl)
+                println()
                 createMethodTrait(decl)
                 println()
                 customSerializersTrait(decl)
@@ -611,13 +615,31 @@ open class Kotlin11Generator(
         }
     }
 
+    protected fun PrettyPrinter.getOrNullMethodTrait(decl: Toplevel) {
+        if (decl.isExtension) return
+
+        + "@JvmStatic"
+        block("fun getOrNull(protocol: IProtocol): ${decl.name}? ") {
+            + "return protocol.tryGetExtension(${decl.name}::class)"
+        }
+    }
+
+    protected fun PrettyPrinter.createOrThrowMethodTrait(decl: Toplevel) {
+        if (decl.isExtension) return
+
+        + "@JvmStatic"
+        block("fun createOrThrow(protocol: IProtocol): ${decl.name} ") {
+            + "return protocol.createExtensionOrThrow(${decl.name}::class) { createModel(protocol.lifetime, protocol) }"
+        }
+    }
+
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (decl.isExtension) return
 
         + "@JvmStatic"
-        + "@Deprecated(\"Use getOrCreate(protocol)\", ReplaceWith(\"${decl.name}.getOrCreate(protocol)\"))"
+        + "@Deprecated(\"Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)\", ReplaceWith(\"${decl.name}.createOrThrow(protocol)\"))"
         block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
-            + "return getOrCreate(protocol)"
+            + "return createOrThrow(protocol)"
         }
     }
 

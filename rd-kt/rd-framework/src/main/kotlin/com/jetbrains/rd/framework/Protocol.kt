@@ -118,9 +118,32 @@ class Protocol internal constructor(
     override fun <T: Any> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T {
         Sync.lock(extensions) {
             val res = extensions.getOrPut(clazz) { create() }
-            @Suppress("UNCHECKED_CAST")
-            return res as? T
-                ?: error("Wrong class found in top level extension, expected `${clazz.simpleName}` but found `${res::class.simpleName}`")
+            return castExtension(res, clazz)
         }
     }
+
+    override fun <T: Any> tryGetExtension(clazz: KClass<T>): T? {
+        Sync.lock(extensions) {
+            val res = extensions[clazz] ?: return null
+            return castExtension(res, clazz)
+        }
+    }
+    
+    override fun <T: Any> createExtensionOrThrow(clazz: KClass<T>, create: () -> T): T {
+        Sync.lock(extensions) {
+            val old = extensions[clazz]
+            if (old != null) {
+                error("Top level extension `${clazz.simpleName}` is already created")
+            }
+            val res = create()
+            extensions[clazz] = res
+            return res
+        }
+    }
+    
+    private fun <T: Any> castExtension(value: Any, clazz: KClass<T>): T {
+        @Suppress("UNCHECKED_CAST")
+        return value as? T
+            ?: error("Wrong class found in top level extension, expected `${clazz.simpleName}` but found `${value::class.simpleName}`")  
+    } 
 }
