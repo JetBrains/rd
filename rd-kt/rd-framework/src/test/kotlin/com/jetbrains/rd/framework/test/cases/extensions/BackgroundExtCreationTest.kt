@@ -2,7 +2,7 @@ package com.jetbrains.rd.framework.test.cases.extensions
 
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import demo.ClassWithExt
-import demo.DemoModel
+import demo.demoModel
 import demo.classExtModel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -16,8 +16,8 @@ class BackgroundExtCreationTest : RdFrameworkTestBase() {
         val count = 10000
         val timeoutInSeconds = 20L
         
-        val serverModel = DemoModel.createOrThrow(serverProtocol)
-        /* clientModel */ DemoModel.createOrThrow(clientProtocol)
+        val serverModel = serverProtocol.demoModel
+        /* clientModel */ clientProtocol.demoModel
         
         val models = (0 until count).map { ClassWithExt(it) }
         models.forEach { serverModel.extList.add(it) }

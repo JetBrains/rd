@@ -3,13 +3,13 @@
 package com.jetbrains.rd.cross.cases
 
 import com.jetbrains.rd.cross.base.CrossTest_KtServer_Base
-import demo.DemoModel
+import demo.demoModel
 
 @Suppress("ClassName")
 class CrossTest_RdCall_KtServer : CrossTest_KtServer_Base() {
     override fun start(args: Array<String>) {
         queue {
-            val model = DemoModel.createOrThrow(protocol)
+            val model = protocol.demoModel
 
             model.callback.set { it -> it.length }
 
