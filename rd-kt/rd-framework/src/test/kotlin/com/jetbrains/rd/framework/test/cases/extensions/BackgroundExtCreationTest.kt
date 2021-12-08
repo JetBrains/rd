@@ -16,8 +16,8 @@ class BackgroundExtCreationTest : RdFrameworkTestBase() {
         val count = 10000
         val timeoutInSeconds = 20L
         
-        val serverModel = DemoModel.create(serverLifetime, serverProtocol)
-        /* clientModel */ DemoModel.create(clientLifetime, clientProtocol)
+        val serverModel = DemoModel.createOrThrow(serverProtocol)
+        /* clientModel */ DemoModel.createOrThrow(clientProtocol)
         
         val models = (0 until count).map { ClassWithExt(it) }
         models.forEach { serverModel.extList.add(it) }

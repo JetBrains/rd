@@ -9,7 +9,7 @@ import demo.DemoModel
 class CrossTest_RdCall_KtServer : CrossTest_KtServer_Base() {
     override fun start(args: Array<String>) {
         queue {
-            val model = DemoModel.create(modelLifetime, protocol)
+            val model = DemoModel.createOrThrow(protocol)
 
             model.callback.set { it -> it.length }
 
