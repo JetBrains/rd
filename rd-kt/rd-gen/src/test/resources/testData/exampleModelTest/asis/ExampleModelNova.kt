@@ -43,14 +43,34 @@ class ExampleModelNova private constructor(
         }
         
         
-        @JvmStatic
-        fun create(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
+        private fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             ExampleRootNova.register(protocol.serializers)
             
             return ExampleModelNova().apply {
                 identify(protocol.identity, RdId.Null.mix("ExampleModelNova"))
                 bind(lifetime, protocol, "ExampleModelNova")
             }
+        }
+        
+        @JvmStatic
+        fun getOrCreate(protocol: IProtocol): ExampleModelNova  {
+            return protocol.getOrCreateExtension(ExampleModelNova::class) { createModel(protocol.lifetime, protocol) }
+        }
+        
+        @JvmStatic
+        fun getOrNull(protocol: IProtocol): ExampleModelNova?  {
+            return protocol.tryGetExtension(ExampleModelNova::class)
+        }
+        
+        @JvmStatic
+        fun createOrThrow(protocol: IProtocol): ExampleModelNova  {
+            return protocol.createExtensionOrThrow(ExampleModelNova::class) { createModel(protocol.lifetime, protocol) }
+        }
+        
+        @JvmStatic
+        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("ExampleModelNova.createOrThrow(protocol)"))
+        fun create(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
+            return createOrThrow(protocol)
         }
         
         
