@@ -2,7 +2,7 @@ package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
-import demo.DemoModel
+import demo.demoModel
 import demo.extModel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
@@ -18,8 +18,8 @@ class ContextWithExtTest : RdFrameworkTestBase() {
         clientProtocol.serializers.register(RdContext.marshallerFor(context))
         serverProtocol.contexts.registerContext(context)
         
-        val serverModel = DemoModel.createOrThrow(serverProtocol)
-        val clientModel = DemoModel.createOrThrow(clientProtocol)
+        val serverModel = serverProtocol.demoModel
+        val clientModel = clientProtocol.demoModel
 
         val serverExt = serverModel.extModel
 

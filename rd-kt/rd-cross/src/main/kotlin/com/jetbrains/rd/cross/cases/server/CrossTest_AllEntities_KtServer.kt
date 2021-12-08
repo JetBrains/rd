@@ -6,7 +6,7 @@ import com.jetbrains.rd.cross.base.CrossTest_KtServer_Base
 import com.jetbrains.rd.cross.statics.CrossTest_AllEntities.checkConstants
 import com.jetbrains.rd.cross.statics.CrossTest_AllEntities.fireAll
 import com.jetbrains.rd.cross.util.trackAction
-import demo.DemoModel
+import demo.demoModel
 import demo.extModel
 
 @Suppress("ClassName")
@@ -18,7 +18,7 @@ class CrossTest_AllEntities_KtServer : CrossTest_KtServer_Base() {
 
         queue {
             val model = trackAction("Creating DemoModel") {
-                DemoModel.createOrThrow(protocol)
+                protocol.demoModel
             }
 
             val extModel = trackAction("Creating ExtModel") {

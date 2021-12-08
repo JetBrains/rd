@@ -3,7 +3,7 @@ package com.jetbrains.rd.framework.test.cases.contexts
 import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import com.jetbrains.rd.util.threading.SpinWait
-import demo.DemoModel
+import demo.demoModel
 import demo.extModel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
@@ -29,7 +29,7 @@ class DelayedContextWithExtTest : RdAsyncTestBase() {
 
         serverUiScheduler.queue {
             serverProtocol.contexts.registerContext(context)
-            val serverModel = DemoModel.createOrThrow(serverProtocol)
+            val serverModel = serverProtocol.demoModel
 
             barrier0.await() // root model also uses ext semantics, so make sure both ends have created it and processed its connection message
 
@@ -48,7 +48,7 @@ class DelayedContextWithExtTest : RdAsyncTestBase() {
         val receivedContexts = mutableSetOf<String>()
 
         clientUiScheduler.queue {
-            val clientModel = DemoModel.createOrThrow(clientProtocol)
+            val clientModel = clientProtocol.demoModel
 
             barrier0.await()
             barrier1.await()

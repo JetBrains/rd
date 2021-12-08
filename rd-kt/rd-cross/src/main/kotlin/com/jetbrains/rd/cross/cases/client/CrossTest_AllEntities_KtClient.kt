@@ -17,7 +17,7 @@ class CrossTest_AllEntities_KtClient : CrossTest_KtClient_Base() {
 
         queue {
             val model = trackAction("Creating DemoModel") {
-                DemoModel.createOrThrow(protocol)
+                protocol.demoModel
             }
 
             val extModel = trackAction("Creating ExtModel") {

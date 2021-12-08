@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework.test.cases.extensions
 
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import demo.DemoModel
+import demo.demoModel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertNotNull
@@ -11,23 +12,23 @@ import kotlin.test.assertSame
 class ToplevelExtCreationTest : RdFrameworkTestBase() {
     @Test
     fun testCreateOrThrow() {
-        DemoModel.createOrThrow(serverProtocol)
+        serverProtocol.createExtensionOrThrow(DemoModel::class) { DemoModel.createModel(serverProtocol.lifetime, serverProtocol) }
         assertThrows<IllegalStateException> {
-            DemoModel.createOrThrow(serverProtocol)
+            serverProtocol.createExtensionOrThrow(DemoModel::class) { DemoModel.createModel(serverProtocol.lifetime, serverProtocol) }
         }
     }
     
     @Test
     fun testGetOrNull() {
         assertNull(DemoModel.getOrNull(serverProtocol))
-        assertNotNull(DemoModel.getOrCreate(serverProtocol))
+        assertNotNull(serverProtocol.demoModel)
         assertNotNull(DemoModel.getOrNull(serverProtocol))
     }
     
     @Test
     fun testGetOrCreate() {
-        val model1 = assertNotNull(DemoModel.getOrCreate(serverProtocol))
-        val model2 = assertNotNull(DemoModel.getOrCreate(serverProtocol))
+        val model1 = assertNotNull(serverProtocol.demoModel)
+        val model2 = assertNotNull(serverProtocol.demoModel)
         assertSame(model1, model2)
     }
 }
