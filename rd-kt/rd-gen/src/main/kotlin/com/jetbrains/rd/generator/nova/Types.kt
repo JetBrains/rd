@@ -563,6 +563,7 @@ abstract class Ext(pointcut : BindableDeclaration, val extName: String? = null) 
 }
 
 val Declaration.isExtension get() = this is Ext && pointcut !is Root
+val Declaration.isToplevelExtension get() = this is Ext && pointcut is Root
 
 abstract class Root(vararg val hardcodedGenerators: IGenerator) : Toplevel(null) {
     internal val singletons = ArrayList<Ext>()
