@@ -29,35 +29,8 @@ class ExampleRootNova private constructor(
         }
         
         
-        private fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleRootNova  {
-            ExampleRootNova.register(protocol.serializers)
-            
-            return ExampleRootNova().apply {
-                identify(protocol.identity, RdId.Null.mix("ExampleRootNova"))
-                bind(lifetime, protocol, "ExampleRootNova")
-            }
-        }
         
-        @JvmStatic
-        fun getOrCreate(protocol: IProtocol): ExampleRootNova  {
-            return protocol.getOrCreateExtension(ExampleRootNova::class) { createModel(protocol.lifetime, protocol) }
-        }
         
-        @JvmStatic
-        fun getOrNull(protocol: IProtocol): ExampleRootNova?  {
-            return protocol.tryGetExtension(ExampleRootNova::class)
-        }
-        
-        @JvmStatic
-        fun createOrThrow(protocol: IProtocol): ExampleRootNova  {
-            return protocol.createExtensionOrThrow(ExampleRootNova::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
-        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("ExampleRootNova.createOrThrow(protocol)"))
-        fun create(lifetime: Lifetime, protocol: IProtocol): ExampleRootNova  {
-            return createOrThrow(protocol)
-        }
         
         
         const val serializationHash = -1365062388667980170L

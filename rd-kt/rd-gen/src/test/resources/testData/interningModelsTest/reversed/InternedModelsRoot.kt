@@ -31,35 +31,8 @@ class InternedModelsRoot private constructor(
         }
         
         
-        private fun createModel(lifetime: Lifetime, protocol: IProtocol): InternedModelsRoot  {
-            InternedModelsRoot.register(protocol.serializers)
-            
-            return InternedModelsRoot().apply {
-                identify(protocol.identity, RdId.Null.mix("InternedModelsRoot"))
-                bind(lifetime, protocol, "InternedModelsRoot")
-            }
-        }
         
-        @JvmStatic
-        fun getOrCreate(protocol: IProtocol): InternedModelsRoot  {
-            return protocol.getOrCreateExtension(InternedModelsRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
         
-        @JvmStatic
-        fun getOrNull(protocol: IProtocol): InternedModelsRoot?  {
-            return protocol.tryGetExtension(InternedModelsRoot::class)
-        }
-        
-        @JvmStatic
-        fun createOrThrow(protocol: IProtocol): InternedModelsRoot  {
-            return protocol.createExtensionOrThrow(InternedModelsRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
-        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("InternedModelsRoot.createOrThrow(protocol)"))
-        fun create(lifetime: Lifetime, protocol: IProtocol): InternedModelsRoot  {
-            return createOrThrow(protocol)
-        }
         
         
         const val serializationHash = 207990610366166095L
