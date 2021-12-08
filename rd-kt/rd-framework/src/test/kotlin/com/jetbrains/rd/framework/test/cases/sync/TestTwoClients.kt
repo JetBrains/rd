@@ -11,19 +11,17 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import test.synchronization.Clazz
-import test.synchronization.SyncModelRoot
-import test.synchronization.extToClazz
+import test.synchronization.*
 
 private val serverId = AtomicInteger()
 
 class TestTwoClients : TestBase() {
 
 
-    lateinit var c0: SyncModelRoot
-    lateinit var c1: SyncModelRoot
-    lateinit var s0: SyncModelRoot
-    lateinit var s1: SyncModelRoot
+    lateinit var c0: SyncModelExt
+    lateinit var c1: SyncModelExt
+    lateinit var s0: SyncModelExt
+    lateinit var s1: SyncModelExt
 
     @BeforeEach
     fun setup() {
@@ -40,13 +38,13 @@ class TestTwoClients : TestBase() {
 
         val sp = mutableListOf<Protocol>()
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("${wire.id}.Protocol", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelRoot.ClientId)
+            val protocol = Protocol("${wire.id}.Protocol", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelExt.ClientId)
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelRoot.ClientId) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelExt.ClientId) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())
@@ -54,11 +52,11 @@ class TestTwoClients : TestBase() {
 
         wait { sp.size  == 2 }
 
-        c0 = SyncModelRoot.createOrThrow(cp[0])
-        c1 = SyncModelRoot.createOrThrow(cp[1])
+        c0 = cp[0].syncModelExt
+        c1 = cp[1].syncModelExt
 
-        s0 = SyncModelRoot.createOrThrow(sp[0])
-        s1 = SyncModelRoot.createOrThrow(sp[1])
+        s0 = sp[0].syncModelExt
+        s1 = sp[1].syncModelExt
 
         s0.synchronizeWith(lifetime, s1)
     }
@@ -112,7 +110,7 @@ class TestTwoClients : TestBase() {
 
     @Test
     fun testPerClientIdMap() {
-        SyncModelRoot.ClientId::value.usingValue("Host") {
+        SyncModelExt.ClientId::value.usingValue("Host") {
             c0.property.set(Clazz(1))
             wait { c1.property.hasValue }
 
@@ -129,10 +127,10 @@ class TestTwoClients : TestBase() {
         val c0ContextSet = listOf("A", "B", "C")
         val c1ContextSet = listOf("C", "D", "E")
 
-        c0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(c0ContextSet)
-        c1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(c1ContextSet)
+        c0.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(c0ContextSet)
+        c1.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(c1ContextSet)
 
-        SyncModelRoot.ClientId::value.usingValue("C") {
+        SyncModelExt.ClientId::value.usingValue("C") {
             c0.property.valueOrThrow.mapPerClientId[1] = 1
             wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
         }
@@ -144,12 +142,12 @@ class TestTwoClients : TestBase() {
 
     @Test
     fun testPerClientIdProperty() {
-        SyncModelRoot.ClientId::value.usingValue("Host") {
-            c0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).add("Host")
-            c1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).add("Host")
+        SyncModelExt.ClientId::value.usingValue("Host") {
+            c0.protocol.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
+            c1.protocol.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
 
-            wait { s0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).contains("Host") }
-            wait { s1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).contains("Host") }
+            wait { s0.protocol.contexts.getValueSet(SyncModelExt.ClientId).contains("Host") }
+            wait { s1.protocol.contexts.getValueSet(SyncModelExt.ClientId).contains("Host") }
 
             c0.propPerClientId.set(1)
             wait { c1.propPerClientId.valueOrNull == 1 }

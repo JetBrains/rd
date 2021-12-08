@@ -6,7 +6,6 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.int
 import com.jetbrains.rd.generator.nova.PredefinedType.string
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
-import com.jetbrains.rd.models.sync.SyncModelRoot.Clazz
 import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
 import com.jetbrains.rd.generator.paths.outputDirectory
 
@@ -14,7 +13,9 @@ const val folder = "sync"
 
 object SyncModelRoot : Root(
     Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", outputDirectory(ktDirectorySystemPropertyKey, folder))
-) {
+)
+
+object SyncModelExt : Ext(SyncModelRoot) {
     val ClientId = context(string)
     val Baseclazz = baseclass {
         field("f", int)
@@ -30,9 +31,9 @@ object SyncModelRoot : Root(
     init {
         field(
             "aggregate", aggregatedef("OuterAggregate") {
-            property("nonNullableScalarProperty", string)
-            property("nullableScalarProperty", string.nullable)
-        }
+                property("nonNullableScalarProperty", string)
+                property("nullableScalarProperty", string.nullable)
+            }
         )
 
 
@@ -45,12 +46,12 @@ object SyncModelRoot : Root(
     }
 }
 
-object ExtToClazz : Ext(SyncModelRoot.Clazz) {
+object ExtToClazz : Ext(SyncModelExt.Clazz) {
     init {
-        property("property", Clazz)
-        list("list", SyncModelRoot.Clazz)
+        property("property", SyncModelExt.Clazz)
+        list("list", SyncModelExt.Clazz)
         set("set", int)
-        map("map", int, SyncModelRoot.Clazz)
+        map("map", int, SyncModelExt.Clazz)
     }
 }
 
