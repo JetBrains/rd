@@ -13,9 +13,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import test.synchronization.Clazz
-import test.synchronization.SyncModelRoot
-import test.synchronization.extToClazz
+import test.synchronization.*
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.listOf
@@ -29,10 +27,10 @@ import kotlin.collections.toSet
 class TestTwoClientsLateSync : TestBase() {
 
 
-    lateinit var c0: SyncModelRoot
-    lateinit var c1: SyncModelRoot
-    lateinit var s0: SyncModelRoot
-    lateinit var s1: SyncModelRoot
+    lateinit var c0: SyncModelExt
+    lateinit var c1: SyncModelExt
+    lateinit var s0: SyncModelExt
+    lateinit var s1: SyncModelExt
 
     @BeforeEach
     fun setup() {
@@ -46,13 +44,13 @@ class TestTwoClientsLateSync : TestBase() {
         val sp = mutableListOf<Protocol>()
         var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelRoot.ClientId)
+            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelExt.ClientId)
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelRoot.ClientId) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelExt.ClientId) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())
@@ -60,11 +58,11 @@ class TestTwoClientsLateSync : TestBase() {
 
         wait { sp.size  == 2 }
 
-        c0 = SyncModelRoot.createOrThrow(cp[0])
-        c1 = SyncModelRoot.createOrThrow(cp[1])
+        c0 = cp[0].syncModelExt
+        c1 = cp[1].syncModelExt
 
-        s0 = SyncModelRoot.createOrThrow(sp[0])
-        s1 = SyncModelRoot.createOrThrow(sp[1])
+        s0 = sp[0].syncModelExt
+        s1 = sp[1].syncModelExt
     }
 
     private fun doSynchronize(accepts: (Any?) -> Boolean = { true }) {
@@ -141,8 +139,8 @@ class TestTwoClientsLateSync : TestBase() {
 
     @Test
     fun testPerClientIdMap() {
-        s0.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(listOf("A", "B", "C"))
-        s1.protocol.contexts.getValueSet(SyncModelRoot.ClientId).addAll(listOf("C", "D", "E"))
+        s0.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(listOf("A", "B", "C"))
+        s1.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(listOf("C", "D", "E"))
 
         s0.property.set(Clazz(1))
         s1.property.set(Clazz(2))
@@ -191,7 +189,7 @@ class TestTwoClientsLateSync : TestBase() {
     fun testDoNotSync() {
         s0.doNotSync.set(1)
 
-        doSynchronize {! (it is RdBindableBase && it.location.localName == SyncModelRoot::doNotSync.name)}
+        doSynchronize {! (it is RdBindableBase && it.location.localName == SyncModelExt::doNotSync.name)}
 
         assertFalse { s1.doNotSync.hasValue }
     }
