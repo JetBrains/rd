@@ -591,6 +591,8 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.createModelMethodTrait(decl: Toplevel) {
         if (!decl.isToplevelExtension) return
 
+        + "@JvmStatic"
+        + "@JvmName(\"internalCreateModel\")"
         block("internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
