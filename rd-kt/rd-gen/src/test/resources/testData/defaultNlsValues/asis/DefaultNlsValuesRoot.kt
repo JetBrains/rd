@@ -29,35 +29,8 @@ class DefaultNlsValuesRoot private constructor(
         }
         
         
-        private fun createModel(lifetime: Lifetime, protocol: IProtocol): DefaultNlsValuesRoot  {
-            DefaultNlsValuesRoot.register(protocol.serializers)
-            
-            return DefaultNlsValuesRoot().apply {
-                identify(protocol.identity, RdId.Null.mix("DefaultNlsValuesRoot"))
-                bind(lifetime, protocol, "DefaultNlsValuesRoot")
-            }
-        }
         
-        @JvmStatic
-        fun getOrCreate(protocol: IProtocol): DefaultNlsValuesRoot  {
-            return protocol.getOrCreateExtension(DefaultNlsValuesRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
         
-        @JvmStatic
-        fun getOrNull(protocol: IProtocol): DefaultNlsValuesRoot?  {
-            return protocol.tryGetExtension(DefaultNlsValuesRoot::class)
-        }
-        
-        @JvmStatic
-        fun createOrThrow(protocol: IProtocol): DefaultNlsValuesRoot  {
-            return protocol.createExtensionOrThrow(DefaultNlsValuesRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
-        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("DefaultNlsValuesRoot.createOrThrow(protocol)"))
-        fun create(lifetime: Lifetime, protocol: IProtocol): DefaultNlsValuesRoot  {
-            return createOrThrow(protocol)
-        }
         
         
         const val serializationHash = -5102364007078219213L

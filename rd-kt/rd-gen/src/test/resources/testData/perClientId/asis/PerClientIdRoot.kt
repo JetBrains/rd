@@ -36,35 +36,8 @@ class PerClientIdRoot private constructor(
         }
         
         
-        private fun createModel(lifetime: Lifetime, protocol: IProtocol): PerClientIdRoot  {
-            PerClientIdRoot.register(protocol.serializers)
-            
-            return PerClientIdRoot().apply {
-                identify(protocol.identity, RdId.Null.mix("PerClientIdRoot"))
-                bind(lifetime, protocol, "PerClientIdRoot")
-            }
-        }
         
-        @JvmStatic
-        fun getOrCreate(protocol: IProtocol): PerClientIdRoot  {
-            return protocol.getOrCreateExtension(PerClientIdRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
         
-        @JvmStatic
-        fun getOrNull(protocol: IProtocol): PerClientIdRoot?  {
-            return protocol.tryGetExtension(PerClientIdRoot::class)
-        }
-        
-        @JvmStatic
-        fun createOrThrow(protocol: IProtocol): PerClientIdRoot  {
-            return protocol.createExtensionOrThrow(PerClientIdRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
-        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("PerClientIdRoot.createOrThrow(protocol)"))
-        fun create(lifetime: Lifetime, protocol: IProtocol): PerClientIdRoot  {
-            return createOrThrow(protocol)
-        }
         
         
         const val serializationHash = 3214444051594582608L

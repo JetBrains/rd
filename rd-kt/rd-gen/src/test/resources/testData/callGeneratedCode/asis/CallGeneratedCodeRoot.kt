@@ -31,35 +31,8 @@ class CallGeneratedCodeRoot private constructor(
         }
         
         
-        private fun createModel(lifetime: Lifetime, protocol: IProtocol): CallGeneratedCodeRoot  {
-            CallGeneratedCodeRoot.register(protocol.serializers)
-            
-            return CallGeneratedCodeRoot().apply {
-                identify(protocol.identity, RdId.Null.mix("CallGeneratedCodeRoot"))
-                bind(lifetime, protocol, "CallGeneratedCodeRoot")
-            }
-        }
         
-        @JvmStatic
-        fun getOrCreate(protocol: IProtocol): CallGeneratedCodeRoot  {
-            return protocol.getOrCreateExtension(CallGeneratedCodeRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
         
-        @JvmStatic
-        fun getOrNull(protocol: IProtocol): CallGeneratedCodeRoot?  {
-            return protocol.tryGetExtension(CallGeneratedCodeRoot::class)
-        }
-        
-        @JvmStatic
-        fun createOrThrow(protocol: IProtocol): CallGeneratedCodeRoot  {
-            return protocol.createExtensionOrThrow(CallGeneratedCodeRoot::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
-        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("CallGeneratedCodeRoot.createOrThrow(protocol)"))
-        fun create(lifetime: Lifetime, protocol: IProtocol): CallGeneratedCodeRoot  {
-            return createOrThrow(protocol)
-        }
         
         
         const val serializationHash = 2426278172729483988L

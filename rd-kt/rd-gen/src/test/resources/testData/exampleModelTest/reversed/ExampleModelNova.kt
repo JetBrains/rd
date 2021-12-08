@@ -43,7 +43,7 @@ class ExampleModelNova private constructor(
         }
         
         
-        private fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
+        internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             ExampleRootNova.register(protocol.serializers)
             
             return ExampleModelNova().apply {
@@ -53,24 +53,14 @@ class ExampleModelNova private constructor(
         }
         
         @JvmStatic
-        fun getOrCreate(protocol: IProtocol): ExampleModelNova  {
-            return protocol.getOrCreateExtension(ExampleModelNova::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
         fun getOrNull(protocol: IProtocol): ExampleModelNova?  {
             return protocol.tryGetExtension(ExampleModelNova::class)
         }
         
         @JvmStatic
-        fun createOrThrow(protocol: IProtocol): ExampleModelNova  {
-            return protocol.createExtensionOrThrow(ExampleModelNova::class) { createModel(protocol.lifetime, protocol) }
-        }
-        
-        @JvmStatic
-        @Deprecated("Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)", ReplaceWith("ExampleModelNova.createOrThrow(protocol)"))
+        @Deprecated("Use protocol.exampleModelNova or ExampleModelNova.getOrNull(protocol)", ReplaceWith("protocol.exampleModelNova"))
         fun create(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
-            return createOrThrow(protocol)
+            return protocol.exampleModelNova
         }
         
         
@@ -131,6 +121,8 @@ class ExampleModelNova private constructor(
     }
     //contexts
 }
+val IProtocol.exampleModelNova get() = getOrCreateExtension(ExampleModelNova::class) { ExampleModelNova.createModel(lifetime, this) }
+
 
 
 /**
