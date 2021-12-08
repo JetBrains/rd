@@ -399,6 +399,10 @@ open class Kotlin11Generator(
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
         }
+
+        if (decl.isToplevelExtension) {
+            toplevelExtensionTrait(decl as Ext)
+        }
     }
 
     protected fun PrettyPrinter.contextsTrait(decl: Declaration) {
@@ -520,11 +524,7 @@ open class Kotlin11Generator(
                 println()
                 createModelMethodTrait(decl)
                 println()
-                getOrCreateMethodTrait(decl)
-                println()
                 getOrNullMethodTrait(decl)
-                println()
-                createOrThrowMethodTrait(decl)
                 println()
                 createMethodTrait(decl)
                 println()
@@ -589,9 +589,9 @@ open class Kotlin11Generator(
 
     //only for toplevel Exts
     protected fun PrettyPrinter.createModelMethodTrait(decl: Toplevel) {
-        if (decl.isExtension) return
+        if (!decl.isToplevelExtension) return
 
-        block("private fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
+        block("internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
 
@@ -606,17 +606,8 @@ open class Kotlin11Generator(
 
     }
 
-    protected fun PrettyPrinter.getOrCreateMethodTrait(decl: Toplevel) {
-        if (decl.isExtension) return
-
-        + "@JvmStatic"
-        block("fun getOrCreate(protocol: IProtocol): ${decl.name} ") {
-            + "return protocol.getOrCreateExtension(${decl.name}::class) { createModel(protocol.lifetime, protocol) }"
-        }
-    }
-
     protected fun PrettyPrinter.getOrNullMethodTrait(decl: Toplevel) {
-        if (decl.isExtension) return
+        if (!decl.isToplevelExtension) return
 
         + "@JvmStatic"
         block("fun getOrNull(protocol: IProtocol): ${decl.name}? ") {
@@ -624,22 +615,14 @@ open class Kotlin11Generator(
         }
     }
 
-    protected fun PrettyPrinter.createOrThrowMethodTrait(decl: Toplevel) {
-        if (decl.isExtension) return
-
-        + "@JvmStatic"
-        block("fun createOrThrow(protocol: IProtocol): ${decl.name} ") {
-            + "return protocol.createExtensionOrThrow(${decl.name}::class) { createModel(protocol.lifetime, protocol) }"
-        }
-    }
-
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
-        if (decl.isExtension) return
-
+        if (!decl.isToplevelExtension) return
+        
+        val extName = (decl as? Ext)?.extName ?: decl.name.decapitalize()
         + "@JvmStatic"
-        + "@Deprecated(\"Use getOrCreate(protocol), createOrThrow(protocol) or getOrNull(protocol)\", ReplaceWith(\"${decl.name}.createOrThrow(protocol)\"))"
+        + "@Deprecated(\"Use protocol.$extName or ${decl.name}.getOrNull(protocol)\", ReplaceWith(\"protocol.$extName\"))"
         block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
-            + "return createOrThrow(protocol)"
+            + "return protocol.$extName"
         }
     }
 
@@ -1117,6 +1100,12 @@ open class Kotlin11Generator(
         val lowerName = decl.name.decapitalize()
         val extName = decl.extName ?: lowerName
         + """val ${pointcut.sanitizedName(decl)}.$extName get() = getOrCreateExtension("$lowerName", ::${decl.name})"""
+        println()
+    }
+
+    private fun PrettyPrinter.toplevelExtensionTrait(decl: Ext) {
+        val extName = decl.extName ?: decl.name.decapitalize()
+        + """val IProtocol.$extName get() = getOrCreateExtension(${decl.name}::class) { ${decl.name}.createModel(lifetime, this) }"""
         println()
     }
 
