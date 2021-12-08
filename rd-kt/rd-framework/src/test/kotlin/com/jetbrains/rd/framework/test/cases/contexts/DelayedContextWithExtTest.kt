@@ -29,7 +29,7 @@ class DelayedContextWithExtTest : RdAsyncTestBase() {
 
         serverUiScheduler.queue {
             serverProtocol.contexts.registerContext(context)
-            val serverModel = DemoModel.create(serverLifetime, serverProtocol)
+            val serverModel = DemoModel.createOrThrow(serverProtocol)
 
             barrier0.await() // root model also uses ext semantics, so make sure both ends have created it and processed its connection message
 
@@ -48,7 +48,7 @@ class DelayedContextWithExtTest : RdAsyncTestBase() {
         val receivedContexts = mutableSetOf<String>()
 
         clientUiScheduler.queue {
-            val clientModel = DemoModel.create(clientLifetime, clientProtocol)
+            val clientModel = DemoModel.createOrThrow(clientProtocol)
 
             barrier0.await()
             barrier1.await()

@@ -54,11 +54,11 @@ class TestTwoClients : TestBase() {
 
         wait { sp.size  == 2 }
 
-        c0 = SyncModelRoot.create(lifetime, cp[0])
-        c1 = SyncModelRoot.create(lifetime, cp[1])
+        c0 = SyncModelRoot.createOrThrow(cp[0])
+        c1 = SyncModelRoot.createOrThrow(cp[1])
 
-        s0 = SyncModelRoot.create(lifetime, sp[0])
-        s1 = SyncModelRoot.create(lifetime, sp[1])
+        s0 = SyncModelRoot.createOrThrow(sp[0])
+        s1 = SyncModelRoot.createOrThrow(sp[1])
 
         s0.synchronizeWith(lifetime, s1)
     }

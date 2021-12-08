@@ -18,8 +18,8 @@ class ContextWithExtTest : RdFrameworkTestBase() {
         clientProtocol.serializers.register(RdContext.marshallerFor(context))
         serverProtocol.contexts.registerContext(context)
         
-        val serverModel = DemoModel.create(serverLifetime, serverProtocol)
-        val clientModel = DemoModel.create(clientLifetime, clientProtocol)
+        val serverModel = DemoModel.createOrThrow(serverProtocol)
+        val clientModel = DemoModel.createOrThrow(clientProtocol)
 
         val serverExt = serverModel.extModel
 
