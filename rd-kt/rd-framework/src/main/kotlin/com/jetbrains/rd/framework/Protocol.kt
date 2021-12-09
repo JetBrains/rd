@@ -129,18 +129,6 @@ class Protocol internal constructor(
         }
     }
     
-    override fun <T: Any> createExtensionOrThrow(clazz: KClass<T>, create: () -> T): T {
-        Sync.lock(extensions) {
-            val old = extensions[clazz]
-            if (old != null) {
-                error("Top level extension `${clazz.simpleName}` is already created")
-            }
-            val res = create()
-            extensions[clazz] = res
-            return res
-        }
-    }
-    
     private fun <T: Any> castExtension(value: Any, clazz: KClass<T>): T {
         @Suppress("UNCHECKED_CAST")
         return value as? T
