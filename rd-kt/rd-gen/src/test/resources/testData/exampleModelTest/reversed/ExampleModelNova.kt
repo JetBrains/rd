@@ -43,6 +43,8 @@ class ExampleModelNova private constructor(
         }
         
         
+        @JvmStatic
+        @JvmName("internalCreateModel")
         internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             ExampleRootNova.register(protocol.serializers)
             
@@ -53,12 +55,7 @@ class ExampleModelNova private constructor(
         }
         
         @JvmStatic
-        fun getOrNull(protocol: IProtocol): ExampleModelNova?  {
-            return protocol.tryGetExtension(ExampleModelNova::class)
-        }
-        
-        @JvmStatic
-        @Deprecated("Use protocol.exampleModelNova or ExampleModelNova.getOrNull(protocol)", ReplaceWith("protocol.exampleModelNova"))
+        @Deprecated("Use protocol.exampleModelNova", ReplaceWith("protocol.exampleModelNova"))
         fun create(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             return protocol.exampleModelNova
         }
