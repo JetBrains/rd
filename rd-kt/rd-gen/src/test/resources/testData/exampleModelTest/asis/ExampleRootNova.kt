@@ -32,7 +32,6 @@ class ExampleRootNova private constructor(
         
         
         
-        
         const val serializationHash = -1365062388667980170L
         
     }
