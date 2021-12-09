@@ -524,8 +524,6 @@ open class Kotlin11Generator(
                 println()
                 createModelMethodTrait(decl)
                 println()
-                getOrNullMethodTrait(decl)
-                println()
                 createMethodTrait(decl)
                 println()
                 customSerializersTrait(decl)
@@ -608,21 +606,12 @@ open class Kotlin11Generator(
 
     }
 
-    protected fun PrettyPrinter.getOrNullMethodTrait(decl: Toplevel) {
-        if (!decl.isToplevelExtension) return
-
-        + "@JvmStatic"
-        block("fun getOrNull(protocol: IProtocol): ${decl.name}? ") {
-            + "return protocol.tryGetExtension(${decl.name}::class)"
-        }
-    }
-
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (!decl.isToplevelExtension) return
         
         val extName = (decl as? Ext)?.extName ?: decl.name.decapitalize()
         + "@JvmStatic"
-        + "@Deprecated(\"Use protocol.$extName or ${decl.name}.getOrNull(protocol)\", ReplaceWith(\"protocol.$extName\"))"
+        + "@Deprecated(\"Use protocol.$extName\", ReplaceWith(\"protocol.$extName\"))"
         block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "return protocol.$extName"
         }

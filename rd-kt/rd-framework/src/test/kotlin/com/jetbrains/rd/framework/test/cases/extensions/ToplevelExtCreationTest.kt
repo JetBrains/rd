@@ -20,9 +20,9 @@ class ToplevelExtCreationTest : RdFrameworkTestBase() {
     
     @Test
     fun testGetOrNull() {
-        assertNull(DemoModel.getOrNull(serverProtocol))
+        assertNull(serverProtocol.tryGetExtension(DemoModel::class))
         assertNotNull(serverProtocol.demoModel)
-        assertNotNull(DemoModel.getOrNull(serverProtocol))
+        assertNotNull(serverProtocol.tryGetExtension(DemoModel::class))
     }
     
     @Test
