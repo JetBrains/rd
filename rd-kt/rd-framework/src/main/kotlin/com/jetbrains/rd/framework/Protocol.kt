@@ -115,14 +115,14 @@ class Protocol internal constructor(
         }
     }
 
-    override fun <T: Any> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T {
+    override fun <T: RdExtBase> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T {
         Sync.lock(extensions) {
             val res = extensions.getOrPut(clazz) { create() }
             return castExtension(res, clazz)
         }
     }
 
-    override fun <T: Any> tryGetExtension(clazz: KClass<T>): T? {
+    override fun <T: RdExtBase> tryGetExtension(clazz: KClass<T>): T? {
         Sync.lock(extensions) {
             val res = extensions[clazz] ?: return null
             return castExtension(res, clazz)
