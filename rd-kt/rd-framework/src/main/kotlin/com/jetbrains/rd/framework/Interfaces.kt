@@ -39,8 +39,8 @@ interface IProtocol : IRdDynamic {
 
     val extCreated: ISignal<ExtCreationInfo>
 
-    fun <T: Any> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T
-    fun <T: Any> tryGetExtension(clazz: KClass<T>): T?
+    fun <T: RdExtBase> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T
+    fun <T: RdExtBase> tryGetExtension(clazz: KClass<T>): T?
 }
 
 /**
