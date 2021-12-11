@@ -61,7 +61,7 @@ class RdGen : Kli() {
         get() {
             val path = generatorsFile.value
             return if (path == null) emptyList()
-            else GenerationSpec.loadFrom(File(generatorsFile.value))
+            else GenerationSpec.loadFrom(File(path))
         }
 
     val hashfile : Path get() = Paths.get(hashFolder.value!!.toString(), hashFileName).normalize()
