@@ -45,7 +45,8 @@ class ExampleModelNova private constructor(
         
         @JvmStatic
         @JvmName("internalCreateModel")
-        internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
+        @Deprecated("Do not use directly, use properly scoped extensions instead.")
+        fun createModel(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             ExampleRootNova.register(protocol.serializers)
             
             return ExampleModelNova().apply {
@@ -55,7 +56,7 @@ class ExampleModelNova private constructor(
         }
         
         @JvmStatic
-        @Deprecated("Use protocol.exampleModelNova", ReplaceWith("protocol.exampleModelNova"))
+        @Deprecated("Use protocol.exampleModelNova", ReplaceWith("protocol.exampleModelNova"), DeprecationLevel.ERROR)
         fun create(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             return protocol.exampleModelNova
         }

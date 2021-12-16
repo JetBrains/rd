@@ -591,7 +591,8 @@ open class Kotlin11Generator(
 
         + "@JvmStatic"
         + "@JvmName(\"internalCreateModel\")"
-        block("internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
+        + "@Deprecated(\"Do not use directly, use properly scoped extensions instead.\")"
+        block("fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
 
@@ -611,7 +612,7 @@ open class Kotlin11Generator(
         
         val extName = (decl as? Ext)?.extName ?: decl.name.decapitalize()
         + "@JvmStatic"
-        + "@Deprecated(\"Use protocol.$extName\", ReplaceWith(\"protocol.$extName\"))"
+        + "@Deprecated(\"Use protocol.$extName\", ReplaceWith(\"protocol.$extName\"), DeprecationLevel.ERROR)"
         block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "return protocol.$extName"
         }
