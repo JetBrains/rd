@@ -591,30 +591,31 @@ open class Kotlin11Generator(
 
         + "@JvmStatic"
         + "@JvmName(\"internalCreateModel\")"
-        + "@Deprecated(\"Do not use directly, use properly scoped extensions instead.\")"
-        block("fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
+        + "@Deprecated(\"Use create instead\", ReplaceWith(\"create(lifetime, protocol)\"))"
+        block("internal fun createModel(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
+            + """@Suppress("DEPRECATION")"""
+            +"return create(lifetime, protocol)"
+        }
+    }
+
+    //only for toplevel Exts
+    private fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
+        if (!decl.isToplevelExtension) return
+        
+        val extName = (decl as? Ext)?.extName ?: decl.name.decapitalize()
+        + "@JvmStatic"
+        + "@Deprecated(\"Use protocol.$extName or revise the extension scope instead\", ReplaceWith(\"protocol.$extName\"))"
+        block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
 
             + "return ${decl.name}().apply {"
             indent {
                 val quotedName = "\"${decl.name}\""
-               + "identify(protocol.identity, RdId.Null.mix($quotedName))"
-               + "bind(lifetime, protocol, $quotedName)"
+                + "identify(protocol.identity, RdId.Null.mix($quotedName))"
+                + "bind(lifetime, protocol, $quotedName)"
             }
             +"}"
-        }
-
-    }
-
-    protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
-        if (!decl.isToplevelExtension) return
-        
-        val extName = (decl as? Ext)?.extName ?: decl.name.decapitalize()
-        + "@JvmStatic"
-        + "@Deprecated(\"Use protocol.$extName\", ReplaceWith(\"protocol.$extName\"), DeprecationLevel.ERROR)"
-        block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
-            + "return protocol.$extName"
         }
     }
 
@@ -1097,7 +1098,7 @@ open class Kotlin11Generator(
 
     private fun PrettyPrinter.toplevelExtensionTrait(decl: Ext) {
         val extName = decl.extName ?: decl.name.decapitalize()
-        + """val IProtocol.$extName get() = getOrCreateExtension(${decl.name}::class) { ${decl.name}.createModel(lifetime, this) }"""
+        + """val IProtocol.$extName get() = getOrCreateExtension(${decl.name}::class) { @Suppress("DEPRECATION") ${decl.name}.create(lifetime, this) }"""
         println()
     }
 
