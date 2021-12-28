@@ -5,6 +5,8 @@ import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
@@ -68,10 +70,12 @@ class CallSiteWiredRdTask<TReq, TRes>(
             taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
 
             if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
-                taskResult.value.bindPolymorphic(outerLifetime, call, rdid.toString())
-                if (!outerLifetime.onTerminationIfAlive(::sendCancellation)) {
-                    sendCancellation()
-                }
+
+                outerLifetime.executeIfAlive {  // lifetime can be terminated from background thread
+                    outerLifetime.onTermination(::sendCancellation)
+                    taskResult.value.bindPolymorphic(outerLifetime, call, rdid.toString())
+                } ?: sendCancellation()
+
             } else if (taskResult is RdTaskResult.Cancelled) { //we need to transfer cancellation to the other side
                 sendCancellation()
             }
@@ -116,7 +120,10 @@ class EndpointWiredRdTask<TReq, TRes>(
         result.adviseOnce(Lifetime.Eternal) { taskResult ->
             if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
                 taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
-                taskResult.value.bindPolymorphic(lifetime, call, rdid.toString())
+
+                lifetime.executeIfAlive {  // lifetime can be terminated from background thread
+                    taskResult.value.bindPolymorphic(lifetime, call, rdid.toString())
+                }
             } else {
                 def.terminate()
             }
@@ -131,8 +138,13 @@ class EndpointWiredRdTask<TReq, TRes>(
         //we are on endpoint side, so listening for cancellation
         RdReactiveBase.logReceived.trace { "received cancellation" }
         buffer.readVoid() //nothing just a void value
-        result.setIfEmpty(RdTaskResult.Cancelled())
-        def.terminate()
+
+        val success = result.setIfEmpty(RdTaskResult.Cancelled())
+        val wireScheduler = call.wireSchedulerIfBound
+        if (success || wireScheduler == null)
+            def.terminate()
+        else if (lifetime.isAlive)
+            wireScheduler.queue { def.terminate() } // if the value is already set, it is not a cancellation scenario, but a termination
     }
 }
 

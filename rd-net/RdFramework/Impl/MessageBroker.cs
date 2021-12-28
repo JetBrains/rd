@@ -210,7 +210,7 @@ namespace JetBrains.Rd.Impl
       // ReSharper disable once InconsistentlySynchronizedField
       mySubscriptions.BlockingAddUnique(lifetime, myLock, reactive.RdId, reactive);
 
-      if (reactive.WireScheduler.OutOfOrderExecution)
+      if (reactive.GetWireSchedulerIfBound()?.OutOfOrderExecution == true)
         lifetime.TryExecute(() =>
         {
           lock(myLock) {

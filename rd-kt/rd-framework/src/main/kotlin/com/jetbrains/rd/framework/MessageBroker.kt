@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.IRdWireable
+import com.jetbrains.rd.framework.base.wireSchedulerIfBound
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -143,7 +144,7 @@ class MessageBroker(private val defaultScheduler: IScheduler) : IPrintable {
         //if (lifetime.isTerminated) return
         subscriptions.blockingPutUnique(lifetime, lock, entity.rdid, entity)
 
-        if (entity.wireScheduler.outOfOrderExecution)
+        if (entity.wireSchedulerIfBound?.outOfOrderExecution == true)
             lifetime.executeIfAlive {
                 Sync.lock(lock) {
                     broker.remove(entity.rdid)?.let { mq ->

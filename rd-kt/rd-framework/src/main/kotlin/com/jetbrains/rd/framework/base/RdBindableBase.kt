@@ -49,9 +49,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
             return null
         }
 
-    private fun <T> nb() : T = throw IllegalStateException("Not bound: $location")
-
-
+    private fun <T> nb() : T = throw ProtocolNotBoundException(location.toString())
 
 
 

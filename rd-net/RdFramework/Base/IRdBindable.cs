@@ -151,6 +151,25 @@ namespace JetBrains.Rd.Base
     #endregion
   }
 
+  public static class RdWireableEx
+  {
+    public static IScheduler? GetWireSchedulerIfBound(this IRdWireable wireable)
+    {
+      if (!wireable.IsBound)
+        return null;
+      
+      try
+      {
+        // can throw exception if wireable is not bound
+        return wireable.WireScheduler;
+      }
+      catch (ProtocolNotBoundException)
+      {
+        return null;
+      }
+    }
+  }
+
 
 
   public static class PrintableEx

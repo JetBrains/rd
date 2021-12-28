@@ -36,3 +36,14 @@ interface IRdWireable: IRdDynamic {
     fun onWireReceived(buffer: AbstractBuffer)
 }
 
+val IRdWireable.wireSchedulerIfBound: IScheduler?
+    get() {
+        if (!isBound) return null
+
+        return try {
+            wireScheduler
+        } catch (e: ProtocolNotBoundException) {
+            null
+        }
+    }
+

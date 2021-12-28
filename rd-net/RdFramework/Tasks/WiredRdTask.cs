@@ -62,9 +62,16 @@ namespace JetBrains.Rd.Tasks
           var potentiallyBindable = taskResult.Result;
           if (potentiallyBindable.IsBindable())
           {
-            potentiallyBindable.BindPolymorphic(outerLifetime, myCall, RdId.ToString());
-            if (!outerLifetime.TryOnTermination(SendCancellation))
+            using var cookie = outerLifetime.UsingExecuteIfAlive();
+            if (cookie.Succeed) // lifetime can be terminated from background thread
+            {
+              outerLifetime.OnTermination(SendCancellation);
+              potentiallyBindable.BindPolymorphic(outerLifetime, myCall, RdId.ToString());
+            }
+            else
+            {
               SendCancellation();
+            }
           } 
           else if (taskResult.Status == RdTaskStatus.Canceled)  //we need to transfer cancellation to the other side
             SendCancellation();
@@ -112,7 +119,12 @@ namespace JetBrains.Rd.Tasks
           if (potentiallyBindable.IsBindable())
           {
             potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
-            potentiallyBindable.BindPolymorphic(Lifetime, myCall, RdId.ToString());
+
+            using var cookie = Lifetime.UsingExecuteIfAlive();
+            if (cookie.Succeed) // lifetime can be terminated from background thread
+            {
+              potentiallyBindable.BindPolymorphic(Lifetime, myCall, RdId.ToString());
+            }
           }
           else
           {
@@ -135,8 +147,13 @@ namespace JetBrains.Rd.Tasks
           //we are on endpoint side, so listening for cancellation
           Trace(RdReactiveBase.ourLogReceived, "received cancellation");
           reader.ReadVoid(); //nothing just a void value
-          ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
-          myDef.Terminate();
+
+          var success = ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
+          var wireScheduler = myCall.GetWireSchedulerIfBound();
+          if (success || wireScheduler == null)
+            myDef.Terminate();
+          else if (Lifetime.IsAlive)
+            wireScheduler.Queue(() => myDef.Terminate()); // if the value is already set, it is not a cancellation scenario, but a termination 
         }
       }
     }

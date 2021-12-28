@@ -34,7 +34,7 @@ namespace JetBrains.Rd.Base
     
     public IViewableProperty<bool> IsBoundProperty { get; } = new ViewableProperty<bool>();
    
-    public virtual IProtocol Proto => Parent.NotNull(this).Proto;
+    public virtual IProtocol Proto => (Parent ?? throw new ProtocolNotBoundException(ToString())).Proto;
     
     public virtual SerializationCtx SerializationContext => Parent.NotNull(this).SerializationContext;
 
