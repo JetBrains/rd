@@ -177,7 +177,7 @@ namespace JetBrains.Rd.Reflection
       if (ReflectionSerializerVerifier.HasRdExtAttribute(instance.GetType().GetTypeInfo()))
         ReflectionSerializerVerifier.AssertValidRdExt(typeInfo);
 
-      foreach (var mi in SerializerReflectionUtil.GetBindableMembers(typeInfo))
+      foreach (var mi in SerializerReflectionUtil.GetBindableFields(typeInfo))
       {
         ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
         var currentValue = ReflectionUtil.GetGetter(mi)(instance);
@@ -201,34 +201,14 @@ namespace JetBrains.Rd.Reflection
       // Add RdEndpoint for Impl class (counterpart of Proxy)
       var interfaces = typeInfo.GetInterfaces();
       bool isProxy = interfaces.Contains(typeof(IProxyTypeMarker));
-      var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(typeInfo);
+      var rpcInterface = ReflectionSerializerVerifier.GetRpcInterface(typeInfo);
 
       if (!isProxy && rpcInterface != null)
       {
-        // Dynamic adapters for Properties are not required, so skip them
-        var ignoreMethods = new HashSet<string>(StringComparer.Ordinal);
-        List<MethodInfo> interfaceMethods = new List<MethodInfo>();
-        void RegisterInterface(Type baseInterface)
-        {
-          interfaceMethods.AddRange(typeInfo.GetInterfaceMap(baseInterface).InterfaceMethods);
-          foreach (var propertyInfo in baseInterface.GetProperties(BindingFlags.Instance | BindingFlags.Public))
-          {
-            var getterName = propertyInfo.GetSetMethod()?.Name;
-            if (getterName != null) ignoreMethods.Add(getterName);
-            var setterName = propertyInfo.GetGetMethod()?.Name;
-            if (setterName != null) ignoreMethods.Add(setterName);
-          }
-        }
-
-        RegisterInterface(rpcInterface);
-        foreach (var baseInterface in rpcInterface.GetInterfaces())
-          RegisterInterface(baseInterface);
+        var interfaceMethods = ReflectionSerializerVerifier.GetMethodsMap(typeInfo, rpcInterface);
 
         foreach (var interfaceMethod in interfaceMethods)
         {
-          if (ignoreMethods.Contains(interfaceMethod.Name))
-            continue;
-
           var adapter = myProxyGenerator.CreateAdapter(rpcInterface, interfaceMethod);
 
           var name = ProxyGenerator.ProxyFieldName(interfaceMethod);
@@ -426,7 +406,7 @@ namespace JetBrains.Rd.Reflection
         }
       }
 
-      throw new Exception($"Unable to activate generic type: {memberType}");
+      throw new Assertion.AssertionException($"Unable to activate generic type: {memberType}");
     }
 
     public static string GetTypeName(Type type)
@@ -434,7 +414,7 @@ namespace JetBrains.Rd.Reflection
       var typename = type.FullName;
       if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(type))
       {
-        var rpcInterface = ReflectionSerializersFactory.GetRpcInterface(type.GetTypeInfo());
+        var rpcInterface = ReflectionSerializerVerifier.GetRpcInterface(type.GetTypeInfo());
         if (rpcInterface != null)
           return rpcInterface.FullName;
       }

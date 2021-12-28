@@ -65,17 +65,18 @@ namespace Test.RdFramework.Reflection
 
       var animal = CFacade.Activator.Activate<Animal>();
       var cm = animal.NestedRdModel;
-      cm.IList.Add(2);
       cm.Prop.Value = "val";
-      cm.List.Add("val2");
-      cm.Set.Add("val3");
-      cm.Map["x"] = "val";
       cm.RegularFieldInModel = "f";
-      
+
       c.PolyProperty.Value = animal;
       var sm = s.PolyProperty.Value.NestedRdModel;
       Assert.NotNull(sm);
       Assert.AreNotSame(sm, cm);
+
+      cm.IList.Add(2);
+      cm.List.Add("val2");
+      cm.Set.Add("val3");
+      cm.Map["x"] = "val";
 
       CollectionAssert.AreEqual(cm.IList, sm.IList);
       CollectionAssert.AreEqual(cm.List, sm.List);

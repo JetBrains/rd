@@ -83,9 +83,12 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestOnlyRpcAreSynchronized()
     {
-      var client = CFacade.InitBind(new PartSync(), TestLifetime, ClientProtocol);
-      var proxy = SFacade.ActivateProxy<IPartSync>(TestLifetime, ServerProtocol);
-      Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+      Assert.Throws<Assertion.AssertionException>(() =>
+      {
+        var client = CFacade.InitBind(new PartSync(), TestLifetime, ClientProtocol);
+        var proxy = SFacade.ActivateProxy<IPartSync>(TestLifetime, ServerProtocol);
+        Assertion.Assert(((RdExtReflectionBindableBase)proxy).Connected.Value, "((RdReflectionBindableBase)proxy).Connected.Value");
+      });
     }
   }
 }

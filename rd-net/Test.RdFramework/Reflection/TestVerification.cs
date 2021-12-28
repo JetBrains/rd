@@ -8,6 +8,9 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class TestVerification
   {
+
+    // These checks are disabled in release
+#if DEBUG
     [TestCase(typeof(NotRdModelData))]
     // [TestCase(typeof(CantHavePrivateFieldError))]
     [TestCase(typeof(NotRdModelData))]
@@ -20,7 +23,7 @@ namespace Test.RdFramework.Reflection
     // injected into another, but the activation for each of RdExt should be processed independently.
     // [TestCase(typeof(CircularDependencyExtError))]
     // [TestCase(typeof(CircularDependencyExt2Error))]
-    
+
     [TestCase(typeof(CircularDependencyInModelError))]
     [TestCase(typeof(CircularDependencyNestedModel1Error))]
     [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
@@ -32,6 +35,7 @@ namespace Test.RdFramework.Reflection
 
       Console.WriteLine(exception);
     }
+#endif
 
     [Test]
     public void TestActivation()

@@ -202,7 +202,7 @@ namespace JetBrains.Rd.Reflection
       TypeInfo typeInfo = typeof(T).GetTypeInfo();
       var allowNullable = ReflectionSerializerVerifier.CanBeNull(typeInfo);
 
-      var memberInfos = SerializerReflectionUtil.GetBindableMembers(typeInfo);
+      var memberInfos = SerializerReflectionUtil.GetBindableFields(typeInfo);
       var memberSetters = memberInfos.Select(ReflectionUtil.GetSetter).ToArray();
       var memberGetters = memberInfos.Select(ReflectionUtil.GetGetter).ToArray();
 
