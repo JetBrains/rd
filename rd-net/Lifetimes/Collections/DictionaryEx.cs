@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -35,10 +36,26 @@ namespace JetBrains.Rd.Util
       this IDictionary<TKey, TValue> dictionary, Lifetime lifetime, object @lock, TKey key,
       TValue value) where TKey: notnull
     {
-
-      lifetime.TryBracket(() =>
+      const int timeoutMs = 50;
+      
+      var lockTaken = false;
+      try
       {
-        lock (@lock)
+        do
+        {
+          // to avoid `ExecuteIfAlive after termination of Lifetime took too much time`
+          if (lifetime.IsNotAlive)
+            return;
+
+#if NET35
+          lockTaken = Monitor.TryEnter(@lock, timeoutMs);
+#else
+          Monitor.TryEnter(@lock, timeoutMs, ref lockTaken);
+#endif
+        } while (!lockTaken);
+
+
+        lifetime.TryBracket(() =>
         {
           try
           {
@@ -49,14 +66,19 @@ namespace JetBrains.Rd.Util
             e.Data.Add("MyKey", key.ToString());
             throw;
           }
-        }
-      }, () =>
-      {
-        lock (@lock)
+        }, () =>
         {
-          Assertion.Require(dictionary.Remove(key), "No value by key {0}", key);
-        }
-      });
+          lock (@lock)
+          {
+            Assertion.Require(dictionary.Remove(key), "No value by key {0}", key);
+          }
+        });
+      }
+      finally
+      {
+        if (lockTaken)
+          Monitor.Exit(@lock);
+      }
     }
   }
 }
