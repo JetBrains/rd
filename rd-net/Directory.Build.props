@@ -4,7 +4,7 @@
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\key.snk</AssemblyOriginatorKeyFile>
     <AssemblyVersion>777.0.0</AssemblyVersion>
     <FileVersion>777.0.0</FileVersion>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
