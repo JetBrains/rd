@@ -154,7 +154,7 @@ namespace JetBrains.Diagnostics
     {
       if (condition == null)
       {
-        Fail(message ?? "");
+        Fail(message ?? "Not null expected");
       }
     }
 
@@ -217,32 +217,22 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, object debugMessage) where T : class
+    public static T NotNull<T>(this T? value, [CallerArgumentExpression("value")] string? message = null)
+      where T : class
     {
       if (value == null)
       {
-        Fail("NRE, debug message: "+ debugMessage);
+        Fail(message ?? "Not null expected");
       }
 
       return value;
     }
 
-    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, string message) where T : class
-    {
-      if (value == null)
-      {
-        Fail(message);
-      }
-
-      return value;
-    }
-    
 #if !NET35
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler) where T : class
+    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
+      where T : class
     {
       if (value == null)
       {
@@ -256,7 +246,8 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [StringFormatMethod("args")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, string message, params object?[] args) where T : class
+    public static T NotNull<T>(this T? value, string message, params object?[] args)
+      where T : class
     {
       if (value == null)
       {
@@ -266,34 +257,24 @@ namespace JetBrains.Diagnostics
       return value;
     }
 
-    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value) where T : class
-    {
-      if (value == null)
-      {
-        Fail("{0} is null", typeof(T).FullName);
-      }
-
-      return value;
-    }
-
     [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, string message) where T : struct
+    public static T NotNull<T>(this T? value, [CallerArgumentExpression("value")] string? message = null)
+      where T : struct
     {
       if (value == null)
       {
-        Fail(message);
+        Fail(message ?? "Not null expected");
       }
 
       return value.GetValueOrDefault();
     }
-    
+
 #if !NET35
     [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler) where T : struct
+    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
+      where T : struct
     {
       if (value == null)
       {
@@ -304,27 +285,27 @@ namespace JetBrains.Diagnostics
     }
 #endif
 
-    [ContractAnnotation("value:null => void; => value:notnull")]
+    [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value) where T : struct
+    public static T NotNull<T>(this T? value, object debugMessage) where T : class
     {
       if (value == null)
       {
-        Fail("{0}? is null", typeof(T).FullName);
+        Fail("NRE, debug message: " + debugMessage);
       }
 
-      return value.GetValueOrDefault();
+      return value;
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
-    public static void Require([DoesNotReturnIf(false)] bool value, string message)
+    public static void Require([DoesNotReturnIf(false)] bool value, [CallerArgumentExpression("value")] string? message = null)
     {
       if (!value)
       {
-        Fail(message);
+        Fail(message ?? "Assertion failed");
       }
     }
-    
+
 #if !NET35
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
     public static void Require([DoesNotReturnIf(false)] bool value, [InterpolatedStringHandlerArgument("value")] ref JetConditionalInterpolatedStringHandler messageHandler)
@@ -336,7 +317,9 @@ namespace JetBrains.Diagnostics
     }
 #endif
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
     public static void Require([DoesNotReturnIf(false)] bool value, string message, object? arg1)
     {
       if (!value)
@@ -345,7 +328,9 @@ namespace JetBrains.Diagnostics
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
     public static void Require([DoesNotReturnIf(false)] bool value, string message, object? arg1, object? arg2)
     {
       if (!value)
@@ -354,7 +339,9 @@ namespace JetBrains.Diagnostics
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining), StringFormatMethod("message"), AssertionMethod]
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
     public static void Require([DoesNotReturnIf(false)] bool value, string message, params object?[] args)
     {
       if (!value)
