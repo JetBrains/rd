@@ -433,13 +433,13 @@ namespace JetBrains.Diagnostics
     /// </code>
     /// Usage:
     /// <code>
-    ///   logger.Trace()?.Log($"some messages with {HeavyComputation()}")
+    ///   logger.WhenTrace()?.Log($"some messages with {HeavyComputation()}")
     /// </code>
     /// </summary>
     /// <param name="logger"/>
     /// <returns>struct <see cref="LogWithLevel"/>(<paramref name="logger"/>, <see cref="LoggingLevel.TRACE"/>) if <see cref="IsTraceEnabled"/>;
     /// null otherwise</returns>
-    [PublicAPI] public static LogWithLevel? Trace(this ILog logger)
+    [PublicAPI] public static LogWithLevel? WhenTrace(this ILog logger)
     {
       return LogWithLevel.CreateIfEnabled(logger, LoggingLevel.TRACE);
     }
@@ -452,16 +452,22 @@ namespace JetBrains.Diagnostics
     /// </code>
     /// Usage:
     /// <code>
-    ///   logger.Verbose()?.Log($"some messages with {HeavyComputation()}")
+    ///   logger.WhenVerbose()?.Log($"some messages with {HeavyComputation()}")
     /// </code>
     /// </summary>
     /// <param name="logger"></param>
     /// <returns>struct <see cref="LogWithLevel"/>(<paramref name="logger"/>, <see cref="LoggingLevel.VERBOSE"/>) if <see cref="IsVersboseEnabled"/>;
     /// null otherwise</returns>
-    [PublicAPI] public static LogWithLevel? Verbose(this ILog logger)
+    [PublicAPI] public static LogWithLevel? WhenVerbose(this ILog logger)
     {
       return LogWithLevel.CreateIfEnabled(logger, LoggingLevel.VERBOSE);
     }
+
+    [Obsolete("Renamed to WhenTrace")]
+    public static LogWithLevel? Trace(this ILog logger) => logger.WhenTrace();
+
+    [Obsolete("Renamed to WhenVerbose")]
+    public static LogWithLevel? Verbose(this ILog logger) => logger.WhenVerbose();
 
     #endregion
   }

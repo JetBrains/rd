@@ -14,8 +14,8 @@ namespace JetBrains.Rd.Base
     internal static readonly ILog ourLogReceived = Protocol.Logger.GetSublogger("RECV");
     internal static readonly ILog ourLogSend = Protocol.Logger.GetSublogger("SEND");
     
-    internal static LogWithLevel? ReceiveTrace => ourLogReceived.Trace();
-    internal static LogWithLevel? SendTrace => ourLogSend.Trace();
+    internal static LogWithLevel? ReceiveTrace => ourLogReceived.WhenTrace();
+    internal static LogWithLevel? SendTrace => ourLogSend.WhenTrace();
 
 
     #region Identification
