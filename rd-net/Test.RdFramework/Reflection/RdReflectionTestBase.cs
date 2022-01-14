@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
@@ -65,6 +66,12 @@ namespace Test.RdFramework.Reflection
     {
       var c = CFacade.Activator.ActivateBind<T1>(TestLifetime, ClientProtocol);
       var s = SFacade.ActivateProxy<T2>(TestLifetime, ServerProtocol);
+      
+      CollectionAssert.AreEquivalent(
+        ((IReflectionBindable)c).BindableChildren.Select(m => m.Key),
+        ((IReflectionBindable)s).BindableChildren.Select(m => m.Key)
+      );
+
       run(c, s);
     }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -272,9 +273,33 @@ namespace JetBrains.Rd.Reflection
       // commented sealed check to avoid annoying colleagues.
       // Assertion.Assert(type.IsSealed, $"Error in {type.ToString(true)} model: RdModels must be sealed.");
 
-      foreach (var member in SerializerReflectionUtil.GetBindableMembers(type))
+      var extMembers = SerializerReflectionUtil.GetBindableFields(type);
+      foreach (var member in extMembers)
       {
         AssertMemberDeclaration(member);
+      }
+
+      var rpcInterface = GetRpcInterface(type);
+      if (rpcInterface != null)
+      {
+        var rpc = new HashSet<string>(ProxyGenerator.GetBindableFieldsNames(rpcInterface), StringComparer.Ordinal);
+        var ext = new HashSet<string>(extMembers.Select(f => f.Name), StringComparer.Ordinal);
+        foreach (var name in GetMethodsMap(type, rpcInterface).Select(ProxyGenerator.ProxyFieldName)) 
+          ext.Add(name);
+
+        ext.SymmetricExceptWith(rpc);
+        if (ext.Count > 0)
+        {
+          var msg = new StringBuilder("The list of BindableChildren available in RdExt and exposed by the RdRpc interface are different. Some of the members will not be connected to the counterpart during execution: ");
+          foreach (var diff in ext)
+          {
+            msg.Append(diff)
+              .Append(rpc.Contains(diff) ? "(missing in RdExt)" : "(missing in RdRpc interface)")
+              .Append(',');
+          }
+          msg[msg.Length - 1] = '.';
+          Assertion.Fail(msg.ToString());
+        }
       }
     }
 
@@ -297,7 +322,7 @@ namespace JetBrains.Rd.Reflection
       if (HasIntrinsic(type))
         return;
 
-      foreach (var member in SerializerReflectionUtil.GetBindableMembers(type))
+      foreach (var member in SerializerReflectionUtil.GetBindableFields(type))
       {
         AssertDataMemberDeclaration(member);
       }
@@ -412,6 +437,34 @@ namespace JetBrains.Rd.Reflection
     public static bool IsRpcAttributeDefined(Type @interface)
     {
       return @interface.IsDefined(typeof(RdRpcAttribute), false);
+    }
+
+    public static Type? GetRpcInterface(TypeInfo typeInfo)
+    {
+      if (typeInfo.GetCustomAttribute<RdExtAttribute>() is RdExtAttribute rdExt && rdExt.RdRpcInterface != null)
+        return rdExt.RdRpcInterface;
+
+      foreach (var @interface in typeInfo.GetInterfaces()) 
+        if (IsRpcAttributeDefined(@interface)) 
+          return @interface;
+
+      return null;
+    }
+
+    public static IEnumerable<MethodInfo> GetMethodsMap(TypeInfo typeInfo, Type rpcInterface)
+    {
+      IEnumerable<MethodInfo> GetInterfaceMap(Type baseInterface)
+      {
+        return typeInfo.GetInterfaceMap(baseInterface).InterfaceMethods.Where(m => !m.IsSpecialName);
+      }
+
+      foreach (var methodInfo in GetInterfaceMap(rpcInterface))
+        yield return methodInfo;
+      foreach (var baseInterface in rpcInterface.GetInterfaces())
+      foreach (var methodInfo in GetInterfaceMap(baseInterface))
+      {
+        yield return methodInfo;
+      }
     }
   }
 }

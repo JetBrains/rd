@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -125,6 +126,17 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+    [Test]
+    public void TestDifferentBindableSets()
+    {
+      Assert.Throws<Assertion.AssertionException>(() =>
+      {
+        WithExtsProxy<DifferenceInBindableFields, IDifferenceInBindableFields>((c, s) =>
+        {
+        });
+      });
+    }
+
     [RdRpc]
     public interface IUnexpectedInterfaceType
     {
@@ -152,6 +164,18 @@ namespace Test.RdFramework.Reflection
       {
         ViewableProperty = new ViewableProperty<string>();
       }
+    }
+    [RdRpc]
+    public interface IDifferenceInBindableFields
+    {
+      IViewableProperty<string> ViewableProperty { get; }
+    }
+
+    [RdExt]
+    public class DifferenceInBindableFields : RdExtReflectionBindableBase, IDifferenceInBindableFields
+    {
+      public IViewableProperty<string> NotInTheInterface { get; }
+      public IViewableProperty<string> ViewableProperty { get; }
     }
   }
 }

@@ -130,7 +130,7 @@ namespace JetBrains.Rd.Reflection
     /// Get lists of members which take part in object serialization.
     /// Can be used for RdExt, RdModel and any RdScalar.
     /// </summary>
-    internal static FieldInfo[] GetBindableMembers(TypeInfo typeInfo)
+    internal static FieldInfo[] GetBindableFields(TypeInfo typeInfo)
     {
 /*
       var rpcInterface = GetRpcInterface();

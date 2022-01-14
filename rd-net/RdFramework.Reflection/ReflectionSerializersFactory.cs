@@ -261,18 +261,6 @@ namespace JetBrains.Rd.Reflection
       mySerializers.Add(typeof(T), serializerPair);
     }
 
-    public static Type? GetRpcInterface(TypeInfo typeInfo)
-    {
-      if (typeInfo.GetCustomAttribute<RdExtAttribute>() is RdExtAttribute rdExt && rdExt.RdRpcInterface != null)
-        return rdExt.RdRpcInterface;
-
-      foreach (var @interface in typeInfo.GetInterfaces()) 
-        if (ReflectionSerializerVerifier.IsRpcAttributeDefined(@interface)) 
-          return @interface;
-
-      return null;
-    }
-
     /// <summary>
     /// Register serializers for either <see cref="RdExtAttribute"/> or <see cref="RdModelAttribute"/>
     /// </summary>
@@ -294,7 +282,7 @@ namespace JetBrains.Rd.Reflection
         return;
       }*/
 
-      var memberInfos = SerializerReflectionUtil.GetBindableMembers(typeInfo);
+      var memberInfos = SerializerReflectionUtil.GetBindableFields(typeInfo);
       var memberSetters = memberInfos.Select(ReflectionUtil.GetSetter).ToArray();
       var memberGetters = memberInfos.Select(ReflectionUtil.GetGetter).ToArray();
 

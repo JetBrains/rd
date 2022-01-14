@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Reflection;
 using JetBrains.Threading;
+using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
 {
@@ -21,6 +23,11 @@ namespace Test.RdFramework.Reflection
 
       await YieldToServer();
       var proxy = SFacade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol);
+
+      CollectionAssert.AreEquivalent(
+        ((IReflectionBindable)client).BindableChildren.Select(m => m.Key),
+        ((IReflectionBindable)proxy).BindableChildren.Select(m => m.Key)
+      );
 
       await Wait();
 

@@ -259,7 +259,7 @@ namespace JetBrains.Rd.Reflection
         case MemberTypes.Field:
           throw new NotSupportedException("Unexpected field member in an interface.");
         case MemberTypes.Method:
-          if (member is MethodInfo method && !method.IsSpecialName)
+          if (member is MethodInfo { IsSpecialName: false } method)
           {
             ImplementMethod(typebuilder, method);
           }
@@ -275,19 +275,11 @@ namespace JetBrains.Rd.Reflection
 
     private void ImplementProperty(TypeBuilder typebuilder, PropertyInfo propertyInfo)
     {
-      string MakeBackingFieldName(string propertyName)
-      {
-        // Debug.Assert((char)GeneratedNameKind.AutoPropertyBackingField == 'k');
-        return "<" + propertyName + ">k__BackingField";
-      }
-
       var type = propertyInfo.PropertyType;
 
       var property = typebuilder.DefineProperty(propertyInfo.Name, PropertyAttributes.HasDefault, type, EmptyArray<Type>.Instance);
 
-      // backing field should be public to be listed in BindableMembers
-
-      var field = typebuilder.DefineField(MakeBackingFieldName(propertyInfo.Name), type, FieldAttributes.Public);
+      var field = typebuilder.DefineField(MakeBackingFieldName(propertyInfo.Name), type, FieldAttributes.Private);
 
       if (propertyInfo.GetSetMethod() != null)
       {
@@ -452,9 +444,42 @@ namespace JetBrains.Rd.Reflection
     }
 
 
+    private static string MakeBackingFieldName(string propertyName)
+    {
+      // Debug.Assert((char)GeneratedNameKind.AutoPropertyBackingField == 'k');
+      return "<" + propertyName + ">k__BackingField";
+    }
+
+
     public static string ProxyFieldName(MethodInfo method)
     {
       return method.Name + "_proxy";
+    }
+
+    /// <summary>
+    /// Return the expected list of names in BindableChildren collection for <see cref="RdRpcAttribute"/> interfaces
+    /// </summary>
+    public static IEnumerable<string> GetBindableFieldsNames(Type rpcInterface)
+    {
+      foreach (var i in rpcInterface.GetInterfaces())
+      foreach (var fieldName in GetBindableFieldsNames(i))
+        yield return fieldName;
+
+      Assertion.Assert(rpcInterface.IsInterface, "Interface is expected");
+      foreach (var member in rpcInterface.GetMembers(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public))
+      {
+        switch (member.MemberType)
+        {
+          case MemberTypes.Method:
+            if (member is MethodInfo { IsSpecialName: false } method)
+              yield return ProxyFieldName(method);
+            break;
+          
+          case MemberTypes.Property:
+            yield return MakeBackingFieldName(member.Name);
+            break;
+        }
+      }
     }
 
     /// <summary>
