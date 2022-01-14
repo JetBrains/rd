@@ -13,7 +13,7 @@ namespace JetBrains.Rd.Impl
   {
     public static readonly ILog Logger = Log.GetLog("protocol");
     public static readonly ILog InitLogger = Logger.GetSublogger("INIT");
-    public static LogWithLevel? InitTrace = InitLogger.Trace();
+    public static LogWithLevel? InitTrace = InitLogger.WhenTrace();
 
     /// <summary>
     /// Should match textual RdId of protocol intern root in Kotlin/js/cpp counterpart

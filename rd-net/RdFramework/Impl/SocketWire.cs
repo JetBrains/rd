@@ -264,12 +264,12 @@ namespace JetBrains.Rd.Impl
               {
                 if (!HeartbeatAlive.Value) // only on change
                 {
-                  Log.Trace()?.Log($"Connection is alive after receiving PING {Id}: " +
-                                   $"receivedTimestamp: {receivedTimestamp}, " +
-                                   $"receivedCounterpartTimestamp: {receivedCounterpartTimestamp}, " +
-                                   $"currentTimeStamp: {myCurrentTimeStamp}, " +
-                                   $"counterpartTimestamp: {myCounterpartTimestamp}, " +
-                                   $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+                  Log.WhenTrace()?.Log($"Connection is alive after receiving PING {Id}: " +
+                                       $"receivedTimestamp: {receivedTimestamp}, " +
+                                       $"receivedCounterpartTimestamp: {receivedCounterpartTimestamp}, " +
+                                       $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                                       $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                                       $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
                 }
                 HeartbeatAlive.Value = true;
               }
@@ -344,10 +344,10 @@ namespace JetBrains.Rd.Impl
           {
             if (HeartbeatAlive.Value) // log only on change
             {
-              Log.Trace()?.Log($"Disconnect detected while sending PING {Id}: " +
-                               $"currentTimeStamp: {myCurrentTimeStamp}, " +
-                               $"counterpartTimestamp: {myCounterpartTimestamp}, " +
-                               $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+              Log.WhenTrace()?.Log($"Disconnect detected while sending PING {Id}: " +
+                                   $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                                   $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                                   $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
             }
             HeartbeatAlive.Value = false;
           }
