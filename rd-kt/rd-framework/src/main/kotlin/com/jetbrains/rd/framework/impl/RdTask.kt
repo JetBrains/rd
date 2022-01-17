@@ -48,7 +48,7 @@ abstract class WiredRdTask<TReq, TRes>(
     override val protocol: IProtocol get() = call.protocol
     override val serializationContext: SerializationCtx get() = call.serializationContext
 
-    val wire get() = call.wire
+    val wire = call.wire
     override val location: RName = call.location.sub(rdid.toString(), ".")
 }
 
