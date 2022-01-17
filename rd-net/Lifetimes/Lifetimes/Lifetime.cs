@@ -16,7 +16,7 @@ namespace JetBrains.Lifetimes
 {
   /// <summary>
   /// Lifetime's lifecycle statuses. Lifetime is created in <see cref="Alive"/> status and eventually becomes <see cref="Terminated"/>.
-  /// Status change is one way road: from lower ordinal to higher (<c>Alive -> Canceling -> Terminating -> Terminated </c>).  
+  /// Status change is one way road: from lower ordinal to higher (<c>Alive -> Canceling -> Terminating -> Terminated </c>).
   /// </summary>
   public enum LifetimeStatus
   {
@@ -64,7 +64,7 @@ namespace JetBrains.Lifetimes
     
     /// <summary>
     /// Short timeout (250ms).<br/>
-    /// The actual value can be overriden via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>.
+    /// The actual value can be overridden via <see cref="LifetimeDefinition.SetTerminationTimeoutMs"/>.
     /// </summary>
     Short,
     

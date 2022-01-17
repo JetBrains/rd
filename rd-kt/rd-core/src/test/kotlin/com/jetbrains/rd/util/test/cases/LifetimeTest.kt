@@ -1,11 +1,14 @@
 package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.*
+import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.test.framework.RdTestBase
 import com.jetbrains.rd.util.threading.SpinWait
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.provider.EnumSource
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -65,7 +68,7 @@ class LifetimeTest : RdTestBase() {
                     l11n.point(0)
                     log.add(1)
 
-                    SpinWait.spinUntil { def.status == LifetimeStatus.Canceled }
+                    SpinWait.spinUntil { def.status == LifetimeStatus.Canceling }
                     assert(!def.isAlive)
                 }
 
@@ -181,6 +184,43 @@ class LifetimeTest : RdTestBase() {
         assert(p3) { "p3" }
     }
 
+    @Test
+    fun testTerminationTimeout() {
+        val defA = LifetimeDefinition(testLifetime).apply { terminationTimeoutKind = LifetimeTerminationTimeoutKind.Long }
+        val defB = LifetimeDefinition(defA.lifetime)
+        val defC = LifetimeDefinition(defA.lifetime).apply { terminationTimeoutKind = LifetimeTerminationTimeoutKind.Short }
 
+        assertEquals(LifetimeTerminationTimeoutKind.Long, defB.terminationTimeoutKind)
+        assertEquals(LifetimeTerminationTimeoutKind.Long, defA.terminationTimeoutKind)
+        assertEquals(LifetimeTerminationTimeoutKind.Short, defC.terminationTimeoutKind)
+    }
 
+    @Test
+    fun testSetTestTerminationTimeout() {
+        enumValues<LifetimeTerminationTimeoutKind>().forEach { timeoutKind ->
+
+            val oldTimeoutMs = Lifetime.getTerminationTimeoutMs(timeoutKind)
+            try {
+                Lifetime.setTerminationTimeoutMs(timeoutKind, 2000)
+
+                val subDef = LifetimeDefinition(testLifetime).apply { terminationTimeoutKind = timeoutKind }
+                val subLt = subDef.lifetime;
+
+                val future = CompletableFuture<Unit>()
+                thread {
+                    subLt.executeIfAlive {
+                        future.complete(Unit)
+                        Thread.sleep(750)
+                    }
+                }
+                assertNotNull(future.get(1, TimeUnit.SECONDS))
+                subDef.terminate()
+
+                assertDoesNotThrow { ErrorAccumulatorLoggerFactory.throwAndClear() }
+            } finally {
+                Lifetime.setTerminationTimeoutMs(timeoutKind, oldTimeoutMs)
+            }
+
+        }
+    }
 }
