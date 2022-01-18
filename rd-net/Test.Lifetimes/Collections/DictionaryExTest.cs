@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace Test.Lifetimes.Collections;
 
 [TestFixture]
-public class DirectoryExTest : LifetimesTestBase
+public class DictionaryExTest : LifetimesTestBase
 {
   [Test]
   public void BlockingAddUniqueTest()
