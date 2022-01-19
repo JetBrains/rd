@@ -2,17 +2,21 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reflection.threadLocal
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import java.lang.IllegalStateException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(request: TReq, onSuccess: (TRes) -> Unit) {
     startAndAdviseSuccess(Lifetime.Eternal, request, onSuccess)
@@ -246,7 +250,52 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     }
 
     override suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler?): TRes {
-        val task = startInternal(lifetime, request, false, responseScheduler ?: protocol.scheduler)
+        lifetime.usingNested { nested ->
+            val scheduler = responseScheduler ?: createResponseScheduler(nested, coroutineContext)
+            return startSuspendingImpl(lifetime, request, scheduler)
+        }
+    }
+
+    private fun createResponseScheduler(lifetime: Lifetime, context: CoroutineContext): IScheduler {
+        val protocolScheduler = protocol.scheduler
+
+        if (!async)
+            return protocolScheduler // to keep the order of other callbacks from the backend
+
+        return object : IScheduler {
+            private var active by threadLocal { 0 }
+
+            override val isActive: Boolean get() = active > 0
+
+            override fun queue(action: () -> Unit) {
+                var executed = false
+
+                fun execute() {
+                    active++
+                    try {
+                        action()
+                    } catch (e: Throwable) {
+                        logSend.error(e)
+                    } finally {
+                        executed = true
+                        active--
+                    }
+                }
+
+                lifetime.launch(context) { execute() }.invokeOnCompletion {
+                    if (executed) return@invokeOnCompletion
+
+                    // if the context or lifetime has been cancelled we should execute this queued action anyway
+                    protocolScheduler.queue(::execute)
+                }
+            }
+
+            override fun flush() = logSend.error { "This scheduler must not be flushed" }
+        }
+    }
+
+    private suspend fun startSuspendingImpl(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler): TRes {
+        val task = startInternal(lifetime, request, false, responseScheduler)
         return try {
             task.awaitInternal()
         } catch (e: CancellationException) {

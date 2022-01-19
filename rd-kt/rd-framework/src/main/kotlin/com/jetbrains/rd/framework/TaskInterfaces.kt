@@ -125,12 +125,41 @@ interface IRdCall<in TReq, out TRes> {
     /**
      * Asynchronously invokes the API with the parameters given as [request] and waits for the result.
      * The returned task will have its result value assigned through the given [responseScheduler].
+     * @param request
+     * @param responseScheduler scheduler, which will be used to set the value of the result. The default is the protocol scheduler
      */
     @Deprecated("Use overload with Lifetime")
     fun start(request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
+
+    /**
+     * Asynchronously invokes the API with the parameters given as [request] and waits for the result.
+     * The returned task will have its result value assigned through the given [responseScheduler].
+     * @param lifetime cancellation token and lifetime of the result if it is bindable.
+     * The lifetime of the counterpart will be terminated when this lifetime is terminated
+     * @param request
+     * @param responseScheduler scheduler, which will be used to set the value of the result. The default is the protocol scheduler
+     */
     fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): IRdTask<TRes>
 
+    /**
+     * Asynchronously invokes the API with the parameters given as [request] and waits for the result suspending.
+     * @param lifetime cancellation token and lifetime of the result if it is bindable.
+     * The lifetime of the counterpart will be terminated when this lifetime terminates.
+     * Any coroutine has its own lifetime, and in most cases you don't need to use this overload with lifetime.
+     * The exception is if you use this method to get a bindable result, then you should pass a special lifetime.
+     * @param request
+     * @param responseScheduler scheduler, which will be used to set the value of the result.
+     * The default is a scheduler created from the current [kotlin.coroutines.CoroutineContext]
+     */
     suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): TRes
+
+    /**
+     * The same as [startSuspending], but the lifetime is equivalent to the lifetime of the current coroutine.
+     * Asynchronously invokes the API with the parameters given as [request] and waits for the result suspending.
+     * @param request
+     * @param responseScheduler scheduler, which will be used to set the value of the result.
+     * The default is a scheduler created from the current [kotlin.coroutines.CoroutineContext]
+     */
     suspend fun startSuspending(request: TReq, responseScheduler: IScheduler? = null) = startSuspending(Lifetime.Eternal, request, responseScheduler)
 }
 
