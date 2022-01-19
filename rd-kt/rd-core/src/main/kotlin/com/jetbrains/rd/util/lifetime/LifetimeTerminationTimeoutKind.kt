@@ -27,5 +27,9 @@ enum class LifetimeTerminationTimeoutKind(val value: Int) {
      *
      * The actual value can be overridden via [Lifetime.setTerminationTimeoutMs].
      */
-    ExtraLong(3),
+    ExtraLong(3);
+
+    companion object {
+        val maxValue get() = ExtraLong
+    }
 }

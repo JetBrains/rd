@@ -41,13 +41,53 @@ sealed class Lifetime {
             }
         }
 
+
+        /**
+         * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
+         * Created lifetime inherits the smallest [terminationTimeoutKind]
+         */
+        fun intersect(lifetime1: Lifetime, lifetime2: Lifetime): Lifetime = defineIntersection(lifetime1, lifetime2).lifetime
+
+        /**
+         * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
+         * Created lifetime inherits the smallest [terminationTimeoutKind]
+         */
         fun intersect(vararg lifetimes: Lifetime): Lifetime = defineIntersection(*lifetimes).lifetime
 
+        /**
+         * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
+         * Created lifetime inherits the smallest [terminationTimeoutKind]
+         */
         fun defineIntersection(vararg lifetimes: Lifetime): LifetimeDefinition {
+            assert(lifetimes.isNotEmpty()) { "One or more parameters must be passed" }
+
             return LifetimeDefinition().also { res ->
+                var minTimeoutKind = LifetimeTerminationTimeoutKind.maxValue
                 lifetimes.forEach { lifetime ->
-                    (lifetime as LifetimeDefinition).attach(res)
+                    lifetime.definition.attach(res, false)
+
+                    val timeoutKind = lifetime.terminationTimeoutKind
+                    if (minTimeoutKind.value > timeoutKind.value)
+                        minTimeoutKind = timeoutKind
                 }
+
+                res.terminationTimeoutKind = minTimeoutKind
+            }
+        }
+
+        /**
+         * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
+         * Created lifetime inherits the smallest [terminationTimeoutKind]
+         */
+        fun defineIntersection(lifetime1: Lifetime, lifetime2: Lifetime): LifetimeDefinition {
+            return LifetimeDefinition().also { res ->
+                val timeoutKind1 = lifetime1.terminationTimeoutKind
+                val timeoutKind2 = lifetime2.terminationTimeoutKind
+
+                res.terminationTimeoutKind = if (timeoutKind1 > timeoutKind2) timeoutKind2 else timeoutKind1
+
+                lifetime1.attach(res, false)
+                lifetime2.attach(res, false)
             }
         }
 
@@ -110,6 +150,9 @@ sealed class Lifetime {
     }
 
     abstract val status : LifetimeStatus
+    abstract val terminationTimeoutKind: LifetimeTerminationTimeoutKind
+
+    internal val definition get() = this as LifetimeDefinition
 
     abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
     abstract fun <T : Any> executeOrThrow(action: () -> T) : T
@@ -131,7 +174,7 @@ sealed class Lifetime {
     //todo think of a better name or use only this api (more clear code, but more allocations)
     abstract fun <T : Any> bracketOrThrow2(opening: () -> T, terminationAction: (T) -> Unit): T
 
-    internal abstract fun attach(child: LifetimeDefinition)
+    internal abstract fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean)
 
     @Deprecated("Use onTermination", ReplaceWith("onTermination(action)"))
     fun add(action: () -> Unit) = onTermination(action)
@@ -148,8 +191,7 @@ class LifetimeDefinition constructor() : Lifetime() {
     val lifetime: Lifetime get() = this
 
     constructor(parent: Lifetime) : this() {
-        parent.attach(this)
-        terminationTimeoutKind = (parent as LifetimeDefinition).terminationTimeoutKind
+        parent.attach(this, true)
     }
 
     companion object {
@@ -189,7 +231,7 @@ class LifetimeDefinition constructor() : Lifetime() {
      * The sub-definitions inherit this value at the moment of creation.
      * The changing of terminationTimeoutKind doesn't affect already created sub-definitions.
      */
-    var terminationTimeoutKind: LifetimeTerminationTimeoutKind
+    override var terminationTimeoutKind: LifetimeTerminationTimeoutKind
         get() = terminationTimeoutKindSlice[state]
         set(value) {
             terminationTimeoutKindSlice.atomicUpdate(state, value)
@@ -427,11 +469,14 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
 
-    override fun attach(child: LifetimeDefinition) {
+    override fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean) {
         require(!child.isEternal) { "$this: Can't attach eternal lifetime" }
 
         if (child.isNotAlive)
             return
+
+        if (inheritTimeoutKind)
+            child.terminationTimeoutKind = terminationTimeoutKind
 
         if (!this.tryAdd(child))
             child.terminate()
@@ -502,14 +547,11 @@ val EternalLifetime get() = Lifetime.Eternal
 
 operator fun Lifetime.plusAssign(action : () -> Unit) = onTermination(action)
 
-fun Lifetime.intersect(lifetime: Lifetime): LifetimeDefinition {
-    return LifetimeDefinition().also {
-        // todo terminationTimeoutKind?
-        this.attach(it)
-        lifetime.attach(it)
-    }
-}
-
+/**
+ * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
+ * Created lifetime inherits the smallest [terminationTimeoutKind]
+ */
+fun Lifetime.intersect(lifetime: Lifetime): LifetimeDefinition = Lifetime.defineIntersection(this, lifetime)
 
 inline fun <T> Lifetime.view(viewable: IViewable<T>, crossinline handler: Lifetime.(T) -> Unit) {
     viewable.view(this) { lt, value -> lt.handler(value) }

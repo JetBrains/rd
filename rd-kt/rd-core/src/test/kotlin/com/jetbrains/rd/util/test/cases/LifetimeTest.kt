@@ -6,7 +6,6 @@ import com.jetbrains.rd.util.test.framework.RdTestBase
 import com.jetbrains.rd.util.threading.SpinWait
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.provider.EnumSource
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -220,7 +219,38 @@ class LifetimeTest : RdTestBase() {
             } finally {
                 Lifetime.setTerminationTimeoutMs(timeoutKind, oldTimeoutMs)
             }
-
         }
+    }
+
+    @Test
+    fun intersectionsAndInheritTimeoutKindTest() {
+        val lf1 = LifetimeDefinition()
+        val lf2 = LifetimeDefinition()
+        val lf3 = LifetimeDefinition()
+
+        fun doTest1(expected: LifetimeTerminationTimeoutKind) {
+            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime);
+            assertEquals(expected, definedLifetime.terminationTimeoutKind);
+        }
+
+        fun doTest2(expected: LifetimeTerminationTimeoutKind) {
+            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime, lf3.lifetime);
+            assertEquals(expected, definedLifetime.terminationTimeoutKind);
+        }
+
+        doTest1(LifetimeTerminationTimeoutKind.Default);
+        doTest2(LifetimeTerminationTimeoutKind.Default);
+
+        lf1.terminationTimeoutKind = LifetimeTerminationTimeoutKind.ExtraLong;
+        doTest1(LifetimeTerminationTimeoutKind.Default);
+        doTest2(LifetimeTerminationTimeoutKind.Default);
+
+        lf2.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Long;
+        doTest1(LifetimeTerminationTimeoutKind.Long);
+        doTest2(LifetimeTerminationTimeoutKind.Default);
+
+        lf3.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Short;
+        doTest1(LifetimeTerminationTimeoutKind.Long);
+        doTest2(LifetimeTerminationTimeoutKind.Short);
     }
 }

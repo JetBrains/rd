@@ -161,10 +161,15 @@ namespace JetBrains.Lifetimes
     /// Is <see cref="Status"/> of this lifetime not equal to <see cref="LifetimeStatus.Alive"/>: Termination started already (or even finished).
     /// </summary>
     [PublicAPI] public bool IsNotAlive              => !IsAlive;
-    
 
-    
-    
+    /// <summary>
+    /// Gets termination timeout kind for the lifetime.<br/>
+    /// The sub-definitions inherit this value at the moment of creation.
+    /// </summary>
+    [PublicAPI] public LifetimeTerminationTimeoutKind TerminationTimeoutKind => Definition.TerminationTimeoutKind;
+
+
+
     #region OnTermination
     
     //OnTerminations that fail in case of bad status
@@ -524,11 +529,8 @@ namespace JetBrains.Lifetimes
       if(action == null)
         throw new ArgumentNullException(nameof(action));
 
-      using(var def = new LifetimeDefinition())
-      {
-        parent.Def.Attach(def);
-        await action(def.Lifetime);
-      }
+      using var def = new LifetimeDefinition(parent.Def.Lifetime);
+      await action(def.Lifetime);
     }
 
     /// <summary>
@@ -542,11 +544,8 @@ namespace JetBrains.Lifetimes
       if(action == null)
         throw new ArgumentNullException(nameof(action));
 
-      using(var def = new LifetimeDefinition())
-      {
-        parent.Def.Attach(def);
-        return await action(def.Lifetime);
-      }
+      using var def = new LifetimeDefinition(parent.Def.Lifetime);
+      return await action(def.Lifetime);
     }
     
     /// <summary>
@@ -660,7 +659,7 @@ namespace JetBrains.Lifetimes
         foreach(LifetimeDefinition betta in definitions)
         {          
           if(alpha != betta)
-            alpha.Attach(betta);            
+            alpha.Attach(betta, false);            
         }
       }
     }
@@ -680,6 +679,7 @@ namespace JetBrains.Lifetimes
     
     /// <summary>
     /// Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
+    /// Created lifetime inherits the smallest <see cref="TerminationTimeoutKind"/>  
     /// </summary>
     [PublicAPI]
     public static Lifetime Intersect(Lifetime lifetime1, Lifetime lifetime2) //reduces memory traffic
@@ -714,9 +714,16 @@ namespace JetBrains.Lifetimes
       if (lifetime1 == lifetime2)
         return lifetime1.CreateNested();
 
-      var res = new LifetimeDefinition();
-      lifetime1.Definition.Attach(res);
-      lifetime2.Definition.Attach(res);
+      var timeoutKind1 = lifetime1.TerminationTimeoutKind;
+      var timeoutKind2 = lifetime2.TerminationTimeoutKind;
+      
+      var res = new LifetimeDefinition
+      {
+        TerminationTimeoutKind = timeoutKind1 > timeoutKind2 ? timeoutKind2 : timeoutKind1 
+      };
+      
+      lifetime1.Definition.Attach(res, false);
+      lifetime2.Definition.Attach(res, false);
       return res;
     }
     
@@ -727,10 +734,20 @@ namespace JetBrains.Lifetimes
     public static LifetimeDefinition DefineIntersection(params Lifetime[] lifetimes)
     {
       if (lifetimes == null) throw new ArgumentNullException(nameof(lifetimes));
+      Assertion.Assert(lifetimes.Length > 0, "One or more parameters must be passed");
 
       var res = new LifetimeDefinition();
+      var minTimeoutKind = (LifetimeTerminationTimeoutKind)int.MaxValue;
       foreach (var lf in lifetimes)
-        lf.Definition.Attach(res);
+      {
+        lf.Definition.Attach(res, false);
+        
+        var timeoutKind = lf.TerminationTimeoutKind;
+        if (timeoutKind < minTimeoutKind)
+          minTimeoutKind = timeoutKind;
+      }
+
+      res.TerminationTimeoutKind = minTimeoutKind;
 
       return res;
     }
@@ -801,7 +818,7 @@ namespace JetBrains.Lifetimes
       try
       {
         atomicAction?.Invoke(res);
-        lifetime.Definition.Attach(res);
+        lifetime.Definition.Attach(res, true);
         return res;
       }
       catch (Exception)
@@ -835,7 +852,7 @@ namespace JetBrains.Lifetimes
       try
       {
         atomicAction?.Invoke(res.Lifetime);
-        lifetime.Definition.Attach(res);
+        lifetime.Definition.Attach(res, true);
         return res;
       }
       catch (Exception)

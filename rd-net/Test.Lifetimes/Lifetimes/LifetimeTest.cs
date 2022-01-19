@@ -1237,5 +1237,54 @@ namespace Test.Lifetimes.Lifetimes
         Assert.AreEqual(threadsCount * iterations, count);
       }
     }
+
+    [Test]
+    public void IntersectionsAndInheritTimeoutKindTest()
+    {
+      var lf1 = new LifetimeDefinition();
+      var lf2 = new LifetimeDefinition();
+      var lf3 = new LifetimeDefinition();
+
+      DoTest1(LifetimeTerminationTimeoutKind.Default);
+      DoTest2(LifetimeTerminationTimeoutKind.Default);
+
+      lf1.TerminationTimeoutKind = LifetimeTerminationTimeoutKind.ExtraLong;
+      DoTest1(LifetimeTerminationTimeoutKind.Default);
+      DoTest2(LifetimeTerminationTimeoutKind.Default);
+
+      lf2.TerminationTimeoutKind = LifetimeTerminationTimeoutKind.Long;
+      DoTest1(LifetimeTerminationTimeoutKind.Long);
+      DoTest2(LifetimeTerminationTimeoutKind.Default);
+
+      lf3.TerminationTimeoutKind = LifetimeTerminationTimeoutKind.Short;
+      DoTest1(LifetimeTerminationTimeoutKind.Long);
+      DoTest2(LifetimeTerminationTimeoutKind.Short);
+
+      void DoTest1(LifetimeTerminationTimeoutKind expected)
+      {
+        var definedLifetime = Lifetime.DefineIntersection(lf1.Lifetime, lf2.Lifetime);
+        var outerDefinedLifetime = OuterLifetime.DefineIntersection(lf1.Lifetime, lf2.Lifetime);
+        Assert.AreEqual(expected, definedLifetime.TerminationTimeoutKind);
+        Assert.AreEqual(expected, outerDefinedLifetime.TerminationTimeoutKind);
+      }
+
+      void DoTest2(LifetimeTerminationTimeoutKind expected)
+      {
+        var definedLifetime = Lifetime.DefineIntersection(lf1.Lifetime, lf2.Lifetime, lf3.Lifetime);
+        var outerDefinedLifetime = OuterLifetime.DefineIntersection(lf1.Lifetime, lf2.Lifetime, lf3.Lifetime);
+        Assert.AreEqual(expected, definedLifetime.TerminationTimeoutKind);
+        Assert.AreEqual(expected, outerDefinedLifetime.TerminationTimeoutKind);
+      }
+    }
+
+    [Test]
+    public void DefineLifetimeInheritTimeoutKindTest()
+    {
+      var definition = new LifetimeDefinition { TerminationTimeoutKind = LifetimeTerminationTimeoutKind.ExtraLong };
+      Assert.AreEqual(LifetimeTerminationTimeoutKind.ExtraLong, Lifetime.Define(definition.Lifetime, "id", (LifetimeDefinition ld) => {}).TerminationTimeoutKind);
+      Assert.AreEqual(LifetimeTerminationTimeoutKind.ExtraLong, Lifetime.Define(definition.Lifetime, "id", (Lifetime ld) => {}).TerminationTimeoutKind);
+      
+      Assert.AreEqual(LifetimeTerminationTimeoutKind.ExtraLong, OuterLifetime.Define(definition.Lifetime, "id", (ld, lf) => {}).TerminationTimeoutKind);
+    }
   }
 }
