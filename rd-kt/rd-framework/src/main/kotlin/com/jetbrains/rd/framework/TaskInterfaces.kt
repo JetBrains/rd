@@ -149,16 +149,20 @@ interface IRdCall<in TReq, out TRes> {
      * The exception is if you use this method to get a bindable result, then you should pass a special lifetime.
      * @param request
      * @param responseScheduler scheduler, which will be used to set the value of the result.
-     * The default is a scheduler created from the current [kotlin.coroutines.CoroutineContext]
+     * The default is to use the scheduler created from the current [kotlin.coroutines.CoroutineContext] if the current [IRdCall] is marked `async`,
+     * otherwise the protocol scheduler is used.
      */
     suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler? = null): TRes
 
     /**
      * The same as [startSuspending], but the lifetime is equivalent to the lifetime of the current coroutine.
      * Asynchronously invokes the API with the parameters given as [request] and waits for the result suspending.
+     * If you use this method to get a bindable result, then it will be bound to the current [IRdCall]`s lifetime.
+     * If you want to bind the result to a different lifetime, you should use a [startSuspending] method with lifetime
      * @param request
      * @param responseScheduler scheduler, which will be used to set the value of the result.
-     * The default is a scheduler created from the current [kotlin.coroutines.CoroutineContext]
+     * The default is to use the scheduler created from the current [kotlin.coroutines.CoroutineContext] if the current [IRdCall] is marked `async`,
+     * otherwise the protocol scheduler is used.
      */
     suspend fun startSuspending(request: TReq, responseScheduler: IScheduler? = null) = startSuspending(Lifetime.Eternal, request, responseScheduler)
 }

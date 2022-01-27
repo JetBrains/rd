@@ -94,7 +94,7 @@ class RdAsyncTaskTest2 : RdFrameworkTestBase() {
 
 
             runBlocking(clientScheduler.asCoroutineDispatcher) {
-                val def = LifetimeDefinition()
+                val def = clientLifetime.createNested()
                 val lifetime = def.lifetime
 
                 val result = runBlocking {
