@@ -137,7 +137,7 @@ class SocketWire {
         }
 
         private fun ping() {
-            catchAndDrop {
+            try {
                 if (!connectionEstablished(currentTimeStamp, counterpartNotionTimestamp)) {
                     if (heartbeatAlive.value) { // only on change
                         logger.trace {
@@ -159,6 +159,10 @@ class SocketWire {
                 }
 
                 ++currentTimeStamp
+            } catch (t: Throwable) {
+                if (logger.isEnabled(LogLevel.Debug)) {
+                    logger.log(LogLevel.Debug, "${id}: ${t.javaClass} raised during PING", t)
+                }
             }
         }
 
