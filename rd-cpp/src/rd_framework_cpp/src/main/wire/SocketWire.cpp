@@ -400,7 +400,7 @@ void SocketWire::Base::ping() const
 	}
 	catch (std::exception const& e)
 	{
-		logger->warn("{}: exception raised during PING | {}", this->id, e.what());
+		logger->debug("{}: exception raised during PING | {}", this->id, e.what());
 	}
 }
 

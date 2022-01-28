@@ -371,7 +371,7 @@ namespace JetBrains.Rd.Impl
         }
         catch (Exception e)
         {
-          Log.Warn(e, $"{Id}: {e.GetType()} raised during PING");
+          Log.Verbose(e, $"{Id}: {e.GetType()} raised during PING");
         }
       }
 
