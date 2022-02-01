@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
 
 namespace JetBrains.Lifetimes
 {
@@ -112,8 +113,7 @@ namespace JetBrains.Lifetimes
         atomicAction?.Invoke(nested, nested.Lifetime);
 
         // Attach as nested to the parent lifetime
-//        if(!nested.IsTerminated) // Might have been terminated by FAtomic
-        lifetime.Def.Attach(nested); // Pass True: might be terminated async on another thread between our check and AttachNested body (example: Queue from another thread)
+        lifetime.Def.Attach(nested, true);
       }
       catch
       {
@@ -127,13 +127,24 @@ namespace JetBrains.Lifetimes
         
     /// <summary>
     /// Creates an intersection of some lifetimes — a lifetime to terminate when either one terminates.
+    /// Created lifetime inherits the smallest <see cref="Lifetime.TerminationTimeoutKind"/>
     /// </summary>
     [PublicAPI]
     public static LifetimeDefinition DefineIntersection(params OuterLifetime[] lifetimes)
     {
+      Assertion.Assert(lifetimes.Length > 0, "One or more parameters must be passed");
       var res = new LifetimeDefinition();
+      var minTimeoutKind = (LifetimeTerminationTimeoutKind)int.MaxValue;
       foreach (var lf in lifetimes)
-        lf.Def.Attach(res);
+      {
+        lf.Def.Attach(res, false);
+
+        var timeoutKind = lf.Def.TerminationTimeoutKind;
+        if (minTimeoutKind > timeoutKind)
+          minTimeoutKind = timeoutKind;
+      }
+
+      res.TerminationTimeoutKind = minTimeoutKind;
 
       return res;
     }

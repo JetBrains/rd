@@ -196,8 +196,8 @@ namespace JetBrains.Lifetimes
     /// </summary>
     public LifetimeTerminationTimeoutKind TerminationTimeoutKind
     {
-      get => ourTerminationTimeoutKindSlice[myState];
-      set => ourTerminationTimeoutKindSlice.InterlockedUpdate(ref myState, value);
+      [PublicAPI] get => ourTerminationTimeoutKindSlice[myState];
+      [PublicAPI] set => ourTerminationTimeoutKindSlice.InterlockedUpdate(ref myState, value);
     }
     
     #endregion
@@ -234,8 +234,7 @@ namespace JetBrains.Lifetimes
     /// <param name="parent"></param>
     public LifetimeDefinition(Lifetime parent)
     {
-      parent.Definition.Attach(this);
-      TerminationTimeoutKind = parent.Definition.TerminationTimeoutKind;
+      parent.Definition.Attach(this, true);
     }
 
     /// <summary>
@@ -627,13 +626,16 @@ namespace JetBrains.Lifetimes
     }
 
     
-    internal void Attach(LifetimeDefinition child)
+    internal void Attach(LifetimeDefinition child, bool inheritTimeoutKind)
     {
       if (child == null) throw new ArgumentNullException(nameof(child));
       Assertion.Require(!child.IsEternal, "{0}: can't attach eternal lifetime", this);
 
       if (child.Status >= LifetimeStatus.Canceling) //should not normally happen
         return;
+
+      if (inheritTimeoutKind)
+        child.TerminationTimeoutKind = TerminationTimeoutKind;
       
       if (!TryAdd(child))
         child.Terminate();

@@ -1,11 +1,13 @@
 package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.*
+import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.test.framework.RdTestBase
 import com.jetbrains.rd.util.threading.SpinWait
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -65,7 +67,7 @@ class LifetimeTest : RdTestBase() {
                     l11n.point(0)
                     log.add(1)
 
-                    SpinWait.spinUntil { def.status == LifetimeStatus.Canceled }
+                    SpinWait.spinUntil { def.status == LifetimeStatus.Canceling }
                     assert(!def.isAlive)
                 }
 
@@ -181,6 +183,74 @@ class LifetimeTest : RdTestBase() {
         assert(p3) { "p3" }
     }
 
+    @Test
+    fun testTerminationTimeout() {
+        val defA = LifetimeDefinition(testLifetime).apply { terminationTimeoutKind = LifetimeTerminationTimeoutKind.Long }
+        val defB = LifetimeDefinition(defA.lifetime)
+        val defC = LifetimeDefinition(defA.lifetime).apply { terminationTimeoutKind = LifetimeTerminationTimeoutKind.Short }
 
+        assertEquals(LifetimeTerminationTimeoutKind.Long, defB.terminationTimeoutKind)
+        assertEquals(LifetimeTerminationTimeoutKind.Long, defA.terminationTimeoutKind)
+        assertEquals(LifetimeTerminationTimeoutKind.Short, defC.terminationTimeoutKind)
+    }
 
+    @Test
+    fun testSetTestTerminationTimeout() {
+        enumValues<LifetimeTerminationTimeoutKind>().forEach { timeoutKind ->
+
+            val oldTimeoutMs = Lifetime.getTerminationTimeoutMs(timeoutKind)
+            try {
+                Lifetime.setTerminationTimeoutMs(timeoutKind, 2000)
+
+                val subDef = LifetimeDefinition(testLifetime).apply { terminationTimeoutKind = timeoutKind }
+                val subLt = subDef.lifetime;
+
+                val future = CompletableFuture<Unit>()
+                thread {
+                    subLt.executeIfAlive {
+                        future.complete(Unit)
+                        Thread.sleep(750)
+                    }
+                }
+                assertNotNull(future.get(1, TimeUnit.SECONDS))
+                subDef.terminate()
+
+                assertDoesNotThrow { ErrorAccumulatorLoggerFactory.throwAndClear() }
+            } finally {
+                Lifetime.setTerminationTimeoutMs(timeoutKind, oldTimeoutMs)
+            }
+        }
+    }
+
+    @Test
+    fun intersectionsAndInheritTimeoutKindTest() {
+        val lf1 = LifetimeDefinition()
+        val lf2 = LifetimeDefinition()
+        val lf3 = LifetimeDefinition()
+
+        fun doTest1(expected: LifetimeTerminationTimeoutKind) {
+            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime);
+            assertEquals(expected, definedLifetime.terminationTimeoutKind);
+        }
+
+        fun doTest2(expected: LifetimeTerminationTimeoutKind) {
+            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime, lf3.lifetime);
+            assertEquals(expected, definedLifetime.terminationTimeoutKind);
+        }
+
+        doTest1(LifetimeTerminationTimeoutKind.Default);
+        doTest2(LifetimeTerminationTimeoutKind.Default);
+
+        lf1.terminationTimeoutKind = LifetimeTerminationTimeoutKind.ExtraLong;
+        doTest1(LifetimeTerminationTimeoutKind.Default);
+        doTest2(LifetimeTerminationTimeoutKind.Default);
+
+        lf2.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Long;
+        doTest1(LifetimeTerminationTimeoutKind.Long);
+        doTest2(LifetimeTerminationTimeoutKind.Default);
+
+        lf3.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Short;
+        doTest1(LifetimeTerminationTimeoutKind.Long);
+        doTest2(LifetimeTerminationTimeoutKind.Short);
+    }
 }

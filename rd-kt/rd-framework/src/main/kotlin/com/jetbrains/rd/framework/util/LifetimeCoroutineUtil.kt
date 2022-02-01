@@ -100,3 +100,12 @@ suspend fun <T> withContext(scheduler: IScheduler, block: suspend CoroutineScope
 
 suspend fun <T> withContext(lifetime: Lifetime, scheduler: IScheduler, block: suspend CoroutineScope.() -> T): T =
     withContext(lifetime, scheduler.asCoroutineDispatcher, block)
+
+
+fun Lifetime.createTerminatedAfter(duration: Duration, terminationContext: CoroutineContext): Lifetime =
+    createNested().also { nested ->
+        nested.launch(terminationContext, CoroutineStart.UNDISPATCHED) {
+            delay(duration.toMillis())
+            nested.terminate()
+        }
+    }
