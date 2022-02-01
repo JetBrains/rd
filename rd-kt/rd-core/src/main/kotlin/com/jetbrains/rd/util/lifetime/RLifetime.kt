@@ -168,11 +168,11 @@ sealed class Lifetime {
 
     abstract fun <T : Any> bracketIfAlive(opening: () -> T, terminationAction: () -> Unit): T?
     //todo think of a better name or use only this api (more clear code, but more allocations)
-    abstract fun <T : Any> bracketIfAlive2(opening: () -> T, terminationAction: (T) -> Unit): T?
+    abstract fun <T : Any> bracketIfAliveEx(opening: () -> T, terminationAction: (T) -> Unit): T?
 
     abstract fun <T : Any> bracketOrThrow(opening: () -> T, terminationAction: () -> Unit): T
     //todo think of a better name or use only this api (more clear code, but more allocations)
-    abstract fun <T : Any> bracketOrThrow2(opening: () -> T, terminationAction: (T) -> Unit): T
+    abstract fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T
 
     internal abstract fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean)
 
@@ -494,7 +494,7 @@ class LifetimeDefinition constructor() : Lifetime() {
         }
     }
 
-    override fun <T : Any> bracketIfAlive2(opening: () -> T, terminationAction: (T) -> Unit): T? {
+    override fun <T : Any> bracketIfAliveEx(opening: () -> T, terminationAction: (T) -> Unit): T? {
         return executeIfAlive {
             val res = opening()
 
@@ -510,8 +510,8 @@ class LifetimeDefinition constructor() : Lifetime() {
         return bracketIfAlive(opening, terminationAction) ?: throw CancellationException()
     }
 
-    override fun <T : Any> bracketOrThrow2(opening: () -> T, terminationAction: (T) -> Unit): T {
-        return bracketIfAlive2(opening, terminationAction) ?: throw CancellationException()
+    override fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T {
+        return bracketIfAliveEx(opening, terminationAction) ?: throw CancellationException()
     }
 
     override fun toString() = "Lifetime `${id ?: anonymousLifetimeId}` [${status}, executing=${executingSlice[state]}, resources=$resCount]"
