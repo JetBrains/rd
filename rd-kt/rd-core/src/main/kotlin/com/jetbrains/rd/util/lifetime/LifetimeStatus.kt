@@ -17,7 +17,7 @@ enum class LifetimeStatus {
      * quite ofter (200 ms is a good reference value).
      *
      * Some methods in this status still works, e.g. [Lifetime.onTermination] others do nothing ([Lifetime.executeIfAlive])
-     * or throw [CancellationException] ([Lifetime.executeOrThrow]/>, [Lifetime.bracketOrThrow])
+     * or throw [CancellationException] ([Lifetime.executeOrThrow], [Lifetime.bracketOrThrow])
      */
     Canceling,
     /**
