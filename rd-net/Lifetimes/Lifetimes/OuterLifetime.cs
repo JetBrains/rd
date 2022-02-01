@@ -128,7 +128,7 @@ namespace JetBrains.Lifetimes
         
     /// <summary>
     /// Creates an intersection of some lifetimes — a lifetime to terminate when either one terminates.
-    /// /// Created lifetime inherits the smallest <see cref="Lifetime.TerminationTimeoutKind"/>
+    /// Created lifetime inherits the smallest <see cref="Lifetime.TerminationTimeoutKind"/>
     /// </summary>
     [PublicAPI]
     public static LifetimeDefinition DefineIntersection(params OuterLifetime[] lifetimes)
