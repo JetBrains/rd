@@ -7,7 +7,7 @@ enum class LifetimeTerminationTimeoutKind(val value: Int) {
     /**
      * Default timeout (500ms).
      *
-     * The actual value defined by <see [Lifetime.waitForExecutingInTerminationTimeoutMs] (compatibility mode).
+     * The actual value defined by [Lifetime.waitForExecutingInTerminationTimeoutMs] (compatibility mode).
      */
     Default(-1),
     /**
