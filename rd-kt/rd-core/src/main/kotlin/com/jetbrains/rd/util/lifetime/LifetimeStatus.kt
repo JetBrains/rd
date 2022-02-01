@@ -28,5 +28,10 @@ enum class LifetimeStatus {
     /**
      * Lifetime is fully terminated, all resources are disposed and method's behavior is the same as in [Terminating] state.
      */
-    Terminated
+    Terminated;
+
+    companion object {
+        @Deprecated("Use Canceling")
+        val Canceled = Canceling
+    }
 }
