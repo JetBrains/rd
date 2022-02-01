@@ -28,8 +28,7 @@ class SpinWait {
             var spins = 0L
             while (!condition()) {
                 if (!lifetime.isAlive || System.nanoTime() - start > duration.toNanos())
-                    return condition()
-
+                    return false
                 if (spins++ < 100)
                     Thread.yield()
                 else
