@@ -191,7 +191,7 @@ class LifetimeDefinition constructor() : Lifetime() {
     val lifetime: Lifetime get() = this
 
     constructor(parent: Lifetime) : this() {
-        parent.attach(this, true)
+        parent.attach(this, inheritTimeoutKind = true)
     }
 
     companion object {
