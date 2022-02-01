@@ -113,8 +113,7 @@ namespace JetBrains.Lifetimes
         atomicAction?.Invoke(nested, nested.Lifetime);
 
         // Attach as nested to the parent lifetime
-//        if(!nested.IsTerminated) // Might have been terminated by FAtomic
-        lifetime.Def.Attach(nested, true); // Pass True: might be terminated async on another thread between our check and AttachNested body (example: Queue from another thread)
+        lifetime.Def.Attach(nested, true);
       }
       catch
       {
