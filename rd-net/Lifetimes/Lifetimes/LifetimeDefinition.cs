@@ -443,7 +443,7 @@ namespace JetBrains.Lifetimes
       {
         Log.Warn($"{this}: can't wait for `ExecuteIfAlive` completed on other thread in {terminationTimeoutMs} ms. Keep termination." + Environment.NewLine 
                         + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
-                        + "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100");
+                        + "This is also possible if the thread waiting for the termination wasn't able to receive execution time during the wait in SpinWait.spinUntil, so it has missed the fact that the lifetime was terminated in time.");
 
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
       }
