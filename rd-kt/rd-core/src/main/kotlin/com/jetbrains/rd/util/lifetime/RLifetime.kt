@@ -391,7 +391,7 @@ class LifetimeDefinition constructor() : Lifetime() {
             log.warn {
                 "$this: can't wait for `executeIfAlive` completed on other thread in $terminationTimeoutMs ms. Keep termination.${System.lineSeparator()}" +
                 "This may happen either because of the executeIfAlive failed to complete in a timely manner. In the case there will be following error messages.${System.lineSeparator()}" +
-                "Or this might happen because of garbage collection or when the thread yielded execution in SpinWait.SpinOnce but did not receive execution back in a timely manner. If you are on JetBrains' Slack see the discussion https://jetbrains.slack.com/archives/CAZEUK2R0/p1606236742208100"
+                "This is also possible if the thread waiting for the termination wasn't able to receive execution time during the wait in SpinWait.SpinUntil, so it has missed the fact that the lifetime was terminated in time."
             }
 
             logErrorAfterExecution.atomicUpdate(state, true)
