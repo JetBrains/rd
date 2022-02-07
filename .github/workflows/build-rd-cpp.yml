@@ -22,8 +22,8 @@ jobs:
       matrix:
         config:
         - {
-            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019-",
-            os: windows-latest,
+            name: "RD CPP Windows VS 2019", artifact: "RD-CPP-Windows-MSVC-2019-",
+            os: windows-2019,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
             SEP: \,
@@ -113,7 +113,7 @@ jobs:
         if (NOT "${{ runner.os }}" STREQUAL "Windows")
           execute_process(COMMAND chmod +x ninja)
         endif()
-      
+
     - name: Configure
       working-directory: ${{ env.working-dir }}
       shell: cmake -P {0}
@@ -130,7 +130,7 @@ jobs:
             RESULT_VARIABLE execute_vcvars_result
           )          
           if (NOT execute_vcvars_result EQUAL 0)
-            message(FATAL_ERROR "Bad exit status. Fail running ${{ matrix.config.environment_script }}")
+            message(FATAL_ERROR "Bad exit status ${execute_vcvars_result}. Fail running ${{ matrix.config.environment_script }}")
           endif()
           file(STRINGS environment_script_output.txt output_lines)
           foreach(line IN LISTS output_lines)
@@ -161,6 +161,12 @@ jobs:
           message(FATAL_ERROR "Bad exit status. Fail building RD CPP")
         endif()
 
+    - name: Upload environment script log
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: build-log-${{ matrix.config.os }}
+        path: environment_script_output.txt
 
     - name: Build
       working-directory: ${{ env.working-dir }}
