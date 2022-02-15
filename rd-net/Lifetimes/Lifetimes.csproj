@@ -59,7 +59,4 @@
         <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' != 'net35'">
-      <PackageReference Include="System.Memory" Version="4.5.4" />
-    </ItemGroup>
 </Project>

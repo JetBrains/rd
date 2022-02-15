@@ -12,6 +12,85 @@ namespace Test.Lifetimes.Diagnostics;
 
 public class InterpolatedStringHandlerTests
 {
+  [Test]
+  public void TestWithAlignment()
+  {
+    var handler = new JetDefaultInterpolatedStringHandler();
+    handler.AppendFormatted("foo", 10);
+    var s1 = handler.ToStringAndClear();
+    
+    handler = new JetDefaultInterpolatedStringHandler();
+    handler.AppendFormatted("foo", -10);
+    var s2 = handler.ToStringAndClear();
+
+    Assert.AreEqual("       foo", s1);
+    Assert.AreEqual("foo       ", s2);
+    
+    handler = new JetDefaultInterpolatedStringHandler();
+    handler.AppendLiteral("test");
+    handler.AppendFormatted("foo", 5);
+    Assert.AreEqual("test  foo", handler.ToStringAndClear());
+  }
+
+  [TestCase("foo", null, "foo", 0)]
+  [TestCase("barfoo", "bar", "foo", -1)]
+  [TestCase("barfoo", "bar", "foo", 1)]
+  public void MoreAlignmentTests(string expected, [CanBeNull] string initial, string value, int alignment)
+  {
+    var handler = new JetDefaultInterpolatedStringHandler();
+    handler.AppendLiteral(initial);
+    handler.AppendFormatted(value, alignment);
+    Assert.AreEqual(expected, handler.ToStringAndClear());
+
+    // Reuse:
+    handler.AppendFormatted(1); // value of another type
+    handler.AppendLiteral(initial);
+    handler.AppendFormatted(value, alignment);
+    Assert.AreEqual("1" + expected, handler.ToStringAndClear());
+  }
+  
+  [TestCase("c430b4ba-b2da-400a-bf4f-55419d557497", "C430B4BA-B2DA-400A-BF4F-55419D557497", null, 0)]
+  [TestCase("0b7964d370a1455ea87ad0930faac164", "0B7964D3-70a1-455E-A87A-D0930FAAC164", "N", 0)]
+  [TestCase("{92b0d81c-30e7-4c48-be86-30deafcb77b6}", "92B0D81C-30E7-4C48-BE86-30DEAFCB77B6", "B", 0)]
+  [TestCase("    c430b4ba-b2da-400a-bf4f-55419d557497", "C430B4BA-B2DA-400A-BF4F-55419D557497", null, 40)]
+  [TestCase("0b7964d370a1455ea87ad0930faac164", "0B7964D3-70a1-455E-A87A-D0930FAAC164", "N", 10)]
+  [TestCase("{92b0d81c-30e7-4c48-be86-30deafcb77b6}  ", "92B0D81C-30E7-4C48-BE86-30DEAFCB77B6", "B", -40)]
+  public void FormatterTests(string expected, string value, string format, int alignment)
+  {
+    var handler = new JetDefaultInterpolatedStringHandler();
+    handler.AppendLiteral("GUID: ");
+    var guid = Guid.Parse(value);
+    handler.AppendFormatted(guid, alignment, format);
+    Assert.AreEqual("GUID: " + expected, handler.ToStringAndClear());
+  }
+  
+  private class ToStringIsNull
+  {
+    public override string ToString() => null!;
+  }
+
+  [Test]
+  public void NullFormatterCase()
+  {
+    var handler = new JetDefaultInterpolatedStringHandler();
+    handler.AppendFormatted(new ToStringIsNull(), 5);
+    Assert.AreEqual("     ", handler.ToStringAndClear());
+  }
+
+  [Test]
+  public void ToStringTests()
+  {
+    var handler = new JetDefaultInterpolatedStringHandler();
+    Assert.AreEqual("", handler.ToString());
+
+    handler.AppendLiteral("111");
+    Assert.AreEqual("111", handler.ToString());
+    handler.AppendLiteral("222");
+    Assert.AreEqual("111222", handler.ToString());
+    Assert.AreEqual("111222", handler.ToStringAndClear());
+    Assert.AreEqual("", handler.ToString());
+  }
+  
   [TestCase(true)]
   [TestCase(false)]
   public void JetConditionalInterpolatedStringHandlerIsEnabledTest(bool condition)

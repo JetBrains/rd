@@ -78,6 +78,7 @@ public ref struct JetConditionalInterpolatedStringHandler
     myHandler.AppendFormatted(value);
   }
 
+  // ReSharper disable once MethodOverloadWithOptionalParameter
   public void AppendFormatted(string? value, int alignment = 0, string? format = null)
   {
     Assertion.Assert(IsEnabled);
