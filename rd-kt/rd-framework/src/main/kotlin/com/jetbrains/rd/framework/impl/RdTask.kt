@@ -54,6 +54,8 @@ abstract class WiredRdTask<TReq, TRes>(
 
     val wire = call.wire
     override val location: RName = call.location.sub(rdid.toString(), ".")
+
+    override fun toString(): String = this::class.simpleName + ": `$location`"
 }
 
 class CallSiteWiredRdTask<TReq, TRes>(

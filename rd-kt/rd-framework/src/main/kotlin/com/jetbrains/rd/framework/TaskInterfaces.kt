@@ -102,7 +102,7 @@ internal suspend fun <T> IRdTask<T>.awaitInternal(): T = Lifetime.using { lifeti
         result.advise(lifetime) {
             when (it) {
                 is RdTaskResult.Success -> c.resume(it.value)
-                is RdTaskResult.Cancelled -> c.cancel(CancellationException("Task finished in Cancelled state"))
+                is RdTaskResult.Cancelled -> c.cancel(CancellationException("Task: ${this@awaitInternal} finished in Cancelled state"))
                 is RdTaskResult.Fault -> c.resumeWithException(it.error)
             }
         }
