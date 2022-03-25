@@ -274,7 +274,7 @@ namespace JetBrains.Rd.Impl
           myRegistrar?.TryRegister(typeof(T), this);
           if (!TryGetReader(typeId, out ctxReadDelegate))
           {
-            var realType = myTypeMapping.SingleOrDefault(c => Equals(c.Value, typeId)); //ok because it's rarely needed
+            var realType = myTypeMapping.SingleOrDefault(c => EqualityComparer<RdId>.Default.Equals(c.Value, typeId)); //ok because it's rarely needed
             throw new KeyNotFoundException(string.Format("There is no readers found. Requested type '{0}'. Real type {1}", typeof(T).FullName, realType));
           }
         }

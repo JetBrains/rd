@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -34,7 +35,7 @@ namespace JetBrains.Collections.Viewable
       {
         lock (myChange)
         {
-          if (Maybe.HasValue && Equals(Maybe.Value, value)) return;
+          if (Maybe.HasValue && EqualityComparer<T>.Default.Equals(Maybe.Value, value)) return;
           Maybe = new Maybe<T>(value);
           myChange.Fire(value);
         }

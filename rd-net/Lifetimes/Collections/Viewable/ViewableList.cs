@@ -101,7 +101,7 @@ namespace JetBrains.Collections.Viewable
         Assertion.Require(value != null, "value != null");
         
         var oldval = myStorage[index];
-        if (Equals(oldval, value)) return;
+        if (EqualityComparer<T>.Default.Equals(oldval, value)) return;
 
         myStorage[index] = value;
         myChange.Fire(ListEvent<T>.Update(index, oldval, value));        
