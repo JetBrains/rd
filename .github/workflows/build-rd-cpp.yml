@@ -30,14 +30,6 @@ jobs:
             suffix: win-vs19            
           }
         - {
-            name: "RD CPP Windows VS 2017", artifact: "RD-CPP-Windows-MSVC-2017-",
-            os: windows-2016,
-            cc: "cl", cxx: "cl",
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-            SEP: \,
-            suffix: win-vs17
-          }
-        - {
             name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-",
             os: ubuntu-latest,
             cc: "clang", cxx: "clang++",
