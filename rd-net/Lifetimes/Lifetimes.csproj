@@ -8,7 +8,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <NoWarn>1591,1570,1574</NoWarn>
+        <NoWarn>$(NoWarn),1591,1570,1574</NoWarn>
         
         <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
         
