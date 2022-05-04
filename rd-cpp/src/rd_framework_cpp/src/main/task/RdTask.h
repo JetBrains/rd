@@ -108,7 +108,7 @@ public:
 
 	bool is_faulted() const
 	{
-		return has_value() && value_or_throw().is_faulted();	// todo atomic
+		return has_value() && value_or_throw().is_faulted();	// TO-DO atomic
 	}
 
 	void advise(Lifetime lifetime, std::function<void(TRes const&)> handler) const
