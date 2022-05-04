@@ -50,8 +50,8 @@ public:
 
 	SerializationCtx& get_serialization_context() const override;
 
-	mutable ordered_map<std::string, std::shared_ptr<IRdBindable>> bindable_extensions;	   // todo concurrency
-	// mutable std::map<std::string, std::any> non_bindable_extensions;//todo concurrency
+	mutable ordered_map<std::string, std::shared_ptr<IRdBindable>> bindable_extensions;	   // TO-DO concurrency
+	// mutable std::map<std::string, std::any> non_bindable_extensions;//TO-DO concurrency
 
 	template <typename T, typename... Args>
 	typename std::enable_if_t<util::is_base_of_v<IRdBindable, T>, T> const& getOrCreateExtension(

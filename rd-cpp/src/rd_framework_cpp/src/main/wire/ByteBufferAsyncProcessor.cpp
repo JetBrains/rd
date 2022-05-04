@@ -26,7 +26,7 @@ void ByteBufferAsyncProcessor::cleanup0()
 
 		state = StateKind::Terminated;
 	}
-	// todo clean data
+	// TO-DO clean data
 
 	cv.notify_all();
 }

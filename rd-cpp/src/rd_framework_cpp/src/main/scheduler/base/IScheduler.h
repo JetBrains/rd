@@ -36,7 +36,7 @@ public:
 	 */
 	virtual void queue(std::function<void()> action) = 0;
 
-	// todo
+	// TO-DO
 	bool out_of_order_execution = false;
 
 	virtual void assert_thread() const;

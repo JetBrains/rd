@@ -18,7 +18,7 @@ size_t contentHashCode(C<T, A> const& list) noexcept
 		__r = __r * 31 + hash<T>()(e);
 	}
 	return __r;
-	// todo faster for integrals
+	// TO-DO faster for integrals
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>

@@ -282,7 +282,7 @@ public:
 			auto const& value_ptr = it->second;
 
 			if (*value_ptr != wrapper::get<V>(value))
-			{	 // todo more effective
+			{	 // TO-DO more effective
 				Wrapper<V> old_value = std::move(map.at(key));
 
 				map.at(key_ptr) = Wrapper<V>(std::move(value));

@@ -296,7 +296,7 @@ public:
 
 	bool removeAll(std::vector<WT> elements) const override
 	{
-		// todo faster
+		// TO-DO faster
 		//        std::unordered_set<T> set(elements.begin(), elements.end());
 
 		bool res = false;
