@@ -30,7 +30,7 @@ constexpr hash_t getPlatformIndependentHash(char const (&that)[N], constexpr_has
 
 constexpr hash_t getPlatformIndependentHash(string_view that, constexpr_hash_t initial = DEFAULT_HASH)
 {
-	return static_cast<hash_t>(hashImpl(initial, &that[0], &that[that.length()]));
+	return static_cast<hash_t>(hashImpl(initial, &that[0], &that[that.length() - 1] + 1));
 }
 
 constexpr hash_t getPlatformIndependentHash(int32_t const& that, constexpr_hash_t initial = DEFAULT_HASH)
