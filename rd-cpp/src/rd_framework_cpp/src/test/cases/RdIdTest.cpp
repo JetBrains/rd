@@ -14,7 +14,8 @@ TEST(rd_id, mix)
 	EXPECT_EQ(id1.get_hash(), 88988021860L);
 	RdId id3 = id2.mix("hijklmn");
 	EXPECT_EQ(-5123855772550266649L, id3.get_hash());
-	EXPECT_EQ(-5123855772550266649L * 31L + 1, id3.mix(0L).get_hash());
+	constexpr auto hash3_mix_0 = static_cast<hash_t>(static_cast<constexpr_hash_t>(-5123855772550266649L) * HASH_FACTOR + 1ULL);
+	EXPECT_EQ(hash3_mix_0, id3.mix(0L).get_hash());
 }
 
 TEST(rd_id, constexprness)
