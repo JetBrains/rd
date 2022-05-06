@@ -12,6 +12,9 @@ namespace rd
 {
 namespace util
 {
+static std::shared_ptr<spdlog::logger> logger =
+	spdlog::stderr_color_mt<spdlog::synchronous_factory>("socketProxyLog", spdlog::color_mode::automatic);
+
 void SocketProxy::connect(CSimpleSocket& proxyServer, CSimpleSocket& proxyClient)
 {
 	try
@@ -104,7 +107,6 @@ SocketProxy::SocketProxy(std::string id, Lifetime lifetime, int serverPort)
 	: id(std::move(id))
 	, lifetime(lifetime)
 	, serverPort(serverPort)
-	, logger(spdlog::stderr_color_mt<spdlog::synchronous_factory>("socketProxyLog", spdlog::color_mode::automatic))
 	, serverToClientLifetime(lifetime)
 	, clientToServerLifetime(lifetime)
 	, proxyServer(std::make_unique<CActiveSocket>())
