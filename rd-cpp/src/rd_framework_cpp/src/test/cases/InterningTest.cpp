@@ -158,7 +158,7 @@ TEST_F(InterningTestBase, testNestedInternedObjects)
 	AfterTest();
 }
 
-TEST_F(InterningTestBase, testNestedInternedObjectsOnSameData)
+TEST_F(InterningTestBase, DISABLED_testNestedInternedObjectsOnSameData)
 {
 	serverProtocol->get_serializers().registry<InterningNestedTestModel>();
 	clientProtocol->get_serializers().registry<InterningNestedTestModel>();
