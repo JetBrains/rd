@@ -161,17 +161,14 @@ tasks {
         dependsOn(cleanupArtifacts, copyNuGetLifetimes, copyNuGetRdFramework, copyNuGetRdFrameworkReflection, copyRdGen)
     }
 
-    fun enableNuGetPublishing(url: String, apiKey: String?) {
+    fun enableNuGetPublishing(url: String, apiKey: String) {
         val args = mutableListOf<Any>(
             project.projectDir.resolve("rd-net").resolve("dotnet.cmd").canonicalPath,
             "nuget",
             "push",
-            "--source", url
+            "--source", url,
+            "--api-key", apiKey
         )
-        if (apiKey != null) {
-            args.add("--api-key")
-            args.add(apiKey)
-        }
 
         for (file in nuGetTargetDir.listFiles().filter { it.extension == "nupkg" }) {
             exec {
@@ -195,7 +192,8 @@ tasks {
             }
             if (deployToInternal) {
                 val internalFeedUrl = rootProject.extra["internalNuGetFeedUrl"].toString()
-                enableNuGetPublishing(internalFeedUrl, null)
+                val internalFeedApiKey = rootProject.extra["internalNuGetFeedKey"].toString()
+                enableNuGetPublishing(internalFeedUrl, internalFeedApiKey)
             }
         }
     }
