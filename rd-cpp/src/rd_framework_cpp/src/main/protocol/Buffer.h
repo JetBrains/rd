@@ -237,7 +237,7 @@ public:
 		write_integral<int32_t>(static_cast<int32_t>(x));
 	}
 
-	template <typename T, typename F, typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, T>>>
+	template <typename T, typename F, typename = typename std::enable_if_t<util::is_same_v<typename util::result_of_t<F()>, T>>>
 	opt_or_wrapper<T> read_nullable(F&& reader)
 	{
 		bool nullable = !read_bool();
@@ -249,7 +249,7 @@ public:
 	}
 
 	template <typename T, typename F,
-		typename = typename std::enable_if_t<util::is_same_v<typename std::result_of_t<F()>, Wrapper<T>>>>
+		typename = typename std::enable_if_t<util::is_same_v<typename util::result_of_t<F()>, Wrapper<T>>>>
 	Wrapper<T> read_nullable(F&& reader)
 	{
 		bool nullable = !read_bool();

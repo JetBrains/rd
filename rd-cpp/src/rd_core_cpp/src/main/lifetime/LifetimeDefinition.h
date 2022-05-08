@@ -1,6 +1,8 @@
 #ifndef RD_CPP_CORE_LIFETIME_DEFINITION_H
 #define RD_CPP_CORE_LIFETIME_DEFINITION_H
 
+#include "util/core_traits.h"
+
 #include "LifetimeImpl.h"
 #include "Lifetime.h"
 
@@ -45,7 +47,7 @@ public:
 	void terminate();
 
 	template <typename F>
-	static auto use(F&& block) -> typename std::result_of_t<F(Lifetime)>
+	static auto use(F&& block) -> typename util::result_of_t<F(Lifetime)>
 	{
 		LifetimeDefinition definition(false);
 		Lifetime lw = definition.lifetime.create_nested();

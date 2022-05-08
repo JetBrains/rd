@@ -17,8 +17,8 @@ namespace util
 template <typename T, typename U>
 constexpr bool is_same_v = std::is_same<T, U>::value;
 
-template <typename _Base, typename _Derived>
-constexpr bool is_base_of_v = std::is_base_of<_Base, _Derived>::value;
+template <typename Base, typename Derived>
+constexpr bool is_base_of_v = std::is_base_of<Base, Derived>::value;
 
 template <bool B>
 using bool_constant = std::integral_constant<bool, B>;
@@ -71,6 +71,19 @@ struct is_invocable_r
 
 template <class F, class... Ts>
 constexpr bool is_invocable_v = is_invocable<F, Ts...>::value;
+
+#ifdef __cpp_lib_is_invocable
+template <class> struct result_of;
+
+template <class F, class... TN>
+struct result_of<F(TN...)>
+{
+	using type = std::invoke_result_t<F, TN...>;
+};
+#else
+template<class... TN> using result_of = std::result_of<TN...>;
+#endif
+template<class... TN> using result_of_t = typename result_of<TN...>::type;
 
 template <typename T>
 constexpr bool is_enum_v = std::is_enum<T>::value;
