@@ -16,11 +16,11 @@ bool RdBindableBase::is_bound() const
 
 void RdBindableBase::bind(Lifetime lf, IRdDynamic const* parent, string_view name) const
 {
-	RD_ASSERT_MSG(!is_bound(), ("Trying to bound already bound this to " + to_string(parent->location)));
+	RD_ASSERT_MSG(!is_bound(), ("Trying to bind already bound this to " + to_string(parent->get_location())));
 	lf->bracket(
 		[this, lf, parent, &name] {
 			this->parent = parent;
-			location = parent->location.sub(name, ".");
+			location = parent->get_location().sub(name, ".");
 			this->bind_lifetime = lf;
 		},
 		[this, lf]() {
@@ -59,6 +59,21 @@ const IProtocol* RdBindableBase::get_protocol() const
 		}
 	}
 	throw std::invalid_argument("Not bound: " + to_string(location));
+}
+
+const RName& RdBindableBase::get_location() const
+{
+	return location;
+}
+
+RdId RdBindableBase::get_id() const
+{
+	return rdid;
+}
+
+void RdBindableBase::set_id(RdId id) const
+{
+	rdid = id;
 }
 
 SerializationCtx& RdBindableBase::get_serialization_context() const

@@ -21,7 +21,7 @@ void Protocol::initialize() const
 	context = std::make_unique<SerializationCtx>(
 		serializers.get(), SerializationCtx::roots_t{{util::getPlatformIndependentHash("Protocol"), internRoot.get()}});
 
-	internRoot->rdid = RdId::Null().mix(InternRootName);
+	internRoot->set_id(RdId::Null().mix(InternRootName));
 	scheduler->queue([this] { internRoot->bind(lifetime, this, InternRootName); });
 }
 

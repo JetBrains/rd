@@ -29,12 +29,12 @@ void InternRoot::on_wire_received(Buffer buffer) const
 
 void InternRoot::bind(Lifetime lf, IRdDynamic const* parent, string_view name) const
 {
-	RD_ASSERT_MSG(!is_bound(), "Trying to bound already bound "s + to_string(this->location) + " to " + to_string(parent->location))
+	RD_ASSERT_MSG(!is_bound(), "Trying to bound already bound "s + to_string(this->location) + " to " + to_string(parent->get_location()))
 
 	lf->bracket(
 		[this, parent, &name] {
 			this->parent = parent;
-			location = parent->location.sub(name, ".");
+			location = parent->get_location().sub(name, ".");
 		},
 		[this] {
 			location = location.sub("<<unbound>>", "::");

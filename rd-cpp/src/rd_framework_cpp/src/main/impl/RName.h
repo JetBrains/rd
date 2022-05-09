@@ -38,7 +38,7 @@ public:
 	explicit RName(string_view local_name);
 	// endregion
 
-	RName sub(string_view localName, string_view separator);
+	RName sub(string_view localName, string_view separator) const;
 
 	explicit operator bool() const
 	{

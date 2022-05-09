@@ -19,7 +19,7 @@ SerializationCtx SerializationCtx::withInternRootsHere(
 	{
 		auto const& name = "InternRoot-" + item;
 		InternRoot const& root = owner.getOrCreateExtension<InternRoot>(name);
-		withId(root, owner.rdid.mix(".").mix(name));
+		withId(root, owner.get_id().mix(".").mix(name));
 		next_roots.emplace(util::getPlatformIndependentHash(item), &root);
 	}
 	return SerializationCtx(serializers, std::move(next_roots));
