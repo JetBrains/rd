@@ -153,7 +153,7 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 	});
 	const auto status = heartbeat.wait_for(timeout);
 
-	logger->debug("{}: waited for heartbeat to stop with status: {}", this->id, status);
+	logger->debug("{}: waited for heartbeat to stop with status: {}", this->id, static_cast<uint32_t>(status));
 
 	if (!socket_provider->IsSocketValid())
 	{
