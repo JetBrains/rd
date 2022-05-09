@@ -34,6 +34,8 @@ public:
 	std::unique_ptr<Serializers> serializers = std::make_unique<Serializers>();
 
 protected:
+	mutable RName location;
+
 	std::shared_ptr<Identities> identity;
 	IScheduler* scheduler = nullptr;
 
@@ -61,6 +63,8 @@ public:
 	const IWire* get_wire() const;
 
 	const Serializers& get_serializers() const;
+
+	const RName& get_location() const override;
 };
 }	 // namespace rd
 #if defined(_MSC_VER)

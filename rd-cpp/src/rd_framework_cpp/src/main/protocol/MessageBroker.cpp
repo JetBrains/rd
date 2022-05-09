@@ -25,7 +25,7 @@ void MessageBroker::invoke(const IRdReactive* that, Buffer msg, bool sync) const
 			bool exists_id = false;
 			{
 				std::lock_guard<decltype(lock)> guard(lock);
-				exists_id = subscriptions.count(that->rdid) > 0;
+				exists_id = subscriptions.count(that->get_id()) > 0;
 			}
 			if (exists_id)
 			{
@@ -33,7 +33,7 @@ void MessageBroker::invoke(const IRdReactive* that, Buffer msg, bool sync) const
 			}
 			else
 			{
-				logger->trace("Disappeared Handler for Reactive entities with id: {}", to_string(that->rdid));
+				logger->trace("Disappeared Handler for Reactive entities with id: {}", to_string(that->get_id()));
 			}
 		};
 		std::function<void()> function = util::make_shared_function(std::move(action));
@@ -129,7 +129,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 
 void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const* entity) const
 {
-	RD_ASSERT_MSG(!entity->rdid.isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())))
+	RD_ASSERT_MSG(!entity->get_id().isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())))
 
 	// advise MUST happen under default scheduler, not custom
 	default_scheduler->assert_thread();
@@ -137,7 +137,7 @@ void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const* entity) cons
 	std::lock_guard<decltype(lock)> guard(lock);
 	if (!lifetime->is_terminated())
 	{
-		auto key = entity->rdid;
+		auto key = entity->get_id();
 		IRdReactive const* value = entity;
 		subscriptions[key] = value;
 		lifetime->add_action([this, key]() { subscriptions.erase(key); });
