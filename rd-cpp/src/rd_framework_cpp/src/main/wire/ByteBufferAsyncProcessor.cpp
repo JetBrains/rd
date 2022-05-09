@@ -223,7 +223,7 @@ void ByteBufferAsyncProcessor::pause(const std::string& reason)
 	auto current_thread_id = std::this_thread::get_id();
 	if (current_thread_id != async_thread_id)
 	{
-		logger->debug(id + "{} paused from another thread : {}", id, to_string(current_thread_id));
+		logger->debug("{} paused from another thread : {}", id, to_string(current_thread_id));
 		std::unique_lock<decltype(processing_lock)> ul(processing_lock);
 		processing_cv.wait(ul, [this]() -> bool { return !in_processing; });
 		logger->debug("{}: pausing waited for main processing", id);
