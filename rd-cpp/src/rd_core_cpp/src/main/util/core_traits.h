@@ -88,8 +88,9 @@ template<class... TN> using result_of_t = typename result_of<TN...>::type;
 template <typename T>
 constexpr bool is_enum_v = std::is_enum<T>::value;
 
+// TO-DO: is is_pod actually required for memcpy-like serialization?
 template <class T>
-constexpr bool is_pod_v = std::is_pod<T>::value;
+constexpr bool is_pod_v = std::is_trivial<T>::value && std::is_standard_layout<T>::value;
 // endregion
 
 template <typename T>
