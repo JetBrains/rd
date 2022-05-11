@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
@@ -21,6 +22,12 @@ namespace JetBrains.Lifetimes
   {    
 #pragma warning disable 420
     #region Statics
+
+    private static readonly Signal<Lifetime> ourExecutionWasNotCancelledByTimeout = new();
+    /// <summary>
+    /// Use this signal to improve diagnostics (e.g., to collect thread dumps etc.)) 
+    /// </summary>
+    public static ISource<Lifetime> ExecutionWasNotCancelledByTimeout => ourExecutionWasNotCancelledByTimeout;
 
     internal static readonly ILog Log = JetBrains.Diagnostics.Log.GetLog<Lifetime>();
     
@@ -446,6 +453,7 @@ namespace JetBrains.Lifetimes
                         + "This is also possible if the thread waiting for the termination wasn't able to receive execution time during the wait in SpinWait.spinUntil, so it has missed the fact that the lifetime was terminated in time.");
 
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
+        ourExecutionWasNotCancelledByTimeout.Fire(Lifetime);
       }
 
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Canceling))
