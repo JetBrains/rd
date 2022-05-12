@@ -214,6 +214,7 @@ namespace Test.Lifetimes.Lifetimes
       const string expectedWarningText = "can't wait for `ExecuteIfAlive` completed on other thread";
       const string expectedExceptionText = "ExecuteIfAlive after termination of";
       bool warningReceived = false, exceptionReceived = false;
+      var executionWasNotCancelledByTimeoutReceived = false;
 
       Lifetime.Using(lifetime =>
       {
@@ -228,7 +229,20 @@ namespace Test.Lifetimes.Lifetimes
           () => TestLogger.ExceptionLogger.Handlers -= LoggerHandler
           );
 
+
         var lifetimeDefinition = lifetime.CreateNested();
+
+        var def2 = lifetime.CreateNested();
+
+        LifetimeDefinition.ExecutionWasNotCancelledByTimeout.Advise(lifetime, lf =>
+        {
+          Assert.AreEqual(lifetimeDefinition.Lifetime, lf);
+          executionWasNotCancelledByTimeoutReceived = true;
+        });
+        
+        def2.Terminate();
+        Assert.IsFalse(executionWasNotCancelledByTimeoutReceived);
+        
         var lifetimeTerminatedEvent = new ManualResetEvent(false);
         var backgroundThreadIsInTryExecuteEvent = new ManualResetEvent(false);
         var thread = new Thread(() => lifetimeDefinition.Lifetime.TryExecute(() =>
@@ -256,6 +270,7 @@ namespace Test.Lifetimes.Lifetimes
 
       Assert.IsTrue(warningReceived, "Warning `{0}` must have been logged", expectedWarningText);
       Assert.IsTrue(exceptionReceived, "Exception `{0}` must have been logged", expectedExceptionText);
+      Assert.IsTrue(executionWasNotCancelledByTimeoutReceived);
     }
     
     [Test]
