@@ -32,7 +32,7 @@ add_library(rd_framework_cpp SHARED
         #serialization
         serialization/SerializationCtx.cpp serialization/SerializationCtx.h
         serialization/Serializers.cpp serialization/Serializers.h
-        serialization/Polymorphic.cpp serialization/Polymorphic.h
+        serialization/Polymorphic.h
         serialization/NullableSerializer.h
         serialization/ArraySerializer.h
         serialization/ISerializable.cpp serialization/ISerializable.h
