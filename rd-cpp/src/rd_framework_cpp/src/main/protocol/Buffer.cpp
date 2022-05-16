@@ -176,7 +176,7 @@ void Buffer::write_wstring(std::wstring const& value)
 void Buffer::write_char16_string(const uint16_t* data, size_t len)
 {
 	write_integral<int32_t>(static_cast<int32_t>(len));
-	write(reinterpret_cast<word_t const*>(data), 2 * len);
+	write(reinterpret_cast<word_t const*>(data), sizeof(uint16_t) * len);
 }
 
 uint16_t* Buffer::read_char16_string()
