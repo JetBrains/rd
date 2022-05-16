@@ -91,11 +91,17 @@ public:
 
 	void fire(T const& value) const override
 	{
-		assert_bound();
+	    // Disabling checking for bounding, to fix async signal being called unbound on another thread.
+		// Copying hack from rd-net
+		// https://github.com/JetBrains/rd/blob/d00d07c38784af5743c75ceca4bbceb92f6f8149/rd-net/RdFramework/Impl/RdSignal.cs#L72-L95
+		// assert_bound();
 		if (!async)
 		{
 			assert_threading();
 		}
+
+		if (async && !is_bound()) return;
+
 		get_wire()->send(rdid, [this, &value](Buffer& buffer) {
 			spdlog::get("logSend")->trace("SEND{}", logmsg(value));
 			S::write(get_serialization_context(), buffer, value);
@@ -130,7 +136,7 @@ public:
 		return wire_scheduler;
 	}
 
-	friend std::string to_string(RdSignal const& value)
+	friend std::string to_string(RdSignal const&)
 	{
 		return "";
 	}

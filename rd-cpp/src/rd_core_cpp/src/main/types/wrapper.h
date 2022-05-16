@@ -310,6 +310,4 @@ struct hash<rd::Wrapper<T>>
 
 static_assert(rd::is_wrapper<rd::Wrapper<std::wstring>>::value, "is wrapper doesn't work");
 
-extern template class rd::Wrapper<std::wstring>;
-
 #endif	  // RD_CPP_WRAPPER_H

@@ -17,7 +17,12 @@ int32_t size(std::vector<T, A> const& value)
 {
 	return static_cast<int32_t>(value.size());
 }
-
+#else	
+template <typename T, typename A>
+int32_t size(std::vector<T, A> const& value)
+{
+	return std::size(value);
+}
 #endif
 
 template <typename T, typename A>
