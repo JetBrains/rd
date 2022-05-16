@@ -11,9 +11,8 @@ Buffer::Buffer() : Buffer(16)
 {
 }
 
-Buffer::Buffer(size_t initialSize)
+Buffer::Buffer(size_t initialSize) : data_(initialSize)
 {
-	data_.resize(initialSize);
 }
 
 Buffer::Buffer(ByteArray array, size_t offset) : data_(std::move(array)), offset(offset)
@@ -172,6 +171,22 @@ void write_wstring_spec<2>(Buffer& buffer, wstring_view value)
 void Buffer::write_wstring(std::wstring const& value)
 {
 	write_wstring(wstring_view(value));
+}
+
+void Buffer::write_char16_string(const uint16_t* data, size_t len)
+{
+	write_integral<int32_t>(static_cast<int32_t>(len));
+	write(reinterpret_cast<word_t const*>(data), 2 * len);
+}
+
+uint16_t* Buffer::read_char16_string()
+{	
+	const int32_t len = read_integral<int32_t>();
+	RD_ASSERT_MSG(len >= 0, "read null string(length =" + std::to_string(len) + ")");
+	uint16_t * result = new uint16_t[len+1];
+	read(reinterpret_cast<Buffer::word_t*>(&result[0]), sizeof(uint16_t) * len);
+	result[len] = 0;
+	return result;
 }
 
 void Buffer::write_wstring(wstring_view value)

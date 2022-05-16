@@ -27,7 +27,7 @@ void SingleThreadSchedulerBase::PoolTask::operator()(int id) const
 }
 
 SingleThreadSchedulerBase::SingleThreadSchedulerBase(std::string name)
-	: log(spdlog::stderr_color_mt<spdlog::synchronous_factory>("log", spdlog::color_mode::automatic))
+	: log(spdlog::stderr_color_mt<spdlog::synchronous_factory>(name, spdlog::color_mode::automatic))
 	, name(std::move(name))
 	, pool(std::make_unique<ctpl::thread_pool>(1))
 {
