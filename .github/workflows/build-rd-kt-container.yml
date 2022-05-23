@@ -22,11 +22,12 @@ jobs:
         with:
           path: ${{ env.GRADLE_USER_HOME }}/wrapper
           key: ${{ runner.os }}.gradle-wrapper.${{ hashFiles('gradle/**') }}
-      - name: Gradle Cache
-        uses: actions/cache@v1.1.0
-        with:
-          path: ${{ env.GRADLE_USER_HOME }}/caches/modules-2
-          key: ${{ runner.os }}.gradle.${{ hashFiles('**/*.gradle.kts') }}
+# TODO: See https://github.com/actions/runner/issues/449
+#      - name: Gradle Cache
+#        uses: actions/cache@v1.1.0
+#        with:
+#          path: ${{ env.GRADLE_USER_HOME }}/caches/modules-2
+#          key: ${{ runner.os }}.gradle.${{ hashFiles('**/*.gradle.kts') }}
 
       - name: Assemble
         run: ./gradlew assemble
