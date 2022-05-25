@@ -11,6 +11,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="obj\SyncModel\ExtToClazz.Generated.cs" />
+        <Compile Include="obj\SyncModel\SyncModelExt.Generated.cs" />
+        <Compile Include="obj\SyncModel\SyncModelRoot.Generated.cs" />
         <ProjectReference Include="..\Lifetimes\Lifetimes.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
         <Compile Include="..\Test.Lifetimes\TestLogger.cs">

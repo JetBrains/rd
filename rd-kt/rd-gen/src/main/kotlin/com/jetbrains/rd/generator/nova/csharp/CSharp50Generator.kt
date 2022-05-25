@@ -576,12 +576,12 @@ open class CSharp50Generator(
         if(decl is Toplevel) {
             decl.declaredTypes.forEach {
                 if(it is Context.Generated) {
-                    val keyTypeName = "RdContext<${it.type.substitutedName(decl)}>"
+                    val keyTypeName = "${it.contextImplementationFqn}<${it.type.substitutedName(decl)}>"
                     +"public class ${it.keyName} : $keyTypeName {"
                     indent {
-                        +"private ${it.keyName}() : this(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl, false)}, ${it.type.writerDelegateRef(decl,false)}) {}"
+                        +"private ${it.keyName}() : base(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.readerDelegateRef(decl, false)}, ${it.type.writerDelegateRef(decl,false)}) {}"
                         +"public static readonly ${it.keyName} Instance = new ${it.keyName}();"
-                        +"protected internal override void RegisterOn(ISerializers serializers)"
+                        +"protected override void RegisterOn(ISerializers serializers)"
                         +"{"
                         +"serializers.Register((_, __) => Instance, (_, __, ___) => { });"
                         +"}"

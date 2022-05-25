@@ -72,13 +72,6 @@ namespace JetBrains.Rd
   {
     [NotNull] public readonly CtxReadDelegate<T> ReadDelegate;
     [NotNull] public readonly CtxWriteDelegate<T> WriteDelegate;
-    
-    private readonly ThreadLocal<Stack<T>> myContextStack = new ThreadLocal<Stack<T>>(() => new Stack<T>());
-#if NET35
-    private readonly ThreadLocal<T> myValue = new ThreadLocal<T>();
-#else
-    private readonly AsyncLocal<T> myValue = new AsyncLocal<T>();
-#endif
 
     /// <summary>
     /// 
@@ -95,13 +88,9 @@ namespace JetBrains.Rd
     }
 
     /// <summary>
-    /// Current (thread- or async-local) value for this context
+    /// Current value for this context
     /// </summary>
-    public T Value
-    {
-      get => myValue.Value;
-      set => myValue.Value = value;
-    }
+    public abstract T Value { get; set; }
 
     /// <summary>
     /// Value which is used as a key inside per-context entities like <see cref="RdPerContextMap{K,V}"/>
@@ -121,19 +110,58 @@ namespace JetBrains.Rd
     /// <summary>
     /// Pushes current context value to a thread-local stack and sets new value
     /// </summary>
-    internal void PushContext(T value)
-    {
-      myContextStack.Value.Push(Value);
-      Value = value;
-    }
+    internal abstract void PushContext(T value);
 
     internal sealed override void PushContextBoxed(object value) => PushContext((T) value);
 
     /// <summary>
     /// Restores previous context value from a thread-local stack
     /// </summary>
-    internal sealed override void PopContext() => Value = myContextStack.Value.Pop();
+    internal abstract override void PopContext();
 
     protected internal sealed override void RegisterOn(ProtocolContexts contexts) => contexts.RegisterContext(this);
+  }
+
+  /// <summary>
+  /// Implementation of <see cref="RdContext{T}"/> which uses <see cref="ThreadLocal{T}"/> or <see cref="AsyncLocal{T}"/>
+  /// storage for its value and stack
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
+  public abstract class ThreadLocalRdContext<T> : RdContext<T>
+  {
+    private readonly ThreadLocal<Stack<T>> myContextStack = new(() => new Stack<T>());
+#if NET35
+    private readonly ThreadLocal<T> myValue = new ThreadLocal<T>();
+#else
+    private readonly AsyncLocal<T> myValue = new();
+#endif
+
+    protected ThreadLocalRdContext(string key, bool isHeavy, [NotNull] CtxReadDelegate<T> readDelegate,
+      [NotNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy, readDelegate, writeDelegate)
+    {
+    }
+    
+    /// <summary>
+    /// Current (thread- or async-local) value for this context
+    /// </summary>
+    public override T Value
+    {
+      get => myValue.Value;
+      set => myValue.Value = value;
+    }
+
+    /// <summary>
+    /// Pushes current context value to a thread-local stack and sets new value
+    /// </summary>
+    internal override void PushContext(T value)
+    {
+      myContextStack.Value.Push(Value);
+      Value = value;
+    }
+
+    /// <summary>
+    /// Restores previous context value from a thread-local stack
+    /// </summary>
+    internal override void PopContext() => Value = myContextStack.Value.Pop();
   }
 }

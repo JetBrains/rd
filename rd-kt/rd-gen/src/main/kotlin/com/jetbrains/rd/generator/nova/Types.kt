@@ -95,7 +95,10 @@ enum class Modifier{
 }
 
 sealed class Context(pointcut: Toplevel, val type: INonNullableScalar): Declaration(pointcut) {
-    class Generated(pointcut: Toplevel, override val _name: String = "", type: INonNullableScalar, var isHeavyKey: Boolean = true) : Context(pointcut, type) {
+    class Generated(pointcut: Toplevel, override val _name: String = "", type: INonNullableScalar, var contextImplementationFqn: String, var isHeavyKey: Boolean = true) : Context(pointcut, type) {
+        init {
+            assert(contextImplementationFqn.isNotBlank()) { "contextImplementationFqn must specify valid type name" }
+        }
         val keyName: String
             get() = name.also { assert(it != "") { "No name specified for context and no name can be derived for key in $pointcut" } }
 
@@ -447,7 +450,9 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun flags(body: Enum.() -> Unit) = enum( body).apply { flags = true }
 
     fun internScope(name: String = "") = InternScope(this, name)
-    fun context(type: INonNullableScalar) = append(Context.Generated(this, "", type)) {}
+    @Deprecated("Use `threadLocalContext` instead'", ReplaceWith("threadLocalContext(type)"))
+    fun context(type: INonNullableScalar) = threadLocalContext(type)
+    fun threadLocalContext(type: INonNullableScalar) = append(Context.Generated(this, "", type, "ThreadLocalRdContext")) {}
     fun externalContext(type: INonNullableScalar, perGeneratorNames: List<Pair<java.lang.Class<in GeneratorBase>, String>>) = append(Context.External(this, perGeneratorNames, type)) {}
 
 

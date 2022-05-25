@@ -5,7 +5,6 @@ import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdBindableBase
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
-import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.framework.test.util.TestWire
 import com.jetbrains.rd.util.ILoggerFactory
@@ -21,8 +20,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
 class ContextsEarlyDeliveryTest {
-    object TestKeyHeavy : RdContext<String>("test-key", true, FrameworkMarshallers.String)
-    object TestKeyLight : RdContext<String>("test-key", false, FrameworkMarshallers.String)
+    object TestKeyHeavy : ThreadLocalRdContext<String>("test-key", true, FrameworkMarshallers.String)
+    object TestKeyLight : ThreadLocalRdContext<String>("test-key", false, FrameworkMarshallers.String)
 
     private val serializers = Serializers()
 

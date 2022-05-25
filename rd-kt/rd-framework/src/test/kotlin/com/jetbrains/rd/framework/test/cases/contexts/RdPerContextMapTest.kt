@@ -3,15 +3,14 @@ package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.ISerializer
-import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.RdId
+import com.jetbrains.rd.framework.ThreadLocalRdContext
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdPerContextMap
 import com.jetbrains.rd.framework.test.util.DynamicEntity
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.assert
-import com.jetbrains.rd.util.lifetime.onTermination
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
@@ -267,8 +266,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
     @Test
     fun testValueSetChangesInContext() {
-        val key1 = object : RdContext<String>("test-key1", true, FrameworkMarshallers.String) {}
-        val key2 = object : RdContext<String>("test-key2", true, FrameworkMarshallers.String) {}
+        val key1 = object : ThreadLocalRdContext<String>("test-key1", true, FrameworkMarshallers.String) {}
+        val key2 = object : ThreadLocalRdContext<String>("test-key2", true, FrameworkMarshallers.String) {}
 
         val serverMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1)
         val clientMap = RdPerContextMap(key1) { RdMap(FrameworkMarshallers.Int, DynamicEntity as ISerializer<DynamicEntity<String>>).apply { master = it } }.static(1).apply { master = false }

@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.RdContext
+import com.jetbrains.rd.framework.ThreadLocalRdContext
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,7 +11,7 @@ import java.util.concurrent.CountDownLatch
 class ContextsMultithreadTest : RdAsyncTestBase() {
     @Test
     fun testBasic() {
-        val key = object : RdContext<String>("test-key", false, FrameworkMarshallers.String) {}
+        val key = object : ThreadLocalRdContext<String>("test-key", false, FrameworkMarshallers.String) {}
 
         val serverSignal = RdSignal<String>().also { it.async = true }
         val clientSignal = RdSignal<String>()

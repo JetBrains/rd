@@ -1,21 +1,19 @@
 package com.jetbrains.rd.framework
 
-import com.jetbrains.rd.util.threadLocalWithInitial
 import kotlin.reflect.KClass
 
 /**
  * Describes a context and provides access to value associated with this context.
  * The associated value is thread-local and synchronized between send/advise pairs on [IWire]. The associated value will be the same in handler method in [IWire.advise] as it was in [IWire.send].
  * Instances of this class with the same [key] will share the associated value.
- * Best practice is to declare contexts in toplevel entities in protocol model using [Toplevel.context]. Manual declaration is also possible.
- * @see com.jetbrains.rd.generator.nova.Toplevel.context
+ * Best practice is to declare contexts in toplevel entities in protocol model using `Toplevel.threadLocalContext`. Manual declaration is also possible.
+ * @see com.jetbrains.rd.generator.nova.Toplevel.threadLocalContext
  *
  * @param key textual name of this context. This is used to match this with protocol counterparts
- * @param heavy Whether or not this context is heavy. A heavy context maintains a value set and interns values. A light context sends values as-is and does not maintain a value set.
+ * @param heavy Whether this context is heavy. A heavy context maintains a value set and interns values. A light context sends values as-is and does not maintain a value set.
  * @param serializer Serializer to be used with this context.
  */
 abstract class RdContext<T : Any>(val key: String, val heavy: Boolean, val serializer: IMarshaller<T>) {
-    private val internalValue = threadLocalWithInitial<T?> { null }
     companion object : ISerializer<RdContext<*>> {
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdContext<*> {
             return ctx.serializers.readPolymorphic(ctx, buffer)
@@ -45,13 +43,9 @@ abstract class RdContext<T : Any>(val key: String, val heavy: Boolean, val seria
     }
 
     /**
-     * The current (thread-local) value for this context
+     * The current value for this context
      */
-    @Suppress("UNCHECKED_CAST")
-    var value: T?
-        get() = internalValue.get()
-        set(value) = internalValue.set(value)
-
+    abstract var value: T?
     /**
      * Value which is used as a key inside per-context entities like [RdPerContextMap][com.jetbrains.rd.framework.impl.RdPerContextMap]
      */

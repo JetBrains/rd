@@ -62,7 +62,7 @@ namespace Test.RdFramework.Contexts
       return x;
     }
 
-    public class TestKeyHeavy : RdContext<string>
+    public class TestKeyHeavy : ThreadLocalRdContext<string>
     {
       private TestKeyHeavy() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
       {
@@ -76,7 +76,7 @@ namespace Test.RdFramework.Contexts
       }
     }
     
-    public class TestKeyLight : RdContext<string>
+    public class TestKeyLight : ThreadLocalRdContext<string>
     {
       private TestKeyLight() : base("test-key", false, Serializers.ReadString, Serializers.WriteString)
       {

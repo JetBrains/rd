@@ -35,7 +35,8 @@ tasks {
         ), "entities")
 
         addSources(mapOf(
-                ktDirectorySystemPropertyKey to "$BUILD_DIR/models/sync"
+                ktDirectorySystemPropertyKey to "$BUILD_DIR/models/sync",
+                csDirectorySystemPropertyKey to "${csRoot}/Test.Cross/obj/SyncModel"
         ), "sync")
 
         addSources(mapOf(
