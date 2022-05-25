@@ -5,18 +5,21 @@ package com.jetbrains.rd.models.sync
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.int
 import com.jetbrains.rd.generator.nova.PredefinedType.string
+import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator
+import com.jetbrains.rd.generator.paths.csDirectorySystemPropertyKey
 import com.jetbrains.rd.generator.paths.ktDirectorySystemPropertyKey
 import com.jetbrains.rd.generator.paths.outputDirectory
 
 const val folder = "sync"
 
 object SyncModelRoot : Root(
-    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", outputDirectory(ktDirectorySystemPropertyKey, folder))
+    Kotlin11Generator(FlowTransform.Symmetric, "test.synchronization", outputDirectory(ktDirectorySystemPropertyKey, folder)),
+    CSharp50Generator (FlowTransform.Symmetric, "Test.Synchronization", outputDirectory(csDirectorySystemPropertyKey, folder))
 )
 
 object SyncModelExt : Ext(SyncModelRoot) {
-    val ClientId = context(string)
+    val ClientId = threadLocalContext(string)
     val Baseclazz = baseclass {
         field("f", int)
     }

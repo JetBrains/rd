@@ -20,7 +20,7 @@ namespace Test.RdFramework.Contexts
       ClientWire.AutoTransmitMode = true;
     }
 
-    public class TestKeyHeavy : RdContext<string>
+    public class TestKeyHeavy : ThreadLocalRdContext<string>
     {
       private TestKeyHeavy() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
       {
@@ -34,7 +34,7 @@ namespace Test.RdFramework.Contexts
       }
     }
     
-    public class TestKeyLight : RdContext<string>
+    public class TestKeyLight : ThreadLocalRdContext<string>
     {
       private TestKeyLight() : base("test-key", false, Serializers.ReadString, Serializers.WriteString)
       {
@@ -104,7 +104,7 @@ namespace Test.RdFramework.Contexts
       Assert.AreEqual("1", key.Value);
     }
 
-    public class TestKey2 : RdContext<string>
+    public class TestKey2 : ThreadLocalRdContext<string>
     {
       private TestKey2() : base("test-key", true, Serializers.ReadString, Serializers.WriteString)
       {

@@ -1,7 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.RdContext
+import com.jetbrains.rd.framework.ThreadLocalRdContext
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -9,8 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 class ContextsTest : RdFrameworkTestBase() {
-    object TestKeyHeavy : RdContext<String>("test-key", true, FrameworkMarshallers.String)
-    object TestKeyLight : RdContext<String>("test-key", false, FrameworkMarshallers.String)
+    object TestKeyHeavy : ThreadLocalRdContext<String>("test-key", true, FrameworkMarshallers.String)
+    object TestKeyLight : ThreadLocalRdContext<String>("test-key", false, FrameworkMarshallers.String)
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])

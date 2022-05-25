@@ -15,8 +15,8 @@ object PerClientIdRoot1 : Root(
         Cpp17Generator(FlowTransform.AsIs, "rd.test.util", File(syspropertyOrInvalid("model.out.src.cpp.dir")))
 ) {
 
-    val key = context(PredefinedType.string)
-    val lightKey = context(PredefinedType.int).light
+    val key = threadLocalContext(PredefinedType.string)
+    val lightKey = threadLocalContext(PredefinedType.int).light
     init {
         setting(Cpp17Generator.TargetName, "contexts_test_model")
 //        setting(Kotlin11Generator.MasterStateful, false)

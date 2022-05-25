@@ -10,8 +10,8 @@ object PerClientIdRoot : Root(
     *KotlinRdGenOutputTest.generators(KotlinPerClientIdTest.testName, "com.jetbrains.rd.framework.test.cases.perClientId"),
     *CSharpRdGenOutputTest.generators(CSharpPerClientIdTest.testName, "JetBrains.Platform.Tests.Cases.RdFramework.PerClientId")
 ) {
-    private val key = context(PredefinedType.string)
-    val lightKey = context(PredefinedType.int).light
+    private val key = threadLocalContext(PredefinedType.string)
+    val lightKey = threadLocalContext(PredefinedType.int).light
     init {
         property("aProp", PredefinedType.string).perContext(key)
         property("aPropDefault", false).perContext(key)
