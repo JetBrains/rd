@@ -103,8 +103,8 @@ class PerClientIdRoot private constructor(
         )
     }
     //contexts
-    object Key: RdContext<String>("Key", true, FrameworkMarshallers.String)
-    object LightKey: RdContext<Int>("LightKey", false, FrameworkMarshallers.Int)
+    object Key: ThreadLocalRdContext<String>("Key", true, FrameworkMarshallers.String)
+    object LightKey: ThreadLocalRdContext<Int>("LightKey", false, FrameworkMarshallers.Int)
 }
 
 
