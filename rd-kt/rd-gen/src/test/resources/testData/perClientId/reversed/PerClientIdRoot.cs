@@ -117,18 +117,18 @@ namespace JetBrains.Platform.Tests.Cases.RdFramework.PerClientId
     }
     
     //constants
-    public class Key : RdContext<string> {
-      private Key() : this("Key", true, JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString) {}
+    public class Key : ThreadLocalRdContext<string> {
+      private Key() : base("Key", true, JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString) {}
       public static readonly Key Instance = new Key();
-      protected internal override void RegisterOn(ISerializers serializers)
+      protected override void RegisterOn(ISerializers serializers)
       {
       serializers.Register((_, __) => Instance, (_, __, ___) => { });
       }
     }
-    public class LightKey : RdContext<int> {
-      private LightKey() : this("LightKey", false, JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt) {}
+    public class LightKey : ThreadLocalRdContext<int> {
+      private LightKey() : base("LightKey", false, JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt) {}
       public static readonly LightKey Instance = new LightKey();
-      protected internal override void RegisterOn(ISerializers serializers)
+      protected override void RegisterOn(ISerializers serializers)
       {
       serializers.Register((_, __) => Instance, (_, __, ___) => { });
       }
