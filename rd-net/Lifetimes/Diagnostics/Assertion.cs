@@ -350,6 +350,61 @@ namespace JetBrains.Diagnostics
       }
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [ContractAnnotation("=> halt")]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
+    [DoesNotReturn]
+    public static T FailWithResult<T>(T result, string message)
+    {
+      Fail(message);
+      return result;
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [ContractAnnotation("=> halt")]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
+    [DoesNotReturn]
+    public static T FailWithResult<T>(T result, string message, object? arg)
+    {
+      Fail(message, arg);
+      return result;
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [ContractAnnotation("=> halt")]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
+    [DoesNotReturn]
+    public static T FailWithResult<T>(T result, string message, object? arg1, object? arg2)
+    {
+      Fail(message, arg1, arg2);
+      return result;
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [ContractAnnotation("=> halt")]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
+    [DoesNotReturn]
+    public static T FailWithResult<T>(T result, string message, object? arg1, object? arg2, object? arg3)
+    {
+      Fail(message, arg1, arg2, arg3);
+      return result;
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    [ContractAnnotation("=> halt")]
+    [StringFormatMethod("message")]
+    [AssertionMethod]
+    [DoesNotReturn]
+    public static T FailWithResult<T>(T result, string message, params object?[] args)
+    {
+      Fail(message, args);
+      return result;
+    }
+
     [Serializable]
     public class AssertionException : Exception
     {
