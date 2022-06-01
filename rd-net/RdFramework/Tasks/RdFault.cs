@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Serialization;
@@ -20,8 +22,24 @@ namespace JetBrains.Rd.Tasks
       ReasonText = inner.ToString(); //todo Use system capabilities, stack traces, etc
     }
 
+    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    protected RdFault(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
+      ReasonTypeFqn = info.GetString(nameof(ReasonTypeFqn));
+      ReasonText = info.GetString(nameof(ReasonText));
+      ReasonMessage = info.GetString(nameof(ReasonMessage));
+    }
     
-    
+    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    public override void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+      info.AddValue(nameof(ReasonTypeFqn), ReasonTypeFqn);
+      info.AddValue(nameof(ReasonText), ReasonText);
+      info.AddValue(nameof(ReasonMessage), ReasonMessage);
+
+      base.GetObjectData(info, context);
+    }
+
     public RdFault(string reasonTypeFqn, string reasonMessage, string reasonText, Exception? reason = null) 
       : base(reasonMessage + (reason == null ? ", reason: " + reasonText : ""), reason)
     {
@@ -29,7 +47,6 @@ namespace JetBrains.Rd.Tasks
       ReasonMessage = reasonMessage;
       ReasonText = reasonText;
     }
-    
     
     public static RdFault Read(SerializationCtx ctx, UnsafeReader reader)
     {
@@ -46,6 +63,5 @@ namespace JetBrains.Rd.Tasks
       writer.Write(value.ReasonMessage);
       writer.Write(value.ReasonText);
     }
-    
   }
 }
