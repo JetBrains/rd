@@ -1,12 +1,12 @@
+using System;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Base
 {
   internal interface ISingleContextHandler
   {
-    void ReadValueAndPush(SerializationCtx context, UnsafeReader reader);
-    void PopValue();
-    
+    IDisposable ReadValueIntoContext(SerializationCtx context, UnsafeReader reader);
+
     void WriteValue(SerializationCtx context, UnsafeWriter writer);
 
     void RegisterValueInValueSet();

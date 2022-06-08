@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
 
@@ -37,14 +38,9 @@ namespace JetBrains.Rd.Impl
       return Context.ReadDelegate(context, reader);
     }
 
-    public void ReadValueAndPush(SerializationCtx context, UnsafeReader reader)
+    public IDisposable ReadValueIntoContext(SerializationCtx context, UnsafeReader reader)
     {
-      Context.PushContext(ReadValue(context, reader));
-    }
-
-    public void PopValue()
-    {
-      Context.PopContext();
+      return Context.UpdateValue(ReadValue(context, reader));
     }
   }
 }

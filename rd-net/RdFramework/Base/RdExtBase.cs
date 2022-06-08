@@ -195,18 +195,17 @@ namespace JetBrains.Rd.Base
                 RealWire.Send(p.Id, writer => writer.WriteRaw(p.Bytes, 0, p.Bytes.Length));
               continue;
             }
-            
-            foreach (var keyValuePair in p.StoredContext)
-              keyValuePair.Key.PushContextBoxed(keyValuePair.Value);
 
+            var contextValueRestorers = p.StoredContext.Select(pair => pair.Key.UpdateValueBoxed(pair.Value)).ToArray();
+            
             try
             {
               RealWire.Send(p.Id, writer => writer.WriteRaw(p.Bytes, 0, p.Bytes.Length));
             }
             finally
             {
-              foreach (var keyValuePair in p.StoredContext)
-                keyValuePair.Key.PopContext();
+              foreach (var contextValueRestorer in contextValueRestorers)
+                contextValueRestorer.Dispose();
             }
           }
         }               

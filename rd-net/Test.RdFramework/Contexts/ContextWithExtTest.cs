@@ -36,9 +36,10 @@ namespace Test.RdFramework.Contexts
       
       foreach (var fireValue in fireValues)
       {
-        context.Value = fireValue;
-        serverExt.Root.Value = new InterningExtRootModel();
-        context.Value = null;
+        using (context.UpdateValue(fireValue))
+        {
+          serverExt.Root.Value = new InterningExtRootModel();
+        }
       }
 
       var numReceives = 0;

@@ -116,7 +116,7 @@ namespace Test.RdFramework.Contexts
       
       var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
 
-      key.Value = "1";
+      using var _ = key.UpdateValue("1");
       
       serverSignal.Fire("");
 

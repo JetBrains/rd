@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 
@@ -54,11 +54,12 @@ namespace JetBrains.Rd
     protected internal abstract void RegisterOn(ProtocolContexts contexts);
     protected internal abstract void RegisterOn(ISerializers serializers);
     
-    internal abstract object ValueBoxed { get; set; }
+    internal abstract object ValueBoxed { get; }
 
-    internal abstract void PopContext();
-
-    internal abstract void PushContextBoxed(object value);
+    /// <summary>
+    /// Sets current value to <paramref name="newValue"/> and returns a cookie which should restore old value on disposing
+    /// </summary>
+    internal abstract IDisposable UpdateValueBoxed(object newValue);
   }
 
   /// <summary>
@@ -90,34 +91,22 @@ namespace JetBrains.Rd
     /// <summary>
     /// Current value for this context
     /// </summary>
-    public abstract T Value { get; set; }
+    public abstract T Value { get; }
 
     /// <summary>
     /// Value which is used as a key inside per-context entities like <see cref="RdPerContextMap{K,V}"/>
     /// </summary>
-    public virtual T ValueForPerContextEntity
+    public virtual T ValueForPerContextEntity => Value;
+
+    internal sealed override object ValueBoxed => Value;
+
+    /// <inheritdoc cref="UpdateValueBoxed"/>
+    internal abstract IDisposable UpdateValue(T newValue);
+
+    internal override IDisposable UpdateValueBoxed(object newValue)
     {
-      get => Value;
-      set => Value = value;
+      return UpdateValue((T) newValue);
     }
-
-    internal sealed override object ValueBoxed
-    {
-      get => Value;
-      set => Value = (T) value;
-    }
-
-    /// <summary>
-    /// Pushes current context value to a thread-local stack and sets new value
-    /// </summary>
-    internal abstract void PushContext(T value);
-
-    internal sealed override void PushContextBoxed(object value) => PushContext((T) value);
-
-    /// <summary>
-    /// Restores previous context value from a thread-local stack
-    /// </summary>
-    internal abstract override void PopContext();
 
     protected internal sealed override void RegisterOn(ProtocolContexts contexts) => contexts.RegisterContext(this);
   }
@@ -129,7 +118,6 @@ namespace JetBrains.Rd
   /// <typeparam name="T"></typeparam>
   public abstract class ThreadLocalRdContext<T> : RdContext<T>
   {
-    private readonly ThreadLocal<Stack<T>> myContextStack = new(() => new Stack<T>());
 #if NET35
     private readonly ThreadLocal<T> myValue = new ThreadLocal<T>();
 #else
@@ -144,24 +132,33 @@ namespace JetBrains.Rd
     /// <summary>
     /// Current (thread- or async-local) value for this context
     /// </summary>
-    public override T Value
-    {
-      get => myValue.Value;
-      set => myValue.Value = value;
-    }
+    public override T Value => myValue.Value;
 
-    /// <summary>
-    /// Pushes current context value to a thread-local stack and sets new value
-    /// </summary>
-    internal override void PushContext(T value)
+    internal override IDisposable UpdateValue(T newValue)
     {
-      myContextStack.Value.Push(Value);
-      Value = value;
+      var oldValue = myValue.Value;
+      myValue.Value = newValue;
+      return new UpdateValueCookie(this, oldValue);
     }
+    
+    private class UpdateValueCookie : IDisposable
+    {
+      private readonly ThreadLocalRdContext<T> myContext;
+      private readonly T myOldValue;
+      private readonly Thread myNewValueSetThread;
 
-    /// <summary>
-    /// Restores previous context value from a thread-local stack
-    /// </summary>
-    internal override void PopContext() => Value = myContextStack.Value.Pop();
+      public UpdateValueCookie(ThreadLocalRdContext<T> context, T oldValue)
+      {
+        myNewValueSetThread = Thread.CurrentThread;
+        myContext = context;
+        myOldValue = oldValue;
+      }
+
+      public void Dispose()
+      {
+        Assertion.AssertCurrentThread(myNewValueSetThread);
+        myContext.myValue.Value = myOldValue;
+      }
+    }
   }
 }

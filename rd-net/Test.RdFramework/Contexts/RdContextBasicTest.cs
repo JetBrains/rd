@@ -59,7 +59,7 @@ namespace Test.RdFramework.Contexts
       key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);
 
-      key.Value = "1";
+      using var _ = key.UpdateValue("1");
 
       Lifetime.Using(lt =>
       {

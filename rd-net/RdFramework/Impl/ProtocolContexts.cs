@@ -161,26 +161,27 @@ namespace JetBrains.Rd.Impl
     {
       var numContextValues = reader.ReadShort();
       Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
+      var contextValueRestorers = new IDisposable[numContextValues];
       for (var i = 0; i < numContextValues; i++)
-        myCounterpartHandlers[i].ReadValueAndPush(SerializationContext, reader);
-      return new MessageContextCookie(this, numContextValues);
+        contextValueRestorers[i] = myCounterpartHandlers[i].ReadValueIntoContext(SerializationContext, reader);
+      return new MessageContextCookie(contextValueRestorers);
     }
 
-    public struct MessageContextCookie : IDisposable
+    public readonly struct MessageContextCookie : IDisposable
     {
-      private readonly ProtocolContexts myHandler;
-      private readonly int myNumContextValues;
+      private readonly IDisposable[] myEachContextValueRestorers;
 
-      public MessageContextCookie(ProtocolContexts handler, int numContextValues)
+      public MessageContextCookie(IDisposable[] eachContextValueRestorers)
       {
-        myHandler = handler;
-        myNumContextValues = numContextValues;
+        myEachContextValueRestorers = eachContextValueRestorers;
       }
 
       public void Dispose()
       {
-        for(var i = 0; i < myNumContextValues; i++)
-          myHandler.myCounterpartHandlers[i].PopValue();
+        foreach (var contextValueRestorer in myEachContextValueRestorers)
+        {
+          contextValueRestorer.Dispose();
+        }
       }
     }
 
