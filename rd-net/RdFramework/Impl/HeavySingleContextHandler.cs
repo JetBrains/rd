@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using System;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -118,14 +118,9 @@ namespace JetBrains.Rd.Impl
       Assertion.Fail("HeavySingleContextHandler can't receive messages");
     }
 
-    public void ReadValueAndPush(SerializationCtx context, UnsafeReader reader)
+    public IDisposable ReadValueIntoContext(SerializationCtx context, UnsafeReader reader)
     {
-      Context.PushContext(ReadValue(context, reader));
-    }
-
-    public void PopValue()
-    {
-      Context.PopContext();
+      return Context.UpdateValue(ReadValue(context, reader));
     }
   }
 }

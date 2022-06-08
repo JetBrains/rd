@@ -12,8 +12,6 @@ namespace Test.RdFramework.Contexts
       base.SetUp();
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
-      
-      RdContextBasicTest.TestKeyHeavy.Instance.Value = null;
     }
 
     [Test]
@@ -230,9 +228,10 @@ namespace Test.RdFramework.Contexts
       BindToClient(LifetimeDefinition.Lifetime, clientMap, 1);
       BindToServer(LifetimeDefinition.Lifetime, serverMap, 1);
 
-      key.Value = server1Cid;
-      ServerProtocol.Wire.Send(RdId.Nil.Mix(10), _ => { });
-      key.Value = null;
+      using (key.UpdateValue(server1Cid))
+      {
+        ServerProtocol.Wire.Send(RdId.Nil.Mix(10), _ => { });
+      }
       
       Assert.True(ServerProtocol.Contexts.GetValueSet(key).Contains(server1Cid));
       
@@ -260,27 +259,26 @@ namespace Test.RdFramework.Contexts
         log.Add("Add " + s);
         lifetime.OnTermination(() => log.Add("Remove " + s));
       });
-      
-      key1.Value = server1Cid;
-      key2.Value = server1Cid;
-      
-      key1.RegisterOn(ClientProtocol.Serializers);
-      key2.RegisterOn(ClientProtocol.Serializers);
-      ServerProtocol.Contexts.RegisterContext(key1);
-      ServerProtocol.Contexts.RegisterContext(key2);
-      ClientProtocol.Contexts.RegisterContext(key1);
 
-      BindToClient(LifetimeDefinition.Lifetime, clientMap, 1);
-      BindToServer(LifetimeDefinition.Lifetime, serverMap, 1);
+      using (key1.UpdateValue(server1Cid))
+      using (key2.UpdateValue(server1Cid))
+      {
+        key1.RegisterOn(ClientProtocol.Serializers);
+        key2.RegisterOn(ClientProtocol.Serializers);
+        ServerProtocol.Contexts.RegisterContext(key1);
+        ServerProtocol.Contexts.RegisterContext(key2);
+        ClientProtocol.Contexts.RegisterContext(key1);
 
-      ServerProtocol.Contexts.GetValueSet(key1).Add(server2Cid);
-      key1.Value = server4Cid;
-      ServerProtocol.Contexts.GetValueSet(key1).Add(server3Cid);
-      
-      
-      key1.Value = null;
-      key2.Value = null;
-      
+        BindToClient(LifetimeDefinition.Lifetime, clientMap, 1);
+        BindToServer(LifetimeDefinition.Lifetime, serverMap, 1);
+
+        ServerProtocol.Contexts.GetValueSet(key1).Add(server2Cid);
+        using (key1.UpdateValue(server4Cid))
+        {
+          ServerProtocol.Contexts.GetValueSet(key1).Add(server3Cid);
+        }
+      }
+
       Assert.False(ServerProtocol.Contexts.GetValueSet(key1).Contains(server1Cid));
       Assert.False(ServerProtocol.Contexts.GetValueSet(key2).Contains(server1Cid));
       
