@@ -11,7 +11,19 @@ abstract class ThreadLocalRdContext<T : Any>(key: String, heavy: Boolean, serial
     /**
      * The current value for this context implemented as thread-local storage
      */
-    override var value: T?
+    override val value: T?
         get() = internalValue.get()
-        set(value) = internalValue.set(value)
+
+    override fun updateValue(newValue: T?): AutoCloseable {
+        val newValueSetThread = Thread.currentThread()
+        val oldValue = internalValue.get()
+        internalValue.set(newValue)
+        return AutoCloseable {
+            val currentThread = Thread.currentThread()
+            assert(newValueSetThread.equals(currentThread)) {
+                "Value update cookie must be closed on the same thread (newValue was set on $newValueSetThread, but current thread is $currentThread)"
+            }
+            internalValue.set(oldValue)
+        }
+    }
 }

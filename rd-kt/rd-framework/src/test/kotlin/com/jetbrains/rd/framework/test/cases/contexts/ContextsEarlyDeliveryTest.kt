@@ -115,40 +115,43 @@ class ContextsEarlyDeliveryTest {
 
         serverProtocol.bindStatic(serverSignal, 1, true)
 
-        key.value = "1"
-
-        serverSignal.fire("")
-
-        clientProtocol = Protocol("Client", serializers,
-            Identities(IdKind.Client),
-            clientScheduler, clientWire, clientLifetime, key)
-        val clientSignal = RdSignal<String>()
-        clientProtocol.bindStatic(clientSignal, 1, false)
-
-        Lifetime.using { lt ->
-            var fired = false
-            clientSignal.advise(lt) {
-                assert(key.value == "1")
-                fired = true
-            }
+        key.updateValue("1").use {
 
             serverSignal.fire("")
-            assert(fired)
-        }
 
-        assert(key.value == "1")
+            clientProtocol = Protocol(
+                "Client", serializers,
+                Identities(IdKind.Client),
+                clientScheduler, clientWire, clientLifetime, key
+            )
+            val clientSignal = RdSignal<String>()
+            clientProtocol.bindStatic(clientSignal, 1, false)
 
-        Lifetime.using { lt ->
-            var fired = false
-            serverSignal.advise(lt) {
-                assert(key.value == "1")
-                fired = true
+            Lifetime.using { lt ->
+                var fired = false
+                clientSignal.advise(lt) {
+                    assert(key.value == "1")
+                    fired = true
+                }
+
+                serverSignal.fire("")
+                assert(fired)
             }
 
-            clientSignal.fire("")
-            assert(fired)
-        }
+            assert(key.value == "1")
 
-        assert(key.value == "1")
+            Lifetime.using { lt ->
+                var fired = false
+                serverSignal.advise(lt) {
+                    assert(key.value == "1")
+                    fired = true
+                }
+
+                clientSignal.fire("")
+                assert(fired)
+            }
+
+            assert(key.value == "1")
+        }
     }
 }

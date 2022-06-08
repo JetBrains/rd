@@ -26,45 +26,46 @@ class ContextsTest : RdFrameworkTestBase() {
 
         serverProtocol.contexts.registerContext(key)
 
-        key.value = "1"
+        key.updateValue("1").use {
 
-        Lifetime.using { lt ->
-            var fired = false
-            clientSignal.advise(lt) {
-                assert(key.value == "1")
-                fired = true
+            Lifetime.using { lt ->
+                var fired = false
+                clientSignal.advise(lt) {
+                    assert(key.value == "1")
+                    fired = true
+                }
+
+                serverSignal.fire("")
+                assert(fired)
             }
 
-            serverSignal.fire("")
-            assert(fired)
-        }
+            clientProtocol.contexts.registerContext(key)
 
-        clientProtocol.contexts.registerContext(key)
+            Lifetime.using { lt ->
+                var fired = false
+                clientSignal.advise(lt) {
+                    assert(key.value == "1")
+                    fired = true
+                }
 
-        Lifetime.using { lt ->
-            var fired = false
-            clientSignal.advise(lt) {
-                assert(key.value == "1")
-                fired = true
+                serverSignal.fire("")
+                assert(fired)
             }
 
-            serverSignal.fire("")
-            assert(fired)
-        }
+            assert(key.value == "1")
 
-        assert(key.value == "1")
+            Lifetime.using { lt ->
+                var fired = false
+                serverSignal.advise(lt) {
+                    assert(key.value == "1")
+                    fired = true
+                }
 
-        Lifetime.using { lt ->
-            var fired = false
-            serverSignal.advise(lt) {
-                assert(key.value == "1")
-                fired = true
+                clientSignal.fire("")
+                assert(fired)
             }
 
-            clientSignal.fire("")
-            assert(fired)
+            assert(key.value == "1")
         }
-
-        assert(key.value == "1")
     }
 }

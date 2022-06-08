@@ -212,16 +212,12 @@ class ExtWire : IWire {
                         continue
                     }
 
-                    val prevValues = ArrayList<Any?>(context.size)
-                    context.forEach { (ctx, value) ->
-                        prevValues.add(ctx.value)
-                        ctx.value = value
-                    }
+                    val valueRestorers = context.map { it.first.updateValue(it.second) }
                     try {
                         realWire.send(id) { buffer -> buffer.writeByteArrayRaw(payload, count) }
                     } finally {
-                        context.forEachIndexed { idx, (ctx, _) ->
-                            ctx.value = prevValues[idx]
+                        valueRestorers.forEach {
+                            it.close()
                         }
                     }
 

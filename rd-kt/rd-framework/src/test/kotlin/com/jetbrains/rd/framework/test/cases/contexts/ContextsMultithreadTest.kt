@@ -29,9 +29,10 @@ class ContextsMultithreadTest : RdAsyncTestBase() {
                 latch1.countDown()
                 latch1.await()
 
-                values.asReversed().forEach {
-                    key.value = it
-                    serverSignal.fire(it)
+                values.asReversed().forEach { value ->
+                    key.updateValue(value).use {
+                        serverSignal.fire(value)
+                    }
                 }
 
                 latch2.countDown()
@@ -40,9 +41,10 @@ class ContextsMultithreadTest : RdAsyncTestBase() {
             latch1.countDown()
             latch1.await()
 
-            values.forEach {
-                key.value = it
-                serverSignal.fire(it)
+            values.forEach { value ->
+                key.updateValue(value).use {
+                    serverSignal.fire(value)
+                }
             }
 
             latch2.countDown()

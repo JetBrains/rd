@@ -45,13 +45,17 @@ abstract class RdContext<T : Any>(val key: String, val heavy: Boolean, val seria
     /**
      * The current value for this context
      */
-    abstract var value: T?
+    abstract val value: T?
     /**
      * Value which is used as a key inside per-context entities like [RdPerContextMap][com.jetbrains.rd.framework.impl.RdPerContextMap]
      */
-    open var valueForPerContextEntity: T?
+    open val valueForPerContextEntity: T?
         get() = value
-        set(value) { this.value = value }
+
+    /**
+     * Changes current value to [newValue] and returns a cookie which should restore old value on closing
+     */
+    abstract fun updateValue(newValue: T?): AutoCloseable
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
