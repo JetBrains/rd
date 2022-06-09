@@ -9,18 +9,22 @@ package com.jetbrains.rd.generator.nova
  *
  * Example: [com.jetbrains.rd.generator.nova.kotlin.Kotlin11Generator.Attributes] that specifies kotlin annotations to generate upon class.
  */
-interface ISetting<out T : Any, out S: SettingsHolder>
+interface ISetting<out T : Any, out S: ISettingsHolder>
 
 /**
  * [ISetting] that has default value
  */
-abstract class SettingWithDefault<out T : Any, out S: SettingsHolder>(val default : T) : ISetting<T, S>
+abstract class SettingWithDefault<out T : Any, out S: ISettingsHolder>(val default : T) : ISetting<T, S>
+
+interface ISettingsHolder {
+    val settings: MutableMap<ISetting<*, *>, Any>
+}
 
 /**
  * Base class for any rd model entity (e.g. [Declaration] or [Member]) that can be customized
  */
-open class SettingsHolder {
-    internal val settings = mutableMapOf<ISetting<*, *>, Any>()
+open class SettingsHolder : ISettingsHolder {
+    override val settings = mutableMapOf<ISetting<*, *>, Any>()
 }
 
 /**
@@ -42,15 +46,15 @@ internal val genInstanceKeys = mutableMapOf<Pair<IGenerator, ISetting<*,*>>, ISe
  * setting(com.jetbrains.rd.generator.nova.csharp.CSharp50Generator.FlowTransformProperty.forGenerator(myClientGenerator), FlowTransform.AsIs)
  * setting(com.jetbrains.rd.generator.nova.csharp.CSharp50Generator.FlowTransformProperty.forGenerator(myServerGenerator), FlowTransform.Reversed)
  */
-fun <T:Any, S:SettingsHolder> ISetting<T, S>.forGenerator(generator: IGenerator) : ISetting<T, S> =
+fun <T:Any, S:ISettingsHolder> ISetting<T, S>.forGenerator(generator: IGenerator) : ISetting<T, S> =
         genInstanceKeys.getOrPut(generator to this) { object : ISetting<T,S> {} } as ISetting<T, S>
 
 
 /**
  * Set setting
  */
-fun <T: Any, S : SettingsHolder> S.setting(key: ISetting<T, S>, value: T) : S = apply { settings[key] = value }
-fun <T: Any, S : SettingsHolder> S.setting(key: SettingWithDefault<T, S>, value: T = key.default) : S = setting(key as ISetting<T, S>, value)
+fun <T: Any, S : ISettingsHolder> S.setting(key: ISetting<T, S>, value: T) : S = apply { settings[key] = value }
+fun <T: Any, S : ISettingsHolder> S.setting(key: SettingWithDefault<T, S>, value: T = key.default) : S = setting(key as ISetting<T, S>, value)
 
 /**
  * Should be called inside generation process ([IGenerator.generate]).
@@ -59,7 +63,7 @@ fun <T: Any, S : SettingsHolder> S.setting(key: SettingWithDefault<T, S>, value:
  * 2. For current rd model entity [this]:[S]
  * 3. For [Declaration] it search not specialized property (without [forGenerator]) in parent's [SettingsHolder.settings] of current rd model entity, i.e. [Declaration.pointcut] (e.g. [Ext] or [Root])
  */
-fun <T: Any, S : SettingsHolder>  S.getSetting(key: ISetting<T, S>) : T? {
+fun <T: Any, S : ISettingsHolder>  S.getSetting(key: ISetting<T, S>) : T? {
     val specializedKey = settingCtx?.let { key.forGenerator(it) }
 
     return if (this is Declaration) {

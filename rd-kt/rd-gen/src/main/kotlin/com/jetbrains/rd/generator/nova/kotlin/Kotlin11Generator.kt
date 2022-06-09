@@ -29,7 +29,7 @@ open class Kotlin11Generator(
 
     //language specific properties
     object Namespace : ISetting<String, Declaration>
-    val Declaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
+    val IDeclaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
 
     object Intrinsic : SettingWithDefault<KotlinIntrinsicMarshaller, Declaration>(KotlinIntrinsicMarshaller.default)
 
@@ -228,7 +228,7 @@ open class Kotlin11Generator(
         return genericParams.asList().map { it.serializerRef(scope) }
     }
 
-    protected fun Declaration.sanitizedName(scope: Declaration) : String {
+    protected fun IDeclaration.sanitizedName(scope: IDeclaration) : String {
         val needQualification = namespace != scope.namespace
         return needQualification.condstr { namespace + "." } + name
     }

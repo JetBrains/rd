@@ -195,13 +195,20 @@ sealed class PredefinedType : INonNullableScalar {
     }
 }
 
+interface IDeclaration: ISettingsHolder {
+    val name: String
+
+}
+
+interface ITypeDeclaration: IType, IDeclaration
+
 @Suppress("UNCHECKED_CAST")
-abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHolder() {
+abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHolder(), IDeclaration {
     abstract val _name: String
     var documentation: String? = null
     var sourceFileAndLine: String? = null
 
-    open val name: String by lazy {
+    override val name: String by lazy {
         if (_name.isNotEmpty()) return@lazy _name.capitalize()
 
         val parent = pointcut as? Toplevel ?: return@lazy ""
@@ -231,7 +238,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
 
 
     @Suppress("UNCHECKED_CAST")
-    internal fun <T:Any, S : SettingsHolder> getSettingInHierarchy(key: ISetting<T, S>) : T? = (settings[key] as? T?) ?: pointcut?.getSettingInHierarchy(key)
+    internal fun <T:Any, S : ISettingsHolder> getSettingInHierarchy(key: ISetting<T, S>) : T? = (settings[key] as? T?) ?: pointcut?.getSettingInHierarchy(key)
 
     //for toString purposes
     protected abstract val cl_name: String
@@ -478,7 +485,7 @@ class Interface(override val _name: String, pointcut: Toplevel, val baseInterfac
     operator fun plus(interList: List<Interface>) = interList + this
 }
 
-sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Struct?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar {
+sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Struct?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar, ITypeDeclaration {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_struct"
 
     class Abstract(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base) {
@@ -496,7 +503,7 @@ sealed class Struct(override val _name: String, override val pointcut : Toplevel
 operator fun <T : Struct> T.getValue(thisRef: Any?, property: KProperty<*>): T = this
 
 sealed class Class(override val _name: String, override val pointcut : Toplevel, override val base: Class?, val isUnknown: Boolean = false) :
-        BindableDeclaration(pointcut), INonNullableBindable, Extensible {
+        BindableDeclaration(pointcut), INonNullableBindable, Extensible, ITypeDeclaration {
     override val cl_name = "${javaClass.simpleName.decapitalize()}_class"
 
     internal val internRootForScopes = mutableListOf<String>()
@@ -522,7 +529,7 @@ class Aggregate(override val _name: String, override val pointcut: Toplevel)
     override val cl_name = "aggregate"
 }
 
-open class Enum(override val _name: String, override val pointcut : Toplevel) : Declaration(pointcut), INonNullableScalar {
+open class Enum(override val _name: String, override val pointcut : Toplevel) : Declaration(pointcut), INonNullableScalar, ITypeDeclaration {
     override val cl_name = "enum"
 
     var flags = false

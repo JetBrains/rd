@@ -25,9 +25,9 @@ open class CSharp50Generator(
     object ClassAttributes : ISetting<Array<String>, Declaration>
 
     //language specific properties
-    object Namespace : ISetting<String, Declaration>
+    object Namespace : ISetting<String, IDeclaration>
 
-    val Declaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
+    val IDeclaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
 
     object FsPath : ISetting<(CSharp50Generator) -> File, Toplevel>
 
@@ -64,7 +64,7 @@ open class CSharp50Generator(
             ).contains(itemType)
 
 
-    protected fun Declaration.sanitizedName(scope: Declaration): String {
+    protected fun IDeclaration.sanitizedName(scope: Declaration): String {
         val needQualification =
                 namespace != scope.namespace
                         || scope.allMembers.map { it.publicName }.contains(name)

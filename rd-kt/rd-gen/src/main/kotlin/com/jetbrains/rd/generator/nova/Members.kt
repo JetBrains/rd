@@ -81,7 +81,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
             class Set       (name : String, itemType : INonNullableScalar) : Stateful(name, itemType)
             class Map       (name : String, keyType : INonNullableScalar, valueType: INonNullable): Stateful(name, keyType, valueType)
 
-            abstract class Extension(name : String, val delegatedBy: Class, vararg _delegates: ExtensionDelegate)
+            abstract class Extension(name : String, val delegatedBy: ITypeDeclaration, vararg _delegates: ExtensionDelegate)
                 : Stateful(name) {
 
                 val delegates = _delegates
