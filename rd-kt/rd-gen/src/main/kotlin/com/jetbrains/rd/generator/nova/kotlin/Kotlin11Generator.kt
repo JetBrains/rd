@@ -61,7 +61,7 @@ open class Kotlin11Generator(
         this is IArray && itemType.isPrimitive
 
     ///types
-    protected open fun IType.substitutedName(scope: Declaration) : String = when (this) {
+    protected open fun IType.substitutedName(scope: IDeclaration) : String = when (this) {
         is Enum -> if (flags) "EnumSet<${sanitizedName(scope)}>" else sanitizedName(scope)
         is Declaration -> sanitizedName(scope)
         is INullable    -> "${itemType.substitutedName(scope)}?"
@@ -88,7 +88,7 @@ open class Kotlin11Generator(
     val Member.Reactive.actualFlow : FlowKind get() = flowTransform.transform(flow)
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    protected open val Member.Reactive.intfSimpleName : String get () {
+    protected open fun Member.Reactive.intfSimpleName(scope: IDeclaration) : String {
         val async = this.freeThreaded.condstr { "Async" }
         return when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
@@ -117,35 +117,35 @@ open class Kotlin11Generator(
                 Source, Both -> "IMutableViewableMap"
             }
 
-            is Member.Reactive.Stateful.Extension -> implSimpleName
+            is Member.Reactive.Stateful.Extension -> implSimpleName(scope)
 
             else -> fail("Unsupported member: $this")
         }
     }
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    protected open val Member.Reactive.implSimpleName : String get () = when (this) {
+    protected open fun Member.Reactive.implSimpleName(scope: IDeclaration) : String = when (this) {
         is Member.Reactive.Task -> "RdCall"
         is Member.Reactive.Signal -> "RdSignal"
         is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
         is Member.Reactive.Stateful.List -> "RdList"
         is Member.Reactive.Stateful.Set -> "RdSet"
         is Member.Reactive.Stateful.Map -> "RdMap"
-        is Member.Reactive.Stateful.Extension -> fqn(this@Kotlin11Generator, flowTransform)
+        is Member.Reactive.Stateful.Extension -> delegateFqnSubstitutedName(scope)
 
         else -> fail ("Unsupported member: $this")
     }
 
 
-    protected open val Member.Reactive.ctorSimpleName : String get () = when (this) {
-        is Member.Reactive.Stateful.Extension -> factoryFqn(this@Kotlin11Generator, flowTransform)
-        else -> implSimpleName
+    protected open fun Member.Reactive.ctorSimpleName(scope: IDeclaration) : String = when (this) {
+        is Member.Reactive.Stateful.Extension -> factoryFqn(scope, true)
+        else -> implSimpleName(scope)
     }
 
     protected open fun Member.intfSubstitutedName(scope: Declaration) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
-        is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Reactive -> intfSimpleName(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         is Member.Const -> type.substitutedName(scope)
         is Member.Method -> name
     }
@@ -161,7 +161,7 @@ open class Kotlin11Generator(
         is Member.Field -> type.substitutedName(scope)
         is Member.Const -> type.substitutedName(scope)
         is Member.Reactive ->
-            (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
+            (implSimpleName(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let { baseTypeName ->
                 if (context != null && !perContextRawName) "RdPerContextMap<${context!!.type.substitutedName(scope)}, $baseTypeName>" else baseTypeName
             }
         is Member.Method -> name
@@ -169,22 +169,38 @@ open class Kotlin11Generator(
 
 
     protected open fun Member.ctorSubstitutedName(scope: Declaration) = when (this) {
-        is Member.Reactive.Stateful.Extension -> ctorSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Reactive.Stateful.Extension -> ctorSimpleName(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         else -> implSubstitutedName(scope)
     }
 
 
     protected open val Member.isBindable : Boolean get() = when (this) {
         is Member.Field -> type is IBindable
-        is Member.Reactive -> true
+        is Member.Reactive -> isBindable
 
         else -> false
     }
 
+    protected open val Member.Reactive.isBindable : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> when {
+            this.delegatedBy !is BindableDeclaration -> false
+            (this.findDelegate()?.delegateType as? Member.DelegateType.Delegated)?.type is IBindable -> true
+            this.findDelegate()?.delegateType is Member.DelegateType.Custom -> true
+            else -> false
+        }
+        else -> true
+    }
 
     protected open val Member.publicName : String get() = sanitize(name)
     protected open val Member.encapsulatedName : String get() = if (isEncapsulated) "_$name" else publicName
-    protected open val Member.isEncapsulated : Boolean get() = this is Member.Reactive
+    protected open val Member.isEncapsulated : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> when {
+            isSimplyDelegated(this@Kotlin11Generator, flowTransform) -> false
+            else -> true
+        }
+        is Member.Reactive -> true
+        else -> false
+    }
 
     protected fun Member.ctorParam(containing: Declaration): String {
         val typeName = implSubstitutedName(containing)
@@ -582,7 +598,7 @@ open class Kotlin11Generator(
     private fun Member.Reactive.perClientIdMapValueFactory(containing: Declaration): String {
         require(this.context != null)
         val params = (listOf(getDefaultValue(containing, this, true)) + customSerializers(containing, true)).filterNotNull().joinToString(", ")
-        return "{ ${this.ctorSimpleName}($params)${(this is Member.Reactive.Stateful.Map).condstr { ".apply { master = it }" }} }"
+        return "{ ${this.ctorSimpleName(containing)}($params)${(this is Member.Reactive.Stateful.Map).condstr { ".apply { master = it }" }} }"
     }
 
     //only for toplevel Exts
@@ -645,7 +661,10 @@ open class Kotlin11Generator(
                         else -> value
                     }
                 }
-                is Member.Reactive.Stateful.Extension -> member.delegatedBy.sanitizedName(containing) + "()"
+                is Member.Reactive.Stateful.Extension -> when (member.delegatedBy) {
+                    is ITypeDeclaration -> member.delegatedBy.sanitizedName(containing) + "()"
+                    else -> null
+                }
                 else -> null
             }
 
@@ -684,13 +703,16 @@ open class Kotlin11Generator(
 
         fun Member.reader(): String = when (this) {
             is Member.Field -> type.reader()
-            is Member.Reactive.Stateful.Extension -> "$ctorSimpleName(${delegatedBy.reader()})"
+            is Member.Reactive.Stateful.Extension -> when {
+                isSimplyDelegated(this@Kotlin11Generator, flowTransform) -> delegatedBy.reader()
+                else -> "${ctorSimpleName(decl)}(${delegatedBy.reader()})"
+            }
             is Member.Reactive -> {
                 val params = (listOf("ctx", "buffer") + customSerializers(decl)).joinToString (", ")
                 if(context != null) {
                     "RdPerContextMap.read(${context!!.longRef(decl)}, buffer) ${this.perClientIdMapValueFactory(decl)}"
                 } else {
-                    "$implSimpleName.read($params)"
+                    "${implSimpleName(decl)}.read($params)"
                 }
 
             }
@@ -748,11 +770,14 @@ open class Kotlin11Generator(
 
         fun Member.writer() : String = when (this) {
             is Member.Field -> type.writer("value.$encapsulatedName")
-            is Member.Reactive.Stateful.Extension -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
+            is Member.Reactive.Stateful.Extension -> when (findDelegate()?.delegateType) {
+                is Member.DelegateType.Delegated -> delegatedBy.writer(("value.$encapsulatedName"))
+                else -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
+            }
             is Member.Reactive -> if(context != null) {
                 "RdPerContextMap.write(buffer, value.$encapsulatedName)"
             } else {
-                "$implSimpleName.write(ctx, buffer, value.$encapsulatedName)"
+                "${implSimpleName(decl)}.write(ctx, buffer, value.$encapsulatedName)"
             }
 
             else -> fail("Unknown member: $this")
@@ -795,6 +820,7 @@ open class Kotlin11Generator(
 
 
     protected fun PrettyPrinter.initializerTrait(decl: Declaration) {
+        if (decl is Struct) return
 //        decl.ownMembers
 //            .filterIsInstance<Member.Reactive.Stateful.Property>()
 //            .filter { it.perContextKey == null }
@@ -870,13 +896,20 @@ open class Kotlin11Generator(
             println()
 
             decl.allMembers.println { m ->
-                val f = m as? Member.Field ?: fail("Must be field but was `$m`")
-                val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-
-                if (f.usedInEquals)
-                    "if (${t.eq(f.encapsulatedName)}) return false"
-                else
-                    ""
+                when (m) {
+                    is Member.Field -> {
+                        val t = m.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${m.type}")
+                        if (m.usedInEquals)
+                            "if (${t.eq(m.encapsulatedName)}) return false"
+                        else
+                            ""
+                    }
+                    is Member.Reactive.Stateful.Extension -> {
+                        val t = m.delegatedBy as? IScalar ?: fail("Extension $decl.`$m` must have scalar type but was ${m.delegatedBy}")
+                        "if (${t.eq(m.encapsulatedName)}) return false"
+                    }
+                    else -> fail("Must be field or Reactive.Stateful.Extension but was `$m`")
+                }
             }
             println()
             + "return true"
@@ -888,12 +921,12 @@ open class Kotlin11Generator(
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IScalar.hc(v : String, f : Member.Field) : String = when (this) {
+        fun IScalar.hc(v : String, m : Member) : String = when (this) {
             is IArray ->
                 if (isPrimitivesArray) "$v.contentHashCode()"
                 else "$v.contentDeepHashCode()"
-            is INullable -> "if ($v != null) " + (itemType as IScalar).hc(v, f) + " else 0"
-            is IAttributedType -> (itemType as? IScalar)?.hc(v, f) ?: fail("Field $decl.`$f` must have scalar type but was $itemType")
+            is INullable -> "if ($v != null) " + (itemType as IScalar).hc(v, m) + " else 0"
+            is IAttributedType -> (itemType as? IScalar)?.hc(v, m) ?: fail("Field $decl.`$m` must have scalar type but was $itemType")
             else -> "$v.hashCode()"
         }
 
@@ -902,12 +935,17 @@ open class Kotlin11Generator(
             + "var __r = 0"
 
             decl.allMembers.println { m ->
-                val f = m as? Member.Field ?: fail("Must be field but was `$m`")
-                val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                if (f.usedInEquals)
-                    "__r = __r*31 + ${t.hc(f.encapsulatedName, f)}"
-                else
-                    ""
+                when (m) {
+                    is Member.Field -> {
+                        val t = m.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${m.type}")
+                        if (m.usedInEquals) t
+                        else null
+                    }
+                    is Member.Reactive.Stateful.Extension -> {
+                        m.delegatedBy as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${m.delegatedBy}")
+                    }
+                    else -> fail("Must be field but was `$m`")
+                }?.let { t -> "__r = __r*31 + ${t.hc(m.encapsulatedName, m)}" } ?: ""
             }
 
             + "return __r"
@@ -975,9 +1013,14 @@ open class Kotlin11Generator(
 
     protected open val Member.hasEmptyConstructor : Boolean get() = when (this) {
         is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
-        is Member.Reactive -> true
+        is Member.Reactive -> hasEmptyConstructor
 
         else -> fail ("Unsupported member: $this")
+    }
+
+    protected open val Member.Reactive.hasEmptyConstructor : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> delegatedBy.hasEmptyConstructor
+        else -> true
     }
 
     private fun PrettyPrinter.primaryCtorParamsTrait(decl: Declaration) {
@@ -1100,6 +1143,26 @@ open class Kotlin11Generator(
         val extName = decl.extName ?: decl.name.decapitalize()
         + """val IProtocol.$extName get() = getOrCreateExtension(${decl.name}::class) { @Suppress("DEPRECATION") ${decl.name}.create(lifetime, this) }"""
         println()
+    }
+
+    private fun Member.Reactive.Stateful.Extension.factoryFqn(scope: IDeclaration, unwrap: Boolean) : String {
+        val delegate = findDelegate() ?: return javaClass.simpleName
+        return delegate.factoryFqn ?: this.delegateFqnSubstitutedName(scope, unwrap)
+    }
+
+    private fun Member.Reactive.Stateful.Extension.findDelegate() = findDelegate(this@Kotlin11Generator, flowTransform)
+
+    protected open fun Member.Reactive.Stateful.Extension.delegateFqnSubstitutedName(scope: IDeclaration, unwrap: Boolean = false): String = findDelegate()?.fqnSubstitutedName(scope, unwrap)
+        ?: this.javaClass.simpleName
+
+    protected open fun Member.ExtensionDelegate.fqnSubstitutedName(scope: IDeclaration, unwrap: Boolean = false): String = this.delegateType.let { delegateType ->
+        when (delegateType) {
+            is Member.DelegateType.Custom -> delegateType.fqn
+            is Member.DelegateType.Delegated -> delegateType.type.let {
+                if (unwrap) it.unwrapToBaseType()
+                else it
+            }.substitutedName(scope)
+        }
     }
 
     override fun toString(): String {

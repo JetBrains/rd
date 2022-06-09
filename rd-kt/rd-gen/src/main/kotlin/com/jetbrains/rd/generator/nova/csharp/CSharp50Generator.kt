@@ -64,7 +64,7 @@ open class CSharp50Generator(
             ).contains(itemType)
 
 
-    protected fun IDeclaration.sanitizedName(scope: Declaration): String {
+    protected fun IDeclaration.sanitizedName(scope: IDeclaration): String {
         val needQualification =
                 namespace != scope.namespace
                         || scope.allMembers.map { it.publicName }.contains(name)
@@ -117,7 +117,7 @@ open class CSharp50Generator(
 
 
     ///types
-    protected open fun IType.substitutedName(scope: Declaration): String {
+    protected open fun IType.substitutedName(scope: IDeclaration): String {
         return when (this) {
             is Declaration -> sanitizedName(scope)
             is InternedScalar -> itemType.substitutedName(scope)
@@ -175,62 +175,68 @@ open class CSharp50Generator(
     val notnull = "[NotNull]"
     fun Member.nullAttr(isCtorParam: Boolean = false): String {
 
-        fun IType.attr(field: Member.Field) : String = when(this) {
-            is INullable -> if (isCtorParam && field.isOptional) "[CanBeNull] " else "[CanBeNull] "
-            is IAttributedType -> itemType.attr(field)
+        fun IType.attr(member: Member) : String = when(this) {
+            is INullable -> when(member) {
+                is Member.Field -> if (isCtorParam && member.isOptional) "[CanBeNull] " else "[CanBeNull] "
+                else -> if (isCtorParam) "[CanBeNull] " else "[CanBeNull] "
+            }
+            is IAttributedType -> itemType.attr(member)
             else -> if (this.isValueType) "" else "$notnull "
         }
 
-        return if (this !is Member.Field) "$notnull " else this.type.attr(this)
+        return when (this) {
+            is Member.Reactive.Stateful.Extension -> {
+                (this.findDelegate()?.delegateType as? Member.DelegateType.Delegated)?.type?.attr(this)
+                    ?: this.delegatedBy.attr(this)
+            }
+            !is Member.Field -> "$notnull "
+            else -> this.type.attr(this)
+        }
     }
 
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    protected open val Member.Reactive.intfSimpleName: String
-        get() {
-            return when (this) {
-                is Member.Reactive.Task -> when (actualFlow) {
-                    Source -> "IRdCall"
-                    Sink -> "IRdEndpoint"
-                    Both -> "RdCall"
-                }
-                is Member.Reactive.Signal -> when (actualFlow) {
-                    Sink -> if (freeThreaded) "ISignal" else "ISource"
-                    Source, Both -> "ISignal"
-                }
-                is Member.Reactive.Stateful.Property -> when (actualFlow) {
-                    Sink -> "IReadonlyProperty"
-                    Source, Both -> "IViewableProperty"
-                }
-                is Member.Reactive.Stateful.List -> when (actualFlow) {
-                    Sink -> "IViewableList"
-                    Source, Both -> "IViewableList"
-                }
-                is Member.Reactive.Stateful.Set -> when (actualFlow) {
-                    Sink -> "IViewableSet"
-                    Source, Both -> "IViewableSet"
-                }
-                is Member.Reactive.Stateful.Map -> when (actualFlow) {
-                    Sink -> "IViewableMap"
-                    Source, Both -> "IViewableMap"
-                }
-
-                is Member.Reactive.Stateful.Extension -> implSimpleName
-
-                else -> fail("Unsupported member: $this")
-            }
+    protected open fun Member.Reactive.intfSimpleName(scope: IDeclaration): String = when (this) {
+        is Member.Reactive.Task -> when (actualFlow) {
+            Source -> "IRdCall"
+            Sink -> "IRdEndpoint"
+            Both -> "RdCall"
+        }
+        is Member.Reactive.Signal -> when (actualFlow) {
+            Sink -> if (freeThreaded) "ISignal" else "ISource"
+            Source, Both -> "ISignal"
+        }
+        is Member.Reactive.Stateful.Property -> when (actualFlow) {
+            Sink -> "IReadonlyProperty"
+            Source, Both -> "IViewableProperty"
+        }
+        is Member.Reactive.Stateful.List -> when (actualFlow) {
+            Sink -> "IViewableList"
+            Source, Both -> "IViewableList"
+        }
+        is Member.Reactive.Stateful.Set -> when (actualFlow) {
+            Sink -> "IViewableSet"
+            Source, Both -> "IViewableSet"
+        }
+        is Member.Reactive.Stateful.Map -> when (actualFlow) {
+            Sink -> "IViewableMap"
+            Source, Both -> "IViewableMap"
         }
 
+        is Member.Reactive.Stateful.Extension -> implSimpleName(scope)
+
+        else -> fail("Unsupported member: $this")
+    }
+
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    protected open val Member.Reactive.implSimpleName: String
-        get() = when (this) {
+    protected open fun Member.Reactive.implSimpleName(scope: IDeclaration): String = when (this) {
             is Member.Reactive.Task -> "RdCall"
             is Member.Reactive.Signal -> "RdSignal"
             is Member.Reactive.Stateful.Property -> "RdProperty"
             is Member.Reactive.Stateful.List -> "RdList"
             is Member.Reactive.Stateful.Set -> "RdSet"
             is Member.Reactive.Stateful.Map -> "RdMap"
-            is Member.Reactive.Stateful.Extension -> fqn(this@CSharp50Generator, memberFlowTransform)
+            is Member.Reactive.Stateful.Extension -> delegateFqnSubstitutedName(scope)
 
             else -> fail("Unsupported member: $this")
         }
@@ -239,7 +245,7 @@ open class CSharp50Generator(
     protected open fun Member.intfSubstitutedName(scope: Declaration): String = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
-        is Member.Reactive -> intfSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Reactive -> intfSimpleName(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         is Member.Const -> type.substitutedName(scope)
         is Member.Method -> publicName
     }
@@ -252,46 +258,67 @@ open class CSharp50Generator(
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Const -> type.substitutedName(scope)
-        is Member.Reactive -> (implSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
+        is Member.Reactive -> (implSimpleName(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }).let {
             if(context != null && !perClientIdRawName) "RdPerContextMap<${context!!.type.substitutedName(scope)}, $it>" else it
         }
         is Member.Method -> publicName
     }
 
     protected open fun Member.creationExpressionSubstituted(scope: Declaration) = when (this) {
-        is Member.Reactive.Stateful.Extension -> simpleCreationExpression + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
+        is Member.Reactive.Stateful.Extension -> simpleCreationExpression(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.substitutedName(scope) }
         else -> "new " + implSubstitutedName(scope)
     }
 
-    protected open val Member.Reactive.simpleCreationExpression : String get () = when (this) {
+    protected open fun Member.Reactive.simpleCreationExpression(scope: IDeclaration) : String = when (this) {
         is Member.Reactive.Stateful.Extension -> {
-            val delegate = findDelegate(this@CSharp50Generator, flowTransform) ?: fail("Could not find delegate: $this")
-            delegate.factoryFqn ?: ("new " + delegate.delegateFqn)
+            val delegate = findDelegate() ?: fail("Could not find delegate: $this")
+            delegate.factoryFqn ?: ("new " + delegate.fqnSubstitutedName(scope))
         }
-        else -> implSimpleName
+        else -> implSimpleName(scope)
     }
 
     protected open val Member.hasEmptyConstructor: Boolean
         get() = when (this) {
             is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
-            is Member.Reactive -> true
+            is Member.Reactive -> hasEmptyConstructor
 
             else -> fail("Unsupported member: $this")
         }
 
+    protected open val Member.Reactive.hasEmptyConstructor : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> delegatedBy.hasEmptyConstructor
+        else -> true
+    }
 
     protected open val Member.isBindable: Boolean
         get() = when (this) {
             is Member.Field -> type is IBindable
-            is Member.Reactive -> true
+            is Member.Reactive -> isBindable
 
             else -> false
         }
 
+    protected open val Member.Reactive.isBindable : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> when {
+            this.delegatedBy !is BindableDeclaration -> false
+            (this.findDelegate()?.delegateType as? Member.DelegateType.Delegated)?.type is IBindable -> true
+            this.findDelegate()?.delegateType is Member.DelegateType.Custom -> true
+            else -> false
+        }
+        else -> true
+    }
+
 
     protected open val Member.publicName: String get() = name.capitalize()
     protected open val Member.encapsulatedName: String get() = isEncapsulated.condstr { "_" } + publicName
-    protected open val Member.isEncapsulated: Boolean get() = this is Member.Reactive
+    protected open val Member.isEncapsulated: Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> when {
+            isSimplyDelegated(this@CSharp50Generator, memberFlowTransform) -> false
+            else -> true
+        }
+        is Member.Reactive -> true
+        else -> false
+    }
 
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean, ignorePerClientId: Boolean = false): String {
         if(context != null && !ignorePerClientId)
@@ -564,7 +591,10 @@ open class CSharp50Generator(
                         else -> value
                     }
                 }
-                is Member.Reactive.Stateful.Extension -> "new " + member.delegatedBy.sanitizedName(containing) + "()"
+                is Member.Reactive.Stateful.Extension -> when (member.delegatedBy) {
+                    is ITypeDeclaration -> "new " + member.delegatedBy.sanitizedName(containing) + "()"
+                    else -> null
+                }
                 else -> null
             }
 
@@ -683,9 +713,14 @@ open class CSharp50Generator(
             else -> readerDelegateRef(decl, false) + "(ctx, reader)"
         }
 
+        fun Member.Reactive.Stateful.Extension.extReader(): String = when {
+            isSimplyDelegated(this@CSharp50Generator, memberFlowTransform) -> delegatedBy.reader()
+            else -> "${creationExpressionSubstituted(decl)}(${delegatedBy.reader()})"
+        }
+
         fun Member.reader(): String = when (this) {
             is Member.Field -> type.reader()
-            is Member.Reactive.Stateful.Extension -> "${creationExpressionSubstituted(decl)}(${delegatedBy.reader()})"
+            is Member.Reactive.Stateful.Extension -> extReader()
             is Member.Reactive -> "${implSubstitutedName(decl)}.Read(ctx, reader${customSerializers(decl, leadingComma = true)})"
 
             else -> fail("Unknown member: $this")
@@ -770,7 +805,10 @@ open class CSharp50Generator(
 
         fun Member.writer(): String = when (this) {
             is Member.Field -> type.writer("value.$encapsulatedName")
-            is Member.Reactive.Stateful.Extension -> delegatedBy.writer(("value.$encapsulatedName.Delegate"))
+            is Member.Reactive.Stateful.Extension -> when (findDelegate()?.delegateType) {
+                is Member.DelegateType.Delegated -> delegatedBy.writer(("value.$encapsulatedName"))
+                else -> delegatedBy.writer(("value.$encapsulatedName.Delegate"))
+            }
             is Member.Reactive -> "${implSubstitutedName(decl)}.Write(ctx, writer, value.$encapsulatedName)"
 
             else -> fail("Unknown member: $this")
@@ -791,7 +829,7 @@ open class CSharp50Generator(
                 if (decl is Class || decl is Aggregate) {
                     +"value.RdId.Write(writer);"
                 }
-                (decl.membersOfBaseClasses + decl.ownMembers).println { it.writer() + ";" }
+                (decl.membersOfBaseClasses + decl.ownMembers).println { it. writer() + ";" }
                 if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
                     +"value.mySerializationContext = ctx.WithInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }});"
                 }
@@ -811,6 +849,7 @@ open class CSharp50Generator(
             if(currentDecl.isOpen && currentDecl.allTypesForDelegation().contains(this)){
                 return " new"
             }
+
         }
 
         return ""
@@ -819,26 +858,35 @@ open class CSharp50Generator(
 
     protected fun PrettyPrinter.fieldsTrait(decl: Declaration) {
 
+        fun IType.attrsStr() = (this as? IAttributedType)?.getAttrsStr()?.let { "$it " } ?: ""
+        fun Member.getSetTrait(prefix: String) = "$prefix ${this.intfSubstitutedName(decl)} ${this.publicName} {get; private set;}"
+
         +"//public fields"
         for (member in decl.ownMembers) {
             p(docComment(member.documentation))
             val prefix = member.nullAttr() + "public"
             when (member) {
-                is Member.Reactive ->
-                    if (member is Member.Reactive.Signal && member.actualFlow == Source) {
+                is Member.Reactive -> when {
+                    member is Member.Reactive.Stateful.Extension && !member.isEncapsulated -> {
+                        val attrStr = (member.findDelegate()?.delegateType as? Member.DelegateType.Delegated)
+                            ?.type?.attrsStr() ?: ""
+                        +"${attrStr}${member.getSetTrait(prefix)}"
+                    }
+                    member is Member.Reactive.Signal && member.actualFlow == Source -> {
                         val type = member.referencedTypes[0]
                         val isNotVoid = type != PredefinedType.void
                         +"$prefix void ${member.publicName}(${isNotVoid.condstr { type.substitutedName(decl) + " value" }}) => ${member.encapsulatedName}.Fire(${isNotVoid.condstr { "value" }});"
-                    }else {
+                    }
+                    else -> {
                         if (member.context != null) {
                             + "$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName}.GetForCurrentContext();"
                             + "$prefix ${member.intfSubstitutedMapName(decl)} ${member.publicName}PerContextMap => ${member.encapsulatedName};"
                         } else
-                        +"$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"}
+                            +"$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} => ${member.encapsulatedName};"
+                    }
+                }
                 is Member.Field -> {
-                    val attrs = (member.type as? IAttributedType)?.getAttrsStr()
-                    val attrsStr = if(attrs != null) "$attrs " else ""
-                    +"$attrsStr$prefix ${member.intfSubstitutedName(decl)} ${member.publicName} {get; private set;}"
+                    +"${member.type.attrsStr()}${member.getSetTrait(prefix)}"
                 }
                 else -> fail("Unsupported member: $member")
             }
@@ -846,7 +894,10 @@ open class CSharp50Generator(
         println()
 
         +"//private fields"
-        decl.ownMembers.filterIsInstance<Member.Reactive>().printlnWithBlankLine {
+        decl.ownMembers
+            .filterIsInstance<Member.Reactive>()
+            .filter { it.isEncapsulated }
+            .printlnWithBlankLine {
             it.nullAttr() + (if (decl.isSealed) "private" else "protected") + " readonly ${it.implSubstitutedName(decl)} ${it.encapsulatedName};"
         }
 
@@ -963,12 +1014,12 @@ open class CSharp50Generator(
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IType.eq(v: String, f : Member.Field) : String = when (this) {
-            !is IScalar -> fail("Field $decl.`$f` must have scalar type but was ${f.type}")
-            is IArray, is IImmutableList -> "$v.SequenceEqual(other.$v)"
-            is Enum, is PredefinedType -> "$v == other.$v"
-            is IAttributedType -> itemType.eq(v, f)
-            else -> "Equals($v, other.$v)"
+        fun IType.eq(fieldName: String, member: Member) : String = when (this) {
+            !is IScalar -> fail("Field $decl.`$member` must have scalar type but was $this")
+            is IArray, is IImmutableList -> "$fieldName.SequenceEqual(other.$fieldName)"
+            is Enum, is PredefinedType -> "$fieldName == other.$fieldName"
+            is IAttributedType -> itemType.eq(fieldName, member)
+            else -> "Equals($fieldName, other.$fieldName)"
         }
 
 
@@ -988,14 +1039,16 @@ open class CSharp50Generator(
         indent {
             +"if (ReferenceEquals(null, other)) return false;"
             +"if (ReferenceEquals(this, other)) return true;"
-            val res = decl.allMembers.flatMap { m ->
-                m as? Member.Field ?: fail("Must be field but was `$m`")
-                if (m.usedInEquals)
-                    listOf(m)
-                else
-                    emptyList()
-
-            }.joinToString(" && ") { f -> f.type.eq(f.encapsulatedName, f) }
+            val res = decl.allMembers.mapNotNull { m ->
+                when (m) {
+                    is Member.Field -> {
+                        if (m.usedInEquals) Triple(m.encapsulatedName, m.type, m)
+                        else null
+                    }
+                    is Member.Reactive.Stateful.Extension -> Triple(m.encapsulatedName, m.delegatedBy, m)
+                    else -> fail("Must be field but was `$m`")
+                }
+            }.joinToString(" && ") { (name, type, member) -> type.eq(name, member) }
                 .takeIf { it.isNotBlank() } ?: "true"
 
             +"return $res;"
@@ -1007,11 +1060,11 @@ open class CSharp50Generator(
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IScalar.hc(v: String, f: Member.Field): String = when (this) {
+        fun IScalar.hc(v: String, m: Member): String = when (this) {
             is Enum -> "(int) $v"
             is IArray, is IImmutableList -> "$v.ContentHashCode()"
-            is INullable -> "($v != null ? " + (itemType as IScalar).hc(v, f) + " : 0)"
-            is ScalarAttributedType<IScalar> -> (itemType as? IScalar)?.hc(v, f) ?: fail("Field $decl.`$f` must have scalar type but was $itemType")
+            is INullable -> "($v != null ? " + (itemType as IScalar).hc(v, m) + " : 0)"
+            is ScalarAttributedType<IScalar> -> (itemType as? IScalar)?.hc(v, m) ?: fail("Field $decl.`$m` must have scalar type but was $itemType")
             else -> "$v.GetHashCode()"
         }
 
@@ -1024,12 +1077,19 @@ open class CSharp50Generator(
                 +"var hash = 0;"
 
                 decl.allMembers.println { m ->
-                    val f = m as? Member.Field ?: fail("Must be field but was `$m`")
-                    val t = f.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${f.type}")
-                    if (f.usedInEquals)
-                        "hash = hash * 31 + ${t.hc(f.encapsulatedName, f)};"
-                    else
-                        ""
+                    when (m) {
+                        is Member.Field -> {
+                            val t = m.type as? IScalar ?: fail("Field $decl.`$m` must have scalar type but was ${m.type}")
+                            if (!m.usedInEquals) null
+                            else t
+                        }
+                        is Member.Reactive.Stateful.Extension -> {
+                            m.delegatedBy.let { delegatedBy ->
+                                delegatedBy as? IScalar ?: fail("Extension $decl.`$m` must have scalar type but was $delegatedBy")
+                            }
+                        }
+                        else -> fail("Must be field but was `$m`")
+                    }?.let { t -> "hash = hash * 31 + ${t.hc(m.encapsulatedName, m)};" } ?: ""
                 }
 
                 +"return hash;"
@@ -1268,6 +1328,18 @@ open class CSharp50Generator(
             }
         }
     }
+
+    private fun Member.Reactive.Stateful.Extension.findDelegate() = findDelegate(this@CSharp50Generator, memberFlowTransform)
+
+    protected open fun Member.ExtensionDelegate.fqnSubstitutedName(scope: IDeclaration): String = this.delegateType.let { delegateType ->
+        when (delegateType) {
+            is Member.DelegateType.Custom -> delegateType.fqn
+            is Member.DelegateType.Delegated -> delegateType.type.substitutedName(scope)
+        }
+    }
+
+    protected open fun Member.Reactive.Stateful.Extension.delegateFqnSubstitutedName(scope: IDeclaration): String = findDelegate()?.fqnSubstitutedName(scope)
+        ?: this.javaClass.simpleName
 
     protected open fun PrettyPrinter.methodTrait(method: Member.Method, decl: Declaration ,isAbstract: Boolean) {
         println("public ${isAbstract.condstr { "abstract " }}${isUnknown(decl).condstr { "override " }}${if (method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}" }})${isAbstract.condstr { ";" }}")

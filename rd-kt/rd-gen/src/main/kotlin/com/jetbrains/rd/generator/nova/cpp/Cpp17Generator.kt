@@ -456,8 +456,7 @@ open class Cpp17Generator(
     //region Member.
     val Member.Reactive.actualFlow: FlowKind get() = flowTransform.transform(flow)
 
-    protected open val Member.Reactive.intfSimpleName: String
-        get() {
+    protected open fun Member.Reactive.intfSimpleName(scope: Declaration): String {
 //        val async = this.freeThreaded.condstr { "Async" }
             return "rd::" + when (this) {
                 is Member.Reactive.Task -> when (actualFlow) {
@@ -486,14 +485,13 @@ open class Cpp17Generator(
                     Source, Both -> "IViewableMap"
                 }
 
-                is Member.Reactive.Stateful.Extension -> implSimpleName
+                is Member.Reactive.Stateful.Extension -> implSimpleName(scope)
 
             }
         }
 
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    protected open val Member.Reactive.implSimpleName: String
-        get() = "rd::" + when (this) {
+    protected open fun Member.Reactive.implSimpleName(scope: Declaration): String = "rd::" + when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
                 Sink -> "RdEndpoint"
                 Source -> "RdCall"
@@ -504,24 +502,30 @@ open class Cpp17Generator(
             is Member.Reactive.Stateful.List -> "RdList"
             is Member.Reactive.Stateful.Set -> "RdSet"
             is Member.Reactive.Stateful.Map -> "RdMap"
-            is Member.Reactive.Stateful.Extension -> fqn(this@Cpp17Generator, flowTransform)
+            is Member.Reactive.Stateful.Extension -> implSubstitutedName(scope)
 
             else -> fail("Unsupported member: $this")
         }
 
-
-    protected open val Member.Reactive.ctorSimpleName: String
-        get() = when (this) {
-            is Member.Reactive.Stateful.Extension -> factoryFqn(this@Cpp17Generator, flowTransform)
-            else -> implSimpleName
+    protected open fun Member.Reactive.Stateful.Extension.implSubstitutedName(scope: Declaration): String = findDelegate(this@Cpp17Generator, flowTransform)?.delegateType?.let { delegateType ->
+        when (delegateType) {
+            is Member.DelegateType.Custom -> delegateType.fqn
+            is Member.DelegateType.Delegated -> delegateType.type.substitutedName(scope)
         }
+    } ?: this.javaClass.simpleName
+
+
+    protected open fun Member.Reactive.ctorSimpleName(scope: Declaration): String = when (this) {
+        is Member.Reactive.Stateful.Extension -> factoryFqn(scope)
+        else -> implSimpleName(scope)
+    }
 
     protected open fun Member.intfSubstitutedName(scope: Declaration) = when (this) {
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.templateName(scope)
         is Member.Reactive -> {
             val customSerializers = if (this is Member.Reactive.Task) customSerializers(scope, false) else emptyList()
-            intfSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+            intfSimpleName(scope) + (genericParams.toList().map { it.templateName(scope) } + customSerializers).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
         }
         is Member.Const -> type.templateName(scope)
         is Member.Method -> publicName
@@ -531,7 +535,7 @@ open class Cpp17Generator(
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.substitutedName(scope)
         is Member.Reactive -> {
-            implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+            implSimpleName(scope) + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
         }
         is Member.Const -> type.substitutedName(scope)
         is Member.Method -> publicName
@@ -541,7 +545,7 @@ open class Cpp17Generator(
         is Member.EnumConst -> fail("Code must be unreachable for ${javaClass.simpleName}")
         is Member.Field -> type.templateName(scope)
         is Member.Reactive -> {
-            implSimpleName + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
+            implSimpleName(scope) + (genericParams.toList().map { it.templateName(scope) } + customSerializers(scope, false)).toTypedArray().joinToOptString(separator = ", ", prefix = "<", postfix = ">")
         }
         is Member.Const -> type.templateName(scope)
         is Member.Method -> publicName
@@ -550,7 +554,7 @@ open class Cpp17Generator(
 
     protected open fun Member.ctorSubstitutedName(scope: Declaration) = when (this) {
         is Member.Reactive.Stateful.Extension -> {
-            "rd::" + ctorSimpleName + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.templateName(scope) }
+            "rd::" + ctorSimpleName(scope) + genericParams.joinToOptString(separator = ", ", prefix = "<", postfix = ">") { it.templateName(scope) }
         }
         else -> implSubstitutedName(scope)
     }
@@ -559,15 +563,32 @@ open class Cpp17Generator(
     protected open val Member.isBindable: Boolean
         get() = when (this) {
             is Member.Field -> type is IBindable
-            is Member.Reactive -> true
+            is Member.Reactive -> isBindable
 
             else -> false
         }
 
+    protected open val Member.Reactive.isBindable : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> when {
+            this.delegatedBy !is BindableDeclaration -> false
+            (this.findDelegate()?.delegateType as? Member.DelegateType.Delegated)?.type is IBindable -> true
+            this.findDelegate()?.delegateType is Member.DelegateType.Custom -> true
+            else -> false
+        }
+        else -> true
+    }
+
 
     open val Member.publicName: String get() = name
     open val Member.encapsulatedName: String get() = "${publicName}_"
-    open val Member.isEncapsulated: Boolean get() = this is Member.Reactive
+    open val Member.isEncapsulated: Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> when {
+            isSimplyDelegated(this@Cpp17Generator, flowTransform) -> false
+            else -> true
+        }
+        is Member.Reactive -> true
+        else -> false
+    }
 
     internal fun ctorParam(member: Member, scope: Declaration, withSetter: Boolean): String {
         val typeName = member.implSubstitutedName(scope)
@@ -586,10 +607,15 @@ open class Cpp17Generator(
     protected open val Member.hasEmptyConstructor: Boolean
         get() = when (this) {
             is Member.Field -> type.hasEmptyConstructor && !emptyCtorSuppressed
-            is Member.Reactive -> true
+            is Member.Reactive -> hasEmptyConstructor
 
             else -> fail("Unsupported member: $this")
         }
+
+    protected open val Member.Reactive.hasEmptyConstructor : Boolean get() = when (this) {
+        is Member.Reactive.Stateful.Extension -> delegatedBy.hasEmptyConstructor
+        else -> true
+    }
     //endregion
 
     //region Declaration.
@@ -2392,6 +2418,23 @@ open class Cpp17Generator(
 
     private fun PrettyPrinter.ifDefLanguageVersionAtLeast(version: String, printer: PrettyPrinter.() -> Unit) {
         ifDirective("__cplusplus >= $version", printer)
+    }
+
+    private fun Member.Reactive.Stateful.Extension.factoryFqn(scope: Declaration) : String {
+        val delegate = findDelegate() ?: return javaClass.simpleName
+        return delegate.factoryFqn ?: this.delegateFqnSubstitutedName(scope)
+    }
+
+    private fun Member.Reactive.Stateful.Extension.findDelegate() = findDelegate(this@Cpp17Generator, flowTransform)
+
+    protected open fun Member.Reactive.Stateful.Extension.delegateFqnSubstitutedName(scope: Declaration): String = findDelegate()?.fqnSubstitutedName(scope)
+        ?: this.javaClass.simpleName
+
+    protected open fun Member.ExtensionDelegate.fqnSubstitutedName(scope: Declaration): String = this.delegateType.let { delegateType ->
+        when (delegateType) {
+            is Member.DelegateType.Custom -> delegateType.fqn
+            is Member.DelegateType.Delegated -> delegateType.type.substitutedName(scope)
+        }
     }
 
     override fun toString(): String {

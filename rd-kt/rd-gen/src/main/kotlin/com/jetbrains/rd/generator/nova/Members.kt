@@ -21,7 +21,6 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
         val res = mutableListOf(type)
         if (type is IHasItemType)
             res.addAll(expandItemTypes(type.itemType))
-
         return res
     }
 
@@ -50,12 +49,26 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
     }
 
 
+    sealed class DelegateType {
+        data class Custom(val fqn: String) : DelegateType()
+        data class Delegated(val type: IType) : DelegateType()
+    }
+
     data class ExtensionDelegate(
-            val klass: KClass<out IGenerator>,
-            val flowTransform: FlowTransform?,
-            val delegateFqn: String,
-            val factoryFqn: String? = null
-    )
+        val klass: KClass<out IGenerator>,
+        val flowTransform: FlowTransform?,
+        val delegateType: DelegateType,
+        val factoryFqn: String? = null
+    ) {
+        constructor(klass: KClass<out IGenerator>,
+                    flowTransform: FlowTransform?,
+                    delegateType: IType,
+                    factoryFqn: String? = null) : this(klass, flowTransform, DelegateType.Delegated(delegateType), factoryFqn)
+        constructor(klass: KClass<out IGenerator>,
+                    flowTransform: FlowTransform?,
+                    delegateFqn: String,
+                    factoryFqn: String? = null) : this(klass, flowTransform, DelegateType.Custom(delegateFqn), factoryFqn)
+    }
 
     sealed class Reactive(name: String, vararg val genericParams: IType) : Member(name, genericParams.toList()) {
         var flow  : FlowKind = FlowKind.Both
@@ -81,25 +94,22 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
             class Set       (name : String, itemType : INonNullableScalar) : Stateful(name, itemType)
             class Map       (name : String, keyType : INonNullableScalar, valueType: INonNullable): Stateful(name, keyType, valueType)
 
-            abstract class Extension(name : String, val delegatedBy: ITypeDeclaration, vararg _delegates: ExtensionDelegate)
+            abstract class Extension(name : String, val delegatedBy: IType, vararg _delegates: ExtensionDelegate)
                 : Stateful(name) {
 
                 val delegates = _delegates
 
-                fun fqn(generator: IGenerator, flowTransform: FlowTransform) : String {
-                    return findDelegate(generator, flowTransform)?.delegateFqn ?: javaClass.simpleName
-                }
-
-                fun factoryFqn(generator: IGenerator, flowTransform: FlowTransform) : String {
-                    val delegate = findDelegate(generator, flowTransform) ?: return javaClass.simpleName
-                    return delegate.factoryFqn ?: delegate.delegateFqn
-                }
+                fun hasFactoryFqn(generator: IGenerator, flowTransform: FlowTransform) =
+                    findDelegate(generator, flowTransform)?.factoryFqn != null
 
                 fun findDelegate(generator: IGenerator, flowTransform: FlowTransform): ExtensionDelegate? {
                     return delegates.firstOrNull {
                         it.klass.safeCast(generator) != null && (it.flowTransform == null || it.flowTransform == flowTransform)
                     }
                 }
+
+                fun isSimplyDelegated(generator: IGenerator, flowTransform: FlowTransform) = findDelegate(generator, flowTransform)?.delegateType
+                    ?.let { !hasFactoryFqn(generator, flowTransform) && it is DelegateType.Delegated && it.type.unwrapAttributed() == this.delegatedBy.unwrapAttributed() } ?: false
 
                 constructor(name: String, delegatedBy: Class, vararg _delegateFqn: Pair<KClass<out IGenerator>, String>) :
                     this(name, delegatedBy, *_delegateFqn.map { ExtensionDelegate(it.first, null, it.second) }.toTypedArray())

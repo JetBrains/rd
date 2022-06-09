@@ -197,7 +197,7 @@ sealed class PredefinedType : INonNullableScalar {
 
 interface IDeclaration: ISettingsHolder {
     val name: String
-
+    val allMembers: List<Member>
 }
 
 interface ITypeDeclaration: IType, IDeclaration
@@ -271,7 +271,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
             return field
         }
     val membersOfBaseClasses: List<Member> get() = base?.allMembers.orEmpty()
-    val allMembers: List<Member> get() = ownMembers + membersOfBaseClasses
+    override val allMembers: List<Member> get() = ownMembers + membersOfBaseClasses
 
     open fun serializationHash(initial: IncrementalHash64) : IncrementalHash64
         = ownMembers.sortedBy { it.name }.fold(initial.mix(cl_name).mix(name).mix(base?.name)) { acc, member -> member.serializationHash(acc) }
@@ -635,6 +635,29 @@ val IType.hasEmptyConstructor : Boolean get() = when (this) {
     is Aggregate -> true
 
     else -> false
+}
+
+internal fun IType.unwrapToBaseType(): IType = when(this) {
+    is IHasItemType -> unwrapNullable().unwrapAttributed().unwrapToBaseType()
+    else -> this
+}
+
+internal fun IType.unwrapNullable(): IType = when(this) {
+    is IHasItemType -> when (this) {
+        is INullable -> itemType.unwrapNullable()
+        else -> this
+    }
+
+    else -> this
+}
+
+internal fun IType.unwrapAttributed(): IType = when(this) {
+    is IHasItemType -> when (this) {
+        is IAttributedType -> itemType.unwrapAttributed()
+        else -> this
+    }
+
+    else -> this
 }
 
 class TypeWithValue internal constructor(val type: IType, val defaultValue: Any)
