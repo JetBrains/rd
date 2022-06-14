@@ -36,9 +36,9 @@ class DelayedContextWithExtTest : RdAsyncTestBase() {
             val serverExt = serverModel.extModel
 
             fireValues.forEach {
-                context.value = it
-                serverExt.checker.fire(Unit)
-                context.value = null
+                context.updateValue(it).use {
+                    serverExt.checker.fire(Unit)
+                }
             }
 
             barrier1.await()

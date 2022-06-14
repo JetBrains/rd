@@ -11,23 +11,11 @@ import com.jetbrains.rd.framework.impl.RdPerContextMap
 import com.jetbrains.rd.framework.test.util.DynamicEntity
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.assert
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 
 class RdPerContextMapTest : RdFrameworkTestBase() {
-    companion object {
-        @BeforeAll
-        @AfterAll
-        @JvmStatic
-        fun resetContext() {
-            ContextsTest.TestKeyHeavy.value = null
-            ContextsTest.TestKeyLight.value = null
-        }
-    }
-
     @Test
     fun testOnStructMap() {
         val key = ContextsTest.TestKeyHeavy
@@ -253,9 +241,9 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         clientMap.bind(clientLifetime, clientProtocol, "map")
         serverMap.bind(serverLifetime, serverProtocol, "map")
 
-        key.value = server1Cid
-        serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
-        key.value = null
+        key.updateValue(server1Cid).use {
+            serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
+        }
 
         assertTrue(serverProtocol.contexts.getValueSet(key).contains(server1Cid))
 
@@ -286,21 +274,23 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
             }
         }
 
-        key1.value = server1Cid
-        key2.value = server1Cid
+        key2.updateValue(server1Cid).use {
+            key1.updateValue(server1Cid).use {
 
-        serverProtocol.contexts.registerContext(key1)
-        serverProtocol.contexts.registerContext(key2)
-        clientProtocol.contexts.registerContext(key1)
+                serverProtocol.contexts.registerContext(key1)
+                serverProtocol.contexts.registerContext(key2)
+                clientProtocol.contexts.registerContext(key1)
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+                clientMap.bind(clientLifetime, clientProtocol, "map")
+                serverMap.bind(serverLifetime, serverProtocol, "map")
 
-        serverProtocol.contexts.getValueSet(key1).add(server2Cid)
-        key1.value = server4Cid
-        serverProtocol.contexts.getValueSet(key1).add(server3Cid)
-        key1.value = null
-        key2.value = null
+                serverProtocol.contexts.getValueSet(key1).add(server2Cid)
+            }
+
+            key1.updateValue(server4Cid).use {
+                serverProtocol.contexts.getValueSet(key1).add(server3Cid)
+            }
+        }
 
         assertFalse(serverProtocol.contexts.getValueSet(key1).contains(server1Cid))
         assertFalse(serverProtocol.contexts.getValueSet(key2).contains(server1Cid))

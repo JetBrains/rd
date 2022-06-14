@@ -28,9 +28,9 @@ class ContextWithExtTest : RdFrameworkTestBase() {
         setWireAutoFlush(false)
 
         fireValues.forEach {
-            context.value = it
-            serverExt.checker.fire(Unit)
-            context.value = null
+            context.updateValue(it).use {
+                serverExt.checker.fire(Unit)
+            }
         }
 
         var numReceives = 0

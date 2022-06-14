@@ -6,7 +6,6 @@ import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
-import com.jetbrains.rd.util.reflection.usingValue
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -110,7 +109,7 @@ class TestTwoClients : TestBase() {
 
     @Test
     fun testPerClientIdMap() {
-        SyncModelExt.ClientId::value.usingValue("Host") {
+        SyncModelExt.ClientId.updateValue("Host").use {
             c0.property.set(Clazz(1))
             wait { c1.property.hasValue }
 
@@ -130,7 +129,7 @@ class TestTwoClients : TestBase() {
         c0.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(c0ContextSet)
         c1.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(c1ContextSet)
 
-        SyncModelExt.ClientId::value.usingValue("C") {
+        SyncModelExt.ClientId.updateValue("C").use {
             c0.property.valueOrThrow.mapPerClientId[1] = 1
             wait { c1.property.valueOrThrow.mapPerClientId[1] == 1 }
         }
@@ -142,7 +141,7 @@ class TestTwoClients : TestBase() {
 
     @Test
     fun testPerClientIdProperty() {
-        SyncModelExt.ClientId::value.usingValue("Host") {
+        SyncModelExt.ClientId.updateValue("Host").use {
             c0.protocol.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
             c1.protocol.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
 
