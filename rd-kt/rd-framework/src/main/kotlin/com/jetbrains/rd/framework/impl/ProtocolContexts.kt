@@ -137,13 +137,11 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     fun readMessageContextAndInvoke(buffer: AbstractBuffer, action: () -> Unit) {
         val numContextValues = buffer.readShort().toInt()
         assert(counterpartHandlers.size >= numContextValues) { "We know of ${counterpartHandlers.size} remote keys, received $numContextValues instead" }
-        val valueRestorers = mutableListOf<AutoCloseable>()
-        for (i in 0 until numContextValues) {
+        val valueRestorers = List(numContextValues) { i ->
             val otherSideHandler = counterpartHandlers[i]
-
             val value = otherSideHandler.readValue(serializationCtx, buffer)
             @Suppress("UNCHECKED_CAST")
-            valueRestorers.add((otherSideHandler.context as RdContext<Any>).updateValue(value))
+            (otherSideHandler.context as RdContext<Any>).updateValue(value)
         }
 
         try {
