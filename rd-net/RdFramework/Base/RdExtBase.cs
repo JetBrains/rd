@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using JetBrains.Collections;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -196,7 +197,18 @@ namespace JetBrains.Rd.Base
               continue;
             }
 
-            var contextValueRestorers = p.StoredContext.Select(pair => pair.Key.UpdateValueBoxed(pair.Value)).ToArray();
+            var storedContext = p.StoredContext;
+            var contextValueRestorers = 
+#if !NET35 // Unfortunately, there's no Array.Empty on .NET 3.5.
+              storedContext.Length == 0
+              ? Array.Empty<IDisposable>() :
+#endif
+              new IDisposable[storedContext.Length];
+            for (var i = 0; i < storedContext.Length; ++i)
+            {
+              var (context, value) = storedContext[i];
+              contextValueRestorers[i] = context.UpdateValueBoxed(value);
+            }
             
             try
             {
