@@ -27,5 +27,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <None Include="$(MSBuildThisFileDirectory)\..\THIRD-PARTY-NOTICES.TXT" Pack="true" PackagePath=""/>
+    <None Include="$(MSBuildThisFileDirectory)\third-party-libraries.json" Pack="true" PackagePath=""/>
   </ItemGroup>
 </Project>
