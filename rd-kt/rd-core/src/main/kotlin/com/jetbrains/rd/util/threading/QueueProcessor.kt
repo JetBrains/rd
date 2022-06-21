@@ -6,8 +6,8 @@ import com.jetbrains.rd.util.lifetime.isAlive
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.channels.receiveOrNull
 
+@OptIn(DelicateCoroutinesApi::class)
 @ExperimentalCoroutinesApi
 class QueueProcessor<T : Any>(val lifetime: Lifetime, process: suspend (T) -> Unit) {
     private val channel = Channel<T>(UNLIMITED)
@@ -19,7 +19,7 @@ class QueueProcessor<T : Any>(val lifetime: Lifetime, process: suspend (T) -> Un
 
         GlobalScope.launch {
             while (lifetime.isAlive) {
-                val item = channel.receiveOrNull() ?: break
+                val item = channel.receiveCatching().getOrNull() ?: break
                 catch { process(item) }
             }
         }

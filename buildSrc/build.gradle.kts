@@ -8,7 +8,7 @@ plugins {
     `kotlin-dsl`
     jacoco
     signing
-    kotlin("multiplatform") version "1.4.0" apply false
+    kotlin("multiplatform") version "1.7.0" apply false
 }
 
 dependencies {
