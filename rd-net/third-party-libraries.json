@@ -1,0 +1,16 @@
+[
+  {
+    "name": ".NET Runtime",
+    "version": "6.0",
+    "url": "https://github.com/dotnet/runtime",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/dotnet/runtime/blob/39b9607807f29e48cae4652cd74735182b31182e/LICENSE.TXT"
+  },
+  {
+    "name": "JetBrains Annotations",
+    "version": "2022.1.0",
+    "url": "https://www.jetbrains.com/help/resharper/Code_Analysis__Code_Annotations.html",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/JetBrains/JetBrains.Annotations/blob/ac4bd27/license.md"
+  }
+]
