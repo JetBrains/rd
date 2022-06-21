@@ -41,10 +41,6 @@ Plugin for RdFramework used for defining models using regular C#
 Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
 * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-gen
 * Gradle: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-gen
-* NuGet: https://www.nuget.org/packages/JetBrains.RdGen
-
-
-
   
 # How to build
 

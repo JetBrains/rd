@@ -20,15 +20,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
 }
 
-val fatJar = task<Jar>("fatJar") {
-    manifest {
-        attributes["Main-Class"] = "com.jetbrains.rd.generator.nova.MainKt"
-    }
-    archiveBaseName.set("rd")
-    from(Callable { configurations.implementation.get().map { if (it.isDirectory) it else zipTree(it) } })
-    with(tasks["jar"] as CopySpec)
-}
-
 apply(from = "models.gradle.kts")
 
 lateinit var models: SourceSet
