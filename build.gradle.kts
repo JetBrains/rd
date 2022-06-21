@@ -116,37 +116,6 @@ tasks {
         into(buildDir.resolve("artifacts").resolve("nuget"))
     }
 
-    val layoutRdGen by registering {
-        group = publishingGroup
-        doLast {
-            val libFolder = buildDir.resolve("temp").resolve("lib").resolve("net")
-            libFolder.mkdirs()
-            val stubFile = libFolder.resolve("_._")
-            if (!stubFile.exists()) {
-                stubFile.createNewFile()
-            }
-        }
-    }
-
-    val packRdGen by registering(Exec::class) {
-        group = publishingGroup
-        dependsOn(":rd-gen:fatJar")
-        dependsOn(dotNetBuild, layoutRdGen, ":rd-gen:fatJar")
-        executable = project.projectDir.resolve("rd-net").resolve("dotnet.cmd").canonicalPath
-        args("pack", "--output", buildDir.resolve("temp").canonicalPath, "/p:Configuration=Release", "/p:PackageVersion=$version", projectDir.resolve("rd-kt").resolve("rd-gen").resolve("JetBrains.RdGen.proj").canonicalPath)
-        workingDir = projectDir.resolve("rd-kt").resolve("rd-gen")
-        environment("DOTNET_NOLOGO", "1")
-        environment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
-    }
-
-    val copyRdGen by registering(Copy::class) {
-        group = publishingGroup
-        dependsOn(packRdGen)
-        from(buildDir.resolve("temp").canonicalPath)
-        include("*.nupkg")
-        into(buildDir.resolve("artifacts").resolve("nuget"))
-    }
-
     val cleanupArtifacts by registering {
         group = publishingGroup
         doLast {
@@ -158,7 +127,7 @@ tasks {
 
     val createNuGetPackages by registering {
         group = publishingGroup
-        dependsOn(cleanupArtifacts, copyNuGetLifetimes, copyNuGetRdFramework, copyNuGetRdFrameworkReflection, copyRdGen)
+        dependsOn(cleanupArtifacts, copyNuGetLifetimes, copyNuGetRdFramework, copyNuGetRdFrameworkReflection)
     }
 
     fun enableNuGetPublishing(url: String, apiKey: String) {
