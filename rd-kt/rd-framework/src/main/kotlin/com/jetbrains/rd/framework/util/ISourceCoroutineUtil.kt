@@ -59,7 +59,7 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, scheduler: IScheduler, handl
 
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, context: CoroutineContext, handler: suspend (T) -> Unit) {
     advise(lifetime) {
-        RdCoroutineScope.current.launch(context) {
+        lifetime.launch(context) {
             handler(it)
         }
     }
