@@ -14,7 +14,7 @@ namespace JetBrains.Rd
     [NotNull] public readonly string Key;
     public readonly bool IsHeavy;
 
-    public RdContextBase(string key, bool isHeavy)
+    protected RdContextBase(string key, bool isHeavy)
     {
       Key = key;
       IsHeavy = isHeavy;
@@ -27,7 +27,7 @@ namespace JetBrains.Rd
 
     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdContextBase value)
     {
-      ctx.Serializers.Write<RdContextBase>(ctx, writer, value);
+      ctx.Serializers.Write(ctx, writer, value);
     }
 
     public bool Equals(RdContextBase other)
@@ -41,7 +41,7 @@ namespace JetBrains.Rd
     {
       if (ReferenceEquals(null, obj)) return false;
       if (ReferenceEquals(this, obj)) return true;
-      if (obj.GetType() != this.GetType()) return false;
+      if (obj.GetType() != GetType()) return false;
       return Equals((RdContextBase) obj);
     }
 
@@ -59,7 +59,7 @@ namespace JetBrains.Rd
     /// <summary>
     /// Sets current value to <paramref name="newValue"/> and returns a cookie which should restore old value on disposing
     /// </summary>
-    internal abstract IDisposable UpdateValueBoxed(object newValue);
+    public abstract IDisposable UpdateValueBoxed(object newValue);
   }
 
   /// <summary>
@@ -101,9 +101,9 @@ namespace JetBrains.Rd
     internal sealed override object ValueBoxed => Value;
 
     /// <inheritdoc cref="UpdateValueBoxed"/>
-    internal abstract IDisposable UpdateValue(T newValue);
+    public abstract IDisposable UpdateValue(T newValue);
 
-    internal override IDisposable UpdateValueBoxed(object newValue)
+    public override IDisposable UpdateValueBoxed(object newValue)
     {
       return UpdateValue((T) newValue);
     }
@@ -134,7 +134,7 @@ namespace JetBrains.Rd
     /// </summary>
     public override T Value => myValue.Value;
 
-    internal override IDisposable UpdateValue(T newValue)
+    public override IDisposable UpdateValue(T newValue)
     {
       var oldValue = myValue.Value;
       myValue.Value = newValue;
