@@ -1269,7 +1269,7 @@ namespace JetBrains.Lifetimes
         {
           return await task();
         }
-        catch (OperationCanceledException) //use isOCE
+        catch (Exception e) when (e.IsOperationCanceled())
         {
           //retry
         }
