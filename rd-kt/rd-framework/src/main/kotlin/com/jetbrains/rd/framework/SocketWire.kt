@@ -4,7 +4,6 @@ import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.ByteBufferAsyncProcessor
@@ -93,10 +92,18 @@ class SocketWire {
 
         protected val lock = Object()
 
+        protected var maxMessageLength = 300_000_000
+
         private var maxReceivedSeqn : Long = 0
 
-
         init {
+            logger.catch("Incorrect rd.max.message.length parameter") {
+                val maxMessageLengthStr = System.getProperty("rd.max.message.length")
+                val newMaxMessageLength = maxMessageLengthStr?.toIntOrNull()
+                if (newMaxMessageLength != null && newMaxMessageLength > maxMessageLength){
+                    maxMessageLength = newMaxMessageLength
+                }
+            }
 
             sendBuffer.pause(disconnectedPauseReason)
             sendBuffer.start()
@@ -196,7 +203,7 @@ class SocketWire {
 
             val len = pkgInput.readInt32() ?: return false
             require(len > 0) {"len > 0: $len"}
-            require (len < 300_000_000) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
+            require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
 
             val data = ByteArray(len)
             if (!pkgInput.readByteArray(data))
@@ -255,7 +262,7 @@ class SocketWire {
                     }
                     else {
                         require(len > 0) {"len > 0: $len"}
-                        require (len < 300_000_000) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
+                        require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
 
                         pkg = ByteArray(len)
                         pos = 0
