@@ -925,9 +925,19 @@ namespace JetBrains.Lifetimes
     /// <param name="options"></param>
     /// <returns></returns>
     [PublicAPI] public Task Start(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
+
+    /// <summary>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [PublicAPI] public Task Start(TaskScheduler scheduler, Action<object> action, object state, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, state, this, options, scheduler); }
     
     /// <summary>
-    /// <inheritdoc cref="Start"/>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// </summary>
     /// <param name="scheduler"></param>
     /// <param name="action"></param>
@@ -935,18 +945,39 @@ namespace JetBrains.Lifetimes
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [PublicAPI] public Task<T> Start<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler); }
+
+    /// <summary>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    [PublicAPI] public Task<T> Start<T>(TaskScheduler scheduler, Func<object, T> action, object state, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, state, this, options, scheduler); }
     
     /// <summary>
-    /// <inheritdoc cref="Start"/>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// </summary>
     /// <param name="scheduler"></param>
     /// <param name="action"></param>
     /// <param name="options"></param>
     /// <returns></returns>
     [PublicAPI] public Task StartAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
+
+    /// <summary>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [PublicAPI] public Task StartAsync(TaskScheduler scheduler, Func<object, Task> action, object state, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, state, this, options, scheduler).Unwrap(); }
     
     /// <summary>
-    /// <inheritdoc cref="Start"/>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// </summary>
     /// <param name="scheduler"></param>
     /// <param name="action"></param>
@@ -954,6 +985,17 @@ namespace JetBrains.Lifetimes
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [PublicAPI] public Task<T> StartAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, this, options, scheduler).Unwrap(); }
+
+    /// <summary>
+    /// <inheritdoc cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    [PublicAPI] public Task<T> StartAsync<T>(TaskScheduler scheduler, Func<object, Task<T>> action, object state, TaskCreationOptions options = TaskCreationOptions.None) { using (UsingAsyncLocal()) return Task.Factory.StartNew(action, state, this, options, scheduler).Unwrap(); }
 
 
     /// <summary>
@@ -965,9 +1007,20 @@ namespace JetBrains.Lifetimes
     /// <param name="options"></param>
     /// <returns></returns>
     [PublicAPI] public Task StartAttached(TaskScheduler scheduler, Action action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options));
+
+    /// <summary>
+    /// Starts task with this lifetime as <see cref="CancellationToken"/> but also (if <see cref="IsAlive"/>) suppress
+    /// lifetime termination until task is finished. Task will see this lifetime in <see cref="AsyncLocal"/>.
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [PublicAPI] public Task StartAttached(TaskScheduler scheduler, Action<object> action, object state, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, state, options));
     
     /// <summary>
-    /// <inheritdoc cref="StartAttached"/>
+    /// <inheritdoc cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// </summary>
     /// <param name="scheduler"></param>
     /// <param name="action"></param>
@@ -975,18 +1028,39 @@ namespace JetBrains.Lifetimes
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [PublicAPI] public Task<T> StartAttached<T>(TaskScheduler scheduler, Func<T> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, options));
-    
+
     /// <summary>
-    /// <inheritdoc cref="StartAttached"/>
+    /// <inheritdoc cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    [PublicAPI] public Task<T> StartAttached<T>(TaskScheduler scheduler, Func<object, T> action, object state, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(Start(scheduler, action, state, options));
+
+    /// <summary>
+    /// <inheritdoc cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// </summary>
     /// <param name="scheduler"></param>
     /// <param name="action"></param>
     /// <param name="options"></param>
     /// <returns></returns>
     [PublicAPI] public Task StartAttachedAsync(TaskScheduler scheduler, Func<Task> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
-    
+
     /// <summary>
-    /// <inheritdoc cref="StartAttached"/>
+    /// <inheritdoc cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [PublicAPI] public Task StartAttachedAsync(TaskScheduler scheduler, Func<object, Task> action, object state, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, state, options));
+
+    /// <summary>
+    /// <inheritdoc cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// </summary>
     /// <param name="scheduler"></param>
     /// <param name="action"></param>
@@ -995,6 +1069,16 @@ namespace JetBrains.Lifetimes
     /// <returns></returns>
     [PublicAPI] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<Task<T>> action, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, options));
 
+    /// <summary>
+    /// <inheritdoc cref="StartAttached(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
+    /// </summary>
+    /// <param name="scheduler"></param>
+    /// <param name="action"></param>
+    /// <param name="state"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    [PublicAPI] public Task<T> StartAttachedAsync<T>(TaskScheduler scheduler, Func<object, Task<T>> action, object state, TaskCreationOptions options = TaskCreationOptions.None) => Definition.Attached(StartAsync(scheduler, action, state, options));
 
 
     /// <summary>
