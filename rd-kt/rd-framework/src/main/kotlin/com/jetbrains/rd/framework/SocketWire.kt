@@ -65,6 +65,7 @@ class SocketWire {
         private const val ack_msg_len: Int = -1
         private const val ping_len: Int = -2
         private const val pkg_header_len = 12
+        private const val default_max_msg_len = 300_000_000
         const val disconnectedPauseReason = "Socket not connected"
         const val maximumHeartbeatDelay = 3
 
@@ -92,19 +93,18 @@ class SocketWire {
 
         protected val lock = Object()
 
-        protected var maxMessageLength = 300_000_000
+        var maxMessageLength = default_max_msg_len
+            set(value) {
+                if (value < default_max_msg_len) {
+                    logger.warn { "$value is less than default value ($default_max_msg_len). This is not allowed." }
+                } else {
+                    field = value
+                }
+            }
 
         private var maxReceivedSeqn : Long = 0
 
         init {
-            logger.catch("Incorrect rd.max.message.length parameter") {
-                val maxMessageLengthStr = System.getProperty("rd.max.message.length")
-                val newMaxMessageLength = maxMessageLengthStr?.toIntOrNull()
-                if (newMaxMessageLength != null && newMaxMessageLength > maxMessageLength){
-                    maxMessageLength = newMaxMessageLength
-                }
-            }
-
             sendBuffer.pause(disconnectedPauseReason)
             sendBuffer.start()
 
@@ -203,7 +203,7 @@ class SocketWire {
 
             val len = pkgInput.readInt32() ?: return false
             require(len > 0) {"len > 0: $len"}
-            require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
+            require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)}), allowed_len=$maxMessageLength(0x${maxMessageLength.toString(16)})" }
 
             val data = ByteArray(len)
             if (!pkgInput.readByteArray(data))
@@ -262,7 +262,7 @@ class SocketWire {
                     }
                     else {
                         require(len > 0) {"len > 0: $len"}
-                        require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)})" }
+                        require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)}), allowed_len=$maxMessageLength(0x${maxMessageLength.toString(16)})" }
 
                         pkg = ByteArray(len)
                         pos = 0
