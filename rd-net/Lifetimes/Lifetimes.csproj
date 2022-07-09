@@ -18,6 +18,10 @@
         
     </PropertyGroup>
     
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net35'">
+        <WarningsNotAsErrors>CS8632</WarningsNotAsErrors>
+    </PropertyGroup>
+    
     <PropertyGroup Label="NuGet">
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageId>JetBrains.Lifetimes</PackageId>
