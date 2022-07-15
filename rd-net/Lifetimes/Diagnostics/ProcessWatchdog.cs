@@ -19,12 +19,12 @@ namespace JetBrains.Diagnostics
     private const int DELAY_BEFORE_RETRY = 1000;
     private const int ERROR_INVALID_PARAMETER = 87;
 
-    public static void StartWatchdogForPidEnvironmentVariable(string envVarName)
+    public static void StartWatchdogForPidEnvironmentVariable(string envVarName, Action? beforeProcessKill = null)
     {
-      StartWatchdogForPidEnvironmentVariable(envVarName, Lifetime.Eternal);
+      StartWatchdogForPidEnvironmentVariable(envVarName, Lifetime.Eternal, beforeProcessKill: beforeProcessKill);
     }
 
-    public static void StartWatchdogForPidEnvironmentVariable(string envVarName, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null)
+    public static void StartWatchdogForPidEnvironmentVariable(string envVarName, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null, Action? beforeProcessKill = null)
     {
       var parentProcessPidString = Environment.GetEnvironmentVariable(envVarName);
       if (parentProcessPidString == null)
@@ -37,15 +37,15 @@ namespace JetBrains.Diagnostics
         ourLogger.Error($"Unable to parse int from environment variable '{envVarName}' => do not watch parent process to die");
         return;
       }
-      StartWatchdogForPid(parentProcessPid, lifetime, gracefulShutdownPeriod);
+      StartWatchdogForPid(parentProcessPid, lifetime, gracefulShutdownPeriod, beforeProcessKill: beforeProcessKill);
     }
 
-    public static void StartWatchdogForPid(int pid)
+    public static void StartWatchdogForPid(int pid, Action? beforeProcessKill)
     {
-      StartWatchdogForPid(pid, Lifetime.Eternal);
+      StartWatchdogForPid(pid, Lifetime.Eternal, beforeProcessKill: beforeProcessKill);
     }
 
-    public static void StartWatchdogForPid(int pid, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null)
+    public static void StartWatchdogForPid(int pid, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null, Action? beforeProcessKill = null)
     {
       var watchThread = new Thread(() =>
       {
@@ -67,6 +67,8 @@ namespace JetBrains.Diagnostics
             {
               LogLog.Error(exitMsg);
               ourLogger.Error(exitMsg);
+              
+              beforeProcessKill?.Invoke();
               
               if (gracefulShutdownPeriod.HasValue)
               {
