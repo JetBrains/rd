@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
+using JetBrains.Util;
 
 #nullable disable
 
@@ -118,6 +119,8 @@ namespace JetBrains.Rd
   /// <typeparam name="T"></typeparam>
   public abstract class ThreadLocalRdContext<T> : RdContext<T>
   {
+    [ThreadStatic] [CanBeNull] private static SingleThreadObjectPool<UpdateValueCookie> ourPool;
+    
 #if NET35
     private readonly ThreadLocal<T> myValue = new ThreadLocal<T>();
 #else
@@ -136,28 +139,38 @@ namespace JetBrains.Rd
 
     public override IDisposable UpdateValue(T newValue)
     {
+      var pool = ourPool ??= new SingleThreadObjectPool<UpdateValueCookie>(() => new UpdateValueCookie(), null);
+      var updateValueCookie = pool.Rent();
       var oldValue = myValue.Value;
+      updateValueCookie.Init(this, oldValue);
+      
       myValue.Value = newValue;
-      return new UpdateValueCookie(this, oldValue);
+      return updateValueCookie;
     }
-    
+
     private class UpdateValueCookie : IDisposable
     {
-      private readonly ThreadLocalRdContext<T> myContext;
-      private readonly T myOldValue;
-      private readonly Thread myNewValueSetThread;
+      [CanBeNull] private ThreadLocalRdContext<T> myContext;
+      private T myOldValue;
+      private readonly Thread myThread = Thread.CurrentThread;
 
-      public UpdateValueCookie(ThreadLocalRdContext<T> context, T oldValue)
+      public void Init([NotNull] ThreadLocalRdContext<T> context, T oldValue)
       {
-        myNewValueSetThread = Thread.CurrentThread;
         myContext = context;
         myOldValue = oldValue;
       }
 
       public void Dispose()
       {
-        Assertion.AssertCurrentThread(myNewValueSetThread);
+        Assertion.AssertCurrentThread(myThread);
+        Assertion.AssertNotNull(myContext);
         myContext.myValue.Value = myOldValue;
+
+        myContext = default;
+        myOldValue = default;
+
+        Assertion.AssertNotNull(ourPool);
+        ourPool.Return(this);
       }
     }
   }

@@ -9,6 +9,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
+using JetBrains.Util;
 
 namespace JetBrains.Rd.Impl
 {
@@ -154,6 +155,8 @@ namespace JetBrains.Rd.Impl
       Wire.Advise(lifetime, this);
     }
 
+    [ThreadStatic] private static SingleThreadListPool<IDisposable>? ourListsPool;
+
     /// <summary>
     /// Reads context values from a message, sets current context to them, and returns a cookie to restore previous context
     /// </summary>
@@ -161,27 +164,29 @@ namespace JetBrains.Rd.Impl
     {
       var numContextValues = reader.ReadShort();
       Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
-      var contextValueRestorers = new IDisposable[numContextValues];
+      
+      var pool = ourListsPool ??= new SingleThreadListPool<IDisposable>(2);
+      var contextValueRestorersCookie = pool.RentCookie();
       for (var i = 0; i < numContextValues; i++)
-        contextValueRestorers[i] = myCounterpartHandlers[i].ReadValueIntoContext(SerializationContext, reader);
-      return new MessageContextCookie(contextValueRestorers);
+        contextValueRestorersCookie.Value.Add(myCounterpartHandlers[i].ReadValueIntoContext(SerializationContext, reader));
+      return new MessageContextCookie(contextValueRestorersCookie);
     }
 
-    public readonly struct MessageContextCookie : IDisposable
+    public readonly ref struct MessageContextCookie
     {
-      private readonly IDisposable[] myEachContextValueRestorers;
+      private readonly RentedValueCookie<List<IDisposable>> myCookie;
 
-      public MessageContextCookie(IDisposable[] eachContextValueRestorers)
+      public MessageContextCookie(RentedValueCookie<List<IDisposable>> cookie)
       {
-        myEachContextValueRestorers = eachContextValueRestorers;
+        myCookie = cookie;
       }
 
       public void Dispose()
       {
-        foreach (var contextValueRestorer in myEachContextValueRestorers)
-        {
+        foreach (var contextValueRestorer in myCookie.Value) 
           contextValueRestorer.Dispose();
-        }
+
+        myCookie.Dispose();
       }
     }
 
