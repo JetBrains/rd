@@ -179,11 +179,12 @@ namespace JetBrains.Rd.Base
       set => Assertion.Assert(RealWire.Contexts == value, "Can't change ProtocolContexts in ExtWire");
     }
 
-
     public ExtWire()
     {
       Connected.WhenTrue(Lifetime.Eternal, _ =>
       {
+        var contextValueRestorers = new List<IDisposable>();
+
         lock (mySendQ)
         {
           while (mySendQ.Count > 0)
@@ -198,16 +199,9 @@ namespace JetBrains.Rd.Base
             }
 
             var storedContext = p.StoredContext;
-            var contextValueRestorers = 
-#if !NET35 // Unfortunately, there's no Array.Empty on .NET 3.5.
-              storedContext.Length == 0
-              ? Array.Empty<IDisposable>() :
-#endif
-              new IDisposable[storedContext.Length];
-            for (var i = 0; i < storedContext.Length; ++i)
+            foreach (var (context, value) in storedContext)
             {
-              var (context, value) = storedContext[i];
-              contextValueRestorers[i] = context.UpdateValueBoxed(value);
+              contextValueRestorers.Add(context.UpdateValueBoxed(value));
             }
             
             try
@@ -218,6 +212,8 @@ namespace JetBrains.Rd.Base
             {
               foreach (var contextValueRestorer in contextValueRestorers)
                 contextValueRestorer.Dispose();
+
+              contextValueRestorers.Clear();
             }
           }
         }               
