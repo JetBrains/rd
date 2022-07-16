@@ -93,6 +93,7 @@ class SocketWire {
 
         protected val lock = Object()
 
+        @field:Volatile
         var maxMessageLength = default_max_msg_len
             set(value) {
                 if (value < default_max_msg_len) {
