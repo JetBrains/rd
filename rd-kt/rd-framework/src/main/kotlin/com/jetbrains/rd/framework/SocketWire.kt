@@ -303,7 +303,7 @@ class SocketWire {
         private val ackPkgHeader = createAbstractBuffer()
 
         /**
-         * Timestamp of this wire which increases at intervals of [heartbeatInterval].
+         * Timestamp of this wire which increases at intervals of [heartbeatIntervalMs].
          */
         private var currentTimeStamp = 0
 
