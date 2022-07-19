@@ -969,11 +969,7 @@ namespace JetBrains.Lifetimes
     private CancellationTokenSource CreateCtsLazily()
     {
       if (myCts != null) return myCts;
-      
-      var cts = new CancellationTokenSource();
-      Memory.Barrier();
-      //to suppress reordering of init and ctor visible from outside
-      myCts = cts;
+      Interlocked.CompareExchange(ref myCts, new CancellationTokenSource(), null);
       
       //But MarkCanceledRecursively may already happen, so we need to help Cancel source
       if (Status != LifetimeStatus.Alive)
