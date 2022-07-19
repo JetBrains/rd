@@ -1224,6 +1224,30 @@ namespace Test.Lifetimes.Lifetimes
       Assert.True(lf.IsNotAlive);
     }
     
+
+    [Test]
+    public void CancellationTokenStressTest()
+    {
+      var cancel = new CancellationTokenSource(1000).Token;
+      
+      var def = new LifetimeDefinition();
+      Task.WaitAll(
+        Task.Run(() =>
+        {
+          while (!cancel.IsCancellationRequested)
+          {
+            def.Terminate();
+            Thread.Yield();
+            def = new LifetimeDefinition();
+          }
+        }),
+        Task.Run(() =>
+        {
+          while (!cancel.IsCancellationRequested) 
+            def.ToCancellationToken();
+        }));
+    }
+
 #endif
 
     [Test]

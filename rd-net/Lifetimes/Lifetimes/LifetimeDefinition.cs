@@ -542,10 +542,10 @@ namespace JetBrains.Lifetimes
       myResources = null;
       myResCount = 0;
       
-      //In fact we shouldn't make cts null, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
+      //In fact we shouldn't make it, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
       //But to avoid memory leaks we must do it. So if you 1) run task with alive lifetime 2) terminate lifetime 3) in task invoke ThrowIfNotAlive() you can obtain `Faulted` state rather than `Canceled`. But it doesn't matter in `async-await` programming.     
       if (!ReferenceEquals(this, Terminated))
-        myCts = null;
+        myCts = Terminated.myCts;
       
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
       Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
