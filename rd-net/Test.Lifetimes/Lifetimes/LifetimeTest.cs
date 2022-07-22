@@ -1224,6 +1224,75 @@ namespace Test.Lifetimes.Lifetimes
       Assert.True(lf.IsNotAlive);
     }
     
+
+    [Test]
+    public void CancellationTokenStressTest()
+    {
+      var cancel = new CancellationTokenSource(1000).Token;
+      
+      var def = new LifetimeDefinition();
+      Task.WaitAll(
+        Task.Run(() =>
+        {
+          while (!cancel.IsCancellationRequested)
+          {
+            def.Terminate();
+            Thread.Yield();
+            def = new LifetimeDefinition();
+          }
+        }),
+        Task.Run(() =>
+        {
+          while (!cancel.IsCancellationRequested) 
+            def.ToCancellationToken();
+        }));
+    }
+
+    [Test]
+    public void CancellationTokenActualCancellationStressTest()
+    {
+      var cancel = new CancellationTokenSource(1000).Token;
+      
+      var sum = 0;
+      var def = Lifetime.Define();
+      Task.WaitAll(
+        Task.Run(() =>
+        {
+          while (!cancel.IsCancellationRequested)
+          {
+            def.Terminate();
+            Thread.Yield();
+            def = new LifetimeDefinition();
+          }
+        }),
+        Task.Run(CheckerProc),
+        Task.Run(CheckerProc),
+        Task.Run(CheckerProc),
+        Task.Run(CheckerProc),
+        Task.Run(CheckerProc),
+        Task.Run(CheckerProc)
+      );
+
+      void CheckerProc()
+      {
+        var cache = def;
+        var localSum = 0;
+        while (!cancel.IsCancellationRequested)
+        {
+          if (def != cache)
+          {
+            cache = def;
+            Interlocked.Increment(ref localSum);
+            cache.ToCancellationToken().Register(() => Interlocked.Decrement(ref localSum));
+          }
+        }
+        cache.Terminate();
+        Interlocked.Add(ref sum, localSum);
+      }
+
+      Assert.AreEqual(0, sum);
+    }
+
 #endif
 
     [Test]

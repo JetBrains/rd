@@ -542,10 +542,10 @@ namespace JetBrains.Lifetimes
       myResources = null;
       myResCount = 0;
       
-      //In fact we shouldn't make cts null, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
+      //In fact we shouldn't make it, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
       //But to avoid memory leaks we must do it. So if you 1) run task with alive lifetime 2) terminate lifetime 3) in task invoke ThrowIfNotAlive() you can obtain `Faulted` state rather than `Canceled`. But it doesn't matter in `async-await` programming.     
       if (!ReferenceEquals(this, Terminated))
-        myCts = null;
+        myCts = Terminated.myCts;
       
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
       Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
@@ -969,11 +969,7 @@ namespace JetBrains.Lifetimes
     private CancellationTokenSource CreateCtsLazily()
     {
       if (myCts != null) return myCts;
-      
-      var cts = new CancellationTokenSource();
-      Memory.Barrier();
-      //to suppress reordering of init and ctor visible from outside
-      myCts = cts;
+      Interlocked.CompareExchange(ref myCts, new CancellationTokenSource(), null);
       
       //But MarkCanceledRecursively may already happen, so we need to help Cancel source
       if (Status != LifetimeStatus.Alive)
