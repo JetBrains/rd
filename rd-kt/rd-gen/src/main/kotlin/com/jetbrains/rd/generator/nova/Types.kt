@@ -163,6 +163,7 @@ sealed class PredefinedType : INonNullableScalar {
     object char : PredefinedType()
     //string
     object string : PredefinedType()
+    object localizedString : PredefinedType()
 
     //library types
     object guid : PredefinedType()

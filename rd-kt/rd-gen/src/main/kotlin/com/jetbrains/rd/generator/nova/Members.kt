@@ -80,7 +80,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
         class Signal(name : String, paramType : IScalar) : Reactive(name, paramType)
 
         sealed class Stateful(name : String, vararg genericParams: IType)  : Reactive(name, *genericParams) {
-            class Property  (name: String, valueType: IType, val defaultValue: Any? = null) : Stateful(name, valueType) {
+            class Property  (name: String, val valueType: IType, val defaultValue: Any? = null) : Stateful(name, valueType) {
                 val isNullable
                     get() = referencedTypes.first().isNullable()
 

@@ -125,6 +125,7 @@ open class CSharp50Generator(
             is IAttributedType -> itemType.substitutedName(scope)
             is IArray -> itemType.substitutedName(scope) + "[]"
             is IImmutableList -> "List<${itemType.substitutedName(scope)}>"
+            is PredefinedType.localizedString -> "JetBrains.Application.I18n.LocalizedString"
             is PredefinedType -> {
                 when {
                     listOf(
@@ -572,6 +573,7 @@ open class CSharp50Generator(
 
             when (member) {
                 is Member.Reactive.Stateful.Property -> when {
+                    member.defaultValue is String && member.valueType is PredefinedType.localizedString -> "JetBrains.Application.I18n.LocalizedStringExtensions.NON_LOCALIZABLE(\"" + member.defaultValue + "\")"
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
                     member.defaultValue is Member.Const -> member.defaultValue.name
                     member.defaultValue != null -> member.defaultValue.toString()
@@ -674,6 +676,7 @@ open class CSharp50Generator(
 
     fun IType.readerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean): String? = when (this) {
         is Enum -> null //to overwrite Declaration
+        is PredefinedType.localizedString -> "JetBrains.Application.I18n.StringExtensions.ReadLocalizedStringDlgt"
         is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Read$name"
         is Declaration -> if(this.isOpen && !allowSpecificOpenTypeReference) null else (this.getSetting(Intrinsic)?.readDelegateFqn ?: "${sanitizedName(containing)}.Read")
         is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Read$name" else null
@@ -707,6 +710,7 @@ open class CSharp50Generator(
 
         fun IType.reader(): String = when (this) {
             is Enum -> "(${sanitizedName(decl)})reader.ReadInt()"
+            is PredefinedType.localizedString -> "JetBrains.Application.I18n.StringExtensions.ReadLocalizedString(reader)"
             is PredefinedType -> "reader.Read$name()"
             is InternedScalar -> "ctx.ReadInterned(reader, \"${internKey.keyName}\", ${itemType.complexDelegateBuilder()})"
             is IAttributedType -> itemType.reader()
@@ -764,6 +768,7 @@ open class CSharp50Generator(
 
     fun IType.writerDeclaredElsewhereDelegateRef(containing: Declaration, allowSpecificOpenTypeReference: Boolean): String? = when (this) {
         is Enum -> null //to overwrite Declaration
+        is PredefinedType.localizedString -> "JetBrains.Application.I18n.StringExtensions.WriteLocalizedStringDlgt"
         is PredefinedType -> "JetBrains.Rd.Impl.Serializers.Write$name"
         is Declaration -> if(isOpen && !allowSpecificOpenTypeReference) null else (this.getSetting(Intrinsic)?.writeDelegateFqn ?: "${sanitizedName(containing)}.Write")
         is IArray -> if (this.isPrimitivesArray) "JetBrains.Rd.Impl.Serializers.Write$name" else null

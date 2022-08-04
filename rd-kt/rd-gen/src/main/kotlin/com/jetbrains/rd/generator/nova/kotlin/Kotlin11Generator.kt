@@ -79,6 +79,7 @@ open class Kotlin11Generator(
         is PredefinedType.secureString -> "RdSecureString"
         is PredefinedType.void -> "Unit"
         is PredefinedType.UnsignedIntegral -> "U${itemType.substitutedName(scope)}"
+        is PredefinedType.localizedString -> "String"
         is PredefinedType -> name.capitalize()
 
         else -> fail("Unsupported type ${javaClass.simpleName}")
@@ -252,6 +253,7 @@ open class Kotlin11Generator(
     protected fun IType.leafSerializerRef(scope: Declaration): String? {
         return when (this) {
             is Enum -> "${sanitizedName(scope)}.marshaller"
+            is PredefinedType.localizedString -> "FrameworkMarshallers.String"
             is PredefinedType -> "FrameworkMarshallers.$name"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn ?: run {
@@ -653,6 +655,7 @@ open class Kotlin11Generator(
                     when (member.type) {
                         is PredefinedType.char -> "\'$value\'"
                         is PredefinedType.string -> "\"$value\""
+                        is PredefinedType.localizedString -> "\"$value\""
                         is PredefinedType.long -> "${value}L"
                         is PredefinedType.float -> "${value}f"
                         is PredefinedType.UnsignedIntegral -> "${value}u"
@@ -684,6 +687,7 @@ open class Kotlin11Generator(
         fun IType.reader(): String = when (this) {
             is Enum -> "buffer.readEnum$setOrEmpty<${sanitizedName(decl)}>()"
             is InternedScalar -> "ctx.readInterned(buffer, \"${internKey.keyName}\") { _, _ -> ${itemType.reader()} }"
+            is PredefinedType.localizedString -> PredefinedType.string.reader()
             is PredefinedType -> "buffer.read${name.capitalize()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
@@ -751,6 +755,7 @@ open class Kotlin11Generator(
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "buffer.writeEnum$setOrEmpty($field)"
             is InternedScalar -> "ctx.writeInterned(buffer, $field, \"${internKey.keyName}\") { _, _, internedValue -> ${itemType.writer("internedValue")} }"
+            is PredefinedType.localizedString -> PredefinedType.string.writer(field)
             is PredefinedType -> "buffer.write${name.capitalize()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
