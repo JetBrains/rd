@@ -413,12 +413,16 @@ namespace JetBrains.Collections.Viewable
 
     public static Task<T> NextValueAsync<T>(this ISource<T> source, Lifetime lifetime, Func<T, bool> condition)
     {
-      var tcs = lifetime.CreateTaskCompletionSource<T>();
-      source.AdviseOnce(lifetime, v =>
+      var tcs = new TaskCompletionSource<T>();
+      var definition = lifetime.CreateNested();
+      definition.SynchronizeWith(tcs);
+
+      source.Advise(definition.Lifetime, v =>
       {
-        if (condition(v))
+        if (condition(v)) 
           tcs.TrySetResult(v);
       });
+      
       return tcs.Task;
     }
 #endif
