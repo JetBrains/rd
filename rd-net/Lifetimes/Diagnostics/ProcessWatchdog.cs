@@ -40,7 +40,7 @@ namespace JetBrains.Diagnostics
       StartWatchdogForPid(parentProcessPid, lifetime, gracefulShutdownPeriod, beforeProcessKill: beforeProcessKill);
     }
 
-    public static void StartWatchdogForPid(int pid, Action? beforeProcessKill)
+    public static void StartWatchdogForPid(int pid, Action? beforeProcessKill = null)
     {
       StartWatchdogForPid(pid, Lifetime.Eternal, beforeProcessKill: beforeProcessKill);
     }
