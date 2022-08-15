@@ -2,6 +2,7 @@ package com.jetbrains.rd.util.reflection
 
 import java.io.File
 import java.net.URL
+import java.net.URLClassLoader
 import java.net.URLDecoder
 import java.util.jar.JarFile
 import kotlin.system.measureTimeMillis
@@ -17,8 +18,7 @@ private val classSuffix : String = ".class"
  */
 fun ClassLoader.scanForClasses(vararg pkgs: String): Sequence<Class<*>> {
     return pkgs.asSequence().flatMap { pkg ->
-        getResources(pkg.pkg2path(false))
-        .asSequence()
+        getRdResources(pkg.pkg2path(false))
         .flatMap { url ->
            url.process(pkg,
                { file -> file.scanForClasses(pkg, this) },
@@ -29,10 +29,31 @@ fun ClassLoader.scanForClasses(vararg pkgs: String): Sequence<Class<*>> {
     }.distinct()
 }
 
+fun ClassLoader.getRdResources(string: String): Sequence<URL> {
+    val result = getResources(string).asSequence()
+    return result + (this as? URLClassLoader)?.getRdResources(string).orEmpty()
+}
+
+fun URLClassLoader.getRdResources(string: String): Sequence<URL> {
+   return this.urLs.mapNotNull {
+       if (it.protocol == "file") {
+           val path = File(it.path)
+           if (path.isFile && path.extension == "jar" && JarFile(path).entries().asSequence().any {
+               it.name.startsWith("$string/")
+           }) {
+               URL("jar:$it!/$string")
+           } else {
+               null
+           }
+       } else {
+           null
+       }
+   }.asSequence()
+}
+
 fun ClassLoader.scanForResourcesContaining(vararg pkgs: String): Sequence<File> {
     return pkgs.asSequence().flatMap { pkg ->
-        getResources(pkg.pkg2path(false))
-            .asSequence()
+        getRdResources(pkg.pkg2path(false))
             .flatMap { url ->
                 url.process(pkg,
                     { sequenceOf(it) },
