@@ -29,15 +29,15 @@ fun ClassLoader.scanForClasses(vararg pkgs: String): Sequence<Class<*>> {
     }.distinct()
 }
 
-fun ClassLoader.getRdResources(string: String): Sequence<URL> {
-    val result = getResources(string).asSequence()
-    return result + (this as? URLClassLoader)?.getRdResources(string).orEmpty()
+fun ClassLoader.getRdResources(name: String): Sequence<URL> {
+    val result = getResources(name).asSequence()
+    return result + (this as? URLClassLoader)?.getRdResources(name).orEmpty()
 }
 
 /**
  * This function is different from the default behavior of [ClassLoader.getResources]. The default implementation will
- * scan `.jar` files for the entries exactly identical to the passed [resourcePath], and if there are no such entries,
- * it won't return anything at all.
+ * scan `.jar` files for the entries exactly identical to the passed [name], and if there are no such entries, it won't
+ * return anything at all.
  *
  * We've found that some `.jar` files have no directory entries, but have entries for files in these directories. For
  * example, a "normal" `.jar` file may include the following structure:
@@ -50,14 +50,14 @@ fun ClassLoader.getRdResources(string: String): Sequence<URL> {
  * For the abnormal `.jar` files, this function will try to "fix" the virtual `.jar` structure by fabricating URLs
  * pointing to non-existing entries (that still logically contain nested resources).
  */
-fun URLClassLoader.getRdResources(resourcePath: String): Sequence<URL> {
+fun URLClassLoader.getRdResources(name: String): Sequence<URL> {
    return this.urLs.mapNotNull { classLoaderItem ->
        if (classLoaderItem.protocol == "file") {
            val path = File(classLoaderItem.path)
            if (path.isFile && path.extension == "jar" && JarFile(path).entries().asSequence().any {
-               it.name.startsWith("$resourcePath/")
+               it.name.startsWith("$name/")
            }) {
-               URL("jar:$classLoaderItem!/$resourcePath")
+               URL("jar:$classLoaderItem!/$name")
            } else {
                null
            }
