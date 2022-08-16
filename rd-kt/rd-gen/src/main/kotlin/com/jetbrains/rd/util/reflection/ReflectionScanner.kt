@@ -34,14 +34,30 @@ fun ClassLoader.getRdResources(string: String): Sequence<URL> {
     return result + (this as? URLClassLoader)?.getRdResources(string).orEmpty()
 }
 
-fun URLClassLoader.getRdResources(string: String): Sequence<URL> {
-   return this.urLs.mapNotNull {
-       if (it.protocol == "file") {
-           val path = File(it.path)
+/**
+ * This function is different from the default behavior of [ClassLoader.getResources]. The default implementation will
+ * scan `.jar` files for the entries exactly identical to the passed [resourcePath], and if there are no such entries,
+ * it won't return anything at all.
+ *
+ * We've found that some `.jar` files have no directory entries, but have entries for files in these directories. For
+ * example, a "normal" `.jar` file may include the following structure:
+ *
+ * - `com`
+ * - `com/Foo.class`
+ *
+ * While an "abnormal" `.jar` file may only include `com/Foo.class`, without an entry for `com`.
+ *
+ * For the abnormal `.jar` files, this function will try to "fix" the virtual `.jar` structure by fabricating URLs
+ * pointing to non-existing entries (that still logically contain nested resources).
+ */
+fun URLClassLoader.getRdResources(resourcePath: String): Sequence<URL> {
+   return this.urLs.mapNotNull { classLoaderItem ->
+       if (classLoaderItem.protocol == "file") {
+           val path = File(classLoaderItem.path)
            if (path.isFile && path.extension == "jar" && JarFile(path).entries().asSequence().any {
-               it.name.startsWith("$string/")
+               it.name.startsWith("$resourcePath/")
            }) {
-               URL("jar:$it!/$string")
+               URL("jar:$classLoaderItem!/$resourcePath")
            } else {
                null
            }
