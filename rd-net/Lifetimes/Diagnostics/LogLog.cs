@@ -199,6 +199,13 @@ namespace JetBrains.Diagnostics
       Fire(null, msg, LoggingLevel.ERROR);
     }
     
+    public static void Warn(string message)
+    {
+      if (message == null) throw new ArgumentException("message is null");
+
+      Fire(null, message, LoggingLevel.WARN);
+    }
+    
     [StringFormatMethod("format")]
     public static void Warn(string format, params object[] args)
     {
@@ -206,6 +213,13 @@ namespace JetBrains.Diagnostics
 
       var msg = string.Format(format, args);
       Fire(null, msg, LoggingLevel.WARN);
+    }
+    
+    public static void Info(string message)
+    {
+      if (message == null) throw new ArgumentException("message is null");
+      
+      Fire(null, message, LoggingLevel.INFO);
     }
 
     [StringFormatMethod("format")]
@@ -216,6 +230,13 @@ namespace JetBrains.Diagnostics
       var msg = string.Format(format, args);
       Fire(null, msg, LoggingLevel.INFO);
     }
+    
+    public static void Verbose(string? category, string message)
+    {
+      if (message == null) throw new ArgumentException("message is null");
+
+      Fire(category, message, LoggingLevel.VERBOSE);
+    }
 
     [StringFormatMethod("format")]
     public static void Verbose(string? category, string format, params object[] args)
@@ -224,6 +245,16 @@ namespace JetBrains.Diagnostics
 
       var msg = string.Format(format, args);
       Fire(category, msg, LoggingLevel.VERBOSE);
+    }
+    
+    public static void Trace(string? category, string message)
+    {
+      if (message == null) throw new ArgumentException("message is null");
+
+      if (SeverityFilter < LoggingLevel.TRACE)
+        return; //shortcut to suppress string formatting
+      
+      Fire(category, message, LoggingLevel.TRACE);
     }
     
     [StringFormatMethod("format")]
