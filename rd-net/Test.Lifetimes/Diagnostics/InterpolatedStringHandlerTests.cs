@@ -139,6 +139,62 @@ public class InterpolatedStringHandlerTests
       Assert.AreEqual(isEnabled, handler.IsEnabled);
     }
   }
+  
+  [Test]
+  public void JetLogVerboseInterpolatedStringHandler()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    foreach (var loggingLevel in values)
+    {
+      var log = new MyTestLog(loggingLevel);
+
+      var handler = new JetLogVerboseInterpolatedStringHandler(1, 1, log, out var isEnabled);
+      Assert.AreEqual(loggingLevel >= LoggingLevel.VERBOSE, isEnabled);
+      Assert.AreEqual(isEnabled, handler.IsEnabled);
+    }
+  }
+
+  [Test]
+  public void JetLogInfoInterpolatedStringHandler()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    foreach (var loggingLevel in values)
+    {
+      var log = new MyTestLog(loggingLevel);
+
+      var handler = new JetLogInfoInterpolatedStringHandler(1, 1, log, out var isEnabled);
+      Assert.AreEqual(loggingLevel >= LoggingLevel.INFO, isEnabled);
+      Assert.AreEqual(isEnabled, handler.IsEnabled);
+    }
+  }
+  
+  [Test]
+  public void JetLogWarnInterpolatedStringHandler()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    foreach (var loggingLevel in values)
+    {
+      var log = new MyTestLog(loggingLevel);
+
+      var handler = new JetLogWarnInterpolatedStringHandler(1, 1, log, out var isEnabled);
+      Assert.AreEqual(loggingLevel >= LoggingLevel.WARN, isEnabled);
+      Assert.AreEqual(isEnabled, handler.IsEnabled);
+    }
+  }
+  
+  [Test]
+  public void JetLogErrorInterpolatedStringHandler()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    foreach (var loggingLevel in values)
+    {
+      var log = new MyTestLog(loggingLevel);
+
+      var handler = new JetLogErrorInterpolatedStringHandler(1, 1, log, out var isEnabled);
+      Assert.AreEqual(loggingLevel >= LoggingLevel.ERROR, isEnabled);
+      Assert.AreEqual(isEnabled, handler.IsEnabled);
+    }
+  }
 
   [Test]
   public void AssertionsTest()
@@ -197,6 +253,102 @@ public class InterpolatedStringHandlerTests
 
       var messages = log.GetMessages();
       if (level == LoggingLevel.TRACE)
+      {
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(message, messages.Single().FormattedMessage);
+      }
+      else
+      {
+        Assert.AreEqual(0, messages.Count);
+      }
+    }
+  }
+  
+  [Test]
+  public void LogVerboseTest()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    const string message = "Verbose enabled";
+    
+    foreach (var level in values)
+    {
+      var log = new MyTestLog(level);
+      log.Verbose($"{(level >= LoggingLevel.VERBOSE ? message : ThrowTestException())}");
+
+      var messages = log.GetMessages();
+      if (level >= LoggingLevel.VERBOSE)
+      {
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(message, messages.Single().FormattedMessage);
+      }
+      else
+      {
+        Assert.AreEqual(0, messages.Count);
+      }
+    }
+  }
+  
+  [Test]
+  public void LogInfoTest()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    const string message = "Info enabled";
+    
+    foreach (var level in values)
+    {
+      var log = new MyTestLog(level);
+      log.Info($"{(level >= LoggingLevel.INFO ? message : ThrowTestException())}");
+
+      var messages = log.GetMessages();
+      if (level >= LoggingLevel.INFO)
+      {
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(message, messages.Single().FormattedMessage);
+      }
+      else
+      {
+        Assert.AreEqual(0, messages.Count);
+      }
+    }
+  }
+  
+  [Test]
+  public void LogWarnTest()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    const string message = "Warn enabled";
+    
+    foreach (var level in values)
+    {
+      var log = new MyTestLog(level);
+      log.Warn($"{(level >= LoggingLevel.WARN ? message : ThrowTestException())}");
+
+      var messages = log.GetMessages();
+      if (level >= LoggingLevel.WARN)
+      {
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(message, messages.Single().FormattedMessage);
+      }
+      else
+      {
+        Assert.AreEqual(0, messages.Count);
+      }
+    }
+  }
+  
+  [Test]
+  public void LogErrorTest()
+  {
+    var values = (LoggingLevel[])Enum.GetValues(typeof(LoggingLevel));
+    const string message = "Error enabled";
+    
+    foreach (var level in values)
+    {
+      var log = new MyTestLog(level);
+      log.Error($"{(level >= LoggingLevel.ERROR ? message : ThrowTestException())}");
+
+      var messages = log.GetMessages();
+      if (level >= LoggingLevel.ERROR)
       {
         Assert.AreEqual(1, messages.Count);
         Assert.AreEqual(message, messages.Single().FormattedMessage);
