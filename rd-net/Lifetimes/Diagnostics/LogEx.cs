@@ -136,6 +136,16 @@ namespace JetBrains.Diagnostics
     {
       @this.Log(LoggingLevel.VERBOSE, message);
     }
+    
+#if !NET35
+    public static void Verbose(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogVerboseInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Log(LoggingLevel.VERBOSE, messageHandler.ToStringAndClear());
+      }      
+    }    
+#endif
 
     [StringFormatMethod("message")]
     public static void Verbose<T1>(this ILog @this, string message, T1 t1)
@@ -191,6 +201,16 @@ namespace JetBrains.Diagnostics
     {
       @this.Log(LoggingLevel.INFO, message);
     }
+    
+#if !NET35
+    public static void Info(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogInfoInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Log(LoggingLevel.INFO, messageHandler.ToStringAndClear());
+      }      
+    }    
+#endif
 
     [StringFormatMethod("message")]
     public static void Info(this ILog @this, string message, params object[] args)
@@ -211,6 +231,16 @@ namespace JetBrains.Diagnostics
     {
       @this.Log(LoggingLevel.WARN, message);
     }
+    
+#if !NET35
+    public static void Warn(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogWarnInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Log(LoggingLevel.WARN, messageHandler.ToStringAndClear());
+      }      
+    }    
+#endif
 
     [StringFormatMethod("message")]
     public static void Warn(this ILog @this, string message, params object[] args)
@@ -232,6 +262,16 @@ namespace JetBrains.Diagnostics
     {
       @this.Log(LoggingLevel.ERROR, message);
     }
+    
+#if !NET35
+    public static void Error(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogErrorInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Log(LoggingLevel.ERROR, messageHandler.ToStringAndClear());
+      }      
+    }    
+#endif
 
     [StringFormatMethod("message")]
     public static void Error(this ILog @this, string message, params object?[] args)
