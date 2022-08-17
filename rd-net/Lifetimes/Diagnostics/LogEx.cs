@@ -84,6 +84,26 @@ namespace JetBrains.Diagnostics
     }
 
 #if !NET35
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.TRACE"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Trace($"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogTraceInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Trace(ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="messageHandler"></param>
     public static void Trace(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogTraceInterpolatedStringHandler messageHandler)
     {
       if (messageHandler.IsEnabled)
@@ -138,6 +158,26 @@ namespace JetBrains.Diagnostics
     }
     
 #if !NET35
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.VERBOSE"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Verbose($"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogVerboseInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Verbose(ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="messageHandler"></param>
     public static void Verbose(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogVerboseInterpolatedStringHandler messageHandler)
     {
       if (messageHandler.IsEnabled)
@@ -203,6 +243,26 @@ namespace JetBrains.Diagnostics
     }
     
 #if !NET35
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.INFO"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Info($"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogInfoInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Info(ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="messageHandler"></param>
     public static void Info(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogInfoInterpolatedStringHandler messageHandler)
     {
       if (messageHandler.IsEnabled)
@@ -233,6 +293,26 @@ namespace JetBrains.Diagnostics
     }
     
 #if !NET35
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.WARN"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Warn($"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogWarnInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Warn(ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="messageHandler"></param>
     public static void Warn(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogWarnInterpolatedStringHandler messageHandler)
     {
       if (messageHandler.IsEnabled)
@@ -264,6 +344,26 @@ namespace JetBrains.Diagnostics
     }
     
 #if !NET35
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.ERROR"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Error($"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogErrorInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Error(ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="messageHandler"></param>
     public static void Error(this ILog logger, [InterpolatedStringHandlerArgument("logger")] ref JetLogErrorInterpolatedStringHandler messageHandler)
     {
       if (messageHandler.IsEnabled)
