@@ -17,7 +17,6 @@
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
-
     <PropertyGroup Label="NuGet">
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageId>JetBrains.RdFramework</PackageId>

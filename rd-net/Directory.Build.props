@@ -15,7 +15,8 @@
     <Nullable Condition="'$(TargetFramework)' == 'net35'">disable</Nullable>
     <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
     
-    <NoWarn Condition="'$(TargetFramework)' == 'net35'">nullable</NoWarn>
+    <!-- TODO: CS8632 is redundant here but added to suppress inspections in ReSharper/Rider, see RSRP-489331 -->
+    <NoWarn Condition="'$(TargetFramework)' == 'net35'">nullable;CS8632</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net461" Condition="'$(TargetFramework)' == 'net461'" Version="1.0.2">
