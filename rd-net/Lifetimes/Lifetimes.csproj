@@ -58,9 +58,4 @@
     <ItemGroup>
         <None Include="PackageIcon.png" Pack="true" PackagePath="" />
     </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' != 'net35'">
-      <PackageReference Include="System.Threading.Channels" Version="6.0.0" />
-    </ItemGroup>
-
 </Project>
