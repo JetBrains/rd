@@ -22,7 +22,7 @@ namespace JetBrains.Threading
             {
                 if (t.Exception != null && !t.Exception.IsOperationCanceled())
                     Log.Root.Error(t.Exception);
-            }, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted);
+            }, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnRanToCompletion);
         }
 
         
