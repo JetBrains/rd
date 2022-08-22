@@ -10,6 +10,13 @@ namespace JetBrains.Threading
 {
     public static class TaskEx
     {
+        private static readonly Action<Task> ourNoAwaitContinuation = t =>
+        {
+          if (t.Exception != null && !t.Exception.IsOperationCanceled())
+            Log.Root.Error(t.Exception);
+        };
+
+
         /// <summary>
         ///   <para>Marks that this task is intentionally not awaited or continued-with.</para>
         ///   <para>The task is let to run, its return value (if any) is abandoned, its exceptions are consumed by our logger.</para>
@@ -17,12 +24,8 @@ namespace JetBrains.Threading
         /// </summary>
         [PublicAPI] public static void NoAwait(this Task? task)
         {
-            task?.ContinueWith
-            (t =>
-            {
-                if (t.Exception != null && !t.Exception.IsOperationCanceled())
-                    Log.Root.Error(t.Exception);
-            }, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnRanToCompletion);
+            task?.ContinueWith(ourNoAwaitContinuation, 
+              TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnRanToCompletion);
         }
 
         
