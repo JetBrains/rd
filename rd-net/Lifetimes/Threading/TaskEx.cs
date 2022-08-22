@@ -20,9 +20,9 @@ namespace JetBrains.Threading
             task?.ContinueWith
             (t =>
             {
-                if(t.Exception != null && !t.Exception.IsOperationCanceled())
+                if (t.Exception != null && !t.Exception.IsOperationCanceled())
                     Log.Root.Error(t.Exception);
-            }, TaskContinuationOptions.ExecuteSynchronously);
+            }, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted);
         }
 
         
