@@ -175,4 +175,17 @@ class SourceExKtTest : RdTestBase()  {
         assertEquals(listOf(0, 1, 2, -1, 100), log)
         assertEquals(listOf(true, true, false, true), logBoolean)
     }
+
+    @Test
+    fun adviceOnceTest() {
+        val signal = Signal<Int>()
+        var count = 0
+
+        signal.adviseOnce(testLifetime) {
+            assertEquals(0, count++)
+            signal.fire(1);
+        }
+
+        signal.fire(0);
+    }
 }

@@ -3,6 +3,7 @@ package com.jetbrains.rd.util.reactive
 import com.jetbrains.rd.util.Maybe
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.isNotAlive
 
 /**
  * Adds an event subscription that never gets removed.
@@ -13,7 +14,14 @@ fun <T> ISource<T>.adviseEternal(handler: (T) -> Unit) = this.advise(Lifetime.Et
  * Executes [handler] exactly once then terminates the subscription
  */
 fun <T> ISource<T>.adviseOnce(lifetime: Lifetime, handler: (T) -> Unit) {
-    adviseUntil(lifetime) { handler(it); true }
+    if (lifetime.isNotAlive) return
+
+    lifetime.createNested { def ->
+        this.advise(def) {
+            def.terminate(true)
+            handler(it)
+        }
+    }
 }
 
 /**
