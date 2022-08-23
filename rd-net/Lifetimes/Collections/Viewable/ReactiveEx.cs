@@ -49,10 +49,13 @@ namespace JetBrains.Collections.Viewable
 
     public static void AdviseOnce<T>(this ISource<T> me, Lifetime lifetime, Action<T> handler)
     {
-      me.AdviseUntil(lifetime, v =>
+      if (lifetime.IsNotAlive) return;
+
+      var definition = lifetime.CreateNested();
+      me.Advise(definition.Lifetime, v =>
       {
+        definition.Terminate();
         handler(v);
-        return true;
       });
     }
 

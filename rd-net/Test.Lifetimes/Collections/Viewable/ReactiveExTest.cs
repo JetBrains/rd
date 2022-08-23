@@ -32,4 +32,19 @@ public class ReactiveExTest : LifetimesTestBase
     }
   }
 #endif
+
+  [Test]
+  public void AdviceOnceTest()
+  {
+    var signal = new Signal<int>();
+    var count = 0;
+
+    signal.AdviseOnce(TestLifetime, _ =>
+    {
+      Assert.AreEqual(0, count++);
+      signal.Fire(1);
+    });
+    
+    signal.Fire(0);
+  }
 }
