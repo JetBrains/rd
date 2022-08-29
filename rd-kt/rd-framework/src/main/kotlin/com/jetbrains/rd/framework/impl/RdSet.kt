@@ -3,19 +3,15 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.AddRemove
-import com.jetbrains.rd.util.reactive.IMutableViewableSet
-import com.jetbrains.rd.util.reactive.IViewableSet
-import com.jetbrains.rd.util.reactive.ViewableSet
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.print
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
 
-
 @Suppress("UNUSED_PARAMETER")
 class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private val set: ViewableSet<T>)
-: RdReactiveBase(), IMutableViewableSet<T> by set {
+: RdReactiveBase(), IMutableViewableSet<T> {
 
     companion object {
         fun<T: Any> read(ctx: SerializationCtx, stream: AbstractBuffer, valueSerializer: ISerializer<T>): RdSet<T> = RdSet(valueSerializer).withId(RdId.read(stream))
@@ -59,7 +55,16 @@ class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private va
 
     constructor(valueSerializer: ISerializer<T> = Polymorphic<T>()) : this(valueSerializer, ViewableSet())
 
+    override val size: Int
+        get() = set.size
+    override val change: ISource<IViewableSet.Event<T>>
+        get() = set.change
 
+    override fun contains(element: T): Boolean = set.contains(element)
+
+    override fun containsAll(elements: Collection<T>): Boolean = set.containsAll(elements)
+
+    override fun isEmpty(): Boolean = set.isEmpty()
 
     override fun print(printer: PrettyPrinter) {
         super.print(printer)
@@ -107,7 +112,6 @@ class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private va
     }
 
     override fun clear() = localChange { set.clear() }
-
 
     override fun advise(lifetime: Lifetime, handler: (IViewableSet.Event<T>) -> Unit) {
         if (isBound) assertThreading()

@@ -2,8 +2,6 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.framework.base.bindPolymorphic
-import com.jetbrains.rd.framework.base.identifyPolymorphic
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.parseFromOrdinal
@@ -17,7 +15,7 @@ class RdMap<K : Any, V : Any> private constructor(
     val keySzr: ISerializer<K>,
     val valSzr: ISerializer<V>,
     private val map: ViewableMap<K, V>
-) : RdReactiveBase(), IAsyncViewableMap<K, V>, IMutableViewableMap<K, V> by map {
+) : RdReactiveBase(), IAsyncViewableMap<K, V>, IMutableViewableMap<K, V> {
 
     companion object : ISerializer<RdMap<*, *>> {
         private enum class Op {Add, Update, Remove, Ack}
@@ -184,11 +182,40 @@ class RdMap<K : Any, V : Any> private constructor(
         printer.print("]")
     }
 
+    override val size: Int
+        get() = map.size
 
+    override fun containsKey(key: K): Boolean = map.containsKey(key)
+
+    override fun containsValue(value: V): Boolean = map.containsValue(value)
+
+    override fun get(key: K): V? = map.get(key)
+
+    override fun isEmpty(): Boolean = map.isEmpty()
+
+    override val entries
+        get() = map.entries
+    override val keys
+        get() = map.keys
+    override val values
+        get() = map.values
+
+    override val change: ISource<IViewableMap.Event<K, V>>
+        get() = map.change
 
     override fun put(key: K, value: V): V? = localChange { map.put(key, value) }
     override fun remove(key: K): V? = localChange { map.remove(key) }
+    override fun remove(key: K, value: V): Boolean = localChange {
+        if (this[key] == value) {
+            remove(key)
+            return@localChange true
+        } else {
+            return@localChange false
+        }
+    }
+
     override fun clear() = localChange { map.clear() }
+    override fun putAll(from: Map<out K, V>) = localChange { map.putAll(from) }
 
 
     override fun advise(lifetime: Lifetime, handler: (IViewableMap.Event<K, V>) -> Unit) {

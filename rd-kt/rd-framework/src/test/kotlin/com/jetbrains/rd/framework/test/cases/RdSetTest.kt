@@ -5,6 +5,7 @@ import com.jetbrains.rd.framework.impl.RdSet
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.reactive.AddRemove
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 
@@ -44,5 +45,22 @@ class RdSetTest : RdFrameworkTestBase() {
 
         clientSet.clear()
         assertEquals(listOf(2, 0, 1, 8, 3, -2, -1, -3, -0, -8), log)
+    }
+
+    @Test
+    fun testAddAll() {
+        val id = 1
+
+        val serverSet = RdSet<String>().static(id)
+        val clientSet = RdSet<String>().static(id)
+
+        clientProtocol.bindStatic(clientSet, "top")
+        serverProtocol.bindStatic(serverSet, "top")
+
+        serverSet.addAll(listOf("foo", "bar"))
+
+        assertEquals(2, clientSet.count())
+        assertContains(clientSet, "foo")
+        assertContains(clientSet, "bar")
     }
 }

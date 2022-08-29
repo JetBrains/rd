@@ -103,5 +103,20 @@ class RdMapTest : RdFrameworkTestBase() {
                 "finish 1", "finish 2"), log)
     }
 
+    @Test
+    fun testPutAll() {
+        val id = 1
 
+        val serverMap = RdMap<Int, String>().static(id)
+        val clientMap = RdMap<Int, String>().static(id)
+
+        clientProtocol.bindStatic(clientMap, "top")
+        serverProtocol.bindStatic(serverMap, "top")
+
+        serverMap.putAll(mapOf(1 to "foo", 2 to "bar"))
+
+        assertEquals(2, clientMap.count())
+        assertEquals("foo", clientMap[1])
+        assertEquals("bar", clientMap[2])
+    }
 }
