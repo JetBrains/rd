@@ -155,5 +155,22 @@ class RdListTest : RdFrameworkTestBase() {
                 "finish 0"
         ), log)
     }
+
+    @Test
+    fun testAddAll() {
+        val id = 1
+
+        val serverList = RdList<String>().static(id)
+        val clientList = RdList<String>().static(id)
+
+        clientProtocol.bindStatic(clientList, "top")
+        serverProtocol.bindStatic(serverList, "top")
+
+        serverList.addAll(listOf("foo", "bar"))
+
+        assertEquals(2, clientList.count())
+        assertEquals("foo", clientList[0])
+        assertEquals("bar", clientList[1])
+    }
 }
 

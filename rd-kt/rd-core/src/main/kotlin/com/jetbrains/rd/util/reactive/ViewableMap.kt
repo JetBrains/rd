@@ -5,7 +5,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.put
 import com.jetbrains.rd.util.reactive.IViewableMap.Event
 
-
 class ViewableMap<K : Any, V : Any>() : IMutableViewableMap<K, V> {
 
     private val map = linkedMapOf<K, V>()
@@ -35,6 +34,15 @@ class ViewableMap<K : Any, V : Any>() : IMutableViewableMap<K, V> {
         val oldval = map.remove(key)
         if (oldval != null) change.fire(Event.Remove(key, oldval))
         return oldval
+    }
+
+    override fun remove(key: K, value: V): Boolean {
+        if (map.remove(key, value)) {
+            change.fire(Event.Remove(key, value))
+            return true
+        }
+
+        return false
     }
 
     override fun clear() {
