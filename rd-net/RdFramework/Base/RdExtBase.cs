@@ -59,7 +59,7 @@ namespace JetBrains.Rd.Base
         );
 
       var bindableParent = Parent is RdBindableBase bindable ? bindable : null;
-      var info = new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash);
+      var info = new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash, this);
       ((Protocol) parentProtocol).SubmitExtCreated(info);
       parentWire.Advise(lifetime, this);
             

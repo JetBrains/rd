@@ -16,7 +16,7 @@ namespace JetBrains.Rd.Impl
           var rName = ReadRName(reader);
           var rdId = reader.ReadNullableStruct((_, r) => r.ReadRdId(), ctx);
           var hash = reader.ReadLong();
-          return new ExtCreationInfo(rName, rdId, hash);
+          return new ExtCreationInfo(rName, rdId, hash, null);
         },
         (ctx, writer, value) =>
         {
