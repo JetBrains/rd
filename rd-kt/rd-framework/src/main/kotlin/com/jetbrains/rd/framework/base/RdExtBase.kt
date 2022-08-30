@@ -54,7 +54,7 @@ abstract class RdExtBase : RdReactiveBase() {
                     it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
                 }
 
-                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash)
+                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash, this)
                 (parentProtocol as Protocol).submitExtCreated(info)
             },
             {

@@ -46,7 +46,7 @@ internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
             val rName = RNameMarshaller.read(buffer)
             val rdId = buffer.readNullable { buffer.readRdId() }
             val hash = buffer.readLong()
-            ExtCreationInfo(rName, rdId, hash)
+            ExtCreationInfo(rName, rdId, hash, null)
         },
         { buffer, (rName, rdId, hash) ->
             RNameMarshaller.write(buffer, rName)

@@ -61,7 +61,7 @@ class Protocol internal constructor(
 
     override val extCreated: ISignal<ExtCreationInfo>
 
-    private val extConfirmation: RdSignal<ExtCreationInfo>
+    val extConfirmation: RdSignal<ExtCreationInfo>
     private val extIsLocal: ThreadLocal<Boolean>
 
     private val extensions = mutableMapOf<KClass<*>, Any>()

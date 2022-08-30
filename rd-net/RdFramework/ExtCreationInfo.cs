@@ -1,4 +1,5 @@
 ﻿using JetBrains.Diagnostics;
+using JetBrains.Rd.Base;
 
 namespace JetBrains.Rd
 {
@@ -7,12 +8,14 @@ namespace JetBrains.Rd
     public RName Name;
     public RdId? Id;
     public long Hash;
+    public RdExtBase? Ext;
 
-    public ExtCreationInfo(RName name, RdId? id, long hash)
+    public ExtCreationInfo(RName name, RdId? id, long hash, RdExtBase? ext)
     {
       Name = name;
       Id = id;
       Hash = hash;
+      Ext = ext;
     }
   }
 }
