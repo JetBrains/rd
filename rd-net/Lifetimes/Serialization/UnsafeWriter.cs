@@ -89,7 +89,12 @@ namespace JetBrains.Serialization
       }
     }
 
-    public struct Bookmark
+    /// <summary>
+    /// A bookmark to the offset in the memory block of the <see cref="UnsafeWriter"/>. Can be used for saving address
+    /// in UnsafeWriter for future use. Basically every method in <see cref="UnsafeWriter"/> can cause reallocation of
+    /// data. It is important to avoid storing pointers obtained from UnsafeWriter between these calls.
+    /// </summary>
+    public readonly struct Bookmark
     {
       private readonly UnsafeWriter myWriter;
       private readonly int myStart;
@@ -634,15 +639,29 @@ namespace JetBrains.Serialization
     }
 
     /// <summary>
+    /// Creates <see cref="Bookmark"/> for the current <see cref="UnsafeWriter"/>'s position.
+    /// </summary>
+    public Bookmark MakeBookmark()
+    {
+      return new Bookmark(this);
+    }
+
+    /// <summary>
     /// Correctly allocates the number of bytes as if they were written with any func, and advances the pointer past them.
     /// This is useful if you want to use buffer space for direct memory access.
-    /// Take the <see cref="Ptr" /> value before calling <see cref="Alloc" /> to address the space correctly.
     /// </summary>
+    /// <remarks>
+    /// Never save the value of <see cref="Ptr" /> before calling <see cref="Alloc" />! This method may cause a reallocation
+    /// of data after which the saved pointer became invalid.
+    /// </remarks>
+    /// <returns><see cref="Bookmark"/> to the allocated buffer </returns>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Alloc(int length)
+    public Bookmark Alloc(int length)
     {
+      var result = new Bookmark(this);
       Prepare((int)checked((uint)length));
       myPtr += length;
+      return result;
     }
 
     /// <summary>
