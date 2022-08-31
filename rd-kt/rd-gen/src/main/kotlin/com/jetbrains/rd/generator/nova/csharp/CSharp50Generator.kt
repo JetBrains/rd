@@ -1289,7 +1289,7 @@ open class CSharp50Generator(
     }
 
     protected open fun PrettyPrinter.interfaceDef(decl: Interface) {
-        +"interface ${decl.name.capitalize()}"
+        +"public interface ${decl.name.capitalize()}"
         indent {baseInterfacesTrait(decl) }
         p("{")
         println()
