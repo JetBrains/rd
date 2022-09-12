@@ -184,7 +184,36 @@ namespace JetBrains.Diagnostics
       {
         logger.Log(LoggingLevel.VERBOSE, messageHandler.ToStringAndClear());
       }      
-    }    
+    }
+
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.VERBOSE"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Verbose(ex, $"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogVerboseInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Verbose(ex, ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="ex"></param>
+    /// <param name="messageHandler"></param>
+    public static void Verbose(this ILog logger, Exception ex, [InterpolatedStringHandlerArgument("logger")] ref JetLogVerboseInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Verbose(ex, messageHandler.ToStringAndClear());
+      }
+    }
 #endif
 
     [StringFormatMethod("message")]
@@ -269,7 +298,36 @@ namespace JetBrains.Diagnostics
       {
         logger.Log(LoggingLevel.INFO, messageHandler.ToStringAndClear());
       }      
-    }    
+    }
+
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.INFO"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Info(ex, $"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogInfoInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Info(ex, ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="ex"></param>
+    /// <param name="messageHandler"></param>
+    public static void Info(this ILog logger, Exception ex, [InterpolatedStringHandlerArgument("logger")] ref JetLogInfoInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Info(ex, messageHandler.ToStringAndClear());
+      }
+    }
 #endif
 
     [StringFormatMethod("message")]
@@ -319,7 +377,36 @@ namespace JetBrains.Diagnostics
       {
         logger.Log(LoggingLevel.WARN, messageHandler.ToStringAndClear());
       }      
-    }    
+    }
+
+    /// Log the message if <see cref="LoggingLevel.WARN"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Warn(ex, $"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogWarnInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Warn(ex, ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="ex"></param>
+    /// <param name="messageHandler"></param>
+    public static void Warn(this ILog logger, Exception ex, [InterpolatedStringHandlerArgument("logger")] ref JetLogWarnInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Warn(ex, messageHandler.ToStringAndClear());
+      }
+    }
+
 #endif
 
     [StringFormatMethod("message")]
@@ -370,7 +457,37 @@ namespace JetBrains.Diagnostics
       {
         logger.Log(LoggingLevel.ERROR, messageHandler.ToStringAndClear());
       }      
-    }    
+    }
+
+    /// <summary>
+    /// Log the message if <see cref="LoggingLevel.ERROR"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
+    /// <br />
+    /// <br />
+    /// For example, the code below
+    /// <code>
+    /// logger.Error(ex, $"{DoSmthSlow()}");
+    /// </code>
+    /// 
+    /// will be compiled into
+    /// 
+    /// <code>
+    /// var handler = new JetLogErrorInterpolatedStringHandler(logger, out var isEnabled);
+    /// if (isEnabled)
+    ///   handler.Append(DoSmthSlow());
+    /// logger.Error(ex, ref handler);
+    /// </code>
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="ex"></param>
+    /// <param name="messageHandler"></param>
+    [StringFormatMethod("message")]
+    public static void Error(this ILog logger, Exception ex, [InterpolatedStringHandlerArgument("logger")] ref JetLogErrorInterpolatedStringHandler messageHandler)
+    {
+      if (messageHandler.IsEnabled)
+      {
+        logger.Error(ex, messageHandler.ToStringAndClear());
+      }
+    }
 #endif
 
     [StringFormatMethod("message")]
