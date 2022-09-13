@@ -111,6 +111,10 @@ fun Lifetime.createTerminatedAfter(duration: Duration, terminationContext: Corou
         }
     }
 
+
+/**
+ * Creates a [coroutineScope] that will be cancelled on the passed lifetime termination
+ **/
 suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend CoroutineScope.() -> T) = coroutineScope {
     if (!lifetime.isEternal)
         lifetime.createNested().synchronizeWith(coroutineContext[Job]!!)
