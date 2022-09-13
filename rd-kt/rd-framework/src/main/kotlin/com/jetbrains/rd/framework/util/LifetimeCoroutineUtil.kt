@@ -59,6 +59,7 @@ fun <T> Lifetime.startAsync(
     block: suspend CoroutineScope.() -> T
 ) = startAsync(scheduler.asCoroutineDispatcher, start, block)
 
+@Deprecated("Use launch without lifetime or lifetimedCoroutineScope")
 fun CoroutineScope.launchChild(
     lifetime: Lifetime,
     context: CoroutineContext = EmptyCoroutineContext,
@@ -66,6 +67,7 @@ fun CoroutineScope.launchChild(
     block: suspend CoroutineScope.() -> Unit
 ) = launch(context, start, block).also { job -> lifetime.createNested().synchronizeWith(job) }
 
+@Deprecated("Use launch method without lifetime or lifetimedCoroutineScope")
 fun CoroutineScope.launchChild(
     lifetime: Lifetime,
     scheduler: IScheduler,
@@ -73,6 +75,7 @@ fun CoroutineScope.launchChild(
     block: suspend CoroutineScope.() -> Unit
 ) = launchChild(lifetime, scheduler.asCoroutineDispatcher, start, block)
 
+@Deprecated("Use async without lifetime or lifetimedCoroutineScope")
 fun <T> CoroutineScope.startChildAsync(
     lifetime: Lifetime,
     context: CoroutineContext = EmptyCoroutineContext,
@@ -80,6 +83,7 @@ fun <T> CoroutineScope.startChildAsync(
     block: suspend CoroutineScope.() -> T
 ) = async(context, start, block).also { job -> lifetime.createNested().synchronizeWith(job) }
 
+@Deprecated("Use async without lifetime or lifetimedCoroutineScope")
 fun <T> CoroutineScope.startChildAsync(
     lifetime: Lifetime,
     scheduler: IScheduler,
@@ -88,11 +92,8 @@ fun <T> CoroutineScope.startChildAsync(
 ) = startChildAsync(lifetime, scheduler.asCoroutineDispatcher, start, block)
 
 suspend fun <T> withContext(lifetime: Lifetime, context: CoroutineContext, block: suspend CoroutineScope.() -> T): T =
-    withContext(context) {
-        if (!lifetime.isEternal)
-            lifetime.createNested().synchronizeWith(coroutineContext[Job]!!)
-
-        block()
+    lifetimedCoroutineScope(lifetime) {
+        withContext(context, block)
     }
 
 suspend fun <T> withContext(scheduler: IScheduler, block: suspend CoroutineScope.() -> T): T =
@@ -109,3 +110,14 @@ fun Lifetime.createTerminatedAfter(duration: Duration, terminationContext: Corou
             nested.terminate()
         }
     }
+
+
+/**
+ * Creates a [coroutineScope] that will be cancelled on the passed lifetime termination
+ **/
+suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend CoroutineScope.() -> T) = coroutineScope {
+    if (!lifetime.isEternal)
+        lifetime.createNested().synchronizeWith(coroutineContext[Job]!!)
+
+    action()
+}
