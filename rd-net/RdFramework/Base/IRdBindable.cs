@@ -84,7 +84,11 @@ namespace JetBrains.Rd.Base
 
       var cnt = 0;
       foreach (var item in items)
-        (item as IRdBindable).BindEx(lifetime, parent, name + "[" + cnt++ + "]");
+      {
+        if (item is not IRdBindable bindable)
+          return;
+        bindable.BindEx(lifetime, parent, name + "[" + cnt++ + "]");
+      }
     }
 
 
