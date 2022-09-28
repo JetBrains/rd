@@ -100,9 +100,7 @@ namespace JetBrains.Rd.Reflection
 
 
     /// <summary>
-    /// Create and initialize RdModel root and its members (including nested RdModels)
-    ///
-    /// It doesn't bind model to Protocol. You may want to use <see cref="ActivateBind{T}"/>
+    /// Creates and initializes reactive primitives, RdModels and RdExts.
     /// </summary>
     public T Activate<T>() where T : RdBindableBase
     {
@@ -110,12 +108,9 @@ namespace JetBrains.Rd.Reflection
     }
 
     /// <summary>
-    /// Activate <see cref="RdExtAttribute"/> and its members.
-    /// Can't be used for data models
+    /// Activate <see cref="RdExtAttribute"/> or <see cref="RdModelAttribute"/> or its members.
     /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public object Activate(Type type)
+    public object Activate(Type type, string name)
     {
       #if JET_MODE_ASSERT
       myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
@@ -125,7 +120,15 @@ namespace JetBrains.Rd.Reflection
       // We should register serializer for current type and all of it members to have possibility to get valid serializers for arguments.
       myTypesCatalog?.AddType(type);
 
-      return ActivateRd(type);
+      return ActivateMember(type, name).NotNull();
+    }
+
+    /// <summary>
+    /// Activate <see cref="RdExtAttribute"/> or <see cref="RdModelAttribute"/> or its members.
+    /// </summary>
+    public object Activate(Type type)
+    {
+      return Activate(type, "Anonymous");
     }
 
     private object ActivateRd(Type type)
@@ -183,7 +186,7 @@ namespace JetBrains.Rd.Reflection
         var currentValue = ReflectionUtil.GetGetter(mi)(instance);
         if (currentValue == null)
         {
-          currentValue = ActivateRdExtMember(mi);
+          currentValue = ActivateMember(ReflectionUtil.GetReturnType(mi), mi.Name);
           var memberSetter = ReflectionUtil.GetSetter(mi);
           memberSetter(instance, currentValue);
         }
@@ -220,7 +223,7 @@ namespace JetBrains.Rd.Reflection
           var endPointType = typeof(RdCall<,>).MakeGenericType(requestType, responseNonTaskType);
           var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
           Assertion.Assert(endpoint != null, "endpoint != null");
-          SetAsync(interfaceMethod, endpoint);
+          SetAsync(endpoint);
           if (endpoint is RdReactiveBase reactiveBase)
             reactiveBase.ValueCanBeNull = true;
           if (ProxyGenerator.IsSync(interfaceMethod))
@@ -312,32 +315,31 @@ namespace JetBrains.Rd.Reflection
       endpoint.Set(handler, scheduler, scheduler);
     }
     
-    private object? ActivateRdExtMember(MemberInfo mi)
+    private object? ActivateMember(Type memberType, string memberName)
     {
-      var returnType = ReflectionUtil.GetReturnType(mi);
-      var typeInfo = returnType.GetTypeInfo();
+      var typeInfo = memberType.GetTypeInfo();
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
 
       object? result;
       if (implementingType.GetTypeInfo().IsGenericType)
       {
-        result = ActivateGenericMember(mi.Name, typeInfo);
+        result = ActivateGenericMember(memberName, typeInfo);
       }
-      else if (!ReflectionSerializerVerifier.IsScalar(returnType))
+      else if (!ReflectionSerializerVerifier.IsScalar(memberType))
       {
-        result = ActivateRd(returnType);
+        result = ActivateRd(memberType);
       }
       else
       {
         result = null;
       }
 
-      SetAsync(mi, result);
+      SetAsync(result);
 
       return result;
     }
 
-    private static void SetAsync(MemberInfo mi, object? result)
+    private static void SetAsync(object? result)
     {
       if (result is IRdReactive activatedBindable)
       {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -185,9 +186,9 @@ namespace JetBrains.Rd.Reflection
       return serializerPair;
     }
 
-    internal SerializerPair GetOrCreateMemberSerializer(MemberInfo mi, Type serializerType, bool allowNullable)
+    internal SerializerPair GetOrCreateMemberSerializer(Type serializerType, bool allowNullable, bool instanceSerializer, MemberInfo? mi)
     {
-      if (!ReflectionSerializerVerifier.HasIntrinsic(serializerType.GetTypeInfo()))
+      if (mi != null && !ReflectionSerializerVerifier.HasIntrinsic(serializerType.GetTypeInfo()))
       {
         if (!allowNullable)
           ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
@@ -198,17 +199,18 @@ namespace JetBrains.Rd.Reflection
       var typeInfo = serializerType.GetTypeInfo();
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
 
-      if (typeInfo.IsGenericType && !(ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || ReflectionSerializerVerifier.HasRdExtAttribute(typeInfo)))
+      if (typeInfo.IsGenericType && !(ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || ReflectionSerializerVerifier.HasRdExtAttribute(typeInfo))
+          && !ReflectionSerializerVerifier.IsScalar(implementingType))
       {
-        return CreateGenericSerializer(typeInfo, implementingType);
+        return CreateGenericSerializer(typeInfo, implementingType.GetTypeInfo());
       }
       else if (ReflectionSerializerVerifier.IsScalar(serializerType))
       {
-        return GetOrCreateScalar(serializerType, false);
+        return GetOrCreateScalar(serializerType, instanceSerializer);
       }
       else
       {
-        var serializerPair = GetOrRegisterStaticSerializerInternal(serializerType, false);
+        var serializerPair = GetOrRegisterStaticSerializerInternal(serializerType, instanceSerializer);
         Assertion.AssertNotNull(serializerPair, $"Unable to Create serializer for type {serializerType.ToString(true)}");
         if (serializerPair == null)
         {
@@ -293,7 +295,7 @@ namespace JetBrains.Rd.Reflection
       {
         var mi = memberInfos[index];
         var returnType = ReflectionUtil.GetReturnType(mi);
-        var serPair = GetOrCreateMemberSerializer(mi, serializerType: returnType, allowNullable: allowNullable);
+        var serPair = GetOrCreateMemberSerializer(serializerType: returnType, allowNullable: allowNullable, instanceSerializer: false, mi: mi);
         memberDeserializers[index] = SerializerReflectionUtil.ConvertReader(returnType, serPair.Reader);
         memberSerializers[index] = SerializerReflectionUtil.ConvertWriter(returnType, serPair.Writer);
       }
@@ -358,11 +360,19 @@ namespace JetBrains.Rd.Reflection
       mySerializers[type] = new SerializerPair(readerDelegate, writerDelegate);
     }
 
-    public SerializerPair CreateGenericSerializer(TypeInfo typeInfo, Type implementingType)
+    private SerializerPair CreateGenericSerializer(TypeInfo typeInfo, TypeInfo implementingInfo)
     {
-      var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingType.GetTypeInfo(), t => GetOrRegisterStaticSerializerInternal(t, true));
+      var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingInfo, t => GetOrRegisterStaticSerializerInternal(t, true));
       if (intrinsic != null)
+      {
+        if (typeInfo != implementingInfo)
+        {
+          return new SerializerPair(
+            SerializerReflectionUtil.ConvertReader(implementingInfo, intrinsic.Reader),
+            SerializerReflectionUtil.ConvertWriter(implementingInfo, intrinsic.Writer));
+        }
         return intrinsic;
+      }
 
       throw new Exception($"Unable to register generic type: {typeInfo}. Generics types are expected to have Read and Write static methods for serialization.");
     }
@@ -395,6 +405,7 @@ namespace JetBrains.Rd.Reflection
     }
   }
 
+  [DebuggerDisplay("T: {ElementType}, Polymorphic: {IsPolymorphic}")]
   public class SerializerPair
   {
     private readonly object myReader;
@@ -412,6 +423,8 @@ namespace JetBrains.Rd.Reflection
         return ctxReadDelegate.Method.DeclaringType?.DeclaringType?.Name.Contains(nameof(Polymorphic)) == true;
       }
     }
+
+    private string ElementType => ((Delegate)myReader).Method.ReturnParameter.ParameterType.ToString(false);
 
     public SerializerPair(object reader, object writer)
     {
@@ -439,7 +452,7 @@ namespace JetBrains.Rd.Reflection
 
     public static SerializerPair CreateFromMethods(MethodInfo readMethod, MethodInfo writeMethod)
     {
-      return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(CreateFromMethods2), readMethod.ReturnType, readMethod, writeMethod)!;
+      return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair), nameof(CreateFromMethodsImpl0), readMethod.ReturnType, readMethod, writeMethod)!;
     }
 
     /// <summary>
@@ -452,15 +465,12 @@ namespace JetBrains.Rd.Reflection
 
     public static SerializerPair CreateFromMethods(MethodInfo readMethod, MethodInfo writeMethod, SerializerPair argumentSerializer)
     {
-      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, object value) =>
-        writeMethod.Invoke(null, new[] { ctx, writer, value, });
-
-      object ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
-        readMethod.Invoke(null, new[] { ctx, reader, argumentSerializer.Reader, argumentSerializer.Writer });
-
-      CtxReadDelegate<object> ctxReadDelegate = ReaderDelegate;
-      CtxWriteDelegate<object> ctxWriteDelegate = WriterDelegate;
-      return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
+      return (SerializerPair) ReflectionUtil.InvokeStaticGeneric(typeof(SerializerPair),
+        nameof(CreateFromMethodsImpl1),
+        readMethod.ReturnType,
+        readMethod,
+        writeMethod,
+        argumentSerializer)!;
     }
 
     public static SerializerPair CreateFromMethods(MethodInfo readMethod, MethodInfo writeMethod, SerializerPair keySerializer, SerializerPair valueSerializer)
@@ -473,6 +483,39 @@ namespace JetBrains.Rd.Reflection
         keySerializer,
         valueSerializer)!;
     }
+
+    private static SerializerPair CreateFromMethodsImpl0<T>(MethodInfo readMethod, MethodInfo writeMethod)
+    {
+      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
+        writeMethod.Invoke(null, new[] { ctx, writer, (object?)value, });
+
+      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
+        (T) readMethod.Invoke(null, new object[] { ctx, reader });
+
+      CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+      CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
+      return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
+    }
+
+    private static SerializerPair CreateFromMethodsImpl1<T>(MethodInfo readMethod, MethodInfo writeMethod, SerializerPair keySerializer)
+    {
+      var ctxKeyReadDelegate = keySerializer.Reader;
+      var ctxKeyWriteDelegate = keySerializer.Writer;
+      
+      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) => 
+        writeMethod.Invoke(null, new object?[] {ctx, writer, value});
+
+      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
+      {
+        return (T)readMethod.Invoke(null,
+          new[] {ctx, reader, ctxKeyReadDelegate, ctxKeyWriteDelegate});
+      }
+
+      CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+      CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
+      return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
+    }
+
 
     private static SerializerPair CreateFromMethodsImpl2<T>(MethodInfo readMethod, MethodInfo writeMethod, SerializerPair keySerializer, SerializerPair valueSerializer)
     {
@@ -489,19 +532,6 @@ namespace JetBrains.Rd.Reflection
         return (T)readMethod.Invoke(null,
           new[] {ctx, reader, ctxKeyReadDelegate, ctxKeyWriteDelegate, ctxValueReadDelegate, ctxValueWriteDelegate});
       }
-
-      var ctxReadDelegate = (CtxReadDelegate<T>) ReaderDelegate;
-      var ctxWriteDelegate = (CtxWriteDelegate<T>) WriterDelegate;
-      return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
-    }
-
-    private static SerializerPair CreateFromMethods2<T>(MethodInfo readMethod, MethodInfo writeMethod)
-    {
-      void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
-        writeMethod.Invoke(null, new[] { ctx, writer, (object?)value, });
-
-      T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
-        (T) readMethod.Invoke(null, new object[] { ctx, reader });
 
       CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
       CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;

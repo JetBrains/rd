@@ -19,8 +19,8 @@ namespace Test.RdFramework.Reflection
     public ModelSample NestedRdModel;
 
     public IViewableList<ModelSample> LiveList;
-    // public IViewableMap<FieldsNotNullOk, int[]> maps { get; set; }
-    // public IViewableSet<FieldsNotNullOk> sets;
+    public IViewableMap<ModelSample, int[]> Maps { get; set; }
+    public IViewableSet<ModelSample> Sets;
   }
 
   [RdModel]
