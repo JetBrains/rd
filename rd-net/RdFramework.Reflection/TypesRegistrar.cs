@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using JetBrains.Util;
 
 namespace JetBrains.Rd.Reflection
@@ -31,7 +32,7 @@ namespace JetBrains.Rd.Reflection
     private void Register(Type type, ISerializersContainer serializers)
     {
       var instanceSerializer = type.IsInterface || type.IsAbstract;
-      var serializerPair = myReflectionSerializersFactory.GetOrRegisterSerializerPair(type, instanceSerializer);
+      var serializerPair = myReflectionSerializersFactory.GetOrCreateMemberSerializer(type, false, instanceSerializer, null);
       ReflectionUtil.InvokeGenericThis(serializers, nameof(serializers.Register), type,
         new[] {serializerPair.Reader, serializerPair.Writer, RdId.DefineByFqn(type).Value });
     }

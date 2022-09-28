@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Collections.Viewable;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -18,6 +20,8 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<FieldsNullableOk> FieldsNullableOk { get; }
       public IViewableProperty<PropertiesNotNullOk> PropertiesNotNullOk { get; }
       public IViewableProperty<Animal> PolyProperty { get; }
+      
+      public ModelSample ModelMember { get; }
     }
 
     public override void SetUp()
@@ -77,7 +81,7 @@ namespace Test.RdFramework.Reflection
       cm.List.Add("val2");
       cm.Set.Add("val3");
       cm.Map["x"] = "val";
-
+      
       CollectionAssert.AreEqual(cm.IList, sm.IList);
       CollectionAssert.AreEqual(cm.List, sm.List);
       CollectionAssert.AreEqual(cm.Set, sm.Set);
@@ -86,6 +90,21 @@ namespace Test.RdFramework.Reflection
       Assert.AreEqual(cm.RegularFieldInModel, sm.RegularFieldInModel);
     }
 
+    [Test]
+    public void TestReactiveListOfReactiveLists()
+    {
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
+
+      var cm = c.ModelMember;
+      var sm = s.ModelMember;
+
+      cm.Multilist.Add(CFacade.Activator.Activate<RdList<string>>()); 
+      cm.Multilist[0].Add("123");
+      cm.MultimapNonReactive["x"] = new List<string> {"123"};
+      CollectionAssert.AreEqual(cm.Multilist[0], sm.Multilist[0]);
+      CollectionAssert.AreEqual(cm.MultimapNonReactive["x"], sm.MultimapNonReactive["x"]);
+    }
     [Test]
     public void TestNestedRdModelsCircular()
     {
