@@ -14,8 +14,8 @@ namespace Test.RdFramework
     [Test]
     public void TestFireSignal()
     {
-      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), ourKey);
-      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), ourKey);
+      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, NewRdSignal<string>(), ourKey);
+      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, NewRdSignal<string>(), ourKey);
 
       var results = new List<string>();
       clientSignal.Advise(LifetimeDefinition.Lifetime, value => results.Add(value));
@@ -30,8 +30,8 @@ namespace Test.RdFramework
     [Test]
     public void TestNullability()
     {
-      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), ourKey);
-      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), ourKey);
+      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, NewRdSignal<string>(), ourKey);
+      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, NewRdSignal<string>(), ourKey);
 
       var results = new List<string>();
       clientSignal.Advise(LifetimeDefinition.Lifetime, value => results.Add(value));

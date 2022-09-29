@@ -27,8 +27,6 @@ namespace JetBrains.Rd.Impl
     private readonly ViewableList<V> myList = new ViewableList<V>();
        
     
-    public RdList() : this(Polymorphic<V>.Read, Polymorphic<V>.Write) {}
-
     public RdList(CtxReadDelegate<V> readValue, CtxWriteDelegate<V> writeValue, long nextVersion = 1L)
     {
       myNextVersion = nextVersion;

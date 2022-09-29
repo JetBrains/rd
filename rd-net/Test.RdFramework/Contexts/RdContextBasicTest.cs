@@ -53,8 +53,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = heavy ? TestKeyHeavy.Instance : (RdContext<string>) TestKeyLight.Instance;
       
-      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
-      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
+      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, NewRdSignal<string>(), 1);
+      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, NewRdSignal<string>(), 1);
 
       key.RegisterOn(ClientProtocol.Serializers);
       ServerProtocol.Contexts.RegisterContext(key);

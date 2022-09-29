@@ -80,9 +80,9 @@ namespace Test.RdFramework
         var serverProtocol = Server(lifetime);
         var clientProtocol = Client(lifetime, serverProtocol);
 
-        var sp = new RdProperty<int>().Static(1);
+        var sp = NewRdProperty<int>().Static(1);
         sp.Bind(lifetime, serverProtocol, Top);
-        var cp = new RdProperty<int>().Static(1);
+        var cp = NewRdProperty<int>().Static(1);
         cp.Bind(lifetime, clientProtocol, Top);
 
         cp.SetValue(1);
@@ -100,9 +100,9 @@ namespace Test.RdFramework
         var serverProtocol = Server(lifetime);
         var clientProtocol = Client(lifetime, serverProtocol);
 
-        var sp = new RdProperty<int>().Static(1);
+        var sp = NewRdProperty<int>().Static(1);
         sp.Bind(lifetime, serverProtocol, Top);
-        var cp = new RdProperty<int>().Static(1);
+        var cp = NewRdProperty<int>().Static(1);
         cp.Bind(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
@@ -128,9 +128,9 @@ namespace Test.RdFramework
         var serverProtocol = Server(lifetime);
         var clientProtocol = Client(lifetime, serverProtocol);
 
-        var sp = new RdProperty<string>().Static(1);
+        var sp = NewRdProperty<string>().Static(1);
         sp.Bind(lifetime, serverProtocol, Top);
-        var cp = new RdProperty<string>().Static(1);
+        var cp = NewRdProperty<string>().Static(1);
         cp.Bind(lifetime, clientProtocol, Top);
 
         cp.SetValue("1");
@@ -161,13 +161,13 @@ namespace Test.RdFramework
         var port = FindFreePort();
         var clientProtocol = Client(lifetime, port);
 
-        var cp = new RdProperty<int>().Static(1);
+        var cp = NewRdProperty<int>().Static(1);
         cp.Bind(lifetime, clientProtocol, Top);
         cp.SetValue(1);
 
         Thread.Sleep(2000);
         var serverProtocol = Server(lifetime, port);
-        var sp = new RdProperty<int>().Static(1);
+        var sp = NewRdProperty<int>().Static(1);
         sp.Bind(lifetime, serverProtocol, Top);
 
         var prev = sp.Maybe;
@@ -211,7 +211,7 @@ namespace Test.RdFramework
         SynchronousScheduler.Instance.SetActive(lifetime);
         var protocol = Server(lifetime);
         Thread.Sleep(100);
-        var p = new RdProperty<int>().Static(1);
+        var p = NewRdProperty<int>().Static(1);
         p.Bind(lifetime, protocol, Top);
         p.SetValue(1);
         p.SetValue(2);
@@ -251,7 +251,7 @@ namespace Test.RdFramework
         SynchronousScheduler.Instance.SetActive(lifetime);
         var protocol = Client(lifetime, FindFreePort());
         Thread.Sleep(100);
-        var p = new RdProperty<int>().Static(1);
+        var p = NewRdProperty<int>().Static(1);
         p.Bind(lifetime, protocol, Top);
         p.SetValue(1);
         p.SetValue(2);
@@ -281,10 +281,10 @@ namespace Test.RdFramework
         var serverProtocol = Server(lifetime);
         var clientProtocol = Client(lifetime, serverProtocol);
 
-        var sp = new RdSignal<int>().Static(1);
+        var sp = NewRdSignal<int>().Static(1);
         sp.Bind(lifetime, serverProtocol, Top);
 
-        var cp = new RdSignal<int>().Static(1);
+        var cp = NewRdSignal<int>().Static(1);
         cp.Bind(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
@@ -319,7 +319,7 @@ namespace Test.RdFramework
           SynchronousScheduler.Instance.SetActive(lifetime);
           var serverProtocol = Server(lifetime, null);
           
-          var sp = new RdProperty<int>().Static(1);
+          var sp = NewRdProperty<int>().Static(1);
           sp.Bind(lifetime, serverProtocol, Top);
           sp.IsMaster = false;
 
@@ -335,7 +335,7 @@ namespace Test.RdFramework
           Lifetime.Using(lf =>
           {
             var clientProtocol = Client(lf, serverProtocol);
-            var cp = new RdProperty<int>().Static(1);
+            var cp = NewRdProperty<int>().Static(1);
             cp.IsMaster = true;
             cp.Bind(lf, clientProtocol, Top);
             cp.SetValue(1);            
@@ -346,11 +346,11 @@ namespace Test.RdFramework
           
           Lifetime.Using(lf =>
           {
-            sp = new RdProperty<int>().Static(2);
+            sp = NewRdProperty<int>().Static(2);
             sp.Bind(lifetime, serverProtocol, Top);
             
             var clientProtocol = Client(lf, serverProtocol);
-            var cp = new RdProperty<int>().Static(2);
+            var cp = NewRdProperty<int>().Static(2);
             cp.Bind(lf, clientProtocol, Top);
             cp.SetValue(2);
             WaitAndAssert(sp, 2);
@@ -361,7 +361,7 @@ namespace Test.RdFramework
           Lifetime.Using(lf =>
           {                        
             var clientProtocol = Client(lf, serverProtocol);
-            var cp = new RdProperty<int>().Static(2);
+            var cp = NewRdProperty<int>().Static(2);
             cp.Bind(lf, clientProtocol, Top);
             cp.SetValue(3);      
             WaitAndAssert(sp, 3, 2);

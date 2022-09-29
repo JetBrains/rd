@@ -15,8 +15,6 @@ namespace JetBrains.Rd.Impl
   {
     private readonly IViewableSet<T> mySet;
 
-    public RdSet() : this(Polymorphic<T>.Read, Polymorphic<T>.Write) {}
-
     public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, IViewableSet<T>? backingSet)
     {
       ValueCanBeNull = false;

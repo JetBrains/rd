@@ -48,11 +48,6 @@ namespace JetBrains.Rd.Tasks
       WriteResponseDelegate = writeResponse;
     }
 
-    public RdCall() : this(Polymorphic<TReq>.Read, Polymorphic<TReq>.Write, Polymorphic<TRes>.Read, Polymorphic<TRes>.Write)
-    {
-    }
-
-
     protected override void Init(Lifetime lifetime)
     {
       base.Init(lifetime);

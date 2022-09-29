@@ -16,8 +16,8 @@ namespace Test.RdFramework
     [Test]
     public void Test1()
     {
-      var serverSet = BindToServer(LifetimeDefinition.Lifetime, new RdSet<int>(), ourKey);
-      var clientSet = BindToClient(LifetimeDefinition.Lifetime, new RdSet<int>(), ourKey);
+      var serverSet = BindToServer(LifetimeDefinition.Lifetime, NewRdSet<int>(), ourKey);
+      var clientSet = BindToClient(LifetimeDefinition.Lifetime, NewRdSet<int>(), ourKey);
 
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
@@ -52,8 +52,8 @@ namespace Test.RdFramework
     [Test]
     public void TestNullability()
     {
-      var serverSet = BindToServer(LifetimeDefinition.Lifetime, new RdSet<string> {IsMaster = true}, ourKey);
-      var clientSet = BindToClient(LifetimeDefinition.Lifetime, new RdSet<string> {IsMaster = false}, ourKey);
+      var serverSet = BindToServer(LifetimeDefinition.Lifetime, NewRdSet<string>(isMaster: true), ourKey);
+      var clientSet = BindToClient(LifetimeDefinition.Lifetime, NewRdSet<string>(isMaster: false), ourKey);
 
       serverSet.Add("Value");
       Assert.Throws<Assertion.AssertionException>(() => { serverSet.Add(null); });

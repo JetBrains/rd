@@ -20,8 +20,6 @@ namespace JetBrains.Rd.Impl
   {
     private readonly ViewableMap<K, V> myMap = new ViewableMap<K, V>();
 
-    public RdMap() : this(Polymorphic<K>.Read, Polymorphic<K>.Write, Polymorphic<V>.Read, Polymorphic<V>.Write) {}
-
     public RdMap(CtxReadDelegate<K> readKey, CtxWriteDelegate<K> writeKey, CtxReadDelegate<V> readValue, CtxWriteDelegate<V> writeValue)
     {
       ValueCanBeNull = false;

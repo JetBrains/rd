@@ -17,8 +17,8 @@ namespace Test.RdFramework
     [Test]
     public void Test1()
     {
-      var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = true, OptimizeNested = true }, ourKey);
-      var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = false, OptimizeNested = true }, ourKey);
+      var serverMap = BindToServer(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: true, optimizeNested: true), ourKey);
+      var clientMap = BindToClient(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: false, optimizeNested: true), ourKey);
 
       Assert.True(serverMap.Count == 0);
       Assert.True(clientMap.Count == 0);
@@ -55,8 +55,8 @@ namespace Test.RdFramework
     [Test]
     public void Test2()
     {
-      var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdMap<int, string> {IsMaster = true, OptimizeNested = true}, ourKey);
-      var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = false, OptimizeNested = true }, ourKey);
+      var serverMap = BindToServer(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: true, optimizeNested: true), ourKey);
+      var clientMap = BindToClient(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: false, optimizeNested: true), ourKey);
 
       var log = new List<string>();
       clientMap.Advise(LifetimeDefinition.Lifetime, (e) => log.Add(e.Kind + " " + e.Key + " " + e.NewValue));   
@@ -81,8 +81,8 @@ namespace Test.RdFramework
     [Test]
     public void TestLifetimes1()
     {
-      var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = true, OptimizeNested = true }, ourKey);
-      var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = false, OptimizeNested = true }, ourKey);
+      var serverMap = BindToServer(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: true, optimizeNested: true), ourKey);
+      var clientMap = BindToClient(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: false, optimizeNested: true), ourKey);
 
       var itemRemoved = "";
 
@@ -99,8 +99,8 @@ namespace Test.RdFramework
     [Test]
     public void TestLifetimes2()
     {
-      var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = true, OptimizeNested = true }, ourKey);
-      var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdMap<int, string> { IsMaster = false, OptimizeNested = true }, ourKey);
+      var serverMap = BindToServer(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: true, optimizeNested: true), ourKey);
+      var clientMap = BindToClient(LifetimeDefinition.Lifetime, NewRdMap<int, string>(isMaster: false, optimizeNested: true), ourKey);
 
       var itemRemovedServer = false;
       var itemRemovedClient = false;
@@ -131,8 +131,8 @@ namespace Test.RdFramework
     [Test]
     public void TestNullability()
     {
-      var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdMap<string, string> {IsMaster = true, OptimizeNested = true}, ourKey);
-      var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdMap<string, string> {IsMaster = false, OptimizeNested = true}, ourKey);
+      var serverMap = BindToServer(LifetimeDefinition.Lifetime, NewRdMap<string, string>(isMaster: true, optimizeNested: true), ourKey);
+      var clientMap = BindToClient(LifetimeDefinition.Lifetime, NewRdMap<string, string>(isMaster: false, optimizeNested: true), ourKey);
 
       Assert.Throws<Assertion.AssertionException>(() => { serverMap.Add("", null); });
       Assert.Throws<ArgumentNullException>(() => { serverMap.Add(null, ""); });

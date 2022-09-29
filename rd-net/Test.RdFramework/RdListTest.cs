@@ -16,8 +16,8 @@ namespace Test.RdFramework
     [Test]
     public void Test1()
     {
-      var serverList = BindToServer(TestLifetime, new RdList<string> { OptimizeNested = true }, ourKey);
-      var clientList = BindToClient(TestLifetime, new RdList<string> { OptimizeNested = true }, ourKey);
+      var serverList = BindToServer(TestLifetime, NewRdList<string>(optimizeNested: true), ourKey);
+      var clientList = BindToClient(TestLifetime, NewRdList<string>(optimizeNested: true), ourKey);
 
       Assert.True(serverList.Count == 0);
       Assert.True(clientList.Count == 0);
@@ -47,8 +47,8 @@ namespace Test.RdFramework
     [Test]
     public void Test2()
     {
-      var serverList = BindToServer(TestLifetime, new RdList<string> { OptimizeNested = true}, ourKey);
-      var clientList = BindToClient(TestLifetime, new RdList<string> { OptimizeNested = true }, ourKey);
+      var serverList = BindToServer(TestLifetime, NewRdList<string>(optimizeNested: true), ourKey);
+      var clientList = BindToClient(TestLifetime, NewRdList<string>(optimizeNested: true), ourKey);
 
       var log = new List<string>();
       clientList.Advise(TestLifetime, (e) => log.Add(e.Kind + " " + e.Index + " " + e.NewValue));   
@@ -71,8 +71,8 @@ namespace Test.RdFramework
     [Test]
     public void TestLifetimes1()
     {
-      var serverList = BindToServer(TestLifetime, new RdList<string> { OptimizeNested = true }, ourKey);
-      var clientList = BindToClient(TestLifetime, new RdList<string> { OptimizeNested = true }, ourKey);
+      var serverList = BindToServer(TestLifetime, NewRdList<string>(optimizeNested: true), ourKey);
+      var clientList = BindToClient(TestLifetime, NewRdList<string>(optimizeNested: true), ourKey);
 
       var itemRemoved = "";
 
@@ -90,8 +90,8 @@ namespace Test.RdFramework
     [Test]
     public void TestLifetimes2()
     {
-      var serverList = BindToServer(LifetimeDefinition.Lifetime, new RdList<string> { OptimizeNested = true }, ourKey);
-      var clientList = BindToClient(LifetimeDefinition.Lifetime, new RdList<string> { OptimizeNested = true }, ourKey);
+      var serverList = BindToServer(LifetimeDefinition.Lifetime, NewRdList<string>(optimizeNested: true), ourKey);
+      var clientList = BindToClient(LifetimeDefinition.Lifetime, NewRdList<string>(optimizeNested: true), ourKey);
 
       var itemRemovedServer = false;
       var itemRemovedClient = false;
@@ -121,8 +121,8 @@ namespace Test.RdFramework
     [Test]
     public void TestNullability()
     {
-      var serverList = BindToServer(LifetimeDefinition.Lifetime, new RdList<string> {OptimizeNested = true}, ourKey);
-      var clientList = BindToClient(LifetimeDefinition.Lifetime, new RdList<string> {OptimizeNested = true}, ourKey);
+      var serverList = BindToServer(LifetimeDefinition.Lifetime, NewRdList<string>(optimizeNested: true), ourKey);
+      var clientList = BindToClient(LifetimeDefinition.Lifetime, NewRdList<string>(optimizeNested: true), ourKey);
 
       Assert.Throws<ArgumentNullException>(() => { serverList.Add(null); });
       ServerWire.TransmitAllMessages();

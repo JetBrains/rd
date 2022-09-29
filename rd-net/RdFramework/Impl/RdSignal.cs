@@ -41,10 +41,6 @@ namespace JetBrains.Rd.Impl
     public IScheduler? Scheduler { get; set; }
 
 
-    public RdSignal() : this(Polymorphic<T>.Read, Polymorphic<T>.Write)
-    {
-    }
-
     public RdSignal(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
     {
       ReadValueDelegate = readValue;
