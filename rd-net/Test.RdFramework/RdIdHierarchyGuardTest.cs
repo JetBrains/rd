@@ -17,8 +17,8 @@ namespace Test.RdFramework
     [Test]    
     public void Test()
     {
-      var serverMap = BindToServer(LifetimeDefinition.Lifetime, new RdMap<int, Model> { IsMaster = true }, ourMapKey);
-      var clientMap = BindToClient(LifetimeDefinition.Lifetime, new RdMap<int, Model> { IsMaster = false }, ourMapKey);      
+      var serverMap = BindToServer(LifetimeDefinition.Lifetime, NewRdMap<int, Model>(isMaster: true), ourMapKey);
+      var clientMap = BindToClient(LifetimeDefinition.Lifetime, NewRdMap<int, Model>(isMaster: false), ourMapKey);
 
       ServerProtocol.Serializers.Register(Model.Read, Model.Write);
       ClientProtocol.Serializers.Register(Model.Read, Model.Write);
@@ -49,7 +49,7 @@ namespace Test.RdFramework
 
       public Model()
       {
-        myValue = new RdProperty<int>();
+        myValue = NewRdProperty<int>();
       }
 
       private Model(RdProperty<int> modelProperty)

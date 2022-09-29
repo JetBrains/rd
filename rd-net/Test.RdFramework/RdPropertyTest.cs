@@ -11,16 +11,11 @@ namespace Test.RdFramework
   {
     private static readonly int ourKey = 1;
 
-//    private static RdProperty<string> CreateProperty(IProtocol protocol, bool isMaster)
-//    {
-//      return new RdProperty<string>(Lifetime.Eternal, protocol, ourKey, isMaster);
-//    }
-
     [Test]
     public void Test1()
     {
-      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = true }, ourKey);
-      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = false }, ourKey);
+      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: true), ourKey);
+      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: false), ourKey);
 
       // Everything is empty
       Assert.False(serverProperty.Maybe.HasValue);
@@ -47,8 +42,8 @@ namespace Test.RdFramework
     [Test]
     public void Test2()
     {
-      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = true }, ourKey);
-      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = false }, ourKey);
+      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: true), ourKey);
+      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: false), ourKey);
 
       // Server -> Client
       serverProperty.SetValue("Server value 1");
@@ -72,8 +67,8 @@ namespace Test.RdFramework
     [Test]
     public void Test3()
     {
-      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = true }, ourKey);
-      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = false }, ourKey);
+      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: true), ourKey);
+      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: false), ourKey);
 
       // Client -> Server
       clientProperty.SetValue("Client value 1");
@@ -97,8 +92,8 @@ namespace Test.RdFramework
     [Test]
     public void Test4()
     {
-      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = true }, ourKey);
-      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = false }, ourKey);
+      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: true), ourKey);
+      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: false), ourKey);
 
       serverProperty.SetValue("Server value 1");
       ServerWire.TransmitOneMessage();
@@ -122,8 +117,8 @@ namespace Test.RdFramework
     [Test]
     public void Test5()
     {
-      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = true }, ourKey);
-      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = false }, ourKey);
+      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: true), ourKey);
+      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: false), ourKey);
 
       serverProperty.SetValue("Server value 1");
       ServerWire.TransmitOneMessage();
@@ -150,8 +145,8 @@ namespace Test.RdFramework
     [Test]
     public void TestNullability()
     {
-      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = true }, ourKey);
-      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, new RdProperty<string> { IsMaster = false }, ourKey);
+      var serverProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: true), ourKey);
+      var clientProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<string>(isMaster: false), ourKey);
 
       serverProperty.SetValue("Server value 1");
       Assert.Throws<Assertion.AssertionException>(() => { serverProperty.SetValue(null); });

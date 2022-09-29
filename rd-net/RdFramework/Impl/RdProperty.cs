@@ -18,8 +18,6 @@ namespace JetBrains.Rd.Impl
 
     public override event PropertyChangedEventHandler? PropertyChanged;
 
-    public RdProperty() : this(Polymorphic<T>.Read, Polymorphic<T>.Write) {}
-
     public RdProperty(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
     {
       ReadValueDelegate = readValue;

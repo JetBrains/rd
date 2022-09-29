@@ -114,13 +114,13 @@ namespace Test.RdFramework.Contexts
       myServerWire.AutoTransmitMode = true;
       myClientWire.AutoTransmitMode = true;
       
-      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
+      var serverSignal = BindToServer(LifetimeDefinition.Lifetime, NewRdSignal<string>(), 1);
 
       using var _ = key.UpdateValue("1");
       
       serverSignal.Fire("");
 
-      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, new RdSignal<string>(), 1);
+      var clientSignal = BindToClient(LifetimeDefinition.Lifetime, NewRdSignal<string>(), 1);
 
       Lifetime.Using(lt =>
       {

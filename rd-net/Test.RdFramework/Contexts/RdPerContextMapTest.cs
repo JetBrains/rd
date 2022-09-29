@@ -19,8 +19,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
@@ -50,8 +50,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
@@ -80,8 +80,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
@@ -107,8 +107,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
@@ -142,8 +142,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
       var client1Cid = "Client-1";
@@ -176,8 +176,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
 
@@ -208,8 +208,8 @@ namespace Test.RdFramework.Contexts
     {
       var key = RdContextBasicTest.TestKeyHeavy.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
 
@@ -244,8 +244,8 @@ namespace Test.RdFramework.Contexts
       var key1 = RdContextBasicTest.TestKeyHeavy.Instance;
       var key2 = RdContextBasicTest.TestKey2.Instance;
 
-      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());
-      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => new RdMap<int, string>());
+      var serverMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => NewRdMap<int, string>());
+      var clientMap = new RdPerContextMap<string, RdMap<int, string>>(key1, _ => NewRdMap<int, string>());
 
       var server1Cid = "Server-1";
       var server2Cid = "Server-2";

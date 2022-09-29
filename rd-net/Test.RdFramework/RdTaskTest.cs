@@ -26,7 +26,7 @@ namespace Test.RdFramework
 
     private RdCall<TIn, TOut> CreateEndpoint<TIn, TOut>(Func<TIn, TOut> handler, IScheduler cancellationScheduler = null, IScheduler handlerScheduler = null)
     {
-      var res = new RdCall<TIn, TOut>();
+      var res = NewRdCall<TIn, TOut>();
       res.Set(handler, cancellationScheduler, handlerScheduler);
       return res;
     }
@@ -39,7 +39,7 @@ namespace Test.RdFramework
       ClientWire.AutoTransmitMode = true;
       ServerWire.AutoTransmitMode = true;
 
-      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, new RdCall<int, string>(), ourKey);
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
       var clientEntity = BindToClient(LifetimeDefinition.Lifetime, CreateEndpoint<int, string>(x => x.ToString()), ourKey);
 
 
@@ -57,7 +57,7 @@ namespace Test.RdFramework
       ClientWire.AutoTransmitMode = true;
       ServerWire.AutoTransmitMode = true;
 
-      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, new RdCall<string, string>(), ourKey);
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<string, string>(), ourKey);
       var clientEntity = BindToClient(LifetimeDefinition.Lifetime, CreateEndpoint<string, string>(x => x.ToString()), ourKey);
       clientEntity.Set((lf, req) => RdTask<string>.Successful(req == null ? "NULL" : null));
 
@@ -83,7 +83,7 @@ namespace Test.RdFramework
       ClientWire.AutoTransmitMode = true;
       ServerWire.AutoTransmitMode = true;
       
-      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, new RdCall<Unit, string>(), ourKey);
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<Unit, string>(), ourKey);
       var clientEntity = BindToClient(LifetimeDefinition.Lifetime, CreateEndpoint<Unit, string>(x => x.ToString()), ourKey);
 
       bool handlerFinished = false; 
@@ -151,7 +151,7 @@ namespace Test.RdFramework
       var call1 = new RdCall<Unit, RdSignal<int>>(Serializers.ReadVoid, Serializers.WriteVoid, RdSignal<int>.Read, RdSignal<int>.Write);
       var call2 = new RdCall<Unit, RdSignal<int>>(Serializers.ReadVoid, Serializers.WriteVoid, RdSignal<int>.Read, RdSignal<int>.Write);
 
-      var respSignal = new RdSignal<int>();
+      var respSignal = NewRdSignal<int>();
       var endpointLfTerminated = false;
       call2.Set((endpointLf, _) =>
       {
@@ -194,8 +194,8 @@ namespace Test.RdFramework
 
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(TestLifetime, "Background scheduler");
 
-      var callsite = BindToServer(LifetimeDefinition.Lifetime, new RdCall<int, string>(), ourKey);
-      var endpoint = BindToClient(LifetimeDefinition.Lifetime, new RdCall<int, string>(), ourKey);
+      var callsite = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
+      var endpoint = BindToClient(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
       
       Assert.IsFalse(scheduler.IsActive);
 
