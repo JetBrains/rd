@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Collections.Viewable;
+using JetBrains.Diagnostics;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
@@ -105,6 +106,36 @@ namespace Test.RdFramework.Reflection
       CollectionAssert.AreEqual(cm.Multilist[0], sm.Multilist[0]);
       CollectionAssert.AreEqual(cm.MultimapNonReactive["x"], sm.MultimapNonReactive["x"]);
     }
+
+    [Test]
+    public void TestOptimizeNested()
+    {
+      var list = CFacade.Activator.Activate<RdList<string>>();
+      Assert.AreEqual(true, list.OptimizeNested);
+      
+      var listInts = CFacade.Activator.Activate<RdList<int>>();
+      Assert.AreEqual(true, listInts.OptimizeNested);
+      var listPoly = CFacade.Activator.Activate<IViewableList<Animal>>();
+      Assert.AreEqual(false, ((RdList<Animal>)listPoly).OptimizeNested);
+      var listNested = CFacade.Activator.Activate<IViewableList<IViewableList<int>>>();
+      Assert.AreEqual(false, ((RdList<IViewableList<int>>)listNested).OptimizeNested);
+
+      var propertyInts = CFacade.Activator.Activate<RdProperty<int>>();
+      Assert.AreEqual(true, propertyInts.OptimizeNested);
+      var propertyPoly = CFacade.Activator.Activate<IViewableProperty<Animal>>();
+      Assert.AreEqual(false, ((RdProperty<Animal>)propertyPoly).OptimizeNested);
+
+      var map = CFacade.Activator.Activate<IViewableMap<int, int>>();
+      Assert.AreEqual(true, ((RdMap<int, int>)map).OptimizeNested);
+      var mapPoly = CFacade.Activator.Activate<RdMap<int, Animal>>();
+      Assert.AreEqual(false, mapPoly.OptimizeNested);
+
+      var set = CFacade.Activator.Activate<IViewableSet<int>>();
+      Assert.AreEqual(true, ((RdSet<int>)set).OptimizeNested);
+      var setPoly = CFacade.Activator.Activate<RdSet<Animal>>();
+      Assert.AreEqual(false, setPoly.OptimizeNested);
+    }
+
     [Test]
     public void TestNestedRdModelsCircular()
     {

@@ -102,7 +102,7 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     /// Creates and initializes reactive primitives, RdModels and RdExts.
     /// </summary>
-    public T Activate<T>() where T : RdBindableBase
+    public T Activate<T>()
     {
       return (T) Activate(typeof(T));
     }
@@ -364,17 +364,23 @@ namespace JetBrains.Rd.Reflection
       var genericArguments = implementingType.GetTypeInfo().GetGenericArguments();
       var argument = genericArguments[0];
       var serializerPair = GetProperSerializer(argument);
-
+      
       if (genericDefinition == typeof(RdProperty<>) ||
           genericDefinition == typeof(RdSignal<>) ||
           genericDefinition == typeof(RdSet<>))
       {
-        return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer);
+        var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer);
+        if (IsMonomorphic(argument))
+          ReflectionUtil.InvokeStaticGeneric(typeof(ReflectionRdActivator), nameof(SetOptimizeNested1), argument, instance);
+        return instance;
       }
 
       if (genericDefinition == typeof(RdList<>))
       {
-        return Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
+        var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, 1L /*nextVersion*/);
+        if (IsMonomorphic(argument))
+          ReflectionUtil.InvokeStaticGeneric(typeof(ReflectionRdActivator), nameof(SetOptimizeNested1), argument, instance);
+        return instance;
       }
 
       if (genericArguments.Length == 2)
@@ -382,10 +388,8 @@ namespace JetBrains.Rd.Reflection
         var argument2 = genericArguments[1];
         var serializerPair2 = GetProperSerializer(argument2);
         var instance = Activator.CreateInstance(implementingType, serializerPair.Reader, serializerPair.Writer, serializerPair2.Reader, serializerPair2.Writer);
-        if (ourLog.IsTraceEnabled())
-          ourLog.Trace("Create 2-generic: {0}.{1}, TReq poly: {2}, TRes poly: {3}", implementingType.FullName, memberName, serializerPair.IsPolymorphic, serializerPair2.IsPolymorphic);
-        if (instance is RdReactiveBase reactive)
-          reactive.ValueCanBeNull = true;
+        if (IsMonomorphic(argument2))
+          ReflectionUtil.InvokeStaticGeneric2(typeof(ReflectionRdActivator), nameof(SetOptimizeNested2), argument, argument2, instance);
         return instance;
       }
 
@@ -409,6 +413,35 @@ namespace JetBrains.Rd.Reflection
       }
 
       throw new Assertion.AssertionException($"Unable to activate generic type: {memberType}");
+
+      static bool IsMonomorphic(Type type)
+      {
+        return type.IsValueType || (!typeof(IRdBindable).IsAssignableFrom(type) && type.IsSealed);
+      }
+    }
+
+    [UsedImplicitly]
+    private static void SetOptimizeNested1<T>(object container) where T : notnull
+    {
+      if (container is RdProperty<T> property)
+      {
+        property.OptimizeNested = true;
+      }
+      else if (container is RdSet<T> set)
+      {
+        set.OptimizeNested = true;
+      }
+      else if (container is RdList<T> list)
+      {
+        list.OptimizeNested = true;
+      }
+    }
+
+    [UsedImplicitly]
+    private static void SetOptimizeNested2<TKey, TValue>(object container) where TKey : notnull
+    {
+      if (container is RdMap<TKey, TValue> map) 
+        map.OptimizeNested = true;
     }
 
     public static string GetTypeName(Type type)
