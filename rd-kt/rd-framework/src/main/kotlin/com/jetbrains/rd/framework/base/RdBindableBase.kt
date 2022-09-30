@@ -89,8 +89,9 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     private fun <T:Any> getOrCreateExtension0(name: String, clazz: KClass<T>, highPriorityExtension: Boolean = false, create: () -> T) : T {
         Sync.lock(extensions) {
-            val res = extensions.getOrPut(name) {
+            val res = extensions[name] ?: run {
                 val newExtension = create()
+                extensions[name] = newExtension
                 if (newExtension is IRdBindable) {
                     bindableChildren.add(if (highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
                     bindLifetime?.let {

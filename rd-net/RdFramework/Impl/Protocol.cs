@@ -115,7 +115,7 @@ namespace JetBrains.Rd.Impl
     
     public ISignal<ExtCreationInfo> ExtCreated { get; }
     
-    public RdSignal<ExtCreationInfo> ExtConfirmation { get; }
+    private RdSignal<ExtCreationInfo> ExtConfirmation { get; }
 
     private ThreadLocal<bool> ExtIsLocal { get; }
 

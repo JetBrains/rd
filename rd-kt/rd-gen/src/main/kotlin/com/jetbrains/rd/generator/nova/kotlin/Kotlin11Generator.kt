@@ -625,13 +625,7 @@ open class Kotlin11Generator(
             + "${decl.root.sanitizedName(decl)}.register(protocol.serializers)"
             println()
 
-            + "return ${decl.name}().apply {"
-            indent {
-                val quotedName = "\"${decl.name}\""
-                + "identify(protocol.identity, RdId.Null.mix($quotedName))"
-                + "bind(lifetime, protocol, $quotedName)"
-            }
-            +"}"
+            + "return ${decl.name}()"
         }
     }
 
