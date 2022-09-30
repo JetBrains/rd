@@ -21,7 +21,7 @@ class Protocol internal constructor(
     override val lifetime: Lifetime,
     serializationCtx: SerializationCtx? = null,
     parentContexts: ProtocolContexts? = null,
-    parentExtCreated: ISignal<ExtCreationInfo>? = null,
+    parentExtCreated: ISignal<ExtCreationInfoEx>? = null,
     parentExtConfirmation: RdSignal<ExtCreationInfo>? = null,
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
@@ -59,9 +59,9 @@ class Protocol internal constructor(
 
     override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
 
-    override val extCreated: ISignal<ExtCreationInfo>
+    override val extCreated: ISignal<ExtCreationInfoEx>
 
-    val extConfirmation: RdSignal<ExtCreationInfo>
+    private val extConfirmation: RdSignal<ExtCreationInfo>
     private val extIsLocal: ThreadLocal<Boolean>
 
     private val extensions = mutableMapOf<KClass<*>, Any>()
@@ -94,10 +94,9 @@ class Protocol internal constructor(
         extIsLocal = ThreadLocal.withInitial { false }
         scheduler.invokeOrQueue {
             extConfirmation.bind(lifetime, this, "ProtocolExtCreated")
-            extConfirmation.advise(lifetime) { message ->
-                if (extIsLocal.get() == true) return@advise
-                // ext confirmed on the other side
-                extCreated.fire(message)
+            extConfirmation.advise(lifetime) { info ->
+                // triggered both from local and remote sides
+                extCreated.fire(ExtCreationInfoEx(info, extIsLocal.get()))
             }
         }
 
@@ -117,7 +116,14 @@ class Protocol internal constructor(
 
     override fun <T: RdExtBase> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T {
         Sync.lock(extensions) {
-            val res = extensions.getOrPut(clazz) { create() }
+            val res = extensions[clazz] ?: run {
+                val newExtension = create()
+                extensions[clazz] = newExtension
+                val declName = clazz.simpleName ?: error("Can't get simple name for class $clazz")
+                newExtension.identify(identity, RdId.Null.mix(declName))
+                newExtension.bind(lifetime, this, declName)
+                newExtension
+            }
             return castExtension(res, clazz)
         }
     }

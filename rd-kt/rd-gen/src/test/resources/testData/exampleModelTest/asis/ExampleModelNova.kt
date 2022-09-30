@@ -56,10 +56,7 @@ class ExampleModelNova private constructor(
         fun create(lifetime: Lifetime, protocol: IProtocol): ExampleModelNova  {
             ExampleRootNova.register(protocol.serializers)
             
-            return ExampleModelNova().apply {
-                identify(protocol.identity, RdId.Null.mix("ExampleModelNova"))
-                bind(lifetime, protocol, "ExampleModelNova")
-            }
+            return ExampleModelNova()
         }
         
         

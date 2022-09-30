@@ -9,3 +9,8 @@ data class ExtCreationInfo(
     val hash: Long,
     val ext: RdExtBase?
 )
+
+data class ExtCreationInfoEx(
+    val info: ExtCreationInfo,
+    val isLocal: Boolean
+)
