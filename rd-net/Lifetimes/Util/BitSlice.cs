@@ -31,9 +31,11 @@ namespace JetBrains.Util.Util
     
     #region Assertions
 
-    [AssertionMethod, Conditional("JET_MODE_ASSERT")]
+    [AssertionMethod]
     protected void AssertSliceFitsHostType<T>()
     {
+      if (!Mode.Assertion) return;
+
       var type = typeof(T);      
       var maxBit = type == typeof(int) ? 31
         : type == typeof(long) ? 64
@@ -43,9 +45,11 @@ namespace JetBrains.Util.Util
       Assertion.Assert(HiBit <= maxBit, "{0} doesn't fit into host type {1}; must be inside [0, {2}]", this, type, maxBit);
     }
 
-    [AssertionMethod, Conditional("JET_MODE_ASSERT")]
+    [AssertionMethod]
     private void AssertValueFitsSlice(int value)
     {
+      if (!Mode.Assertion) return;
+
       Assertion.Assert(value >= 0, "[{0}] must be >= 0; actual: {1}", nameof(value), value);
       Assertion.Assert(value <= Mask, "[{0}] must be <= {1} to fit {2}; actual: {3}", nameof(value), Mask, this, value);
     }

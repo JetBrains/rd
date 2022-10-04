@@ -51,9 +51,9 @@ namespace JetBrains.Util
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private long GetElapsedDateTimeTicks() => unchecked((long)(ElapsedTicks * ourTickFrequency));
 
-    [Conditional("JET_MODE_ASSERT")]
     private void AssertTimeStamp()
     {
+      if (!Mode.Assertion) return;
       Assertion.Assert(myStartTimeStamp != 0, $"{nameof(LocalStopwatch)} must be created using `{nameof(StartNew)}` method");
     }
   }
