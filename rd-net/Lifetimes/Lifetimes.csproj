@@ -10,8 +10,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <NoWarn>$(NoWarn),1591,1570,1574</NoWarn>
         
-        <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
-        
         <Configurations>Debug;Release;CrossTests</Configurations>
         
         <Platforms>AnyCPU</Platforms>

@@ -4,7 +4,6 @@
 
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
-        <DefineConstants>JET_MODE_ASSERT</DefineConstants>
         <Configurations>Debug;Release;CrossTests</Configurations>
         <Platforms>AnyCPU</Platforms>
         <RollForward>LatestMajor</RollForward>

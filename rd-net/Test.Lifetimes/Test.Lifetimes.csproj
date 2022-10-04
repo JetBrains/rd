@@ -10,8 +10,6 @@
         <Platforms>AnyCPU</Platforms>
         <RollForward>LatestMajor</RollForward>
         <Nullable>disable</Nullable>
-
-        <DefineConstants Condition="'$(Configuration)' == 'Debug'">JET_MODE_ASSERT</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

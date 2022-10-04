@@ -92,10 +92,11 @@ namespace JetBrains.Threading
     #endregion
 
 
-    #region Diagnostics    
-    [Conditional("JET_MODE_ASSERT")]
+    #region Diagnostics
     private void AssertState()
     {
+      if (!Mode.Assertion) return;
+
       lock (myLock)
       {
         Assertion.Assert(mySenders.Count <= myMessages.Count

@@ -106,15 +106,12 @@ namespace JetBrains.Rd.Reflection
     private readonly object myLock = new object();
 
 
-#if JET_MODE_ASSERT
     /// <summary>
     /// current serialization stack.
     ///
     /// used to provide diagnostics about circular dependencies only.
     /// </summary>
     private readonly Queue<Type> myCurrentSerializersChain = new Queue<Type>();
-
-#endif
 
     public IScalarSerializers Scalars => myScalars;
 
@@ -132,9 +129,8 @@ namespace JetBrains.Rd.Reflection
     {
       lock (myLock)
       {
-#if JET_MODE_ASSERT
-        myCurrentSerializersChain.Clear();
-#endif
+        if (Mode.Assertion)
+          myCurrentSerializersChain.Clear();
         return GetOrRegisterStaticSerializerInternal(type, instance);
       }
     }
@@ -147,9 +143,8 @@ namespace JetBrains.Rd.Reflection
       // RdModels only
       if (!mySerializers.TryGetValue(type, out var serializerPair))
       {
-#if JET_MODE_ASSERT
-        myCurrentSerializersChain.Enqueue(type);
-#endif
+        if (Mode.Assertion)
+          myCurrentSerializersChain.Enqueue(type);
 
         using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type))
         {
@@ -167,9 +162,8 @@ namespace JetBrains.Rd.Reflection
           }
         }
 
-#if JET_MODE_ASSERT
-        myCurrentSerializersChain.Dequeue();
-#endif
+        if (Mode.Assertion)
+          myCurrentSerializersChain.Dequeue();
 
         if (!mySerializers.TryGetValue(type, out serializerPair))
         {
@@ -212,10 +206,9 @@ namespace JetBrains.Rd.Reflection
         Assertion.AssertNotNull(serializerPair, $"Unable to Create serializer for type {serializerType.ToString(true)}");
         if (serializerPair == null)
         {
-#if JET_MODE_ASSERT
-          Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}");
-#endif
-          throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}");
+          if (Mode.Assertion)
+            Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}");
+          throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}. Enable Assertion mode to get detailed information.");
         }
 
         return serializerPair;

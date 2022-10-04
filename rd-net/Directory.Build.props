@@ -14,7 +14,8 @@
     -->
     <Nullable Condition="'$(TargetFramework)' == 'net35'">disable</Nullable>
     <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
-    
+
+    <DefineConstants>JET_MODE_ASSERT</DefineConstants>
     <!-- TODO: CS8632 is redundant here but added to suppress inspections in ReSharper/Rider, see RSRP-489331 -->
     <NoWarn Condition="'$(TargetFramework)' == 'net35'">nullable;CS8632</NoWarn>
   </PropertyGroup>

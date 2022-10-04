@@ -42,7 +42,6 @@ namespace JetBrains.Rd.Reflection
 
     public ITypesCatalog? TypesCatalog => myTypesCatalog;
 
-#if JET_MODE_ASSERT
     /// <summary>
     /// current activation stack.
     ///
@@ -50,8 +49,6 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     [ThreadStatic]
     private static Queue<Type>? myCurrentActivationChain;
-
-#endif
 
     public ReflectionRdActivator(ReflectionSerializersFactory serializersFactory, ITypesCatalog? typesCatalog)
       : this(serializersFactory, new ProxyGenerator(), typesCatalog)
@@ -117,10 +114,11 @@ namespace JetBrains.Rd.Reflection
     /// <returns></returns>
     public object Activate(Type type)
     {
-      #if JET_MODE_ASSERT
-      myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
-      myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
-      #endif
+      if (Mode.Assertion)
+      {
+        myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
+        myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
+      }
 
       // We should register serializer for current type and all of it members to have possibility to get valid serializers for arguments.
       myTypesCatalog?.AddType(type);
@@ -130,12 +128,13 @@ namespace JetBrains.Rd.Reflection
 
     private object ActivateRd(Type type)
     {
-#if JET_MODE_ASSERT
-      Assertion.Assert(myCurrentActivationChain != null, "myCurrentActivationChain != null");
-      Assertion.Assert(!myCurrentActivationChain.Contains(type),
-        $"Unable to activate {type.FullName}: circular dependency detected: {string.Join(" -> ", myCurrentActivationChain.Select(t => t.FullName).ToArray())}");
-      myCurrentActivationChain.Enqueue(type);
-#endif
+      if (Mode.Assertion)
+      {
+        Assertion.Assert(myCurrentActivationChain != null, "myCurrentActivationChain != null");
+        Assertion.Assert(!myCurrentActivationChain.Contains(type),
+            $"Unable to activate {type.FullName}: circular dependency detected: {string.Join(" -> ", myCurrentActivationChain.Select(t => t.FullName).ToArray())}");
+        myCurrentActivationChain.Enqueue(type);
+      }
 
       var typeInfo = type.GetTypeInfo();
       ReflectionSerializerVerifier.AssertEitherExtModelAttribute(typeInfo);
@@ -154,18 +153,20 @@ namespace JetBrains.Rd.Reflection
       }
 
       ReflectionInitInternal(instance);
-#if JET_MODE_ASSERT
-      myCurrentActivationChain.Dequeue();
-#endif
+
+      if (Mode.Assertion)
+        myCurrentActivationChain!.Dequeue();
+
       return instance;
     }
 
     public object ReflectionInit(object instance)
     {
-#if JET_MODE_ASSERT
-      myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
-      myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
-#endif
+      if (Mode.Assertion)
+      {
+        myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
+        myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
+      }
 
       return ReflectionInitInternal(instance);
     }
