@@ -62,12 +62,19 @@ namespace JetBrains.Serialization
     private void AssertLength(int size)
     {
       var alreadyRead = (int)(myPtr - myInitialPtr);
-      Assertion.Assert(alreadyRead + size <= myMaxlen, "Can't read from unsafe reader: alreadyRead={0} size={1} maxlen={2}. " +
-                                                 "Usually this happens when you change serialization format and forget to clear previous entries from disk. " +
-                                                 "For example, you forgot to advance persistent caches version - do this in 'SolutionCaches' and 'ShellCaches' classes)."
-                                                 , alreadyRead, size, myMaxlen);
+      if (alreadyRead + size > myMaxlen)
+      {
+        ThrowOutOfRange(size, alreadyRead);
+      }
     }
 
+    private void ThrowOutOfRange(int size, int alreadyRead)
+    {
+      Assertion.Fail("Can't read from unsafe reader: alreadyRead={0} size={1} maxlen={2}. " +
+                                "Usually this happens when you change serialization format and forget to clear previous entries from disk. " +
+                                "For example, you forgot to advance persistent caches version - do this in 'SolutionCaches' and 'ShellCaches' classes)."
+        , alreadyRead, size, myMaxlen);
+    }
 
 
     #region Primitive readers
