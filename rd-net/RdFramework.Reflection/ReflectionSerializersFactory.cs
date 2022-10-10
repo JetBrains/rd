@@ -129,7 +129,7 @@ namespace JetBrains.Rd.Reflection
     {
       lock (myLock)
       {
-        if (Mode.Assertion)
+        if (Mode.IsAssertion)
           myCurrentSerializersChain.Clear();
         return GetOrRegisterStaticSerializerInternal(type, instance);
       }
@@ -143,7 +143,7 @@ namespace JetBrains.Rd.Reflection
       // RdModels only
       if (!mySerializers.TryGetValue(type, out var serializerPair))
       {
-        if (Mode.Assertion)
+        if (Mode.IsAssertion)
           myCurrentSerializersChain.Enqueue(type);
 
         using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type))
@@ -162,7 +162,7 @@ namespace JetBrains.Rd.Reflection
           }
         }
 
-        if (Mode.Assertion)
+        if (Mode.IsAssertion)
           myCurrentSerializersChain.Dequeue();
 
         if (!mySerializers.TryGetValue(type, out serializerPair))
@@ -206,7 +206,7 @@ namespace JetBrains.Rd.Reflection
         Assertion.AssertNotNull(serializerPair, $"Unable to Create serializer for type {serializerType.ToString(true)}");
         if (serializerPair == null)
         {
-          if (Mode.Assertion)
+          if (Mode.IsAssertion)
             Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {String.Join(" -> ", myCurrentSerializersChain.Select(t => t.ToString(true)).ToArray())}");
           throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}. Enable Assertion mode to get detailed information.");
         }

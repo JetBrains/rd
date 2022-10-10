@@ -114,7 +114,7 @@ namespace JetBrains.Rd.Reflection
     /// <returns></returns>
     public object Activate(Type type)
     {
-      if (Mode.Assertion)
+      if (Mode.IsAssertion)
       {
         myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
         myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
@@ -128,7 +128,7 @@ namespace JetBrains.Rd.Reflection
 
     private object ActivateRd(Type type)
     {
-      if (Mode.Assertion)
+      if (Mode.IsAssertion)
       {
         Assertion.Assert(myCurrentActivationChain != null, "myCurrentActivationChain != null");
         Assertion.Assert(!myCurrentActivationChain.Contains(type),
@@ -154,7 +154,7 @@ namespace JetBrains.Rd.Reflection
 
       ReflectionInitInternal(instance);
 
-      if (Mode.Assertion)
+      if (Mode.IsAssertion)
         myCurrentActivationChain!.Dequeue();
 
       return instance;
@@ -162,7 +162,7 @@ namespace JetBrains.Rd.Reflection
 
     public object ReflectionInit(object instance)
     {
-      if (Mode.Assertion)
+      if (Mode.IsAssertion)
       {
         myCurrentActivationChain = myCurrentActivationChain ?? new Queue<Type>();
         myCurrentActivationChain.Clear(); // clear previous attempts to activate different types
