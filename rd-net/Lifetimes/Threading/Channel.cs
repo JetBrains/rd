@@ -95,7 +95,7 @@ namespace JetBrains.Threading
     #region Diagnostics
     private void AssertState()
     {
-      if (!Mode.Assertion) return;
+      if (!Mode.IsAssertion) return;
 
       lock (myLock)
       {

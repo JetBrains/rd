@@ -29,7 +29,7 @@ namespace Test.RdFramework.Reflection
     [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
     public void TestError(Type type)
     {
-      Assert.True(Mode.Assertion);
+      Assert.True(Mode.IsAssertion);
       var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
       var exception = Assert.Throws<Assertion.AssertionException>(() => activator.Activate(type));

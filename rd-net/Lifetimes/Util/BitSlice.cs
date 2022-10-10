@@ -34,7 +34,7 @@ namespace JetBrains.Util.Util
     [AssertionMethod]
     protected void AssertSliceFitsHostType<T>()
     {
-      if (!Mode.Assertion) return;
+      if (!Mode.IsAssertion) return;
 
       var type = typeof(T);      
       var maxBit = type == typeof(int) ? 31
@@ -48,7 +48,7 @@ namespace JetBrains.Util.Util
     [AssertionMethod]
     private void AssertValueFitsSlice(int value)
     {
-      if (!Mode.Assertion) return;
+      if (!Mode.IsAssertion) return;
 
       Assertion.Assert(value >= 0, "[{0}] must be >= 0; actual: {1}", nameof(value), value);
       Assertion.Assert(value <= Mask, "[{0}] must be <= {1} to fit {2}; actual: {3}", nameof(value), Mask, this, value);
