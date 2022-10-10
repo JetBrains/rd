@@ -1292,6 +1292,48 @@ namespace Test.Lifetimes.Lifetimes
 
       Assert.AreEqual(0, sum);
     }
+    
+    [Test]
+    public void CancellationTokenMultiThreadTerminationTest()
+    {
+      const int n = 6;
+      const int magicNumber = (n + 1) * 1000;
+      
+      for (int i = 0; i < 1000; i++)
+      {
+        var count = 0;
+        var sum = 0;
+        var def = TestLifetime.CreateNested();
+        var creatorTask = Task.Run(Creator);
+
+        Task.WaitAll(Enumerable.Range(0, n).Select(_ => Task.Run(Terminator)).Concat(new []{creatorTask}).ToArray());
+
+        def.Terminate();
+
+        Assert.AreEqual(0, sum);
+
+        void Creator()
+        {
+          while (Volatile.Read(ref count) <= magicNumber)
+          {
+            var newDef = new LifetimeDefinition();
+            Interlocked.Increment(ref sum);
+            newDef.ToCancellationToken().Register(() => Interlocked.Decrement(ref sum));
+            Interlocked.Exchange(ref def, newDef).Terminate();
+            Interlocked.Increment(ref count);
+          }
+        }
+
+        void Terminator()
+        {
+          while (Volatile.Read(ref count) <= magicNumber)
+          {
+            Volatile.Read(ref def).Terminate();
+            Interlocked.Increment(ref count);
+          }
+        }
+      }
+    }
 
 #endif
 
