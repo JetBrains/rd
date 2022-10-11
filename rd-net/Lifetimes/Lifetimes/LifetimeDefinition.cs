@@ -545,7 +545,20 @@ namespace JetBrains.Lifetimes
       //In fact we shouldn't make it, because it should provide stable CancellationToken to finish enclosing tasks in Canceled state (not Faulted)
       //But to avoid memory leaks we must do it. So if you 1) run task with alive lifetime 2) terminate lifetime 3) in task invoke ThrowIfNotAlive() you can obtain `Faulted` state rather than `Canceled`. But it doesn't matter in `async-await` programming.     
       if (!ReferenceEquals(this, Terminated))
+      {
+        // we need to cancel myCts because a race condition is possible
+        
+        // Thread 1 MarkCancelingRecursively -> Exchange status Alive to Cancelling
+        // Thread 2 Terminate -> (skip MarkCancelingRecursively because Status > Alive) -> Destruct -> myCts = Terminated.myCts
+        // Thread 1 myTcs?.Cancel() -> the original cts will never be cancelled
+        
+        // so we have to cancel it here
+        if (myCts is { } cts) 
+          cts.Cancel();
+        
+        // synchronization is not needed here, because the creation of cts happens only under UnderMutexCookie(Alive)
         myCts = Terminated.myCts;
+      }
       
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
       Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
