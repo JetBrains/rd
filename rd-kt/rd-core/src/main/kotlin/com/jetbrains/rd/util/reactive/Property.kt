@@ -13,6 +13,7 @@ class Property<T>(defaultValue: T) : IProperty<T>
         value = newValue
     }
 
+    @Volatile
     override var value: T = defaultValue
         set(newValue) {
             if (field == newValue) return
@@ -49,6 +50,7 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
         return false
     }
 
+    @Volatile
     protected var _value: T? = null
 
     override val valueOrNull: T?
