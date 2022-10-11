@@ -9,6 +9,7 @@ using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using JetBrains.Threading;
 using NUnit.Framework;
+// ReSharper disable MethodSupportsCancellation
 
 namespace Test.Lifetimes.Lifetimes
 {
@@ -1264,6 +1265,7 @@ namespace Test.Lifetimes.Lifetimes
             Thread.Yield();
             def = new LifetimeDefinition();
           }
+          def.Terminate();
         }),
         Task.Run(CheckerProc),
         Task.Run(CheckerProc),
@@ -1286,7 +1288,7 @@ namespace Test.Lifetimes.Lifetimes
             cache.ToCancellationToken().Register(() => Interlocked.Decrement(ref localSum));
           }
         }
-        cache.Terminate();
+        SpinWait.SpinUntil(() => def.Lifetime.Status == LifetimeStatus.Terminated);
         Interlocked.Add(ref sum, localSum);
       }
 
