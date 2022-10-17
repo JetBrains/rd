@@ -53,12 +53,15 @@ namespace JetBrains.Serialization
 
     public void Skip(int bytes)
     {
-      if (Mode.IsAssertion) AssertLength(bytes);
+      AssertLength(bytes);
       myPtr += bytes;
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void AssertLength(int size)
     {
+      // NOTE: having this makes it possible for JIT to just drop the remaining method's body when assertions are disabled
+      if (!Mode.IsAssertion) return;
       var alreadyRead = (int)(myPtr - myInitialPtr);
       if (alreadyRead + size > myMaxlen)
       {
@@ -80,7 +83,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public byte* ReadRaw(int count)
     {
-      if (Mode.IsAssertion) AssertLength(count);
+      AssertLength(count);
       var res = myPtr;
       myPtr += count;
       return res;
@@ -89,7 +92,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public bool ReadBoolean()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(byte));
+      AssertLength(sizeof(byte));
 
       return *(myPtr++) != 0;
     }
@@ -97,7 +100,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public byte ReadByte()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(byte));
+      AssertLength(sizeof(byte));
 
       return *(myPtr++);
     }
@@ -112,7 +115,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public char ReadChar()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(char));
+      AssertLength(sizeof(char));
 
       var x = (char*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -122,7 +125,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public decimal ReadDecimal()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(decimal));
+      AssertLength(sizeof(decimal));
 
       var x = (decimal*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -132,7 +135,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public double ReadDouble()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(double));
+      AssertLength(sizeof(double));
 
       var x = (double*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -142,7 +145,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public float ReadFloat()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(float));
+      AssertLength(sizeof(float));
 
       var x = (float*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -152,7 +155,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Int16 ReadInt16()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(Int16));
+      AssertLength(sizeof(Int16));
 
       var x = (Int16*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -168,7 +171,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Int32 ReadInt32()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(Int32));
+      AssertLength(sizeof(Int32));
 
       var x = (Int32*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -203,7 +206,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Int64 ReadInt64()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(Int64));
+      AssertLength(sizeof(Int64));
 
       var x = (Int64*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -227,7 +230,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public UInt16 ReadUInt16()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(UInt16));
+      AssertLength(sizeof(UInt16));
 
       var x = (UInt16*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -237,7 +240,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public UInt32 ReadUInt32()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(UInt32));
+      AssertLength(sizeof(UInt32));
 
       var x = (UInt32*)myPtr;
       myPtr = (byte*)(x + 1);
@@ -247,7 +250,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public UInt64 ReadUInt64()
     {
-      if (Mode.IsAssertion) AssertLength(sizeof(UInt64));
+      AssertLength(sizeof(UInt64));
 
       var x = (UInt64*)myPtr;
       myPtr = (byte*)(x + 1);
