@@ -14,8 +14,6 @@ open class Signal<T> : ISignal<T> {
         fun priorityAdviseSection(block:() -> Unit) = incrementCookie(cookie, TlsBoxed<Int>::value) { block() }
 
         fun Void() = Signal<Unit>()
-
-        private val logger by lazy { getLogger<Signal<*>>() }
     }
 
 
@@ -33,7 +31,6 @@ open class Signal<T> : ISignal<T> {
         }
     }
 
-
     override fun advise(lifetime : Lifetime, handler: (T) -> Unit) {
         advise0(if (Signal.isPriorityAdvise) priorityListeners else listeners, lifetime, handler)
     }
@@ -47,7 +44,7 @@ open class Signal<T> : ISignal<T> {
                     queue.getAndUpdate { arr ->
                         if (arr.contains(handler)) throw IllegalArgumentException("Duplicate handler: $handler")
                         if (arr.size == 10_000) {
-                            logger.error { "10k handlers were added for a signal; this will cause performance degradation" }
+                            Logger.root.error { "10k handlers were added for a signal; this will cause performance degradation" }
                         }
                         arr.insert(handler, arr.size)
                     }

@@ -1,8 +1,6 @@
 package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
-import com.jetbrains.rd.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
 enum class LogLevel {
@@ -34,21 +32,94 @@ interface ILoggerFactory {
 
 
 class SwitchLogger(category: String) : Logger {
-    private lateinit var realLogger: Logger
+    private val mediator =  LoggerFactoryStatic.getOrCreateMediator(category)
+
+    override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
+        mediator.logger.log(level, message, throwable)
+    }
+
+    override fun isEnabled(level: LogLevel): Boolean = mediator.logger.isEnabled(level)
+}
+
+internal object LoggerFactoryStatic {
+    @Volatile
+    private var currentFactory: ILoggerFactory = ConsoleLoggerFactory
+    private val concurrentMap = ConcurrentHashMap<String, LoggerMediator>()
+    private val locker = Any()
 
     init {
-        val stack = Statics<ILoggerFactory>().stack
-        stack.viewableTail().advise(Lifetime.Eternal) { factory ->
-            realLogger = (factory?:ConsoleLoggerFactory).getLogger(category)
+        val tail = Statics<ILoggerFactory>().tail
+        synchronized(locker) {
+
+            // tail.change has no state, so updateMediators will not be called under lock
+            tail.change.advise(Lifetime.Eternal) { factory ->
+                updateMediators(factory ?: ConsoleLoggerFactory)
+            }
+
+            // set default value under lock to avoid a race condition
+            // when tail.change is called during advise
+            currentFactory = tail.value ?: ConsoleLoggerFactory
         }
     }
 
-    override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
-        realLogger.log(level, message, throwable)
+    // this method is expected to be called very rarely
+    private fun updateMediators(factory: ILoggerFactory) {
+        val mediators: List<LoggerMediator>
+        var localFactory: ILoggerFactory
+
+        synchronized(locker) {
+            // getOrCreateMediator ensures actual currentFactory for all new mediators,
+            // so we don't care about mediators added after getting this snapshot.
+            mediators = concurrentMap.values.toList()
+
+            localFactory = factory
+            currentFactory = localFactory
+        }
+
+        val newLoggers = mediators.map {
+            // do not use getLogger under lock
+            localFactory.getLogger(it.category)
+        }
+
+        synchronized(locker) {
+            if (localFactory != currentFactory)
+                return // if currentFactory has been changed, another thread will update all mediators
+
+            mediators.forEachIndexed { index, loggerMediator ->
+                loggerMediator.logger = newLoggers[index]
+            }
+        }
     }
 
-    override fun isEnabled(level: LogLevel): Boolean = realLogger.isEnabled(level)
+    fun getOrCreateMediator(category: String): LoggerMediator {
+        while(true) {
+            // do not use a lock here to ensure maximum parallelism when reading
+            val loggerMediator = concurrentMap[category]
+            if (loggerMediator != null)
+                return loggerMediator
 
+            val factory = currentFactory
+            // do not use getLogger under lock
+            val logger = factory.getLogger(category)
+
+            synchronized(locker) {
+                var loggerMediator = concurrentMap[category]
+                if (loggerMediator != null)
+                    return loggerMediator
+
+                if (factory == currentFactory) {
+                    loggerMediator = LoggerMediator(category, logger)
+                    concurrentMap[category] = loggerMediator
+                    return loggerMediator
+                } // else currentFactory has been changed, so we need to re-create logger
+            }
+        }
+    }
+}
+
+internal class LoggerMediator(val category: String, @Volatile var logger: Logger) : Logger {
+    override fun log(level: LogLevel, message: Any?, throwable: Throwable?) = logger.log(level, message, throwable)
+    override fun isEnabled(level: LogLevel): Boolean = logger.isEnabled(level)
 }
 
 
@@ -81,7 +152,7 @@ fun defaultLogFormat(category: String, level: LogLevel, message: Any?, throwable
     return "${level.toString().padEnd(5)} | ${category.substringAfterLast('.').padEnd(25)} | ${currentThreadName().padEnd(15)} | ${message?.toString()?:""} ${throwableToPrint?.getThrowableText()?.let { "| $it" }?:""}"
 }
 
-fun getLogger(category: String) = SwitchLogger(category)
+fun getLogger(category: String): Logger = LoggerFactoryStatic.getOrCreateMediator(category)
 fun getLogger(categoryKclass: KClass<*>): Logger = getLogger(qualifiedName(categoryKclass))
 inline fun <reified T> getLogger() = getLogger(T::class)
 

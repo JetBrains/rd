@@ -2,6 +2,7 @@ package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.reactive.IViewableList
 import com.jetbrains.rd.util.reactive.ViewableList
+import com.jetbrains.rd.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
 /**
@@ -23,6 +24,8 @@ class Statics<T: Any> private constructor(val kclass: KClass<T>){
 
     private val _stack = ViewableList<T>()
     val stack : IViewableList<T> get() = _stack
+    val tail = stack.viewableTail()
+
 
     fun get() : T? = _stack.lastOrNull()
 
@@ -43,6 +46,4 @@ class Statics<T: Any> private constructor(val kclass: KClass<T>){
     override fun toString(): String {
         return Statics::class.simpleName+"<" + kclass.simpleName +">"
     }
-
-
 }
