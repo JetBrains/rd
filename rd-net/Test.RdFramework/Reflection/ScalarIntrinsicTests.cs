@@ -50,7 +50,7 @@ namespace Test.RdFramework.Reflection
     {
       WithExts<IntrinsicExt4>((c, s) =>
       {
-        c.Simple.Value = new NoRedIntrinsic4(1,1,1);
+        c.Simple.Value = new NoRedIntrinsic4<int, int>(1,1,1);
         Assert.AreEqual(0, s.Simple.Value.Red);
         Assert.AreEqual(1, s.Simple.Value.Green);
         Assert.AreEqual(1, s.Simple.Value.Blue);
@@ -104,7 +104,7 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     public class IntrinsicExt4 : RdExtReflectionBindableBase
     {
-      public IViewableProperty<NoRedIntrinsic4> Simple { get; }
+      public IViewableProperty<NoRedIntrinsic4<int, int>> Simple { get; }
     }
 
 
@@ -193,7 +193,7 @@ namespace Test.RdFramework.Reflection
     /// Intrinsic way 4: implemented directly in type via Non-protocol methods with unsafe writers
     /// </summary>
     [RdScalar] // not required
-    public class NoRedIntrinsic4
+    public class NoRedIntrinsic4<T1/*optional*/, T2/*optional*/>
     {
       public int Red { get;  }
       public int Green { get; }
@@ -206,9 +206,9 @@ namespace Test.RdFramework.Reflection
         Blue = blue;
       }
 
-      public static NoRedIntrinsic4 Read(UnsafeReader reader)
+      public static NoRedIntrinsic4<T1, T2> Read(UnsafeReader reader)
       {
-        return new NoRedIntrinsic4(0 /*reader.ReadByte()*/, reader.ReadByte(), reader.ReadByte());
+        return new NoRedIntrinsic4<T1, T2>(0 /*reader.ReadByte()*/, reader.ReadByte(), reader.ReadByte());
       }
 
       public void Write(UnsafeWriter writer)
