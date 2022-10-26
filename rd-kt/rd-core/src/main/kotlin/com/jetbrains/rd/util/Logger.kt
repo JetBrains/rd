@@ -1,8 +1,6 @@
 package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
-import com.jetbrains.rd.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
 enum class LogLevel {
@@ -32,25 +30,35 @@ interface ILoggerFactory {
     fun getLogger(category: String): Logger
 }
 
+class SwitchLogger(private val category: String) : Logger {
+    @Volatile
+    private var cachedPair: Pair? = null
 
-class SwitchLogger(category: String) : Logger {
-    private lateinit var realLogger: Logger
+    override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
+        getRealLogger().log(level, message, throwable)
+    }
 
-    init {
-        val stack = Statics<ILoggerFactory>().stack
-        stack.viewableTail().advise(Lifetime.Eternal) { factory ->
-            realLogger = (factory?:ConsoleLoggerFactory).getLogger(category)
+    override fun isEnabled(level: LogLevel): Boolean = getRealLogger().isEnabled(level)
+
+    internal fun getRealLogger(): Logger {
+        var pair = cachedPair
+        while (true) {
+            val currentFactory = LoggerFactoryStatic.currentFactory // currentFactory rarely changes
+            if (pair?.factory === currentFactory)
+                return pair.logger
+
+            pair = Pair(currentFactory, currentFactory.getLogger(category))
+            cachedPair = pair
         }
     }
 
-    override fun log(level: LogLevel, message: Any?, throwable: Throwable?) {
-        realLogger.log(level, message, throwable)
-    }
-
-    override fun isEnabled(level: LogLevel): Boolean = realLogger.isEnabled(level)
-
+    private class Pair(val factory: ILoggerFactory, val logger: Logger)
 }
 
+private object LoggerFactoryStatic {
+    private val factoryHolder = Statics<ILoggerFactory>()
+    val currentFactory get() = factoryHolder.get() ?: ConsoleLoggerFactory
+}
 
 object ConsoleLoggerFactory : ILoggerFactory {
     var minLevelToLog : LogLevel = LogLevel.Debug
