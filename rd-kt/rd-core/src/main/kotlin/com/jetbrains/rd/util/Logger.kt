@@ -55,7 +55,7 @@ class SwitchLogger(private val category: String) : Logger {
     private class Pair(val factory: ILoggerFactory, val logger: Logger)
 }
 
-internal object LoggerFactoryStatic {
+private object LoggerFactoryStatic {
     private val factoryHolder = Statics<ILoggerFactory>()
     val currentFactory get() = factoryHolder.get() ?: ConsoleLoggerFactory
 }
