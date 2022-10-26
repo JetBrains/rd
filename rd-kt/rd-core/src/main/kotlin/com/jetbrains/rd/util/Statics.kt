@@ -1,8 +1,5 @@
 package com.jetbrains.rd.util
 
-import com.jetbrains.rd.util.reactive.IViewableList
-import com.jetbrains.rd.util.reactive.ViewableList
-import com.jetbrains.rd.util.reactive.viewableTail
 import kotlin.reflect.KClass
 
 /**
@@ -22,20 +19,16 @@ class Statics<T: Any> private constructor(val kclass: KClass<T>){
         inline operator fun <reified T:Any> invoke() = of(T::class)
     }
 
-    private val _stack = ViewableList<T>()
-    val stack : IViewableList<T> get() = _stack
-    val tail = stack.viewableTail()
+    private var curValue = AtomicReference<T?>(null)
 
-
-    fun get() : T? = _stack.lastOrNull()
+    fun get() = curValue.get()
 
     fun push(value: T) : Closeable {
-        _stack.add(value)
+        val old = curValue.getAndSet(value)
         return object : Closeable {
             override fun close() {
-                require (_stack.size > 0) { "$this: Empty stack" }
-                require (_stack[_stack.lastIndex] == value) { "$this: Last element must be $value but: ${_stack[_stack.lastIndex]}" }
-                _stack.removeAt(_stack.lastIndex)
+                if (!curValue.compareAndSet(value, old))
+                    throw IllegalStateException("$this: current element must be $value but: $curValue")
             }
         }
     }

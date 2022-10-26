@@ -1,7 +1,5 @@
 package com.jetbrains.rd.util.test.cases
 
-import com.jetbrains.rd.util.Logger
-import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
@@ -47,12 +45,5 @@ class SignalTest : RdTestBase()  {
 
         signal.fire()
         assertEquals(listOf(3, 4, 1, 2, 5), log)
-    }
-
-    @Test
-    fun manyLoggersStofl() {
-        val listOf = mutableListOf<Logger>()
-        for (i in 0..10_001)
-            listOf.add(getLogger("category: $i"))
     }
 }
