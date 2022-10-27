@@ -70,7 +70,9 @@ class CallSiteWiredRdTask<TReq, TRes>(
     init {
 
         call.wire.advise(taskWireSubscriptionDefinition.lifetime, this) //this lifetimeDef listen only one value
-        taskWireSubscriptionDefinition.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
+        if (!taskWireSubscriptionDefinition.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }) {
+            result.setIfEmpty(RdTaskResult.Cancelled())
+        }
 
         result.adviseOnce(Lifetime.Eternal) { taskResult ->
             taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
