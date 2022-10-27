@@ -128,40 +128,52 @@ class RdAsyncTaskTest : RdFrameworkTestBase() {
         }
 
         //1. explicit cancellation
-        val ld = LifetimeDefinition()
-        var task = server_entity.start(ld.lifetime, Unit)
-        ld.terminate()
+        run {
+            val ld = LifetimeDefinition()
+            val task = server_entity.start(ld.lifetime, Unit)
+            ld.terminate()
 
-        spinUntil { task.result.hasValue }
-        assert(task.isCanceled)
+            spinUntil { task.result.hasValue }
+            assert(task.isCanceled)
 
-        spinUntil { handlerFinished }
-        assertFalse(handlerCompletedSuccessfully)
+            spinUntil { handlerFinished }
+            assertFalse(handlerCompletedSuccessfully)
+        }
 
         //2. no cancellation
-        handlerFinished = false
-        handlerCompletedSuccessfully = false
-        task = server_entity.start(LifetimeDefinition().lifetime, Unit)
+        run {
+            handlerFinished = false
+            handlerCompletedSuccessfully = false
+            val task = server_entity.start(LifetimeDefinition().lifetime, Unit)
 
-        spinUntil { task.result.hasValue }
-        assert(task.isSucceeded)
+            spinUntil { task.result.hasValue }
+            assert(task.isSucceeded)
 
-        spinUntil { handlerFinished }
-        assert(handlerCompletedSuccessfully)
+            spinUntil { handlerFinished }
+            assert(handlerCompletedSuccessfully)
+        }
 
-        //3. cancellation from parent lifetime
-        handlerFinished = false
-        handlerCompletedSuccessfully = false
-        clientLifetime
-        task = server_entity.start(LifetimeDefinition().lifetime, Unit)
-        clientLifetimeDef.terminate()
-        serverLifetimeDef.terminate()
+        //3. terminatedLifetime
+        run {
+            val task = server_entity.start(Lifetime.Terminated, Unit)
+            assert(task.isCanceled)
+        }
 
-        spinUntil { task.result.hasValue }
-        assert(task.isCanceled)
+        //4. cancellation from parent lifetime
+        run {
+            handlerFinished = false
+            handlerCompletedSuccessfully = false
+            clientLifetime
+            val task = server_entity.start(LifetimeDefinition().lifetime, Unit)
+            clientLifetimeDef.terminate()
+            serverLifetimeDef.terminate()
 
-        spinUntil { handlerFinished }
-        assertFalse(handlerCompletedSuccessfully)
+            spinUntil { task.result.hasValue }
+            assert(task.isCanceled)
+
+            spinUntil { handlerFinished }
+            assertFalse(handlerCompletedSuccessfully)
+        }
     }
 
     @Test

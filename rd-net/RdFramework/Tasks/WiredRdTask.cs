@@ -53,7 +53,8 @@ namespace JetBrains.Rd.Tasks
         var taskWireSubscriptionDefinition = outerLifetime.CreateNested();
       
         myCall.Wire.Advise(taskWireSubscriptionDefinition.Lifetime, this); //this lifetimeDef listen only one value
-        taskWireSubscriptionDefinition.Lifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()));
+        if (!taskWireSubscriptionDefinition.Lifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled())))
+          ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
 
         Result.AdviseOnce(Lifetime.Eternal, taskResult =>
         {
