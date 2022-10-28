@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
@@ -111,18 +112,25 @@ namespace JetBrains.Rd.Reflection
 
     public static MethodInfo GetWriteNonProtocolDeserializer(TypeInfo typeInfo)
     {
-      var types = new[]
+      var instanceWrite = typeInfo.GetMethod("Write", new[]
       {
         typeof(UnsafeWriter),
-      };
-      var methodInfo = typeInfo.GetMethod("Write", types, null);
+      }, null);
 
-      if (methodInfo == null)
+      if (instanceWrite != null)
+        return instanceWrite;
+
+      var staticWrite = typeInfo.GetMethod("Write", new[]
       {
-        Assertion.Fail($"Unable to found method in {typeInfo.ToString(true)} with requested signature : public Write({string.Join(", ", types.Select(t => t.ToString(true)).ToArray())})");
-      }
+        typeof(UnsafeWriter),
+        typeInfo.AsType()
+      }, null);
+      if (staticWrite != null)
+        return staticWrite;
 
-      return methodInfo;
+      Assertion.Fail($"Unable to found neither static Write({nameof(UnsafeWriter)}, value) nor value.Write({nameof(UnsafeWriter)}) method in {typeInfo.ToString(true)} ");
+
+      return instanceWrite;
     }
 
 
