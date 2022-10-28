@@ -1,4 +1,5 @@
 ﻿using JetBrains.Collections.Viewable;
+using JetBrains.Core;
 using JetBrains.Rd;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
@@ -58,6 +59,19 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public void TestRdSimpleMethodsStaticWrite()
+    {
+      WithExts<IntrinsicExt5>((c, s) =>
+      {
+        c.Simple.Value = new OuterClass<Unit>.NoRedIntrinsic5(1,1,1);
+        Assert.AreEqual(0, s.Simple.Value.Red);
+        Assert.AreEqual(1, s.Simple.Value.Green);
+        Assert.AreEqual(1, s.Simple.Value.Blue);
+      });
+    }
+
+
+    [Test]
     public void TestExternalSerialization()
     {
       void Reg(ISerializersContainer cache)
@@ -105,6 +119,11 @@ namespace Test.RdFramework.Reflection
     public class IntrinsicExt4 : RdExtReflectionBindableBase
     {
       public IViewableProperty<NoRedIntrinsic4<int, int>> Simple { get; }
+    }
+    [RdExt]
+    public class IntrinsicExt5 : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<OuterClass<Unit>.NoRedIntrinsic5> Simple { get; }
     }
 
 
@@ -218,6 +237,29 @@ namespace Test.RdFramework.Reflection
         writer.Write((byte) Blue);
       }
     }
+
+    public class OuterClass<T>
+    {
+      /// <summary>
+      /// Intrinsic way 5: implemented directly in type via Non-protocol methods with unsafe writers, but write method can be static
+      /// </summary>
+      [RdScalar] // not required
+      public record NoRedIntrinsic5(int Red, int Green, int Blue)
+      {
+        public static NoRedIntrinsic5 Read(UnsafeReader reader)
+        {
+          return new NoRedIntrinsic5(0 /*reader.ReadByte()*/, reader.ReadByte(), reader.ReadByte());
+        }
+
+        public static void Write(UnsafeWriter writer, NoRedIntrinsic5 value)
+        {
+          // writer.Write((byte) value.Red);
+          writer.Write((byte)value.Green);
+          writer.Write((byte)value.Blue);
+        }
+      }
+    }
+
 
     public class Marshaller : IIntrinsicMarshaller<NoRedIntrinsic3>
     {

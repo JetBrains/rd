@@ -541,13 +541,19 @@ namespace JetBrains.Rd.Reflection
     private static SerializerPair CreateFromNonProtocolMethodsT<T>(MethodInfo readMethod, MethodInfo writeMethod)
     {
       Assertion.Assert(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType.ToString(true)})");
-      Assertion.Assert(!writeMethod.IsStatic, $"Read method should not be static ({readMethod.DeclaringType.ToString(true)})");
-      
+
       void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value)
       {
         if (!typeof(T).IsValueType && !writer.WriteNullness(value as object))
           return;
         writeMethod.Invoke(value, new object[] {writer});
+      }
+
+      void WriterDelegateStatic(SerializationCtx ctx, UnsafeWriter writer, T value)
+      {
+        if (!typeof(T).IsValueType && !writer.WriteNullness(value as object))
+          return;
+        writeMethod.Invoke(null, new object?[] {writer, value});
       }
 
       T? ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
@@ -559,7 +565,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       CtxReadDelegate<T?> ctxReadDelegate = ReaderDelegate;
-      CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
+      CtxWriteDelegate<T> ctxWriteDelegate = writeMethod.IsStatic ? WriterDelegateStatic : WriterDelegate;
       return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
     }
 
