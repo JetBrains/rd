@@ -40,18 +40,14 @@ namespace JetBrains.Collections.Viewable
         
         public virtual void Fire(T value)
         {
-            foreach (var l in myListeners)
+            foreach (var action in myListeners)
             {
-              if (!l.Lifetime.IsAlive) 
-                continue;
-
               try
               {
-                l.Value?.Invoke(value);
+                action.Invoke(value);
               }
               catch (Exception e)
               {
-                //todo suppress operation canceled
                 Log.Root.Error(e);
               }
             }

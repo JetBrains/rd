@@ -25,26 +25,26 @@ namespace Test.Lifetimes.Lifetimes
       lst.AddPriorityItem(new ValueLifetimed<int>(l2.Lifetime, 3));
       lst.AddPriorityItem(new ValueLifetimed<int>(l2.Lifetime, 4));
       
-      Assert.AreEqual(new List<int> {3, 4, 1, 2}, lst.Select(x => x.Value).ToList());
+      Assert.AreEqual(new List<int> {3, 4, 1, 2}, lst.Select(x => x).ToList());
       
       l1.Terminate();
-      Assert.AreEqual(new List<int> {3, 4}, lst.Select(x => x.Value).ToList());
+      Assert.AreEqual(new List<int> {3, 4}, lst.Select(x => x).ToList());
       
       lst.Add(l2.Lifetime, 5);
-      Assert.AreEqual(new List<int> {3, 4, 5}, lst.Select(x => x.Value).ToList());
+      Assert.AreEqual(new List<int> {3, 4, 5}, lst.Select(x => x).ToList());
       
       l2.Terminate();
-      Assert.AreEqual(new List<int> {}, lst.Select(x => x.Value).ToList());
+      Assert.AreEqual(new List<int> {}, lst.Select(x => x).ToList());
       
       //again
       l1 = new LifetimeDefinition();
       l2 = new LifetimeDefinition();
       
       lst.Add(l1.Lifetime, 1);
-      Assert.AreEqual(new List<int> {1}, lst.Select(x => x.Value).ToList());
+      Assert.AreEqual(new List<int> {1}, lst.Select(x => x).ToList());
       
       lst.AddPriorityItem(new ValueLifetimed<int>(l2.Lifetime, 2));
-      Assert.AreEqual(new List<int> {2, 1}, lst.Select(x => x.Value).ToList());
+      Assert.AreEqual(new List<int> {2, 1}, lst.Select(x => x).ToList());
     }
 
     [Test]
@@ -70,9 +70,8 @@ namespace Test.Lifetimes.Lifetimes
 
       void Enumerate()
       {
-        foreach (var (lf, action) in lst)
+        foreach (var action in lst)
         {
-          if (lf.IsNotAlive) continue;
           action.Invoke();
         }
       }
@@ -103,12 +102,12 @@ namespace Test.Lifetimes.Lifetimes
       using (var enumerator = list.GetEnumerator())
       {
         Assert.IsTrue(enumerator.MoveNext());
-        Assert.AreEqual(1, enumerator.Current.Value);
+        Assert.AreEqual(1, enumerator.Current);
       
         list.AddPriorityItem(lifetime, 3);
 
         Assert.IsTrue(enumerator.MoveNext());
-        Assert.AreEqual(2, enumerator.Current.Value);
+        Assert.AreEqual(2, enumerator.Current);
 
         Assert.IsFalse(enumerator.MoveNext());
       }
@@ -116,15 +115,15 @@ namespace Test.Lifetimes.Lifetimes
       using (var enumerator = list.GetEnumerator())
       {
         Assert.IsTrue(enumerator.MoveNext());
-        Assert.AreEqual(3, enumerator.Current.Value);
+        Assert.AreEqual(3, enumerator.Current);
       
         list.AddPriorityItem(lifetime, 4);
 
         Assert.IsTrue(enumerator.MoveNext());
-        Assert.AreEqual(1, enumerator.Current.Value);
+        Assert.AreEqual(1, enumerator.Current);
 
         Assert.IsTrue(enumerator.MoveNext());
-        Assert.AreEqual(2, enumerator.Current.Value);
+        Assert.AreEqual(2, enumerator.Current);
 
         Assert.IsFalse(enumerator.MoveNext());
       }
@@ -163,12 +162,12 @@ namespace Test.Lifetimes.Lifetimes
               {
                 while (lifetime.IsAlive)
                 {
-                  var copy = new List<ValueLifetimed<HugeStruct>>(); // fast enumeration
-                  foreach (var lifetimed in list) copy.Add(lifetimed);
+                  var copy = new List<HugeStruct>(); // fast enumeration
+                  foreach (var value in list) copy.Add(value);
 
                   foreach (var value in copy)
                   {
-                    value.Value.AssertValues();
+                    value.AssertValues();
                     if (lifetime.IsNotAlive)
                       return;
                   }
@@ -185,7 +184,7 @@ namespace Test.Lifetimes.Lifetimes
                 {
                   foreach (var value in list) // slow enumeration
                   {
-                    value.Value.AssertValues();
+                    value.AssertValues();
                     if (lifetime.IsNotAlive)
                       return;
                     

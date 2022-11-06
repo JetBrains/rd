@@ -24,34 +24,39 @@ namespace JetBrains.Lifetimes
   /// <typeparam name="T"></typeparam>
   public struct LifetimedList<T>
   {
-    public struct Enumerator : IEnumerator<ValueLifetimed<T>>
+#nullable disable
+    public struct Enumerator : IEnumerator<T>
     {
       private readonly ValueLifetimed<T>[] myItems;
       private readonly int mySize;
       
-      private ValueLifetimed<T> myCurValue;
+      private T myCurValue;
       private int myPos;
 
       public Enumerator(ValueLifetimed<T>[] items, int size) : this()
       {
         myItems = items;
         mySize = size;
-        myPos = -1;
+        myPos = 0;
       }
 
       public void Dispose() {}
 
       public bool MoveNext()
       {
-        while (++myPos < mySize)
+        while (myPos < mySize)
         {
           ref var item = ref myItems[myPos];
-          if (item.Lifetime.IsNotAlive) continue;
+          if (item.Lifetime.IsNotAlive)
+          {
+            myPos++;
+            continue;
+          }
           
-          myCurValue = item;
+          myCurValue = item.Value;
+          Memory.VolatileWrite(ref myPos, myPos + 1); // myCurValue must be set before Lifetime.IsAlive check
 
           // double-check `IsAlive` because myCurValue may be partially cleared if ClearValuesIfNotAlive was called at the same time
-          Memory.Barrier(); // to suppress reordering
           if (item.Lifetime.IsAlive)
             return true;
         }
@@ -60,17 +65,16 @@ namespace JetBrains.Lifetimes
       }            
 
       public void Reset() { throw new NotSupportedException(); }
-      public ValueLifetimed<T> Current => myCurValue;
+      public T Current => myCurValue;
       object IEnumerator.Current => Current;
     }
+#nullable restore
 
     //in x64 we have one free 4-bytes slot in this structure so let we use it for something meaningful
-    //1. Global lock (GlobalMutexSlice) for thread-safe insertion of a new element
-    //2. Local lock (LocalMutexSlice) for fast thread-safe reading/writing of `mySize` and `myItems`
-    //3. Marker (MarkerMutexSlice) to delimit items into two parts: with high priority (< Marker) and normal (>= Marker)
+    //1. lock (MutexSlice) for thread-safe insertion of a new element
+    //2. Marker (MarkerMutexSlice) to delimit items into two parts: with high priority (< Marker) and normal (>= Marker)
     private int myState;
-    private int mySize;
-    private ValueLifetimed<T>[] myItems;
+    private volatile ArrayAndSize? myArrayAndSize;
 
     public void Add(Lifetime lifetime, T value) => Add(new ValueLifetimed<T>(lifetime, value));
     public void AddPriorityItem(Lifetime lifetime, T value) => AddPriorityItem(new ValueLifetimed<T>(lifetime, value));
@@ -78,29 +82,23 @@ namespace JetBrains.Lifetimes
     public void Add(ValueLifetimed<T> item)
     {
       bool shouldClear;
-      EnterGlobalLock();
+      EnterLock();
       try
       {
         shouldClear = EnsureCapacityNoLock(false, out var items, out var marker, out var size);
-        items[size] = item;  
-        
-        EnterLocalLock();
-        try
-        {
-          // increase mySize only after inserting an element
-          mySize = size + 1;
-          myItems = items;
-          // no need to use InterlockedUpdate because we under lock
-          myState = MarkerMutexSlice.Updated(myState, marker);
-        }
-        finally
-        {
-          ReleaseLocalLock();
-        }
+        items[size] = item;
+
+        // increase mySize only after inserting an element
+        if (myArrayAndSize?.Array == items)
+          myArrayAndSize.Size = size + 1;
+        else
+          myArrayAndSize = new ArrayAndSize(items, size + 1);
+        // no need to use InterlockedUpdate because we under lock
+        myState = MarkerMutexSlice.Updated(myState, marker);
       }
       finally
       {
-        ReleaseGlobalLock();
+        ReleaseLock();
       }
 
       if (shouldClear)
@@ -118,30 +116,24 @@ namespace JetBrains.Lifetimes
 
     public void AddPriorityItem(ValueLifetimed<T> item)
     {
-      EnterGlobalLock();
+      EnterLock();
       try
       {
         // AddPriorityItem is not a frequent operation, we can afford to create a new array each time
         EnsureCapacityNoLock(true, out var items, out var marker, out var size);
         items[marker] = item;
         
-        EnterLocalLock();
-        try
-        {
-          // increase mySize only after inserting an element
-          mySize = size + 1;
-          myItems = items;
-          // no need to use InterlockedUpdate because we under lock
-          myState = MarkerMutexSlice.Updated(myState, marker + 1);
-        }
-        finally
-        {
-          ReleaseLocalLock();
-        }
+        // increase mySize only after inserting an element
+        if (myArrayAndSize?.Array == items)
+          myArrayAndSize.Size = size + 1;
+        else
+          myArrayAndSize = new ArrayAndSize(items, size + 1);
+        // no need to use InterlockedUpdate because we under lock
+        myState = MarkerMutexSlice.Updated(myState, marker + 1);
       }
       finally
       {
-        ReleaseGlobalLock();
+        ReleaseLock();
       }
       
       // AddPriorityItem always creates a new array
@@ -157,21 +149,18 @@ namespace JetBrains.Lifetimes
 
     private bool EnsureCapacityNoLock(bool priority, out ValueLifetimed<T>[] items, out int marker, out int size)
     {
-      myItems ??= new ValueLifetimed<T>[1];
+      size = myArrayAndSize?.Size ?? 0;
+      items = myArrayAndSize?.Array ?? new ValueLifetimed<T>[1];
 
       marker = MarkerMutexSlice[myState];
       
-      if (mySize < myItems.Length && !priority)
-      {
-        items = myItems;
-        size = mySize;
+      if (size < items.Length && !priority)
         return false;
-      }
-     
+
       var newSize = 0;
-      for (var i = 0; i < mySize; i++)
+      for (var i = 0; i < size; i++)
       {
-        if (myItems[i].Lifetime.IsAlive) 
+        if (items[i].Lifetime.IsAlive) 
           newSize++;
       }
 
@@ -185,7 +174,7 @@ namespace JetBrains.Lifetimes
       
       for (var i = 0; i < marker; i++)
       {
-        ref var item = ref myItems[i];
+        ref var item = ref items[i];
         if (item.Lifetime.IsAlive)
           newItems[countAfterCleaning++] = item;
         else
@@ -193,9 +182,9 @@ namespace JetBrains.Lifetimes
       }
 
       var offset = priority ? 1 : 0; // reserve place for new priority item
-      for (var i = marker; i < mySize; i++)
+      for (var i = marker; i < size; i++)
       {
-        ref var item = ref myItems[i];
+        ref var item = ref items[i];
         if (item.Lifetime.IsAlive)
           newItems[countAfterCleaning++ + offset] = item;
         else if (i < marker)
@@ -212,27 +201,20 @@ namespace JetBrains.Lifetimes
     {
       // !!! performance optimization !!!
       // no need to take lock because it doesn't affect the addition of new items.
-      var items = Memory.VolatileRead(ref myItems);
-      if (items == null) return;
-      
-      var size = Math.Min(Memory.VolatileRead(ref mySize), items.Length);
-      for (var j = 0; j < size; j++)
-      {
+      var arrayAndSize = myArrayAndSize;
+      if (arrayAndSize == null) return;
+
+      var items = arrayAndSize.Array;
+      var size = Memory.VolatileRead(ref arrayAndSize.Size);
+      for (var j = 0; j < size; j++) 
         items[j].ClearValueIfNotAlive();
-      }
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void EnterGlobalLock() => EnterLock(GlobalMutexSlice);
+    private void EnterLock() => EnterLock(MutexSlice);
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void ReleaseGlobalLock() => ReleaseLock(GlobalMutexSlice);
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void EnterLocalLock() => EnterLock(LocalMutexSlice);
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void ReleaseLocalLock() => ReleaseLock(LocalMutexSlice);
+    private void ReleaseLock() => ReleaseLock(MutexSlice);
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void EnterLock(BoolBitSlice slice)
@@ -256,33 +238,37 @@ namespace JetBrains.Lifetimes
       slice.InterlockedUpdate(ref myState, false);
     }
 
-    public Enumerator GetEnumerator()
+    public readonly Enumerator GetEnumerator()
     {
-      EnterLocalLock();
-      try
+      var arrayAndSize = myArrayAndSize;
+      return arrayAndSize != null ? new Enumerator(arrayAndSize.Array, arrayAndSize.Size) : default;
+    }
+    
+    private class ArrayAndSize
+    {
+      public readonly ValueLifetimed<T>[] Array;
+      public int Size;
+
+      public ArrayAndSize(ValueLifetimed<T>[] array, int size)
       {
-        return new Enumerator(myItems, mySize);
-      }
-      finally
-      {
-        ReleaseLocalLock();
+        Array = array;
+        Size = size;
       }
     }
   }
 
   public static class LifetimedListEx
   {
-    internal static readonly BoolBitSlice GlobalMutexSlice = BitSlice.Bool();
-    internal static readonly BoolBitSlice LocalMutexSlice = BitSlice.Bool(GlobalMutexSlice);
-    internal static readonly IntBitSlice MarkerMutexSlice = BitSlice.Int(16, LocalMutexSlice);
+    internal static readonly BoolBitSlice MutexSlice = BitSlice.Bool();
+    internal static readonly IntBitSlice MarkerMutexSlice = BitSlice.Int(16, MutexSlice);
 
-    public static IEnumerable<TOut> Select<TIn, TOut>(this LifetimedList<TIn> source, Func<ValueLifetimed<TIn>, TOut> selector)
+    public static IEnumerable<TOut> Select<TIn, TOut>(this LifetimedList<TIn> source, Func<TIn, TOut> selector)
     {
       foreach (var value in source)
         yield return selector(value);
     }
     
-    public static IEnumerable<ValueLifetimed<T>> Where<T>(this LifetimedList<T> source, Func<ValueLifetimed<T>, bool> predicate)
+    public static IEnumerable<T> Where<T>(this LifetimedList<T> source, Func<T, bool> predicate)
     {
       foreach (var value in source)
       {

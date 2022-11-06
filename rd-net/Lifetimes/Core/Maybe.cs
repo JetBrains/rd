@@ -10,7 +10,7 @@ namespace JetBrains.Core
   /// default(Maybe) == Maybe.None
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  public struct Maybe<T> : IEquatable<Maybe<T>>
+  public readonly struct Maybe<T> : IEquatable<Maybe<T>>
   {
     [PublicAPI] public static readonly Maybe<T> None;
     public bool HasValue { get; }
