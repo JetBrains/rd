@@ -37,17 +37,10 @@ namespace JetBrains.Rd.Tasks
 
   public static class RdTask
   {
-    public static RdTask<T> Successful<T>(T result) => FromResult(RdTaskResult<T>.Success(result));
-    public static RdTask<T> Faulted<T>(Exception exception) => FromResult(RdTaskResult<T>.Faulted(exception));
-    public static RdTask<T> Cancelled<T>() => FromResult(RdTaskResult<T>.Cancelled());
-    private static RdTask<T> FromResult<T>(RdTaskResult<T> result)
-    {
-      var res = new RdTask<T>
-      {
-        ResultInternal = { Value = result }
-      };
-
-      return res;
-    }
+    [PublicAPI] public static RdTask<T> Successful<T>(T result) => FromResult(RdTaskResult<T>.Success(result));
+    [PublicAPI] public static RdTask<T> Faulted<T>(Exception exception) => FromResult(RdTaskResult<T>.Faulted(exception));
+    [PublicAPI] public static RdTask<T> Cancelled<T>() => FromResult(RdTaskResult<T>.Cancelled());
+    private static RdTask<T> FromResult<T>(RdTaskResult<T> result) =>
+      new() { ResultInternal = { Value = result } };
   }
 }
