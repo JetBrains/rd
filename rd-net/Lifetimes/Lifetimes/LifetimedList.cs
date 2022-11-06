@@ -76,6 +76,8 @@ namespace JetBrains.Lifetimes
     private int myState;
     private volatile ArrayAndSize? myArrayAndSize;
 
+    public int Count => myArrayAndSize?.Size ?? 0;
+
     public void Add(Lifetime lifetime, T value) => Add(new ValueLifetimed<T>(lifetime, value));
     public void AddPriorityItem(Lifetime lifetime, T value) => AddPriorityItem(new ValueLifetimed<T>(lifetime, value));
     
@@ -205,7 +207,7 @@ namespace JetBrains.Lifetimes
       if (arrayAndSize == null) return;
 
       var items = arrayAndSize.Array;
-      var size = Memory.VolatileRead(ref arrayAndSize.Size);
+      var size = arrayAndSize.Size;
       for (var j = 0; j < size; j++) 
         items[j].ClearValueIfNotAlive();
     }
@@ -243,17 +245,37 @@ namespace JetBrains.Lifetimes
       var arrayAndSize = myArrayAndSize;
       return arrayAndSize != null ? new Enumerator(arrayAndSize.Array, arrayAndSize.Size) : default;
     }
+
+    public readonly Snapshot GetSnapshot()
+    {
+      var arrayAndSize = myArrayAndSize;
+      return arrayAndSize != null ? new Snapshot(arrayAndSize.Array, arrayAndSize.Size) : default;
+    }
     
     private class ArrayAndSize
     {
       public readonly ValueLifetimed<T>[] Array;
-      public int Size;
+      public volatile int Size;
 
       public ArrayAndSize(ValueLifetimed<T>[] array, int size)
       {
         Array = array;
         Size = size;
       }
+    }
+    
+    public readonly struct Snapshot
+    {
+      public readonly int Count;
+      private readonly ValueLifetimed<T>[] myItems;
+
+      public Snapshot(ValueLifetimed<T>[] items, int count)
+      {
+        Count = count;
+        myItems = items;
+      }
+
+      public Enumerator GetEnumerator() => new(myItems, Count);
     }
   }
 
