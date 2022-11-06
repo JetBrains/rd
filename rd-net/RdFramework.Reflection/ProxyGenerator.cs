@@ -214,7 +214,8 @@ namespace JetBrains.Rd.Reflection
       if (IsSync(method))
       {
         // Create RdTask
-        il.Emit(OpCodes.Call, returnType.GetMethod(nameof(RdTask.Successful)).NotNull("RdTask.Successful<Unit> not found"));
+        var taskFactoryMethod = typeof(RdTask).GetMethod(nameof(RdTask.Successful))?.MakeGenericMethod(responseType);
+        il.Emit(OpCodes.Call, taskFactoryMethod.NotNull("RdTask.Successful<Unit> not found"));
       }
       else
       {
