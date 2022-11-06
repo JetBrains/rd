@@ -14,7 +14,7 @@ namespace JetBrains.Rd.Tasks
 {
   public class RdTask<T> : IRdTask<T>
   {
-    
+
     internal readonly WriteOnceProperty<RdTaskResult<T>> ResultInternal = new WriteOnceProperty<RdTaskResult<T>>();
 
     public IReadonlyProperty<RdTaskResult<T>> Result => ResultInternal;
@@ -23,19 +23,31 @@ namespace JetBrains.Rd.Tasks
     public void SetCancelled() => ResultInternal.SetIfEmpty(RdTaskResult<T>.Cancelled());
     public void Set(Exception e) => ResultInternal.SetIfEmpty(RdTaskResult<T>.Faulted(e));
 
-    private static RdTask<T> FromResult(RdTaskResult<T> result)
-    {
-      var res = new RdTask<T>();
-      res.ResultInternal.Value = result;
-      return res;
-    }
-
-    public static RdTask<T> Successful(T result) => FromResult(RdTaskResult<T>.Success(result));
-    public static RdTask<T> Faulted(Exception exception) => FromResult(RdTaskResult<T>.Faulted(exception));
-    public static RdTask<T> Cancelled() => FromResult(RdTaskResult<T>.Cancelled());
+    [Obsolete("Use 'RdTask.Successful<T>(T)' instead")]
+    public static RdTask<T> Successful(T result) => RdTask.Successful(result);
+    [Obsolete("Use 'RdTask.Faulted<T>(Exception)' instead")]
+    public static RdTask<T> Faulted(Exception exception) => RdTask.Faulted<T>(exception);
+    [Obsolete("Use 'RdTask.Cancelled<T>()' instead")]
+    public static RdTask<T> Cancelled() => RdTask.Cancelled<T>();
 
 #if !NET35
     [PublicAPI] public static implicit operator Task<T>(RdTask<T> task) => task.AsTask();
 #endif
+  }
+
+  public static class RdTask
+  {
+    public static RdTask<T> Successful<T>(T result) => FromResult(RdTaskResult<T>.Success(result));
+    public static RdTask<T> Faulted<T>(Exception exception) => FromResult(RdTaskResult<T>.Faulted(exception));
+    public static RdTask<T> Cancelled<T>() => FromResult(RdTaskResult<T>.Cancelled());
+    private static RdTask<T> FromResult<T>(RdTaskResult<T> result)
+    {
+      var res = new RdTask<T>
+      {
+        ResultInternal = { Value = result }
+      };
+
+      return res;
+    }
   }
 }
