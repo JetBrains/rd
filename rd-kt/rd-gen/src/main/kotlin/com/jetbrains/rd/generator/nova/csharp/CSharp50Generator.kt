@@ -147,6 +147,7 @@ open class CSharp50Generator(
                     }
                     this == PredefinedType.void -> "Unit"
                     this == PredefinedType.secureString -> "RdSecureString"
+                    this == PredefinedType.duration -> "TimeSpan"
                     else -> name
                 }
             }

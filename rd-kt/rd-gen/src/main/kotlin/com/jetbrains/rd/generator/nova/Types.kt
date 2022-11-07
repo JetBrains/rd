@@ -167,6 +167,7 @@ sealed class PredefinedType : INonNullableScalar {
     //library types
     object guid : PredefinedType()
     object dateTime : PredefinedType()
+    object duration : PredefinedType()
     object uri : PredefinedType()
     object secureString : PredefinedType()
 

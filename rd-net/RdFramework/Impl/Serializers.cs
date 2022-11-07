@@ -81,6 +81,7 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxReadDelegate<string?> ReadString = (ctx, reader) => reader.ReadString();
     public static readonly CtxReadDelegate<Guid> ReadGuid = (ctx, reader) => reader.ReadGuid();
     public static readonly CtxReadDelegate<DateTime> ReadDateTime = (ctx, reader) => reader.ReadDateTime();
+    public static readonly CtxReadDelegate<TimeSpan> ReadDuration = (ctx, reader) => reader.ReadTimeSpan();
     public static readonly CtxReadDelegate<Uri> ReadUri = (ctx, reader) => reader.ReadUri();
     public static readonly CtxReadDelegate<RdId> ReadRdId = (ctx, reader) => reader.ReadRdId();
     
@@ -123,6 +124,7 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxWriteDelegate<string?> WriteString = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<Guid> WriteGuid = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<DateTime> WriteDateTime = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<TimeSpan> WriteDuration = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<Uri> WriteUri = (ctx, writer, value) => writer.Write(value);
     public static readonly CtxWriteDelegate<RdId> WriteRdId = (ctx, writer, value) => writer.Write(value);
     

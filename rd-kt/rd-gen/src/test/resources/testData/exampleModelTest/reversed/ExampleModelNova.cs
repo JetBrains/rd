@@ -89,7 +89,7 @@ namespace org.example
     
     
     
-    protected override long SerializationHash => -5738447821523408934L;
+    protected override long SerializationHash => 2268532445437633574L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -294,6 +294,7 @@ namespace org.example
     [NotNull] public IViewableProperty<string> Nls_prop => _Nls_prop;
     [NotNull] public IViewableProperty<string> Nullable_nls_prop => _Nullable_nls_prop;
     [NotNull] public string Non_nls_open_field {get; private set;}
+    [NotNull] public IViewableProperty<TimeSpan> Duration_prop => _Duration_prop;
     
     //private fields
     [NotNull] private readonly RdProperty<org.example.Foo> _Foo1;
@@ -304,6 +305,7 @@ namespace org.example
     [NotNull] private readonly RdProperty<string> _Property_with_several_attrs;
     [NotNull] private readonly RdProperty<string> _Nls_prop;
     [NotNull] private readonly RdProperty<string> _Nullable_nls_prop;
+    [NotNull] private readonly RdProperty<TimeSpan> _Duration_prop;
     
     //primary constructor
     private Baz(
@@ -322,6 +324,7 @@ namespace org.example
       [NotNull] RdProperty<string> nls_prop,
       [NotNull] RdProperty<string> nullable_nls_prop,
       [NotNull] string non_nls_open_field,
+      [NotNull] RdProperty<TimeSpan> duration_prop,
       [NotNull] RdProperty<string> y,
       [NotNull] RdProperty<org.example.Z> z,
       int x,
@@ -347,6 +350,7 @@ namespace org.example
       if (nls_prop == null) throw new ArgumentNullException("nls_prop");
       if (nullable_nls_prop == null) throw new ArgumentNullException("nullable_nls_prop");
       if (non_nls_open_field == null) throw new ArgumentNullException("non_nls_open_field");
+      if (duration_prop == null) throw new ArgumentNullException("duration_prop");
       
       Foo = foo;
       Bar = bar;
@@ -363,11 +367,13 @@ namespace org.example
       _Nls_prop = nls_prop;
       _Nullable_nls_prop = nullable_nls_prop;
       Non_nls_open_field = non_nls_open_field;
+      _Duration_prop = duration_prop;
       _MapScalar.OptimizeNested = true;
       _Property_with_default_nls.OptimizeNested = true;
       _Property_with_several_attrs.OptimizeNested = true;
       _Nls_prop.OptimizeNested = true;
       _Nullable_nls_prop.OptimizeNested = true;
+      _Duration_prop.OptimizeNested = true;
       _MapScalar.Async = true;
       _Foo1.ValueCanBeNull = true;
       _Bar1.ValueCanBeNull = true;
@@ -382,6 +388,7 @@ namespace org.example
       BindableChildren.Add(new KeyValuePair<string, object>("property_with_several_attrs", _Property_with_several_attrs));
       BindableChildren.Add(new KeyValuePair<string, object>("nls_prop", _Nls_prop));
       BindableChildren.Add(new KeyValuePair<string, object>("nullable_nls_prop", _Nullable_nls_prop));
+      BindableChildren.Add(new KeyValuePair<string, object>("duration_prop", _Duration_prop));
     }
     //secondary constructor
     public Baz (
@@ -409,6 +416,7 @@ namespace org.example
       new RdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       non_nls_open_field,
+      new RdProperty<TimeSpan>(JetBrains.Rd.Impl.Serializers.ReadDuration, JetBrains.Rd.Impl.Serializers.WriteDuration),
       new RdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString),
       new RdProperty<org.example.Z>(ReadZ, WriteZ),
       x,
@@ -439,7 +447,8 @@ namespace org.example
       var nls_prop = RdProperty<string>.Read(ctx, reader, JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString);
       var nullable_nls_prop = RdProperty<string>.Read(ctx, reader, ReadStringNullable, WriteStringNullable);
       var non_nls_open_field = reader.ReadString();
-      var _result = new Baz(foo, bar, nls_field, nls_nullable_field, string_list_field, nls_list_field, foo1, bar1, mapScalar, mapBindable, property_with_default_nls, property_with_several_attrs, nls_prop, nullable_nls_prop, non_nls_open_field, y, z, x, sdf).WithId(_id);
+      var duration_prop = RdProperty<TimeSpan>.Read(ctx, reader, JetBrains.Rd.Impl.Serializers.ReadDuration, JetBrains.Rd.Impl.Serializers.WriteDuration);
+      var _result = new Baz(foo, bar, nls_field, nls_nullable_field, string_list_field, nls_list_field, foo1, bar1, mapScalar, mapBindable, property_with_default_nls, property_with_several_attrs, nls_prop, nullable_nls_prop, non_nls_open_field, duration_prop, y, z, x, sdf).WithId(_id);
       return _result;
     };
     public static CtxReadDelegate<List<org.example.Foo>> ReadFooList = org.example.Foo.Read.List();
@@ -472,6 +481,7 @@ namespace org.example
       RdProperty<string>.Write(ctx, writer, value._Nls_prop);
       RdProperty<string>.Write(ctx, writer, value._Nullable_nls_prop);
       writer.Write(value.Non_nls_open_field);
+      RdProperty<TimeSpan>.Write(ctx, writer, value._Duration_prop);
     };
     public static  CtxWriteDelegate<List<org.example.Foo>> WriteFooList = org.example.Foo.Write.List();
     public static  CtxWriteDelegate<List<A>> WriteANullableList = A.Write.NullableClass().List();
@@ -509,6 +519,7 @@ namespace org.example
         printer.Print("nls_prop = "); _Nls_prop.PrintEx(printer); printer.Println();
         printer.Print("nullable_nls_prop = "); _Nullable_nls_prop.PrintEx(printer); printer.Println();
         printer.Print("non_nls_open_field = "); Non_nls_open_field.PrintEx(printer); printer.Println();
+        printer.Print("duration_prop = "); _Duration_prop.PrintEx(printer); printer.Println();
         printer.Print("y = "); _Y.PrintEx(printer); printer.Println();
         printer.Print("z = "); _Z.PrintEx(printer); printer.Println();
         printer.Print("x = "); X.PrintEx(printer); printer.Println();
@@ -527,7 +538,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:89</p>
+  /// <p>Generated from: Example.kt:91</p>
   /// </summary>
   public sealed class Completion : RdBindableBase
   {
@@ -597,7 +608,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:84</p>
+  /// <p>Generated from: Example.kt:86</p>
   /// </summary>
   public sealed class Document : RdBindableBase
   {
@@ -771,7 +782,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:73</p>
+  /// <p>Generated from: Example.kt:75</p>
   /// </summary>
   public sealed class FooBar : RdBindableBase
   {
@@ -902,7 +913,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:98</p>
+  /// <p>Generated from: Example.kt:100</p>
   /// </summary>
   public sealed class ScalarExample : IPrintable, IEquatable<ScalarExample>
   {
@@ -1214,7 +1225,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:101</p>
+  /// <p>Generated from: Example.kt:103</p>
   /// </summary>
   public sealed class TextControl : RdBindableBase
   {

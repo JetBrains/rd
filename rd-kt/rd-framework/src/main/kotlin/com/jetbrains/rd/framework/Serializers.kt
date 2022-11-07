@@ -5,6 +5,9 @@ import com.jetbrains.rd.framework.impl.RdSecureString
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlin.reflect.KClass
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'register()' method of corresponding Toplevel. " +
         "Usually it should be done automatically during 'bind()' invocation but in complex cases you should do it manually."
@@ -159,6 +162,11 @@ fun AbstractBuffer.readDateTime(): Date {
     return Date(timeInMillisecondsSinceEpoch)
 }
 
+fun AbstractBuffer.readDuration(): Duration {
+    var durationInTicks = readLong()
+    return durationInTicks.toDuration(DurationUnit.NANOSECONDS)
+}
+
 fun AbstractBuffer.readUri(): URI = URI(readString())
 
 inline fun <reified T : Enum<T>> AbstractBuffer.readEnum(): T {
@@ -214,6 +222,11 @@ fun AbstractBuffer.writeGuid(value: UUID) = writeUuid(value)
 fun AbstractBuffer.writeDateTime(value: Date) {
     val timeInTicks = value.getTime() * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH
     writeLong(timeInTicks)
+}
+
+fun AbstractBuffer.writeDuration(value: Duration) {
+    var durationInNanoseconds = value.inWholeNanoseconds
+    writeLong(durationInNanoseconds)
 }
 
 fun AbstractBuffer.writeUri(value: URI) {
