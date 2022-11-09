@@ -89,7 +89,7 @@ namespace org.example
     
     
     
-    protected override long SerializationHash => 2268532445437633574L;
+    protected override long SerializationHash => -4929039364373743159L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -416,7 +416,7 @@ namespace org.example
       new RdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       non_nls_open_field,
-      new RdProperty<TimeSpan>(JetBrains.Rd.Impl.Serializers.ReadDuration, JetBrains.Rd.Impl.Serializers.WriteDuration),
+      new RdProperty<TimeSpan>(JetBrains.Rd.Impl.Serializers.ReadTimeSpan, JetBrains.Rd.Impl.Serializers.WriteTimeSpan),
       new RdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString),
       new RdProperty<org.example.Z>(ReadZ, WriteZ),
       x,
@@ -447,7 +447,7 @@ namespace org.example
       var nls_prop = RdProperty<string>.Read(ctx, reader, JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString);
       var nullable_nls_prop = RdProperty<string>.Read(ctx, reader, ReadStringNullable, WriteStringNullable);
       var non_nls_open_field = reader.ReadString();
-      var duration_prop = RdProperty<TimeSpan>.Read(ctx, reader, JetBrains.Rd.Impl.Serializers.ReadDuration, JetBrains.Rd.Impl.Serializers.WriteDuration);
+      var duration_prop = RdProperty<TimeSpan>.Read(ctx, reader, JetBrains.Rd.Impl.Serializers.ReadTimeSpan, JetBrains.Rd.Impl.Serializers.WriteTimeSpan);
       var _result = new Baz(foo, bar, nls_field, nls_nullable_field, string_list_field, nls_list_field, foo1, bar1, mapScalar, mapBindable, property_with_default_nls, property_with_several_attrs, nls_prop, nullable_nls_prop, non_nls_open_field, duration_prop, y, z, x, sdf).WithId(_id);
       return _result;
     };

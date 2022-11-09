@@ -36,7 +36,7 @@ void Baz::initialize()
     mapScalar_.async = true;
 }
 // primary ctor
-Baz::Baz(std::vector<rd::Wrapper<Foo>> foo_, std::vector<rd::Wrapper<A>> bar_, rd::Wrapper<std::wstring> nls_field_, rd::Wrapper<std::wstring> nls_nullable_field_, std::vector<rd::Wrapper<std::wstring>> string_list_field_, std::vector<rd::Wrapper<std::wstring>> nls_list_field_, rd::RdProperty<rd::Wrapper<Foo>, Baz::__FooNullableSerializer> foo1_, rd::RdProperty<rd::Wrapper<A>, Baz::__ANullableSerializer> bar1_, rd::RdMap<int32_t, ScalarPrimer, rd::Polymorphic<int32_t>, rd::AbstractPolymorphic<ScalarPrimer>> mapScalar_, rd::RdMap<int32_t, FooBar, rd::Polymorphic<int32_t>, rd::Polymorphic<FooBar>> mapBindable_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_default_nls_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_several_attrs_, rd::RdProperty<std::wstring, Baz::__StringSerializer> nls_prop_, rd::RdProperty<rd::Wrapper<std::wstring>, Baz::__StringNullableSerializer> nullable_nls_prop_, rd::Wrapper<std::wstring> non_nls_open_field_, rd::RdProperty<rd::Duration, rd::Polymorphic<rd::Duration>> duration_prop_, rd::RdProperty<std::wstring, rd::Polymorphic<std::wstring>> y_, rd::RdProperty<Z, rd::Polymorphic<Z>> z_, int32_t x_, rd::RdMap<int32_t, int32_t, rd::Polymorphic<int32_t>, rd::Polymorphic<int32_t>> sdf_) :
+Baz::Baz(std::vector<rd::Wrapper<Foo>> foo_, std::vector<rd::Wrapper<A>> bar_, rd::Wrapper<std::wstring> nls_field_, rd::Wrapper<std::wstring> nls_nullable_field_, std::vector<rd::Wrapper<std::wstring>> string_list_field_, std::vector<rd::Wrapper<std::wstring>> nls_list_field_, rd::RdProperty<rd::Wrapper<Foo>, Baz::__FooNullableSerializer> foo1_, rd::RdProperty<rd::Wrapper<A>, Baz::__ANullableSerializer> bar1_, rd::RdMap<int32_t, ScalarPrimer, rd::Polymorphic<int32_t>, rd::AbstractPolymorphic<ScalarPrimer>> mapScalar_, rd::RdMap<int32_t, FooBar, rd::Polymorphic<int32_t>, rd::Polymorphic<FooBar>> mapBindable_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_default_nls_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_several_attrs_, rd::RdProperty<std::wstring, Baz::__StringSerializer> nls_prop_, rd::RdProperty<rd::Wrapper<std::wstring>, Baz::__StringNullableSerializer> nullable_nls_prop_, rd::Wrapper<std::wstring> non_nls_open_field_, rd::RdProperty<rd::TimeSpan, rd::Polymorphic<rd::TimeSpan>> duration_prop_, rd::RdProperty<std::wstring, rd::Polymorphic<std::wstring>> y_, rd::RdProperty<Z, rd::Polymorphic<Z>> z_, int32_t x_, rd::RdMap<int32_t, int32_t, rd::Polymorphic<int32_t>, rd::Polymorphic<int32_t>> sdf_) :
 A(std::move(y_),std::move(z_),std::move(x_),std::move(sdf_))
 ,foo_(std::move(foo_)), bar_(std::move(bar_)), nls_field_(std::move(nls_field_)), nls_nullable_field_(std::move(nls_nullable_field_)), string_list_field_(std::move(string_list_field_)), nls_list_field_(std::move(nls_list_field_)), foo1_(std::move(foo1_)), bar1_(std::move(bar1_)), mapScalar_(std::move(mapScalar_)), mapBindable_(std::move(mapBindable_)), property_with_default_nls_(std::move(property_with_default_nls_)), property_with_several_attrs_(std::move(property_with_several_attrs_)), nls_prop_(std::move(nls_prop_)), nullable_nls_prop_(std::move(nullable_nls_prop_)), non_nls_open_field_(std::move(non_nls_open_field_)), duration_prop_(std::move(duration_prop_))
 {
@@ -90,7 +90,7 @@ Baz Baz::read(rd::SerializationCtx& ctx, rd::Buffer & buffer)
     auto nls_prop_ = rd::RdProperty<std::wstring, Baz::__StringSerializer>::read(ctx, buffer);
     auto nullable_nls_prop_ = rd::RdProperty<rd::Wrapper<std::wstring>, Baz::__StringNullableSerializer>::read(ctx, buffer);
     auto non_nls_open_field_ = buffer.read_wstring();
-    auto duration_prop_ = rd::RdProperty<rd::Duration, rd::Polymorphic<rd::Duration>>::read(ctx, buffer);
+    auto duration_prop_ = rd::RdProperty<rd::TimeSpan, rd::Polymorphic<rd::TimeSpan>>::read(ctx, buffer);
     Baz res{std::move(foo_), std::move(bar_), std::move(nls_field_), std::move(nls_nullable_field_), std::move(string_list_field_), std::move(nls_list_field_), std::move(foo1_), std::move(bar1_), std::move(mapScalar_), std::move(mapBindable_), std::move(property_with_default_nls_), std::move(property_with_several_attrs_), std::move(nls_prop_), std::move(nullable_nls_prop_), std::move(non_nls_open_field_), std::move(duration_prop_), std::move(y_), std::move(z_), std::move(x_), std::move(sdf_)};
     withId(res, _id);
     return res;
@@ -231,7 +231,7 @@ std::wstring const & Baz::get_non_nls_open_field() const
 {
     return non_nls_open_field_;
 }
-rd::IProperty<rd::Duration> const & Baz::get_duration_prop() const
+rd::IProperty<rd::TimeSpan> const & Baz::get_duration_prop() const
 {
     return duration_prop_;
 }

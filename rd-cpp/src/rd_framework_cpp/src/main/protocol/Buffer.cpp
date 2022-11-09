@@ -5,8 +5,6 @@
 #include <string>
 #include <algorithm>
 
-#include "Duration.h"
-
 namespace rd
 {
 Buffer::Buffer() : Buffer(16)
@@ -217,15 +215,15 @@ void Buffer::write_date_time(DateTime const& date_time)
 	write_integral<int64_t>(t);
 }
 
-Duration Buffer::read_duration()
+TimeSpan Buffer::read_time_span()
 {
 	int64_t duration_in_ticks = read_integral<int64_t>();
-	return Duration{duration_in_ticks};
+	return TimeSpan{duration_in_ticks};
 }
 
-void Buffer::write_duration(Duration const& duration)
+void Buffer::write_time_span(TimeSpan const& duration)
 {
-	write_integral<int64_t>(duration.ticks);
+	write_integral<int64_t>(duration.Ticks());
 }
 
 bool Buffer::read_bool()

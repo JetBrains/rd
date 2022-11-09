@@ -7,7 +7,7 @@
 #endif
 
 #include "types/DateTime.h"
-#include "types/Duration.h"
+#include "types/TimeSpan.h"
 #include "util/core_util.h"
 #include "types/wrapper.h"
 #include "std/allocator.h"
@@ -212,9 +212,9 @@ public:
 
 	void write_date_time(DateTime const& date_time);
 
-	Duration read_duration();
+	TimeSpan read_time_span();
 
-	void write_duration(Duration const& duration);
+	void write_time_span(TimeSpan const& duration);
 
 	template <typename T, typename = typename std::enable_if_t<util::is_enum_v<T>>>
 	T read_enum()

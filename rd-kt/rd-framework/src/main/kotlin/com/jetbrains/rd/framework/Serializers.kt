@@ -162,7 +162,7 @@ fun AbstractBuffer.readDateTime(): Date {
     return Date(timeInMillisecondsSinceEpoch)
 }
 
-fun AbstractBuffer.readDuration(): Duration {
+fun AbstractBuffer.readTimeSpan(): Duration {
     var durationInTicks = readLong()
     return durationInTicks.toDuration(DurationUnit.NANOSECONDS)
 }
@@ -224,7 +224,7 @@ fun AbstractBuffer.writeDateTime(value: Date) {
     writeLong(timeInTicks)
 }
 
-fun AbstractBuffer.writeDuration(value: Duration) {
+fun AbstractBuffer.writeTimeSpan(value: Duration) {
     var durationInNanoseconds = value.inWholeNanoseconds
     writeLong(durationInNanoseconds)
 }

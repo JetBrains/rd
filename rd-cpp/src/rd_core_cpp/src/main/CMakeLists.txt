@@ -28,6 +28,7 @@ add_library(rd_core_cpp SHARED
         std/unordered_set.h
         #types
         types/DateTime.cpp types/DateTime.h
+        types/TimeSpan.cpp types/TimeSpan.h
         types/Void.h
         types/wrapper.h
         #util

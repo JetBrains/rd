@@ -161,7 +161,7 @@ object DemoModel : Ext(DemoRoot) {
 
         property("date", PredefinedType.dateTime)
 
-        property("duration", PredefinedType.duration)
+        property("duration", PredefinedType.timeSpan)
 
         const("const_toplevel", PredefinedType.bool, true)
 

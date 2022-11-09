@@ -153,17 +153,17 @@ public:
 };
 
 template <>
-class Polymorphic<Duration>
+class Polymorphic<TimeSpan>
 {
 public:
-	inline static Duration read(SerializationCtx& /*ctx*/, Buffer& buffer)
+	inline static TimeSpan read(SerializationCtx& /*ctx*/, Buffer& buffer)
 	{
-		return buffer.read_duration();
+		return buffer.read_time_span();
 	}
 
-	inline static void write(SerializationCtx& /*ctx*/, Buffer& buffer, Duration const& value)
+	inline static void write(SerializationCtx& /*ctx*/, Buffer& buffer, TimeSpan const& value)
 	{
-		buffer.write_duration(value);
+		buffer.write_time_span(value);
 	}
 };
 

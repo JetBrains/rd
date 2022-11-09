@@ -97,7 +97,7 @@ protected:
     rd::RdProperty<std::wstring, Baz::__StringSerializer> nls_prop_;
     rd::RdProperty<rd::Wrapper<std::wstring>, Baz::__StringNullableSerializer> nullable_nls_prop_;
     rd::Wrapper<std::wstring> non_nls_open_field_;
-    rd::RdProperty<rd::Duration, rd::Polymorphic<rd::Duration>> duration_prop_;
+    rd::RdProperty<rd::TimeSpan, rd::Polymorphic<rd::TimeSpan>> duration_prop_;
     
 
 private:
@@ -106,7 +106,7 @@ private:
 
 public:
     // primary ctor
-    Baz(std::vector<rd::Wrapper<Foo>> foo_, std::vector<rd::Wrapper<A>> bar_, rd::Wrapper<std::wstring> nls_field_, rd::Wrapper<std::wstring> nls_nullable_field_, std::vector<rd::Wrapper<std::wstring>> string_list_field_, std::vector<rd::Wrapper<std::wstring>> nls_list_field_, rd::RdProperty<rd::Wrapper<Foo>, Baz::__FooNullableSerializer> foo1_, rd::RdProperty<rd::Wrapper<A>, Baz::__ANullableSerializer> bar1_, rd::RdMap<int32_t, ScalarPrimer, rd::Polymorphic<int32_t>, rd::AbstractPolymorphic<ScalarPrimer>> mapScalar_, rd::RdMap<int32_t, FooBar, rd::Polymorphic<int32_t>, rd::Polymorphic<FooBar>> mapBindable_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_default_nls_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_several_attrs_, rd::RdProperty<std::wstring, Baz::__StringSerializer> nls_prop_, rd::RdProperty<rd::Wrapper<std::wstring>, Baz::__StringNullableSerializer> nullable_nls_prop_, rd::Wrapper<std::wstring> non_nls_open_field_, rd::RdProperty<rd::Duration, rd::Polymorphic<rd::Duration>> duration_prop_, rd::RdProperty<std::wstring, rd::Polymorphic<std::wstring>> y_, rd::RdProperty<Z, rd::Polymorphic<Z>> z_, int32_t x_, rd::RdMap<int32_t, int32_t, rd::Polymorphic<int32_t>, rd::Polymorphic<int32_t>> sdf_);
+    Baz(std::vector<rd::Wrapper<Foo>> foo_, std::vector<rd::Wrapper<A>> bar_, rd::Wrapper<std::wstring> nls_field_, rd::Wrapper<std::wstring> nls_nullable_field_, std::vector<rd::Wrapper<std::wstring>> string_list_field_, std::vector<rd::Wrapper<std::wstring>> nls_list_field_, rd::RdProperty<rd::Wrapper<Foo>, Baz::__FooNullableSerializer> foo1_, rd::RdProperty<rd::Wrapper<A>, Baz::__ANullableSerializer> bar1_, rd::RdMap<int32_t, ScalarPrimer, rd::Polymorphic<int32_t>, rd::AbstractPolymorphic<ScalarPrimer>> mapScalar_, rd::RdMap<int32_t, FooBar, rd::Polymorphic<int32_t>, rd::Polymorphic<FooBar>> mapBindable_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_default_nls_, rd::RdProperty<std::wstring, Baz::__StringSerializer> property_with_several_attrs_, rd::RdProperty<std::wstring, Baz::__StringSerializer> nls_prop_, rd::RdProperty<rd::Wrapper<std::wstring>, Baz::__StringNullableSerializer> nullable_nls_prop_, rd::Wrapper<std::wstring> non_nls_open_field_, rd::RdProperty<rd::TimeSpan, rd::Polymorphic<rd::TimeSpan>> duration_prop_, rd::RdProperty<std::wstring, rd::Polymorphic<std::wstring>> y_, rd::RdProperty<Z, rd::Polymorphic<Z>> z_, int32_t x_, rd::RdMap<int32_t, int32_t, rd::Polymorphic<int32_t>, rd::Polymorphic<int32_t>> sdf_);
     // secondary constructor
     Baz(std::vector<rd::Wrapper<Foo>> foo_, std::vector<rd::Wrapper<A>> bar_, rd::Wrapper<std::wstring> nls_field_, rd::Wrapper<std::wstring> nls_nullable_field_, std::vector<rd::Wrapper<std::wstring>> string_list_field_, std::vector<rd::Wrapper<std::wstring>> nls_list_field_, rd::Wrapper<std::wstring> non_nls_open_field_, int32_t x_);
     
@@ -148,7 +148,7 @@ public:
     rd::IProperty<std::wstring> const & get_nls_prop() const;
     rd::IProperty<rd::Wrapper<std::wstring>> const & get_nullable_nls_prop() const;
     std::wstring const & get_non_nls_open_field() const;
-    rd::IProperty<rd::Duration> const & get_duration_prop() const;
+    rd::IProperty<rd::TimeSpan> const & get_duration_prop() const;
     
     // intern
 

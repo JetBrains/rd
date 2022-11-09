@@ -77,7 +77,7 @@ object FrameworkMarshallers {
     val Guid: UniversalMarshaller<UUID> = create({ it.readUuid() }, AbstractBuffer::writeUuid, 11)
     val DateTime: UniversalMarshaller<Date> = create(AbstractBuffer::readDateTime, AbstractBuffer::writeDateTime, 12)
     val Uri: UniversalMarshaller<URI> = create({ it.readUri() }, AbstractBuffer::writeUri, 13)
-    var Duration: UniversalMarshaller<kotlin.time.Duration> = create(AbstractBuffer::readDuration, AbstractBuffer::writeDuration, 14)
+    var TimeSpan: UniversalMarshaller<kotlin.time.Duration> = create(AbstractBuffer::readTimeSpan, AbstractBuffer::writeTimeSpan, 14)
 
     //rdId
     val RdId: IMarshaller<RdId> = create(AbstractBuffer::readRdId, AbstractBuffer::writeRdId, 15)
@@ -132,7 +132,7 @@ object FrameworkMarshallers {
         serializers.register(String)
         serializers.register(Guid) // We use Microsoft GUID Structure for marshalling, see https://en.wikipedia.org/wiki/Globally_unique_identifier#Binary_encoding
         serializers.register(DateTime) // We use .NET DateTime.Ticks for marshalling, see http://stackoverflow.com/questions/3706306/c-sharp-datetime-ticks-equivalent-in-java/3706320#3706320
-        serializers.register(Duration)
+        serializers.register(TimeSpan)
         serializers.register(Uri)
         serializers.register(RdId)
         serializers.register(SecureString)

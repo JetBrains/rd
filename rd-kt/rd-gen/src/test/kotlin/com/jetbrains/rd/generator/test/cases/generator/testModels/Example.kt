@@ -69,7 +69,7 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         property("nullable_nls_prop", PredefinedType.string.nullable.attrs(KnownAttrs.Nls))
         field("non_nls_open_field", nonNlsString)
 
-        property("duration_prop", PredefinedType.duration)
+        property("duration_prop", PredefinedType.timeSpan)
     }
 
     val FooBar: Class.Concrete = classdef {

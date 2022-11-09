@@ -61,7 +61,7 @@ class ExampleModelNova private constructor(
         }
         
         
-        const val serializationHash = 2268532445437633574L
+        const val serializationHash = -4929039364373743159L
         
     }
     override val serializersOwner: ISerializersOwner get() = ExampleModelNova
@@ -311,7 +311,7 @@ class Baz private constructor(
             val _nls_prop = RdOptionalProperty.read(ctx, buffer, __StringSerializer)
             val _nullable_nls_prop = RdProperty.read(ctx, buffer, __StringNullableSerializer)
             val non_nls_open_field = buffer.readString()
-            val _duration_prop = RdOptionalProperty.read(ctx, buffer, FrameworkMarshallers.Duration)
+            val _duration_prop = RdOptionalProperty.read(ctx, buffer, FrameworkMarshallers.TimeSpan)
             return Baz(foo, bar, nls_field, nls_nullable_field, string_list_field, nls_list_field, _foo1, _bar1, _mapScalar, _mapBindable, _property_with_default_nls, _property_with_several_attrs, _nls_prop, _nullable_nls_prop, non_nls_open_field, _duration_prop, _y, _z, x, _sdf).withId(_id)
         }
         
@@ -412,7 +412,7 @@ class Baz private constructor(
         RdOptionalProperty<@org.jetbrains.annotations.Nls String>(__StringSerializer),
         RdProperty<@org.jetbrains.annotations.Nls String?>(null, __StringNullableSerializer),
         non_nls_open_field,
-        RdOptionalProperty<Duration>(FrameworkMarshallers.Duration),
+        RdOptionalProperty<Duration>(FrameworkMarshallers.TimeSpan),
         RdOptionalProperty<String>(FrameworkMarshallers.String),
         RdOptionalProperty<Z>(Z.marshaller),
         x,
