@@ -13,7 +13,7 @@ int64_t TimeSpan::TicksPerMillisecond=10000;
 int64_t TimeSpan::TicksPerMicrosecond=10;
 
 TimeSpan TimeSpan::Zero = TimeSpan{0};
-TimeSpan TimeSpan::Max = TimeSpan{18446744073709551615ll};
+TimeSpan TimeSpan::Max = TimeSpan{std::numeric_limits<int64_t>::max()};
 
 TimeSpan TimeSpan::CreateFromTicks(int64_t ticks)
 {
@@ -71,32 +71,32 @@ int64_t TimeSpan::Ticks() const
 
 double TimeSpan::TotalDays()const
 {
-	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerDay);
+	return static_cast<double>(m_ticks) / static_cast<double>(TicksPerDay);
 }
 
 double TimeSpan::TotalHours()const
 {
-	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerHour);
+	return static_cast<double>(m_ticks) / static_cast<double>(TicksPerHour);
 }
 
 double TimeSpan::TotalMinutes()const
 {
-	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerMinute);
+	return static_cast<double>(m_ticks) / static_cast<double>(TicksPerMinute);
 }
 
 double TimeSpan::TotalSeconds()const
 {
-	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerSecond);
+	return static_cast<double>(m_ticks) / static_cast<double>(TicksPerSecond);
 }
 
 double TimeSpan::TotalMilliseconds()const
 {
-	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerMillisecond);
+	return static_cast<double>(m_ticks) / static_cast<double>(TicksPerMillisecond);
 }
 
 double TimeSpan::TotalMicroseconds()const
 {
-	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerMicrosecond);
+	return static_cast<double>(m_ticks) / static_cast<double>(TicksPerMicrosecond);
 }
 
 bool operator<(const TimeSpan& lhs, const TimeSpan& rhs)
