@@ -37,12 +37,12 @@ public:
 	int32_t Microseconds() const;
 	int64_t Ticks() const;
 
-	double_t TotalDays() const;
-	double_t TotalHours() const;
-	double_t TotalMinutes() const;
-	double_t TotalSeconds() const;
-	double_t TotalMilliseconds() const;
-	double_t TotalMicroseconds() const;
+	double TotalDays() const;
+	double TotalHours() const;
+	double TotalMinutes() const;
+	double TotalSeconds() const;
+	double TotalMilliseconds() const;
+	double TotalMicroseconds() const;
 
 	friend bool RD_CORE_API operator<(const TimeSpan& lhs, const TimeSpan& rhs);
 	friend bool RD_CORE_API operator>(const TimeSpan& lhs, const TimeSpan& rhs);

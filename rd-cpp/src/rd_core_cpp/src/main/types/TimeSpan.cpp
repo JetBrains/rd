@@ -69,34 +69,34 @@ int64_t TimeSpan::Ticks() const
 	return m_ticks;
 }
 
-double_t TimeSpan::TotalDays()const
+double TimeSpan::TotalDays()const
 {
-	return static_cast<double_t>(m_ticks) / static_cast<double_t>(TicksPerDay);
+	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerDay);
 }
 
-double_t TimeSpan::TotalHours()const
+double TimeSpan::TotalHours()const
 {
-	return static_cast<double_t>(m_ticks) / static_cast<double_t>(TicksPerHour);
+	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerHour);
 }
 
-double_t TimeSpan::TotalMinutes()const
+double TimeSpan::TotalMinutes()const
 {
-	return static_cast<double_t>(m_ticks) / static_cast<double_t>(TicksPerMinute);
+	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerMinute);
 }
 
-double_t TimeSpan::TotalSeconds()const
+double TimeSpan::TotalSeconds()const
 {
-	return static_cast<double_t>(m_ticks) / static_cast<double_t>(TicksPerSecond);
+	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerSecond);
 }
 
-double_t TimeSpan::TotalMilliseconds()const
+double TimeSpan::TotalMilliseconds()const
 {
-	return static_cast<double_t>(m_ticks) / static_cast<double_t>(TicksPerMillisecond);
+	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerMillisecond);
 }
 
-double_t TimeSpan::TotalMicroseconds()const
+double TimeSpan::TotalMicroseconds()const
 {
-	return static_cast<double_t>(m_ticks) / static_cast<double_t>(TicksPerMicrosecond);
+	return static_cast<double>(m_ticks) / static_cast<double_t>(TicksPerMicrosecond);
 }
 
 bool operator<(const TimeSpan& lhs, const TimeSpan& rhs)
