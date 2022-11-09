@@ -335,8 +335,12 @@ public class AsyncCollectionsBackendTest : LifetimesTestBase
     var expected = Enumerable.Range(0, n).ToList();
     var appendTask = Task.Run(async () =>
     {
-      foreach (var i in expected) 
+      var value = 0;
+      foreach (var i in expected)
+      {
+        Assert.AreEqual(i, value++);
         await backend.AppendAsync(i);
+      }
 
     });
     appendTask.ContinueWith(_ => definition.Terminate());
@@ -418,7 +422,12 @@ internal class TestIntBackend : AsyncCollectionsBackend<int, int, int>
 
   public Task SetValueAsync(int value) => UpdateValueAsync(AddUpdateRemove.Update, 0, value);
 
-  protected override int DoUpdate(int state, AddUpdateRemove kind, int _, int element) => UpdateImpl(element);
+  protected override int DoUpdate(int state, AddUpdateRemove kind, int _, int element)
+  {
+    myState =  UpdateImpl(element);
+    return 0;
+  }
+
   protected override int Copy(int state) => CopyImpl(state);
 
   protected override void DoFireState(int state, Action<AddUpdateRemove, int, int> listener) => Execute(AddUpdateRemove.Update, 0, state, listener);
@@ -433,13 +442,19 @@ internal sealed class TestListBackend : AsyncCollectionsBackend<List<int>, int, 
   public Task AppendAsync(int value) => UpdateValueAsync(AddUpdateRemove.Add, -1, value);
 
 
-  protected override List<int> DoUpdate(List<int> state, AddUpdateRemove kind, int key, int element)
+  protected override int DoUpdate(List<int> state, AddUpdateRemove kind, int key, int element)
   {
     if (kind == AddUpdateRemove.Add)
+    {
       state.Add(element);
-    else
-      throw new NotSupportedException();
-    return state;
+      var index = state.Count - 1;
+      if (index != element)
+        Assert.Fail($"{string.Join(", ", state)}");
+      
+      return index;
+    }
+
+    throw new NotSupportedException();
   }
 
   protected override List<int> Copy(List<int> state) => new(state);

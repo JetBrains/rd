@@ -18,7 +18,7 @@ internal abstract class AsyncCollectionsBackend<TState, TKey, TValue> : ITermina
   private readonly object myLocker = new();
   private IScheduler myScheduler;
   
-  private TState myState;
+  protected TState myState;
   private int myReadersCount;
   private int myVersion;
   private bool myHasValue;
@@ -46,7 +46,7 @@ internal abstract class AsyncCollectionsBackend<TState, TKey, TValue> : ITermina
     {
       var maybe = myHasValue && myReadersCount > 0 ? Copy(myState!) : myState!;
 
-      myState = DoUpdate(maybe, kind, key, value);
+      key = DoUpdate(maybe, kind, key, value);
       myHasValue = true;
       myVersion++;
       myReadersCount = 0;
@@ -177,7 +177,7 @@ internal abstract class AsyncCollectionsBackend<TState, TKey, TValue> : ITermina
     myListeners.ClearValuesIfNotAlive();
   }
 
-  protected abstract TState DoUpdate(TState state, AddUpdateRemove kind, TKey key, TValue element);
+  protected abstract TKey DoUpdate(TState state, AddUpdateRemove kind, TKey key, TValue element);
   protected abstract TState Copy(TState state);
   protected abstract void DoFireState(TState? state, Action<AddUpdateRemove, TKey, TValue> listener);
 
