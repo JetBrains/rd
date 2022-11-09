@@ -153,6 +153,21 @@ public:
 };
 
 template <>
+class Polymorphic<Duration>
+{
+public:
+	inline static Duration read(SerializationCtx& /*ctx*/, Buffer& buffer)
+	{
+		return buffer.read_duration();
+	}
+
+	inline static void write(SerializationCtx& /*ctx*/, Buffer& buffer, Duration const& value)
+	{
+		buffer.write_duration(value);
+	}
+};
+
+template <>
 class Polymorphic<Void>
 {
 public:

@@ -407,6 +407,7 @@ open class Cpp17Generator(
             }
         }
         is PredefinedType.dateTime -> "rd::DateTime"
+        is PredefinedType.duration -> "rd::Duration"
         is PredefinedType.guid -> "UUID"
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"

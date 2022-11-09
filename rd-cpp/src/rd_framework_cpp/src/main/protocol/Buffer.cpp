@@ -5,6 +5,8 @@
 #include <string>
 #include <algorithm>
 
+#include "Duration.h"
+
 namespace rd
 {
 Buffer::Buffer() : Buffer(16)
@@ -213,6 +215,17 @@ void Buffer::write_date_time(DateTime const& date_time)
 {
 	uint64_t t = date_time.seconds * TICKS_PER_MILLISECOND + TICKS_AT_EPOCH;
 	write_integral<int64_t>(t);
+}
+
+Duration Buffer::read_duration()
+{
+	int64_t duration_in_ticks = read_integral<int64_t>();
+	return Duration{duration_in_ticks};
+}
+
+void Buffer::write_duration(Duration const& duration)
+{
+	write_integral<int64_t>(duration.ticks);
 }
 
 bool Buffer::read_bool()

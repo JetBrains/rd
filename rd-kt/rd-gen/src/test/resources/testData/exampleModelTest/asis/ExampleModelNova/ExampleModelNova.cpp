@@ -64,7 +64,7 @@ void ExampleModelNova::connect(rd::Lifetime lifetime, rd::IProtocol const * prot
 void ExampleModelNova::initialize()
 {
     version_.optimize_nested = true;
-    serializationHash = -5738447821523408934L;
+    serializationHash = 2268532445437633574L;
 }
 // primary ctor
 ExampleModelNova::ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_) :
