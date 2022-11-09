@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <limits>
 
 namespace rd
 {
