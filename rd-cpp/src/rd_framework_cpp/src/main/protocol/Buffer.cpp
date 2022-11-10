@@ -215,6 +215,17 @@ void Buffer::write_date_time(DateTime const& date_time)
 	write_integral<int64_t>(t);
 }
 
+TimeSpan Buffer::read_time_span()
+{
+	int64_t duration_in_ticks = read_integral<int64_t>();
+	return TimeSpan{duration_in_ticks};
+}
+
+void Buffer::write_time_span(TimeSpan const& duration)
+{
+	write_integral<int64_t>(duration.Ticks());
+}
+
 bool Buffer::read_bool()
 {
 	const auto res = read_integral<uint8_t>();

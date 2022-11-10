@@ -161,6 +161,8 @@ object DemoModel : Ext(DemoRoot) {
 
         property("date", PredefinedType.dateTime)
 
+        property("duration", PredefinedType.timeSpan)
+
         const("const_toplevel", PredefinedType.bool, true)
 
         val cc = const("const_for_default", PredefinedType.string, "192")

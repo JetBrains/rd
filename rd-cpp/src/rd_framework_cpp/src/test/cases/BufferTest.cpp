@@ -331,3 +331,23 @@ TEST(BufferTest, date_time)
 
 	std::cout << std::endl << to_string(time_now) << std::endl << to_string(start_of_epoch);
 }
+
+TEST(BufferTest, duration)
+{
+	Buffer buffer;
+
+	Duration duration{5};
+
+	buffer.write_duration(duration);
+
+	EXPECT_EQ(2 * sizeof(int64_t), buffer.get_position());
+
+	buffer.rewind();
+
+	auto nt1 = buffer.read_duration();
+
+	EXPECT_EQ(duration, nt1);
+
+	std::cout << std::endl << to_string(duration);
+}
+

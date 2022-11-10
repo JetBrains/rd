@@ -74,6 +74,7 @@ open class Kotlin11Generator(
 
         is PredefinedType.bool -> "Boolean"
         is PredefinedType.dateTime -> "Date"
+        is PredefinedType.timeSpan -> "Duration"
         is PredefinedType.guid -> "UUID"
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
@@ -331,6 +332,7 @@ open class Kotlin11Generator(
         + "import com.jetbrains.rd.util.reactive.*"
         + "import com.jetbrains.rd.util.string.*"
         + "import com.jetbrains.rd.util.*"
+        + "import kotlin.time.Duration"
         + "import kotlin.reflect.KClass"
         + "import kotlin.jvm.JvmStatic"
 

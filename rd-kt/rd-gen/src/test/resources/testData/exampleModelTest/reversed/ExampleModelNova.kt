@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.*
+import kotlin.time.Duration
 import kotlin.reflect.KClass
 import kotlin.jvm.JvmStatic
 
@@ -60,7 +61,7 @@ class ExampleModelNova private constructor(
         }
         
         
-        const val serializationHash = -5738447821523408934L
+        const val serializationHash = -4929039364373743159L
         
     }
     override val serializersOwner: ISerializersOwner get() = ExampleModelNova
@@ -272,6 +273,7 @@ class Baz private constructor(
     private val _nls_prop: RdOptionalProperty<@org.jetbrains.annotations.Nls String>,
     private val _nullable_nls_prop: RdProperty<@org.jetbrains.annotations.Nls String?>,
     val non_nls_open_field: @org.jetbrains.annotations.NonNls String,
+    private val _duration_prop: RdOptionalProperty<Duration>,
     _y: RdOptionalProperty<String>,
     _z: RdOptionalProperty<Z>,
     x: Int,
@@ -309,7 +311,8 @@ class Baz private constructor(
             val _nls_prop = RdOptionalProperty.read(ctx, buffer, __StringSerializer)
             val _nullable_nls_prop = RdProperty.read(ctx, buffer, __StringNullableSerializer)
             val non_nls_open_field = buffer.readString()
-            return Baz(foo, bar, nls_field, nls_nullable_field, string_list_field, nls_list_field, _foo1, _bar1, _mapScalar, _mapBindable, _property_with_default_nls, _property_with_several_attrs, _nls_prop, _nullable_nls_prop, non_nls_open_field, _y, _z, x, _sdf).withId(_id)
+            val _duration_prop = RdOptionalProperty.read(ctx, buffer, FrameworkMarshallers.TimeSpan)
+            return Baz(foo, bar, nls_field, nls_nullable_field, string_list_field, nls_list_field, _foo1, _bar1, _mapScalar, _mapBindable, _property_with_default_nls, _property_with_several_attrs, _nls_prop, _nullable_nls_prop, non_nls_open_field, _duration_prop, _y, _z, x, _sdf).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Baz)  {
@@ -333,6 +336,7 @@ class Baz private constructor(
             RdOptionalProperty.write(ctx, buffer, value._nls_prop)
             RdProperty.write(ctx, buffer, value._nullable_nls_prop)
             buffer.writeString(value.non_nls_open_field)
+            RdOptionalProperty.write(ctx, buffer, value._duration_prop)
         }
         
         private val __FooNullableSerializer = AbstractPolymorphic(Foo).nullable()
@@ -352,6 +356,7 @@ class Baz private constructor(
     val property_with_several_attrs: IOptProperty<@org.jetbrains.annotations.Nls @org.jetbrains.annotations.NonNls String> get() = _property_with_several_attrs
     val nls_prop: IOptProperty<@org.jetbrains.annotations.Nls String> get() = _nls_prop
     val nullable_nls_prop: IProperty<@org.jetbrains.annotations.Nls String?> get() = _nullable_nls_prop
+    val duration_prop: IOptProperty<Duration> get() = _duration_prop
     //methods
     //initializer
     init {
@@ -360,6 +365,7 @@ class Baz private constructor(
         _property_with_several_attrs.optimizeNested = true
         _nls_prop.optimizeNested = true
         _nullable_nls_prop.optimizeNested = true
+        _duration_prop.optimizeNested = true
     }
     
     init {
@@ -377,6 +383,7 @@ class Baz private constructor(
         bindableChildren.add("property_with_several_attrs" to _property_with_several_attrs)
         bindableChildren.add("nls_prop" to _nls_prop)
         bindableChildren.add("nullable_nls_prop" to _nullable_nls_prop)
+        bindableChildren.add("duration_prop" to _duration_prop)
     }
     
     //secondary constructor
@@ -405,6 +412,7 @@ class Baz private constructor(
         RdOptionalProperty<@org.jetbrains.annotations.Nls String>(__StringSerializer),
         RdProperty<@org.jetbrains.annotations.Nls String?>(null, __StringNullableSerializer),
         non_nls_open_field,
+        RdOptionalProperty<Duration>(FrameworkMarshallers.TimeSpan),
         RdOptionalProperty<String>(FrameworkMarshallers.String),
         RdOptionalProperty<Z>(Z.marshaller),
         x,
@@ -432,6 +440,7 @@ class Baz private constructor(
             print("nls_prop = "); _nls_prop.print(printer); println()
             print("nullable_nls_prop = "); _nullable_nls_prop.print(printer); println()
             print("non_nls_open_field = "); non_nls_open_field.print(printer); println()
+            print("duration_prop = "); _duration_prop.print(printer); println()
             print("y = "); _y.print(printer); println()
             print("z = "); _z.print(printer); println()
             print("x = "); x.print(printer); println()
@@ -457,6 +466,7 @@ class Baz private constructor(
             _nls_prop.deepClonePolymorphic(),
             _nullable_nls_prop.deepClonePolymorphic(),
             non_nls_open_field,
+            _duration_prop.deepClonePolymorphic(),
             _y.deepClonePolymorphic(),
             _z.deepClonePolymorphic(),
             x,
@@ -468,7 +478,7 @@ class Baz private constructor(
 
 
 /**
- * #### Generated from [Example.kt:89]
+ * #### Generated from [Example.kt:91]
  */
 class Completion private constructor(
     private val _lookupItems: RdMap<Int, Boolean>
@@ -531,7 +541,7 @@ class Completion private constructor(
 
 
 /**
- * #### Generated from [Example.kt:84]
+ * #### Generated from [Example.kt:86]
  */
 class Document private constructor(
     val moniker: FooBar,
@@ -684,7 +694,7 @@ abstract class Foo (
 
 
 /**
- * #### Generated from [Example.kt:73]
+ * #### Generated from [Example.kt:75]
  */
 class FooBar (
     val a: Baz
@@ -804,7 +814,7 @@ class Foo_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:98]
+ * #### Generated from [Example.kt:100]
  */
 data class ScalarExample (
     val intfield: Int
@@ -1033,7 +1043,7 @@ data class Selection (
 
 
 /**
- * #### Generated from [Example.kt:101]
+ * #### Generated from [Example.kt:103]
  */
 class TextControl private constructor(
     private val _selection: RdOptionalProperty<Selection>,

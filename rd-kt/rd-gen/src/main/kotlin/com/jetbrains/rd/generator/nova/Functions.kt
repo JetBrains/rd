@@ -65,7 +65,7 @@ fun BindableDeclaration.call(name : String, paramType : IScalar, resultType : IT
 fun BindableDeclaration.callback(name : String, paramType : IScalar, resultType : IType) = append(Task(name, paramType, resultType).readonly)
 
 
-fun BindableDeclaration.property(name : String, valueType : IType) = append(Property(name, valueType))
+fun BindableDeclaration.property(name: String, valueType : IType) = append(Property(name, valueType))
 fun BindableDeclaration.property(name: String, defaultValue: TypeWithValue) = append(Property(name, defaultValue.type, defaultValue.defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Boolean) = append(Property(name, PredefinedType.bool, defaultValue))
 fun BindableDeclaration.property(name: String, defaultValue: Int) = append(Property(name, PredefinedType.int, defaultValue))

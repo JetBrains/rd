@@ -259,6 +259,12 @@ namespace JetBrains.Serialization
     {
       return new DateTime(ReadLong(), DateTimeKind.Utc);
     }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public TimeSpan ReadTimeSpan()
+    {
+      return TimeSpan.FromTicks(ReadLong());
+    }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Uri ReadUri()

@@ -449,6 +449,12 @@ namespace JetBrains.Serialization
       Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
       Write(value.Ticks);
     }
+    
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(TimeSpan value)
+    {
+      Write(value.Ticks);
+    }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Uri value)
