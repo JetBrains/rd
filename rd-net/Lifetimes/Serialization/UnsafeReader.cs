@@ -139,13 +139,18 @@ namespace JetBrains.Serialization
 
       var x = (double*)myPtr;
       myPtr = (byte*)(x + 1);
-#if NET35
-      return *x;
-#else
-      double d = 0;
-      Buffer.MemoryCopy(x, &d, sizeof(double), sizeof(double));
-      return d;
+#if !NET35
+      if (!RuntimeInfo.IsUnalignedAccessAllowed)
+      {
+        double d = 0;
+        Buffer.MemoryCopy(x, &d, sizeof(double), sizeof(double));
+        return d;
+      }
+      else
 #endif
+      {
+        return *x;
+      }
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
