@@ -137,9 +137,22 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
-    public void TestNestedRdModelsCircular()
+    public void TestScalarsInRdModels()
     {
-      var animal = CFacade.Activator.Activate<Animal>();
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
+      
+      var serverAnimal = CFacade.Activator.Activate<Animal>();
+      serverAnimal.arrays = new[]{"initial"}; 
+      serverAnimal.arrays2 = new[]{"initial2"};
+
+      s.PolyProperty.Value = serverAnimal;
+      serverAnimal.arrays[0]= "null";
+      serverAnimal.arrays2[0]= "null";
+      
+      var clientAnimal = c.PolyProperty.Value;
+      Assert.AreEqual(clientAnimal.arrays, null); /* NonSerialized filed should not be initialized*/
+      CollectionAssert.AreEqual(new[] { "initial2" }, clientAnimal.arrays2); /* other fields should serialize their content only once */
     }
 
     [Test]
