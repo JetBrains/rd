@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Diagnostics;
-#if NET461
+#if NET472
 using System;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
@@ -80,7 +80,7 @@ namespace Test.Lifetimes.Serialization
       CollectionAssert.AreEqual(new List<string> {"d", "e"}, reader.ReadCollection(UnsafeReader.StringDelegate, n => new List<string>(n)));
     }
 
-#if NET461
+#if NET472
     private UnsafeWriter.Cookie myCookie;
     private UnsafeReader myReader;
 

@@ -3,7 +3,7 @@
     <DotnetProducts>C:\work\main</DotnetProducts>
     <DotnetHive>Main</DotnetHive>
     <DotnetProductsOut>$(DotnetProducts)\Bin.$(DotnetHive)</DotnetProductsOut>
-    <CopyFromTargetFramework>net461</CopyFromTargetFramework>
+    <CopyFromTargetFramework>net472</CopyFromTargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <DotnetProductsNuPkg Include="$(DotnetProducts)\Packages\$(PackageId).2*\*.nupkg"/>
