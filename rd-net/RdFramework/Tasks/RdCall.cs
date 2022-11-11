@@ -73,7 +73,7 @@ namespace JetBrains.Rd.Tasks
     public override void OnWireReceived(UnsafeReader reader) //endpoint's side
     {
       var taskId = RdId.Read(reader);
-      
+
       var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(myBindLifetime, this, taskId, myCancellationScheduler ?? SynchronousScheduler.Instance);
       //subscribe for lifetime cancellation
       var externalCancellation = wiredTask.Lifetime;
@@ -90,7 +90,7 @@ namespace JetBrains.Rd.Tasks
           {
             var message = $"Handler is not set for {wiredTask} :: received request: {value.PrintToString()}";
             ourLogReceived.Error(message);
-            rdTask = RdTask<TRes>.Faulted(new Exception(message));
+            rdTask = RdTask.Faulted<TRes>(new Exception(message));
           }
           else
           {
@@ -100,15 +100,15 @@ namespace JetBrains.Rd.Tasks
             }
             catch (Exception ex)
             {
-              rdTask = RdTask<TRes>.Faulted(ex);
+              rdTask = RdTask.Faulted<TRes>(ex);
             }
           }
         }
         catch (Exception e)
         {
-          rdTask = RdTask<TRes>.Faulted(new Exception($"Unexpected exception in {wiredTask}", e));
+          rdTask = RdTask.Faulted<TRes>(new Exception($"Unexpected exception in {wiredTask}", e));
         }
-        
+
         rdTask.Result.Advise(Lifetime.Eternal, result =>
           {
             try
@@ -126,7 +126,7 @@ namespace JetBrains.Rd.Tasks
           });
       }
     }
-    
+
 
     public TRes Sync(TReq request, RpcTimeouts? timeouts = null)
     {
@@ -171,7 +171,7 @@ namespace JetBrains.Rd.Tasks
 
       var taskId = Proto.Identities.Next(RdId.Nil);
       var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler);
-      
+
       Wire.Send(RdId, (writer) =>
       {
         SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");

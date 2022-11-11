@@ -158,7 +158,7 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(!method.IsGenericMethod, "generics are not supported");
       Assertion.Assert(!method.IsStatic, "only instance methods are supported");
 
-      // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter", 
+      // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter",
       //   TypeAttributes.Public & TypeAttributes.Sealed & TypeAttributes.Abstract & TypeAttributes.BeforeFieldInit);
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, unwrapTask: false);
@@ -214,7 +214,8 @@ namespace JetBrains.Rd.Reflection
       if (IsSync(method))
       {
         // Create RdTask
-        il.Emit(OpCodes.Call, returnType.GetMethod(nameof(RdTask<int>.Successful)).NotNull("RdTask<Unit>.Successful not found"));
+        var taskFactoryMethod = typeof(RdTask).GetMethod(nameof(RdTask.Successful))?.MakeGenericMethod(responseType);
+        il.Emit(OpCodes.Call, taskFactoryMethod.NotNull("RdTask.Successful<Unit> not found"));
       }
       else
       {
@@ -316,7 +317,7 @@ namespace JetBrains.Rd.Reflection
       foreach (var p in parameters)
       {
         // Lifetime treated as cancellation token
-        if (p.ParameterType != typeof(Lifetime) || p.ParameterType == typeof(CancellationToken)) 
+        if (p.ParameterType != typeof(Lifetime) || p.ParameterType == typeof(CancellationToken))
           list.Add(p.ParameterType);
       }
 
@@ -474,7 +475,7 @@ namespace JetBrains.Rd.Reflection
             if (member is MethodInfo { IsSpecialName: false } method)
               yield return ProxyFieldName(method);
             break;
-          
+
           case MemberTypes.Property:
             yield return MakeBackingFieldName(member.Name);
             break;

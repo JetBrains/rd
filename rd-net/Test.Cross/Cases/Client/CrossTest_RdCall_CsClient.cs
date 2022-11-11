@@ -14,7 +14,7 @@ namespace Test.RdCross.Cases.Client
       {
         var demoModel = new DemoModel(ModelLifetime, Protocol);
 
-        demoModel.Call.Set((lifetime, c) => RdTask<string>.Successful(c.ToString()));
+        demoModel.Call.Set((lifetime, c) => RdTask.Successful(c.ToString()));
 
         demoModel.Callback.Start(ModelLifetime, "Csharp");
       });

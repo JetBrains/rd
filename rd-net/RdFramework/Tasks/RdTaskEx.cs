@@ -16,7 +16,7 @@ namespace JetBrains.Rd.Tasks
     [PublicAPI] public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
 
     public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout) => SpinWaitEx.SpinUntil(Lifetime.Eternal, timeout, () => task.Result.HasValue());
-    
+
 
     public static RdTask<T> ToRdTask<T>(this Task<T> task)
     {
@@ -53,17 +53,17 @@ namespace JetBrains.Rd.Tasks
     {
       endpoint.Set((lt, req) => handler(lt, req).ToRdTask(), cancellationScheduler, handlerScheduler);
     }
-    
+
     [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
-      endpoint.Set((lifetime, req) => RdTask<TRes>.Successful(handler(lifetime, req)), cancellationScheduler, handlerScheduler);
+      endpoint.Set((lifetime, req) => RdTask.Successful(handler(lifetime, req)), cancellationScheduler, handlerScheduler);
     }
-    
+
     [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
-      endpoint.Set((_, req) => RdTask<TRes>.Successful(handler(req)), cancellationScheduler, handlerScheduler);
+      endpoint.Set((_, req) => RdTask.Successful(handler(req)), cancellationScheduler, handlerScheduler);
     }
-    
+
     [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       endpoint.Set(req =>
@@ -72,7 +72,7 @@ namespace JetBrains.Rd.Tasks
         return Unit.Instance;
       }, cancellationScheduler, handlerScheduler);
     }
-    
+
     [PublicAPI]
     public static Task<T> AsTask<T>(this IRdTask<T> task)
     {
@@ -96,6 +96,6 @@ namespace JetBrains.Rd.Tasks
         }
       });
       return tcs.Task;
-    }   
+    }
   }
 }
