@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace JetBrains.Diagnostics;
 
@@ -17,8 +18,46 @@ public static class Mode
 
   static Mode()
   {
-    var data = AppDomain.CurrentDomain.GetData("JET_MODE_ASSERT") as bool?;
+    var data = AppDomain.CurrentDomain.GetData(ModeInitializer.AssertionEnabledVariableName) as bool?;
     IsAssertion = data == true;
     IsAssertionUndefined = !data.HasValue;
+  }
+}
+
+public static class ModeInitializer
+{
+  public const string AssertionEnabledVariableName = "JET_MODE_ASSERT";
+
+  /// <summary>
+  /// Indirectly set the value of <see cref="Mode.IsAssertion"/> and evaluates the static constructor of <see cref="Mode"/> class.
+  /// </summary>
+  /// <returns>true if the assertion mode is properly defined and equal to the provided value<returns>
+  public static bool Init(bool isAssertionEnabled)
+  {
+    if (AppDomain.CurrentDomain.GetData(AssertionEnabledVariableName) is not bool)
+      AppDomain.CurrentDomain.SetData(AssertionEnabledVariableName, isAssertionEnabled);
+
+    return !GetIsAssertionUndefined() && GetIsAssertion() == isAssertionEnabled;
+  }
+
+  /// <summary>
+  /// Force touches <see cref="Mode"/> class and return the value of the current assertion enabled mode.
+  /// </summary>
+  /// <returns></returns>
+  [MethodImpl(MethodImplOptions.NoInlining)]
+  public static bool GetIsAssertion()
+  {
+    return Mode.IsAssertion;
+  }
+
+  /// <summary>
+  /// Force touches <see cref="Mode"/> class and returns if the assertion mode was properly initialized from AppDomain
+  /// config or default value was used instead
+  /// </summary>
+  /// <returns></returns>
+  [MethodImpl(MethodImplOptions.NoInlining)]
+  public static bool GetIsAssertionUndefined()
+  {
+    return Mode.IsAssertionUndefined;
   }
 }

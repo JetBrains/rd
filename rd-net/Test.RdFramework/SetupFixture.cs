@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Diagnostics;
 using NUnit.Framework;
 
 namespace Test.RdFramework;
@@ -9,6 +10,7 @@ public class SetupFixture
   [OneTimeSetUp]
   public void Setup()
   {
-    AppDomain.CurrentDomain.SetData("JET_MODE_ASSERT", true);
+    if (!ModeInitializer.Init(true))
+      throw new Exception($"Assertion mode cannot be initialized. (default value was used: {ModeInitializer.GetIsAssertionUndefined()})");
   }
 }

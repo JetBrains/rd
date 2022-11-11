@@ -23,7 +23,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert([DoesNotReturnIf(false)] bool condition, [CallerArgumentExpression("condition")] string? message = null)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(message ?? "");
       }
@@ -35,7 +35,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert([DoesNotReturnIf(false)] bool condition, [InterpolatedStringHandlerArgument("condition")] ref JetConditionalInterpolatedStringHandler handler)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(handler.ToStringAndClear());
       }
@@ -46,7 +46,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void AssertCurrentThread(Thread thread)
     {
-      if (Mode.IsAssertion && Thread.CurrentThread != thread)
+      if (Thread.CurrentThread != thread)
       {
         Fail("Current thread <{0}> is not equal to referent thread <{1}>", Thread.CurrentThread.ToThreadString(), thread.ToThreadString());
       }
@@ -57,7 +57,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert<T>([DoesNotReturnIf(false)] bool condition, string message, T? arg)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(message, arg);
       }
@@ -68,7 +68,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert<T1,T2>([DoesNotReturnIf(false)] bool condition, string message, T1? arg1, T2? arg2)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(message, arg1, arg2);
       }
@@ -79,7 +79,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert<T1, T2, T3>([DoesNotReturnIf(false)] bool condition, string message, T1? arg1, T2? arg2, T3? arg3)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(message, arg1, arg2, arg3);
       }
@@ -90,7 +90,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert<T1, T2, T3, T4>([DoesNotReturnIf(false)] bool condition, string message, T1? arg1, T2? arg2, T3? arg3, T4? arg4)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(message, arg1, arg2, arg3, arg4);
       }
@@ -101,7 +101,7 @@ namespace JetBrains.Diagnostics
     [Conditional("JET_MODE_ASSERT")]
     public static void Assert([DoesNotReturnIf(false)] bool condition, string message, params object?[] args)
     {
-      if (Mode.IsAssertion && !condition)
+      if (!condition)
       {
         Fail(message, args);
       }

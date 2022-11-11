@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Diagnostics;
 #if NET461
 using System;
 using BenchmarkDotNet.Attributes;
@@ -135,7 +136,9 @@ namespace Test.Lifetimes.Serialization
     [GlobalSetup]
     public void Setup()
     {
-      AppDomain.CurrentDomain.SetData("JET_MODE_ASSERT", true); // comment to disable asserts
+      // comment to disable asserts
+      if (!ModeInitializer.Init(true))
+        throw new Exception($"Assertion mode cannot be initialized. (default value was used: {ModeInitializer.GetIsAssertionUndefined()})");
 
       myCookie = UnsafeWriter.NewThreadLocalWriter();
       myCookie.Writer.Write(false);
