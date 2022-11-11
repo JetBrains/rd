@@ -14,6 +14,11 @@ namespace Test.RdFramework.Reflection
     [NonSerialized] [CanBeNull] public string[] arrays;
 
     /// <summary>
+    /// Arbitrary data without [NonSerialized] will be serialized only once at the moment of passing to the other side.
+    /// </summary>
+    [CanBeNull] public string[] arrays2;
+
+    /// <summary>
     /// Nested RdModel should work
     /// </summary>
     public ModelSample NestedRdModel;
