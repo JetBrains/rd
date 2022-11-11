@@ -20,7 +20,7 @@
     <NoWarn Condition="'$(TargetFramework)' == 'net35'">nullable;CS8632</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net461" Condition="'$(TargetFramework)' == 'net461'" Version="1.0.2">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Condition="'$(TargetFramework)' == 'net472'" Version="1.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

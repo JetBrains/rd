@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using JetBrains.Serialization;
 using NUnit.Framework;
 
-#if NET461
+#if NET472
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 #endif
@@ -86,7 +86,7 @@ namespace Test.Lifetimes.Serialization
       Console.WriteLine(sw.ElapsedMilliseconds);
     }
 
-#if NET461
+#if NET472
     [Test, Explicit("Scientifically measure performance")]
     public void Bdn()
     {
