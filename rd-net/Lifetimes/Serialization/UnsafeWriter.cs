@@ -370,11 +370,14 @@ namespace JetBrains.Serialization
       Prepare(sizeof(double));
       var x = (double*)myPtr;
       myPtr = (byte*)(x + 1);
-#if NET35
-      *x = value;
-#else
-      Buffer.MemoryCopy(&value, x, sizeof(double), sizeof(double));
+#if !NET35
+      if (!RuntimeInfo.IsUnalignedAccessAllowed)
+        Buffer.MemoryCopy(&value, x, sizeof(double), sizeof(double));
+      else
 #endif
+      {
+        *x = value;
+      }
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]

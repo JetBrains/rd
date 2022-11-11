@@ -3,6 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using JetBrains.Annotations;
 
+#if !NET35
+using System.Runtime.InteropServices;
+#endif
+
 namespace JetBrains.Util
 {
   public static class RuntimeInfo
@@ -11,6 +15,7 @@ namespace JetBrains.Util
     public static readonly bool IsRunningOnMono; 
     public static readonly bool IsRunningUnderWindows;
     public static readonly bool IsRunningOnCore;
+    public static readonly bool IsUnalignedAccessAllowed;
 
     static RuntimeInfo()
     {
@@ -47,6 +52,14 @@ namespace JetBrains.Util
       {
         IsRunningOnMono = false;
       }
+
+      IsUnalignedAccessAllowed =
+#if NET35
+        true
+#else
+        RuntimeInformation.ProcessArchitecture != Architecture.Arm
+#endif
+        ;
     }
 
 #if NET35
