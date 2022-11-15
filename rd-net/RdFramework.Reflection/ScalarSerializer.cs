@@ -53,9 +53,9 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     private readonly Predicate<Type> myBlackListChecker;
 
-    public ScalarSerializer(ITypesCatalog typesCatalog, Predicate<Type>? blackListChecker = null)
+    public ScalarSerializer(ITypesCatalog? typesCatalog, Predicate<Type>? blackListChecker = null)
     {
-      myTypesCatalog = typesCatalog ?? throw new ArgumentNullException(nameof(typesCatalog));
+      myTypesCatalog = typesCatalog;
       myBlackListChecker = blackListChecker ?? (_ => false);
       Serializers.RegisterFrameworkMarshallers(this);
     }
