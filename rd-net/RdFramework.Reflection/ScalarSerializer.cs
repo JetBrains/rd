@@ -82,6 +82,11 @@ namespace JetBrains.Rd.Reflection
         return pair;
       }
 
+      if (type == typeof(IntPtr))
+      {
+        throw new ArgumentException("Platform-specific types cannot be serialized.");
+      }
+
       if (myBlackListChecker(type))
       {
         Assertion.Fail($"Attempt to create serializer for black-listed type: {type.ToString(true)}");
