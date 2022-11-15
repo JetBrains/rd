@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace JetBrains.Rd.Reflection
 {
   public class SimpleTypesCatalog : ITypesCatalog
   {
-    private readonly Dictionary<RdId, Type> myRdIdToTypeMapping = new Dictionary<RdId, Type>();
+    private readonly ConcurrentDictionary<RdId, Type> myRdIdToTypeMapping = new();
 
     public Type? GetById(RdId id)
     {
