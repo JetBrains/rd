@@ -21,9 +21,9 @@ using TypeInfo = System.Type;
 public class ReflectionSerializersFactory
 {
   /// <summary>
-  /// Collection true type to non-polymorphic serializer
+  /// Collection true type to non-polymorphic serializer (it is called static serializers)
   /// </summary>
-  private readonly Dictionary<Type, SerializerPair> mySerializers = new Dictionary<Type, SerializerPair>();
+  private readonly Dictionary<Type, SerializerPair> mySerializers = new();
 
 
   private readonly IScalarSerializers myScalars;
@@ -40,15 +40,10 @@ public class ReflectionSerializersFactory
 
   public IScalarSerializers Scalars => myScalars;
 
-  public ISerializersContainer Cache { get; }
-
   public ReflectionSerializersFactory(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null)
   {
     myScalars = scalars ?? new ScalarSerializer(typeCatalog, blackListChecker);
-    Cache = new SerializersContainer(mySerializers);
-    Serializers.RegisterFrameworkMarshallers(Cache);
   }
-
 
   public SerializerPair GetOrRegisterSerializerPair(Type type, bool instance = false)
   {
@@ -292,32 +287,5 @@ public class ReflectionSerializersFactory
     }
 
     throw new Exception($"Unable to register generic type: {type}. Generics types are expected to have Read and Write static methods for serialization.");
-  }
-
-  private class SerializersContainer : ISerializersContainer
-  {
-    private readonly IDictionary<Type, SerializerPair> myStore;
-
-    public SerializersContainer(IDictionary<Type, SerializerPair> store)
-    {
-      myStore = store;
-    }
-
-    public void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedType = null)
-    {
-      myStore[typeof(T)] = new SerializerPair(reader, writer);
-    }
-
-    public void RegisterEnum<T>() where T :
-#if !NET35
-    unmanaged, 
-#endif
-      Enum
-    {
-    }
-
-    public void RegisterToplevelOnce(Type toplevelType, Action<ISerializers> registerDeclaredTypesSerializers)
-    {
-    }
   }
 }

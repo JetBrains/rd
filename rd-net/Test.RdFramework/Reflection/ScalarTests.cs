@@ -365,7 +365,7 @@ namespace Test.RdFramework.Reflection
       }
 
     [RdScalar] // not required
-      public class ColorFields
+      public sealed class ColorFields
       {
         public int Red { get; }
         public int Green { get; }
