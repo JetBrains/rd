@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -18,8 +19,6 @@ namespace JetBrains.Rd.Reflection
 {
   public class ScalarSerializer : IScalarSerializers, ISerializersContainer
   {
-    private static ILog log = Log.GetLog(typeof(ScalarSerializer));
-
     /// <summary>
     /// Types catalog required for providing information about statically discovered types during concrete serializer
     /// construction for sake of possibility for Rd serializers to lookup real type by representing RdId
@@ -29,13 +28,13 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     /// Collection static serializers (polymorphic is not possible here! Only instance serializer can be polymorphic)
     /// </summary>
-    private readonly Dictionary<Type, SerializerPair> myStaticSerializers = new Dictionary<Type, SerializerPair>();
+    private readonly ConcurrentDictionary<Type, SerializerPair> myStaticSerializers = new();
 
     /// <summary>
     /// Collection of specific polymorphic serializers. These serializers should be register before activating any Rd
     /// entity to guarantee consistency of serializers in Rd objects
     /// </summary>
-    private readonly Dictionary<Type, SerializerPair> myPolySerializers = new Dictionary<Type, SerializerPair>();
+    private readonly ConcurrentDictionary<Type, SerializerPair> myPolySerializers = new();
 
     /// <summary>
     /// A flag to enforce consistency of serializers. New specific poly serializer can't be registered after first query
@@ -65,8 +64,11 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(CanBePolymorphic(type), $"Unable to register polymorphic serializer: {type.ToString(true)} is not a polymorphic type (it should be not sealed class or an interface)");
       Assertion.Assert(!myStaticSerializers.ContainsKey(type), $"Unable to register polymorphic serializer: a static serializer for type {type.ToString(true)} already exists");
       Assertion.Assert(!myPolySerializersSealed, $"Unable to register polymorphic serializer for type {type.ToString(true)}. It is too late to register a polymorphic serializer as one or more models were already activated.");
-      
-      myPolySerializers.Add(type, serializers);
+
+      if (!myPolySerializers.TryAdd(type, serializers))
+      {
+        Assertion.Fail($"Unable to add {type.ToString(true)} key to polymorphic serializers dictionary. This type was already registered.");
+      }
     }
 
 
@@ -193,8 +195,6 @@ namespace JetBrains.Rd.Reflection
         return false;
 
       return (type.IsClass && !type.IsSealed) || type.IsInterface;
-      //&& typeof(RdReflectionBindableBase).IsAssignableFrom(typeInfo);
-      //&& ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo);
     }
 
     private SerializerPair CreateCustomScalar<T>()

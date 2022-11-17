@@ -85,8 +85,9 @@ namespace Test.RdFramework.Reflection
           });
       }
 
-      Reg(CFacade.SerializersFactory.Cache);
-      Reg(SFacade.SerializersFactory.Cache);
+      // TODO: it should be doable without casting
+      Reg((ISerializersContainer)CFacade.ScalarSerializers);
+      Reg((ISerializersContainer)SFacade.ScalarSerializers);
 
       WithExts<NoIntrinsicExt>((c, s) =>
       {
