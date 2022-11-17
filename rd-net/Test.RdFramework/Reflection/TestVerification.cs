@@ -30,7 +30,7 @@ namespace Test.RdFramework.Reflection
     public void TestError(Type type)
     {
       Assert.True(Mode.IsAssertion);
-      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
+      var serializer = new ReflectionSerializers(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
       var exception = Assert.Throws<Assertion.AssertionException>(() => activator.Activate(type));
 
@@ -41,7 +41,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestActivation()
     {
-      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
+      var serializer = new ReflectionSerializers(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
       var model = activator.Activate<ModelCalls>();
       Assert.NotNull(model);
@@ -52,7 +52,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestActivation2()
     {
-      var serializer = new ReflectionSerializersFactory(new SimpleTypesCatalog());
+      var serializer = new ReflectionSerializers(new SimpleTypesCatalog());
       var activator = new ReflectionRdActivator(serializer, null);
       var model = activator.Activate<RootModel>();
       

@@ -13,7 +13,7 @@ namespace JetBrains.Rd.Reflection
 
     public IScalarSerializers ScalarSerializers { get; }
 
-    public ReflectionSerializersFactory SerializersFactory { get; }
+    public ReflectionSerializers Serializers { get; }
 
     public IProxyGenerator ProxyGenerator { get; }
 
@@ -23,15 +23,15 @@ namespace JetBrains.Rd.Reflection
     {
     }
 
-    public ReflectionSerializersFacade(ITypesCatalog? typesCatalog = null, IScalarSerializers? scalarSerializers = null, ReflectionSerializersFactory? reflectionSerializers = null, IProxyGenerator? proxyGenerator = null, ReflectionRdActivator? activator = null, TypesRegistrar? registrar = null, bool allowSave = false, Predicate<Type>? blackListChecker = null)
+    public ReflectionSerializersFacade(ITypesCatalog? typesCatalog = null, IScalarSerializers? scalarSerializers = null, ReflectionSerializers? reflectionSerializers = null, IProxyGenerator? proxyGenerator = null, ReflectionRdActivator? activator = null, TypesRegistrar? registrar = null, bool allowSave = false, Predicate<Type>? blackListChecker = null)
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
       ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog, blackListChecker);
-      SerializersFactory = reflectionSerializers ?? new ReflectionSerializersFactory(TypesCatalog, ScalarSerializers);
+      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers);
 
       ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(allowSave));
-      Activator = activator ?? new ReflectionRdActivator(SerializersFactory, ProxyGenerator, TypesCatalog);
-      Registrar = registrar ?? new TypesRegistrar(TypesCatalog, SerializersFactory);
+      Activator = activator ?? new ReflectionRdActivator(Serializers, ProxyGenerator, TypesCatalog);
+      Registrar = registrar ?? new TypesRegistrar(TypesCatalog, Serializers);
     }
 
     public TInterface ActivateProxy<TInterface>(Lifetime lifetime, IProtocol protocol) where TInterface : class

@@ -32,11 +32,11 @@ namespace JetBrains.Rd.Reflection
   {
     private static readonly ILog ourLog = Log.GetLog<ReflectionRdActivator>();
 
-    private readonly ReflectionSerializersFactory mySerializersFactory;
+    private readonly ReflectionSerializers mySerializers;
     private readonly IProxyGenerator myProxyGenerator;
     private readonly ITypesCatalog? myTypesCatalog;
 
-    public ReflectionSerializersFactory SerializersFactory => mySerializersFactory;
+    public ReflectionSerializers Serializers => mySerializers;
 
     public IProxyGenerator Generator => myProxyGenerator;
 
@@ -50,14 +50,14 @@ namespace JetBrains.Rd.Reflection
     [ThreadStatic]
     private static Queue<Type>? myCurrentActivationChain;
 
-    public ReflectionRdActivator(ReflectionSerializersFactory serializersFactory, ITypesCatalog? typesCatalog)
-      : this(serializersFactory, new ProxyGenerator(), typesCatalog)
+    public ReflectionRdActivator(ReflectionSerializers serializers, ITypesCatalog? typesCatalog)
+      : this(serializers, new ProxyGenerator(), typesCatalog)
     {
     }
 
-    public ReflectionRdActivator(ReflectionSerializersFactory serializersFactory, IProxyGenerator proxyGenerator, ITypesCatalog? typesCatalog)
+    public ReflectionRdActivator(ReflectionSerializers serializers, IProxyGenerator proxyGenerator, ITypesCatalog? typesCatalog)
     {
-      mySerializersFactory = serializersFactory;
+      mySerializers = serializers;
       myTypesCatalog = typesCatalog;
       myProxyGenerator = proxyGenerator;
     }
@@ -354,7 +354,7 @@ namespace JetBrains.Rd.Reflection
       // registration for all statically known types
       myTypesCatalog?.AddType(type);
 
-      return mySerializersFactory.GetOrRegisterSerializerPair(type, true);
+      return mySerializers.GetOrRegisterSerializerPair(type, true);
     }
 
     private object? ActivateGenericMember(string memberName, TypeInfo memberType)

@@ -18,7 +18,7 @@ using TypeInfo = System.Type;
 /// <summary>
 /// Creates and provides access to Reflection-generated serializers for Rd, thread safe
 /// </summary>
-public class ReflectionSerializersFactory
+public class ReflectionSerializers
 {
   /// <summary>
   /// Collection true type to non-polymorphic serializer (it is called static serializers)
@@ -40,7 +40,7 @@ public class ReflectionSerializersFactory
 
   public IScalarSerializers Scalars => myScalars;
 
-  public ReflectionSerializersFactory(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null)
+  public ReflectionSerializers(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null)
   {
     myScalars = scalars ?? new ScalarSerializer(typeCatalog, blackListChecker);
   }

@@ -7,12 +7,12 @@ namespace JetBrains.Rd.Reflection
   public class TypesRegistrar : ITypesRegistrar
   {
     private readonly ITypesCatalog myCatalog;
-    private readonly ReflectionSerializersFactory myReflectionSerializersFactory;
+    private readonly ReflectionSerializers myReflectionSerializers;
 
-    public TypesRegistrar(ITypesCatalog catalog, ReflectionSerializersFactory reflectionSerializersFactory)
+    public TypesRegistrar(ITypesCatalog catalog, ReflectionSerializers reflectionSerializers)
     {
       myCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-      myReflectionSerializersFactory = reflectionSerializersFactory ?? throw new ArgumentNullException(nameof(reflectionSerializersFactory));
+      myReflectionSerializers = reflectionSerializers ?? throw new ArgumentNullException(nameof(reflectionSerializers));
     }
 
     public void TryRegister(RdId id, ISerializers serializers)
@@ -32,7 +32,7 @@ namespace JetBrains.Rd.Reflection
     private void Register(Type type, ISerializersContainer serializers)
     {
       var instanceSerializer = type.IsInterface || type.IsAbstract;
-      var serializerPair = myReflectionSerializersFactory.GetOrCreateMemberSerializer(type, false, instanceSerializer, null);
+      var serializerPair = myReflectionSerializers.GetOrCreateMemberSerializer(type, false, instanceSerializer, null);
       ReflectionUtil.InvokeGenericThis(serializers, nameof(serializers.Register), type,
         new[] {serializerPair.Reader, serializerPair.Writer, RdId.DefineByFqn(type).Value });
     }
