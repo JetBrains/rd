@@ -28,10 +28,13 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestCustomType()
     {
-      WithBothFacades(f => f.ScalarSerializers.RegisterPolymorphicSerializer(typeof(IMyInterface), SerializerPair.FromMarshaller(new MyInterfaceMarshaller())));
+      WithBothFacades(f =>
+      {
+        f.Serializers.Register(typeof(IMyInterface), SerializerPair.FromMarshaller(new MyInterfaceMarshaller()));
+      });
       WithExtsProxy<SimpleCalls, ISimpleCalls>((c, proxy) =>
       {
-        var instanceSerializer = CFacade.ScalarSerializers.GetInstanceSerializer(typeof(IReadOnlyDictionary<string, string>));
+        //var instanceSerializer = ((ISerializersSource)CFacade.Serializers).GetOrRegisterSerializerPair(typeof(IReadOnlyDictionary<string, string>), true);
 
         Assert.AreEqual(typeof(MyImpl2).Name, proxy.GetTypeName2(new MyImpl1()));
         proxy.GetTypeName3(new IMyInterface[]{new MyImpl1(), new MyImpl2()});

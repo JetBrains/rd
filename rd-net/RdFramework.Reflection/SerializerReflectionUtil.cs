@@ -16,9 +16,6 @@ namespace JetBrains.Rd.Reflection
 {
   public class SerializerReflectionUtil
   {
-    private static readonly MethodInfo ourConvertTypedCtxRead = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxReadTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
-    private static readonly MethodInfo ourConvertTypedCtxWrite = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxWriteTypedToObject), BindingFlags.Static | BindingFlags.NonPublic);
-
     public static MethodInfo GetReadStaticSerializer(TypeInfo typeInfo)
     {
       var types = new[]
@@ -201,34 +198,43 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    internal static CtxReadDelegate<object> ConvertReader(Type returnType, object reader)
+    internal static CtxReadDelegate<TOut> ConvertReader<TOut>(object reader)
     {
-      if (reader is CtxReadDelegate<object> objReader)
+      if (reader is CtxReadDelegate<TOut> objReader)
         return objReader;
 
-      var genericTypedRead = ourConvertTypedCtxRead.MakeGenericMethod(returnType);
+      var genericTypedRead = ourConvertTypedCtxRead.MakeGenericMethod(reader.GetType().GetGenericArguments()[0], typeof(object));
       var result = genericTypedRead.Invoke(null, new[] { reader });
-      return (CtxReadDelegate<object>)result;
+      return (CtxReadDelegate<TOut>)result;
     }
 
-    internal static CtxWriteDelegate<object?> ConvertWriter(Type returnType, object writer)
+    internal static CtxWriteDelegate<TOut> ConvertWriter<TOut>(object writer)
     {
-      if (writer is CtxWriteDelegate<object?> objWriter)
+      if (writer is CtxWriteDelegate<TOut> objWriter)
         return objWriter;
 
-      return (CtxWriteDelegate<object?>)ourConvertTypedCtxWrite.MakeGenericMethod(returnType).Invoke(null, new[] { writer });
+      return (CtxWriteDelegate<TOut>)ourConvertTypedCtxWrite.MakeGenericMethod(writer.GetType().GetGenericArguments()[0], typeof(TOut)).Invoke(null, new[] { writer });
     }
 
-
-    private static CtxReadDelegate<object?> CtxReadTypedToObject<T>(CtxReadDelegate<T> typedDelegate)
+    private static readonly MethodInfo ourConvertTypedCtxRead = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxReadTypedToObject), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static CtxReadDelegate<TOut> CtxReadTypedToObject<TIn, TOut>(CtxReadDelegate<TIn> typedDelegate)
     {
-      return (ctx, unsafeReader) => typedDelegate(ctx, unsafeReader);
+      return (ctx, unsafeReader) => (TOut) (object) typedDelegate(ctx, unsafeReader)!;
     }
 
-    private static CtxWriteDelegate<object> CtxWriteTypedToObject<T>(CtxWriteDelegate<T> typedDelegate)
+    private static readonly MethodInfo ourConvertTypedCtxWrite = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxWriteTypedToObject), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static CtxWriteDelegate<TOut> CtxWriteTypedToObject<TIn, TOut>(CtxWriteDelegate<TIn> typedDelegate)
     {
-      return (ctx, unsafeWriter, value) => typedDelegate(ctx, unsafeWriter, (T)value);
+      return (ctx, unsafeWriter, value) => typedDelegate(ctx, unsafeWriter, (TIn) (object) value!) ;
     }
 
+    public static bool CanBePolymorphic(Type type)
+    {
+      /*if (IsList(type) || IsDictionary(type))
+        return false;
+        */
+
+      return (type.IsClass && !type.IsSealed) || type.IsInterface;
+    }
   }
 }

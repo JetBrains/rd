@@ -74,7 +74,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestExternalSerialization()
     {
-      void Reg(ISerializersContainer cache)
+      void Reg(ReflectionSerializers cache)
       {
         cache.Register(
           (ctx, reader) => new ScalarTests.ColorFields(0, reader.ReadByte(), reader.ReadByte()),
@@ -85,9 +85,8 @@ namespace Test.RdFramework.Reflection
           });
       }
 
-      // TODO: it should be doable without casting
-      Reg((ISerializersContainer)CFacade.ScalarSerializers);
-      Reg((ISerializersContainer)SFacade.ScalarSerializers);
+      Reg(CFacade.Serializers);
+      Reg(SFacade.Serializers);
 
       WithExts<NoIntrinsicExt>((c, s) =>
       {

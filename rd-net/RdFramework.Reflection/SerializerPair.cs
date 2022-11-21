@@ -19,18 +19,11 @@ public class SerializerPair
 
   public object Writer => myWriter;
 
-  public bool IsPolymorphic
-  {
-    get
-    {
-      var ctxReadDelegate = (Delegate) myReader;
-      return ctxReadDelegate.Method.DeclaringType?.DeclaringType?.Name.Contains(nameof(Polymorphic)) == true;
-    }
-  }
+  public bool IsPolymorphic { get; }
 
   private string ElementType => ((Delegate)myReader).Method.ReturnParameter.ParameterType.ToString(false);
 
-  public SerializerPair(object reader, object writer)
+  public SerializerPair(object reader, object writer, bool isPolymorphic = false)
   {
     if (reader == null) throw new ArgumentNullException(nameof(reader));
     if (writer == null) throw new ArgumentNullException(nameof(writer));
@@ -42,6 +35,7 @@ public class SerializerPair
 
     myReader = reader;
     myWriter = writer;
+    IsPolymorphic = isPolymorphic;
   }
 
   public CtxReadDelegate<T> GetReader<T>()
@@ -178,13 +172,5 @@ public class SerializerPair
     CtxReadDelegate<T?> ctxReadDelegate = ReaderDelegate;
     CtxWriteDelegate<T> ctxWriteDelegate = writeMethod.IsStatic ? WriterDelegateStatic : WriterDelegate;
     return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
-  }
-
-  public static SerializerPair Polymorphic(Type type)
-  {
-    var poly = typeof(Polymorphic<>).MakeGenericType(type);
-    var reader = poly.GetField(nameof(Polymorphic<int>.Read), BindingFlags.Static | BindingFlags.Public).NotNull().GetValue(null);
-    var writer = poly.GetField(nameof(Polymorphic<int>.Write), BindingFlags.Static | BindingFlags.Public).NotNull().GetValue(null);
-    return new SerializerPair(reader, writer);
   }
 }

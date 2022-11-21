@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
@@ -44,9 +45,9 @@ namespace Test.RdFramework.Reflection
       SFacade.TypesCatalog.AddType(type);
     }
 
-    protected override Serializers CreateSerializers(bool isServer)
+    protected override ISerializers CreateSerializers(bool isServer)
     {
-      return new Serializers(TaskScheduler.Default, isServer ? SFacade.Registrar : CFacade.Registrar);
+      return isServer ? CFacade.Serializers : SFacade.Serializers;
     }
 
     protected void WithExts<T>(Action<T,T> run) where T : RdBindableBase

@@ -67,7 +67,7 @@ namespace Test.RdFramework.Reflection
       try
       {
         CFacade.ProxyGenerator.CreateType<T>();
-        CFacade.ScalarSerializers.GetOrCreate(typeof(T));
+        CFacade.ScalarSerializers.CreateSerializer(typeof(T), CFacade.Serializers);
       }
       catch (Exception)
       {

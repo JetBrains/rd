@@ -48,7 +48,7 @@ namespace Test.RdFramework
       return dispatcher;
     }
 
-    protected virtual Serializers CreateSerializers(bool isServer)
+    protected virtual ISerializers CreateSerializers(bool isServer)
     {
       return new Serializers();
     }
