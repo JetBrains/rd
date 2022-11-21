@@ -91,13 +91,17 @@ namespace JetBrains.Util
       }
     }
 
-    public static object? InvokeGenericThis(object self, string methodName, Type argument, object?[]? parameters = null)
+
+    /// <summary>
+    /// Calls a method using reflection with captured stack of inner exception
+    /// </summary>
+    /// <returns></returns>
+    public static T? Call<T>(MethodInfo method, object? thisArg, object?[]? parameters = null)
     {
-      var methodInfo = self.GetType().OptionalTypeInfo().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+      object? ret;
       try
       {
-        return methodInfo.NotNull().MakeGenericMethod(argument)
-          .Invoke(self, parameters ?? EmptyArray<object>.Instance);
+        ret = method.Invoke(thisArg, parameters ?? EmptyArray<object>.Instance);
       }
       catch (TargetInvocationException e)
       {
@@ -106,40 +110,28 @@ namespace JetBrains.Util
 #endif
         throw;
       }
+
+      return (T?)ret;
+    }
+
+    public static object? InvokeGenericThis(object self, string methodName, Type argument, object?[]? parameters = null)
+    {
+      var methodInfo = self.GetType().OptionalTypeInfo().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        .NotNull().MakeGenericMethod(argument);
+      return Call<object?>(methodInfo, self, parameters);
     }
 
     public static object? InvokeStaticGeneric(Type type, string methodName, Type argument, params object?[]? parameters)
     {
-      var methodInfo = type.OptionalTypeInfo().GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-      try
-      {
-        return methodInfo.NotNull().MakeGenericMethod(argument)
-          .Invoke(null, parameters ?? EmptyArray<object>.Instance);
-      }
-      catch (TargetInvocationException e)
-      {
-#if !NET35
-        if (e.InnerException != null) ExceptionDispatchInfo.Capture(e.InnerException).Throw();
-#endif
-        throw;
-      }
+      var methodInfo = type.OptionalTypeInfo().GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+        .NotNull().MakeGenericMethod(argument);
+      return Call<object?>(methodInfo, null, parameters ?? EmptyArray<object>.Instance);
     }
 
     public static object? InvokeStaticGeneric2(Type type, string methodName, Type argument1, Type argument2, params object?[]? parameters)
     {
       var methodInfo = type.OptionalTypeInfo().GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-      try
-      {
-        return methodInfo.NotNull().MakeGenericMethod(argument1, argument2)
-          .Invoke(null, parameters ?? EmptyArray<object>.Instance);
-      }
-      catch (TargetInvocationException e)
-      {
-#if !NET35
-        if (e.InnerException != null) ExceptionDispatchInfo.Capture(e.InnerException).Throw();
-#endif
-        throw;
-      }
+      return Call<object?>(methodInfo.NotNull().MakeGenericMethod(argument1, argument2), null, parameters);
     }
 
 
@@ -155,7 +147,7 @@ namespace JetBrains.Util
         return null;
       }
     }
-    
+
     public static object? TryGetNonStaticProperty(object ownerObject, string memberName)
     {
       try
@@ -215,10 +207,8 @@ namespace JetBrains.Util
 
       return result;
     }
-    
-    
-    
-    #if !NET35
+
+#if !NET35
     public static T SetStaticInstanceProperty<T>(Lifetime lifetime, Type type)
     {
       const BindingFlags propertiesFlags = BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static;
