@@ -240,8 +240,8 @@ namespace Test.RdFramework.Reflection
     
     public void RunScalarTest<T>(T instance, Action<T, T> checkEqual)
     {
-      var scalar = new ScalarSerializer(CFacade.TypesCatalog);
-      var serializerPair = scalar.GetOrCreate(typeof(T));
+      var scalar = new ReflectionSerializers(CFacade.TypesCatalog).WithBasicCollectionSerializers();
+      var serializerPair = scalar.GetOrRegisterSerializerPair(typeof(T), true);
       var reader = serializerPair.GetReader<T>();
       var writer = serializerPair.GetWriter<T>();
       using (var cookie = UnsafeWriter.NewThreadLocalWriter())

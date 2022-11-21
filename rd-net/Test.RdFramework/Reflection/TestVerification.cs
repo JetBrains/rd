@@ -1,6 +1,8 @@
 ﻿using System;
 using JetBrains.Diagnostics;
+using JetBrains.Rd;
 using JetBrains.Rd.Reflection;
+using JetBrains.Serialization;
 using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
@@ -24,15 +26,20 @@ namespace Test.RdFramework.Reflection
     // [TestCase(typeof(CircularDependencyExtError))]
     // [TestCase(typeof(CircularDependencyExt2Error))]
 
-    [TestCase(typeof(CircularDependencyInModelError))]
+    [TestCase(typeof(CircularDependencyModelError))]
     [TestCase(typeof(CircularDependencyNestedModel1Error))]
     [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
     public void TestError(Type type)
     {
       Assert.True(Mode.IsAssertion);
-      var serializer = new ReflectionSerializers(new SimpleTypesCatalog());
-      var activator = new ReflectionRdActivator(serializer, null);
-      var exception = Assert.Throws<Assertion.AssertionException>(() => activator.Activate(type));
+      var catalog = new SimpleTypesCatalog();
+      var serializer = new ReflectionSerializers(catalog);
+      var activator = new ReflectionRdActivator(serializer, catalog);
+      var exception = Assert.Throws<Assertion.AssertionException>(() =>
+      {
+        var activate = activator.Activate(type);
+        serializer.GetOrRegisterSerializerPair(type);
+      });
 
       Console.WriteLine(exception);
     }

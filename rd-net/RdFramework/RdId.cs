@@ -101,6 +101,7 @@ namespace JetBrains.Rd
       return $"{(ulong)myValue}";
     }
 
+    [Pure]
     public void Write(UnsafeWriter writer)
     {
       writer.Write(myValue);

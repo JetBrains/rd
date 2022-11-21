@@ -17,21 +17,20 @@ namespace JetBrains.Rd.Reflection
 
     public IProxyGenerator ProxyGenerator { get; }
 
-    public ITypesRegistrar Registrar { get; }
-
     public ReflectionSerializersFacade() : this(null)
     {
     }
 
-    public ReflectionSerializersFacade(ITypesCatalog? typesCatalog = null, IScalarSerializers? scalarSerializers = null, ReflectionSerializers? reflectionSerializers = null, IProxyGenerator? proxyGenerator = null, ReflectionRdActivator? activator = null, TypesRegistrar? registrar = null, bool allowSave = false, Predicate<Type>? blackListChecker = null)
+    public ReflectionSerializersFacade(ITypesCatalog? typesCatalog = null, IScalarSerializers? scalarSerializers = null,
+      ReflectionSerializers? reflectionSerializers = null, IProxyGenerator? proxyGenerator = null,
+      ReflectionRdActivator? activator = null, bool allowSave = false, Predicate<Type>? blackListChecker = null)
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
       ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog, blackListChecker);
-      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers);
+      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers).WithBasicCollectionSerializers();
 
       ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(allowSave));
       Activator = activator ?? new ReflectionRdActivator(Serializers, ProxyGenerator, TypesCatalog);
-      Registrar = registrar ?? new TypesRegistrar(TypesCatalog, Serializers);
     }
 
     public TInterface ActivateProxy<TInterface>(Lifetime lifetime, IProtocol protocol) where TInterface : class

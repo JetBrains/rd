@@ -53,7 +53,6 @@ namespace Test.Reflection.App
       var lifetime = lifetimeDefinition.Lifetime;
 
       var reflectionSerializers = new ReflectionSerializersFacade();
-      var serializers = new Serializers(TaskScheduler.Default, reflectionSerializers.Registrar);
 
       var scheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, "Scheduler");
       Protocol protocol;
@@ -65,13 +64,13 @@ namespace Test.Reflection.App
       {
         Console.Title = "Server";
         wire = new SocketWire.Server(lifetime, scheduler, ourIpEndPoint);
-        protocol = new Protocol("Server", serializers, new Identities(IdKind.Server), scheduler, wire, lifetime);
+        protocol = new Protocol("Server", reflectionSerializers.Serializers, new Identities(IdKind.Server), scheduler, wire, lifetime);
       }
       else
       {
         Console.Title = "Client";
         wire = new SocketWire.Client(lifetime, scheduler, ourIpEndPoint);
-        protocol = new Protocol("Client", serializers, new Identities(IdKind.Client), scheduler, wire, lifetime);
+        protocol = new Protocol("Client", reflectionSerializers.Serializers, new Identities(IdKind.Client), scheduler, wire, lifetime);
       }
 
       scheduler.Queue(() => RunApplication(isServer, reflectionSerializers, lifetime, protocol));
