@@ -1,10 +1,10 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
+using JetBrains.Threading;
 
 namespace JetBrains.Util.Util
 {
@@ -117,6 +117,7 @@ namespace JetBrains.Util.Util
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void InterlockedUpdate(ref int host, T value)
     {
+      var spinner = new SpinWaitEx();
       var s = host;
       while (true)
       {
@@ -124,6 +125,7 @@ namespace JetBrains.Util.Util
         if (originalValue == s) break;
 
         s = originalValue;
+        spinner.SpinOnce(false);
       }
     }
     
