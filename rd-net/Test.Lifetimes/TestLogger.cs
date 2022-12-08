@@ -60,7 +60,7 @@ namespace Test.Lifetimes
     }
 
     [CanBeNull]
-    private Exception RecycleLoggedExceptions()
+    public Exception RecycleLoggedExceptions()
     {
       lock (myMonitor)
       {
