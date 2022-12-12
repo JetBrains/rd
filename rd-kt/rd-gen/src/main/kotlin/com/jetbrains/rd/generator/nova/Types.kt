@@ -4,6 +4,8 @@ package com.jetbrains.rd.generator.nova
 
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.util.booleanSystemProperty
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.getSourceFileAndLine
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.condstr
@@ -120,7 +122,7 @@ sealed class Context(pointcut: Toplevel, val type: INonNullableScalar): Declarat
 
 
 sealed class PredefinedType : INonNullableScalar {
-    override val name : String get() = javaClass.simpleName.capitalize()
+    override val name : String get() = javaClass.simpleName.capitalizeInvariant()
 
     //special type to denote no parameter or return values
     object void : PredefinedType()
@@ -210,7 +212,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     var sourceFileAndLine: String? = null
 
     override val name: String by lazy {
-        if (_name.isNotEmpty()) return@lazy _name.capitalize()
+        if (_name.isNotEmpty()) return@lazy _name.capitalizeInvariant()
 
         val parent = pointcut as? Toplevel ?: return@lazy ""
 
@@ -232,7 +234,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
         //default: error will arise at validation
         ?: ""
 
-        return@lazy  res.capitalize()
+        return@lazy  res.capitalizeInvariant()
     }
 
     val root : Root get () = pointcut?.root ?: this as Root
@@ -479,7 +481,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
 }
 
 class Interface(override val _name: String, pointcut: Toplevel, val baseInterfaces: List<Interface>) : Declaration(pointcut){
-    override val cl_name = "${javaClass.simpleName.decapitalize()}_interface"
+    override val cl_name = "${javaClass.simpleName.decapitalizeInvariant()}_interface"
     operator fun invoke(body: Interface.() -> Unit) = this to body //for extends
 
     operator fun plus(inter: Interface) = mutableListOf(this, inter)
@@ -487,7 +489,7 @@ class Interface(override val _name: String, pointcut: Toplevel, val baseInterfac
 }
 
 sealed class Struct(override val _name: String, override val pointcut : Toplevel, override val base: Struct?, val isUnknown: Boolean = false) : Declaration(pointcut), INonNullableScalar, ITypeDeclaration {
-    override val cl_name = "${javaClass.simpleName.decapitalize()}_struct"
+    override val cl_name = "${javaClass.simpleName.decapitalizeInvariant()}_struct"
 
     class Abstract(name: String, pointcut: Toplevel, base: Abstract?) : Struct(name, pointcut, base) {
         override val modifier: Modifier = Modifier.Abstract
@@ -505,7 +507,7 @@ operator fun <T : Struct> T.getValue(thisRef: Any?, property: KProperty<*>): T =
 
 sealed class Class(override val _name: String, override val pointcut : Toplevel, override val base: Class?, val isUnknown: Boolean = false) :
         BindableDeclaration(pointcut), INonNullableBindable, Extensible, ITypeDeclaration {
-    override val cl_name = "${javaClass.simpleName.decapitalize()}_class"
+    override val cl_name = "${javaClass.simpleName.decapitalizeInvariant()}_class"
 
     internal val internRootForScopes = mutableListOf<String>()
     override val extensions = mutableListOf<Ext>()

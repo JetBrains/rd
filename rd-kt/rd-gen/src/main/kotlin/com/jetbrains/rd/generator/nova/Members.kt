@@ -1,5 +1,7 @@
 package com.jetbrains.rd.generator.nova
 
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
@@ -12,7 +14,7 @@ enum class FlowKind {
 
 
 sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder() {
-    open val name: String = name.decapitalize()
+    open val name: String = name.decapitalizeInvariant()
     var documentation: String? = null
     lateinit var owner: Declaration
     val referencedTypes : List<IType> = referencedTypes.flatMap { expandItemTypes(it) }.distinct()
@@ -125,7 +127,7 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
             errors.add("Member $m is invalid: empty name")
         else if (!name[0].isLetter() || !name.all { it.isLetterOrDigit() || it == '_'})
             errors.add("Member $m is invalid: must be [A-Za-z][A-Za-z0-9_]*")
-        else if (name.capitalize() == owner.name)
+        else if (name.capitalizeInvariant() == owner.name)
             errors.add("Member $m is invalid: name cannot be the same as its enclosing declaration")
         else if (owner.ownMembers.any { it != this && it.name == name })
             errors.add("Member $m is duplicated")

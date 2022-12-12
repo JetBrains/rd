@@ -4,6 +4,8 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.csharp.CSharpSanitizer.sanitize
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
@@ -137,7 +139,7 @@ open class CSharp50Generator(
                             PredefinedType.double,
                             PredefinedType.char,
                             PredefinedType.string
-                    ).contains(this) -> name.decapitalize()
+                    ).contains(this) -> name.decapitalizeInvariant()
                     this is PredefinedType.UnsignedIntegral -> {
                         if (itemType is PredefinedType.byte) {
                             "byte"
@@ -309,7 +311,7 @@ open class CSharp50Generator(
     }
 
 
-    protected open val Member.publicName: String get() = name.capitalize()
+    protected open val Member.publicName: String get() = name.capitalizeInvariant()
     protected open val Member.encapsulatedName: String get() = isEncapsulated.condstr { "_" } + publicName
     protected open val Member.isEncapsulated: Boolean get() = when (this) {
         is Member.Reactive.Stateful.Extension -> when {
@@ -1301,7 +1303,7 @@ open class CSharp50Generator(
     }
 
     protected open fun PrettyPrinter.interfaceDef(decl: Interface) {
-        +"public interface ${decl.name.capitalize()}"
+        +"public interface ${decl.name.capitalizeInvariant()}"
         indent {baseInterfacesTrait(decl) }
         p("{")
         println()
@@ -1317,7 +1319,7 @@ open class CSharp50Generator(
 
     protected open fun PrettyPrinter.methodsTrait(decl: Interface) {
         decl.ownMembers.filterIsInstance<Member.Method>().forEach { method ->
-            +"${if(method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}"}});"
+            +"${if(method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalizeInvariant()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}"}});"
         }
     }
 
@@ -1354,7 +1356,7 @@ open class CSharp50Generator(
         ?: this.javaClass.simpleName
 
     protected open fun PrettyPrinter.methodTrait(method: Member.Method, decl: Declaration ,isAbstract: Boolean) {
-        println("public ${isAbstract.condstr { "abstract " }}${isUnknown(decl).condstr { "override " }}${if (method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalize()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}" }})${isAbstract.condstr { ";" }}")
+        println("public ${isAbstract.condstr { "abstract " }}${isUnknown(decl).condstr { "override " }}${if (method.resultType == PredefinedType.void) "void" else method.resultType.substitutedName(decl)} ${method.name.capitalizeInvariant()}(${method.args.joinToString { t -> "${t.second.substitutedName(decl)} ${t.first}" }})${isAbstract.condstr { ";" }}")
 
         if (isAbstract) return
         println("{")
@@ -1369,13 +1371,13 @@ open class CSharp50Generator(
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {
         val pointcut = decl.pointcut ?: return
-        val ownerLowerName = pointcut.name.decapitalize()
+        val ownerLowerName = pointcut.name.decapitalizeInvariant()
 
         +"public static class ${pointcut.name}${decl.name}Ex"
         +" {"
         indent {
-            val lowerName = decl.name.decapitalize()
-            val extName = decl.extName?.capitalize() ?: decl.name
+            val lowerName = decl.name.decapitalizeInvariant()
+            val extName = decl.extName?.capitalizeInvariant() ?: decl.name
             +"public static ${decl.name} Get$extName(this ${pointcut.sanitizedName(decl)} $ownerLowerName)"
             +"{"
             indent {

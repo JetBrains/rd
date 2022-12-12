@@ -6,6 +6,8 @@ import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.cpp.CppSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.eol
@@ -412,7 +414,7 @@ open class Cpp17Generator(
         is PredefinedType.uri -> "URI"
         is PredefinedType.secureString -> "RdSecureString"
         is PredefinedType.void -> "rd::Void"
-        is PredefinedType -> name.decapitalize()
+        is PredefinedType -> name.decapitalizeInvariant()
         is RdCppLibraryType -> name
 
         else -> fail("Unsupported type ${javaClass.simpleName}")
@@ -1882,7 +1884,7 @@ open class Cpp17Generator(
             is PredefinedType.dateTime -> "buffer.read_date_time()"
             is PredefinedType.NativeIntegral, is PredefinedType.UnsignedIntegral -> "buffer.read_integral<${templateName(decl)}>()"
             is PredefinedType.NativeFloatingPointType -> "buffer.read_floating_point<${templateName(decl)}>()"
-            is PredefinedType -> "buffer.read${name.capitalize()}()"
+            is PredefinedType -> "buffer.read${name.capitalizeInvariant()}()"
             is Declaration -> {
                 if (isIntrinsic) {
                     polymorphicReader()
@@ -2330,7 +2332,7 @@ open class Cpp17Generator(
 
     protected fun PrettyPrinter.extensionTraitDef(decl: Ext) {//todo
         define(extensionTraitDecl(decl)) {
-            val lowerName = decl.name.decapitalize()
+            val lowerName = decl.name.decapitalizeInvariant()
             +"""return pointcut.getOrCreateExtension<${decl.name}>("$lowerName");"""
             println()
         }
