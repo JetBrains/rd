@@ -4,8 +4,8 @@ package com.jetbrains.rd.generator.nova
 
 import com.jetbrains.rd.generator.nova.cpp.Cpp17Generator
 import com.jetbrains.rd.generator.nova.util.booleanSystemProperty
-import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.getSourceFileAndLine
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.condstr
@@ -183,6 +183,7 @@ sealed class PredefinedType : INonNullableScalar {
     object ulong: UnsignedIntegral(long)
 
     //aliases
+    @Suppress("unused")
     companion object {
         val int8 : NativeIntegral get() = byte
         val uint8 : UnsignedIntegral get() = ubyte
@@ -336,7 +337,7 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     }
 
 
-    class Part<T>(val name: String)
+    class Part<@Suppress("unused") T>(val name: String)
 
     //classes
     private fun baseclass0(name: String, base: Class.Abstract?, body: Class.() -> Unit) = append(Class.Abstract(name, this, base), body)

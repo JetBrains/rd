@@ -1,7 +1,7 @@
 package com.jetbrains.rd.generator.nova
 
-import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
@@ -142,8 +142,10 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
 
 }
 
+@Suppress("unused")
 fun Member.Field.notUsedInEquals() = apply { usedInEquals = false }
 
+@Suppress("unused")
 val Member.Field.suppressEmptyCtor get() = apply { emptyCtorSuppressed = true }
 val Member.Field.optional get() = apply {
     if (type is INonNullable) throw GeneratorException("Field '$name' can't be optional because it's not nullable, actual type: ${type.name}")

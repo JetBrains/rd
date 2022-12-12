@@ -6,8 +6,8 @@ import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.cpp.CppSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.cpp.Signature.Constructor
 import com.jetbrains.rd.generator.nova.cpp.Signature.MemberFunction
-import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.eol
@@ -30,8 +30,9 @@ private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: Stri
     }
 }
 
-/*please set VsWarningsDefault to null if you don't need disabling VS warnings
-val VsWarningsDefault : IntArray? = null*/
+// please set VsWarningsDefault to null if you don't need disabling VS warnings
+@Suppress("RedundantNullableReturnType")
+// val VsWarningsDefault: IntArray? = null
 val VsWarningsDefault: IntArray? = intArrayOf(4250, 4307, 4267, 4244, 4100)
 
 /**
@@ -50,6 +51,7 @@ open class Cpp17Generator(
     companion object {
         private const val polymorphicHeader = "serialization/Polymorphic"
 
+        @Suppress("unused")
         object LanguageVersion {
             const val `C++11` = "201103L"
             const val `C++14` = "201402L"
@@ -182,8 +184,6 @@ open class Cpp17Generator(
     private object RdBindableBase : RdCppLibraryType("rd::RdBindableBase")
 
     private object RdExtBase : RdCppLibraryType("rd::RdExtBase")
-
-    private object RdAbstract : RdCppLibraryType("rd::RdAbstract")
 
     //endregion",
     fun String.isWrapper(): Boolean {
@@ -448,10 +448,10 @@ open class Cpp17Generator(
     protected fun IType.serializerRef(scope: Declaration, isUsage: Boolean, withNamespace: Boolean): String {
         val className = if (withNamespace) "${scope.namespace}::" + scope.name else scope.name
         return leafSerializerRef(scope)
-            ?: isUsage.condstr { "$className::" } + when (this) {
+            ?: (isUsage.condstr { "$className::" } + when (this) {
                 is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
                 else -> "__${name}Serializer"
-            }
+            })
     }
 
 //endregion
@@ -632,7 +632,7 @@ open class Cpp17Generator(
      */
     private fun Declaration.withNamespace() =
         if (namespace.isEmpty()) {
-            "$name"
+            name
         } else {
             "$namespace::$platformTypeName"
         }
@@ -663,13 +663,11 @@ open class Cpp17Generator(
     protected fun Declaration.baseNames(): List<BaseClass> {
         return this.base?.let {
             mutableListOf(BaseClass(it as IType, it.allMembers))
-        } ?: (
-            if (this is Toplevel)
-                listOf(BaseClass(RdExtBase, emptyList()))
-            else if (this is Class || this is Aggregate || this is Toplevel)
-                listOf(BaseClass(RdBindableBase, emptyList()))
-            else listOf()
-            )
+        } ?: (when (this) {
+            is Toplevel -> listOf(BaseClass(RdExtBase, emptyList()))
+            is Class, is Aggregate -> listOf(BaseClass(RdBindableBase, emptyList()))
+            else -> listOf()
+        })
     }
 
     val Declaration.primaryCtorVisibility: String
@@ -958,7 +956,7 @@ open class Cpp17Generator(
     }
 
     private fun String.includeGuardName(): String {
-        return this.replace('.', '_').toUpperCase()
+        return this.replace('.', '_').uppercase()
     }
 
     private fun Declaration.includeGuardName(): String {
@@ -1484,14 +1482,14 @@ open class Cpp17Generator(
     }
 
     fun PrettyPrinter.customSerializersTrait(decl: Declaration) {
-        fun IType.serializerBuilder(): String = leafSerializerRef(decl) ?: "rd::" + when (this) {
+        fun IType.serializerBuilder(): String = leafSerializerRef(decl) ?: ("rd::" + when (this) {
             is IArray -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
             is IImmutableList -> "ArraySerializer<${itemType.serializerBuilder()}, ${decl.listType.withNamespace()}>"
             is INullable -> "NullableSerializer<${itemType.serializerBuilder()}>"
             is IAttributedType -> itemType.serializerBuilder()
             is InternedScalar -> """InternedSerializer<${itemType.serializerBuilder()}, ${internKey.hash()}>"""
             else -> fail("Unknown type: $this")
-        }
+        })
 
         val allTypesForDelegation = decl.allMembers
             .filterIsInstance<Member.Reactive>()
@@ -1500,11 +1498,6 @@ open class Cpp17Generator(
             .filter { it.leafSerializerRef(decl) == null }
 
         allTypesForDelegation.println { "using ${it.serializerRef(decl, false, false)} = ${it.serializerBuilder()};" }
-    }
-
-
-    private fun abstractDeclarationTraitDecl(decl: Declaration): MemberFunction {
-        return MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer &buffer, rd::RdId const &unknownId, int32_t size)", decl.name).override()
     }
 
     protected fun PrettyPrinter.registerSerializersTraitDecl(decl: Declaration) {
@@ -1528,10 +1521,6 @@ open class Cpp17Generator(
             +"friend class ${decl.name.dropLast(8)};"
             //todo drop "_Unknown" smarter
         }
-        /*if (decl.isAbstract) {
-            println()
-            declare(abstractDeclarationTraitDecl(decl))
-        }*/
         if (decl is Toplevel) {
             publicBlock() {
                 registerSerializersTraitDecl(decl)
@@ -1742,7 +1731,7 @@ open class Cpp17Generator(
         }
     }
 
-    private fun polymorphicToStringTraitDecl(decl: Declaration): MemberFunction? {
+    private fun polymorphicToStringTraitDecl(decl: Declaration): MemberFunction {
         val signature = MemberFunction("std::string", "toString()", decl.name).const()
         return when {
             decl is Toplevel -> signature.override()
@@ -1752,9 +1741,7 @@ open class Cpp17Generator(
         }
     }
 
-    private fun externalToStringTraitDecl(decl: Declaration): MemberFunction? {
-//        if (!(decl is Toplevel)) return null
-
+    private fun externalToStringTraitDecl(decl: Declaration): MemberFunction {
         return MemberFunction("std::string", "to_string(const ${decl.name} & value)", null).friend()
     }
 
@@ -1864,9 +1851,6 @@ open class Cpp17Generator(
         externalToStringTraitDef(decl)
     }
 
-    private val Enum.underscoreSetOrEmpty
-        get() = flags.condstr { "_set" }
-
     private fun PrettyPrinter.readerBodyTrait(decl: Declaration) {
         fun IType.polymorphicReader() = "rd::Polymorphic<${templateName(decl)}>::read(ctx, buffer)"
 
@@ -1962,12 +1946,6 @@ open class Cpp17Generator(
 //endregion
 
 //region TraitDef
-
-    private fun PrettyPrinter.abstractDeclarationTraitDef(decl: Declaration) {
-        define(abstractDeclarationTraitDecl(decl)) {
-            readerBodyTrait(unknown(decl)!!)
-        }
-    }
 
     protected fun PrettyPrinter.registerSerializersTraitDef(decl: Toplevel, types: List<Declaration>) {//todo name access
         val serializersOwnerImplName = "${decl.name}SerializersOwner"
@@ -2308,7 +2286,7 @@ open class Cpp17Generator(
     }
 
     private fun PrettyPrinter.polymorphicToStringTraitDef(decl: Declaration) {
-        polymorphicToStringTraitDecl(decl)?.let { function ->
+        polymorphicToStringTraitDecl(decl).let { function ->
             define(function) {
                 +"""std::string res = "${decl.name}\n";"""
                 decl.allMembers.forEach { member ->
@@ -2322,7 +2300,7 @@ open class Cpp17Generator(
     }
 
     private fun PrettyPrinter.externalToStringTraitDef(decl: Declaration) {
-        externalToStringTraitDecl(decl)?.let {
+        externalToStringTraitDecl(decl).let {
             define(it) {
                 +"return value.toString();"
             }
@@ -2411,16 +2389,6 @@ open class Cpp17Generator(
         +"#ifdef $feature"
         printer()
         +"#endif"
-    }
-
-    private fun PrettyPrinter.ifDirective(feature: String, printer: PrettyPrinter.() -> Unit) {
-        +"#if $feature"
-        printer()
-        +"#endif"
-    }
-
-    private fun PrettyPrinter.ifDefLanguageVersionAtLeast(version: String, printer: PrettyPrinter.() -> Unit) {
-        ifDirective("__cplusplus >= $version", printer)
     }
 
     private fun Member.Reactive.Stateful.Extension.factoryFqn(scope: Declaration) : String {

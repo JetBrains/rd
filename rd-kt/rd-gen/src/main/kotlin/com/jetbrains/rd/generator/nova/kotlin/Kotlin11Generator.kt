@@ -4,8 +4,8 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.kotlin.KotlinSanitizer.sanitize
-import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -46,9 +46,6 @@ open class Kotlin11Generator(
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name$generatedFileSuffix.kt")
 
-
-    private val Member.Reactive.Stateful.optimizeNested : Boolean
-        get() = (this !is Member.Reactive.Stateful.Extension && this.genericParams.none { it is IBindable })
 
     private val IType.isPredefinedNumber: Boolean
         get() = this is PredefinedType.UnsignedIntegral ||
@@ -985,11 +982,6 @@ open class Kotlin11Generator(
             }
             + ")"
         }
-
-        if (decl is Struct.Concrete && decl.base != null) {
-            println()
-            + "override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()"
-        }
     }
 
 
@@ -1036,9 +1028,11 @@ open class Kotlin11Generator(
 
     protected open fun PrettyPrinter.baseClassTrait(decl: Declaration) {
         val base = decl.base ?: let {
-            if (decl is Toplevel) p( " : RdExtBase()")
-            else if (decl is Class || decl is Aggregate || decl is Toplevel) p(" : RdBindableBase()")
-            else if (decl is Struct) p(" : IPrintable")
+            when (decl) {
+                is Toplevel -> p( " : RdExtBase()")
+                is Class, is Aggregate -> p(" : RdBindableBase()")
+                is Struct -> p(" : IPrintable")
+            }
             interfacesTrait(decl)
             return
         }
