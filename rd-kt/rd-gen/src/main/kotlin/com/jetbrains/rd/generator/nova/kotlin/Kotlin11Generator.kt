@@ -4,6 +4,8 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.kotlin.KotlinSanitizer.sanitize
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
@@ -80,7 +82,7 @@ open class Kotlin11Generator(
         is PredefinedType.secureString -> "RdSecureString"
         is PredefinedType.void -> "Unit"
         is PredefinedType.UnsignedIntegral -> "U${itemType.substitutedName(scope)}"
-        is PredefinedType -> name.capitalize()
+        is PredefinedType -> name.capitalizeInvariant()
 
         else -> fail("Unsupported type ${javaClass.simpleName}")
     }
@@ -620,7 +622,7 @@ open class Kotlin11Generator(
     private fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (!decl.isToplevelExtension) return
         
-        val extName = (decl as? Ext)?.extName ?: decl.name.decapitalize()
+        val extName = (decl as? Ext)?.extName ?: decl.name.decapitalizeInvariant()
         + "@JvmStatic"
         + "@Deprecated(\"Use protocol.$extName or revise the extension scope instead\", ReplaceWith(\"protocol.$extName\"))"
         block("fun create(lifetime: Lifetime, protocol: IProtocol): ${decl.name} ") {
@@ -680,7 +682,7 @@ open class Kotlin11Generator(
         fun IType.reader(): String = when (this) {
             is Enum -> "buffer.readEnum$setOrEmpty<${sanitizedName(decl)}>()"
             is InternedScalar -> "ctx.readInterned(buffer, \"${internKey.keyName}\") { _, _ -> ${itemType.reader()} }"
-            is PredefinedType -> "buffer.read${name.capitalize()}()"
+            is PredefinedType -> "buffer.read${name.capitalizeInvariant()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
                         ?: if (isSealed)
@@ -747,7 +749,7 @@ open class Kotlin11Generator(
         fun IType.writer(field: String) : String  = when (this) {
             is Enum -> "buffer.writeEnum$setOrEmpty($field)"
             is InternedScalar -> "ctx.writeInterned(buffer, $field, \"${internKey.keyName}\") { _, _, internedValue -> ${itemType.writer("internedValue")} }"
-            is PredefinedType -> "buffer.write${name.capitalize()}($field)"
+            is PredefinedType -> "buffer.write${name.capitalizeInvariant()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
                     if (isSealed) "${substitutedName(decl)}.write(ctx, buffer, $field)"
@@ -1129,14 +1131,14 @@ open class Kotlin11Generator(
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {
         val pointcut = decl.pointcut ?: return
-        val lowerName = decl.name.decapitalize()
+        val lowerName = decl.name.decapitalizeInvariant()
         val extName = decl.extName ?: lowerName
         + """val ${pointcut.sanitizedName(decl)}.$extName get() = getOrCreateExtension("$lowerName", ::${decl.name})"""
         println()
     }
 
     private fun PrettyPrinter.toplevelExtensionTrait(decl: Ext) {
-        val extName = decl.extName ?: decl.name.decapitalize()
+        val extName = decl.extName ?: decl.name.decapitalizeInvariant()
         + """val IProtocol.$extName get() = getOrCreateExtension(${decl.name}::class) { @Suppress("DEPRECATION") ${decl.name}.create(lifetime, this) }"""
         println()
     }
