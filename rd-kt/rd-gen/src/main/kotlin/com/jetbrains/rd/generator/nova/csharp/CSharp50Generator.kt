@@ -914,28 +914,70 @@ open class CSharp50Generator(
         }
     }
 
-    private fun PrettyPrinter.defaultValue(member: Member, typeName: String) {
-        if (member is Member.Field && haveDefaultValue(member)) {
-            member.defaultValue.let { defaultValue ->
-                p(" = ")
-                when (defaultValue) {
-                    is String -> p(
-                        if (member.type is Enum) {
-                            if (member.type.flags && defaultValue.isEmpty())
-                                "($typeName)0"
-                            else
-                                "$typeName.$defaultValue"
-                        } else {
-                            "\"$defaultValue\""
-                        }
-                    )
-                    else -> p(defaultValue.toString())
+    private fun PrettyPrinter.printConstructorParameterList(decl: Declaration, members: List<Member>) {
+        fun getDefaultValue(member: Member, typeName: String): String? {
+            // Returns "null" for defaultValue = null (i.e. for pure `optional` fields). Returns actual `null` if there
+            // is no default value.
+            if (member is Member.Field && isOptional(member)) {
+                return member.defaultValue.let { defaultValue ->
+                    when (defaultValue) {
+                        is String ->
+                            if (member.type is Enum) {
+                                if (member.type.flags && defaultValue.isEmpty())
+                                    "($typeName)0"
+                                else
+                                    "$typeName.$defaultValue"
+                            } else {
+                                "\"$defaultValue\""
+                            }
+                        else -> defaultValue.toString()
+                    }
                 }
             }
+
+            return null
         }
+
+        fun PrettyPrinter.printDefaultValueWithAttributes(member: Member, typeName: String) {
+            getDefaultValue(member, typeName)?.let { defaultValue ->
+                p("[Optional] [DefaultParameterValue($defaultValue)] ")
+            }
+        }
+
+        fun PrettyPrinter.printDefaultValueAssignment(member: Member, typeName: String) {
+            getDefaultValue(member, typeName)?.let { defaultValue ->
+                p(" = ")
+                p(defaultValue)
+            }
+        }
+
+        val indexAfterWhichAllHaveDefaultValues = members.withIndex()
+            .reversed()
+            .dropWhile {
+                val member = it.value
+                member is Member.Field && isOptional(member)
+            }.firstOrNull()?.index ?: -1
+        +members.withIndex()
+            .joinToString(",\r\n") {
+                val member = it.value
+                val typeName = member.implSubstitutedName(decl)
+                val attributes = member.getIncludedTypeAttributes()?:""
+
+                printer {
+                    p(attributes)
+                    p(member.nullAttr(true)) // [Null], [NotNull], [CanBeNull]
+                    if (it.index < indexAfterWhichAllHaveDefaultValues)
+                        printDefaultValueWithAttributes(member, typeName)
+                    p(typeName)
+                    p(" ")
+                    p(sanitize(member.name))
+                    if (it.index > indexAfterWhichAllHaveDefaultValues)
+                        printDefaultValueAssignment(member, typeName)
+                }.toString()
+            }
     }
 
-    private fun haveDefaultValue(member: Member.Field) =
+    private fun isOptional(member: Member.Field) =
         (member.isOptional || member.defaultValue != null)
 
     protected fun PrettyPrinter.secondaryConstructorTrait(decl: Declaration) {
@@ -951,19 +993,10 @@ open class CSharp50Generator(
 
         +"$accessModifier ${decl.name} ("
         indent {
-            +decl.allMembers
-                    .filter { !it.hasEmptyConstructor }
-                    .joinToString(",\n") {
-                        val typeName = it.implSubstitutedName(decl)
-
-                        printer {
-                            p(it.nullAttr(true)) // [Null], [NotNull], [CanBeNull]
-                            p(typeName)
-                            p(" ")
-                            p(sanitize(it.name))
-                            defaultValue(it, typeName)
-                        }.toString()
-                    }
+            printConstructorParameterList(
+                decl,
+                decl.allMembers.filter { !it.hasEmptyConstructor }
+            )
         }
         +") : this ("
         indent {
@@ -1173,28 +1206,7 @@ open class CSharp50Generator(
 
         +"$accessModifier ${decl.name}("
         indent {
-            val indexAfterWhichAllHaveDefaultValues = decl.allMembers.withIndex()
-                .reversed()
-                .dropWhile {
-                    val member = it.value
-                    member is Member.Field && haveDefaultValue(member)
-                }.firstOrNull()?.index ?: -1
-            +decl.allMembers.withIndex()
-                .joinToString(",\r\n") {
-                    val member = it.value
-                    val typeName = member.implSubstitutedName(decl)
-                    val attributes = member.getIncludedTypeAttributes()?:""
-
-                    printer {
-                        p(attributes)
-                        p(member.nullAttr(true)) // [Null], [NotNull], [CanBeNull]
-                        p(typeName)
-                        p(" ")
-                        p(sanitize(member.name))
-                        if (it.index > indexAfterWhichAllHaveDefaultValues)
-                            defaultValue(member, typeName)
-                    }.toString()
-                }
+            printConstructorParameterList(decl, decl.allMembers)
         }
         p(")")
         val base = decl.base
