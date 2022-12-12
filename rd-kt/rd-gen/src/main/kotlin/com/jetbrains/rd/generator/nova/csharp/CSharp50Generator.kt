@@ -4,8 +4,8 @@ import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
 import com.jetbrains.rd.generator.nova.csharp.CSharpSanitizer.sanitize
-import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
+import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
