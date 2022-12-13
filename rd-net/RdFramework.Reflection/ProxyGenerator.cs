@@ -66,6 +66,8 @@ namespace JetBrains.Rd.Reflection
       typeof(FakeTuple<,,,,,,,>), // T1, T2, T3, T4, T5, T6, T7, TRest
     };
 
+    public const int MaxTuplePayload = 7;
+
     private static Lazy<ProxyGeneratorMembers> ourLazyMembers => new Lazy<ProxyGeneratorMembers>(() => new ProxyGeneratorMembers());
     private static ProxyGeneratorMembers Members => ourLazyMembers.Value;
 
@@ -188,17 +190,29 @@ namespace JetBrains.Rd.Reflection
       }
 
       var parameters = method.GetParameters();
-      for (int pi = 0, fi = 0; pi < parameters.Length; pi++)
+      for (int parameterIndex = 0, fi = 0; parameterIndex < parameters.Length; parameterIndex++)
       {
-        if (parameters[pi].ParameterType == typeof(Lifetime))
+        if (parameters[parameterIndex].ParameterType == typeof(Lifetime))
         {
           LoadArgument(il, 1 /* external cancellation lifetime in SetHandler */);
         }
         else
         {
-          Assertion.Assert(parameters[pi].ParameterType == fields[fi].FieldType, "parameters[pi].ParameterType == fields[i].FieldType");
           il.Emit(OpCodes.Ldarg_2); // value tuple
-          il.Emit(OpCodes.Ldfld, fields[fi]);
+          
+          int i = fi;
+          var f = fields;
+          while (i >= MaxTuplePayload)
+          {
+            il.Emit(OpCodes.Ldfld, f[MaxTuplePayload]);
+            f = f[MaxTuplePayload].FieldType.GetFields();
+            i -= MaxTuplePayload;
+          }
+          if (Mode.IsAssertion)
+            Assertion.Assert(parameters[parameterIndex].ParameterType == f[i].FieldType, "parameters[pi].ParameterType == fields[i].FieldType");
+
+          il.Emit(OpCodes.Ldfld, f[i]);
+
           fi++;
         }
       }
@@ -307,24 +321,36 @@ namespace JetBrains.Rd.Reflection
     /// <returns></returns>
     public static Type[] GetRequstType(MethodInfo method)
     {
-      // todo: support more than 7 parameters
       var parameters = method.GetParameters();
       if (parameters.Length == 0)
         return new[] {typeof(Unit)};
 
-      Assertion.Assert(parameters.Length <= 7, "parameters.Length <= 7");
-      List<Type> list = new List<Type>();
+      var parms = new List<Type>(parameters.Length);
       foreach (var p in parameters)
       {
-        // Lifetime treated as cancellation token
+        // Lifetime treats as cancellation token
         if (p.ParameterType != typeof(Lifetime) || p.ParameterType == typeof(CancellationToken))
-          list.Add(p.ParameterType);
+          parms.Add(p.ParameterType);
       }
 
-      if (list.Count == 0)
+      if (parms.Count == 0)
         return new[] {typeof(Unit)};
 
-      return new[] {ValueTuples[list.Count - 1].MakeGenericType(list.ToArray()) };
+      Type? type = null;
+      while (parms.Count > 0)
+      {
+        // fold the last aligned to MaxTupleArgs types to the "Rest" value type
+        var rest = parms.Count % MaxTuplePayload;
+        var toFold = rest == 0 ? MaxTuplePayload : rest;
+
+        var foldTypeArguments = parms.GetRange(parms.Count - toFold, toFold);
+        parms.RemoveRange(parms.Count - toFold, toFold);
+
+        if (type != null) foldTypeArguments.Add(type);
+        type = ValueTuples[foldTypeArguments.Count - 1].MakeGenericType(foldTypeArguments.ToArray());
+      }
+
+      return new[] { type! };
     }
 
     public static Type GetResponseType(MethodInfo method, bool unwrapTask = false)
@@ -402,6 +428,24 @@ namespace JetBrains.Rd.Reflection
           {
             // load args
             LoadArgument(ilgen, i + 1 /* #0 is `self/this` argument */);
+          }
+        }
+
+        var genArgs = requestType.GetGenericArguments();
+        if (genArgs.Length > MaxTuplePayload)
+        {
+          var toInit = new Stack<ConstructorInfo>();
+          var rest = genArgs[MaxTuplePayload];
+          while (rest != null)
+          {
+            toInit.Push(rest.GetConstructors().Single());
+            var ar = rest.GetGenericArguments();
+            rest = ar.Length > MaxTuplePayload ? ar[MaxTuplePayload] : null;
+          }
+
+          while (toInit.Count != 0)
+          {
+            ilgen.Emit(OpCodes.Newobj, toInit.Pop());
           }
         }
 

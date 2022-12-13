@@ -25,6 +25,12 @@
         <ProjectReference Include="..\Test.Lifetimes\Test.Lifetimes.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Test.RdFramework.Generator\Test.RdFramework.Generator.csproj"
+        OutputItemType="Analyzer"
+        ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
     <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
       <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     </ItemGroup>
