@@ -5,6 +5,7 @@ import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.incrementCookie
+import com.jetbrains.rd.util.reflection.usingValue
 
 open class Signal<T> : ISignal<T> {
     companion object {
@@ -12,6 +13,7 @@ open class Signal<T> : ISignal<T> {
 
         private val isPriorityAdvise: Boolean get() = cookie.value > 0
         fun priorityAdviseSection(block:() -> Unit) = incrementCookie(cookie, TlsBoxed<Int>::value) { block() }
+        fun nonPriorityAdviseSection(block: () -> Unit) = cookie::value.usingValue(0) { block() }
 
         fun Void() = Signal<Unit>()
     }

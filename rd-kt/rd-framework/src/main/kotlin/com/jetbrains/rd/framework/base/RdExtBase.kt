@@ -8,10 +8,7 @@ import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.collections.QueueImpl
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.flowInto
-import com.jetbrains.rd.util.reactive.whenTrue
+import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import com.jetbrains.rd.util.trace
@@ -55,7 +52,9 @@ abstract class RdExtBase : RdReactiveBase() {
                 }
 
                 val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash, this)
-                (parentProtocol as Protocol).submitExtCreated(info)
+                Signal.nonPriorityAdviseSection {
+                    (parentProtocol as Protocol).submitExtCreated(info)
+                }
             },
             {
                 extProtocol = null
