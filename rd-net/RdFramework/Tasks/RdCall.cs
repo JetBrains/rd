@@ -61,14 +61,19 @@ namespace JetBrains.Rd.Tasks
     }
 
 
-    [PublicAPI]
-    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
+    public void SetRdTask(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
       Handler = handler;
       myCancellationScheduler = cancellationScheduler;
       myHandlerScheduler = handlerScheduler;
     }
 
+    [Obsolete("This is an internal API. It is preferable to use SetSync or SetAsync extension methods")]
+    public void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
+    {
+      SetRdTask(handler, cancellationScheduler, handlerScheduler);
+    }
+    
     [PublicAPI]
     public override void OnWireReceived(UnsafeReader reader) //endpoint's side
     {
