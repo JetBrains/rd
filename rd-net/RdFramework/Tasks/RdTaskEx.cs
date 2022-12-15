@@ -51,17 +51,41 @@ namespace JetBrains.Rd.Tasks
 
     [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
-      endpoint.Set((lt, req) => handler(lt, req).ToRdTask(), cancellationScheduler, handlerScheduler);
+      endpoint.SetRdTask((lt, req) => handler(lt, req).ToRdTask(), cancellationScheduler, handlerScheduler);
+    }
+    
+    [PublicAPI] public static void SetAsync<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, Task<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
+    {
+      endpoint.Set(handler, cancellationScheduler, handlerScheduler);
+    }
+    
+    [PublicAPI] public static void SetVoidAsync<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Func<Lifetime, TReq, Task> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
+    {
+      endpoint.SetAsync(async (lt, x) =>
+      {
+        await handler(lt, x);
+        return Unit.Instance;
+      }, cancellationScheduler, handlerScheduler);
     }
 
     [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
-      endpoint.Set((lifetime, req) => RdTask.Successful(handler(lifetime, req)), cancellationScheduler, handlerScheduler);
+      endpoint.SetRdTask((lifetime, req) => RdTask.Successful(handler(lifetime, req)), cancellationScheduler, handlerScheduler);
+    }
+    
+    [PublicAPI] public static void SetSync<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<Lifetime, TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
+    {
+      endpoint.Set(handler, cancellationScheduler, handlerScheduler);
     }
 
     [PublicAPI] public static void Set<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
     {
-      endpoint.Set((_, req) => RdTask.Successful(handler(req)), cancellationScheduler, handlerScheduler);
+      endpoint.SetRdTask((_, req) => RdTask.Successful(handler(req)), cancellationScheduler, handlerScheduler);
+    }
+    
+    [PublicAPI] public static void SetSync<TReq, TRes>(this IRdEndpoint<TReq, TRes> endpoint, Func<TReq, TRes> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)
+    {
+      endpoint.Set(handler, cancellationScheduler, handlerScheduler);
     }
 
     [PublicAPI] public static void SetVoid<TReq>(this IRdEndpoint<TReq, Unit> endpoint, Action<TReq> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null)

@@ -302,7 +302,7 @@ namespace JetBrains.Rd.Reflection
     /// </summary>
     public static void SetHandlerTaskVoid<TReq>(RdCall<TReq, Unit> endpoint, Func<Lifetime, TReq, Task> handler)
     {
-      endpoint.Set((lt, req) => handler(lt, req).ToRdTask());
+      endpoint.SetRdTask((lt, req) => handler(lt, req).ToRdTask());
     }
 
     /// <summary>
@@ -313,7 +313,7 @@ namespace JetBrains.Rd.Reflection
     public static void SetHandler<TReq, TRes>(RdCall<TReq, TRes> endpoint, Func<Lifetime, TReq, RdTask<TRes>> handler)
     {
       var scheduler = new SwitchingScheduler(endpoint);
-      endpoint.Set(handler, scheduler, scheduler);
+      endpoint.SetRdTask(handler, scheduler, scheduler);
     }
     
     private object? ActivateMember(Type memberType, string memberName)

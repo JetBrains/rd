@@ -14,7 +14,10 @@ namespace JetBrains.Rd.Tasks
   
   public interface IRdEndpoint<TReq, TRes>
   {
+    [Obsolete("This is an internal API. It is preferable to use SetSync or SetAsync extension methods")]
     void Set(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null);
+    
+    void SetRdTask(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null);
   }
 
   public interface IRdCall<in TReq, TRes>
