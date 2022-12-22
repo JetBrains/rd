@@ -87,6 +87,7 @@ class RdMap<K : Any, V : Any> private constructor(
     }
 
     override fun findByRName(rName: RName): RdBindableBase? {
+        if (rName == RName.Empty) return this
         val rootName = rName.getNonEmptyRoot()
         val localName = rootName.localName
         if (!localName.startsWith('[') || !localName.endsWith(']'))

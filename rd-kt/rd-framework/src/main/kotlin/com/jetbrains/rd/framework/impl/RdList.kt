@@ -72,6 +72,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
     }
 
     override fun findByRName(rName: RName): RdBindableBase? {
+        if (rName == RName.Empty) return this
         val rootName = rName.getNonEmptyRoot()
         val localName = rootName.localName
         if (!localName.startsWith('[') || !localName.endsWith(']'))
