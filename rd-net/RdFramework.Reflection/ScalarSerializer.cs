@@ -114,7 +114,8 @@ namespace JetBrains.Rd.Reflection
       CtxReadDelegate<T?> readerDelegate = (ctx, unsafeReader) =>
       {
         if (memberDeserializers == null)
-          InitMemberSerializers();
+          using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(typeof(T)))
+            InitMemberSerializers();
         Assertion.AssertNotNull(memberDeserializers);
 
         if (allowNullable && !unsafeReader.ReadNullness())
@@ -122,18 +123,28 @@ namespace JetBrains.Rd.Reflection
 
         object instance = FormatterServices.GetUninitializedObject(typeof(T));
 
-        for (var index = 0; index < memberDeserializers.Length; index++)
+        try
         {
-          var memberValue = memberDeserializers[index](ctx, unsafeReader);
-          memberSetters[index](instance, memberValue);
+          for (var index = 0; index < memberDeserializers.Length; index++)
+          {
+            var memberValue = memberDeserializers[index](ctx, unsafeReader);
+            memberSetters[index](instance, memberValue);
+          }
         }
+        catch (ArgumentException e)
+        {
+          e.Data["Type:" + typeof(T).ToString(true)] = "";
+          throw;
+        }
+
         return (T) instance;
       };
 
       CtxWriteDelegate<T> writerDelegate = (ctx, unsafeWriter, value) =>
       {
         if (memberSerializers == null)
-          InitMemberSerializers();
+          using (new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(typeof(T)))
+            InitMemberSerializers();
         Assertion.AssertNotNull(memberSerializers);
 
         if (allowNullable)
@@ -143,10 +154,18 @@ namespace JetBrains.Rd.Reflection
             return;
         }
 
-        for (var i = 0; i < memberSerializers.Length; i++)
+        try
         {
-          var memberValue = memberGetters[i](value!);
-          memberSerializers[i](ctx, unsafeWriter, memberValue!);
+          for (var i = 0; i < memberSerializers.Length; i++)
+          {
+            var memberValue = memberGetters[i](value!);
+            memberSerializers[i](ctx, unsafeWriter, memberValue!);
+          }
+        }
+        catch (ArgumentException e)
+        {
+          e.Data["Type:" + typeof(T).ToString(true)] = "";
+          throw;
         }
       };
 
