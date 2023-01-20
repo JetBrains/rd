@@ -122,18 +122,14 @@ namespace JetBrains.Rd.Reflection
       var rdExtConstructor = Members.RdExtConstructor;
       typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ interfaceType }));
 
-      var memberNames = new HashSet<string>(StringComparer.Ordinal);
-      ImplementInterface(interfaceType, memberNames, typebuilder);
+      ImplementInterface(interfaceType, typebuilder);
       foreach (var baseInterface in interfaceType.GetInterfaces())
-        ImplementInterface(baseInterface, memberNames, typebuilder);
+        ImplementInterface(baseInterface, typebuilder);
 
-      void ImplementInterface(Type baseInterface, HashSet<string> hashSet, TypeBuilder typeBuilder)
+      void ImplementInterface(Type baseInterface, TypeBuilder typeBuilder)
       {
         foreach (var member in baseInterface.GetMembers(BindingFlags.Instance | BindingFlags.Public))
         {
-          if (!hashSet.Add(member.Name))
-            throw new ArgumentException($"Duplicate member name: {member.Name}. Method overloads are not supported.");
-
           ImplementMember(typeBuilder, member);
         }
       }
@@ -496,10 +492,7 @@ namespace JetBrains.Rd.Reflection
     }
 
 
-    public static string ProxyFieldName(MethodInfo method)
-    {
-      return method.Name + "_proxy";
-    }
+    public static string ProxyFieldName(MethodInfo method) => $"{method}_proxy";
 
     /// <summary>
     /// Return the expected list of names in BindableChildren collection for <see cref="RdRpcAttribute"/> interfaces
