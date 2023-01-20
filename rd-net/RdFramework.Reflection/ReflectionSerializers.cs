@@ -95,6 +95,8 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
 
       if (!myStaticSerializers.TryGetValue(type, out var serializerPair))
       {
+        using var info = new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type);
+
         myCatalog.AddType(type);
         
         BeforeCreation.Fire(type);
@@ -102,7 +104,6 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
         if (myStaticSerializers.TryGetValue(type, out serializerPair))
           return serializerPair;
 
-        using var info = new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type);
         if (Mode.IsAssertion) myCurrentSerializersChain.Enqueue(type);
         try
         {
