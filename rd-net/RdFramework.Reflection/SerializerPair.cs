@@ -2,26 +2,28 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using JetBrains.Diagnostics;
-using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 using JetBrains.Util;
 using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Reflection;
 
-[DebuggerDisplay("T: {ElementType}, Polymorphic: {IsPolymorphic}")]
-public class SerializerPair
+[DebuggerDisplay("TR: {ReaderTypeString}, TW: {WriterTypeString}, Polymorphic: {IsPolymorphic}")]
+public sealed class SerializerPair
 {
   private readonly object myReader;
   private readonly object myWriter;
 
   public object Reader => myReader;
-
   public object Writer => myWriter;
 
   public bool IsPolymorphic { get; }
 
-  private string ElementType => ((Delegate)myReader).Method.ReturnParameter.ParameterType.ToString(false);
+  public Type ReaderType => myReader.GetType().GetGenericArguments()[0];
+  public Type WriterType => myWriter.GetType().GetGenericArguments()[0];
+
+  private string WriterTypeString => WriterType.ToString(false);
+  private string ReaderTypeString => ReaderType.ToString(false);
 
   public SerializerPair(object reader, object writer, bool isPolymorphic = false)
   {

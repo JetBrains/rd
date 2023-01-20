@@ -172,7 +172,7 @@ namespace JetBrains.Rd.Reflection
       return IsMemberType(typeInfo);
     }
 
-    private static bool IsMemberType(TypeInfo typeInfo)
+    public static bool IsMemberType(TypeInfo typeInfo)
     {
       if (typeInfo.IsGenericType)
       {

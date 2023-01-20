@@ -14,19 +14,23 @@ namespace Test.RdFramework.Reflection
 {
   public class ProxyGeneratorTestBase : RdReflectionTestBase
   {
+    protected RdBindableBase myClient;
+    protected object myProxy;
+
     protected virtual bool IsAsync => false;
 
     protected async Task TestTemplate<TImpl, TInterface>(Func<TInterface, Task> runTest) where TImpl : RdBindableBase where TInterface : class
     {
       await YieldToClient();
-      var client = CFacade.Activator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
+      myClient = CFacade.Activator.ActivateBind<TImpl>(TestLifetime, ClientProtocol);
 
       await YieldToServer();
       var proxy = SFacade.ActivateProxy<TInterface>(TestLifetime, ServerProtocol);
+      myProxy = proxy;
 
       CollectionAssert.AreEquivalent(
-        ((IReflectionBindable)client).BindableChildren.Select(m => m.Key),
-        ((IReflectionBindable)proxy).BindableChildren.Select(m => m.Key)
+        ((IReflectionBindable)myClient).BindableChildren.Select(m => m.Key),
+        ((IReflectionBindable)myProxy).BindableChildren.Select(m => m.Key)
       );
 
       await Wait();
@@ -34,7 +38,7 @@ namespace Test.RdFramework.Reflection
       SaveGeneratedAssembly();
       
       await YieldToServer();
-      Assertion.Assert((proxy as RdExtReflectionBindableBase).NotNull().Connected.Value,
+      Assertion.Assert((myProxy as RdExtReflectionBindableBase).NotNull().Connected.Value,
         "((RdReflectionBindableBase)proxy).Connected.Value");
 
       await runTest(proxy);
