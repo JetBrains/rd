@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
-using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
 
@@ -20,13 +19,13 @@ public class ProxyGeneratorPrimitiveCompositionTest : ProxyGeneratorTestBase
   {
     IViewableList<IViewableList<string>> Multilist { get; }
 
-    // IViewableMap<short, IViewableSet<short>> SyncMoments { get; }
+    IViewableMap<short, IViewableSet<short>> SyncMoments { get; }
   }
 
   [RdExt]
   public class Test : RdExtReflectionBindableBase, ITest
   {
-    // public IViewableMap<short, IViewableSet<short>> SyncMoments { get; }
+    public IViewableMap<short, IViewableSet<short>> SyncMoments { get; }
     public IViewableList<IViewableList<string>> Multilist { get; }
   }
 
@@ -41,11 +40,11 @@ public class ProxyGeneratorPrimitiveCompositionTest : ProxyGeneratorTestBase
     await Wait();
 
     await YieldToClient();
-    var vs = CFacade.Activator.Activate<IViewableList<string>>();
-    vs.Add("123");
-    client.Multilist.Add(vs);
+    var vs = CFacade.Activator.Activate<IViewableSet<short>>();
+    vs.Add(123);
+    client.SyncMoments.Add(123, vs);
     
     await Wait();
-    //Assert.IsTrue(server.SyncMoments[123].Contains(123));
+    Assert.IsTrue(server.SyncMoments[123].Contains(123));
   }
 }

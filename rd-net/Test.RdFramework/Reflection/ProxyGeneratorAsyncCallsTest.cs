@@ -220,11 +220,7 @@ namespace Test.RdFramework.Reflection
         model.SyncMoments.Add(123, vs);
         return Task.CompletedTask;
       });
-
-/*#if NET35
-      // it seems like ExecuteSynchronously does not work in NET35
-      SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => result != null);
-#endif*/
+      
       Assert.AreEqual(true, ((IAsyncCallsTest)myClient).SyncMoments.First().Value.Contains(123));
     }
 
