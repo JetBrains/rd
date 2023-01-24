@@ -51,7 +51,12 @@ namespace JetBrains.Rd.Reflection
     {
       if (type == typeof(IntPtr))
       {
-        throw new ArgumentException("Platform-specific types cannot be serialized.");
+        throw new ArgumentException($"Unable to serialize {type.ToString(true)}. Platform-specific types cannot be serialized.");
+      }
+
+      if (typeof(Delegate).IsAssignableFrom(type))
+      {
+        throw new ArgumentException($"Unable to serialize {type.ToString(true)}. Delegates cannot be serialized.");
       }
 
       if (myBlackListChecker(type))

@@ -26,6 +26,8 @@ namespace Test.RdFramework.Reflection
     [RdExt]
     internal class AsyncCallsTest : RdExtReflectionBindableBase, IAsyncCallsTest
     {
+      public IViewableMap<short, IViewableSet<short>> SyncMoments { get; }
+
       public Task<string> GetStringAsync()
       {
         return Task.FromResult("result");
@@ -60,6 +62,8 @@ namespace Test.RdFramework.Reflection
     [RdRpc]
     public interface IAsyncCallsTest
     {
+      IViewableMap<short, IViewableSet<short>> SyncMoments { get; }
+
       Task<string> GetStringAsync();
       Task RunSomething();
 
@@ -204,6 +208,20 @@ namespace Test.RdFramework.Reflection
         await Wait();
         CollectionAssert.AreEqual(new[] {"123"}, m.History);
       });
+    }
+
+    [Test]
+    public async Task TestPrimitiveComposition()
+    {
+      await TestAsyncCalls(model =>
+      {
+        var vs = CFacade.Activator.Activate<IViewableSet<short>>();
+        vs.Add(123);
+        model.SyncMoments.Add(123, vs);
+        return Task.CompletedTask;
+      });
+      
+      Assert.AreEqual(true, ((IAsyncCallsTest)myClient).SyncMoments.First().Value.Contains(123));
     }
 
     private async Task TestAsyncCalls(Func<IAsyncCallsTest, Task> run) => await TestTemplate<AsyncCallsTest, IAsyncCallsTest>(run);

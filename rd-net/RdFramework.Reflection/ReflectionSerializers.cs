@@ -79,7 +79,10 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
   {
     lock (myLock)
     {
-      if (instance && SerializerReflectionUtil.CanBePolymorphic(type))
+      var implementingType = ReflectionSerializerVerifier.GetImplementingType(type.GetTypeInfo()).GetTypeInfo();
+      var isRdType = implementingType != type;
+
+      if (!isRdType && instance && SerializerReflectionUtil.CanBePolymorphic(type))
       {
         myCatalog.AddType(type);
         if (myInstanceSerializers.TryGetValue(type, out var pair))
@@ -95,6 +98,8 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
 
       if (!myStaticSerializers.TryGetValue(type, out var serializerPair))
       {
+        using var info = new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type);
+
         myCatalog.AddType(type);
         
         BeforeCreation.Fire(type);
@@ -102,12 +107,20 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
         if (myStaticSerializers.TryGetValue(type, out serializerPair))
           return serializerPair;
 
-        using var info = new FirstChanceExceptionInterceptor.ThreadLocalDebugInfo(type);
         if (Mode.IsAssertion) myCurrentSerializersChain.Enqueue(type);
         try
         {
           myStaticSerializers.Add(type, null!);
-          if (ReflectionSerializerVerifier.IsScalar(type))
+
+          if (isRdType)
+          {
+            var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingType, t => GetOrRegisterSerializerPair(t, true));
+            Assertion.Assert(intrinsic != null, "Unable to get intrinsic serializer for type {0}, thought it should be implemented for Rd-types.", type);
+            var pair = SerializerReflectionUtil.ConvertPair(intrinsic, type);
+
+            myStaticSerializers[type] = pair;
+          }
+          else if (ReflectionSerializerVerifier.IsScalar(type))
           {
             myStaticSerializers[type] = CreateScalar(type, instance);
           }
@@ -143,39 +156,6 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
       else
         Assertion.AssertNotNull(serializerPair,
           $"Unable to register type: {type.ToString(true)}, undetected circular dependency. Enable Mode.IsAssertion to get the cycle.");
-
-      return serializerPair;
-    }
-  }
-
-  internal SerializerPair CreateMemberSerializer(Type serializerType, bool allowNullable, bool instanceSerializer, MemberInfo? mi)
-  {
-    if (mi != null && !ReflectionSerializerVerifier.HasIntrinsic(serializerType.GetTypeInfo()))
-    {
-      if (!allowNullable)
-        ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
-      else
-        ReflectionSerializerVerifier.AssertDataMemberDeclaration(mi);
-    }
-
-    var serializerTypeInfo = serializerType.GetTypeInfo();
-    var implementingTypeInfo = ReflectionSerializerVerifier.GetImplementingType(serializerTypeInfo).GetTypeInfo();
-    myCatalog.AddType(implementingTypeInfo);
-
-    if (serializerTypeInfo.IsGenericType && !(ReflectionSerializerVerifier.HasRdModelAttribute(serializerTypeInfo) || ReflectionSerializerVerifier.HasRdExtAttribute(serializerTypeInfo))
-                                         && !ReflectionSerializerVerifier.IsScalar(implementingTypeInfo))
-    {
-      return CreateGenericSerializer(serializerTypeInfo, implementingTypeInfo);
-    }
-    else
-    {
-      var serializerPair = GetOrRegisterSerializerPair(serializerType, instanceSerializer);
-      if (serializerPair == null)
-      {
-        if (Mode.IsAssertion)
-          Assertion.Fail($"Unable to create serializer for {serializerType.ToString(true)}: circular dependency detected: {Join(" -> ", myCurrentSerializersChain.Select(t => Types.ToString(t, true)).ToArray())}");
-        throw new Assertion.AssertionException($"Undetected circular dependency during serializing {serializerType.ToString(true)}. Enable Assertion mode to get detailed information.");
-      }
 
       return serializerPair;
     }
@@ -227,7 +207,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     {
       var mi = memberInfos[index];
       var returnType = ReflectionUtil.GetReturnType(mi);
-      var serPair = CreateMemberSerializer(serializerType: returnType, allowNullable: allowNullable, instanceSerializer: false, mi: mi);
+      var serPair = GetOrRegisterSerializerPair(returnType);
       memberDeserializers[index] = SerializerReflectionUtil.ConvertReader<object>(serPair.Reader);
       memberSerializers[index] = SerializerReflectionUtil.ConvertWriter<object?>(serPair.Writer);
     }
@@ -299,9 +279,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     {
       if (type != implementation)
       {
-        return new SerializerPair(
-          SerializerReflectionUtil.ConvertReader<object>(intrinsic.Reader),
-          SerializerReflectionUtil.ConvertWriter<object?>(intrinsic.Writer));
+        return new SerializerPair(intrinsic.Reader, intrinsic.Writer);
       }
       return intrinsic;
     }

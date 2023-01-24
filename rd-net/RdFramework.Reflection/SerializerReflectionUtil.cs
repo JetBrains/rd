@@ -198,6 +198,29 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
+    internal static SerializerPair ConvertPair(SerializerPair serializers, Type desiredType)
+    {
+      return (SerializerPair)ourConvertSerializerPair.MakeGenericMethod(serializers.Writer.GetType().GetGenericArguments()[0], desiredType).Invoke(null, new object[] { serializers });
+    }
+
+    private static readonly MethodInfo ourConvertSerializerPair = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(ConvertPairGeneric), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static SerializerPair ConvertPairGeneric<TIn, TOut>(SerializerPair serializers)
+    {
+      if (typeof(TIn) == typeof(TOut))
+        return serializers;
+
+      var read = serializers.GetReader<TIn>();
+      var write = serializers.GetWriter<TIn>();
+
+      if (typeof(TOut).IsAssignableFrom(typeof(TIn)))
+        return new SerializerPair(read, CtxWriteTypedToObject<TIn, TOut>(write));
+
+      if (typeof(TIn).IsAssignableFrom(typeof(TOut)))
+        return new SerializerPair(CtxReadTypedToObject<TIn, TOut>(read), write);
+
+      return new SerializerPair(CtxReadTypedToObject<TIn, TOut>(read), CtxWriteTypedToObject<TIn, TOut>(write));
+    }
+
     internal static CtxReadDelegate<TOut> ConvertReader<TOut>(object reader)
     {
       if (reader is CtxReadDelegate<TOut> objReader)
