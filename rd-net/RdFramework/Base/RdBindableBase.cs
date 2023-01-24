@@ -85,10 +85,15 @@ namespace JetBrains.Rd.Base
         }
       );
       
-      Proto.Scheduler.AssertThread(this);
+      AssertThread();
 
       using (Signal.PriorityAdviseCookie.Create())
         Init(lf);
+    }
+
+    protected virtual void AssertThread()
+    {
+      Proto.Scheduler.AssertThread(this);
     }
 
     protected virtual void Init(Lifetime lifetime)
