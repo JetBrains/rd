@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿#if !NET35
+using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection;
 
@@ -14,3 +15,4 @@ public partial class ProxyGeneratorCalls
   /// </summary>
   const string n = nameof(Test07);
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !NET35
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Rd;
@@ -11,9 +12,6 @@ namespace Test.RdFramework.Reflection
   [TestFixture] [Apartment(System.Threading.ApartmentState.STA)]
   public class ProxyGeneratorScalarInterfaceSerializerTest : RdReflectionTestBase
   {
-#if NET35
-    private static TaskHack Task = new TaskHack();
-#endif
 
     [Test]
     public void TestSimple()
@@ -103,3 +101,5 @@ namespace Test.RdFramework.Reflection
     }
   }
 }
+
+#endif

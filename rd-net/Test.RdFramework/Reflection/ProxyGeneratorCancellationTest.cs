@@ -6,15 +6,16 @@ using JetBrains.Rd.Reflection;
 using JetBrains.Threading;
 using NUnit.Framework;
 
-#if NET35
-    private static TaskHack Task = new TaskHack();
-#endif
 
 namespace Test.RdFramework.Reflection
 {
   [TestFixture]
   public class ProxyGeneratorCancellationTest : ProxyGeneratorTestBase
   {
+#if NET35
+    private static TaskHack Task = new TaskHack();
+#endif
+
     protected override bool IsAsync => true;
 
     [RdRpc]
@@ -45,7 +46,7 @@ namespace Test.RdFramework.Reflection
 
       public Task AlwaysCancelled()
       {
-        return Task.Factory.StartNew(() =>
+        return Task.Run(() =>
         {
           Thread.Sleep(100);
           throw new OperationCanceledException();

@@ -25,7 +25,7 @@ public class ProxyGeneratorOverloadsTest : RdReflectionTestBase
 
   [RdExt] public class Calls : RdExtReflectionBindableBase, ICalls
   {
-    public Guid GetLangPreferences(Guid langServiceGuid) => Guid.Parse("3FB51DAC-EFAB-48D0-9535-D96B79E928B8");
-    public Guid[] GetLangPreferences(Guid[] langServiceGuids) => new[] {Guid.Parse("156F86F9-C90D-4D84-B3BB-4568BE3644D4")};
+    public Guid GetLangPreferences(Guid langServiceGuid) => new("3FB51DAC-EFAB-48D0-9535-D96B79E928B8");
+    public Guid[] GetLangPreferences(Guid[] langServiceGuids) => new[] {new Guid("156F86F9-C90D-4D84-B3BB-4568BE3644D4")};
   }
 }

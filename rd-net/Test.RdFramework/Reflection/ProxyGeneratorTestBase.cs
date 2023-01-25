@@ -14,6 +14,10 @@ namespace Test.RdFramework.Reflection
 {
   public class ProxyGeneratorTestBase : RdReflectionTestBase
   {
+#if NET35
+    private static TaskHack Task = new TaskHack();
+#endif
+
     protected RdBindableBase myClient;
     protected object myProxy;
 
