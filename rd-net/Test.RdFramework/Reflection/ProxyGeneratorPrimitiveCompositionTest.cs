@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
@@ -31,7 +30,6 @@ public class ProxyGeneratorPrimitiveCompositionTest : ProxyGeneratorTestBase
   }
 
   [Test]
-  public ConfiguredTaskAwaitable TestAsyncNet35_wrapper() => TestAsync().ConfigureAwait(false);
   public async Task TestAsync()
   {
     await YieldToClient();

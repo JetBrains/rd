@@ -35,17 +35,13 @@ namespace Test.RdFramework.Reflection
       var catalog = new SimpleTypesCatalog();
       var serializer = new ReflectionSerializers(catalog);
       var activator = new ReflectionRdActivator(serializer, catalog);
-      try
+      var exception = Assert.Throws<Assertion.AssertionException>(() =>
       {
         var activate = activator.Activate(type);
         serializer.GetOrRegisterSerializerPair(type);
+      });
 
-        Assert.Fail("Should throw");
-      }
-      catch (Exception e)
-      {
-        Console.WriteLine(e);
-      };
+      Console.WriteLine(exception);
     }
 #endif
 
