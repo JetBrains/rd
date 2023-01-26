@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
@@ -58,6 +59,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncNet35_wrapper() => TestAsync().ConfigureAwait(false);
     public async Task TestAsync()
     {
       await YieldToClient();
@@ -78,6 +80,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test, Repeat(10), Description("Repeat test as it reveal cancellation race")]
+    public ConfiguredTaskAwaitable TestSyncCallNet35_wrapper() => TestSyncCall().ConfigureAwait(false);
     public async Task TestSyncCall()
     {
       SwitchingScheduler.Disable(TestLifetime);

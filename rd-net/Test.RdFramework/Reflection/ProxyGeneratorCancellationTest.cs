@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Lifetimes;
@@ -55,6 +56,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncCancelNet35_wrapper() => TestAsyncCancel().ConfigureAwait(false);
     public async Task TestAsyncCancel()
     {
       bool? isCancelled = null;
@@ -74,6 +76,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncExternalCancellationNet35_wrapper() => TestAsyncExternalCancellation().ConfigureAwait(false);
     public async Task TestAsyncExternalCancellation()
     {
       bool? isCancelled = null;
@@ -89,6 +92,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncNet35_wrapper() => TestAsync().ConfigureAwait(false);
     public async Task TestAsync()
     {
       bool? isCancelled = null;

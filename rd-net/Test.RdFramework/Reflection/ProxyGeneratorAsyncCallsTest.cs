@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
@@ -155,6 +156,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncNet35() => TestAsync().ConfigureAwait(false);
     public async Task TestAsync()
     {
       string result = null;
@@ -171,6 +173,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncVoidNet35_wrapper() => TestAsyncVoid().ConfigureAwait(false);
     public async Task TestAsyncVoid()
     {
       // todo: really check long running task result
@@ -178,6 +181,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestAsyncModelsNet35_wrapper() => TestAsyncModels().ConfigureAwait(false);
     public async Task TestAsyncModels()
     {
       await TestTemplate<AsyncModelsTest, IAsyncModelsTestDifferentName>(async proxy =>
@@ -190,15 +194,23 @@ namespace Test.RdFramework.Reflection
       });
     }
 
-    [Test] public async Task TestAsyncSum1() => await TestAsyncCalls(async model => Assert.AreEqual(await model.iSum(100, -150), -50));
-    [Test] public async Task TestAsyncSum2() => await TestAsyncCalls(async model => Assert.AreEqual(await model.uiSum(uint.MaxValue, 0), uint.MaxValue));
-    [Test] public async Task TestAsyncSum3() => await TestAsyncCalls(async model => Assert.AreEqual(await model.sSum(100, -150), -50));
-    [Test] public async Task TestAsyncSum4() => await TestAsyncCalls(async model => Assert.AreEqual(await model.usSum(ushort.MaxValue, 1), 0));
-    [Test] public async Task TestAsyncSum5() => await TestAsyncCalls(async model => Assert.AreEqual(await model.lSum(long.MaxValue, 0), long.MaxValue));
-    [Test] public async Task TestAsyncSum6() => await TestAsyncCalls(async model => Assert.AreEqual(await model.ulSum(ulong.MaxValue, 0), ulong.MaxValue));
-    [Test] public async Task TestAsyncSum7() => await TestAsyncCalls(async model => Assert.AreEqual(await model.bSum(byte.MaxValue, 1), 0));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum1Net35_wrapper() => TestAsyncSum1().ConfigureAwait(false);
+    public async Task TestAsyncSum1() => await TestAsyncCalls(async model => Assert.AreEqual(await model.iSum(100, -150), -50));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum2Net35_wrapper() => TestAsyncSum2().ConfigureAwait(false);
+    public async Task TestAsyncSum2() => await TestAsyncCalls(async model => Assert.AreEqual(await model.uiSum(uint.MaxValue, 0), uint.MaxValue));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum3Net35_wrapper() => TestAsyncSum3().ConfigureAwait(false);
+    public async Task TestAsyncSum3() => await TestAsyncCalls(async model => Assert.AreEqual(await model.sSum(100, -150), -50));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum4Net35_wrapper() => TestAsyncSum4().ConfigureAwait(false);
+    public async Task TestAsyncSum4() => await TestAsyncCalls(async model => Assert.AreEqual(await model.usSum(ushort.MaxValue, 1), 0));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum5Net35_wrapper() => TestAsyncSum5().ConfigureAwait(false);
+    public async Task TestAsyncSum5() => await TestAsyncCalls(async model => Assert.AreEqual(await model.lSum(long.MaxValue, 0), long.MaxValue));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum6Net35_wrapper() => TestAsyncSum6().ConfigureAwait(false);
+    public async Task TestAsyncSum6() => await TestAsyncCalls(async model => Assert.AreEqual(await model.ulSum(ulong.MaxValue, 0), ulong.MaxValue));
+    [Test] public ConfiguredTaskAwaitable TestAsyncSum7Net35_wrapper() => TestAsyncSum7().ConfigureAwait(false);
+    public async Task TestAsyncSum7() => await TestAsyncCalls(async model => Assert.AreEqual(await model.bSum(byte.MaxValue, 1), 0));
 
     [Test, Description("Sync call in and asynchonous enviroment")]
+    public ConfiguredTaskAwaitable TestSyncCallNet35_wrapper() => TestSyncCall().ConfigureAwait(false);
     public async Task TestSyncCall()
     {
       await TestSyncCalls(async m =>
@@ -211,6 +223,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestPrimitiveCompositionNet35_wrapper() => TestPrimitiveComposition().ConfigureAwait(false);
     public async Task TestPrimitiveComposition()
     {
       await TestAsyncCalls(model =>

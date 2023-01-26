@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
@@ -49,6 +50,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public ConfiguredTaskAwaitable TestNet35_wrapper() => Test().ConfigureAwait(false);
     public async Task Test()
     {
       await YieldToClient();

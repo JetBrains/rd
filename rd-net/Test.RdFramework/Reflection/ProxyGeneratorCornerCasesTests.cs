@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
@@ -16,6 +17,7 @@ namespace Test.RdFramework.Reflection
     protected override bool IsAsync => true;
 
     [Test]
+    public ConfiguredTaskAwaitable TestUnregisteredTypeNet35_wrapper() => TestUnregisteredType().ConfigureAwait(false);
     public async Task TestUnregisteredType()
     {
       await TestTemplate<UnknownSerializer, IUnknownSerializer>(async s =>
