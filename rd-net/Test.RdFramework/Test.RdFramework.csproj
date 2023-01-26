@@ -19,6 +19,10 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.17" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
+        <Compile Remove="Reflection" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\RdFramework.Reflection\RdFramework.Reflection.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
