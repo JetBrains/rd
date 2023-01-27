@@ -10,7 +10,7 @@ public class ReflectionSerializersPrimitivesTest
   [Test]
   public void TestNonPolymorphicForPrimitive()
   {
-    var s = new ReflectionSerializers(new SimpleTypesCatalog()).WithBasicCollectionSerializers();
+    var s = new ReflectionSerializers(new SimpleTypesCatalog());
     var pair = s.GetOrRegisterSerializerPair(typeof(IViewableList<string>), true);
 
     Assert.False(pair.IsPolymorphic);

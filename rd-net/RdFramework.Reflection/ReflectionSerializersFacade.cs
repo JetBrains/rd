@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Reflection
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
       ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog, blackListChecker);
-      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers).WithBasicCollectionSerializers();
+      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers);
 
       ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(allowSave));
       Activator = activator ?? new ReflectionRdActivator(Serializers, ProxyGenerator, TypesCatalog);

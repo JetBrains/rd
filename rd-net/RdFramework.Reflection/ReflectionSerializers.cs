@@ -68,11 +68,16 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
   /// </summary>
   public ISignal<Type> BeforeCreation { get; } = new Signal<Type>();
 
-  public ReflectionSerializers(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null)
+  public ReflectionSerializers(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null, bool withExtensions = true)
   {
     myCatalog = typeCatalog;
     myScalars = scalars ?? new ScalarSerializer(typeCatalog, blackListChecker);
     Serializers.RegisterFrameworkMarshallers(this);
+    
+    if (withExtensions)
+    {
+      ScalarCollectionExtension.AttachCollectionSerializers(this);
+    }
   }
 
   public SerializerPair GetOrRegisterSerializerPair(Type type, bool instance = false)

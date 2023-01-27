@@ -11,7 +11,13 @@ namespace JetBrains.Rd.Reflection;
 /// </summary>
 public static class ScalarCollectionExtension
 {
+  [Obsolete("NOP method. Basic collection serializers are enabled by default")]
   public static ReflectionSerializers WithBasicCollectionSerializers(this ReflectionSerializers self)
+  {
+    return self;
+  }
+
+  public static void AttachCollectionSerializers(ReflectionSerializers self)
   {
     self.BeforeCreation.Advise(Lifetime.Eternal, type =>
     {
@@ -42,7 +48,6 @@ public static class ScalarCollectionExtension
         self.Register(type, result);
       }
     });
-    return self;
   }
 
   private static SerializerPair CreateArraySerializer<T>(ISerializersSource serializersSource)
