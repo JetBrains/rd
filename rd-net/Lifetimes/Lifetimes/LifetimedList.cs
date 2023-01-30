@@ -252,7 +252,7 @@ namespace JetBrains.Lifetimes
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void ReleaseLock(BoolBitSlice slice)
     {
-      Assertion.Assert(slice[myState], "Must be under mutex");
+      if (Mode.IsAssertion) Assertion.Assert(slice[myState], "Must be under mutex");
       slice.InterlockedUpdate(ref myState, false);
     }
 

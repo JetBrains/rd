@@ -37,7 +37,7 @@ namespace JetBrains.Rd.Reflection
     {
       var type = ProxyGenerator.CreateType<TInterface>();
       var proxyInstance = Activator.ActivateBind(type, lifetime, protocol) as TInterface;
-      Assertion.Assert(proxyInstance != null, "Unable to cast proxy to desired interface ({0})", typeof(TInterface));
+      Assertion.AssertNotNull(proxyInstance, "Unable to cast proxy to desired interface ({0})", typeof(TInterface));
       return proxyInstance;
     }
 

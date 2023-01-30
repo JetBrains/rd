@@ -24,71 +24,71 @@ public ref struct JetConditionalInterpolatedStringHandler
   
   public string ToStringAndClear()
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     return myHandler.ToStringAndClear();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void AppendLiteral(string value)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendLiteral(value);
   }
 
   public void AppendFormatted<T>(T value)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value);
   }
 
   public void AppendFormatted<T>(T value, string? format)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value, format);
   }
 
   public void AppendFormatted<T>(T value, int alignment)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value, alignment);
   }
 
   public void AppendFormatted<T>(T value, int alignment, string? format)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value, alignment, format);
   }
 
   // Commented out, because the compiler will require System.Memory for a project that uses string interpolation 
   // public void AppendFormatted(ReadOnlySpan<char> value)
   // {
-  //   Assertion.Assert(IsEnabled);
+  //   if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
   //   myHandler.AppendFormatted(value);
   // }
   //
   // public void AppendFormatted(ReadOnlySpan<char> value, int alignment = 0, string? format = null)
   // {
-  //   Assertion.Assert(IsEnabled);
+  //   if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
   //   myHandler.AppendFormatted(value, alignment, format);
   // }
 
   public void AppendFormatted(string? value)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value);
   }
 
   // ReSharper disable once MethodOverloadWithOptionalParameter
   public void AppendFormatted(string? value, int alignment = 0, string? format = null)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value, alignment, format);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void AppendFormatted(object? value, int alignment = 0, string? format = null)
   {
-    Assertion.Assert(IsEnabled);
+    if (Mode.IsAssertion) Assertion.Assert(IsEnabled);
     myHandler.AppendFormatted(value, alignment, format);
   }
 }

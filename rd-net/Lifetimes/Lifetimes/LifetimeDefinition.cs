@@ -86,7 +86,7 @@ namespace JetBrains.Lifetimes
       }
 
       var hasValue  = map.TryGetValue(this, out var old);
-      Assertion.Assert(hasValue == (old > 0), "Illegal state, hasValue={0}, _old={1}", hasValue, old);
+      if (Mode.IsAssertion) Assertion.Assert(hasValue == (old > 0), "Illegal state, hasValue={0}, _old={1}", hasValue, old);
       
       var _new = old + increment;
       if (_new == 0)
@@ -379,7 +379,7 @@ namespace JetBrains.Lifetimes
         while (true)
         {          
           var s = myDef.myState;
-          Assertion.Assert(ourMutexSlice[s], "{0}: Mutex must be owned", myDef);
+          if (Mode.IsAssertion) Assertion.Assert(ourMutexSlice[s], "{0}: Mutex must be owned", myDef);
     
           if (Interlocked.CompareExchange(ref myDef.myState, ourMutexSlice.Updated(s, false), s) == s)
             break;
@@ -391,7 +391,7 @@ namespace JetBrains.Lifetimes
 
     private bool IncrementStatusIfEqualsTo(LifetimeStatus status)
     {
-      Assertion.Assert(!IsEternal, "Trying to change eternal lifetime");
+      if (Mode.IsAssertion) Assertion.Assert(!IsEternal, "Trying to change eternal lifetime");
 
       while (true)
       {
@@ -465,14 +465,14 @@ namespace JetBrains.Lifetimes
         SpinWaitEx.SpinUntil(() => !ourMutexSlice[myState]);
       
       Destruct();      
-      Assertion.Assert(Status == LifetimeStatus.Terminated, "{0}: bad status for termination finish", this);
+      if (Mode.IsAssertion) Assertion.Assert(Status == LifetimeStatus.Terminated, "{0}: bad status for termination finish", this);
       Diagnostics(nameof(LifetimeStatus.Terminated));
     }
     
     
     private void MarkCancelingRecursively()
     {
-      Assertion.Assert(!IsEternal, "Trying to terminate eternal lifetime");
+      if (Mode.IsAssertion) Assertion.Assert(!IsEternal, "Trying to terminate eternal lifetime");
 
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Alive))
         return;
@@ -499,12 +499,12 @@ namespace JetBrains.Lifetimes
     private void Destruct()
     {
       var status = Status;
-      Assertion.Assert(status == LifetimeStatus.Terminating, "{0}: bad status for destructuring start", this);
-      Assertion.Assert(ourMutexSlice[myState] == false, "{0}: mutex must be released in this point", this);
+      if (Mode.IsAssertion) Assertion.Assert(status == LifetimeStatus.Terminating, "{0}: bad status for destructuring start", this);
+      if (Mode.IsAssertion) Assertion.Assert(ourMutexSlice[myState] == false, "{0}: mutex must be released in this point", this);
       //no one can take mutex after this point
 
       var resources = myResources;
-      Assertion.Assert(resources != null, "{0}: `resources` can't be null on destructuring stage", this);
+      if (Mode.IsAssertion) Assertion.Assert(resources != null, "{0}: `resources` can't be null on destructuring stage", this);
       
       for (var i = myResCount - 1; i >= 0; i--)
       {
@@ -561,7 +561,7 @@ namespace JetBrains.Lifetimes
       }
       
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
-      Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
+      if (Mode.IsAssertion) Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
     }
 
     
@@ -588,9 +588,9 @@ namespace JetBrains.Lifetimes
           return false;
 
         var resources = myResources;
-        Assertion.Assert(resources != null, "{0}: `resources` can't be null under mutex while status < Terminating", this);
+        if (Mode.IsAssertion) Assertion.Assert(resources != null, "{0}: `resources` can't be null under mutex while status < Terminating", this);
         
-        if (myResCount == resources.Length)
+        if (myResCount == resources!.Length)
         {
           var countAfterCleaning = 0;
           for (var i = 0; i < myResCount; i++)
@@ -650,7 +650,7 @@ namespace JetBrains.Lifetimes
     internal void Attach(LifetimeDefinition child, bool inheritTimeoutKind)
     {
       if (child == null) throw new ArgumentNullException(nameof(child));
-      Assertion.Require(!child.IsEternal, "{0}: can't attach eternal lifetime", this);
+      if (Mode.IsAssertion) Assertion.Require(!child.IsEternal, "{0}: can't attach eternal lifetime", this);
 
       if (child.Status >= LifetimeStatus.Canceling) //should not normally happen
         return;
@@ -1012,7 +1012,7 @@ namespace JetBrains.Lifetimes
         {
           if (!mutex.Success)
           {
-            Assertion.Assert(!ReferenceEquals(this, Terminated), "Mustn't reach this point on lifetime `Terminated`");
+            if (Mode.IsAssertion) Assertion.Assert(!ReferenceEquals(this, Terminated), "Mustn't reach this point on lifetime `Terminated`");
             return Terminated.ToCancellationToken(); //to get stable CancellationTokenSource (for tasks to finish in Canceling state, rather than Faulted)
           }
           

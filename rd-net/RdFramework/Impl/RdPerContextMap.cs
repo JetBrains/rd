@@ -52,7 +52,7 @@ namespace JetBrains.Rd.Impl
         public V GetForCurrentContext()
         {
           var currentId = Context.ValueForPerContextEntity;
-          Assertion.Assert(currentId != null, "No value set for key {0}", Context.Key);
+          if (Mode.IsAssertion) Assertion.Assert(currentId != null, "No value set for key {0}", Context.Key);
           if (TryGetValue(currentId, out var value))
             return value;
           Assertion.Fail("{0} has no value for Context {1} = {2}", Location, Context.Key, currentId);

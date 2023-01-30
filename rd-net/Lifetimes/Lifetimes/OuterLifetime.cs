@@ -132,7 +132,7 @@ namespace JetBrains.Lifetimes
     [PublicAPI]
     public static LifetimeDefinition DefineIntersection(params OuterLifetime[] lifetimes)
     {
-      Assertion.Assert(lifetimes.Length > 0, "One or more parameters must be passed");
+      if (Mode.IsAssertion) Assertion.Assert(lifetimes.Length > 0, "One or more parameters must be passed");
       var res = new LifetimeDefinition();
       var minTimeoutKind = (LifetimeTerminationTimeoutKind)int.MaxValue;
       foreach (var lf in lifetimes)

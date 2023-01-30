@@ -41,8 +41,8 @@ namespace JetBrains.Util.Util
         : type == typeof(long) ? 64
         : 0;
       
-      Assertion.Assert(maxBit > 0, "Unsupported host type: {0}", type);      
-      Assertion.Assert(HiBit <= maxBit, "{0} doesn't fit into host type {1}; must be inside [0, {2}]", this, type, maxBit);
+      if (Mode.IsAssertion) Assertion.Assert(maxBit > 0, "Unsupported host type: {0}", type);      
+      if (Mode.IsAssertion) Assertion.Assert(HiBit <= maxBit, "{0} doesn't fit into host type {1}; must be inside [0, {2}]", this, type, maxBit);
     }
 
     [AssertionMethod]
@@ -50,8 +50,8 @@ namespace JetBrains.Util.Util
     {
       if (!Mode.IsAssertion) return;
 
-      Assertion.Assert(value >= 0, "[{0}] must be >= 0; actual: {1}", nameof(value), value);
-      Assertion.Assert(value <= Mask, "[{0}] must be <= {1} to fit {2}; actual: {3}", nameof(value), Mask, this, value);
+      if (Mode.IsAssertion) Assertion.Assert(value >= 0, "[{0}] must be >= 0; actual: {1}", nameof(value), value);
+      if (Mode.IsAssertion) Assertion.Assert(value <= Mask, "[{0}] must be <= {1} to fit {2}; actual: {3}", nameof(value), Mask, this, value);
     }
     
     #endregion

@@ -104,14 +104,14 @@ namespace JetBrains.Rd.Impl
     
     private void EnsureHeavyHandlerExists<T>(RdContext<T> context)
     {
-      Assertion.Assert(context.IsHeavy, "key.IsHeavy");
+      if (Mode.IsAssertion) Assertion.Assert(context.IsHeavy, "key.IsHeavy");
       if (!myHandlersMap.ContainsKey(context)) 
         DoAddHandler(context, new HeavySingleContextHandler<T>(context, this));
     }
     
     private void EnsureLightHandlerExists<T>(RdContext<T> context)
     {
-      Assertion.Assert(!context.IsHeavy, "!key.IsHeavy");
+      if (Mode.IsAssertion) Assertion.Assert(!context.IsHeavy, "!key.IsHeavy");
       if (!myHandlersMap.ContainsKey(context)) 
         DoAddHandler(context, new LightSingleContextHandler<T>(context));
     }
@@ -121,7 +121,7 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     public IViewableSet<T> GetValueSet<T>(RdContext<T> context) where T : notnull
     {
-      Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
+      if (Mode.IsAssertion) Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
       return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).LocalValueSet;
     }
 
@@ -163,7 +163,7 @@ namespace JetBrains.Rd.Impl
     public MessageContextCookie ReadContextsIntoCookie(UnsafeReader reader)
     {
       var numContextValues = reader.ReadShort();
-      Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
+      if (Mode.IsAssertion) Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
       
       var pool = ourListsPool ??= new SingleThreadListPool<IDisposable>(2);
       var contextValueRestorersCookie = pool.RentCookie();

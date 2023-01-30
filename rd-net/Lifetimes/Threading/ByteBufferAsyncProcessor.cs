@@ -49,7 +49,7 @@ namespace JetBrains.Threading
       {
         if (Ptr == 0)
         {
-          Assertion.Assert(SeqN == long.MaxValue, "SeqN == long.MaxValue, but: {0}", SeqN);
+          if (Mode.IsAssertion) Assertion.Assert(SeqN == long.MaxValue, "SeqN == long.MaxValue, but: {0}", SeqN);
           return true;
         }
         
@@ -238,7 +238,7 @@ namespace JetBrains.Threading
 
     public void ReprocessUnacknowledged()
     {
-      Assertion.Require(Thread.CurrentThread != myAsyncProcessingThread, "Thread.CurrentThread != myAsyncProcessingThread");
+      Assertion.Require(Thread.CurrentThread != myAsyncProcessingThread);
       lock (myLock)
       {
         while (myProcessing) 
@@ -293,8 +293,8 @@ namespace JetBrains.Threading
 
           ShrinkConditionally(myChunkToProcess);
 
-          Assertion.Assert(myChunkToProcess.Ptr > 0, "chunkToProcess.Ptr > 0");
-          Assertion.Assert(myChunkToFill != myChunkToProcess && myChunkToFill.IsNotProcessed, "myChunkToFill != chunkToProcess && myChunkToFill.IsNotProcessed");
+          if (Mode.IsAssertion) Assertion.Assert(myChunkToProcess.Ptr > 0, "chunkToProcess.Ptr > 0");
+          if (Mode.IsAssertion) Assertion.Assert(myChunkToFill != myChunkToProcess && myChunkToFill.IsNotProcessed, "myChunkToFill != chunkToProcess && myChunkToFill.IsNotProcessed");
 
           myProcessing = true;
         }
@@ -368,7 +368,7 @@ namespace JetBrains.Threading
     
     public void Clear()
     {
-      Assertion.Require(Thread.CurrentThread != myAsyncProcessingThread, "Thread.CurrentThread != myAsyncProcessingThread");
+      Assertion.Require(Thread.CurrentThread != myAsyncProcessingThread);
 
       lock (myLock)
       {
@@ -487,7 +487,7 @@ namespace JetBrains.Threading
         var ptr = 0;
         while (ptr < count)
         {
-          Assertion.Assert(myChunkToFill.IsNotProcessed, "myChunkToFill.IsNotProcessed");
+          if (Mode.IsAssertion) Assertion.Assert(myChunkToFill.IsNotProcessed);
           var rest = count - ptr;
           var available = ChunkSize - myChunkToFill.Ptr;
           if (available > 0)
@@ -523,7 +523,7 @@ namespace JetBrains.Threading
 
     private void ShrinkConditionally(Chunk upTo) //under lock
     {
-      Assertion.Assert(myChunkToFill != upTo, "myFreeChunk != upTo");
+      if (Mode.IsAssertion) Assertion.Assert(myChunkToFill != upTo, "myFreeChunk != upTo");
       
       var now = Environment.TickCount;
       if (now - myLastShrinkOrGrowTimeMs <= ShrinkIntervalMs && /*overflow*/now - myLastShrinkOrGrowTimeMs >= 0 ) return;

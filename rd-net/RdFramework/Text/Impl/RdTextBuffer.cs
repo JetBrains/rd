@@ -78,7 +78,7 @@ namespace JetBrains.Rd.Text.Impl
       var newVersion = rdTextBufferChange.Version;
       var change = rdTextBufferChange.Change;
       var side = rdTextBufferChange.Origin;
-      Assertion.Assert(side != myLocalOrigin, "side != mySide");
+      if (Mode.IsAssertion) Assertion.Assert(side != myLocalOrigin, "side != mySide");
 
       var masterVersionRemote = newVersion.Master;
       var slaveVersionRemote = newVersion.Slave;
@@ -89,7 +89,7 @@ namespace JetBrains.Rd.Text.Impl
       }
       else if (change.Kind == RdTextChangeKind.PromoteVersion)
       {
-        Assertion.Assert(!IsMaster, "!IsMaster");
+        if (Mode.IsAssertion) Assertion.Assert(!IsMaster);
         BufferVersion = newVersion;
         return;
       }
@@ -97,7 +97,7 @@ namespace JetBrains.Rd.Text.Impl
       {
         if (IsMaster)
         {
-          Assertion.Assert(myChangesToConfirmOrRollback.Count == 0, "changesToConfirmOrRollback.IsEmpty()");
+          if (Mode.IsAssertion) Assertion.Assert(myChangesToConfirmOrRollback.Count == 0);
           if (masterVersionRemote != BufferVersion.Master)
           {
             // reject the change. we've already sent overriding change.
@@ -143,8 +143,7 @@ namespace JetBrains.Rd.Text.Impl
 
     public void Fire(RdTextChange change)
     {
-      Assertion.Assert(Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion,
-        "Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion");
+      if (Mode.IsAssertion) Assertion.Assert(Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion);
       if (Delegate.IsBound) Proto.Scheduler.AssertThread();
 
       if (IsMaster && myActiveSession != null && myActiveSession.IsCommitting)
@@ -175,7 +174,7 @@ namespace JetBrains.Rd.Text.Impl
 
     public void Advise(Lifetime lifetime, Action<RdTextChange> change)
     {
-      Assertion.Assert(Delegate.IsBound, "Delegate.IsBound");
+      Assertion.Assert(Delegate.IsBound);
       Proto.Scheduler.AssertThread();
       
       myTextChanged.Advise(lifetime, change);
@@ -197,8 +196,8 @@ namespace JetBrains.Rd.Text.Impl
 
     public ITypingSession StartTypingSession(Lifetime lifetime)
     {
-      Assertion.Assert(myActiveSession == null, "myActiveSession == null");
-      Assertion.Assert(lifetime.IsAlive, "lifetime.IsAlive");
+      Assertion.Assert(myActiveSession == null);
+      Assertion.Assert(lifetime.IsAlive);
 
       myActiveSession = new TextBufferTypingSession(this);
       lifetime.OnTermination(() => myActiveSession = null);
@@ -295,7 +294,7 @@ namespace JetBrains.Rd.Text.Impl
 
       public void StartCommitRemoteVersion()
       {
-        Assertion.Assert(myState == State.Opened, "myState == State.Opened");
+        Assertion.Assert(myState == State.Opened);
         myState = State.Committing;
       }
     }

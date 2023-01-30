@@ -76,7 +76,7 @@ namespace JetBrains.Rd.Impl
       {
         var reader = UnsafeReader.CreateReader(p, msg.Length);
         var rdid0 = RdId.Read(reader);
-        Assertion.Assert(reactive.RdId.Equals(rdid0), "Not equals: {0}, {1}", reactive.RdId, rdid0);
+        if (Mode.IsAssertion) Assertion.Assert(reactive.RdId.Equals(rdid0), "Not equals: {0}, {1}", reactive.RdId, rdid0);
 
         if (BackwardsCompatibleWireFormat)
           reactive.OnWireReceived(reader);
@@ -99,7 +99,7 @@ namespace JetBrains.Rd.Impl
         
         foreach (var keyValuePair in entries)
         {
-          Assertion.Assert(keyValuePair.Value.CustomSchedulerMessages.Count == 0, "Unexpected custom scheduler messages");
+          if (Mode.IsAssertion) Assertion.Assert(keyValuePair.Value.CustomSchedulerMessages.Count == 0, "Unexpected custom scheduler messages");
           
           foreach (var messageBytes in keyValuePair.Value.DefaultSchedulerMessages)
             Dispatch(keyValuePair.Key, messageBytes);
@@ -110,7 +110,7 @@ namespace JetBrains.Rd.Impl
     //on poller thread
     public void Dispatch(RdId id, byte[] msg)
     {
-      Assertion.Require(!id.IsNil, "!id.IsNil");
+      Assertion.Require(!id.IsNil);
 
       lock (myLock)
       {
@@ -161,7 +161,7 @@ namespace JetBrains.Rd.Impl
                   {
                     foreach (var m in currentBroker.CustomSchedulerMessages)
                     {
-                      Assertion.Assert(subscription.WireScheduler != myScheduler,
+                      if (Mode.IsAssertion) Assertion.Assert(subscription.WireScheduler != myScheduler,
                         "subscription.Scheduler != myScheduler for {0}", subscription);
                       Invoke(subscription, m);
                     }

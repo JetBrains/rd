@@ -53,8 +53,7 @@ namespace JetBrains.Util
 
     private void AssertTimeStamp()
     {
-      if (!Mode.IsAssertion) return;
-      Assertion.Assert(myStartTimeStamp != 0, $"{nameof(LocalStopwatch)} must be created using `{nameof(StartNew)}` method");
+      if (Mode.IsAssertion) Assertion.Assert(myStartTimeStamp != 0, $"{nameof(LocalStopwatch)} must be created using `{nameof(StartNew)}` method");
     }
   }
 }

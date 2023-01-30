@@ -153,8 +153,8 @@ namespace JetBrains.Rd.Reflection
     /// <returns></returns>
     public DynamicMethod CreateAdapter(Type selfType, MethodInfo method)
     {
-      Assertion.Assert(!method.IsGenericMethod, "generics are not supported");
-      Assertion.Assert(!method.IsStatic, "only instance methods are supported");
+      Assertion.Require(!method.IsGenericMethod, "generics are not supported");
+      Assertion.Require(!method.IsStatic, "only instance methods are supported");
 
       // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter",
       //   TypeAttributes.Public & TypeAttributes.Sealed & TypeAttributes.Abstract & TypeAttributes.BeforeFieldInit);
@@ -373,8 +373,8 @@ namespace JetBrains.Rd.Reflection
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
 
-      Assertion.Assert(!requestType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, requestType);
-      Assertion.Assert(!responseType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, responseType);
+      Assertion.Require(!requestType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, requestType);
+      Assertion.Require(!responseType.IsByRef, "ByRef is not supported. ({0}.{1})", typebuilder, responseType);
 
       var fieldType = typeof(IRdCall<,>).MakeGenericType(requestType, responseType);
       var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);
@@ -403,7 +403,7 @@ namespace JetBrains.Rd.Reflection
       {
         if (parameters[i].ParameterType == typeof(Lifetime))
         {
-          Assertion.Assert(lifetimeArgument == -1, "Only one lifetime parameter is allowed");
+          Assertion.Require(lifetimeArgument == -1, "Only one lifetime parameter is allowed");
           lifetimeArgument = i;
         }
       }
@@ -503,7 +503,7 @@ namespace JetBrains.Rd.Reflection
       foreach (var fieldName in GetBindableFieldsNames(i))
         yield return fieldName;
 
-      Assertion.Assert(rpcInterface.IsInterface, "Interface is expected");
+      Assertion.Require(rpcInterface.IsInterface, "Interface is expected");
       foreach (var member in rpcInterface.GetMembers(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public))
       {
         switch (member.MemberType)

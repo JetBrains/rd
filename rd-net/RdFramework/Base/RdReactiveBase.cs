@@ -93,7 +93,7 @@ namespace JetBrains.Rd.Base
     
     protected internal LocalChangeCookie UsingLocalChange()
     {
-      Assertion.Assert(!IsLocalChange, "!IsLocalChange: {0}", this);
+      if (Mode.IsAssertion) Assertion.Assert(!IsLocalChange, "!IsLocalChange: {0}", this);
       if (IsBound && !Async) AssertThreading();
       return new LocalChangeCookie(this);
     }
