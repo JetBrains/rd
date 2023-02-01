@@ -257,6 +257,24 @@ namespace Test.RdFramework.Reflection
           writer.Write((byte)value.Green);
           writer.Write((byte)value.Blue);
         }
+
+        public virtual bool Equals(NoRedIntrinsic5 other)
+        {
+          if (ReferenceEquals(null, other)) return false;
+          if (ReferenceEquals(this, other)) return true;
+          return Red == other.Red && Green == other.Green && Blue == other.Blue;
+        }
+
+        public override int GetHashCode()
+        {
+          unchecked
+          {
+            var hashCode = Red;
+            hashCode = (hashCode * 397) ^ Green;
+            hashCode = (hashCode * 397) ^ Blue;
+            return hashCode;
+          }
+        }
       }
     }
 

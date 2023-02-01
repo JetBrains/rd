@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks>net472;netcoreapp3.1;net35</TargetFrameworks>
 
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
@@ -19,6 +19,10 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.17" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
+        <Compile Remove="Reflection" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\RdFramework.Reflection\RdFramework.Reflection.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
@@ -26,7 +30,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Test.RdFramework.Generator\Test.RdFramework.Generator.csproj"
+      <ProjectReference Condition="'$(TargetFramework)' != 'net35'"
+        Include="..\Test.RdFramework.Generator\Test.RdFramework.Generator.csproj"
         OutputItemType="Analyzer"
         ReferenceOutputAssembly="false" />
     </ItemGroup>

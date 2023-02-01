@@ -134,6 +134,7 @@ namespace Test.RdFramework.Reflection
       });
     }
 
+#if !NET35
     [Test]
     public void TestListInterface()
     {
@@ -155,6 +156,22 @@ namespace Test.RdFramework.Reflection
         CollectionAssert.AreEqual(c.Objects.Value.EnumerableInts      , s.Objects.Value.EnumerableInts      );
       });
     }
+    
+    [RdExt]
+    public class ListInterfacesExt : RdExtReflectionBindableBase
+    {
+      public IViewableProperty<ListOwner1> Objects { get; }
+
+      public class ListOwner1
+      {
+        public IList<int> InterfaceListOfInts;
+        public List<int> ListOfInts;
+        public IList<int> CollectionOfInts;
+        public IReadOnlyList<int> ReadonlyListInts;
+        public IEnumerable<int> EnumerableInts;
+      }
+    }
+#endif
 
     [Test]
     public void TestEventArgs()
@@ -285,21 +302,6 @@ namespace Test.RdFramework.Reflection
     public class MyEventArgs<T> : EventArgs
     {
       public T Value;
-    }
-
-    [RdExt]
-    public class ListInterfacesExt : RdExtReflectionBindableBase
-    {
-      public IViewableProperty<ListOwner1> Objects { get; }
-
-      public class ListOwner1
-      {
-        public IList<int> InterfaceListOfInts;
-        public List<int> ListOfInts;
-        public IList<int> CollectionOfInts;
-        public IReadOnlyList<int> ReadonlyListInts;
-        public IEnumerable<int> EnumerableInts;
-      }
     }
 
     [RdExt]

@@ -1,11 +1,7 @@
-﻿using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
-using JetBrains.Core;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
-using JetBrains.Rd.Tasks;
 using NUnit.Framework;
 
 namespace Test.RdFramework.Reflection
@@ -17,6 +13,10 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class ProxyGeneratorModelTest : ProxyGeneratorTestBase
   {
+#if NET35
+    private static TaskHack Task = new TaskHack();
+#endif
+
     protected override bool IsAsync => true;
 
     [RdRpc]

@@ -17,9 +17,9 @@ namespace Test.RdFramework
   [Apartment(System.Threading.ApartmentState.STA)]
   public class RdTaskTest : RdFrameworkTestBase
   {
-    #if NET35
+#if NET35
     static TaskHack Task = new TaskHack();
-    #endif
+#endif
 
     private static readonly int ourKey = 1;
 
@@ -217,8 +217,9 @@ namespace Test.RdFramework
       {
         Assert.IsTrue(scheduler.IsActive);
         Assert.AreNotEqual(thread, Thread.CurrentThread);
-
-        Volatile.Write(ref point1, true);
+        
+        point1 = true;
+        Thread.MemoryBarrier();
 
         SpinWaitEx.SpinUntil(TestLifetime, TimeSpan.FromSeconds(10), () => point2);
         Assert.IsTrue(point2);
@@ -237,7 +238,8 @@ namespace Test.RdFramework
       Assert.IsTrue(point1);
       Assert.IsFalse(result.Maybe.HasValue);
 
-      Volatile.Write(ref point2, true);
+      point2 = true;
+      Thread.MemoryBarrier();
       SpinWaitEx.SpinUntil(TestLifetime, () => result.Maybe.HasValue);
 
       Assert.AreEqual("0", result.Value.Result);

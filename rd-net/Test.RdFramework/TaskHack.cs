@@ -19,10 +19,19 @@ namespace Test.RdFramework
       return Task.Factory.StartNew(() => result);
     }
 
+    public Task Run(Action action) => Task.Factory.StartNew(action);
+    public Task<TResult> Run<TResult>(Func<TResult> function) => Task.Factory.StartNew(function);
+    public Task Run(Func<Task?> function) => Task.Factory.StartNew(function);
+    // public Task<TResult> Run<TResult>(Func<Task<TResult>?> function) => Task.Factory.StartNew<Task<TResult>>(function, default);
+
+//     public Task<TResult> Run<TResult>(Func<TResult> function) => Task.Factory.StartNew(function);
+//     public Task Run(Func<Task> function) => Task.Factory.StartNew(function);
+//     public Task Run(Action action) => Task.Factory.StartNew(action);
+
     public Task CompletedTask { get; }
 
     // only for test purposes
-    public Task Delay(int ms, CancellationToken token)
+    public Task Delay(int ms, CancellationToken token = default)
     {
       return Task.Factory.StartNew(() =>
       {
