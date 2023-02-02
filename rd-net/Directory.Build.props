@@ -5,8 +5,12 @@
     <AssemblyVersion>777.0.0</AssemblyVersion>
     <FileVersion>777.0.0</FileVersion>
     <LangVersion>10.0</LangVersion>
-    
-    <!--
+
+    <!-- Disable SourceLink and queries to git in debug mode. It removes warning about missing non-required submodules. -->
+    <EnableSourceLink Condition="'$(Configuration)' == 'Debug'">false</EnableSourceLink>
+    <EnableSourceControlManagerQueries Condition="'$(Configuration)' == 'Debug'">false</EnableSourceControlManagerQueries>
+
+      <!--
       NOTE: We support .NET 3.5 assemblies for running inside of Unity 2017. It uses an old mcs compiler, which doesn't
       recognize NRT annotations. Feel free to drop these hacks and revert to nullable: enable after we stop supporting
       mcs versions without this commit:
