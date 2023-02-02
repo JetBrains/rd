@@ -290,7 +290,7 @@ namespace JetBrains.Rd.Impl
         }
       }
 
-      var uncasted = ctxReadDelegate(ctx, reader);
+      var uncasted = ctxReadDelegate(ctx, reader)!;
       if (Mode.IsAssertion) Assertion.Assert(uncasted is T, "Bad cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(T).Name, uncasted.GetType().Name);
       return (T)uncasted;
     }

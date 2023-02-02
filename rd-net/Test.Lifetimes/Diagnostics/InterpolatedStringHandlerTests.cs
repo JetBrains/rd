@@ -1,4 +1,5 @@
-﻿#if !NET35
+﻿#nullable enable
+#if !NET35
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -219,7 +220,7 @@ public class InterpolatedStringHandlerTests
 
     {
       var notNullValue = (object)0;
-      var nullValue = (object)null;
+      var nullValue = (object?)null;
 
       var _ = notNullValue.NotNull($"{ThrowTestException()}");
       Assert.Throws<TestException>(() =>
@@ -402,7 +403,7 @@ public class InterpolatedStringHandlerTests
       if (exception != null)
         throw new Exception("Unexpected exception", exception);
 
-      return message;
+      return message ?? string.Empty;
     }
   }
 }
