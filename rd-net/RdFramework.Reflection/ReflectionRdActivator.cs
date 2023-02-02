@@ -133,7 +133,7 @@ namespace JetBrains.Rd.Reflection
     {
       if (Mode.IsAssertion)
       {
-        Assertion.Assert(myCurrentActivationChain != null);
+        Assertion.AssertNotNull(myCurrentActivationChain);
         Assertion.Assert(!myCurrentActivationChain.Contains(type),
             $"Unable to activate {type.FullName}: circular dependency detected: {string.Join(" -> ", myCurrentActivationChain.Select(t => t.FullName).ToArray())}");
         myCurrentActivationChain.Enqueue(type);
@@ -280,7 +280,7 @@ namespace JetBrains.Rd.Reflection
 
     private void EnsureFakeTupleRegistered(Type type)
     {
-      Assertion.Assert(myTypesCatalog != null, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
+      Assertion.AssertNotNull(myTypesCatalog, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
       myTypesCatalog.AddType(type);
     }
 

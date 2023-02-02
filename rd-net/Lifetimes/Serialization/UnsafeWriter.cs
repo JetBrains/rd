@@ -309,8 +309,8 @@ namespace JetBrains.Serialization
         LogLog.Verbose(LogCategory, "Realloc UnsafeWriter, current: {0:N0} bytes, new: {1:N0}", myCurrentAllocSize, reallocSize);
         if (myStartPtr != null) //already terminated
         {
-          if (Mode.IsAssertion) Assertion.Assert(myMemory != null);
-          myStartPtr = (byte*) myMemory!.Realloc(reallocSize);
+          Assertion.AssertNotNull(myMemory);
+          myStartPtr = (byte*) myMemory.Realloc(reallocSize);
           myPtr = myStartPtr + myCount;
           myCurrentAllocSize = reallocSize;
           myCount = newCount;

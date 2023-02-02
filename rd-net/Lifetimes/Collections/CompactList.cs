@@ -76,7 +76,7 @@ namespace JetBrains.Collections
         case 0: return -1;
         case 1: return comparer.Equals(mySingleValue, item) ? 0 : -1;          
         default:
-          Assertion.Assert(myMultipleValues != null);
+          Assertion.AssertNotNull(myMultipleValues);
           for (var i = myMultipleValues.Count - 1; i >= 0; i--)
           {
             if (comparer.Equals(myMultipleValues[i], item)) return i;
@@ -99,13 +99,13 @@ namespace JetBrains.Collections
           return true;
           
         case 2:
-          Assertion.Assert(myMultipleValues != null);
+          Assertion.AssertNotNull(myMultipleValues);
           mySingleValue = myMultipleValues[1-index];
           myMultipleValues = SingleMarker;
           return true;
             
         default:
-          Assertion.Assert(myMultipleValues != null);
+          Assertion.AssertNotNull(myMultipleValues);
           myMultipleValues.RemoveAt(index);
           return true;
       }      

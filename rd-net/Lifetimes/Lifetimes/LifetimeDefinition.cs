@@ -588,7 +588,7 @@ namespace JetBrains.Lifetimes
           return false;
 
         var resources = myResources;
-        if (Mode.IsAssertion) Assertion.Assert(resources != null, "{0}: `resources` can't be null under mutex while status < Terminating", this);
+        if (Mode.IsAssertion) Assertion.AssertNotNull(resources, "{0}: `resources` can't be null under mutex while status < Terminating", this);
         
         if (myResCount == resources!.Length)
         {
