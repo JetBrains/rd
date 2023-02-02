@@ -257,7 +257,7 @@ namespace Test.RdFramework.Reflection
     
     public void RunScalarTest<T>(T instance, Action<T, T> checkEqual)
     {
-      var scalar = new ReflectionSerializers(CFacade.TypesCatalog).WithBasicCollectionSerializers();
+      var scalar = new ReflectionSerializers(CFacade.TypesCatalog);
       var serializerPair = scalar.GetOrRegisterSerializerPair(typeof(T), true);
       var reader = serializerPair.GetReader<T>();
       var writer = serializerPair.GetWriter<T>();

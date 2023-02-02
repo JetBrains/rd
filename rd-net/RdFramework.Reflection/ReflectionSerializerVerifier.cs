@@ -211,12 +211,17 @@ namespace JetBrains.Rd.Reflection
 
     public static void AssertEitherExtModelAttribute(TypeInfo type)
     {
-      /*Assertion.Assert((HasRdExtAttribute(type) || HasRdModelAttribute(type)), $"Invalid RdModel: expected to have either {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)} ({type.ToString(true)}).");*/
-      Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
+      if (Mode.IsAssertion)
+      {
+        Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
+      }
     }
 
     public static void AssertRoot(TypeInfo type)
     {
+      if (!Mode.IsAssertion)
+        return;
+
       if (HasRdExtAttribute(type))
       {
         AssertEitherExtModelAttribute(type);
@@ -263,6 +268,9 @@ namespace JetBrains.Rd.Reflection
 
     public static void AssertValidRdExt(TypeInfo type)
     {
+      if (!Mode.IsAssertion)
+        return;
+
       var isRdModel = HasRdExtAttribute(type);
       Assertion.Assert(isRdModel, $"Error in {type.ToString(true)} model: no {nameof(RdExtAttribute)} attribute specified");
       Assertion.Assert(!type.IsValueType, $"Error in {type.ToString(true)} model: can't be ValueType");
@@ -305,6 +313,9 @@ namespace JetBrains.Rd.Reflection
 
     public static void AssertMemberDeclaration(MemberInfo member)
     {
+      if (!Mode.IsAssertion)
+        return;
+
       var isMember = IsMemberDeclaration(member);
       Assertion.Assert(isMember,
         $"Error in {member.DeclaringType?.ToString(true)}: model: member {member.Name} " +
@@ -314,6 +325,9 @@ namespace JetBrains.Rd.Reflection
 
     public static void AssertValidRdModel(TypeInfo type)
     {
+      if (!Mode.IsAssertion)
+        return;
+
       var isDataModel = HasRdModelAttribute(type);
       Assertion.Assert(isDataModel, $"Error in {type.ToString(true)} model: no {nameof(RdModelAttribute)} attribute specified");
       Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
@@ -337,6 +351,9 @@ namespace JetBrains.Rd.Reflection
 
     private static void AssertValidScalar(TypeInfo type)
     {
+      if (!Mode.IsAssertion)
+        return;
+
       if (HasRdModelAttribute(type) || HasRdExtAttribute(type))
       {
         Assertion.Fail($"Scalar type {type.ToString(true)} is invalid. {nameof(RdExtAttribute)} and {nameof(RdModelAttribute)} are not applicable to scalars since they can't be bound to the protocol.");
@@ -354,6 +371,9 @@ namespace JetBrains.Rd.Reflection
 
     public static void AssertDataMemberDeclaration(MemberInfo member)
     {
+      if (!Mode.IsAssertion)
+        return;
+
       var isMember = IsModelMemberDeclaration(member);
       Assertion.Assert(isMember,
         $"Error in {member.DeclaringType?.ToString(true)}: data model: member {member.Name} " +

@@ -59,7 +59,7 @@ namespace JetBrains.Rd.Impl
     [PublicAPI]
     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdMap<K, V> value)
     {
-      Assertion.Assert(!value.RdId.IsNil, "!value.RdId.IsNil");
+      Assertion.Assert(!value.RdId.IsNil);
       writer.Write(value.RdId);
     }
     #endregion

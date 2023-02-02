@@ -292,7 +292,7 @@ namespace JetBrains.Rd.Impl
               if (seqN > myMaxReceivedSeqn || seqN == 1 /*TODO new client, possible duplicate problem if ack for seqN=1 from previous client's connection hasn't passed*/)
               {
                 myMaxReceivedSeqn = seqN; //will be acknowledged when we read whole message
-                Assertion.Assert(myPkg.Available > 0, "myPkgBuffer.Available > 0");
+                Assertion.Assert(myPkg.Available > 0);
 
                 var sizeToCopy = Math.Min(size, myPkg.Available);
                 myPkg.MoveTo(buffer, offset, sizeToCopy);

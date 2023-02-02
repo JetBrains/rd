@@ -35,11 +35,11 @@ namespace JetBrains.Rd.Impl
     public bool Read(ref BufferWindow helper, Receiver receiver, int size)
     {
       var hi = Hi + size;
-      Assertion.Assert(hi <= Data.Length, "hi <= Data.Length");
+      if (Mode.IsAssertion) Assertion.Assert(hi <= Data.Length, "hi <= Data.Length");
       
       while (Hi < hi)
       {
-        Assertion.Assert(helper.Hi >= helper.Lo, "helper.Hi >= helper.Lo");
+        if (Mode.IsAssertion) Assertion.Assert(helper.Hi >= helper.Lo, "helper.Hi >= helper.Lo");
 
         if (helper.Available > 0)
         {
@@ -61,7 +61,7 @@ namespace JetBrains.Rd.Impl
           helper.Hi += receiverAvailable;
         }
       }
-      Assertion.Assert(Hi == hi, "lo == hi");
+      if (Mode.IsAssertion) Assertion.Assert(Hi == hi, "lo == hi");
       return true;
     }
   }

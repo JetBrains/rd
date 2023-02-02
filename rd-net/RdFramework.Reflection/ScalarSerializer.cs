@@ -206,7 +206,7 @@ namespace JetBrains.Rd.Reflection
       var writerConvert = Expression.ConvertChecked(writerParameter, typeof(int));
       var writerCaster = Expression.Lambda<Func<T, int>>(writerConvert, writerParameter).Compile();
 
-      Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
+      if (Mode.IsAssertion) Assertion.Require(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
       var result = new SerializerPair(
         (CtxReadDelegate<T>) ((ctx, reader) => readerCaster(reader.ReadInt())),
         (CtxWriteDelegate<T>) ((ctx, w, o) => w.Write(writerCaster(o))));

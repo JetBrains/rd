@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Reflection
     {
       TypesCatalog = typesCatalog ?? new SimpleTypesCatalog();
       ScalarSerializers = scalarSerializers ?? new ScalarSerializer(TypesCatalog, blackListChecker);
-      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers).WithBasicCollectionSerializers();
+      Serializers = reflectionSerializers ?? new ReflectionSerializers(TypesCatalog, ScalarSerializers);
 
       ProxyGenerator = proxyGenerator ?? new ProxyGeneratorCache(new ProxyGenerator(allowSave));
       Activator = activator ?? new ReflectionRdActivator(Serializers, ProxyGenerator, TypesCatalog);
@@ -37,7 +37,7 @@ namespace JetBrains.Rd.Reflection
     {
       var type = ProxyGenerator.CreateType<TInterface>();
       var proxyInstance = Activator.ActivateBind(type, lifetime, protocol) as TInterface;
-      Assertion.Assert(proxyInstance != null, "Unable to cast proxy to desired interface ({0})", typeof(TInterface));
+      Assertion.AssertNotNull(proxyInstance, "Unable to cast proxy to desired interface ({0})", typeof(TInterface));
       return proxyInstance;
     }
 

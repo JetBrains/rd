@@ -208,7 +208,7 @@ namespace JetBrains.Serialization
         else
         {
           var cookie = NativeMemoryPool.ReserveMiss();
-          Assertion.Assert(cookie.IsValid, "memoryCookie.IsValid");
+          if (Mode.IsAssertion) Assertion.Assert(cookie.IsValid, "memoryCookie.IsValid");
           myMemory = cookie.myHolder;
           if (cookie.CausedAllocation)
           {
@@ -309,7 +309,7 @@ namespace JetBrains.Serialization
         LogLog.Verbose(LogCategory, "Realloc UnsafeWriter, current: {0:N0} bytes, new: {1:N0}", myCurrentAllocSize, reallocSize);
         if (myStartPtr != null) //already terminated
         {
-          Assertion.Assert(myMemory != null, "myMemory != null");
+          Assertion.AssertNotNull(myMemory);
           myStartPtr = (byte*) myMemory.Realloc(reallocSize);
           myPtr = myStartPtr + myCount;
           myCurrentAllocSize = reallocSize;
@@ -453,7 +453,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(DateTime value)
     {
-      Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
+      if (Mode.IsAssertion) Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
       Write(value.Ticks);
     }
     

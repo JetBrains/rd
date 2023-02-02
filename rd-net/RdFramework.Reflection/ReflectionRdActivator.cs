@@ -133,7 +133,7 @@ namespace JetBrains.Rd.Reflection
     {
       if (Mode.IsAssertion)
       {
-        Assertion.Assert(myCurrentActivationChain != null, "myCurrentActivationChain != null");
+        Assertion.AssertNotNull(myCurrentActivationChain);
         Assertion.Assert(!myCurrentActivationChain.Contains(type),
             $"Unable to activate {type.FullName}: circular dependency detected: {string.Join(" -> ", myCurrentActivationChain.Select(t => t.FullName).ToArray())}");
         myCurrentActivationChain.Enqueue(type);
@@ -142,7 +142,7 @@ namespace JetBrains.Rd.Reflection
       var typeInfo = type.GetTypeInfo();
       ReflectionSerializerVerifier.AssertEitherExtModelAttribute(typeInfo);
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
-      Assertion.Assert(typeof(RdBindableBase).GetTypeInfo().IsAssignableFrom(implementingType),
+      if (Mode.IsAssertion) Assertion.Assert(typeof(RdBindableBase).GetTypeInfo().IsAssignableFrom(implementingType),
         $"Unable to activate {type.FullName}: type should be {nameof(RdBindableBase)}");
 
       object instance;
@@ -194,7 +194,7 @@ namespace JetBrains.Rd.Reflection
         else
         {
           var implementingType = ReflectionSerializerVerifier.GetImplementingType(ReflectionUtil.GetReturnType(mi).GetTypeInfo());
-          Assertion.Assert(currentValue.GetType() == implementingType, 
+          if (Mode.IsAssertion) Assertion.Assert(currentValue.GetType() == implementingType, 
             "Bindable field {0} was initialized with incompatible type. Expected type {1}, actual {2}", 
             mi, 
             implementingType.ToString(true), 
@@ -222,8 +222,7 @@ namespace JetBrains.Rd.Reflection
           var responseNonTaskType = ProxyGenerator.GetResponseType(interfaceMethod, unwrapTask: true);
           var responseType = ProxyGenerator.GetResponseType(interfaceMethod, unwrapTask: false);
           var endPointType = typeof(RdCall<,>).MakeGenericType(requestType, responseNonTaskType);
-          var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo());
-          Assertion.Assert(endpoint != null, "endpoint != null");
+          var endpoint = ActivateGenericMember(name, endPointType.GetTypeInfo()).NotNull();
           SetAsync(endpoint);
           if (endpoint is RdReactiveBase reactiveBase)
             reactiveBase.ValueCanBeNull = true;
@@ -281,7 +280,7 @@ namespace JetBrains.Rd.Reflection
 
     private void EnsureFakeTupleRegistered(Type type)
     {
-      Assertion.Assert(myTypesCatalog != null, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
+      Assertion.AssertNotNull(myTypesCatalog, "myPolymorphicTypesCatalog required to be NotNull when RPC is used");
       myTypesCatalog.AddType(type);
     }
 

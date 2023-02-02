@@ -78,7 +78,7 @@ namespace JetBrains.Rd.Impl
     [PublicAPI]
     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdList<V> value)
     {
-      Assertion.Assert(!value.RdId.IsNil, "!value.Id.IsNil");
+      Assertion.Assert(!value.RdId.IsNil);
       writer.Write(value.myNextVersion);
       writer.Write(value.RdId);
     }

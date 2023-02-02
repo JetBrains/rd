@@ -250,7 +250,7 @@ namespace JetBrains.Diagnostics
     /// <exception cref="IOException"></exception>
     public static TextWriterLogFactory CreateFileLogFactory(Lifetime lifetime, string path, bool append = false, LoggingLevel enabledLevel = LoggingLevel.VERBOSE)
     {      
-      Assertion.Assert(lifetime.IsAlive, "lifetime.IsTerminated");
+      Assertion.Require(lifetime.IsAlive, "lifetime.IsTerminated");
       
       var directory = Path.GetDirectoryName(path);
       if (directory == null)

@@ -68,11 +68,16 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
   /// </summary>
   public ISignal<Type> BeforeCreation { get; } = new Signal<Type>();
 
-  public ReflectionSerializers(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null)
+  public ReflectionSerializers(ITypesCatalog typeCatalog, IScalarSerializers? scalars = null, Predicate<Type>? blackListChecker = null, bool withExtensions = true)
   {
     myCatalog = typeCatalog;
     myScalars = scalars ?? new ScalarSerializer(typeCatalog, blackListChecker);
     Serializers.RegisterFrameworkMarshallers(this);
+    
+    if (withExtensions)
+    {
+      ScalarCollectionExtension.AttachCollectionSerializers(this);
+    }
   }
 
   public SerializerPair GetOrRegisterSerializerPair(Type type, bool instance = false)
@@ -115,7 +120,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
           if (isRdType)
           {
             var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingType, t => GetOrRegisterSerializerPair(t, true));
-            Assertion.Assert(intrinsic != null, "Unable to get intrinsic serializer for type {0}, thought it should be implemented for Rd-types.", type);
+            Assertion.AssertNotNull(intrinsic, "Unable to get intrinsic serializer for type {0}, thought it should be implemented for Rd-types.", type);
             var pair = SerializerReflectionUtil.ConvertPair(intrinsic, type);
 
             myStaticSerializers[type] = pair;
@@ -129,8 +134,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
             var intrinsic = Intrinsic.TryGetIntrinsicSerializer(
               type.GetTypeInfo(),
               t => GetOrRegisterSerializerPair(t, true));
-            Assertion.Assert(intrinsic != null,
-              "Unable to get intrinsic serializer for type {0}, thought API detect the presense of it. Probably it was only partially implemented",
+            Assertion.AssertNotNull(intrinsic, "Unable to get intrinsic serializer for type {0}, thought API detect the presense of it. Probably it was only partially implemented",
               type);
             myStaticSerializers[type] = intrinsic;
           }
@@ -171,7 +175,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     var pair = myScalars.CreateSerializer(serializerType, this);
     if (pair == null)
       Assertion.Fail($"Unable to Create serializer for scalar type {serializerType.ToString(true)}");
-    else
+    else if (Mode.IsAssertion)
       Assertion.Assert(!pair.IsPolymorphic, "Polymorphic serializer can't be stored in staticSerializers");
 
     return pair;
@@ -182,7 +186,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
   /// </summary>
   private void RegisterModelSerializer<T>()
   {
-    Assertion.Assert(!ReflectionSerializerVerifier.IsScalar(typeof(T)), "Type {0} should be either RdModel or RdExt.", typeof(T));
+    if (Mode.IsAssertion) Assertion.Assert(!ReflectionSerializerVerifier.IsScalar(typeof(T)), "Type {0} should be either RdModel or RdExt.", typeof(T));
 
     var typeInfo = typeof(T).GetTypeInfo();
     ReflectionSerializerVerifier.AssertRoot(typeInfo);
@@ -305,9 +309,9 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     {
       if (SerializerReflectionUtil.CanBePolymorphic(type))
       {
-        Assertion.Assert(!myStaticSerializers.ContainsKey(type),
+        if (Mode.IsAssertion) Assertion.Assert(!myStaticSerializers.ContainsKey(type),
           $"Unable to register serializers serializer: a static serializer for type {type.ToString(true)} already exists");
-        Assertion.Assert(!myPolySerializersSealed,
+        Assertion.Require(!myPolySerializersSealed,
           $"Unable to register serializers serializer for type {type.ToString(true)}. It is too late to register a serializers serializer as one or more models were already activated.");
 
         myInstanceSerializers.Add(type, pair);

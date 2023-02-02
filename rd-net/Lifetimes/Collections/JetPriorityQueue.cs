@@ -153,13 +153,13 @@ namespace JetBrains.Collections
       if (cmp1 != 0) return cmp1;
 
       var cmp2 = myVersions[left] - myVersions[right];
-      Assertion.Assert(cmp2 != 0, "Equal versions for indices {0}, {1}, version = {2}", left, right, myVersions[left]);
+      if (Mode.IsAssertion) Assertion.Assert(cmp2 != 0, "Equal versions for indices {0}, {1}, version = {2}", left, right, myVersions[left]);
       return cmp2 > 0 ? 1 : -1;
     }
     
     private void HeapDown(int idx)
     {
-      Assertion.Assert(idx >= 1 && idx < myStorage.Count, "Index {0} is not in range [1, {1})", idx, myStorage.Count);
+      if (Mode.IsAssertion) Assertion.Assert(idx >= 1 && idx < myStorage.Count, "Index {0} is not in range [1, {1})", idx, myStorage.Count);
 
       int n = myStorage.Count;
       int left = (idx << 1) | 0;
@@ -181,7 +181,7 @@ namespace JetBrains.Collections
 
     private void HeapUp(int idx)
     {      
-      Assertion.Assert(idx >= 1 && idx < myStorage.Count, "Index {0} is not in range [1, {1})", idx, myStorage.Count);
+      if (Mode.IsAssertion) Assertion.Assert(idx >= 1 && idx < myStorage.Count, "Index {0} is not in range [1, {1})", idx, myStorage.Count);
       
       while (idx > 1 && Compare(idx, idx >> 1) < 0)
       {

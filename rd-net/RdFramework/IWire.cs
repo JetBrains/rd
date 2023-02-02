@@ -97,8 +97,8 @@ namespace JetBrains.Rd
 
     public void Send<TParam>(RdId id, TParam param, Action<TParam, UnsafeWriter> writer)
     {
-      Assertion.Require(!id.IsNil, "!id.IsNil");
-      Assertion.AssertNotNull(writer, "writer != null");
+      Assertion.Require(!id.IsNil);
+      Assertion.AssertNotNull(writer);
 
       using (var cookie = UnsafeWriter.NewThreadLocalWriter())
       {

@@ -30,10 +30,13 @@ public sealed class SerializerPair
     if (reader == null) throw new ArgumentNullException(nameof(reader));
     if (writer == null) throw new ArgumentNullException(nameof(writer));
 
-    Assertion.Assert(reader.GetType().GetGenericTypeDefinition() == typeof(CtxReadDelegate<>),
-      $"Invalid type: expected CtxReaderDelegate, but was {reader.GetType().ToString(true)}");
-    Assertion.Assert(writer.GetType().GetGenericTypeDefinition() == typeof(CtxWriteDelegate<>),
-      $"Invalid type: expected CtxWriteDelegate, but was {writer.GetType().ToString(true)}");
+    if (Mode.IsAssertion)
+    {
+      Assertion.Assert(reader.GetType().GetGenericTypeDefinition() == typeof(CtxReadDelegate<>),
+        $"Invalid type: expected CtxReaderDelegate, but was {reader.GetType().ToString(true)}");
+      Assertion.Assert(writer.GetType().GetGenericTypeDefinition() == typeof(CtxWriteDelegate<>),
+        $"Invalid type: expected CtxWriteDelegate, but was {writer.GetType().ToString(true)}");
+    }
 
     myReader = reader;
     myWriter = writer;
@@ -147,7 +150,7 @@ public sealed class SerializerPair
 
   private static SerializerPair CreateFromNonProtocolMethodsT<T>(MethodInfo readMethod, MethodInfo writeMethod)
   {
-    Assertion.Assert(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType.ToString(true)})");
+    Assertion.Require(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType.ToString(true)})");
 
     void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value)
     {

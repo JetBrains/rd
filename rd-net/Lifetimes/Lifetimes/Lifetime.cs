@@ -734,7 +734,7 @@ namespace JetBrains.Lifetimes
     public static LifetimeDefinition DefineIntersection(params Lifetime[] lifetimes)
     {
       if (lifetimes == null) throw new ArgumentNullException(nameof(lifetimes));
-      Assertion.Assert(lifetimes.Length > 0, "One or more parameters must be passed");
+      if (Mode.IsAssertion) Assertion.Assert(lifetimes.Length > 0, "One or more parameters must be passed");
 
       var res = new LifetimeDefinition();
       var minTimeoutKind = (LifetimeTerminationTimeoutKind)int.MaxValue;

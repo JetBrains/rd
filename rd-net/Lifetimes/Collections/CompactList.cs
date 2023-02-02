@@ -58,8 +58,7 @@ namespace JetBrains.Collections
           mySingleValue = default(T);
           break;
         default:
-          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
-          myMultipleValues.Add(item);
+          myMultipleValues.NotNull().Add(item);
           break;
       }
     }
@@ -77,7 +76,7 @@ namespace JetBrains.Collections
         case 0: return -1;
         case 1: return comparer.Equals(mySingleValue, item) ? 0 : -1;          
         default:
-          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
+          Assertion.AssertNotNull(myMultipleValues);
           for (var i = myMultipleValues.Count - 1; i >= 0; i--)
           {
             if (comparer.Equals(myMultipleValues[i], item)) return i;
@@ -88,7 +87,8 @@ namespace JetBrains.Collections
 
     public bool RemoveAt(int index)
     {
-      Assertion.Assert(index >= 0, "{0} >= 0", index);
+      if (Mode.IsAssertion)
+        Assertion.Assert(index >= 0, "{0} >= 0", index);
       if (index >= Count) return false;
       
       switch (Count)
@@ -99,13 +99,13 @@ namespace JetBrains.Collections
           return true;
           
         case 2:
-          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
+          Assertion.AssertNotNull(myMultipleValues);
           mySingleValue = myMultipleValues[1-index];
           myMultipleValues = SingleMarker;
           return true;
             
         default:
-          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
+          Assertion.AssertNotNull(myMultipleValues);
           myMultipleValues.RemoveAt(index);
           return true;
       }      
@@ -120,8 +120,7 @@ namespace JetBrains.Collections
         case 1:
           return new [] {mySingleValue};
         default:
-          Assertion.Assert(myMultipleValues != null, "myMultipleValues != null");
-          return myMultipleValues.ToArray();
+          return myMultipleValues.NotNull().ToArray();
       }
     }
     

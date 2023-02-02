@@ -202,7 +202,7 @@ namespace JetBrains.Rd.Impl
 #endif
      Enum
     {
-      Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
+      if (Mode.IsAssertion) Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
       return Cast32BitEnum<T>.FromInt(reader.ReadInt());
     }
 
@@ -291,7 +291,7 @@ namespace JetBrains.Rd.Impl
       }
 
       var uncasted = ctxReadDelegate(ctx, reader);
-      Assertion.Assert(uncasted is T, "Bad cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(T).Name, uncasted.GetType().Name);
+      if (Mode.IsAssertion) Assertion.Assert(uncasted is T, "Bad cast for id {0}. Expected: {1}, actual: {2}", typeId, typeof(T).Name, uncasted.GetType().Name);
       return (T)uncasted;
     }
 

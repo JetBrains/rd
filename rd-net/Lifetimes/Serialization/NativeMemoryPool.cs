@@ -233,7 +233,7 @@ namespace JetBrains.Serialization
 
       public ThreadMemoryHolder()
       {
-        Assertion.Assert(myPtr == IntPtr.Zero, "myPtr == IntPtr.Zero");
+        if (Mode.IsAssertion) Assertion.Assert(myPtr == IntPtr.Zero);
         myPtr = AllocateMemory(AllocSize);
         Length = AllocSize;
       }
