@@ -503,8 +503,8 @@ namespace JetBrains.Lifetimes
       if (Mode.IsAssertion) Assertion.Assert(ourMutexSlice[myState] == false, "{0}: mutex must be released in this point", this);
       //no one can take mutex after this point
 
-      var resources = myResources;
-      if (Mode.IsAssertion) Assertion.Assert(resources != null, "{0}: `resources` can't be null on destructuring stage", this);
+      var resources = myResources!;
+      if (Mode.IsAssertion) Assertion.AssertNotNull(resources, "{0}: `resources` can't be null on destructuring stage", this);
       
       for (var i = myResCount - 1; i >= 0; i--)
       {
