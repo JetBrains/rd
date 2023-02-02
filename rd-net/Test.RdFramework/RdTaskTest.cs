@@ -59,7 +59,7 @@ namespace Test.RdFramework
 
       var serverEntity = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<string, string>(), ourKey);
       var clientEntity = BindToClient(LifetimeDefinition.Lifetime, CreateEndpoint<string, string>(x => x.ToString()), ourKey);
-      clientEntity.Set((lf, req) => RdTask.Successful(req == null ? "NULL" : null));
+      clientEntity.SetSync((_, req) => req == null ? "NULL" : null);
 
       Assert.Throws<Assertion.AssertionException>(() =>
       {
@@ -164,10 +164,10 @@ namespace Test.RdFramework
 
       var respSignal = NewRdSignal<int>();
       var endpointLfTerminated = false;
-      call2.Set((endpointLf, _) =>
+      call2.SetSync((endpointLf, _) =>
       {
         endpointLf.OnTermination(() => endpointLfTerminated = true);
-        return RdTask.Successful(respSignal);
+        return respSignal;
       });
 
       var serverEntity = BindToServer(LifetimeDefinition.Lifetime, call1, ourKey);

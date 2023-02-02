@@ -384,7 +384,7 @@ namespace Test.RdFramework.Reflection
         {
         }
 
-        protected bool Equals(ColorFields other)
+        private bool Equals(ColorFields other)
         {
           return Red == other.Red;
         }
