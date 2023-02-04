@@ -942,7 +942,11 @@ open class CSharp50Generator(
 
         fun PrettyPrinter.printDefaultValueWithAttributes(member: Member, typeName: String) {
             getDefaultValue(member, typeName)?.let { defaultValue ->
-                p("[Optional] [DefaultParameterValue($defaultValue)] ")
+                if (defaultValue != "null") {
+                    p("[Optional] [DefaultParameterValue($defaultValue)] ")
+                } else {
+                    p("[Optional] ")
+                }
             }
         }
 
