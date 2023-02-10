@@ -1,0 +1,28 @@
+name: rd-infersharp
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+    - name: Compile
+      run: cd rd-net && dotnet build --configuration Release
+    - name: Run Infer#
+      uses: microsoft/infersharpaction@v1.4
+      id: runinfersharp
+      with:
+        binary-path: 'rd-net/RdFramework.Reflection/bin/Release/net472/'
+    - name: Upload SARIF output to GitHub Security Center
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: infer-out/report.sarif

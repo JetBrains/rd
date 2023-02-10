@@ -15,10 +15,10 @@ jobs:
       TEAMCITY_VERSION: 1 # temporary; to disable cross tests
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Gradle Wrapper Cache
-        uses: actions/cache@v1.1.0
+        uses: actions/cache@v3
         with:
           path: ${{ env.GRADLE_USER_HOME }}/wrapper
           key: ${{ runner.os }}.gradle-wrapper.${{ hashFiles('gradle/**') }}
@@ -34,7 +34,7 @@ jobs:
       - name: Build
         run: ./gradlew build
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ always() }}
         with:
           name: tests-log.${{ runner.os }}
