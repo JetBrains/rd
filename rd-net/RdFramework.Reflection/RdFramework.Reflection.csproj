@@ -23,7 +23,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryType>git</RepositoryType>
         <Authors>JetBrains</Authors>
-        <Copyright>Copyright © JetBrains 2021</Copyright>
+        <Copyright>Copyright © JetBrains $([System.DateTime]::UtcNow.Year)</Copyright>
         <PackageTags>rd reactive distributed protocol</PackageTags>
         <Description>Plugin for JetBrains Networking library (JetBrains.RdFramework) used for defining models using regular C# for C#-C# communications</Description>
 
