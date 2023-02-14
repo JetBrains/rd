@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Threading;
+using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -11,7 +13,7 @@ using Test.Lifetimes;
 using Test.RdFramework.Components;
 
 namespace Test.RdFramework
-{ 
+{
   public abstract class RdFrameworkTestBase : LifetimesTestBase
   {
     protected IProtocol ClientProtocol;
@@ -19,6 +21,8 @@ namespace Test.RdFramework
 
     protected TestWire ClientWire;
     protected TestWire ServerWire;
+    
+    [CanBeNull] private TestWireTapping WireTapping;
 
     [SetUp]
     public override void SetUp()
@@ -29,16 +33,31 @@ namespace Test.RdFramework
 
       var serverDispatcher = CreateScheduler(true);
       var clientDispatcher = CreateScheduler(false);
+      
       var serverR = "Server (R#)";
-      ServerProtocol = new Protocol(serverR, CreateSerializers(true), identities, serverDispatcher, new TestWire(serverDispatcher, serverR, true), LifetimeDefinition.Lifetime);
+      ServerWire = new TestWire(serverDispatcher, serverR, true);
+      ServerProtocol = new Protocol(serverR, CreateSerializers(true), identities, serverDispatcher, ServerWire, LifetimeDefinition.Lifetime);
+      
       var clientIdea = "Client (IDEA)";
-      ClientProtocol = new Protocol(clientIdea, CreateSerializers(false), identities, clientDispatcher, new TestWire(clientDispatcher, clientIdea, false), LifetimeDefinition.Lifetime);
+      ClientWire = new TestWire(clientDispatcher, clientIdea, false);
+      ClientProtocol = new Protocol(clientIdea, CreateSerializers(false), identities, clientDispatcher, ClientWire, LifetimeDefinition.Lifetime);
 
-      ServerWire = (ServerProtocol.Wire as TestWire).NotNull();
-      ClientWire = (ClientProtocol.Wire as TestWire).NotNull();
+      // EnableWireTapping();
 
       ServerWire.Connection = ClientWire;
       ClientWire.Connection = ServerWire;
+    }
+
+    /// <summary>
+    /// Record all communication over the wire and write them to temporary directory
+    /// </summary>
+    private void EnableWireTapping()
+    {
+      var filename = Path.Combine(Path.Combine(Path.GetTempPath(), "RdTestWireTapping"), TestContext.CurrentContext.Test.FullName + ".txt");
+      var directoryName = Path.GetDirectoryName(filename);
+      if (directoryName != null && !Directory.Exists(directoryName))
+        Directory.CreateDirectory(directoryName);
+      WireTapping = new TestWireTapping(filename, ClientWire, ServerWire);
     }
 
     protected virtual IScheduler CreateScheduler(bool isServer)
@@ -65,6 +84,7 @@ namespace Test.RdFramework
       ClientProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
       if (!SpinWait.SpinUntil(() => barrier == 2, 100))
         Log.Root.Error("Either Server or Client scheduler is not empty in 100ms!");
+      WireTapping?.Dispose();
       base.TearDown();
     }
 
