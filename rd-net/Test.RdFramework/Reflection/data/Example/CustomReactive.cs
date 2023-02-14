@@ -1,10 +1,12 @@
 ﻿using JetBrains.Annotations;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
+using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
 
 namespace Test.RdFramework.Reflection
 {
+  [AssertBuiltInType(BuiltInSerializers.BuiltInType.ProtocolCollectionLike2)]
   public sealed class CustomReactive<T1, T2> : RdReactiveBase
   {
     private bool myCreatedFromRead = false;

@@ -41,7 +41,7 @@ namespace Test.RdFramework.Reflection
       });
     }
 
-    public class MyInterfaceMarshaller : IIntrinsicMarshaller<IMyInterface>
+    public class MyInterfaceMarshaller : IBuiltInMarshaller<IMyInterface>
     {
       public IMyInterface Read(SerializationCtx ctx, UnsafeReader reader)
       {

@@ -67,11 +67,11 @@ namespace JetBrains.Rd.Reflection
 
       var typeInfo = type.GetTypeInfo();
 
-      var intrinsic = Intrinsic.TryGetIntrinsicSerializer(typeInfo, t1 => serializers.GetOrRegisterSerializerPair(t1, true));
-      if (intrinsic != null)
+      var builtIn = BuiltInSerializers.TryGet(typeInfo, t1 => serializers.GetOrRegisterSerializerPair(t1, true));
+      if (builtIn != null)
       {
         myTypesCatalog?.AddType(type);
-        return intrinsic;
+        return builtIn;
       }
 
       else if (type.IsEnum)

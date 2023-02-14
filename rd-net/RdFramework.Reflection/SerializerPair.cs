@@ -90,13 +90,16 @@ public sealed class SerializerPair
   private static SerializerPair CreateFromMethodsImpl0<T>(MethodInfo readMethod, MethodInfo writeMethod)
   {
     void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) =>
-      writeMethod.Invoke(null, new[] { ctx, writer, (object?)value, });
+      writeMethod.Invoke(value, new object?[] { ctx, writer });
+
+    void WriterDelegateStatic(SerializationCtx ctx, UnsafeWriter writer, T value) =>
+      writeMethod.Invoke(null, new object?[] { ctx, writer, value, });
 
     T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
-      (T) readMethod.Invoke(null, new object[] { ctx, reader });
+      (T) readMethod.Invoke(null, new object?[] { ctx, reader });
 
     CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
-    CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
+    CtxWriteDelegate<T> ctxWriteDelegate = writeMethod.IsStatic ? WriterDelegateStatic : WriterDelegate;
     return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
   }
 
@@ -141,7 +144,7 @@ public sealed class SerializerPair
     return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
   }
 
-  public static SerializerPair FromMarshaller<T>(IIntrinsicMarshaller<T> marshaller)
+  public static SerializerPair FromMarshaller<T>(IBuiltInMarshaller<T> marshaller)
   {
     CtxReadDelegate<T> ctxReadDelegate = marshaller.Read;
     CtxWriteDelegate<T> ctxWriteDelegate = marshaller.Write;

@@ -119,9 +119,9 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
 
           if (isRdType)
           {
-            var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementingType, t => GetOrRegisterSerializerPair(t, true));
-            Assertion.AssertNotNull(intrinsic, "Unable to get intrinsic serializer for type {0}, thought it should be implemented for Rd-types.", type);
-            var pair = SerializerReflectionUtil.ConvertPair(intrinsic, type);
+            var builtIn = BuiltInSerializers.TryGet(implementingType, t => GetOrRegisterSerializerPair(t, true));
+            Assertion.AssertNotNull(builtIn, "Unable to get built in serializer for type {0}, thought it should be implemented for Rd-types.", type);
+            var pair = SerializerReflectionUtil.ConvertPair(builtIn, type);
 
             myStaticSerializers[type] = pair;
           }
@@ -129,14 +129,14 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
           {
             myStaticSerializers[type] = CreateScalar(type, instance);
           }
-          else if (ReflectionSerializerVerifier.HasIntrinsic(type.GetTypeInfo()))
+          else if (BuiltInSerializers.Has(type.GetTypeInfo()))
           {
-            var intrinsic = Intrinsic.TryGetIntrinsicSerializer(
+            var builtIn = BuiltInSerializers.TryGet(
               type.GetTypeInfo(),
               t => GetOrRegisterSerializerPair(t, true));
-            Assertion.AssertNotNull(intrinsic, "Unable to get intrinsic serializer for type {0}, thought API detect the presense of it. Probably it was only partially implemented",
+            Assertion.AssertNotNull(builtIn, "Unable to get built in serializer for type {0}, thought API detect the presense of it. Probably it was only partially implemented",
               type);
-            myStaticSerializers[type] = intrinsic;
+            myStaticSerializers[type] = builtIn;
           }
           else
           {
@@ -193,10 +193,10 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     var isScalar = ReflectionSerializerVerifier.IsScalar(typeInfo);
     bool allowNullable = ReflectionSerializerVerifier.HasRdModelAttribute(typeInfo) || (isScalar && ReflectionSerializerVerifier.CanBeNull(typeInfo));
 
-    /*      var intrinsicSerializer = TryGetIntrinsicSerializer(typeInfo);
-          if (intrinsicSerializer != null)
+    /*      var builtInSerializer = TryGetBuiltInSerializer(typeInfo);
+          if (builtInSerializer != null)
           {
-            myStaticSerializers[typeof(T)] = intrinsicSerializer;
+            myStaticSerializers[typeof(T)] = builtInSerializer;
             return;
           }*/
 
@@ -278,14 +278,14 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
 
   private SerializerPair CreateGenericSerializer(TypeInfo type, TypeInfo implementation)
   {
-    var intrinsic = Intrinsic.TryGetIntrinsicSerializer(implementation, t => GetOrRegisterSerializerPair(t, true));
-    if (intrinsic != null)
+    var builtIn = BuiltInSerializers.TryGet(implementation, t => GetOrRegisterSerializerPair(t, true));
+    if (builtIn != null)
     {
       if (type != implementation)
       {
-        return new SerializerPair(intrinsic.Reader, intrinsic.Writer);
+        return new SerializerPair(builtIn.Reader, builtIn.Writer);
       }
-      return intrinsic;
+      return builtIn;
     }
 
     throw new Exception($"Unable to register generic type: {type}. Generics types are expected to have Read and Write static methods for serialization.");
