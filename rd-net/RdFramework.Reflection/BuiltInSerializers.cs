@@ -80,15 +80,45 @@ namespace JetBrains.Rd.Reflection
       if (HasBuiltInAttribute(t))
         return BuiltInType.MarshallerAttribute;
 
-      var writeMethod = t.GetMethod("Write", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-      if (writeMethod != null)
+      try
       {
-        var genericLength = t.GetGenericArguments().Length;
-        var parameters = writeMethod.GetParameters();
+        var writeMethod = t.GetMethod("Write", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        if (writeMethod != null)
+        {
+          return CheckWriteMethod(t, writeMethod);
+        }
+      }
+      catch (AmbiguousMatchException)
+      {
+        // More than one Write method exist. We should enumerate members to find appropriate overload. 
+        // not a default branch because of array allocation.
+        foreach (var member in t.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+        {
+          if (member is MethodInfo writeMethod && StringComparer.Ordinal.Equals("Write", writeMethod.Name))
+          {
+            var type = CheckWriteMethod(t, writeMethod);
+            if (type != BuiltInType.None)
+              return type;
+          }
+        }
+      }
+
+      var fieldInfo = t.GetField("Write", BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+      if (fieldInfo != null)
+      {
+        return BuiltInType.StaticFields;
+      }
+
+      return BuiltInType.None;
+
+      static BuiltInType CheckWriteMethod(Type ownerType, MethodInfo methodInfo)
+      {
+        var genericLength = ownerType.GetGenericArguments().Length;
+        var parameters = methodInfo.GetParameters();
         if (genericLength == 1 || genericLength == 2)
         {
           // more than one Read is defined for RdMap. We can't query method by name directly and have to allocate array.
-          var likeReadMethods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+          var likeReadMethods = ownerType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
           foreach (var likeReadMethod in likeReadMethods)
           {
             if (!StringComparer.Ordinal.Equals("Read", likeReadMethod.Name))
@@ -100,22 +130,23 @@ namespace JetBrains.Rd.Reflection
           }
         }
 
-        if (parameters.Length == 0)
-          return BuiltInType.None;
-        var hasSerializationCtx = parameters[0].ParameterType == typeof(SerializationCtx);
-        if (writeMethod.IsStatic)
-          return hasSerializationCtx ? BuiltInType.StaticProtocolMethods : BuiltInType.StaticMethods;
+        var likeProtocol = parameters.Length == 2 + (methodInfo.IsStatic ? 1 : 0) &&
+                           parameters[0].ParameterType == typeof(SerializationCtx) &&
+                           parameters[1].ParameterType == typeof(UnsafeWriter);
+        var likeMethods = parameters.Length == 1 + (methodInfo.IsStatic ? 1 : 0) &&
+                          parameters[0].ParameterType == typeof(UnsafeWriter);
+        if (methodInfo.IsStatic)
+        {
+          if (likeProtocol) return BuiltInType.StaticProtocolMethods;
+          if (likeMethods) return BuiltInType.StaticMethods;
+        }
         else
-          return hasSerializationCtx ? BuiltInType.ProtocolMethods : BuiltInType.Methods;
+        {
+          if (likeProtocol) return BuiltInType.ProtocolMethods;
+          if (likeMethods) return BuiltInType.Methods;
+        }
+        return BuiltInType.None;
       }
-
-      var fieldInfo = t.GetField("Write", BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
-      if (fieldInfo != null)
-      {
-        return BuiltInType.StaticFields;
-      }
-
-      return BuiltInType.None;
     }
 
 

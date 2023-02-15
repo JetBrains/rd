@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Collections.Viewable;
@@ -268,6 +269,10 @@ namespace Test.RdFramework.Reflection
         writer.Write((byte) Green);
         writer.Write((byte) Blue);
       }
+
+      // Overloads with same name are allowed
+      public void Write(Stream stream) { }
+      public static NoRedBuiltIn4<T1, T2> Read(Stream stream) => default;
     }
 
     public class OuterClass<T>
