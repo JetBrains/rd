@@ -2,6 +2,7 @@ package com.jetbrains.rd.generator.gradle
 
 import org.gradle.api.tasks.JavaExec
 import java.io.File
+import java.nio.file.Files
 
 open class RdGenTask : JavaExec() {
     private val local = extensions.create("params", RdGenExtension::class.java, this)
@@ -16,30 +17,30 @@ open class RdGenTask : JavaExec() {
 
     override fun exec() {
         val params = effectiveParams
-        args(params.toArguments())
-
-        val files = project.configurations.getByName("rdGenConfiguration").files
-        val buildScriptFiles = project.buildscript.configurations.getByName("classpath").files
-        val rdFiles: MutableSet<File> = HashSet()
-        for (file in buildScriptFiles) {
-            if (file.name.contains("rd-")) {
-                rdFiles.add(file)
-            }
-        }
-        classpath(files)
-        classpath(rdFiles)
+        val tempGeneratorsFile =
+            if (params.hasGenerators) Files.createTempFile("rd-", ".generators").toFile()
+            else null
         try {
+            args(params.toArguments(tempGeneratorsFile))
+
+            val files = project.configurations.getByName("rdGenConfiguration").files
+            val buildScriptFiles = project.buildscript.configurations.getByName("classpath").files
+            val rdFiles: MutableSet<File> = HashSet()
+            for (file in buildScriptFiles) {
+                if (file.name.contains("rd-")) {
+                    rdFiles.add(file)
+                }
+            }
+            classpath(files)
+            classpath(rdFiles)
+
             super.exec()
         } finally {
-            cleanup(params)
+            tempGeneratorsFile?.delete()
         }
     }
 
     init {
         mainClass.set("com.jetbrains.rd.generator.nova.MainKt")
-    }
-
-    private fun cleanup(params: RdGenExtension) {
-        params.tempGeneratorsFile?.delete()
     }
 }
