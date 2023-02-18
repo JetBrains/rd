@@ -5,6 +5,7 @@ import com.jetbrains.rd.util.getThrowableText
 import com.jetbrains.rd.util.hash.PersistentHash
 import com.jetbrains.rd.util.kli.Kli
 import com.jetbrains.rd.util.reflection.scanForResourcesContaining
+import java.io.Closeable
 import java.io.File
 import java.io.PrintStream
 import java.lang.Class
@@ -140,15 +141,29 @@ class RdGen : Kli() {
 
     private val defaultClassloader = RdGen::class.java.classLoader!!
 
-    fun compileDsl(src: List<File>) : ClassLoader? {
+    data class ClassLoaderResource(
+        val classLoader: ClassLoader?,
+        val tempDirectory: Path?,
+        val ownClassLoader: Boolean = true
+    ) : Closeable {
+
+        override fun close() {
+            if (ownClassLoader && classLoader is Closeable) {
+                classLoader.close()
+            }
+            tempDirectory?.toFile()?.deleteRecursively()
+        }
+    }
+
+    fun compileDsl(src: List<File>) : ClassLoaderResource {
+        var tempDirectory: Path? = null
         val dst = compiled.value?.apply {
             v("Compiling into specified folder: $this")
 
-        } ?: Files.createTempDirectory("rdgen-").apply {
-            v("Temporary folder created: $this")
-            toFile().deleteOnExit()
+        } ?: Files.createTempDirectory("rdgen-").also {
+            v("Temporary folder created: $it")
+            tempDirectory = it
         }
-
 
         val elapsed = measureTimeMillis {
             error = compile0(src, dst)
@@ -163,12 +178,12 @@ class RdGen : Kli() {
                 } ?: emptyList())
 
                 v("Loading compiled classes from '${classpathUris.joinToString()}'")
-                URLClassLoader(classpathUris.toTypedArray(), defaultClassloader)
+                ClassLoaderResource(URLClassLoader(classpathUris.toTypedArray(), defaultClassloader), tempDirectory)
             } catch (e: Throwable) {
                 error = "Error during loading classes from '$dst'"
-                null
+                ClassLoaderResource(null, tempDirectory)
             }
-        else null
+        else ClassLoaderResource(null, tempDirectory)
     }
 
 
@@ -281,7 +296,7 @@ class RdGen : Kli() {
 
         //2. Compile dsl or take defaultClassloader
         val srcDir = sources.value
-        val classloader =
+        val resource =
             if (srcDir != null) {
                 val sourcePaths = (srcDir.split(';').filter { it.isNotEmpty() }.map { File(it) })
                 for (sourcePath in sourcePaths) {
@@ -289,44 +304,51 @@ class RdGen : Kli() {
                         return errorAndExit("Sources are incorrect. No folder found at '$sourcePath'")
                 }
 
-                compileDsl(sourcePaths) ?: return errorAndExit()
+                compileDsl(sourcePaths)
             } else {
                 println("Folder 'source' isn't specified, searching for models in classloader of RdGen class (current java process classpath).")
                 println("To see parameters and usages invoke `rdgen -h`")
-                defaultClassloader
+                ClassLoaderResource(defaultClassloader, null, ownClassLoader = false)
             }
-        v("gradleGenerationSpecs=[${gradleGenerationSpecs.joinToString("\n")}]")
-        v("noLineNumbersInComments=${noLineNumbersInComments.value}")
-        //3. Find all rd model classes in classpath and generate code
-        val outputFolders = try {
-            usingSystemProperty(
-                SharedGeneratorSettings.LineNumbersInCommentsEnv,
-                (!noLineNumbersInComments.value).toString()
-            ) {
-                generateRdModel(
-                    classloader,
-                    pkgPrefixes,
-                    verbose.value,
-                    generatorFilter,
-                    clearOutput.value,
-                    gradleGenerationSpecs
-                )
+
+        resource.use { (classLoader) ->
+            if (classLoader == null) {
+                return errorAndExit()
             }
-        } catch (e : Throwable) {
-            e.printStackTrace()
-            return false
-        }
 
-        //4. Serialize .rdgen hashfile for incremental generation in future
-        if (srcDir != null) {
-            val hash = prepareHash(outputFolders)
-            v("Storing hash into '$hashfile'")
-            hash.store(hashfile)
-        } else {
-            v("Don't store hashfile, build is not incremental since 'sources' aren't specified")
-        }
+            v("gradleGenerationSpecs=[${gradleGenerationSpecs.joinToString("\n")}]")
+            v("noLineNumbersInComments=${noLineNumbersInComments.value}")
+            //3. Find all rd model classes in classpath and generate code
+            val outputFolders = try {
+                usingSystemProperty(
+                    SharedGeneratorSettings.LineNumbersInCommentsEnv,
+                    (!noLineNumbersInComments.value).toString()
+                ) {
+                    generateRdModel(
+                        classLoader!!,
+                        pkgPrefixes,
+                        verbose.value,
+                        generatorFilter,
+                        clearOutput.value,
+                        gradleGenerationSpecs
+                    )
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                return false
+            }
 
-        return true
+            //4. Serialize .rdgen hashfile for incremental generation in future
+            if (srcDir != null) {
+                val hash = prepareHash(outputFolders)
+                v("Storing hash into '$hashfile'")
+                hash.store(hashfile)
+            } else {
+                v("Don't store hashfile, build is not incremental since 'sources' aren't specified")
+            }
+
+            return true
+        }
     }
 }
 

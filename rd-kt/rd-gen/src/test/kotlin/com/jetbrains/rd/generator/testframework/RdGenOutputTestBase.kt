@@ -67,10 +67,14 @@ abstract class RdGenOutputTestBase {
                 rdGen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
 
                 val generatedSources = File(generatedSourcesDir, transform).walk().toList() + customGeneratedSources()
-                val compiledClassesLoader = rdGen.compileDsl(generatedSources)
-                Assertions.assertNotNull(compiledClassesLoader, "Failed to compile generated sources: ${rdGen.error}")
+                rdGen.compileDsl(generatedSources).use { (compiledClassesLoader) ->
+                    Assertions.assertNotNull(
+                        compiledClassesLoader,
+                        "Failed to compile generated sources: ${rdGen.error}"
+                    )
 
-                afterCompileAction?.invoke(compiledClassesLoader!!)
+                    afterCompileAction?.invoke(compiledClassesLoader!!)
+                }
             } else
                 Assertions.assertNull(afterCompileAction)
         }
