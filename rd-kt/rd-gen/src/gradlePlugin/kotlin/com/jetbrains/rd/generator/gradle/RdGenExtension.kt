@@ -4,7 +4,6 @@ import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.api.Task
 import java.io.File
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.stream.Collectors
 
@@ -73,10 +72,14 @@ open class RdGenExtension(private val project: Project) {
         if (verbose == true) arguments.add("-v")
         val generateLineNumbersInComments = lineNumbersInComments ?: true
         if (!generateLineNumbersInComments) arguments.add("--no-line-numbers")
-        val generatorsFile = createGeneratorsFile()
-        if (generatorsFile != null) {
-            arguments.add("-g")
-            arguments.add(generatorsFile.path)
+        if (generators.isNotEmpty()) {
+            val generatorsFile = tempGeneratorsFile
+                ?: Files.createTempFile("rd-", ".generators").toFile()
+            if (generatorsFile != null) {
+                arguments.add("-g")
+                arguments.add(generatorsFile.path)
+                tempGeneratorsFile = generatorsFile
+            }
         }
         return arguments
     }
@@ -89,6 +92,13 @@ open class RdGenExtension(private val project: Project) {
     var filter: String? = null
     var verbose: Boolean? = null
     var lineNumbersInComments: Boolean? = null
+
+    /**
+     * File that will be used to temporarily store the generator list and passed to rd-gen.
+     *
+     * Will be auto-populated if not set. Will be deleted at the end of the task execution.
+     */
+    var tempGeneratorsFile: File? = null
 
     private val generators: MutableList<GradleGenerationSpec> = ArrayList()
     fun generator(closure: Closure<GradleGenerationSpec>) = GradleGenerationSpec().apply {
@@ -115,15 +125,12 @@ open class RdGenExtension(private val project: Project) {
     private val classPathEntries: List<String>
         get() = project.files(classpath).files.stream().map { obj: File -> obj.path }.collect(Collectors.toList())
 
-    private fun createGeneratorsFile(): File? {
-        if (generators.isEmpty()) return null
-        val file = Files.createTempFile("rd-", ".generators").toFile()
+    private fun fillGeneratorsFile(file: File) {
         val sb = StringBuilder()
         for (generator in generators) {
             sb.append(generator.toString())
             sb.append("\n")
         }
-        Files.write(file.toPath(), sb.toString().toByteArray(StandardCharsets.UTF_8))
-        return file
+        file.writeText(sb.toString())
     }
 }

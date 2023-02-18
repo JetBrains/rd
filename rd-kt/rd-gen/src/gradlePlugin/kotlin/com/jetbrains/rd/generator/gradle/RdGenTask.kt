@@ -11,8 +11,12 @@ open class RdGenTask : JavaExec() {
         local.apply(action)
     }
 
+    private val effectiveParams: RdGenExtension
+        get() = local.mergeWith(global!!)
+
     override fun exec() {
-        args(generateArgs())
+        val params = effectiveParams
+        args(params.toArguments())
 
         val files = project.configurations.getByName("rdGenConfiguration").files
         val buildScriptFiles = project.buildscript.configurations.getByName("classpath").files
@@ -24,15 +28,18 @@ open class RdGenTask : JavaExec() {
         }
         classpath(files)
         classpath(rdFiles)
-        super.exec()
-    }
-
-    private fun generateArgs(): List<String?> {
-        val effective = local.mergeWith(global!!)
-        return effective.toArguments()
+        try {
+            super.exec()
+        } finally {
+            cleanup(params)
+        }
     }
 
     init {
-        main = "com.jetbrains.rd.generator.nova.MainKt"
+        mainClass.set("com.jetbrains.rd.generator.nova.MainKt")
+    }
+
+    private fun cleanup(params: RdGenExtension) {
+        params.tempGeneratorsFile?.delete()
     }
 }
