@@ -4,7 +4,6 @@ import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.api.Task
 import java.io.File
-import java.nio.file.Files
 import java.util.stream.Collectors
 
 @Deprecated("Use RdGenExtension instead", replaceWith = ReplaceWith("RdGenExtension"))
@@ -42,7 +41,7 @@ open class RdGenExtension(private val project: Project) {
         return project.files(mergedFiles).files
     }
 
-    fun toArguments(): List<String?> {
+    fun toArguments(generatorsFile: File?): List<String?> {
         val arguments = ArrayList<String?>()
         arguments.add("-s")
         arguments.add(java.lang.String.join(";", sourceFiles))
@@ -73,13 +72,11 @@ open class RdGenExtension(private val project: Project) {
         val generateLineNumbersInComments = lineNumbersInComments ?: true
         if (!generateLineNumbersInComments) arguments.add("--no-line-numbers")
         if (generators.isNotEmpty()) {
-            val generatorsFile = tempGeneratorsFile
-                ?: Files.createTempFile("rd-", ".generators").toFile()
-            if (generatorsFile != null) {
-                arguments.add("-g")
-                arguments.add(generatorsFile.path)
-                tempGeneratorsFile = generatorsFile
-            }
+            generatorsFile ?: error("generatorsFile should be passed if generators collection is not empty")
+            fillGeneratorsFile(generatorsFile)
+
+            arguments.add("-g")
+            arguments.add(generatorsFile.path)
         }
         return arguments
     }
@@ -93,14 +90,9 @@ open class RdGenExtension(private val project: Project) {
     var verbose: Boolean? = null
     var lineNumbersInComments: Boolean? = null
 
-    /**
-     * File that will be used to temporarily store the generator list and passed to rd-gen.
-     *
-     * Will be auto-populated if not set. Will be deleted at the end of the task execution.
-     */
-    var tempGeneratorsFile: File? = null
-
     private val generators: MutableList<GradleGenerationSpec> = ArrayList()
+    val hasGenerators: Boolean
+        get() = generators.isNotEmpty()
     fun generator(closure: Closure<GradleGenerationSpec>) = GradleGenerationSpec().apply {
         project.configure(this, closure)
         generators.add(this)
