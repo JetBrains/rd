@@ -20,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
-        <Compile Remove="Reflection" />
+        <Compile Remove="Reflection/**" />
     </ItemGroup>
 
     <ItemGroup>
