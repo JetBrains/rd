@@ -63,9 +63,6 @@ namespace JetBrains.Rd.Reflection
     }
   }
 
-  [Obsolete("RdAsync enabled by default for everything")]
-  [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
-  public class RdAsyncAttribute : Attribute { }
   /// <summary>
   /// Override default <see cref="RpcTimeouts"/> in proxy instances in RdReflection. Should be used either on the method of
   /// interface marked by <see cref="RdRpcAttribute"/> or on the interface itself.
