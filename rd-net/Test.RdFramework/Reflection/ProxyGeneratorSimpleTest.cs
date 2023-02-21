@@ -110,11 +110,11 @@ namespace Test.RdFramework.Reflection
     }
     public class TestRunRequest
     {
-      public IntrinsicType Val;
+      public TypeWithBuiltInSerializer Val;
 
-      public sealed class IntrinsicType
+      public sealed class TypeWithBuiltInSerializer
       {
-        public static IntrinsicType Read(UnsafeReader reader) => new IntrinsicType();
+        public static TypeWithBuiltInSerializer Read(UnsafeReader reader) => new();
         public void Write(UnsafeWriter writer)
         {
         }

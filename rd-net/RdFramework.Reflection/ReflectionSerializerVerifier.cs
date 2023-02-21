@@ -12,6 +12,8 @@ using JetBrains.Rd.Tasks;
 using JetBrains.Serialization;
 using JetBrains.Util;
 using JetBrains.Util.Util;
+using static System.StringComparer;
+using static JetBrains.Rd.Reflection.ReflectionSerializerVerifier;
 
 #if NET35
 using TypeInfo = System.Type;
@@ -243,7 +245,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       // Generated from DSL models
-      if (typeof(RdBindableBase).IsAssignableFrom(type) && HasIntrinsicFields(type))
+      if (typeof(RdBindableBase).IsAssignableFrom(type) && BuiltInSerializers.HasBuiltInFields(type))
       {
         return;
       }
@@ -332,8 +334,8 @@ namespace JetBrains.Rd.Reflection
       Assertion.Assert(isDataModel, $"Error in {type.ToString(true)} model: no {nameof(RdModelAttribute)} attribute specified");
       Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
 
-      // No way to prevent serialization errors for intrinsic serializers, just skip for now
-      if (HasIntrinsic(type))
+      // No way to prevent serialization errors for built in serializers, just skip for now
+      if (BuiltInSerializers.Has(type))
         return;
 
       foreach (var member in SerializerReflectionUtil.GetBindableFields(type))
@@ -400,59 +402,6 @@ namespace JetBrains.Rd.Reflection
       return typeInfo.AsType();
     }
 
-
-    public static bool HasIntrinsic(TypeInfo t)
-    {
-      return HasIntrinsicNonProtocolMethods(t) || HasIntrinsicProtocolMethods(t) || HasIntrinsicFields(t) || HasRdExtAttribute(t);
-    }
-
-    public static bool HasIntrinsicAttribute(TypeInfo t)
-    {
-      var rdScalar = t.GetCustomAttribute<RdScalarAttribute>();
-      return rdScalar != null && rdScalar.Marshaller != null;
-    }
-
-    public static bool HasIntrinsicFields(TypeInfo t)
-    {
-      foreach (var member in t.GetFields(BindingFlags.Static | BindingFlags.Public))
-      {
-        if (member.Name == "Read" || member.Name == "Write")
-        {
-          return true;
-        }
-      }
-
-      return false;
-
-    }
-
-    public static bool HasIntrinsicNonProtocolMethods(TypeInfo t)
-    {
-      foreach (var member in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
-      {
-        if ((member.Name == "Read" || member.Name == "Write") &&
-            member.GetParameters() is var p && p.Length == 1 && p[0].ParameterType == typeof(UnsafeReader))
-        {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-
-    public static bool HasIntrinsicProtocolMethods(TypeInfo t)
-    {
-      foreach (var method in t.GetMethods(BindingFlags.Static | BindingFlags.Public))
-      {
-        if (method.Name == "Read" || method.Name == "Write" && method.GetParameters().Any(p => p.ParameterType == typeof(SerializationCtx)))
-        {
-          return true;
-        }
-      }
-
-      return false;
-    }
 
     public static bool IsRpcAttributeDefined(Type @interface)
     {

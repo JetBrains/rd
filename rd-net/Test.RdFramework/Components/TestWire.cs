@@ -12,7 +12,9 @@ namespace Test.RdFramework.Components
     private readonly string myName;
     private readonly bool myIsMaster;
     private readonly Queue<Message> myOutgoingMessages;
+    private readonly Signal<byte[]> myOnTransmit;
 
+    public ISource<byte[]> OnTransmit => myOnTransmit;
     public long BytesSent { get; private set; }
 
     public TestWire(IScheduler scheduler, string name, bool isMaster) : base(scheduler)
@@ -21,6 +23,7 @@ namespace Test.RdFramework.Components
       myName = name;
       myIsMaster = isMaster;
       myOutgoingMessages = new Queue<Message>();
+      myOnTransmit = new Signal<byte[]>();
     }
 
     public TestWire Connection { get; set; }
@@ -40,6 +43,7 @@ namespace Test.RdFramework.Components
       myScheduler.InvokeOrQueue(() =>
       {
         var message = myOutgoingMessages.Dequeue();
+        myOnTransmit.Fire(message.Data);
         Connection.Receive(message.Data);
       });
     }

@@ -7,10 +7,10 @@ using NUnit.Framework;
 namespace Test.RdFramework.Reflection
 {
   [TestFixture]
-  public class PolymorphicScalarIntrinsicTest : RdReflectionTestBase
+  public class PolymorphicScalarBuiltInSerializersTest : RdReflectionTestBase
   {
     [Test]
-    public void TestIntrinsicClass()
+    public void TestClass()
     {
       WithExts<TestExt>((c, s) =>
       {
@@ -23,7 +23,7 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
-    public void TestIntrinsicInterface()
+    public void TestInterface()
     {
       WithExts<TestExt>((c, s) =>
       {
@@ -37,7 +37,8 @@ namespace Test.RdFramework.Reflection
 
 
     /// <summary>
-    /// Types should use intrinsic serializer even when in the base class exists intrinsic serializer.
+    /// Types should relay on reflection serializer even if built in serializer exists in the base type.
+    /// Types should match exactly to avoid issues at runtime.
     /// </summary>
     [Test]
     public void TestReflectionSerializer()
@@ -79,6 +80,7 @@ namespace Test.RdFramework.Reflection
       Guid Mark { get; set; }
     }
 
+    [AssertBuiltInType(BuiltInSerializers.BuiltInType.Methods)]
     public  class Base : IBase
     {
       public Guid Mark { get; set; }
@@ -92,6 +94,7 @@ namespace Test.RdFramework.Reflection
       public void Write(UnsafeWriter writer) => writer.Write("base");
     }
 
+    [AssertBuiltInType(BuiltInSerializers.BuiltInType.Methods)]
     public class Type1 : Base
     {
       public new static Type1 Read(UnsafeReader reader)
@@ -103,6 +106,7 @@ namespace Test.RdFramework.Reflection
       public new void Write(UnsafeWriter writer) => writer.Write("type1");
     }
 
+    [AssertBuiltInType(BuiltInSerializers.BuiltInType.None)]
     public class TypeReflectionSerializer : Base
     {
     }
