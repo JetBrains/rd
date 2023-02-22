@@ -1,5 +1,6 @@
 using System;
 using JetBrains.Annotations;
+using JetBrains.Rd.Tasks;
 
 namespace JetBrains.Rd.Reflection
 {
@@ -62,9 +63,32 @@ namespace JetBrains.Rd.Reflection
     }
   }
 
-  [Obsolete("RdAsync enabled by default for everything")]
-  [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
-  public class RdAsyncAttribute : Attribute { }
+  /// <summary>
+  /// Override default <see cref="RpcTimeouts"/> in proxy instances in RdReflection. Should be used either on the method of
+  /// interface marked by <see cref="RdRpcAttribute"/> or on the interface itself.
+  ///
+  /// Default value means no timeout.
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+  public class RpcTimeoutAttribute : Attribute
+  {
+    [UsedImplicitly/*used in ProxyGenerator*/]
+    public readonly RpcTimeouts myTimeout;
+
+    public RpcTimeouts Timeout => myTimeout;
+
+    public RpcTimeoutAttribute(double errorMilliseconds = -1, double warnMilliseconds = -1)
+    {
+      var errorTimespan = errorMilliseconds == -1 ? TimeSpan.MaxValue : TimeSpan.FromMilliseconds(errorMilliseconds);
+      var warnTimespan = warnMilliseconds < 0 ? errorTimespan : TimeSpan.FromMilliseconds(warnMilliseconds);
+      myTimeout = new RpcTimeouts(warnTimespan, errorTimespan);
+    }
+
+    public RpcTimeoutAttribute(bool rawValues, long errorTicks, long warnTicks = -1)
+    {
+      myTimeout = new RpcTimeouts(new TimeSpan(warnTicks), new TimeSpan(errorTicks));
+    }
+  }
 
   /// <summary>
   /// Marker interface for proxy types.

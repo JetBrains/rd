@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
@@ -15,6 +16,8 @@ namespace JetBrains.Rd.Reflection
 {
   public class ProxyGenerator : IProxyGenerator
   {
+    private static ILog ourLog = Log.GetLog<ProxyGenerator>();
+
     private const String DynamicAssemblyName = "JetBrains.Rd.ProxyGenerator";
     private readonly bool myAllowSave;
 
@@ -122,16 +125,40 @@ namespace JetBrains.Rd.Reflection
       var rdExtConstructor = Members.RdExtConstructor;
       typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ interfaceType }));
 
-      ImplementInterface(interfaceType, typebuilder);
+      var ctx = new TypeBuilderContext(typebuilder);
+      ImplementInterface(interfaceType, ctx);
       foreach (var baseInterface in interfaceType.GetInterfaces())
-        ImplementInterface(baseInterface, typebuilder);
+        ImplementInterface(baseInterface, ctx);
 
-      void ImplementInterface(Type baseInterface, TypeBuilder typeBuilder)
+      void ImplementInterface(Type baseInterface, TypeBuilderContext ctx)
       {
+        if (baseInterface.GetCustomAttribute<RpcTimeoutAttribute>() is { } timeouts)
+        {
+          ctx.SetDefaultTimeout(timeouts);
+        }
+
         foreach (var member in baseInterface.GetMembers(BindingFlags.Instance | BindingFlags.Public))
         {
-          ImplementMember(typeBuilder, member);
+          ImplementMember(ctx, member);
         }
+      }
+
+      if (ctx.TimeoutFields.IsValueCreated)
+      {
+        var cctor = typebuilder.DefineTypeInitializer();
+        var il = cctor.GetILGenerator();
+        foreach (var kvp in ctx.TimeoutFields.Value)
+        {
+          // Re-create RpcTimeouts attribute. It used only to re-create RpcTimeouts. It is more robust to use types for
+          // ProxyGeneration which are located on our project.
+          il.Emit(OpCodes.Ldc_I8, kvp.Value.WarnAwaitTime.Ticks);
+          il.Emit(OpCodes.Ldc_I8, kvp.Value.ErrorAwaitTime.Ticks);
+          il.Emit(OpCodes.Call, ProxyGeneratorMembers.CreateRpcTimeoutMethod);
+          
+          // set the static field
+          il.Emit(OpCodes.Stsfld, kvp.Key);
+        }
+        il.Emit(OpCodes.Ret);
       }
 
 #if NET35
@@ -259,7 +286,7 @@ namespace JetBrains.Rd.Reflection
       return (returnType != typeof(Task)) && (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(Task<>));
     }
 
-    private void ImplementMember(TypeBuilder typebuilder, MemberInfo member)
+    private void ImplementMember(TypeBuilderContext ctx, MemberInfo member)
     {
       switch (member.MemberType)
       {
@@ -272,11 +299,11 @@ namespace JetBrains.Rd.Reflection
         case MemberTypes.Method:
           if (member is MethodInfo { IsSpecialName: false } method)
           {
-            ImplementMethod(typebuilder, method);
+            ImplementMethod(ctx, method);
           }
           break;
         case MemberTypes.Property:
-          ImplementProperty(typebuilder, ((PropertyInfo)member));
+          ImplementProperty(ctx, ((PropertyInfo)member));
           break;
         default:
           var ex = new InvalidOperationException("Unexpected Member Type bit fields combination.");
@@ -284,8 +311,9 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    private void ImplementProperty(TypeBuilder typebuilder, PropertyInfo propertyInfo)
+    private void ImplementProperty(TypeBuilderContext ctx, PropertyInfo propertyInfo)
     {
+      var typebuilder = ctx.Builder;
       var type = propertyInfo.PropertyType;
 
       var property = typebuilder.DefineProperty(propertyInfo.Name, PropertyAttributes.HasDefault, type, EmptyArray<Type>.Instance);
@@ -367,8 +395,9 @@ namespace JetBrains.Rd.Reflection
       return method.ReturnType;
     }
 
-    private void ImplementMethod(TypeBuilder typebuilder, MethodInfo method)
+    private void ImplementMethod(TypeBuilderContext ctx, MethodInfo method)
     {
+      var typebuilder = ctx.Builder;
       // add field for IRdCall instance
       var requestType = GetRequstType(method)[0];
       var responseType = GetResponseType(method, true);
@@ -380,6 +409,12 @@ namespace JetBrains.Rd.Reflection
       var field = typebuilder.DefineField(ProxyFieldName(method), fieldType , FieldAttributes.Public);
 
       var isSyncCall = !typeof(IAsyncResult).IsAssignableFrom(method.ReturnType);
+
+      FieldInfo? timeoutsField = null;
+      if (isSyncCall && method.GetCustomAttribute<RpcTimeoutAttribute>() is { } timeouts)
+      {
+        timeoutsField = ctx.DefineCustomRpcTimeout(timeouts, method);
+      }
 
       var parameters = method.GetParameters();
       MethodBuilder methodbuilder = typebuilder.DefineMethod(method.Name,
@@ -455,7 +490,13 @@ namespace JetBrains.Rd.Reflection
 
       if (isSyncCall)
       {
-        ilgen.Emit(OpCodes.Ldnull); // RpcTimeouts
+        // RpcTimeouts
+        var rpcTimeoutsField = timeoutsField ?? ctx.DefaultTimeoutField;
+        if (rpcTimeoutsField != null)
+          ilgen.Emit(OpCodes.Ldsfld, rpcTimeoutsField);
+        else
+          ilgen.Emit(OpCodes.Ldnull);
+
         ilgen.Emit(OpCodes.Call, Members.SyncNested4.MakeGenericMethod(requestType, responseType));
       }
       else
@@ -546,6 +587,40 @@ namespace JetBrains.Rd.Reflection
       else
         ilgen.Emit(OpCodes.Ldarg, (short)nArg);
     }
+
+    private class TypeBuilderContext
+    {
+      public TypeBuilderContext(TypeBuilder builder)
+      {
+        Builder = builder;
+        TimeoutFields = new (() => new Dictionary<FieldInfo, RpcTimeouts>());
+      }
+
+      public TypeBuilder Builder { get; }
+      
+      public Lazy<Dictionary<FieldInfo, RpcTimeouts>> TimeoutFields { get; }
+      public FieldInfo? DefaultTimeoutField { get; private set; }
+
+      public FieldInfo DefineCustomRpcTimeout(RpcTimeoutAttribute timeouts, MethodInfo method) => DefineStaticTimeoutsField(method.Name + "_rpcTimeout", timeouts);
+
+      public void SetDefaultTimeout(RpcTimeoutAttribute timeouts)
+      {
+        if (DefaultTimeoutField == null)
+        {
+          var field = DefineStaticTimeoutsField("default__rpcTimeout", timeouts);
+          DefaultTimeoutField = field;
+        }
+        else
+          ourLog.Warn($"Default timeout for RdRpc was defined more than once for {Builder.FullName}. The value on the nearest interface will be used.");
+      }
+
+      private FieldInfo DefineStaticTimeoutsField(string fieldName, RpcTimeoutAttribute timeouts)
+      {
+        var timeoutsField = Builder.DefineField(fieldName, typeof(RpcTimeouts), FieldAttributes.Private | FieldAttributes.Static);
+        TimeoutFields.Value.Add(timeoutsField, timeouts.Timeout);
+        return timeoutsField;
+      }
+    }
   }
 
   internal class ProxyGeneratorMembers
@@ -573,6 +648,10 @@ namespace JetBrains.Rd.Reflection
     public MethodInfo ToTask = (typeof(ProxyGeneratorUtil))
       .GetMethod(nameof(ProxyGeneratorUtil.ToTask))
       .NotNull(nameof(ToTask));
+
+    public static readonly MethodInfo CreateRpcTimeoutMethod = typeof(ProxyGeneratorUtil)
+      .GetMethod(nameof(ProxyGeneratorUtil.CreateRpcTimeouts))
+      .NotNull();
 
     public static MethodInfo StartRdCall(Type rdCallType)
     {

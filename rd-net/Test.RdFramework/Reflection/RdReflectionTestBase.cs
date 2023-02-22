@@ -24,7 +24,7 @@ namespace Test.RdFramework.Reflection
     {
       // increase timeouts to balance unpredictable agent performance
       myRespectRpcTimeouts = RpcTimeouts.RespectRpcTimeouts;
-      RpcTimeouts.RespectRpcTimeouts = false;
+      RpcTimeouts.RespectRpcTimeouts = RespectRpcTimeouts;
       CFacade = new ReflectionSerializersFacade(allowSave: true);
       SFacade = new ReflectionSerializersFacade(allowSave: true);
 
@@ -32,6 +32,8 @@ namespace Test.RdFramework.Reflection
       ServerWire.AutoTransmitMode = true;
       ClientWire.AutoTransmitMode = true;
     }
+
+    protected virtual bool RespectRpcTimeouts => false;
 
     public override void TearDown()
     {

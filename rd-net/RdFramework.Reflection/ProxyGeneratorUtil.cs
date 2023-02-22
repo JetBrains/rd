@@ -92,5 +92,10 @@ namespace JetBrains.Rd.Reflection
         return task.Result.Value.Unwrap();
       }
     }
+
+    public static RpcTimeouts CreateRpcTimeouts(long ticksWarning, long ticksError)
+    {
+      return new RpcTimeouts(new TimeSpan(ticksWarning), new TimeSpan(ticksError));
+    }
   }
 }

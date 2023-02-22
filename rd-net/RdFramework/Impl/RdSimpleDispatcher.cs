@@ -61,7 +61,7 @@ namespace JetBrains.Rd.Impl
             return;
           }
 
-          var timeout = MessageTimeout != null ? (int)MessageTimeout.Value.TotalMilliseconds : -1;
+          var timeout = MessageTimeout == null || MessageTimeout == TimeSpan.MaxValue ? -1 : (int)MessageTimeout.Value.TotalMilliseconds;
           if (!myEvent.WaitOne(timeout))
           {
             throw new Exception($"Cannot receive a message in {timeout} ms");
