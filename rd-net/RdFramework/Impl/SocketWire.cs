@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -15,6 +17,15 @@ namespace JetBrains.Rd.Impl
 {
   public static class SocketWire
   {
+    public static EndPoint NewEndpoint(int port)
+    {
+      var path = port == 0
+        ? Path.GetTempFileName()
+        : Path.Combine(Path.GetTempPath(), port.ToString(CultureInfo.InvariantCulture)); 
+      if (File.Exists(path)) File.Delete(path);
+      return new UnixDomainSocketEndPoint(path);
+    }
+
     private static readonly ILog ourStaticLog = Log.GetLog<Base>();
 
     public abstract class Base : WireBase
@@ -457,7 +468,7 @@ namespace JetBrains.Rd.Impl
       //It's a kind of magic...
       protected static void SetSocketOptions(Socket s)
       {
-        s.NoDelay = true;
+        // s.NoDelay = true;
 
 //        if (!TimeoutForbidden())
 //          s.ReceiveTimeout = TimeoutMs; //sometimes shutdown and close doesn't lead Receive to throw exception
@@ -508,7 +519,8 @@ namespace JetBrains.Rd.Impl
         );
       }
 
-      public int Port { get; protected set; }
+      //public int Port { get; protected set; }
+      public EndPoint EndPoint { get; protected set; }
 
 
       protected virtual bool AcceptHandshake(Socket socket)
@@ -521,9 +533,9 @@ namespace JetBrains.Rd.Impl
     public class Client : Base
     {
       public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, int port, string optId = null) :
-        this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
+        this(lifetime, scheduler, NewEndpoint(port), optId) {}
 
-      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] IPEndPoint endPoint, string optId = null) :
+      public Client(Lifetime lifetime, [NotNull] IScheduler scheduler, [NotNull] EndPoint endPoint, string optId = null) :
         base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         var thread = new Thread(() =>
@@ -536,7 +548,7 @@ namespace JetBrains.Rd.Impl
             {
               try
               {
-                var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                var s = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Tcp);
                 Socket = s;
 
                 SetSocketOptions(s);
@@ -595,7 +607,7 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] IPEndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, optId)
+      public Server(Lifetime lifetime, [NotNull] IScheduler scheduler, [CanBeNull] EndPoint endPoint = null, string optId = null) : this(lifetime, scheduler, optId)
       {
         var serverSocket = CreateServerSocket(endPoint);
 
@@ -621,14 +633,14 @@ namespace JetBrains.Rd.Impl
       private Server(Lifetime lifetime, IScheduler scheduler, string optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {}
 
-      public static Socket CreateServerSocket([CanBeNull] IPEndPoint endPoint)
+      public static Socket CreateServerSocket([CanBeNull] EndPoint endPoint)
       {
         Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
 
-        var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        var serverSocket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
         SetSocketOptions(serverSocket);
 
-        endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
+        endPoint = endPoint ?? NewEndpoint(0);
         serverSocket.Bind(endPoint);
         serverSocket.Listen(1);
         Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
@@ -639,8 +651,9 @@ namespace JetBrains.Rd.Impl
       private void StartServerSocket(Lifetime lifetime, [NotNull] Socket serverSocket)
       {
         if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
-        Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
-        Log.Verbose("{0} : started, port: {1}", Id, Port);
+        EndPoint = serverSocket.LocalEndPoint;
+        //Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
+        Log.Verbose("{0} : started, port: {1}", Id, EndPoint);
 
         var thread = new Thread(() =>
         {
@@ -649,7 +662,7 @@ namespace JetBrains.Rd.Impl
           {
             try
             {
-              Log.Verbose("{0} : accepting, port: {1}", Id, Port);
+              Log.Verbose("{0} : accepting, port: {1}", Id, EndPoint);
               var s = serverSocket.Accept();
               lock (Lock)
               {
@@ -719,18 +732,18 @@ namespace JetBrains.Rd.Impl
 
     public class ServerFactory
     {
-      [PublicAPI] public readonly int LocalPort;
+      [PublicAPI] public readonly EndPoint LocalEndPoint;
       [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
 
 
-      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint endpoint = null)
+      public ServerFactory(Lifetime lifetime, IScheduler scheduler, EndPoint endpoint = null)
         : this(lifetime, () => new WireParameters(scheduler, null), endpoint) {}
 
 
       public ServerFactory(
         Lifetime lifetime,
         [NotNull] Func<WireParameters> wireParametersFactory,
-        IPEndPoint endpoint = null
+        EndPoint endpoint = null
       )
       {
         var serverSocket = Server.CreateServerSocket(endpoint);
@@ -740,7 +753,8 @@ namespace JetBrains.Rd.Impl
           ourStaticLog.Verbose("closing server socket");
           Base.CloseSocket(serverSocket);
         });
-        LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
+        LocalEndPoint = serverSocket.LocalEndPoint;
+        //LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
 
         void Rec()
         {

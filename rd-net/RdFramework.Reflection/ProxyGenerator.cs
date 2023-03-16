@@ -74,7 +74,7 @@ namespace JetBrains.Rd.Reflection
     public ProxyGenerator(bool allowSave = false)
     {
       myAllowSave = allowSave;
-#if NETSTANDARD
+#if NETSTANDARD || NET7_0
      myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule("ProxyGenerator"));
      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ProxyGenerator"), AssemblyBuilderAccess.Run));
 #else
