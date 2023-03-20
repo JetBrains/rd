@@ -24,7 +24,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     final override var location: RName = RName("<<not bound>>")
         private set
 
-    protected var parent : IRdDynamic? = null
+    var parent: IRdDynamic? = null
+        protected set
 
     var bindLifetime: Lifetime? = null
         private set
