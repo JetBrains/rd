@@ -4,22 +4,22 @@ import com.jetbrains.rd.framework.FrameworkMarshallers
 import com.jetbrains.rd.framework.ISerializer
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdCall
+import com.jetbrains.rd.framework.impl.RdList
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.util.asCoroutineDispatcher
 import com.jetbrains.rd.framework.util.setSuspend
 import com.jetbrains.rd.framework.util.withContext
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
 
 class RdAsyncTaskTest2 : RdFrameworkTestBase() {
 
@@ -125,4 +125,46 @@ class RdAsyncTaskTest2 : RdFrameworkTestBase() {
             }
         }
     }
+
+    @Test
+    fun bindableRdCallListTest() {
+        clientLifetime.usingNested { lifetime ->
+            val entity_id = 1
+
+            val callsite = RdCall(FrameworkMarshallers.Void, RdList.Companion as ISerializer<RdList<Int>>).static(entity_id)
+            val endpoint = RdCall(FrameworkMarshallers.Void, RdList.Companion as ISerializer<RdList<Int>>).static(entity_id)
+
+            val n = 100
+            runBlocking(serverScheduler.asCoroutineDispatcher) {
+                serverProtocol.bindStatic(endpoint, "top")
+                endpoint.set { i ->
+                    RdList<Int>().apply {
+                        for (i in 0 until n) {
+                            add(i)
+                        }
+                    }
+                }
+            }
+
+            runBlocking(clientScheduler.asCoroutineDispatcher) {
+                clientProtocol.bindStatic(callsite, "top")
+
+                val list = callsite.startSuspending(Unit)
+                var count = 0
+
+                list.view(lifetime) { lt, index, value ->
+                    assertEquals(count++, value)
+                    assertEquals(index, value)
+                }
+
+
+                withTimeout(1000.milliseconds) {
+                    while (count != n) {
+                        yield()
+                    }
+                }
+            }
+        }
+    }
+
 }

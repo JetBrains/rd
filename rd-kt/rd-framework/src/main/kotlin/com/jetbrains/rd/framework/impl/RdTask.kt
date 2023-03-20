@@ -129,15 +129,18 @@ class EndpointWiredRdTask<TReq, TRes>(
             if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
                 taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
 
+                wire.send(rdid) { writer ->
+                    RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+                }
+
                 lifetime.executeIfAlive {  // lifetime can be terminated from background thread
                     taskResult.value.bindPolymorphic(lifetime, call, rdid.toString())
                 }
             } else {
                 def.terminate()
-            }
-
-            wire.send(rdid) { writer ->
-                RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+                wire.send(rdid) { writer ->
+                    RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+                }
             }
         }
     }

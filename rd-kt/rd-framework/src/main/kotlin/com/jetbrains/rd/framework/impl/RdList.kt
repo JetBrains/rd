@@ -16,14 +16,18 @@ import com.jetbrains.rd.util.trace
 class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private val list: ViewableList<V>, private var nextVersion: Long = 1L)
     : RdReactiveBase(), IMutableViewableList<V> by list {
 
-    companion object {
+    companion object : ISerializer<RdList<*>> {
         private enum class Op {Add, Update, Remove} // update versionedFlagShift when changing
 
         fun<V:Any> read(ctx: SerializationCtx, buffer: AbstractBuffer, valSzr: ISerializer<V>): RdList<V> {
             return RdList(valSzr, ViewableList(), buffer.readLong()).withId(RdId.read(buffer))
         }
 
-        fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdList<*>) : Unit = value.run {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdList<*> {
+            return read(ctx, buffer, Polymorphic())
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdList<*>) : Unit = value.run {
             buffer.writeLong(nextVersion)
             rdid.write(buffer)
         }
