@@ -120,6 +120,12 @@ namespace JetBrains.Rd.Tasks
           if (potentiallyBindable.IsBindable())
           {
             potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
+            
+            myWire.Send(RdId,
+              writer =>
+              {
+                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
+              });
 
             using var cookie = Lifetime.UsingExecuteIfAlive();
             if (cookie.Succeed) // lifetime can be terminated from background thread
@@ -130,14 +136,14 @@ namespace JetBrains.Rd.Tasks
           else
           {
             myDef.Terminate();
+            myWire.Send(RdId,
+              writer =>
+              {
+                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
+              });
           }
 
           Trace(RdReactiveBase.ourLogSend, "send response", taskResult);
-          myWire.Send(RdId,
-            writer =>
-            {
-              RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
-            });
         });
       }
 
