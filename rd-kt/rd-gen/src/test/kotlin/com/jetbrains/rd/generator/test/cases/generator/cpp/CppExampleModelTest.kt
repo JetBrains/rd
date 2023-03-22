@@ -14,7 +14,7 @@ class CppExampleModelTest : CppRdGenOutputTest() {
 
     override fun expectedFileCount(model: Class<*>) = when (model) {
         ExampleRootNova::class.java -> 2
-        ExampleModelNova::class.java -> 32
+        ExampleModelNova::class.java -> 90
         else -> 0
     }
 

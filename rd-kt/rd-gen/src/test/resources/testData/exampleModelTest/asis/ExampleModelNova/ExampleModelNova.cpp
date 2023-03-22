@@ -11,6 +11,11 @@
 #include "ExampleModelNova/Selection.Generated.h"
 #include "ExampleModelNova/Baz.Generated.h"
 #include "ExampleModelNova/FooBar.Generated.h"
+#include "ExampleModelNova/Class.Generated.h"
+#include "ExampleModelNova/Struct.Generated.h"
+#include "ExampleModelNova/DerivedClass.Generated.h"
+#include "ExampleModelNova/DerivedStruct.Generated.h"
+#include "ExampleModelNova/DerivedStructWith2Interfaces.Generated.h"
 #include "ExampleModelNova/Document.Generated.h"
 #include "ExampleModelNova/ScalarExample.Generated.h"
 #include "ExampleModelNova/TextControl.Generated.h"
@@ -20,6 +25,17 @@
 #include "ExampleModelNova/Foo_Unknown.Generated.h"
 #include "ExampleModelNova/ScalarPrimer_Unknown.Generated.h"
 #include "ExampleModelNova/A_Unknown.Generated.h"
+#include "ExampleModelNova/BaseClass_Unknown.Generated.h"
+#include "ExampleModelNova/BaseStruct_Unknown.Generated.h"
+#include "ExampleModelNova/OpenClass_Unknown.Generated.h"
+#include "ExampleModelNova/OpenStruct_Unknown.Generated.h"
+#include "ExampleModelNova/DerivedOpenClass_Unknown.Generated.h"
+#include "ExampleModelNova/DerivedOpenStruct_Unknown.Generated.h"
+#include "ExampleModelNova/DerivedBaseClass_Unknown.Generated.h"
+#include "ExampleModelNova/DerivedBaseStruct_Unknown.Generated.h"
+#include "ExampleModelNova/BaseClassWithInterface_Unknown.Generated.h"
+#include "ExampleModelNova/BaseStructWithInterface_Unknown.Generated.h"
+#include "ExampleModelNova/DerivedClassWith2Interfaces_Unknown.Generated.h"
 
 #include "ExampleRootNova/ExampleRootNova.Generated.h"
 
@@ -42,6 +58,11 @@ void ExampleModelNova::ExampleModelNovaSerializersOwner::registerSerializersCore
     serializers.registry<Selection>();
     serializers.registry<Baz>();
     serializers.registry<FooBar>();
+    serializers.registry<Class>();
+    serializers.registry<Struct>();
+    serializers.registry<DerivedClass>();
+    serializers.registry<DerivedStruct>();
+    serializers.registry<DerivedStructWith2Interfaces>();
     serializers.registry<Document>();
     serializers.registry<ScalarExample>();
     serializers.registry<TextControl>();
@@ -49,6 +70,17 @@ void ExampleModelNova::ExampleModelNovaSerializersOwner::registerSerializersCore
     serializers.registry<Foo_Unknown>();
     serializers.registry<ScalarPrimer_Unknown>();
     serializers.registry<A_Unknown>();
+    serializers.registry<BaseClass_Unknown>();
+    serializers.registry<BaseStruct_Unknown>();
+    serializers.registry<OpenClass_Unknown>();
+    serializers.registry<OpenStruct_Unknown>();
+    serializers.registry<DerivedOpenClass_Unknown>();
+    serializers.registry<DerivedOpenStruct_Unknown>();
+    serializers.registry<DerivedBaseClass_Unknown>();
+    serializers.registry<DerivedBaseStruct_Unknown>();
+    serializers.registry<BaseClassWithInterface_Unknown>();
+    serializers.registry<BaseStructWithInterface_Unknown>();
+    serializers.registry<DerivedClassWith2Interfaces_Unknown>();
 }
 
 void ExampleModelNova::connect(rd::Lifetime lifetime, rd::IProtocol const * protocol)
@@ -64,7 +96,7 @@ void ExampleModelNova::connect(rd::Lifetime lifetime, rd::IProtocol const * prot
 void ExampleModelNova::initialize()
 {
     version_.optimize_nested = true;
-    serializationHash = -4929039364373743159L;
+    serializationHash = -6982206461096110814L;
 }
 // primary ctor
 ExampleModelNova::ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_) :

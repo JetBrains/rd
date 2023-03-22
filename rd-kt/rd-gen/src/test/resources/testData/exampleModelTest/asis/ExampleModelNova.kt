@@ -32,6 +32,15 @@ class ExampleModelNova private constructor(
             serializers.register(Selection)
             serializers.register(Baz)
             serializers.register(FooBar)
+            serializers.register(Class)
+            serializers.register(Struct)
+            serializers.register(OpenClass)
+            serializers.register(OpenStruct)
+            serializers.register(DerivedClass)
+            serializers.register(DerivedStruct)
+            serializers.register(DerivedOpenClass)
+            serializers.register(DerivedOpenStruct)
+            serializers.register(DerivedStructWith2Interfaces)
             serializers.register(Document)
             serializers.register(ScalarExample)
             serializers.register(TextControl)
@@ -41,6 +50,17 @@ class ExampleModelNova private constructor(
             serializers.register(Foo_Unknown)
             serializers.register(ScalarPrimer_Unknown)
             serializers.register(A_Unknown)
+            serializers.register(BaseClass_Unknown)
+            serializers.register(BaseStruct_Unknown)
+            serializers.register(OpenClass_Unknown)
+            serializers.register(OpenStruct_Unknown)
+            serializers.register(DerivedOpenClass_Unknown)
+            serializers.register(DerivedOpenStruct_Unknown)
+            serializers.register(DerivedBaseClass_Unknown)
+            serializers.register(DerivedBaseStruct_Unknown)
+            serializers.register(BaseClassWithInterface_Unknown)
+            serializers.register(BaseStructWithInterface_Unknown)
+            serializers.register(DerivedClassWith2Interfaces_Unknown)
         }
         
         
@@ -61,7 +81,7 @@ class ExampleModelNova private constructor(
         }
         
         
-        const val serializationHash = -4929039364373743159L
+        const val serializationHash = -6982206461096110814L
         
     }
     override val serializersOwner: ISerializersOwner get() = ExampleModelNova
@@ -250,6 +270,335 @@ class A_Unknown (
             unknownBytes
         )
     }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:92]
+ */
+abstract class BaseClass (
+    val baseField: Int
+) : RdBindableBase() {
+    //companion
+    
+    companion object : IAbstractDeclaration<BaseClass> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): BaseClass  {
+            val objectStartPosition = buffer.position
+            val _id = RdId.read(buffer)
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return BaseClass_Unknown(baseField, unknownId, unknownBytes).withId(_id)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:132]
+ */
+abstract class BaseClassWithInterface (
+) : RdBindableBase(), Interface {
+    //companion
+    
+    companion object : IAbstractDeclaration<BaseClassWithInterface> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): BaseClassWithInterface  {
+            val objectStartPosition = buffer.position
+            val _id = RdId.read(buffer)
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return BaseClassWithInterface_Unknown(unknownId, unknownBytes).withId(_id)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+class BaseClassWithInterface_Unknown (
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : BaseClassWithInterface (
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<BaseClassWithInterface_Unknown> {
+        override val _type: KClass<BaseClassWithInterface_Unknown> = BaseClassWithInterface_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseClassWithInterface_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseClassWithInterface_Unknown)  {
+            value.rdid.write(buffer)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("BaseClassWithInterface_Unknown (")
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): BaseClassWithInterface_Unknown   {
+        return BaseClassWithInterface_Unknown(
+            unknownId,
+            unknownBytes
+        )
+    }
+    //contexts
+}
+
+
+class BaseClass_Unknown (
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : BaseClass (
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<BaseClass_Unknown> {
+        override val _type: KClass<BaseClass_Unknown> = BaseClass_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseClass_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseClass_Unknown)  {
+            value.rdid.write(buffer)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("BaseClass_Unknown (")
+        printer.indent {
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): BaseClass_Unknown   {
+        return BaseClass_Unknown(
+            baseField,
+            unknownId,
+            unknownBytes
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:96]
+ */
+abstract class BaseStruct (
+    val baseField: Int
+) : IPrintable {
+    //companion
+    
+    companion object : IAbstractDeclaration<BaseStruct> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): BaseStruct  {
+            val objectStartPosition = buffer.position
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return BaseStruct_Unknown(baseField, unknownId, unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:135]
+ */
+abstract class BaseStructWithInterface (
+) : IPrintable, Interface {
+    //companion
+    
+    companion object : IAbstractDeclaration<BaseStructWithInterface> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): BaseStructWithInterface  {
+            val objectStartPosition = buffer.position
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return BaseStructWithInterface_Unknown(unknownId, unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+class BaseStructWithInterface_Unknown (
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : BaseStructWithInterface (
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<BaseStructWithInterface_Unknown> {
+        override val _type: KClass<BaseStructWithInterface_Unknown> = BaseStructWithInterface_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseStructWithInterface_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseStructWithInterface_Unknown)  {
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as BaseStructWithInterface_Unknown
+        
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("BaseStructWithInterface_Unknown (")
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
+    //contexts
+}
+
+
+class BaseStruct_Unknown (
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : BaseStruct (
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<BaseStruct_Unknown> {
+        override val _type: KClass<BaseStruct_Unknown> = BaseStruct_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseStruct_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseStruct_Unknown)  {
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as BaseStruct_Unknown
+        
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("BaseStruct_Unknown (")
+        printer.indent {
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
     //contexts
 }
 
@@ -478,7 +827,49 @@ class Baz private constructor(
 
 
 /**
- * #### Generated from [Example.kt:91]
+ * #### Generated from [Example.kt:86]
+ */
+class Class (
+) : RdBindableBase() {
+    //companion
+    
+    companion object : IMarshaller<Class> {
+        override val _type: KClass<Class> = Class::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Class  {
+            val _id = RdId.read(buffer)
+            return Class().withId(_id)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Class)  {
+            value.rdid.write(buffer)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("Class (")
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): Class   {
+        return Class(
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:157]
  */
 class Completion private constructor(
     private val _lookupItems: RdMap<Int, Boolean>
@@ -541,7 +932,744 @@ class Completion private constructor(
 
 
 /**
- * #### Generated from [Example.kt:86]
+ * #### Generated from [Example.kt:124]
+ */
+abstract class DerivedBaseClass (
+    val derivedField: Boolean,
+    baseField: Int
+) : BaseClass (
+    baseField
+) {
+    //companion
+    
+    companion object : IAbstractDeclaration<DerivedBaseClass> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): DerivedBaseClass  {
+            val objectStartPosition = buffer.position
+            val _id = RdId.read(buffer)
+            val derivedField = buffer.readBool()
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return DerivedBaseClass_Unknown(derivedField, baseField, unknownId, unknownBytes).withId(_id)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+class DerivedBaseClass_Unknown (
+    derivedField: Boolean,
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : DerivedBaseClass (
+    derivedField,
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<DerivedBaseClass_Unknown> {
+        override val _type: KClass<DerivedBaseClass_Unknown> = DerivedBaseClass_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedBaseClass_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedBaseClass_Unknown)  {
+            value.rdid.write(buffer)
+            buffer.writeBool(value.derivedField)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedBaseClass_Unknown (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): DerivedBaseClass_Unknown   {
+        return DerivedBaseClass_Unknown(
+            derivedField,
+            baseField,
+            unknownId,
+            unknownBytes
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:128]
+ */
+abstract class DerivedBaseStruct (
+    val derivedField: Boolean,
+    baseField: Int
+) : BaseStruct (
+    baseField
+) {
+    //companion
+    
+    companion object : IAbstractDeclaration<DerivedBaseStruct> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): DerivedBaseStruct  {
+            val objectStartPosition = buffer.position
+            val derivedField = buffer.readBool()
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return DerivedBaseStruct_Unknown(derivedField, baseField, unknownId, unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+class DerivedBaseStruct_Unknown (
+    derivedField: Boolean,
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : DerivedBaseStruct (
+    derivedField,
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<DerivedBaseStruct_Unknown> {
+        override val _type: KClass<DerivedBaseStruct_Unknown> = DerivedBaseStruct_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedBaseStruct_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedBaseStruct_Unknown)  {
+            buffer.writeBool(value.derivedField)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as DerivedBaseStruct_Unknown
+        
+        if (derivedField != other.derivedField) return false
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + derivedField.hashCode()
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedBaseStruct_Unknown (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:108]
+ */
+class DerivedClass (
+    val derivedField: Boolean,
+    baseField: Int
+) : BaseClass (
+    baseField
+) {
+    //companion
+    
+    companion object : IMarshaller<DerivedClass> {
+        override val _type: KClass<DerivedClass> = DerivedClass::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedClass  {
+            val _id = RdId.read(buffer)
+            val baseField = buffer.readInt()
+            val derivedField = buffer.readBool()
+            return DerivedClass(derivedField, baseField).withId(_id)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedClass)  {
+            value.rdid.write(buffer)
+            buffer.writeInt(value.baseField)
+            buffer.writeBool(value.derivedField)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedClass (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): DerivedClass   {
+        return DerivedClass(
+            derivedField,
+            baseField
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:138]
+ */
+abstract class DerivedClassWith2Interfaces (
+    val derivedField: Boolean,
+    baseField: Int
+) : BaseClass (
+    baseField
+), Interface, Interface2 {
+    //companion
+    
+    companion object : IAbstractDeclaration<DerivedClassWith2Interfaces> {
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): DerivedClassWith2Interfaces  {
+            val objectStartPosition = buffer.position
+            val _id = RdId.read(buffer)
+            val derivedField = buffer.readBool()
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return DerivedClassWith2Interfaces_Unknown(derivedField, baseField, unknownId, unknownBytes).withId(_id)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    //deepClone
+    //contexts
+}
+
+
+class DerivedClassWith2Interfaces_Unknown (
+    derivedField: Boolean,
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : DerivedClassWith2Interfaces (
+    derivedField,
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<DerivedClassWith2Interfaces_Unknown> {
+        override val _type: KClass<DerivedClassWith2Interfaces_Unknown> = DerivedClassWith2Interfaces_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedClassWith2Interfaces_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedClassWith2Interfaces_Unknown)  {
+            value.rdid.write(buffer)
+            buffer.writeBool(value.derivedField)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedClassWith2Interfaces_Unknown (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): DerivedClassWith2Interfaces_Unknown   {
+        return DerivedClassWith2Interfaces_Unknown(
+            derivedField,
+            baseField,
+            unknownId,
+            unknownBytes
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:116]
+ */
+open class DerivedOpenClass (
+    val derivedField: Boolean,
+    baseField: Int
+) : OpenClass (
+    baseField
+) {
+    //companion
+    
+    companion object : IMarshaller<DerivedOpenClass>, IAbstractDeclaration<DerivedOpenClass> {
+        override val _type: KClass<DerivedOpenClass> = DerivedOpenClass::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenClass  {
+            val _id = RdId.read(buffer)
+            val baseField = buffer.readInt()
+            val derivedField = buffer.readBool()
+            return DerivedOpenClass(derivedField, baseField).withId(_id)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenClass)  {
+            value.rdid.write(buffer)
+            buffer.writeInt(value.baseField)
+            buffer.writeBool(value.derivedField)
+        }
+        
+        
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): DerivedOpenClass  {
+            val objectStartPosition = buffer.position
+            val _id = RdId.read(buffer)
+            val derivedField = buffer.readBool()
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return DerivedOpenClass_Unknown(derivedField, baseField, unknownId, unknownBytes).withId(_id)
+        }
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedOpenClass (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): DerivedOpenClass   {
+        return DerivedOpenClass(
+            derivedField,
+            baseField
+        )
+    }
+    //contexts
+}
+
+
+class DerivedOpenClass_Unknown (
+    derivedField: Boolean,
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : DerivedOpenClass (
+    derivedField,
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<DerivedOpenClass_Unknown> {
+        override val _type: KClass<DerivedOpenClass_Unknown> = DerivedOpenClass_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenClass_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenClass_Unknown)  {
+            value.rdid.write(buffer)
+            buffer.writeBool(value.derivedField)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedOpenClass_Unknown (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): DerivedOpenClass_Unknown   {
+        return DerivedOpenClass_Unknown(
+            derivedField,
+            baseField,
+            unknownId,
+            unknownBytes
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:120]
+ */
+open class DerivedOpenStruct (
+    val derivedField: Boolean,
+    baseField: Int
+) : OpenStruct (
+    baseField
+) {
+    //companion
+    
+    companion object : IMarshaller<DerivedOpenStruct>, IAbstractDeclaration<DerivedOpenStruct> {
+        override val _type: KClass<DerivedOpenStruct> = DerivedOpenStruct::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenStruct  {
+            val baseField = buffer.readInt()
+            val derivedField = buffer.readBool()
+            return DerivedOpenStruct(derivedField, baseField)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenStruct)  {
+            buffer.writeInt(value.baseField)
+            buffer.writeBool(value.derivedField)
+        }
+        
+        
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): DerivedOpenStruct  {
+            val objectStartPosition = buffer.position
+            val derivedField = buffer.readBool()
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return DerivedOpenStruct_Unknown(derivedField, baseField, unknownId, unknownBytes)
+        }
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as DerivedOpenStruct
+        
+        if (derivedField != other.derivedField) return false
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + derivedField.hashCode()
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedOpenStruct (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+}
+
+
+class DerivedOpenStruct_Unknown (
+    derivedField: Boolean,
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : DerivedOpenStruct (
+    derivedField,
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<DerivedOpenStruct_Unknown> {
+        override val _type: KClass<DerivedOpenStruct_Unknown> = DerivedOpenStruct_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenStruct_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenStruct_Unknown)  {
+            buffer.writeBool(value.derivedField)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as DerivedOpenStruct_Unknown
+        
+        if (derivedField != other.derivedField) return false
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + derivedField.hashCode()
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedOpenStruct_Unknown (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:112]
+ */
+class DerivedStruct (
+    val derivedField: Boolean,
+    baseField: Int
+) : BaseStruct (
+    baseField
+) {
+    //companion
+    
+    companion object : IMarshaller<DerivedStruct> {
+        override val _type: KClass<DerivedStruct> = DerivedStruct::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedStruct  {
+            val baseField = buffer.readInt()
+            val derivedField = buffer.readBool()
+            return DerivedStruct(derivedField, baseField)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedStruct)  {
+            buffer.writeInt(value.baseField)
+            buffer.writeBool(value.derivedField)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as DerivedStruct
+        
+        if (derivedField != other.derivedField) return false
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + derivedField.hashCode()
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedStruct (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:142]
+ */
+class DerivedStructWith2Interfaces (
+    val derivedField: Boolean,
+    baseField: Int
+) : BaseStruct (
+    baseField
+), Interface, Interface2 {
+    //companion
+    
+    companion object : IMarshaller<DerivedStructWith2Interfaces> {
+        override val _type: KClass<DerivedStructWith2Interfaces> = DerivedStructWith2Interfaces::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedStructWith2Interfaces  {
+            val baseField = buffer.readInt()
+            val derivedField = buffer.readBool()
+            return DerivedStructWith2Interfaces(derivedField, baseField)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedStructWith2Interfaces)  {
+            buffer.writeInt(value.baseField)
+            buffer.writeBool(value.derivedField)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as DerivedStructWith2Interfaces
+        
+        if (derivedField != other.derivedField) return false
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + derivedField.hashCode()
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("DerivedStructWith2Interfaces (")
+        printer.indent {
+            print("derivedField = "); derivedField.print(printer); println()
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:152]
  */
 class Document private constructor(
     val moniker: FooBar,
@@ -814,7 +1942,255 @@ class Foo_Unknown (
 
 
 /**
+ * #### Generated from [Example.kt:80]
+ */
+interface Interface
+{
+}
+
+/**
+ * #### Generated from [Example.kt:83]
+ */
+interface Interface2
+{
+}
+
+/**
  * #### Generated from [Example.kt:100]
+ */
+open class OpenClass (
+    val baseField: Int
+) : RdBindableBase() {
+    //companion
+    
+    companion object : IMarshaller<OpenClass>, IAbstractDeclaration<OpenClass> {
+        override val _type: KClass<OpenClass> = OpenClass::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenClass  {
+            val _id = RdId.read(buffer)
+            val baseField = buffer.readInt()
+            return OpenClass(baseField).withId(_id)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenClass)  {
+            value.rdid.write(buffer)
+            buffer.writeInt(value.baseField)
+        }
+        
+        
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): OpenClass  {
+            val objectStartPosition = buffer.position
+            val _id = RdId.read(buffer)
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return OpenClass_Unknown(baseField, unknownId, unknownBytes).withId(_id)
+        }
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("OpenClass (")
+        printer.indent {
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): OpenClass   {
+        return OpenClass(
+            baseField
+        )
+    }
+    //contexts
+}
+
+
+class OpenClass_Unknown (
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : OpenClass (
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<OpenClass_Unknown> {
+        override val _type: KClass<OpenClass_Unknown> = OpenClass_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenClass_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenClass_Unknown)  {
+            value.rdid.write(buffer)
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("OpenClass_Unknown (")
+        printer.indent {
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    override fun deepClone(): OpenClass_Unknown   {
+        return OpenClass_Unknown(
+            baseField,
+            unknownId,
+            unknownBytes
+        )
+    }
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:104]
+ */
+open class OpenStruct (
+    val baseField: Int
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<OpenStruct>, IAbstractDeclaration<OpenStruct> {
+        override val _type: KClass<OpenStruct> = OpenStruct::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenStruct  {
+            val baseField = buffer.readInt()
+            return OpenStruct(baseField)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenStruct)  {
+            buffer.writeInt(value.baseField)
+        }
+        
+        
+        override fun readUnknownInstance(ctx: SerializationCtx, buffer: AbstractBuffer, unknownId: RdId, size: Int): OpenStruct  {
+            val objectStartPosition = buffer.position
+            val baseField = buffer.readInt()
+            val unknownBytes = ByteArray(objectStartPosition + size - buffer.position)
+            buffer.readByteArrayRaw(unknownBytes)
+            return OpenStruct_Unknown(baseField, unknownId, unknownBytes)
+        }
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as OpenStruct
+        
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("OpenStruct (")
+        printer.indent {
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+}
+
+
+class OpenStruct_Unknown (
+    baseField: Int,
+    override val unknownId: RdId,
+    val unknownBytes: ByteArray
+) : OpenStruct (
+    baseField
+), IUnknownInstance {
+    //companion
+    
+    companion object : IMarshaller<OpenStruct_Unknown> {
+        override val _type: KClass<OpenStruct_Unknown> = OpenStruct_Unknown::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenStruct_Unknown  {
+            throw NotImplementedError("Unknown instances should not be read via serializer")
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenStruct_Unknown)  {
+            buffer.writeInt(value.baseField)
+            buffer.writeByteArrayRaw(value.unknownBytes)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as OpenStruct_Unknown
+        
+        if (baseField != other.baseField) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + baseField.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("OpenStruct_Unknown (")
+        printer.indent {
+            print("baseField = "); baseField.print(printer); println()
+        }
+        printer.print(")")
+    }
+    
+    override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:166]
  */
 data class ScalarExample (
     val intfield: Int
@@ -1043,7 +2419,56 @@ data class Selection (
 
 
 /**
- * #### Generated from [Example.kt:103]
+ * #### Generated from [Example.kt:89]
+ */
+class Struct (
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<Struct> {
+        override val _type: KClass<Struct> = Struct::class
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Struct  {
+            return Struct()
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Struct)  {
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as Struct
+        
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("Struct (")
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+}
+
+
+/**
+ * #### Generated from [Example.kt:169]
  */
 class TextControl private constructor(
     private val _selection: RdOptionalProperty<Selection>,
