@@ -28,9 +28,6 @@ if (System.getenv(TEAMCITY_VERSION) == null) {
 //    include(":rd-cpp")
 //    project(":rd-cpp").projectDir = File("rd-cpp")
 
-    include(":rd-cross")
-    project(":rd-cross").projectDir = File("rd-kt/rd-cross")
+//    include(":rd-cross")
+//    project(":rd-cross").projectDir = File("rd-kt/rd-cross")
 }
-
-
-
