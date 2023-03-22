@@ -12,7 +12,7 @@ class InterfaceModel : Ext(OpenEntityRoot) {
 
     val a = interfacedef {}
 
-    val testInterface = interfacedef.extends(marker1, marker2){
+    val testInterface = interfacedef extends marker1 extends marker2 {
         method("testInterfaceMethod", void)
     }
 
@@ -22,7 +22,7 @@ class InterfaceModel : Ext(OpenEntityRoot) {
     }
 
     // concrete classes
-    val testConcreteClassWithInterface = classdef implements marker1 + marker2 with {
+    val testConcreteClassWithInterface = classdef implements marker1 implements marker2 with {
         field("testConcreteClass", string)
     }
 
@@ -32,11 +32,11 @@ class InterfaceModel : Ext(OpenEntityRoot) {
         field("testClassField", string)
     }
 
-    val derivedTestClass = baseclass extends testClass implements derivedInterface + a with {
+    val derivedTestClass = baseclass extends testClass implements derivedInterface implements a with {
         field("derivedTestClassField", string)
     }
 
-    val multipleInterfaceDerivedTestClass = baseclass extends testClass implements marker1 + marker2 + a with {
+    val multipleInterfaceDerivedTestClass = baseclass extends testClass implements marker1 implements marker2 implements a with {
         field("multipleInterfaceDerivedTestClassField", string)
     }
 
@@ -50,7 +50,7 @@ class InterfaceModel : Ext(OpenEntityRoot) {
         field("derivedTestOpenClassField", string)
     }
 
-    val multipleInterfaceDerivedOpenTestClass = openclass extends  testOpenClass implements listOf(marker1, marker2) with {
+    val multipleInterfaceDerivedOpenTestClass = openclass extends testOpenClass implements marker1 implements marker2 with {
         field("multipleInterfaceDerivedTestOpenClassField", string)
     }
 
@@ -60,11 +60,11 @@ class InterfaceModel : Ext(OpenEntityRoot) {
         field("testStructField", string)
     }
 
-    val derivedTestStruct = basestruct extends testStruct implements derivedInterface with {
+    val derivedTestStruct = basestruct extends testStruct  implements derivedInterface with {
         field("derivedTestStructField", string)
     }
 
-    val multipleInterfaceDerivedTestStruct = basestruct extends testStruct implements listOf(marker1, marker2) with {
+    val multipleInterfaceDerivedTestStruct = basestruct extends testStruct implements marker1 implements marker2 with {
         field("multipleInterfaceDerivedTestClassField", string)
     }
 
@@ -78,7 +78,7 @@ class InterfaceModel : Ext(OpenEntityRoot) {
         field("derivedTestOpenStructField", string)
     }
 
-    val multipleInterfaceDerivedOpenTestStruct = openstruct extends  testOpenStruct implements listOf(marker1, marker2) with {
+    val multipleInterfaceDerivedOpenTestStruct = openstruct extends  testOpenStruct implements marker1 implements marker2 with {
         field("multipleInterfaceDerivedTestOpenStructField", string)
     }
 

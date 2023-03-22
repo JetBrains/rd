@@ -76,6 +76,72 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         field("a", baz)
     }
 
+    /// Inheritance
+    val Interface = interfacedef {
+    }
+
+    val Interface2 = interfacedef {
+    }
+
+    val Class = classdef {
+    }
+
+    val Struct = structdef {
+    }
+
+    val BaseClass = baseclass {
+        field("baseField", PredefinedType.int)
+    }
+
+    val BaseStruct = basestruct {
+        field("baseField", PredefinedType.int)
+    }
+
+    val OpenClass = openclass {
+        field("baseField", PredefinedType.int)
+    }
+
+    val OpenStruct = openstruct {
+        field("baseField", PredefinedType.int)
+    }
+
+    val DerivedClass = classdef extends BaseClass {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val DerivedStruct = structdef extends BaseStruct {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val DerivedOpenClass = openclass extends OpenClass {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val DerivedOpenStruct = openstruct extends OpenStruct {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val DerivedBaseClass = baseclass extends BaseClass {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val DerivedBaseStruct = basestruct extends BaseStruct {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val BaseClassWithInterface = baseclass implements Interface with {
+    }
+
+    val BaseStructWithInterface = basestruct implements Interface with {
+    }
+
+    val DerivedClassWith2Interfaces = baseclass extends BaseClass implements Interface implements Interface2 with {
+        field("derivedField", PredefinedType.bool)
+    }
+
+    val DerivedStructWith2Interfaces = structdef extends BaseStruct implements Interface implements Interface2 with {
+        field("derivedField", PredefinedType.bool)
+    }
 
     init {
         source("push", PredefinedType.int)
