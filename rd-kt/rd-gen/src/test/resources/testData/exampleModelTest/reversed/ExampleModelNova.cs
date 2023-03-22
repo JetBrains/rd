@@ -89,15 +89,33 @@ namespace org.example
     
     
     
-    protected override long SerializationHash => -4929039364373743159L;
+    protected override long SerializationHash => -6982206461096110814L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
     {
       serializers.Register(Baz.Read, Baz.Write);
+      serializers.Register(OpenClass.Read, OpenClass.Write);
+      serializers.Register(OpenStruct.Read, OpenStruct.Write);
+      serializers.Register(DerivedClass.Read, DerivedClass.Write);
+      serializers.Register(DerivedStruct.Read, DerivedStruct.Write);
+      serializers.Register(DerivedOpenClass.Read, DerivedOpenClass.Write);
+      serializers.Register(DerivedOpenStruct.Read, DerivedOpenStruct.Write);
+      serializers.Register(DerivedStructWith2Interfaces.Read, DerivedStructWith2Interfaces.Write);
       serializers.Register(Foo_Unknown.Read, Foo_Unknown.Write);
       serializers.Register(ScalarPrimer_Unknown.Read, ScalarPrimer_Unknown.Write);
       serializers.Register(A_Unknown.Read, A_Unknown.Write);
+      serializers.Register(BaseClass_Unknown.Read, BaseClass_Unknown.Write);
+      serializers.Register(BaseStruct_Unknown.Read, BaseStruct_Unknown.Write);
+      serializers.Register(OpenClass_Unknown.Read, OpenClass_Unknown.Write);
+      serializers.Register(OpenStruct_Unknown.Read, OpenStruct_Unknown.Write);
+      serializers.Register(DerivedOpenClass_Unknown.Read, DerivedOpenClass_Unknown.Write);
+      serializers.Register(DerivedOpenStruct_Unknown.Read, DerivedOpenStruct_Unknown.Write);
+      serializers.Register(DerivedBaseClass_Unknown.Read, DerivedBaseClass_Unknown.Write);
+      serializers.Register(DerivedBaseStruct_Unknown.Read, DerivedBaseStruct_Unknown.Write);
+      serializers.Register(BaseClassWithInterface_Unknown.Read, BaseClassWithInterface_Unknown.Write);
+      serializers.Register(BaseStructWithInterface_Unknown.Read, BaseStructWithInterface_Unknown.Write);
+      serializers.Register(DerivedClassWith2Interfaces_Unknown.Read, DerivedClassWith2Interfaces_Unknown.Write);
       
       serializers.RegisterToplevelOnce(typeof(ExampleRootNova), ExampleRootNova.RegisterDeclaredTypesSerializers);
     }
@@ -259,6 +277,376 @@ namespace org.example
         printer.Print("z = "); _Z.PrintEx(printer); printer.Println();
         printer.Print("x = "); X.PrintEx(printer); printer.Println();
         printer.Print("sdf = "); _Sdf.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:92</p>
+  /// </summary>
+  public abstract class BaseClass : RdBindableBase
+  {
+    //fields
+    //public fields
+    public int BaseField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    protected BaseClass(
+      int baseField
+    )
+    {
+      BaseField = baseField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<BaseClass> Read = Polymorphic<BaseClass>.ReadAbstract(BaseClass_Unknown.Read);
+    
+    public static CtxWriteDelegate<BaseClass> Write = Polymorphic<BaseClass>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:132</p>
+  /// </summary>
+  public abstract class BaseClassWithInterface : RdBindableBase, Interface
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<BaseClassWithInterface> Read = Polymorphic<BaseClassWithInterface>.ReadAbstract(BaseClassWithInterface_Unknown.Read);
+    
+    public static CtxWriteDelegate<BaseClassWithInterface> Write = Polymorphic<BaseClassWithInterface>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  public sealed class BaseClassWithInterface_Unknown : BaseClassWithInterface
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<BaseClassWithInterface_Unknown> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var _result = new BaseClassWithInterface_Unknown().WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<BaseClassWithInterface_Unknown> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("BaseClassWithInterface_Unknown (");
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  public sealed class BaseClass_Unknown : BaseClass
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public BaseClass_Unknown(
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<BaseClass_Unknown> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var baseField = reader.ReadInt();
+      var _result = new BaseClass_Unknown(baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<BaseClass_Unknown> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("BaseClass_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:96</p>
+  /// </summary>
+  public abstract class BaseStruct{
+    //fields
+    //public fields
+    public int BaseField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    protected BaseStruct(
+      int baseField
+    )
+    {
+      BaseField = baseField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<BaseStruct> Read = Polymorphic<BaseStruct>.ReadAbstract(BaseStruct_Unknown.Read);
+    
+    public static CtxWriteDelegate<BaseStruct> Write = Polymorphic<BaseStruct>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:135</p>
+  /// </summary>
+  public abstract class BaseStructWithInterface : Interface
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<BaseStructWithInterface> Read = Polymorphic<BaseStructWithInterface>.ReadAbstract(BaseStructWithInterface_Unknown.Read);
+    
+    public static CtxWriteDelegate<BaseStructWithInterface> Write = Polymorphic<BaseStructWithInterface>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  public sealed class BaseStructWithInterface_Unknown : BaseStructWithInterface
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<BaseStructWithInterface_Unknown> Read = (ctx, reader) => 
+    {
+      var _result = new BaseStructWithInterface_Unknown();
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<BaseStructWithInterface_Unknown> Write = (ctx, writer, value) => 
+    {
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((BaseStructWithInterface_Unknown) obj);
+    }
+    public bool Equals(BaseStructWithInterface_Unknown other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return true;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("BaseStructWithInterface_Unknown (");
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  public sealed class BaseStruct_Unknown : BaseStruct
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public BaseStruct_Unknown(
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<BaseStruct_Unknown> Read = (ctx, reader) => 
+    {
+      var baseField = reader.ReadInt();
+      var _result = new BaseStruct_Unknown(baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<BaseStruct_Unknown> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((BaseStruct_Unknown) obj);
+    }
+    public bool Equals(BaseStruct_Unknown other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("BaseStruct_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }
@@ -538,7 +926,55 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:91</p>
+  /// <p>Generated from: Example.kt:86</p>
+  /// </summary>
+  public sealed class Class : RdBindableBase
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<Class> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var _result = new Class().WithId(_id);
+      return _result;
+    };
+    
+    public static CtxWriteDelegate<Class> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("Class (");
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:157</p>
   /// </summary>
   public sealed class Completion : RdBindableBase
   {
@@ -608,7 +1044,864 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:86</p>
+  /// <p>Generated from: Example.kt:124</p>
+  /// </summary>
+  public abstract class DerivedBaseClass : BaseClass
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    protected DerivedBaseClass(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedBaseClass> Read = Polymorphic<DerivedBaseClass>.ReadAbstract(DerivedBaseClass_Unknown.Read);
+    
+    public static new CtxWriteDelegate<DerivedBaseClass> Write = Polymorphic<DerivedBaseClass>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  public sealed class DerivedBaseClass_Unknown : DerivedBaseClass
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public DerivedBaseClass_Unknown(
+      bool derivedField,
+      int baseField
+    ) : base (
+      derivedField,
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedBaseClass_Unknown> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var derivedField = reader.ReadBool();
+      var baseField = reader.ReadInt();
+      var _result = new DerivedBaseClass_Unknown(derivedField, baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedBaseClass_Unknown> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.DerivedField);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedBaseClass_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:128</p>
+  /// </summary>
+  public abstract class DerivedBaseStruct : BaseStruct
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    protected DerivedBaseStruct(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedBaseStruct> Read = Polymorphic<DerivedBaseStruct>.ReadAbstract(DerivedBaseStruct_Unknown.Read);
+    
+    public static new CtxWriteDelegate<DerivedBaseStruct> Write = Polymorphic<DerivedBaseStruct>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  public sealed class DerivedBaseStruct_Unknown : DerivedBaseStruct
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public DerivedBaseStruct_Unknown(
+      bool derivedField,
+      int baseField
+    ) : base (
+      derivedField,
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedBaseStruct_Unknown> Read = (ctx, reader) => 
+    {
+      var derivedField = reader.ReadBool();
+      var baseField = reader.ReadInt();
+      var _result = new DerivedBaseStruct_Unknown(derivedField, baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedBaseStruct_Unknown> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.DerivedField);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((DerivedBaseStruct_Unknown) obj);
+    }
+    public bool Equals(DerivedBaseStruct_Unknown other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return DerivedField == other.DerivedField && BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + DerivedField.GetHashCode();
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedBaseStruct_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:108</p>
+  /// </summary>
+  public sealed class DerivedClass : BaseClass
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public DerivedClass(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedClass> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var baseField = reader.ReadInt();
+      var derivedField = reader.ReadBool();
+      var _result = new DerivedClass(derivedField, baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedClass> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.BaseField);
+      writer.Write(value.DerivedField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedClass (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:138</p>
+  /// </summary>
+  public abstract class DerivedClassWith2Interfaces : BaseClass, Interface, Interface2
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    protected DerivedClassWith2Interfaces(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedClassWith2Interfaces> Read = Polymorphic<DerivedClassWith2Interfaces>.ReadAbstract(DerivedClassWith2Interfaces_Unknown.Read);
+    
+    public static new CtxWriteDelegate<DerivedClassWith2Interfaces> Write = Polymorphic<DerivedClassWith2Interfaces>.Write;
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    //toString
+  }
+  
+  
+  public sealed class DerivedClassWith2Interfaces_Unknown : DerivedClassWith2Interfaces
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public DerivedClassWith2Interfaces_Unknown(
+      bool derivedField,
+      int baseField
+    ) : base (
+      derivedField,
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedClassWith2Interfaces_Unknown> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var derivedField = reader.ReadBool();
+      var baseField = reader.ReadInt();
+      var _result = new DerivedClassWith2Interfaces_Unknown(derivedField, baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedClassWith2Interfaces_Unknown> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.DerivedField);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedClassWith2Interfaces_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:116</p>
+  /// </summary>
+  public class DerivedOpenClass : OpenClass
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public DerivedOpenClass(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedOpenClass> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var baseField = reader.ReadInt();
+      var derivedField = reader.ReadBool();
+      var _result = new DerivedOpenClass(derivedField, baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedOpenClass> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.BaseField);
+      writer.Write(value.DerivedField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedOpenClass (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  public sealed class DerivedOpenClass_Unknown : DerivedOpenClass
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public DerivedOpenClass_Unknown(
+      bool derivedField,
+      int baseField
+    ) : base (
+      derivedField,
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedOpenClass_Unknown> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var derivedField = reader.ReadBool();
+      var baseField = reader.ReadInt();
+      var _result = new DerivedOpenClass_Unknown(derivedField, baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedOpenClass_Unknown> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.DerivedField);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedOpenClass_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:120</p>
+  /// </summary>
+  public class DerivedOpenStruct : OpenStruct
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public DerivedOpenStruct(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedOpenStruct> Read = (ctx, reader) => 
+    {
+      var baseField = reader.ReadInt();
+      var derivedField = reader.ReadBool();
+      var _result = new DerivedOpenStruct(derivedField, baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedOpenStruct> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.BaseField);
+      writer.Write(value.DerivedField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((DerivedOpenStruct) obj);
+    }
+    public bool Equals(DerivedOpenStruct other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return DerivedField == other.DerivedField && BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + DerivedField.GetHashCode();
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedOpenStruct (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  public sealed class DerivedOpenStruct_Unknown : DerivedOpenStruct
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public DerivedOpenStruct_Unknown(
+      bool derivedField,
+      int baseField
+    ) : base (
+      derivedField,
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedOpenStruct_Unknown> Read = (ctx, reader) => 
+    {
+      var derivedField = reader.ReadBool();
+      var baseField = reader.ReadInt();
+      var _result = new DerivedOpenStruct_Unknown(derivedField, baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedOpenStruct_Unknown> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.DerivedField);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((DerivedOpenStruct_Unknown) obj);
+    }
+    public bool Equals(DerivedOpenStruct_Unknown other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return DerivedField == other.DerivedField && BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + DerivedField.GetHashCode();
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedOpenStruct_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:112</p>
+  /// </summary>
+  public sealed class DerivedStruct : BaseStruct
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public DerivedStruct(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedStruct> Read = (ctx, reader) => 
+    {
+      var baseField = reader.ReadInt();
+      var derivedField = reader.ReadBool();
+      var _result = new DerivedStruct(derivedField, baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedStruct> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.BaseField);
+      writer.Write(value.DerivedField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((DerivedStruct) obj);
+    }
+    public bool Equals(DerivedStruct other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return DerivedField == other.DerivedField && BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + DerivedField.GetHashCode();
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedStruct (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:142</p>
+  /// </summary>
+  public sealed class DerivedStructWith2Interfaces : BaseStruct, Interface, Interface2
+  {
+    //fields
+    //public fields
+    public bool DerivedField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public DerivedStructWith2Interfaces(
+      bool derivedField,
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+      DerivedField = derivedField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<DerivedStructWith2Interfaces> Read = (ctx, reader) => 
+    {
+      var baseField = reader.ReadInt();
+      var derivedField = reader.ReadBool();
+      var _result = new DerivedStructWith2Interfaces(derivedField, baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<DerivedStructWith2Interfaces> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.BaseField);
+      writer.Write(value.DerivedField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((DerivedStructWith2Interfaces) obj);
+    }
+    public bool Equals(DerivedStructWith2Interfaces other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return DerivedField == other.DerivedField && BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + DerivedField.GetHashCode();
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("DerivedStructWith2Interfaces (");
+      using (printer.IndentCookie()) {
+        printer.Print("derivedField = "); DerivedField.PrintEx(printer); printer.Println();
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:152</p>
   /// </summary>
   public sealed class Document : RdBindableBase
   {
@@ -913,7 +2206,292 @@ namespace org.example
   
   
   /// <summary>
+  /// <p>Generated from: Example.kt:80</p>
+  /// </summary>
+  public interface Interface
+  {
+  }
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:83</p>
+  /// </summary>
+  public interface Interface2
+  {
+  }
+  
+  /// <summary>
   /// <p>Generated from: Example.kt:100</p>
+  /// </summary>
+  public class OpenClass : RdBindableBase
+  {
+    //fields
+    //public fields
+    public int BaseField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public OpenClass(
+      int baseField
+    )
+    {
+      BaseField = baseField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<OpenClass> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var baseField = reader.ReadInt();
+      var _result = new OpenClass(baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static CtxWriteDelegate<OpenClass> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("OpenClass (");
+      using (printer.IndentCookie()) {
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  public sealed class OpenClass_Unknown : OpenClass
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public OpenClass_Unknown(
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<OpenClass_Unknown> Read = (ctx, reader) => 
+    {
+      var _id = RdId.Read(reader);
+      var baseField = reader.ReadInt();
+      var _result = new OpenClass_Unknown(baseField).WithId(_id);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<OpenClass_Unknown> Write = (ctx, writer, value) => 
+    {
+      value.RdId.Write(writer);
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    //hash code trait
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("OpenClass_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:104</p>
+  /// </summary>
+  public class OpenStruct{
+    //fields
+    //public fields
+    public int BaseField {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public OpenStruct(
+      int baseField
+    )
+    {
+      BaseField = baseField;
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<OpenStruct> Read = (ctx, reader) => 
+    {
+      var baseField = reader.ReadInt();
+      var _result = new OpenStruct(baseField);
+      return _result;
+    };
+    
+    public static CtxWriteDelegate<OpenStruct> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((OpenStruct) obj);
+    }
+    public bool Equals(OpenStruct other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public virtual void Print(PrettyPrinter printer)
+    {
+      printer.Println("OpenStruct (");
+      using (printer.IndentCookie()) {
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  public sealed class OpenStruct_Unknown : OpenStruct
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    public OpenStruct_Unknown(
+      int baseField
+    ) : base (
+      baseField
+     ) 
+    {
+    }
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static new CtxReadDelegate<OpenStruct_Unknown> Read = (ctx, reader) => 
+    {
+      var baseField = reader.ReadInt();
+      var _result = new OpenStruct_Unknown(baseField);
+      return _result;
+    };
+    
+    public static new CtxWriteDelegate<OpenStruct_Unknown> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.BaseField);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((OpenStruct_Unknown) obj);
+    }
+    public bool Equals(OpenStruct_Unknown other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return BaseField == other.BaseField;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + BaseField.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("OpenStruct_Unknown (");
+      using (printer.IndentCookie()) {
+        printer.Print("baseField = "); BaseField.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:166</p>
   /// </summary>
   public sealed class ScalarExample : IPrintable, IEquatable<ScalarExample>
   {
@@ -1225,7 +2803,73 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:103</p>
+  /// <p>Generated from: Example.kt:89</p>
+  /// </summary>
+  public sealed class Struct : IPrintable, IEquatable<Struct>
+  {
+    //fields
+    //public fields
+    
+    //private fields
+    //primary constructor
+    //secondary constructor
+    //deconstruct trait
+    //statics
+    
+    public static CtxReadDelegate<Struct> Read = (ctx, reader) => 
+    {
+      var _result = new Struct();
+      return _result;
+    };
+    
+    public static CtxWriteDelegate<Struct> Write = (ctx, writer, value) => 
+    {
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((Struct) obj);
+    }
+    public bool Equals(Struct other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return true;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("Struct (");
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:169</p>
   /// </summary>
   public sealed class TextControl : RdBindableBase
   {
