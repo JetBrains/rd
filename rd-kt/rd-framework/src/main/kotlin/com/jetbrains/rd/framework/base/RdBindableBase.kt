@@ -3,14 +3,16 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.util.Sync
-import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.RName
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -27,18 +29,21 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     var parent: IRdDynamic? = null
         protected set
 
-    var bindLifetime: Lifetime? = null
+    private var bindLifetime: Lifetime = Lifetime.Terminated
         private set
 
     //bound state: inferred
 
-    val isBound : Boolean  get() = parent != null
+    var bindState = BindState.NotBound
+        private set
 
-    override val protocol : IProtocol get() = parent?.protocol?: nb()
+    val isBound : Boolean  get() = bindState == BindState.Bound
 
-    protected val bindableChildren : MutableList<Pair<String, Any?>> = ViewableList<Pair<String, Any?>>()
+    override val protocol : IProtocol? get() = parent?.protocol
 
-    override val serializationContext: SerializationCtx get() = parent?.serializationContext ?: nb()
+    protected val bindableChildren : MutableList<Pair<String, Any?>> = ViewableList(Collections.synchronizedList(mutableListOf()))
+
+    override val serializationContext: SerializationCtx? get() = parent?.serializationContext
 
     val containingExt: RdExtBase?
         get() {
@@ -54,30 +59,57 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
 
 
-    final override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
+    final override fun preBind(lf: Lifetime, parent: IRdDynamic, name: String) {
         require (this.parent == null) { "Trying to bound already bound $this to ${parent.location}" }
 //todo uncomment it
 //        require (!rdid.isNull) { "Must be identified first" }
 
-        lf.bracket(
+        val proto = parent.protocol ?: return
+
+        lf.bracketIfAlive(
             {
                 this.parent = parent
                 location = parent.location.sub(name, ".")
                 bindLifetime = lf
             },
             {
-                bindLifetime = null
-                location = location.sub("<<unbound>>","::")
-                this.parent = null
-                rdid = RdId.Null
-            }
-        )
+                assertBindingThread()
+                unbind()
 
-        protocol.scheduler.assertThread(this)
+                location = location.sub("<<unbound>>","::")
+                rdid = RdId.Null
+                bindState = BindState.NotBound
+                this.parent = null
+            }
+        ) ?: return
+
+        assertBindingThread()
 
         Signal.priorityAdviseSection {
-            init(lf)
+            preInit(lf, proto)
         }
+
+        bindState = BindState.PreBound
+    }
+
+    override fun bind() {
+        assertBindingThread()
+
+        val bindLifetime = bindLifetime
+        val proto = protocol ?: return
+        val ctx = serializationContext ?: return
+
+        val bindState = bindState
+        if (bindLifetime.isNotAlive)
+            return
+
+        assert(bindState == BindState.PreBound)
+
+        Signal.priorityAdviseSection {
+            init(bindLifetime, proto, ctx)
+        }
+
+        this@RdBindableBase.bindState = BindState.Bound
     }
 
     private val extensions = mutableMapOf<String, Any>()
@@ -95,9 +127,14 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 extensions[name] = newExtension
                 if (newExtension is IRdBindable) {
                     bindableChildren.add(if (highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
-                    bindLifetime?.let {
-                        newExtension.identify(protocol.identity, rdid.mix(".$name"))
-                        newExtension.bind(it, this, name)
+                    val proto = protocol ?: return newExtension
+
+                    val localBindLifetime = bindLifetime
+                    if (localBindLifetime.isAlive) {
+                        if (newExtension.rdid == RdId.Null)
+                            newExtension.identify(proto.identity, rdid.mix(".$name"))
+                        newExtension.preBind(localBindLifetime, this, name)
+                        newExtension.bind()
                     }
                 }
 
@@ -109,11 +146,41 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
-    //need to implement in subclasses
-    protected open fun init(lifetime : Lifetime) {
-        for ((name, child) in bindableChildren) {
-            child?.bindPolymorphic(lifetime, this, name)
+    protected open fun assertBindingThread()
+    {
+        if (AllowBindingCookie.isBindNotAllowed) {
+            val proto = protocol ?: return
+            if (proto.lifetime.isNotAlive)
+                return
+
+            proto.scheduler.assertThread(this)
         }
+    }
+
+    //need to implement in subclasses
+    protected open fun preInit(lifetime : Lifetime, proto: IProtocol) {
+        preInitBindableFields(lifetime)
+    }
+
+    //need to implement in subclasses
+    protected open fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        initBindableFields(lifetime)
+    }
+
+    protected open fun preInitBindableFields(lifetime: Lifetime) {
+        for ((name, child) in bindableChildren) {
+            child?.preBindPolymorphic(lifetime, this, name)
+        }
+    }
+
+    protected open fun initBindableFields(lifetime: Lifetime) {
+        for ((_, child) in bindableChildren) {
+            child?.bindPolymorphic()
+        }
+    }
+
+    protected open fun unbind() {
+
     }
 
     open fun findByRName(rName: RName): RdBindableBase? {
@@ -196,6 +263,12 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         doOneWay(lifetime, this, otherBindable)
         doOneWay(lifetime, otherBindable, this)
     }
+}
+
+enum class BindState {
+    NotBound,
+    PreBound,
+    Bound
 }
 
 fun <T : RdBindableBase> T.withId(id: RdId) : T {

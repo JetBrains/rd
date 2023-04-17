@@ -3,39 +3,97 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.isNotAlive
+import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.IViewableMap
 import com.jetbrains.rd.util.reactive.ViewableMap
+import java.util.*
+import kotlin.collections.ArrayDeque
+import kotlin.collections.LinkedHashMap
 
 class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val context: RdContext<K>, val valueFactory: (Boolean) -> V, private val internalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V>, IViewableMap<K, V> by internalMap {
-    constructor(context: RdContext<K>, valueFactory: (Boolean) -> V) : this(context, valueFactory, ViewableMap())
+    constructor(context: RdContext<K>, valueFactory: (Boolean) -> V) : this(context, valueFactory, ViewableMap(Collections.synchronizedMap(LinkedHashMap())))
 
     override fun deepClone(): IRdBindable {
         return RdPerContextMap(context, valueFactory)
     }
 
-    public val changing = internalMap.changing
-    public var optimizeNested: Boolean = false
+    val changing = internalMap.changing
+    var optimizeNested: Boolean = false
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    private var queue: ReactiveQueue<Pair<K, V>>? = null
+
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         // this entity has no own messages
         error("RdPerContextMap at $location received a message" )
     }
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
-        val protocolValueSet = protocol.contexts.getValueSet(context)
-        internalMap.keys.filter { !protocolValueSet.contains(it) }.forEach { internalMap.remove(it) }
-        protocolValueSet.view(lifetime) { keyLt, key ->
-            val oldValue = internalMap[key]
-            val newEntity = (oldValue ?: valueFactory(master)).withId(rdid.mix(key.toString()))
-            newEntity.bind(keyLt, this, "[${key}]")
-            if (oldValue == null)
-                internalMap[key] = newEntity
-            keyLt.onTermination {
-                newEntity.rdid = RdId.Null
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
+
+        val localQueue = ReactiveQueue<Pair<K, V>>()
+        queue = localQueue
+
+
+        val protocolValueSet = proto.contexts.getValueSet(context)
+        proto.scheduler.invokeOrQueue {
+            internalMap.keys.filter { !protocolValueSet.contains(it) }.forEach { internalMap.remove(it) }
+        }
+
+        protocolValueSet.view(lifetime) { contextValueLifetime, contextValue ->
+            val oldValue = internalMap[contextValue]
+
+            val value = (oldValue ?: valueFactory(master))
+
+            contextValueLifetime.executeIfAlive {
+                value.withId(rdid.mix(contextValue.toString()))
+                value.preBind(contextValueLifetime, this, "[${contextValue}]")
+            }
+
+            localQueue.enqueue(Pair(contextValue, value))
+        }
+    }
+
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        super.init(lifetime, proto, ctx)
+
+        val localQueue = queue
+        if (localQueue == null) {
+            if (proto.lifetime.isNotAlive)
+                return
+
+            error("queue must not be null")
+        }
+
+        localQueue.view(lifetime) { pair ->
+            lifetime.executeIfAlive {
+                pair.second.bind()
+
+                if (!internalMap.containsKey(pair.first)) {
+                    proto.scheduler.invokeOrQueue {
+                        if (!internalMap.containsKey(pair.first)) {
+                            internalMap[pair.first] = pair.second
+                        }
+                    }
+                }
             }
         }
+    }
+
+    override fun adviseAddRemove(lifetime: Lifetime, handler: (AddRemove, K, V) -> Unit) {
+        assertThreading()
+        internalMap.adviseAddRemove(lifetime, handler)
+    }
+
+    override fun view(lifetime: Lifetime, handler: (Lifetime, Map.Entry<K, V>) -> Unit) {
+        assertThreading()
+        internalMap.view(lifetime, handler)
+    }
+
+    override fun view(lifetime: Lifetime, handler: (Lifetime, K, V) -> Unit) {
+        assertThreading()
+        internalMap.view(lifetime, handler)
     }
 
     override operator fun get(key: K): V? {
@@ -43,6 +101,8 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
             if (!internalMap.containsKey(key))
                 internalMap[key] = valueFactory(false)
         }
+
+        assertThreading()
         return internalMap[key]
     }
 
@@ -59,6 +119,53 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
 
         fun write(buffer: AbstractBuffer, map: RdPerContextMap<*, *>) {
             buffer.writeRdId(map.rdid)
+        }
+    }
+
+    private class ReactiveQueue<T> {
+        private var listener: ((T) -> Unit)? = null
+        private val queue = ArrayDeque<T>()
+
+        fun enqueue(value: T) {
+            val action: (T) -> Unit
+            synchronized(queue) {
+                val localListener = listener
+                if (localListener != null) {
+                    assert(queue.size == 0)
+                    action = localListener
+                } else{
+                    queue.add(value)
+                    return
+                }
+            }
+
+            action(value)
+        }
+
+        fun view(lifetime: Lifetime, action: (T) -> Unit) {
+            while (lifetime.isAlive) {
+                val value = synchronized(queue) {
+                    if (queue.size > 0) {
+                        if (lifetime.isNotAlive)
+                            return
+
+                        queue.removeFirst()
+                    } else {
+                        lifetime.bracketIfAlive({
+                            assert(listener == null)
+                            listener = action
+                        }, {
+                            synchronized(queue) {
+                                listener = null
+                            }
+                        })
+
+                        return
+                    }
+                }
+
+                action(value)
+            }
         }
     }
 }

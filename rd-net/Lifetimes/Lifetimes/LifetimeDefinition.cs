@@ -317,12 +317,22 @@ namespace JetBrains.Lifetimes
     #region Diagnostics
     
     [PublicAPI] public static readonly string AnonymousLifetimeId = "Anonymous";
-    
+
     /// <summary>
     /// You can optionally set this identification information to see logs with lifetime's id other than <see cref="AnonymousLifetimeId"/>
     /// </summary>
-    [PublicAPI] public object? Id { get; set; }    
-    
+    [PublicAPI]
+    public object? Id
+    {
+      get => myId;
+      set
+      {
+        myId = value;
+        if (Status == LifetimeStatus.Terminated)
+          myId = null;
+      }
+    }
+
     private bool IsVerboseLoggingEnabled => ourVerboseDiagnosticsSlice[myState];
     
     /// <summary>
@@ -539,6 +549,7 @@ namespace JetBrains.Lifetimes
         }
       }
 
+
       myResources = null;
       myResCount = 0;
       
@@ -561,6 +572,8 @@ namespace JetBrains.Lifetimes
       }
       
       var statusIncrementedSuccessfully = IncrementStatusIfEqualsTo(LifetimeStatus.Terminating);
+      myId = null;
+      
       if (Mode.IsAssertion) Assertion.Assert(statusIncrementedSuccessfully, "{0}: bad status for destructuring finish", this);
     }
 
@@ -970,8 +983,9 @@ namespace JetBrains.Lifetimes
     #region Cancellation    
     
     private CancellationTokenSource? myCts;
-    
-        
+    private object? myId;
+
+
     //Only if state >= Canceling
     private LifetimeCanceledException CanceledException() => new LifetimeCanceledException(Lifetime);
     

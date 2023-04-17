@@ -97,7 +97,7 @@ namespace Test.RdFramework.Interning
     [NotNull] private readonly RdProperty<string> _InternedInProtocol;
     
     private SerializationCtx mySerializationContext;
-    public override SerializationCtx SerializationContext { get { return mySerializationContext; } }
+    public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }
     //primary constructor
     private InterningExtRootModel(
       [NotNull] RdProperty<string> internedLocally,

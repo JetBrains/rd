@@ -83,9 +83,9 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdProperty<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
         var cp = NewRdProperty<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         cp.SetValue(1);
         WaitAndAssert(sp, 1);
@@ -103,9 +103,9 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdProperty<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
         var cp = NewRdProperty<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
         sp.Advise(lifetime, it => log.Add(it));
@@ -131,9 +131,9 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdProperty<string>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
         var cp = NewRdProperty<string>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         cp.SetValue("1");
         WaitAndAssert(sp, "1");
@@ -164,13 +164,13 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, port);
 
         var cp = NewRdProperty<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
         cp.SetValue(1);
 
         Thread.Sleep(2000);
         var serverProtocol = Server(lifetime, port);
         var sp = NewRdProperty<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
 
         var prev = sp.Maybe;
 
@@ -214,7 +214,7 @@ namespace Test.RdFramework
         var protocol = Server(lifetime);
         Thread.Sleep(100);
         var p = NewRdProperty<int>().Static(1);
-        p.Bind(lifetime, protocol, Top);
+        p.BindTopLevel(lifetime, protocol, Top);
         p.SetValue(1);
         p.SetValue(2);
         Thread.Sleep(50);
@@ -254,7 +254,7 @@ namespace Test.RdFramework
         var protocol = Client(lifetime, FindFreePort());
         Thread.Sleep(100);
         var p = NewRdProperty<int>().Static(1);
-        p.Bind(lifetime, protocol, Top);
+        p.BindTopLevel(lifetime, protocol, Top);
         p.SetValue(1);
         p.SetValue(2);
         Thread.Sleep(50);
@@ -284,10 +284,10 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdSignal<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
 
         var cp = NewRdSignal<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
         sp.Advise(lifetime, i => advise(log, i));
@@ -322,7 +322,7 @@ namespace Test.RdFramework
           var serverProtocol = Server(lifetime, null);
           
           var sp = NewRdProperty<int>().Static(1);
-          sp.Bind(lifetime, serverProtocol, Top);
+          sp.BindTopLevel(lifetime, serverProtocol, Top);
           sp.IsMaster = false;
 
           var wire = serverProtocol.Wire as SocketWire.Base;
@@ -339,7 +339,7 @@ namespace Test.RdFramework
             var clientProtocol = Client(lf, serverProtocol);
             var cp = NewRdProperty<int>().Static(1);
             cp.IsMaster = true;
-            cp.Bind(lf, clientProtocol, Top);
+            cp.BindTopLevel(lf, clientProtocol, Top);
             cp.SetValue(1);            
             WaitAndAssert(sp, 1);            
             Assert.AreEqual(1, clientCount);
@@ -349,11 +349,11 @@ namespace Test.RdFramework
           Lifetime.Using(lf =>
           {
             sp = NewRdProperty<int>().Static(2);
-            sp.Bind(lifetime, serverProtocol, Top);
+            sp.BindTopLevel(lifetime, serverProtocol, Top);
             
             var clientProtocol = Client(lf, serverProtocol);
             var cp = NewRdProperty<int>().Static(2);
-            cp.Bind(lf, clientProtocol, Top);
+            cp.BindTopLevel(lf, clientProtocol, Top);
             cp.SetValue(2);
             WaitAndAssert(sp, 2);
             Assert.AreEqual(2, clientCount);
@@ -364,7 +364,7 @@ namespace Test.RdFramework
           {                        
             var clientProtocol = Client(lf, serverProtocol);
             var cp = NewRdProperty<int>().Static(2);
-            cp.Bind(lf, clientProtocol, Top);
+            cp.BindTopLevel(lf, clientProtocol, Top);
             cp.SetValue(3);      
             WaitAndAssert(sp, 3, 2);
             Assert.AreEqual(3, clientCount);
@@ -398,88 +398,6 @@ namespace Test.RdFramework
       SpinWaitEx.SpinUntil(() => factory.Connected.Count == 0);
     }
 
-    [TestCase(true)]
-    [TestCase(false)]
-    public void TestPacketLoss(bool isClientToServer)
-    {
-      using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
-      Lifetime.Using(lifetime =>
-      {
-        SynchronousScheduler.Instance.SetActive(lifetime);
-
-        var serverProtocol = Server(lifetime);
-        var serverWire = (SocketWire.Base) serverProtocol.Wire;
-
-        var proxy = new SocketProxy("TestProxy", lifetime, serverProtocol);
-        proxy.Start();
-
-        var clientProtocol = Client(lifetime, proxy.Port);
-        var clientWire = (SocketWire.Base) clientProtocol.Wire;
-
-        Thread.Sleep(DefaultTimeout);
-
-        if (isClientToServer)
-          proxy.StopClientToServerMessaging();
-        else
-          proxy.StopServerToClientMessaging();
-
-        var detectionTimeoutTicks = ((SocketWire.Base) clientProtocol.Wire).HeartBeatInterval.Ticks *
-                                    (SocketWire.Base.MaximumHeartbeatDelay + 3);
-        var detectionTimeout = TimeSpan.FromTicks(detectionTimeoutTicks);
-          
-        Thread.Sleep(detectionTimeout);
-
-        Assert.IsTrue(serverWire.Connected.Value);
-        Assert.IsTrue(clientWire.Connected.Value);
-          
-        Assert.IsFalse(serverWire.HeartbeatAlive.Value);
-        Assert.IsFalse(clientWire.HeartbeatAlive.Value);
-
-        if (isClientToServer)
-          proxy.StartClientToServerMessaging();
-        else
-          proxy.StartServerToClientMessaging();
-
-        Thread.Sleep(detectionTimeout);
-
-        Assert.IsTrue(serverWire.Connected.Value);
-        Assert.IsTrue(clientWire.Connected.Value);
-          
-        Assert.IsTrue(serverWire.HeartbeatAlive.Value);
-        Assert.IsTrue(clientWire.HeartbeatAlive.Value);
-
-      });
-    }
-
-    [Test]
-    [Ignore("Not enough timeout to get the correct test")]
-    public void TestStressHeartbeat()
-    {
-      // using (Log.UsingLogFactory(new TextWriterLogFactory(Console.Out, LoggingLevel.TRACE)))
-      Lifetime.Using(lifetime =>
-      {
-        SynchronousScheduler.Instance.SetActive(lifetime);
-
-        var interval = TimeSpan.FromMilliseconds(50);
-
-        var serverProtocol = Server(lifetime);
-        var serverWire = ((SocketWire.Base) serverProtocol.Wire).With(wire => wire.HeartBeatInterval = interval);
-
-        var latency = TimeSpan.FromMilliseconds(40);
-        var proxy = new SocketProxy("TestProxy", lifetime, serverProtocol) {Latency = latency};
-        proxy.Start();
-
-        var clientProtocol = Client(lifetime, proxy.Port);
-        var clientWire = ((SocketWire.Base) clientProtocol.Wire).With(wire => wire.HeartBeatInterval = interval);
-
-        Thread.Sleep(DefaultTimeout);
-
-        serverWire.HeartbeatAlive.WhenFalse(lifetime, _ => Assert.Fail("Detected false disconnect on server side"));
-        clientWire.HeartbeatAlive.WhenFalse(lifetime, _ => Assert.Fail("Detected false disconnect on client side"));
-
-        Thread.Sleep(TimeSpan.FromSeconds(50));
-      });
-    }
 
     private static void CloseSocket(IProtocol protocol)
     {

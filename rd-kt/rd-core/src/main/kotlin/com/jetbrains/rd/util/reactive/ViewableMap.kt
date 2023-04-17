@@ -5,9 +5,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.put
 import com.jetbrains.rd.util.reactive.IViewableMap.Event
 
-class ViewableMap<K : Any, V : Any>() : IMutableViewableMap<K, V> {
-
-    private val map = linkedMapOf<K, V>()
+class ViewableMap<K : Any, V : Any>(private val map: MutableMap<K, V> = LinkedHashMap()) : IMutableViewableMap<K, V> {
 
     override val change = Signal<Event<K, V>>()
 

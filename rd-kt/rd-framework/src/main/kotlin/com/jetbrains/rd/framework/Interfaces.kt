@@ -1,24 +1,24 @@
 package com.jetbrains.rd.framework
 
-import com.jetbrains.rd.framework.base.IRdReactive
-import com.jetbrains.rd.framework.base.IRdWireable
-import com.jetbrains.rd.framework.base.ISerializersOwner
-import com.jetbrains.rd.framework.base.RdExtBase
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.impl.InternId
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
+import java.rmi.NotBoundException
 import kotlin.reflect.KClass
 
 /**
  * A node in a graph of entities that can be synchronized with its remote copy over a network or a similar connection.
  */
 interface IRdDynamic {
-    val protocol: IProtocol
-    val serializationContext: SerializationCtx
+    val protocol: IProtocol?
+    val serializationContext: SerializationCtx?
     val location: RName
 }
+
+val IRdDynamic.protocolOrThrow: IProtocol get() = protocol ?: throw ProtocolNotBoundException(this.toString())
 
 /**
  * A root node in an object graph which can be synchronized with its remote copy over a network or a similar connection.
@@ -31,6 +31,9 @@ interface IProtocol : IRdDynamic {
     val wire: IWire
     val lifetime: Lifetime
     val isMaster : Boolean
+
+    override val serializationContext: SerializationCtx
+    override val protocol: IProtocol get() = this
 
     // Models for which the serialization hash does not match that on the other side
     val outOfSyncModels: ViewableSet<RdExtBase>

@@ -68,7 +68,7 @@ namespace InheritsAutomationRoot
     public InheritsAutomationRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
       Identify(protocol.Identities, RdId.Root.Mix("InheritsAutomationRoot"));
-      Bind(lifetime, protocol, "InheritsAutomationRoot");
+      this.BindTopLevel(lifetime, protocol, "InheritsAutomationRoot");
     }
     
     //constants

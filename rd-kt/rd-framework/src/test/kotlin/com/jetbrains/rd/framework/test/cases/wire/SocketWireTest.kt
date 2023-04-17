@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.wire
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.impl.RdSignal
@@ -67,8 +68,8 @@ class SocketWireTest : TestBase() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
-        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, top) }
-        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         cp.set(1)
         sp.waitAndAssert(1)
@@ -82,8 +83,8 @@ class SocketWireTest : TestBase() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
-        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, top) }
-        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         val log = ConcurrentLinkedQueue<Int>()
         sp.advise(lifetime) { log.add(it) }
@@ -104,8 +105,8 @@ class SocketWireTest : TestBase() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
-        val sp = RdSignal<Int>().static(1).apply { bind(lifetime, serverProtocol, top) }
-        val cp = RdSignal<Int>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val sp = RdSignal<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
+        val cp = RdSignal<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         val log = mutableListOf<Int>()
         sp.advise(socketLifetime) { log.add(it) }
@@ -149,8 +150,8 @@ class SocketWireTest : TestBase() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
-        val sp = RdSignal<Int>().static(1).apply { bind(lifetime, serverProtocol, top) }
-        val cp = RdSignal<Int>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val sp = RdSignal<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
+        val cp = RdSignal<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         var count = 0
         sp.advise(socketLifetime) {
@@ -174,8 +175,8 @@ class SocketWireTest : TestBase() {
         val serverProtocol = server(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
-        val sp = RdOptionalProperty<String>().static(1).apply { bind(lifetime, serverProtocol, top) }
-        val cp = RdOptionalProperty<String>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val sp = RdOptionalProperty<String>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
+        val cp = RdOptionalProperty<String>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         cp.set("1")
         sp.waitAndAssert("1")
@@ -192,14 +193,14 @@ class SocketWireTest : TestBase() {
         val clientProtocol = client(socketLifetime, port)
 
 
-        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         cp.set(1)
 
         Thread.sleep(2000)
 
         val serverProtocol = server(socketLifetime, port)
-        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, serverProtocol, top) }
+        val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
 
         val prev = sp.valueOrNull
         cp.set(4)
@@ -221,7 +222,7 @@ class SocketWireTest : TestBase() {
     fun TestServerWithoutClientWithDelayAndMessages() {
         val protocol = server(socketLifetime)
         Thread.sleep(100)
-        val sp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, protocol, top) }
+        val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, protocol, top) }
 
         sp.set(1)
         sp.set(2)
@@ -243,7 +244,7 @@ class SocketWireTest : TestBase() {
     fun TestClientWithoutServerWithDelayAndMessages() {
         val clientProtocol = client(socketLifetime, NetUtils.findFreePort(0))
 
-        val cp = RdOptionalProperty<Int>().static(1).apply { bind(lifetime, clientProtocol, top) }
+        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
 
         cp.set(1)
         cp.set(2)
@@ -264,8 +265,8 @@ class SocketWireTest : TestBase() {
 //        sp.mySerializationContext = sp.mySerializationContext.withInternRootsHere(sp, "Test")
 //        cp.mySerializationContext = cp.mySerializationContext.withInternRootsHere(cp, "Test")
 //
-//        sp.bind(lifetime, serverProtocol, "top")
-//        cp.bind(lifetime, clientProtocol, "top")
+//        sp.bindTopLevel(lifetime, serverProtocol, "top")
+//        cp.bindTopLevel(lifetime, clientProtocol, "top")
 //
 //        val modelA = InterningNestedTestStringModel("A", InterningNestedTestStringModel("B", InterningNestedTestStringModel("C", null)))
 //        cp.property.set(modelA)

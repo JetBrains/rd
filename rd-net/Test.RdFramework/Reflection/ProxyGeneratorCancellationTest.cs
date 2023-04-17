@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Collections.Viewable;
+using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
 using JetBrains.Threading;
+using JetBrains.Util.Internal;
 using NUnit.Framework;
 
 
@@ -76,16 +79,16 @@ namespace Test.RdFramework.Reflection
     [Test]
     public async Task TestAsyncExternalCancellation()
     {
-      bool? isCancelled = null;
+      Task? task = null;
       await TestAsyncCalls(model =>
       {
         model.AlwaysCancelled().
-          ContinueWith(t => isCancelled = t.IsCanceled, TaskContinuationOptions.ExecuteSynchronously);
+          ContinueWith(t => task = t, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, SynchronousScheduler.Instance);
         return Task.CompletedTask;
       });
 
-      SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => isCancelled != null);
-      Assert.AreEqual(true, isCancelled);
+      SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => Memory.VolatileRead(ref task) != null);
+      Assert.AreEqual(true, task.NotNull().IsCanceled);
     }
 
     [Test]

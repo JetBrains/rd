@@ -126,8 +126,8 @@ class TestTwoClients : TestBase() {
         val c0ContextSet = listOf("A", "B", "C")
         val c1ContextSet = listOf("C", "D", "E")
 
-        c0.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(c0ContextSet)
-        c1.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(c1ContextSet)
+        c0.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).addAll(c0ContextSet)
+        c1.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).addAll(c1ContextSet)
 
         SyncModelExt.ClientId.updateValue("C").use {
             c0.property.valueOrThrow.mapPerClientId[1] = 1
@@ -142,11 +142,11 @@ class TestTwoClients : TestBase() {
     @Test
     fun testPerClientIdProperty() {
         SyncModelExt.ClientId.updateValue("Host").use {
-            c0.protocol.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
-            c1.protocol.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
+            c0.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
+            c1.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).add("Host")
 
-            wait { s0.protocol.contexts.getValueSet(SyncModelExt.ClientId).contains("Host") }
-            wait { s1.protocol.contexts.getValueSet(SyncModelExt.ClientId).contains("Host") }
+            wait { s0.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).contains("Host") }
+            wait { s1.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).contains("Host") }
 
             c0.propPerClientId.set(1)
             wait { c1.propPerClientId.valueOrNull == 1 }

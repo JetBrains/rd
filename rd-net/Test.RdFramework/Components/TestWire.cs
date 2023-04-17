@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd;
 using JetBrains.Serialization;
@@ -11,7 +11,7 @@ namespace Test.RdFramework.Components
     private readonly IScheduler myScheduler;
     private readonly string myName;
     private readonly bool myIsMaster;
-    private readonly Queue<Message> myOutgoingMessages;
+    private readonly ConcurrentQueue<Message> myOutgoingMessages;
     private readonly Signal<byte[]> myOnTransmit;
 
     public ISource<byte[]> OnTransmit => myOnTransmit;
@@ -22,7 +22,7 @@ namespace Test.RdFramework.Components
       myScheduler = scheduler;
       myName = name;
       myIsMaster = isMaster;
-      myOutgoingMessages = new Queue<Message>();
+      myOutgoingMessages = new ConcurrentQueue<Message>();
       myOnTransmit = new Signal<byte[]>();
     }
 
@@ -42,10 +42,15 @@ namespace Test.RdFramework.Components
     {
       myScheduler.InvokeOrQueue(() =>
       {
-        var message = myOutgoingMessages.Dequeue();
+        var message = Dequeue();
         myOnTransmit.Fire(message.Data);
         Connection.Receive(message.Data);
       });
+    }
+
+    private Message Dequeue()
+    {
+      return myOutgoingMessages.TryDequeue(out var m) ? m : throw new IndexOutOfRangeException();
     }
 
     public void TransmitAllMessages()
@@ -59,7 +64,7 @@ namespace Test.RdFramework.Components
 
     public void MissOneMessage()
     {
-      myOutgoingMessages.Dequeue();
+      Dequeue();
     }
 
     protected override void SendPkg(UnsafeWriter.Cookie cookie)

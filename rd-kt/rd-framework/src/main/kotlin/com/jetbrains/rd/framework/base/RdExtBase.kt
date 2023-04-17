@@ -3,15 +3,11 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
-import com.jetbrains.rd.util.Logger
-import com.jetbrains.rd.util.Queue
-import com.jetbrains.rd.util.Sync
-import com.jetbrains.rd.util.collections.QueueImpl
+import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
-import com.jetbrains.rd.util.threading.SynchronousScheduler
-import com.jetbrains.rd.util.trace
+import javax.management.openmbean.InvalidOpenTypeException
 
 abstract class RdExtBase : RdReactiveBase() {
     enum class ExtState {
@@ -22,152 +18,250 @@ abstract class RdExtBase : RdReactiveBase() {
 
 
     private val extWire = ExtWire()
-    private var extScheduler: ExtScheduler? = null
     private var extProtocol: IProtocol? = null
     val connected = extWire.connected
-    override val wireScheduler: IScheduler get() = SynchronousScheduler
 
-    override val protocol: IProtocol get() = extProtocol ?: super.protocol //nb
+    override val protocol: IProtocol? get() = extProtocol ?: super.protocol
 
     abstract val serializersOwner: ISerializersOwner
     open val serializationHash: Long = 0L
 
+    var bindLifetime: Lifetime? = null
+        private set
 
-    override fun init(lifetime: Lifetime) {
+    override fun preInit(lifetime: Lifetime, parentProtocol: IProtocol) {
+        bindLifetime = lifetime
+        // will be called in init
+    }
+
+    override fun unbind() {
+        bindLifetime = null
+    }
+
+    private val localCustomScheduler = ThreadLocal<CustomExtScheduler>()
+
+    protected open val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
+
+    private val hasCustomScheduler: Boolean get() = extThreading == ExtThreadingKind.CustomScheduler
+    private val allowCreationOnBackgroundThread: Boolean get() = extThreading != ExtThreadingKind.Default
+
+    protected fun setCustomScheduler(scheduler: IScheduler) {
+        require(hasCustomScheduler) { "Ext: ${this::javaClass.name} doesn't support custom schedulers" }
+
+        val extScheduler = localCustomScheduler.get()
+        requireNotNull(extScheduler) { "Custom scheduler can only be set from ext listener only" }
+        extScheduler.setScheduler(scheduler)
+    }
+
+    override fun init(lifetime: Lifetime, parentProtocol: IProtocol, ctx: SerializationCtx) {
         Protocol.initializationLogger.traceMe { "binding" }
 
-        val parentProtocol = super.protocol
         val parentWire = parentProtocol.wire
 
         serializersOwner.register(parentProtocol.serializers)
+        val serializationCtx = serializationContext ?: return
 
-//        val sc = ExtScheduler(parentProtocol.scheduler)
-        val sc = parentProtocol.scheduler
         extWire.realWire = parentWire
-        lifetime.bracket(
-            {
-//                extScheduler = sc
-                extProtocol = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, sc, extWire, lifetime, serializationContext, parentProtocol.contexts, parentProtocol.extCreated, createExtSignal()).also {
-                    it.outOfSyncModels.flowInto(lifetime, super.protocol.outOfSyncModels) { model -> model }
-                }
+        lifetime.bracketIfAlive({
+            val scheduler = when (extThreading) {
+                ExtThreadingKind.Default -> parentProtocol.scheduler
+                ExtThreadingKind.CustomScheduler -> CustomExtScheduler()
+                ExtThreadingKind.AllowBackgroundCreation ->  ExtSchedulerWrapper(parentProtocol.scheduler)
+            }
+
+            val signal = createExtSignal()
+            val proto = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, scheduler, extWire, lifetime, serializationCtx, parentProtocol.contexts, parentProtocol.extCreated, signal).also {
+                it.outOfSyncModels.flowInto(lifetime, parentProtocol.outOfSyncModels) { model -> model }
+            }
+
+            extProtocol = proto
+            Lifetime.using { activeLifetime ->
+                if (scheduler is ExtSchedulerBase)
+                    scheduler.setActiveCurrentThread(activeLifetime)
+
+                super.preInit(lifetime, proto)
+                super.init(lifetime, proto, ctx)
 
                 val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash, this)
                 Signal.nonPriorityAdviseSection {
-                    (parentProtocol as Protocol).submitExtCreated(info)
-                }
-            },
-            {
-                extProtocol = null
-//                extScheduler = null
-            }
-        )
+                    try {
+                        if (scheduler is CustomExtScheduler) {
+                            assert(localCustomScheduler.get() == null)
+                            localCustomScheduler.set(scheduler)
+                        }
 
-        parentWire.advise(lifetime, this)
-
-        //it's critical to advise before 'Ready' is sent because we advise on SynchronousScheduler
-
-        lifetime.bracket(
-            { parentWire.sendState(ExtState.Ready) },
-            { parentWire.sendState(ExtState.Disconnected) }
-        )
-
-
-        //todo make it smarter
-        for ((name, child) in bindableChildren) {
-            if (child is RdPropertyBase<*> && child.defaultValueChanged) {
-                child.localChange {
-                    child.bind(lifetime, this, name)
+                        (parentProtocol as Protocol).submitExtCreated(info)
+                    } finally {
+                        localCustomScheduler.set(null)
+                    }
                 }
             }
-            else {
-                child?.bindPolymorphic(lifetime, this, name)
-            }
-        }
 
-        Protocol.initializationLogger.traceMe { "created and bound :: ${printToString()}" }
+            parentWire.advise(lifetime, this)
+
+            parentWire.sendState(ExtState.Ready)
+            Protocol.initializationLogger.traceMe { "created and bound :: ${printToString()}" }
+        }, {
+            extProtocol = null
+            parentWire.sendState(ExtState.Disconnected)
+        })
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun assertBindingThread() {
+        if (allowCreationOnBackgroundThread) return
+
+        super.assertBindingThread()
+    }
+
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val remoteState = buffer.readEnum<ExtState>()
         logReceived.traceMe { "remote: $remoteState " }
 
         @Suppress("REDUNDANT_ELSE_IN_WHEN")
         when (remoteState) {
-            RdExtBase.ExtState.Ready -> {
+            ExtState.Ready -> {
                 extWire.realWire.sendState(ExtState.ReceivedCounterpart)
                 extWire.connected.value = true
             }
-            RdExtBase.ExtState.ReceivedCounterpart -> extWire.connected.set(true) //don't set anything if already set
-            RdExtBase.ExtState.Disconnected -> extWire.connected.set(false)
+            ExtState.ReceivedCounterpart -> extWire.connected.set(true) //don't set anything if already set
+            ExtState.Disconnected -> extWire.connected.set(false)
 
             else -> error("Unknown remote state: $remoteState")
         }
 
         val counterpartSerializationHash = buffer.readLong()
-        if (serializationHash != counterpartSerializationHash) {
+        val parentProtocol = super.protocol
+        if (serializationHash != counterpartSerializationHash && parentProtocol != null) {
             //need to queue since outOfSyncModels is not synchronized
-            super.protocol.scheduler.queue { super.protocol.outOfSyncModels.add(this) }
+            parentProtocol.scheduler.queue { parentProtocol.outOfSyncModels.add(this) }
             error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
         }
     }
 
-    private fun IWire.sendState(state: ExtState) = protocol.contexts.sendWithoutContexts {
-        send(rdid) {
-            logSend.traceMe { state }
-            it.writeEnum(state)
-            it.writeLong(serializationHash)
+    private fun IWire.sendState(state: ExtState) {
+        val proto = protocol ?: return
+
+        proto.contexts.sendWithoutContexts {
+            send(rdid) {
+                logSend.traceMe { state }
+                it.writeEnum(state)
+                it.writeLong(serializationHash)
+            }
         }
     }
     private inline fun Logger.traceMe (message:() -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
 
-    fun pumpScheduler() = extScheduler?.pump()
-}
-
-
-//todo make it more efficient
-class ExtScheduler(private val parentScheduler: IScheduler) : IScheduler {
-    override fun flush() {
-        parentScheduler.flush()
+    override fun initBindableFields(lifetime: Lifetime) {
+        for ((_, child) in bindableChildren) {
+            if (child is RdPropertyBase<*> && child.defaultValueChanged) {
+                child.localChange {
+                    child.bind()
+                }
+            }
+            else {
+                child?.bindPolymorphic()
+            }
+        }
     }
 
-    private val queue = QueueImpl<Pair<Long, () -> Unit>>()
-    private var nextActionId = 0L
+    enum class ExtThreadingKind {
+        Default,
+        CustomScheduler,
+        AllowBackgroundCreation
+    }
+}
+
+internal abstract class ExtSchedulerBase : IScheduler {
+    private var activeThread = AtomicReference<Thread?>(null)
+
+    internal fun setActiveCurrentThread(lifetime: Lifetime) {
+        lifetime.bracketIfAliveEx({
+            val thread = Thread.currentThread()
+            val prevThread = activeThread.getAndSet(thread)
+            assert(prevThread == null) { "prev thread must be null, but actual: $prevThread" }
+
+            thread
+        }, { thread ->
+            val prevThread = activeThread.getAndSet(null)
+            assert(prevThread == thread) { "prev thread must be $thread, but actual: $prevThread" }
+        })
+    }
+
+    protected fun isActiveThread(): Boolean {
+        return Thread.currentThread() == activeThread.get()
+    }
+}
+
+internal class ExtSchedulerWrapper(val realScheduler: IScheduler) : ExtSchedulerBase() {
 
     override fun queue(action: () -> Unit) {
-        val nxt = Sync.lock(queue) {
-            val r = ++nextActionId
-            queue.offer(r to action)
-            r
-        }
-        parentScheduler.queue { pumpUntil(nxt) }
+        realScheduler.queue(action)
     }
-
-
-    //what if lifetime terminates during pumping?
-    fun pump() = pumpUntil(Long.MAX_VALUE)
-
-    private fun pumpUntil(id: Long) {
-        while (true) {
-            Sync.lock(queue) {
-                if (queue.isEmpty())
-                    null
-                else {
-                    val (number, action) = queue.peek()!!
-                    if (number <= id) {
-                        queue.poll()
-                        action
-                    } else null
-                }
-            }?.invoke()?:return
-        }
-    }
-
 
     override val isActive: Boolean
-        get() = parentScheduler.isActive
+        get() = realScheduler.isActive || isActiveThread()
 
+    override fun flush() {
+        throw InvalidOpenTypeException("Unsupported")
+    }
 }
 
+internal class CustomExtScheduler : ExtSchedulerBase() {
+    private val locker = Any()
+
+    @Volatile
+    private var queue: ArrayDeque<() -> Unit>? = ArrayDeque()
+
+    @Volatile
+    private lateinit var realScheduler: IScheduler
+
+    override fun queue(action: () -> Unit) {
+        val localQueue = queue
+        if (localQueue == null) {
+            realScheduler.queue(action)
+            return
+        }
+
+        synchronized(locker) {
+            val localQueue = queue
+            if (localQueue != null) {
+                localQueue.add(action)
+            } else {
+                realScheduler.queue(action)
+            }
+        }
+    }
+
+    override val isActive: Boolean
+        get() = (queue == null && realScheduler.isActive) || isActiveThread()
+
+    override fun flush() {
+        throw InvalidOpenTypeException("Unsupported")
+    }
+
+    fun setScheduler(scheduler: IScheduler) {
+        synchronized(locker) {
+            require(!::realScheduler.isInitialized)
+
+            val localQueue = queue
+            require(localQueue != null)
+
+            while (true) {
+                val acton = localQueue.removeFirstOrNull()
+                if (acton != null) {
+                    scheduler.queue(acton)
+                    continue
+                }
+
+                realScheduler = scheduler
+                queue = null
+                return
+            }
+        }
+    }
+
+    override val outOfOrderExecution: Boolean get() = false
+}
 
 //todo multithreading
 class ExtWire : IWire {

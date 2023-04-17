@@ -38,10 +38,13 @@ namespace JetBrains.Diagnostics
 #endif
     }
     
-    public struct ThreadLocalDebugInfo : IDisposable
-    {      
+    public readonly struct ThreadLocalDebugInfo : IDisposable
+    {
+      private readonly object myDebugInfo;
+
       public ThreadLocalDebugInfo(object debugInfo)
       {
+        myDebugInfo = debugInfo;
         if (ourThreadLocalDebugInfo == null)
           ourThreadLocalDebugInfo = new Stack();
         
@@ -50,7 +53,8 @@ namespace JetBrains.Diagnostics
 
       public void Dispose()
       {
-        ourThreadLocalDebugInfo?.Pop();
+        if (myDebugInfo != null)
+          ourThreadLocalDebugInfo?.Pop();
       }
     }
 

@@ -9,6 +9,7 @@ namespace JetBrains.Rd.Impl
   internal class LightSingleContextHandler<T> : ISingleContextHandler<T>
   {
     public RdContext<T> Context { get; }
+
     public RdContextBase ContextBase => Context;
 
     public LightSingleContextHandler(RdContext<T> context)
@@ -16,7 +17,12 @@ namespace JetBrains.Rd.Impl
       Context = context;
     }
 
-    
+
+    public object ReadValueBoxed(SerializationCtx context, UnsafeReader reader)
+    {
+      return ReadValue(context, reader);
+    }
+
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
       var value = Context.Value;
@@ -36,11 +42,6 @@ namespace JetBrains.Rd.Impl
       if (!hasValue)
         return default;
       return Context.ReadDelegate(context, reader);
-    }
-
-    public IDisposable ReadValueIntoContext(SerializationCtx context, UnsafeReader reader)
-    {
-      return Context.UpdateValue(ReadValue(context, reader));
     }
   }
 }

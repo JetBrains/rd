@@ -1,9 +1,17 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.RdId
+import com.jetbrains.rd.framework.impl.ProtocolContexts
+import com.jetbrains.rd.util.Logger
+import com.jetbrains.rd.util.SwitchLogger
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.threading.SynchronousScheduler
+import com.jetbrains.rd.util.trace
 
 /**
  * A non-root node in an object graph which can be synchronized with its remote copy over a network or a similar connection,
@@ -23,27 +31,19 @@ interface IRdReactive : IRdBindable, IRdWireable {
 interface IRdWireable: IRdDynamic {
 
     val rdid: RdId
-    val isBound: Boolean
-
-    /**
-     * Scheduler on which wire invokes callback [onWireReceived]. Default is the same as [protocol]'s one.
-     */
-    val wireScheduler : IScheduler
 
     /**
      * Callback that wire triggers when it receives messaged
      */
-    fun onWireReceived(buffer: AbstractBuffer)
+    fun onWireReceived(buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper)
 }
 
-val IRdWireable.wireSchedulerIfBound: IScheduler?
-    get() {
-        if (!isBound) return null
+interface IRdWireableDispatchHelper {
+    val rdId: RdId
+    val lifetime: Lifetime
 
-        return try {
-            wireScheduler
-        } catch (e: ProtocolNotBoundException) {
-            null
-        }
-    }
+    fun dispatch(lifetime: Lifetime = this.lifetime, scheduler: IScheduler? = null, action: () -> Unit);
+    fun dispatch(scheduler: IScheduler? = null, action: () -> Unit) = dispatch(lifetime, scheduler, action)
+}
+
 

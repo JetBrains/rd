@@ -106,6 +106,8 @@ class PerClientIdRoot private constructor(
     //contexts
     object Key: ThreadLocalRdContext<String>("Key", true, FrameworkMarshallers.String)
     object LightKey: ThreadLocalRdContext<Int>("LightKey", false, FrameworkMarshallers.Int)
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 
 
@@ -185,6 +187,7 @@ class InnerClass private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -234,6 +237,7 @@ class PerClientIdSignal (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -283,4 +287,5 @@ class PerClientIdStruct (
     }
     //deepClone
     //contexts
+    //threading
 }

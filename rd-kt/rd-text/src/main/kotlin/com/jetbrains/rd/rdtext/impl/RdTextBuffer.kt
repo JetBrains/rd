@@ -2,6 +2,7 @@ package com.jetbrains.rd.rdtext.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.IRdBindable
+import com.jetbrains.rd.framework.base.ProtocolNotBoundException
 import com.jetbrains.rd.framework.base.RdDelegateBase
 import com.jetbrains.rd.framework.base.RdReactiveBase.Companion.logReceived
 import com.jetbrains.rd.framework.base.deepClonePolymorphic
@@ -35,6 +36,8 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
 
     private val localOrigin: RdChangeOrigin = if (isMaster) RdChangeOrigin.Master else RdChangeOrigin.Slave
 
+    private var bindLifetime = Lifetime.Terminated
+
     init {
         // disabling mastering, text buffer must resolve conflicts by itself
         (delegatedBy.changes as RdProperty<*>).slave()
@@ -42,19 +45,25 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
 
     override val changing: Boolean get() = delegatedBy.changes.changing
 
-    override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
-        super.bind(lf, parent, name)
-        delegatedBy.changes.adviseNotNull(lf) {
+    override fun preBind(lf: Lifetime, parent: IRdDynamic, name: String) {
+        bindLifetime = lf
+        super.preBind(lf, parent, name)
+    }
+
+    override fun bind() {
+        val lifetime = bindLifetime
+        super.bind()
+        delegatedBy.changes.adviseNotNull(lifetime) {
             if (it.origin == localOrigin) return@adviseNotNull
 
             receiveChange(it)
         }
 
         // for asserting documents equality
-        delegatedBy.assertedSlaveText.compose(delegatedBy.assertedMasterText, { slave, master -> slave to master}).advise(lf) { (s, m) ->
+        delegatedBy.assertedSlaveText.compose(delegatedBy.assertedMasterText, { slave, master -> slave to master}).advise(lifetime) { (s, m) ->
             if (s.masterVersion == m.masterVersion
-                    && s.slaveVersion == m.slaveVersion
-                    && s.text != m.text) {
+                && s.slaveVersion == m.slaveVersion
+                && s.text != m.text) {
                 throw IllegalStateException("Master and Slave texts are different.\nMaster:\n$m\nSlave:\n$s")
             }
         }
@@ -117,7 +126,8 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
 
     override fun fire(value: RdTextChange) {
         require(delegatedBy.isBound || bufferVersion == TextBufferVersion.INIT_VERSION)
-        if (delegatedBy.isBound) protocol.scheduler.assertThread()
+        if (delegatedBy.isBound) protocolOrThrow.scheduler.assertThread()
+
         val activeSession = activeTypingSession
         if (activeSession != null && activeSession.isCommitting) {
             return
@@ -147,7 +157,7 @@ open class RdTextBuffer(delegate: RdTextBufferState, final override val isMaster
 
     override fun advise(lifetime: Lifetime, handler: (RdTextChange) -> Unit) {
         require(delegatedBy.isBound)
-        protocol.scheduler.assertThread()
+        protocolOrThrow.scheduler.assertThread()
 
         textChanged.advise(lifetime, handler)
     }

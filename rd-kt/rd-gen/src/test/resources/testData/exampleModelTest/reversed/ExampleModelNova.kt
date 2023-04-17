@@ -137,6 +137,8 @@ class ExampleModelNova private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 val IProtocol.exampleModelNova get() = getOrCreateExtension(ExampleModelNova::class) { @Suppress("DEPRECATION") ExampleModelNova.create(lifetime, this) }
 
@@ -192,6 +194,7 @@ abstract class A (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -271,6 +274,7 @@ class A_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -303,6 +307,7 @@ abstract class BaseClass (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -333,6 +338,7 @@ abstract class BaseClassWithInterface (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -377,6 +383,7 @@ class BaseClassWithInterface_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -428,6 +435,7 @@ class BaseClass_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -459,6 +467,7 @@ abstract class BaseStruct (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -488,6 +497,7 @@ abstract class BaseStructWithInterface (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -540,6 +550,7 @@ class BaseStructWithInterface_Unknown (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -600,6 +611,7 @@ class BaseStruct_Unknown (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -823,6 +835,7 @@ class Baz private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -865,6 +878,7 @@ class Class (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -928,6 +942,7 @@ class Completion private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -964,6 +979,7 @@ abstract class DerivedBaseClass (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1020,6 +1036,7 @@ class DerivedBaseClass_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1055,6 +1072,7 @@ abstract class DerivedBaseStruct (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1121,6 +1139,7 @@ class DerivedBaseStruct_Unknown (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1177,6 +1196,7 @@ class DerivedClass (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1213,6 +1233,7 @@ abstract class DerivedClassWith2Interfaces (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1269,6 +1290,7 @@ class DerivedClassWith2Interfaces_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1335,6 +1357,7 @@ open class DerivedOpenClass (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1391,6 +1414,7 @@ class DerivedOpenClass_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1465,6 +1489,7 @@ open class DerivedOpenStruct (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1531,6 +1556,7 @@ class DerivedOpenStruct_Unknown (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1598,6 +1624,7 @@ class DerivedStruct (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1665,6 +1692,7 @@ class DerivedStructWith2Interfaces (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1760,6 +1788,7 @@ class Document private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1818,6 +1847,7 @@ abstract class Foo (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -1871,6 +1901,7 @@ class FooBar (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -1938,6 +1969,7 @@ class Foo_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -2010,6 +2042,7 @@ open class OpenClass (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -2061,6 +2094,7 @@ class OpenClass_Unknown (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -2126,6 +2160,7 @@ open class OpenStruct (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2186,6 +2221,7 @@ class OpenStruct_Unknown (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2243,6 +2279,7 @@ data class ScalarExample (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2274,6 +2311,7 @@ abstract class ScalarPrimer (
     //pretty print
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2334,6 +2372,7 @@ class ScalarPrimer_Unknown (
     override fun toString() = PrettyPrinter().singleLine().also { print(it) }.toString()
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2415,6 +2454,7 @@ data class Selection (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2464,6 +2504,7 @@ class Struct (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -2551,6 +2592,7 @@ class TextControl private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 

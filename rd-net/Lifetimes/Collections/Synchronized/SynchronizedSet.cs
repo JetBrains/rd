@@ -6,7 +6,6 @@ using JetBrains.Annotations;
 
 namespace JetBrains.Collections.Synchronized
 {
-  #if !NET35
   /// <summary>
   /// This is a thread-safe set with all methods synchronized.
   /// <see cref="GetEnumerator()"/> copies whole content so
@@ -23,7 +22,12 @@ namespace JetBrains.Collections.Synchronized
   /// </code>
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  [PublicAPI] public class SynchronizedSet<T> : ISet<T>, IReadOnlyCollection<T>
+  [PublicAPI] public class SynchronizedSet<T> :
+#if NET35
+    ICollection<T>
+#else
+    ISet<T>, IReadOnlyCollection<T>
+#endif
   {
     private readonly HashSet<T> mySet;
 
@@ -136,6 +140,7 @@ namespace JetBrains.Collections.Synchronized
 
     public bool IsReadOnly => false;
 
+#if !NET35
     bool ISet<T>.Add(T item)
     {
       lock (mySet)
@@ -143,6 +148,7 @@ namespace JetBrains.Collections.Synchronized
         return mySet.Add(item);
       }
     }
+#endif
 
     public void UnionWith(IEnumerable<T> other)
     {
@@ -224,6 +230,7 @@ namespace JetBrains.Collections.Synchronized
       }
     }
 
+#if !NET35
     public IReadOnlyList<T> ExtractAll()
     {
       lock (mySet)
@@ -233,6 +240,7 @@ namespace JetBrains.Collections.Synchronized
         return elements;
       }
     }
+#endif
     
     public T? ExtractOneOrDefault()
     {
@@ -246,5 +254,4 @@ namespace JetBrains.Collections.Synchronized
       }
     }
   }
-#endif
 }

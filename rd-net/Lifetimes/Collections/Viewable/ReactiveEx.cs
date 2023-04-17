@@ -162,7 +162,7 @@ namespace JetBrains.Collections.Viewable
 
     public static void View<T>(this IViewableSet<T> me, Lifetime lifetime, Action<Lifetime, T> handler) where T : notnull
     {
-      var lifetimes = new Dictionary<T, LifetimeDefinition>();
+      var lifetimes = new Dictionary<T, LifetimeDefinition>(me.Count);
 
       me.Advise(lifetime, (kind, value) =>
       {
@@ -262,7 +262,7 @@ namespace JetBrains.Collections.Viewable
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static void View<V>(this IViewableList<V> me, Lifetime lifetime, Action<Lifetime, int, V> handler) where V : notnull
     {
-      var lifetimes = new List<LifetimeDefinition>();
+      var lifetimes = new List<LifetimeDefinition>(me.Count);
 
       me.AdviseAddRemove(lifetime, (kind, index, value) =>
       {

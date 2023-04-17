@@ -1,5 +1,6 @@
 package com.jetbrains.rd.framework.test.cases
 
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
@@ -17,7 +18,7 @@ class LateAdviseOrderingTest: RdAsyncTestBase() {
         val latch2 = CountDownLatch(1)
 
         serverUiScheduler.queue {
-            serverSignal.bind(serverLifetime, serverProtocol, "top")
+            serverSignal.bindTopLevel(serverLifetime, serverProtocol, "top")
 
             for (i in 0 until 10)
                 serverSignal.fire(i)
@@ -34,7 +35,7 @@ class LateAdviseOrderingTest: RdAsyncTestBase() {
         val observedOrder = ArrayList<Pair<Int, Boolean>>()
 
         clientUiScheduler.queue {
-            clientSignal.bind(clientLifetime, clientProtocol, "top")
+            clientSignal.bindTopLevel(clientLifetime, clientProtocol, "top")
 
             latch1.await()
 

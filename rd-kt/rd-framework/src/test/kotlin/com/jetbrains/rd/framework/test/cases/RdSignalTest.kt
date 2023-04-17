@@ -124,8 +124,12 @@ class RdSignalTest : RdFrameworkTestBase() {
             }
         }
 
-        override fun init(lifetime: Lifetime) {
-            _foo.bind(lifetime, this, "foo")
+        override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+            _foo.preBind(lifetime, this, "foo")
+        }
+
+        override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+            _foo.bind()
         }
 
         override fun identify(identities: IIdentities, id: RdId) {
@@ -228,10 +232,10 @@ class RdSignalTest : RdFrameworkTestBase() {
         require(clientProtocol.scheduler !== SynchronousScheduler) { "Test assumes protocol default scheduler is not Sync" }
 
         val signal = RdSignal<Unit>()
-        signal.wireScheduler = SynchronousScheduler
+        signal.scheduler = SynchronousScheduler
         clientProtocol.bindStatic(signal.static(1), "top")
 
-        assertEquals(SynchronousScheduler, signal.wireScheduler)
+        assertEquals(SynchronousScheduler, signal.scheduler)
     }
 
     // this test can be removed together with the deprecated method it tests
@@ -243,7 +247,7 @@ class RdSignalTest : RdFrameworkTestBase() {
         signal.adviseOn(Lifetime.Eternal, SynchronousScheduler) { _ -> }
         clientProtocol.bindStatic(signal.static(1), "top")
 
-        assertEquals(SynchronousScheduler, signal.wireScheduler)
+        assertEquals(SynchronousScheduler, signal.scheduler)
     }
 
     private class VoidSignalEntity(private val _foo: RdSignal<Unit>) : RdBindableBase() {
@@ -268,8 +272,12 @@ class RdSignalTest : RdFrameworkTestBase() {
 
         }
 
-        override fun init(lifetime: Lifetime) {
-            _foo.bind(lifetime, this, "foo")
+        override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+            _foo.preBind(lifetime, this, "foo")
+        }
+
+        override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+            _foo.bind()
         }
 
         override fun identify(identities: IIdentities, id: RdId) {

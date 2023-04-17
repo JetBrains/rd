@@ -153,7 +153,7 @@ interface ISignal<T> : ISource<T> {
 }
 
 interface IAsyncSignal<T> : ISignal<T>, IAsyncSource<T>  {
-    var scheduler: IScheduler
+    var scheduler: IScheduler?
 }
 
 typealias IVoidSignal = ISignal<Unit>

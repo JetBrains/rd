@@ -152,6 +152,8 @@ sealed class Lifetime {
     abstract val status : LifetimeStatus
     abstract val terminationTimeoutKind: LifetimeTerminationTimeoutKind
 
+    abstract val allowTerminationUnderExecution: Boolean
+
     internal val definition get() = this as LifetimeDefinition
 
     abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
@@ -174,7 +176,7 @@ sealed class Lifetime {
     //todo think of a better name or use only this api (more clear code, but more allocations)
     abstract fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T
 
-    internal abstract fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean)
+    abstract fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean)
 
     @Deprecated("Use onTermination", ReplaceWith("onTermination(action)"))
     fun add(action: () -> Unit) = onTermination(action)
@@ -195,7 +197,6 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
     companion object {
-        internal val eternal = LifetimeDefinition().apply { id = "Eternal" }
         private val log : Logger by lazy {getLogger<Lifetime>()}
 
         //State decomposition
@@ -204,9 +205,11 @@ class LifetimeDefinition constructor() : Lifetime() {
         private val mutexSlice = BitSlice.bool(statusSlice)
         private val logErrorAfterExecution = BitSlice.bool(mutexSlice)
         private val terminationTimeoutKindSlice = BitSlice.enum<LifetimeTerminationTimeoutKind>(logErrorAfterExecution)
+        private val allowTerminationUnderExecutionSlice = BitSlice.bool(terminationTimeoutKindSlice);
 
 
         val Terminated : LifetimeDefinition = LifetimeDefinition().apply { id = "Terminated" }
+        internal val eternal = LifetimeDefinition().apply { id = "Eternal" }
 
         const val anonymousLifetimeId = "Anonymous"
 
@@ -237,10 +240,22 @@ class LifetimeDefinition constructor() : Lifetime() {
             terminationTimeoutKindSlice.atomicUpdate(state, value)
         }
 
+    override var allowTerminationUnderExecution: Boolean
+        get() = allowTerminationUnderExecutionSlice[state]
+        set(value) {
+            allowTerminationUnderExecutionSlice.atomicUpdate(state, value)
+        }
+
     /**
      * You can optionally set this identification information to see logs with lifetime's id other than [anonymousLifetimeId]"/>
      */
     var id: Any? = null
+        get() = field
+        set(value)  {
+            field = value
+            if (status == LifetimeStatus.Terminated)
+                field = null
+        }
 
     override fun<T : Any> executeIfAlive(action: () -> T): T? {
         //increase [executing] by 1
@@ -378,7 +393,7 @@ class LifetimeDefinition constructor() : Lifetime() {
 
 
 
-        if (threadLocalExecuting[this] > 0 && !supportsTerminationUnderExecuting) {
+        if (threadLocalExecuting[this] > 0 && !supportsTerminationUnderExecuting && !allowTerminationUnderExecution) {
             error("$this: Can't terminate lifetime under `executeIfAlive` because termination doesn't support this. Use `terminate(true)`")
         }
 
@@ -441,6 +456,7 @@ class LifetimeDefinition constructor() : Lifetime() {
         resCount = 0
 
         require(incrementStatusIfEqualTo(Terminating)) { "Bad status for destructuring finish: $this" }
+        id = null
     }
 
 

@@ -1,13 +1,9 @@
 package com.jetbrains.rd.framework.impl
 
-import com.jetbrains.rd.framework.ISerializer
-import com.jetbrains.rd.framework.Polymorphic
-import com.jetbrains.rd.framework.SerializationCtx
-import com.jetbrains.rd.framework.AbstractBuffer
-import com.jetbrains.rd.framework.base.IRdBindable
-import com.jetbrains.rd.framework.base.RdReactiveBase
-import com.jetbrains.rd.framework.base.withId
-import com.jetbrains.rd.framework.readRdId
+import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.util.Logger
+import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
@@ -29,41 +25,38 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     private val signal = Signal<T>()
     override val changing: Boolean get() = signal.changing
 
-    override lateinit var wireScheduler: IScheduler
-    override lateinit var serializationContext : SerializationCtx
-
-    override var scheduler: IScheduler
-        get() = wireScheduler
-        set(value) { wireScheduler = value }
-
-    override fun onWireReceived(buffer: AbstractBuffer) {
-        val value = valueSerializer.read(serializationContext, buffer)
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
+        val value = valueSerializer.read(ctx, buffer)
         logReceived.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
-        signal.fire(value)
+        dispatchHelper.dispatch(scheduler) {
+            signal.fire(value)
+        }
     }
 
     //protocol init, don't mess with initializer above
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
-        serializationContext = super.serializationContext
-        if (!this::wireScheduler.isInitialized)
-            wireScheduler = defaultScheduler
-        wire.advise(lifetime, this)
-
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
+        proto.wire.advise(lifetime, this)
     }
 
+    override var scheduler: IScheduler? = null
+
     override fun fire(value: T) {
-//        assertBound()
-        //localChange {
-        if (isBound) {
-            assertThreading()
-            wire.send(rdid) { buffer ->
-                logSend.trace { "signal `$location` ($rdid):: value = ${value.printToString()}" }
-                valueSerializer.write(serializationContext, buffer, value)
-            }
+        assertThreading()
+
+        val proto = protocol
+        val ctx = serializationContext
+
+        if (proto == null || ctx == null)
+            return
+
+        val wire = proto.wire
+
+        wire.send(rdid) { buffer ->
+            logSend.trace { "signal `$location` ($rdid):: value = ${value.printToString()}" }
+            valueSerializer.write(ctx, buffer, value)
         }
         signal.fire(value)
-        //}
     }
 
 
@@ -77,7 +70,10 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
     @Deprecated("You should explicitly override the scheduler")
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
         if (isBound) assertThreading() //even if listener on pool thread, advise must be on main thread
-        this.wireScheduler = scheduler
+        if (this.scheduler != null && this.scheduler !== scheduler) {
+            Logger.Companion.root.error { "scheduler is already set: ${this.scheduler}, new scheduler: ${scheduler}" }
+        }
+        this.scheduler = scheduler
         signal.advise(lifetime, handler)
     }
 }

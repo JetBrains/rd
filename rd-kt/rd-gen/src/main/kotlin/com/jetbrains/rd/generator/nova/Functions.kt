@@ -76,6 +76,9 @@ fun BindableDeclaration.property(name: String, defaultValue: Member.Const) = app
 fun BindableDeclaration.property(name: String, defaultValue: Member.Const, vararg attributes: KnownAttrs) =
     append(Property(name, PredefinedType.string.attrs(*attributes), defaultValue))
 
+
+fun BindableDeclaration.asyncProperty(name: String, valueType : IScalar) = append(AsyncProperty(name, valueType))
+
 fun BindableDeclaration.list(name : String, itemType : IType) = append(List(name, itemType))
 fun BindableDeclaration.set(name : String, itemType : INonNullableScalar) = append(Set(name, itemType))
 fun BindableDeclaration.map(name : String, keyType : INonNullableScalar, valueType: INonNullable) = append(Map(name, keyType, valueType))

@@ -58,6 +58,8 @@ class CallGeneratedCodeRoot private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 
 
@@ -107,6 +109,7 @@ class Abc (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -198,6 +201,7 @@ class Editor private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 

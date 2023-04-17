@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd;
 using NUnit.Framework;
@@ -81,8 +83,10 @@ namespace Test.RdFramework.Contexts
         barrier2.SignalAndWait();
         
         var clientExt = clientModel.GetOrCreateExtension("test", () => new InterningExt());
-        
-        Thread.Sleep(500);
+
+        var task = new Task(() => {});
+        task.Start(ServerProtocol.Scheduler.AsTaskScheduler());
+        task.Wait();
         
         clientExt.Root.AdviseNotNull(LifetimeDefinition.Lifetime, _ =>
         {
@@ -91,7 +95,7 @@ namespace Test.RdFramework.Contexts
         });
       });
 
-      SpinWait.SpinUntil(() => numReceives == 3, TimeSpan.FromMilliseconds(5_000));
+      SpinWait.SpinUntil(() => numReceives == 3, Debugger.IsAttached ? TimeSpan.FromDays(1) : TimeSpan.FromMilliseconds(5_000));
       
       Assert.AreEqual(3, numReceives);
       Assert.AreEqual(fireValues, receivedContexts);

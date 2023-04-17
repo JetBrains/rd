@@ -17,7 +17,9 @@ interface IRdBindable : IRdDynamic {
      * Inserts the node into the object graph under the given [parent] and assigns the specified [name] to it. The node will
      * be removed from the graph when the specified [lf] lifetime is terminated.
      */
-    fun bind(lf: Lifetime, parent: IRdDynamic, name: String)
+    fun preBind(lf: Lifetime, parent: IRdDynamic, name: String)
+
+    fun bind()
 
     /**
      * Assigns IDs to this node and its child nodes in the graph.
@@ -31,16 +33,19 @@ interface IRdBindable : IRdDynamic {
 }
 
 //generator comprehension methods
-fun <T:IRdBindable?> T.bind(lf: Lifetime, parent: IRdDynamic, name: String) = this?.bind(lf, parent, name)
+fun <T:IRdBindable?> T.preBind(lf: Lifetime, parent: IRdDynamic, name: String) = this?.preBind(lf, parent, name)
+fun <T:IRdBindable?> T.bind() = this?.bind()
 fun <T:IRdBindable?> T.identify(identities: IIdentities, ids: RdId) = this?.identify(identities, ids)
 
 fun <T:IRdBindable?> Array<T>.identify(identities: IIdentities, ids: RdId) = forEachIndexed { i, v ->  v?.identify(identities, ids.mix(i))}
-fun <T:IRdBindable?> Array<T>.bind(lf: Lifetime, parent: IRdDynamic, name: String) = forEachIndexed { i, v ->  v?.bind(lf,parent, "$name[$i]")}
+fun <T:IRdBindable?> Array<T>.preBind(lf: Lifetime, parent: IRdDynamic, name: String) = forEachIndexed { i, v ->  v?.preBind(lf,parent, "$name[$i]")}
+fun <T:IRdBindable?> Array<T>.bind() = forEachIndexed { i, v ->  v?.bind()}
 
 fun <T:IRdBindable?> List<T>.identify(identities: IIdentities, ids: RdId) = forEachIndexed { i, v ->  v?.identify(identities, ids.mix(i))}
-fun <T:IRdBindable?> List<T>.bind(lf: Lifetime, parent: IRdDynamic, name: String) = forEachIndexed { i, v ->  v?.bind(lf,parent, "$name[$i]")}
+fun <T:IRdBindable?> List<T>.preBind(lf: Lifetime, parent: IRdDynamic, name: String) = forEachIndexed { i, v ->  v?.preBind(lf,parent, "$name[$i]")}
+fun <T:IRdBindable?> List<T>.bind() = forEachIndexed { i, v ->  v?.bind()}
 
-internal fun Any.identifyPolymorphic(identities: IIdentities, ids: RdId) {
+internal fun Any?.identifyPolymorphic(identities: IIdentities, ids: RdId) {
     if (this is IRdBindable) {
         this.identify(identities, ids)
     } else {
@@ -50,14 +55,32 @@ internal fun Any.identifyPolymorphic(identities: IIdentities, ids: RdId) {
 
 }
 
-internal fun Any.bindPolymorphic(lf: Lifetime, parent: IRdDynamic, name: String) {
+internal fun Any?.preBindPolymorphic(lf: Lifetime, parent: IRdDynamic, name: String) {
     if (this is IRdBindable)
-        this.bind(lf, parent, name)
+        this.preBind(lf, parent, name)
     else {
         //Don't remove 'else'. RdList is bindable and collection simultaneously.
-        (this as? Array<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.bind(lf,parent, "$name[$i]")}
-        (this as? List<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.bind(lf,parent, "$name[$i]")}
+        (this as? Array<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.preBind(lf,parent, "$name[$i]")}
+        (this as? List<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.preBind(lf,parent, "$name[$i]")}
     }
+}
+
+internal fun Any?.bindPolymorphic() {
+    if (this is IRdBindable)
+        this.bind()
+    else {
+        //Don't remove 'else'. RdList is bindable and collection simultaneously.
+        (this as? Array<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.bind()}
+        (this as? List<*>)?.forEachIndexed { i, v ->  (v as? IRdBindable)?.bind()}
+    }
+}
+
+internal fun <T : IRdBindable> T?.bindTopLevel(lf: Lifetime, parent: IRdDynamic, name: String) {
+    if (this == null)
+        return
+
+    preBind(lf, parent, name)
+    bind()
 }
 
 internal fun <T> T.isBindable(): Boolean {

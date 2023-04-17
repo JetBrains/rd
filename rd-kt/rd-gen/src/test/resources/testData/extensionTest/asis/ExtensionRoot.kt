@@ -57,6 +57,8 @@ class ExtensionRoot private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 
 
@@ -122,6 +124,7 @@ class ClassWithStr (
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -198,4 +201,5 @@ data class StructWithStr (
     }
     //deepClone
     //contexts
+    //threading
 }

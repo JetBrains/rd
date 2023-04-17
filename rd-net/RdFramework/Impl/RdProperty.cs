@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -89,6 +90,7 @@ namespace JetBrains.Rd.Impl
     #region Init
 
     public bool OptimizeNested = false;
+    private LifetimeDefinition? myBindDefinition;
 
     public override void Identify(IIdentities identities, RdId id)
     {
@@ -99,71 +101,128 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol proto)
     {
-      base.Init(lifetime);
-
-      var serializationContext = SerializationContext;
+      base.PreInit(lifetime, proto);
 
       if (!OptimizeNested)
       {
-        Change.Advise(lifetime, v =>
+        var maybe = Maybe;
+        if (maybe.HasValue)
         {
-          if (IsLocalChange)
-            v.IdentifyPolymorphic(Proto.Identities, Proto.Identities.Next(RdId));
-        });
+          var definition = TryPreBindValue(lifetime, maybe.Value, false);
+          using var cookie = lifetime.UsingExecuteIfAlive();
+          if (cookie.Succeed)
+          {
+            var prevDefinition = Interlocked.Exchange(ref myBindDefinition , definition);
+            Assertion.Assert(prevDefinition?.Lifetime.IsNotAlive ?? true);
+            
+          }
+          else return;
+        }
       }
+
+      proto.Wire.Advise(lifetime, this);
+    }
+
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, proto, ctx);
+
+      var maybe = Maybe;
+      var hasInitValue = maybe.HasValue;
+      if (hasInitValue && !OptimizeNested) 
+        maybe.Value.BindPolymorphic();
 
       Advise(lifetime, v =>
       {
-        if (!IsLocalChange) return;
+        var shouldIdentify = !hasInitValue;
+        hasInitValue = false;
+
+        if (!IsLocalChange)
+          return;
+        
+        if (!OptimizeNested && shouldIdentify)
+        {
+          v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+
+          var prevDefinition = Interlocked.Exchange(ref myBindDefinition, TryPreBindValue(lifetime, v, false));
+          prevDefinition?.Terminate();
+        }
+
         if (IsMaster) myMasterVersion++;
 
-        Wire.Send(RdId, SendContext.Of(serializationContext, v, this), (sendContext, writer) =>
+        proto.Wire.Send(RdId, SendContext.Of(ctx, v, this), static (sendContext, writer) =>
         {
           var sContext = sendContext.SzrCtx;
           var evt = sendContext.Event;
           var me = sendContext.This;
           writer.Write(me.myMasterVersion);
           me.WriteValueDelegate(sContext, writer, evt);
-          SendTrace?.Log($"{this} :: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
+          SendTrace?.Log($"{me} :: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
         });
+        
+        if (!OptimizeNested && shouldIdentify)
+          v.BindPolymorphic();
       });
-
-
-      Wire.Advise(lifetime, this);
-
-
-      if (!OptimizeNested)
-      {
-        this.View(lifetime, (lf, v) =>
-        {
-          v.BindPolymorphic(lf, this, "$");
-        });
-      }
-
     }
 
+    protected override void Unbind()
+    {
+      base.Unbind();
+      myBindDefinition = null;
+    }
 
-    public override void OnWireReceived(UnsafeReader reader)
+    public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)
     {
       var version = reader.ReadInt();
-      var value = ReadValueDelegate(SerializationContext, reader);
+      var value = ReadValueDelegate(ctx, reader);
 
-      var rejected = IsMaster && version < myMasterVersion;
-        
-      ReceiveTrace?.Log($"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
-
-      if (rejected) return;
-        
-      myMasterVersion = version;
-
-      using (UsingDebugInfo())
+      var lifetime = dispatchHelper.Lifetime;
+      var definition = TryPreBindValue(lifetime, value, true);
+      
+      dispatchHelper.Dispatch(() =>
       {
-        myProperty.Value = value;
-      }
+        var rejected = IsMaster && version < myMasterVersion;
+        
+        ReceiveTrace?.Log($"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
 
+        if (rejected)
+        {
+          definition?.Terminate();
+          return;
+        }
+        
+        myMasterVersion = version;
+
+        using (UsingDebugInfo())
+        {
+          Interlocked.Exchange(ref myBindDefinition, definition)?.Terminate();
+          myProperty.Value = value;
+        }
+      });
+    }
+
+    private LifetimeDefinition? TryPreBindValue(Lifetime lifetime, T value, bool bindAlso)
+    {
+      if (OptimizeNested || !value.IsBindable())
+        return null;
+
+      var definition = new LifetimeDefinition { Id = value };
+      try
+      {
+        value.PreBindPolymorphic(definition.Lifetime, this, "$");
+        if (bindAlso)
+          value.BindPolymorphic();
+        
+        lifetime.Definition.Attach(definition, true);
+        return definition;
+      }
+      catch
+      {
+        definition.Terminate();
+        throw;
+      }
     }
 
     #endregion

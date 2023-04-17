@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.contexts
 
 import com.jetbrains.rd.framework.FrameworkMarshallers
+import com.jetbrains.rd.framework.RdContext
 import com.jetbrains.rd.framework.ThreadLocalRdContext
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
@@ -24,6 +25,7 @@ class ContextsTest : RdFrameworkTestBase() {
         serverProtocol.bindStatic(serverSignal, 1)
         clientProtocol.bindStatic(clientSignal, 1)
 
+        clientProtocol.serializers.register(RdContext.marshallerFor(key))
         serverProtocol.contexts.registerContext(key)
 
         key.updateValue("1").use {

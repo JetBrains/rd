@@ -8,52 +8,62 @@ import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.print
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
+import java.util.Collections
 
 @Suppress("UNUSED_PARAMETER")
 class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private val set: ViewableSet<T>)
 : RdReactiveBase(), IMutableViewableSet<T> {
 
-    companion object {
+    companion object : ISerializer<RdSet<*>> {
         fun<T: Any> read(ctx: SerializationCtx, stream: AbstractBuffer, valueSerializer: ISerializer<T>): RdSet<T> = RdSet(valueSerializer).withId(RdId.read(stream))
-        fun<T: Any> write(ctx: SerializationCtx, stream: AbstractBuffer, value: RdSet<T>) = value.rdid.write(stream)
+
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdSet<*> {
+            return read(ctx, buffer, Polymorphic())
+        }
+
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdSet<*>) {
+            value.rdid.write(buffer)
+        }
     }
 
     override fun deepClone(): IRdBindable = RdSet(valueSerializer).also { for (elem in set) { it.add(elem.deepClonePolymorphic()) } }
 
     var optimizeNested : Boolean = false
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
 
-        val serializationContext = serializationContext
+        proto.wire.advise(lifetime, this)
+    }
+
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        super.init(lifetime, proto, ctx)
 
         localChange { advise(lifetime) lambda@{ kind, v ->
             if (!isLocalChange) return@lambda
 
-            wire.send(rdid) { buffer ->
+            proto.wire.send(rdid) { buffer ->
                 buffer.writeEnum(kind)
-                valueSerializer.write(serializationContext, buffer, v)
+                valueSerializer.write(ctx, buffer, v)
 
                 logSend.trace { "set `$location` ($rdid) :: $kind :: ${v.printToString()} "}
             }
         }}
-
-        wire.advise(lifetime, this)
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val kind = buffer.readEnum<AddRemove>()
-        val v = valueSerializer.read(serializationContext, buffer)
+        val v = valueSerializer.read(ctx, buffer)
 
-        //todo maybe identify is forgotten
-
-        when (kind) {
-            AddRemove.Add -> set.add(v)
-            AddRemove.Remove -> set.remove(v)
+        dispatchHelper.dispatch {
+            when (kind) {
+                AddRemove.Add -> set.add(v)
+                AddRemove.Remove -> set.remove(v)
+            }
         }
     }
 
-    constructor(valueSerializer: ISerializer<T> = Polymorphic<T>()) : this(valueSerializer, ViewableSet())
+    constructor(valueSerializer: ISerializer<T> = Polymorphic<T>()) : this(valueSerializer, ViewableSet(Collections.synchronizedSet(LinkedHashSet<T>())))
 
     override val size: Int
         get() = set.size

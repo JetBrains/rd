@@ -7,11 +7,11 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.string.printToString
 
-abstract class WireBase(val scheduler: IScheduler) : IWireWithDelayedDelivery {
+abstract class WireBase : IWireWithDelayedDelivery {
     private lateinit var contextsInternal: ProtocolContexts
     final override val connected = Property(false)
     override val heartbeatAlive = Property(false)
-    protected val messageBroker = MessageBroker(scheduler, true)
+    protected val messageBroker = MessageBroker(true)
 
     override fun advise(lifetime: Lifetime, entity: IRdWireable) = messageBroker.adviseOn(lifetime, entity)
 

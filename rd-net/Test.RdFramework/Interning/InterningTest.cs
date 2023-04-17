@@ -68,8 +68,8 @@ namespace Test.RdFramework.Interning
         ClientProtocol.SerializationContext.WithInternRootsHere(clientPropertyWrapper, "Test");
       
       
-      serverPropertyWrapper.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top");
-      clientPropertyWrapper.Bind(LifetimeDefinition.Lifetime, ClientProtocol, "top");
+      serverPropertyWrapper.BindTopLevel(LifetimeDefinition.Lifetime, ServerProtocol, "top");
+      clientPropertyWrapper.BindTopLevel(LifetimeDefinition.Lifetime, ClientProtocol, "top");
 
       var serverModel = new InterningTestModel("");
 
@@ -173,8 +173,8 @@ namespace Test.RdFramework.Interning
         ClientProtocol.SerializationContext.WithInternRootsHere(clientPropertyWrapper, "Test");
       
       
-      serverPropertyWrapper.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top");
-      clientPropertyWrapper.Bind(LifetimeDefinition.Lifetime, ClientProtocol, "top");
+      serverPropertyWrapper.BindTopLevel(LifetimeDefinition.Lifetime, ServerProtocol, "top");
+      clientPropertyWrapper.BindTopLevel(LifetimeDefinition.Lifetime, ClientProtocol, "top");
 
       var testValue = new InterningNestedTestModel("extremelyLongString",
         new InterningNestedTestModel("middle", new InterningNestedTestModel("bottom", null)));
@@ -207,9 +207,9 @@ namespace Test.RdFramework.Interning
     public void TestRemovals(bool firstSendServer, bool secondSendServer, bool thirdSendServer)
     {
       var rootServer = new InternRoot<object>().Static(1);
-      rootServer.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top");
+      rootServer.BindTopLevel(LifetimeDefinition.Lifetime, ServerProtocol, "top");
       var rootClient = new InternRoot<object>().Static(1);
-      rootClient.Bind(LifetimeDefinition.Lifetime, ClientProtocol, "top");
+      rootClient.BindTopLevel(LifetimeDefinition.Lifetime, ClientProtocol, "top");
 
       var stringToSend = "This string is nice and long enough to overshadow any interning overheads";
 
@@ -240,9 +240,9 @@ namespace Test.RdFramework.Interning
     public void TestMonomorphic()
     {
       var rootServerMono = new InternRoot<long>(Serializers.ReadLong, Serializers.WriteLong).Static(1);
-      rootServerMono.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top1");
+      rootServerMono.BindTopLevel(LifetimeDefinition.Lifetime, ServerProtocol, "top1");
       var rootServerPoly = new InternRoot<object>().Static(2);
-      rootServerPoly.Bind(LifetimeDefinition.Lifetime, ServerProtocol, "top2");
+      rootServerPoly.BindTopLevel(LifetimeDefinition.Lifetime, ServerProtocol, "top2");
 
       var sentBytesMono = MeasureBytes(ServerProtocol, () => rootServerMono.Intern(0L));
       // bytes: message header (8+4+2), long (8), InternId (4)

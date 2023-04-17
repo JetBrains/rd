@@ -28,7 +28,6 @@ open class Kotlin11Generator(
     generatedFileSuffix: String = ".Generated"
 ) : GeneratorBase(flowTransform, generatedFileSuffix) {
 
-
     //language specific properties
     object Namespace : ISetting<String, Declaration>
     val IDeclaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
@@ -44,6 +43,15 @@ open class Kotlin11Generator(
     object RefineFieldType: ISetting<Pair<String, IType>, SettingsHolder>
 
     object FsPath : ISetting<(Kotlin11Generator) -> File, Toplevel>
+
+    enum class ExtThreadingKind {
+        Default,
+        CustomScheduler,
+        AllowBackgroundCreation
+    }
+
+    object ThreadingKind : ISetting<ExtThreadingKind, Toplevel>
+
     protected open val Toplevel.fsPath: File get() = getSetting(FsPath)?.invoke(this@Kotlin11Generator) ?: File(folder, "$name$generatedFileSuffix.kt")
 
 
@@ -104,6 +112,12 @@ open class Kotlin11Generator(
                 Sink -> if (isNullable || defaultValue != null) "IPropertyView" else "IOptPropertyView"
                 Source, Both -> if (isNullable || defaultValue != null) "IProperty" else "IOptProperty"
             }
+
+            is Member.Reactive.Stateful.AsyncProperty -> when (actualFlow) {
+                Sink -> "IAsyncProperty"
+                Source, Both -> "IMutableAsyncProperty"
+            }
+
             is Member.Reactive.Stateful.List -> when (actualFlow) {
                 Sink -> "IViewableList"
                 Source, Both -> "IMutableViewableList"
@@ -128,6 +142,7 @@ open class Kotlin11Generator(
         is Member.Reactive.Task -> "RdCall"
         is Member.Reactive.Signal -> "RdSignal"
         is Member.Reactive.Stateful.Property -> if (isNullable || defaultValue != null) "RdProperty" else "RdOptionalProperty"
+        is Member.Reactive.Stateful.AsyncProperty -> "AsyncRdProperty"
         is Member.Reactive.Stateful.List -> "RdList"
         is Member.Reactive.Stateful.Set -> "RdSet"
         is Member.Reactive.Stateful.Map -> "RdMap"
@@ -411,6 +426,8 @@ open class Kotlin11Generator(
             deepCloneTrait(decl)
             + "//contexts"
             contextsTrait(decl)
+            +"//threading"
+            extensionThreadingTrait(decl)
         }
 
         if (decl.isExtension) {
@@ -636,7 +653,7 @@ open class Kotlin11Generator(
             else
 
             when (member) {
-                is Member.Reactive.Stateful.Property -> when {
+                is Member.Reactive.Stateful.PropertyBase -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
                     member.defaultValue is Member.Const -> member.defaultValue.name
                     member.defaultValue != null -> member.defaultValue.toString()
@@ -1121,6 +1138,16 @@ open class Kotlin11Generator(
         }
         println("}")
         println()
+    }
+
+    private fun PrettyPrinter.extensionThreadingTrait(decl: Declaration) {
+        if (decl is Toplevel) {
+            val threadingKind = decl.settings[ThreadingKind] ?: ExtThreadingKind.Default
+            +"override val extThreading: ExtThreadingKind get() = ExtThreadingKind.${threadingKind}"
+
+            if (threadingKind == ExtThreadingKind.CustomScheduler)
+                +"fun setScheduler(scheduler: IScheduler) = setCustomScheduler(scheduler)"
+        }
     }
 
     private fun PrettyPrinter.extensionTrait(decl: Ext) {

@@ -3,10 +3,10 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.framework.IInternRoot
 import com.jetbrains.rd.framework.base.IRdBindable
+import com.jetbrains.rd.framework.base.IRdWireableDispatchHelper
 import com.jetbrains.rd.framework.base.RdReactiveBase
 
 class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic()): IInternRoot<TBase> {
@@ -23,6 +23,9 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
     }
 
     override fun intern(value: TBase): InternId {
+        val proto = protocol ?: return InternId.invalid
+        val ctx = serializationContext ?: return InternId.invalid
+
         return inverseMap[value]?.id ?: run {
             val newMapping = InverseMapValue(InternId.invalid, InternId.invalid)
             val oldMapping = inverseMap.putIfAbsent(value, newMapping)
@@ -35,9 +38,9 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
                 RdReactiveBase.logSend.trace { "InternRoot `$location` ($rdid):: $idx = $value" }
 
                 directMap[idx] = value
-                protocol.contexts.sendWithoutContexts {
-                    protocol.wire.send(rdid) { writer ->
-                        serializer.write(serializationContext, writer, value)
+                proto.contexts.sendWithoutContexts {
+                    proto.wire.send(rdid) { writer ->
+                        serializer.write(ctx, writer, value)
                         writer.writeInternId(idx)
                     }
                 }
@@ -76,10 +79,15 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
         get() = true
         set(_) = error("Intern Roots are always async")
 
-    override val wireScheduler: IScheduler = InternScheduler()
+    override fun onWireReceived(buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper) {
+        val ctx = serializationContext
+        if (ctx == null) {
+            RdReactiveBase.logReceived.trace { "$this is not bound. Message for (${dispatchHelper.rdId} will not be processed" }
+            return
+        }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
-        val value = serializer.read(serializationContext, buffer) ?: return
+        val value = serializer.read(ctx, buffer)
+
         val remoteId = buffer.readInternId()
         assert(!remoteId.isLocal) { "Remote sent local InterningId, bug?" }
         assert(remoteId.isValid) { "Remote sent invalid InterningId, bug?" }
@@ -98,24 +106,28 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
     override var rdid: RdId = RdId.Null
         internal set
 
-    override val isBound get() = parent != null
-
-    override fun bind(lf: Lifetime, parent: IRdDynamic, name: String) {
+    override fun preBind(lf: Lifetime, parent: IRdDynamic, name: String) {
         require (this.parent == null) { "Trying to bound already bound $this to ${parent.location}" }
 
-        lf.bracket({
+        val proto = parent.protocol ?: return
+
+        lf.bracketIfAlive({
             this.parent = parent
             location = parent.location.sub(name, ".")
+
+            directMap.clear()
+            inverseMap.clear()
         }, {
             location = location.sub("<<unbound>>", "::")
             this.parent = null
             rdid = RdId.Null
         })
 
-        directMap.clear()
-        inverseMap.clear()
+        proto.wire.advise(lf, this)
+    }
 
-        protocol.wire.advise(lf, this)
+    override fun bind() {
+
     }
 
     override fun identify(identities: IIdentities, id: RdId) {
@@ -127,10 +139,10 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
 
     var parent: IRdDynamic? = null
 
-    override val protocol: IProtocol
-        get() = parent?.protocol ?: error("Not bound: $location")
+    override val protocol: IProtocol?
+        get() = parent?.protocol
 
-    override val serializationContext: SerializationCtx
+    override val serializationContext: SerializationCtx?
         get() = parent?.serializationContext ?: error("Not bound: $location")
 
     override var location: RName = RName("<<not bound>>")
@@ -166,22 +178,4 @@ fun AbstractBuffer.readInternId(): InternId {
 
 fun AbstractBuffer.writeInternId(id: InternId) {
     writeInt(if(id.value == -1) id.value else id.value xor 1)
-}
-
-class InternScheduler : IScheduler {
-    override fun queue(action: () -> Unit) {
-        activeCounts.set(activeCounts.get() + 1)
-        try {
-            action()
-        } finally {
-            activeCounts.set(activeCounts.get() - 1)
-        }
-    }
-    override val isActive: Boolean
-        get() = activeCounts.get() > 0
-    override fun flush() = Unit
-    override val outOfOrderExecution: Boolean
-        get() = true
-
-    private val activeCounts = threadLocalWithInitial { 0 }
 }

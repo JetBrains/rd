@@ -97,7 +97,7 @@ namespace Test.RdFramework.Reflection.Generated
     public RefExt(Lifetime lifetime, IProtocol protocol) : this()
     {
       Identify(protocol.Identities, RdId.Root.Mix("RefExt"));
-      Bind(lifetime, protocol, "RefExt");
+      this.BindTopLevel(lifetime, protocol, "RefExt");
     }
     
     //constants

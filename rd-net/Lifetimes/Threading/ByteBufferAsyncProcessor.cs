@@ -5,6 +5,7 @@ using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Serialization;
+using JetBrains.Util;
 using JetBrains.Util.Internal;
 #nullable disable
 
@@ -192,7 +193,8 @@ namespace JetBrains.Threading
       if (!res)
       {
         LogLog.Warn($"Async processor {Id} hasn't finished in ${timeoutMs} ms. Trying to abort thread.");
-        LogLog.Catch(() => myAsyncProcessingThread.Abort());
+        if (!RuntimeInfo.IsRunningOnCore)
+          LogLog.Catch(() => myAsyncProcessingThread.Abort());
       }
 
       CleanupInternal();

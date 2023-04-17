@@ -1,14 +1,14 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.IRdBindable
+import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.base.ISingleContextHandler
-import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.CopyOnWriteArrayList
 import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.IAppendOnlyViewableConcurrentSet
 import com.jetbrains.rd.util.reactive.IMutableViewableSet
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ViewableList
@@ -20,12 +20,13 @@ import com.jetbrains.rd.util.reflection.usingValue
  */
 class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase() {
     private val counterpartHandlers = CopyOnWriteArrayList<ISingleContextHandler<*>>()
-    private val myHandlerOrder = ViewableList(CopyOnWriteArrayList<ISingleContextHandler<*>>())
+    private val handlersToWrite = CopyOnWriteArrayList<ISingleContextHandler<*>>()
+    private val myHandlerOrder = ViewableList<ISingleContextHandler<*>>()
     private val handlersMap = ConcurrentHashMap<RdContext<*>, ISingleContextHandler<*>>()
     private val myOrderingsLock = Any() // used to protect writes to myKeyHandlersOrder
 
     internal var isSendWithoutContexts by threadLocal { false }
-    internal fun sendWithoutContexts(block: () -> Unit) = this::isSendWithoutContexts.usingValue(true, block)
+    internal fun <T> sendWithoutContexts(block: () -> T) = this::isSendWithoutContexts.usingValue(true, block)
 
     override fun deepClone(): IRdBindable {
         error("This may not be cloned")
@@ -34,26 +35,38 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     val registeredContexts: Collection<RdContext<*>>
         get() = handlersMap.keys
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
+
         Sync.lock(myOrderingsLock) {
             myHandlerOrder.view(lifetime) { handlerLifetime, _, handler ->
-                bindHandler(handlerLifetime, handler, handler.context.key)
-                sendContextToRemote(handler.context)
+                preBindHandler(handlerLifetime, handler, handler.context.key)
             }
         }
-        wire.advise(lifetime, this)
+
+        proto.wire.advise(lifetime, this)
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
-        assertWireThread()
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        super.init(lifetime, proto, ctx)
+        Sync.lock(myOrderingsLock) {
+            myHandlerOrder.view(lifetime) { handlerLifetime, _, handler ->
+                bindHandler(handler)
+                sendContextToRemote(handler.context)
+
+                // add the handler to myHandlersToWrite only after sending the context to remote
+                handlersToWrite.add(handler)
+            }
+        }
+    }
+
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val context = RdContext.read(serializationCtx, buffer)
         ensureContextHandlerExists(context)
         counterpartHandlers.add(handlersMap[context]!!)
     }
 
     private inline fun doAddHandler(context: RdContext<*>, factory: () -> ISingleContextHandler<*>) {
-        assert(!isBound || wireScheduler.isActive || protocol.scheduler.isActive)
         val value = factory()
         val prevValue = handlersMap.putIfAbsent(context, value)
         if (prevValue == null) {
@@ -75,18 +88,19 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         }
     }
 
-    private fun bindHandler(it: Lifetime, handler: ISingleContextHandler<*>, key: String) {
+    private fun preBindHandler(lifetime: Lifetime, handler: ISingleContextHandler<*>, key: String) {
         if (handler !is HeavySingleContextHandler<*>) return
+
         handler.rdid = rdid.mix(key)
-        protocol.scheduler.invokeOrQueue {
-            sendWithoutContexts {
-                handler.bind(it, this, key)
-            }
-        }
+        handler.preBind(lifetime, this, key)
     }
 
-    private fun assertWireThread() {
-        assert(wireScheduler.isActive) { "Must handle this on protocol thread" }
+    private fun bindHandler(handler: ISingleContextHandler<*>) {
+        if (handler !is HeavySingleContextHandler<*>) return
+
+        sendWithoutContexts {
+            handler.bind()
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -98,7 +112,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
      * Get a value set for a given context
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> getValueSet(context: RdContext<T>) : IMutableViewableSet<T> {
+    fun <T : Any> getValueSet(context: RdContext<T>) : IAppendOnlyViewableConcurrentSet<T> {
         assert(context.heavy) { "Only heavy contexts have value sets, ${context.key} is not heavy" }
         return (getContextHandler(context) as HeavySingleContextHandler<T>).valueSet
     }
@@ -111,8 +125,10 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     }
 
     private fun sendContextToRemote(context: RdContext<*>) {
+        val proto = protocol ?: return
+
         sendWithoutContexts {
-            wire.send(rdid) { buffer ->
+            proto.wire.send(rdid) { buffer ->
                 RdContext.write(serializationCtx, buffer, context)
             }
         }
@@ -124,31 +140,44 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
     fun writeCurrentMessageContext(buffer: AbstractBuffer) {
         if (isSendWithoutContexts) return writeEmptyContexts(buffer)
 
-        val writtenSize = myHandlerOrder.size
+        // all handlers in handlersToWrite have been sent to the remote side
+        val writtenSize = handlersToWrite.size
         buffer.writeShort(writtenSize.toShort())
-        for(i in 0 until writtenSize) {
-            myHandlerOrder[i].writeValue(serializationCtx, buffer)
+        for (i in 0 until writtenSize) {
+            handlersToWrite[i].writeValue(serializationCtx, buffer)
         }
     }
 
-    /**
-     * Reads a context from a given buffer and invokes the provided action in it
-     */
-    fun readMessageContextAndInvoke(buffer: AbstractBuffer, action: () -> Unit) {
+    internal fun readContext(buffer: AbstractBuffer): MessageContext {
         val numContextValues = buffer.readShort().toInt()
+        val values = arrayOfNulls<Any>(numContextValues)
+        val handlers = arrayOfNulls<ISingleContextHandler<*>>(numContextValues)
         assert(counterpartHandlers.size >= numContextValues) { "We know of ${counterpartHandlers.size} remote keys, received $numContextValues instead" }
-        val valueRestorers = List(numContextValues) { i ->
-            val otherSideHandler = counterpartHandlers[i]
-            val value = otherSideHandler.readValue(serializationCtx, buffer)
-            @Suppress("UNCHECKED_CAST")
-            (otherSideHandler.context as RdContext<Any>).updateValue(value)
+
+        for (i in 0 until numContextValues) {
+            val handler = counterpartHandlers[0]
+            values[i] = handler.readValue(serializationCtx, buffer)
+            handlers[i] = handler
         }
 
-        try {
-            action()
-        } finally {
-            valueRestorers.forEach {
-                it.close()
+        return MessageContext(values as Array<Any>, handlers as Array<ISingleContextHandler<*>>)
+    }
+
+    internal class MessageContext(private val values: Array<Any>, private val handlers: Array<ISingleContextHandler<*>>) {
+        inline fun update(action: () -> Unit) {
+            val disposables = arrayOfNulls<AutoCloseable>(values.size)
+
+            for (i in values.indices) {
+                val handler = handlers[i].context as RdContext<Any>
+                disposables[i] = handler.updateValue(values[i])
+            }
+
+            try {
+                action()
+            } finally {
+                for (value in disposables) {
+                    value?.close()
+                }
             }
         }
     }
@@ -162,10 +191,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         }
     }
 
-
     override var async: Boolean
         get() = true
         set(value) = error("ProtocolContextHandler is always async")
-
-    override val wireScheduler: IScheduler = InternScheduler()
 }

@@ -139,8 +139,8 @@ class TestTwoClientsLateSync : TestBase() {
 
     @Test
     fun testPerClientIdMap() {
-        s0.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(listOf("A", "B", "C"))
-        s1.protocol.contexts.getValueSet(SyncModelExt.ClientId).addAll(listOf("C", "D", "E"))
+        s0.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).addAll(listOf("A", "B", "C"))
+        s1.protocolOrThrow.contexts.getValueSet(SyncModelExt.ClientId).addAll(listOf("C", "D", "E"))
 
         s0.property.set(Clazz(1))
         s1.property.set(Clazz(2))

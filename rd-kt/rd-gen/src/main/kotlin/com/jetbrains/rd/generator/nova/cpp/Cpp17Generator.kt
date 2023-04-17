@@ -475,6 +475,9 @@ open class Cpp17Generator(
                     Sink -> "IProperty"
                     Source, Both -> "IProperty"
                 }
+
+                is Member.Reactive.Stateful.AsyncProperty -> error("Not supported")
+
                 is Member.Reactive.Stateful.List -> when (actualFlow) {
                     Sink -> "IViewableList"
                     Source, Both -> "IViewableList"
@@ -489,7 +492,6 @@ open class Cpp17Generator(
                 }
 
                 is Member.Reactive.Stateful.Extension -> implSimpleName(scope)
-
             }
         }
 
@@ -2355,7 +2357,7 @@ open class Cpp17Generator(
         }
 
         return when (member) {
-            is Member.Reactive.Stateful.Property -> when {
+            is Member.Reactive.Stateful.PropertyBase -> when {
                 member.defaultValue is String -> "L\"${member.defaultValue}\""
                 member.defaultValue is Member.Const -> unwrapConstant(member.defaultValue)
                 member.defaultValue != null -> {

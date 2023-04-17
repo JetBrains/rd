@@ -6,12 +6,13 @@ import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.framework.createAbstractBuffer
 import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.reactive.IScheduler
+import java.util.concurrent.ConcurrentLinkedQueue
 
 
-class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
+class TestWire(scheduler : IScheduler) : WireBase() {
     lateinit var counterpart : TestWire
 
-    val msgQ = Queue<RdMessage>()
+    val msgQ = ConcurrentLinkedQueue<RdMessage>()
 
     var bytesWritten: Long = 0
 
