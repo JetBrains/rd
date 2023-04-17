@@ -13,7 +13,12 @@ namespace JetBrains.Collections.Synchronized
   /// <typeparam name="TV"></typeparam>
   [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>
   {
-    private readonly IDictionary<TK, TV> myImpl = new Dictionary<TK, TV>();
+    private readonly IDictionary<TK, TV> myImpl;
+
+    public SynchronizedDictionary(IEqualityComparer<TK>? comparer = null)
+    {
+      myImpl = new Dictionary<TK, TV>(comparer);
+    }
     
     /// <summary>
     /// Copies content of collection: O(n) CPU and memory complexity.

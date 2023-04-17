@@ -28,10 +28,10 @@ namespace JetBrains.Rd.Reflection
       ((IReflectionBindable) this).EnsureBindableChildren();
     }
 
-    protected override void InitBindableFields(Lifetime lifetime)
+    protected override void PreInitBindableFields(Lifetime lifetime)
     {
       ((IReflectionBindable) this).EnsureBindableChildren();
-      base.InitBindableFields(lifetime);
+      base.PreInitBindableFields(lifetime);
     }
 
     public override void Identify(IIdentities identities, RdId id)

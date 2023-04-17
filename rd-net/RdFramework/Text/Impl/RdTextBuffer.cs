@@ -27,6 +27,8 @@ namespace JetBrains.Rd.Text.Impl
 
     public TextBufferVersion BufferVersion { get; private set; }
 
+    private Lifetime myBindLifetime = Lifetime.Terminated;
+
     /// <summary>
     /// Slave of the text buffer supports a list of changes that were introduced locally and can be rolled back when master buffer reports incompatible change
     /// </summary>
@@ -46,10 +48,18 @@ namespace JetBrains.Rd.Text.Impl
       ((RdProperty<RdTextBufferChange>) Delegate.Changes).IsMaster = false;
     }
 
-    public override void Bind(Lifetime lf, IRdDynamic parent, string name)
+    public override void PreBind(Lifetime lf, IRdDynamic parent, string name)
     {
-      base.Bind(lf, parent, name);
-      Delegate.Changes.AdviseNotNull(lf, change =>
+      myBindLifetime = lf;
+      base.PreBind(lf, parent, name);
+    }
+
+    public override void Bind()
+    {
+      var bindLifetime = myBindLifetime;
+      base.Bind();
+      
+      Delegate.Changes.AdviseNotNull(bindLifetime, change =>
       {
         if (change.Origin == myLocalOrigin) return;
         if (myActiveSession != null && myActiveSession.TryPushRemoteChange(change))
@@ -60,7 +70,7 @@ namespace JetBrains.Rd.Text.Impl
         ReceiveChange(change);
       });
 
-      Delegate.AssertedMasterText.Compose(lf, Delegate.AssertedSlaveText, Tuple.Create).Advise(lf, tuple =>
+      Delegate.AssertedMasterText.Compose(bindLifetime, Delegate.AssertedSlaveText, Tuple.Create).Advise(bindLifetime, tuple =>
       {
         var m = tuple.Item1;
         var s = tuple.Item2;
@@ -144,7 +154,7 @@ namespace JetBrains.Rd.Text.Impl
     public void Fire(RdTextChange change)
     {
       if (Mode.IsAssertion) Assertion.Assert(Delegate.IsBound || BufferVersion == TextBufferVersion.InitVersion);
-      if (Delegate.IsBound) Proto.Scheduler.AssertThread();
+      if (Delegate.IsBound) TryGetProto().NotNull(this).Scheduler.AssertThread();
 
       if (IsMaster && myActiveSession != null && myActiveSession.IsCommitting)
       {
@@ -175,7 +185,7 @@ namespace JetBrains.Rd.Text.Impl
     public void Advise(Lifetime lifetime, Action<RdTextChange> change)
     {
       Assertion.Assert(Delegate.IsBound);
-      Proto.Scheduler.AssertThread();
+      TryGetProto().NotNull(this).Scheduler.AssertThread();
       
       myTextChanged.Advise(lifetime, change);
     }

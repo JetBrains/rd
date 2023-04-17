@@ -668,7 +668,7 @@ open class CSharp50Generator(
 
         indent {
             +"Identify(protocol.Identities, RdId.Root.Mix(\"${decl.name}\"));"
-            +"Bind(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
+            +"this.BindTopLevel(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
         }
         +"}"
     }
@@ -905,7 +905,7 @@ open class CSharp50Generator(
 
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             +"private SerializationCtx mySerializationContext;"
-            +"public override SerializationCtx SerializationContext { get { return mySerializationContext; } }"
+            +"public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }"
         }
     }
 

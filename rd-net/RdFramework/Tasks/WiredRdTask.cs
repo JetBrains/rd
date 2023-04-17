@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -15,23 +16,33 @@ namespace JetBrains.Rd.Tasks
     public bool IsBound => myCall.IsBound;
     public IScheduler WireScheduler { get; }
 
-    private readonly IWire myWire;
-
-    public IProtocol Proto => myCall.Proto;
-    public SerializationCtx SerializationContext => myCall.SerializationContext;
+    public IWire? Wire;
     public RName Location { get; }
+
 
     protected WiredRdTask(RdCall<TReq, TRes> call, RdId rdId, IScheduler wireScheduler)
     {
       myCall = call;
       RdId = rdId;
+      Wire = call.TryGetProto()?.Wire;
       WireScheduler = wireScheduler;
-      myWire = call.Wire;
       Location = call.Location.Sub(rdId);
     }
 
+    public IProtocol? TryGetProto() => myCall.TryGetProto();
+    public bool TryGetSerializationContext(out SerializationCtx ctx) => myCall.TryGetSerializationContext(out ctx);
+
     //received response from wire
-    public abstract void OnWireReceived(UnsafeReader reader);
+    public RdWireableContinuation OnWireReceived(Lifetime lifetime, UnsafeReader reader)
+    {
+      var proto = TryGetProto();
+      if (proto == null || !TryGetSerializationContext(out var ctx) || lifetime.IsNotAlive)
+        return RdWireableContinuation.Empty;
+
+      return OnWireReceived(proto, ctx, reader);
+    }
+    
+    public abstract RdWireableContinuation OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader);
 
     protected void Trace(ILog log, string message, object? additional = null)
     {
@@ -48,33 +59,21 @@ namespace JetBrains.Rd.Tasks
     
     internal class CallSite : WiredRdTask<TReq, TRes>
     {
+      private readonly Lifetime myOuterLifetime;
+
       public CallSite(Lifetime outerLifetime, RdCall<TReq, TRes> call, RdId rdId, IScheduler wireScheduler) : base(call, rdId, wireScheduler)
       {
+        myOuterLifetime = outerLifetime;
         var taskWireSubscriptionDefinition = outerLifetime.CreateNested();
       
-        myCall.Wire.Advise(taskWireSubscriptionDefinition.Lifetime, this); //this lifetimeDef listen only one value
+        Wire?.Advise(taskWireSubscriptionDefinition.Lifetime, this); //this lifetimeDef listen only one value
         if (!taskWireSubscriptionDefinition.Lifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled())))
           ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
 
         Result.AdviseOnce(Lifetime.Eternal, taskResult =>
         {
           taskWireSubscriptionDefinition.Terminate(); //no need to listen result or cancellation from wire
-
-          var potentiallyBindable = taskResult.Result;
-          if (potentiallyBindable.IsBindable())
-          {
-            using var cookie = outerLifetime.UsingExecuteIfAlive();
-            if (cookie.Succeed) // lifetime can be terminated from background thread
-            {
-              outerLifetime.OnTermination(SendCancellation);
-              potentiallyBindable.BindPolymorphic(outerLifetime, myCall, RdId.ToString());
-            }
-            else
-            {
-              SendCancellation();
-            }
-          } 
-          else if (taskResult.Status == RdTaskStatus.Canceled)  //we need to transfer cancellation to the other side
+          if (taskResult.Status == RdTaskStatus.Canceled)  //we need to transfer cancellation to the other side
             SendCancellation();
         });
       }
@@ -82,20 +81,51 @@ namespace JetBrains.Rd.Tasks
       private void SendCancellation()
       {
         Trace(RdReactiveBase.ourLogSend, "send cancellation");
-        myWire.Send(RdId, writer => writer.Write(Unit.Instance)); //send cancellation to the other side
+        Wire?.Send(RdId, writer => writer.Write(Unit.Instance)); //send cancellation to the other side
       }
 
-      public override void OnWireReceived(UnsafeReader reader)
+      public override RdWireableContinuation OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
       {
-        using (myCall.UsingDebugInfo())
-        {
-          // we are at call side, so listening no response and bind it if it's bindable
-          var resultFromWire = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, myCall.SerializationContext, reader);
-          Trace(RdReactiveBase.ourLogReceived, "received response", resultFromWire);
+        // we are at call side, so listening no response and bind it if it's bindable
+        var taskResult = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, ctx, reader);
+        Trace(RdReactiveBase.ourLogReceived, "received response", taskResult);
 
-          if (!ResultInternal.SetIfEmpty(resultFromWire))
-            Trace(RdReactiveBase.ourLogReceived, "response from wire was rejected because task already has result");
-        }
+        if (ResultInternal.Maybe.HasValue)
+          return RdWireableContinuation.Empty;
+        
+        var potentiallyBindable = taskResult.Result;
+        if (potentiallyBindable.IsBindable())
+        {
+          var definition = new LifetimeDefinition();
+          try
+          {
+            using var _ = AllowBindCookie.Create();
+            
+            var valueBindLifetime = definition.Lifetime;
+            valueBindLifetime.OnTermination(SendCancellation);
+            potentiallyBindable.PreBindPolymorphic(valueBindLifetime, myCall, RdId.ToString());
+            potentiallyBindable.BindPolymorphic();
+        
+            myOuterLifetime.Definition.Attach(definition, true);
+          }
+          catch
+          {
+            definition.Terminate();
+            throw;
+          }
+        } 
+        else if (taskResult.Status == RdTaskStatus.Canceled)  //we need to transfer cancellation to the other side
+          SendCancellation();
+
+
+        return new RdWireableContinuation(myOuterLifetime, WireScheduler, () =>
+        {
+          using (myCall.UsingDebugInfo())
+          {
+            if (!ResultInternal.SetIfEmpty(taskResult))
+              Trace(RdReactiveBase.ourLogReceived, "response from wire was rejected because task already has result");
+          }
+        });
       }
     }
 
@@ -111,35 +141,46 @@ namespace JetBrains.Rd.Tasks
       {
         myDef = bindLifetime.CreateNested();
         
-        myCall.Wire.Advise(Lifetime, this);
+        Wire?.Advise(Lifetime, this);
         Lifetime.TryOnTermination(() => ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled()));
         
+        if (!TryGetSerializationContext(out var serializationCtx))
+          return;
+
         Result.AdviseOnce(Lifetime.Eternal, taskResult =>
         {
+          var proto = myCall.TryGetProto();
           var potentiallyBindable = taskResult.Result;
-          if (potentiallyBindable.IsBindable())
+          if (potentiallyBindable.IsBindable() && proto != null)
           {
-            potentiallyBindable.IdentifyPolymorphic(myCall.Proto.Identities, myCall.RdId.Mix(RdId.ToString()));
-            
-            myWire.Send(RdId,
-              writer =>
-              {
-                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
-              });
+            potentiallyBindable.IdentifyPolymorphic(proto.Identities, myCall.RdId.Mix(RdId.ToString()));
 
             using var cookie = Lifetime.UsingExecuteIfAlive();
             if (cookie.Succeed) // lifetime can be terminated from background thread
             {
-              potentiallyBindable.BindPolymorphic(Lifetime, myCall, RdId.ToString());
+              potentiallyBindable.PreBindPolymorphic(Lifetime, myCall, RdId.ToString());
+              if (Lifetime.IsNotAlive)
+                return;
+
+              Wire?.Send(RdId, writer =>
+              {
+                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, serializationCtx, writer,
+                  taskResult);
+              });
+              
+              if (Lifetime.IsNotAlive)
+                return;
+              
+              potentiallyBindable.BindPolymorphic();
             }
           }
           else
           {
             myDef.Terminate();
-            myWire.Send(RdId,
+            Wire?.Send(RdId,
               writer =>
               {
-                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, myCall.SerializationContext, writer, taskResult);
+                RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, serializationCtx, writer, taskResult);
               });
           }
 
@@ -147,21 +188,24 @@ namespace JetBrains.Rd.Tasks
         });
       }
 
-      public override void OnWireReceived(UnsafeReader reader)
+      public override RdWireableContinuation OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
       {
-        using (myCall.UsingDebugInfo())
+        //we are on endpoint side, so listening for cancellation
+        Trace(RdReactiveBase.ourLogReceived, "received cancellation");
+        reader.ReadVoid(); //nothing just a void value
+        
+        return new RdWireableContinuation(Lifetime, WireScheduler, () =>
         {
-          //we are on endpoint side, so listening for cancellation
-          Trace(RdReactiveBase.ourLogReceived, "received cancellation");
-          reader.ReadVoid(); //nothing just a void value
-
-          var success = ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
-          var wireScheduler = myCall.GetWireSchedulerIfBound();
-          if (success || wireScheduler == null)
-            myDef.Terminate();
-          else if (Lifetime.IsAlive)
-            wireScheduler.Queue(() => myDef.Terminate()); // if the value is already set, it is not a cancellation scenario, but a termination 
-        }
+          using (myCall.UsingDebugInfo())
+          {
+            var success = ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
+            var wireScheduler = myCall.TryGetProto()?.Scheduler;
+            if (success || wireScheduler == null)
+              myDef.Terminate();
+            else if (Lifetime.IsAlive)
+              wireScheduler.Queue(() => myDef.Terminate()); // if the value is already set, it is not a cancellation scenario, but a termination 
+          }
+        });
       }
     }
   }

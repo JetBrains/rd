@@ -25,20 +25,20 @@ namespace JetBrains.Rd.Reflection
     {
       ((IReflectionBindable) this).EnsureBindableChildren();
     }
-    
+
     /// <summary>
     /// Reflection models can be bound on any thread
     /// </summary>
-    protected override void AssertThread()
+    protected override void AssertBindingThread()
     {
     }
 
-    protected override void InitBindableFields(Lifetime lifetime)
+    protected override void PreInitBindableFields(Lifetime lifetime)
     {
       ((IReflectionBindable) this).EnsureBindableChildren();
-      base.InitBindableFields(lifetime);
+      base.PreInitBindableFields(lifetime);
     }
-
+    
     public override void Identify(IIdentities identities, RdId id)
     {
       ((IReflectionBindable) this).EnsureBindableChildren();

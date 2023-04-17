@@ -27,6 +27,8 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     const string ProtocolInternScopeStringId = "Protocol";
 
+    public Lifetime Lifetime { get; }
+
     public Protocol(string name, ISerializers serializers, IIdentities identities, IScheduler scheduler, 
       IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
       : this(name, serializers, identities, scheduler, wire, lifetime, null, null, null, null, initialContexts)
@@ -36,7 +38,7 @@ namespace JetBrains.Rd.Impl
       IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, ProtocolContexts? parentContexts = null, 
       ISignal<ExtCreationInfo>? parentExtCreated = null, RdSignal<ExtCreationInfo>? parentExtConfirmation = null, params RdContextBase[] initialContexts)
     {
-      
+      Lifetime = lifetime;
       Name = name ?? throw new ArgumentNullException(nameof(name));
       Location = new RName(name);
 
@@ -48,7 +50,7 @@ namespace JetBrains.Rd.Impl
       Contexts = parentContexts ?? new ProtocolContexts(SerializationContext);
       wire.Contexts = Contexts;
       if (serializationCtx == null)
-        SerializationContext.InternRoots[ProtocolInternScopeStringId].Bind(lifetime, this, ProtocolInternRootRdId);
+        SerializationContext.InternRoots[ProtocolInternScopeStringId].BindTopLevel(lifetime, this, ProtocolInternRootRdId);
       foreach (var rdContextBase in initialContexts) rdContextBase.RegisterOn(Contexts);
       if (parentContexts == null)
         BindContexts(lifetime);
@@ -56,18 +58,22 @@ namespace JetBrains.Rd.Impl
       ExtCreated = parentExtCreated ?? new Signal<ExtCreationInfo>();
       ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal();
       ExtIsLocal = new ThreadLocal<bool>(() => false);
-      scheduler.InvokeOrQueue(() =>
+      ExtConfirmation.Advise(lifetime, message =>
       {
-        ExtConfirmation.Bind(lifetime, this, ProtocolExtCreatedRdId);
-        ExtConfirmation.Advise(lifetime, message =>
-        {
-          if (ExtIsLocal.Value) return;
-          ExtCreated.Fire(message);
-        });
+        if (ExtIsLocal.Value) return;
+        ExtCreated.Fire(message);
       });
-      
+      using (AllowBindCookie.Create()) 
+        ExtConfirmation.BindTopLevel(lifetime, this, ProtocolExtCreatedRdId);
+
       if (wire is IWireWithDelayedDelivery wireWithMessageBroker)
         wireWithMessageBroker.StartDeliveringMessages();
+    }
+
+    public bool TryGetSerializationContext(out SerializationCtx ctx)
+    {
+      ctx = SerializationContext;
+      return true;
     }
 
     private InternRoot<object> CreateProtocolInternRoot(Lifetime lifetime)
@@ -84,7 +90,8 @@ namespace JetBrains.Rd.Impl
       Scheduler.InvokeOrQueue(() =>
       {
         if (!lifetime.IsAlive) return;
-        Contexts.Bind(lifetime, this, ContextHandlerRdId);
+        Contexts.PreBind(lifetime, this, ContextHandlerRdId);
+        Contexts.Bind();
       });
     }
     
@@ -123,7 +130,6 @@ namespace JetBrains.Rd.Impl
     
     
     public RName Location { get; }
-    IProtocol IRdDynamic.Proto => this;
-
+    IProtocol IRdDynamic.TryGetProto() => this;
   }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
@@ -89,6 +90,7 @@ namespace JetBrains.Rd.Impl
     #region Init
 
     public bool OptimizeNested = false;
+    private LifetimeDefinition? myBindDefinition;
 
     public override void Identify(IIdentities identities, RdId id)
     {
@@ -99,71 +101,125 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
-      base.Init(lifetime);
-
-      var serializationContext = SerializationContext;
+      base.PreInit(lifetime, parentProto);
 
       if (!OptimizeNested)
       {
-        Change.Advise(lifetime, v =>
-        {
-          if (IsLocalChange)
-            v.IdentifyPolymorphic(Proto.Identities, Proto.Identities.Next(RdId));
-        });
+        var maybe = Maybe;
+        if (maybe.HasValue) 
+          myBindDefinition = TryPreBindValue(lifetime, maybe.Value, false);
       }
+
+      parentProto.Wire.Advise(lifetime, this);
+    }
+
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, proto, ctx);
+
+      var maybe = Maybe;
+      var hasInitValue = maybe.HasValue;
+      if (hasInitValue && !OptimizeNested) 
+        maybe.Value.BindPolymorphic();
 
       Advise(lifetime, v =>
       {
-        if (!IsLocalChange) return;
+        var shouldIdentify = !hasInitValue;
+        hasInitValue = false;
+        
+        if (!OptimizeNested)
+        {
+          if (AllowBindCookie.IsBindNotAllowed)
+            proto.Scheduler.AssertThread(this);
+
+          if (IsLocalChange && shouldIdentify)
+          {
+            v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+            
+            myBindDefinition?.Terminate();
+            if (v != null) 
+              myBindDefinition = TryPreBindValue(lifetime, v, false);
+          }
+        }
+
+        if (!IsLocalChange)
+          return;
+
         if (IsMaster) myMasterVersion++;
 
-        Wire.Send(RdId, SendContext.Of(serializationContext, v, this), (sendContext, writer) =>
+        proto.Wire.Send(RdId, SendContext.Of(ctx, v, this), static (sendContext, writer) =>
         {
           var sContext = sendContext.SzrCtx;
           var evt = sendContext.Event;
           var me = sendContext.This;
           writer.Write(me.myMasterVersion);
           me.WriteValueDelegate(sContext, writer, evt);
-          SendTrace?.Log($"{this} :: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
+          SendTrace?.Log($"{me} :: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
         });
+        
+        v.BindPolymorphic();
       });
-
-
-      Wire.Advise(lifetime, this);
-
-
-      if (!OptimizeNested)
-      {
-        this.View(lifetime, (lf, v) =>
-        {
-          v.BindPolymorphic(lf, this, "$");
-        });
-      }
-
     }
 
+    protected override void Unbind()
+    {
+      base.Unbind();
+      
+      if (myBindDefinition is { } bindDefinition)
+      {
+        myBindDefinition = null;
+        bindDefinition.Terminate();
+      }
+    }
 
-    public override void OnWireReceived(UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
     {
       var version = reader.ReadInt();
-      var value = ReadValueDelegate(SerializationContext, reader);
+      var value = ReadValueDelegate(ctx, reader);
 
-      var rejected = IsMaster && version < myMasterVersion;
-        
-      ReceiveTrace?.Log($"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
-
-      if (rejected) return;
-        
-      myMasterVersion = version;
-
-      using (UsingDebugInfo())
+      var definition = TryPreBindValue(lifetime, value, true);
+      
+      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
       {
-        myProperty.Value = value;
-      }
+        var rejected = IsMaster && version < myMasterVersion;
+        
+        ReceiveTrace?.Log($"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
 
+        if (rejected) return;
+        
+        myMasterVersion = version;
+
+        using (UsingDebugInfo())
+        {
+          myBindDefinition?.Terminate();
+          myBindDefinition = definition;
+          myProperty.Value = value;
+        }
+      });
+    }
+
+    private LifetimeDefinition? TryPreBindValue(Lifetime lifetime, T value, bool bindAlso)
+    {
+      if (OptimizeNested || value == null)
+        return null;
+
+      var definition = new LifetimeDefinition();
+      try
+      {
+        value.PreBindPolymorphic(definition.Lifetime, this, "$");
+        if (bindAlso)
+          value.BindPolymorphic();
+        
+        lifetime.Definition.Attach(definition, true);
+        return definition;
+      }
+      catch
+      {
+        definition.Terminate();
+        throw;
+      }
     }
 
     #endregion

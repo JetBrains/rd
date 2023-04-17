@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Collections.Synchronized;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -24,7 +26,7 @@ namespace JetBrains.Rd.Impl
 #endif
     where V : notnull
   {
-    private readonly ViewableList<V> myList = new ViewableList<V>();
+    private readonly ViewableList<V> myList = new(new SynchronizedList<V>()/*to have thread safe print*/);
        
     
     public RdList(CtxReadDelegate<V> readValue, CtxWriteDelegate<V> writeValue, long nextVersion = 1L)
@@ -94,28 +96,77 @@ namespace JetBrains.Rd.Impl
 
 
     #region Init
-    
-    
+
+
     public bool OptimizeNested { [PublicAPI] get; set; }
+    [ItemCanBeNull] private List<LifetimeDefinition> myBindDefinitions;
 
-    protected override void Init(Lifetime lifetime)
+    protected override void Unbind()
     {
-      base.Init(lifetime);
+      base.Unbind();
+      if (myBindDefinitions is { } definitions)
+      {
+        myBindDefinitions = null;
+        foreach (var definition in definitions) 
+          definition?.Terminate();
+      }
+    }
 
-      var serializationContext = SerializationContext;
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
+    {
+      base.PreInit(lifetime, parentProto);
 
+      if (!OptimizeNested)
+      {
+        Assertion.Assert(myBindDefinitions == null);
+        myBindDefinitions ??= new List<LifetimeDefinition>(myList.Count);
+        
+        for (var index = 0; index < Count; index++)
+        {
+          var item = this[index];
+          if (item != null)
+          {
+            item.IdentifyPolymorphic(parentProto.Identities, parentProto.Identities.Next(RdId));
+            myBindDefinitions.Add(TryPreBindValue(lifetime, item, index, false));
+          }
+        }
+      }
+      
+      parentProto.Wire.Advise(lifetime, this);
+    }
+
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, proto, ctx);
+      
+      if (!OptimizeNested)
+      {
+        Change.Advise(lifetime, it =>
+        {
+          if (AllowBindCookie.IsBindNotAllowed)
+            proto.Scheduler.AssertThread(this);
+
+          if (IsLocalChange)
+          {
+            if (it.Kind != AddUpdateRemove.Add)
+              myBindDefinitions[it.Index]?.Terminate();
+
+            if (it.Kind != AddUpdateRemove.Remove && it.NewValue != null)
+            {
+              it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+              myBindDefinitions.Insert(it.Index, TryPreBindValue(lifetime, it.NewValue, it.Index, false));
+            }
+          }
+        });
+      }
+      
       using (UsingLocalChange())
       {
         Advise(lifetime, it =>
-        {
-          if (!IsLocalChange) return;          
+        {     
+          if (!IsLocalChange) return;
 
-          if (!OptimizeNested && it.Kind != AddUpdateRemove.Remove)
-          {
-            it.NewValue.IdentifyPolymorphic(Proto.Identities, Proto.Identities.Next(RdId));
-          }
-
-          Wire.Send(RdId, SendContext.Of(serializationContext, it, this), (sendContext, stream) =>
+          proto.Wire.Send(RdId, SendContext.Of(ctx, it, this), static(sendContext, stream) =>
           {
             var sContext = sendContext.SzrCtx;
             var evt = sendContext.Event;
@@ -128,31 +179,19 @@ namespace JetBrains.Rd.Impl
               me.WriteValueDelegate(sContext, stream, evt.NewValue);
             
             SendTrace?.Log($"list `{me.Location}` ({me.RdId}) :: {evt.Kind} :: index={evt.Index} :: " +
-                            $"version = {me.myNextVersion - 1}" +
-                            $"{(evt.Kind != AddUpdateRemove.Remove ? " :: value = " + evt.NewValue.PrintToString() : "")}");
+                           $"version = {me.myNextVersion - 1}" +
+                           $"{(evt.Kind != AddUpdateRemove.Remove ? " :: value = " + evt.NewValue.PrintToString() : "")}");
           });
-
+          
+          it.NewValue.BindPolymorphic();
         });
       }
-
-      Wire.Advise(lifetime, this);
-
-
-      if (!OptimizeNested) //means values must be bindable
-      {
-        this.View(lifetime, (lf, index, value) =>
-        {
-          value.BindPolymorphic(lf, this, "["+index+"]"); //todo name will be not unique when you add elements in the middle of the list 
-        });
-      }
-      
-      
     }
 
     protected override string ShortName => "list";
 
 
-    public override void OnWireReceived(UnsafeReader stream)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream)
     {
       var header = stream.ReadLong();
       var opType = header & ((1 << versionedFlagShift) - 1);
@@ -160,52 +199,101 @@ namespace JetBrains.Rd.Impl
 
       var index = stream.ReadInt();
 
-        
       var kind = (AddUpdateRemove) opType;
-      V value = default(V);
-      var isPut = kind == AddUpdateRemove.Add || kind == AddUpdateRemove.Update;
+      var value = default(V);
+      var isPut = kind is AddUpdateRemove.Add or AddUpdateRemove.Update;
       if (isPut)
-        value = ReadValueDelegate(SerializationContext, stream);
-        
-      ReceiveTrace?.Log(
-        $"list `{Location}` ({RdId}) :: {kind} :: index={index} :: version = {version}{(isPut ? " :: value = " + value.PrintToString() : "")}");
+        value = ReadValueDelegate(ctx, stream);
 
-      if (version != myNextVersion)
+      var definition = value != null ? TryPreBindValue(lifetime, value, index, true) : null;
+      
+      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
       {
-        Assertion.Fail("Version conflict for {0} Expected version {1} received {2}. Are you modifying a list from two sides?", 
-          Location,
-          myNextVersion,
-          version);
-      }
+        ReceiveTrace?.Log($"list `{Location}` ({RdId}) :: {kind} :: index={index} :: version = {version}{(isPut ? " :: value = " + value.PrintToString() : "")}");
 
-        
-      myNextVersion++;
-        
-      using (UsingDebugInfo())
-      {
-        switch (kind)
+        if (version != myNextVersion)
         {
-          case AddUpdateRemove.Add:
-            if (index < 0)
-              myList.Add(value);
-            else
-              myList.Insert(index, value);
-            break;
-            
-          case AddUpdateRemove.Update:
-            // ReSharper disable once AssignNullToNotNullAttribute
-            myList[index] = value;
-            break;
-
-          case AddUpdateRemove.Remove:
-            myList.RemoveAt(index);
-            break;
-
-          default:
-            throw new ArgumentOutOfRangeException(kind.ToString());
+          definition?.Terminate();
+          Assertion.Fail("Version conflict for {0} Expected version {1} received {2}. Are you modifying a list from two sides?", 
+            Location,
+            myNextVersion,
+            version);
         }
-      }    
+
+        
+        myNextVersion++;
+        
+        using (UsingDebugInfo())
+        {
+          switch (kind)
+          {
+            case AddUpdateRemove.Add:
+              if (index < 0)
+              {
+                if (definition != null)
+                  myBindDefinitions.Add(definition);
+                myList.Add(value);
+              }
+              else
+              {
+                if (definition != null)
+                  myBindDefinitions.Insert(index, definition);
+                myList.Insert(index, value);
+              }
+
+              break;
+
+            case AddUpdateRemove.Update:
+              // ReSharper disable once AssignNullToNotNullAttribute
+              if (definition != null)
+              {
+                myBindDefinitions[index]?.Terminate();
+                myBindDefinitions[index] = definition;
+              }
+              
+              myList[index] = value;
+              break;
+
+            case AddUpdateRemove.Remove:
+              if (definition != null)
+              {
+                myBindDefinitions[index]?.Terminate();
+                myBindDefinitions.RemoveAt(index);
+              }
+              myList.RemoveAt(index);
+              break;
+
+            default:
+              throw new ArgumentOutOfRangeException(kind.ToString());
+          }
+        }    
+      });
     }
+    
+#nullable restore
+    private LifetimeDefinition? TryPreBindValue(Lifetime lifetime, V? value, int index, bool bindAlso)
+    {
+      if (OptimizeNested || value == null)
+        return null;
+
+      var definition = new LifetimeDefinition();
+      try
+      {
+        value.PreBindPolymorphic(definition.Lifetime, this, "["+index+"]"); //todo name will be not unique when you add elements in the middle of the list
+        if (bindAlso)
+          value.BindPolymorphic();
+        
+        lifetime.Definition.Attach(definition, true);
+        return definition;
+      }
+      catch
+      {
+        definition.Terminate();
+        throw;
+      }
+    }
+#nullable disable
+
 
     #endregion
 

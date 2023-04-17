@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Reflection;
@@ -72,9 +73,12 @@ namespace Test.RdFramework.Reflection
 
     #endregion
 
-    public override void OnWireReceived(UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
     {
-      EventCount++;
+      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      {
+        EventCount++;
+      });
     }
   }
 }

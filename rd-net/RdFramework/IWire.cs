@@ -34,7 +34,6 @@ namespace JetBrains.Rd
   public abstract class WireBase : IWireWithDelayedDelivery
   {    
     protected readonly MessageBroker MessageBroker;
-    protected IScheduler Scheduler { get; }
     private ProtocolContexts myContexts;
     
     private bool myBackwardsCompatibleWireFormat = false;
@@ -64,28 +63,24 @@ namespace JetBrains.Rd
     }
 
 
-    protected WireBase(IScheduler scheduler)
+    [Obsolete]
+    protected WireBase(IScheduler scheduler) : this()
+    {
+    }
+    
+    protected WireBase()
     {
       // contexts is initialized when protocol is created.
       myContexts = null!;
-      if (scheduler == null) throw new ArgumentNullException(nameof(scheduler));
-
-      Scheduler = scheduler;
-      MessageBroker = new MessageBroker(scheduler, true);
+      MessageBroker = new MessageBroker(true);
     }
 
     
-    protected unsafe void Receive(byte[] msg)
+    protected void Receive(byte[] msg)
     {
-      RdId id;
-      fixed (byte* p = msg)
-      {
-        var reader = UnsafeReader.CreateReader(p, msg.Length);
-        id = RdId.Read(reader);
-      }
       Log.Root.Catch(() =>
       {
-        MessageBroker.Dispatch(id, msg);
+        MessageBroker.Dispatch(msg);
       });
     }
 
@@ -122,7 +117,7 @@ namespace JetBrains.Rd
 
     public IRdWireable? TryGetById(RdId rdId)
     {
-      return MessageBroker.TryGetById(rdId);
+      return MessageBroker.TryGetById(rdId, out var lifetimed) && lifetimed.Lifetime.IsAlive ? lifetimed.Value : null;
     }
   }
 }

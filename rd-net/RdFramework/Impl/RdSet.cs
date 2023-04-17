@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using JetBrains.Collections.Synchronized;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -15,16 +16,14 @@ namespace JetBrains.Rd.Impl
   {
     private readonly IViewableSet<T> mySet;
 
-    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, IViewableSet<T>? backingSet)
+    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
     {
       ValueCanBeNull = false;
       ReadValueDelegate = readValue;
       WriteValueDelegate = writeValue;
 
-      mySet = backingSet ?? new ViewableSet<T>();
+      mySet = new ViewableSet<T>(new SynchronizedSet<T>() /*to have thread-safe print*/);
     }
-
-    public RdSet(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue) : this(readValue, writeValue, null) { }
 
 
     #region Serializers
@@ -62,56 +61,60 @@ namespace JetBrains.Rd.Impl
     
     public bool OptimizeNested { [PublicAPI] get; set; }
 
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
-      base.Init(lifetime);
-      var serializationContext = SerializationContext;
+      base.PreInit(lifetime, parentProto);
 
+      parentProto.Wire.Advise(lifetime, this);
+    }
+
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, proto, ctx);
+      
       using (UsingLocalChange())
       {
         Advise(lifetime, it =>
         {
           if (!IsLocalChange) return;
-          
-          Wire.Send(RdId, (stream) =>
+
+          proto.Wire.Send(RdId, (stream) =>
           {
             stream.Write((int)it.Kind);
-            WriteValueDelegate(serializationContext, stream, it.Value);
+            WriteValueDelegate(ctx, stream, it.Value);
 
-            
+
             SendTrace?.Log($"{this} :: {it.Kind} :: {it.Value.PrintToString()}");
           });
-
         });
       }
-
-      Wire.Advise(lifetime, this);
-
     }
 
-    public override void OnWireReceived(UnsafeReader stream)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream)
     {
       var kind = (AddRemove) stream.ReadInt();
-      var value = ReadValueDelegate(SerializationContext, stream);
+      var value = ReadValueDelegate(ctx, stream);
       ReceiveTrace?.Log($"{this} :: {kind} :: {value.PrintToString()}");
-        
-      using (UsingDebugInfo())
+
+      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
       {
-        switch (kind)
+        using (UsingDebugInfo())
         {
-          case AddRemove.Add:
-            mySet.Add(value);
-            break;
+          switch (kind)
+          {
+            case AddRemove.Add:
+              mySet.Add(value);
+              break;
 
-          case AddRemove.Remove:
-            mySet.Remove(value);
-            break;
+            case AddRemove.Remove:
+              mySet.Remove(value);
+              break;
 
-          default:
-            throw new ArgumentOutOfRangeException();
+            default:
+              throw new ArgumentOutOfRangeException();
+          }
         }
-          
-      }
+      });
     }
 
     #endregion

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -14,227 +14,134 @@ namespace JetBrains.Rd.Impl
   {
     private readonly ILog myLogger = Log.GetLog("protocol.Mq");
 
-    class Mq
-    {
-      internal readonly List<byte[]> DefaultSchedulerMessages = new List<byte[]>();
-      internal readonly List<byte[]> CustomSchedulerMessages = new List<byte[]>();
-    }
-
     public bool BackwardsCompatibleWireFormat = false;
 
-    private readonly IScheduler myScheduler;
-    private readonly object myLock = new object();
-    private readonly Dictionary<RdId, IRdWireable> mySubscriptions = new Dictionary<RdId, IRdWireable>();
-    private readonly Dictionary<RdId, Mq> myBroker = new Dictionary<RdId, Mq>();
+    private readonly object myLock = new();
+    private readonly Dictionary<RdId, ValueLifetimed<IRdWireable>> mySubscriptions = new();
+    private Queue<byte[]>? myUnprocessedMessages;
 
-    private bool myIsQueueingAllMessages;
-
-    public MessageBroker(IScheduler scheduler)
+    [Obsolete]
+    public MessageBroker(IScheduler scheduler) : this()
     {
-      myScheduler = scheduler;
-      myIsQueueingAllMessages = false;
     }
     
-    public MessageBroker(IScheduler scheduler, bool withholdMessageDeliveryInitially)
+    [Obsolete]
+    public MessageBroker(IScheduler scheduler, bool withholdMessageDeliveryInitially) : this(withholdMessageDeliveryInitially)
     {
-      myScheduler = scheduler;
-      myIsQueueingAllMessages = withholdMessageDeliveryInitially;
-    }
-
-
-    private void Invoke(IRdWireable reactive, byte[] msg, bool sync = false)
-    {
-      if (sync)
-      {
-        Execute(reactive, msg);
-        return;
-      } 
-      
-      reactive.WireScheduler.Queue(() =>
-      {
-        if (ShouldProcess(reactive))
-          Execute(reactive, msg);
-        else
-          myLogger.Trace("Handler for entity {0} dissapeared", reactive);
-      });
-      
-    }
-
-    private bool ShouldProcess(IRdWireable reactive)
-    {
-      if (!reactive.IsBound) return false;
-
-      lock (myLock)
-      {
-        return mySubscriptions.ContainsKey(reactive.RdId);
-      }
     }
     
-    private unsafe void Execute(IRdWireable reactive, byte[] msg)
+    public MessageBroker() : this(false) { }
+    public MessageBroker(bool withholdMessageDeliveryInitially)
     {
-      fixed (byte* p = msg)
-      {
-        var reader = UnsafeReader.CreateReader(p, msg.Length);
-        var rdid0 = RdId.Read(reader);
-        if (Mode.IsAssertion) Assertion.Assert(reactive.RdId.Equals(rdid0), "Not equals: {0}, {1}", reactive.RdId, rdid0);
-
-        if (BackwardsCompatibleWireFormat)
-          reactive.OnWireReceived(reader);
-        else
-          using (reactive.Proto.Contexts.ReadContextsIntoCookie(reader))
-            reactive.OnWireReceived(reader);
-      }
+      myUnprocessedMessages = withholdMessageDeliveryInitially ? new() : null;
     }
 
     public void StartDeliveringMessages()
     {
-      lock (myLock)
+      while (true)
       {
-        Assertion.Require(myIsQueueingAllMessages, "Already started delivering messages");
-        
-        myIsQueueingAllMessages = false;
-
-        var entries = myBroker.ToList();
-        myBroker.Clear();
-        
-        foreach (var keyValuePair in entries)
+        Queue<byte[]>? queue;
+        lock (myLock)
         {
-          if (Mode.IsAssertion) Assertion.Assert(keyValuePair.Value.CustomSchedulerMessages.Count == 0, "Unexpected custom scheduler messages");
-          
-          foreach (var messageBytes in keyValuePair.Value.DefaultSchedulerMessages)
-            Dispatch(keyValuePair.Key, messageBytes);
+          queue = myUnprocessedMessages;
+          Assertion.Require(queue != null, "Already started delivering messages");
+
+          if (queue.Count == 0)
+          {
+            myUnprocessedMessages = null;
+            return;
+          }
+
+          myUnprocessedMessages = new Queue<byte[]>();
         }
+
+        foreach (var message in queue)
+          DispatchImpl(message);
       }
     }
 
     //on poller thread
-    public void Dispatch(RdId id, byte[] msg)
+    public void Dispatch(byte[] msg)
     {
-      Assertion.Require(!id.IsNil);
-
-      lock (myLock)
+      if (myUnprocessedMessages != null)
       {
-        var s = mySubscriptions.GetOrDefault(id);
-        if (s == null || myIsQueueingAllMessages)
+        lock (myLock)
         {
-          var currentBroker = myBroker.GetOrCreate(id, () => new Mq());
-          currentBroker.DefaultSchedulerMessages.Add(msg);
-
-          if (myIsQueueingAllMessages) return;
-          
-          myScheduler.Queue(() =>
+          if (myUnprocessedMessages is { } queue)
           {
-            byte[]? msg1;
+            queue.Enqueue(msg);
+            return;
+          }
+        }
+      }
 
-            IRdWireable subscription;
-            bool hasSubscription;
+      DispatchImpl(msg);
+    }
 
-            lock (myLock)
-            {
-              if (currentBroker.DefaultSchedulerMessages.Count > 0)
-              {
-                msg1 = currentBroker.DefaultSchedulerMessages[0];
-                currentBroker.DefaultSchedulerMessages.RemoveAt(0);
-              }
-              else
-                msg1 = null;
+    private unsafe void DispatchImpl(byte[] msg)
+    {
+      RdWireableContinuation continuation;
+      ProtocolContexts.MessageContextCookie messageContextCookie = default;
+      fixed (byte* p = msg)
+      {
+        var reader = UnsafeReader.CreateReader(p, msg.Length);
+        var id = RdId.Read(reader);
 
-              hasSubscription = mySubscriptions.TryGetValue(id, out subscription);
-            }
-
-            if (!hasSubscription)
-            {
-              myLogger.Trace("No handler for id: {0}", id);
-            }
-            else if (msg1 != null)
-            {
-              Invoke(subscription, msg1, sync: subscription.WireScheduler == myScheduler);
-            }
-
-            lock (myLock)
-            { 
-              if (currentBroker.DefaultSchedulerMessages.Count == 0)
-              {
-                if (myBroker.Remove(id))
-                {
-                  if (subscription != null)
-                  {
-                    foreach (var m in currentBroker.CustomSchedulerMessages)
-                    {
-                      if (Mode.IsAssertion) Assertion.Assert(subscription.WireScheduler != myScheduler,
-                        "subscription.Scheduler != myScheduler for {0}", subscription);
-                      Invoke(subscription, m);
-                    }
-                  }
-                }
-              }
-            }
-
-          });
+        if (!TryGetById(id, out var lifetimed))
+        {
+          myLogger.Trace($"Handler is not found for {id}");
+          return;
         }
 
-
-        else // s != null
+        var reactive = lifetimed.Value.NotNull();
+        var proto = reactive.TryGetProto();
+        if (proto == null)
         {
-          if (s.WireScheduler == myScheduler || s.WireScheduler.OutOfOrderExecution)
-          {
-            Invoke(s, msg);
-          }
+          myLogger.Trace($"proto is null for {id}");
+          return;
+        }
+
+        using (AllowBindCookie.Create())
+        {
+          if (BackwardsCompatibleWireFormat)
+            continuation = reactive.OnWireReceived(lifetimed.Lifetime, reader);
           else
           {
-            var mq = myBroker.GetOrDefault(id);
-            if (mq != null)
-            {
-              mq.CustomSchedulerMessages.Add(msg);
-            }
-            else
-            {
-              Invoke(s, msg);
-            }
+            messageContextCookie = proto.Contexts.ReadContextsIntoCookie(reader);
+            continuation = reactive.OnWireReceived(lifetimed.Lifetime, reader);
           }
-
         }
 
+        if (continuation == RdWireableContinuation.NotBound)
+        {
+          myLogger.Trace($"entity is not bound to protocol for {id}");
+          return;
+        }
+
+        reader.Reset(null, 0);
       }
+
+      continuation.RunAsync(messageContextCookie);
     }
 
-
-    
     public void Advise(Lifetime lifetime, IRdWireable reactive)
     {
-      Assertion.Require(!reactive.RdId.IsNil, "!id.IsNil: {0}", reactive);
-
-      //todo commented because of WiredRdTask
-//      myScheduler.AssertThread(reactive);
-
-      // ReSharper disable once InconsistentlySynchronizedField
-      mySubscriptions.BlockingAddUnique(lifetime, myLock, reactive.RdId, reactive);
-
-      if (reactive.GetWireSchedulerIfBound()?.OutOfOrderExecution == true)
-        lifetime.TryExecute(() =>
-        {
-          lock(myLock) {
-            if (myBroker.TryGetValue(reactive.RdId, out var mq))
-            {
-              myBroker.Remove(reactive.RdId);
-              foreach (var msg in mq.DefaultSchedulerMessages)
-              {
-                Invoke(reactive, msg);
-              }
-
-              mq.DefaultSchedulerMessages.Clear(); // clear it here because it is captured by default scheduler queueing
-              Assertion.Assert(mq.CustomSchedulerMessages.Count == 0, "Custom scheduler messages for an entity with outOfOrder scheduler {0}", reactive);
-            }
-          }
-        });
+      var rdId = reactive.RdId;
+      if (rdId.IsNil)
+      {
+        if (lifetime.IsNotAlive)
+          return;
+        
+        Assertion.Fail($"!id.IsNil: {reactive}");
+      }
+      
+      mySubscriptions.BlockingAddUnique(lifetime, myLock, rdId, new(lifetime, reactive));
     }
 
-    public IRdWireable? TryGetById(RdId rdId)
+    public bool TryGetById(RdId rdId, out ValueLifetimed<IRdWireable> subscription)
     {
       lock (myLock)
-      {
-        return mySubscriptions.TryGetValue(rdId, out var value) ? value : null;
-      }
+        return mySubscriptions.TryGetValue(rdId, out subscription) && subscription.Lifetime.IsAlive;
     }
   }
 }

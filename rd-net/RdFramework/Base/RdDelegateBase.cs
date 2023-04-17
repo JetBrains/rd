@@ -16,9 +16,10 @@ namespace JetBrains.Rd.Base
 
 
     #region Delegation
-    public IProtocol Proto => Delegate.Proto;
+    public IProtocol? TryGetProto() => Delegate.TryGetProto();
 
-    public SerializationCtx SerializationContext => Delegate.SerializationContext;
+    public bool TryGetSerializationContext(out SerializationCtx ctx) => Delegate.TryGetSerializationContext(out ctx);
+
     public RName Location => Delegate.Location;
 
     public void Print(PrettyPrinter printer)
@@ -27,7 +28,8 @@ namespace JetBrains.Rd.Base
       Delegate.Print(printer);
     }
 
-    public virtual void Bind(Lifetime lf, IRdDynamic parent, string name) => Delegate.Bind(lf, parent, name);
+    public virtual void PreBind(Lifetime lf, IRdDynamic parent, string name) => Delegate.PreBind(lf, parent, name);
+    public virtual void Bind() => Delegate.Bind();
 
     public void Identify(IIdentities identities, RdId id) => Delegate.Identify(identities, id);
 

@@ -27,8 +27,7 @@ namespace JetBrains.Rd.Base
     
     private readonly ExtWire myExtWire = new ExtWire();
     private IProtocol myExtProtocol;
-    public override IProtocol Proto => myExtProtocol ?? base.Proto;
-    
+    public sealed override IProtocol TryGetProto() => myExtProtocol ?? base.TryGetProto();
     
     public readonly IReadonlyProperty<bool> Connected;
     protected RdExtBase()
@@ -39,43 +38,47 @@ namespace JetBrains.Rd.Base
     protected abstract Action<ISerializers> Register { get; }
     protected virtual long SerializationHash => 0L;
 
-    public override IScheduler WireScheduler => SynchronousScheduler.Instance;
-
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
       Protocol.InitTrace?.Log($"{this} :: binding");
 
-      var parentProtocol = base.Proto;
-      var parentWire = parentProtocol.Wire;
+      var parentWire = parentProto.Wire;
       
-      parentProtocol.Serializers.RegisterToplevelOnce(GetType(), Register);
+      parentProto.Serializers.RegisterToplevelOnce(GetType(), Register);
       
+      if (!TryGetSerializationContext(out var serializationContext))
+        return;
 
       //todo ExtScheduler
       myExtWire.RealWire = parentWire;
       lifetime.Bracket(
-        () => { myExtProtocol = new Protocol(parentProtocol.Name, parentProtocol.Serializers, parentProtocol.Identities, parentProtocol.Scheduler, myExtWire, lifetime, SerializationContext, parentProtocol.Contexts, parentProtocol.ExtCreated, this.CreateExtSignal()); },
+        () => { myExtProtocol = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, parentProto.Scheduler, myExtWire, lifetime, serializationContext, parentProto.Contexts, parentProto.ExtCreated, this.CreateExtSignal()); },
         () => { myExtProtocol = null; }
         );
 
-      var bindableParent = Parent is RdBindableBase bindable ? bindable : null;
+      var bindableParent = Parent as RdBindableBase;
       var info = new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash, this);
-      ((Protocol) parentProtocol).SubmitExtCreated(info);
+      ((Protocol) parentProto).SubmitExtCreated(info);
       parentWire.Advise(lifetime, this);
             
       
       lifetime.OnTermination(() => { SendState(parentWire, ExtState.Disconnected); });
       
       //protocol must be set first to allow bindable bind to it
-      base.Init(lifetime);
+      base.PreInit(lifetime, parentProto);
 
       SendState(parentWire, ExtState.Ready);
       
       Protocol.InitTrace?.Log($"{this} :: bound");
     }
 
+    protected override void Init(Lifetime lifetime, IProtocol currentProto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, currentProto, ctx);
+    }
 
-    public override void OnWireReceived(UnsafeReader reader)
+
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
     {
       var remoteState = (ExtState)reader.ReadInt();
       ReceiveTrace?.Log($"Ext {Location} ({RdId}) : {remoteState}");
@@ -100,19 +103,31 @@ namespace JetBrains.Rd.Base
       }
       
       var counterpartSerializationHash = reader.ReadLong();
-      if (counterpartSerializationHash != SerializationHash)
-      {                                    
-        base.Proto.Scheduler.Queue(() => { base.Proto.OutOfSyncModels.Add(this); } );
+      if (counterpartSerializationHash != SerializationHash && base.TryGetProto() is {} parentProto)
+      {
+        parentProto.Scheduler.Queue(() => parentProto.OutOfSyncModels.Add(this));
         
-        if (base.Proto is Protocol p && p.ThrowErrorOnOutOfSyncModels)
-          Assertion.Fail($"{this} : SerializationHash doesn't match to counterpart: maybe you forgot to generate models?" +
-                         $"Our: `${SerializationHash}` counterpart: {counterpartSerializationHash}");
+        var message = $"{this} : SerializationHash doesn't match to counterpart: maybe you forgot to generate models?Our: `${SerializationHash}` counterpart: {counterpartSerializationHash}";
+        if (parentProto is Protocol { ThrowErrorOnOutOfSyncModels: true })
+        {
+          Assertion.Fail(message);
+        }
+        else
+        {
+          ourLogReceived.Warn(message);
+        }
       }
+      
+      return RdWireableContinuation.Empty;
     }
 
     private void SendState(IWire parentWire, ExtState state)
     {
-      using(base.Proto.Contexts.CreateSendWithoutContextsCookie())
+      var parentProto = base.TryGetProto();
+      if (parentProto == null)
+        return;
+      
+      using(parentProto.Contexts.CreateSendWithoutContextsCookie())
         parentWire.Send(RdId, writer =>
         {
           SendTrace?.Log($"{this} : {state}");
@@ -123,6 +138,12 @@ namespace JetBrains.Rd.Base
 
         
 
+    protected override void PreInitBindableFields(Lifetime lifetime)
+    {
+      foreach (var pair in BindableChildren) 
+        pair.Value?.PreBindPolymorphic(lifetime, this, pair.Key);
+    }
+    
     protected override void InitBindableFields(Lifetime lifetime)
     {
       foreach (var pair in BindableChildren)
@@ -131,15 +152,14 @@ namespace JetBrains.Rd.Base
         {
           using (reactive.UsingLocalChange())
           {
-            reactive.BindPolymorphic(lifetime, this, pair.Key);
+            reactive.BindPolymorphic();
           } 
         }
         else
         {
-          pair.Value?.BindPolymorphic(lifetime, this, pair.Key);
+          pair.Value?.BindPolymorphic();
         }
       }
-      
     }
 
     protected override string ShortName => "ext";
@@ -152,7 +172,7 @@ namespace JetBrains.Rd.Base
 
 
     internal readonly ViewableProperty<bool> Connected = new ViewableProperty<bool>(false);
-    internal IWire RealWire;
+    public IWire RealWire;
     
     private struct QueueItem
     {

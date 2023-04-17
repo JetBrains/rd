@@ -113,7 +113,7 @@ namespace JetBrains.Platform.Tests.Cases.RdFramework.PerClientId
     public PerClientIdRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
       Identify(protocol.Identities, RdId.Root.Mix("PerClientIdRoot"));
-      Bind(lifetime, protocol, "PerClientIdRoot");
+      this.BindTopLevel(lifetime, protocol, "PerClientIdRoot");
     }
     
     //constants

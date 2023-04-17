@@ -24,9 +24,6 @@ namespace JetBrains.Rd.Tasks
     [PublicAPI]
     public CtxWriteDelegate<TRes> WriteResponseDelegate { get; }
 
-    //set in init
-    internal new SerializationCtx SerializationContext;
-
     //set via Set method
     [PublicAPI] public Func<Lifetime, TReq, RdTask<TRes>>? Handler { get; private set; }
 
@@ -38,26 +35,23 @@ namespace JetBrains.Rd.Tasks
     private IScheduler? myCancellationScheduler;
     private IScheduler? myHandlerScheduler;
 
-    public override IScheduler WireScheduler => myHandlerScheduler ?? base.WireScheduler;
-
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
       ReadRequestDelegate = readRequest;
       WriteRequestDelegate = writeRequest;
       ReadResponseDelegate = readResponse;
       WriteResponseDelegate = writeResponse;
+      myBindLifetime = Lifetime.Terminated;
     }
 
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
-      base.Init(lifetime);
-
+      base.PreInit(lifetime, parentProto);
+      
+      Assertion.Assert(myBindLifetime.Status == LifetimeStatus.Terminated);
       myBindLifetime = lifetime;
 
-      //because we advise synchronous scheduler
-      SerializationContext = base.SerializationContext;
-
-      Wire.Advise(lifetime, this);
+      parentProto.Wire.Advise(lifetime, this);
     }
 
 
@@ -75,46 +69,61 @@ namespace JetBrains.Rd.Tasks
     }
     
     [PublicAPI]
-    public override void OnWireReceived(UnsafeReader reader) //endpoint's side
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
     {
       var taskId = RdId.Read(reader);
 
-      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(myBindLifetime, this, taskId, myCancellationScheduler ?? SynchronousScheduler.Instance);
-      //subscribe for lifetime cancellation
-      var externalCancellation = wiredTask.Lifetime;
-
-      using (UsingDebugInfo()) //now supports only sync handlers
+      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(lifetime, this, taskId, myCancellationScheduler ?? SynchronousScheduler.Instance);
+      try
       {
-        RdTask<TRes> rdTask;
-        try
-        {
-          var value = ReadRequestDelegate(SerializationContext, reader);
-          ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
-          var handler = Handler;
-          if (handler == null)
-          {
-            var message = $"Handler is not set for {wiredTask} :: received request: {value.PrintToString()}";
-            ourLogReceived.Error(message);
-            rdTask = RdTask.Faulted<TRes>(new Exception(message));
-          }
-          else
-          {
-            try
-            {
-              rdTask = handler(externalCancellation, value);
-            }
-            catch (Exception ex)
-            {
-              rdTask = RdTask.Faulted<TRes>(ex);
-            }
-          }
-        }
-        catch (Exception e)
-        {
-          rdTask = RdTask.Faulted<TRes>(new Exception($"Unexpected exception in {wiredTask}", e));
-        }
+        return OnWireReceived(lifetime, proto, ctx, reader, wiredTask);
+      }
+      catch (Exception e)
+      {
+        wiredTask.Set(e);
+        return RdWireableContinuation.Empty;
+      }
+      //subscribe for lifetime cancellation
+    }
 
-        rdTask.Result.Advise(Lifetime.Eternal, result =>
+    private RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, WiredRdTask<TReq, TRes>.Endpoint wiredTask)
+    {
+      var externalCancellation = wiredTask.Lifetime;
+      var value = ReadRequestDelegate(ctx, reader);
+      ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
+
+      return new RdWireableContinuation(lifetime, myHandlerScheduler ?? proto.Scheduler, () =>
+      {
+        using (UsingDebugInfo()) //now supports only sync handlers
+        {
+          RdTask<TRes> rdTask;
+          try
+          {
+            var handler = Handler;
+            if (handler == null)
+            {
+              var message = $"Handler is not set for {wiredTask} :: received request: {value.PrintToString()}";
+              ourLogReceived.Error(message);
+              rdTask = RdTask.Faulted<TRes>(new Exception(message));
+            }
+            else
+            {
+              try
+              {
+                rdTask = handler(externalCancellation, value);
+              }
+              catch (Exception ex)
+              {
+                rdTask = RdTask.Faulted<TRes>(ex);
+              }
+            }
+          }
+          catch (Exception e)
+          {
+            rdTask = RdTask.Faulted<TRes>(new Exception($"Unexpected exception in {wiredTask}", e));
+          }
+
+          rdTask.Result.Advise(Lifetime.Eternal, result =>
           {
             try
             {
@@ -129,7 +138,8 @@ namespace JetBrains.Rd.Tasks
               wiredTask.Set(new RdFault(ee));
             }
           });
-      }
+        }
+      });
     }
 
 
@@ -162,27 +172,34 @@ namespace JetBrains.Rd.Tasks
 
 
     public IRdTask<TRes> Start(TReq request, IScheduler? responseScheduler = null)
-      => StartInternal(Lifetime.Eternal, request, responseScheduler ?? Proto.Scheduler);
+      => StartInternal(Lifetime.Eternal, request, responseScheduler);
 
     public IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler? responseScheduler = null)
-      => StartInternal(lifetime, request, responseScheduler ?? Proto.Scheduler);
+      => StartInternal(lifetime, request, responseScheduler);
 
 
-    private IRdTask<TRes> StartInternal(Lifetime requestLifetime, TReq request, IScheduler scheduler)
+    private IRdTask<TRes> StartInternal(Lifetime requestLifetime, TReq request, IScheduler? scheduler)
     {
-      AssertBound();
-      if (!Async) AssertThreading();
+      var proto = TryGetProto();
+      
+      if (!Async)
+        AssertBound();
+      
+      AssertThreading();
       AssertNullability(request);
 
-      var taskId = Proto.Identities.Next(RdId.Nil);
-      var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler);
+      if (proto == null || !TryGetSerializationContext(out var serializationContext))
+        return new WiredRdTask<TReq, TRes>.CallSite(Lifetime.Terminated, this, RdId.Nil, SynchronousScheduler.Instance);
 
-      Wire.Send(RdId, (writer) =>
+      var taskId = proto.Identities.Next(RdId.Nil);
+      var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler ?? proto.Scheduler);
+      
+      proto.Wire.Send(RdId, (writer) =>
       {
         SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");
 
         taskId.Write(writer);
-        WriteRequestDelegate(SerializationContext, writer, request);
+        WriteRequestDelegate(serializationContext, writer, request);
       });
 
       return task;

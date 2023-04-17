@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd;
@@ -91,7 +92,7 @@ namespace Test.RdFramework.Contexts
         });
       });
 
-      SpinWait.SpinUntil(() => numReceives == 3, TimeSpan.FromMilliseconds(5_000));
+      SpinWait.SpinUntil(() => numReceives == 3, Debugger.IsAttached ? TimeSpan.FromDays(1) : TimeSpan.FromMilliseconds(5_000));
       
       Assert.AreEqual(3, numReceives);
       Assert.AreEqual(fireValues, receivedContexts);

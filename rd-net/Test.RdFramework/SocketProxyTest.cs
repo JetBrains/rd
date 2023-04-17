@@ -35,10 +35,10 @@ namespace Test.RdFramework
           var clientProtocol = SocketWireTest.Client(lifetime, proxy.Port);
 
           var sp = NewRdSignal<int>().Static(1);
-          sp.Bind(lifetime, serverProtocol, SocketWireTest.Top);
+          sp.BindTopLevel(lifetime, serverProtocol, SocketWireTest.Top);
 
           var cp = NewRdSignal<int>().Static(1);
-          cp.Bind(lifetime, clientProtocol, SocketWireTest.Top);
+          cp.BindTopLevel(lifetime, clientProtocol, SocketWireTest.Top);
 
           var serverLog = new List<int>();
           var clientLog = new List<int>();

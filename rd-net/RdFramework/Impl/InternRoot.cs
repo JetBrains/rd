@@ -34,8 +34,11 @@ namespace JetBrains.Rd.Impl
 
     public InternId Intern(TBase value)
     {
-      IdPair pair;
-      if (myInverseMap.TryGetValue(value, out pair))
+      var proto = TryGetProto();
+      if (proto == null || !TryGetSerializationContext(out var serializationCtx))
+        throw new ProtocolNotBoundException($"Cannot intern {value} because {this} is not bound");
+      
+      if (myInverseMap.TryGetValue(value, out var pair))
         return pair.Id;
 
       pair.Id = pair.ExtraId = InternId.Invalid;
@@ -49,10 +52,10 @@ namespace JetBrains.Rd.Impl
         RdReactiveBase.SendTrace?.Log($"InternRoot `{Location}` ({RdId}):: {allocatedId} = {value}");
         
         myDirectMap[allocatedId] = value;
-        using(Proto.Contexts.CreateSendWithoutContextsCookie())
-          Proto.Wire.Send(RdId, writer =>
+        using(proto.Contexts.CreateSendWithoutContextsCookie())
+          proto.Wire.Send(RdId, writer =>
           {
-            myWriteDelegate(SerializationContext, writer, value);
+            myWriteDelegate(serializationCtx, writer, value);
             InternId.Write(writer, allocatedId);
           });
 
@@ -109,8 +112,18 @@ namespace JetBrains.Rd.Impl
       myWriteDelegate = writeDelegate ?? Polymorphic<TBase>.Write;
     }
 
-    public IProtocol Proto => myParent.NotNull(this).Proto;
-    public SerializationCtx SerializationContext => myParent.NotNull(this).SerializationContext;
+    public IProtocol TryGetProto() => myParent?.TryGetProto();
+    public bool TryGetSerializationContext(out SerializationCtx ctx)
+    {
+      var parent = myParent;
+      if (parent != null)
+        return parent.TryGetSerializationContext(out ctx);
+
+      ctx = default;
+      return default;
+    }
+
+    
     public RName Location { get; private set; } = new RName("<<not bound>>");
 
     public void Print(PrettyPrinter printer)
@@ -129,7 +142,7 @@ namespace JetBrains.Rd.Impl
     public RdId RdId { get; set; }
     public bool IsBound => myParent != null;
 
-    public void Bind(Lifetime lf, IRdDynamic parent, string name)
+    public void PreBind(Lifetime lf, IRdDynamic parent, string name)
     {
       if (myParent != null)
       {
@@ -137,7 +150,11 @@ namespace JetBrains.Rd.Impl
       }
       //todo uncomment when fix InterningTest
       //Assertion.Require(RdId != RdId.Nil, "Must be identified first");
-     
+
+      var proto = parent.TryGetProto();
+      if (proto == null)
+        return;
+
       lf.Bracket(() =>
         {
           myParent = parent;
@@ -154,7 +171,11 @@ namespace JetBrains.Rd.Impl
       myDirectMap.Clear();
       myInverseMap.Clear();
 
-      Proto.Wire.Advise(lf, this);
+      proto.Wire.Advise(lf, this);
+    }
+
+    public void Bind()
+    {
     }
 
     public void Identify(IIdentities identities, RdId id)
@@ -171,17 +192,18 @@ namespace JetBrains.Rd.Impl
       set => throw new NotSupportedException("Intern Roots are always async");
     }
 
-    public IScheduler WireScheduler => InternRootScheduler.Instance;
-
-    public void OnWireReceived(UnsafeReader reader)
+    public RdWireableContinuation OnWireReceived(Lifetime lifetime, UnsafeReader reader)
     {
-      var value = myReadDelegate(SerializationContext, reader);
+      if (!TryGetSerializationContext(out var serializationCtx))
+        return RdWireableContinuation.Empty;
+          
+      var value = myReadDelegate(serializationCtx, reader);
       var id = InternId.Read(reader);
       Assertion.Require(!id.IsLocal, "Other side sent us id of our own side?");
       Assertion.Require(id.IsValid, "Other side sent us invalid id?");
       RdReactiveBase.ReceiveTrace?.Log($"InternRoot `{Location}` ({RdId}):: {id} = {value}");
       myDirectMap[id] = value;
-      var pair = new IdPair() { Id = id, ExtraId = InternId.Invalid };
+      var pair = new IdPair { Id = id, ExtraId = InternId.Invalid };
       if (!myInverseMap.TryAdd(value, pair))
       {
         while (true)
@@ -193,6 +215,8 @@ namespace JetBrains.Rd.Impl
           if (myInverseMap.TryUpdate(value, modifiedPair, oldPair)) break;
         }
       }
+      
+      return RdWireableContinuation.Empty;
     }
 
     private struct IdPair : IEquatable<IdPair>
@@ -228,27 +252,5 @@ namespace JetBrains.Rd.Impl
         return !left.Equals(right);
       }
     }
-  }
-
-  class InternRootScheduler : IScheduler
-  {
-    internal static readonly InternRootScheduler Instance = new InternRootScheduler();
-    
-    private int myActive = 0;
-    public void Queue(Action action)
-    {
-      Interlocked.Increment(ref myActive);
-      try
-      {
-        action();
-      }
-      finally
-      {
-        Interlocked.Decrement(ref myActive);
-      }
-    }
-
-    public bool IsActive => myActive > 0;
-    public bool OutOfOrderExecution => true;
   }
 }

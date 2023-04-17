@@ -1,16 +1,14 @@
-using System;
 using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Base
 {
   internal interface ISingleContextHandler
   {
-    IDisposable ReadValueIntoContext(SerializationCtx context, UnsafeReader reader);
-
     void WriteValue(SerializationCtx context, UnsafeWriter writer);
 
     void RegisterValueInValueSet();
-    
+
+    object ReadValueBoxed(SerializationCtx context, UnsafeReader reader);
     RdContextBase ContextBase { get; }
   }
   

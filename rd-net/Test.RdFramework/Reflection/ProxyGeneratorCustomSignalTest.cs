@@ -71,8 +71,8 @@ namespace Test.RdFramework.Reflection
         myRdSignal.Fire(value);
       }
 
-      public IProtocol Proto => myRdSignal.Proto;
-      public SerializationCtx SerializationContext => myRdSignal.SerializationContext;
+      public IProtocol TryGetProto() => myRdSignal.TryGetProto();
+
       public RName Location => myRdSignal.Location;
       public void Print(PrettyPrinter printer)
       {
@@ -84,10 +84,19 @@ namespace Test.RdFramework.Reflection
         get => myRdSignal.RdId;
         set => myRdSignal.RdId = value;
       }
-      public void Bind(Lifetime lf, IRdDynamic parent, string name)
+
+      public void PreBind(Lifetime lf, IRdDynamic parent, string name)
       {
-        myRdSignal.Bind(lf, parent, name);
+        myRdSignal.PreBind(lf, parent, name);
       }
+      
+      public void Bind()
+      {
+        myRdSignal.Bind();
+      }
+
+      public bool TryGetSerializationContext(out SerializationCtx ctx) => myRdSignal.TryGetSerializationContext(out ctx);
+
       public void Identify(IIdentities identities, RdId id)
       {
         myRdSignal.Identify(identities, id);

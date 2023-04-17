@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Collections;
+using JetBrains.Collections.Synchronized;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -18,7 +19,7 @@ namespace JetBrains.Rd.Impl
 
   public class RdMap<K, V> : RdReactiveBase, IViewableMap<K, V> where K : notnull
   {
-    private readonly ViewableMap<K, V> myMap = new ViewableMap<K, V>();
+    private readonly ViewableMap<K, V> myMap = new(new SynchronizedDictionary<K, V>()/*to have thread safe print*/);
 
     public RdMap(CtxReadDelegate<K> readKey, CtxWriteDelegate<K> writeKey, CtxReadDelegate<V> readValue, CtxWriteDelegate<V> writeValue)
     {
@@ -80,14 +81,65 @@ namespace JetBrains.Rd.Impl
     #region Init
     
     public bool OptimizeNested { [PublicAPI] get; set; }
-
-
+    private Dictionary<K, LifetimeDefinition>? myBindDefinitions;
     
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
-      base.Init(lifetime);
+      base.PreInit(lifetime, parentProto);
 
-      var serializationContext = SerializationContext;
+      if (!OptimizeNested)
+      {
+        Assertion.Assert(myBindDefinitions == null);
+        var definitions  = new Dictionary<K, LifetimeDefinition>(myMap.Count); 
+        
+        foreach (var (key, value) in this)
+        {
+          if (value != null)
+          {
+            value.IdentifyPolymorphic(parentProto.Identities, parentProto.Identities.Next(RdId));
+            var definition = TryPreBindValue(lifetime, key, value, false);
+            if (definition != null)
+              definitions.Add(key, definition);
+          }
+        }
+
+        myBindDefinitions = definitions;
+      }
+
+      parentProto.Wire.Advise(lifetime, this);
+    }
+
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, proto, ctx);
+      
+      if (!OptimizeNested)
+      {
+        Change.Advise(lifetime, it =>
+        {
+          if (AllowBindCookie.IsBindNotAllowed)
+            proto.Scheduler.AssertThread(this);
+          
+          AssertNullability(it.Key);
+
+          if (it.Kind != AddUpdateRemove.Remove) AssertNullability(it.NewValue);
+
+          if (IsLocalChange)
+          {
+            var definitions = myBindDefinitions.NotNull(this);
+            if (it.Kind != AddUpdateRemove.Add) 
+              definitions[it.Key]?.Terminate();
+
+            if (it.Kind != AddUpdateRemove.Remove)
+            {
+              it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+              var definition = TryPreBindValue(lifetime, it.Key, it.NewValue, false);
+              if (definition != null)
+                definitions[it.Key] = definition;
+            }
+          }
+        });
+      }
 
       using (UsingLocalChange())
       {
@@ -95,16 +147,7 @@ namespace JetBrains.Rd.Impl
         {
           if (!IsLocalChange) return;
 
-          AssertNullability(it.Key);
-
-          if (it.Kind != AddUpdateRemove.Remove) AssertNullability(it.NewValue);
-
-          if (!OptimizeNested && it.Kind != AddUpdateRemove.Remove)
-          {
-            it.NewValue.IdentifyPolymorphic(Proto.Identities, Proto.Identities.Next(RdId));
-          }
-
-          Wire.Send(RdId, SendContext.Of(serializationContext, it, this), (sendContext, stream) =>
+          proto.Wire.Send(RdId, SendContext.Of(ctx, it, this), static (sendContext, stream) =>
           {
             var sContext = sendContext.SzrCtx;
             var evt = sendContext.Event;
@@ -117,35 +160,36 @@ namespace JetBrains.Rd.Impl
             {
               me.myPendingForAck[evt.Key] = version;
               stream.Write(version);
-            }              
-            
+            }
+
             me.WriteKeyDelegate(sContext, stream, evt.Key);
-            if (evt.IsUpdate || evt.IsAdd) 
+            if (evt.IsUpdate || evt.IsAdd)
               me.WriteValueDelegate(sContext, stream, evt.NewValue);
 
 
             SendTrace?.Log($"{me} :: {evt.Kind} :: key = {evt.Key.PrintToString()}"
-              + (me.IsMaster     ? " :: version = " + version : "")
-              + (evt.Kind != AddUpdateRemove.Remove  ? " :: value = " + evt.NewValue.PrintToString() : ""));
+                           + (me.IsMaster ? " :: version = " + version : "")
+                           + (evt.Kind != AddUpdateRemove.Remove ? " :: value = " + evt.NewValue.PrintToString() : ""));
           });
 
-        });
-      }
-
-      Wire.Advise(lifetime, this);
-
-
-      if (!OptimizeNested) //means values must be bindable
-      {
-        this.View(lifetime, (lf, k, v) =>
-        {
-          v.BindPolymorphic(lf, this, "["+k+"]");
+          if (!OptimizeNested && it.NewValue is {} newValue) 
+            newValue.BindPolymorphic();
         });
       }
     }
 
+    protected override void Unbind()
+    {
+      base.Unbind();
+      if (myBindDefinitions is { } definitions)
+      {
+        myBindDefinitions = null;
+        foreach (var (_, definition) in definitions) 
+          definition?.Terminate();
+      }
+    }
 
-    public override void OnWireReceived(UnsafeReader stream)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream)
     {
       var header = stream.ReadInt();
       var msgVersioned = (header >> versionedFlagShift) != 0;
@@ -153,29 +197,32 @@ namespace JetBrains.Rd.Impl
 
       var version = msgVersioned ? stream.ReadLong() : 0L;
 
-      var key = ReadKeyDelegate(SerializationContext, stream);
+      var key = ReadKeyDelegate(ctx, stream);
 
       if (opType == Ack)
       {
-        string? error = null;
-
-        if (!msgVersioned) error = "Received ACK while msg hasn't versioned flag set";
-        else if (!IsMaster) error = "Received ACK when not a Master";
-        else if (!myPendingForAck.TryGetValue(key, out var pendingVersion)) error = "No pending for ACK";
-        else if (pendingVersion < version)
-          error = $"Pending version `{pendingVersion}` < ACK version `{version}`";
-        // Good scenario
-        else if (pendingVersion == version)
-          myPendingForAck.Remove(key);
-        //else do nothing, silently drop
-
-        var isError = !string.IsNullOrEmpty(error);
-        if (ourLogReceived.IsTraceEnabled() || isError)
+        return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
         {
-          ourLogReceived.LogFormat(isError ? LoggingLevel.ERROR : LoggingLevel.TRACE,
-            "{0}  :: ACK :: key = {1} :: version = {2}{3}", this, key.PrintToString(), version,
-            isError ? " >> " + error : "");
-        }
+          string? error = null;
+
+          if (!msgVersioned) error = "Received ACK while msg hasn't versioned flag set";
+          else if (!IsMaster) error = "Received ACK when not a Master";
+          else if (!myPendingForAck.TryGetValue(key, out var pendingVersion)) error = "No pending for ACK";
+          else if (pendingVersion < version)
+            error = $"Pending version `{pendingVersion}` < ACK version `{version}`";
+          // Good scenario
+          else if (pendingVersion == version)
+            myPendingForAck.Remove(key);
+          //else do nothing, silently drop
+
+          var isError = !string.IsNullOrEmpty(error);
+          if (ourLogReceived.IsTraceEnabled() || isError)
+          {
+            ourLogReceived.LogFormat(isError ? LoggingLevel.ERROR : LoggingLevel.TRACE,
+              "{0}  :: ACK :: key = {1} :: version = {2}{3}", this, key.PrintToString(), version,
+              isError ? " >> " + error : "");
+          }
+        });
       }
       else
       {
@@ -186,52 +233,98 @@ namespace JetBrains.Rd.Impl
           {
             case AddUpdateRemove.Add:
             case AddUpdateRemove.Update:
-              var value = ReadValueDelegate(SerializationContext, stream);
-              
-              ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" +
-                                 (msgVersioned ? " :: version = " + version : "") +
-                                 $" :: value = {value.PrintToString()}"
-                                 );
-              
+              var value = ReadValueDelegate(ctx, stream);
+              var definition = TryPreBindValue(lifetime, key, value, true);
 
-              if (msgVersioned || !IsMaster || !myPendingForAck.ContainsKey(key))
-                myMap[key] = value;
-              else ReceiveTrace?.Log(">> CHANGE IGNORED");
+              return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+              {
+                ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" +
+                                  (msgVersioned ? " :: version = " + version : "") +
+                                  $" :: value = {value.PrintToString()}"
+                );
 
-              break;
+
+                if (msgVersioned || !IsMaster || !myPendingForAck.ContainsKey(key))
+                {
+                  if (definition != null)
+                  {
+                    var definitions = myBindDefinitions.NotNull(this);
+                    if (kind == AddUpdateRemove.Update) 
+                      definitions[key]?.Terminate();
+
+                    definitions[key] = definition;
+                  }
+                  
+                  myMap[key] = value;
+                }
+                else
+                {
+                  definition?.Terminate();
+                  ReceiveTrace?.Log(">> CHANGE IGNORED");
+                }
+
+                if (msgVersioned)
+                {
+                  proto.Wire.Send(RdId, innerWriter =>
+                  {
+                    innerWriter.Write((1 << versionedFlagShift) | Ack);
+                    innerWriter.Write(version);
+                    WriteKeyDelegate.Invoke(ctx, innerWriter, key);
+            
+                    SendTrace?.Log($"{this} :: ACK :: key = {key.PrintToString()} :: version = {version}");
+                  });
+
+                  if (IsMaster)
+                    ourLogReceived.Error("Both ends are masters: {0}", Location);
+                }
+              });
 
             case AddUpdateRemove.Remove:
-              
-              ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}"
-                + (msgVersioned ? " :: version = " + version : "")
-                );
-            
 
-              if (msgVersioned || !IsMaster || !myPendingForAck.ContainsKey(key))
-                myMap.Remove(key);
-              else ReceiveTrace?.Log(">> CHANGE IGNORED");
+              return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+              {
+                ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" + (msgVersioned ? " :: version = " + version : ""));
 
-              break;
+
+                if (msgVersioned || !IsMaster || !myPendingForAck.ContainsKey(key))
+                {
+                  if (myBindDefinitions is {} definitions && definitions.TryGetValue(key, out var definition))
+                  {
+                    definition?.Terminate();
+                    definitions.Remove(key);
+                  }
+
+                  myMap.Remove(key);
+                }
+                else ReceiveTrace?.Log(">> CHANGE IGNORED");
+              });
 
             default:
               throw new ArgumentOutOfRangeException(kind.ToString());
           }
         }
+      }
+    }
+    
+    private LifetimeDefinition? TryPreBindValue(Lifetime lifetime, K key, V? value, bool bindAlso)
+    {
+      if (OptimizeNested || value == null)
+        return null;
 
-        if (msgVersioned)
-        {
-          Wire.Send(RdId, (innerWriter) =>
-          {
-            innerWriter.Write((1 << versionedFlagShift) | Ack);
-            innerWriter.Write(version);
-            WriteKeyDelegate.Invoke(SerializationContext, innerWriter, key);
-            
-            SendTrace?.Log($"{this} :: ACK :: key = {key.PrintToString()} :: version = {version}");
-          });
-
-          if (IsMaster)
-            ourLogReceived.Error("Both ends are masters: {0}", Location);
-        }
+      var definition = new LifetimeDefinition();
+      try
+      {
+        value.PreBindPolymorphic(definition.Lifetime, this, "["+key+"]"); //todo name will be not unique when you add elements in the middle of the list
+        if (bindAlso)
+          value.BindPolymorphic();
+        
+        lifetime.Definition.Attach(definition, true);
+        return definition;
+      }
+      catch
+      {
+        definition.Terminate();
+        throw;
       }
     }
 

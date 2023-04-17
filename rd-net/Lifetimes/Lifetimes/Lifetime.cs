@@ -257,6 +257,10 @@ namespace JetBrains.Lifetimes
     /// <returns><c>true</c> if resource added - only status &le; <see cref="LifetimeStatus.Canceling"/>. <c>false</c> if resource's not added - status &ge; <see cref="LifetimeStatus.Terminating"/> </returns>
 
     [PublicAPI]          public bool TryOnTermination(ITerminationHandler disposable) => Definition.TryAdd(disposable); 
+    
+    
+    
+    [PublicAPI]          public void Attach(LifetimeDefinition child, bool inheritTimeoutKind) => Definition.Attach(child, inheritTimeoutKind); 
 
     #endregion
 

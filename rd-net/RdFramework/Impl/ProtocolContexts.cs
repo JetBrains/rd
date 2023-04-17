@@ -25,7 +25,7 @@ namespace JetBrains.Rd.Impl
     private readonly ThreadLocal<bool> mySendWithoutContexts = new ThreadLocal<bool>(() => false);
     
     
-    internal struct SendWithoutContextsCookie : IDisposable
+    internal readonly struct SendWithoutContextsCookie : IDisposable
     {
       private readonly ProtocolContexts myContexts;
       private readonly bool myPrevValue;
@@ -43,7 +43,7 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    public override SerializationCtx SerializationContext { get; }
+    private readonly SerializationCtx mySerializationCtx;
 
     internal SendWithoutContextsCookie CreateSendWithoutContextsCookie() => new SendWithoutContextsCookie(this);
     public bool IsSendWithoutContexts => mySendWithoutContexts.Value; 
@@ -51,7 +51,7 @@ namespace JetBrains.Rd.Impl
     public ProtocolContexts(SerializationCtx serializationCtx)
     {
       Async = true;
-      SerializationContext = serializationCtx;
+      mySerializationCtx = serializationCtx;
     }
     
     public ICollection<RdContextBase> RegisteredContexts => myHandlersMap.Keys;
@@ -60,45 +60,56 @@ namespace JetBrains.Rd.Impl
     {
       return (ISingleContextHandler<T>) myHandlersMap[context];
     }
-    
-    public override void OnWireReceived(UnsafeReader reader)
+
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
     {
-      var contextBase = RdContextBase.Read(SerializationContext, reader);
+      var contextBase = RdContextBase.Read(mySerializationCtx, reader);
 
       contextBase.RegisterOn(this);
       
       myCounterpartHandlers.Add(myHandlersMap[contextBase]);
+      return RdWireableContinuation.Empty;
     }
 
     private void DoAddHandler<T>(RdContext<T> context, ISingleContextHandler<T> handler)
     {
       if (myHandlersMap.TryAdd(context, handler))
       {
-        context.RegisterOn(SerializationContext.Serializers);
+        context.RegisterOn(mySerializationCtx.Serializers);
         lock (myOrderingLock) 
           myHandlerOrder.Add(handler);
       }
     }
 
-    private void BindHandler(Lifetime lifetime, string key, ISingleContextHandler handler)
+    private void PreBindHandler(Lifetime lifetime, string key, ISingleContextHandler handler)
     {
       if (handler is RdBindableBase bindableHandler)
       {
         bindableHandler.RdId = RdId.Mix(key);
-        Proto.Scheduler.InvokeOrQueue(lifetime, () =>
-        {
-          using(CreateSendWithoutContextsCookie())
-            bindableHandler.Bind(lifetime, this, key);
-        });
+        bindableHandler.PreBind(lifetime, this, key);
+      }
+    }
+    
+    private void BindHandler(ISingleContextHandler handler)
+    {
+      if (handler is RdBindableBase bindableHandler)
+      {
+        using (CreateSendWithoutContextsCookie()) 
+          bindableHandler.Bind();
       }
     }
 
+
     private void SendContextToRemote(RdContextBase context)
     {
+      var wire = TryGetProto()?.Wire;
+      if (wire == null)
+        return;
+      
       using(CreateSendWithoutContextsCookie())
-        Wire.Send(RdId, writer =>
+        wire.Send(RdId, writer =>
         {
-          RdContextBase.Write(SerializationContext, writer, context);
+          RdContextBase.Write(mySerializationCtx, writer, context);
         });
     }
     
@@ -119,7 +130,7 @@ namespace JetBrains.Rd.Impl
     /// <summary>
     /// Get a value set for a given key. The values are local relative to transform
     /// </summary>
-    public IViewableSet<T> GetValueSet<T>(RdContext<T> context) where T : notnull
+    public IAppendOnlyViewableConcurrentSet<T> GetValueSet<T>(RdContext<T> context) where T : notnull
     {
       if (Mode.IsAssertion) Assertion.Assert(context.IsHeavy, "Only heavy keys have value sets, key {0} is light", context.Key);
       return ((HeavySingleContextHandler<T>) GetHandlerForContext(context)).LocalValueSet;
@@ -138,55 +149,77 @@ namespace JetBrains.Rd.Impl
     }
     
 
-    public override IScheduler WireScheduler => InternRootScheduler.Instance;
-
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
-      base.Init(lifetime);
-
+      base.PreInit(lifetime, parentProto);
+      
       lock (myOrderingLock)
       {
         myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
         {
-          BindAndSendHandler(handlerLt, handler);
+          PreBindHandler(handlerLt, handler.ContextBase.Key, handler);
         });
       }
       
-      Wire.Advise(lifetime, this);
+      parentProto.Wire.Advise(lifetime, this);
     }
 
-    [ThreadStatic] private static SingleThreadListPool<IDisposable>? ourListsPool;
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+    {
+      base.Init(lifetime, proto, ctx);
+      lock (myOrderingLock)
+      {
+        myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
+        {
+          BindAndSendHandler(handler);
+        });
+      }
+      
+    }
 
     /// <summary>
     /// Reads context values from a message, sets current context to them, and returns a cookie to restore previous context
     /// </summary>
-    public MessageContextCookie ReadContextsIntoCookie(UnsafeReader reader)
+    internal MessageContextCookie ReadContextsIntoCookie(UnsafeReader reader)
     {
       var numContextValues = reader.ReadShort();
-      if (Mode.IsAssertion) Assertion.Assert(numContextValues <= myCounterpartHandlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
-      
-      var pool = ourListsPool ??= new SingleThreadListPool<IDisposable>(2);
-      var contextValueRestorersCookie = pool.RentCookie();
+      var handlers = myCounterpartHandlers;
+      if (Mode.IsAssertion) Assertion.Assert(numContextValues <= handlers.Count, "We know of {0} other side keys, received {1} instead", myCounterpartHandlers.Count, numContextValues);
+
+      var values = new object[numContextValues];
       for (var i = 0; i < numContextValues; i++)
-        contextValueRestorersCookie.Value.Add(myCounterpartHandlers[i].ReadValueIntoContext(SerializationContext, reader));
-      return new MessageContextCookie(contextValueRestorersCookie);
+        values[i] = handlers[i].ReadValueBoxed(mySerializationCtx, reader);
+
+      return new MessageContextCookie(values, myCounterpartHandlers.GetStorageUnsafe());
     }
 
-    public readonly ref struct MessageContextCookie
+    internal readonly struct MessageContextCookie : IDisposable
     {
-      private readonly RentedValueCookie<List<IDisposable>> myCookie;
+      private readonly object[] myValues;
+      private readonly ISingleContextHandler[] myHandlers;
 
-      public MessageContextCookie(RentedValueCookie<List<IDisposable>> cookie)
+      public MessageContextCookie(object[] values, ISingleContextHandler[] handlers)
       {
-        myCookie = cookie;
+        myValues = values;
+        myHandlers = handlers;
       }
 
+      public void Update()
+      {
+        if (myHandlers == null)
+          return;
+        
+        for (var i = 0; i < myValues.Length; i++) 
+          myValues[i] = myHandlers[i].ContextBase.UpdateValueBoxed(myValues[i]);
+      }
+      
       public void Dispose()
       {
-        foreach (var contextValueRestorer in myCookie.Value) 
-          contextValueRestorer.Dispose();
-
-        myCookie.Dispose();
+        if (myValues is {} values)
+        {
+          foreach (var cookie in values)
+            ((IDisposable)cookie).Dispose();
+        }
       }
     }
 
@@ -205,7 +238,7 @@ namespace JetBrains.Rd.Impl
       var count = myHandlerOrder.Count;
       writer.Write((short) count);
       for (var i = 0; i < count; i++) 
-        myHandlerOrder[i].WriteValue(SerializationContext, writer);
+        myHandlerOrder[i].WriteValue(mySerializationCtx, writer);
     }
 
     /// <summary>
@@ -227,10 +260,10 @@ namespace JetBrains.Rd.Impl
       writer.Write((short) 0);
     } 
 
-    private void BindAndSendHandler(Lifetime lifetime, ISingleContextHandler handler)
+    private void BindAndSendHandler(ISingleContextHandler handler)
     {
-      BindHandler(lifetime, handler.ContextBase.Key, handler);
       SendContextToRemote(handler.ContextBase);
+      BindHandler(handler);
     }
   }
 }

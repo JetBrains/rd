@@ -19,7 +19,7 @@ namespace JetBrains.Rd.Impl
       return Read(ctx, reader, Polymorphic<T>.Read, Polymorphic<T>.Write);
     }
 
-    public static RdSignal<T> Read(SerializationCtx ctx, UnsafeReader reader, CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
+    public static RdSignal<T> Read(SerializationCtx _, UnsafeReader reader, CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue)
     {
       var id = reader.ReadRdId();
       return new RdSignal<T>(readValue, writeValue).WithId(id);
@@ -32,11 +32,7 @@ namespace JetBrains.Rd.Impl
 
     #endregion
 
-    private readonly Signal<T> mySignal = new Signal<T>();
-
-    public new SerializationCtx SerializationContext { get; private set; }
-    
-    public override IScheduler WireScheduler => Scheduler ?? DefaultScheduler;
+    private readonly Signal<T> mySignal = new();
 
     public IScheduler? Scheduler { get; set; }
 
@@ -47,38 +43,43 @@ namespace JetBrains.Rd.Impl
       WriteValueDelegate = writeValue;
     }
 
-
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
-      base.Init(lifetime);
+      base.PreInit(lifetime, parentProto);
 
-      SerializationContext = base.SerializationContext; //caching context because of we could listen on
-      Wire.Advise(lifetime, this);
+      parentProto.Wire.Advise(lifetime, this);
     }
 
-    public override void OnWireReceived(UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
     {
-      var value = ReadValueDelegate(SerializationContext, reader);
+      var value = ReadValueDelegate(ctx, reader);
       ReceiveTrace?.Log($"{this} :: value = {value.PrintToString()}");
-      using (UsingDebugInfo())
-        mySignal.Fire(value);
+      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      {
+        using (UsingDebugInfo())
+          mySignal.Fire(value);
+      });
     }
-
 
     public void Fire(T value)
     {
-//      AssertBound(); // todo: smart assert: fail if fired before bind; this allows not bound signals in UI
-      if (!Async) AssertThreading();
+      AssertThreading();
+      
+      var proto = TryGetProto();
+      if (!Async || proto is { Scheduler.IsActive: true })
+        AssertBound();
 
       AssertNullability(value);
 
-      var wire = Parent?.Proto.Wire;
-
+      var wire = proto?.Wire;
       if (wire == null && Async)
+        return;
+      
+      if (!TryGetSerializationContext(out var serializationCtx))
         return;
 
       //local change
-      wire.NotNull(this).Send(RdId, SendContext.Of(SerializationContext, value, this), (sendContext, stream) =>
+      wire.NotNull(this).Send(RdId, SendContext.Of(serializationCtx, value, this), static (sendContext, stream) =>
       {
         var me = sendContext.This;
         SendTrace?.Log($"{me} :: value = {sendContext.Event.PrintToString()}");
@@ -93,9 +94,10 @@ namespace JetBrains.Rd.Impl
 
     public void Advise(Lifetime lifetime, Action<T> handler)
     {
-      if (IsBound) AssertThreading();
-
       mySignal.Advise(lifetime, handler);
+      
+      if (IsBound)
+        AssertThreading();
     }
 
     protected override string ShortName => "signal";

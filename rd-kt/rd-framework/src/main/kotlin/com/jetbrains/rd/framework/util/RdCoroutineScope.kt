@@ -78,7 +78,9 @@ open class RdCoroutineScope(lifetime: Lifetime) : CoroutineScope {
         action: suspend CoroutineScope.() -> Unit
     ): Job {
         val nestedDef = lifetime.createNested()
-        return launch(context, start, action).also { job -> nestedDef.synchronizeWith(job) }
+        val scope = CoroutineScope(current.coroutineContext)
+        nestedDef.synchronizeWith(scope)
+        return scope.launch(context, start, action).also { job -> nestedDef.synchronizeWith(job) }
     }
 
     protected open fun shutdown() {

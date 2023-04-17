@@ -2,10 +2,9 @@
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
+using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
-using JetBrains.Rd.Util;
 using JetBrains.Serialization;
-using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Base
 {
@@ -18,11 +17,6 @@ namespace JetBrains.Rd.Base
     internal static LogWithLevel? SendTrace => ourLogSend.WhenTrace();
 
 
-    #region Identification
-
-    #endregion
-
-
     #region Assertion
     
     public bool Async { get; set; }
@@ -30,8 +24,8 @@ namespace JetBrains.Rd.Base
     [AssertionMethod]
     protected void AssertThreading()
     {
-      if (!Async)
-        Proto.Scheduler.AssertThread(this);
+      if (!Async && AllowBindCookie.IsBindNotAllowed && TryGetProto() is {} proto)
+        proto.Scheduler.AssertThread(this);
     }
 
     public bool ValueCanBeNull { get; set; }
@@ -52,16 +46,6 @@ namespace JetBrains.Rd.Base
     }
 
     #endregion 
-
-
-    #region Delegation
-
-    protected ISerializers Serializers => Proto.Serializers;
-    
-    internal IWire Wire => Proto.Wire;
-    protected IScheduler DefaultScheduler => Proto.Scheduler;
-
-    #endregion
 
 
     #region Local change
@@ -102,9 +86,16 @@ namespace JetBrains.Rd.Base
 
     #region From interface
 
-    public virtual IScheduler WireScheduler => DefaultScheduler;
-
-    public abstract void OnWireReceived(UnsafeReader reader);
+    public RdWireableContinuation OnWireReceived(Lifetime lifetime, UnsafeReader reader)
+    {
+      var proto = TryGetProto();
+      if (proto == null || !TryGetSerializationContext(out var serializationCtx) || lifetime.IsNotAlive)
+        return RdWireableContinuation.NotBound;
+      
+      return OnWireReceived(lifetime, proto, serializationCtx, reader);
+    }
+    
+    public abstract RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader);
 
     #endregion
     

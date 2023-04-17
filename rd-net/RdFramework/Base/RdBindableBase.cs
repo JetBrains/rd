@@ -11,7 +11,7 @@ using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Base
 {
-  public abstract class RdBindableBase : IRdBindable, INotifyPropertyChanged
+  public abstract class RdBindableBase : IRdBindable, INotifyPropertyChanged, ITerminationHandler
   {
     #region Bound state: main
     
@@ -31,12 +31,20 @@ namespace JetBrains.Rd.Base
     #region Bound state: inferred
     
     public bool IsBound => Parent != null;
-    
-    public IViewableProperty<bool> IsBoundProperty { get; } = new ViewableProperty<bool>();
-   
-    public virtual IProtocol Proto => (Parent ?? throw new ProtocolNotBoundException(ToString())).Proto;
-    
-    public virtual SerializationCtx SerializationContext => Parent.NotNull(this).SerializationContext;
+
+    private BindState myBindState = BindState.NotBound;
+
+    public virtual IProtocol? TryGetProto() => Parent?.TryGetProto();
+
+    public virtual bool TryGetSerializationContext(out SerializationCtx ctx)
+    {
+      var parent = Parent;
+      if (parent != null)
+        return parent.TryGetSerializationContext(out ctx);
+
+      ctx = default;
+      return default;
+    }
 
     public RdExtBase? ContainingExt
     {
@@ -59,53 +67,107 @@ namespace JetBrains.Rd.Base
     protected readonly List<KeyValuePair<string, object>> BindableChildren = new List<KeyValuePair<string, object>>();  
 
     
-    public void Bind(Lifetime lf, IRdDynamic parent, string name)
+    public void PreBind(Lifetime lf, IRdDynamic parent, string name)
     {
       if (Parent != null)
       {
         Assertion.Fail($"Trying to bound already bound {this} to {parent.Location}");
       }
       //todo uncomment when fix InterningTest
-      //Assertion.Require(RdId != RdId.Nil, "Must be identified first");
-     
-      lf.Bracket(() =>
-        {
-          Parent = parent;
-          Location = parent.Location.Sub(name);
-          myBindLifetime = lf;                    
-          IsBoundProperty.SetValue(true);                                   
-        },
-        () =>
-        {
-          IsBoundProperty.SetValue(false);          
-          myBindLifetime = Lifetime.Terminated;
-          Location = Location.Sub("<<unbound>>", "::");
-          Parent = null;
-          RdId = RdId.Nil;
-        }
-      );
+      // Assertion.Require(RdId != RdId.Nil, "Must be identified first");
+      var proto = parent.TryGetProto();
+      if (proto == null)
+        return;
       
-      AssertThread();
+      using (var cookie = lf.UsingExecuteIfAlive())
+      {
+        if (!cookie.Succeed)
+          throw new LifetimeCanceledException(lf);
+        
+        Parent = parent;
+        Location = parent.Location.Sub(name);
+        myBindLifetime = lf;
+        
+        lf.OnTermination(this);
+      }
+
+      AssertBindingThread();
 
       using (Signal.PriorityAdviseCookie.Create())
-        Init(lf);
+        PreInit(lf, proto);
+      
+      myBindState = BindState.PreBound;
     }
 
-    protected virtual void AssertThread()
+    public void Bind()
     {
-      Proto.Scheduler.AssertThread(this);
+      AssertBindingThread();
+      var bindLifetime = myBindLifetime;
+      Assertion.Assert(bindLifetime.IsAlive);
+      
+      var proto = TryGetProto();
+      if (proto == null || !TryGetSerializationContext(out var ctx))
+        return;
+      
+      Assertion.Assert(myBindState == BindState.PreBound);
+
+      using (Signal.PriorityAdviseCookie.Create())
+        Init(bindLifetime, proto, ctx);
+      
+      myBindState = BindState.Bound;
     }
 
-    protected virtual void Init(Lifetime lifetime)
+    protected virtual void Unbind()
+    {
+      AssertBindingThread();
+      
+      myBindLifetime = Lifetime.Terminated;
+      Location = Location.Sub("<<unbound>>", "::");
+      Parent = null;
+      RdId = RdId.Nil;
+      myBindState = BindState.NotBound;
+    }
+
+    public void OnTermination(Lifetime lifetime)
+    {
+      Unbind();
+    }
+
+    protected virtual void AssertBindingThread()
+    {
+      if (AllowBindCookie.IsBindNotAllowed)
+      {
+        var proto = TryGetProto().NotNull(this);
+        if (proto.Lifetime.IsNotAlive)
+          return;
+        
+        proto.Scheduler.AssertThread(this);
+      }
+    }
+
+    protected virtual void PreInit(Lifetime lifetime, IProtocol parentProto)
+    {
+      PreInitBindableFields(lifetime);
+    }
+    
+    protected virtual void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
     {
       InitBindableFields(lifetime);
     }
 
+    protected virtual void PreInitBindableFields(Lifetime lifetime)
+    {
+      foreach (var pair in BindableChildren)
+      {
+        pair.Value?.PreBindPolymorphic(lifetime, this, pair.Key);
+      }
+    }
+    
     protected virtual void InitBindableFields(Lifetime lifetime)
     {
       foreach (var pair in BindableChildren)
       {
-        pair.Value?.BindPolymorphic(lifetime, this, pair.Key);
+        pair.Value?.BindPolymorphic();
       }
     }
 
@@ -190,9 +252,8 @@ namespace JetBrains.Rd.Base
 
       lock (myExtensions)
       {
-        object existing;
         T res;
-        if (myExtensions.TryGetValue(name, out existing))
+        if (myExtensions.TryGetValue(name, out var existing))
         {
           var val = existing.NotNull("Found null value for key: '{0}'", name) as T;
           Assertion.Require(val != null, "Found bad value for key '{0}'. Expected type: '{1}', actual:'{2}", name, typeof(T).FullName, existing.GetType().FullName);
@@ -203,13 +264,20 @@ namespace JetBrains.Rd.Base
           res = create().NotNull("'Create' result must not be null");
           
           myExtensions[name] = res;
+          
           if (res is IRdBindable bindable)
           {
             BindableChildren.Insert(highPriorityExtension ? 0 : BindableChildren.Count, new KeyValuePair<string, object>(name, bindable));
+            var proto = TryGetProto();
+            if (proto == null)
+              return res;
+            
             if (myBindLifetime != Lifetime.Terminated)
             {
-              bindable.Identify(Proto.Identities, RdId.Mix("." + name));
-              bindable.Bind(myBindLifetime, this, name);
+              if (bindable.RdId == RdId.Nil)
+                bindable.Identify(proto.Identities, RdId.Mix("." + name));
+              bindable.PreBind(myBindLifetime, this, name);
+              bindable.Bind();
             }
           }
         }
@@ -222,4 +290,11 @@ namespace JetBrains.Rd.Base
     //       when it sees PropertyChanged, it does not look for property descriptor events
     public virtual event PropertyChangedEventHandler PropertyChanged { add { } remove { } }
   }
+  public enum BindState
+  {
+    NotBound,
+    PreBound,
+    Bound
+  }
+
 }
