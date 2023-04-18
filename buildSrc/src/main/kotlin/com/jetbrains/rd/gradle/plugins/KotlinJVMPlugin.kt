@@ -29,7 +29,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
         apply(plugin = "signing")
 
         configure<JacocoPluginExtension> {
-            toolVersion = "0.8.2"
+            toolVersion = "0.8.9"
         }
 
         configure<KotlinJvmProjectExtension> {
@@ -43,13 +43,13 @@ open class KotlinJVMPlugin : Plugin<Project> {
             tasks {
                 named<KotlinCompile>("compileKotlin") {
                     kotlinOptions {
-                        jvmTarget = "1.8"
+                        jvmTarget = "17"
                     }
                 }
 
                 named<KotlinCompile>("compileTestKotlin") {
                     kotlinOptions {
-                        jvmTarget = "1.8"
+                        jvmTarget = "17"
                     }
                 }
             }

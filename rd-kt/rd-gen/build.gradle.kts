@@ -1,7 +1,6 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import com.jetbrains.rd.gradle.tasks.creatingCopySourcesTask
-import org.gradle.jvm.tasks.Jar
 
 applyKotlinJVM()
 
@@ -12,12 +11,12 @@ plugins {
 dependencies {
     implementation(project(":rd-core:"))
     implementation(gradleApi())
-    testImplementation(project(":rd-framework"))
-    testImplementation("org.jetbrains:annotations:20.1.0")
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
     implementation("org.jetbrains.intellij.deps:trove4j:1.0.20181211")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
+    testImplementation(project(":rd-framework"))
+    testImplementation("org.jetbrains:annotations:20.1.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
 }
 
 apply(from = "models.gradle.kts")

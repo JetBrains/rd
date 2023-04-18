@@ -13,7 +13,7 @@ open class RdGenerateTask : JavaExec() {
 
     init {
         group = "generate"
-        main = "com.jetbrains.rd.generator.nova.MainKt"
+        mainClass.set("com.jetbrains.rd.generator.nova.MainKt")
     }
 
     override fun exec() {

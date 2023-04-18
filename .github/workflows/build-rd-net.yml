@@ -11,18 +11,18 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v1.8.2
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '7.0.x'
     - name: Restore
       run: cd rd-net && dotnet restore
     - name: Compile
       run: cd rd-net && dotnet build --configuration Release --no-restore
     - name: Tests
       run: cd rd-net && dotnet test --no-restore --verbosity quiet --logger trx
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: failure()
       with:
         name: tests-log

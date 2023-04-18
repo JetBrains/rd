@@ -45,10 +45,10 @@ jobs:
           }
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
       
     - name: Cache submodules
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache-submodules
       with:
         path: |
@@ -67,7 +67,7 @@ jobs:
         nuget-version: '5.x'
       
     - name: Cache Ninja
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache-ninja
       with:
         path: |
@@ -154,7 +154,7 @@ jobs:
         endif()
 
     - name: Upload environment script log
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: always()
       with:
         name: build-log-${{ matrix.config.os }}
@@ -200,7 +200,7 @@ jobs:
       run: cd export && cmake -E tar "cfv" ../${{ env.artifact }} --format=zip include libs
 
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**

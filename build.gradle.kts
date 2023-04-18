@@ -1,5 +1,7 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
     project.extra.apply {
@@ -13,7 +15,7 @@ buildscript {
 
 plugins {
     base
-    id("me.filippov.gradle.jvm.wrapper") version "0.10.0"
+    id("me.filippov.gradle.jvm.wrapper") version "0.14.0"
 }
 
 allprojects {
@@ -38,6 +40,14 @@ allprojects {
                 showStandardStreams = true
                 exceptionFormat = TestExceptionFormat.FULL
             }
+        }
+        withType<KotlinCompile> {
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_17)
+            }
+        }
+        withType<JavaCompile> {
+            targetCompatibility = "17"
         }
     }
 }
@@ -139,7 +149,7 @@ tasks {
             "--api-key", apiKey
         )
 
-        for (file in nuGetTargetDir.listFiles().filter { it.extension == "nupkg" }) {
+        for (file in nuGetTargetDir.listFiles()?.filter { it.extension == "nupkg" } ?: emptyList()) {
             exec {
                 val argsForCurrentFile = (args + file).toTypedArray()
                 commandLine(*argsForCurrentFile)

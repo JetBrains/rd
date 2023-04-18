@@ -108,7 +108,7 @@ class RdGen : Kli() {
                 "-cp", cp,
                 "-no-stdlib",
                 "-d", dst.toString(),
-                "-jvm-target", "1.8"
+                "-jvm-target", "17"
             ) + src.map { it.absolutePath }
 
             v("kotlinc " + args.joinToString(" ") { if (it.contains(' ')) "\"$it\"" else it })
