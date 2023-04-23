@@ -12,25 +12,18 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.SigningExtension
-import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun Project.applyKotlinJVM() = apply<KotlinJVMPlugin>()
 
-@Suppress("UNUSED_VARIABLE")
 open class KotlinJVMPlugin : Plugin<Project> {
     override fun apply(target: Project) = target.run {
         apply(plugin = "java")
         apply(plugin = "kotlin-platform-jvm")
-        apply(plugin = "jacoco")
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "signing")
-
-        configure<JacocoPluginExtension> {
-            toolVersion = "0.8.9"
-        }
 
         configure<KotlinJvmProjectExtension> {
             val sourceJar by tasks.creating(Jar::class) {
@@ -130,8 +123,6 @@ open class KotlinJVMPlugin : Plugin<Project> {
 
             val test by tasks.getting(Test::class) {
                 maxHeapSize = "512m"
-                finalizedBy(tasks.named("jacocoTestReport"))
-
                 useJUnitPlatform()
             }
 
