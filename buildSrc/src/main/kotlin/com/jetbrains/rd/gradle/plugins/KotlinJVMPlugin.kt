@@ -20,7 +20,6 @@ fun Project.applyKotlinJVM() = apply<KotlinJVMPlugin>()
 open class KotlinJVMPlugin : Plugin<Project> {
     override fun apply(target: Project) = target.run {
         apply(plugin = "java")
-        apply(plugin = "kotlin-platform-jvm")
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "signing")

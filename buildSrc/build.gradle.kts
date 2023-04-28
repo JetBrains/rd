@@ -7,7 +7,6 @@ repositories {
 plugins {
     `kotlin-dsl`
     signing
-    kotlin("multiplatform") version "1.8.10" apply false
 }
 
 dependencies {

@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":rd-core:"))
+    implementation(project(":rd-core"))
     implementation(gradleApi())
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
@@ -24,19 +24,9 @@ apply(from = "models.gradle.kts")
 lateinit var models: SourceSet
 
 sourceSets {
-    main {
-        compileClasspath = compileClasspath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
-    }
-
-    test {
-        compileClasspath = compileClasspath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
-        runtimeClasspath = runtimeClasspath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
-    }
-
     models = create("models") {
         kotlin {
             compileClasspath += main.get().output
-            compileClasspath = compileClasspath.minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
 
             listOf("interning", "demo", "sync", "openEntity").map {
                 rootProject.buildDir.resolve("models").resolve(it)
@@ -49,7 +39,7 @@ sourceSets {
     }
 
     create("gradlePlugin") {
-        compileClasspath += sourceSets["main"].compileClasspath
+        compileClasspath += sourceSets["main"].compileClasspath - files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>())
     }
 }
 
