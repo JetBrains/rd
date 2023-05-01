@@ -109,10 +109,10 @@ open class KotlinJVMPlugin : Plugin<Project> {
                     if (deployToProduction) {
                         maven {
                             name = "maven-central"
-                            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                            url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/")
                             credentials {
-                                username = rootProject.extra["sonatypeUser"].toString()
-                                password = rootProject.extra["sonatypePassword"].toString()
+                                username = "Bearer"
+                                password = rootProject.extra["internalNuGetFeedKey"].toString()
                             }
                         }
                     }
