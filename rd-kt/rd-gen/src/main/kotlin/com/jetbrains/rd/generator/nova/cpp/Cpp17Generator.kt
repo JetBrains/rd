@@ -12,11 +12,11 @@ import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
+import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
 import com.jetbrains.rd.util.warn
 import java.io.File
-
 
 private fun StringBuilder.appendDefaultInitialize(member: Member, typeName: String) {
     if (member is Member.Field && (member.isOptional || member.defaultValue != null)) {
@@ -720,42 +720,43 @@ open class Cpp17Generator(
             createPchSource(pchCppFile, pchHeaderFile)
         }
 
-        File(this, "CMakeLists.txt").run {
-            printWriter().use {
-                it.apply {
-                    println("cmake_minimum_required(VERSION 3.7)")
+        val cMakeLists = File(this, "CMakeLists.txt")
+        PrettyPrinter().apply {
+            eolKind = Eol.linux
 
-                    val pchOptionVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
+            println("cmake_minimum_required(VERSION 3.7)")
 
-                    val targetFiles = fileNames.toMutableList()
-                    if (generatePrecompiledHeaders) {
-                        val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
+            val pchOptionVariable = "ENABLE_PCH_HEADERS_FOR_$targetName"
 
-                        println("option($pchOptionVariable \"Enable precompiled headers\" $onOrOff)")
-                        println("""
-                        |if ($pchOptionVariable)
-                        |    set(PCH_CPP_OPT $pchCppFile)
-                        |else ()
-                        |    set(PCH_CPP_OPT "")
-                        |endif ()""".trimMargin()
-                        )
-                        targetFiles.add("\${PCH_CPP_OPT}")
-                    }
+            val targetFiles = fileNames.toMutableList()
+            if (generatePrecompiledHeaders) {
+                val onOrOff = if (usingPrecompiledHeaders) "ON" else "OFF"
 
-                    println("add_library($targetName STATIC \n${targetFiles.joinToString(separator = eol)})")
-                    println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR})")
-                    println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
-
-                    if (generatePrecompiledHeaders) {
-                        println("""
-                                |if ($pchOptionVariable)
-                                |    include(${Files.PrecompiledHeaderCmake})
-                                |    add_precompiled_header($targetName $pchHeaderFile SOURCE_CXX $pchCppFile FORCEINCLUDE)
-                                |endif ()""".trimMargin()
-                        )
-                    }
-                }
+                println("option($pchOptionVariable \"Enable precompiled headers\" $onOrOff)")
+                println("""
+                |if ($pchOptionVariable)
+                |    set(PCH_CPP_OPT $pchCppFile)
+                |else ()
+                |    set(PCH_CPP_OPT "")
+                |endif ()""".trimMargin()
+                )
+                targetFiles.add("\${PCH_CPP_OPT}")
             }
+
+            println("add_library($targetName STATIC \n${targetFiles.joinToString(separator = "\n")})")
+            println("target_include_directories($targetName PUBLIC \${CMAKE_CURRENT_SOURCE_DIR})")
+            println("target_link_libraries($targetName PUBLIC rd_framework_cpp)")
+
+            if (generatePrecompiledHeaders) {
+                println("""
+                        |if ($pchOptionVariable)
+                        |    include(${Files.PrecompiledHeaderCmake})
+                        |    add_precompiled_header($targetName $pchHeaderFile SOURCE_CXX $pchCppFile FORCEINCLUDE)
+                        |endif ()""".trimMargin()
+                )
+            }
+
+            cMakeLists.writeText(this.toString())
         }
 
         if (usingPrecompiledHeaders) {
