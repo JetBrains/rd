@@ -171,7 +171,7 @@ tasks {
             }
             if (deployToInternal) {
                 val internalFeedUrl = rootProject.extra["internalNuGetFeedUrl"].toString()
-                val internalFeedApiKey = rootProject.extra["internalNuGetFeedKey"].toString()
+                val internalFeedApiKey = rootProject.extra["internalDeployKey"].toString()
                 enableNuGetPublishing(internalFeedUrl, internalFeedApiKey)
             }
         }

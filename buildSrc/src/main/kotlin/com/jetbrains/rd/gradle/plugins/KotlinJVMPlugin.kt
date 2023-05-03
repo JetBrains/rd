@@ -100,19 +100,30 @@ open class KotlinJVMPlugin : Plugin<Project> {
                         signatories = GpgSignSignatoryProvider()
                     }
                 }
-                val deployToProduction = rootProject.extra["deployMavenToProduction"].toString().toBoolean()
+                val deployToIntelliJ = rootProject.extra["deployMavenToIntelliJDependencies"].toString().toBoolean()
+                val deployToSonatype = rootProject.extra["deployMavenToSonatype"].toString().toBoolean()
                 repositories {
                     maven {
                         name = "artifacts"
                         url = uri(rootProject.projectDir.resolve("build").resolve("artifacts").resolve("maven"))
                     }
-                    if (deployToProduction) {
+                    if (deployToIntelliJ) {
                         maven {
-                            name = "maven-central"
+                            name = "intellij-dependencies"
                             url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/")
                             credentials {
                                 username = "Bearer"
-                                password = rootProject.extra["internalNuGetFeedKey"].toString()
+                                password = rootProject.extra["internalDeployKey"].toString()
+                            }
+                        }
+                    }
+                    if (deployToSonatype) {
+                        maven {
+                            name = "maven-central"
+                            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                            credentials {
+                                username = rootProject.extra["sonatypeUser"].toString()
+                                password = rootProject.extra["sonatypePassword"].toString()
                             }
                         }
                     }
