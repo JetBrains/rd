@@ -47,7 +47,7 @@ open class Cpp17Generator(
     generatedFileSuffix: String = ".Generated"
 ) : GeneratorBase(flowTransform, generatedFileSuffix) {
 
-    @Suppress("ObjectPropertyName")
+    @Suppress("ConstPropertyName")
     companion object {
         private const val polymorphicHeader = "serialization/Polymorphic"
 
