@@ -1,14 +1,13 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
 using JetBrains.Util.Internal;
+// ReSharper disable BuiltInTypeReferenceStyle
 
 namespace JetBrains.Serialization
 {
@@ -22,15 +21,17 @@ namespace JetBrains.Serialization
   ///
   /// <seealso cref="UnsafeReader"/>
   /// </summary>
+  [PublicAPI]
   public sealed unsafe class UnsafeWriter
   {
     private readonly int myInitialAllocSize;
 
+    [PublicAPI]
     public readonly struct Cookie : IDisposable
     {
       private readonly UnsafeWriter myWriter;
       private readonly int myStart;
-      [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+
       public Cookie(UnsafeWriter writer)
       {
         myWriter = writer;
@@ -94,6 +95,7 @@ namespace JetBrains.Serialization
     /// in UnsafeWriter for future use. Basically every method in <see cref="UnsafeWriter"/> can cause reallocation of
     /// data. It is important to avoid storing pointers obtained from UnsafeWriter between these calls.
     /// </summary>
+    [PublicAPI]
     public readonly struct Bookmark
     {
       private readonly UnsafeWriter myWriter;
@@ -127,7 +129,6 @@ namespace JetBrains.Serialization
 
     private const string LogCategory = "UnsafeWriter";
 
-
     /// <summary>
     /// Whether <see cref="UnsafeWriter"/> can be cached for the specific thread.
     /// </summary>
@@ -135,9 +136,8 @@ namespace JetBrains.Serialization
     public static bool AllowUnsafeWriterCaching
     {
       get => true;
-      set
-      {
-      }
+      // ReSharper disable once ValueParameterNotUsed
+      set { }
     }
 
     /// <summary>
@@ -145,8 +145,6 @@ namespace JetBrains.Serialization
     /// </summary>
     [ThreadStatic] private static UnsafeWriter? ourWriter;
 
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static Cookie NewThreadLocalWriter()
     {
       if (ourWriter != null)
@@ -157,7 +155,6 @@ namespace JetBrains.Serialization
       return writer;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     [Obsolete("Use NewThreadLocalWriter()")]
     public static Cookie NewThreadLocalWriterNoCaching()
     {
@@ -165,7 +162,6 @@ namespace JetBrains.Serialization
     }
 
     [Obsolete("Use NewThreadLocalWriter()")]
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static Cookie NewThreadLocalWriterImpl(bool allowCaching)
     {
       return NewThreadLocalWriter();
@@ -193,7 +189,7 @@ namespace JetBrains.Serialization
     /// in some circumstances may be used and reserved by other consumer (when it's free)
     /// </summary>
     private NativeMemoryPool.ThreadMemoryHolder? myMemory;
-    private int myRecursionLevel = 0;
+    private int myRecursionLevel;
 
     /// <summary>
     /// Creates a new UnsafeWriter
@@ -208,7 +204,8 @@ namespace JetBrains.Serialization
         else
         {
           var cookie = NativeMemoryPool.ReserveMiss();
-          if (Mode.IsAssertion) Assertion.Assert(cookie.IsValid, "memoryCookie.IsValid");
+          if (Mode.IsAssertion) Assertion.Assert(cookie.IsValid);
+
           myMemory = cookie.myHolder;
           if (cookie.CausedAllocation)
           {
@@ -222,7 +219,6 @@ namespace JetBrains.Serialization
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void Deinitialize(int start)
     {
       if (--myRecursionLevel == 0)
@@ -230,7 +226,7 @@ namespace JetBrains.Serialization
         myMemory!.Free();
         myCurrentAllocSize = 0;
         // Setting current alloc size to zero have a special semantic of making current UnsafeWriter invalid.
-        // There is no need to additionally resetting these pointers as write will check available memory and raise an 
+        // There is no need to additionally resetting these pointers as write will check available memory and raise an
         // exception for this special case
         // myStartPtr = (byte*) 0;
         // myPtr = (byte*) 0;
@@ -243,11 +239,12 @@ namespace JetBrains.Serialization
 
     ~UnsafeWriter()
     {
-      for (int i = 0; i < ReleaseResources; i++)
+      for (var index = 0; index < ReleaseResources; index++)
+      {
         NativeMemoryPool.TryFreeMemory();
+      }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void Reset(int start = 0)
     {
       myPtr = myStartPtr + start;
@@ -262,25 +259,21 @@ namespace JetBrains.Serialization
     private int Count
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      get
-      {
-        return myCount;
-      }
+      get => myCount;
     }
 
     private byte* Data
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      get { return myStartPtr; }
+      get => myStartPtr;
     }
 
     public byte* Ptr
     {
       [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-      get { return myPtr; }
+      get => myPtr;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private void Prepare(int nbytes)
     {
       var newCount = myCount + nbytes;
@@ -316,16 +309,15 @@ namespace JetBrains.Serialization
           myCount = newCount;
         }
       }
-      catch (Exception e)
+      catch (Exception exception)
       {
         throw new ArgumentException(
-          string.Format("Can't allocate more memory for chunk: {0} bytes, currentlyAllocated={1}, count={2}", reallocSize,
-            myCurrentAllocSize, myCount), e);
+          $"Can't allocate more memory for chunk: {reallocSize} bytes, currentlyAllocated={myCurrentAllocSize}, count={myCount}", exception);
       }
     }
 
-
     #region Primitive writers
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(bool value)
     {
@@ -372,7 +364,9 @@ namespace JetBrains.Serialization
       myPtr = (byte*)(x + 1);
 #if !NET35
       if (!RuntimeInfo.IsUnalignedAccessAllowed)
+      {
         Buffer.MemoryCopy(&value, x, sizeof(double), sizeof(double));
+      }
       else
 #endif
       {
@@ -454,9 +448,10 @@ namespace JetBrains.Serialization
     public void Write(DateTime value)
     {
       if (Mode.IsAssertion) Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
+
       Write(value.Ticks);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(TimeSpan value)
     {
@@ -480,7 +475,6 @@ namespace JetBrains.Serialization
       }
     }
 
-
     /// <summary>
     /// Doesn't write length prefix, only string contents. If value == null, does nothing.
     /// </summary>
@@ -502,7 +496,8 @@ namespace JetBrains.Serialization
     public void WriteStringContent(string? value, int offset, int count)
     {
       if (value == null) return;
-      if (offset < 0 || count < 0 || offset + count > value.Length) throw new ArgumentException(string.Format("string.length={0}, offset={1}, count={2}", value.Length, offset, count));
+      if (offset < 0 || count < 0 || offset + count > value.Length)
+        throw new ArgumentException($"string.length={value.Length}, offset={offset}, count={count}");
 
       WriteStringContentInternal(this, value, offset, count);
     }
@@ -517,7 +512,6 @@ namespace JetBrains.Serialization
       of bugzilla: https://bugzilla.xamarin.com/show_bug.cgi?id=60625
       It is shouldn't dropped while we support client mono version before 5.0
      */
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static void WriteStringContentInternal(UnsafeWriter wrt, string value, int offset, int count)
     {
       if (ourOldMonoFlag)
@@ -540,7 +534,6 @@ namespace JetBrains.Serialization
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static void WriteStringContentInternalBeforeMono5(UnsafeWriter wrt, string value, int offset, int count)
     {
       for (var i = offset; i < offset + count; i++)
@@ -556,11 +549,10 @@ namespace JetBrains.Serialization
       Memory.CopyMemory(ptr, myPtr, size);
       myPtr += size;
     }
+
     #endregion
-
-
-
     #region Delegates
+
     public delegate void WriteDelegate<in T>(UnsafeWriter writer, T value);
 
     public static readonly WriteDelegate<bool> BooleanDelegate = (writer, x) => writer.Write(x);
@@ -584,27 +576,14 @@ namespace JetBrains.Serialization
     public static readonly WriteDelegate<string[]> StringArrayDelegate = (writer, x) => writer.Write(StringDelegate, x);
 
     #endregion
-
-
-
     #region Collection writers
-    /*public void Write<T>(WriteDelegate<T> writeDelegate, T[] value)
-    {
-      if (value == null) Write(-1);
-      else
-      {
-        Write(value.Length);
-       foreach (var t in value)
-        {
-          writeDelegate(this, t);
-        }
-      }
-    }*/
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(int[]? value)
     {
-      if (value == null) Write(-1);
+      if (value == null)
+      {
+        Write(-1);
+      }
       else
       {
         Write(value.Length);
@@ -615,14 +594,15 @@ namespace JetBrains.Serialization
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(byte[]? value)
     {
-      if(value == null)
+      if (value == null)
+      {
         Write(-1);
+      }
       else
       {
-        int size = value.Length;
+        var size = value.Length;
         Write(size);
         Prepare(size);
         Marshal.Copy(value, 0, (IntPtr)myPtr, size); // Unlike MemoryUtil::CopyMemory, this is a CLR intrinsic call
@@ -630,22 +610,22 @@ namespace JetBrains.Serialization
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteRaw(byte[] value)
     {
-      if(value == null)
-        throw new ArgumentNullException("value");
-      int size = value.Length;
+      if (value == null)
+        throw new ArgumentNullException(nameof(value));
+
+      var size = value.Length;
       Prepare(size);
       Marshal.Copy(value, 0, (IntPtr)myPtr, size); // Unlike MemoryUtil::CopyMemory, this is a CLR intrinsic call
       myPtr += size;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteRaw(byte[] value, int start, int length)
     {
-      if(value == null)
-        throw new ArgumentNullException("value");
+      if (value == null)
+        throw new ArgumentNullException(nameof(value));
+
       Prepare(length);
       Marshal.Copy(value, start, (IntPtr)myPtr, length); // Unlike MemoryUtil::CopyMemory, this is a CLR intrinsic call
       myPtr += length;
@@ -654,6 +634,7 @@ namespace JetBrains.Serialization
     /// <summary>
     /// Creates <see cref="Bookmark"/> for the current <see cref="UnsafeWriter"/>'s position.
     /// </summary>
+    [MustUseReturnValue]
     public Bookmark MakeBookmark()
     {
       return new Bookmark(this);
@@ -667,8 +648,7 @@ namespace JetBrains.Serialization
     /// Never save the value of <see cref="Ptr" /> before calling <see cref="Alloc" />! This method may cause a reallocation
     /// of data after which the saved pointer became invalid.
     /// </remarks>
-    /// <returns><see cref="Bookmark"/> to the allocated buffer </returns>
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    /// <returns><see cref="Bookmark"/> to the allocated buffer</returns>
     public Bookmark Alloc(int length)
     {
       var result = new Bookmark(this);
@@ -680,10 +660,13 @@ namespace JetBrains.Serialization
     /// <summary>
     /// Non optimal collection serialization. You can serialize internal structure (eg. array) instead.
     /// </summary>
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write<T, TCol>(WriteDelegate<T> writeDelegate, TCol? value) where TCol : ICollection<T>
+    public void Write<T, TCollection>(WriteDelegate<T> writeDelegate, TCollection? value)
+      where TCollection : ICollection<T>
     {
-      if (value == null) Write(-1);
+      if (value == null)
+      {
+        Write(-1);
+      }
       else
       {
         Write(value.Count);
@@ -694,10 +677,13 @@ namespace JetBrains.Serialization
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write<TK, TV, TDict>(WriteDelegate<TK> writeKeyDelegate, WriteDelegate<TV> writeValueDelegate, TDict value) where TDict : IDictionary<TK, TV>
+    public void Write<TK, TV, TDictionary>(WriteDelegate<TK> writeKeyDelegate, WriteDelegate<TV> writeValueDelegate, TDictionary? value)
+      where TDictionary : IDictionary<TK, TV>
     {
-      if (value == null) Write(-1);
+      if (value == null)
+      {
+        Write(-1);
+      }
       else
       {
         Write(value.Count);
@@ -708,10 +694,10 @@ namespace JetBrains.Serialization
         }
       }
     }
+
     #endregion
 
     [ContractAnnotation("null=>false")]
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : struct
     {
       var res = value != null;
@@ -720,13 +706,11 @@ namespace JetBrains.Serialization
     }
 
     [ContractAnnotation("null=>false")]
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : class
     {
       var res = value != null;
       Write(res);
       return res;
     }
-
   }
 }
