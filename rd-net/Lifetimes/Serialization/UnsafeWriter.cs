@@ -8,6 +8,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Util;
 using JetBrains.Util.Internal;
 // ReSharper disable BuiltInTypeReferenceStyle
+// ReSharper disable ArrangeRedundantParentheses
 
 namespace JetBrains.Serialization
 {
@@ -457,6 +458,33 @@ namespace JetBrains.Serialization
       var x = (Int32*)myPtr;
       myPtr = (byte*)(x + 1);
       *x = value;
+    }
+
+    public void Write7BitEncodedInt32(int value)
+    {
+      // write out an int 7 bits at a time
+      var v = (uint)value;
+
+      while (v >= 0b10000000)
+      {
+        WriteByte((byte)(v | 0b10000000));
+        v >>= 7;
+      }
+
+      WriteByte((byte)v);
+    }
+
+    public void WriteOftenSmallPositiveInt32(int value)
+    {
+      if (value >= 0 & value < byte.MaxValue)
+      {
+        WriteByte((byte) value);
+      }
+      else
+      {
+        WriteByte(byte.MaxValue);
+        WriteInt32(value);
+      }
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]

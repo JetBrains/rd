@@ -7,6 +7,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Util;
 using JetBrains.Util.Internal;
 // ReSharper disable BuiltInTypeReferenceStyle
+// ReSharper disable ArrangeRedundantParentheses
 
 namespace JetBrains.Serialization
 {
@@ -190,36 +191,34 @@ namespace JetBrains.Serialization
       return *x;
     }
 
-    public static UInt16 ReadUInt16FromBytes(byte[] bytes)
+    public int Read7BitEncodedInt32()
     {
-      fixed (byte* bb = bytes)
+      // read out an Int32 7 bits at a time
+      var count = 0;
+      var shift = 0;
+      byte b;
+      do
       {
-        return *(UInt16*) bb;
-      }
+        if (shift == 5 * 7)
+          throw new FormatException();
+
+        b = ReadByte();
+        count |= (b & 0b1111111) << shift;
+        shift += 7;
+      } while ((b & 0b10000000) != 0);
+
+      return count;
     }
 
-    public static Int32 ReadInt32FromBytes(byte[] bytes, int offset = 0)
+    public int ReadOftenSmallPositiveInt32()
     {
-      fixed (byte* bb = bytes)
+      var byteValue = ReadByte();
+      if (byteValue == byte.MaxValue)
       {
-        return *(Int32*) (bb + offset);
+        return ReadInt32();
       }
-    }
 
-    public static Int64 ReadInt64FromBytes(byte[] bytes, int offset = 0)
-    {
-      fixed (byte* bb = bytes)
-      {
-        return *(Int64*) (bb + offset);
-      }
-    }
-
-    public static UInt64 ReadUInt64FromBytes(byte[] bytes)
-    {
-      fixed (byte* bb = bytes)
-      {
-        return *(UInt64*) bb;
-      }
+      return byteValue;
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -477,5 +476,37 @@ namespace JetBrains.Serialization
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public ulong ReadULong() => ReadUInt64();
+
+    public static UInt16 ReadUInt16FromBytes(byte[] bytes)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(UInt16*) bb;
+      }
+    }
+
+    public static Int32 ReadInt32FromBytes(byte[] bytes, int offset = 0)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(Int32*) (bb + offset);
+      }
+    }
+
+    public static Int64 ReadInt64FromBytes(byte[] bytes, int offset = 0)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(Int64*) (bb + offset);
+      }
+    }
+
+    public static UInt64 ReadUInt64FromBytes(byte[] bytes)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(UInt64*) bb;
+      }
+    }
   }
 }
