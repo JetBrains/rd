@@ -7,6 +7,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Tasks
 {
@@ -69,7 +70,7 @@ namespace JetBrains.Rd.Tasks
     }
     
     [PublicAPI]
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? _)
     {
       var taskId = RdId.Read(reader);
 
@@ -92,7 +93,8 @@ namespace JetBrains.Rd.Tasks
       var value = ReadRequestDelegate(ctx, reader);
       ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
 
-      return new RdWireableContinuation(lifetime, myHandlerScheduler ?? proto.Scheduler, () =>
+      var scheduler = myHandlerScheduler ?? proto.Scheduler;
+      return new RdWireableContinuation(lifetime, scheduler, null,() =>
       {
         using (UsingDebugInfo()) //now supports only sync handlers
         {

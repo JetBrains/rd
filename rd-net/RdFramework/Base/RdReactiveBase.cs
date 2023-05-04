@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Base
 {
@@ -18,8 +20,24 @@ namespace JetBrains.Rd.Base
 
 
     #region Assertion
-    
-    public bool Async { get; set; }
+
+    private readonly UnsynchronizedConcurrentAccessDetector myUnsynchronizedConcurrentAccessDetector = new();
+
+    public bool Async { get; set ; }
+
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler? protoScheduler)
+    {
+      if (AllowBindCookie.IsBindAllowed)
+        return default;
+      
+      if (!Async)
+      {
+        var scheduler = protoScheduler ?? TryGetProto()?.Scheduler;
+        scheduler?.AssertThread(this);
+      }
+
+      return myUnsynchronizedConcurrentAccessDetector.CreateCookie();
+    }
 
     [AssertionMethod]
     protected void AssertThreading()
@@ -52,13 +70,15 @@ namespace JetBrains.Rd.Base
     
     public bool IsLocalChange { get; protected set; }
     
-    protected internal struct LocalChangeCookie : IDisposable
+    protected internal readonly ref struct LocalChangeCookie
     {
+      private readonly UnsynchronizedConcurrentAccessDetector.Cookie myAccessCookie;
       private readonly RdReactiveBase myHost;
-      private FirstChanceExceptionInterceptor.ThreadLocalDebugInfo myDebugInfo;
+      private readonly FirstChanceExceptionInterceptor.ThreadLocalDebugInfo myDebugInfo;
 
-      internal LocalChangeCookie(RdReactiveBase host)
+      internal LocalChangeCookie(RdReactiveBase host, UnsynchronizedConcurrentAccessDetector.Cookie accessCookie)
       {
+        myAccessCookie = accessCookie;
         (myHost = host).IsLocalChange = true;
         myDebugInfo = host.UsingDebugInfo();
       }      
@@ -66,6 +86,7 @@ namespace JetBrains.Rd.Base
       public void Dispose()
       {
         myHost.IsLocalChange = false;
+        myAccessCookie.Dispose();
         myDebugInfo.Dispose();
       }
     }
@@ -77,9 +98,19 @@ namespace JetBrains.Rd.Base
     
     protected internal LocalChangeCookie UsingLocalChange()
     {
-      if (Mode.IsAssertion) Assertion.Assert(!IsLocalChange, "!IsLocalChange: {0}", this);
-      if (IsBound && !Async) AssertThreading();
-      return new LocalChangeCookie(this);
+      var cookie = CreateAssertThreadingCookie(null);
+      try
+      {
+        if (Mode.IsAssertion) 
+          Assertion.Assert(!IsLocalChange, "!IsLocalChange: {0}", this);
+
+        return new LocalChangeCookie(this, cookie);
+      }
+      catch
+      {
+        cookie.Dispose();
+        throw;
+      }
     }
     #endregion
 
@@ -92,10 +123,10 @@ namespace JetBrains.Rd.Base
       if (proto == null || !TryGetSerializationContext(out var serializationCtx) || lifetime.IsNotAlive)
         return RdWireableContinuation.NotBound;
       
-      return OnWireReceived(lifetime, proto, serializationCtx, reader);
+      return OnWireReceived(lifetime, proto, serializationCtx, reader, myUnsynchronizedConcurrentAccessDetector);
     }
     
-    public abstract RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader);
+    public abstract RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? detector);
 
     #endregion
     

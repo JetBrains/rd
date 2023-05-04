@@ -7,6 +7,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 using JetBrains.Util;
 
 namespace JetBrains.Rd.Base
@@ -42,37 +43,57 @@ namespace JetBrains.Rd.Base
 
   public class RdWireableContinuation
   {
-    public static readonly RdWireableContinuation Empty = new(Lifetime.Terminated, SynchronousScheduler.Instance, EmptyAction.Instance);
-    public static readonly RdWireableContinuation NotBound = new(Lifetime.Terminated, SynchronousScheduler.Instance, EmptyAction.Instance);
+    public static readonly RdWireableContinuation Empty = new(Lifetime.Terminated, SynchronousScheduler.Instance, null, EmptyAction.Instance);
+    public static readonly RdWireableContinuation NotBound = new(Lifetime.Terminated, SynchronousScheduler.Instance, null, EmptyAction.Instance);
 
     private readonly Lifetime myLifetime;
     private readonly IScheduler? myWireScheduler;
+    private readonly UnsynchronizedConcurrentAccessDetector? myDetector;
     private readonly Action myAction;
 
-    public RdWireableContinuation(Lifetime lifetime, IScheduler wireScheduler, Action action)
+    public RdWireableContinuation(Lifetime lifetime, IScheduler wireScheduler, UnsynchronizedConcurrentAccessDetector? detector, Action action)
     {
       myLifetime = lifetime;
       myWireScheduler = wireScheduler;
+      myDetector = detector;
+      myAction = action;
+    }
+    
+    public RdWireableContinuation(Lifetime lifetime, UnsynchronizedConcurrentAccessDetector? detector, Action action)
+    {
+      myLifetime = lifetime;
+      myDetector = detector;
       myAction = action;
     }
 
-    internal void RunAsync(ProtocolContexts.MessageContextCookie cookie)
+    internal void RunAsync(IProtocol protocol, ProtocolContexts.MessageContextCookie messageContextCookie)
     {
       if (myLifetime.IsNotAlive)
         return;
-      
-      var @this = this;
-      @this.myWireScheduler?.Queue(() =>
+
+      var scheduler = myWireScheduler ?? protocol.Scheduler;
+      scheduler.Queue(() =>
       {
-        if (@this.myLifetime.IsNotAlive)
-          return;
-        
-        using (cookie)
+        using (messageContextCookie)
         {
-          cookie.Update();
-          @this.myAction();
+          messageContextCookie.Update();
+          using var _ = AccessCookie();
+
+          if (scheduler == protocol.Scheduler)
+          {
+            using var executeIfAliveCookie = myLifetime.UsingExecuteIfAlive(true);
+            if (executeIfAliveCookie.Succeed)
+              myAction();
+          }
+          else
+            myAction();
         }
       });
+    }
+
+    private UnsynchronizedConcurrentAccessDetector.Cookie AccessCookie()
+    {
+      return myDetector != null ? myDetector.CreateCookie() : default;
     }
   }
 

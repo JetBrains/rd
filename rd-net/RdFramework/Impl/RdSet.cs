@@ -9,6 +9,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Impl
 {
@@ -64,6 +65,8 @@ namespace JetBrains.Rd.Impl
     protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {
       base.PreInit(lifetime, parentProto);
+      if (lifetime.IsNotAlive)
+        return;
 
       parentProto.Wire.Advise(lifetime, this);
     }
@@ -71,11 +74,16 @@ namespace JetBrains.Rd.Impl
     protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
     {
       base.Init(lifetime, proto, ctx);
+      if (lifetime.IsNotAlive)
+        return;
       
       using (UsingLocalChange())
       {
         Advise(lifetime, it =>
         {
+          if (lifetime.IsNotAlive)
+            return;
+          
           if (!IsLocalChange) return;
 
           proto.Wire.Send(RdId, (stream) =>
@@ -90,13 +98,13 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream, UnsynchronizedConcurrentAccessDetector? detector)
     {
       var kind = (AddRemove) stream.ReadInt();
       var value = ReadValueDelegate(ctx, stream);
       ReceiveTrace?.Log($"{this} :: {kind} :: {value.PrintToString()}");
 
-      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      return new RdWireableContinuation(lifetime, detector, () =>
       {
         using (UsingDebugInfo())
         {
@@ -242,7 +250,7 @@ namespace JetBrains.Rd.Impl
 
     public void Advise(Lifetime lifetime, Action<SetEvent<T>> handler)
     {
-      if (IsBound) AssertThreading();
+      using (CreateAssertThreadingCookie(null))
       using (UsingDebugInfo())
         mySet.Advise(lifetime, handler);
     }

@@ -24,6 +24,7 @@ using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rd.Util;
 using JetBrains.Rd.Text;
+using JetBrains.Threading;
 
 
 // ReSharper disable RedundantEmptyObjectCreationArgumentList
@@ -151,6 +152,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -205,6 +207,8 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -287,6 +291,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -323,6 +329,8 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -352,6 +360,8 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -397,6 +407,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -454,6 +466,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -489,6 +503,7 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
   }
   
   
@@ -518,6 +533,7 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
   }
   
   
@@ -581,6 +597,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -657,6 +674,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -922,6 +940,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -970,6 +990,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1040,6 +1062,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1079,6 +1103,8 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1141,6 +1167,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1180,6 +1208,7 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
   }
   
   
@@ -1262,6 +1291,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -1328,6 +1358,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1367,6 +1399,8 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1429,6 +1463,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1495,6 +1531,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1557,6 +1595,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -1643,6 +1683,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -1725,6 +1766,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -1811,6 +1853,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -1897,6 +1940,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2015,6 +2059,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -2071,6 +2117,8 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -2134,6 +2182,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -2202,6 +2252,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -2276,6 +2328,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -2333,6 +2387,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -2411,6 +2467,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2487,6 +2544,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2570,6 +2628,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2605,6 +2664,7 @@ namespace org.example
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2681,6 +2741,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2799,6 +2860,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2865,6 +2927,7 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -2965,6 +3028,8 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   

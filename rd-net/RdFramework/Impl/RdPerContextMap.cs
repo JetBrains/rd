@@ -8,6 +8,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Impl
 {
@@ -27,7 +28,7 @@ namespace JetBrains.Rd.Impl
 
         public bool IsMaster;
 
-        public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+        public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? detector)
         {
             // this entity does not receive messages
             Assertion.Fail(nameof(RdPerContextMap<K, V>) + " may not receive messages");
@@ -107,20 +108,21 @@ namespace JetBrains.Rd.Impl
 
         public void View(Lifetime lifetime, Action<Lifetime, KeyValuePair<K, V>> handler)
         {
-          AssertThreading();
-          myMap.View(lifetime, handler);
+          using (CreateAssertThreadingCookie(null))
+            myMap.View(lifetime, handler);
         }
 
         public void View(Lifetime lifetime, Action<Lifetime, K, V> handler)
         {
-          AssertThreading();
-          myMap.View(lifetime, handler);
+          using (CreateAssertThreadingCookie(null))
+            myMap.View(lifetime, handler);
         }
 
         public V this[K key]
         {
           get
           {
+            using var _ = UsingLocalChange();
             if (!IsBound)
             {
               if (!myMap.ContainsKey(key))
@@ -134,13 +136,13 @@ namespace JetBrains.Rd.Impl
 
         public bool TryGetValue(K key, out V value)
         {
+          using var _ = UsingLocalChange();
           if (!IsBound)
           {
             if (!myMap.ContainsKey(key))
               myMap[key] = myValueFactory(IsMaster);
           }
           
-          AssertThreading();
           return myMap.TryGetValue(key, out value);
         }
 

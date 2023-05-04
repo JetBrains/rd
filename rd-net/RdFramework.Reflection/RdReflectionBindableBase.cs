@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Collections.Viewable;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Reflection
 {
@@ -29,9 +31,7 @@ namespace JetBrains.Rd.Reflection
     /// <summary>
     /// Reflection models can be bound on any thread
     /// </summary>
-    protected override void AssertBindingThread()
-    {
-    }
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler? protoScheduler) => default;
 
     protected override void PreInitBindableFields(Lifetime lifetime)
     {

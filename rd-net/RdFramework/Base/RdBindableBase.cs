@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Util;
+using JetBrains.Threading;
+using JetBrains.Util.Internal;
 using JetBrains.Util.Util;
 
 namespace JetBrains.Rd.Base
@@ -30,7 +31,7 @@ namespace JetBrains.Rd.Base
     
     #region Bound state: inferred
     
-    public bool IsBound => Parent != null;
+    public bool IsBound => myBindState == BindState.Bound;
 
     private BindState myBindState = BindState.NotBound;
 
@@ -64,34 +65,30 @@ namespace JetBrains.Rd.Base
     
 
     
-    protected readonly List<KeyValuePair<string, object>> BindableChildren = new List<KeyValuePair<string, object>>();  
+    protected readonly List<KeyValuePair<string, object>> BindableChildren = new();  
 
     
     public void PreBind(Lifetime lf, IRdDynamic parent, string name)
     {
-      if (Parent != null)
-      {
+      if (Memory.VolatileRead(ref Parent) != null)
         Assertion.Fail($"Trying to bound already bound {this} to {parent.Location}");
-      }
+      
       //todo uncomment when fix InterningTest
       // Assertion.Require(RdId != RdId.Nil, "Must be identified first");
       var proto = parent.TryGetProto();
       if (proto == null)
         return;
-      
-      using (var cookie = lf.UsingExecuteIfAlive())
-      {
-        if (!cookie.Succeed)
-          throw new LifetimeCanceledException(lf);
-        
-        Parent = parent;
-        Location = parent.Location.Sub(name);
-        myBindLifetime = lf;
-        
-        lf.OnTermination(this);
-      }
 
-      AssertBindingThread();
+      using var assertThreadingCookie = CreateAssertThreadingCookie(proto.Scheduler);
+      using var executeIfAliveCookie = lf.UsingExecuteIfAlive();
+      if (!executeIfAliveCookie.Succeed)
+        return;
+        
+      Parent = parent;
+      Location = parent.Location.Sub(name);
+      myBindLifetime = lf;
+        
+      lf.OnTermination(this);
 
       using (Signal.PriorityAdviseCookie.Create())
         PreInit(lf, proto);
@@ -101,12 +98,16 @@ namespace JetBrains.Rd.Base
 
     public void Bind()
     {
-      AssertBindingThread();
-      var bindLifetime = myBindLifetime;
-      Assertion.Assert(bindLifetime.IsAlive);
-      
       var proto = TryGetProto();
       if (proto == null || !TryGetSerializationContext(out var ctx))
+        return;
+      
+      using var assertThreadingCookie = CreateAssertThreadingCookie(proto.Scheduler);
+      
+      var bindLifetime = myBindLifetime;
+      
+      using var executeIfAliveCookie = bindLifetime.UsingExecuteIfAlive();
+      if (!executeIfAliveCookie.Succeed)
         return;
       
       Assertion.Assert(myBindState == BindState.PreBound);
@@ -119,30 +120,18 @@ namespace JetBrains.Rd.Base
 
     protected virtual void Unbind()
     {
-      AssertBindingThread();
-      
-      myBindLifetime = Lifetime.Terminated;
-      Location = Location.Sub("<<unbound>>", "::");
-      Parent = null;
-      RdId = RdId.Nil;
-      myBindState = BindState.NotBound;
     }
 
     public void OnTermination(Lifetime lifetime)
     {
       Unbind();
-    }
-
-    protected virtual void AssertBindingThread()
-    {
-      if (AllowBindCookie.IsBindNotAllowed)
-      {
-        var proto = TryGetProto().NotNull(this);
-        if (proto.Lifetime.IsNotAlive)
-          return;
-        
-        proto.Scheduler.AssertThread(this);
-      }
+      
+      myBindLifetime = Lifetime.Terminated;
+      Location = Location.Sub("<<unbound>>", "::");
+      RdId = RdId.Nil;
+      myBindState = BindState.NotBound;
+      
+      Memory.VolatileWrite(ref Parent, null);
     }
 
     protected virtual void PreInit(Lifetime lifetime, IProtocol parentProto)
@@ -159,6 +148,9 @@ namespace JetBrains.Rd.Base
     {
       foreach (var pair in BindableChildren)
       {
+        if (lifetime.IsNotAlive) 
+          return;
+        
         pair.Value?.PreBindPolymorphic(lifetime, this, pair.Key);
       }
     }
@@ -167,12 +159,16 @@ namespace JetBrains.Rd.Base
     {
       foreach (var pair in BindableChildren)
       {
+        if (lifetime.IsNotAlive)
+          return;
+        
         pair.Value?.BindPolymorphic();
       }
     }
 
     public virtual void Identify(IIdentities identities, RdId id)
     {
+      using var assertThreadingCookie = CreateAssertThreadingCookie(null);
       Assertion.Require(RdId.IsNil, "Already has RdId: {0}, entity: {1}", RdId, this);      
       Assertion.Require(!id.IsNil, "Assigned RdId mustn't be null, entity: {0}", this);
       
@@ -181,6 +177,16 @@ namespace JetBrains.Rd.Base
       {
         pair.Value?.IdentifyPolymorphic(identities, id.Mix("." + pair.Key));
       }
+    }
+
+    protected internal virtual UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler? protoScheduler)
+    {
+      if (AllowBindCookie.IsBindAllowed)
+        return default;
+      
+      var scheduler = protoScheduler ?? TryGetProto()?.Scheduler;
+      scheduler?.AssertThread(this);
+      return default;
     }
 
     public virtual RdBindableBase? FindByRName(RName rName)
@@ -200,9 +206,7 @@ namespace JetBrains.Rd.Base
 
       return child.FindByRName(rName.DropNonEmptyRoot());
     }
-    
-    
-    
+
     protected virtual string ShortName => GetType().ToString(false, true);
 
     public virtual void Print(PrettyPrinter printer)
@@ -289,12 +293,12 @@ namespace JetBrains.Rd.Base
     // NOTE: dummy implementation which prevents WPF from hanging the viewmodel forever on reflection property descriptor fabricated change events:
     //       when it sees PropertyChanged, it does not look for property descriptor events
     public virtual event PropertyChangedEventHandler PropertyChanged { add { } remove { } }
-  }
-  public enum BindState
-  {
-    NotBound,
-    PreBound,
-    Bound
-  }
 
+    private enum BindState
+    {
+      NotBound,
+      PreBound,
+      Bound
+    }
+  }
 }

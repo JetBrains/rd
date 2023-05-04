@@ -118,7 +118,7 @@ namespace JetBrains.Rd.Tasks
           SendCancellation();
 
 
-        return new RdWireableContinuation(myOuterLifetime, WireScheduler, () =>
+        return new RdWireableContinuation(myOuterLifetime, WireScheduler, null,() =>
         {
           using (myCall.UsingDebugInfo())
           {
@@ -194,7 +194,7 @@ namespace JetBrains.Rd.Tasks
         Trace(RdReactiveBase.ourLogReceived, "received cancellation");
         reader.ReadVoid(); //nothing just a void value
         
-        return new RdWireableContinuation(Lifetime, WireScheduler, () =>
+        return new RdWireableContinuation(Lifetime, WireScheduler, null, () =>
         {
           using (myCall.UsingDebugInfo())
           {

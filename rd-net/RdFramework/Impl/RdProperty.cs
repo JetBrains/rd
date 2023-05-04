@@ -9,6 +9,7 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 using JetBrains.Annotations;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Impl
 {
@@ -105,6 +106,9 @@ namespace JetBrains.Rd.Impl
     {
       base.PreInit(lifetime, parentProto);
 
+      if (lifetime.IsNotAlive)
+        return;
+      
       if (!OptimizeNested)
       {
         var maybe = Maybe;
@@ -126,14 +130,14 @@ namespace JetBrains.Rd.Impl
 
       Advise(lifetime, v =>
       {
+        if (lifetime.IsNotAlive)
+          return;
+        
         var shouldIdentify = !hasInitValue;
         hasInitValue = false;
         
         if (!OptimizeNested)
         {
-          if (AllowBindCookie.IsBindNotAllowed)
-            proto.Scheduler.AssertThread(this);
-
           if (IsLocalChange && shouldIdentify)
           {
             v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
@@ -166,22 +170,17 @@ namespace JetBrains.Rd.Impl
     protected override void Unbind()
     {
       base.Unbind();
-      
-      if (myBindDefinition is { } bindDefinition)
-      {
-        myBindDefinition = null;
-        bindDefinition.Terminate();
-      }
+      myBindDefinition = null;
     }
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? detector)
     {
       var version = reader.ReadInt();
       var value = ReadValueDelegate(ctx, reader);
 
       var definition = TryPreBindValue(lifetime, value, true);
       
-      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      return new RdWireableContinuation(lifetime, detector, () =>
       {
         var rejected = IsMaster && version < myMasterVersion;
         
@@ -248,8 +247,7 @@ namespace JetBrains.Rd.Impl
 
     public void Advise(Lifetime lifetime, Action<T> handler)
     {
-      if (IsBound) AssertThreading();
-      
+      using (CreateAssertThreadingCookie(null))
       using (UsingDebugInfo())
         myProperty.Advise(lifetime, handler);
     }

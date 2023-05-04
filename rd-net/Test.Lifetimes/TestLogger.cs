@@ -30,14 +30,9 @@ namespace Test.Lifetimes
     {
       if (level.IsSeriousError())
       {
-        try
+        lock (myMonitor)
         {
-          throw exception == null ? new Exception(message) : new Exception(message, exception);
-        }
-        catch (Exception e)
-        {
-          lock (myMonitor) 
-            myExceptions.Add(e);
+          myExceptions.Add(exception == null ? new Exception(message) : new Exception(message, exception));
         }
       }
 

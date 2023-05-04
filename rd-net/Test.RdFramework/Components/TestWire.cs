@@ -17,7 +17,7 @@ namespace Test.RdFramework.Components
     public ISource<byte[]> OnTransmit => myOnTransmit;
     public long BytesSent { get; private set; }
 
-    public TestWire(IScheduler scheduler, string name, bool isMaster) : base(scheduler)
+    public TestWire(IScheduler scheduler, string name, bool isMaster)
     {
       myScheduler = scheduler;
       myName = name;

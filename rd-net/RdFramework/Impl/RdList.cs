@@ -13,6 +13,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 #nullable disable
 
@@ -104,12 +105,7 @@ namespace JetBrains.Rd.Impl
     protected override void Unbind()
     {
       base.Unbind();
-      if (myBindDefinitions is { } definitions)
-      {
-        myBindDefinitions = null;
-        foreach (var definition in definitions) 
-          definition?.Terminate();
-      }
+      myBindDefinitions = null;
     }
 
     protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
@@ -123,6 +119,9 @@ namespace JetBrains.Rd.Impl
         
         for (var index = 0; index < Count; index++)
         {
+          if (lifetime.IsNotAlive)
+            return;
+          
           var item = this[index];
           if (item != null)
           {
@@ -143,9 +142,6 @@ namespace JetBrains.Rd.Impl
       {
         Change.Advise(lifetime, it =>
         {
-          if (AllowBindCookie.IsBindNotAllowed)
-            proto.Scheduler.AssertThread(this);
-
           if (IsLocalChange)
           {
             if (it.Kind != AddUpdateRemove.Add)
@@ -164,7 +160,11 @@ namespace JetBrains.Rd.Impl
       {
         Advise(lifetime, it =>
         {     
+          if (lifetime.IsNotAlive)
+            return;
           if (!IsLocalChange) return;
+
+          using var _ = it.NewValue is RdBindableBase bindable ? bindable.CreateAssertThreadingCookie(proto.Scheduler) : default; 
 
           proto.Wire.Send(RdId, SendContext.Of(ctx, it, this), static(sendContext, stream) =>
           {
@@ -191,7 +191,7 @@ namespace JetBrains.Rd.Impl
     protected override string ShortName => "list";
 
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream, [CanBeNull] UnsynchronizedConcurrentAccessDetector detector)
     {
       var header = stream.ReadLong();
       var opType = header & ((1 << versionedFlagShift) - 1);
@@ -207,7 +207,7 @@ namespace JetBrains.Rd.Impl
 
       var definition = value != null ? TryPreBindValue(lifetime, value, index, true) : null;
       
-      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      return new RdWireableContinuation(lifetime, detector, () =>
       {
         ReceiveTrace?.Log($"list `{Location}` ({RdId}) :: {kind} :: index={index} :: version = {version}{(isPut ? " :: value = " + value.PrintToString() : "")}");
 
@@ -394,8 +394,7 @@ namespace JetBrains.Rd.Impl
 
     public void Advise(Lifetime lifetime, Action<ListEvent<V>> handler)
     {
-      if (IsBound) AssertThreading();
-
+      using (CreateAssertThreadingCookie(null))
       using (UsingDebugInfo())
         myList.Advise(lifetime, handler);
     }

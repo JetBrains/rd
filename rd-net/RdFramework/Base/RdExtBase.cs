@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using JetBrains.Collections;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 using JetBrains.Util;
-
-#nullable disable
 
 namespace JetBrains.Rd.Base
 {
@@ -26,8 +24,8 @@ namespace JetBrains.Rd.Base
     
     
     private readonly ExtWire myExtWire = new ExtWire();
-    private IProtocol myExtProtocol;
-    public sealed override IProtocol TryGetProto() => myExtProtocol ?? base.TryGetProto();
+    private IProtocol? myExtProtocol;
+    public sealed override IProtocol? TryGetProto() => myExtProtocol ?? base.TryGetProto();
     
     public readonly IReadonlyProperty<bool> Connected;
     protected RdExtBase()
@@ -51,10 +49,13 @@ namespace JetBrains.Rd.Base
 
       //todo ExtScheduler
       myExtWire.RealWire = parentWire;
-      lifetime.Bracket(
+      var result = lifetime.TryBracket(
         () => { myExtProtocol = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, parentProto.Scheduler, myExtWire, lifetime, serializationContext, parentProto.Contexts, parentProto.ExtCreated, this.CreateExtSignal()); },
         () => { myExtProtocol = null; }
         );
+      
+      if (!result.Succeed)
+        return;
 
       var bindableParent = Parent as RdBindableBase;
       var info = new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash, this);
@@ -72,13 +73,18 @@ namespace JetBrains.Rd.Base
       Protocol.InitTrace?.Log($"{this} :: bound");
     }
 
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler? protoScheduler)
+    {
+      return default;
+    }
+
     protected override void Init(Lifetime lifetime, IProtocol currentProto, SerializationCtx ctx)
     {
       base.Init(lifetime, currentProto, ctx);
     }
 
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? _)
     {
       var remoteState = (ExtState)reader.ReadInt();
       ReceiveTrace?.Log($"Ext {Location} ({RdId}) : {remoteState}");
@@ -166,7 +172,7 @@ namespace JetBrains.Rd.Base
   }
 
   
-  
+#nullable disable
   class ExtWire : IWire
   {
 
@@ -205,6 +211,7 @@ namespace JetBrains.Rd.Base
       {
         var contextValueRestorers = new List<IDisposable>();
 
+        var realWire = RealWire.NotNull();
         lock (mySendQ)
         {
           while (mySendQ.Count > 0)

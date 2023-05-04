@@ -419,6 +419,7 @@ open class CSharp50Generator(
         +"using JetBrains.Rd.Tasks;"
         +"using JetBrains.Rd.Util;"
         +"using JetBrains.Rd.Text;"
+        +"using JetBrains.Threading;"
         println()
 
         println()
@@ -515,12 +516,19 @@ open class CSharp50Generator(
             prettyPrintTrait(decl)
             +"//toString"
             toStringTrait(decl)
+            +"//CreateAssertThreadingCookie"
+            createAssertThreadingCookieTrait(decl)
         }
         +"}"
 
         if (decl.isExtension) {
             extensionTrait(decl as Ext)
         }
+    }
+
+    protected open fun PrettyPrinter.createAssertThreadingCookieTrait(decl: Declaration) {
+        if (decl is Class)
+            +"protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;"
     }
 
     protected open fun PrettyPrinter.doc(decl: Declaration) {

@@ -24,6 +24,7 @@ using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rd.Util;
 using JetBrains.Rd.Text;
+using JetBrains.Threading;
 
 
 // ReSharper disable RedundantEmptyObjectCreationArgumentList
@@ -90,5 +91,6 @@ namespace InheritsAutomationRoot
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
 }

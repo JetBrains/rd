@@ -9,6 +9,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 using JetBrains.Util;
 
 namespace JetBrains.Rd.Impl
@@ -61,7 +62,7 @@ namespace JetBrains.Rd.Impl
       return (ISingleContextHandler<T>) myHandlersMap[context];
     }
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? _)
     {
       var contextBase = RdContextBase.Read(mySerializationCtx, reader);
 

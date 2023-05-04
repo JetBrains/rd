@@ -24,6 +24,7 @@ using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rd.Util;
 using JetBrains.Rd.Text;
+using JetBrains.Threading;
 
 
 // ReSharper disable RedundantEmptyObjectCreationArgumentList
@@ -90,6 +91,7 @@ namespace InheritsAutomationRoot
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
   }
   
   
@@ -120,6 +122,8 @@ namespace InheritsAutomationRoot
     //hash code trait
     //pretty print
     //toString
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
   
   
@@ -165,5 +169,7 @@ namespace InheritsAutomationRoot
       Print(printer);
       return printer.ToString();
     }
+    //CreateAssertThreadingCookie
+    protected override UnsynchronizedConcurrentAccessDetector.Cookie CreateAssertThreadingCookie(IScheduler protoScheduler) => default;
   }
 }

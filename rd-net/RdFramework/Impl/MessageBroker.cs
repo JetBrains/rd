@@ -82,6 +82,7 @@ namespace JetBrains.Rd.Impl
     {
       RdWireableContinuation continuation;
       ProtocolContexts.MessageContextCookie messageContextCookie = default;
+      IProtocol? proto;
       fixed (byte* p = msg)
       {
         var reader = UnsafeReader.CreateReader(p, msg.Length);
@@ -94,7 +95,7 @@ namespace JetBrains.Rd.Impl
         }
 
         var reactive = lifetimed.Value.NotNull();
-        var proto = reactive.TryGetProto();
+        proto = reactive.TryGetProto();
         if (proto == null)
         {
           myLogger.Trace($"proto is null for {id}");
@@ -121,7 +122,7 @@ namespace JetBrains.Rd.Impl
         reader.Reset(null, 0);
       }
 
-      continuation.RunAsync(messageContextCookie);
+      continuation.RunAsync(proto, messageContextCookie);
     }
 
     public void Advise(Lifetime lifetime, IRdWireable reactive)

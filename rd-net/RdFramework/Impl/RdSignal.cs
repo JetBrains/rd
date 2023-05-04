@@ -4,6 +4,7 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 namespace JetBrains.Rd.Impl
 {
@@ -50,11 +51,12 @@ namespace JetBrains.Rd.Impl
       parentProto.Wire.Advise(lifetime, this);
     }
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector? _)
     {
       var value = ReadValueDelegate(ctx, reader);
       ReceiveTrace?.Log($"{this} :: value = {value.PrintToString()}");
-      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      var scheduler = Scheduler ?? proto.Scheduler;
+      return new RdWireableContinuation(lifetime, scheduler, null, () =>
       {
         using (UsingDebugInfo())
           mySignal.Fire(value);

@@ -4,6 +4,7 @@ using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Reflection;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 namespace Test.RdFramework.Reflection
 {
@@ -73,9 +74,9 @@ namespace Test.RdFramework.Reflection
 
     #endregion
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector detector)
     {
-      return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+      return new RdWireableContinuation(lifetime, detector, () =>
       {
         EventCount++;
       });

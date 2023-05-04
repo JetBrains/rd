@@ -9,6 +9,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 #nullable disable
 
@@ -125,7 +126,7 @@ namespace JetBrains.Rd.Impl
       return myInternRoot.UnIntern<T>(id);
     }
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector _)
     {
       Assertion.Fail("HeavySingleContextHandler can't receive messages");
       return RdWireableContinuation.Empty;
@@ -220,7 +221,7 @@ namespace JetBrains.Rd.Impl
     public bool Contains(T value) => mySet.Contains(value);
     public void View(Lifetime lifetime, Action<Lifetime, T> action) => mySet.View(lifetime, action);
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader reader, UnsynchronizedConcurrentAccessDetector _)
     {
       var kind = (AddRemove)reader.ReadInt();
       var value = ReadValueDelegate(ctx, reader);

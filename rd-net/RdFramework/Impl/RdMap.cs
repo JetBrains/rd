@@ -11,6 +11,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
+using JetBrains.Threading;
 
 // ReSharper disable InconsistentNaming
 
@@ -73,7 +74,7 @@ namespace JetBrains.Rd.Impl
     
     public bool IsMaster = false;
     private long myNextVersion;
-    private readonly Dictionary<K, long> myPendingForAck = new Dictionary<K, long>();
+    private readonly SynchronizedDictionary<K, long> myPendingForAck = new();
 
     #endregion
 
@@ -94,6 +95,9 @@ namespace JetBrains.Rd.Impl
         
         foreach (var (key, value) in this)
         {
+          if (lifetime.IsNotAlive)
+            return;
+          
           if (value != null)
           {
             value.IdentifyPolymorphic(parentProto.Identities, parentProto.Identities.Next(RdId));
@@ -117,9 +121,6 @@ namespace JetBrains.Rd.Impl
       {
         Change.Advise(lifetime, it =>
         {
-          if (AllowBindCookie.IsBindNotAllowed)
-            proto.Scheduler.AssertThread(this);
-          
           AssertNullability(it.Key);
 
           if (it.Kind != AddUpdateRemove.Remove) AssertNullability(it.NewValue);
@@ -144,8 +145,13 @@ namespace JetBrains.Rd.Impl
       using (UsingLocalChange())
       {
         Advise(lifetime, it =>
-        {
+        {    
+          if (lifetime.IsNotAlive)
+            return;
+          
           if (!IsLocalChange) return;
+          
+          using var _ = it.NewValue is RdBindableBase bindable ? bindable.CreateAssertThreadingCookie(proto.Scheduler) : default;
 
           proto.Wire.Send(RdId, SendContext.Of(ctx, it, this), static (sendContext, stream) =>
           {
@@ -181,15 +187,10 @@ namespace JetBrains.Rd.Impl
     protected override void Unbind()
     {
       base.Unbind();
-      if (myBindDefinitions is { } definitions)
-      {
-        myBindDefinitions = null;
-        foreach (var (_, definition) in definitions) 
-          definition?.Terminate();
-      }
+      myBindDefinitions = null;
     }
 
-    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream)
+    public override RdWireableContinuation OnWireReceived(Lifetime lifetime, IProtocol proto, SerializationCtx ctx, UnsafeReader stream, UnsynchronizedConcurrentAccessDetector? detector)
     {
       var header = stream.ReadInt();
       var msgVersioned = (header >> versionedFlagShift) != 0;
@@ -201,7 +202,7 @@ namespace JetBrains.Rd.Impl
 
       if (opType == Ack)
       {
-        return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+        return new RdWireableContinuation(lifetime, detector, () =>
         {
           string? error = null;
 
@@ -236,7 +237,7 @@ namespace JetBrains.Rd.Impl
               var value = ReadValueDelegate(ctx, stream);
               var definition = TryPreBindValue(lifetime, key, value, true);
 
-              return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+              return new RdWireableContinuation(lifetime, detector, () =>
               {
                 ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" +
                                   (msgVersioned ? " :: version = " + version : "") +
@@ -281,7 +282,7 @@ namespace JetBrains.Rd.Impl
 
             case AddUpdateRemove.Remove:
 
-              return new RdWireableContinuation(lifetime, proto.Scheduler, () =>
+              return new RdWireableContinuation(lifetime, detector, () =>
               {
                 ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" + (msgVersioned ? " :: version = " + version : ""));
 
@@ -447,7 +448,7 @@ namespace JetBrains.Rd.Impl
 
     public void Advise(Lifetime lifetime, Action<MapEvent<K, V>> handler)
     {
-      if (IsBound) AssertThreading();
+      using (CreateAssertThreadingCookie(null))
       using (UsingDebugInfo())
       {
         myMap.Advise(lifetime, handler);
