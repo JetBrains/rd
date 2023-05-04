@@ -319,27 +319,85 @@ namespace JetBrains.Serialization
     #region Primitive writers
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(bool value)
+    public void Write(bool value) => WriteBoolean(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(byte value) => WriteByte(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(Guid value) => WriteGuid(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(char value) => WriteChar(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(decimal value) => WriteDecimal(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(double value) => WriteDouble(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(float value) => WriteFloat(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(Int16 value) => WriteInt16(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(Int32 value) => WriteInt32(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(Int64 value) => WriteInt64(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(UInt16 value) => WriteUint16(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(UInt32 value) => WriteUInt32(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(UInt64 value) => WriteUint64(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(DateTime value) => WriteDateTime(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(TimeSpan value) => WriteTimeSpan(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(Uri value) => WriteUri(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void Write(string? value) => WriteString(value);
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void WriteBoolean(bool value)
     {
       Prepare(sizeof(byte));
       *(myPtr++) = (byte)(value ? 1 : 0);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(byte value)
+    public void WriteByte(byte value)
     {
       Prepare(sizeof(byte));
       *(myPtr++) = value;
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(Guid value)
+    public void WriteSByte(sbyte value)
+    {
+      Prepare(sizeof(sbyte));
+      *(myPtr++) = (byte) value;
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public void WriteGuid(Guid value)
     {
       Write<byte, byte[]>((writer, b) => writer.Write(b), value.ToByteArray());
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(char value)
+    public void WriteChar(char value)
     {
       Prepare(sizeof(char));
       var x = (char*)myPtr;
@@ -348,7 +406,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(decimal value)
+    public void WriteDecimal(decimal value)
     {
       Prepare(sizeof(decimal));
       var x = (decimal*)myPtr;
@@ -357,7 +415,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(double value)
+    public void WriteDouble(double value)
     {
       Prepare(sizeof(double));
       var x = (double*)myPtr;
@@ -375,7 +433,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(float value)
+    public void WriteFloat(float value)
     {
       Prepare(sizeof(float));
       var x = (float*)myPtr;
@@ -384,7 +442,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(Int16 value)
+    public void WriteInt16(Int16 value)
     {
       Prepare(sizeof(Int16));
       var x = (Int16*)myPtr;
@@ -393,7 +451,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(Int32 value)
+    public void WriteInt32(Int32 value)
     {
       Prepare(sizeof(Int32));
       var x = (Int32*)myPtr;
@@ -409,7 +467,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(Int64 value)
+    public void WriteInt64(Int64 value)
     {
       Prepare(sizeof(Int64));
       var x = (Int64*)myPtr;
@@ -418,7 +476,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt16 value)
+    public void WriteUint16(UInt16 value)
     {
       Prepare(sizeof(UInt16));
       var x = (UInt16*)myPtr;
@@ -427,7 +485,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt32 value)
+    public void WriteUInt32(UInt32 value)
     {
       Prepare(sizeof(UInt32));
       var x = (UInt32*)myPtr;
@@ -436,7 +494,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt64 value)
+    public void WriteUint64(UInt64 value)
     {
       Prepare(sizeof(UInt64));
       var x = (UInt64*)myPtr;
@@ -445,7 +503,7 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(DateTime value)
+    public void WriteDateTime(DateTime value)
     {
       if (Mode.IsAssertion) Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
 
@@ -453,19 +511,19 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(TimeSpan value)
+    public void WriteTimeSpan(TimeSpan value)
     {
       Write(value.Ticks);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(Uri value)
+    public void WriteUri(Uri value)
     {
       Write(Uri.EscapeUriString(value.OriginalString));
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(string? value)
+    public void WriteString(string? value)
     {
       if (value == null) Write(-1);
       else

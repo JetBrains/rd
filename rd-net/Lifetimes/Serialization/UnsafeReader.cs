@@ -105,6 +105,14 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public sbyte ReadSByte()
+    {
+      AssertLength(sizeof(sbyte));
+
+      return (sbyte) *(myPtr++);
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Guid ReadGuid()
     {
       var array = ReadArray(reader => reader.ReadByte());
@@ -173,12 +181,6 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public Int16 ReadShort() //alias
-    {
-      return ReadInt16();
-    }
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Int32 ReadInt32()
     {
       AssertLength(sizeof(Int32));
@@ -228,18 +230,6 @@ namespace JetBrains.Serialization
       var x = (Int64*)myPtr;
       myPtr = (byte*)(x + 1);
       return *x;
-    }
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public int ReadInt()
-    {
-      return ReadInt32();
-    }
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public long ReadLong()
-    {
-      return ReadInt64();
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -462,39 +452,30 @@ namespace JetBrains.Serialization
     #endregion
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public bool ReadNullness()
-    {
-      return ReadBoolean();
-    }
+    public bool ReadNullness() => ReadBoolean();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public bool ReadBool()
-    {
-      return ReadBoolean();
-    }
+    public bool ReadBool() => ReadBoolean();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public byte ReadUByte()
-    {
-      return ReadByte();
-    }
+    public Int16 ReadShort() => ReadInt16();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public ushort ReadUShort()
-    {
-      return ReadUInt16();
-    }
+    public int ReadInt() => ReadInt32();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public uint ReadUInt()
-    {
-      return ReadUInt32();
-    }
+    public long ReadLong() => ReadInt64();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public ulong ReadULong()
-    {
-      return ReadUInt64();
-    }
+    public byte ReadUByte() => ReadByte();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public ushort ReadUShort() => ReadUInt16();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public uint ReadUInt() => ReadUInt32();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public ulong ReadULong() => ReadUInt64();
   }
 }
