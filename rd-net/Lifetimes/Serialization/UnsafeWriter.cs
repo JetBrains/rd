@@ -332,54 +332,139 @@ namespace JetBrains.Serialization
 
     #region Primitive writers
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteBool() instead",
+      ReplaceTemplate = "$qualifier$.WriteBoolean($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(bool value) => WriteBoolean(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteByte() instead",
+      ReplaceTemplate = "$qualifier$.WriteByte($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(byte value) => WriteByte(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteGuid() instead",
+      ReplaceTemplate = "$qualifier$.WriteGuid($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Guid value) => WriteGuid(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteChar() instead",
+      ReplaceTemplate = "$qualifier$.WriteChar($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(char value) => WriteChar(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteDecimal() instead",
+      ReplaceTemplate = "$qualifier$.WriteDecimal($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(decimal value) => WriteDecimal(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteDouble() instead",
+      ReplaceTemplate = "$qualifier$.WriteDouble($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(double value) => WriteDouble(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteFloat() instead",
+      ReplaceTemplate = "$qualifier$.WriteFloat($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(float value) => WriteFloat(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteInt16() instead",
+      ReplaceTemplate = "$qualifier$.WriteInt16($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Int16 value) => WriteInt16(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteInt32() instead",
+      ReplaceTemplate = "$qualifier$.WriteInt32($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Int32 value) => WriteInt32(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteInt64() instead",
+      ReplaceTemplate = "$qualifier$.WriteInt64($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Int64 value) => WriteInt64(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteUInt16() instead",
+      ReplaceTemplate = "$qualifier$.WriteUInt16($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(UInt16 value) => WriteUint16(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteUInt32() instead",
+      ReplaceTemplate = "$qualifier$.WriteUInt32($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(UInt32 value) => WriteUInt32(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteUInt64() instead",
+      ReplaceTemplate = "$qualifier$.WriteUInt64($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(UInt64 value) => WriteUint64(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteDateTime() instead",
+      ReplaceTemplate = "$qualifier$.WriteDateTime($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(DateTime value) => WriteDateTime(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteTimeSpan() instead",
+      ReplaceTemplate = "$qualifier$.WriteTimeSpan($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(TimeSpan value) => WriteTimeSpan(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteUri() instead",
+      ReplaceTemplate = "$qualifier$.WriteUri($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(Uri value) => WriteUri(value);
 
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteString() instead",
+      ReplaceTemplate = "$qualifier$.WriteString($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void Write(string? value) => WriteString(value);
 
@@ -677,7 +762,21 @@ namespace JetBrains.Serialization
     #endregion
     #region Collection writers
 
-    public void Write(int[]? value)
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteArray() instead",
+      ReplaceTemplate = "$qualifier$.WriteArray($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
+    public void Write(int[]? value) => WriteArray(value);
+
+    [CodeTemplate(
+      searchTemplate: "$member$($arg$)",
+      Message = "HINT: Use WriteByteArray() instead",
+      ReplaceTemplate = "$qualifier$.WriteByteArray($arg$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
+    public void Write(byte[]? value) => WriteByteArray(value);
+
+    public void WriteArray(int[]? value)
     {
       if (value == null)
       {
@@ -693,7 +792,7 @@ namespace JetBrains.Serialization
       }
     }
 
-    public void Write(byte[]? value)
+    public void WriteByteArray(byte[]? value)
     {
       if (value == null)
       {
@@ -756,10 +855,19 @@ namespace JetBrains.Serialization
       return result;
     }
 
+    [CodeTemplate(
+      searchTemplate: "$member$($args$)",
+      Message = "HINT: Use WriteCollection() instead",
+      ReplaceTemplate = "$qualifier$.WriteCollection($args$)",
+      SuppressionKey = "UnsafeWriter_ExplicitApi")]
+    public void Write<T, TCollection>(WriteDelegate<T> writeDelegate, TCollection? value)
+      where TCollection : ICollection<T>
+      => WriteCollection(writeDelegate, value);
+
     /// <summary>
     /// Non optimal collection serialization. You can serialize internal structure (eg. array) instead.
     /// </summary>
-    public void Write<T, TCollection>(WriteDelegate<T> writeDelegate, TCollection? value)
+    public void WriteCollection<T, TCollection>(WriteDelegate<T> writeDelegate, TCollection? value)
       where TCollection : ICollection<T>
     {
       if (value == null)
