@@ -119,12 +119,25 @@ namespace JetBrains.Serialization
       /// </summary>
       public void WriteIntLength()
       {
-        *(int*) Data = myWriter.Count - myStart - sizeof(int);
+        *((int*)Data) = myWriter.Count - myStart - sizeof(int);
       }
 
       public void WriteIntLength(int length)
       {
-        *(int*) Data = length;
+        *((int*)Data) = length;
+      }
+
+      public void FinishRawWrite(int bytesWritten)
+      {
+        if (bytesWritten <= 0)
+          throw new ArgumentOutOfRangeException(nameof(bytesWritten));
+
+        var finalPtr = myWriter.myStartPtr + myStart + bytesWritten;
+        if (myWriter.myPtr <= finalPtr)
+          throw new ArgumentOutOfRangeException(nameof(bytesWritten), "Overflow, allocation is smaller then bytes written");
+
+        myWriter.myPtr = finalPtr;
+        myWriter.myCount = myStart + bytesWritten;
       }
     }
 

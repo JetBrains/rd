@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
-using JetBrains.Diagnostics;
-#if NET472
-using System;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-#endif
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using JetBrains.Annotations;
 using JetBrains.Serialization;
 using NUnit.Framework;
+#if NET472
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
+using JetBrains.Diagnostics;
+#endif
 
 namespace Test.Lifetimes.Serialization
 {
@@ -78,6 +80,62 @@ namespace Test.Lifetimes.Serialization
       Assert.Null(reader.ReadCollection(UnsafeReader.StringDelegate, n => new List<string>(n)));
       CollectionAssert.AreEqual(new List<string>(), reader.ReadCollection(UnsafeReader.StringDelegate, n => new List<string>(n)));
       CollectionAssert.AreEqual(new List<string> {"d", "e"}, reader.ReadCollection(UnsafeReader.StringDelegate, n => new List<string>(n)));
+    }
+
+    [Test]
+    [TestCase("")]
+    [TestCase("x")]
+    [TestCase("hello")]
+    [TestCase("привет")]
+    [TestCase("one два three")]
+    public void TestUtf8Encoding([NotNull] string value)
+    {
+      var encoding = Encoding.UTF8;
+
+      byte[] bytes;
+      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+      {
+        var maxByteCount = encoding.GetMaxByteCount(value.Length);
+        var bookmark = cookie.Writer.Alloc(maxByteCount + sizeof(int));
+
+        int bytesWritten;
+        fixed (char* sourcePtr = value)
+        {
+          bytesWritten = encoding.GetBytes(
+            sourcePtr, charCount: value.Length, bytes: bookmark.Data + sizeof(int), maxByteCount);
+
+          *((int*)bookmark.Data) = bytesWritten;
+
+          bytesWritten += sizeof(int);
+          bookmark.FinishRawWrite(bytesWritten);
+        }
+
+        cookie.Writer.WriteUInt32(0xDEADBEEF);
+        bytes = cookie.CloneData();
+
+        Assert.AreEqual(bytes.Length, bytesWritten + sizeof(uint));
+      }
+
+      fixed (byte* ptr = bytes)
+      {
+        var reader = UnsafeReader.CreateReader(ptr, bytes.Length);
+
+        var bytesCount = reader.ReadInt32();
+
+#if NET35
+        var start = reader.ReadRaw(bytesCount);
+        var buffer = new byte[bytesCount];
+        System.Runtime.InteropServices.Marshal.Copy((IntPtr) start, buffer, 0, length: bytesCount);
+        var value2 = encoding.GetString(buffer);
+#else
+        var startPtr = reader.ReadRaw(bytesCount);
+        var value2 = encoding.GetString(startPtr, bytesCount);
+#endif
+
+        var marker = reader.ReadUInt32();
+        Assert.AreEqual(marker, 0xDEADBEEF);
+        Assert.AreEqual(value, value2);
+      }
     }
 
 #if NET472
