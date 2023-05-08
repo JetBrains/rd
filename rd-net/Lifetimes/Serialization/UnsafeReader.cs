@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
 using JetBrains.Util.Internal;
+// ReSharper disable BuiltInTypeReferenceStyle
+// ReSharper disable ArrangeRedundantParentheses
 
 namespace JetBrains.Serialization
 {
@@ -16,31 +17,30 @@ namespace JetBrains.Serialization
   /// 
   /// </summary>
   //Can't be struct because internal state must change during methods invocation
+  [PublicAPI]
   public unsafe class UnsafeReader
-  {    
+  {
     private byte* myPtr;
 
     private byte* myInitialPtr;
     private int myMaxlen;
 
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static UnsafeReader CreateReader(byte* ptr, int len)
     {
-      UnsafeReader reader = new UnsafeReader();
+      var reader = new UnsafeReader();
       reader.Reset(ptr, len);
       return reader;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void With(byte[] data, Action<UnsafeReader> action)
     {
       fixed (byte* resptr = data)
+      {
         action(CreateReader(resptr, data.Length));
+      }
     }
 
     //allows to reuse this instance (and get rid of boxing)
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public UnsafeReader Reset(byte* ptr, int len)
     {
       myInitialPtr = ptr;
@@ -62,6 +62,7 @@ namespace JetBrains.Serialization
     {
       // NOTE: having this makes it possible for JIT to just drop the remaining method's body when assertions are disabled
       if (!Mode.IsAssertion) return;
+
       var alreadyRead = (int)(myPtr - myInitialPtr);
       if (alreadyRead + size > myMaxlen)
       {
@@ -71,12 +72,11 @@ namespace JetBrains.Serialization
 
     private void ThrowOutOfRange(int size, int alreadyRead)
     {
-      Assertion.Fail("Can't read from unsafe reader: alreadyRead={0} size={1} maxlen={2}. " +
-                                "Usually this happens when you change serialization format and forget to clear previous entries from disk. " +
-                                "For example, you forgot to advance persistent caches version - do this in 'SolutionCaches' and 'ShellCaches' classes)."
-        , alreadyRead, size, myMaxlen);
+      Assertion.Fail(
+        "Can't read from unsafe reader: alreadyRead={0} size={1} maxlen={2}. " +
+        "Usually this happens when you change serialization format and forget to clear previous entries from disk. " +
+        "For example, you forgot to advance persistent caches version - do this in 'SolutionCaches' and 'ShellCaches' classes).", alreadyRead, size, myMaxlen);
     }
-
 
     #region Primitive readers
 
@@ -106,10 +106,18 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public sbyte ReadSByte()
+    {
+      AssertLength(sizeof(sbyte));
+
+      return (sbyte) *(myPtr++);
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Guid ReadGuid()
     {
       var array = ReadArray(reader => reader.ReadByte());
-      return new Guid(array);
+      return new Guid(array!);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -174,12 +182,6 @@ namespace JetBrains.Serialization
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public Int16 ReadShort() //alias
-    {
-      return ReadInt16();
-    }
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Int32 ReadInt32()
     {
       AssertLength(sizeof(Int32));
@@ -188,31 +190,36 @@ namespace JetBrains.Serialization
       myPtr = (byte*)(x + 1);
       return *x;
     }
-    
-    public static UInt16 ReadUInt16FromBytes(byte[] bytes)
+
+    public int Read7BitEncodedInt32()
     {
-      fixed (byte* bb = bytes)
-        return *(UInt16*) bb;
+      // read out an Int32 7 bits at a time
+      var count = 0;
+      var shift = 0;
+      byte b;
+      do
+      {
+        if (shift == 5 * 7)
+          throw new FormatException();
+
+        b = ReadByte();
+        count |= (b & 0b1111111) << shift;
+        shift += 7;
+      } while ((b & 0b10000000) != 0);
+
+      return count;
     }
 
-    public static Int32 ReadInt32FromBytes(byte[] bytes, int offset = 0)
+    public int ReadOftenSmallPositiveInt32()
     {
-      fixed (byte* bb = bytes)
-        return *(Int32*) (bb + offset);
+      var byteValue = ReadByte();
+      if (byteValue == byte.MaxValue)
+      {
+        return ReadInt32();
+      }
+
+      return byteValue;
     }
-    
-    public static Int64 ReadInt64FromBytes(byte[] bytes, int offset = 0)
-    {
-      fixed (byte* bb = bytes)
-        return *(Int64*) (bb + offset);
-    }
-    
-    public static UInt64 ReadUInt64FromBytes(byte[] bytes)
-    {
-      fixed (byte* bb = bytes)
-        return *(UInt64*) bb;
-    }
-    
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Int64 ReadInt64()
@@ -223,20 +230,6 @@ namespace JetBrains.Serialization
       myPtr = (byte*)(x + 1);
       return *x;
     }
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public int ReadInt()
-    {
-      return ReadInt32();
-    }
-
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public long ReadLong()
-    {
-      return ReadInt64();
-    }
-
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public UInt16 ReadUInt16()
@@ -273,7 +266,7 @@ namespace JetBrains.Serialization
     {
       return new DateTime(ReadLong(), DateTimeKind.Utc);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public TimeSpan ReadTimeSpan()
     {
@@ -283,27 +276,29 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public Uri ReadUri()
     {
-      return new Uri(Uri.UnescapeDataString(ReadString()), UriKind.RelativeOrAbsolute);
+      var uri = ReadString();
+      return new Uri(Uri.UnescapeDataString(uri!), UriKind.RelativeOrAbsolute);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public string? ReadString()
     {
-      int len = ReadInt32();
+      var len = ReadInt32();
 
       if (len < 0) return null;
-      if (len == 0) return string.Empty;      
-      
+      if (len == 0) return string.Empty;
+
       var raw = (char*) ReadRaw(len * sizeof(char));
       if (raw == (char*)0)
         throw new InvalidOperationException($"Bad memory (null) after reading string of size {len:N}");
-        
+
       var res = new string(raw, 0, len);
       return res;
     }
-    #endregion
 
+    #endregion
     #region Intern
+
     public interface IRawStringIntern
     {
       string Intern(RawString raw);
@@ -321,14 +316,13 @@ namespace JetBrains.Serialization
       }
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public string? ReadStringInterned(IRawStringIntern intern)
     {
-      int len = ReadInt32();
+      var len = ReadInt32();
 
       if (len < 0) return null;
       if (len == 0) return string.Empty;
-      
+
       var raw = (char*) ReadRaw(len * sizeof(char));
       if (raw == (char*)0)
         throw new InvalidOperationException($"Bad memory (null) after reading string of size {len:N}");
@@ -336,11 +330,12 @@ namespace JetBrains.Serialization
       var res = intern.Intern(new RawString {Length = len, Data = raw});
       return res;
     }
+
     #endregion
-
-
     #region Delegates
+
     public delegate T ReadDelegate<out T>(UnsafeReader reader);
+
     public static readonly ReadDelegate<bool> BoolDelegate = reader => reader.ReadBoolean();
     public static readonly ReadDelegate<bool> BooleanDelegate = reader => reader.ReadBoolean(); //alias
     public static readonly ReadDelegate<byte> ByteDelegate = reader => reader.ReadByte();
@@ -367,26 +362,26 @@ namespace JetBrains.Serialization
     public static readonly ReadDelegate<string?[]?> StringArrayDelegate = reader => reader.ReadArray(StringDelegate);
 
     #endregion
-
-
     #region Collection readers
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public T?[]? ReadArray<T>(ReadDelegate<T?> readDelegate)
     {
-      int len = ReadInt32();
+      var len = ReadInt32();
       if (len < 0) return null;
       if (len == 0) return EmptyArray<T>.Instance;
 
       var res = new T?[len];
-      for (int i = 0; i < len; i++) res[i] = readDelegate(this);
+      for (var index = 0; index < len; index++)
+      {
+        res[index] = readDelegate(this);
+      }
+
       return res;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public int[]? ReadIntArray()
     {
-      int len = ReadInt32();
+      var len = ReadInt32();
       if (len < 0) return null;
       if (len == 0) return EmptyArray<int>.Instance;
 
@@ -396,13 +391,13 @@ namespace JetBrains.Serialization
         var size = len * sizeof(int);
         Memory.CopyMemory(ReadRaw(size), (byte*)mem, size);
       }
+
       return res;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public byte[]? ReadByteArray()
     {
-      int len = ReadInt32();
+      var len = ReadInt32();
       if (len < 0) return null;
       if (len == 0) return EmptyArray<byte>.Instance;
 
@@ -411,83 +406,107 @@ namespace JetBrains.Serialization
       {
         Memory.CopyMemory(ReadRaw(len), mem, len);
       }
+
       return res;
     }
-
 
     /// <summary>
     /// Non optimal collection serialization. One can serialize internal structure (eg. array) instead.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <typeparam name="TCol"></typeparam>
+    /// <typeparam name="TCollection"></typeparam>
     /// <param name="readDelegate"></param>
     /// <param name="constructor"></param>
     /// <returns></returns>
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public TCol? ReadCollection<T, TCol>(ReadDelegate<T> readDelegate, Func<int, TCol> constructor) where TCol : ICollection<T>
+    public TCollection? ReadCollection<T, TCollection>(ReadDelegate<T> readDelegate, Func<int, TCollection> constructor) where TCollection : ICollection<T>
     {
-      int count = ReadInt32();
-      if (count < 0) return default(TCol);
+      var count = ReadInt32();
+      if (count < 0) return default;
 
-      TCol col = constructor(count);
-      for (int i = 0; i < count; i++)
+      var col = constructor(count);
+      for (var index = 0; index < count; index++)
       {
         col.Add(readDelegate(this));
       }
+
       return col;
     }
 
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public TDict? ReadDictionary<TK, TV, TDict>(ReadDelegate<TK> readKeyDelegate, ReadDelegate<TV> readValueDelegate,
-      Func<int, TDict> constructor) where TDict : IDictionary<TK, TV>
+    public TDictionary? ReadDictionary<TKey, TValue, TDictionary>(
+      ReadDelegate<TKey> readKeyDelegate, ReadDelegate<TValue> readValueDelegate, Func<int, TDictionary> constructor)
+      where TDictionary : IDictionary<TKey, TValue>
     {
-      int count = ReadInt32();
-      if (count < 0) return default(TDict);
+      var count = ReadInt32();
+      if (count < 0) return default;
 
-      TDict dict = constructor(count);
-      for (int i = 0; i < count; i++)
+      var dict = constructor(count);
+      for (var index = 0; index < count; index++)
       {
         dict[readKeyDelegate(this)] = readValueDelegate(this);
       }
+
       return dict;
     }
 
     #endregion
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public bool ReadNullness()
-    {
-      return ReadBoolean();
-    }
+    public bool ReadNullness() => ReadBoolean();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public bool ReadBool()
-    {
-      return ReadBoolean();
-    }
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public byte ReadUByte()
-    {
-      return ReadByte();
-    }
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public ushort ReadUShort()
-    {
-      return ReadUInt16();
-    }
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public uint ReadUInt()
-    {
-      return ReadUInt32();
-    }
+    public bool ReadBool() => ReadBoolean();
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public ulong ReadULong()
+    public Int16 ReadShort() => ReadInt16();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public int ReadInt() => ReadInt32();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public long ReadLong() => ReadInt64();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public byte ReadUByte() => ReadByte();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public ushort ReadUShort() => ReadUInt16();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public uint ReadUInt() => ReadUInt32();
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public ulong ReadULong() => ReadUInt64();
+
+    public static UInt16 ReadUInt16FromBytes(byte[] bytes)
     {
-      return ReadUInt64();
+      fixed (byte* bb = bytes)
+      {
+        return *(UInt16*) bb;
+      }
+    }
+
+    public static Int32 ReadInt32FromBytes(byte[] bytes, int offset = 0)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(Int32*) (bb + offset);
+      }
+    }
+
+    public static Int64 ReadInt64FromBytes(byte[] bytes, int offset = 0)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(Int64*) (bb + offset);
+      }
+    }
+
+    public static UInt64 ReadUInt64FromBytes(byte[] bytes)
+    {
+      fixed (byte* bb = bytes)
+      {
+        return *(UInt64*) bb;
+      }
     }
   }
 }
