@@ -23,6 +23,7 @@ namespace JetBrains.Rd
 
     public static RdContextBase Read(SerializationCtx ctx, UnsafeReader reader)
     {
+      var x = 1;
       return ctx.Serializers.Read<RdContextBase>(ctx, reader);
     }
 
