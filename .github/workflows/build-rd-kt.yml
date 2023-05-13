@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-10.15, windows-2019]
+        os: [macos-11, windows-2019]
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.github/gradle
       TEAMCITY_VERSION: 1 # temporary; to disable cross tests
