@@ -74,6 +74,11 @@ abstract class RdExtBase : RdReactiveBase() {
 
         //todo make it smarter
         for ((name, child) in bindableChildren) {
+            if (child is RdExtBase && child.parent == this) {
+                // Extensions can be created from extension listener above, in submitExtCreated,
+                // and they will be already bound at this point, so we should skip them
+                continue
+            }
             if (child is RdPropertyBase<*> && child.defaultValueChanged) {
                 child.localChange {
                     child.bind(lifetime, this, name)
