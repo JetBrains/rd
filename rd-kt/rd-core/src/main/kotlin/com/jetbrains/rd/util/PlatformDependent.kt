@@ -9,6 +9,9 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.io.use
 import kotlin.reflect.KClass
 
@@ -35,7 +38,14 @@ val eol : String = System.lineSeparator()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 object Sync {
-    inline fun <R: Any?> lock(obj: Any, acton: () -> R) = synchronized(obj, acton)
+    @OptIn(ExperimentalContracts::class)
+    inline fun <R: Any?> lock(obj: Any, acton: () -> R): R {
+        contract {
+            callsInPlace(acton, InvocationKind.EXACTLY_ONCE)
+        }
+
+        return synchronized(obj, acton)
+    }
     fun notifyAll(obj: Any) = (obj as Object).notifyAll()
     fun notify(obj: Any) = (obj as Object).notify()
     fun wait(obj: Any) = (obj as Object).wait()

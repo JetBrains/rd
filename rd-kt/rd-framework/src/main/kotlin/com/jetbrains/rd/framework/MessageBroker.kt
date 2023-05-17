@@ -4,7 +4,9 @@ import com.jetbrains.rd.framework.base.AllowBindingCookie
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.IRdWireableDispatchHelper
 import com.jetbrains.rd.framework.impl.ProtocolContexts
-import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.Queue
+import com.jetbrains.rd.util.Sync
+import com.jetbrains.rd.util.blockingPutUnique
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -12,6 +14,7 @@ import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
+import com.jetbrains.rd.util.trace
 
 class RdMessage (val id : RdId, val istream : AbstractBuffer)
 class MessageBroker(queueMessages: Boolean = false) : IPrintable {
@@ -28,12 +31,11 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
 
     fun startDeliveringMessages() {
         while (true) {
-            var queue: Queue<RdMessage>? = null
+            var queue: Queue<RdMessage>
             Sync.lock (lock) {
-                queue = unprocessedMessages
-                require(queue != null) { "Already started delivering messages" }
+                queue = requireNotNull(unprocessedMessages) { "Already started delivering messages" }
 
-                if (queue!!.size == 0)
+                if (queue.size == 0)
                 {
                     unprocessedMessages = null
                     return
@@ -42,7 +44,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
                 unprocessedMessages = Queue()
             }
 
-            for (rdMessage in queue!!) {
+            for (rdMessage in queue) {
                 dispatchImpl(rdMessage.id, rdMessage.istream)
             }
         }
