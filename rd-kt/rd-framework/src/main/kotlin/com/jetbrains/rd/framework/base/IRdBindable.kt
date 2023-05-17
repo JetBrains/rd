@@ -3,6 +3,7 @@
 package com.jetbrains.rd.framework.base
 
 import com.jetbrains.rd.framework.IIdentities
+import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -78,7 +79,7 @@ internal fun Any?.bindPolymorphic() {
     }
 }
 
-internal fun <T : IRdBindable> T?.bindTopLevel(lf: Lifetime, parent: IRdDynamic, name: String) {
+internal fun <T : IRdBindable> T?.bindTopLevel(lf: Lifetime, parent: IProtocol, name: String) {
     if (this == null)
         return
 
