@@ -145,8 +145,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
-    protected open fun assertBindingThread()
-    {
+    protected open fun assertBindingThread() {
         if (AllowBindingCookie.isBindNotAllowed) {
             val proto = protocol ?: return
             if (proto.lifetime.isNotAlive)

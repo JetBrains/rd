@@ -5,6 +5,7 @@ import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
 import javax.management.openmbean.InvalidOpenTypeException
@@ -35,10 +36,11 @@ abstract class RdExtBase : RdReactiveBase() {
     }
 
     override fun unbind() {
+        customSchedulerWrapper = null
         bindLifetime = null
     }
 
-    private val localCustomScheduler = ThreadLocal<CustomExtScheduler>()
+    private var customSchedulerWrapper: CustomExtScheduler? = null
 
     protected open val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 
@@ -48,7 +50,11 @@ abstract class RdExtBase : RdReactiveBase() {
     protected fun setCustomScheduler(scheduler: IScheduler) {
         require(hasCustomScheduler) { "Ext: ${this::javaClass.name} doesn't support custom schedulers" }
 
-        val extScheduler = localCustomScheduler.get()
+        val extScheduler = customSchedulerWrapper
+        if (extScheduler == null) {
+            if (bindLifetime?.isNotAlive != false)
+                return
+        }
         requireNotNull(extScheduler) { "Custom scheduler can only be set from ext listener only" }
         extScheduler.setScheduler(scheduler)
     }
@@ -66,7 +72,7 @@ abstract class RdExtBase : RdReactiveBase() {
             val scheduler = when (extThreading) {
                 ExtThreadingKind.Default -> parentProtocol.scheduler
                 ExtThreadingKind.CustomScheduler -> CustomExtScheduler()
-                ExtThreadingKind.AllowBackgroundCreation ->  ExtSchedulerWrapper(parentProtocol.scheduler)
+                ExtThreadingKind.AllowBackgroundCreation -> ExtSchedulerWrapper(parentProtocol.scheduler)
             }
 
             val signal = createExtSignal()
@@ -83,17 +89,14 @@ abstract class RdExtBase : RdReactiveBase() {
                 super.init(lifetime, proto, ctx)
 
                 val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash, this)
-                Signal.nonPriorityAdviseSection {
-                    try {
-                        if (scheduler is CustomExtScheduler) {
-                            assert(localCustomScheduler.get() == null)
-                            localCustomScheduler.set(scheduler)
-                        }
 
-                        (parentProtocol as Protocol).submitExtCreated(info)
-                    } finally {
-                        localCustomScheduler.set(null)
-                    }
+                if (scheduler is CustomExtScheduler) {
+                    assert(customSchedulerWrapper == null)
+                    customSchedulerWrapper = scheduler
+                }
+
+                Signal.nonPriorityAdviseSection {
+                    (parentProtocol as Protocol).submitExtCreated(info)
                 }
             }
 
@@ -123,6 +126,7 @@ abstract class RdExtBase : RdReactiveBase() {
                 extWire.realWire.sendState(ExtState.ReceivedCounterpart)
                 extWire.connected.value = true
             }
+
             ExtState.ReceivedCounterpart -> extWire.connected.set(true) //don't set anything if already set
             ExtState.Disconnected -> extWire.connected.set(false)
 
@@ -149,7 +153,8 @@ abstract class RdExtBase : RdReactiveBase() {
             }
         }
     }
-    private inline fun Logger.traceMe (message:() -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
+
+    private inline fun Logger.traceMe(message: () -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
 
     override fun initBindableFields(lifetime: Lifetime) {
         for ((_, child) in bindableChildren) {
@@ -157,8 +162,7 @@ abstract class RdExtBase : RdReactiveBase() {
                 child.localChange {
                     child.bind()
                 }
-            }
-            else {
+            } else {
                 child?.bindPolymorphic()
             }
         }
@@ -244,7 +248,7 @@ internal class CustomExtScheduler : ExtSchedulerBase() {
             require(!::realScheduler.isInitialized)
 
             val localQueue = queue
-            require(localQueue != null)
+            require(localQueue != null) { "Scheduler already set" }
 
             while (true) {
                 val acton = localQueue.removeFirstOrNull()
@@ -266,7 +270,7 @@ internal class CustomExtScheduler : ExtSchedulerBase() {
 //todo multithreading
 class ExtWire : IWire {
 
-    internal lateinit var realWire : IWire
+    internal lateinit var realWire: IWire
 
     override fun advise(lifetime: Lifetime, entity: IRdWireable) = realWire.advise(lifetime, entity)
 
@@ -279,6 +283,7 @@ class ExtWire : IWire {
 
     @Suppress("ArrayInDataClass")
     data class QueueItem(val id: RdId, val msgSize: Int, val payoad: ByteArray, val context: List<Pair<RdContext<Any>, Any?>>)
+
     override val connected: Property<Boolean> = Property(false)
     override val heartbeatAlive
         get() = realWire.heartbeatAlive
@@ -332,7 +337,7 @@ class ExtWire : IWire {
                     else
                         contexts.registeredContexts.map { (it as RdContext<Any>) to it.value })
                 )
-                if(!contexts.isSendWithoutContexts) {
+                if (!contexts.isSendWithoutContexts) {
                     // trigger value set addition here to replicate normal wire behavior
                     contexts.registeredContexts.forEach { context ->
                         contexts.getContextHandler(context).registerValueInValueSet()
