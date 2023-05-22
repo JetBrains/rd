@@ -3,13 +3,12 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.collections.SynchronizedMap
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
-import java.util.Collections
 import kotlin.assert
 
 
@@ -56,7 +55,7 @@ class RdMap<K : Any, V : Any> private constructor(
         super.preInit(lifetime, proto)
 
         if (!optimizeNested) {
-            val definitions = Collections.synchronizedMap(mutableMapOf<K, LifetimeDefinition?>())
+            val definitions = SynchronizedMap<K, LifetimeDefinition?>()
 
             for ((key, value) in this) {
                 if (value != null) {
@@ -257,7 +256,7 @@ class RdMap<K : Any, V : Any> private constructor(
     }
 
 
-    constructor(keySzr: ISerializer<K> = Polymorphic(), valSzr: ISerializer<V> = Polymorphic()) : this(keySzr, valSzr, ViewableMap(Collections.synchronizedMap(LinkedHashMap<K, V>()) /*to have thread=safe print*/))
+    constructor(keySzr: ISerializer<K> = Polymorphic(), valSzr: ISerializer<V> = Polymorphic()) : this(keySzr, valSzr, ViewableMap(SynchronizedMap() /*to have thread=safe print*/))
 
 
 

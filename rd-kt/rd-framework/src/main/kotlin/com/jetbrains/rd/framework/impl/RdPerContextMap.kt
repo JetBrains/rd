@@ -2,18 +2,17 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.util.collections.SynchronizedMap
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.AddRemove
 import com.jetbrains.rd.util.reactive.IViewableMap
 import com.jetbrains.rd.util.reactive.ViewableMap
-import java.util.*
 import kotlin.collections.ArrayDeque
-import kotlin.collections.LinkedHashMap
 
 class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override val context: RdContext<K>, val valueFactory: (Boolean) -> V, private val internalMap: ViewableMap<K, V>) : RdReactiveBase(), IPerContextMap<K, V>, IViewableMap<K, V> by internalMap {
-    constructor(context: RdContext<K>, valueFactory: (Boolean) -> V) : this(context, valueFactory, ViewableMap(Collections.synchronizedMap(LinkedHashMap())))
+    constructor(context: RdContext<K>, valueFactory: (Boolean) -> V) : this(context, valueFactory, ViewableMap(SynchronizedMap()))
 
     override fun deepClone(): IRdBindable {
         return RdPerContextMap(context, valueFactory)

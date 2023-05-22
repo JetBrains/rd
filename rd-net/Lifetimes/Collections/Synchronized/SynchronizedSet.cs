@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
 
 namespace JetBrains.Collections.Synchronized
 {
@@ -29,30 +30,16 @@ namespace JetBrains.Collections.Synchronized
     ISet<T>, IReadOnlyCollection<T>
 #endif
   {
-    private readonly HashSet<T> mySet;
+    private HashSet<T> mySet;
+    private readonly object myLocker = new();
+    private int myIsUnderReadingCount;
 
     public SynchronizedSet() : this(null, null) {}
     public SynchronizedSet(IEnumerable<T> values) : this(values, null) {}
     public SynchronizedSet(IEqualityComparer<T> comparer) : this(null, comparer) {}
     public SynchronizedSet(IEnumerable<T>? values, IEqualityComparer<T>? comparer)
     {
-      mySet = new HashSet<T>(comparer);
-      if (values == null) return;
-      
-      foreach (var item in values)
-        mySet.Add(item);
-    }
-
-    private T[] CopyToArray()
-    {
-      var clone = new T[mySet.Count];
-      var i = 0;
-      lock (mySet)
-      {
-        foreach (var val in mySet)
-          clone[i++] = val;
-      }
-      return clone;
+      mySet = values == null ? new HashSet<T>(comparer) : new HashSet<T>(values, comparer);
     }
 
     /// <summary>
@@ -61,13 +48,29 @@ namespace JetBrains.Collections.Synchronized
     /// <returns></returns>
     public IEnumerator<T> GetEnumerator()
     {
-      T[] clone;
-      lock (mySet)
+      HashSet<T> set;
+      lock (myLocker)
       {
-        clone = CopyToArray();
+        set = mySet;
+        myIsUnderReadingCount++;
       }
 
-      return ((IEnumerable<T>) clone).GetEnumerator();
+      try
+      {
+        foreach (var pair in set)
+          yield return pair;
+      }
+      finally
+      {
+        lock (myLocker)
+        {
+          if (mySet == set) 
+          {
+            var count = myIsUnderReadingCount--;
+            Assertion.Assert(count >= 0);
+          }
+        }
+      }
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -77,9 +80,9 @@ namespace JetBrains.Collections.Synchronized
 
     public bool Add(T item)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        return mySet.Add(item);
+        return GetOrCloneSetNoLock().Add(item);
       }
     }
 
@@ -90,15 +93,15 @@ namespace JetBrains.Collections.Synchronized
 
     public void Clear()
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        mySet.Clear();
+        GetOrCloneSetNoLock().Clear();
       }
     }
 
     public bool Contains(T item)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.Contains(item);
       }
@@ -106,7 +109,7 @@ namespace JetBrains.Collections.Synchronized
 
     public void CopyTo(T[] array, int arrayIndex)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         // Linq calls on ConcurrentSet are not thread-safe
         // E.g., Enumerable.ToList calls List`1.ctor which contains the following race:
@@ -115,15 +118,16 @@ namespace JetBrains.Collections.Synchronized
         //   collection.CopyTo(_items, 0);
         // In order to prevent IndexOutOfRangeException for this code,
         // we shouldn't copy more elements that we have in the array.
-        mySet.CopyTo(array, arrayIndex, Math.Min(mySet.Count, array.Length - arrayIndex));
+        var set = mySet;
+        set.CopyTo(array, arrayIndex, Math.Min(set.Count, array.Length - arrayIndex));
       }
     }
 
     public bool Remove(T item)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        return mySet.Remove(item);
+        return GetOrCloneSetNoLock().Remove(item);
       }
     }
 
@@ -131,7 +135,7 @@ namespace JetBrains.Collections.Synchronized
     {
       get
       {
-        lock (mySet)
+        lock(myLocker)
         {
           return mySet.Count;
         }
@@ -143,48 +147,48 @@ namespace JetBrains.Collections.Synchronized
 #if !NET35
     bool ISet<T>.Add(T item)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        return mySet.Add(item);
+        return GetOrCloneSetNoLock().Add(item);
       }
     }
 #endif
 
     public void UnionWith(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        mySet.UnionWith(other);
+        GetOrCloneSetNoLock().UnionWith(other);
       }
     }
 
     public void IntersectWith(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        mySet.IntersectWith(other);
+        GetOrCloneSetNoLock().IntersectWith(other);
       }
     }
 
     public void ExceptWith(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        mySet.ExceptWith(other);
+        GetOrCloneSetNoLock().ExceptWith(other);
       }
     }
 
     public void SymmetricExceptWith(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        mySet.SymmetricExceptWith(other);
+        GetOrCloneSetNoLock().SymmetricExceptWith(other);
       }
     }
 
     public bool IsSubsetOf(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.IsSubsetOf(other);
       }
@@ -192,7 +196,7 @@ namespace JetBrains.Collections.Synchronized
 
     public bool IsSupersetOf(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.IsSupersetOf(other);
       }
@@ -200,7 +204,7 @@ namespace JetBrains.Collections.Synchronized
 
     public bool IsProperSupersetOf(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.IsProperSupersetOf(other);
       }
@@ -208,7 +212,7 @@ namespace JetBrains.Collections.Synchronized
 
     public bool IsProperSubsetOf(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.IsProperSubsetOf(other);
       }
@@ -216,7 +220,7 @@ namespace JetBrains.Collections.Synchronized
 
     public bool Overlaps(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.Overlaps(other);
       }
@@ -224,34 +228,57 @@ namespace JetBrains.Collections.Synchronized
 
     public bool SetEquals(IEnumerable<T> other)
     {
-      lock (mySet)
+      lock(myLocker)
       {
         return mySet.SetEquals(other);
       }
     }
 
-#if !NET35
-    public IReadOnlyList<T> ExtractAll()
+    public T[] ExtractAll()
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        var elements = CopyToArray();
-        mySet.Clear();
+        var set = GetOrCloneSetNoLock();
+        var elements = CopyToArray(set);
+        set.Clear();
         return elements;
       }
+    
+      static T[] CopyToArray(HashSet<T> set)
+      {
+        var clone = new T[set.Count];
+        var i = 0;
+        foreach (var val in set)
+          clone[i++] = val;
+        return clone;
+      }
     }
-#endif
     
     public T? ExtractOneOrDefault()
     {
-      lock (mySet)
+      lock(myLocker)
       {
-        if (mySet.Count == 0) return default;
+        var set = GetOrCloneSetNoLock();
+        if (set.Count == 0) return default;
 
-        var item = mySet.First();
-        mySet.Remove(item);
+        var item = set.First();
+        set.Remove(item);
         return item;
       }
+    }
+    
+    private HashSet<T> GetOrCloneSetNoLock()
+    {
+      var map = mySet;
+      if (myIsUnderReadingCount > 0)
+      {
+        map = new HashSet<T>(map);
+        myIsUnderReadingCount = 0;
+        mySet = map;
+        return map;
+      }
+
+      return map;
     }
   }
 }

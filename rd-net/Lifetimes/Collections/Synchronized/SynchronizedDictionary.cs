@@ -1,6 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
+using JetBrains.Diagnostics;
+using JetBrains.Util.Internal;
 
 namespace JetBrains.Collections.Synchronized
 {
@@ -11,9 +15,12 @@ namespace JetBrains.Collections.Synchronized
   /// </summary>
   /// <typeparam name="TK"></typeparam>
   /// <typeparam name="TV"></typeparam>
-  [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>
+  [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>, ICollection<TK>
   {
-    private readonly IDictionary<TK, TV> myImpl;
+    private Dictionary<TK, TV> myImpl;
+    private SynchronizedValues? myValues;
+    private readonly object myLocker = new();
+    private int myIsUnderReadingCount;
 
     public SynchronizedDictionary(IEqualityComparer<TK>? comparer = null)
     {
@@ -31,12 +38,29 @@ namespace JetBrains.Collections.Synchronized
     /// <returns></returns>
     public IEnumerator<KeyValuePair<TK, TV>> GetEnumerator()
     {
-      var copy = new List<KeyValuePair<TK, TV>>();
-      lock (myImpl)
+      Dictionary<TK, TV> map;
+      lock (myLocker)
       {
-        copy.AddRange(myImpl);
+        map = myImpl;
+        myIsUnderReadingCount++;
       }
-      return copy.GetEnumerator();
+
+      try
+      {
+        foreach (var pair in map)
+          yield return pair;
+      }
+      finally
+      {
+        lock (myLocker)
+        {
+          if (myImpl == map) 
+          {
+            var count = myIsUnderReadingCount--;
+            Assertion.Assert(count >= 0);
+          }
+        }
+      }
     }
     
     
@@ -45,94 +69,187 @@ namespace JetBrains.Collections.Synchronized
       return GetEnumerator();
     }
 
-    
-    public void Add(KeyValuePair<TK, TV> item)
+
+    void ICollection<KeyValuePair<TK, TV>>.Add(KeyValuePair<TK, TV> item)
     {
-      lock(myImpl)
-        myImpl.Add(item);
+      lock (myLocker)
+      {
+        var map = (IDictionary<TK, TV>)GetOrCloneMapNoLock();
+        map.Add(item);
+      }
     }
 
     
     public void Clear()
     {
-      lock(myImpl)
-        myImpl.Clear();
+      lock(myLocker)
+        GetOrCloneMapNoLock().Clear();
     }
 
-    
-    public bool Contains(KeyValuePair<TK, TV> item)
+
+    bool ICollection<KeyValuePair<TK, TV>>.Contains(KeyValuePair<TK, TV> item)
     {
-      lock(myImpl)
-        return myImpl.Contains(item);
+      lock(myLocker)
+      {
+        var map = (IDictionary<TK, TV>)myImpl;
+        return map.Contains(item);
+      }
     }
 
-    
-    public void CopyTo(KeyValuePair<TK, TV>[] array, int arrayIndex)
+
+    void ICollection<KeyValuePair<TK, TV>>.CopyTo(KeyValuePair<TK, TV>[] array, int arrayIndex)
     {
-      lock(myImpl)
-        myImpl.CopyTo(array, arrayIndex);
+      lock (myLocker)
+      {
+        var map = (IDictionary<TK, TV>)myImpl;
+        map.CopyTo(array, arrayIndex);
+      }
     }
 
-    
-    public bool Remove(KeyValuePair<TK, TV> item)
+
+    bool ICollection<KeyValuePair<TK, TV>>.Remove(KeyValuePair<TK, TV> item)
     {
-      lock(myImpl)
-        return myImpl.Remove(item);
+      lock (myLocker)
+      {
+        var map = (IDictionary<TK, TV>)GetOrCloneMapNoLock();
+        return map.Remove(item);
+      }
     }
 
-    
     public int Count
     {
-      get { lock(myImpl) return myImpl.Count; }
+      get { lock(myLocker) return myImpl.Count; }
     }
 
-    public bool IsReadOnly
-    {
-      get { lock(myImpl) return myImpl.IsReadOnly; }
-    }
+    bool ICollection<KeyValuePair<TK, TV>>.IsReadOnly => false;
 
-    
+
     public bool ContainsKey(TK key)
     {
-      lock(myImpl)
+      lock(myLocker)
         return myImpl.ContainsKey(key);
     }
 
     
     public void Add(TK key, TV value)
     {
-      lock(myImpl)
-        myImpl.Add(key, value);
+      lock(myLocker)
+        GetOrCloneMapNoLock().Add(key, value);
     }
 
     
     public bool Remove(TK key)
     {
-      lock(myImpl)
-        return myImpl.Remove(key);
+      lock(myLocker)
+        return GetOrCloneMapNoLock().Remove(key);
     }
 
     
     public bool TryGetValue(TK key, out TV value)
     {
-      lock(myImpl) return myImpl.TryGetValue(key, out value);
+      lock(myLocker) return myImpl.TryGetValue(key, out value);
     }
 
     public TV this[TK key]
     {
       
-      get { lock(myImpl) return myImpl[key]; }
-      set { lock(myImpl) myImpl[key] = value; }
+      get { lock(myLocker) return myImpl[key]; }
+      set { lock(myLocker) GetOrCloneMapNoLock()[key] = value; }
     }
 
-    public ICollection<TK> Keys
-    {
-      get { lock(myImpl) return myImpl.Keys; }
-    }
-
+    public ICollection<TK> Keys => this;
     public ICollection<TV> Values
     {
-      get { lock(myImpl) return myImpl.Values; }
+      get
+      {
+        var values = myValues;
+        if (values != null)
+          return values;
+
+        lock (myLocker)
+        {
+          values = myValues;
+          if (values != null)
+            return values;
+          
+          values = new SynchronizedValues(this);
+          Memory.VolatileWrite(ref myValues, values);
+        }
+
+        return values;
+      }
+    }
+    
+
+    private Dictionary<TK, TV> GetOrCloneMapNoLock()
+    {
+      var map = myImpl;
+      if (myIsUnderReadingCount > 0)
+      {
+        map = new Dictionary<TK, TV>(map);
+        myIsUnderReadingCount = 0;
+        myImpl = map;
+        return map;
+      }
+
+      return map;
+    }
+
+    void ICollection<TK>.Add(TK item) => throw new NotSupportedException();
+    
+    bool ICollection<TK>.Contains(TK item) => ContainsKey(item);
+    void ICollection<TK>.CopyTo(TK[] array, int arrayIndex)
+    {
+      lock (myLocker) 
+        myImpl.Keys.CopyTo(array, arrayIndex);
+    }
+
+    bool ICollection<TK>.IsReadOnly => true;
+
+    IEnumerator<TK> IEnumerable<TK>.GetEnumerator()
+    {
+      foreach (var pair in this)
+        yield return pair.Key;
+    }
+    
+    // Compiler Error CS0695 'generic type' cannot implement both 'generic interface' and 'generic interface' because they may unify for some type parameter substitutions
+    // so we need to write SynchronizedValues 
+    private class SynchronizedValues : ICollection<TV>
+    {
+      private readonly SynchronizedDictionary<TK, TV> myMap;
+
+      public SynchronizedValues(SynchronizedDictionary<TK, TV> map)
+      {
+        myMap = map;
+      }
+    
+      void ICollection<TV>.Add(TV item) => throw new NotSupportedException();
+      public bool Remove(TV item) => throw new NotSupportedException();
+      public void Clear() => throw new NotSupportedException();
+
+      bool ICollection<TV>.Contains(TV item)
+      {
+        lock (myMap.myLocker) 
+          return myMap.myImpl.Values.Contains(item);
+      }
+
+      void ICollection<TV>.CopyTo(TV[] array, int arrayIndex)
+      {
+        lock (myMap.myLocker) 
+          myMap.myImpl.Values.CopyTo(array, arrayIndex);
+      }
+
+      public int Count => myMap.Count;
+
+      bool ICollection<TV>.IsReadOnly => true;
+
+      public IEnumerator<TV> GetEnumerator()
+      {
+        foreach (var pair in myMap)
+          yield return pair.Value;
+      }
+
+      IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
   }
 }

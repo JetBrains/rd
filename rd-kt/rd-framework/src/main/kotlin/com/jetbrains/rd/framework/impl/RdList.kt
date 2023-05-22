@@ -2,10 +2,10 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.util.collections.SynchronizedList
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.parseFromOrdinal
 import com.jetbrains.rd.util.reactive.IMutableViewableList
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -13,7 +13,6 @@ import com.jetbrains.rd.util.reactive.IViewableList
 import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.trace
-import java.util.Collections
 
 
 @Suppress("UNUSED_PARAMETER")
@@ -61,7 +60,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
         if (!optimizeNested) {
 
-            val definitions = Collections.synchronizedList(mutableListOf<LifetimeDefinition?>())
+            val definitions = SynchronizedList<LifetimeDefinition?>()
 
             for (index in 0 until size) {
                 val item = this[index]
@@ -216,7 +215,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
         }
     }
 
-    constructor(valSzr: ISerializer<V> = Polymorphic<V>()) : this(valSzr, ViewableList(Collections.synchronizedList(mutableListOf<V>())))
+    constructor(valSzr: ISerializer<V> = Polymorphic<V>()) : this(valSzr, ViewableList(SynchronizedList()))
 
 
 

@@ -2,13 +2,13 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.util.collections.SynchronizedSet
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.print
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.trace
-import java.util.Collections
 
 @Suppress("UNUSED_PARAMETER")
 class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private val set: ViewableSet<T>)
@@ -63,7 +63,7 @@ class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, private va
         }
     }
 
-    constructor(valueSerializer: ISerializer<T> = Polymorphic<T>()) : this(valueSerializer, ViewableSet(Collections.synchronizedSet(LinkedHashSet<T>())))
+    constructor(valueSerializer: ISerializer<T> = Polymorphic<T>()) : this(valueSerializer, ViewableSet(SynchronizedSet()))
 
     override val size: Int
         get() = set.size

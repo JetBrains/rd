@@ -159,13 +159,13 @@ class ConcurrentViewableSet<T> : IViewableConcurrentSet<T> {
     private fun getOrCloneMapNoLock(): LinkedHashMap<T, LifetimeDefinition> {
         var localMap = map
         if (isUnderReadingCount > 0) {
-            localMap = LinkedHashMap(localMap);
-            isUnderReadingCount = 0;
-            map = localMap;
-            return localMap;
+            localMap = LinkedHashMap(localMap)
+            isUnderReadingCount = 0
+            map = localMap
+            return localMap
         }
 
-        return localMap;
+        return localMap
     }
 
     private class VersionedData<T>(val lifetime: Lifetime, val value: T, val version: Int)

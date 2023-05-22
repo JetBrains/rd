@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.util.Sync
+import com.jetbrains.rd.util.collections.SynchronizedList
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
@@ -12,7 +13,6 @@ import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.RName
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -41,7 +41,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
     override val protocol : IProtocol? get() = parent?.protocol
 
-    protected val bindableChildren : MutableList<Pair<String, Any?>> = ViewableList(Collections.synchronizedList(mutableListOf()))
+    protected val bindableChildren : MutableList<Pair<String, Any?>> = ViewableList(SynchronizedList())
 
     override val serializationContext: SerializationCtx? get() = parent?.serializationContext
 

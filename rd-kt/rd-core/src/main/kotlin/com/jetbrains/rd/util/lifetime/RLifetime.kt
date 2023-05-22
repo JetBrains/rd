@@ -205,7 +205,7 @@ class LifetimeDefinition constructor() : Lifetime() {
         private val mutexSlice = BitSlice.bool(statusSlice)
         private val logErrorAfterExecution = BitSlice.bool(mutexSlice)
         private val terminationTimeoutKindSlice = BitSlice.enum<LifetimeTerminationTimeoutKind>(logErrorAfterExecution)
-        private val allowTerminationUnderExecutionSlice = BitSlice.bool(terminationTimeoutKindSlice);
+        private val allowTerminationUnderExecutionSlice = BitSlice.bool(terminationTimeoutKindSlice)
 
 
         val Terminated : LifetimeDefinition = LifetimeDefinition().apply { id = "Terminated" }
