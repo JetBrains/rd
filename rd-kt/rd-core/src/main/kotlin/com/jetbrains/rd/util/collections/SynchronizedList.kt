@@ -25,25 +25,25 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun addAll(elements: Collection<T>): Boolean {
         return synchronized(locker) {
-            list.addAll(elements)
+            getOrCloneListNoLock().addAll(elements)
         }
     }
 
     override fun addAll(index: Int, elements: Collection<T>): Boolean {
         return synchronized(locker) {
-            list.addAll(index, elements)
+            getOrCloneListNoLock().addAll(index, elements)
         }
     }
 
     override fun add(index: Int, element: T) {
         return synchronized(locker) {
-            list.add(index, element)
+            getOrCloneListNoLock().add(index, element)
         }
     }
 
     override fun add(element: T): Boolean {
         return synchronized(locker) {
-            list.add(element)
+            getOrCloneListNoLock().add(element)
         }
     }
 
@@ -80,7 +80,7 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun listIterator(index: Int): MutableListIterator<T> {
         val snapshot = synchronized(locker) {
-            list.asSequence().drop(index).toList()
+            list.drop(index)
         }
 
         val iterator = snapshot.listIterator()
@@ -101,7 +101,7 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun removeAt(index: Int): T {
         return synchronized(locker) {
-            list.removeAt(index)
+            getOrCloneListNoLock().removeAt(index)
         }
     }
 
@@ -113,7 +113,7 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun set(index: Int, element: T): T {
         return synchronized(locker) {
-            list.set(index, element)
+            getOrCloneListNoLock().set(index, element)
         }
     }
 
@@ -125,13 +125,13 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun removeAll(elements: Collection<T>): Boolean {
         return synchronized(locker) {
-            list.removeAll(elements)
+            getOrCloneListNoLock().removeAll(elements)
         }
     }
 
     override fun remove(element: T): Boolean {
         return synchronized(locker) {
-            list.remove(element)
+            getOrCloneListNoLock().remove(element)
         }
     }
 
@@ -199,37 +199,39 @@ class SynchronizedList<T> : MutableList<T> {
             callsInPlace(getNewList, InvocationKind.AT_LEAST_ONCE)
         }
 
-        val localList = synchronized(locker) {
-            isUnderReadingCount++
-            list
-        }
-
-        try {
-            val newMap = getNewList(localList)
-
-            synchronized(locker) {
-                if (localList == list) {
-
-                    list = newMap
-                    assert(isUnderReadingCount > 0)
-                    isUnderReadingCount = 0
-
-                    return
-                }
+        while (true) {
+            val localList = synchronized(locker) {
+                isUnderReadingCount++
+                list
             }
 
-        } catch (e: Throwable) {
+            try {
+                val newList = getNewList(localList)
 
-            if (localList == list) {
                 synchronized(locker) {
                     if (localList == list) {
-                        val count = isUnderReadingCount--
-                        assert(count >= 0)
+
+                        list = newList
+                        assert(isUnderReadingCount > 0)
+                        isUnderReadingCount = 0
+
+                        return
                     }
                 }
-            }
 
-            throw e
+            } catch (e: Throwable) {
+
+                if (localList == list) {
+                    synchronized(locker) {
+                        if (localList == list) {
+                            val count = isUnderReadingCount--
+                            assert(count >= 0)
+                        }
+                    }
+                }
+
+                throw e
+            }
         }
     }
 

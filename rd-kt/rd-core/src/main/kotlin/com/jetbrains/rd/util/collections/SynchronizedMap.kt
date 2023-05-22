@@ -233,37 +233,39 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
             callsInPlace(getNewMap, InvocationKind.AT_LEAST_ONCE)
         }
 
-        val localMap = synchronized(locker) {
-            isUnderReadingCount++
-            map
-        }
-
-        try {
-            val newMap = getNewMap(localMap)
-
-            synchronized(locker) {
-                if (localMap == map) {
-
-                    map = newMap
-                    assert(isUnderReadingCount > 0)
-                    isUnderReadingCount = 0
-
-                    return
-                }
+        while (true) {
+            val localMap = synchronized(locker) {
+                isUnderReadingCount++
+                map
             }
 
-        } catch (e: Throwable) {
+            try {
+                val newMap = getNewMap(localMap)
 
-            if (localMap == map) {
                 synchronized(locker) {
                     if (localMap == map) {
-                        val count = isUnderReadingCount--
-                        assert(count >= 0)
+
+                        map = newMap
+                        assert(isUnderReadingCount > 0)
+                        isUnderReadingCount = 0
+
+                        return
                     }
                 }
-            }
 
-            throw e
+            } catch (e: Throwable) {
+
+                if (localMap == map) {
+                    synchronized(locker) {
+                        if (localMap == map) {
+                            val count = isUnderReadingCount--
+                            assert(count >= 0)
+                        }
+                    }
+                }
+
+                throw e
+            }
         }
     }
 
