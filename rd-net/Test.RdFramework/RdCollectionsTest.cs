@@ -35,6 +35,8 @@ public class RdCollectionsTest : RdFrameworkTestBase
     Register(RdProperty<RdProperty<RdSet<int>>>.Read, RdProperty<RdProperty<RdSet<int>>>.Write);
     Register(RdProperty<RdProperty<RdProperty<RdSet<int>>>>.Read, RdProperty<RdProperty<RdProperty<RdSet<int>>>>.Write);
     
+    Register(AsyncRdProperty<int>.Read, AsyncRdProperty<int>.Write);
+    
     return serializers;
 
     void Register<T>(CtxReadDelegate<T> read, CtxWriteDelegate<T> write)
@@ -395,6 +397,45 @@ public class RdCollectionsTest : RdFrameworkTestBase
 
     Assert.NotNull(serverProperty);
   }
+  
+  [Test]
+  public void AsyncPropertyTest()
+  {
+    ClientWire.AutoTransmitMode = true;
+    ServerWire.AutoTransmitMode = true;
+    
+    var serverTopLevelProperty = BindToServer(LifetimeDefinition.Lifetime,NewRdProperty<AsyncRdProperty<int>>(), ourKey);
+    serverTopLevelProperty.ValueCanBeNull = true;
+    var clientTopLevelProperty = BindToClient(LifetimeDefinition.Lifetime,NewRdProperty<AsyncRdProperty<int>>(), ourKey);
+    clientTopLevelProperty.ValueCanBeNull = true;
+
+    var clientAsyncProperty = NewAsyncRdProperty<int>();
+
+    AsyncRdProperty<int> serverAsyncProperty = null;
+
+    SetSchedulerActive(SchedulerKind.Server, () =>
+    {
+      serverTopLevelProperty.View(LifetimeDefinition.Lifetime, (mapLifetime, property) =>
+      {
+        serverAsyncProperty = property;
+      });
+    });
+
+    SetSchedulerActive(SchedulerKind.Client, () =>
+    {
+      clientTopLevelProperty.Value = clientAsyncProperty;
+    });
+    
+    PumpAllProtocols(true);
+
+    Assert.NotNull(serverAsyncProperty);
+    Assert.IsFalse(serverAsyncProperty.Maybe.HasValue);
+
+    clientAsyncProperty.Value = 123;
+    Assert.IsTrue(serverAsyncProperty.Maybe.HasValue);
+    Assert.AreEqual(123, serverAsyncProperty.Maybe.Value);
+  }
+
   
   
   private void PumpAllProtocols(bool transmitMessages)

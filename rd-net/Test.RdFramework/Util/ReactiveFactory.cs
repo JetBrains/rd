@@ -14,6 +14,11 @@ public static class ReactiveFactory
   {
     return new RdProperty<T>(Polymorphic<T>.Read, Polymorphic<T>.Write) { IsMaster = isMaster };
   }
+  
+  public static AsyncRdProperty<T> NewAsyncRdProperty<T>(bool isMaster = false)
+  {
+    return new AsyncRdProperty<T>(Polymorphic<T>.Read, Polymorphic<T>.Write) { IsMaster = isMaster };
+  }
 
   public static RdSignal<T> NewRdSignal<T>()
   {

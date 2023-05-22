@@ -47,11 +47,11 @@ interface IMutableAsyncProperty<T> : IAsyncProperty<T> {
     fun set(value: T)
 }
 
-class AsyncRdProperty<T>(val valueSerializer: ISerializer<T>) : IMutableAsyncProperty<T>, IRdBindable, IPrintable, IRdWireable {
+class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : IMutableAsyncProperty<T>, IRdBindable, IPrintable, IRdWireable {
 
     companion object : ISerializer<AsyncRdProperty<*>> {
 
-        fun <T : Any> write0(ctx: SerializationCtx, buffer: AbstractBuffer, prop: RdPropertyBase<T>, maybe: Maybe<T?>) {
+        fun <T : Any> write0(ctx: SerializationCtx, buffer: AbstractBuffer, prop: AsyncRdProperty<T>, maybe: Maybe<T?>) {
             prop.rdid.notNull().write(buffer)
             if (maybe.hasValue) {
                 buffer.writeBool(true)
@@ -65,7 +65,7 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T>) : IMutableAsyncPro
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): AsyncRdProperty<*> = read(ctx, buffer, Polymorphic())
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, property: AsyncRdProperty<*>) {
             synchronized(property.property) {
-                write0(ctx, buffer, property as RdPropertyBase<Any>, property.maybe)
+                write0(ctx, buffer, property as AsyncRdProperty<Any>, property.maybe)
             }
         }
 
@@ -83,14 +83,14 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T>) : IMutableAsyncPro
     private val property = Property<Maybe<T>>(Maybe.None)
     private val internalChange = AsyncSignal<T>()
 
-    constructor(defaultValue: T, valueSerializer: ISerializer<T>) : this(valueSerializer) {
+    constructor(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic()) : this(valueSerializer) {
         property.value = Maybe.Just(defaultValue)
     }
 
     init {
         property.advise(Lifetime.Eternal) {
             if (it.hasValue)
-            internalChange.fire(it.asNullable as T)
+                internalChange.fire(it.asNullable as T)
         }
     }
 
@@ -151,7 +151,7 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T>) : IMutableAsyncPro
             }) ?: return
         }
 
-        proto.wire.advise(lifetime, this);
+        proto.wire.advise(lifetime, this)
     }
 
     override fun bind() {

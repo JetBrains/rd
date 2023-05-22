@@ -2,10 +2,7 @@ package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.BindState
-import com.jetbrains.rd.framework.impl.RdList
-import com.jetbrains.rd.framework.impl.RdMap
-import com.jetbrains.rd.framework.impl.RdProperty
-import com.jetbrains.rd.framework.impl.RdSet
+import com.jetbrains.rd.framework.impl.*
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -23,6 +20,8 @@ class RdCollectionsTest : RdFrameworkTestBase() {
             register(RdProperty as ISerializer<RdProperty<RdSet<Int>?>>)
             register(RdProperty as ISerializer<RdProperty<RdProperty<RdSet<Int>?>>>)
             register(RdProperty as ISerializer<RdProperty<RdProperty<RdProperty<RdSet<Int>?>>>>)
+
+            register(AsyncRdProperty as ISerializer<AsyncRdProperty<Int>>)
         }
     }
 
@@ -342,6 +341,39 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         pumpAllProtocols(false)
 
         assertNotNull(serverProperty)
+    }
+
+    @Test
+    fun asyncPropertyTest() {
+
+        val serverTopLevelProperty = RdProperty<AsyncRdProperty<Int>?>(null)
+        val clientTopLevelProperty = RdProperty<AsyncRdProperty<Int>?>(null)
+
+        serverProtocol.bindStatic(serverTopLevelProperty, 1)
+        clientProtocol.bindStatic(clientTopLevelProperty, 1)
+
+        val clientAsyncProperty = AsyncRdProperty<Int>()
+
+        var serverAsyncProperty: AsyncRdProperty<Int>?  = null
+
+        setSchedulerActive(SchedulerKind.Server) {
+            serverTopLevelProperty.view(serverLifetime) { mapLifetime, property ->
+                serverAsyncProperty = property
+            }
+        }
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientTopLevelProperty.value = clientAsyncProperty
+        }
+
+        pumpAllProtocols(true)
+
+        assertNotNull(serverAsyncProperty)
+        assertFalse(serverAsyncProperty!!.maybe.hasValue)
+
+        clientAsyncProperty.value = 123
+        assertTrue(serverAsyncProperty!!.maybe.hasValue)
+        assertEquals(123, serverAsyncProperty!!.value)
     }
 
 
