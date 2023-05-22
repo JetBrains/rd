@@ -71,6 +71,14 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 this.parent = parent
                 location = parent.location.sub(name, ".")
                 bindLifetime = lf
+
+                assertBindingThread()
+
+                Signal.priorityAdviseSection {
+                    preInit(lf, proto)
+                }
+
+                bindState = BindState.PreBound
             },
             {
                 assertBindingThread()
@@ -82,14 +90,6 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 this.parent = null
             }
         ) ?: return
-
-        assertBindingThread()
-
-        Signal.priorityAdviseSection {
-            preInit(lf, proto)
-        }
-
-        bindState = BindState.PreBound
     }
 
     override fun bind() {
@@ -100,16 +100,15 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         val ctx = serializationContext ?: return
 
         val bindState = bindState
-        if (bindLifetime.isNotAlive)
-            return
+        bindLifetime.executeIfAlive {
+            assert(bindState == BindState.PreBound)
 
-        assert(bindState == BindState.PreBound)
+            Signal.priorityAdviseSection {
+                init(bindLifetime, proto, ctx)
+            }
 
-        Signal.priorityAdviseSection {
-            init(bindLifetime, proto, ctx)
+            this@RdBindableBase.bindState = BindState.Bound
         }
-
-        this@RdBindableBase.bindState = BindState.Bound
     }
 
     private val extensions = mutableMapOf<String, Any>()

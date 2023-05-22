@@ -80,17 +80,13 @@ namespace JetBrains.Rd.Base
       if (proto == null)
         return;
 
-      using (var cookie = lf.UsingExecuteIfAlive())
-      {
-        if (!cookie.Succeed)
-          return;
+      using var cookie = lf.UsingExecuteIfAlive();
+      if (!cookie.Succeed)
+        return;
 
-        Parent = parent;
-        Location = parent.Location.Sub(name);
-        myBindLifetime = lf;
-
-        lf.OnTermination(this);
-      }
+      Parent = parent;
+      Location = parent.Location.Sub(name);
+      myBindLifetime = lf;
 
       AssertBindingThread();
 
@@ -98,6 +94,8 @@ namespace JetBrains.Rd.Base
         PreInit(lf, proto);
 
       BindState = BindState.PreBound;
+
+      lf.OnTermination(this);
     }
 
     public void Bind()
@@ -110,7 +108,8 @@ namespace JetBrains.Rd.Base
       if (proto == null || !TryGetSerializationContext(out var ctx))
         return;
 
-      if (bindLifetime.IsNotAlive)
+      using var cookie = bindLifetime.UsingExecuteIfAlive();
+      if (!cookie.Succeed)
         return;
 
       Assertion.Assert(bindState == BindState.PreBound);
