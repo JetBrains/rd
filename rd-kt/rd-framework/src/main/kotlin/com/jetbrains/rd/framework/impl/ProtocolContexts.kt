@@ -155,7 +155,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         assert(counterpartHandlers.size >= numContextValues) { "We know of ${counterpartHandlers.size} remote keys, received $numContextValues instead" }
 
         for (i in 0 until numContextValues) {
-            val handler = counterpartHandlers[0]
+            val handler = counterpartHandlers[i]
             values[i] = handler.readValue(serializationCtx, buffer)
             handlers[i] = handler
         }
