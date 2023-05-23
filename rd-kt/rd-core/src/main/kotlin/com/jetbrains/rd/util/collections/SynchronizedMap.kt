@@ -24,7 +24,7 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
 
     override val size: Int
         get() = synchronized(locker) {
-             map.size
+            map.size
         }
 
     override val values: MutableCollection<TV>
@@ -71,7 +71,7 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
 
     override fun remove(key: TK): TV? {
         return synchronized(locker) {
-             getOrCloneMapNoLock().remove(key)
+            getOrCloneMapNoLock().remove(key)
         }
     }
 
@@ -83,31 +83,31 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
 
     override fun put(key: TK, value: TV): TV? {
         return synchronized(locker) {
-             getOrCloneMapNoLock().put(key, value)
+            getOrCloneMapNoLock().put(key, value)
         }
     }
 
     override fun get(key: TK): TV? {
         return synchronized(locker) {
-            getOrCloneMapNoLock()[key]
+            map[key]
         }
     }
 
     override fun containsValue(value: TV): Boolean {
         return synchronized(locker) {
-             map.containsValue(value)
+            map.containsValue(value)
         }
     }
 
     override fun containsKey(key: TK): Boolean {
         return synchronized(locker) {
-             map.containsKey(key)
+            map.containsKey(key)
         }
     }
 
     override fun remove(key: TK, value: TV): Boolean {
         return synchronized(locker) {
-             getOrCloneMapNoLock().remove(key, value)
+            getOrCloneMapNoLock().remove(key, value)
         }
     }
 
@@ -143,20 +143,18 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
     }
 
     override fun computeIfAbsent(key: TK, mappingFunction: Function<in TK, out TV>): TV {
-        var oldValue = get(key)
-        while (true) {
-            if (oldValue != null) return oldValue
+        val oldValue = get(key)
+        if (oldValue != null) return oldValue
 
-            val newValue = mappingFunction.apply(key)
+        val newValue = mappingFunction.apply(key)
 
-            synchronized(locker) {
-                if (map[key] == null) {
-                    oldValue = null
-                    return@synchronized // continue
-                }
+        synchronized(locker) {
+            val oldValue = map[key]
+            if (oldValue != null)
+                return oldValue
 
-                put(key, newValue)
-            }
+            put(key, newValue)
+            return newValue
         }
     }
 
@@ -243,22 +241,23 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
                 val newMap = getNewMap(localMap)
 
                 synchronized(locker) {
-                    if (localMap == map) {
+                    if (localMap === map) {
+
+                        assert(map !== newMap)
 
                         map = newMap
                         assert(isUnderReadingCount > 0)
                         isUnderReadingCount = 0
-
                         return
                     }
                 }
 
             } catch (e: Throwable) {
 
-                if (localMap == map) {
+                if (localMap === map) {
                     synchronized(locker) {
-                        if (localMap == map) {
-                            val count = isUnderReadingCount--
+                        if (localMap === map) {
+                            val count = --isUnderReadingCount
                             assert(count >= 0)
                         }
                     }
@@ -315,8 +314,8 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
         } finally {
 
             synchronized(locker) {
-                if (localMap == map) {
-                    val count = isUnderReadingCount--
+                if (localMap === map) {
+                    val count = --isUnderReadingCount
                     assert(count >= 0)
                 }
             }
