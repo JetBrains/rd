@@ -128,7 +128,7 @@ class ConcurrentViewableSet<T> : IViewableConcurrentSet<T> {
         }
 
         synchronized(locker) {
-            if (map == localMap) {
+            if (map === localMap) {
                 val count = isUnderReadingCount--
                 assert(count >= 0)
             }
@@ -147,7 +147,7 @@ class ConcurrentViewableSet<T> : IViewableConcurrentSet<T> {
                 }
             } finally {
                 synchronized(locker) {
-                    if (localMap == map) {
+                    if (localMap === map) {
                         val count = isUnderReadingCount--
                         assert(count >= 0)
                     }

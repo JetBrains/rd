@@ -209,7 +209,7 @@ class SynchronizedList<T> : MutableList<T> {
                 val newList = getNewList(localList)
 
                 synchronized(locker) {
-                    if (localList == list) {
+                    if (localList === list) {
 
                         list = newList
                         assert(isUnderReadingCount > 0)
@@ -221,9 +221,9 @@ class SynchronizedList<T> : MutableList<T> {
 
             } catch (e: Throwable) {
 
-                if (localList == list) {
+                if (localList === list) {
                     synchronized(locker) {
-                        if (localList == list) {
+                        if (localList === list) {
                             val count = isUnderReadingCount--
                             assert(count >= 0)
                         }
@@ -247,7 +247,7 @@ class SynchronizedList<T> : MutableList<T> {
         } finally {
 
             synchronized(locker) {
-                if (localList == list) {
+                if (localList === list) {
                     val count = isUnderReadingCount--
                     assert(count >= 0)
                 }
