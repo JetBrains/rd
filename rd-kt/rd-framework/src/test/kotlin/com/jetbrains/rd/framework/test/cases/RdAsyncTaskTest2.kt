@@ -98,9 +98,9 @@ class RdAsyncTaskTest2 : RdFrameworkTestBase() {
                 val lifetime = def.lifetime
 
                 val result = runBlocking {
-//                    withTimeout(5000L) {
+                    withTimeout(5000L) {
                         callsite.startSuspending(lifetime, Unit)
-//                    }
+                    }
                 }
 
                 result.fire(1)
