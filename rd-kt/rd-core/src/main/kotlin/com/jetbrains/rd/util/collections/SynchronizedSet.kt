@@ -57,13 +57,7 @@ class SynchronizedSet<T> : MutableSet<T> {
     }
 
     override fun removeAll(elements: Collection<T>): Boolean {
-        var removed = false
-        elements.forEach {
-            if (remove(it))
-                removed = true
-        }
-
-        return removed
+        return map.keys.removeAll(elements)
     }
 
     override fun remove(element: T): Boolean {
