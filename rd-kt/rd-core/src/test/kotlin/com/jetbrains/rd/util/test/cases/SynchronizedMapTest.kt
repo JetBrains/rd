@@ -258,6 +258,27 @@ class SynchronizedMapTest : RdTestBase() {
         }
 
         doTest { map ->
+            val iterator = map.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                assertEquals(entry.value, entry.key.toString())
+                assertEquals(entry.value, map[entry.key])
+
+                map.remove(entry.key)
+                assertNull(map[entry.key])
+
+                val snapshot = map.toMap()
+                iterator.remove()
+
+                snapshot.forEach {
+                    assertTrue(map.containsKey(it.key))
+                    assertTrue(map.containsValue(it.value))
+                    assertEquals(it.value, map[it.key])
+                }
+            }
+        }
+
+        doTest { map ->
             val iterator = map.keys.iterator()
             while (iterator.hasNext()) {
                 val key = iterator.next()
