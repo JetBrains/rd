@@ -215,13 +215,13 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
 
     override fun replace(key: TK, oldValue: TV, newValue: TV): Boolean {
         return synchronized(locker) {
-            getOrCloneMapNoLock().replace(key, oldValue, newValue)
+            super.replace(key, oldValue, newValue)
         }
     }
 
     override fun replace(key: TK, value: TV): TV? {
         return synchronized(locker) {
-            getOrCloneMapNoLock().replace(key, value)
+            super.replace(key, value)
         }
     }
 
