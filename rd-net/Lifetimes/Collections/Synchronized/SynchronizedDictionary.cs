@@ -10,8 +10,8 @@ namespace JetBrains.Collections.Synchronized
 {
   /// <summary>
   /// This dictionary is used for Net3.5 as a poor replacement of ConcurrentDictionary.
-  /// All methods are synchronized. <see cref="GetEnumerator()"/> copies whole content so
-  /// you can change collection as you want during enumeration. 
+  /// All methods are synchronized.
+  /// You can change collection as you want during enumeration. 
   /// </summary>
   /// <typeparam name="TK"></typeparam>
   /// <typeparam name="TV"></typeparam>
@@ -33,7 +33,7 @@ namespace JetBrains.Collections.Synchronized
     }
     
     /// <summary>
-    /// Copies content of collection: O(n) CPU and memory complexity.
+    /// Returns a snapshot of the collection. Does not introduce overhead, such as copying the collection if there are no concurrent modifications.
     /// </summary>
     /// <returns></returns>
     public IEnumerator<KeyValuePair<TK, TV>> GetEnumerator()

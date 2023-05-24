@@ -8,8 +8,7 @@ namespace JetBrains.Collections.Synchronized
 {
   /// <summary>
   /// This is a thread-safe list with all methods synchronized.
-  /// <see cref="GetEnumerator()"/> copies whole content so
-  /// you can change collection as you want during enumeration. 
+  /// You can change collection as you want during enumeration. 
   /// </summary>
   /// <typeparam name="T"></typeparam>
   [PublicAPI] public class SynchronizedList<T> : IList<T>
@@ -26,7 +25,7 @@ namespace JetBrains.Collections.Synchronized
     }
 
     /// <summary>
-    /// Copies content of collection: O(n) CPU and memory complexity.
+    /// Returns a snapshot of the collection. Does not introduce overhead, such as copying the collection if there are no concurrent modifications.
     /// </summary>
     /// <returns></returns>
     public IEnumerator<T> GetEnumerator()

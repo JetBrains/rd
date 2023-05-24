@@ -9,8 +9,7 @@ namespace JetBrains.Collections.Synchronized
 {
   /// <summary>
   /// This is a thread-safe set with all methods synchronized.
-  /// <see cref="GetEnumerator()"/> copies whole content so
-  /// you can change collection as you want during enumeration.
+  /// You can change collection as you want during enumeration.
   ///
   /// Useful pattern for filtering):
   /// <code>
@@ -43,7 +42,7 @@ namespace JetBrains.Collections.Synchronized
     }
 
     /// <summary>
-    /// Copies content of collection: O(n) CPU and memory complexity.
+    /// Returns a snapshot of the collection. Does not introduce overhead, such as copying the collection if there are no concurrent modifications.
     /// </summary>
     /// <returns></returns>
     public IEnumerator<T> GetEnumerator()
