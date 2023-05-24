@@ -408,18 +408,24 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
 
     private inner class KeySet : MutableSet<TK> {
         override fun add(element: TK): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().keys.add(element)
+            }
         }
 
         override fun addAll(elements: Collection<TK>): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().keys.addAll(elements)
+            }
         }
 
         override val size: Int
             get() = this@SynchronizedMap.size
 
         override fun clear() {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().keys.clear()
+            }
         }
 
         override fun isEmpty(): Boolean {
@@ -435,32 +441,31 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
         }
 
         override fun iterator(): MutableIterator<TK> {
-            val iterator = iterator {
-                for (pair in this@SynchronizedMap.entries) yield(pair.key)
-            }
+            val iterator = this@SynchronizedMap.iterator()
 
             return object : MutableIterator<TK> {
                 override fun hasNext() = iterator.hasNext()
-                override fun next() = iterator.next()
-
-                override fun remove() {
-                    throw UnsupportedOperationException()
-                }
+                override fun next() = iterator.next().key
+                override fun remove() = iterator.remove()
             }
         }
 
         override fun retainAll(elements: Collection<TK>): Boolean {
             return synchronized(locker) {
-                map.keys.retainAll(elements)
+                getOrCloneMapNoLock().keys.retainAll(elements)
             }
         }
 
         override fun removeAll(elements: Collection<TK>): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().keys.removeAll(elements)
+            }
         }
 
         override fun remove(element: TK): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().keys.remove(element)
+            }
         }
     }
 
@@ -469,15 +474,21 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
             get() = this@SynchronizedMap.size
 
         override fun clear() {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().values.clear()
+            }
         }
 
         override fun addAll(elements: Collection<TV>): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().values.addAll(elements)
+            }
         }
 
         override fun add(element: TV): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().values.add(element)
+            }
         }
 
         override fun isEmpty(): Boolean {
@@ -485,32 +496,31 @@ class SynchronizedMap<TK, TV> : MutableMap<TK, TV>, MutableSet<MutableMap.Mutabl
         }
 
         override fun iterator(): MutableIterator<TV> {
-            val iterator = iterator {
-                for (pair in this@SynchronizedMap.entries) yield(pair.value)
-            }
+            val iterator = this@SynchronizedMap.iterator()
 
             return object : MutableIterator<TV> {
                 override fun hasNext() = iterator.hasNext()
-                override fun next() = iterator.next()
-
-                override fun remove() {
-                    throw UnsupportedOperationException()
-                }
+                override fun next() = iterator.next().value
+                override fun remove() = iterator.remove()
             }
         }
 
         override fun retainAll(elements: Collection<TV>): Boolean {
             return synchronized(locker) {
-                map.values.retainAll(elements)
+                getOrCloneMapNoLock().values.retainAll(elements)
             }
         }
 
         override fun removeAll(elements: Collection<TV>): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().values.removeAll(elements)
+            }
         }
 
         override fun remove(element: TV): Boolean {
-            throw UnsupportedOperationException()
+            return synchronized(locker) {
+                getOrCloneMapNoLock().values.remove(element)
+            }
         }
 
         override fun containsAll(elements: Collection<TV>): Boolean {

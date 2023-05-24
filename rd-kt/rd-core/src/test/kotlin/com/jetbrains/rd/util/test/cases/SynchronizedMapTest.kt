@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.*
 
-class SynchronizedCollectionsTest : RdTestBase() {
+class SynchronizedMapTest : RdTestBase() {
 
     @Test
     fun synchronizedMapSimpleTest() {
@@ -14,6 +14,8 @@ class SynchronizedCollectionsTest : RdTestBase() {
         doSimpleMapModifications(map)
         map.clear()
         doSimpleMapEntriesModifications(map)
+
+        map.clear()
         doSimpleKeyValueEntriesModifications(map)
     }
 
@@ -187,6 +189,141 @@ class SynchronizedCollectionsTest : RdTestBase() {
             }
 
             assertEquals(size, count)
+        }
+
+        doTest { map ->
+            val retainList = map.drop(2).take(4)
+            assertTrue(map.retainAll(retainList))
+            assertEquals(4, map.size)
+
+            retainList.forEach {
+                assertEquals(it.value, map[it.key])
+            }
+        }
+
+        doTest { map ->
+            assertThrows<UnsupportedOperationException> { map.keys.add(0) }
+            assertThrows<UnsupportedOperationException> { map.values.add("0") }
+
+            assertThrows<UnsupportedOperationException> { map.keys.addAll(0..10) }
+            assertThrows<UnsupportedOperationException> { map.values.addAll((0..10).map { it.toString() }) }
+        }
+
+        doTest { map ->
+            map.keys.clear()
+            assertTrue(map.isEmpty())
+        }
+
+        doTest { map ->
+            map.values.clear()
+            assertTrue(map.isEmpty())
+        }
+
+        doTest { map ->
+            map.keys.removeAll(0..5)
+            assertEquals(4, map.size)
+            map.keys.forEach {
+                assertEquals(it.toString(), map[it])
+            }
+        }
+
+        doTest { map ->
+            map.values.removeAll((0..5).map { it.toString() })
+            assertEquals(4, map.size)
+            map.values.forEach {
+                assertEquals(it, map[it.toInt()])
+            }
+        }
+
+        doTest { map ->
+            map.remove(0)
+            assertEquals(9, map.size)
+        }
+
+        doTest { map ->
+            map.values.remove("0")
+            assertEquals(9, map.size)
+        }
+
+        doTest { map ->
+            val iterator = map.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                assertEquals(entry.value, entry.key.toString())
+                assertEquals(entry.value, map[entry.key])
+
+                iterator.remove()
+                assertNull(map[entry.key])
+            }
+        }
+
+        doTest { map ->
+            val iterator = map.keys.iterator()
+            while (iterator.hasNext()) {
+                val key = iterator.next()
+                assertEquals(key.toString(), map[key])
+
+                iterator.remove()
+                assertNull(map[key])
+            }
+        }
+
+        doTest { map ->
+            val iterator = map.values.iterator()
+            while (iterator.hasNext()) {
+                val value = iterator.next()
+                assertEquals(value, map[value.toInt()])
+
+                iterator.remove()
+                assertNull(map[value.toInt()])
+            }
+        }
+
+        doTest { map ->
+            val size = map.size
+            assertTrue(map.removeIf {
+                it.key == 0
+            })
+
+            assertEquals(size - 1, map.size)
+            assertFalse(map.containsKey(0))
+        }
+
+        doTest { map ->
+            val size = map.size
+            assertTrue(map.removeIf {
+                if (it.key == 0)
+                    map.remove(0)
+                it.key == 1
+            })
+
+            assertEquals(size - 2, map.size)
+            assertFalse(map.containsKey(0))
+            assertFalse(map.containsKey(1))
+        }
+
+        doTest { map ->
+            map.replaceAll { key, value ->
+                value + "_"
+            }
+
+            map.forEach {key, value ->
+                assertEquals(key.toString() + "_", value)
+            }
+        }
+
+        doTest { map ->
+            map.replaceAll { key, value ->
+                if (key == 0)
+                    map.remove(0)
+
+                value + "_"
+            }
+
+            assertFalse(map.containsKey(0))
+            map.forEach {key, value ->
+                assertEquals(key.toString() + "_", value)
+            }
         }
     }
 
@@ -505,6 +642,10 @@ class SynchronizedCollectionsTest : RdTestBase() {
     }
 
     private fun doSimpleKeyValueEntriesModifications(map: SynchronizedMap<Int, String>) {
+        assertTrue(map.isEmpty())
+
+        val list = (0..10).map { it.toPair().toMutableEntry() }
+        map.addAll(list)
         val keys = map.keys
         val values = map.values
 
@@ -514,14 +655,32 @@ class SynchronizedCollectionsTest : RdTestBase() {
         assertThrows<UnsupportedOperationException> { keys.addAll(0..10) }
         assertThrows<UnsupportedOperationException> { values.addAll((0..10).map { it.toString() }) }
 
-        assertThrows<UnsupportedOperationException> { keys.clear() }
-        assertThrows<UnsupportedOperationException> { values.clear() }
+        keys.clear()
+        assertTrue(map.isEmpty())
+        map.addAll(list)
 
-        assertThrows<UnsupportedOperationException> { keys.removeAll(0..10) }
-        assertThrows<UnsupportedOperationException> { values.removeAll((0..10).map { it.toString() }) }
+        values.clear()
+        assertTrue(map.isEmpty())
+        map.addAll(list)
 
-        assertThrows<UnsupportedOperationException> { keys.remove(0) }
-        assertThrows<UnsupportedOperationException> { values.remove("0") }
+        keys.removeAll(0..5)
+        assertEquals(5, map.size)
+        keys.forEach {
+            assertEquals(it.toString(), map[it])
+        }
+
+        values.removeAll((7..10).map { it.toString() })
+        assertEquals(1, map.size)
+        assertEquals(values.single(), map.single().value)
+
+
+        map.addAll(list)
+        keys.remove(0)
+        assertEquals(10, map.size)
+
+        map.addAll(list)
+        values.remove("0")
+        assertEquals(10, map.size)
     }
 
 
@@ -680,6 +839,19 @@ class SynchronizedCollectionsTest : RdTestBase() {
         assertEquals("1234", map.getOrDefault(0, "1"))
         assertEquals("_", map.getOrDefault(1234, "_"))
         assertFalse(map.containsKey(1234))
+
+        map.clear()
+        map.addAll(list.map { it.toMutableEntry() })
+
+        val retainList = list.drop(2).take(4)
+        assertTrue(map.retainAll(retainList.map { it.toMutableEntry() }))
+        assertEquals(4, map.size)
+
+        retainList.forEach {
+            assertEquals(it.second, map[it.first])
+            assertFalse(map.remove(it.first, it.second + "_"))
+            assertTrue(map.remove(it.first, it.second))
+        }
     }
 
     private fun Int.toPair() = this to this.toString()

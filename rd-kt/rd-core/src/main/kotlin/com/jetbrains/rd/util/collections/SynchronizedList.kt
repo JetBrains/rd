@@ -19,7 +19,7 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun clear() {
         synchronized(locker) {
-            list.clear()
+            getOrCloneListNoLock().clear()
         }
     }
 
@@ -59,7 +59,6 @@ class SynchronizedList<T> : MutableList<T> {
         }
     }
 
-
     override fun iterator(): MutableIterator<T> {
         val iterator = iterator {
             underReading { snapshot ->
@@ -90,7 +89,7 @@ class SynchronizedList<T> : MutableList<T> {
             override fun hasPrevious(): Boolean = iterator.hasPrevious()
             override fun next(): T = iterator.next()
             override fun nextIndex(): Int = iterator.nextIndex()
-            override fun previous(): T = iterator.next()
+            override fun previous(): T = iterator.previous()
             override fun previousIndex(): Int = iterator.previousIndex()
 
             override fun add(element: T): Unit = throw UnsupportedOperationException()
@@ -119,7 +118,7 @@ class SynchronizedList<T> : MutableList<T> {
 
     override fun retainAll(elements: Collection<T>): Boolean {
         return synchronized(locker) {
-            list.retainAll(elements)
+            getOrCloneListNoLock().retainAll(elements)
         }
     }
 
