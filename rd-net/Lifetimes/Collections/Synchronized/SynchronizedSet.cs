@@ -56,8 +56,8 @@ namespace JetBrains.Collections.Synchronized
 
       try
       {
-        foreach (var pair in set)
-          yield return pair;
+        foreach (var item in set)
+          yield return item;
       }
       finally
       {
