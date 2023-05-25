@@ -22,7 +22,7 @@ abstract class RdReactiveBase : RdBindableBase(), IRdReactive {
 
     //assertion
     override var async = false
-    protected fun assertThreading() {
+    protected open fun assertThreading() {
         if (!async && AllowBindingCookie.isBindNotAllowed) {
             val proto = protocol ?: return
             proto.scheduler.assertThread(this)

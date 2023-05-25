@@ -22,7 +22,7 @@ namespace JetBrains.Rd.Base
     public bool Async { get; set; }
 
     [AssertionMethod]
-    protected void AssertThreading()
+    protected virtual void AssertThreading()
     {
       if (!Async && AllowBindCookie.IsBindNotAllowed && TryGetProto() is {} proto)
         proto.Scheduler.AssertThread(this);

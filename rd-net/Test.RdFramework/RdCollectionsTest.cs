@@ -36,6 +36,8 @@ public class RdCollectionsTest : RdFrameworkTestBase
     Register(RdProperty<RdProperty<RdProperty<RdSet<int>>>>.Read, RdProperty<RdProperty<RdProperty<RdSet<int>>>>.Write);
     
     Register(AsyncRdProperty<int>.Read, AsyncRdProperty<int>.Write);
+    Register(AsyncRdMap<int, string>.Read, AsyncRdMap<int, string>.Write);
+    Register(AsyncRdSet<int>.Read, AsyncRdSet<int>.Write);
     
     return serializers;
 
@@ -435,6 +437,84 @@ public class RdCollectionsTest : RdFrameworkTestBase
     Assert.IsTrue(serverAsyncProperty.Maybe.HasValue);
     Assert.AreEqual(123, serverAsyncProperty.Maybe.Value);
   }
+  
+  [Test]
+  public void AsyncMapTest()
+  {
+    ClientWire.AutoTransmitMode = true;
+    ServerWire.AutoTransmitMode = true;
+    
+    var serverTopLevelProperty = BindToServer(LifetimeDefinition.Lifetime,NewRdProperty<AsyncRdMap<int, string>>(), ourKey);
+    serverTopLevelProperty.ValueCanBeNull = true;
+    var clientTopLevelProperty = BindToClient(LifetimeDefinition.Lifetime,NewRdProperty<AsyncRdMap<int, string>>(), ourKey);
+    clientTopLevelProperty.ValueCanBeNull = true;
+
+    var clientAsyncMap = NewAsyncRdMap<int, string>();
+
+    AsyncRdMap<int, string> serverAsyncMap = null;
+
+    SetSchedulerActive(SchedulerKind.Server, () =>
+    {
+      serverTopLevelProperty.View(LifetimeDefinition.Lifetime, (mapLifetime, map) =>
+      {
+        serverAsyncMap = map;
+      });
+    });
+
+    SetSchedulerActive(SchedulerKind.Client, () =>
+    {
+      clientTopLevelProperty.Value = clientAsyncMap;
+    });
+    
+    PumpAllProtocols(true);
+
+    Assert.NotNull(serverAsyncMap);
+    Assert.AreEqual(0, serverAsyncMap.Count);
+
+    clientAsyncMap[0] = 123.ToString();
+    Assert.AreEqual(1, serverAsyncMap.Count);
+    Assert.AreEqual("123", serverAsyncMap[0]);
+  }
+  
+  [Test]
+  public void AsyncSetTest()
+  {
+    ClientWire.AutoTransmitMode = true;
+    ServerWire.AutoTransmitMode = true;
+    
+    var serverTopLevelProperty = BindToServer(LifetimeDefinition.Lifetime,NewRdProperty<AsyncRdSet<int>>(), ourKey);
+    serverTopLevelProperty.ValueCanBeNull = true;
+    var clientTopLevelProperty = BindToClient(LifetimeDefinition.Lifetime,NewRdProperty<AsyncRdSet<int>>(), ourKey);
+    clientTopLevelProperty.ValueCanBeNull = true;
+
+    var clientAsyncSet = NewAsyncRdSet<int>();
+
+    AsyncRdSet<int> serverAsyncSet = null;
+
+    SetSchedulerActive(SchedulerKind.Server, () =>
+    {
+      serverTopLevelProperty.View(LifetimeDefinition.Lifetime, (mapLifetime, set) =>
+      {
+        serverAsyncSet = set;
+      });
+    });
+
+    SetSchedulerActive(SchedulerKind.Client, () =>
+    {
+      clientTopLevelProperty.Value = clientAsyncSet;
+    });
+    
+    PumpAllProtocols(true);
+
+    Assert.NotNull(serverAsyncSet);
+    Assert.AreEqual(0, serverAsyncSet.Count);
+
+    clientAsyncSet.Add(123);
+    Assert.AreEqual(1, serverAsyncSet.Count);
+    Assert.IsTrue(serverAsyncSet.Contains(123));
+  }
+
+
 
   
   

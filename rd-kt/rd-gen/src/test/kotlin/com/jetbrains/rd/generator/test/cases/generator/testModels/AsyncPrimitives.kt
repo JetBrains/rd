@@ -14,6 +14,9 @@ object AsyncPrimitivesExt : Ext(AsyncPrimitivesRoot) {
     init {
         asyncProperty("asyncProperty", PredefinedType.string)
         asyncProperty("asyncPropertyNullable", PredefinedType.string.nullable)
+
+        asyncMap("asyncMap", PredefinedType.int, PredefinedType.string)
+        asyncSet("asyncSet", PredefinedType.int)
     }
 }
 

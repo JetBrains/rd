@@ -20,7 +20,9 @@ import kotlin.jvm.JvmStatic
  */
 class AsyncPrimitivesExt private constructor(
     private val _asyncProperty: AsyncRdProperty<String>,
-    private val _asyncPropertyNullable: AsyncRdProperty<String?>
+    private val _asyncPropertyNullable: AsyncRdProperty<String?>,
+    private val _asyncMap: AsyncRdMap<Int, String>,
+    private val _asyncSet: AsyncRdSet<Int>
 ) : RdExtBase() {
     //companion
     
@@ -48,7 +50,7 @@ class AsyncPrimitivesExt private constructor(
         
         private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
         
-        const val serializationHash = 656430842423377943L
+        const val serializationHash = -5414287245037713638L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsyncPrimitivesExt
@@ -57,23 +59,31 @@ class AsyncPrimitivesExt private constructor(
     //fields
     val asyncProperty: IMutableAsyncProperty<String> get() = _asyncProperty
     val asyncPropertyNullable: IMutableAsyncProperty<String?> get() = _asyncPropertyNullable
+    val asyncMap: AsyncRdMap<Int, String> get() = _asyncMap
+    val asyncSet: AsyncRdSet<Int> get() = _asyncSet
     //methods
     //initializer
     init {
         _asyncProperty.optimizeNested = true
         _asyncPropertyNullable.optimizeNested = true
+        _asyncMap.optimizeNested = true
+        _asyncSet.optimizeNested = true
     }
     
     init {
         bindableChildren.add("asyncProperty" to _asyncProperty)
         bindableChildren.add("asyncPropertyNullable" to _asyncPropertyNullable)
+        bindableChildren.add("asyncMap" to _asyncMap)
+        bindableChildren.add("asyncSet" to _asyncSet)
     }
     
     //secondary constructor
     private constructor(
     ) : this(
         AsyncRdProperty<String>(FrameworkMarshallers.String),
-        AsyncRdProperty<String?>(null, __StringNullableSerializer)
+        AsyncRdProperty<String?>(null, __StringNullableSerializer),
+        AsyncRdMap<Int, String>(FrameworkMarshallers.Int, FrameworkMarshallers.String),
+        AsyncRdSet<Int>(FrameworkMarshallers.Int)
     )
     
     //equals trait
@@ -84,6 +94,8 @@ class AsyncPrimitivesExt private constructor(
         printer.indent {
             print("asyncProperty = "); _asyncProperty.print(printer); println()
             print("asyncPropertyNullable = "); _asyncPropertyNullable.print(printer); println()
+            print("asyncMap = "); _asyncMap.print(printer); println()
+            print("asyncSet = "); _asyncSet.print(printer); println()
         }
         printer.print(")")
     }
@@ -91,7 +103,9 @@ class AsyncPrimitivesExt private constructor(
     override fun deepClone(): AsyncPrimitivesExt   {
         return AsyncPrimitivesExt(
             _asyncProperty.deepClonePolymorphic(),
-            _asyncPropertyNullable.deepClonePolymorphic()
+            _asyncPropertyNullable.deepClonePolymorphic(),
+            _asyncMap.deepClonePolymorphic(),
+            _asyncSet.deepClonePolymorphic()
         )
     }
     //contexts

@@ -226,10 +226,14 @@ open class CSharp50Generator(
             Sink -> "IViewableSet"
             Source, Both -> "IViewableSet"
         }
+        is Member.Reactive.Stateful.AsyncSet -> "AsyncRdSet"
+
         is Member.Reactive.Stateful.Map -> when (actualFlow) {
             Sink -> "IViewableMap"
             Source, Both -> "IViewableMap"
         }
+
+        is Member.Reactive.Stateful.AsyncMap -> "AsyncRdMap"
 
         is Member.Reactive.Stateful.Extension -> implSimpleName(scope)
 
@@ -244,7 +248,9 @@ open class CSharp50Generator(
             is Member.Reactive.Stateful.AsyncProperty -> "AsyncRdProperty"
             is Member.Reactive.Stateful.List -> "RdList"
             is Member.Reactive.Stateful.Set -> "RdSet"
+            is Member.Reactive.Stateful.AsyncSet -> "AsyncRdSet"
             is Member.Reactive.Stateful.Map -> "RdMap"
+            is Member.Reactive.Stateful.AsyncMap -> "AsyncRdMap"
             is Member.Reactive.Stateful.Extension -> delegateFqnSubstitutedName(scope)
 
             else -> fail("Unsupported member: $this")

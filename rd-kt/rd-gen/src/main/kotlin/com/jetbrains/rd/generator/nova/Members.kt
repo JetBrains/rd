@@ -94,16 +94,15 @@ sealed class Member(name: String, referencedTypes: List<IType>) : SettingsHolder
                 }
             }
 
-            class Property  (name: String, valueType: IType, defaultValue: Any? = null) : PropertyBase(name, valueType, defaultValue) {
-
-            }
-
-            class AsyncProperty  (name: String, valueType: IType, defaultValue: Any? = null) : PropertyBase(name, valueType, defaultValue) {
-            }
+            class Property  (name: String, valueType: IType, defaultValue: Any? = null) : PropertyBase(name, valueType, defaultValue)
+            class AsyncProperty  (name: String, valueType: IType, defaultValue: Any? = null) : PropertyBase(name, valueType, defaultValue)
 
             class List      (name : String, itemType : IType) : Stateful(name, itemType)
             class Set       (name : String, itemType : INonNullableScalar) : Stateful(name, itemType)
+            class AsyncSet  (name : String, itemType : INonNullableScalar) : Stateful(name, itemType)
+
             class Map       (name : String, keyType : INonNullableScalar, valueType: INonNullable): Stateful(name, keyType, valueType)
+            class AsyncMap  (name : String, keyType : INonNullableScalar, valueType: INonNullableScalar): Stateful(name, keyType, valueType)
 
             abstract class Extension(name : String, val delegatedBy: IType, vararg _delegates: ExtensionDelegate)
                 : Stateful(name) {

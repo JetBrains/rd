@@ -22,6 +22,8 @@ class RdCollectionsTest : RdFrameworkTestBase() {
             register(RdProperty as ISerializer<RdProperty<RdProperty<RdProperty<RdSet<Int>?>>>>)
 
             register(AsyncRdProperty as ISerializer<AsyncRdProperty<Int>>)
+            register(AsyncRdMap as ISerializer<AsyncRdMap<Int, String>>)
+            register(AsyncRdSet as ISerializer<AsyncRdSet<Int>>)
         }
     }
 
@@ -376,6 +378,79 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         assertEquals(123, serverAsyncProperty!!.value)
     }
 
+    @Test
+    fun asyncMapTest() {
+
+        serverWire.autoFlush = true
+        clientWire.autoFlush = true
+
+        val serverTopLevelProperty = RdProperty<AsyncRdMap<Int, String>?>(null)
+        val clientTopLevelProperty = RdProperty<AsyncRdMap<Int, String>?>(null)
+
+        serverProtocol.bindStatic(serverTopLevelProperty, 1)
+        clientProtocol.bindStatic(clientTopLevelProperty, 1)
+
+        val clientAsyncMap = AsyncRdMap<Int, String>()
+
+        var serverAsyncMap: AsyncRdMap<Int, String>?  = null
+
+        setSchedulerActive(SchedulerKind.Server) {
+            serverTopLevelProperty.view(serverLifetime) { mapLifetime, map ->
+                serverAsyncMap = map
+            }
+        }
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientTopLevelProperty.value = clientAsyncMap
+        }
+
+        pumpAllProtocols(true)
+
+        assertNotNull(serverAsyncMap)
+        assertEquals(0, serverAsyncMap!!.size)
+
+        clientAsyncMap[0] = "123"
+
+        assertEquals(1, serverAsyncMap!!.size)
+        assertEquals("123", serverAsyncMap!![0])
+    }
+
+    @Test
+    fun asyncSetTest() {
+
+        serverWire.autoFlush = true
+        clientWire.autoFlush = true
+
+        val serverTopLevelProperty = RdProperty<AsyncRdSet<Int>?>(null)
+        val clientTopLevelProperty = RdProperty<AsyncRdSet<Int>?>(null)
+
+        serverProtocol.bindStatic(serverTopLevelProperty, 1)
+        clientProtocol.bindStatic(clientTopLevelProperty, 1)
+
+        val clientAsyncSet = AsyncRdSet<Int>()
+
+        var serverAsyncSet: AsyncRdSet<Int>?  = null
+
+        setSchedulerActive(SchedulerKind.Server) {
+            serverTopLevelProperty.view(serverLifetime) { mapLifetime, set ->
+                serverAsyncSet = set
+            }
+        }
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientTopLevelProperty.value = clientAsyncSet
+        }
+
+        pumpAllProtocols(true)
+
+        assertNotNull(serverAsyncSet)
+        assertEquals(0, serverAsyncSet!!.size)
+
+        clientAsyncSet.add(123)
+
+        assertEquals(1, serverAsyncSet!!.size)
+        assertTrue(serverAsyncSet!!.contains(123))
+    }
 
 
     enum class SchedulerKind {

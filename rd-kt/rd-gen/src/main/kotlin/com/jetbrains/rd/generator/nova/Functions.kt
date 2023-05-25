@@ -81,7 +81,9 @@ fun BindableDeclaration.asyncProperty(name: String, valueType : IScalar) = appen
 
 fun BindableDeclaration.list(name : String, itemType : IType) = append(List(name, itemType))
 fun BindableDeclaration.set(name : String, itemType : INonNullableScalar) = append(Set(name, itemType))
+fun BindableDeclaration.asyncSet(name : String, itemType : INonNullableScalar) = append(AsyncSet(name, itemType))
 fun BindableDeclaration.map(name : String, keyType : INonNullableScalar, valueType: INonNullable) = append(Map(name, keyType, valueType))
+fun BindableDeclaration.asyncMap(name : String, keyType : INonNullableScalar, valueType: INonNullableScalar) = append(AsyncMap(name, keyType, valueType))
 
 //Following "fake" functions introduced to raise compile-time errors if you add reactive entities into structs.
 //Suppose we have struct inside bindable declaration: Ext or Class. Then We must cheat Kotlin resolve

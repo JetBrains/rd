@@ -2,7 +2,6 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.framework.base.identifyPolymorphic
 import com.jetbrains.rd.util.Maybe
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isNotAlive
@@ -14,24 +13,6 @@ import com.jetbrains.rd.util.trace
 interface IAsyncSource2<T> {
     fun adviseOn(lifetime : Lifetime, scheduler : IScheduler, handler : (T) -> Unit)
 }
-
-class AsyncSignal<T> : IAsyncSource2<T> {
-    private val signal = Signal<T>()
-    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
-        synchronized(signal) {
-            signal.advise(lifetime) {
-                scheduler.queue { handler(it) }
-            }
-        }
-    }
-
-    fun fire(value: T) {
-        synchronized(signal) {
-            signal.fire(value)
-        }
-    }
-}
-
 
 interface IAsyncProperty<T> : IAsyncSource2<T> {
     val maybe: Maybe<T>
@@ -81,18 +62,11 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : 
 
     private val isLocalChange = threadLocalWithInitial { false }
     private val property = Property<Maybe<T>>(Maybe.None)
-    private val internalChange = AsyncSignal<T>()
 
     constructor(defaultValue: T, valueSerializer: ISerializer<T> = Polymorphic()) : this(valueSerializer) {
         property.value = Maybe.Just(defaultValue)
     }
 
-    init {
-        property.advise(Lifetime.Eternal) {
-            if (it.hasValue)
-                internalChange.fire(it.asNullable as T)
-        }
-    }
 
     fun withId(id: RdId) : AsyncRdProperty<T> {
         require(this.rdid == RdId.Null) { "this.id != RdId.Null, but ${this.rdid}" }
@@ -114,13 +88,20 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : 
         get() = true
         set(value) { }
 
-    private var masterOverriden : Boolean? = null
+    private var masterOverridden : Boolean? = null
 
     var master : Boolean
-        get() = masterOverriden ?: protocol?.isMaster ?: false
-        set(value) { masterOverriden = value }
+        get() = masterOverridden ?: protocol?.isMaster ?: false
+        set(value) { masterOverridden = value }
 
-    val change : IAsyncSource2<T> get() = internalChange
+    val change : IAsyncSource2<T> get() = object : IAsyncSource2<T> {
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+            property.change.advise(lifetime) {
+                if (it.hasValue)
+                    scheduler.queue { handler(it.asNullable as T) }
+            }
+        }
+    }
 
     override var rdid: RdId = RdId.Null
         internal set

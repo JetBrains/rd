@@ -44,33 +44,49 @@ namespace org.example
     //public fields
     [NotNull] public IAsyncProperty<string> AsyncProperty => _AsyncProperty;
     [NotNull] public IAsyncProperty<string> AsyncPropertyNullable => _AsyncPropertyNullable;
+    [NotNull] public AsyncRdMap<int, string> AsyncMap => _AsyncMap;
+    [NotNull] public AsyncRdSet<int> AsyncSet => _AsyncSet;
     
     //private fields
     [NotNull] private readonly AsyncRdProperty<string> _AsyncProperty;
     [NotNull] private readonly AsyncRdProperty<string> _AsyncPropertyNullable;
+    [NotNull] private readonly AsyncRdMap<int, string> _AsyncMap;
+    [NotNull] private readonly AsyncRdSet<int> _AsyncSet;
     
     //primary constructor
     private AsyncPrimitivesExt(
       [NotNull] AsyncRdProperty<string> asyncProperty,
-      [NotNull] AsyncRdProperty<string> asyncPropertyNullable
+      [NotNull] AsyncRdProperty<string> asyncPropertyNullable,
+      [NotNull] AsyncRdMap<int, string> asyncMap,
+      [NotNull] AsyncRdSet<int> asyncSet
     )
     {
       if (asyncProperty == null) throw new ArgumentNullException("asyncProperty");
       if (asyncPropertyNullable == null) throw new ArgumentNullException("asyncPropertyNullable");
+      if (asyncMap == null) throw new ArgumentNullException("asyncMap");
+      if (asyncSet == null) throw new ArgumentNullException("asyncSet");
       
       _AsyncProperty = asyncProperty;
       _AsyncPropertyNullable = asyncPropertyNullable;
+      _AsyncMap = asyncMap;
+      _AsyncSet = asyncSet;
       _AsyncProperty.OptimizeNested = true;
       _AsyncPropertyNullable.OptimizeNested = true;
+      _AsyncMap.OptimizeNested = true;
+      _AsyncSet.OptimizeNested = true;
       _AsyncPropertyNullable.ValueCanBeNull = true;
       BindableChildren.Add(new KeyValuePair<string, object>("asyncProperty", _AsyncProperty));
       BindableChildren.Add(new KeyValuePair<string, object>("asyncPropertyNullable", _AsyncPropertyNullable));
+      BindableChildren.Add(new KeyValuePair<string, object>("asyncMap", _AsyncMap));
+      BindableChildren.Add(new KeyValuePair<string, object>("asyncSet", _AsyncSet));
     }
     //secondary constructor
     private AsyncPrimitivesExt (
     ) : this (
       new AsyncRdProperty<string>(JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString),
-      new AsyncRdProperty<string>(ReadStringNullable, WriteStringNullable)
+      new AsyncRdProperty<string>(ReadStringNullable, WriteStringNullable),
+      new AsyncRdMap<int, string>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt, JetBrains.Rd.Impl.Serializers.ReadString, JetBrains.Rd.Impl.Serializers.WriteString),
+      new AsyncRdSet<int>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt)
     ) {}
     //deconstruct trait
     //statics
@@ -79,7 +95,7 @@ namespace org.example
     
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     
-    protected override long SerializationHash => 656430842423377943L;
+    protected override long SerializationHash => -5414287245037713638L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -107,6 +123,8 @@ namespace org.example
       using (printer.IndentCookie()) {
         printer.Print("asyncProperty = "); _AsyncProperty.PrintEx(printer); printer.Println();
         printer.Print("asyncPropertyNullable = "); _AsyncPropertyNullable.PrintEx(printer); printer.Println();
+        printer.Print("asyncMap = "); _AsyncMap.PrintEx(printer); printer.Println();
+        printer.Print("asyncSet = "); _AsyncSet.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }

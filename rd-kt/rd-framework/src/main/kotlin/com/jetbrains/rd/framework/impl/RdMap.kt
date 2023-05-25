@@ -13,7 +13,7 @@ import kotlin.assert
 
 
 @Suppress("UNUSED_PARAMETER")
-class RdMap<K : Any, V : Any> private constructor(
+open class RdMap<K : Any, V : Any> private constructor(
     val keySzr: ISerializer<K>,
     val valSzr: ISerializer<V>,
     private val map: ViewableMap<K, V>
