@@ -19,6 +19,9 @@ interface IRdBindable : IRdDynamic {
      */
     fun preBind(lf: Lifetime, parent: IRdDynamic, name: String)
 
+    /**
+     * Sends child objects to the wire. This method is called after the parent sends this instance to the wire.
+     * */
     fun bind()
 
     /**

@@ -476,7 +476,7 @@ open class Cpp17Generator(
                     Source, Both -> "IProperty"
                 }
 
-                is Member.Reactive.Stateful.AsyncProperty -> error("Not supported")
+                is Member.Reactive.Stateful.AsyncProperty -> error("Async property not supported")
 
                 is Member.Reactive.Stateful.List -> when (actualFlow) {
                     Sink -> "IViewableList"

@@ -123,7 +123,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
         override var rdid: RdId = RdId.Null
 
         private val set = ConcurrentViewableSet<T>()
-        private val isThreadLocal = threadLocalWithInitial { false }
+        private val isThreadLocalChange = threadLocalWithInitial { false }
 
         override val size: Int
             get() = set.size
@@ -140,7 +140,7 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
         override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
             super.init(lifetime, proto, ctx)
             view(lifetime) { _, value ->
-                if (!isThreadLocal.get()) return@view
+                if (!isThreadLocalChange.get()) return@view
 
                 proto.wire.send(rdid) { writer ->
 
@@ -154,15 +154,15 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
         }
 
         override fun add(value: T): Boolean {
-            assert(!isThreadLocal.get())
+            assert(!isThreadLocalChange.get())
 
-            isThreadLocal.set(true)
+            isThreadLocalChange.set(true)
             try {
                 return protocolContexts.sendWithoutContexts {
                     set.add(value)
                 }
             } finally {
-                isThreadLocal.set(false)
+                isThreadLocalChange.set(false)
             }
         }
 

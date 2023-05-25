@@ -8,6 +8,13 @@ interface IAppendOnlyViewableConcurrentSet<T> : Iterable<T> {
     val size: Int
 
     fun add(value: T): Boolean
+
+
+    /**
+     * Adds all the elements of the specified collection to this collection.
+     *
+     * @return `true` if any of the specified elements was added to the collection, `false` if the collection was not modified.
+     */
     fun addAll(elements: Iterable<T>): Boolean {
         var added = false
         for (element in elements) {

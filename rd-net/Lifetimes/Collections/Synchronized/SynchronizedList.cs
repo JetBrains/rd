@@ -39,8 +39,8 @@ namespace JetBrains.Collections.Synchronized
 
       try
       {
-        foreach (var pair in list)
-          yield return pair;
+        foreach (var item in list)
+          yield return item;
       }
       finally
       {

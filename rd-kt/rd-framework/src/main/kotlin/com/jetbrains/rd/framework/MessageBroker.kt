@@ -81,7 +81,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
 
         val protocol = entry.subscription.protocol
         if (protocol == null) {
-            log.trace { "handler is not found for $id" }
+            log.trace { "protocol is not found for $id" }
             return
         }
 
