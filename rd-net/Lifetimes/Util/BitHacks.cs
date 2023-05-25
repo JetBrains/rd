@@ -100,24 +100,30 @@ namespace JetBrains.Util
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static int ReverseBitScan(uint value)
     {
-      value |= value >> 1;
-      value |= value >> 2;
-      value |= value >> 4;
-      value |= value >> 8;
-      value |= value >> 16;
-      return ourDeBruijnBitTable32[(int) ((value * DeBruijnSequence32) >> 27)];
+      unchecked
+      {
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        return ourDeBruijnBitTable32[(int) ((value * DeBruijnSequence32) >> 27)];
+      }
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static int ReverseBitScan(ulong value)
     {
-      value |= value >> 1;
-      value |= value >> 2;
-      value |= value >> 4;
-      value |= value >> 8;
-      value |= value >> 16;
-      value |= value >> 32;
-      return ourDeBruijnBitTable64[(int) ((value * DeBruijnSequence64) >> 58)];
+      unchecked
+      {
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        value |= value >> 32;
+        return ourDeBruijnBitTable64[(int) ((value * DeBruijnSequence64) >> 58)];
+      }
     }
   }
 }
