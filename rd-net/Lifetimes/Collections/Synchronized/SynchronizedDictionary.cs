@@ -102,7 +102,33 @@ namespace JetBrains.Collections.Synchronized
       lock (myLocker)
       {
         var map = (IDictionary<TK, TV>)myImpl;
-        map.CopyTo(array, arrayIndex);
+        CopyToNoLock(map, array, arrayIndex);
+      }
+    }
+
+    private static void CopyToNoLock<T>(ICollection<T> source, T[] destination, int arrayIndex)
+    {
+      // Linq calls on SynchronizedDictionary are not thread-safe
+      // E.g., Enumerable.ToList calls List`1.ctor which contains the following race:
+      //   int count = collection.Count;
+      //   _items = new T[count];
+      //   collection.CopyTo(_items, 0);
+      // In order to prevent IndexOutOfRangeException for this code,
+      // we shouldn't copy more elements that we have in the array.
+      if (source.Count <= destination.Length - arrayIndex)
+        source.CopyTo(destination, arrayIndex);
+      else
+      {
+        var i = arrayIndex;
+        if (i >= destination.Length)
+          return;
+        
+        foreach (var pair in source)
+        {
+          destination[i++] = pair;
+          if (i >= destination.Length)
+            return;
+        }
       }
     }
 
@@ -201,7 +227,7 @@ namespace JetBrains.Collections.Synchronized
     void ICollection<TK>.CopyTo(TK[] array, int arrayIndex)
     {
       lock (myLocker) 
-        myImpl.Keys.CopyTo(array, arrayIndex);
+        CopyToNoLock(myImpl.Keys, array, arrayIndex);
     }
 
     bool ICollection<TK>.IsReadOnly => true;
@@ -236,7 +262,7 @@ namespace JetBrains.Collections.Synchronized
       void ICollection<TV>.CopyTo(TV[] array, int arrayIndex)
       {
         lock (myMap.myLocker) 
-          myMap.myImpl.Values.CopyTo(array, arrayIndex);
+          CopyToNoLock(myMap.myImpl.Values, array, arrayIndex);
       }
 
       public int Count => myMap.Count;

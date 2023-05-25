@@ -110,7 +110,7 @@ namespace JetBrains.Collections.Synchronized
     {
       lock(myLocker)
       {
-        // Linq calls on ConcurrentSet are not thread-safe
+        // Linq calls on SynchronizedSet are not thread-safe
         // E.g., Enumerable.ToList calls List`1.ctor which contains the following race:
         //   int count = collection.Count;
         //   _items = new T[count];
