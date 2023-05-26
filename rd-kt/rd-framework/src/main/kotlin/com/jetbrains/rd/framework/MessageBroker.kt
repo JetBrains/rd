@@ -31,7 +31,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
 
     fun startDeliveringMessages() {
         while (true) {
-            var queue: Queue<RdMessage>
+            val queue: Queue<RdMessage>
             Sync.lock (lock) {
                 queue = requireNotNull(unprocessedMessages) { "Already started delivering messages" }
 
