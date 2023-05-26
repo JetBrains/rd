@@ -2,12 +2,14 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Timers;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Serialization;
 using JetBrains.Threading;
+using Timer = System.Timers.Timer;
 
 namespace JetBrains.Rd.Impl
 {
@@ -43,6 +45,7 @@ namespace JetBrains.Rd.Impl
       protected readonly IViewableProperty<Socket> SocketProvider = new ViewableProperty<Socket> ();
 
       public readonly IViewableProperty<bool> Connected = new ViewableProperty<bool> { Value = false };
+      public readonly IViewableProperty<bool> HeartbeatAlive = new ViewableProperty<bool> { Value = false };
 
       protected readonly ByteBufferAsyncProcessor SendBuffer;
       protected readonly object Lock = new object();
@@ -70,12 +73,16 @@ namespace JetBrains.Rd.Impl
         SendBuffer.Pause(DisconnectedPauseReason);
         SendBuffer.Start();
 
+        Connected.Advise(lifetime, value => HeartbeatAlive.Value = value);
+
 
         //when connected
         SocketProvider.Advise(lifetime, socket =>
         {
 //          //todo hack for multiconnection, bring it to API
 //          if (SupportsReconnect) SendBuffer.Clear();
+
+          var timer = StartHeartbeat();
 
           SendBuffer.ReprocessUnacknowledged();
           SendBuffer.Resume(DisconnectedPauseReason);
@@ -94,10 +101,29 @@ namespace JetBrains.Rd.Impl
 
             SendBuffer.Pause(DisconnectedPauseReason);
 
+            timer.Dispose();
+
             CloseSocket(socket);
           }
         });
       }
+
+      private static bool ConnectionEstablished(int timeStamp, int notionTimestamp) => timeStamp - notionTimestamp <= MaximumHeartbeatDelay;
+
+      private Timer StartHeartbeat()
+      {
+        var timer = new Timer(HeartBeatInterval.TotalMilliseconds) { AutoReset = false };
+        void OnTimedEvent(object sender, ElapsedEventArgs e)
+        {
+          Ping();
+          timer.Start();
+        }
+
+        timer.Elapsed += OnTimedEvent;
+        timer.Start();
+        return timer;
+      }
+
 
       public static void CloseSocket(Socket? socket)
       {
@@ -227,8 +253,29 @@ namespace JetBrains.Rd.Impl
 
             Int32 len = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data);
 
-            if (len == PING_LEN) // backward compatibility
+            if (len == PING_LEN)
+            {
+              Int32 receivedTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
+              Int32 receivedCounterpartTimestamp = UnsafeReader.ReadInt32FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32) + sizeof(Int32));
+              myCounterpartTimestamp = receivedTimestamp;
+              myCounterpartNotionTimestamp = receivedCounterpartTimestamp;
+
+              if (ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
+              {
+                if (!HeartbeatAlive.Value) // only on change
+                {
+                  Log.WhenTrace()?.Log($"Connection is alive after receiving PING {Id}: " +
+                                       $"receivedTimestamp: {receivedTimestamp}, " +
+                                       $"receivedCounterpartTimestamp: {receivedCounterpartTimestamp}, " +
+                                       $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                                       $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                                       $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+                }
+                HeartbeatAlive.Value = true;
+              }
+
               continue;
+            }
 
             Int64 seqN = UnsafeReader.ReadInt64FromBytes(myPkgHeaderBuffer.Data, sizeof(Int32));
             if (len == ACK_MSG_LEN)
@@ -287,6 +334,47 @@ namespace JetBrains.Rd.Impl
         }
       }
 
+      private void Ping()
+      {
+        if (BackwardsCompatibleWireFormat) return;
+        
+        try
+        {
+          if (!ConnectionEstablished(myCurrentTimeStamp, myCounterpartNotionTimestamp))
+          {
+            if (HeartbeatAlive.Value) // log only on change
+            {
+              Log.WhenTrace()?.Log($"Disconnect detected while sending PING {Id}: " +
+                                   $"currentTimeStamp: {myCurrentTimeStamp}, " +
+                                   $"counterpartTimestamp: {myCounterpartTimestamp}, " +
+                                   $"counterpartNotionTimestamp: {myCounterpartNotionTimestamp}");
+            }
+            HeartbeatAlive.Value = false;
+          }
+
+          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+          {
+            cookie.Writer.Write(PING_LEN);
+            cookie.Writer.Write(myCurrentTimeStamp);
+            cookie.Writer.Write(myCounterpartTimestamp);
+            cookie.CopyTo(myPingPkgHeader);
+          }
+
+          lock (mySocketSendLock)
+            Socket.Send(myPingPkgHeader);
+
+          ++myCurrentTimeStamp;
+        }
+        catch (ObjectDisposedException)
+        {
+          Log.Verbose($"{Id}: Socket was disposed during PING");
+        }
+        catch (Exception e)
+        {
+          Log.Verbose(e, $"{Id}: {e.GetType()} raised during PING");
+        }
+      }
+
       private readonly object mySocketSendLock = new object();
 
       private int ReceiveFromSocket(byte[] buffer, int offset, int size)
@@ -300,6 +388,30 @@ namespace JetBrains.Rd.Impl
       private const int PkgHeaderLen = sizeof(int) /*pkgFullLen */ + sizeof(long) /*seqN*/;
       private readonly byte[] mySendPkgHeader = new byte[ PkgHeaderLen];
       private readonly byte[] myAckPkgHeader = new byte[ PkgHeaderLen]; //different threads
+
+      /// <summary>
+      /// Ping's interval and not actually detection's timeout.
+      /// Its value must be the same on both sides of connection.
+      /// </summary>
+      public TimeSpan HeartBeatInterval { get; set; } = TimeSpan.FromMilliseconds(500);
+
+      /// <summary>
+      /// Timestamp of this wire which increases at intervals of <see cref="HeartBeatInterval"/>
+      /// </summary>
+      private int myCurrentTimeStamp;
+
+      /// <summary>
+      /// Actual notion about counterpart's <see cref="myCurrentTimeStamp"/>
+      /// </summary>
+      private int myCounterpartTimestamp;
+
+      /// <summary>
+      /// The latest received counterpart's notion of this wire's <see cref="myCurrentTimeStamp"/>
+      /// </summary>
+      private int myCounterpartNotionTimestamp;
+
+      internal const int MaximumHeartbeatDelay = 3;
+      private readonly byte[] myPingPkgHeader = new byte[ PkgHeaderLen];
 
       private void Send0(byte[] data, int offset, int len, ref long seqN)
       {
