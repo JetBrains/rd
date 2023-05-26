@@ -1,10 +1,11 @@
+#nullable disable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
-using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Collections.Synchronized;
 using JetBrains.Collections.Viewable;
@@ -13,8 +14,6 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
-
-#nullable disable
 
 // ReSharper disable InconsistentNaming
 
@@ -249,7 +248,6 @@ namespace JetBrains.Rd.Impl
 
           case AddUpdateRemove.Update:
           {
-            // ReSharper disable once AssignNullToNotNullAttribute
             if (TryGetBindDefinitions(lifetime) is {} definitions)
             {
               definitions[index]?.Terminate();
