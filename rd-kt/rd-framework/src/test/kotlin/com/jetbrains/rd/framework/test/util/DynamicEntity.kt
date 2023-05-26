@@ -33,8 +33,12 @@ class DynamicEntity<T>(val _foo: RdProperty<T>) : RdBindableBase() {
         }
     }
 
-    override fun init(lifetime: Lifetime) {
-        _foo.bind(lifetime, this, "foo")
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        _foo.preBind(lifetime, this, "foo")
+    }
+
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        _foo.bind()
     }
 
     override fun identify(identities: IIdentities, id: RdId) {

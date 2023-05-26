@@ -16,15 +16,18 @@ namespace Test.RdFramework.Interning
 
     public RdProperty<T> Property { get; private set; }
 
-    public override SerializationCtx SerializationContext
+    public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }
+
+    protected override void PreInit(Lifetime lifetime, IProtocol proto)
     {
-      get { return mySerializationContext; }
+      Property.PreBind(lifetime, this, "interningPropertyWrapper");
+      base.PreInit(lifetime, proto);
     }
 
-    protected override void Init(Lifetime lifetime)
+    protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
     {
-      Property.Bind(lifetime, this, "interningPropertyWrapper");
-      base.Init(lifetime);
+      Property.Bind();
+      base.Init(lifetime, proto, ctx);
     }
 
     public override void Identify(IIdentities identities, RdId id)

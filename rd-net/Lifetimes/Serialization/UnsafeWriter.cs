@@ -139,6 +139,11 @@ namespace JetBrains.Serialization
         myWriter.myPtr = finalPtr;
         myWriter.myCount = myStart + bytesWritten;
       }
+
+      public void Reset()
+      {
+        FinishRawWrite(myStart - myWriter.Count);
+      }
     }
 
     private const string LogCategory = "UnsafeWriter";

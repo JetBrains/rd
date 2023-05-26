@@ -61,7 +61,7 @@ namespace JetBrains.Rd.Impl
       private readonly Actor<long> myAcktor;
       const string DisconnectedPauseReason = "Disconnected";
 
-      protected Base(string id, Lifetime lifetime, IScheduler scheduler) : base(scheduler)
+      protected Base(string id, Lifetime lifetime, IScheduler scheduler)
       {
         Id = id;
         Log = Diagnostics.Log.GetLog(GetType());

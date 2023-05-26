@@ -5,14 +5,13 @@ import com.jetbrains.rd.framework.util.asCoroutineDispatcher
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.Statics
+import com.jetbrains.rd.util.collections.SynchronizedList
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.threading.CompoundThrowable
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
-import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -53,7 +52,7 @@ open class CoroutineTestBase {
 class TestSingleThreadCoroutineHost(lifetime: Lifetime, scheduler: TestSingleThreadScheduler) : RdCoroutineScope(lifetime) {
     override val defaultDispatcher: CoroutineContext = scheduler.asCoroutineDispatcher
 
-    private val exceptions = Collections.synchronizedList(mutableListOf<Throwable>())
+    private val exceptions = SynchronizedList<Throwable>()
 
     override fun onException(throwable: Throwable) {
         exceptions.add(throwable)

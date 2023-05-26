@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.framework.AbstractBuffer
 import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.RdId
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 
 /**
@@ -23,27 +24,19 @@ interface IRdReactive : IRdBindable, IRdWireable {
 interface IRdWireable: IRdDynamic {
 
     val rdid: RdId
-    val isBound: Boolean
-
-    /**
-     * Scheduler on which wire invokes callback [onWireReceived]. Default is the same as [protocol]'s one.
-     */
-    val wireScheduler : IScheduler
 
     /**
      * Callback that wire triggers when it receives messaged
      */
-    fun onWireReceived(buffer: AbstractBuffer)
+    fun onWireReceived(buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper)
 }
 
-val IRdWireable.wireSchedulerIfBound: IScheduler?
-    get() {
-        if (!isBound) return null
+interface IRdWireableDispatchHelper {
+    val rdId: RdId
+    val lifetime: Lifetime
 
-        return try {
-            wireScheduler
-        } catch (e: ProtocolNotBoundException) {
-            null
-        }
-    }
+    fun dispatch(lifetime: Lifetime = this.lifetime, scheduler: IScheduler? = null, action: () -> Unit)
+    fun dispatch(scheduler: IScheduler? = null, action: () -> Unit) = dispatch(lifetime, scheduler, action)
+}
+
 

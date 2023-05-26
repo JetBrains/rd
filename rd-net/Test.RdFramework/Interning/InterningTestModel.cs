@@ -54,7 +54,7 @@ namespace Test.RdFramework.Interning
     public InterningRoot1(Lifetime lifetime, IProtocol protocol) : this()
     {
       Identify(protocol.Identities, RdId.Root.Mix(GetType().Name));
-      Bind(lifetime, protocol, GetType().Name);
+      this.BindTopLevel(lifetime, protocol, GetType().Name);
       Protocol.InitTrace?.Log ($"CREATED toplevel object {this.PrintToString()}");
     }
     //custom body
@@ -83,7 +83,7 @@ namespace Test.RdFramework.Interning
     
     //private fields
     private SerializationCtx mySerializationContext;
-    public override SerializationCtx SerializationContext { get { return mySerializationContext; } }
+    public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }
     //primary constructor
     //secondary constructor
     //statics
@@ -131,7 +131,7 @@ namespace Test.RdFramework.Interning
     [NotNull] private readonly RdSignal<string> _Signaller;
     
     private SerializationCtx mySerializationContext;
-    public override SerializationCtx SerializationContext { get { return mySerializationContext; } }
+    public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }
     //primary constructor
     private InterningMtModel(
       [NotNull] string searchLabel,
@@ -445,7 +445,7 @@ namespace Test.RdFramework.Interning
     [NotNull] private readonly RdMap<int, WrappedStringModel> _Issues;
     
     private SerializationCtx mySerializationContext;
-    public override SerializationCtx SerializationContext { get { return mySerializationContext; } }
+    public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }
     //primary constructor
     private InterningTestModel(
       [NotNull] string searchLabel,

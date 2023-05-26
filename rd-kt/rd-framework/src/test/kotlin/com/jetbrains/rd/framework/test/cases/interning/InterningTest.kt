@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.interning
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
@@ -326,7 +327,7 @@ class InterningTest: RdFrameworkTestBase() {
 
     private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String) : InternRoot<T> {
         identify(protocol.identity, RdId.Null.mix(id))
-        bind(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
+        bindTopLevel(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
         return this
     }
 }

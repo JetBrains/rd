@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Collections.Viewable;
+using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
 
@@ -27,7 +28,7 @@ namespace JetBrains.Rd.Reflection
         IScheduler scheduler;
         lock (ourLock)
         {
-          scheduler = myFallbackSchedulerSource.Proto.Scheduler;
+           scheduler = myFallbackSchedulerSource.GetProtoOrThrow().Scheduler;
           if (ourSchedulersOverride.Count > 0 && ourDisable == 0)
             scheduler = ourSchedulersOverride.Peek();
         }

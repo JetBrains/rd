@@ -1,7 +1,6 @@
 package com.jetbrains.rd.framework.test.cases.contexts
 
-import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.ThreadLocalRdContext
+import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdAsyncTestBase
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,12 +15,16 @@ class ContextsMultithreadTest : RdAsyncTestBase() {
         val serverSignal = RdSignal<String>().also { it.async = true }
         val clientSignal = RdSignal<String>()
 
+        val registerLatch = CountDownLatch(2)
         val latch1 = CountDownLatch(4)
         val latch2 = CountDownLatch(2)
 
         val values = (1..100_000).map { it.toString() }
 
         serverUiScheduler.queue {
+            registerLatch.countDown()
+            registerLatch.await()
+
             serverProtocol.bindStatic(serverSignal, 1)
             serverProtocol.contexts.registerContext(key)
 
@@ -51,6 +54,10 @@ class ContextsMultithreadTest : RdAsyncTestBase() {
         }
 
         clientUiScheduler.queue {
+            clientProtocol.serializers.register(RdContext.marshallerFor(key))
+
+            registerLatch.countDown()
+            registerLatch.await()
             clientProtocol.bindStatic(clientSignal, 1)
 
             clientSignal.advise(clientLifetime) {

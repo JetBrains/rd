@@ -1,21 +1,31 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using JetBrains.Annotations;
+using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
-using JetBrains.Util.Util;
+using JetBrains.Util;
 
 namespace JetBrains.Rd.Base
 {
   public interface IRdDynamic
   {
-    IProtocol Proto { get; }
-    SerializationCtx SerializationContext { get; }
     RName Location { get; }
+    
+    IProtocol? TryGetProto();
+    bool TryGetSerializationContext(out SerializationCtx ctx);
+  }
+
+  public static class RdDynamicEx
+  {
+    public static IProtocol GetProtoOrThrow(this IRdDynamic dynamic)
+    {
+      return dynamic.TryGetProto() ?? throw new ProtocolNotBoundException(dynamic.ToString());
+    }
   }
 
 
@@ -28,40 +38,134 @@ namespace JetBrains.Rd.Base
   public interface IRdWireable : IRdDynamic
   {
     RdId RdId { get; }
-    bool IsBound { get; }
+    void OnWireReceived(UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper);    
+  }
 
-    IScheduler WireScheduler { get; }
+  public interface IRdWireableDispatchHelper
+  {
+    RdId RdId { get; }
+    Lifetime Lifetime { get; }
+    
+    public void Dispatch(Lifetime lifetime, IScheduler? scheduler, Action action);
+  }
 
-    void OnWireReceived(UnsafeReader reader);    
+  public static class RdWireableDispatchHelperEx
+  {
+    public static void Dispatch(this IRdWireableDispatchHelper helper, Lifetime lifetime, Action action)
+    {
+      helper.Dispatch(lifetime, null, action);
+    }
+    
+    public static void Dispatch(this IRdWireableDispatchHelper helper, IScheduler? scheduler, Action action)
+    {
+      helper.Dispatch(helper.Lifetime, scheduler, action);
+    }
+    
+    public static void Dispatch(this IRdWireableDispatchHelper helper, Action action)
+    {
+      helper.Dispatch(helper.Lifetime, null, action);
+    }
   }
 
   public interface IRdBindable : IRdDynamic, IPrintable
   {
     RdId RdId { get; set; }
-    void Bind(Lifetime lf, IRdDynamic parent, string name);    
+    void PreBind(Lifetime lf, IRdDynamic parent, string name);    
+    void Bind();    
     void Identify(IIdentities identities, RdId id);
+  }
+
+  internal readonly ref struct AllowBindCookie
+  {
+    private readonly bool myCreated;
+
+    [ThreadStatic]
+    public static int IsBindAllowedCount;
+
+    public static bool IsBindAllowed => IsBindAllowedCount > 0;
+    public static bool IsBindNotAllowed => !IsBindAllowed;
+
+    private AllowBindCookie(bool created)
+    {
+      myCreated = created;
+    }
+
+    public static AllowBindCookie Create()
+    {
+      IsBindAllowedCount++;
+      return new AllowBindCookie(true);
+    }
+
+    public void Dispose()
+    {
+      if (myCreated)
+        IsBindAllowedCount--;
+    }
   }
 
 
   public static class RdBindableEx
   {
-
-
     #region Bind
 
 
-    internal static void BindPolymorphic(this object? value, Lifetime lifetime, IRdDynamic parent, string name)
+    internal static void PreBindPolymorphic(this object? value, Lifetime lifetime, IRdDynamic parent, string name)
     {
       if (value is IRdBindable rdBindable) 
-        rdBindable.Bind(lifetime, parent, name);
+        rdBindable.PreBind(lifetime, parent, name);
       else
         //Don't remove 'else'. RdList is bindable and collection simultaneously.
-        (value as IEnumerable)?.Bind0(lifetime, parent, name);
+        (value as IEnumerable)?.PreBind0(lifetime, parent, name);
       
+    }
+
+    internal static void BindPolymorphic(this object? value)
+    {
+      if (value is IRdBindable rdBindable) 
+        rdBindable.Bind();
+      else
+        //Don't remove 'else'. RdList is bindable and collection simultaneously.
+        (value as IEnumerable)?.Bind0();
+      
+    }
+    
+    internal static class FastIsBindable<T>
+    {
+      // ReSharper disable once StaticMemberInGenericType
+      public static readonly bool Value = Calculate();
+
+      private static bool Calculate()
+      {
+        var type = typeof(T);
+        if (type.IsValueType)
+          return false;
+
+        var rdBindableType = typeof(IRdBindable);
+        if (rdBindableType.IsAssignableFrom(type))
+          return true;
+
+        if (type.IsArray && type.GetElementType() is { } elementType && rdBindableType.IsAssignableFrom(elementType))
+          return true;
+
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+        {
+          var argument = type.GetGenericArguments().Single();
+          if (rdBindableType.IsAssignableFrom(argument))
+            return true;
+        }
+
+        return false;
+      }
     }
 
     internal static bool IsBindable<T>(this T obj)
     {
+      if (obj == null)
+        return false;
+      
+      if (FastIsBindable<T>.Value)
+        return true;
+      
       switch (obj)
       {
         case IRdBindable _:
@@ -78,7 +182,7 @@ namespace JetBrains.Rd.Base
     }
 
 
-    private static void Bind0(this IEnumerable? items, Lifetime lifetime, IRdDynamic parent, string name)
+    private static void PreBind0(this IEnumerable? items, Lifetime lifetime, IRdDynamic parent, string name)
     {
       if (items == null) return;
 
@@ -87,25 +191,40 @@ namespace JetBrains.Rd.Base
       {
         if (item is not IRdBindable bindable)
           return;
-        bindable.BindEx(lifetime, parent, name + "[" + cnt++ + "]");
+        bindable.PreBindEx(lifetime, parent, name + "[" + cnt++ + "]");
+      }
+    }
+
+    private static void Bind0(this IEnumerable? items)
+    {
+      if (items == null) return;
+
+      foreach (var item in items)
+      {
+        if (item is not IRdBindable bindable)
+          return;
+        bindable.BindEx();
       }
     }
 
 
-    public static void BindEx<T>(this T? value, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
+    public static void PreBindEx<T>(this T? value, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
     {
-      if (value != null) value.Bind(lifetime, parent, name);
+      if (value != null) value.PreBind(lifetime, parent, name);
     }
 
-    // ASSHEATING C# OVERLOAD RESOLUTION
-    public static void BindEx<T>(this List<T>? items, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
+    public static void BindEx<T>(this T? value) where T : IRdBindable
     {
-      Bind0(items, lifetime, parent, name);
+      if (value != null) value.Bind();
     }
 
-    public static void BindEx<T>(this T[]? items, Lifetime lifetime, IRdDynamic parent, string name) where T : IRdBindable
+    public static void BindTopLevel<T>(this T? value, Lifetime lifetime, IProtocol parent, string name) where T : IRdBindable
     {
-      Bind0(items, lifetime, parent, name);
+      if (value != null)
+      {
+        value.PreBind(lifetime, parent, name);
+        value.Bind();
+      }
     }
 
     #endregion
@@ -154,27 +273,6 @@ namespace JetBrains.Rd.Base
 
     #endregion
   }
-
-  public static class RdWireableEx
-  {
-    public static IScheduler? GetWireSchedulerIfBound(this IRdWireable wireable)
-    {
-      if (!wireable.IsBound)
-        return null;
-      
-      try
-      {
-        // can throw exception if wireable is not bound
-        return wireable.WireScheduler;
-      }
-      catch (ProtocolNotBoundException)
-      {
-        return null;
-      }
-    }
-  }
-
-
 
   public static class PrintableEx
   {

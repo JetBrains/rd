@@ -1,5 +1,6 @@
 package com.jetbrains.rd.framework.test.cases.wire
 
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.TestBase
@@ -29,10 +30,10 @@ class SocketProxyTest : TestBase() {
             val clientProtocol = SocketWireTest.client(lifetime, proxy.port)
 
             val sp = RdSignal<Int>().static(1)
-            sp.bind(lifetime, serverProtocol, SocketWireTest.top)
+            sp.bindTopLevel(lifetime, serverProtocol, SocketWireTest.top)
 
             val cp = RdSignal<Int>().static(1)
-            cp.bind(lifetime, clientProtocol, SocketWireTest.top)
+            cp.bindTopLevel(lifetime, clientProtocol, SocketWireTest.top)
 
             val serverLog = mutableListOf<Int>()
             val clientLog = mutableListOf<Int>()

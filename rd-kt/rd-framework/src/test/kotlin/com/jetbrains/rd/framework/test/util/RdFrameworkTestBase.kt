@@ -1,9 +1,8 @@
 package com.jetbrains.rd.framework.test.util
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.base.IRdBindable
-import com.jetbrains.rd.framework.base.RdBindableBase
-import com.jetbrains.rd.framework.base.static
+import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.util.Closeable
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Statics
@@ -21,7 +20,6 @@ object TestScheduler : IScheduler {
 }
 
 open class RdFrameworkTestBase {
-    private val serializers = Serializers()
 
 
     protected lateinit var clientProtocol: IProtocol
@@ -51,6 +49,9 @@ open class RdFrameworkTestBase {
     protected open val clientScheduler: IScheduler get() = TestScheduler
     protected open val serverScheduler: IScheduler get() = TestScheduler
 
+    protected open val clientWireScheduler: IScheduler? get() = null
+    protected open val serverWireScheduler: IScheduler? get() = null
+
     @BeforeTest
     fun setUp() {
         disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
@@ -58,24 +59,28 @@ open class RdFrameworkTestBase {
         serverLifetimeDef = Lifetime.Eternal.createNested()
 
 
-        val clientTestWire = TestWire(clientScheduler)
-        val serverTestWire = TestWire(serverScheduler)
+        val clientTestWire = TestWire(clientWireScheduler ?: clientScheduler)
+        val serverTestWire = TestWire(serverWireScheduler ?: serverScheduler)
 
         val (w1, w2) = clientTestWire to serverTestWire
         w1.counterpart = w2
         w2.counterpart = w1
 
-        clientProtocol = Protocol("Client", serializers,
+        clientProtocol = Protocol("Client", createSerializers(false),
                 Identities(IdKind.Client),
             clientScheduler, clientTestWire, clientLifetime)
 
-        serverProtocol = Protocol("Server", serializers,
+        serverProtocol = Protocol("Server", createSerializers(true),
                 Identities(IdKind.Server),
             serverScheduler, serverTestWire, serverLifetime)
     }
 
+    open fun createSerializers(isServer: Boolean): ISerializers {
+        return Serializers()
+    }
+
     @AfterTest
-    fun tearDown() {
+    open fun tearDown() {
         disposeLoggerFactory?.close()
         disposeLoggerFactory = null
 
@@ -91,7 +96,9 @@ open class RdFrameworkTestBase {
             serverProtocol -> serverLifetime
             else -> throw IllegalArgumentException("Not valid protocol, must be client or server")
         }
-        x.bind(lf, this, name)
+        AllowBindingCookie.allowBind {
+            x.bindTopLevel(lf, this, name)
+        }
         return x
     }
 
@@ -101,7 +108,10 @@ open class RdFrameworkTestBase {
             serverProtocol -> serverLifetime
             else -> throw IllegalArgumentException("Not valid protocol, must be client or server")
         }
-        x.static(id).bind(lf, this, "top")
+        AllowBindingCookie.allowBind {
+            x.static(id).bindTopLevel(lf, this, "top")
+        }
+
         return x
     }
 

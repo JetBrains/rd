@@ -4,7 +4,10 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.base.bindPolymorphic
 import com.jetbrains.rd.framework.base.identifyPolymorphic
+import com.jetbrains.rd.util.AtomicReference
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.trace
@@ -32,53 +35,116 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
         }
     //init
     var optimizeNested: Boolean = false
+    private val bindDefinition: AtomicReference<LifetimeDefinition?> = AtomicReference(null)
 
     protected abstract val property: IMutablePropertyBase<T>
 
     override val change : ISource<T> get() = property.change
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
+    protected abstract val valueOrNull: T?
 
-        val serializationContext = serializationContext
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
 
-        if (!optimizeNested)
-            change.advise(lifetime) {
-                v -> if (isLocalChange) v?.identifyPolymorphic(protocol.identity, protocol.identity.next(rdid))
-            }
+        if (!optimizeNested) {
+            val value = valueOrNull
+            if (value != null) {
+                val definition = tryPreBindValue(lifetime, value, false)
+                lifetime.executeIfAlive {
+                    val prevDefinition = bindDefinition.getAndSet(definition)
+                    assert(prevDefinition?.isNotAlive ?: true)
+                }
 
-        advise(lifetime) lambda@{ v ->
-            if (!isLocalChange) return@lambda
-            if (master) masterVersion++
-
-            wire.send(rdid) { buffer ->
-                buffer.writeInt(masterVersion)
-                valueSerializer.write(serializationContext, buffer, v)
-                logSend.trace { "property `$location` ($rdid):: ver = $masterVersion, value = ${v.printToString()}" }
             }
         }
 
-        wire.advise(lifetime, this)
-
-        if (!optimizeNested)
-            view(lifetime) { lf, v -> v?.bindPolymorphic(lf, this, "\$")}
+        proto.wire.advise(lifetime, this)
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        super.init(lifetime, proto, ctx)
+
+        val value = valueOrNull
+        var hasInitValue = value != null
+        if (hasInitValue && !optimizeNested)
+            value.bindPolymorphic()
+
+        advise(lifetime) { v ->
+            val shouldIdentify = !hasInitValue
+            hasInitValue = false
+
+            if (!isLocalChange)
+                return@advise
+
+            if (!optimizeNested && shouldIdentify) {
+                v.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+
+                val prevDefinition = bindDefinition.getAndSet(tryPreBindValue(lifetime, v, false))
+                prevDefinition?.terminate()
+            }
+
+            if (master) masterVersion++
+
+            proto.wire.send(rdid) { buffer ->
+                buffer.writeInt(masterVersion)
+                valueSerializer.write(ctx, buffer, v)
+                logSend.trace { "property `$location` ($rdid):: ver = $masterVersion, value = ${v.printToString()}" }
+            }
+
+            if (!optimizeNested && shouldIdentify)
+                v.bindPolymorphic()
+        }
+    }
+
+    override fun unbind() {
+        super.unbind()
+        bindDefinition.getAndSet(null)
+    }
+
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val version = buffer.readInt()
-        val v = valueSerializer.read(serializationContext, buffer)
+        val v = valueSerializer.read(ctx, buffer)
 
-        val rejected = master && version < masterVersion
-        logReceived.trace {"property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}"}
+        val definition = tryPreBindValue(dispatchHelper.lifetime, v, true)
 
-        if (rejected) return
-        masterVersion = version
-        property.set(v)
+        dispatchHelper.dispatch {
+            val rejected = master && version < masterVersion
+            logReceived.trace { "property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}" }
+
+            if (rejected) {
+                definition?.terminate()
+                return@dispatch
+            }
+
+            masterVersion = version
+
+            val prevDefinition = bindDefinition.getAndSet(definition)
+            prevDefinition?.terminate()
+            property.set(v)
+        }
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
         if (isBound) assertThreading()
         property.advise(lifetime, handler)
+    }
+
+    private fun tryPreBindValue(lifetime: Lifetime, value: T, bindAlso: Boolean): LifetimeDefinition? {
+        if (optimizeNested || value == null)
+            return null
+
+        val definition = LifetimeDefinition().apply { id = value }
+        try {
+            value.preBindPolymorphic(definition.lifetime, this, "$")
+            if (bindAlso)
+                value.bindPolymorphic()
+
+            lifetime.attach(definition, true)
+            return definition
+        } catch (e: Throwable) {
+            definition.terminate()
+            throw e
+        }
     }
 }
 
@@ -99,8 +165,10 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
     companion object : ISerializer<RdOptionalProperty<*>> {
 
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdOptionalProperty<*> = read(ctx, buffer, Polymorphic())
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdOptionalProperty<*>) =
-            write0(ctx, buffer, value as RdPropertyBase<Any>, value.valueOrNull)
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdOptionalProperty<*>) {
+            val value1 = value.valueOrNull
+            write0(ctx, buffer, value as RdPropertyBase<Any>, value1)
+        }
 
         fun <T : Any> read(ctx: SerializationCtx, buffer: AbstractBuffer, valueSerializer: ISerializer<T>): RdOptionalProperty<T> {
             val id = RdId.read(buffer)
@@ -197,6 +265,9 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
         return this
     }
 
+    override val valueOrNull: T?
+        get() = value
+
     //api
     override val property = Property(defaultValue)
 
@@ -219,6 +290,23 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
         super<RdPropertyBase>.advise(lifetime, handler)
+    }
+
+
+    override fun findByRName(rName: RName): RdBindableBase? {
+        if (rName == RName.Empty) return this
+        val rootName = rName.getNonEmptyRoot()
+        val localName = rootName.localName
+        if (localName != "$")
+            return null
+
+        val value = property.value as? RdBindableBase
+            ?: return null
+
+        if (rootName == rName)
+            return value
+
+        return value.findByRName(rName.dropNonEmptyRoot())
     }
 
     //pretty printing

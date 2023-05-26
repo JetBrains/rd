@@ -19,6 +19,15 @@ fun LifetimeDefinition.synchronizeWith(job: Job, supportsTerminationUnderExecuti
     }
 }
 
+fun LifetimeDefinition.synchronizeWith(scope: CoroutineScope, supportsTerminationUnderExecution: Boolean = false) {
+    if (onTerminationIfAlive { scope.cancel() }) {
+        scope.coroutineContext.job.invokeOnCompletion { terminate(supportsTerminationUnderExecution) }
+    } else {
+        scope.cancel()
+    }
+}
+
+
 suspend fun Lifetime.waitFor(timeout: Duration, maxDelay: Long = 256, condition: suspend () -> Boolean): Boolean {
     val start = System.nanoTime()
     val durationNanos = timeout.toNanos()

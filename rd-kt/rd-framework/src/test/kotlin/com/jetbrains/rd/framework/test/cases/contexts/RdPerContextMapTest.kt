@@ -1,10 +1,8 @@
 @file:Suppress("UNCHECKED_CAST")
 package com.jetbrains.rd.framework.test.cases.contexts
 
-import com.jetbrains.rd.framework.FrameworkMarshallers
-import com.jetbrains.rd.framework.ISerializer
-import com.jetbrains.rd.framework.RdId
-import com.jetbrains.rd.framework.ThreadLocalRdContext
+import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdPerContextMap
@@ -16,6 +14,12 @@ import org.junit.jupiter.api.Test
 
 
 class RdPerContextMapTest : RdFrameworkTestBase() {
+    private val serializers = Serializers()
+
+    override fun createSerializers(isServer: Boolean): ISerializers {
+        return serializers
+    }
+
     @Test
     fun testOnStructMap() {
         val key = ContextsTest.TestKeyHeavy
@@ -31,8 +35,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         serverProtocol.contexts.getValueSet(key).add(server1Cid)
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
         serverMap[server1Cid]!![1] = "test"
 
         assert(clientMap[server1Cid]!![1] == "test")
@@ -58,8 +62,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         serverProtocol.contexts.getValueSet(key).add(server1Cid)
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
         assert(clientMap[server1Cid]!![1]!!.foo.value == "test")
@@ -88,8 +92,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverMap[server1Cid]!![1] = DynamicEntity("test")
         clientProtocol.contexts.getValueSet(key).add(client1Cid)
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         assert(clientMap[server1Cid]!![1]!!.foo.value == "test")
 
@@ -113,8 +117,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         assert(serverMap[server1Cid] == null)
         assert(clientMap[server1Cid] == null)
@@ -147,8 +151,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverMap[server1Cid]!![1] = DynamicEntity("test")
         serverMap[server2Cid]!![1] = DynamicEntity("test")
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         assertEquals(listOf("Add $server1Cid", "Add $server2Cid"), log)
     }
@@ -180,8 +184,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverMap[server1Cid]!![1] = DynamicEntity("test")
         serverMap[server2Cid]!![1] = DynamicEntity("test")
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         assertEquals(listOf("Add $server1Cid", "Add $server2Cid", "Remove $server2Cid"), log)
     }
@@ -209,8 +213,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
 
         serverProtocol.contexts.getValueSet(key).addAll(setOf(server1Cid))
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         serverMap[server1Cid]!![1] = DynamicEntity("test")
 
@@ -238,8 +242,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverProtocol.contexts.registerContext(key)
         clientProtocol.contexts.registerContext(key)
 
-        clientMap.bind(clientLifetime, clientProtocol, "map")
-        serverMap.bind(serverLifetime, serverProtocol, "map")
+        clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+        serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         key.updateValue(server1Cid).use {
             serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
@@ -281,8 +285,8 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
                 serverProtocol.contexts.registerContext(key2)
                 clientProtocol.contexts.registerContext(key1)
 
-                clientMap.bind(clientLifetime, clientProtocol, "map")
-                serverMap.bind(serverLifetime, serverProtocol, "map")
+                clientMap.bindTopLevel(clientLifetime, clientProtocol, "map")
+                serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
                 serverProtocol.contexts.getValueSet(key1).add(server2Cid)
             }

@@ -2,16 +2,18 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.collections.SynchronizedMap
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.parseFromOrdinal
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
-import com.jetbrains.rd.util.trace
+import kotlin.assert
 
 
 @Suppress("UNUSED_PARAMETER")
-class RdMap<K : Any, V : Any> private constructor(
+open class RdMap<K : Any, V : Any> private constructor(
     val keySzr: ISerializer<K>,
     val valSzr: ISerializer<V>,
     private val map: ViewableMap<K, V>
@@ -35,6 +37,7 @@ class RdMap<K : Any, V : Any> private constructor(
 
     private var nextVersion = 0L
     private val pendingForAck = mutableMapOf<K, Long>()
+    private var bindDefinitions: MutableMap<K, LifetimeDefinition?>? = null
 
     var optimizeNested: Boolean = false
         set(value) {
@@ -48,15 +51,55 @@ class RdMap<K : Any, V : Any> private constructor(
             (value != null).condstr { " :: value = ${value.printToString()}" }
     }
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
+
+        if (!optimizeNested) {
+            val definitions = SynchronizedMap<K, LifetimeDefinition?>()
+
+            for ((key, value) in this) {
+                if (value != null) {
+                    value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                    val definition = tryPreBindValue(lifetime, key, value, false)
+                    if (definition != null)
+                        definitions[key] = definition
+                }
+            }
+
+            lifetime.executeIfAlive {
+                assert(bindDefinitions == null)
+                bindDefinitions = definitions
+            }
+        }
+
+        proto.wire.advise(lifetime, this)
+    }
+
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        super.init(lifetime, proto, ctx)
+
+        if (!optimizeNested) {
+            change.advise(lifetime) {
+                if (isLocalChange) {
+                    val definitions = tryGetBindDefinitions(lifetime) ?: return@advise
+
+                    if (it !is IViewableMap.Event.Add)
+                        definitions[it.key]?.terminate()
+
+                    if (it !is IViewableMap.Event.Remove) {
+                        val value = it.newValueOpt
+                        value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                        val definition = tryPreBindValue(lifetime, it.key, value, false)
+                        definitions.put(it.key, definition)?.terminate()
+                    }
+                }
+            }
+        }
 
         localChange { advise(lifetime) lambda@{
             if (!isLocalChange) return@lambda
 
-            if (!optimizeNested) (it.newValueOpt)?.identifyPolymorphic(protocol.identity, protocol.identity.next(rdid))
-
-            wire.send(rdid) { buffer ->
+            proto.wire.send(rdid) { buffer ->
                 val versionedFlag = (if (master) 1 else 0) shl versionedFlagShift
                 val op = when (it) {
                     is IViewableMap.Event.Add ->    Op.Add
@@ -68,22 +111,23 @@ class RdMap<K : Any, V : Any> private constructor(
                 val version = if (master) ++nextVersion else 0L
 
                 if (master) {
-                    pendingForAck.put(it.key, version)
+                    Sync.lock(pendingForAck) {
+                        pendingForAck.put(it.key, version)
+                    }
+
                     buffer.writeLong(version)
                 }
 
-                keySzr.write(serializationContext, buffer, it.key)
+                keySzr.write(ctx, buffer, it.key)
 
-                it.newValueOpt?.let { valSzr.write(serializationContext, buffer, it) }
+                it.newValueOpt?.let { valSzr.write(ctx, buffer, it) }
 
                 logSend.trace { logmsg(op, version, it.key, it.newValueOpt) }
             }
+
+            if (!optimizeNested)
+                it.newValueOpt.bindPolymorphic()
         }}
-
-        wire.advise(lifetime, this)
-
-        if (!optimizeNested)
-            view(lifetime) { lf, entry -> (entry.value).bindPolymorphic(lf, this, "[${entry.key}]") }
     }
 
     override fun findByRName(rName: RName): RdBindableBase? {
@@ -105,17 +149,18 @@ class RdMap<K : Any, V : Any> private constructor(
         return value.findByRName(rName.dropNonEmptyRoot())
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val header = buffer.readInt()
         val msgVersioned = (header shr versionedFlagShift) != 0
         val op = parseFromOrdinal<Op>(header and ((1 shl versionedFlagShift) - 1))
 
         val version = if (msgVersioned) buffer.readLong() else 0
 
-        val key = keySzr.read(serializationContext, buffer)
+        val key = keySzr.read(ctx, buffer)
 
         if (op == Op.Ack) {
-            val errmsg =
+            dispatchHelper.dispatch {
+                val errmsg = Sync.lock(pendingForAck) {
                     if (!msgVersioned) "Received ${Op.Ack} while msg hasn't versioned flag set"
                     else if (!master) "Received ${Op.Ack} when not a Master"
                     else pendingForAck[key]?.let { pendingVersion ->
@@ -126,43 +171,92 @@ class RdMap<K : Any, V : Any> private constructor(
                             "" //return good result
                         }
                     } ?: "No pending for ${Op.Ack}"
+                }
 
-            if (errmsg.isEmpty())
-                logReceived.trace  { logmsg(Op.Ack, version, key) }
-            else
-                logReceived.error {  logmsg(Op.Ack, version, key) + " >> $errmsg"}
+                if (errmsg.isEmpty())
+                    logReceived.trace { logmsg(Op.Ack, version, key) }
+                else
+                    logReceived.error { logmsg(Op.Ack, version, key) + " >> $errmsg" }
+            }
 
         } else {
             val isPut = (op == Op.Add || op == Op.Update)
-            val value = if (isPut) valSzr.read(serializationContext, buffer) else null
+            val value = if (isPut) valSzr.read(ctx, buffer) else null
 
-            if (msgVersioned || !master || !pendingForAck.containsKey(key)) {
-                logReceived.trace { logmsg(op, version, key, value) }
+            val lifetime = dispatchHelper.lifetime
+            val definition = tryPreBindValue(lifetime, key, value, true)
 
-                if (value != null) map[key] = value
-                else map.remove(key)
+            dispatchHelper.dispatch {
+                if (msgVersioned || !master || !isPendingForAck(key)) {
+                    logReceived.trace { logmsg(op, version, key, value) }
 
-            } else {
-                logReceived.trace { logmsg(op, version, key, value) + " >> REJECTED" }
-            }
+                    if (value != null) {
+                        val definitions = tryGetBindDefinitions(lifetime)
+                        if (definitions != null) {
+                            if (op == Op.Update)
+                                definitions[key]?.terminate()
 
+                            definitions[key] = definition
+                        }
 
-            if (msgVersioned) {
-                wire.send(rdid) { innerBuffer ->
-                    innerBuffer.writeInt((1 shl versionedFlagShift) or Op.Ack.ordinal)
-                    innerBuffer.writeLong(version)
-                    keySzr.write(serializationContext, innerBuffer, key)
+                        map[key] = value
+                    } else {
+                        val prevDef = tryGetBindDefinitions(lifetime)?.remove(key)
+                        prevDef?.terminate()
+                        map.remove(key)
+                    }
 
-                    logSend.trace { logmsg(Op.Ack, version, key) }
+                } else {
+                    logReceived.trace { logmsg(op, version, key, value) + " >> REJECTED" }
                 }
 
-                if (master) logReceived.error { "Both ends are masters: $location" }
-            }
+                if (msgVersioned) {
+                    proto.wire.send(rdid) { innerBuffer ->
+                        innerBuffer.writeInt((1 shl versionedFlagShift) or Op.Ack.ordinal)
+                        innerBuffer.writeLong(version)
+                        keySzr.write(ctx, innerBuffer, key)
 
+                        logSend.trace { logmsg(Op.Ack, version, key) }
+                    }
+
+                    if (master) logReceived.error { "Both ends are masters: $location" }
+                }
+            }
         }
     }
 
-    constructor(keySzr: ISerializer<K> = Polymorphic(), valSzr: ISerializer<V> = Polymorphic()) : this(keySzr, valSzr, ViewableMap())
+    private fun isPendingForAck(key: K): Boolean {
+        Sync.lock(pendingForAck) {
+            return pendingForAck.containsKey(key)
+        }
+    }
+
+    private fun tryGetBindDefinitions(lifetime: Lifetime): MutableMap<K, LifetimeDefinition?>?  {
+        val definitions = bindDefinitions
+        return if (lifetime.isAlive) definitions else null
+    }
+
+    private fun tryPreBindValue(lifetime: Lifetime, key: K, value: V?, bindAlso: Boolean): LifetimeDefinition? {
+        if (optimizeNested || value == null)
+            return null
+
+        val definition = LifetimeDefinition().apply { id = value }
+        try {
+            value.preBindPolymorphic(definition.lifetime, this, "[$key]")
+            if (bindAlso)
+                value.bindPolymorphic()
+
+            (lifetime as LifetimeDefinition).attach(definition, true)
+
+            return definition
+        } catch (e: Throwable) {
+            definition.terminate()
+            throw e
+        }
+    }
+
+
+    constructor(keySzr: ISerializer<K> = Polymorphic(), valSzr: ISerializer<V> = Polymorphic()) : this(keySzr, valSzr, ViewableMap(SynchronizedMap() /*to have thread=safe print*/))
 
 
 

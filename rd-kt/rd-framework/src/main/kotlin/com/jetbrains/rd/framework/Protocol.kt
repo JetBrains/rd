@@ -1,6 +1,9 @@
 package com.jetbrains.rd.framework
 
+import com.jetbrains.rd.framework.base.AllowBindingCookie
 import com.jetbrains.rd.framework.base.RdExtBase
+import com.jetbrains.rd.framework.base.bind
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdSignal
@@ -70,7 +73,7 @@ class Protocol internal constructor(
         wire.setupContexts(contexts)
 
         if(serializationCtx == null) {
-            serializationContext.internRoots.getValue("Protocol").bind(lifetime, this, "ProtocolInternRoot")
+            serializationContext.internRoots.getValue("Protocol").bindTopLevel(lifetime, this, "ProtocolInternRoot")
         }
 
         initialContexts.forEach {
@@ -80,8 +83,8 @@ class Protocol internal constructor(
         if (parentContexts == null) {
             contexts.also {
                 it.rdid = RdId.Null.mix("ProtocolContextHandler")
-                scheduler.invokeOrQueue {
-                    it.bind(lifetime, this, "ProtocolContextHandler")
+                AllowBindingCookie.allowBind {
+                    it.bindTopLevel(lifetime, this, "ProtocolContextHandler")
                 }
             }
         }
@@ -92,8 +95,8 @@ class Protocol internal constructor(
             signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
         }
         extIsLocal = ThreadLocal.withInitial { false }
-        scheduler.invokeOrQueue {
-            extConfirmation.bind(lifetime, this, "ProtocolExtCreated")
+        AllowBindingCookie.allowBind {
+            extConfirmation.bindTopLevel(lifetime, this, "ProtocolExtCreated")
             extConfirmation.advise(lifetime) { info ->
                 // triggered both from local and remote sides
                 extCreated.fire(ExtCreationInfoEx(info, extIsLocal.get()))
@@ -121,7 +124,7 @@ class Protocol internal constructor(
                 extensions[clazz] = newExtension
                 val declName = clazz.simpleName ?: error("Can't get simple name for class $clazz")
                 newExtension.identify(identity, RdId.Null.mix(declName))
-                newExtension.bind(lifetime, this, declName)
+                newExtension.bindTopLevel(lifetime, this, declName)
                 newExtension
             }
             return castExtension(res, clazz)

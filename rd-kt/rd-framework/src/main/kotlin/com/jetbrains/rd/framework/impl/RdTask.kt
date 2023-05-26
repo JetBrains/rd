@@ -4,10 +4,7 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.util.*
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.intersect
-import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.reflection.threadLocal
 import com.jetbrains.rd.util.string.RName
@@ -32,6 +29,7 @@ fun<TReq, TRes> IRdCall<TReq, TRes>.startAndAdviseSuccess(lifetime: Lifetime, re
 open class RdTask<T> : IRdTask<T> {
     override val result = WriteOnceProperty<RdTaskResult<T>>()
     fun set(v : T) = result.set(RdTaskResult.Success(v))
+    fun set(e: Throwable) = result.set(RdTaskResult.Fault(e))
 
     companion object {
         fun<T> faulted(error: Throwable) = RdTask<T>().apply { this.result.set(RdTaskResult.Fault(error)) }
@@ -45,21 +43,35 @@ open class RdTask<T> : IRdTask<T> {
 abstract class WiredRdTask<TReq, TRes>(
     val call: RdCall<TReq,TRes>,
     override val rdid: RdId,
-    override val wireScheduler: IScheduler
+    val wireScheduler: IScheduler
 ) : RdTask<TRes>(), IRdWireable {
 
-    override val isBound  get() = call.isBound
-    override val protocol: IProtocol get() = call.protocol
-    override val serializationContext: SerializationCtx get() = call.serializationContext
+    override val protocol: IProtocol? get() = call.protocol
+    override val serializationContext: SerializationCtx? get() = call.serializationContext
 
-    val wire = call.wire
+    val wire = call.protocol?.wire
     override val location: RName = call.location.sub(rdid.toString(), ".")
 
-    override fun toString(): String = this::class.simpleName + ": `$location`"
+    override fun toString(): String = this::class.simpleName + ": `$location`" + ": ($rdid)"
+
+    override fun onWireReceived(buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper) {
+        val proto = protocol
+        val ctx = serializationContext
+
+        if (proto == null || ctx == null) {
+            RdReactiveBase.logReceived.trace { "$this is not bound. Message for (${dispatchHelper.rdId} will not be processed" }
+            return
+        }
+
+
+        return onWireReceived(proto, ctx, buffer, dispatchHelper)
+    }
+
+    abstract fun onWireReceived(proto: IProtocol, ctx: SerializationCtx, buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper)
 }
 
 class CallSiteWiredRdTask<TReq, TRes>(
-    outerLifetime: Lifetime,
+    private val outerLifetime: Lifetime,
     call: RdCall<TReq, TRes>,
     rdid: RdId,
     wireScheduler: IScheduler
@@ -69,7 +81,7 @@ class CallSiteWiredRdTask<TReq, TRes>(
 
     init {
 
-        call.wire.advise(taskWireSubscriptionDefinition.lifetime, this) //this lifetimeDef listen only one value
+        wire?.advise(taskWireSubscriptionDefinition.lifetime, this) //this lifetimeDef listen only one value
         if (!taskWireSubscriptionDefinition.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }) {
             result.setIfEmpty(RdTaskResult.Cancelled())
         }
@@ -77,14 +89,7 @@ class CallSiteWiredRdTask<TReq, TRes>(
         result.adviseOnce(Lifetime.Eternal) { taskResult ->
             taskWireSubscriptionDefinition.terminate() //no need to listen result or cancellation from wire
 
-            if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
-
-                outerLifetime.executeIfAlive {  // lifetime can be terminated from background thread
-                    outerLifetime.onTermination(::sendCancellation)
-                    taskResult.value.bindPolymorphic(outerLifetime, call, rdid.toString())
-                } ?: sendCancellation()
-
-            } else if (taskResult is RdTaskResult.Cancelled) { //we need to transfer cancellation to the other side
+            if (taskResult is RdTaskResult.Cancelled) { //we need to transfer cancellation to the other side
                 sendCancellation()
             }
         }
@@ -96,18 +101,39 @@ class CallSiteWiredRdTask<TReq, TRes>(
 
     private fun sendCancellation() {
         RdReactiveBase.logSend.trace { "send cancellation" }
-        wire.send(rdid) { writer ->
-            writer.writeVoid(Unit)
-        } //send cancellation to the other side
+        wire?.send(rdid) { writer -> writer.writeVoid(Unit) } //send cancellation to the other side
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun onWireReceived(proto: IProtocol, ctx: SerializationCtx, buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper) {
         // we are at call side, so listening no response and bind it if it's bindable
-        val resultFromWire = RdTaskResult.read(call.serializationContext, buffer, call.responseSzr)
-
+        val resultFromWire = RdTaskResult.read(ctx, buffer, call.responseSzr)
         RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) received response for task '$rdid' : ${resultFromWire.printToString()} " }
-        if (!result.setIfEmpty(resultFromWire))
-            RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
+
+        if (result.hasValue) {
+            RdReactiveBase.logReceived.trace { "`result` already has a value: ${result.valueOrNull}" }
+            return
+        }
+
+        if (resultFromWire is RdTaskResult.Success && resultFromWire.value.isBindable()){
+            val definition = LifetimeDefinition().apply { id = resultFromWire.value }
+
+            try {
+                definition.onTermination { sendCancellation() }
+                resultFromWire.value.preBindPolymorphic(definition, call, rdid.toString())
+                resultFromWire.value.bindPolymorphic()
+
+                outerLifetime.attach(definition, true)
+            } catch (e: Throwable) {
+                definition.terminate()
+                throw e
+            }
+        } else if (resultFromWire is RdTaskResult.Cancelled)
+            sendCancellation()
+
+        dispatchHelper.dispatch(outerLifetime, wireScheduler) {
+            if (!result.setIfEmpty(resultFromWire))
+                RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
+        }
     }
 }
 
@@ -118,44 +144,62 @@ class EndpointWiredRdTask<TReq, TRes>(
     wireScheduler: IScheduler
 ) : WiredRdTask<TReq, TRes>(call, rdid, wireScheduler) {
 
-    private val def = bindLifetime.createNested()
+    private val def = bindLifetime.createNested().apply { id = this }
     val lifetime get() = def.lifetime
 
     init {
-        call.wire.advise(lifetime, this)
+        wire?.advise(lifetime, this)
         lifetime.onTerminationIfAlive { result.setIfEmpty(RdTaskResult.Cancelled()) }
 
-        result.adviseOnce(Lifetime.Eternal) { taskResult ->
-            if (taskResult is RdTaskResult.Success && taskResult.value != null && taskResult.value.isBindable()) {
-                taskResult.value.identifyPolymorphic(call.protocol.identity, call.rdid.mix(rdid.toString()))
+        val ctx = serializationContext
+        if (ctx != null) {
+            result.adviseOnce(Lifetime.Eternal) { taskResult ->
+                val proto = protocol
 
-                wire.send(rdid) { writer ->
-                    RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
-                }
+                if (taskResult is RdTaskResult.Success && taskResult.value.isBindable()) {
+                    if (proto == null) {
+                        wire?.send(rdid) { writer -> RdTaskResult.write(ctx,writer, RdTaskResult.Cancelled(), call.responseSzr)}
+                        return@adviseOnce
+                    }
 
-                lifetime.executeIfAlive {  // lifetime can be terminated from background thread
-                    taskResult.value.bindPolymorphic(lifetime, call, rdid.toString())
-                }
-            } else {
-                def.terminate()
-                wire.send(rdid) { writer ->
-                    RdTaskResult.write(call.serializationContext, writer, taskResult, call.responseSzr)
+                    taskResult.value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                    lifetime.executeIfAlive {
+                        taskResult.value.preBindPolymorphic(lifetime, call, rdid.toString())
+                        if (lifetime.isNotAlive)
+                            return@executeIfAlive
+
+                        wire?.send(rdid) { writer ->
+                            RdTaskResult.write(ctx, writer, taskResult, call.responseSzr)
+                        }
+
+                        if (lifetime.isNotAlive)
+                            return@executeIfAlive
+
+                        taskResult.value.bindPolymorphic()
+                    }
+                } else {
+                    def.terminate()
+                    wire?.send(rdid) { writer ->
+                        RdTaskResult.write(ctx, writer, taskResult, call.responseSzr)
+                    }
                 }
             }
         }
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun onWireReceived(proto: IProtocol, ctx: SerializationCtx, buffer: AbstractBuffer, dispatchHelper: IRdWireableDispatchHelper) {
         //we are on endpoint side, so listening for cancellation
         RdReactiveBase.logReceived.trace { "received cancellation" }
         buffer.readVoid() //nothing just a void value
 
-        val success = result.setIfEmpty(RdTaskResult.Cancelled())
-        val wireScheduler = call.wireSchedulerIfBound
-        if (success || wireScheduler == null)
-            def.terminate()
-        else if (lifetime.isAlive)
-            wireScheduler.queue { def.terminate() } // if the value is already set, it is not a cancellation scenario, but a termination
+        dispatchHelper.dispatch(lifetime, wireScheduler) {
+            val success = result.setIfEmpty(RdTaskResult.Cancelled())
+            val wireScheduler = call.protocol?.scheduler
+            if (success || wireScheduler == null)
+                def.terminate()
+            else if (this@EndpointWiredRdTask.lifetime.isAlive)
+                wireScheduler.queue { def.terminate() } // if the value is already set, it is not a cancellation scenario, but a termination
+        }
     }
 }
 
@@ -206,21 +250,19 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         var respectSyncCallTimeouts = true
     }
 
-    override lateinit var serializationContext : SerializationCtx
-
     private var handler: ((Lifetime, TReq) -> RdTask<TRes>)? = null
+    private var bindLifetime: Lifetime = Lifetime.Terminated
 
     private var cancellationScheduler: IScheduler? = null
     private var handlerScheduler: IScheduler? = null
 
-    override val wireScheduler get() = handlerScheduler ?: super.wireScheduler
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
+        kotlin.assert(bindLifetime.status == LifetimeStatus.Terminated)
+        bindLifetime = lifetime
 
-        //Because we advise on Synchronous Scheduler: RIDER-10986
-        serializationContext = super.serializationContext
-        wire.advise(lifetime, this)
+        proto.wire.advise(lifetime, this)
     }
 
     override fun sync(request: TReq, timeouts: RpcTimeouts?) : TRes {
@@ -229,18 +271,12 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         val effectiveTimeouts = if (respectSyncCallTimeouts) timeouts ?: RpcTimeouts.default else RpcTimeouts.infinite
 
         val freezeTime = measureTimeMillis {
-            if (!task.wait(effectiveTimeouts.errorAwaitTimeMs) {
-                    if (protocol.scheduler.isActive)
-                        containingExt?.pumpScheduler()
-                }
-            )
+            if (!task.wait(effectiveTimeouts.errorAwaitTimeMs) { })
                 throw TimeoutException("Sync execution of rpc `$location` is timed out in ${effectiveTimeouts.errorAwaitTimeMs} ms")
         }
         if (freezeTime > effectiveTimeouts.warnAwaitTimeMs) logAssert.error {"Sync execution of rpc `$location` executed too long: $freezeTime ms "}
         return task.result.valueOrThrow.unwrap()
-
     }
-
 
     @Deprecated("Use overload with lifetime", ReplaceWith("start(/*lifetime*/, request, responseScheduler)","com.jetbrains.rd.util.lifetime.Lifetime"))
     override fun start(request: TReq, responseScheduler: IScheduler?) : IRdTask<TRes> {
@@ -253,7 +289,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     fun start(lifetime: Lifetime, request: TReq) = start(lifetime, request, null)
 
     override fun start(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler?) : IRdTask<TRes> {
-        return startInternal(lifetime, request, false, responseScheduler ?: protocol.scheduler)
+        return startInternal(lifetime, request, false, responseScheduler)
     }
 
     override suspend fun startSuspending(lifetime: Lifetime, request: TReq, responseScheduler: IScheduler?): TRes {
@@ -264,7 +300,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     }
 
     private fun createResponseScheduler(lifetime: Lifetime, context: CoroutineContext): IScheduler {
-        val protocolScheduler = protocol.scheduler
+        val protocolScheduler = protocol?.scheduler ?: return SynchronousScheduler
 
         if (!async)
             return protocolScheduler // to keep the order of other callbacks from the backend
@@ -307,22 +343,31 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
             task.awaitInternal()
         } catch (e: CancellationException) {
             task.cancel() // send the cancellation to the backend if the coroutine has been cancelled
-            throw e;
+            throw e
         }
     }
 
-    private fun startInternal(lifetime: Lifetime, request: TReq, sync: Boolean, scheduler: IScheduler) : CallSiteWiredRdTask<TReq, TRes> {
-        assertBound()
-        if (!async) assertThreading()
+    private fun startInternal(lifetime: Lifetime, request: TReq, sync: Boolean, scheduler: IScheduler?) : CallSiteWiredRdTask<TReq, TRes> {
+        val proto = protocol
+        val ctx = serializationContext
 
-        val taskId = protocol.identity.next(RdId.Null)
-        val bindLifetime = bindLifetime ?: throw IllegalStateException("Bind lifetime is not initialized yet")
-        val task = CallSiteWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler)
+        if (!async)
+            assertBound()
 
-        wire.send(rdid) { buffer ->
+        assertThreading()
+
+        if (proto == null || ctx == null)
+            return CallSiteWiredRdTask(Lifetime.Terminated, this, RdId.Null, SynchronousScheduler)
+
+
+        val taskId = proto.identity.next(RdId.Null)
+        val bindLifetime = bindLifetime
+        val task = CallSiteWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler ?: proto.scheduler)
+
+        proto.wire.send(rdid) { buffer ->
             logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
             taskId.write(buffer)
-            requestSzr.write(serializationContext, buffer, request)
+            requestSzr.write(ctx, buffer, request)
         }
 
         return task
@@ -344,40 +389,46 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
      */
     constructor(cancellationScheduler: IScheduler? = null, handlerScheduler: IScheduler? = null, handler: (TReq) -> TRes) : this () { set(cancellationScheduler, handlerScheduler, handler) }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val taskId = RdId.read(buffer)
-
-        val bindLifetime = bindLifetime ?: throw IllegalStateException("Bind lifetime is not initialized yet")
-        val wiredTask = EndpointWiredRdTask(bindLifetime, this, taskId, cancellationScheduler ?: SynchronousScheduler)
-        val externalCancellation = wiredTask.lifetime
-
-        val rdTask = try {
-            val value = requestSzr.read(serializationContext, buffer)
-            logReceived.trace { "endpoint `$location`::($rdid) taskId=($taskId) request = ${value.printToString()}" }
-
-            val handlerLocal = handler
-            if (handlerLocal == null) {
-                val message = "Handler is not set for endpoint `$location`::($rdid) taskId=($taskId) :: received request:  ${value.printToString()}";
-                logReceived.error { message }
-                RdTask.faulted(Exception(message))
-            } else {
-                try {
-                    handlerLocal.invoke(externalCancellation, value)
-                } catch (e: Throwable) {
-                    RdTask.faulted(e)
-                }
-            }
+        val wiredTask = EndpointWiredRdTask(dispatchHelper.lifetime, this, taskId, cancellationScheduler ?: SynchronousScheduler)
+        try {
+            return onWireReceived(proto, ctx, buffer, wiredTask, dispatchHelper)
         } catch (e: Throwable) {
-            RdTask.faulted(Exception("Unexpected exception in endpoint `$location`::($rdid) taskId=($taskId)", e))
+            wiredTask.set(e)
         }
+    }
 
-        rdTask.result.advise(Lifetime.Eternal) { result ->
-            try {
-                logSend.trace {"endpoint `$location`::($rdid) taskId=($taskId) response = ${result.printToString()}" + (handler == null).condstr { " BUT handler is NULL" }}
-                wiredTask.result.setIfEmpty(result)
-            } catch (ex: Throwable) {
-                logSend.log(LogLevel.Error, "Problem when responding to `${wiredTask}`", ex)
-                wiredTask.result.set(RdTaskResult.Fault(ex))
+    private fun onWireReceived(proto: IProtocol, ctx: SerializationCtx, buffer: AbstractBuffer, wiredRdTask: EndpointWiredRdTask<TReq, TRes>, dispatchHelper: IRdWireableDispatchHelper) {
+        val externalCancellation = wiredRdTask.lifetime
+        val value = requestSzr.read(ctx, buffer)
+        logReceived.trace { "endpoint `$location`::($rdid) taskId=(${wiredRdTask.rdid}) request = ${value.printToString()}" }
+        dispatchHelper.dispatch(handlerScheduler) {
+            val rdTask = try {
+                val handlerLocal = handler
+                if (handlerLocal == null) {
+                    val message = "Handler is not set for endpoint `$location`::($rdid) taskId=($wiredRdTask.rdid) :: received request:  ${value.printToString()}"
+                    logReceived.error { message }
+                    RdTask.faulted(Exception(message))
+                } else {
+                    try {
+                        handlerLocal.invoke(externalCancellation, value)
+                    } catch (e: Throwable) {
+                        RdTask.faulted(e)
+                    }
+                }
+            } catch (e: Throwable) {
+                RdTask.faulted(Exception("Unexpected exception in endpoint `$location`::($rdid) taskId=($wiredRdTask.rdid)", e))
+            }
+
+            rdTask.result.advise(Lifetime.Eternal) { result ->
+                try {
+                    logSend.trace { "endpoint `$location`::($rdid) taskId=(${wiredRdTask.rdid}) response = ${result.printToString()}" + (handler == null).condstr { " BUT handler is NULL" } }
+                    wiredRdTask.result.setIfEmpty(result)
+                } catch (ex: Throwable) {
+                    logSend.log(LogLevel.Error, "Problem when responding to `${wiredRdTask}`", ex)
+                    wiredRdTask.result.set(RdTaskResult.Fault(ex))
+                }
             }
         }
     }

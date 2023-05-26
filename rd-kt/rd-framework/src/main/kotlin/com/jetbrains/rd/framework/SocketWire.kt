@@ -72,7 +72,7 @@ class SocketWire {
         private fun connectionEstablished(timeStamp : Int, notionTimestamp: Int) = timeStamp - notionTimestamp <= maximumHeartbeatDelay
     }
 
-    abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase(scheduler) {
+    abstract class Base protected constructor(val id: String, private val lifetime: Lifetime, scheduler: IScheduler) : WireBase() {
 
         protected val logger: Logger = getLogger(this::class)
         val socketProvider = OptProperty<Socket>()

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using JetBrains.Util;
 
 namespace JetBrains.Collections
 {
@@ -12,15 +13,17 @@ namespace JetBrains.Collections
   /// <typeparam name="T">Type of elements contained in this list</typeparam>
   internal class CopyOnWriteList<T> : IList<T>
   {
-    private T[] myStorage;
+    private volatile T[] myStorage;
 
     /// <summary>
     /// Creates a new empty list.
     /// </summary>
     public CopyOnWriteList()
     {
-      myStorage = new T[0];
+      myStorage = EmptyArray<T>.Instance;
     }
+
+    internal T[] GetStorageUnsafe() => myStorage;
 
     /// <inheritdoc />
     public IEnumerator<T> GetEnumerator()
@@ -36,19 +39,36 @@ namespace JetBrains.Collections
 
     private void Modify<TParam>(TParam param, Func<T[], TParam, T[]> action)
     {
+      var currentStorage = myStorage;
       while (true)
       {
-        var currentStorage = myStorage;
         var newArray = action(currentStorage, param);
-        if (Interlocked.CompareExchange(ref myStorage, newArray, currentStorage) == currentStorage)
+        var realStorage = Interlocked.CompareExchange(ref myStorage, newArray, currentStorage);
+        if (realStorage == currentStorage)
           break;
+
+        currentStorage = realStorage;
+      }
+    }
+    
+    private TOut Modify<TParam, TOut>(TParam param, Func<T[], TParam, KeyValuePair<T[], TOut>> action)
+    {
+      var currentStorage = myStorage;
+      while (true)
+      {
+        var (newArray, result) = action(currentStorage, param);
+        var realStorage = Interlocked.CompareExchange(ref myStorage, newArray, currentStorage);
+        if (realStorage == currentStorage)
+          return result;
+
+        currentStorage = realStorage;
       }
     }
 
     /// <inheritdoc />
     public void Add(T item)
     {
-      Modify(item, (currentArray, arg2) =>
+      Modify(item, static (currentArray, arg2) =>
       {
         var newArray = new T[currentArray.Length + 1];
         Array.Copy(currentArray, newArray, currentArray.Length);
@@ -60,7 +80,7 @@ namespace JetBrains.Collections
     /// <inheritdoc />
     public void Clear()
     {
-      Modify(0, ((_, __) => new T[0]));
+      Modify(0, static (_, __) => EmptyArray<T>.Instance);
     }
 
     /// <inheritdoc />
@@ -79,23 +99,17 @@ namespace JetBrains.Collections
     /// <inheritdoc />
     public bool Remove(T item)
     {
-      var result = false;
-      Modify(item, (currentArray, arg2) =>
+      return Modify(item, static (currentArray, arg2) =>
       {
         var indexOfEntry = Array.IndexOf(currentArray, arg2);
         if (indexOfEntry == -1)
-        {
-          result = false;
-          return currentArray;
-        }
+          return new KeyValuePair<T[], bool>(currentArray, false);
 
         var newArray = new T[currentArray.Length - 1];
         Array.Copy(currentArray, newArray, indexOfEntry);
         Array.Copy(currentArray, indexOfEntry + 1, newArray, indexOfEntry, currentArray.Length - 1 - indexOfEntry);
-        result = true;
-        return newArray;
+        return new KeyValuePair<T[], bool>(newArray, true);
       });
-      return result;
     }
 
     /// <inheritdoc />
@@ -125,7 +139,7 @@ namespace JetBrains.Collections
     /// <inheritdoc />
     public void Insert(int index, T item)
     {
-      Modify(new ItemIndexPair(index, item), (currentArray, arg2) =>
+      Modify(new ItemIndexPair(index, item), static (currentArray, arg2) =>
       {
         var index2 = arg2.Index;
         var item2 = arg2.Item;
@@ -140,7 +154,7 @@ namespace JetBrains.Collections
     /// <inheritdoc />
     public void RemoveAt(int index)
     {
-      Modify(index, (currentArray, arg2) =>
+      Modify(index, static (currentArray, arg2) =>
       {
         var indexOfEntry = arg2;
         var newArray = new T[currentArray.Length - 1];
@@ -154,13 +168,13 @@ namespace JetBrains.Collections
     public T this[int index]
     {
       get => myStorage[index];
-      set => Modify(new ItemIndexPair(index, value), ((currentArray, pair) =>
+      set => Modify(new ItemIndexPair(index, value), static (currentArray, pair) =>
       {
         var newArray = new T[currentArray.Length];
         Array.Copy(currentArray, newArray, currentArray.Length);
         newArray[pair.Index] = pair.Item;
         return newArray;
-      }));
+      });
     }
   }
 }

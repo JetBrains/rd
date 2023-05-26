@@ -73,7 +73,7 @@ namespace JetBrains.Rd.Reflection
 
       var typename = GetTypeName(typeof(T));
       instance.Identify(protocol.Identities, RdId.Root.Mix(typename));
-      instance.Bind(lifetime, protocol, typename);
+      instance.BindTopLevel(lifetime, protocol, typename);
 
       return instance;
     }
@@ -90,7 +90,7 @@ namespace JetBrains.Rd.Reflection
       var typename = GetTypeName(type);
       var bindable = (RdExtReflectionBindableBase) instance;
       bindable.Identify(protocol.Identities, RdId.Root.Mix(typename));
-      bindable.Bind(lifetime, protocol, typename);
+      bindable.BindTopLevel(lifetime, protocol, typename);
 
       return bindable;
     }

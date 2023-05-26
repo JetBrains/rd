@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.test.cases.contexts
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdBindableBase
+import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.TestScheduler
@@ -82,7 +83,7 @@ class ContextsEarlyDeliveryTest {
             serverProtocol -> serverLifetime
             else -> throw IllegalArgumentException("Not valid protocol, must be client or server")
         }
-        x.bind(lf, this, name)
+        x.bindTopLevel(lf, this, name)
         return x
     }
 
@@ -91,7 +92,7 @@ class ContextsEarlyDeliveryTest {
             false -> clientLifetime
             true -> serverLifetime
         }
-        x.static(id).bind(lf, this, "top")
+        x.static(id).bindTopLevel(lf, this, "top")
         return x
     }
 

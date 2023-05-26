@@ -24,9 +24,6 @@ namespace JetBrains.Rd.Tasks
     [PublicAPI]
     public CtxWriteDelegate<TRes> WriteResponseDelegate { get; }
 
-    //set in init
-    internal new SerializationCtx SerializationContext;
-
     //set via Set method
     [PublicAPI] public Func<Lifetime, TReq, RdTask<TRes>>? Handler { get; private set; }
 
@@ -38,26 +35,23 @@ namespace JetBrains.Rd.Tasks
     private IScheduler? myCancellationScheduler;
     private IScheduler? myHandlerScheduler;
 
-    public override IScheduler WireScheduler => myHandlerScheduler ?? base.WireScheduler;
-
     public RdCall(CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
     {
       ReadRequestDelegate = readRequest;
       WriteRequestDelegate = writeRequest;
       ReadResponseDelegate = readResponse;
       WriteResponseDelegate = writeResponse;
+      myBindLifetime = Lifetime.Terminated;
     }
 
-    protected override void Init(Lifetime lifetime)
+    protected override void PreInit(Lifetime lifetime, IProtocol proto)
     {
-      base.Init(lifetime);
-
+      base.PreInit(lifetime, proto);
+      
+      Assertion.Assert(myBindLifetime.Status == LifetimeStatus.Terminated);
       myBindLifetime = lifetime;
 
-      //because we advise synchronous scheduler
-      SerializationContext = base.SerializationContext;
-
-      Wire.Advise(lifetime, this);
+      proto.Wire.Advise(lifetime, this);
     }
 
 
@@ -75,21 +69,32 @@ namespace JetBrains.Rd.Tasks
     }
     
     [PublicAPI]
-    public override void OnWireReceived(UnsafeReader reader) //endpoint's side
+    public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)
     {
       var taskId = RdId.Read(reader);
 
-      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(myBindLifetime, this, taskId, myCancellationScheduler ?? SynchronousScheduler.Instance);
-      //subscribe for lifetime cancellation
-      var externalCancellation = wiredTask.Lifetime;
+      var wiredTask = new WiredRdTask<TReq, TRes>.Endpoint(dispatchHelper.Lifetime, this, taskId, myCancellationScheduler ?? SynchronousScheduler.Instance);
+      try
+      {
+        OnWireReceived(ctx, reader, wiredTask, dispatchHelper);
+      }
+      catch (Exception e)
+      {
+        wiredTask.Set(e);
+      }
+    }
 
-      using (UsingDebugInfo()) //now supports only sync handlers
+    private void OnWireReceived(SerializationCtx ctx, UnsafeReader reader, WiredRdTask<TReq, TRes>.Endpoint wiredTask, IRdWireableDispatchHelper dispatchHelper)
+    {
+      var externalCancellation = wiredTask.Lifetime;
+      var value = ReadRequestDelegate(ctx, reader);
+      ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
+
+      dispatchHelper.Dispatch(myHandlerScheduler, () =>
       {
         RdTask<TRes> rdTask;
         try
         {
-          var value = ReadRequestDelegate(SerializationContext, reader);
-          ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
           var handler = Handler;
           if (handler == null)
           {
@@ -115,21 +120,21 @@ namespace JetBrains.Rd.Tasks
         }
 
         rdTask.Result.Advise(Lifetime.Eternal, result =>
+        {
+          try
           {
-            try
-            {
-              if (result.Status == RdTaskStatus.Success)
-                AssertNullability(result.Result);
+            if (result.Status == RdTaskStatus.Success)
+              AssertNullability(result.Result);
 
-              wiredTask.ResultInternal.SetIfEmpty(result);
-            }
-            catch (Exception ee)
-            {
-              ourLogSend.Error($"Problem when responding to `{wiredTask}`", ee);
-              wiredTask.Set(new RdFault(ee));
-            }
-          });
-      }
+            wiredTask.ResultInternal.SetIfEmpty(result);
+          }
+          catch (Exception ee)
+          {
+            ourLogSend.Error($"Problem when responding to `{wiredTask}`", ee);
+            wiredTask.Set(new RdFault(ee));
+          }
+        });
+      });
     }
 
 
@@ -162,27 +167,34 @@ namespace JetBrains.Rd.Tasks
 
 
     public IRdTask<TRes> Start(TReq request, IScheduler? responseScheduler = null)
-      => StartInternal(Lifetime.Eternal, request, responseScheduler ?? Proto.Scheduler);
+      => StartInternal(Lifetime.Eternal, request, responseScheduler);
 
     public IRdTask<TRes> Start(Lifetime lifetime, TReq request, IScheduler? responseScheduler = null)
-      => StartInternal(lifetime, request, responseScheduler ?? Proto.Scheduler);
+      => StartInternal(lifetime, request, responseScheduler);
 
 
-    private IRdTask<TRes> StartInternal(Lifetime requestLifetime, TReq request, IScheduler scheduler)
+    private IRdTask<TRes> StartInternal(Lifetime requestLifetime, TReq request, IScheduler? scheduler)
     {
-      AssertBound();
-      if (!Async) AssertThreading();
+      var proto = TryGetProto();
+      
+      if (!Async)
+        AssertBound();
+      
+      AssertThreading();
       AssertNullability(request);
 
-      var taskId = Proto.Identities.Next(RdId.Nil);
-      var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler);
+      if (proto == null || !TryGetSerializationContext(out var serializationContext))
+        return new WiredRdTask<TReq, TRes>.CallSite(Lifetime.Terminated, this, RdId.Nil, SynchronousScheduler.Instance);
 
-      Wire.Send(RdId, (writer) =>
+      var taskId = proto.Identities.Next(RdId.Nil);
+      var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler ?? proto.Scheduler);
+      
+      proto.Wire.Send(RdId, (writer) =>
       {
         SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");
 
         taskId.Write(writer);
-        WriteRequestDelegate(SerializationContext, writer, request);
+        WriteRequestDelegate(serializationContext, writer, request);
       });
 
       return task;

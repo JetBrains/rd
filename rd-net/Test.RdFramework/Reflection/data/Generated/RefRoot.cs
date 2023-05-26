@@ -68,7 +68,7 @@ namespace Test.RdFramework.Reflection.Generated
     public RefRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
       Identify(protocol.Identities, RdId.Root.Mix("RefRoot"));
-      Bind(lifetime, protocol, "RefRoot");
+      this.BindTopLevel(lifetime, protocol, "RefRoot");
     }
     
     //constants

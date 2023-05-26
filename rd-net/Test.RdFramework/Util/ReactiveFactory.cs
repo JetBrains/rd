@@ -14,6 +14,11 @@ public static class ReactiveFactory
   {
     return new RdProperty<T>(Polymorphic<T>.Read, Polymorphic<T>.Write) { IsMaster = isMaster };
   }
+  
+  public static AsyncRdProperty<T> NewAsyncRdProperty<T>(bool isMaster = false)
+  {
+    return new AsyncRdProperty<T>(Polymorphic<T>.Read, Polymorphic<T>.Write) { IsMaster = isMaster };
+  }
 
   public static RdSignal<T> NewRdSignal<T>()
   {
@@ -29,6 +34,11 @@ public static class ReactiveFactory
   {
     return new RdSet<T>(Polymorphic<T>.Read, Polymorphic<T>.Write) { IsMaster = isMaster };
   }
+  
+  public static AsyncRdSet<T> NewAsyncRdSet<T>(bool isMaster = false)
+  {
+    return new AsyncRdSet<T>(Polymorphic<T>.Read, Polymorphic<T>.Write) { IsMaster = isMaster };
+  }
 
   public static RdMap<TKey, TValue> NewRdMap<TKey, TValue>(bool isMaster = false, bool optimizeNested = false)
   {
@@ -38,6 +48,12 @@ public static class ReactiveFactory
       OptimizeNested = optimizeNested
     };
   }
+  
+  public static AsyncRdMap<TKey, TValue> NewAsyncRdMap<TKey, TValue>(bool isMaster = false)
+  {
+    return new AsyncRdMap<TKey, TValue>(Polymorphic<TKey>.Read, Polymorphic<TKey>.Write, Polymorphic<TValue>.Read, Polymorphic<TValue>.Write) { IsMaster = isMaster };
+  }
+
 
   public static RdCall<TReq, TRes> NewRdCall<TReq, TRes>()
   {

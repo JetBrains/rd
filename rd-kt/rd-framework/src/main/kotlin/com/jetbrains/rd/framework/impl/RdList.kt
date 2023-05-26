@@ -2,7 +2,10 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
+import com.jetbrains.rd.util.collections.SynchronizedList
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.parseFromOrdinal
 import com.jetbrains.rd.util.reactive.IMutableViewableList
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -38,6 +41,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
     override fun deepClone(): IRdBindable = RdList(valSzr).also { for (elem in list) { it.add(elem.deepClonePolymorphic()) } }
 
     var optimizeNested: Boolean = false
+    private var bindDefinitions: MutableList<LifetimeDefinition?>? = null
 
 
     private fun logmsg(op: Op, version: Long, key: Int, value: V? = null) : String {
@@ -46,15 +50,59 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             (value != null).condstr { " :: value = ${value.printToString()}" }
     }
 
-    override fun init(lifetime: Lifetime) {
-        super.init(lifetime)
+    override fun unbind() {
+        super.unbind()
+        bindDefinitions = null
+    }
+
+    override fun preInit(lifetime: Lifetime, proto: IProtocol) {
+        super.preInit(lifetime, proto)
+
+        if (!optimizeNested) {
+
+            val definitions = SynchronizedList<LifetimeDefinition?>()
+
+            for (index in 0 until size) {
+                val item = this[index]
+                if (item != null) {
+                    item.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                    definitions.add(tryPreBindValue(lifetime, item, index, false))
+                }
+            }
+
+            lifetime.executeIfAlive {
+                assert(bindDefinitions == null)
+                bindDefinitions = definitions
+            }
+        }
+
+        proto.wire.advise(lifetime, this)
+    }
+
+    override fun init(lifetime: Lifetime, proto: IProtocol, ctx: SerializationCtx) {
+        super.init(lifetime, proto, ctx)
+
+        if (!optimizeNested) {
+            change.advise(lifetime) {
+                if (isLocalChange) {
+                    val definitions = tryGetBindDefinitions(lifetime) ?: return@advise
+
+                    if (it !is IViewableList.Event.Add)
+                        definitions[it.index]?.terminate()
+
+                    val value = it.newValueOpt
+                    if (it !is IViewableList.Event.Remove) {
+                        value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                        definitions.add(it.index, tryPreBindValue(lifetime, value, it.index, false))
+                    }
+                }
+            }
+        }
 
         localChange { advise(lifetime) lambda@{
             if (!isLocalChange) return@lambda
 
-            if (!optimizeNested) (it.newValueOpt)?.identifyPolymorphic(protocol.identity, protocol.identity.next(rdid))
-
-            wire.send(rdid) { buffer ->
+            proto.wire.send(rdid) { buffer ->
                 val op = when (it) {
                     is IViewableList.Event.Add ->    Op.Add
                     is IViewableList.Event.Update -> Op.Update
@@ -63,16 +111,14 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
                 buffer.writeLong(op.ordinal.toLong() or (nextVersion++ shl versionedFlagShift))
                 buffer.writeInt(it.index)
 
-                it.newValueOpt?.let { valSzr.write(serializationContext, buffer, it) }
+                it.newValueOpt?.let { valSzr.write(ctx, buffer, it) }
 
                 logSend.trace { logmsg(op, nextVersion-1, it.index, it.newValueOpt) }
             }
+
+            if (!optimizeNested)
+                it.newValueOpt.bindPolymorphic()
         }}
-
-        wire.advise(lifetime, this)
-
-        if (!optimizeNested)
-            view(lifetime) { lf, index, value -> value.bindPolymorphic(lf, this, "[$index]") }
     }
 
     override fun findByRName(rName: RName): RdBindableBase? {
@@ -95,31 +141,81 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
         return element.findByRName(rName.dropNonEmptyRoot())
     }
 
-    override fun onWireReceived(buffer: AbstractBuffer) {
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val header = buffer.readLong()
         val version = header shr versionedFlagShift
         val op = parseFromOrdinal<Op>((header and ((1 shl versionedFlagShift) - 1L)).toInt())
         val index = buffer.readInt()
 
 
-        val value = if ((op == Op.Add || op == Op.Update)) valSzr.read(serializationContext, buffer) else null
+        val value = if ((op == Op.Add || op == Op.Update)) valSzr.read(ctx, buffer) else null
 
         logReceived.trace { logmsg(op, version, index, value) }
 
-        require(version == nextVersion) {
-            "Version conflict for $location}. Expected version $nextVersion, received $version. Are you modifying a list from two sides?"
-        }
+        val lifetime = dispatchHelper.lifetime
+        val definition = tryPreBindValue(lifetime, value, index, true)
 
-        nextVersion++
+        dispatchHelper.dispatch {
+            if (version != nextVersion) {
+                definition?.terminate()
+                error("Version conflict for $location}. Expected version $nextVersion, received $version. Are you modifying a list from two sides?")
+            }
 
-        when(op) { // todo: better conflict resolution
-            RdList.Companion.Op.Add -> if (index < 0) list.add(value!!) else list.add(index, value!!)
-            RdList.Companion.Op.Update -> list[index] = value!!
-            RdList.Companion.Op.Remove -> list.removeAt(index)
+            nextVersion++
+
+            val definitions = tryGetBindDefinitions(lifetime)
+            when (op) { // todo: better conflict resolution
+                RdList.Companion.Op.Add -> {
+                    if (index < 0) {
+                        definitions?.add(definition)
+                        list.add(value!!)
+                    } else {
+                        definitions?.add(index, definition)
+                        list.add(index, value!!)
+                    }
+                }
+
+                RdList.Companion.Op.Update -> {
+                    if (definitions != null) {
+                        definitions[index]?.terminate()
+                        definitions[index] = definition
+                    }
+                    list[index] = value!!
+                }
+
+                RdList.Companion.Op.Remove -> {
+                    definitions?.removeAt(index)?.terminate()
+                    list.removeAt(index)
+                }
+            }
         }
     }
 
-    constructor(valSzr: ISerializer<V> = Polymorphic<V>()) : this(valSzr, ViewableList())
+    private fun tryGetBindDefinitions(lifetime: Lifetime): MutableList<LifetimeDefinition?>?  {
+        val definitions = bindDefinitions
+        return if (lifetime.isAlive) definitions else null
+    }
+
+    private fun tryPreBindValue(lifetime: Lifetime, value: V?, index: Int, bindAlso: Boolean): LifetimeDefinition? {
+        if (optimizeNested || value == null)
+            return null
+
+        val definition = LifetimeDefinition().apply { id = value }
+        try {
+            value.preBindPolymorphic(definition.lifetime, this, "[$index]")
+            if (bindAlso)
+                value.bindPolymorphic()
+
+            (lifetime as LifetimeDefinition).attach(definition, true)
+
+            return definition
+        } catch (e: Throwable) {
+            definition.terminate()
+            throw e
+        }
+    }
+
+    constructor(valSzr: ISerializer<V> = Polymorphic<V>()) : this(valSzr, ViewableList(SynchronizedList()))
 
 
 

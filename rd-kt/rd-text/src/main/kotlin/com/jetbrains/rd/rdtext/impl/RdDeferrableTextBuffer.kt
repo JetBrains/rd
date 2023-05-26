@@ -3,6 +3,7 @@ package com.jetbrains.rd.rdtext.impl
 import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.framework.base.deepClonePolymorphic
+import com.jetbrains.rd.framework.protocolOrThrow
 import com.jetbrains.rd.rdtext.IDeferrableITextBuffer
 import com.jetbrains.rd.rdtext.intrinsics.RdTextChange
 import com.jetbrains.rd.rdtext.intrinsics.RdTextChangeKind
@@ -38,7 +39,7 @@ class RdDeferrableTextBuffer(delegate: RdTextBufferState, isMaster: Boolean = tr
     }
 
     override fun flush() {
-        protocol.scheduler.assertThread()
+        protocolOrThrow.scheduler.assertThread()
         require(!queue.isEmpty()) { "!queue.isEmpty()" }
         RdReactiveBase.logSend.debug { "Sending queued changes" }
         try {

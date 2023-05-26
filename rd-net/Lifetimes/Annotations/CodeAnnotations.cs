@@ -708,7 +708,7 @@ namespace JetBrains.Annotations
         | AttributeTargets.Enum,
         AllowMultiple = true,
         Inherited = false)]
-    public sealed class CodeTemplateAttribute : Attribute
+    internal sealed class CodeTemplateAttribute : Attribute
     {
         public CodeTemplateAttribute(string searchTemplate)
         {

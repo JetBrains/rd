@@ -53,7 +53,7 @@ namespace JetBrains.Rd.Reflection
     {
       var typename = ReflectionRdActivator.GetTypeName(instance.GetType());
       instance.Identify(protocol.Identities, RdId.Root.Mix(typename));
-      instance.Bind(lifetime, protocol, typename);
+      instance.BindTopLevel(lifetime, protocol, typename);
     }
   }
 }

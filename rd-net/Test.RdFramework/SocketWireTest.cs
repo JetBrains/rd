@@ -83,9 +83,9 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdProperty<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
         var cp = NewRdProperty<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         cp.SetValue(1);
         WaitAndAssert(sp, 1);
@@ -103,9 +103,9 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdProperty<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
         var cp = NewRdProperty<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
         sp.Advise(lifetime, it => log.Add(it));
@@ -131,9 +131,9 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdProperty<string>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
         var cp = NewRdProperty<string>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         cp.SetValue("1");
         WaitAndAssert(sp, "1");
@@ -164,13 +164,13 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, port);
 
         var cp = NewRdProperty<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
         cp.SetValue(1);
 
         Thread.Sleep(2000);
         var serverProtocol = Server(lifetime, port);
         var sp = NewRdProperty<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
 
         var prev = sp.Maybe;
 
@@ -214,7 +214,7 @@ namespace Test.RdFramework
         var protocol = Server(lifetime);
         Thread.Sleep(100);
         var p = NewRdProperty<int>().Static(1);
-        p.Bind(lifetime, protocol, Top);
+        p.BindTopLevel(lifetime, protocol, Top);
         p.SetValue(1);
         p.SetValue(2);
         Thread.Sleep(50);
@@ -254,7 +254,7 @@ namespace Test.RdFramework
         var protocol = Client(lifetime, FindFreePort());
         Thread.Sleep(100);
         var p = NewRdProperty<int>().Static(1);
-        p.Bind(lifetime, protocol, Top);
+        p.BindTopLevel(lifetime, protocol, Top);
         p.SetValue(1);
         p.SetValue(2);
         Thread.Sleep(50);
@@ -284,10 +284,10 @@ namespace Test.RdFramework
         var clientProtocol = Client(lifetime, serverProtocol);
 
         var sp = NewRdSignal<int>().Static(1);
-        sp.Bind(lifetime, serverProtocol, Top);
+        sp.BindTopLevel(lifetime, serverProtocol, Top);
 
         var cp = NewRdSignal<int>().Static(1);
-        cp.Bind(lifetime, clientProtocol, Top);
+        cp.BindTopLevel(lifetime, clientProtocol, Top);
 
         var log = new List<int>();
         sp.Advise(lifetime, i => advise(log, i));
@@ -322,7 +322,7 @@ namespace Test.RdFramework
           var serverProtocol = Server(lifetime, null);
           
           var sp = NewRdProperty<int>().Static(1);
-          sp.Bind(lifetime, serverProtocol, Top);
+          sp.BindTopLevel(lifetime, serverProtocol, Top);
           sp.IsMaster = false;
 
           var wire = serverProtocol.Wire as SocketWire.Base;
@@ -339,7 +339,7 @@ namespace Test.RdFramework
             var clientProtocol = Client(lf, serverProtocol);
             var cp = NewRdProperty<int>().Static(1);
             cp.IsMaster = true;
-            cp.Bind(lf, clientProtocol, Top);
+            cp.BindTopLevel(lf, clientProtocol, Top);
             cp.SetValue(1);            
             WaitAndAssert(sp, 1);            
             Assert.AreEqual(1, clientCount);
@@ -349,11 +349,11 @@ namespace Test.RdFramework
           Lifetime.Using(lf =>
           {
             sp = NewRdProperty<int>().Static(2);
-            sp.Bind(lifetime, serverProtocol, Top);
+            sp.BindTopLevel(lifetime, serverProtocol, Top);
             
             var clientProtocol = Client(lf, serverProtocol);
             var cp = NewRdProperty<int>().Static(2);
-            cp.Bind(lf, clientProtocol, Top);
+            cp.BindTopLevel(lf, clientProtocol, Top);
             cp.SetValue(2);
             WaitAndAssert(sp, 2);
             Assert.AreEqual(2, clientCount);
@@ -364,7 +364,7 @@ namespace Test.RdFramework
           {                        
             var clientProtocol = Client(lf, serverProtocol);
             var cp = NewRdProperty<int>().Static(2);
-            cp.Bind(lf, clientProtocol, Top);
+            cp.BindTopLevel(lf, clientProtocol, Top);
             cp.SetValue(3);      
             WaitAndAssert(sp, 3, 2);
             Assert.AreEqual(3, clientCount);
@@ -373,31 +373,7 @@ namespace Test.RdFramework
         });
       
     }
-
-
-
-    [Test]
-    public void TestSocketFactory()
-    {
-      var sLifetime = new LifetimeDefinition();
-      var factory = new SocketWire.ServerFactory(sLifetime.Lifetime, SynchronousScheduler.Instance);
-      
-      var lf1 = new LifetimeDefinition();
-      new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, factory.LocalPort);
-      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
-      
-      var lf2 = new LifetimeDefinition();
-      new SocketWire.Client(lf2.Lifetime, SynchronousScheduler.Instance, factory.LocalPort);
-      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 2);
-      
-      
-      lf1.Terminate();
-      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
-      
-      sLifetime.Terminate();
-      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 0);
-    }
-
+    
     [TestCase(true)]
     [TestCase(false)]
     public void TestPacketLoss(bool isClientToServer)
@@ -480,6 +456,31 @@ namespace Test.RdFramework
         Thread.Sleep(TimeSpan.FromSeconds(50));
       });
     }
+
+
+
+    [Test]
+    public void TestSocketFactory()
+    {
+      var sLifetime = new LifetimeDefinition();
+      var factory = new SocketWire.ServerFactory(sLifetime.Lifetime, SynchronousScheduler.Instance);
+      
+      var lf1 = new LifetimeDefinition();
+      new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, factory.LocalPort);
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
+      
+      var lf2 = new LifetimeDefinition();
+      new SocketWire.Client(lf2.Lifetime, SynchronousScheduler.Instance, factory.LocalPort);
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 2);
+      
+      
+      lf1.Terminate();
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
+      
+      sLifetime.Terminate();
+      SpinWaitEx.SpinUntil(() => factory.Connected.Count == 0);
+    }
+
 
     private static void CloseSocket(IProtocol protocol)
     {

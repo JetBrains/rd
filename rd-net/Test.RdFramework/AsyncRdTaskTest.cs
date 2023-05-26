@@ -25,7 +25,7 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
     ClientWire.AutoTransmitMode = true;
     ServerWire.AutoTransmitMode = true;
     
-    LifetimeDefinition.Lifetime.UsingNested(lifetime =>
+    var lifetime = LifetimeDefinition.Lifetime; 
     {
       var entity_id = 1;
 
@@ -72,7 +72,7 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
       });
       
       Assert.IsTrue(bindClientTask.Wait(Timeout(TimeSpan.FromSeconds(10))));
-    });
+    }
   }
 
   private static TimeSpan Timeout(TimeSpan timeout)

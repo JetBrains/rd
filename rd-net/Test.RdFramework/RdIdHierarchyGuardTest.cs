@@ -70,9 +70,14 @@ namespace Test.RdFramework
         RdProperty<int>.Write(ctx, writer, ((Model)value).myValue);
       }
 
-      protected override void Init(Lifetime lifetime)
+      protected override void PreInit(Lifetime lifetime, IProtocol proto)
       {
-        myValue.Bind(lifetime, this, "myValue");
+        myValue.PreBind(lifetime, this, "myValue");
+      }
+      
+      protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
+      {
+        myValue.Bind();
       }
 
       public override void Identify(IIdentities identities, RdId id)

@@ -212,6 +212,12 @@ open class CSharp50Generator(
             Sink -> "IReadonlyProperty"
             Source, Both -> "IViewableProperty"
         }
+
+        is Member.Reactive.Stateful.AsyncProperty -> when (actualFlow) {
+            Sink -> "IReadonlyAsyncProperty"
+            Source, Both -> "IAsyncProperty"
+        }
+
         is Member.Reactive.Stateful.List -> when (actualFlow) {
             Sink -> "IViewableList"
             Source, Both -> "IViewableList"
@@ -220,10 +226,14 @@ open class CSharp50Generator(
             Sink -> "IViewableSet"
             Source, Both -> "IViewableSet"
         }
+        is Member.Reactive.Stateful.AsyncSet -> "AsyncRdSet"
+
         is Member.Reactive.Stateful.Map -> when (actualFlow) {
             Sink -> "IViewableMap"
             Source, Both -> "IViewableMap"
         }
+
+        is Member.Reactive.Stateful.AsyncMap -> "AsyncRdMap"
 
         is Member.Reactive.Stateful.Extension -> implSimpleName(scope)
 
@@ -235,9 +245,12 @@ open class CSharp50Generator(
             is Member.Reactive.Task -> "RdCall"
             is Member.Reactive.Signal -> "RdSignal"
             is Member.Reactive.Stateful.Property -> "RdProperty"
+            is Member.Reactive.Stateful.AsyncProperty -> "AsyncRdProperty"
             is Member.Reactive.Stateful.List -> "RdList"
             is Member.Reactive.Stateful.Set -> "RdSet"
+            is Member.Reactive.Stateful.AsyncSet -> "AsyncRdSet"
             is Member.Reactive.Stateful.Map -> "RdMap"
+            is Member.Reactive.Stateful.AsyncMap -> "AsyncRdMap"
             is Member.Reactive.Stateful.Extension -> delegateFqnSubstitutedName(scope)
 
             else -> fail("Unsupported member: $this")
@@ -573,7 +586,7 @@ open class CSharp50Generator(
         else
 
             when (member) {
-                is Member.Reactive.Stateful.Property -> when {
+                is Member.Reactive.Stateful.PropertyBase -> when {
                     member.defaultValue is String -> "\"" + member.defaultValue + "\""
                     member.defaultValue is Member.Const -> member.defaultValue.name
                     member.defaultValue != null -> member.defaultValue.toString()
@@ -668,7 +681,7 @@ open class CSharp50Generator(
 
         indent {
             +"Identify(protocol.Identities, RdId.Root.Mix(\"${decl.name}\"));"
-            +"Bind(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
+            +"this.BindTopLevel(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
         }
         +"}"
     }
@@ -905,7 +918,7 @@ open class CSharp50Generator(
 
         if (decl is Class && decl.internRootForScopes.isNotEmpty()) {
             +"private SerializationCtx mySerializationContext;"
-            +"public override SerializationCtx SerializationContext { get { return mySerializationContext; } }"
+            +"public override bool TryGetSerializationContext(out SerializationCtx ctx) { ctx = mySerializationContext; return true; }"
         }
     }
 
@@ -1039,7 +1052,7 @@ open class CSharp50Generator(
     }
 
     private fun Member.defaultValueAsString(ignorePerClientId: Boolean = false): String {
-        return if (this is Member.Reactive.Stateful.Property && defaultValue != null && (context == null || ignorePerClientId)) {
+        return if (this is Member.Reactive.Stateful.PropertyBase && defaultValue != null && (context == null || ignorePerClientId)) {
             when (defaultValue) {
                 is String -> ", \"$defaultValue\""
                 is Member.Const -> ", ${defaultValue.name}"

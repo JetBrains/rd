@@ -66,14 +66,11 @@ namespace Test.RdFramework
         serverEntity.Sync(null);
       });
 
-      Assert.Throws<Assertion.AssertionException>(() =>
+      using (Log.UsingLogFactory(new TestThrowingLogFactory()))
       {
-        using (Log.UsingLogFactory(new TestThrowingLogFactory()))
-        {
-          var task = serverEntity.Start("Value");
-          Assert.AreEqual(RdTaskStatus.Faulted, task.Result.Value.Status);
-        }
-      });
+        var task = serverEntity.Start("Value");
+        Assert.AreEqual(RdTaskStatus.Faulted, task.Result.Value.Status);
+      }
     }
 
 

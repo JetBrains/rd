@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
 
@@ -60,7 +61,7 @@ namespace JetBrains.Rd.Reflection
       // If you want to mitigate this limitation, keep in mind that if you make a sync call from background thread
       // with some small probability your call can be merged in the sync execution of other call. Usually it is not
       // desired behaviour as you can accidentally obtain undesired locks.
-      call.Proto.Scheduler.AssertThread();
+      call.GetProtoOrThrow().Scheduler.AssertThread();
 
       var nestedCallsScheduler = new LifetimeDefinition();
       var responseScheduler = new RdSimpleDispatcher(nestedCallsScheduler.Lifetime, Log.GetLog(call.GetType()));

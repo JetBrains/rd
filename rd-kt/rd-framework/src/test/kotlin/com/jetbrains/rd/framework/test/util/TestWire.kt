@@ -2,15 +2,17 @@ package com.jetbrains.rd.framework.test.util
 
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.RdMessage
 import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.framework.createAbstractBuffer
 import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.reactive.IScheduler
+import java.util.concurrent.ConcurrentLinkedQueue
 
-class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
+class TestWire(val scheduler : IScheduler) : WireBase() {
     lateinit var counterpart : TestWire
 
-    val msgQ = Queue<RdMessage>()
+    val msgQ = ConcurrentLinkedQueue<RdMessage>()
 
     var bytesWritten: Long = 0
 
@@ -18,6 +20,8 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
         connected.set(true)
     }
 
+    val hasMessages
+        get() =  msgQ.size > 0
 
     override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
         require(!id.isNull)
@@ -57,6 +61,3 @@ class TestWire(scheduler : IScheduler) : WireBase(scheduler) {
         counterpart.messageBroker.dispatch(msg.id, msg.istream)
     }
 }
-
-
-class RdMessage (val id : RdId, val istream : AbstractBuffer)

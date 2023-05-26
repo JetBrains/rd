@@ -39,10 +39,13 @@ class SignalOrderingTest : RdAsyncTestBase() {
             evt1.countDown()
             evt1.await()
 
-            evt2.countDown()
-
             val serverSignal1 = RdSignal(FrameworkMarshallers.String).static(1)
             val serverSignal2 = RdSignal(FrameworkMarshallers.String).static(2)
+
+            serverProtocol.bindStatic(serverSignal1, "top1")
+            serverProtocol.bindStatic(serverSignal2, "top2")
+
+            evt2.countDown()
 
             serverSignal1.adviseOn(serverLifetime, serverUiScheduler) {
                 assert(awaiting1) { "did not expect signal 1 to fire with $it" }
@@ -56,11 +59,6 @@ class SignalOrderingTest : RdAsyncTestBase() {
                 awaiting1 = true
                 counter++
             }
-
-            Thread.sleep(1_000)
-
-            serverProtocol.bindStatic(serverSignal1, "top1")
-            serverProtocol.bindStatic(serverSignal2, "top2")
         }
 
         evt1.countDown()
@@ -70,6 +68,6 @@ class SignalOrderingTest : RdAsyncTestBase() {
         clientUiScheduler.assertNoExceptions()
         serverUiScheduler.assertNoExceptions()
 
-        assert(counter == iterationCount) { "Some values were not received" }
+        assert(counter == iterationCount) { "Some values were not received. Expected: $iterationCount, but actual: $counter" }
     }
 }

@@ -56,6 +56,8 @@ class DefaultNlsValuesRoot private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 
 
@@ -127,4 +129,5 @@ class ClassModel private constructor(
         )
     }
     //contexts
+    //threading
 }

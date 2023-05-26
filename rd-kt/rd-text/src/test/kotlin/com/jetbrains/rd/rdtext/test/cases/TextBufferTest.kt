@@ -26,7 +26,8 @@ import org.junit.jupiter.api.Test
 
 private fun IRdBindable.top(lifetime: Lifetime, protocol: IProtocol) {
     identify(protocol.identity, RdId.Null.mix(this.javaClass.simpleName))
-    bind(lifetime, protocol, this.javaClass.simpleName)
+    preBind(lifetime, protocol, this.javaClass.simpleName)
+    bind()
 }
 
 private data class TextBufferCommand(val change: RdTextChange, val isQueued: Boolean, val origin: RdChangeOrigin)

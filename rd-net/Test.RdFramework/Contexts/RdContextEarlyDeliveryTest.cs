@@ -52,13 +52,15 @@ namespace Test.RdFramework.Contexts
 
     private T BindToClient<T>(Lifetime lf, T x, int staticId) where T : IRdReactive
     {
-      x.Static(staticId).Bind(lf, myClientProtocol, "client");
+      var reactive = x.Static(staticId);
+      reactive.BindTopLevel(lf, myClientProtocol, "client");
       return x;
     }
 
     private T BindToServer<T>(Lifetime lf, T x, int staticId) where T : IRdReactive
     {
-      x.Static(staticId).Bind(lf, myServerProtocol, "server");
+      var reactive = x.Static(staticId);
+      reactive.BindTopLevel(lf, myServerProtocol, "server");
       return x;
     }
 

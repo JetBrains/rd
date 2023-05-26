@@ -35,11 +35,11 @@ namespace Test.RdFramework
       var clientDispatcher = CreateScheduler(false);
       
       var serverR = "Server (R#)";
-      ServerWire = new TestWire(serverDispatcher, serverR, true);
+      ServerWire = new TestWire(TryCreateWireScheduler(true) ?? serverDispatcher, serverR, true);
       ServerProtocol = new Protocol(serverR, CreateSerializers(true), identities, serverDispatcher, ServerWire, LifetimeDefinition.Lifetime);
       
       var clientIdea = "Client (IDEA)";
-      ClientWire = new TestWire(clientDispatcher, clientIdea, false);
+      ClientWire = new TestWire(TryCreateWireScheduler(false) ?? clientDispatcher, clientIdea, false);
       ClientProtocol = new Protocol(clientIdea, CreateSerializers(false), identities, clientDispatcher, ClientWire, LifetimeDefinition.Lifetime);
 
       // EnableWireTapping();
@@ -66,6 +66,13 @@ namespace Test.RdFramework
       dispatcher.SetActive(LifetimeDefinition.Lifetime);
       return dispatcher;
     }
+    
+    [CanBeNull]
+    protected virtual IScheduler TryCreateWireScheduler(bool isServer)
+    {
+      return null;
+    }
+
 
     protected virtual ISerializers CreateSerializers(bool isServer)
     {
@@ -90,13 +97,19 @@ namespace Test.RdFramework
 
     protected T BindToClient<T>(Lifetime lf, T x, int staticId) where T : IRdReactive
     {
-      x.Static(staticId).Bind(lf, ClientProtocol, "client");
+      using var _ = AllowBindCookie.Create();
+      var reactive = x.Static(staticId);
+      reactive.PreBind(lf, ClientProtocol, "client");
+      reactive.Bind();
       return x;
     }
 
     protected T BindToServer<T>(Lifetime lf, T x, int staticId) where T : IRdReactive
     {
-      x.Static(staticId).Bind(lf, ServerProtocol, "server");
+      using var _ = AllowBindCookie.Create();
+      var reactive = x.Static(staticId);
+      reactive.PreBind(lf, ServerProtocol, "server");
+      reactive.Bind();
       return x;
     }
   }

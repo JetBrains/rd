@@ -61,7 +61,7 @@ namespace JetBrains.Util.Internal
   Interlocked.MemoryBarrier();
 #endif
     }
-    
+#nullable disable
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T VolatileRead<T>(ref T location) where T : class
     {
@@ -84,6 +84,7 @@ namespace JetBrains.Util.Internal
       Volatile.Write(ref location, value);
 #endif
     }
+#nullable restore
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static int VolatileRead(ref int location)
