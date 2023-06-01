@@ -39,6 +39,9 @@ public class RdCollectionsTest : RdFrameworkTestBase
     Register(AsyncRdMap<int, string>.Read, AsyncRdMap<int, string>.Write);
     Register(AsyncRdSet<int>.Read, AsyncRdSet<int>.Write);
     
+    Register(RdList<RdProperty<int>>.Read, RdList<RdProperty<int>>.Write);
+    Register(RdProperty<int>.Read, RdProperty<int>.Write);
+    
     return serializers;
 
     void Register<T>(CtxReadDelegate<T> read, CtxWriteDelegate<T> write)
@@ -296,6 +299,67 @@ public class RdCollectionsTest : RdFrameworkTestBase
     Assert.AreEqual(BindState.NotBound,clientMap.BindState);
     Assert.AreEqual(BindState.NotBound,serverMap.BindState);
   }
+
+  [Test]
+  public void RdListRemoveAtTest()
+  {
+    var serverTopLevelProperty = BindToServer(LifetimeDefinition.Lifetime, NewRdProperty<RdList<RdProperty<int>>>(), ourKey);
+    serverTopLevelProperty.ValueCanBeNull = true;
+
+    var clientTopLevelProperty = BindToClient(LifetimeDefinition.Lifetime, NewRdProperty<RdList<RdProperty<int>>>(), ourKey);
+    clientTopLevelProperty.ValueCanBeNull = true;
+
+    var clientList = NewRdList<RdProperty<int>>();
+    clientList.ValueCanBeNull = true;
+
+    var clientProperty1 = NewRdProperty<int>();
+    clientProperty1.ValueCanBeNull = true;
+    var clientProperty2 = NewRdProperty<int>();
+    clientProperty2.ValueCanBeNull = true;
+
+    clientList.Add(clientProperty1);
+    clientList.Add(clientProperty2);
+
+    SetSchedulerActive(SchedulerKind.Client, () => { clientTopLevelProperty.Value = clientList; });
+    Assert.IsFalse(serverTopLevelProperty.Maybe.HasValue);
+
+    PumpAllProtocols(true);
+
+    var serverList = serverTopLevelProperty.Value;
+    Assert.AreEqual(2, serverList.Count);
+    var serverProperty1 = serverList[0];
+    var serverProperty2 = serverList[1];
+
+    Assert.AreEqual(BindState.Bound, clientProperty1.BindState);
+    Assert.AreEqual(BindState.Bound, clientProperty2.BindState);
+    Assert.AreEqual(BindState.Bound, serverProperty1.BindState);
+    Assert.AreEqual(BindState.Bound, serverProperty2.BindState);
+
+    SetSchedulerActive(SchedulerKind.Client, () => { clientList.RemoveAt(0); });
+
+    PumpAllProtocols(true);
+
+    Assert.AreEqual(BindState.NotBound, clientProperty1.BindState);
+    Assert.AreEqual(BindState.NotBound, serverProperty1.BindState);
+    Assert.AreEqual(BindState.Bound, clientProperty2.BindState);
+    Assert.AreEqual(BindState.Bound, serverProperty2.BindState);
+
+    Assert.AreEqual(BindState.Bound, clientList.BindState);
+    Assert.AreEqual(BindState.Bound, serverList.BindState);
+
+    SetSchedulerActive(SchedulerKind.Client, () => { clientList.RemoveAt(0); });
+
+    PumpAllProtocols(true);
+
+    Assert.AreEqual(BindState.NotBound, clientProperty1.BindState);
+    Assert.AreEqual(BindState.NotBound, serverProperty1.BindState);
+    Assert.AreEqual(BindState.NotBound, clientProperty2.BindState);
+    Assert.AreEqual(BindState.NotBound, serverProperty2.BindState);
+
+    Assert.AreEqual(BindState.Bound, clientList.BindState);
+    Assert.AreEqual(BindState.Bound, serverList.BindState);
+  }
+
 
   
   [Test]

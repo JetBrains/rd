@@ -24,6 +24,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
             register(AsyncRdProperty as ISerializer<AsyncRdProperty<Int>>)
             register(AsyncRdMap as ISerializer<AsyncRdMap<Int, String>>)
             register(AsyncRdSet as ISerializer<AsyncRdSet<Int>>)
+
+            register(RdList as ISerializer<RdList<RdProperty<Int>>>)
+            register(RdProperty as ISerializer<RdProperty<Int>>)
         }
     }
 
@@ -276,16 +279,16 @@ class RdCollectionsTest : RdFrameworkTestBase() {
 
         pumpAllProtocols(true)
 
-        var serverMap = serverTopLevelProperty.value
+        val serverMap = serverTopLevelProperty.value
         assertNotNull(serverMap)
 
         assertEquals(1, serverMap.size)
         assertEquals(2, serverMap.keys.single())
 
-        var serverList = serverMap.values.single()
+        val serverList = serverMap.values.single()
         assertEquals(1, serverList.size)
-        var serverProperty = serverList[0]
-        var serverSet = serverProperty.value
+        val serverProperty = serverList[0]
+        val serverSet = serverProperty.value
         assertNotNull(serverSet)
 
         assertEquals(3, serverSet.size)
@@ -312,6 +315,70 @@ class RdCollectionsTest : RdFrameworkTestBase() {
     }
 
     @Test
+    fun rdListRemoveAtTest() {
+        val serverTopLevelProperty = RdProperty<RdList<RdProperty<Int>>?>(null)
+        val clientTopLevelProperty = RdProperty<RdList<RdProperty<Int>>?>(null)
+
+        serverProtocol.bindStatic(serverTopLevelProperty, 1)
+        clientProtocol.bindStatic(clientTopLevelProperty, 1)
+
+        val clientList = RdList<RdProperty<Int>>()
+
+        val clientProperty1 = RdProperty(0)
+        val clientProperty2 = RdProperty(0)
+
+        clientList.add(clientProperty1)
+        clientList.add(clientProperty2)
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientTopLevelProperty.value = clientList
+        }
+
+        assertNull(serverTopLevelProperty.value)
+
+        pumpAllProtocols(true)
+
+        val serverList = serverTopLevelProperty.value!!
+        assertEquals(2, serverList.size)
+        val serverProperty1 = serverList[0]
+        val serverProperty2 = serverList[1]
+
+        assertEquals(BindState.Bound, clientProperty1.bindState)
+        assertEquals(BindState.Bound, clientProperty2.bindState)
+        assertEquals(BindState.Bound, serverProperty1.bindState)
+        assertEquals(BindState.Bound, serverProperty2.bindState)
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientList.removeAt(0)
+        }
+
+        pumpAllProtocols(true)
+
+        assertEquals(BindState.NotBound, clientProperty1.bindState)
+        assertEquals(BindState.NotBound, serverProperty1.bindState)
+        assertEquals(BindState.Bound, clientProperty2.bindState)
+        assertEquals(BindState.Bound, serverProperty2.bindState)
+
+        assertEquals(BindState.Bound, clientList.bindState)
+        assertEquals(BindState.Bound, serverList.bindState)
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientList.removeAt(0)
+        }
+
+        pumpAllProtocols(true)
+
+        assertEquals(BindState.NotBound, clientProperty1.bindState)
+        assertEquals(BindState.NotBound, serverProperty1.bindState)
+        assertEquals(BindState.NotBound, clientProperty2.bindState)
+        assertEquals(BindState.NotBound, serverProperty2.bindState)
+
+        assertEquals(BindState.Bound, clientList.bindState)
+        assertEquals(BindState.Bound, serverList.bindState)
+    }
+
+
+    @Test
     fun propertyTest() {
         serverWire.autoFlush = true
         clientWire.autoFlush = true
@@ -324,7 +391,7 @@ class RdCollectionsTest : RdFrameworkTestBase() {
 
         val clientNested1 = RdProperty<RdProperty<RdSet<Int>?>?>(null)
         val clientNested2 = RdProperty<RdSet<Int>?>(null)
-        var clientSet = RdSet<Int>()
+        val clientSet = RdSet<Int>()
         clientNested2.value = clientSet
         clientNested1.value = clientNested2
 
