@@ -90,6 +90,9 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
                     if (it !is IViewableList.Event.Add)
                         definitions[it.index]?.terminate()
 
+                    if (it is IViewableList.Event.Remove)
+                        definitions.removeAt(it.index)
+
                     val value = it.newValueOpt
                     if (it !is IViewableList.Event.Remove) {
                         value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))

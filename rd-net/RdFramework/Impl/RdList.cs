@@ -153,6 +153,9 @@ namespace JetBrains.Rd.Impl
 
             if (it.Kind != AddUpdateRemove.Add)
               definitions[it.Index]?.Terminate();
+            
+            if (it.Kind == AddUpdateRemove.Remove)
+              definitions.RemoveAt(it.Index);
 
             if (it.Kind != AddUpdateRemove.Remove && it.NewValue != null)
             {

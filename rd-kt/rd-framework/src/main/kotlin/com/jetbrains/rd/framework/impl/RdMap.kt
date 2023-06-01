@@ -86,6 +86,9 @@ open class RdMap<K : Any, V : Any> private constructor(
                     if (it !is IViewableMap.Event.Add)
                         definitions[it.key]?.terminate()
 
+                    if (it is IViewableMap.Event.Remove)
+                        definitions.remove(it.key)
+
                     if (it !is IViewableMap.Event.Remove) {
                         val value = it.newValueOpt
                         value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))

@@ -136,6 +136,9 @@ namespace JetBrains.Rd.Impl
             if (it.Kind != AddUpdateRemove.Add) 
               definitions[it.Key]?.Terminate();
 
+            if (it.Kind == AddUpdateRemove.Remove)
+              definitions.Remove(it.Key);
+
             if (it.Kind != AddUpdateRemove.Remove)
             {
               it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
