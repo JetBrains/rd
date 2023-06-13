@@ -81,7 +81,6 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                 bindState = BindState.PreBound
             },
             {
-                assertBindingThread()
                 unbind()
 
                 location = location.sub("<<unbound>>","::")
