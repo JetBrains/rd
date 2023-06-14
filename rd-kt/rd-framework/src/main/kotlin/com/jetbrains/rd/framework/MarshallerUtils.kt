@@ -55,6 +55,8 @@ internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
         }
     )
     return RdSignal(marshaller).also {
+        it.async = true
+
         val baseId = (this as? IRdWireable)?.rdid ?: RdId.Null
         it.rdid = baseId.mix("ProtocolExtCreated")
     }
