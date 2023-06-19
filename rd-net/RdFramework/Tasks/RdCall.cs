@@ -92,32 +92,7 @@ namespace JetBrains.Rd.Tasks
 
       dispatchHelper.Dispatch(myHandlerScheduler, () =>
       {
-        RdTask<TRes> rdTask;
-        try
-        {
-          var handler = Handler;
-          if (handler == null)
-          {
-            var message = $"Handler is not set for {wiredTask} :: received request: {value.PrintToString()}";
-            ourLogReceived.Error(message);
-            rdTask = RdTask.Faulted<TRes>(new Exception(message));
-          }
-          else
-          {
-            try
-            {
-              rdTask = handler(externalCancellation, value);
-            }
-            catch (Exception ex)
-            {
-              rdTask = RdTask.Faulted<TRes>(ex);
-            }
-          }
-        }
-        catch (Exception e)
-        {
-          rdTask = RdTask.Faulted<TRes>(new Exception($"Unexpected exception in {wiredTask}", e));
-        }
+        var rdTask = RunHandler(value, externalCancellation, wiredTask);
 
         rdTask.Result.Advise(Lifetime.Eternal, result =>
         {
@@ -135,6 +110,38 @@ namespace JetBrains.Rd.Tasks
           }
         });
       });
+    }
+
+    private RdTask<TRes> RunHandler(TReq value, Lifetime externalCancellation, object? moniker)
+    {
+      RdTask<TRes> rdTask;
+      try
+      {
+        var handler = Handler;
+        if (handler == null)
+        {
+          var message = $"Handler is not set for {moniker} :: received request: {value.PrintToString()}";
+          ourLogReceived.Error(message);
+          rdTask = RdTask.Faulted<TRes>(new Exception(message));
+        }
+        else
+        {
+          try
+          {
+            rdTask = handler(externalCancellation, value);
+          }
+          catch (Exception ex)
+          {
+            rdTask = RdTask.Faulted<TRes>(ex);
+          }
+        }
+      }
+      catch (Exception e)
+      {
+        rdTask = RdTask.Faulted<TRes>(new Exception($"Unexpected exception in {moniker}", e));
+      }
+
+      return rdTask;
     }
 
 
@@ -185,6 +192,11 @@ namespace JetBrains.Rd.Tasks
 
       if (proto == null || !TryGetSerializationContext(out var serializationContext))
         return new WiredRdTask<TReq, TRes>.CallSite(Lifetime.Terminated, this, RdId.Nil, SynchronousScheduler.Instance);
+
+      // Short-circuit of calls on local wires. On a local protocol with stub wire the handler will
+      // never be executed, so we call it right now explicitly in sync mode.
+      if (proto.Wire.IsStub)
+        return RunHandler(request, requestLifetime, moniker: this);
 
       var taskId = proto.Identities.Next(RdId.Nil);
       var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler ?? proto.Scheduler);
