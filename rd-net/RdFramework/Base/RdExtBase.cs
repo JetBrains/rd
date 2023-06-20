@@ -189,7 +189,7 @@ namespace JetBrains.Rd.Base
     
     private readonly Queue<QueueItem> mySendQ = new Queue<QueueItem>();
 
-    public bool IsStub => false;
+    public bool IsStub => RealWire.IsStub;
 
     public ProtocolContexts Contexts
     {
