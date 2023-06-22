@@ -173,6 +173,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         assertEquals(BindState.Bound, serverSet.bindState)
 
         setSchedulerActive(SchedulerKind.Client) {
+            val oldProperty = clientProperty.value
+            clientProperty.value = null
+            clientProperty.value = oldProperty
             clientProperty.value = null
         }
 
@@ -184,6 +187,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         assertEquals(BindState.Bound, serverProperty.bindState)
 
         setSchedulerActive(SchedulerKind.Client) {
+            val oldProperty = clientList[0]
+            clientList[0] = RdProperty(null)
+            clientList[0] = oldProperty
             clientList[0] = RdProperty(null)
         }
 
@@ -212,6 +218,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         assertEquals(BindState.Bound, serverList.bindState)
 
         setSchedulerActive(SchedulerKind.Client) {
+            val oldValue = clientMap[clientMap.keys.single()]!!
+            clientMap[clientMap.keys.single()] = RdList()
+            clientMap[clientMap.keys.single()] = oldValue
             clientMap[clientMap.keys.single()] = RdList()
         }
 
@@ -239,6 +248,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         assertEquals(BindState.Bound, serverMap.bindState)
 
         setSchedulerActive(SchedulerKind.Client) {
+            val oldValue = clientTopLevelProperty.value
+            clientTopLevelProperty.value = null
+            clientTopLevelProperty.value = oldValue
             clientTopLevelProperty.value = null
         }
 
