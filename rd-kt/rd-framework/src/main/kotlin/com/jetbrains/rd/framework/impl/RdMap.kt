@@ -51,6 +51,11 @@ open class RdMap<K : Any, V : Any> private constructor(
             (value != null).condstr { " :: value = ${value.printToString()}" }
     }
 
+    override fun unbind() {
+        super.unbind()
+        bindDefinitions = null
+    }
+
     override fun preInit(lifetime: Lifetime, proto: IProtocol) {
         super.preInit(lifetime, proto)
 

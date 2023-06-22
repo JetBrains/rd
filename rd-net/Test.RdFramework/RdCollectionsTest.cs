@@ -220,6 +220,9 @@ public class RdCollectionsTest : RdFrameworkTestBase
     
     SetSchedulerActive(SchedulerKind.Client, () =>
     {
+      var oldValue = clientProperty.Value;
+      clientProperty.Value = null;
+      clientProperty.Value = oldValue;
       clientProperty.Value = null;
     });
     
@@ -232,6 +235,9 @@ public class RdCollectionsTest : RdFrameworkTestBase
     
     SetSchedulerActive(SchedulerKind.Client, () =>
     {
+      var oldValue = clientList[0];
+      clientList[0] = NewRdProperty<RdSet<int>>();
+      clientList[0] = oldValue;
       clientList[0] = NewRdProperty<RdSet<int>>();
     });
     
@@ -262,6 +268,9 @@ public class RdCollectionsTest : RdFrameworkTestBase
     
     SetSchedulerActive(SchedulerKind.Client, () =>
     {
+      var oldValue = clientMap[clientMap.Keys.Single()];
+      clientMap[clientMap.Keys.Single()] = NewRdList<RdProperty<RdSet<int>>>();
+      clientMap[clientMap.Keys.Single()] = oldValue;
       clientMap[clientMap.Keys.Single()] = NewRdList<RdProperty<RdSet<int>>>();
     });
     
@@ -291,6 +300,9 @@ public class RdCollectionsTest : RdFrameworkTestBase
     
     SetSchedulerActive(SchedulerKind.Client, () =>
     {
+      var oldValue = clientTopLevelProperty.Value;
+      clientTopLevelProperty.Value = null;
+      clientTopLevelProperty.Value = oldValue;
       clientTopLevelProperty.Value = null;
     });
     
