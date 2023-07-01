@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using JetBrains.Core;
 using JetBrains.Lifetimes;
@@ -375,7 +374,7 @@ namespace JetBrains.Collections.Viewable
       {
         mySource = source;
         myMap = map;
-        Change = new MappedSink<T, R>(source.Change, myMap);
+        Change = new MappedSink<T, R>(source, myMap);
       }
 
       public void Advise(Lifetime lifetime, Action<R> handler) => Change.Advise(lifetime, handler);
