@@ -374,10 +374,10 @@ namespace JetBrains.Collections.Viewable
       {
         mySource = source;
         myMap = map;
-        Change = new MappedSink<T, R>(source, myMap);
+        Change = new MappedSink<T, R>(source.Change, myMap);
       }
 
-      public void Advise(Lifetime lifetime, Action<R> handler) => Change.Advise(lifetime, handler);
+      public void Advise(Lifetime lifetime, Action<R> handler) => mySource.Advise(lifetime, v => handler(myMap(v)));
 
       public ISource<R> Change { get; }
 
