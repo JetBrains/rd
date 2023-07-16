@@ -79,6 +79,12 @@ Before we discuss the model members, let's discuss the member types. RdGen allow
    
 You can reuse a same type declared once in several places (for example, as a type for several fields or a return type of a call).
 
+#### Type Categories
+Most of the types from the coming section are split into two big categories: _bindable types_ and _scalars_.
+
+A bindable type is a type that can contain reactive members, while a scalar type is immutable and cannot contain any reactive or bindable members in it.
+
+#### Entity Types
 The protocol allows to declare the following type of entities:
 1. `structdef`: a simple _non-bindable type_ that cannot contain any reactive properties; only fields are allowed. Use structs for simple data, normally for value objects only.
    
@@ -134,10 +140,35 @@ There are also certain predefined types inside of the `PredefinedType` object, s
 
 Also, collection types may be used, see `array(type)` or `immutableList(type)` for collection type definitions.
 
+#### Nullability
+To mark a type as nullable, mark add `nullable` after it. For example:
+
+```kotlin
+property("foo1", PredefinedType.int.nullable)
+```
+
+This will have a language-specific effect on the generated code.
+
 #### Attributes
-TODO
+It is possible to add certain attributes to entity types. For now, there are three attributes supported: `Nls`, `NlsSafe`, `NonNls`. All three affect localization, and are only emitted for Kotlin code right now.
+
+They are mapped to the following Java annotations:
+- `Nls` → `org.jetbrains.annotations.Nls`
+- `NonNls` → `org.jetbrains.annotations.NonNls`
+- `NlsSafe` → `com.intellij.openapi.util.NlsSafe` (IntelliJ-specific, should not be used outside of IntelliJ ecosystem)
+
+Also, there are extension members defined in `com.jetbrains.rd.generator.nova` to declare common string types:
+- `nlsString`
+- `nonNlsString`
+- `nlsSafeString`
+
+For other cases, you can use the attributes directly via `.attrs()` call. For example, to declare a nullable localizeable string:
+```
+field("nls_nullable_field", PredefinedType.string.nullable.attrs(KnownAttrs.Nls))
+```
 
 #### Interning
+TODO
 
 ### Members
 Any top-level model may contain a variety of members:
@@ -153,3 +184,7 @@ TODO
 Examples
 --------
 TODO (add links)
+
+Walkthrough
+-----------
+TODO
