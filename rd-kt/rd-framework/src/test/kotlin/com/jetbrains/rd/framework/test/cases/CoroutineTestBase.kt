@@ -1,6 +1,5 @@
 package com.jetbrains.rd.framework.test.cases
 
-import com.jetbrains.rd.framework.util.RdCoroutineScope
 import com.jetbrains.rd.framework.util.asCoroutineDispatcher
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Logger
@@ -12,6 +11,7 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.threading.CompoundThrowable
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
+import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
