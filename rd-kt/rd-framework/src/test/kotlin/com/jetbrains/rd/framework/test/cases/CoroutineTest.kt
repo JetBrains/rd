@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.CompoundThrowable
+import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
