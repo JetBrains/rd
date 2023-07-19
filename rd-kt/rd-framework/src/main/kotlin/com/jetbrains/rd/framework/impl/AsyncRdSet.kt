@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.IAsyncSource
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.IViewableSet
 import com.jetbrains.rd.util.string.RName
@@ -11,7 +12,7 @@ import java.util.function.*
 
 class AsyncRdSet<T : Any> private constructor(
     private val set: BackendRdSet<T>
-) : IRdBindable,  MutableSet<T>, IAsyncSource2<IViewableSet.Event<T>>{
+) : IRdBindable,  MutableSet<T>, IAsyncSource<IViewableSet.Event<T>> {
 
     constructor(valueSerializer: ISerializer<T> = Polymorphic()) : this(BackendRdSet(valueSerializer))
 
@@ -24,7 +25,7 @@ class AsyncRdSet<T : Any> private constructor(
         }
     }
 
-    val change: IAsyncSource2<IViewableSet.Event<T>> = object : IAsyncSource2<IViewableSet.Event<T>> {
+    val change: IAsyncSource<IViewableSet.Event<T>> = object : IAsyncSource<IViewableSet.Event<T>> {
         override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableSet.Event<T>) -> Unit) {
             set.change.advise(lifetime) {
                 scheduler.queue { handler(it) }

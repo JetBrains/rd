@@ -1,7 +1,9 @@
 package com.jetbrains.rd.util.reactive
 
+import com.jetbrains.rd.util.DelicateRdApi
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.threading.ThreadSafeAdviseToAdviseOnSynchronizer
+import com.jetbrains.rd.util.threading.adviseOn
 
 fun <T : Any> IViewableSet<T>.createIsEmpty(lifetime: Lifetime): IPropertyView<Boolean> {
     val property = Property(this.isEmpty())
@@ -50,6 +52,15 @@ fun <T : Any> IViewableList<T>.viewableTail() : IPropertyView<T?> = object : IPr
                     handler(value)
             }
         }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T?) -> Unit) {
+            @OptIn(DelicateRdApi::class)
+            ThreadSafeAdviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
+        }
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T?) -> Unit) {
+        throw UnsupportedOperationException()
     }
 
     override val value: T?

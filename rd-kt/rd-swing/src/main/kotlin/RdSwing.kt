@@ -19,6 +19,10 @@ fun <T> proxyProperty(default: T, onAdvise: (lifetime: Lifetime, set: (T) -> Uni
             vl = it
             handler(it)
         }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+            throw UnsupportedOperationException()
+        }
     }
 
     override val value: T
@@ -33,7 +37,7 @@ private class AWTEventSource(eventMask: Long) : ISource<AWTEvent> {
             rdSet.forEach { it(event) }
         }
 
-        rdSet.advise(Lifetime.Eternal.createNested()) { addRemove, _ ->
+        rdSet.advise(Lifetime.Eternal) { addRemove, _ ->
             if (rdSet.isEmpty() && addRemove == AddRemove.Remove) {
                 Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
             } else if (rdSet.size == 1 && addRemove == AddRemove.Add) {
@@ -50,6 +54,10 @@ private class AWTEventSource(eventMask: Long) : ISource<AWTEvent> {
                 { rdSet.add(handler) },
                 { rdSet.remove(handler) }
         )
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (AWTEvent) -> Unit) {
+        throw UnsupportedOperationException()
     }
 }
 
@@ -95,6 +103,10 @@ fun Component.pressOutside(): IVoidSource {
                     }
                 }
             }
+        }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (Unit) -> Unit) {
+            throw UnsupportedOperationException()
         }
     }
 }
@@ -155,6 +167,10 @@ fun JComponent.mouseClicked(): ISource<MouseEvent> {
                     {this@mouseClicked.removeMouseListener(clickListener)}
             )
         }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (MouseEvent) -> Unit) {
+            throw UnsupportedOperationException()
+        }
     }
 }
 
@@ -211,6 +227,10 @@ fun JComponent.sizeProperty(): IPropertyView<Dimension> = object : IPropertyView
                         {this@sizeProperty.addComponentListener(listener)},
                         {this@sizeProperty.removeComponentListener(listener)}
                 )
+            }
+
+            override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (Dimension) -> Unit) {
+                throw UnsupportedOperationException()
             }
         }
     override val value: Dimension

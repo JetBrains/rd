@@ -10,11 +10,7 @@ import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.threadLocalWithInitial
 import com.jetbrains.rd.util.trace
 
-interface IAsyncSource2<T> {
-    fun adviseOn(lifetime : Lifetime, scheduler : IScheduler, handler : (T) -> Unit)
-}
-
-interface IAsyncProperty<T> : IAsyncSource2<T> {
+interface IAsyncProperty<T> : IAsyncSource<T> {
     val maybe: Maybe<T>
     val value: T
         get() = maybe.orElseThrow { IllegalStateException("Property is not initialized") }
@@ -94,7 +90,7 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : 
         get() = masterOverridden ?: protocol?.isMaster ?: false
         set(value) { masterOverridden = value }
 
-    val change : IAsyncSource2<T> get() = object : IAsyncSource2<T> {
+    val change : IAsyncSource<T> get() = object : IAsyncSource<T> {
         override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
             property.change.advise(lifetime) {
                 if (it.hasValue)

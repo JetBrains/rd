@@ -4,6 +4,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.test.framework.RdTestBase
+import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNull
@@ -119,5 +120,114 @@ class PropertyTest  : RdTestBase() {
         outer.set(4)
         assertEquals(3, p.valueOrThrow)
 
+    }
+
+    @Test
+    fun propertyMapDeduplicationTest() {
+        Lifetime.using { lifetime ->
+            val property = Property(0)
+            var count  = 0
+            val mappedProperty = property.map { 0 }
+
+            mappedProperty.advise(lifetime) {
+                count++
+            }
+
+            mappedProperty.adviseOn(lifetime, SynchronousScheduler) {
+                count++
+            }
+
+            assertEquals(2, count)
+
+            mappedProperty.change.advise(lifetime) {
+                count++
+            }
+
+            mappedProperty.change.adviseOn(lifetime, SynchronousScheduler) {
+                count++
+            }
+
+            for (i in 0 .. 10_000) {
+                property.set(i)
+            }
+
+            assertEquals(2, count)
+        }
+    }
+
+    @Test
+    fun optPropertyMapDeduplicationTest() {
+        Lifetime.using { lifetime ->
+            val property = OptProperty<Int>()
+            var count  = 0
+            val mappedProperty = property.map { 0 }
+
+            mappedProperty.advise(lifetime) {
+                count++
+            }
+
+            mappedProperty.adviseOn(lifetime, SynchronousScheduler) {
+                count++
+            }
+
+            mappedProperty.change.advise(lifetime) {
+                count++
+            }
+
+            mappedProperty.change.adviseOn(lifetime, SynchronousScheduler) {
+                count++
+            }
+
+            assertEquals(0, count)
+
+            for (i in 0 .. 10_000) {
+                property.set(i)
+            }
+
+            assertEquals(4, count)
+        }
+    }
+
+    @Test
+    fun propertySwitchMapDeduplicationTest() {
+        Lifetime.using { lifetime ->
+            val property = Property(Property(0))
+            var count = 0
+            val mappedProperty = property.switchMap { it }
+
+            mappedProperty.advise(lifetime) {
+                count++
+            }
+
+            mappedProperty.adviseOn(lifetime, SynchronousScheduler) {
+                count++
+            }
+
+            assertEquals(2, count)
+
+            mappedProperty.change.advise(lifetime) {
+                count++
+            }
+
+            mappedProperty.change.adviseOn(lifetime, SynchronousScheduler) {
+                count++
+            }
+
+            for (i in 0..10_000) {
+                property.value = Property(0)
+            }
+
+            assertEquals(2, count)
+
+            for (i in 0..10_000) {
+                property.value = Property(1)
+            }
+
+            assertEquals(6, count)
+
+            property.value.value = 2
+
+            assertEquals(10, count)
+        }
     }
 }

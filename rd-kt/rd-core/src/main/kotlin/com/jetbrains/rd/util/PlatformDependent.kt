@@ -52,7 +52,7 @@ object Sync {
     fun wait(obj: Any, timeout: Long) = (obj as Object).wait(timeout)
 }
 
-fun<K,V> concurrentMapOf() : MutableMap<K,V> = ConcurrentHashMap()
+fun<K,V> concurrentMapOf() = ConcurrentHashMap<K, V>()
 
 typealias Closeable = java.io.Closeable
 inline fun <T : Closeable?, R> T.use(block:(T) -> R) : R = use(block)

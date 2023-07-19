@@ -128,5 +128,7 @@ open class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, priva
         set.advise(lifetime, handler)
     }
 
-
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableSet.Event<T>) -> Unit) {
+        set.adviseOn(lifetime, scheduler, handler)
+    }
 }

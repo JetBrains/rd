@@ -5,10 +5,15 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.intersect
 import com.jetbrains.rd.util.lifetime.isNotAlive
+import com.jetbrains.rd.util.threading.AdviseToAdviseOnSynchronizerImpl
+import com.jetbrains.rd.util.threading.ThreadSafeAdviseToAdviseOnSynchronizer
+import com.jetbrains.rd.util.threading.adviseOn
+import com.jetbrains.rd.util.threading.modifyAndFireChange
 import kotlin.jvm.Volatile
 
-class Property<T>(defaultValue: T) : IProperty<T>
-{
+class Property<T>(defaultValue: T) : IProperty<T> {
+    private val adviseToAdviseOnSynchronizer = AdviseToAdviseOnSynchronizerImpl()
+
     override fun set(newValue: T) {
         value = newValue
     }
@@ -17,9 +22,16 @@ class Property<T>(defaultValue: T) : IProperty<T>
     override var value: T = defaultValue
         set(newValue) {
             if (field == newValue) return
-            field = newValue
-            _change.fire(newValue)
+
+            adviseToAdviseOnSynchronizer.modifyAndFireChange(_change) {
+                field = newValue
+                newValue
+            }
         }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        adviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
+    }
 
     private val _change = Signal<T>()
     override val change : ISource<T> get() = _change
@@ -33,12 +45,17 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
     }
 
     private val _change = Signal<T>()
+    private val adviseToAdviseOnSynchronizer = AdviseToAdviseOnSynchronizerImpl()
+
     override val change : ISource<T> get() = _change
 
     override fun set(newValue: T) {
         if (newValue == _value) return
-        _value = newValue
-        _change.fire(newValue)
+
+        adviseToAdviseOnSynchronizer.modifyAndFireChange(_change) {
+            _value = newValue
+            newValue
+        }
     }
 
     //make it interlocked
@@ -48,6 +65,10 @@ open class OptProperty<T : Any>() : IOptProperty<T> {
             return true
         }
         return false
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        adviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
     }
 
     @Volatile
@@ -70,6 +91,10 @@ class WriteOnceProperty<T : Any> : IOptProperty<T> {
         if (!setIfEmpty(newValue)) {
             throw IllegalStateException("WriteOnceProperty is already set with `${value}`, but you're trying to rewrite it with `${value}`")
         }
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        ThreadSafeAdviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
     }
 
     fun setIfEmpty(newValue: T): Boolean {

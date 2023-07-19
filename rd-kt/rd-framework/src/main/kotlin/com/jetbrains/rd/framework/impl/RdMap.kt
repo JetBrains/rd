@@ -327,7 +327,6 @@ open class RdMap<K : Any, V : Any> private constructor(
     }
 
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableMap.Event<K, V>) -> Unit) {
-        if (isBound) assertThreading()
-        map.advise(lifetime) { e -> scheduler.invokeOrQueue { handler(e) }}
+        map.adviseOn(lifetime, scheduler, handler)
     }
 }

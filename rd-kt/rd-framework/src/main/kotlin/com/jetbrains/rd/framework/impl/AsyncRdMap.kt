@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.impl
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.IAsyncSource
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.IViewableMap
 import com.jetbrains.rd.util.string.RName
@@ -12,7 +13,7 @@ import java.util.function.Function
 
 class AsyncRdMap<K : Any, V : Any> private constructor(
     private val map: BackendRdMap<K, V>
-) : IRdBindable,  MutableMap<K, V>, IAsyncSource2<IViewableMap.Event<K, V>> {
+) : IRdBindable,  MutableMap<K, V>, IAsyncSource<IViewableMap.Event<K, V>> {
 
     constructor(keySzr: ISerializer<K> = Polymorphic(), valSzr: ISerializer<V> = Polymorphic(),) : this(BackendRdMap(keySzr, valSzr))
 
@@ -25,7 +26,7 @@ class AsyncRdMap<K : Any, V : Any> private constructor(
         }
     }
 
-    val change: IAsyncSource2<IViewableMap.Event<K, V>> = object : IAsyncSource2<IViewableMap.Event<K, V>> {
+    val change: IAsyncSource<IViewableMap.Event<K, V>> = object : IAsyncSource<IViewableMap.Event<K, V>> {
         override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableMap.Event<K, V>) -> Unit) {
             map.change.advise(lifetime) {
                 scheduler.queue { handler(it) }

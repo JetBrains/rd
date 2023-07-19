@@ -4,10 +4,15 @@ import com.jetbrains.rd.util.catch
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.put
 import com.jetbrains.rd.util.reactive.IViewableMap.Event
+import com.jetbrains.rd.util.threading.AdviseToAdviseOnSynchronizerImpl
+import com.jetbrains.rd.util.threading.adviseOn
+import com.jetbrains.rd.util.threading.modifyAndFireChange
+import com.jetbrains.rd.util.threading.modifyAndFireChanges
 
 class ViewableMap<K : Any, V : Any>(private val map: MutableMap<K, V> = LinkedHashMap()) : IMutableViewableMap<K, V> {
 
     override val change = Signal<Event<K, V>>()
+    private val adviseToAdviseOnSynchronizer = AdviseToAdviseOnSynchronizerImpl()
 
     override fun advise(lifetime: Lifetime, handler: (Event<K, V>) -> Unit) {
         change.advise(lifetime, handler)
@@ -19,39 +24,53 @@ class ViewableMap<K : Any, V : Any>(private val map: MutableMap<K, V> = LinkedHa
     }
 
     override fun put(key: K, value: V): V? {
-        val oldval = map.put(key, value)
-        if (oldval != null) {
-            if (oldval != value) change.fire(Event.Update(key, oldval, value))
-        } else {
-            change.fire(Event.Add(key, value))
+        var oldval: V?
+        adviseToAdviseOnSynchronizer.modifyAndFireChange(change) {
+            oldval = map.put(key, value)
+
+            if (oldval != null) {
+                Event.Update(key, oldval!!, value)
+            } else {
+                Event.Add(key, value)
+            }
         }
         return oldval
     }
 
     override fun remove(key: K): V? {
-        val oldval = map.remove(key)
-        if (oldval != null) change.fire(Event.Remove(key, oldval))
+        var oldval: V?
+        adviseToAdviseOnSynchronizer.modifyAndFireChange(change) {
+            oldval = map.remove(key)
+            if (oldval == null) return null
+            else Event.Remove(key, oldval!!)
+        }
+
         return oldval
     }
 
     override fun remove(key: K, value: V): Boolean {
-        if (map.remove(key, value)) {
-            change.fire(Event.Remove(key, value))
-            return true
+        adviseToAdviseOnSynchronizer.modifyAndFireChange(change) {
+            if (map.remove(key, value))
+                Event.Remove(key, value)
+            else
+                return false
         }
 
-        return false
+        return true
     }
 
     override fun clear() {
-        val changes = arrayListOf<Event<K, V>>()
-        val iterator = map.entries.iterator()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            changes.add(Event.Remove(entry.key, entry.value))
-            iterator.remove()
+        adviseToAdviseOnSynchronizer.modifyAndFireChanges(change) {
+            val changes = arrayListOf<Event<K, V>>()
+            val iterator = map.entries.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                changes.add(Event.Remove(entry.key, entry.value))
+                iterator.remove()
+            }
+
+            changes
         }
-        changes.forEach { change.fire(it) }
     }
 
     override val keys: MutableSet<K> get() = map.keys
@@ -63,6 +82,9 @@ class ViewableMap<K : Any, V : Any>(private val map: MutableMap<K, V> = LinkedHa
     override fun containsValue(value: V): Boolean = map.containsValue(value)
     override fun get(key: K): V? = map[key]
 
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (Event<K, V>) -> Unit) {
+        adviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
+    }
 }
 
 

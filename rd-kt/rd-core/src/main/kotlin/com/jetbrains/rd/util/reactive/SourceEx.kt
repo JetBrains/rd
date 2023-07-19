@@ -4,6 +4,12 @@ import com.jetbrains.rd.util.Maybe
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
+import com.jetbrains.rd.util.threading.SynchronousScheduler
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.consumeAsFlow
 
 /**
  * Adds an event subscription that never gets removed.
@@ -134,6 +140,25 @@ fun <TKey:Any, TValue: Any> ISource<IViewableMap.Event<TKey, TValue>>.flowInto(l
 fun<T, R> ISource<T>.map(f: (T) -> R) = object : ISource<R> {
     override fun advise(lifetime: Lifetime, handler: (R) -> Unit) {
         this@map.advise(lifetime) { handler(f(it)) }
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (R) -> Unit) {
+        this@map.adviseOn(lifetime, scheduler) { handler(f(it)) }
+    }
+}
+
+
+fun <T> IAsyncSource<T>.asFlow(capacity: Int = Channel.UNLIMITED): Flow<T> = object : Flow<T> {
+    override suspend fun collect(collector: FlowCollector<T>) {
+        Lifetime.using { lifetime ->
+            val channel = Channel<T>(capacity, BufferOverflow.DROP_OLDEST)
+
+            adviseOn(lifetime, SynchronousScheduler) {
+                channel.trySend(it)
+            }
+
+            channel.consumeAsFlow().collect(collector)
+        }
     }
 }
 

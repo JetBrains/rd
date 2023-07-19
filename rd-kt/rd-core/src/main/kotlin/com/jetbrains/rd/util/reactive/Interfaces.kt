@@ -1,15 +1,17 @@
 package com.jetbrains.rd.util.reactive
 
+import com.jetbrains.rd.util.DelicateRdApi
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
+import com.jetbrains.rd.util.threading.ThreadSafeAdviseToAdviseOnSynchronizer
+import com.jetbrains.rd.util.threading.adviseOn
 
 
 /**
  * An object that allows to subscribe to events of type [T].
  */
-interface ISource<out T> {
+interface ISource<out T> : IAsyncSource<T> {
     /**
      * Adds an event subscription. Every time an event occurs, the [handler] is called, receiving
      * an instance of the event. The subscription is removed when the given [lifetime] expires.
@@ -20,12 +22,8 @@ interface ISource<out T> {
 /**
  * An object that allows to subscribe to events of type [T] and to handle them on a different thread.
  */
-interface IAsyncSource<out T> : ISource<T> {
-    /**
-     * Adds an event subscription. Every time an event occurs, the [handler] is called on the given [scheduler],
-     * receiving an instance of the event. The subscription is removed when the given [lifetime] expires.
-     */
-    fun adviseOn(lifetime : Lifetime, scheduler : IScheduler, handler : (T) -> Unit)
+interface IAsyncSource<out T> {
+    fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit)
 }
 
 typealias IVoidSource = ISource<Unit>
@@ -99,6 +97,11 @@ interface IPropertyView<out T> : IPropertyBase<T> {
         change.advise(lifetime, handler)
         handler(value)
     }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        @OptIn(DelicateRdApi::class)
+        ThreadSafeAdviseToAdviseOnSynchronizer.toMappedProperty(this, lifetime) { it }.adviseOn(lifetime, scheduler, handler)
+    }
 }
 
 /**
@@ -116,6 +119,11 @@ interface IOptPropertyView<out T : Any> : IPropertyBase<T> {
 
         change.advise(lifetime, handler)
         valueOrNull?.let { handler(it) }
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        @OptIn(DelicateRdApi::class)
+        ThreadSafeAdviseToAdviseOnSynchronizer.toMappedOptProperty(this, lifetime) { it }.adviseOn(lifetime, scheduler, handler)
     }
 }
 
@@ -150,9 +158,13 @@ fun <T : Any> IOptPropertyView<T>.asNullable(): IPropertyView<T?> = object : IPr
 interface ISignal<T> : ISource<T> {
     val changing : Boolean
     fun fire(value : T)
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        ThreadSafeAdviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
+    }
 }
 
-interface IAsyncSignal<T> : ISignal<T>, IAsyncSource<T>  {
+interface IAsyncSignal<T> : ISignal<T>  {
     var scheduler: IScheduler?
 }
 

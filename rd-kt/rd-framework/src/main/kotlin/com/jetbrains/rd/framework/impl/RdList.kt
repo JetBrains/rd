@@ -263,10 +263,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
         list.advise(lifetime, handler)
     }
 
-    fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableList.Event<V>) -> Unit) {
-        if (isBound) assertThreading()
-        list.advise(lifetime) { e -> scheduler.invokeOrQueue { handler(e) }}
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableList.Event<V>) -> Unit) {
+        list.adviseOn(lifetime, scheduler, handler)
     }
-
-
 }

@@ -2,11 +2,21 @@ package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.catch
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.threading.AdviseToAdviseOnSynchronizerImpl
+import com.jetbrains.rd.util.threading.adviseOn
+import com.jetbrains.rd.util.threading.modifyAndFireChange
 
 class ViewableSet<T : Any>(private val set: MutableSet<T> = LinkedHashSet<T>()) : IMutableViewableSet<T> {
+    private val adviseToAdviseOnSynchronizer = AdviseToAdviseOnSynchronizerImpl()
+
     override fun add(element: T): Boolean {
-        if (!set.add(element)) return false
-        change.fire(IViewableSet.Event(AddRemove.Add, element))
+        adviseToAdviseOnSynchronizer.modifyAndFireChange(change) {
+            if (set.add(element))
+                IViewableSet.Event(AddRemove.Add, element)
+            else
+                return false
+        }
+
         return true
     }
 
@@ -24,13 +34,19 @@ class ViewableSet<T : Any>(private val set: MutableSet<T> = LinkedHashSet<T>()) 
         }
     }
 
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableSet.Event<T>) -> Unit) {
+        adviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
+    }
+
     override fun iterator(): MutableIterator<T> {
         return object : MutableIterator<T> {
             val delegate = set.iterator()
             var current: T? = null
             override fun remove() {
-                delegate.remove()
-                change.fire(IViewableSet.Event(AddRemove.Remove, current!!))
+                adviseToAdviseOnSynchronizer.modifyAndFireChange(change) {
+                    delegate.remove()
+                    IViewableSet.Event(AddRemove.Remove, current!!)
+                }
             }
 
             override fun hasNext(): Boolean = delegate.hasNext()
@@ -39,8 +55,14 @@ class ViewableSet<T : Any>(private val set: MutableSet<T> = LinkedHashSet<T>()) 
     }
 
     override fun remove(element: T): Boolean {
-        if (!set.remove(element)) return false
-        change.fire(IViewableSet.Event(AddRemove.Remove, element))
+        adviseToAdviseOnSynchronizer.modifyAndFireChange(change) {
+            if (set.remove(element)) {
+                IViewableSet.Event(AddRemove.Remove, element)
+            } else {
+                return false
+            }
+        }
+
         return true
     }
 
@@ -56,7 +78,6 @@ class ViewableSet<T : Any>(private val set: MutableSet<T> = LinkedHashSet<T>()) 
             }
         }
         return modified
-
     }
 
 

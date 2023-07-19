@@ -1,9 +1,12 @@
 package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.Boxed
+import com.jetbrains.rd.util.DelicateRdApi
 import com.jetbrains.rd.util.Maybe
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reflection.usingTrueFlag
+import com.jetbrains.rd.util.threading.ThreadSafeAdviseToAdviseOnSynchronizer
+import com.jetbrains.rd.util.threading.adviseOn
 
 fun <T1, T2, TRes> IPropertyView<T1>.compose(other: IPropertyView<T2>, composer: (T1, T2) -> TRes): IPropertyView<TRes> =
         CompositePropertyView(this, other, composer)
@@ -28,6 +31,10 @@ private class CompositePropertyView<T1, T2, TRes>(
 
             left.change.advise(lifetime) { handleIfChanged() }
             right.change.advise(lifetime) { handleIfChanged() }
+        }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (TRes) -> Unit) {
+            ThreadSafeAdviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
         }
     }
 }
@@ -60,6 +67,10 @@ private class CompositeOptPropertyView<T1 : Any, T2 : Any, TRes : Any>(
 
             left.change.advise(lifetime) { handleIfChanged() }
             right.change.advise(lifetime) { handleIfChanged() }
+        }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (TRes) -> Unit) {
+            ThreadSafeAdviseToAdviseOnSynchronizer.adviseOn(this, lifetime, scheduler, handler)
         }
     }
 }
@@ -139,6 +150,17 @@ fun <T> ISource<T>.distinct() = object : ISource<T> {
             }
         }
     }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        var old : Maybe<T> = Maybe.None
+        this@distinct.adviseOn(lifetime, scheduler) {
+            val new = Maybe.Just(it)
+            if (new != old) {
+                old = new
+                handler(it)
+            }
+        }
+    }
 }
 
 
@@ -149,19 +171,25 @@ fun <T> ISource<T>.filter(f: (T) -> Boolean) = object : ISource<T> {
                 handler(it)
         }
     }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        this@filter.adviseOn(lifetime, scheduler) {
+            if (f(it))
+                handler(it)
+        }
+    }
 }
 
 fun <T, R> IPropertyView<T>.map(f: (T) -> R) = object : IPropertyView<R> {
     override val change: ISource<R> = object : ISource<R> {
         override fun advise(lifetime: Lifetime, handler: (R) -> Unit) {
-            var lastValue = value
-            this@map.advise(lifetime) {
-                val newValue = f(it)
-                if (newValue != lastValue) {
-                    lastValue = newValue
-                    handler(f(it))
-                }
-            }
+            @OptIn(DelicateRdApi::class)
+            ThreadSafeAdviseToAdviseOnSynchronizer.toMappedProperty(this@map, lifetime, f).change.advise(lifetime, handler)
+        }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (R) -> Unit) {
+            @OptIn(DelicateRdApi::class)
+            ThreadSafeAdviseToAdviseOnSynchronizer.toMappedProperty(this@map, lifetime, f).change.adviseOn(lifetime, scheduler, handler)
         }
     }
 
@@ -177,14 +205,13 @@ fun <T : Any, R : Any> IOptPropertyView<T>.map(f: (T) -> R) = object : IOptPrope
 
     override val change: ISource<R> = object : ISource<R> {
         override fun advise(lifetime: Lifetime, handler: (R) -> Unit) {
-            var lastValue = valueOrNull
-            this@map.advise(lifetime) {
-                val newValue = f(it)
-                if (newValue != lastValue) {
-                    lastValue = newValue
-                    handler(f(it))
-                }
-            }
+            @OptIn(DelicateRdApi::class)
+            ThreadSafeAdviseToAdviseOnSynchronizer.toMappedOptProperty(this@map, lifetime, f).change.advise(lifetime, handler)
+        }
+
+        override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (R) -> Unit) {
+            @OptIn(DelicateRdApi::class)
+            ThreadSafeAdviseToAdviseOnSynchronizer.toMappedOptProperty(this@map, lifetime, f).change.adviseOn(lifetime, scheduler, handler)
         }
     }
 }

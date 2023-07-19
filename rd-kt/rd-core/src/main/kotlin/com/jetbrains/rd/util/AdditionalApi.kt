@@ -1,13 +1,14 @@
 package com.jetbrains.rd.util
 
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.plusAssign
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.IScheduler
-import com.jetbrains.rd.util.reactive.ISource
+import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.threading.SynchronousScheduler
+import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
+import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import java.time.Duration
 import java.util.*
-import java.util.EnumSet
 import kotlin.concurrent.schedule
 
 private val timer by lazy { Timer("rd throttler", true) }
@@ -15,27 +16,20 @@ private val timer by lazy { Timer("rd throttler", true) }
 fun <T : Any> ISource<T>.throttleLast(timeout: Duration, scheduler: IScheduler) = object : ISource<T> {
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
-        var currentTask: TimerTask? = null
-        val lastValue = AtomicReference<T?>(null)
+        adviseOn(lifetime, scheduler, handler)
+    }
 
-        lifetime.executeIfAlive {
-            lifetime += { currentTask?.cancel() }
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        val flow = MutableSharedFlow<T>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        this@throttleLast.adviseOn(lifetime, SynchronousScheduler) {
+            flow.tryEmit(it)
         }
 
-
-        this@throttleLast.advise(lifetime) { v ->
-            if (lastValue.getAndSet(v) == null) {
-                currentTask = timer.schedule(timeout.toMillis()) {
-                    val toSchedule = lastValue.getAndSet(null)?: return@schedule
-                    scheduler.invokeOrQueue {
-                        lifetime.executeIfAlive {
-                            handler(toSchedule)
-                        }
-                    }
-                }
+        lifetime.launch(scheduler.asCoroutineDispatcher) {
+            flow.sample(timeout.toMillis()).collect {
+                Logger.root.catch { handler(it) }
             }
         }
-
     }
 }
 
@@ -43,25 +37,43 @@ fun <T : Any> ISource<T>.throttleLast(timeout: Duration, scheduler: IScheduler) 
 fun <T : Any> IPropertyView<T?>.debounceNotNull(timeout: Duration, scheduler: IScheduler) = object : ISource<T?> {
 
     override fun advise(lifetime: Lifetime, handler: (T?) -> Unit) {
-        var currentTask: TimerTask? = null
+        adviseOn(lifetime, scheduler, handler)
+    }
 
-        this@debounceNotNull.view(lifetime) { innerLifetime, v ->
-            currentTask?.cancel()
-
-            if (v == null)
-                handler(v)
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T?) -> Unit) {
+        val flow = MutableSharedFlow<T>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        this@debounceNotNull.adviseOn(lifetime, scheduler) {
+            if (it == null)
+                handler(null)
             else
-                currentTask = timer.schedule(timeout.toMillis()) {
-                    scheduler.invokeOrQueue {
-                        innerLifetime.executeIfAlive {
-                            handler(v)
-                        }
-                    }
-                }
+                flow.tryEmit(it)
+        }
+
+        lifetime.launch(scheduler.asCoroutineDispatcher) {
+            flow.debounce(timeout.toMillis()).collect {
+                Logger.root.catch { handler(it) }
+            }
         }
     }
 }
 
+
+fun <T> ISource<T>.asProperty(lifetime: Lifetime, defaultValue: T): IPropertyView<T> {
+    return Property(defaultValue).apply {
+        this@asProperty.flowInto<T>(lifetime, this@apply)
+    }
+}
+
+/**
+ * Converts an [ISource] into an [IPropertyView] with a default value.
+ *
+ * This method expects that the original source is stateless and doesn't provide a full-fledged property as a result.
+ * The `value` of the property is changed only if there is at least one subscription.
+ *
+ * @param defaultValue The default value to be used if no other value is emitted.
+ * @return An [IPropertyView] representing the converted source.
+ */
+@DelicateRdApi
 fun <T> ISource<T>.asProperty(defaultValue: T) = object : IPropertyView<T> {
     override val change: ISource<T>
         get() = this@asProperty
@@ -71,6 +83,10 @@ fun <T> ISource<T>.asProperty(defaultValue: T) = object : IPropertyView<T> {
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) = super.advise(lifetime) {
         value = it
         handler(it)
+    }
+
+    override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        throw UnsupportedOperationException()
     }
 }
 
