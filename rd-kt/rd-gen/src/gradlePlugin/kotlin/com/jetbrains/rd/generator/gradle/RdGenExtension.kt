@@ -43,8 +43,10 @@ open class RdGenExtension(private val project: Project) {
 
     fun toArguments(generatorsFile: File?): List<String?> {
         val arguments = ArrayList<String?>()
-        arguments.add("-s")
-        arguments.add(java.lang.String.join(";", sourceFiles))
+        if (sourceFiles.isNotEmpty()) {
+            arguments.add("-s")
+            arguments.add(java.lang.String.join(";", sourceFiles))
+        }
         if (hashFolder != null) {
             arguments.add("-h")
             arguments.add(hashFolder)
