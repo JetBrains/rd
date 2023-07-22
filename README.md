@@ -1,5 +1,5 @@
 # RD 
-[![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Maven Central](https://img.shields.io/maven-central/v/com.jetbrains.rd/rd-core)](https://mvnrepository.com/artifact/com.jetbrains.rd)
 
 Reactive Distributed communication framework for .NET, Kotlin and C++ (experimental). 
