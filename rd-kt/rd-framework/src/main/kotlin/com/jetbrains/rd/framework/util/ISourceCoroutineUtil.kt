@@ -4,9 +4,10 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 fun <T> ISource<T>.nextValueAsync(
     lifetime: Lifetime,
@@ -53,13 +54,15 @@ suspend fun <T : Any> ISource<T?>.nextNotNullValue(lifetime: Lifetime = Lifetime
         nextNotNullValueAsync(lifetime).await()
     }
 
+@Deprecated("Use overload with CoroutineContext")
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, scheduler: IScheduler, handler: suspend (T) -> Unit) {
-    adviseSuspend(lifetime, scheduler.asCoroutineDispatcher(allowInlining = true), handler)
+    // AIR allowInlining is a bad practice, ask @daniil for the details
+    adviseSuspend(lifetime, scheduler.asCoroutineDispatcher(allowInlining = true), CoroutineStart.UNDISPATCHED, handler)
 }
 
-fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, context: CoroutineContext, handler: suspend (T) -> Unit) {
+fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, context: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
     advise(lifetime) {
-        lifetime.launch(context) {
+        lifetime.launch(context, coroutineStart) {
             handler(it)
         }
     }
