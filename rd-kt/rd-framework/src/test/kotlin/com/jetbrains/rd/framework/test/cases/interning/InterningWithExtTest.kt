@@ -6,6 +6,7 @@ import com.jetbrains.rd.framework.impl.RdOptionalProperty
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.test.util.TestWire
 import com.jetbrains.rd.util.collections.QueueImpl
+import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IOptProperty
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.valueOrThrow
@@ -115,6 +116,9 @@ object TestSchedulerWithQueueSemantics: IScheduler {
 
     override val isActive: Boolean
         get() = true
+
+    override val executionOrder: ExecutionOrder
+        get() = ExecutionOrder.Unknown
 
     override fun flush() {
         while(true) (queue.poll() ?: return).invoke()

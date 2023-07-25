@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.Statics
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
+import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -17,6 +18,8 @@ object TestScheduler : IScheduler {
     override fun flush() {}
     override fun queue(action: () -> Unit) = action()
     override val isActive: Boolean get() = true
+    override val executionOrder: ExecutionOrder
+        get() = ExecutionOrder.Unknown
 }
 
 open class RdFrameworkTestBase {

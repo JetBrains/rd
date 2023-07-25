@@ -28,7 +28,7 @@ fun <T : Any> ISource<T?>.nextNotNullValueAsync(lifetime: Lifetime): Deferred<T>
 suspend fun <T> ISource<T>.nextValue(
     lifetime: Lifetime = Lifetime.Eternal,
     condition: (T) -> Boolean = { true }
-): T = nextValue()
+): T = nextValue(condition)
 
 
 @Deprecated("Api moved to rd-core", ReplaceWith("nextTrueValueAsync(lifetime)", "com.jetbrains.rd.util.threading.coroutines.nextTrueValueAsync"))

@@ -22,9 +22,7 @@ interface IScheduler {
         }
     }
 
-    //Provides better performance but loose event consistency.
-    val outOfOrderExecution : Boolean get() = false
-
+    val executionOrder: ExecutionOrder
 
     fun invokeOrQueue(action: () -> Unit) {
         if (isActive) action()
@@ -40,3 +38,34 @@ interface ISchedulerWithBackground : IScheduler {
      */
     val backgroundScheduler: IScheduler
 }
+
+//Provides better performance but loose event consistency.
+val IScheduler.outOfOrderExecution : Boolean get() = executionOrder == ExecutionOrder.OutOfOrder
+
+/**
+ * Represents the execution order guarantee of a scheduler.
+ */
+enum class ExecutionOrder {
+    /**
+     * The scheduler guarantees a sequential execution order.
+     * Tasks are executed in the order they were received.
+     */
+    Sequential,
+
+    /**
+     * The scheduler does not guarantee a sequential execution order.
+     * Tasks may be executed concurrently or in a different order than received.
+     */
+    OutOfOrder,
+
+    /**
+     * The execution order of the scheduler is unknown.
+     * This is typically used when the scheduler is a wrapper around another service or dispatcher
+     * where the execution order cannot be directly determined.
+     * It is important to note that 'Unknown' should not be treated as 'OutOfOrder'. It may represent
+     * a sequential scheduler and any optimization assuming an 'OutOfOrder' execution may potentially
+     * disrupt the actual execution order.
+     */
+    Unknown
+}
+
