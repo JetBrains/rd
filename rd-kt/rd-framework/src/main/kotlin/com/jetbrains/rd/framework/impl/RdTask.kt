@@ -310,6 +310,9 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
             override val isActive: Boolean get() = active > 0
 
+            override val executionOrder: ExecutionOrder
+                get() = ExecutionOrder.Unknown
+
             override fun queue(action: () -> Unit) {
                 var executed = false
 
