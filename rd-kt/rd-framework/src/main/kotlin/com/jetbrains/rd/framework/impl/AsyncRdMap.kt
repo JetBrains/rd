@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.IViewableMap
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.threading.SynchronousScheduler
+import com.jetbrains.rd.util.threading.asSequentialScheduler
 import java.util.function.BiFunction
 import java.util.function.Function
 
@@ -27,6 +28,7 @@ class AsyncRdMap<K : Any, V : Any> private constructor(
 
     val change: IAsyncSource2<IViewableMap.Event<K, V>> = object : IAsyncSource2<IViewableMap.Event<K, V>> {
         override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableMap.Event<K, V>) -> Unit) {
+            val scheduler = scheduler.asSequentialScheduler()
             map.change.advise(lifetime) {
                 scheduler.queue { handler(it) }
             }
@@ -34,6 +36,8 @@ class AsyncRdMap<K : Any, V : Any> private constructor(
     }
 
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableMap.Event<K, V>) -> Unit) {
+        val scheduler = scheduler.asSequentialScheduler()
+
         synchronized(map) {
             map.advise(lifetime) { event ->
                 scheduler.queue { handler(event) }

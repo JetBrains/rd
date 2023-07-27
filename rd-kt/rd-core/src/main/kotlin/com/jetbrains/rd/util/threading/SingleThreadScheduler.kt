@@ -4,6 +4,7 @@ import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.plusAssign
+import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reflection.threadLocal
 import java.util.*
@@ -32,6 +33,9 @@ abstract class SingleThreadSchedulerBase(val name: String) : IScheduler {
         }
     }
     val tasksInQueue = AtomicInteger(0)
+
+    override val executionOrder: ExecutionOrder
+        get() = ExecutionOrder.Sequential
 
     override fun queue(action: () -> Unit) {
         tasksInQueue.incrementAndGet()

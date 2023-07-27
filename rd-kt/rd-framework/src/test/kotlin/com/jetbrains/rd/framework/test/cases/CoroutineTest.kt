@@ -7,10 +7,12 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.LifetimeStatus
 import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.CompoundThrowable
+import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -516,9 +518,7 @@ class CoroutineTest : CoroutineTestBase() {
 
     @Test
     fun asCoroutineDispatcherTest() {
-        val realScheduler = object : IScheduler {
-            override fun queue(action: () -> Unit) = scheduler.queue(action)
-            override val isActive get() = scheduler.isActive
+        val realScheduler = object : IScheduler by scheduler {
             override fun flush() = TODO("Not yet implemented")
         }
 
@@ -581,18 +581,14 @@ class CoroutineTest : CoroutineTestBase() {
         doNonInlineTest(realScheduler.asCoroutineDispatcher)
 
 
-        val inliningScheduler = object : CoroutineDispatcher(), IScheduler {
-            override fun queue(action: () -> Unit) = scheduler.queue(action)
-            override val isActive get() = scheduler.isActive
+        val inliningScheduler = object : CoroutineDispatcher(), IScheduler by scheduler {
             override fun flush() = TODO("Not yet implemented")
 
             override fun dispatch(context: CoroutineContext, block: Runnable) = queue { block.run() }
             override fun isDispatchNeeded(context: CoroutineContext) = !isActive
         }
 
-        val nonInliningScheduler = object : CoroutineDispatcher(), IScheduler {
-            override fun queue(action: () -> Unit) = scheduler.queue(action)
-            override val isActive get() = scheduler.isActive
+        val nonInliningScheduler = object : CoroutineDispatcher(), IScheduler by scheduler {
             override fun flush() = TODO("Not yet implemented")
 
             override fun dispatch(context: CoroutineContext, block: Runnable) = queue { block.run() }

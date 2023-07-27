@@ -8,6 +8,7 @@ import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.threadLocalWithInitial
+import com.jetbrains.rd.util.threading.asSequentialScheduler
 import com.jetbrains.rd.util.trace
 
 interface IAsyncSource2<T> {
@@ -96,6 +97,7 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : 
 
     val change : IAsyncSource2<T> get() = object : IAsyncSource2<T> {
         override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+            val scheduler = scheduler.asSequentialScheduler()
             property.change.advise(lifetime) {
                 if (it.hasValue)
                     scheduler.queue { handler(it.asNullable as T) }
@@ -191,6 +193,7 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : 
     override val serializationContext: SerializationCtx? get() = parent?.serializationContext
 
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (T) -> Unit) {
+        val scheduler = scheduler.asSequentialScheduler()
         synchronized(property) {
             property.advise(lifetime) {
                 if (it.hasValue)

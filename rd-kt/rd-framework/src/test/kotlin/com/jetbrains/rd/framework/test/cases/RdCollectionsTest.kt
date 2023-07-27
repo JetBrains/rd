@@ -5,6 +5,7 @@ import com.jetbrains.rd.framework.base.BindState
 import com.jetbrains.rd.framework.impl.*
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import kotlin.test.*
 
@@ -604,6 +605,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
                 return count > 0
             }
 
+        override val executionOrder: ExecutionOrder
+            get() = ExecutionOrder.Unknown
+
         override fun flush() {
             error("Not supported")
         }
@@ -648,6 +652,9 @@ class RdCollectionsTest : RdFrameworkTestBase() {
                 assertThread()
                 return count > 0
             }
+
+        override val executionOrder: ExecutionOrder
+            get() = ExecutionOrder.Unknown
 
         override fun flush() {
             error("Not supported")

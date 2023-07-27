@@ -7,6 +7,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.IViewableSet
 import com.jetbrains.rd.util.string.RName
 import com.jetbrains.rd.util.threading.SynchronousScheduler
+import com.jetbrains.rd.util.threading.asSequentialScheduler
 import java.util.function.*
 
 class AsyncRdSet<T : Any> private constructor(
@@ -26,6 +27,7 @@ class AsyncRdSet<T : Any> private constructor(
 
     val change: IAsyncSource2<IViewableSet.Event<T>> = object : IAsyncSource2<IViewableSet.Event<T>> {
         override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableSet.Event<T>) -> Unit) {
+            val scheduler = scheduler.asSequentialScheduler()
             set.change.advise(lifetime) {
                 scheduler.queue { handler(it) }
             }
@@ -33,6 +35,8 @@ class AsyncRdSet<T : Any> private constructor(
     }
 
     override fun adviseOn(lifetime: Lifetime, scheduler: IScheduler, handler: (IViewableSet.Event<T>) -> Unit) {
+        val scheduler = scheduler.asSequentialScheduler()
+
         synchronized(set) {
             set.advise(lifetime) { event ->
                 scheduler.queue { handler(event) }

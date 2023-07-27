@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework.test.util
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.info
+import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import java.util.concurrent.LinkedBlockingDeque
 
@@ -31,6 +32,9 @@ object SequentialPumpingScheduler : IScheduler {
     }
 
     override val isActive: Boolean get() = true
+
+    override val executionOrder: ExecutionOrder
+        get() = ExecutionOrder.Sequential
 
     var isExecuting: Boolean = false
         private set

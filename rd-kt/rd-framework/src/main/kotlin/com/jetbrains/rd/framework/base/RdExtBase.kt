@@ -8,6 +8,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
+import com.jetbrains.rd.util.threading.asSequentialScheduler
 import javax.management.openmbean.InvalidOpenTypeException
 
 abstract class RdExtBase : RdReactiveBase() {
@@ -205,6 +206,9 @@ internal class ExtSchedulerWrapper(val realScheduler: IScheduler) : ExtScheduler
     override val isActive: Boolean
         get() = realScheduler.isActive || isActiveThread()
 
+    override val executionOrder: ExecutionOrder
+        get() = realScheduler.executionOrder
+
     override fun flush() {
         throw InvalidOpenTypeException("Unsupported")
     }
@@ -239,11 +243,15 @@ internal class CustomExtScheduler : ExtSchedulerBase() {
     override val isActive: Boolean
         get() = (queue == null && realScheduler.isActive) || isActiveThread()
 
+    override val executionOrder: ExecutionOrder
+        get() = ExecutionOrder.Sequential
+
     override fun flush() {
         throw InvalidOpenTypeException("Unsupported")
     }
 
     fun setScheduler(scheduler: IScheduler) {
+
         synchronized(locker) {
             require(!::realScheduler.isInitialized)
 
@@ -257,14 +265,12 @@ internal class CustomExtScheduler : ExtSchedulerBase() {
                     continue
                 }
 
-                realScheduler = scheduler
+                realScheduler = scheduler.asSequentialScheduler()
                 queue = null
                 return
             }
         }
     }
-
-    override val outOfOrderExecution: Boolean get() = false
 }
 
 //todo multithreading
