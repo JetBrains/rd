@@ -82,7 +82,7 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
     private var thread: Thread? = null
 
     private var state = when (realScheduler.executionOrder) {
-        ExecutionOrder.Sequential, ExecutionOrder.Unknown -> ActionKind.DelegateAsIS
+        ExecutionOrder.Sequential, ExecutionOrder.Unknown -> ActionKind.DelegateAsIs
         ExecutionOrder.OutOfOrder -> ActionKind.Repost
     }
 
@@ -103,7 +103,7 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
                     false
                 }
 
-                ActionKind.DelegateAsIS -> true
+                ActionKind.DelegateAsIs -> true
             }
         }
 
@@ -118,7 +118,7 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
         realScheduler.queue {
 
             synchronized(queue) {
-                if (state != ActionKind.DelegateAsIS)
+                if (state != ActionKind.DelegateAsIs)
                     return@queue
 
                 if (thread == null) {
@@ -136,7 +136,7 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
             synchronized(queue) {
                 thread = null
 
-                if (state == ActionKind.DelegateAsIS)
+                if (state == ActionKind.DelegateAsIs)
                     return@queue
             }
 
@@ -175,7 +175,6 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
     private enum class ActionKind {
         Nothing,
         Repost,
-        DelegateAsIs,
-
+        DelegateAsIs
     }
 }
