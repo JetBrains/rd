@@ -80,12 +80,18 @@ class SchedulerTest : RdFrameworkTestBase() {
                         coroutineScope {
                             for (j in 0 until 10) {
                                 launch {
+                                    var prevValue = -1
+
                                     for (i in 0 until n / 10) {
 
+                                        val capturedValue = i
                                         scheduler.queue {
                                             assertTrue(scheduler.isActive)
 
                                             count++
+
+                                            assertEquals(prevValue + 1, capturedValue)
+                                            prevValue++
                                         }
 
                                         if (i % 31 == 0)
