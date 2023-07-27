@@ -46,9 +46,9 @@ fun ISource<Boolean>.nextFalseValueAsync(lifetime: Lifetime) = nextValueAsync(li
 suspend fun ISource<Boolean>.nextTrueValue() = nextValue { it }
 suspend fun ISource<Boolean>.nextFalseValue() = nextValue { !it }
 
-suspend fun <T : Any> ISource<T?>.nextNotNullValue(lifetime: Lifetime = Lifetime.Eternal): T =
-    lifetime.usingNested { // unsubscribe if coroutine was cancelled
-        nextNotNullValueAsync(lifetime).await()
+suspend fun <T : Any> ISource<T?>.nextNotNullValue(): T =
+    Lifetime.using { // unsubscribe if coroutine was cancelled
+        nextNotNullValueAsync(it).await()
     }
 
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, scheduler: IScheduler, handler: suspend (T) -> Unit) {

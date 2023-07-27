@@ -64,8 +64,9 @@ fun CoroutineDispatcher.asRdScheduler(dispatcherExecutionOrder: ExecutionOrder):
  * Otherwise, a new sequential scheduler is created that wraps the original scheduler.
  *
  * The returned sequential scheduler attempts to keep the original execution order
- * until concurrent execution is detected. When concurrency is detected, it stops preserving
- * the original order and queues tasks internally to ensure sequential execution.
+ * until concurrent execution is detected. When concurrency is detected (i.e. when a new task is
+ * scheduled while a previous one hasn't finished yet), it stops preserving the original order and
+ * queues tasks internally to ensure sequential execution.
  *
  * @return a scheduler that guarantees sequential execution.
  */
@@ -123,6 +124,7 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
                 if (thread == null) {
                     thread = Thread.currentThread()
                 } else {
+                    // concurrent behavior detected
                     state = ActionKind.Nothing
                     return@queue
                 }
@@ -173,7 +175,7 @@ private class SequentialScheduler(private val realScheduler: IScheduler) : ISche
     private enum class ActionKind {
         Nothing,
         Repost,
-        DelegateAsIS,
+        DelegateAsIs,
 
     }
 }
