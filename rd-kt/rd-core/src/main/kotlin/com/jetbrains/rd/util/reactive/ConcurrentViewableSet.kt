@@ -4,11 +4,15 @@ import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.*
 
-interface IAppendOnlyViewableConcurrentSet<T> : Iterable<T> {
+interface IViewableConcurrentSet<T> : Iterable<T> {
     val size: Int
 
-    fun add(value: T): Boolean
+    fun contains(value: T): Boolean
+    fun view(lifetime: Lifetime, action: (Lifetime, T) -> Unit)
+}
 
+interface IAppendOnlyViewableConcurrentSet<T> : IViewableConcurrentSet<T> {
+    fun add(value: T): Boolean
 
     /**
      * Adds all the elements of the specified collection to this collection.
@@ -24,17 +28,13 @@ interface IAppendOnlyViewableConcurrentSet<T> : Iterable<T> {
 
         return added
     }
-
-    fun contains(value: T): Boolean
-
-    fun view(lifetime: Lifetime, action: (Lifetime, T) -> Unit)
 }
 
-interface IViewableConcurrentSet<T> : IAppendOnlyViewableConcurrentSet<T> {
+interface IMutableViewableConcurrentSet<T> : IAppendOnlyViewableConcurrentSet<T> {
     fun remove(value: T): Boolean
 }
 
-class ConcurrentViewableSet<T> : IViewableConcurrentSet<T> {
+class ConcurrentViewableSet<T> : IMutableViewableConcurrentSet<T> {
     private val signal = Signal<VersionedData<T>>()
     private var map = LinkedHashMap<T, LifetimeDefinition>()
     private val locker = Any()
