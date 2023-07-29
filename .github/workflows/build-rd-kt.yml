@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-11, windows-2019]
+      fail-fast: false
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.github/gradle
       TEAMCITY_VERSION: 1 # temporary; to disable cross tests
