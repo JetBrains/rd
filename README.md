@@ -140,7 +140,7 @@ For this purpose project _:rd-gen_ must be built.
   
 ## Instruction
 
-See https://www.jetbrains.com/help/resharper/sdk/Products/Rider.html#protocol-extension for more details.
+See [https://www.jetbrains.com/help/resharper/sdk/Rider.html#protocol-extension](https://www.jetbrains.com/help/resharper/sdk/Rider.html#protocol-extension) for more details.
 
 ### More examples of models
 
