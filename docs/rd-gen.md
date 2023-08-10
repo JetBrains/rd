@@ -168,7 +168,38 @@ field("nls_nullable_field", PredefinedType.string.nullable.attrs(KnownAttrs.Nls)
 ```
 
 #### Interning
-TODO
+It's possible to reduce protocol traffic by enabling interning of certain objects. In the model definition, you can call `.interned(scope)` on any scalar definition, and that will start interning the values. The interned values are only sent the first time they appear in a scope, and in future appearances, only their id is sent.
+
+`scope` is the scope in that you want the values to be interned. For globally-interned values, use global `ProtocolInternScope`. Additionally, you can declare an intern scope in any top-level definition.
+
+A user-declared scope should be rooted in some model. TODO: Figure out the details
+
+Some examples:
+
+```kotlin
+map("issues", PredefinedType.int, structdef("ProtocolWrappedStringModel") {
+    // These strings will be interned for the lifetime of the whole protocol:
+    field("text", PredefinedType.string.interned(ProtocolInternScope))
+})
+
+object MyExample : Root() {
+    val TestInternScope = internScope()
+
+    val InterningTestModel = classdef {
+        internRoot(TestInternScope)
+
+        map("issues", PredefinedType.int, structdef("WrappedStringModel") {
+            // These values will live as long as the parent class lives. TODO: Verify that
+            field("text", PredefinedType.string.interned(TestInternScope))
+        })
+    }
+
+    val InterningNestedTestModel = structdef {
+        // These values will live for as long as … (TODO: Figure this out) 
+        field("inner", this.interned(TestInternScope).nullable)
+    }
+}
+```
 
 ### Members
 Any top-level model may contain a variety of members:
