@@ -188,7 +188,8 @@ internal abstract class ExtSchedulerBase : IScheduler {
             thread
         }, { thread ->
             val prevThread = activeThread.getAndSet(null)
-            assert(prevThread == thread) { "prev thread must be $thread, but actual: $prevThread" }
+            // parent lifetime can be terminated from background thread
+            assert(prevThread != null) { "prev thread must not be null" }
         })
     }
 

@@ -8,6 +8,7 @@ import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.Sync
+import com.jetbrains.rd.util.collections.SynchronizedSet
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
@@ -45,7 +46,7 @@ class Protocol internal constructor(
                 vararg initialContexts: RdContext<*>) : this(name, serializers, identity, scheduler, wire, lifetime, null, null, null, null, *initialContexts)
 
     override val location: RName = RName(name)
-    override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet()
+    override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet(SynchronizedSet())
 
     override val isMaster: Boolean = identity.dynamicKind == IdKind.Client
 
