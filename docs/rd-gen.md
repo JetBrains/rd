@@ -172,7 +172,7 @@ It's possible to reduce protocol traffic by enabling interning of certain object
 
 `scope` is the scope in that you want the values to be interned. For globally-interned values, use global `ProtocolInternScope`. Additionally, you can declare an intern scope in any top-level definition.
 
-A user-declared scope should be rooted in some model. TODO: Figure out the details
+For each field, the closest scope in the model hierarchy will be chosen and used for interning. If there's no such intern scope, then interning will be automatically disabled.
 
 Some examples:
 
@@ -185,28 +185,44 @@ map("issues", PredefinedType.int, structdef("ProtocolWrappedStringModel") {
 object MyExample : Root() {
     val TestInternScope = internScope()
 
+    internRoot(TestInternScope)
     val InterningTestModel = classdef {
         internRoot(TestInternScope)
 
         map("issues", PredefinedType.int, structdef("WrappedStringModel") {
-            // These values will live as long as the parent class lives. TODO: Verify that
+            // These values will live as long as the parent class lives.
             field("text", PredefinedType.string.interned(TestInternScope))
         })
     }
 
     val InterningNestedTestModel = structdef {
-        // These values will live for as long as … (TODO: Figure this out) 
+        // These values will live for as long as the protocol root. 
         field("inner", this.interned(TestInternScope).nullable)
     }
 }
 ```
 
 ### Members
-Any top-level model may contain a variety of members:
-- read-only fields
+Model types may contain a variety of members:
+- constants: `const("name", type`
+- read-only fields: `field("name", type, value)`
+- signals (bi-directional): `signal("name", signalValueType)`
+- sources (the signalling side of a signal): `source("name", signalValueType)`
+- sinks (the receiving side of a signal): `sink("name", signalValueType)`
+- calls (for RPC, awaitable, the calling side): `call("name", argumentType, returnValue)`
+- callbacks (the receiving side of the call): `callback("name", argumentType, returnValue)`
+- properties: `property("name", value)`
+- TODO: asyncProperty and below
+- methods (for interfaces): `method("name", returnType, vararg argumentTypes)`
 
 ### Settings
 TODO
+
+#### Transformations (as-is, reversed, symmetric)
+TODO
+
+### Threading
+TODO: default threading model, `.async`, new threading model
 
 Gradle Configuration
 --------------------
