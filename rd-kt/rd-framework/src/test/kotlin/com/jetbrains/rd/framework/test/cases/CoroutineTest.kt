@@ -17,9 +17,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.time.Duration
 import kotlin.coroutines.CoroutineContext
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class CoroutineTest : CoroutineTestBase() {
 
@@ -668,6 +666,33 @@ class CoroutineTest : CoroutineTestBase() {
                 job.join()
                 assertTrue(cancelled)
             }
+        }
+    }
+
+    @Test
+    fun exceptionInLifetimeCoroutineScopeTest() {
+        val def = LifetimeDefinition()
+        runBlocking {
+            val coroutineScope = def.coroutineScope
+            val job = coroutineScope.async {
+                throw IllegalStateException()
+            }
+
+            job.join()
+            val exception = job.getCompletionExceptionOrNull()
+            assertIs<java.lang.IllegalStateException>(exception)
+            assertTrue(job.isCompleted)
+
+            assertTrue(def.isAlive)
+            assertTrue(def.coroutineScope.isActive)
+            assertSame(coroutineScope, def.coroutineScope)
+
+            var called = false
+            coroutineScope.launch {
+                called = true
+            }.join()
+
+            assertTrue(called)
         }
     }
 
