@@ -7,7 +7,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.LifetimeStatus
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.spinUntil
@@ -20,6 +19,7 @@ import java.time.Duration
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class CoroutineTest : CoroutineTestBase() {
 
@@ -624,6 +624,49 @@ class CoroutineTest : CoroutineTestBase() {
                 } catch (e: CancellationException) {
                     // ok
                 }
+            }
+        }
+    }
+
+    @Test
+    fun coroutineScopeTest() {
+        for (i in 0..1_000) {
+            val definition = LifetimeDefinition()
+            var expectedValue = i
+
+            for (j in 0..i) {
+                definition.onTermination {
+                    assertEquals(expectedValue, j)
+                    expectedValue--
+                }
+            }
+
+            val dispatcher = Dispatchers.Default.limitedParallelism(1)
+            runBlocking(dispatcher) {
+                var called = false
+                var cancelled = false
+
+                val job = definition.coroutineScope.launch(dispatcher) {
+                    try {
+                        called = true
+                        awaitCancellation()
+                    } finally {
+                        cancelled = true
+                        if (expectedValue != -1)
+                            logger.error { "Unexpected value: ${expectedValue}" }
+                    }
+                }
+
+                assertTrue(job.isActive)
+                assertFalse(called)
+                yield()
+                assertTrue(called)
+                assertFalse(cancelled)
+                definition.terminate()
+                assertFalse(cancelled)
+                assertEquals(-1, expectedValue)
+                job.join()
+                assertTrue(cancelled)
             }
         }
     }

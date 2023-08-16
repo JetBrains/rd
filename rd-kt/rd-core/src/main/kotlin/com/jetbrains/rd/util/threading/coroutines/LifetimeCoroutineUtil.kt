@@ -46,7 +46,7 @@ fun Lifetime.launch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
-) = RdCoroutineScope.current.launch(this, context, start, block)
+) = this.coroutineScope.launch(context, start, block)
 
 fun Lifetime.launch(
     scheduler: IScheduler,
@@ -58,7 +58,7 @@ fun <T> Lifetime.async(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
-) = RdCoroutineScope.current.async(this, context, start, block)
+) = this.coroutineScope.async(context, start, block)
 
 fun <T> Lifetime.async(
     scheduler: IScheduler,

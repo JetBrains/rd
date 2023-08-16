@@ -7,6 +7,9 @@ import com.jetbrains.rd.util.collections.CountingSet
 import com.jetbrains.rd.util.lifetime.LifetimeStatus.*
 import com.jetbrains.rd.util.reactive.IViewable
 import com.jetbrains.rd.util.reactive.viewNotNull
+import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlin.math.min
 
 
@@ -153,6 +156,7 @@ sealed class Lifetime {
     abstract val terminationTimeoutKind: LifetimeTerminationTimeoutKind
 
     abstract val allowTerminationUnderExecution: Boolean
+    abstract val coroutineScope: CoroutineScope
 
     internal val definition get() = this as LifetimeDefinition
 
@@ -246,12 +250,20 @@ class LifetimeDefinition constructor() : Lifetime() {
             allowTerminationUnderExecutionSlice.atomicUpdate(state, value)
         }
 
+    override val coroutineScope: CoroutineScope
+        get() = tryGetOrCreateAdditionalFields()?.scope ?: RdCoroutineScope.current.cancelledScope
+
     /**
      * You can optionally set this identification information to see logs with lifetime's id other than [anonymousLifetimeId]"/>
      */
     var id: Any? = null
         get() = field
         set(value)  {
+            if (value is Lifetime) {
+                Logger.root.error { "Set lifetime as id for another lifetime is not allowed" }
+                return
+            }
+
             field = value
             if (status == LifetimeStatus.Terminated)
                 field = null
@@ -319,13 +331,33 @@ class LifetimeDefinition constructor() : Lifetime() {
         }
     }
 
+    private fun tryGetAdditionalFields(): AdditionalFields? {
+        if (lifetime === eternal)
+            return EternalAdditionalFields
+
+        val resources = resources ?: return null
+        return resources[0] as? AdditionalFields
+    }
+
+    private fun tryGetOrCreateAdditionalFields(): AdditionalFields? {
+        return tryGetAdditionalFields() ?: run {
+            val additionalFields = AdditionalFields(id)
+            if (tryAdd(additionalFields)) {
+                additionalFields
+            } else {
+                additionalFields.cancel()
+                tryGetAdditionalFields()
+            }
+        }
+    }
+
     private fun tryAdd(action: Any): Boolean {
         //we could add anything to Eternal lifetime and it'll never be executed
         if (lifetime === eternal)
             return true
 
         return underMutexIfLessOrEqual(Canceling) {
-            val localResources = resources
+            var localResources = resources
             require(localResources != null) { "$this: `resources` can't be null under mutex while status < Terminating" }
 
             if (resCount == localResources.size) {
@@ -348,8 +380,20 @@ class LifetimeDefinition constructor() : Lifetime() {
                 }
             }
 
-            resources!![resCount++] = action
-            true
+            localResources = resources!!
+
+            if (action is AdditionalFields) {
+                if (localResources[0] is AdditionalFields)
+                    false
+                else {
+                    System.arraycopy(localResources, 0, localResources, 1, resCount++)
+                    localResources[0] = action
+                    true
+                }
+            } else {
+                localResources[resCount++] = action
+                true
+            }
         } ?: false
     }
 
@@ -379,6 +423,8 @@ class LifetimeDefinition constructor() : Lifetime() {
 
         // in fact here access to resources could be done without mutex because setting cancellation status of children is rather optimization than necessity
         val localResources = resources ?: return
+
+        (localResources[0] as? AdditionalFields)?.cancel()
 
         //Math.min is to ensure that even if some other thread increased myResCount, we don't get IndexOutOfBoundsException
         for (i in min(resCount, localResources.size) - 1 downTo 0) {
@@ -444,6 +490,8 @@ class LifetimeDefinition constructor() : Lifetime() {
                     is Closeable -> resource.close()
 
                     is LifetimeDefinition -> resource.terminate(supportsRecursion)
+
+                    is AdditionalFields -> resource.cancel()
 
                     else -> log.error { "$this: Unknown termination resource: $resource" }
                 }
@@ -532,6 +580,28 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
     override fun toString() = "Lifetime `${id ?: anonymousLifetimeId}` [${status}, executing=${executingSlice[state]}, resources=$resCount]"
+
+    /**
+     * Utility class to encapsulate rarely used properties or functionalities
+     * without adding them as dedicated fields in the primary object.
+     *
+     * Instead of bloating the main object with seldom accessed stuff, we create this object on-demand and put it place it in resources[0] for quick access
+     *
+     * Rider utilizes an extensive number of lifetimes.
+     * Even the mere addition of a potentially uninitialized (null) field can lead to a substantial increase in memory consumption, potentially spanning megabytes.
+     */
+    private open class AdditionalFields(id: Any?) {
+        open val scope = RdCoroutineScope.current.createNestedScope(id?.toString())
+
+        fun cancel() {
+            scope.cancel()
+        }
+    }
+
+    private object EternalAdditionalFields : AdditionalFields(null) {
+        override val scope: CoroutineScope
+            get() = RdCoroutineScope.current
+    }
 }
 
 fun Lifetime.waitTermination() = spinUntil { status == Terminated }
