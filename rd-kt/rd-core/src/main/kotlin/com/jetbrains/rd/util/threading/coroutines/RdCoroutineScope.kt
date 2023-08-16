@@ -1,20 +1,18 @@
 package com.jetbrains.rd.util.threading.coroutines
 
-import com.jetbrains.rd.util.AtomicReference
-import com.jetbrains.rd.util.error
-import com.jetbrains.rd.util.getLogger
-import com.jetbrains.rd.util.info
+import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import java.lang.IllegalStateException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-open class RdCoroutineScope(lifetime: Lifetime) : CoroutineScope {
+open class RdCoroutineScope : CoroutineScope {
     companion object {
         private val logger = getLogger<RdCoroutineScope>()
 
-        private val default = RdCoroutineScope(Lifetime.Eternal)
+        private val default = RdCoroutineScope()
         private var currentHost: AtomicReference<RdCoroutineScope?> = AtomicReference(null)
 
         val current: RdCoroutineScope get() = currentHost.get() ?: default
@@ -22,37 +20,25 @@ open class RdCoroutineScope(lifetime: Lifetime) : CoroutineScope {
         /**
          * Should be called on start of the application to override the default behavior of the Rd-based coroutines (default dispatcher, exception handler, shutdown behavior).
          */
-        fun override(lifetime: Lifetime, host: RdCoroutineScope) {
-            lifetime.bracket({
-                if (!currentHost.compareAndSet(null, host)) {
-                    throw IllegalStateException("Could not override RdCoroutineHost")
-                }
+        fun override(host: RdCoroutineScope) {
+            if (!currentHost.compareAndSet(null, host))
+                throw IllegalStateException("Could not override RdCoroutineHost")
 
-                logger.info { "RdCoroutineHost overridden" }
-            }, {
-                if (!currentHost.compareAndSet(host, null)) {
-                    throw IllegalStateException("currentHost must not be null")
-                }
-
-                logger.info { "RdCoroutineHost has been reset" }
-            })
+            logger.debug { "RdCoroutineHost has been overridden" }
+            host.coroutineContext.job.invokeOnCompletion {
+                currentHost.getAndSet(null)
+                logger.debug { "RdCoroutineHost has been reset" }
+            }
         }
     }
 
     final override val coroutineContext by lazy {
-        defaultDispatcher + CoroutineExceptionHandler { _, throwable ->
+        defaultContext + CoroutineExceptionHandler { _, throwable ->
             onException(throwable)
         }
     }
 
-    protected open val defaultDispatcher: CoroutineContext get() = Dispatchers.Default
-
-    init {
-        lifetime.onTermination {
-            shutdown()
-            logger.info { "RdCoroutineHost disposed" }
-        }
-    }
+    protected open val defaultContext: CoroutineContext get() = Dispatchers.Default
 
     open fun onException(throwable: Throwable) {
         if (throwable !is CancellationException) {
@@ -78,18 +64,6 @@ open class RdCoroutineScope(lifetime: Lifetime) : CoroutineScope {
     ): Job {
         val nestedDef = lifetime.createNested()
         return launch(context, start, action).also { job -> nestedDef.synchronizeWith(job) }
-    }
-
-    protected open fun shutdown() {
-        try {
-            runBlocking {
-                coroutineContext[Job]!!.cancelAndJoin()
-            }
-        } catch (e: CancellationException) {
-            // nothing
-        } catch (e: Throwable) {
-            logger.error(e)
-        }
     }
 }
 

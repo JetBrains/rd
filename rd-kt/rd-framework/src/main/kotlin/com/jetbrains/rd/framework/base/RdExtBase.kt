@@ -83,7 +83,7 @@ abstract class RdExtBase : RdReactiveBase() {
 
             extProtocol = proto
             Lifetime.using { activeLifetime ->
-                if (scheduler is ExtSchedulerBase)
+                if (scheduler is ExtSchedulerBase && extThreading != ExtThreadingKind.Default)
                     scheduler.setActiveCurrentThread(activeLifetime)
 
                 super.preInit(lifetime, proto)

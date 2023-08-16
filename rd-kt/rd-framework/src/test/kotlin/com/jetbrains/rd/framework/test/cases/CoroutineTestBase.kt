@@ -12,6 +12,7 @@ import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.threading.CompoundThrowable
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
+import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -34,12 +35,17 @@ open class CoroutineTestBase {
 
         logger = getLogger<CoroutineTest>()
 
-        host = TestSingleThreadCoroutineHost(lifetime, scheduler)
+        host = TestSingleThreadCoroutineHost(scheduler)
 
         lifetime.onTermination { scheduler.assertNoExceptions() }
         lifetime.onTermination { host.assertNoExceptions() }
 
-        RdCoroutineScope.override(lifetime, host)
+        RdCoroutineScope.override(host)
+        def.onTermination {
+            runBlocking {
+                host.coroutineContext.job.cancelAndJoin()
+            }
+        }
     }
 
     @AfterTest
@@ -49,8 +55,8 @@ open class CoroutineTestBase {
     }
 }
 
-class TestSingleThreadCoroutineHost(lifetime: Lifetime, scheduler: TestSingleThreadScheduler) : RdCoroutineScope(lifetime) {
-    override val defaultDispatcher: CoroutineContext = scheduler.asCoroutineDispatcher
+class TestSingleThreadCoroutineHost(scheduler: TestSingleThreadScheduler) : RdCoroutineScope() {
+    override val defaultContext: CoroutineContext = scheduler.asCoroutineDispatcher + SupervisorJob()
 
     private val exceptions = SynchronizedList<Throwable>()
 
