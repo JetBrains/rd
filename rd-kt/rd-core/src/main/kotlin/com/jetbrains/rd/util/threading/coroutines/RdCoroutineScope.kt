@@ -38,7 +38,7 @@ open class RdCoroutineScope : CoroutineScope {
         }
     }
 
-    protected open val defaultContext: CoroutineContext get() = Dispatchers.Default
+    protected open val defaultContext: CoroutineContext get() = Dispatchers.Default + SupervisorJob()
 
     open fun onException(throwable: Throwable) {
         if (throwable !is CancellationException) {
@@ -46,25 +46,45 @@ open class RdCoroutineScope : CoroutineScope {
         }
     }
 
+    val cancelledScope by lazy { createNestedScope(null).apply { cancel() } }
+
+    internal fun createNestedScope(id: String?): CoroutineScope {
+        var context = coroutineContext + SupervisorJob(parent = coroutineContext.job)
+        if (id != null)
+            context += CoroutineName(id)
+        val scope = CoroutineScope(context)
+        registerChildScope(scope)
+        return scope
+    }
+
+    @Deprecated("Use coroutine scope built in lifetime",
+        ReplaceWith("lifetime.coroutineScope.async(context, start, action)", "kotlinx.coroutines.async")
+    )
     fun <T> async(
         lifetime: Lifetime,
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,
         action: suspend CoroutineScope.() -> T
-    ): Deferred<T> {
-        val nestedDef = lifetime.createNested()
-        return async(context, start, action).also { job -> nestedDef.synchronizeWith(job) }
-    }
+    ): Deferred<T> = lifetime.coroutineScope.async(context, start, action)
 
+    @Deprecated("Use coroutine scope built in lifetime",
+        ReplaceWith("lifetime.coroutineScope.launch(context, start, action)", "kotlinx.coroutines.launch")
+    )
     fun launch(
         lifetime: Lifetime,
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,
         action: suspend CoroutineScope.() -> Unit
-    ): Job {
-        val nestedDef = lifetime.createNested()
-        return launch(context, start, action).also { job -> nestedDef.synchronizeWith(job) }
-    }
+    ): Job = lifetime.coroutineScope.launch(context, start, action)
+
+    /**
+     * An extension point to track and join scopes after lifetime termination.
+     *
+     * It is impossible to join scope inside lifetime termination, because it's a synchronous action,
+     * but we want to wait for completion lifetime-related scopes during project/application termination,
+     * so we can use this api to track and join scopes that  have been cancelled during lifetime termination
+     */
+    protected open fun registerChildScope(scope: CoroutineScope) {}
 }
 
 fun Job.noAwait() {

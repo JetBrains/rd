@@ -144,7 +144,7 @@ class EndpointWiredRdTask<TReq, TRes>(
     wireScheduler: IScheduler
 ) : WiredRdTask<TReq, TRes>(call, rdid, wireScheduler) {
 
-    private val def = bindLifetime.createNested().apply { id = this }
+    private val def = bindLifetime.createNested().apply { id = this@EndpointWiredRdTask }
     val lifetime get() = def.lifetime
 
     init {
