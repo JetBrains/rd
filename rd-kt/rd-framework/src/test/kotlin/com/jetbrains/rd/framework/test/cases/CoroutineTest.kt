@@ -1,18 +1,18 @@
 package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.util.*
-import com.jetbrains.rd.util.assert
-import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.LifetimeStatus
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Signal
-import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.CompoundThrowable
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Runnable
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.time.Duration
@@ -693,6 +693,71 @@ class CoroutineTest : CoroutineTestBase() {
             }.join()
 
             assertTrue(called)
+        }
+    }
+
+    @Test
+    fun cancelledCoroutineScope() {
+
+        runBlocking {
+            val testScope = this
+            var count = 0
+
+
+            fun Lifetime.checkScopeCancellation() {
+                val lifetimedScope = coroutineScope
+                // there is no guarantee that cancellation will be observed immediately,
+                // but we want to check that scope is already cancelled
+                spinUntil(1000) { !lifetimedScope.isActive }
+
+                val toString = lifetimedScope.toString()
+                if (lifetimedScope.isActive)
+                    testScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                        throw java.lang.IllegalStateException("Scope must not be alive during termination: $toString")
+                    }
+            }
+
+            fun LifetimeDefinition.addOnTermination() {
+                onTerminationIfAlive {
+                    checkScopeCancellation()
+                }
+            }
+
+            fun newDef(): LifetimeDefinition = LifetimeDefinition().apply {
+                id = count++
+                addOnTermination()
+            }
+
+            var atomicDefinition = AtomicReference(newDef())
+
+            val terminationJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                (0..5).forEach {
+                    launch(Dispatchers.Default, CoroutineStart.UNDISPATCHED) {
+                        while (isActive) {
+                            atomicDefinition.get().terminate()
+                            yield()
+                        }
+                    }
+                }
+
+                (0..5).forEach {
+                    launch(Dispatchers.Default, CoroutineStart.UNDISPATCHED) {
+                        while (isActive) {
+                            val definition = atomicDefinition.get()
+                            definition.addOnTermination()
+                            definition.coroutineScope
+                            yield()
+                        }
+                    }
+                }
+            }
+
+            for (i in 0..100_000) {
+                yield()
+                atomicDefinition.getAndSet(newDef())
+            }
+
+            terminationJob.cancel()
         }
     }
 
