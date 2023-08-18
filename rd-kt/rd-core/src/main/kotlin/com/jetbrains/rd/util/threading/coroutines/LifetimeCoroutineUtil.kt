@@ -87,3 +87,23 @@ suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend Coro
 
     action()
 }
+
+
+/**
+ * The same as withContext, but creates a [Lifetime] that will be terminated only after the passed [action] and its [CoroutineScope] are completed
+ *
+ * @throws IllegalArgumentException If the given [context] contains a [Job].
+ **/
+suspend fun withLifetime(context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.(Lifetime) -> Unit) {
+    require(context[Job] == null) {
+        "Context must not specify a Job: $context"
+    }
+
+    withContext(context) {
+        Lifetime.using { lifetime ->
+            coroutineScope {
+                action(lifetime)
+            }
+        }
+    }
+}
