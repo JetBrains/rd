@@ -388,6 +388,9 @@ class LifetimeDefinition constructor() : Lifetime() {
                 else {
                     System.arraycopy(localResources, 0, localResources, 1, resCount++)
                     localResources[0] = action
+
+                    if (isNotAlive)
+                        action.cancel()
                     true
                 }
             } else {
@@ -480,6 +483,8 @@ class LifetimeDefinition constructor() : Lifetime() {
 
         val localResources = resources
         require(localResources != null) { "$this: `resources` can't be null on destructuring stage" }
+
+        (localResources[0] as? AdditionalFields)?.cancel()
 
         for (i in resCount - 1 downTo 0) {
             val resource = localResources[i]
