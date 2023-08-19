@@ -209,10 +209,17 @@ Model types may contain a variety of members:
 - signals (bi-directional): `signal("name", signalValueType)`
 - sources (the signalling side of a signal): `source("name", signalValueType)`
 - sinks (the receiving side of a signal): `sink("name", signalValueType)`
-- calls (for RPC, awaitable, the calling side): `call("name", argumentType, returnValue)`
-- callbacks (the receiving side of the call): `callback("name", argumentType, returnValue)`
-- properties: `property("name", value)`
-- TODO: asyncProperty and below
+- calls (for RPC, awaitable, the calling side): `call("name", argumentType, returnValueType)`
+- callbacks (the receiving side of the call): `callback("name", argumentType, returnValueType)`
+- properties: `property("name", valueType)`
+- async properties (properties that use the new threading model, see below): `asyncProperty("name", valueType)`
+- reactive collections:
+  - lists: `list("name", itemType)`
+  - sets: `set("name", itemType)`
+  - async sets (the ones that use the new threading model, see below): `asyncSet("name", itemType)`
+  - maps: `map("name", keyType, valueType)`
+  - async maps (the ones that use the new threading model, see below): `asyncSet("name", itemType)`
+  - TODO: `array` and below
 - methods (for interfaces): `method("name", returnType, vararg argumentTypes)`
 
 ### Settings
