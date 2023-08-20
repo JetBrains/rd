@@ -1,9 +1,9 @@
 package com.jetbrains.rd.util.threading.coroutines
 
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.lifetime.isEternal
-import com.jetbrains.rd.util.lifetime.isNotAlive
+import com.jetbrains.rd.util.DelicateRdApi
+import com.jetbrains.rd.util.Logger
+import com.jetbrains.rd.util.catch
+import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.reactive.IScheduler
 import kotlinx.coroutines.*
 import java.time.Duration
@@ -100,10 +100,25 @@ suspend fun withLifetime(context: CoroutineContext = EmptyCoroutineContext, acti
     }
 
     withContext(context) {
-        Lifetime.using { lifetime ->
+        val definition = LifetimeDefinition()
+        try {
             coroutineScope {
-                action(lifetime)
+                @OptIn(InternalCoroutinesApi::class)
+                coroutineContext.job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) {
+                    @OptIn(DelicateRdApi::class)
+                    definition.markCancelled()
+                }
+
+                action(definition.lifetime)
+            }
+        } finally {
+            withContext(NonCancellable) {
+                definition.terminateSuspending(joinScope = true)
             }
         }
     }
+}
+
+fun CoroutineScope.onTermination(action: () -> Unit) {
+    coroutineContext.job.invokeOnCompletion { Logger.root.catch { action() } }
 }
