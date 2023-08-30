@@ -10,7 +10,7 @@ class SignalFlow<T>(private val signal: ISignal<T>) : Flow<T> {
 
     override suspend fun collect(collector: FlowCollector<T>): Nothing {
         Lifetime.using { lifetime ->
-            val channel = Channel<T>()
+            val channel = Channel<T>(Channel.UNLIMITED)
             signal.advise(lifetime) {
                 channel.trySend(it)
             }
