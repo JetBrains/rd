@@ -73,7 +73,7 @@ abstract class RdExtBase : RdReactiveBase() {
             val scheduler = when (extThreading) {
                 ExtThreadingKind.Default -> parentProtocol.scheduler
                 ExtThreadingKind.CustomScheduler -> CustomExtScheduler()
-                ExtThreadingKind.AllowBackgroundCreation -> ExtSchedulerWrapper(parentProtocol.scheduler)
+                ExtThreadingKind.AllowBackgroundCreation -> parentProtocol.scheduler
             }
 
             val signal = createExtSignal()
@@ -86,8 +86,10 @@ abstract class RdExtBase : RdReactiveBase() {
                 if (scheduler is ExtSchedulerBase && extThreading != ExtThreadingKind.Default)
                     scheduler.setActiveCurrentThread(activeLifetime)
 
-                super.preInit(lifetime, proto)
-                super.init(lifetime, proto, ctx)
+                AllowBindingCookie.allowBind {
+                    super.preInit(lifetime, proto)
+                    super.init(lifetime, proto, ctx)
+                }
 
                 val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash, this)
 
@@ -172,6 +174,8 @@ abstract class RdExtBase : RdReactiveBase() {
     enum class ExtThreadingKind {
         Default,
         CustomScheduler,
+
+        @Deprecated("Creating on the background is allowed by default")
         AllowBackgroundCreation
     }
 }
@@ -195,23 +199,6 @@ internal abstract class ExtSchedulerBase : IScheduler {
 
     protected fun isActiveThread(): Boolean {
         return Thread.currentThread() == activeThread.get()
-    }
-}
-
-internal class ExtSchedulerWrapper(val realScheduler: IScheduler) : ExtSchedulerBase() {
-
-    override fun queue(action: () -> Unit) {
-        realScheduler.queue(action)
-    }
-
-    override val isActive: Boolean
-        get() = realScheduler.isActive || isActiveThread()
-
-    override val executionOrder: ExecutionOrder
-        get() = realScheduler.executionOrder
-
-    override fun flush() {
-        throw InvalidOpenTypeException("Unsupported")
     }
 }
 

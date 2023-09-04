@@ -47,6 +47,7 @@ open class Kotlin11Generator(
     enum class ExtThreadingKind {
         Default,
         CustomScheduler,
+        @Deprecated("Creating on the background is allowed by default")
         AllowBackgroundCreation
     }
 
