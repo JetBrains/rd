@@ -113,11 +113,7 @@ abstract class RdExtBase : RdReactiveBase() {
         })
     }
 
-    override fun assertBindingThread() {
-        if (allowCreationOnBackgroundThread) return
-
-        super.assertBindingThread()
-    }
+    override fun assertBindingThread() = Unit
 
     override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val remoteState = buffer.readEnum<ExtState>()
