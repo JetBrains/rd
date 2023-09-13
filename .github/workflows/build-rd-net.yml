@@ -29,6 +29,5 @@ jobs:
     - uses: actions/upload-artifact@v3
       if: failure()
       with:
-        name: tests-log
+        name: ${{ runner.os }}.test-results
         path: "**/TestResults/*"
-
