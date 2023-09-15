@@ -338,10 +338,7 @@ open class CSharp50Generator(
     protected fun Member.Reactive.customSerializers(containing: Declaration, leadingComma: Boolean, ignorePerClientId: Boolean = false): String {
         if(context != null && !ignorePerClientId)
             return leadingComma.condstr { ", " } + perClientIdMapValueFactory(containing)
-        val res = genericParams.joinToString {
-            val allowSpecificOpenTypeReference = false
-            it.readerDelegateRef(containing, allowSpecificOpenTypeReference) + ", " + it.writerDelegateRef(containing, allowSpecificOpenTypeReference)
-        }
+        val res = genericParams.joinToString { it.readerDelegateRef(containing, true) + ", " + it.writerDelegateRef(containing, false) }
         return (genericParams.isNotEmpty() && leadingComma).condstr { ", " } + res
     }
 
