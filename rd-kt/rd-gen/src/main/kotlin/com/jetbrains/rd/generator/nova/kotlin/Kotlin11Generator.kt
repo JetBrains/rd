@@ -263,7 +263,7 @@ open class Kotlin11Generator(
     protected fun Member.Reactive.customSerializers(scope: Declaration, ignorePerClientId: Boolean = false) : List<String> {
         if (context != null && !ignorePerClientId)
             return listOf(context!!.longRef(scope), perClientIdMapValueFactory(scope))
-        return genericParams.asList().map { it.serializerRef(scope) }
+        return genericParams.asList().map { it.serializerRef(scope, false) }
     }
 
     protected fun IDeclaration.sanitizedName(scope: IDeclaration) : String {
@@ -271,14 +271,14 @@ open class Kotlin11Generator(
         return needQualification.condstr { namespace + "." } + name
     }
 
-    protected fun IType.leafSerializerRef(scope: Declaration): String? {
+    protected fun IType.leafSerializerRef(scope: Declaration, allowSpecificOpenTypeReference: Boolean): String? {
         return when (this) {
             is Enum -> "${sanitizedName(scope)}.marshaller"
             is PredefinedType -> "FrameworkMarshallers.$name"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn ?: run {
                     val name = sanitizedName(scope)
-                    if (isAbstract) "AbstractPolymorphic($name)" else name
+                    if (isAbstract || isOpen && !allowSpecificOpenTypeReference) "AbstractPolymorphic($name)" else name
                 }
 
             is IArray -> if (this.isPrimitivesArray) "FrameworkMarshallers.${substitutedName(scope)}" else null
@@ -286,7 +286,7 @@ open class Kotlin11Generator(
         }
     }
 
-    protected fun IType.serializerRef(scope: Declaration) : String = leafSerializerRef(scope) ?: when(this) {
+    protected fun IType.serializerRef(scope: Declaration, allowSpecificOpenTypeReference: Boolean) : String = leafSerializerRef(scope, allowSpecificOpenTypeReference) ?: when(this) {
         is InternedScalar -> "__${name}At${internKey.keyName}Serializer"
         else -> "__${name}Serializer"
     }
@@ -450,7 +450,7 @@ open class Kotlin11Generator(
         if(decl is Toplevel) {
             decl.declaredTypes.forEach {
                 if(it is Context.Generated)
-                    +"object ${it.keyName}: ${it.contextImplementationFqn}<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl)})"
+                    +"object ${it.keyName}: ${it.contextImplementationFqn}<${it.type.substitutedName(decl)}>(\"${it.keyName}\", ${it.isHeavyKey}, ${it.type.serializerRef(decl, false)})"
             }
         }
     }
@@ -580,7 +580,7 @@ open class Kotlin11Generator(
     }
 
     protected fun PrettyPrinter.customSerializersTrait(decl: Declaration) {
-        fun IType.serializerBuilder() : String = leafSerializerRef(decl)?: when (this) {
+        fun IType.serializerBuilder() : String = leafSerializerRef(decl, false)?: when (this) {
             is IArray -> itemType.serializerBuilder() + ".array()"
             is IImmutableList -> itemType.serializerBuilder() + ".list()"
             is INullable -> itemType.serializerBuilder() + ".nullable()"
@@ -593,10 +593,10 @@ open class Kotlin11Generator(
             .filterIsInstance<Member.Reactive>()
             .flatMap { it.genericParams.toList() }
             .distinct()
-            .filter { it.leafSerializerRef(decl) == null }
+            .filter { it.leafSerializerRef(decl, false) == null }
 
         allTypesForDelegation
-            .map { "private val ${it.serializerRef(decl)} = ${it.serializerBuilder()}" }
+            .map { "private val ${it.serializerRef(decl, false)} = ${it.serializerBuilder()}" }
             .distinct()
             .forEach { println(it) }
     }
@@ -610,7 +610,7 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
         block("override fun registerSerializersCore(serializers: ISerializers) ") {
             types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
-                "serializers.register(${it.serializerRef(decl)})"
+                "serializers.register(${it.serializerRef(decl, true)})"
             }
 
             if (decl is Root) {
@@ -727,7 +727,8 @@ open class Kotlin11Generator(
                 else -> "${ctorSimpleName(decl)}(${delegatedBy.reader()})"
             }
             is Member.Reactive -> {
-                val params = (listOf("ctx", "buffer") + customSerializers(decl)).joinToString (", ")
+                val customSerializers = customSerializers(decl)
+                val params = (listOf("ctx", "buffer") + customSerializers).joinToString (", ")
                 if(context != null) {
                     "RdPerContextMap.read(${context!!.longRef(decl)}, buffer) ${this.perClientIdMapValueFactory(decl)}"
                 } else {
