@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net472;netcoreapp3.1;net35</TargetFrameworks>
+        <!--suppress MsbuildTargetFrameworkTagInspection -->
+        <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks Condition=" $(OS) == 'Windows_NT' ">net472;$(TargetFrameworks);net35</TargetFrameworks>
 
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
