@@ -128,7 +128,7 @@ class ConcurrentViewableSet<T> : IMutableViewableConcurrentSet<T> {
                 continue
 
             try {
-                action(definition, value)
+                action(newLifetime, value)
             } catch (e: Throwable) {
                 Logger.root.error(e)
             }
