@@ -68,7 +68,7 @@ namespace Test.RdFramework.Reflection.Generated
     private RefExt (
     ) : this (
       new RdProperty<Base>(Base.Read, Base.Write),
-      new RdProperty<OpenClass>(OpenClass.Read, WriteOpenClass)
+      new RdProperty<OpenClass>(ReadOpenClass, WriteOpenClass)
     ) {}
     //deconstruct trait
     //statics
