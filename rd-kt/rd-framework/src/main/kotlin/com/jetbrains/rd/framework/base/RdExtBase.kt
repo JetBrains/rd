@@ -61,12 +61,12 @@ abstract class RdExtBase : RdReactiveBase() {
     }
 
     override fun init(lifetime: Lifetime, parentProtocol: IProtocol, ctx: SerializationCtx) {
+        parentProtocol as Protocol
         Protocol.initializationLogger.traceMe { "binding" }
 
         val parentWire = parentProtocol.wire
 
         serializersOwner.register(parentProtocol.serializers)
-        val serializationCtx = serializationContext ?: return
 
         extWire.realWire = parentWire
         lifetime.bracketIfAlive({
@@ -77,7 +77,7 @@ abstract class RdExtBase : RdReactiveBase() {
             }
 
             val signal = createExtSignal()
-            val proto = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, scheduler, extWire, lifetime, serializationCtx, parentProtocol.contexts, parentProtocol.extCreated, signal).also {
+            val proto = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, scheduler, extWire, lifetime, parentProtocol, signal).also {
                 it.outOfSyncModels.flowInto(lifetime, parentProtocol.outOfSyncModels) { model -> model }
             }
 
@@ -99,7 +99,7 @@ abstract class RdExtBase : RdReactiveBase() {
                 }
 
                 Signal.nonPriorityAdviseSection {
-                    (parentProtocol as Protocol).submitExtCreated(info)
+                    parentProtocol.submitExtCreated(info)
                 }
             }
 
