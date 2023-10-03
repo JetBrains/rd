@@ -23,9 +23,7 @@ class Protocol internal constructor(
     override val scheduler: IScheduler,
     override val wire: IWire, //to initialize field with circular dependencies
     override val lifetime: Lifetime,
-    serializationCtx: SerializationCtx? = null,
-    parentContexts: ProtocolContexts? = null,
-    parentExtCreated: ISignal<ExtCreationInfoEx>? = null,
+    private val parentProtocol: Protocol?,
     parentExtConfirmation: RdSignal<ExtCreationInfo>? = null,
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
@@ -43,7 +41,7 @@ class Protocol internal constructor(
                 scheduler: IScheduler,
                 wire: IWire, //to initialize field with circular dependencies
                 lifetime: Lifetime,
-                vararg initialContexts: RdContext<*>) : this(name, serializers, identity, scheduler, wire, lifetime, null, null, null, null, *initialContexts)
+                vararg initialContexts: RdContext<*>) : this(name, serializers, identity, scheduler, wire, lifetime, null, null, *initialContexts)
 
     override val location: RName = RName(name)
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet(SynchronizedSet())
@@ -57,11 +55,11 @@ class Protocol internal constructor(
     }
 
     override val protocol: IProtocol get() = this
-    override val serializationContext: SerializationCtx = serializationCtx ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot<Any>().also {
+    override val serializationContext: SerializationCtx = parentProtocol?.serializationContext ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot<Any>().also {
         it.rdid = RdId.Null.mix("ProtocolInternRoot")
     }))
 
-    override val contexts: ProtocolContexts = parentContexts ?: ProtocolContexts(serializationContext)
+    override val contexts: ProtocolContexts = parentProtocol?.contexts ?: ProtocolContexts(serializationContext)
 
     override val extCreated: ISignal<ExtCreationInfoEx>
 
@@ -73,7 +71,7 @@ class Protocol internal constructor(
     init {
         wire.setupContexts(contexts)
 
-        if(serializationCtx == null) {
+        if(parentProtocol?.serializationContext == null) {
             serializationContext.internRoots.getValue("Protocol").bindTopLevel(lifetime, this, "ProtocolInternRoot")
         }
 
@@ -81,7 +79,7 @@ class Protocol internal constructor(
             contexts.registerContext(it)
         }
 
-        if (parentContexts == null) {
+        if (parentProtocol?.contexts == null) {
             contexts.also {
                 it.rdid = RdId.Null.mix("ProtocolContextHandler")
                 AllowBindingCookie.allowBind {
@@ -90,7 +88,7 @@ class Protocol internal constructor(
             }
         }
 
-        extCreated = parentExtCreated ?: Signal()
+        extCreated = parentProtocol?.extCreated ?: Signal()
         extConfirmation = parentExtConfirmation ?: createExtSignal().also { signal ->
             val protocolScheduler = scheduler
             signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
@@ -119,6 +117,10 @@ class Protocol internal constructor(
     }
 
     override fun <T: RdExtBase> getOrCreateExtension(clazz: KClass<T>, create: () -> T): T {
+        parentProtocol?.let {
+            return it.getOrCreateExtension(clazz, create)
+        }
+
         Sync.lock(extensions) {
             val res = extensions[clazz] ?: run {
                 val newExtension = create()
@@ -132,7 +134,11 @@ class Protocol internal constructor(
         }
     }
 
-    override fun <T: RdExtBase> tryGetExtension(clazz: KClass<T>): T? {
+    override fun <T : RdExtBase> tryGetExtension(clazz: KClass<T>): T? {
+        parentProtocol?.let {
+            return it.tryGetExtension(clazz)
+        }
+
         Sync.lock(extensions) {
             val res = extensions[clazz] ?: return null
             return castExtension(res, clazz)
