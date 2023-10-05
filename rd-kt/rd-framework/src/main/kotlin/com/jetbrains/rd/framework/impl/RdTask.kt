@@ -365,12 +365,15 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
         val taskId = proto.identity.next(RdId.Null)
         val bindLifetime = bindLifetime
-        val task = CallSiteWiredRdTask(lifetime.intersect(bindLifetime), this, taskId, scheduler ?: proto.scheduler)
+        val taskLifetime = lifetime.intersect(bindLifetime)
 
-        proto.wire.send(rdid) { buffer ->
-            logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
-            taskId.write(buffer)
-            requestSzr.write(ctx, buffer, request)
+        val task = CallSiteWiredRdTask(taskLifetime, this, taskId, scheduler ?: proto.scheduler)
+        taskLifetime.executeIfAlive {
+            proto.wire.send(rdid) { buffer ->
+                logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
+                taskId.write(buffer)
+                requestSzr.write(ctx, buffer, request)
+            }
         }
 
         return task
