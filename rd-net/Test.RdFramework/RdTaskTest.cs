@@ -241,5 +241,58 @@ namespace Test.RdFramework
 
       Assert.AreEqual("0", result.Value.Result);
     }
+    
+    [Test]
+    public void StartWithTerminatedLifetime()
+    {
+      ClientWire.AutoTransmitMode = true;
+      ServerWire.AutoTransmitMode = true;
+      var entity_id = 1;
+
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
+      var clientEntity = BindToClient(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
+
+      var called = false;
+      serverEntity.Set((lf, value) =>
+      {
+        called = true;
+        throw new InvalidOperationException("Must not be reached");
+      });
+
+      var task = clientEntity.Start(Lifetime.Terminated, 1);
+      var result = task.Result.Value;
+      Assert.IsTrue(result.Status == RdTaskStatus.Canceled);
+      Assert.IsFalse(called);
+    }
+
+
+    [Test]
+    public void StartWithTerminatingDuringSet()
+    {
+      ClientWire.AutoTransmitMode = true;
+      ServerWire.AutoTransmitMode = true;
+      var entity_id = 1;
+
+      var serverEntity = BindToServer(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
+      var clientEntity = BindToClient(LifetimeDefinition.Lifetime, NewRdCall<int, string>(), ourKey);
+
+      var def = TestLifetime.CreateNested();
+      Lifetime callLifetime = default;
+      serverEntity.Set((lf, value) =>
+      {
+        using (new LifetimeDefinition.AllowTerminationUnderExecutionCookie(Thread.CurrentThread))
+        {
+          def.Terminate();
+        }
+
+        callLifetime = lf;
+        return RdTask.Successful(value.ToString());
+      });
+
+      var task = clientEntity.Start(def.Lifetime, 1);
+      var result = task.Result.Value;
+      Assert.IsTrue(result.Status == RdTaskStatus.Canceled);
+      Assert.IsFalse(callLifetime.IsAlive);
+    }
   }
 }

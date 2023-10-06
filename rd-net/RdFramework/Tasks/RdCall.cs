@@ -199,15 +199,21 @@ namespace JetBrains.Rd.Tasks
         return RunHandler(request, requestLifetime, moniker: this);
 
       var taskId = proto.Identities.Next(RdId.Nil);
-      var task = new WiredRdTask<TReq,TRes>.CallSite(Lifetime.Intersect(requestLifetime, myBindLifetime), this, taskId, scheduler ?? proto.Scheduler);
-      
-      proto.Wire.Send(RdId, (writer) =>
-      {
-        SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");
 
-        taskId.Write(writer);
-        WriteRequestDelegate(serializationContext, writer, request);
-      });
+      var taskLifetime = Lifetime.Intersect(requestLifetime, myBindLifetime);
+      var task = new WiredRdTask<TReq, TRes>.CallSite(taskLifetime, this, taskId, scheduler ?? proto.Scheduler);
+
+      using var cookie = taskLifetime.UsingExecuteIfAlive();
+      if (cookie.Succeed)
+      {
+        proto.Wire.Send(RdId, (writer) =>
+        {
+          SendTrace?.Log($"{task} :: send request: {request.PrintToString()}");
+
+          taskId.Write(writer);
+          WriteRequestDelegate(serializationContext, writer, request);
+        });
+      }
 
       return task;
     }
