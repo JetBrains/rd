@@ -200,18 +200,9 @@ namespace JetBrains.Rd.Tasks
 
       var taskId = proto.Identities.Next(RdId.Nil);
 
-      var intersectedDef = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
-      var task = new WiredRdTask<TReq,TRes>.CallSite(intersectedDef.Lifetime, this, taskId, scheduler ?? proto.Scheduler);
-      task.Result.Advise(intersectedDef.Lifetime, result =>
-      {
-        if (result.Status != RdTaskStatus.Success || !result.Result.IsBindable())
-        {
-          intersectedDef.AllowTerminationUnderExecution = true;
-          intersectedDef.Terminate();
-        }
-      });
+      var task = CreateCallSite(requestLifetime, (lifetime) => new WiredRdTask<TReq, TRes>.CallSite(lifetime, this, taskId, scheduler ?? proto.Scheduler));
       
-      using var cookie = intersectedDef.UsingExecuteIfAlive();
+      using var cookie = task.Lifetime.UsingExecuteIfAlive();
       if (cookie.Succeed)
       {
         proto.Wire.Send(RdId, (writer) =>
@@ -222,6 +213,25 @@ namespace JetBrains.Rd.Tasks
           WriteRequestDelegate(serializationContext, writer, request);
         });
       }
+
+      return task;
+    }
+
+    private WiredRdTask<TReq, TRes>.CallSite CreateCallSite(Lifetime requestLifetime, Func<Lifetime, WiredRdTask<TReq, TRes>.CallSite> createTask)
+    {
+      if (requestLifetime.IsEternal)
+        return createTask(myBindLifetime);
+      
+      var intersectedDef = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
+      var task = createTask(intersectedDef.Lifetime);
+      task.Result.Advise(intersectedDef.Lifetime, result =>
+      {
+        if (result.Status != RdTaskStatus.Success || !result.Result.IsBindable())
+        {
+          intersectedDef.AllowTerminationUnderExecution = true;
+          intersectedDef.Terminate();
+        }
+      });
 
       return task;
     }
