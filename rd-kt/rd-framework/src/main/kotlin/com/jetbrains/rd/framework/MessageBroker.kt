@@ -102,8 +102,8 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
         private val messageContext: ProtocolContexts.MessageContext
     ) : IRdWireableDispatchHelper {
 
-        override fun dispatch(lifetime: Lifetime, scheduler: IScheduler?, action: () -> Unit) {
-            doDispatch(lifetime.intersect(this.lifetime), scheduler ?: protocol.scheduler, action)
+        override fun dispatch(scheduler: IScheduler?, action: () -> Unit) {
+            doDispatch(lifetime, scheduler ?: protocol.scheduler, action)
         }
 
         private fun doDispatch(lifetime: Lifetime, scheduler: IScheduler, action: () -> Unit) {

@@ -252,7 +252,7 @@ public class AsyncRdSet<T> : IRdBindable, IAsyncSource<SetEvent<T>>,
       myDispatchHelper = dispatchHelper;
     }
     
-    public void Dispatch(Lifetime lifetime, IScheduler? scheduler, Action action)
+    public void Dispatch(IScheduler? scheduler, Action action)
     {
       myDispatchHelper.Dispatch(SynchronousScheduler.Instance, action);
     }

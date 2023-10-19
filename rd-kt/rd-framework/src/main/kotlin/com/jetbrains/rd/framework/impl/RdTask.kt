@@ -130,7 +130,7 @@ class CallSiteWiredRdTask<TReq, TRes>(
         } else if (resultFromWire is RdTaskResult.Cancelled)
             sendCancellation()
 
-        dispatchHelper.dispatch(outerLifetime, wireScheduler) {
+        dispatchHelper.dispatch(wireScheduler) {
             if (!result.setIfEmpty(resultFromWire))
                 RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
         }
@@ -192,7 +192,7 @@ class EndpointWiredRdTask<TReq, TRes>(
         RdReactiveBase.logReceived.trace { "received cancellation" }
         buffer.readVoid() //nothing just a void value
 
-        dispatchHelper.dispatch(lifetime, wireScheduler) {
+        dispatchHelper.dispatch(wireScheduler) {
             val success = result.setIfEmpty(RdTaskResult.Cancelled())
             val wireScheduler = call.protocol?.scheduler
             if (success || wireScheduler == null)

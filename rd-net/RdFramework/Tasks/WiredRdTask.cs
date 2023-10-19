@@ -124,7 +124,7 @@ namespace JetBrains.Rd.Tasks
           SendCancellation();
 
 
-        dispatchHelper.Dispatch(myOuterLifetime, WireScheduler, () =>
+        dispatchHelper.Dispatch(WireScheduler, () =>
         {
           if (!ResultInternal.SetIfEmpty(taskResult))
             Trace(RdReactiveBase.ourLogReceived, "response from wire was rejected because task already has result");
@@ -203,7 +203,7 @@ namespace JetBrains.Rd.Tasks
         Trace(RdReactiveBase.ourLogReceived, "received cancellation");
         reader.ReadVoid(); //nothing just a void value
         
-        dispatchHelper.Dispatch(Lifetime, WireScheduler, () =>
+        dispatchHelper.Dispatch(WireScheduler, () =>
         {
           var success = ResultInternal.SetIfEmpty(RdTaskResult<TRes>.Cancelled());
           var protocolScheduler = myCall.TryGetProto()?.Scheduler;

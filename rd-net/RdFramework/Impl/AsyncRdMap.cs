@@ -224,7 +224,7 @@ public class AsyncRdMap<K, V> : IRdBindable, IAsyncSource<MapEvent<K, V>>, IDict
       myDispatchHelper = dispatchHelper;
     }
     
-    public void Dispatch(Lifetime lifetime, IScheduler? scheduler, Action action)
+    public void Dispatch(IScheduler? scheduler, Action action)
     {
       myDispatchHelper.Dispatch(SynchronousScheduler.Instance, action);
     }

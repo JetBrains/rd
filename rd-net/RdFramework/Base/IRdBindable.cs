@@ -46,24 +46,19 @@ namespace JetBrains.Rd.Base
     RdId RdId { get; }
     Lifetime Lifetime { get; }
     
-    public void Dispatch(Lifetime lifetime, IScheduler? scheduler, Action action);
+    public void Dispatch(IScheduler? scheduler, Action action);
   }
 
   public static class RdWireableDispatchHelperEx
   {
-    public static void Dispatch(this IRdWireableDispatchHelper helper, Lifetime lifetime, Action action)
-    {
-      helper.Dispatch(lifetime, null, action);
-    }
-    
     public static void Dispatch(this IRdWireableDispatchHelper helper, IScheduler? scheduler, Action action)
     {
-      helper.Dispatch(helper.Lifetime, scheduler, action);
+      helper.Dispatch(scheduler, action);
     }
     
     public static void Dispatch(this IRdWireableDispatchHelper helper, Action action)
     {
-      helper.Dispatch(helper.Lifetime, null, action);
+      helper.Dispatch(null, action);
     }
   }
 
