@@ -71,7 +71,7 @@ abstract class WiredRdTask<TReq, TRes>(
 }
 
 class CallSiteWiredRdTask<TReq, TRes>(
-    private val outerLifetime: Lifetime,
+    val outerLifetime: Lifetime,
     call: RdCall<TReq, TRes>,
     rdid: RdId,
     wireScheduler: IScheduler
@@ -364,19 +364,33 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
 
         val taskId = proto.identity.next(RdId.Null)
-        val bindLifetime = bindLifetime
-        val intersectedDef = lifetime.defineIntersection(bindLifetime)
-        val task = CallSiteWiredRdTask(intersectedDef.lifetime, this, taskId, scheduler ?: proto.scheduler)
-        task.result.advise(intersectedDef.lifetime) {
-            if (it !is RdTaskResult.Success || !it.value.isBindable()) {
-                intersectedDef.terminate(true)
-            }
+        val task = createCallSite(lifetime) { callsiteLifetime ->
+            CallSiteWiredRdTask(callsiteLifetime, this, taskId, scheduler ?: proto.scheduler)
         }
-        intersectedDef.lifetime.executeIfAlive {
+
+        task.outerLifetime.executeIfAlive {
             proto.wire.send(rdid) { buffer ->
                 logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
                 taskId.write(buffer)
                 requestSzr.write(ctx, buffer, request)
+            }
+        }
+
+        return task
+    }
+
+    private inline fun createCallSite(
+        requestLifetime: Lifetime,
+        createTask: (Lifetime) -> CallSiteWiredRdTask<TReq, TRes>
+    ): CallSiteWiredRdTask<TReq, TRes> {
+        if (requestLifetime.isEternal)
+            return createTask(bindLifetime)
+
+        val intersectedDef = Lifetime.defineIntersection(requestLifetime, bindLifetime)
+        val task = createTask(intersectedDef.lifetime)
+        task.result.advise(intersectedDef.lifetime) {
+            if (it !is RdTaskResult.Success || !it.value.isBindable()) {
+                intersectedDef.terminate(true)
             }
         }
 

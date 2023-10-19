@@ -64,6 +64,8 @@ namespace JetBrains.Rd.Tasks
     {
       private readonly Lifetime myOuterLifetime;
 
+      public Lifetime Lifetime => myOuterLifetime;
+
       public CallSite(Lifetime outerLifetime, RdCall<TReq, TRes> call, RdId rdId, IScheduler wireScheduler) : base(call, rdId, wireScheduler)
       {
         myOuterLifetime = outerLifetime;
