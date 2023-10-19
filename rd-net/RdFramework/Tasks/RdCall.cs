@@ -200,10 +200,18 @@ namespace JetBrains.Rd.Tasks
 
       var taskId = proto.Identities.Next(RdId.Nil);
 
-      var taskLifetime = Lifetime.Intersect(requestLifetime, myBindLifetime);
-      var task = new WiredRdTask<TReq, TRes>.CallSite(taskLifetime, this, taskId, scheduler ?? proto.Scheduler);
-
-      using var cookie = taskLifetime.UsingExecuteIfAlive();
+      var intersectedDef = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
+      var task = new WiredRdTask<TReq,TRes>.CallSite(intersectedDef.Lifetime, this, taskId, scheduler ?? proto.Scheduler);
+      task.Result.Advise(intersectedDef.Lifetime, result =>
+      {
+        if (result.Status != RdTaskStatus.Success || !result.Result.IsBindable())
+        {
+          intersectedDef.AllowTerminationUnderExecution = true;
+          intersectedDef.Terminate();
+        }
+      });
+      
+      using var cookie = intersectedDef.UsingExecuteIfAlive();
       if (cookie.Succeed)
       {
         proto.Wire.Send(RdId, (writer) =>

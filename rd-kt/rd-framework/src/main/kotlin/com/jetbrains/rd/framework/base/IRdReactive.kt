@@ -35,8 +35,7 @@ interface IRdWireableDispatchHelper {
     val rdId: RdId
     val lifetime: Lifetime
 
-    fun dispatch(lifetime: Lifetime = this.lifetime, scheduler: IScheduler? = null, action: () -> Unit)
-    fun dispatch(scheduler: IScheduler? = null, action: () -> Unit) = dispatch(lifetime, scheduler, action)
+    fun dispatch(scheduler: IScheduler? = null, action: () -> Unit)
 }
 
 

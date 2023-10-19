@@ -190,8 +190,8 @@ class AsyncRdSet<T : Any> private constructor(
                     override val lifetime: Lifetime
                         get() = dispatchHelper.lifetime
 
-                    override fun dispatch(lifetime: Lifetime, scheduler: IScheduler?, action: () -> Unit) {
-                        dispatchHelper.dispatch(lifetime, SynchronousScheduler, action)
+                    override fun dispatch(scheduler: IScheduler?, action: () -> Unit) {
+                        dispatchHelper.dispatch(SynchronousScheduler, action)
                     }
                 })
             }

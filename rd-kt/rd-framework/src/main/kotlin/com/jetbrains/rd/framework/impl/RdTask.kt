@@ -130,7 +130,7 @@ class CallSiteWiredRdTask<TReq, TRes>(
         } else if (resultFromWire is RdTaskResult.Cancelled)
             sendCancellation()
 
-        dispatchHelper.dispatch(outerLifetime, wireScheduler) {
+        dispatchHelper.dispatch(wireScheduler) {
             if (!result.setIfEmpty(resultFromWire))
                 RdReactiveBase.logReceived.trace { "call `${call.location}` (${call.rdid}) response was dropped, task result is: ${result.valueOrNull}" }
         }
@@ -192,7 +192,7 @@ class EndpointWiredRdTask<TReq, TRes>(
         RdReactiveBase.logReceived.trace { "received cancellation" }
         buffer.readVoid() //nothing just a void value
 
-        dispatchHelper.dispatch(lifetime, wireScheduler) {
+        dispatchHelper.dispatch(wireScheduler) {
             val success = result.setIfEmpty(RdTaskResult.Cancelled())
             val wireScheduler = call.protocol?.scheduler
             if (success || wireScheduler == null)
@@ -365,10 +365,14 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
 
         val taskId = proto.identity.next(RdId.Null)
         val bindLifetime = bindLifetime
-        val taskLifetime = lifetime.intersect(bindLifetime)
-
-        val task = CallSiteWiredRdTask(taskLifetime, this, taskId, scheduler ?: proto.scheduler)
-        taskLifetime.executeIfAlive {
+        val intersectedDef = lifetime.defineIntersection(bindLifetime)
+        val task = CallSiteWiredRdTask(intersectedDef.lifetime, this, taskId, scheduler ?: proto.scheduler)
+        task.result.advise(intersectedDef.lifetime) {
+            if (it !is RdTaskResult.Success || !it.value.isBindable()) {
+                intersectedDef.terminate(true)
+            }
+        }
+        intersectedDef.lifetime.executeIfAlive {
             proto.wire.send(rdid) { buffer ->
                 logSend.trace { "call `$location`::($rdid) send${sync.condstr {" SYNC"}} request '$taskId' : ${request.printToString()} " }
                 taskId.write(buffer)

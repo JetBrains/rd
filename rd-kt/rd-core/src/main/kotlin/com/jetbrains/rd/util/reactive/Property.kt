@@ -114,7 +114,7 @@ class WriteOnceProperty<T : Any> : IOptProperty<T> {
             if (def.isNotAlive || lifetime.isNotAlive) return
 
             val nestedDef = def.intersect(lifetime)
-            super.advise(nestedDef.lifetime, handler)
+            super.advise(nestedDef, handler)
         }
 
         override fun fire(value: T) {

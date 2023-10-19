@@ -121,9 +121,9 @@ namespace JetBrains.Rd.Impl
         myMessageContext = messageContext;
       }
 
-      public void Dispatch(Lifetime lifetime, IScheduler? scheduler, Action action)
+      public void Dispatch(IScheduler? scheduler, Action action)
       {
-        DoDispatch(lifetime.Intersect(Lifetime), scheduler ?? myProtocol.Scheduler, action);
+        DoDispatch(Lifetime, scheduler ?? myProtocol.Scheduler, action);
       }
       
       private void DoDispatch(Lifetime lifetime, IScheduler scheduler, Action action)

@@ -49,7 +49,15 @@ sealed class Lifetime {
          * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
          * Created lifetime inherits the smallest [terminationTimeoutKind]
          */
-        fun intersect(lifetime1: Lifetime, lifetime2: Lifetime): Lifetime = defineIntersection(lifetime1, lifetime2).lifetime
+        fun intersect(lifetime1: Lifetime, lifetime2: Lifetime): Lifetime  {
+            if (lifetime1 === lifetime2 || lifetime2.isEternal)
+                return lifetime1
+
+            if (lifetime1.isEternal)
+                return lifetime2
+
+            return defineIntersection(lifetime1, lifetime2).lifetime
+        }
 
         /**
          * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
@@ -642,7 +650,8 @@ operator fun Lifetime.plusAssign(action : () -> Unit) = onTermination(action)
  * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
  * Created lifetime inherits the smallest [terminationTimeoutKind]
  */
-fun Lifetime.intersect(lifetime: Lifetime): LifetimeDefinition = Lifetime.defineIntersection(this, lifetime)
+fun Lifetime.intersect(lifetime: Lifetime): Lifetime = Lifetime.intersect(this, lifetime)
+fun Lifetime.defineIntersection(lifetime: Lifetime): LifetimeDefinition = Lifetime.defineIntersection(this, lifetime)
 
 inline fun <T> Lifetime.view(viewable: IViewable<T>, crossinline handler: Lifetime.(T) -> Unit) {
     viewable.view(this) { lt, value -> lt.handler(value) }
