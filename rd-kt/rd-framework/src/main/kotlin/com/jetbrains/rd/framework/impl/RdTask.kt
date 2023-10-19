@@ -369,7 +369,7 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
         val task = CallSiteWiredRdTask(intersectedDef.lifetime, this, taskId, scheduler ?: proto.scheduler)
         task.result.advise(intersectedDef.lifetime) {
             if (it !is RdTaskResult.Success || !it.value.isBindable()) {
-                intersectedDef.terminate()
+                intersectedDef.terminate(true)
             }
         }
         intersectedDef.lifetime.executeIfAlive {

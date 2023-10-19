@@ -205,7 +205,10 @@ namespace JetBrains.Rd.Tasks
       task.Result.Advise(intersectedDef.Lifetime, result =>
       {
         if (result.Status != RdTaskStatus.Success || !result.Result.IsBindable())
+        {
+          intersectedDef.AllowTerminationUnderExecution = true;
           intersectedDef.Terminate();
+        }
       });
       
       using var cookie = intersectedDef.UsingExecuteIfAlive();
