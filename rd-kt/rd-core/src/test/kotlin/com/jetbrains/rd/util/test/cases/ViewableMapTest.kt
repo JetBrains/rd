@@ -24,7 +24,7 @@ class ViewableMapTest : RdTestBase()  {
         Lifetime.using { lifetime ->
             map.adviseAddRemove(lifetime) { kind, key, value -> logAddRemove.add("${kind} ${key}:${value}")}
             map.advise(lifetime) { entry -> logUpdate.add(entry.toString())}
-            map.view(lifetime) { inner, x -> inner.bracket({ logView.add(x.key) }, { logView.add(-x.value) }) }
+            map.view(lifetime) { inner, x -> inner.bracketIfAlive({ logView.add(x.key) }, { logView.add(-x.value) }) }
 
             lifetime += {logAddRemove.add("End")}
 

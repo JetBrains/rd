@@ -43,7 +43,7 @@ class LifetimeTest : RdTestBase() {
 
         val def = LifetimeDefinition()
         def.onTermination { log.add(1) }
-        def.createNested().onTermination { log.add(2) }
+        def.lifetime.createNested().onTermination { log.add(2) }
         def.onTermination { log.add(3) }
 
         def.terminate()
@@ -116,7 +116,7 @@ class LifetimeTest : RdTestBase() {
         val def = LifetimeDefinition()
 
         var x = 0
-        assertEquals(0, def.bracket({ x++ }, { x++; }))
+        assertEquals(0, def.bracketIfAlive({ x++ }, { x++; }))
         assertEquals(1, x)
         def.terminate()
         assertEquals(2, x)
@@ -127,7 +127,7 @@ class LifetimeTest : RdTestBase() {
         val def = LifetimeDefinition()
 
         var x = 0
-        assertThrows(Throwable::class.java) { def.bracket({ x++; fail<Throwable>() }, { x++; }) }
+        assertThrows(Throwable::class.java) { def.bracketIfAlive({ x++; fail<Throwable>() }, { x++; }) }
         assertEquals(1, x)
         def.terminate()
         assertEquals(1, x)
@@ -139,7 +139,7 @@ class LifetimeTest : RdTestBase() {
 
         var x = 0
         def.terminate()
-        assertNull (def.bracket({ x++; fail<Throwable>() }, { x++; }) )
+        assertNull (def.bracketIfAlive({ x++; fail<Throwable>() }, { x++; }) )
         assertEquals(0, x)
         def.terminate()
         assertEquals(0, x)
@@ -172,9 +172,9 @@ class LifetimeTest : RdTestBase() {
                 }
             }
 
-            val r = lifetime::class.declaredMemberProperties.single { it.name == "resources" }
+            val r = lifetime.definition::class.declaredMemberProperties.single { it.name == "resources" }
             r.isAccessible = true
-            val resources = r.getter.call(lifetime) as Array<*>
+            val resources = r.getter.call(lifetime.definition) as Array<*>
             assert(resources.size <= 12)
         }
 
@@ -203,7 +203,7 @@ class LifetimeTest : RdTestBase() {
                 Lifetime.setTerminationTimeoutMs(timeoutKind, 2000)
 
                 val subDef = LifetimeDefinition(testLifetime).apply { terminationTimeoutKind = timeoutKind }
-                val subLt = subDef.lifetime;
+                val subLt = subDef.lifetime
 
                 val future = CompletableFuture<Unit>()
                 thread {
@@ -229,28 +229,28 @@ class LifetimeTest : RdTestBase() {
         val lf3 = LifetimeDefinition()
 
         fun doTest1(expected: LifetimeTerminationTimeoutKind) {
-            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime);
-            assertEquals(expected, definedLifetime.terminationTimeoutKind);
+            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime)
+            assertEquals(expected, definedLifetime.terminationTimeoutKind)
         }
 
         fun doTest2(expected: LifetimeTerminationTimeoutKind) {
-            val definedLifetime = Lifetime.defineIntersection(lf1.lifetime, lf2.lifetime, lf3.lifetime);
-            assertEquals(expected, definedLifetime.terminationTimeoutKind);
+            val definedLifetime = Lifetime.defineIntersection(listOf(lf1.lifetime, lf2.lifetime, lf3.lifetime))
+            assertEquals(expected, definedLifetime.terminationTimeoutKind)
         }
 
-        doTest1(LifetimeTerminationTimeoutKind.Default);
-        doTest2(LifetimeTerminationTimeoutKind.Default);
+        doTest1(LifetimeTerminationTimeoutKind.Default)
+        doTest2(LifetimeTerminationTimeoutKind.Default)
 
-        lf1.terminationTimeoutKind = LifetimeTerminationTimeoutKind.ExtraLong;
-        doTest1(LifetimeTerminationTimeoutKind.Default);
-        doTest2(LifetimeTerminationTimeoutKind.Default);
+        lf1.terminationTimeoutKind = LifetimeTerminationTimeoutKind.ExtraLong
+        doTest1(LifetimeTerminationTimeoutKind.Default)
+        doTest2(LifetimeTerminationTimeoutKind.Default)
 
-        lf2.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Long;
-        doTest1(LifetimeTerminationTimeoutKind.Long);
-        doTest2(LifetimeTerminationTimeoutKind.Default);
+        lf2.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Long
+        doTest1(LifetimeTerminationTimeoutKind.Long)
+        doTest2(LifetimeTerminationTimeoutKind.Default)
 
-        lf3.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Short;
-        doTest1(LifetimeTerminationTimeoutKind.Long);
-        doTest2(LifetimeTerminationTimeoutKind.Short);
+        lf3.terminationTimeoutKind = LifetimeTerminationTimeoutKind.Short
+        doTest1(LifetimeTerminationTimeoutKind.Long)
+        doTest2(LifetimeTerminationTimeoutKind.Short)
     }
 }

@@ -72,11 +72,11 @@ suspend fun <T> withRdSchedulerContext(scheduler: IScheduler, block: suspend Cor
 
 fun Lifetime.createTerminatedAfter(duration: Duration, terminationContext: CoroutineContext): Lifetime =
     createNested().also { nested ->
-        nested.launch(terminationContext, CoroutineStart.UNDISPATCHED) {
+        nested.lifetime.launch(terminationContext, CoroutineStart.UNDISPATCHED) {
             delay(duration.toMillis())
             nested.terminate()
         }
-    }
+    }.lifetime
 
 /**
  * Creates a [coroutineScope] that will be cancelled on the passed lifetime termination

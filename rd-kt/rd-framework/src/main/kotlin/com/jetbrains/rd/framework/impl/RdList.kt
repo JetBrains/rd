@@ -209,7 +209,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             if (bindAlso)
                 value.bindPolymorphic()
 
-            (lifetime as LifetimeDefinition).attach(definition, true)
+            lifetime.attach(definition, true)
 
             return definition
         } catch (e: Throwable) {

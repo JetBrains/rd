@@ -103,7 +103,7 @@ class RdTaskTest : RdFrameworkTestBase() {
             RdTask.fromResult(value.toString())
         }
 
-        val task = client_entity.start(def, 1)
+        val task = client_entity.start(def.lifetime, 1)
         val result = task.result.valueOrThrow
         assertIs<RdTaskResult.Cancelled<String>>(result)
         assertFalse(callLifetime!!.isAlive)

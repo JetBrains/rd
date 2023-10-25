@@ -41,7 +41,7 @@ open class Signal<T> : ISignal<T> {
     private fun advise0(queue:AtomicReference<Array<(T) -> Unit>>, lifetime : Lifetime, handler: (T) -> Unit) {
         if (!lifetime.isAlive) return
 
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 {
                     queue.getAndUpdate { arr ->
                         if (arr.contains(handler)) throw IllegalArgumentException("Duplicate handler: $handler")

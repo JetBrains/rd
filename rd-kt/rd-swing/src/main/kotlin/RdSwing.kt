@@ -33,7 +33,7 @@ private class AWTEventSource(eventMask: Long) : ISource<AWTEvent> {
             rdSet.forEach { it(event) }
         }
 
-        rdSet.advise(Lifetime.Eternal.createNested()) { addRemove, _ ->
+        rdSet.advise(Lifetime.Eternal) { addRemove, _ ->
             if (rdSet.isEmpty() && addRemove == AddRemove.Remove) {
                 Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
             } else if (rdSet.size == 1 && addRemove == AddRemove.Add) {
@@ -46,7 +46,7 @@ private class AWTEventSource(eventMask: Long) : ISource<AWTEvent> {
     }
 
     override fun advise(lifetime: Lifetime, handler: (AWTEvent) -> Unit) {
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 { rdSet.add(handler) },
                 { rdSet.remove(handler) }
         )
@@ -126,7 +126,7 @@ fun ListSelectionModel.selectedIndexes(): IPropertyView<List<Int>> {
             set(list)
         }
 
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 { this@selectedIndexes.addListSelectionListener(listener) },
                 { this@selectedIndexes.removeListSelectionListener(listener)})
     }
@@ -150,7 +150,7 @@ fun JComponent.mouseClicked(): ISource<MouseEvent> {
             }
 
 
-            lifetime.bracket (
+            lifetime.bracketIfAlive (
                     {this@mouseClicked.addMouseListener(clickListener)},
                     {this@mouseClicked.removeMouseListener(clickListener)}
             )
@@ -175,7 +175,7 @@ fun JLabel.tooltipForCropped(lifetime: Lifetime) {
 
     val listener = PropertyChangeListener { updateTooltip() }
 
-    lifetime.bracket(
+    lifetime.bracketIfAlive(
             {this.addPropertyChangeListener("text", listener)},
             {this.removePropertyChangeListener(listener)}
     )
@@ -191,7 +191,7 @@ fun Graphics2D.fillRect(rect: Rectangle, color: Color) {
 }
 
 fun <T> JComboBox<T>.addLifetimedItem(lifetime: Lifetime, item: T) {
-    lifetime.bracket(
+    lifetime.bracketIfAlive(
             {addItem(item)},
             {removeItem(item)}
     )
@@ -207,7 +207,7 @@ fun JComponent.sizeProperty(): IPropertyView<Dimension> = object : IPropertyView
                     }
                 }
 
-                lifetime.bracket(
+                lifetime.bracketIfAlive(
                         {this@sizeProperty.addComponentListener(listener)},
                         {this@sizeProperty.removeComponentListener(listener)}
                 )
@@ -235,7 +235,7 @@ fun JTextComponent.textProperty(): IPropertyView<String> {
             }
         }
 
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 {this@textProperty.document.addDocumentListener(listener)},
                 {this@textProperty.document.removeDocumentListener(listener)}
         )
@@ -251,7 +251,7 @@ fun <T> JComboBox<T>.selectedItemProperty(): IPropertyView<T?> {
             set(getValue())
         }
 
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 {this@selectedItemProperty.addActionListener(ls)},
                 {this@selectedItemProperty.removeActionListener(ls)}
         )
@@ -271,7 +271,7 @@ fun Component.visibleProperty(): IPropertyView<Boolean> {
             }
         }
 
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 {this@visibleProperty.addComponentListener(listener)},
                 {this@visibleProperty.removeComponentListener(listener)}
         )
@@ -294,7 +294,7 @@ fun JComponent.isInHierarchyProperty(): IPropertyView<Boolean> {
             }
         }
 
-        lifetime.bracket(
+        lifetime.bracketIfAlive(
                 {this@isInHierarchyProperty.addAncestorListener(listener)},
                 {this@isInHierarchyProperty.removeAncestorListener(listener)}
         )
@@ -309,7 +309,7 @@ fun JComponent.namedProperty(name: String, lifetime: Lifetime): IOptPropertyView
         }
     }
 
-    lifetime.bracket(
+    lifetime.bracketIfAlive(
             {addPropertyChangeListener(listener)},
             {removePropertyChangeListener(listener)}
     )

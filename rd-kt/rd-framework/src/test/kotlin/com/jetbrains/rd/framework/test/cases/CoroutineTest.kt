@@ -612,7 +612,7 @@ class CoroutineTest : CoroutineTestBase() {
             runBlocking {
                 val nested = lifetime.createNested()
                 try {
-                    lifetimedCoroutineScope(nested) {
+                    lifetimedCoroutineScope(nested.lifetime) {
                         launch { nested.terminate() }
                         assert(nested.isAlive)
 
@@ -719,7 +719,7 @@ class CoroutineTest : CoroutineTestBase() {
 
             fun LifetimeDefinition.addOnTermination() {
                 onTerminationIfAlive {
-                    checkScopeCancellation()
+                    lifetime.checkScopeCancellation()
                 }
             }
 

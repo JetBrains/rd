@@ -95,7 +95,7 @@ class ConcurrentViewableSet<T> : IMutableViewableConcurrentSet<T> {
 
     private fun tryGetLifetime(value: T): Lifetime? {
         synchronized(locker) {
-            return map[value]
+            return map[value]?.lifetime
         }
     }
 

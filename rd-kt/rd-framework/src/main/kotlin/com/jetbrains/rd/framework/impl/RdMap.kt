@@ -254,7 +254,7 @@ open class RdMap<K : Any, V : Any> private constructor(
             if (bindAlso)
                 value.bindPolymorphic()
 
-            (lifetime as LifetimeDefinition).attach(definition, true)
+            lifetime.attach(definition, true)
 
             return definition
         } catch (e: Throwable) {

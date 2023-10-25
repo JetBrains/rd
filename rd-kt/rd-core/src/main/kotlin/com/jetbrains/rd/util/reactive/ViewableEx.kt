@@ -1,7 +1,6 @@
 package com.jetbrains.rd.util.reactive
 
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
 
 fun <T : Any> IViewableSet<T>.createIsEmpty(lifetime: Lifetime): IPropertyView<Boolean> {
     val property = Property(this.isEmpty())

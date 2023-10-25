@@ -26,7 +26,7 @@ open class RdTestBase {
         l11n.reset()
         l11n.enable()
 
-        testLifetime = testLifetimes.next()
+        testLifetime = testLifetimes.next().lifetime
 
         loggerFactoryCookie = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
     }

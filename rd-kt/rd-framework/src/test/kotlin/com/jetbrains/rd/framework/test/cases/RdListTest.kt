@@ -79,7 +79,7 @@ class RdListTest : RdFrameworkTestBase() {
 
         val log = arrayListOf<String>()
         serverList.view(Lifetime.Eternal) { lf, k, v ->
-            lf.bracket({ log.add("start $k") }, { log.add("finish $k") })
+            lf.bracketIfAlive({ log.add("start $k") }, { log.add("finish $k") })
             v.foo.advise(lf) { fooval -> log.add("$fooval") }
         }
         clientList.add(DynamicEntity<Boolean?>(null))
@@ -123,7 +123,7 @@ class RdListTest : RdFrameworkTestBase() {
         val log = arrayListOf<String>()
 
         serverList.view(Lifetime.Eternal) { lf, k, v ->
-            lf.bracket(
+            lf.bracketIfAlive(
                     { log.add("start $k") },
                     { log.add("finish $k") }
             )

@@ -2,6 +2,7 @@ package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.referenceEquals
 import com.jetbrains.rd.util.reactive.WriteOnceProperty
 import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.test.framework.RdTestBase
@@ -102,7 +103,7 @@ class WriteOncePropertyTest : RdTestBase() {
             var viewedValue = 0
             prop.view(lifetime) { lf, value ->
                 viewedValue = value
-                assert(lifetime === lf) // reference equals
+                assert(lifetime.referenceEquals(lf)) // reference equals
             }
 
             prop.set(1)

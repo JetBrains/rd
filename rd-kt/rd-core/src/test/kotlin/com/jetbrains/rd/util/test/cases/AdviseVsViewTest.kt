@@ -2,7 +2,6 @@ package com.jetbrains.rd.util.test.cases
 
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.test.framework.RdTestBase
 import kotlin.test.Test
@@ -67,7 +66,7 @@ class AdviseVsViewTest : RdTestBase() {
 
         val log = arrayListOf<Boolean>()
 
-        property.view(lf) { _, value ->
+        property.view(lf.lifetime) { _, value ->
             // previously would throw an exception on viewing changes from { property.set(true) }
             log.add(value)
         }

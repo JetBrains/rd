@@ -30,14 +30,14 @@ class SequentialLifetimesTest : RdTestBase()  {
         val seq = SequentialLifetimes(Lifetime.Eternal)
 
         var acc = 0
-        val lf = seq.next()
+        val lf = seq.next().lifetime
         lf.plusAssign { acc++ }
         lf.plusAssign { acc++ }
         assertEquals(0, acc)
 
         assertEquals(0, acc)
 
-        seq.next().plusAssign { acc++ }
+        seq.next().lifetime.plusAssign { acc++ }
         assertEquals(2, acc)
 
         seq.terminateCurrent()
@@ -51,14 +51,14 @@ class SequentialLifetimesTest : RdTestBase()  {
         val seq = SequentialLifetimes(def.lifetime)
 
         var acc = 0
-        val lf = seq.next()
+        val lf = seq.next().lifetime
         lf.plusAssign { acc++ }
         lf.plusAssign { acc++ }
         assertEquals(0, acc)
 
         assertEquals(0, acc)
 
-        seq.next().plusAssign { acc++ }
+        seq.next().lifetime.plusAssign { acc++ }
         assertEquals(2, acc)
 
         def.terminate()
@@ -79,8 +79,8 @@ class SequentialLifetimesTest : RdTestBase()  {
         val lfA = seqA.next()
         val lfB = seqB.next()
 
-        lfA.plusAssign { accA = true }
-        lfB.plusAssign { accB = true }
+        lfA.lifetime.plusAssign { accA = true }
+        lfB.lifetime.plusAssign { accB = true }
 
         lfA.terminate()
         assertTrue(accA)
@@ -145,9 +145,9 @@ class SequentialLifetimesTest : RdTestBase()  {
                     lifetime.onTermination { p3 = true }
             }
 
-            val r = lifetime::class.declaredMemberProperties.single { it.name == "resources" }
+            val r = lifetime.definition::class.declaredMemberProperties.single { it.name == "resources" }
             r.isAccessible = true
-            val resources = r.getter.call(lifetime) as Array<*>
+            val resources = r.getter.call(lifetime.definition) as Array<*>
             assert(resources.size <= 12)
         }
 

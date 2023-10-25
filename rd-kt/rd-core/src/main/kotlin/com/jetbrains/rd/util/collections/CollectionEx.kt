@@ -26,7 +26,7 @@ fun <K, V> MutableMap<K, V>.putUnique(key: K, value: V) : V {
 }
 
 fun <K, V> MutableMap<K, V>.put(lf: Lifetime, key: K, value: V) {
-    lf.bracket({this[key] = value}, {
+    lf.bracketIfAlive({this[key] = value}, {
         this.remove(key)
     })
 }

@@ -13,12 +13,9 @@ import kotlinx.coroutines.cancel
 import kotlin.math.min
 
 
-sealed class Lifetime {
+@JvmInline
+value class Lifetime(internal val definition: LifetimeDefinition) {
     companion object {
-        private val threadLocalExecutingBackingFiled: ThreadLocal<CountingSet<Lifetime>> = threadLocalWithInitial { CountingSet() }
-        // !!! IMPORTANT !!! Don't use 'by ThreadLocal' to avoid slow reflection initialization
-        internal val threadLocalExecuting get() = threadLocalExecutingBackingFiled.get()
-
         private const val waitForExecutingInTerminationTimeoutMsDefault = 500L
         private val terminationTimeoutMs = arrayOf(250L, 5000L, 30000L)
 
@@ -32,8 +29,8 @@ sealed class Lifetime {
         var waitForExecutingInTerminationTimeoutMs = waitForExecutingInTerminationTimeoutMsDefault //timeout for waiting executeIfAlive in termination
 
 
-        val Eternal: Lifetime get() = LifetimeDefinition.eternal //some marker
-        val Terminated get() = LifetimeDefinition.Terminated.lifetime
+        val Eternal: Lifetime get() = LifetimeDefinition.eternal.lifetime //some marker
+        val Terminated: Lifetime get() = LifetimeDefinition.Terminated.lifetime
 
         inline fun <T> using(block: (Lifetime) -> T): T {
             val def = LifetimeDefinition()
@@ -50,7 +47,7 @@ sealed class Lifetime {
          * Created lifetime inherits the smallest [terminationTimeoutKind]
          */
         fun intersect(lifetime1: Lifetime, lifetime2: Lifetime): Lifetime  {
-            if (lifetime1 === lifetime2 || lifetime2.isEternal)
+            if (lifetime1.referenceEquals(lifetime2) || lifetime2.isEternal)
                 return lifetime1
 
             if (lifetime1.isEternal)
@@ -63,13 +60,13 @@ sealed class Lifetime {
          * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
          * Created lifetime inherits the smallest [terminationTimeoutKind]
          */
-        fun intersect(vararg lifetimes: Lifetime): Lifetime = defineIntersection(*lifetimes).lifetime
+        fun intersect(lifetimes: List<Lifetime>): Lifetime = defineIntersection(lifetimes).lifetime
 
         /**
          * Creates an intersection of some lifetimes: new lifetime that terminate when either one terminates.
          * Created lifetime inherits the smallest [terminationTimeoutKind]
          */
-        fun defineIntersection(vararg lifetimes: Lifetime): LifetimeDefinition {
+        fun defineIntersection(lifetimes: List<Lifetime>): LifetimeDefinition {
             assert(lifetimes.isNotEmpty()) { "One or more parameters must be passed" }
 
             return LifetimeDefinition().also { res ->
@@ -128,13 +125,6 @@ sealed class Lifetime {
                 terminationTimeoutMs[timeoutKind.value - 1] = milliseconds
             }
         }
-
-
-        @Deprecated("Use lifetime.createNested { def -> ... }")
-        fun define(lifetime: Lifetime, atomicAction: (LifetimeDefinition, Lifetime) -> Unit) = lifetime.createNested { atomicAction(it, it) }
-
-        @Deprecated("Use lifetime.createNested", ReplaceWith("lifetime.createNested()"))
-        fun create(lifetime: Lifetime): LifetimeDefinition = lifetime.createNested()
     }
 
     @Deprecated("Use lifetime.createNested", ReplaceWith("lifetime.createNested()"))
@@ -160,49 +150,33 @@ sealed class Lifetime {
         }
     }
 
-    abstract val status : LifetimeStatus
-    abstract val terminationTimeoutKind: LifetimeTerminationTimeoutKind
+    val status : LifetimeStatus get() = definition.status
+    val terminationTimeoutKind: LifetimeTerminationTimeoutKind get() = definition.terminationTimeoutKind
 
-    abstract val allowTerminationUnderExecution: Boolean
-    abstract val coroutineScope: CoroutineScope
+    val allowTerminationUnderExecution: Boolean get() = definition.allowTerminationUnderExecution
+    val coroutineScope: CoroutineScope get() = definition.coroutineScope
 
-    internal val definition get() = this as LifetimeDefinition
+    fun <T : Any> executeIfAlive(action: () -> T) : T? = definition.executeIfAlive(action)
+    fun <T : Any> executeOrThrow(action: () -> T) : T = definition.executeOrThrow(action)
 
-    abstract fun <T : Any> executeIfAlive(action: () -> T) : T?
-    abstract fun <T : Any> executeOrThrow(action: () -> T) : T
+    fun onTerminationIfAlive(action: () -> Unit): Boolean = definition.onTerminationIfAlive(action)
+    fun onTerminationIfAlive(closeable: Closeable): Boolean = definition.onTerminationIfAlive(closeable)
 
-    abstract fun onTerminationIfAlive(action: () -> Unit): Boolean
-    abstract fun onTerminationIfAlive(closeable: Closeable): Boolean
+    fun onTermination(action: () -> Unit): Unit = definition.onTermination(action)
+    fun onTermination(closeable: Closeable): Unit = definition.onTermination(closeable)
 
-    abstract fun onTermination(action: () -> Unit)
-    abstract fun onTermination(closeable: Closeable)
+    fun <T : Any> bracketIfAlive(opening: () -> T, terminationAction: () -> Unit): T? = definition.bracketIfAlive(opening, terminationAction)
+    fun <T : Any> bracketIfAliveEx(opening: () -> T, terminationAction: (T) -> Unit): T? = definition.bracketIfAliveEx(opening, terminationAction)
 
-    @Deprecated("Use bracketIfAlive", ReplaceWith("bracketIfAlive(opening, terminationAction)"))
-    fun <T : Any> bracket(opening: () -> T, terminationAction: () -> Unit): T? = bracketIfAlive(opening, terminationAction)
+    fun <T : Any> bracketOrThrow(opening: () -> T, terminationAction: () -> Unit): T = definition.bracketOrThrow(opening, terminationAction)
+    fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T = definition.bracketOrThrowEx(opening, terminationAction)
 
-    abstract fun <T : Any> bracketIfAlive(opening: () -> T, terminationAction: () -> Unit): T?
-    //todo think of a better name or use only this api (more clear code, but more allocations)
-    abstract fun <T : Any> bracketIfAliveEx(opening: () -> T, terminationAction: (T) -> Unit): T?
-
-    abstract fun <T : Any> bracketOrThrow(opening: () -> T, terminationAction: () -> Unit): T
-    //todo think of a better name or use only this api (more clear code, but more allocations)
-    abstract fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T
-
-    abstract fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean)
-
-    @Deprecated("Use onTermination", ReplaceWith("onTermination(action)"))
-    fun add(action: () -> Unit) = onTermination(action)
-
-    @Deprecated("Use isNotAlive", ReplaceWith("isNotAlive"))
-    val isTerminated: Boolean get() = isNotAlive
-
-    @Deprecated("Use executeIfAlive(action)", ReplaceWith("executeIfAlive(action)"))
-    fun <T : Any> ifAlive(action: () -> T) = executeIfAlive(action)
+    fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean): Unit = definition.attach(child, inheritTimeoutKind)
 }
 
 
-class LifetimeDefinition constructor() : Lifetime() {
-    val lifetime: Lifetime get() = this
+class LifetimeDefinition constructor() {
+    val lifetime: Lifetime get() = Lifetime(this)
 
     constructor(parent: Lifetime) : this() {
         parent.attach(this, inheritTimeoutKind = true)
@@ -218,6 +192,10 @@ class LifetimeDefinition constructor() : Lifetime() {
         private val logErrorAfterExecution = BitSlice.bool(mutexSlice)
         private val terminationTimeoutKindSlice = BitSlice.enum<LifetimeTerminationTimeoutKind>(logErrorAfterExecution)
         private val allowTerminationUnderExecutionSlice = BitSlice.bool(terminationTimeoutKindSlice)
+
+        private val threadLocalExecutingBackingFiled: ThreadLocal<CountingSet<LifetimeDefinition>> = threadLocalWithInitial { CountingSet() }
+        // !!! IMPORTANT !!! Don't use 'by ThreadLocal' to avoid slow reflection initialization
+        internal val threadLocalExecuting get() = threadLocalExecutingBackingFiled.get()
 
 
         val Terminated : LifetimeDefinition = LifetimeDefinition().apply { id = "Terminated" }
@@ -238,7 +216,7 @@ class LifetimeDefinition constructor() : Lifetime() {
     /**
      * Only possible [Alive] -> [Canceling] -> [Terminating] -> [Terminated]
      */
-    override val status : LifetimeStatus get() = statusSlice[state]
+    val status : LifetimeStatus get() = statusSlice[state]
 
     /**
      * Gets or sets termination timeout kind for the definition.
@@ -246,19 +224,19 @@ class LifetimeDefinition constructor() : Lifetime() {
      * The sub-definitions inherit this value at the moment of creation.
      * The changing of terminationTimeoutKind doesn't affect already created sub-definitions.
      */
-    override var terminationTimeoutKind: LifetimeTerminationTimeoutKind
+    var terminationTimeoutKind: LifetimeTerminationTimeoutKind
         get() = terminationTimeoutKindSlice[state]
         set(value) {
             terminationTimeoutKindSlice.atomicUpdate(state, value)
         }
 
-    override var allowTerminationUnderExecution: Boolean
+    var allowTerminationUnderExecution: Boolean
         get() = allowTerminationUnderExecutionSlice[state]
         set(value) {
             allowTerminationUnderExecutionSlice.atomicUpdate(state, value)
         }
 
-    override val coroutineScope: CoroutineScope
+    val coroutineScope: CoroutineScope
         get() = tryGetOrCreateAdditionalFields()?.scope ?: RdCoroutineScope.current.cancelledScope
 
     /**
@@ -277,7 +255,7 @@ class LifetimeDefinition constructor() : Lifetime() {
                 field = null
         }
 
-    override fun<T : Any> executeIfAlive(action: () -> T): T? {
+    fun<T : Any> executeIfAlive(action: () -> T): T? {
         //increase [executing] by 1
         while (true) {
             val s = state.get()
@@ -298,13 +276,13 @@ class LifetimeDefinition constructor() : Lifetime() {
             state.decrementAndGet()
 
             if (logErrorAfterExecution[state]) {
-                val terminationTimeoutMs = getTerminationTimeoutMs(terminationTimeoutKind)
+                val terminationTimeoutMs = Lifetime.getTerminationTimeoutMs(terminationTimeoutKind)
                 log.error { "executeIfAlive after termination of $this took too much time (>${terminationTimeoutMs}ms)" }
             }
         }
     }
 
-    override fun <T : Any> executeOrThrow(action: () -> T): T {
+    fun <T : Any> executeOrThrow(action: () -> T): T {
         return executeIfAlive(action) ?: throw CancellationException()
     }
 
@@ -340,7 +318,7 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
     private fun tryGetAdditionalFields(): AdditionalFields? {
-        if (lifetime === eternal)
+        if (isEternal)
             return EternalAdditionalFields
 
         val resources = resources ?: return null
@@ -361,7 +339,7 @@ class LifetimeDefinition constructor() : Lifetime() {
 
     private fun tryAdd(action: Any): Boolean {
         //we could add anything to Eternal lifetime and it'll never be executed
-        if (lifetime === eternal)
+        if (isEternal)
             return true
 
         return underMutexIfLessOrEqual(Canceling) {
@@ -458,7 +436,7 @@ class LifetimeDefinition constructor() : Lifetime() {
         markCancelingRecursively()
 
         //wait for all executions finished
-        val terminationTimeoutMs = getTerminationTimeoutMs(terminationTimeoutKind)
+        val terminationTimeoutMs = Lifetime.getTerminationTimeoutMs(terminationTimeoutKind)
         if (!spinUntil(terminationTimeoutMs) { executingSlice[state] <= threadLocalExecuting[this] }) {
             log.warn {
                 "$this: can't wait for `executeIfAlive` completed on other thread in $terminationTimeoutMs ms. Keep termination.${System.lineSeparator()}" +
@@ -521,11 +499,11 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
 
-    override fun onTerminationIfAlive(action: () -> Unit) = tryAdd(action)
-    override fun onTerminationIfAlive(closeable: Closeable) = tryAdd(closeable)
+    fun onTerminationIfAlive(action: () -> Unit) = tryAdd(action)
+    fun onTerminationIfAlive(closeable: Closeable) = tryAdd(closeable)
 
-    override fun onTermination(action: () -> Unit) = onTerminationImpl(action)
-    override fun onTermination(closeable: Closeable) = onTerminationImpl(closeable)
+    fun onTermination(action: () -> Unit) = onTerminationImpl(action)
+    fun onTermination(closeable: Closeable) = onTerminationImpl(closeable)
 
     private fun onTerminationImpl(resource: Any) {
         if (tryAdd(resource)) return
@@ -546,7 +524,7 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
 
-    override fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean) {
+    fun attach(child: LifetimeDefinition, inheritTimeoutKind: Boolean) {
         require(!child.isEternal) { "$this: Can't attach eternal lifetime" }
 
         if (child.isNotAlive)
@@ -560,7 +538,7 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 
 
-    override fun<T:Any> bracketIfAlive(opening: () -> T, terminationAction: () -> Unit) : T? {
+    fun<T:Any> bracketIfAlive(opening: () -> T, terminationAction: () -> Unit) : T? {
         return executeIfAlive {
             val res = opening()
 
@@ -572,7 +550,7 @@ class LifetimeDefinition constructor() : Lifetime() {
         }
     }
 
-    override fun <T : Any> bracketIfAliveEx(opening: () -> T, terminationAction: (T) -> Unit): T? {
+    fun <T : Any> bracketIfAliveEx(opening: () -> T, terminationAction: (T) -> Unit): T? {
         return executeIfAlive {
             val res = opening()
 
@@ -584,11 +562,11 @@ class LifetimeDefinition constructor() : Lifetime() {
         }
     }
 
-    override fun <T : Any> bracketOrThrow(opening: () -> T, terminationAction: () -> Unit): T {
+    fun <T : Any> bracketOrThrow(opening: () -> T, terminationAction: () -> Unit): T {
         return bracketIfAlive(opening, terminationAction) ?: throw CancellationException()
     }
 
-    override fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T {
+    fun <T : Any> bracketOrThrowEx(opening: () -> T, terminationAction: (T) -> Unit): T {
         return bracketIfAliveEx(opening, terminationAction) ?: throw CancellationException()
     }
 
@@ -617,28 +595,30 @@ class LifetimeDefinition constructor() : Lifetime() {
     }
 }
 
-fun Lifetime.waitTermination() = spinUntil { status == Terminated }
 
-fun Lifetime.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
-fun Lifetime.assertAlive() { assert(status == Alive) { "Not alive: $this" } }
+fun Lifetime?.referenceEquals(lifetime: Lifetime?) = this?.definition === lifetime?.definition
 
-val Lifetime.isAlive : Boolean get() = status == Alive
-val Lifetime.isNotAlive : Boolean get() = status != Alive
-val Lifetime.isEternal : Boolean get() = this === Lifetime.Eternal
+fun Lifetime.waitTermination(): Unit = definition.waitTermination()
+
+fun Lifetime.throwIfNotAlive(): Unit = definition.throwIfNotAlive()
+fun Lifetime.assertAlive(): Unit = definition.assertAlive()
+
+val Lifetime.isAlive : Boolean get() = definition.isAlive
+val Lifetime.isNotAlive : Boolean get() = definition.isNotAlive
+val Lifetime.isEternal : Boolean get() = definition.isEternal
+
+fun LifetimeDefinition.waitTermination() = spinUntil { status == Terminated }
+
+fun LifetimeDefinition.throwIfNotAlive() { if (status != Alive) throw CancellationException() }
+fun LifetimeDefinition.assertAlive() { assert(status == Alive) { "Not alive: $this" } }
+
+val LifetimeDefinition.isAlive : Boolean get() = status == Alive
+val LifetimeDefinition.isNotAlive : Boolean get() = status != Alive
+val LifetimeDefinition.isEternal : Boolean get() = this === LifetimeDefinition.eternal
 
 
-private fun Lifetime.badStatusForAddActions() {
+private fun LifetimeDefinition.badStatusForAddActions() {
     error ("$this: can't add termination action if lifetime terminating or terminated (Status > Canceling); you can consider usage of `onTerminationIfAlive`")
-}
-
-@Deprecated("Use the native implementation", ReplaceWith("onTermination(action)"))
-fun Lifetime.onTermination(action: () -> Unit) {
-    onTermination(action)
-}
-
-@Deprecated("Use the native implementation", ReplaceWith("onTermination(closeable)"))
-fun Lifetime.onTermination(closeable: Closeable) {
-    onTermination(closeable)
 }
 
 

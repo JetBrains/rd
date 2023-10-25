@@ -119,7 +119,7 @@ class CallSiteWiredRdTask<TReq, TRes>(
 
             try {
                 definition.onTermination { sendCancellation() }
-                resultFromWire.value.preBindPolymorphic(definition, call, rdid.toString())
+                resultFromWire.value.preBindPolymorphic(definition.lifetime, call, rdid.toString())
                 resultFromWire.value.bindPolymorphic()
 
                 outerLifetime.attach(definition, true)

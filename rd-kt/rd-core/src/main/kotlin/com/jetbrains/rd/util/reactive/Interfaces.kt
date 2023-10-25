@@ -3,7 +3,6 @@ package com.jetbrains.rd.util.reactive
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
 
 
 /**
@@ -72,10 +71,10 @@ interface IPropertyBase<out T> : ISource<T>, IViewable<T> {
         // nested lifetime is needed due to exception that could be thrown
         // while viewing a property change right at the moment of <param>lifetime</param>'s termination
         // but before <param>handler</param> gets removed (e.g. p.view(lf) { /*here*/ }; lf += { p.set(..) })
-        val lf = lifetime.createNested()
+        val lf = lifetime.createNested().lifetime
         SequentialLifetimes(lf).let {
             advise(lf) { v ->
-                if (lf.isAlive) handler(it.next(), v)
+                if (lf.isAlive) handler(it.next().lifetime, v)
             }
         }
     }

@@ -9,6 +9,7 @@ import com.jetbrains.rd.framework.test.util.TestBase
 import com.jetbrains.rd.framework.test.util.TestScheduler
 import com.jetbrains.rd.framework.util.NetUtils
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.spinUntil
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -55,11 +56,12 @@ class SocketWireTest : TestBase() {
         }
     }
 
-    lateinit var socketLifetime: Lifetime
+    lateinit var socketLifetimeDefinition: LifetimeDefinition
+    val socketLifetime: Lifetime get() = socketLifetimeDefinition.lifetime
 
     @BeforeEach
     fun setUp() {
-        socketLifetime = lifetime.createNested().lifetime
+        socketLifetimeDefinition = lifetime.createNested()
 //        ConsoleLoggerFactory.minLevelToLog = LogLevel.Trace
     }
 
@@ -295,23 +297,26 @@ class SocketWireTest : TestBase() {
             assertTrue(spinUntil(spinTimeoutMs, condition), "Timeout of $spinTimeoutMs ms.")
         }
 
-        val sLifetime = lifetime.createNested()
+        val sLifetimeDef = lifetime.createNested()
+        val sLifetime = sLifetimeDef.lifetime
         val factory = SocketWire.ServerFactory(sLifetime, TestScheduler, 0)
 
-        val lf1 = sLifetime.createNested()
+        val lf1Def = sLifetime.createNested()
+        val lf1 = lf1Def.lifetime
         SocketWire.Client(lf1, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 1 }
 
-        val lf2 = sLifetime.createNested()
+        val lf2Def = sLifetime.createNested()
+        val lf2 = lf2Def.lifetime
         SocketWire.Client(lf2, TestScheduler, factory.localPort)
 
         spinUntil { factory.size == 2 }
 
-        lf1.terminate()
+        lf1Def.terminate()
         spinUntil { factory.size == 1 }
 
-        sLifetime.terminate()
+        sLifetimeDef.terminate()
         spinUntil { factory.size == 0 }
     }
 
