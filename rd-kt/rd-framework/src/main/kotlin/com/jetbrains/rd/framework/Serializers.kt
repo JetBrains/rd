@@ -3,8 +3,11 @@ package com.jetbrains.rd.framework
 import com.jetbrains.rd.framework.base.ISerializersOwner
 import com.jetbrains.rd.framework.impl.RdSecureString
 import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.hash.getPlatformIndependentHash
 import com.jetbrains.rd.util.lifetime.Lifetime
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
+import kotlin.reflect.jvm.jvmName
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -33,9 +36,8 @@ class Serializers : ISerializers {
 
 
 
-    val types = hashMapOf<RdId, KClass<*>>()
-    val writers = hashMapOf<KClass<*>, Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>>()
-    val marshallers = hashMapOf<RdId, IMarshaller<*>>()
+    private val writers = ConcurrentHashMap<KClass<*>, IMarshaller<*>>()
+    private val marshallers = ConcurrentHashMap<RdId, IMarshaller<*>>()
 
     init {
         backgroundRegistrar.invokeOrQueue {
@@ -50,19 +52,15 @@ class Serializers : ISerializers {
         }
 
         val id = serializer.id
-        val t = serializer._type
-
-        Protocol.initializationLogger.trace { "Registering type ${t.simpleName}, id = $id" }
-
-        val existing = types[id]
+        val existing = marshallers[id]
         if (existing != null) {
-            require(existing == t) { "Can't register ${t.simpleName} with id: $id, already registered: ${existing.simpleName}" }
-        } else {
-            types[id] = t
+            require(existing.fqn == serializer.fqn) { "Can't register ${serializer.fqn} with id: $id, already registered: ${serializer.fqn}" }
+        }  else {
+            Protocol.initializationLogger.trace { "Registering type ${serializer.fqn}, id = $id" }
+            marshallers[id] = serializer
+            if (serializer !is LazyCompanionMarshaller)
+                writers[serializer._type] = serializer
         }
-
-        marshallers[id] = serializer
-        writers[t] = Pair(id, serializer::write) as Pair<RdId, (SerializationCtx, AbstractBuffer, Any) -> Unit>
     }
 
     override fun get(id: RdId): IMarshaller<*>? {
@@ -102,22 +100,34 @@ class Serializers : ISerializers {
                 ?: throw IllegalStateException("Non-null object expected")
     }
 
+    private fun <T : Any> getWriter(clazz: KClass<out T>): IMarshaller<T> {
+        val marshaller = writers.getOrPut(clazz) {
+            val id = RdId(clazz.simpleName.getPlatformIndependentHash())
+            marshallers[id] ?: cantFindWriter(clazz)
+        }
+
+        return marshaller as? IMarshaller<T> ?: cantFindWriter(clazz)
+    }
+
+    private fun <T : Any> cantFindWriter(clazz: KClass<T>): Nothing {
+        throw IllegalStateException("Can't find writer by class: ${clazz}. $notRegisteredErrorMessage")
+    }
+
     override fun <T : Any> writePolymorphic(ctx: SerializationCtx, stream: AbstractBuffer, value: T) {
         backgroundRegistrar.flush()
 
-        val (id, writer) = writers[value::class]
-                ?: throw IllegalStateException("Can't find writer by class: ${value::class}. $notRegisteredErrorMessage")
+        val serializer = getWriter(value::class)
 
         if (value is IUnknownInstance) {
             value.unknownId.write(stream)
         } else {
-            id.write(stream)
+            serializer.id.write(stream)
         }
 
         val lengthTagPosition = stream.position
         stream.writeInt(0)
         val objectStartPosition = stream.position
-        writer(ctx, stream, value)
+        serializer.write(ctx, stream, value)
         val objectEndPosition = stream.position
         stream.position = lengthTagPosition
         stream.writeInt(objectEndPosition - objectStartPosition)
