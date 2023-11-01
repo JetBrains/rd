@@ -1,5 +1,6 @@
 package com.jetbrains.rd.framework
 
+import com.jetbrains.rd.framework.FrameworkMarshallers.create
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.string.RName
@@ -9,7 +10,7 @@ object RNameMarshaller {
         val isEmpty = buffer.readBoolean()
         if (isEmpty)
             return RName.Empty
-        
+
         val rootName = buffer.readString()
         var last = buffer.readBoolean()
         var rName = RName(rootName)
@@ -41,8 +42,7 @@ object RNameMarshaller {
 }
 
 internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
-    val marshaller = FrameworkMarshallers.create(
-        { buffer ->
+    val marshaller = create(ExtCreationInfo::class, { buffer ->
             val rName = RNameMarshaller.read(buffer)
             val rdId = buffer.readNullable { buffer.readRdId() }
             val hash = buffer.readLong()

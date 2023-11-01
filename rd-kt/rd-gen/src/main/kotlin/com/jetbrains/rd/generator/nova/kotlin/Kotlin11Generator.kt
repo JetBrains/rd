@@ -9,6 +9,7 @@ import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
+import com.jetbrains.rd.util.hash.getPlatformIndependentHash
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.condstr
@@ -519,6 +520,7 @@ open class Kotlin11Generator(
             println()
             block("companion object : IMarshaller<${decl.name}>") {
                 + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
+                + "override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
                 println()
                 readerTrait(decl)
                 println()
@@ -543,6 +545,7 @@ open class Kotlin11Generator(
             println()
             block("companion object : IMarshaller<${decl.name}>, IAbstractDeclaration<${decl.name}>") {
                 +"override val _type: KClass<${decl.name}> = ${decl.name}::class"
+                +"override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
                 println()
                 readerTrait(decl)
                 println()
@@ -609,8 +612,17 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
         block("override fun registerSerializersCore(serializers: ISerializers) ") {
+            var first = true
             types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
-                "serializers.register(${it.serializerRef(decl, true)})"
+                if (it is Declaration && it.getSetting(Intrinsic) == null) {
+                    if (first) {
+                        +"val classLoader = javaClass.classLoader"
+                        first = false
+                    }
+                    "serializers.register(LazyCompanionMarshaller(RdId(${it.name.getPlatformIndependentHash()}), classLoader, \"${it.namespace}.${it.name}\"))"
+                } else {
+                    "serializers.register(${it.serializerRef(decl, true)})"
+                }
             }
 
             if (decl is Root) {
@@ -1087,10 +1099,21 @@ open class Kotlin11Generator(
                 docComment(it.documentation) + it.name
             }
             println()
-            block("companion object") {
+            block("companion object : IMarshaller<${decl.substitutedName(decl)}>") {
                 +"val marshaller = FrameworkMarshallers.enum${decl.setOrEmpty}<${decl.name}>()"
                 println()
                 constantTrait(decl)
+                println()
+                + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
+                + "override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
+                println()
+                block("override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.substitutedName(decl)}") {
+                    +"return marshaller.read(ctx, buffer)"
+                }
+                println()
+                block("override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ${decl.substitutedName(decl)}) ") {
+                    +"marshaller.write(ctx, buffer, value)"
+                }
             }
         }
     }
