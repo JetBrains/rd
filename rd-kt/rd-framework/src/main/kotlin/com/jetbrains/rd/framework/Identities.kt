@@ -11,9 +11,12 @@ enum class IdKind {
 }
 
 //PLEASE DO NOT CHANGE IT!!! IT'S EXACTLY THE SAME ON C# SIDE
-fun String?.getPlatformIndependentHash(initial: Long = 19L) : Long = this?.fold(initial) { acc, c -> acc*31 + c.toInt()} ?:0
-fun Int.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
-fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (this + 1)
+@Deprecated("Api moved to com.jetbrains.rd.util.hash", ReplaceWith("getPlatformIndependentHash(initial)","com.jetbrains.rd.util.hash.getPlatformIndependentHash"))
+fun String?.getPlatformIndependentHash(initial: Long = 19L) : Long = getPlatformIndependentHash(initial)
+@Deprecated("Api moved to com.jetbrains.rd.util.hash", ReplaceWith("getPlatformIndependentHash(initial)","com.jetbrains.rd.util.hash.getPlatformIndependentHash"))
+fun Int.getPlatformIndependentHash(initial: Long = 19L) : Long = getPlatformIndependentHash(initial)
+@Deprecated("Api moved to com.jetbrains.rd.util.hash", ReplaceWith("getPlatformIndependentHash(initial)","com.jetbrains.rd.util.hash.getPlatformIndependentHash"))
+fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = getPlatformIndependentHash(initial)
 
 
 /**
