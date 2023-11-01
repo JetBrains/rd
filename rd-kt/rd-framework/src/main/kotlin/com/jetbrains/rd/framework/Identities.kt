@@ -2,6 +2,7 @@ package com.jetbrains.rd.framework
 
 
 import com.jetbrains.rd.util.AtomicInteger
+import com.jetbrains.rd.util.hash.getPlatformIndependentHash
 import com.jetbrains.rd.util.string.condstr
 
 enum class IdKind {
@@ -18,7 +19,8 @@ fun Long.getPlatformIndependentHash(initial: Long = 19L) : Long = initial*31 + (
 /**
  * An identifier of the object that participates in the object graph.
  */
-data class RdId(val hash: Long) {
+@JvmInline
+value class RdId(val hash: Long) {
 
     companion object {
         val Null : RdId = RdId( 0)
