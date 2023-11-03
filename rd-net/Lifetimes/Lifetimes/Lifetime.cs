@@ -7,9 +7,6 @@ using JetBrains.Collections.Viewable;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
-#if !NET35
-
-#endif
 
 namespace JetBrains.Lifetimes
 {
