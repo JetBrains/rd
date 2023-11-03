@@ -25,7 +25,8 @@ class DefaultNlsValuesRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(ClassModel)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(17439278522805508), classLoader, "DefaultNlsValuesRoot.ClassModel"))
             DefaultNlsValuesRoot.register(serializers)
         }
         
@@ -72,6 +73,7 @@ class ClassModel private constructor(
     
     companion object : IMarshaller<ClassModel> {
         override val _type: KClass<ClassModel> = ClassModel::class
+        override val id: RdId get() = RdId(17439278522805508)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ClassModel  {
