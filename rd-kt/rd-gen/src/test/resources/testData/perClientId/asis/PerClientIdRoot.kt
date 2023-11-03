@@ -30,9 +30,10 @@ class PerClientIdRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(InnerClass)
-            serializers.register(PerClientIdStruct)
-            serializers.register(PerClientIdSignal)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(17599967238820149), classLoader, "com.jetbrains.rd.framework.test.cases.perClientId.InnerClass"))
+            serializers.register(LazyCompanionMarshaller(RdId(948719498381570149), classLoader, "com.jetbrains.rd.framework.test.cases.perClientId.PerClientIdStruct"))
+            serializers.register(LazyCompanionMarshaller(RdId(948719498371076920), classLoader, "com.jetbrains.rd.framework.test.cases.perClientId.PerClientIdSignal"))
             PerClientIdRoot.register(serializers)
         }
         
@@ -123,6 +124,7 @@ class InnerClass private constructor(
     
     companion object : IMarshaller<InnerClass> {
         override val _type: KClass<InnerClass> = InnerClass::class
+        override val id: RdId get() = RdId(17599967238820149)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): InnerClass  {
@@ -200,6 +202,7 @@ class PerClientIdSignal (
     
     companion object : IMarshaller<PerClientIdSignal> {
         override val _type: KClass<PerClientIdSignal> = PerClientIdSignal::class
+        override val id: RdId get() = RdId(948719498371076920)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): PerClientIdSignal  {
@@ -250,6 +253,7 @@ class PerClientIdStruct (
     
     companion object : IMarshaller<PerClientIdStruct> {
         override val _type: KClass<PerClientIdStruct> = PerClientIdStruct::class
+        override val id: RdId get() = RdId(948719498381570149)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): PerClientIdStruct  {

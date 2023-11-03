@@ -29,38 +29,39 @@ class ExampleModelNova private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(Selection)
-            serializers.register(Baz)
-            serializers.register(FooBar)
-            serializers.register(Class)
-            serializers.register(Struct)
-            serializers.register(OpenClass)
-            serializers.register(OpenStruct)
-            serializers.register(DerivedClass)
-            serializers.register(DerivedStruct)
-            serializers.register(DerivedOpenClass)
-            serializers.register(DerivedOpenStruct)
-            serializers.register(DerivedStructWith2Interfaces)
-            serializers.register(Document)
-            serializers.register(ScalarExample)
-            serializers.register(TextControl)
-            serializers.register(EnumSetTest.marshaller)
-            serializers.register(Z.marshaller)
-            serializers.register(Completion)
-            serializers.register(Foo_Unknown)
-            serializers.register(ScalarPrimer_Unknown)
-            serializers.register(A_Unknown)
-            serializers.register(BaseClass_Unknown)
-            serializers.register(BaseStruct_Unknown)
-            serializers.register(OpenClass_Unknown)
-            serializers.register(OpenStruct_Unknown)
-            serializers.register(DerivedOpenClass_Unknown)
-            serializers.register(DerivedOpenStruct_Unknown)
-            serializers.register(DerivedBaseClass_Unknown)
-            serializers.register(DerivedBaseStruct_Unknown)
-            serializers.register(BaseClassWithInterface_Unknown)
-            serializers.register(BaseStructWithInterface_Unknown)
-            serializers.register(DerivedClassWith2Interfaces_Unknown)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(576020388116153), classLoader, "org.example.Selection"))
+            serializers.register(LazyCompanionMarshaller(RdId(632584), classLoader, "org.example.Baz"))
+            serializers.register(LazyCompanionMarshaller(RdId(18972494688), classLoader, "org.example.FooBar"))
+            serializers.register(LazyCompanionMarshaller(RdId(609144101), classLoader, "org.example.Class"))
+            serializers.register(LazyCompanionMarshaller(RdId(19349429704), classLoader, "org.example.Struct"))
+            serializers.register(LazyCompanionMarshaller(RdId(572905478059643), classLoader, "org.example.OpenClass"))
+            serializers.register(LazyCompanionMarshaller(RdId(17760070285811506), classLoader, "org.example.OpenStruct"))
+            serializers.register(LazyCompanionMarshaller(RdId(-1667485286246826738), classLoader, "org.example.DerivedClass"))
+            serializers.register(LazyCompanionMarshaller(RdId(3648188347942988543), classLoader, "org.example.DerivedStruct"))
+            serializers.register(LazyCompanionMarshaller(RdId(-5037012260488689180), classLoader, "org.example.DerivedOpenClass"))
+            serializers.register(LazyCompanionMarshaller(RdId(-8573427485006989079), classLoader, "org.example.DerivedOpenStruct"))
+            serializers.register(LazyCompanionMarshaller(RdId(4287876202302424743), classLoader, "org.example.DerivedStructWith2Interfaces"))
+            serializers.register(LazyCompanionMarshaller(RdId(18177246065230), classLoader, "org.example.Document"))
+            serializers.register(LazyCompanionMarshaller(RdId(-3048302864262156661), classLoader, "org.example.ScalarExample"))
+            serializers.register(LazyCompanionMarshaller(RdId(554385840109775197), classLoader, "org.example.TextControl"))
+            serializers.register(LazyCompanionMarshaller(RdId(542326635061440960), classLoader, "org.example.EnumSetTest"))
+            serializers.register(LazyCompanionMarshaller(RdId(679), classLoader, "org.example.Z"))
+            serializers.register(LazyCompanionMarshaller(RdId(17442164506690639), classLoader, "org.example.Completion"))
+            serializers.register(LazyCompanionMarshaller(RdId(543167202472902558), classLoader, "org.example.Foo_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-427415512200834691), classLoader, "org.example.ScalarPrimer_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(560483126050681), classLoader, "org.example.A_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-8929432671501473473), classLoader, "org.example.BaseClass_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-8524399809491771292), classLoader, "org.example.BaseStruct_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-5669233277524003226), classLoader, "org.example.OpenClass_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(308061035262048285), classLoader, "org.example.OpenStruct_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-5977551086017277745), classLoader, "org.example.DerivedOpenClass_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(9196953045680089812), classLoader, "org.example.DerivedOpenStruct_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(9208993593714803624), classLoader, "org.example.DerivedBaseClass_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(364492200926270235), classLoader, "org.example.DerivedBaseStruct_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(1299733233306533130), classLoader, "org.example.BaseClassWithInterface_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-2819848318270682619), classLoader, "org.example.BaseStructWithInterface_Unknown"))
+            serializers.register(LazyCompanionMarshaller(RdId(-485232411962447965), classLoader, "org.example.DerivedClassWith2Interfaces_Unknown"))
         }
         
         
@@ -215,6 +216,7 @@ class A_Unknown (
     
     companion object : IMarshaller<A_Unknown> {
         override val _type: KClass<A_Unknown> = A_Unknown::class
+        override val id: RdId get() = RdId(560483126050681)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): A_Unknown  {
@@ -351,6 +353,7 @@ class BaseClassWithInterface_Unknown (
     
     companion object : IMarshaller<BaseClassWithInterface_Unknown> {
         override val _type: KClass<BaseClassWithInterface_Unknown> = BaseClassWithInterface_Unknown::class
+        override val id: RdId get() = RdId(1299733233306533130)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseClassWithInterface_Unknown  {
@@ -398,6 +401,7 @@ class BaseClass_Unknown (
     
     companion object : IMarshaller<BaseClass_Unknown> {
         override val _type: KClass<BaseClass_Unknown> = BaseClass_Unknown::class
+        override val id: RdId get() = RdId(-8929432671501473473)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseClass_Unknown  {
@@ -510,6 +514,7 @@ class BaseStructWithInterface_Unknown (
     
     companion object : IMarshaller<BaseStructWithInterface_Unknown> {
         override val _type: KClass<BaseStructWithInterface_Unknown> = BaseStructWithInterface_Unknown::class
+        override val id: RdId get() = RdId(-2819848318270682619)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseStructWithInterface_Unknown  {
@@ -565,6 +570,7 @@ class BaseStruct_Unknown (
     
     companion object : IMarshaller<BaseStruct_Unknown> {
         override val _type: KClass<BaseStruct_Unknown> = BaseStruct_Unknown::class
+        override val id: RdId get() = RdId(-8524399809491771292)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BaseStruct_Unknown  {
@@ -649,6 +655,7 @@ class Baz private constructor(
     
     companion object : IMarshaller<Baz> {
         override val _type: KClass<Baz> = Baz::class
+        override val id: RdId get() = RdId(632584)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Baz  {
@@ -848,6 +855,7 @@ class Class (
     
     companion object : IMarshaller<Class> {
         override val _type: KClass<Class> = Class::class
+        override val id: RdId get() = RdId(609144101)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Class  {
@@ -892,6 +900,7 @@ class Completion private constructor(
     
     companion object : IMarshaller<Completion> {
         override val _type: KClass<Completion> = Completion::class
+        override val id: RdId get() = RdId(17442164506690639)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Completion  {
@@ -996,6 +1005,7 @@ class DerivedBaseClass_Unknown (
     
     companion object : IMarshaller<DerivedBaseClass_Unknown> {
         override val _type: KClass<DerivedBaseClass_Unknown> = DerivedBaseClass_Unknown::class
+        override val id: RdId get() = RdId(9208993593714803624)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedBaseClass_Unknown  {
@@ -1089,6 +1099,7 @@ class DerivedBaseStruct_Unknown (
     
     companion object : IMarshaller<DerivedBaseStruct_Unknown> {
         override val _type: KClass<DerivedBaseStruct_Unknown> = DerivedBaseStruct_Unknown::class
+        override val id: RdId get() = RdId(364492200926270235)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedBaseStruct_Unknown  {
@@ -1156,6 +1167,7 @@ class DerivedClass (
     
     companion object : IMarshaller<DerivedClass> {
         override val _type: KClass<DerivedClass> = DerivedClass::class
+        override val id: RdId get() = RdId(-1667485286246826738)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedClass  {
@@ -1250,6 +1262,7 @@ class DerivedClassWith2Interfaces_Unknown (
     
     companion object : IMarshaller<DerivedClassWith2Interfaces_Unknown> {
         override val _type: KClass<DerivedClassWith2Interfaces_Unknown> = DerivedClassWith2Interfaces_Unknown::class
+        override val id: RdId get() = RdId(-485232411962447965)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedClassWith2Interfaces_Unknown  {
@@ -1307,6 +1320,7 @@ open class DerivedOpenClass (
     
     companion object : IMarshaller<DerivedOpenClass>, IAbstractDeclaration<DerivedOpenClass> {
         override val _type: KClass<DerivedOpenClass> = DerivedOpenClass::class
+        override val id: RdId get() = RdId(-5037012260488689180)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenClass  {
@@ -1374,6 +1388,7 @@ class DerivedOpenClass_Unknown (
     
     companion object : IMarshaller<DerivedOpenClass_Unknown> {
         override val _type: KClass<DerivedOpenClass_Unknown> = DerivedOpenClass_Unknown::class
+        override val id: RdId get() = RdId(-5977551086017277745)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenClass_Unknown  {
@@ -1431,6 +1446,7 @@ open class DerivedOpenStruct (
     
     companion object : IMarshaller<DerivedOpenStruct>, IAbstractDeclaration<DerivedOpenStruct> {
         override val _type: KClass<DerivedOpenStruct> = DerivedOpenStruct::class
+        override val id: RdId get() = RdId(-8573427485006989079)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenStruct  {
@@ -1506,6 +1522,7 @@ class DerivedOpenStruct_Unknown (
     
     companion object : IMarshaller<DerivedOpenStruct_Unknown> {
         override val _type: KClass<DerivedOpenStruct_Unknown> = DerivedOpenStruct_Unknown::class
+        override val id: RdId get() = RdId(9196953045680089812)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedOpenStruct_Unknown  {
@@ -1573,6 +1590,7 @@ class DerivedStruct (
     
     companion object : IMarshaller<DerivedStruct> {
         override val _type: KClass<DerivedStruct> = DerivedStruct::class
+        override val id: RdId get() = RdId(3648188347942988543)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedStruct  {
@@ -1641,6 +1659,7 @@ class DerivedStructWith2Interfaces (
     
     companion object : IMarshaller<DerivedStructWith2Interfaces> {
         override val _type: KClass<DerivedStructWith2Interfaces> = DerivedStructWith2Interfaces::class
+        override val id: RdId get() = RdId(4287876202302424743)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): DerivedStructWith2Interfaces  {
@@ -1711,6 +1730,7 @@ class Document private constructor(
     
     companion object : IMarshaller<Document> {
         override val _type: KClass<Document> = Document::class
+        override val id: RdId get() = RdId(18177246065230)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Document  {
@@ -1800,9 +1820,20 @@ enum class EnumSetTest {
     b, 
     c;
     
-    companion object {
+    companion object : IMarshaller<EnumSet<EnumSetTest>> {
         val marshaller = FrameworkMarshallers.enumSet<EnumSetTest>()
         
+        
+        override val _type: KClass<EnumSetTest> = EnumSetTest::class
+        override val id: RdId get() = RdId(542326635061440960)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): EnumSet<EnumSetTest> {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: EnumSet<EnumSetTest>)  {
+            marshaller.write(ctx, buffer, value)
+        }
     }
 }
 
@@ -1861,6 +1892,7 @@ class FooBar (
     
     companion object : IMarshaller<FooBar> {
         override val _type: KClass<FooBar> = FooBar::class
+        override val id: RdId get() = RdId(18972494688)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): FooBar  {
@@ -1918,6 +1950,7 @@ class Foo_Unknown (
     
     companion object : IMarshaller<Foo_Unknown> {
         override val _type: KClass<Foo_Unknown> = Foo_Unknown::class
+        override val id: RdId get() = RdId(543167202472902558)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Foo_Unknown  {
@@ -1997,6 +2030,7 @@ open class OpenClass (
     
     companion object : IMarshaller<OpenClass>, IAbstractDeclaration<OpenClass> {
         override val _type: KClass<OpenClass> = OpenClass::class
+        override val id: RdId get() = RdId(572905478059643)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenClass  {
@@ -2057,6 +2091,7 @@ class OpenClass_Unknown (
     
     companion object : IMarshaller<OpenClass_Unknown> {
         override val _type: KClass<OpenClass_Unknown> = OpenClass_Unknown::class
+        override val id: RdId get() = RdId(-5669233277524003226)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenClass_Unknown  {
@@ -2108,6 +2143,7 @@ open class OpenStruct (
     
     companion object : IMarshaller<OpenStruct>, IAbstractDeclaration<OpenStruct> {
         override val _type: KClass<OpenStruct> = OpenStruct::class
+        override val id: RdId get() = RdId(17760070285811506)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenStruct  {
@@ -2175,6 +2211,7 @@ class OpenStruct_Unknown (
     
     companion object : IMarshaller<OpenStruct_Unknown> {
         override val _type: KClass<OpenStruct_Unknown> = OpenStruct_Unknown::class
+        override val id: RdId get() = RdId(308061035262048285)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): OpenStruct_Unknown  {
@@ -2235,6 +2272,7 @@ data class ScalarExample (
     
     companion object : IMarshaller<ScalarExample> {
         override val _type: KClass<ScalarExample> = ScalarExample::class
+        override val id: RdId get() = RdId(-3048302864262156661)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ScalarExample  {
@@ -2326,6 +2364,7 @@ class ScalarPrimer_Unknown (
     
     companion object : IMarshaller<ScalarPrimer_Unknown> {
         override val _type: KClass<ScalarPrimer_Unknown> = ScalarPrimer_Unknown::class
+        override val id: RdId get() = RdId(-427415512200834691)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ScalarPrimer_Unknown  {
@@ -2390,6 +2429,7 @@ data class Selection (
     
     companion object : IMarshaller<Selection> {
         override val _type: KClass<Selection> = Selection::class
+        override val id: RdId get() = RdId(576020388116153)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Selection  {
@@ -2467,6 +2507,7 @@ class Struct (
     
     companion object : IMarshaller<Struct> {
         override val _type: KClass<Struct> = Struct::class
+        override val id: RdId get() = RdId(19349429704)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Struct  {
@@ -2521,6 +2562,7 @@ class TextControl private constructor(
     
     companion object : IMarshaller<TextControl> {
         override val _type: KClass<TextControl> = TextControl::class
+        override val id: RdId get() = RdId(554385840109775197)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): TextControl  {
@@ -2603,8 +2645,19 @@ enum class Z {
     Bar, 
     z1;
     
-    companion object {
+    companion object : IMarshaller<Z> {
         val marshaller = FrameworkMarshallers.enum<Z>()
         
+        
+        override val _type: KClass<Z> = Z::class
+        override val id: RdId get() = RdId(679)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Z {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Z)  {
+            marshaller.write(ctx, buffer, value)
+        }
     }
 }
