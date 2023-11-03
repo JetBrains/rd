@@ -25,8 +25,9 @@ class ExtensionRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(ClassWithStr)
-            serializers.register(StructWithStr)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(-1687597404575351130), classLoader, "ExtensionRoot.ClassWithStr"))
+            serializers.register(LazyCompanionMarshaller(RdId(-2602185343174852445), classLoader, "ExtensionRoot.StructWithStr"))
             ExtensionRoot.register(serializers)
         }
         
@@ -75,6 +76,7 @@ class ClassWithStr (
     
     companion object : IMarshaller<ClassWithStr> {
         override val _type: KClass<ClassWithStr> = ClassWithStr::class
+        override val id: RdId get() = RdId(-1687597404575351130)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ClassWithStr  {
@@ -141,6 +143,7 @@ data class StructWithStr (
     
     companion object : IMarshaller<StructWithStr> {
         override val _type: KClass<StructWithStr> = StructWithStr::class
+        override val id: RdId get() = RdId(-2602185343174852445)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): StructWithStr  {

@@ -26,8 +26,9 @@ class InternedModelsRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(Editor)
-            serializers.register(Abc)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(18933576544), classLoader, "InternedModelsRoot.Editor"))
+            serializers.register(LazyCompanionMarshaller(RdId(631631), classLoader, "InternedModelsRoot.Abc"))
             InternedModelsRoot.register(serializers)
         }
         
@@ -86,6 +87,7 @@ class Abc (
     
     companion object : IMarshaller<Abc> {
         override val _type: KClass<Abc> = Abc::class
+        override val id: RdId get() = RdId(631631)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Abc  {
@@ -137,6 +139,7 @@ class Editor (
     
     companion object : IMarshaller<Editor> {
         override val _type: KClass<Editor> = Editor::class
+        override val id: RdId get() = RdId(18933576544)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Editor  {

@@ -27,8 +27,9 @@ class RecursivePolymorphicModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(BeTreeGridLine)
-            serializers.register(BeTreeGridLine_Unknown)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(8163186073645594862), classLoader, "org.example.BeTreeGridLine"))
+            serializers.register(LazyCompanionMarshaller(RdId(7212854712083994073), classLoader, "org.example.BeTreeGridLine_Unknown"))
         }
         
         
@@ -109,6 +110,7 @@ open class BeTreeGridLine protected constructor(
     
     companion object : IMarshaller<BeTreeGridLine>, IAbstractDeclaration<BeTreeGridLine> {
         override val _type: KClass<BeTreeGridLine> = BeTreeGridLine::class
+        override val id: RdId get() = RdId(8163186073645594862)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BeTreeGridLine  {
@@ -179,6 +181,7 @@ class BeTreeGridLine_Unknown (
     
     companion object : IMarshaller<BeTreeGridLine_Unknown> {
         override val _type: KClass<BeTreeGridLine_Unknown> = BeTreeGridLine_Unknown::class
+        override val id: RdId get() = RdId(7212854712083994073)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): BeTreeGridLine_Unknown  {
