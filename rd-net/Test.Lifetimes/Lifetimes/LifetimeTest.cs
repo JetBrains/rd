@@ -1421,11 +1421,16 @@ namespace Test.Lifetimes.Lifetimes
     [Test]
     public void EternalLifetimeKeepalive()
     {
-      Assert.Throws<Assertion.AssertionException>(() =>
+      Assert.DoesNotThrow(() =>
       {
         var o = new object();
         Lifetime.Eternal.KeepAlive(o);
       });
+      var ex = Assert.Throws<Exception>(() =>
+      {
+        TestLogger.ExceptionLogger.ThrowLoggedExceptions();
+      });
+      Assert.True(ex.Message.Contains("!IsEternal"));
     }
   }
 }

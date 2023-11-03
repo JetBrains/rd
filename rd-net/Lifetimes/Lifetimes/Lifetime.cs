@@ -608,7 +608,7 @@ namespace JetBrains.Lifetimes
     [PublicAPI]
     public Lifetime KeepAlive(object @object)
     {
-      Assertion.Assert(!IsEternal);
+      LifetimeDefinition.Log.Assert(!IsEternal);
       if (@object == null) throw new ArgumentNullException(nameof(@object));      
 
       return OnTermination(() => GC.KeepAlive(@object));
