@@ -9,6 +9,7 @@
 #include "scheduler/base/IScheduler.h"
 
 #include <condition_variable>
+#include <string>
 #include <thread>
 #include <queue>
 
