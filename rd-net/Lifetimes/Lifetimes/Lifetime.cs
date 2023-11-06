@@ -8,10 +8,6 @@ using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
 
-#if !NET35
-
-#endif
-
 namespace JetBrains.Lifetimes
 {
   /// <summary>
@@ -612,6 +608,7 @@ namespace JetBrains.Lifetimes
     [PublicAPI]
     public Lifetime KeepAlive(object @object)
     {
+      LifetimeDefinition.Log.Assert(!IsEternal);
       if (@object == null) throw new ArgumentNullException(nameof(@object));      
 
       return OnTermination(() => GC.KeepAlive(@object));

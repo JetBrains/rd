@@ -7,8 +7,11 @@ using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
-using JetBrains.Threading;
 using NUnit.Framework;
+#if !NET35
+using JetBrains.Threading;
+#endif
+
 // ReSharper disable MethodSupportsCancellation
 
 namespace Test.Lifetimes.Lifetimes
@@ -1413,6 +1416,21 @@ namespace Test.Lifetimes.Lifetimes
       Assert.AreEqual(LifetimeTerminationTimeoutKind.ExtraLong, Lifetime.Define(definition.Lifetime, "id", (Lifetime ld) => {}).TerminationTimeoutKind);
       
       Assert.AreEqual(LifetimeTerminationTimeoutKind.ExtraLong, OuterLifetime.Define(definition.Lifetime, "id", (ld, lf) => {}).TerminationTimeoutKind);
+    }
+
+    [Test]
+    public void EternalLifetimeKeepalive()
+    {
+      Assert.DoesNotThrow(() =>
+      {
+        var o = new object();
+        Lifetime.Eternal.KeepAlive(o);
+      });
+      var ex = Assert.Throws<Exception>(() =>
+      {
+        TestLogger.ExceptionLogger.ThrowLoggedExceptions();
+      });
+      Assert.True(ex.Message.Contains("!IsEternal"));
     }
   }
 }
