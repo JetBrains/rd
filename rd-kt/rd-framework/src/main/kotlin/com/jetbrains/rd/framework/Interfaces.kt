@@ -6,8 +6,8 @@ import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
-import java.rmi.NotBoundException
 import kotlin.reflect.KClass
+import kotlin.reflect.jvm.jvmName
 
 /**
  * A node in a graph of entities that can be synchronized with its remote copy over a network or a similar connection.
@@ -95,6 +95,32 @@ interface IMarshaller<T : Any> : ISerializer<T> {
     val _type: KClass<*>
     val id : RdId
         get() = RdId(_type.simpleName.getPlatformIndependentHash())
+}
+
+val IMarshaller<*>.fqn: String get() {
+    return if (this is LazyCompanionMarshaller) this.fgn
+    else _type.qualifiedName ?: _type.jvmName
+}
+
+class LazyCompanionMarshaller<T : Any>(
+    override val id: RdId,
+    val classLoader: ClassLoader,
+    val fqn: String
+) : IMarshaller<T> {
+    private val lazy = lazy(LazyThreadSafetyMode.PUBLICATION) {
+        Class.forName(fgn, true, classLoader).getDeclaredField("Companion").get(null) as IMarshaller<T>
+    }
+
+    override val _type: KClass<*>
+        get() = lazy.value._type
+
+    override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): T {
+        return lazy.value.read(ctx, buffer)
+    }
+
+    override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: T) {
+        lazy.value.write(ctx, buffer, value)
+    }
 }
 
 interface IAbstractDeclaration<T> {

@@ -3,6 +3,7 @@ package com.jetbrains.rd.framework
 import com.jetbrains.rd.framework.impl.RdSecureString
 import com.jetbrains.rd.util.*
 import kotlin.reflect.*
+import kotlin.time.Duration
 
 open class UniversalMarshaller<T : Any>(
         override val _type: KClass<*>,
@@ -27,13 +28,18 @@ open class DelegatedMarshaller<TFrom : Any, TTo : Any>(marshaller: IMarshaller<T
 )
 
 object FrameworkMarshallers {
-    inline fun <reified T : Any> create(crossinline reader: (AbstractBuffer) -> T, crossinline writer: (AbstractBuffer, T) -> Unit, predefinedId: Int? = null): UniversalMarshaller<T> {
-        return UniversalMarshaller(T::class, { _, stream -> reader(stream) }, { _, stream, v -> writer(stream, v) }, predefinedId)
+    @Deprecated("Use an overload without inlining", ReplaceWith("create(T::class, reader, writer, predefinedId)", "com.jetbrains.rd.framework.FrameworkMarshallers.create"))
+    inline fun <reified T : Any> create(noinline reader: (AbstractBuffer) -> T, noinline writer: (AbstractBuffer, T) -> Unit, predefinedId: Int? = null): UniversalMarshaller<T> {
+        return create(T::class, reader, writer, predefinedId)
     }
-    
+
+    fun <T : Any> create(clazz: KClass<T>, reader: (AbstractBuffer) -> T, writer: (AbstractBuffer, T) -> Unit, predefinedId: Int? = null): UniversalMarshaller<T> {
+        return UniversalMarshaller(clazz, { _, stream -> reader(stream) }, { _, stream, v -> writer(stream, v) }, predefinedId)
+    }
+
 
     inline fun <reified T : Enum<T>> enum(): UniversalMarshaller<T> {
-        return create({ it.readEnum<T>() }, { stream, x -> stream.writeEnum(x) })
+        return create(T::class, { it.readEnum<T>() }, { stream, x -> stream.writeEnum(x) } )
     }
 
     inline fun <reified T : Enum<T>> enumSet(): UniversalMarshaller<EnumSet<T>> {
@@ -50,21 +56,21 @@ object FrameworkMarshallers {
     }
 
 
-    val Int8 : IMarshaller<Byte> = create(AbstractBuffer::readByte, AbstractBuffer::writeByte, 1)
-    val Int16: IMarshaller<Short> = create(AbstractBuffer::readShort, AbstractBuffer::writeShort, 2)
-    val Int32: IMarshaller<Int> = create(AbstractBuffer::readInt, AbstractBuffer::writeInt, 3)
-    val Int64: IMarshaller<Long> = create(AbstractBuffer::readLong, AbstractBuffer::writeLong, 4)
+    val Int8 : IMarshaller<Byte> = create(kotlin.Byte::class, AbstractBuffer::readByte, AbstractBuffer::writeByte, 1)
+    val Int16: IMarshaller<Short> = create(kotlin.Short::class, AbstractBuffer::readShort, AbstractBuffer::writeShort, 2)
+    val Int32: IMarshaller<Int> = create(kotlin.Int::class, AbstractBuffer::readInt, AbstractBuffer::writeInt, 3)
+    val Int64: IMarshaller<Long> = create(kotlin.Long::class, AbstractBuffer::readLong, AbstractBuffer::writeLong, 4)
 
-    val Float: IMarshaller<Float> = create(AbstractBuffer::readFloat, AbstractBuffer::writeFloat, 5)
-    val Double: IMarshaller<Double> = create(AbstractBuffer::readDouble, AbstractBuffer::writeDouble, 6)
-    val Char: IMarshaller<Char> = create(AbstractBuffer::readChar, AbstractBuffer::writeChar, 7)
-    val Bool: IMarshaller<Boolean> = create(AbstractBuffer::readBoolean, AbstractBuffer::writeBoolean, 8)
+    val Float: IMarshaller<Float> = create(kotlin.Float::class, AbstractBuffer::readFloat, AbstractBuffer::writeFloat, 5)
+    val Double: IMarshaller<Double> = create(kotlin.Double::class, AbstractBuffer::readDouble, AbstractBuffer::writeDouble, 6)
+    val Char: IMarshaller<Char> = create(kotlin.Char::class, AbstractBuffer::readChar, AbstractBuffer::writeChar, 7)
+    val Bool: IMarshaller<Boolean> = create(Boolean::class, AbstractBuffer::readBoolean, AbstractBuffer::writeBoolean, 8)
 
     //empty
-    val Void: IMarshaller<Unit> = create({ }, { _, _ -> }, 9)
+    val Void: IMarshaller<Unit> = create(Unit::class, { }, { _, _ -> }, 9)
 
     //normal string
-    val String: UniversalMarshaller<String> = create(AbstractBuffer::readString, AbstractBuffer::writeString, 10)
+    val String: UniversalMarshaller<String> = create(kotlin.String::class, AbstractBuffer::readString, AbstractBuffer::writeString, 10)
 
     //aliases
     val Byte = Int8
@@ -74,48 +80,48 @@ object FrameworkMarshallers {
 
 
     //jvm-based
-    val Guid: UniversalMarshaller<UUID> = create({ it.readUuid() }, AbstractBuffer::writeUuid, 11)
-    val DateTime: UniversalMarshaller<Date> = create(AbstractBuffer::readDateTime, AbstractBuffer::writeDateTime, 12)
-    val Uri: UniversalMarshaller<URI> = create({ it.readUri() }, AbstractBuffer::writeUri, 13)
-    var TimeSpan: UniversalMarshaller<kotlin.time.Duration> = create(AbstractBuffer::readTimeSpan, AbstractBuffer::writeTimeSpan, 14)
+    val Guid: UniversalMarshaller<UUID> = create(java.util.UUID::class, { it.readUuid() }, AbstractBuffer::writeUuid, 11)
+    val DateTime: UniversalMarshaller<Date> = create(java.util.Date::class, AbstractBuffer::readDateTime, AbstractBuffer::writeDateTime, 12)
+    val Uri: UniversalMarshaller<URI> = create(java.net.URI::class, { it.readUri() }, AbstractBuffer::writeUri, 13)
+    var TimeSpan: UniversalMarshaller<Duration> = create(Duration::class, AbstractBuffer::readTimeSpan, AbstractBuffer::writeTimeSpan, 14)
 
     //rdId
-    val RdId: IMarshaller<RdId> = create(AbstractBuffer::readRdId, AbstractBuffer::writeRdId, 15)
+    val RdId: IMarshaller<RdId> = create(com.jetbrains.rd.framework.RdId::class, AbstractBuffer::readRdId, AbstractBuffer::writeRdId, 15)
 
     //string for passwords
-    val SecureString: IMarshaller<RdSecureString> = create({ RdSecureString(it.readString()) }, { buf, str -> buf.writeString(str.contents) }, 16)
+    val SecureString: IMarshaller<RdSecureString> = create(RdSecureString::class, { RdSecureString(it.readString()) }, { buf, str -> buf.writeString(str.contents) }, 16)
 
     //arrays
-    val ByteArray: UniversalMarshaller<ByteArray> = create(AbstractBuffer::readByteArray, AbstractBuffer::writeByteArray, 31)
-    val ShortArray: UniversalMarshaller<ShortArray> = create(AbstractBuffer::readShortArray, AbstractBuffer::writeShortArray, 32)
-    val IntArray: UniversalMarshaller<IntArray> = create(AbstractBuffer::readIntArray, AbstractBuffer::writeIntArray, 33)
-    val LongArray: UniversalMarshaller<LongArray> = create(AbstractBuffer::readLongArray, AbstractBuffer::writeLongArray, 34)
+    val ByteArray: UniversalMarshaller<ByteArray> = create(kotlin.ByteArray::class, AbstractBuffer::readByteArray, AbstractBuffer::writeByteArray, 31)
+    val ShortArray: UniversalMarshaller<ShortArray> = create(kotlin.ShortArray::class, AbstractBuffer::readShortArray, AbstractBuffer::writeShortArray, 32)
+    val IntArray: UniversalMarshaller<IntArray> = create(kotlin.IntArray::class, AbstractBuffer::readIntArray, AbstractBuffer::writeIntArray, 33)
+    val LongArray: UniversalMarshaller<LongArray> = create(kotlin.LongArray::class, AbstractBuffer::readLongArray, AbstractBuffer::writeLongArray, 34)
 
-    val FloatArray: UniversalMarshaller<FloatArray> = create(AbstractBuffer::readFloatArray, AbstractBuffer::writeFloatArray, 35)
-    val DoubleArray: UniversalMarshaller<DoubleArray> = create(AbstractBuffer::readDoubleArray, AbstractBuffer::writeDoubleArray, 36)
+    val FloatArray: UniversalMarshaller<FloatArray> = create(kotlin.FloatArray::class, AbstractBuffer::readFloatArray, AbstractBuffer::writeFloatArray, 35)
+    val DoubleArray: UniversalMarshaller<DoubleArray> = create(kotlin.DoubleArray::class, AbstractBuffer::readDoubleArray, AbstractBuffer::writeDoubleArray, 36)
 
-    val CharArray: UniversalMarshaller<CharArray> = create(AbstractBuffer::readCharArray, AbstractBuffer::writeCharArray, 37)
-    val BooleanArray: UniversalMarshaller<BooleanArray> = create(AbstractBuffer::readBooleanArray, AbstractBuffer::writeBooleanArray, 38)
+    val CharArray: UniversalMarshaller<CharArray> = create(kotlin.CharArray::class, AbstractBuffer::readCharArray, AbstractBuffer::writeCharArray, 37)
+    val BooleanArray: UniversalMarshaller<BooleanArray> = create(kotlin.BooleanArray::class, AbstractBuffer::readBooleanArray, AbstractBuffer::writeBooleanArray, 38)
 
 
     //unsigned
     @ExperimentalUnsignedTypes
-    val UByte : IMarshaller<UByte> = create(AbstractBuffer::readUByte, AbstractBuffer::writeUByte, 41)
+    val UByte : IMarshaller<UByte> = create(kotlin.UByte::class, AbstractBuffer::readUByte, AbstractBuffer::writeUByte, 41)
     @ExperimentalUnsignedTypes
-    val UShort: IMarshaller<UShort> = create(AbstractBuffer::readUShort, AbstractBuffer::writeUShort, 42)
+    val UShort: IMarshaller<UShort> = create(kotlin.UShort::class, AbstractBuffer::readUShort, AbstractBuffer::writeUShort, 42)
     @ExperimentalUnsignedTypes
-    val UInt: IMarshaller<UInt> = create(AbstractBuffer::readUInt, AbstractBuffer::writeUInt, 43)
+    val UInt: IMarshaller<UInt> = create(kotlin.UInt::class, AbstractBuffer::readUInt, AbstractBuffer::writeUInt, 43)
     @ExperimentalUnsignedTypes
-    val ULong: IMarshaller<ULong> = create(AbstractBuffer::readULong, AbstractBuffer::writeULong, 44)
+    val ULong: IMarshaller<ULong> = create(kotlin.ULong::class, AbstractBuffer::readULong, AbstractBuffer::writeULong, 44)
 
     @ExperimentalUnsignedTypes
-    val UByteArray: UniversalMarshaller<UByteArray> = create(AbstractBuffer::readUByteArray, AbstractBuffer::writeUByteArray, 45)
+    val UByteArray: UniversalMarshaller<UByteArray> = create(kotlin.UByteArray::class, AbstractBuffer::readUByteArray, AbstractBuffer::writeUByteArray, 45)
     @ExperimentalUnsignedTypes
-    val UShortArray: UniversalMarshaller<UShortArray> = create(AbstractBuffer::readUShortArray, AbstractBuffer::writeUShortArray, 46)
+    val UShortArray: UniversalMarshaller<UShortArray> = create(kotlin.UShortArray::class, AbstractBuffer::readUShortArray, AbstractBuffer::writeUShortArray, 46)
     @ExperimentalUnsignedTypes
-    val UIntArray: UniversalMarshaller<UIntArray> = create(AbstractBuffer::readUIntArray, AbstractBuffer::writeUIntArray, 47)
+    val UIntArray: UniversalMarshaller<UIntArray> = create(kotlin.UIntArray::class, AbstractBuffer::readUIntArray, AbstractBuffer::writeUIntArray, 47)
     @ExperimentalUnsignedTypes
-    val ULongArray: UniversalMarshaller<ULongArray> = create(AbstractBuffer::readULongArray, AbstractBuffer::writeULongArray, 48)
+    val ULongArray: UniversalMarshaller<ULongArray> = create(kotlin.ULongArray::class, AbstractBuffer::readULongArray, AbstractBuffer::writeULongArray, 48)
 
     fun registerIn(serializers: ISerializers) {
         serializers.register(Int8)

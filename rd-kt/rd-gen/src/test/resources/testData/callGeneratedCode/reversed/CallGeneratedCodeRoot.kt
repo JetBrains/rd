@@ -25,9 +25,10 @@ class CallGeneratedCodeRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(Editor)
-            serializers.register(Es.marshaller)
-            serializers.register(Abc)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(18933576544), classLoader, "call.generated.code.root.Editor"))
+            serializers.register(LazyCompanionMarshaller(RdId(20513), classLoader, "call.generated.code.root.Es"))
+            serializers.register(LazyCompanionMarshaller(RdId(631631), classLoader, "call.generated.code.root.Abc"))
             CallGeneratedCodeRoot.register(serializers)
         }
         
@@ -72,6 +73,7 @@ class Abc (
     
     companion object : IMarshaller<Abc> {
         override val _type: KClass<Abc> = Abc::class
+        override val id: RdId get() = RdId(631631)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Abc  {
@@ -127,6 +129,7 @@ class Editor private constructor(
     
     companion object : IMarshaller<Editor> {
         override val _type: KClass<Editor> = Editor::class
+        override val id: RdId get() = RdId(18933576544)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): Editor  {
@@ -213,8 +216,19 @@ enum class Es {
     b, 
     c;
     
-    companion object {
+    companion object : IMarshaller<EnumSet<Es>> {
         val marshaller = FrameworkMarshallers.enumSet<Es>()
         
+        
+        override val _type: KClass<Es> = Es::class
+        override val id: RdId get() = RdId(20513)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): EnumSet<Es> {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: EnumSet<Es>)  {
+            marshaller.write(ctx, buffer, value)
+        }
     }
 }
