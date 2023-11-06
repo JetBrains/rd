@@ -105,7 +105,7 @@ val IMarshaller<*>.fqn: String get() {
 class LazyCompanionMarshaller<T : Any>(
     override val id: RdId,
     val classLoader: ClassLoader,
-    val fgn: String
+    val fqn: String
 ) : IMarshaller<T> {
     private val lazy = lazy(LazyThreadSafetyMode.PUBLICATION) {
         Class.forName(fgn, true, classLoader).getDeclaredField("Companion").get(null) as IMarshaller<T>
