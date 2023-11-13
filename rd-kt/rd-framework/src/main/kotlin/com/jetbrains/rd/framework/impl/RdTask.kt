@@ -426,8 +426,10 @@ class RdCall<TReq, TRes>(internal val requestSzr: ISerializer<TReq> = Polymorphi
     private fun onWireReceived(proto: IProtocol, ctx: SerializationCtx, buffer: AbstractBuffer, wiredRdTask: EndpointWiredRdTask<TReq, TRes>, dispatchHelper: IRdWireableDispatchHelper) {
         val externalCancellation = wiredRdTask.lifetime
         val value = requestSzr.read(ctx, buffer)
-        logReceived.trace { "endpoint `$location`::($rdid) taskId=(${wiredRdTask.rdid}) request = ${value.printToString()}" }
+        logReceived.trace { "onWireReceived:: endpoint `$location`::($rdid) taskId=(${wiredRdTask.rdid}) request = ${value.printToString()}" }
         dispatchHelper.dispatch(handlerScheduler) {
+            logReceived.trace { "dispatch:: endpoint `$location`::($rdid) taskId=(${wiredRdTask.rdid}) request = ${value.printToString()}" }
+
             val rdTask = try {
                 val handlerLocal = handler
                 if (handlerLocal == null) {

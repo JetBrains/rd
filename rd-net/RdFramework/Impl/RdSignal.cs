@@ -53,9 +53,10 @@ namespace JetBrains.Rd.Impl
     public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)
     {
       var value = ReadValueDelegate(ctx, reader);
-      ReceiveTrace?.Log($"{this} :: value = {value.PrintToString()}");
+      ReceiveTrace?.Log($"OnWireReceived:: {this} :: value = {value.PrintToString()}");
       dispatchHelper.Dispatch(Scheduler, () =>
       {
+        ReceiveTrace?.Log($"Dispatched:: {this} :: value = {value.PrintToString()}");
           mySignal.Fire(value);
       });
     }

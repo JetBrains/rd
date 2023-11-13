@@ -194,9 +194,11 @@ open class RdMap<K : Any, V : Any> private constructor(
             val lifetime = dispatchHelper.lifetime
             val definition = tryPreBindValue(lifetime, key, value, true)
 
+            logReceived.trace { "onWireReceived:: ${logmsg(op, version, key, value)}" }
+
             dispatchHelper.dispatch {
                 if (msgVersioned || !master || !isPendingForAck(key)) {
-                    logReceived.trace { logmsg(op, version, key, value) }
+                    logReceived.trace { "dispatched:: ${logmsg(op, version, key, value)}" }
 
                     if (value != null) {
                         val definitions = tryGetBindDefinitions(lifetime)

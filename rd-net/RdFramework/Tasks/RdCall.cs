@@ -88,10 +88,11 @@ namespace JetBrains.Rd.Tasks
     {
       var externalCancellation = wiredTask.Lifetime;
       var value = ReadRequestDelegate(ctx, reader);
-      ReceiveTrace?.Log($"{wiredTask} :: received request: {value.PrintToString()}");
+      ReceiveTrace?.Log($"OnWireReceived:: {wiredTask} :: received request: {value.PrintToString()}");
 
       dispatchHelper.Dispatch(myHandlerScheduler, () =>
       {
+        ReceiveTrace?.Log($"Dispatched:: {wiredTask} :: received request: {value.PrintToString()}");
         var rdTask = RunHandler(value, externalCancellation, wiredTask);
 
         rdTask.Result.Advise(Lifetime.Eternal, result =>

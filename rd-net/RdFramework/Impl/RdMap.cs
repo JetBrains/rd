@@ -194,6 +194,13 @@ namespace JetBrains.Rd.Impl
       myBindDefinitions = null;
     }
 
+    private static string getMessage(bool msgVersioned, long version, bool isPut, V? value)
+    {
+      return "{this} :: {kind} :: key = {key.PrintToString()}" +
+             (msgVersioned ? " :: version = " + version : "") +
+             (isPut ? $" :: value = {value.PrintToString()}" : "");
+    }
+
     public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader stream, IRdWireableDispatchHelper dispatchHelper)
     {
       var header = stream.ReadInt();
@@ -237,14 +244,14 @@ namespace JetBrains.Rd.Impl
         var isPut = kind is AddUpdateRemove.Add or AddUpdateRemove.Update;
         var value = isPut ? ReadValueDelegate(ctx, stream) : default;
         var definition = TryPreBindValue(lifetime, key, value, true);
+        
+        ReceiveTrace?.Log($"OnWireReceived:: {getMessage(msgVersioned, version, isPut, value)}");
 
         dispatchHelper.Dispatch(() =>
         {
           if (msgVersioned || !IsMaster || !IsPendingForAck(key))
           {
-            ReceiveTrace?.Log($"{this} :: {kind} :: key = {key.PrintToString()}" +
-                              (msgVersioned ? " :: version = " + version : "") +
-                              (isPut ? $" :: value = {value.PrintToString()}" : ""));
+            ReceiveTrace?.Log($"Dispatched:: {getMessage(msgVersioned, version, isPut, value)}");
             
             if (isPut)
             {
@@ -271,7 +278,7 @@ namespace JetBrains.Rd.Impl
           }
           else
           {
-            ReceiveTrace?.Log(">> CHANGE IGNORED");
+            ReceiveTrace?.Log($">> CHANGE IGNORED {getMessage(msgVersioned, version, isPut, value)}");
           }
 
           if (msgVersioned)

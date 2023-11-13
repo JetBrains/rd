@@ -55,7 +55,9 @@ open class RdSet<T : Any> constructor(val valueSerializer: ISerializer<T>, priva
         val kind = buffer.readEnum<AddRemove>()
         val v = valueSerializer.read(ctx, buffer)
 
+        logReceived.trace { "onWireReceived:: $this :: $kind :: ${v.printToString()}" }
         dispatchHelper.dispatch {
+            logReceived.trace { "dispatched:: $this :: $kind :: ${v.printToString()}" }
             when (kind) {
                 AddRemove.Add -> set.add(v)
                 AddRemove.Remove -> set.remove(v)

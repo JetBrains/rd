@@ -94,10 +94,11 @@ namespace JetBrains.Rd.Impl
     {
       var kind = (AddRemove) stream.ReadInt();
       var value = ReadValueDelegate(ctx, stream);
-      ReceiveTrace?.Log($"{this} :: {kind} :: {value.PrintToString()}");
+      ReceiveTrace?.Log($"OnWireReceived:: {this} :: {kind} :: {value.PrintToString()}");
 
       dispatchHelper.Dispatch(() =>
       {
+        ReceiveTrace?.Log($"Dispatched:: {this} :: {kind} :: {value.PrintToString()}");
         switch (kind)
         {
           case AddRemove.Add:

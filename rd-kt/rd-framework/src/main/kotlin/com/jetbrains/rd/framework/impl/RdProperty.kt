@@ -107,9 +107,11 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
 
         val definition = tryPreBindValue(dispatchHelper.lifetime, v, true)
 
+        logReceived.trace { "onWireReceived:: ${getMessage(version, v)}" }
+
         dispatchHelper.dispatch {
             val rejected = master && version < masterVersion
-            logReceived.trace { "property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}${rejected.condstr { " >> REJECTED" }}" }
+            logReceived.trace { "dispatched:: ${getMessage(version, v)}${rejected.condstr { " >> REJECTED" }}" }
 
             if (rejected) {
                 definition?.terminate()
@@ -123,6 +125,9 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
             property.set(v)
         }
     }
+
+    private fun getMessage(version: Int, v: T) =
+        "property `$location` ($rdid):: oldver = $masterVersion, newver = $version, value = ${v.printToString()}"
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
         if (isBound) assertThreading()
