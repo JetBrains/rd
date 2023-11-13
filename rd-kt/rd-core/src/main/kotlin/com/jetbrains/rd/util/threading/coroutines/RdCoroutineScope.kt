@@ -24,10 +24,10 @@ open class RdCoroutineScope : CoroutineScope {
             if (!currentHost.compareAndSet(null, host))
                 throw IllegalStateException("Could not override RdCoroutineHost")
 
-            logger.debug { "RdCoroutineHost has been overridden" }
+            logger.trace { "RdCoroutineHost has been overridden" }
             host.coroutineContext.job.invokeOnCompletion {
                 currentHost.getAndSet(null)
-                logger.debug { "RdCoroutineHost has been reset" }
+                logger.trace { "RdCoroutineHost has been reset" }
             }
         }
     }
