@@ -181,11 +181,13 @@ namespace JetBrains.Rd.Impl
       var lifetime = dispatchHelper.Lifetime;
       var definition = TryPreBindValue(lifetime, value, true);
       
+      ReceiveTrace?.Log($"OnWireReceived:: {GetMessage(version, value)}");
+      
       dispatchHelper.Dispatch(() =>
       {
         var rejected = IsMaster && version < myMasterVersion;
         
-        ReceiveTrace?.Log($"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}{(rejected ? " REJECTED" : "")}");
+        ReceiveTrace?.Log($"Dispatch:: {GetMessage(version, value)}{(rejected ? " REJECTED" : "")}");
 
         if (rejected)
         {
@@ -201,6 +203,11 @@ namespace JetBrains.Rd.Impl
           myProperty.Value = value;
         }
       });
+    }
+
+    private string GetMessage(int version, T value)
+    {
+      return $"{this} :: oldver = {myMasterVersion}, newver = {version}, value = {value.PrintToString()}";
     }
 
     private LifetimeDefinition? TryPreBindValue(Lifetime lifetime, T value, bool bindAlso)

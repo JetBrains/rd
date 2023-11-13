@@ -98,7 +98,7 @@ interface IMarshaller<T : Any> : ISerializer<T> {
 }
 
 val IMarshaller<*>.fqn: String get() {
-    return if (this is LazyCompanionMarshaller) this.fgn
+    return if (this is LazyCompanionMarshaller) this.fqn
     else _type.qualifiedName ?: _type.jvmName
 }
 
@@ -108,7 +108,7 @@ class LazyCompanionMarshaller<T : Any>(
     val fqn: String
 ) : IMarshaller<T> {
     private val lazy = lazy(LazyThreadSafetyMode.PUBLICATION) {
-        Class.forName(fgn, true, classLoader).getDeclaredField("Companion").get(null) as IMarshaller<T>
+        Class.forName(fqn, true, classLoader).getDeclaredField("Companion").get(null) as IMarshaller<T>
     }
 
     override val _type: KClass<*>

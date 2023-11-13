@@ -27,8 +27,9 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
 
     override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
         val value = valueSerializer.read(ctx, buffer)
-        logReceived.trace {"signal `$location` ($rdid):: value = ${value.printToString()}"}
+        logReceived.trace {"onWireReceived:: signal `$location` ($rdid):: value = ${value.printToString()}"}
         dispatchHelper.dispatch(scheduler) {
+            logReceived.trace {"dispatched:: signal `$location` ($rdid):: value = ${value.printToString()}"}
             signal.fire(value)
         }
     }
