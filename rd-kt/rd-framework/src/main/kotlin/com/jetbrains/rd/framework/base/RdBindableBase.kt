@@ -74,6 +74,9 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
                 assertBindingThread()
 
+                if (proto is Protocol && !rdid.isNull)
+                    proto.rdEntitiesRegistrar.register(bindLifetime, rdid, this)
+
                 Signal.priorityAdviseSection {
                     preInit(lf, proto)
                 }

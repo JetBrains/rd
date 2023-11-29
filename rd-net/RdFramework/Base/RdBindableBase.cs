@@ -5,6 +5,7 @@ using System.Linq;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Rd.Impl;
 using JetBrains.Rd.Util;
 using JetBrains.Util.Internal;
 using JetBrains.Util.Util;
@@ -89,6 +90,11 @@ namespace JetBrains.Rd.Base
       myBindLifetime = lf;
 
       AssertBindingThread();
+
+      if (proto is Protocol proto2 && !RdId.IsNil)
+      {
+        proto2.RdEntitiesRegistrar.Register(lf, RdId, this);
+      }
 
       using (Signal.PriorityAdviseCookie.Create())
         PreInit(lf, proto);

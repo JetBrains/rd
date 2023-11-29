@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
