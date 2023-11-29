@@ -61,7 +61,7 @@ namespace JetBrains.Rd.Base
       lifetime.TryBracket(
         () =>
         {
-          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, serializationContext, parentProto.Contexts, parentProto.ExtCreated, this.CreateExtSignal());
+          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, (Protocol)parentProto, this.CreateExtSignal());
           myExtProtocol = proto;
           
           //protocol must be set first to allow bindable bind to it
@@ -69,7 +69,7 @@ namespace JetBrains.Rd.Base
           base.Init(lifetime, proto, ctx);
           
           var bindableParent = Parent as RdBindableBase;
-          var info = new ExtCreationInfo(Location, bindableParent?.ContainingExt?.RdId, SerializationHash, this);
+          var info = new ExtCreationInfo(Location, bindableParent?.RdId, SerializationHash, this);
           ((Protocol)parentProto).SubmitExtCreated(info);
 
           parentWire.Advise(lifetime, this);

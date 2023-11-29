@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
+using JetBrains.Collections.Synchronized;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
+using JetBrains.Rd.Util;
 
 namespace JetBrains.Rd.Impl
 {
@@ -29,14 +31,17 @@ namespace JetBrains.Rd.Impl
 
     public Lifetime Lifetime { get; }
 
+    public DynamicContainer DynamicContainer { get; }
+    
+    private readonly Protocol? myParentProtocol;
+
     public Protocol(string name, ISerializers serializers, IIdentities identities, IScheduler scheduler, 
       IWire wire, Lifetime lifetime, params RdContextBase[] initialContexts) 
-      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, null, null, initialContexts)
+      : this(name, serializers, identities, scheduler, wire, lifetime, null, null, initialContexts)
     { }
 
     internal Protocol(string name, ISerializers serializers, IIdentities identities, IScheduler scheduler,
-      IWire wire, Lifetime lifetime, SerializationCtx? serializationCtx = null, ProtocolContexts? parentContexts = null, 
-      ISignal<ExtCreationInfo>? parentExtCreated = null, RdSignal<ExtCreationInfo>? parentExtConfirmation = null, params RdContextBase[] initialContexts)
+      IWire wire, Lifetime lifetime, Protocol? parentProtocol, RdSignal<ExtCreationInfo>? parentExtConfirmation = null, params RdContextBase[] initialContexts)
     {
       Lifetime = lifetime;
       Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -46,16 +51,18 @@ namespace JetBrains.Rd.Impl
       Identities = identities ?? throw new ArgumentNullException(nameof(identities));
       Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
       Wire = wire ?? throw new ArgumentNullException(nameof(wire));
-      SerializationContext = serializationCtx ?? new SerializationCtx(this, new Dictionary<string, IInternRoot<object>>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
-      Contexts = parentContexts ?? new ProtocolContexts(SerializationContext);
+      myParentProtocol = parentProtocol;
+      DynamicContainer = parentProtocol?.DynamicContainer ?? new DynamicContainer();
+      SerializationContext = parentProtocol?.SerializationContext ?? new SerializationCtx(this, new Dictionary<string, IInternRoot<object>>() {{ProtocolInternScopeStringId, CreateProtocolInternRoot(lifetime)}});
+      Contexts = parentProtocol?.Contexts ?? new ProtocolContexts(SerializationContext);
       wire.Contexts = Contexts;
-      if (serializationCtx == null)
+      if (parentProtocol?.SerializationContext == null)
         SerializationContext.InternRoots[ProtocolInternScopeStringId].BindTopLevel(lifetime, this, ProtocolInternRootRdId);
       foreach (var rdContextBase in initialContexts) rdContextBase.RegisterOn(Contexts);
-      if (parentContexts == null)
+      if (parentProtocol?.Contexts == null)
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
-      ExtCreated = parentExtCreated ?? new Signal<ExtCreationInfo>();
+      ExtCreated = parentProtocol?.ExtCreated ?? new Signal<ExtCreationInfo>();
       ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal();
       ExtIsLocal = new ThreadLocal<bool>(() => false);
       ExtConfirmation.Advise(lifetime, message =>
@@ -130,5 +137,25 @@ namespace JetBrains.Rd.Impl
     
     public RName Location { get; }
     IProtocol IRdDynamic.TryGetProto() => this;
+  }
+
+  public class DynamicContainer
+  {
+    private readonly Dictionary<RdId, IRdDynamic> myMap = new();
+
+    public void Register(Lifetime lifetime, RdId rdId, IRdDynamic dynamic)
+    {
+      Assertion.Assert(!rdId.IsNil);
+      
+      myMap.BlockingAddUnique(lifetime, myMap, rdId, dynamic);
+    }
+
+    public bool TryGetDynamic(RdId rdId, out IRdDynamic dynamic)
+    {
+      lock (myMap)
+      {
+        return myMap.TryGetValue(rdId, out dynamic);
+      }
+    }
   }
 }

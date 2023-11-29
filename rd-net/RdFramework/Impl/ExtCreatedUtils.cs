@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
 using JetBrains.Serialization;
@@ -27,6 +28,7 @@ namespace JetBrains.Rd.Impl
       );
       var baseId = @this is IRdWireable wireable ? wireable.RdId : RdId.Nil;
       signal.RdId = baseId.Mix(Protocol.ProtocolExtCreatedRdId);
+      signal.Scheduler = SynchronousScheduler.Instance;
       return signal;
     }
     

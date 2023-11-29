@@ -7,12 +7,15 @@ import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdSignal
+import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.Sync
+import com.jetbrains.rd.util.addUnique
 import com.jetbrains.rd.util.collections.SynchronizedSet
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
+import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlin.reflect.KClass
 
 
@@ -47,6 +50,8 @@ class Protocol internal constructor(
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet(SynchronizedSet())
 
     override val isMaster: Boolean = identity.dynamicKind == IdKind.Client
+
+    val dynamicContainer: DynamicContainer = parentProtocol?.dynamicContainer ?: DynamicContainer()
 
     companion object {
         val logCategory = "protocol"
@@ -89,10 +94,7 @@ class Protocol internal constructor(
         }
 
         extCreated = parentProtocol?.extCreated ?: Signal()
-        extConfirmation = parentExtConfirmation ?: createExtSignal().also { signal ->
-            val protocolScheduler = scheduler
-            signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
-        }
+        extConfirmation = parentExtConfirmation ?: createExtSignal()
         extIsLocal = ThreadLocal.withInitial { false }
         AllowBindingCookie.allowBind {
             extConfirmation.bindTopLevel(lifetime, this, "ProtocolExtCreated")
@@ -150,4 +152,15 @@ class Protocol internal constructor(
         return value as? T
             ?: error("Wrong class found in top level extension, expected `${clazz.simpleName}` but found `${value::class.simpleName}`")  
     } 
+}
+
+class DynamicContainer {
+    private val map = ConcurrentHashMap<RdId, IRdDynamic>()
+
+    fun register(lifetime: Lifetime, rdId: RdId, dynamic: IRdDynamic) {
+        require(!rdId.isNull)
+        map.addUnique(lifetime, rdId, dynamic)
+    }
+
+    fun tryGetDynamic(rdId: RdId): IRdDynamic? = map[rdId]
 }
