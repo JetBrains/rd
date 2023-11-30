@@ -15,8 +15,23 @@ namespace JetBrains.Diagnostics
   /// </summary>
   [PublicAPI] public static class ProcessWatchdog
   {
+    public class Options
+    {
+      public int Pid { get; }
+      public Lifetime Lifetime { get; }
+      public TimeSpan? GracefulShutdownPeriod { get; set; }
+      public Action? BeforeProcessKill { get; set; }
+      public Action? KillCurrentProcess { get; set; }
+
+      public Options(int pid, Lifetime lifetime)
+      {
+        Pid = pid;
+        Lifetime = lifetime;
+      }
+    }
+
     private static readonly ILog ourLogger = Log.GetLog(nameof(ProcessWatchdog));
-    private const int DELAY_BEFORE_RETRY = 1000;
+    internal const int DELAY_BEFORE_RETRY = 1000;
     private const int ERROR_INVALID_PARAMETER = 87;
 
     public static void StartWatchdogForPidEnvironmentVariable(string envVarName, Action? beforeProcessKill = null)
@@ -45,10 +60,27 @@ namespace JetBrains.Diagnostics
       StartWatchdogForPid(pid, Lifetime.Eternal, beforeProcessKill: beforeProcessKill);
     }
 
-    public static void StartWatchdogForPid(int pid, Lifetime lifetime, TimeSpan? gracefulShutdownPeriod = null, Action? beforeProcessKill = null)
+    public static void StartWatchdogForPid(
+      int pid,
+      Lifetime lifetime,
+      TimeSpan? gracefulShutdownPeriod = null,
+      Action? beforeProcessKill = null) =>
+      StartWatchdogForPid(new Options(pid, lifetime)
+      {
+        GracefulShutdownPeriod = gracefulShutdownPeriod,
+        BeforeProcessKill = beforeProcessKill
+      });
+
+    public static void StartWatchdogForPid(Options options)
     {
+      var pid = options.Pid;
       var watchThread = new Thread(() =>
       {
+        var lifetime = options.Lifetime;
+        var beforeProcessKill = options.BeforeProcessKill;
+        var gracefulShutdownPeriod = options.GracefulShutdownPeriod;
+        var killCurrentProcess = options.KillCurrentProcess;
+
         ourLogger.Info($"Monitoring parent process PID:{pid}");
 
         var useWinApi = true;
@@ -84,7 +116,10 @@ namespace JetBrains.Diagnostics
               // ignored
             }
 
-            Process.GetCurrentProcess().Kill();
+            if (killCurrentProcess != null)
+              killCurrentProcess();
+            else
+              Process.GetCurrentProcess().Kill();
             return;
           }
 
@@ -136,16 +171,18 @@ namespace JetBrains.Diagnostics
       var handle = IntPtr.Zero;
       try
       {
-        handle = Kernel32.OpenProcess(ProcessAccessRights.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        handle = Kernel32.OpenProcess(
+          ProcessAccessRights.PROCESS_QUERY_LIMITED_INFORMATION | ProcessAccessRights.SYNCHRONIZE,
+          false,
+          pid);
         if (handle == IntPtr.Zero)
         {
           var errorCode = Marshal.GetLastWin32Error();
           return errorCode == ERROR_INVALID_PARAMETER ? false : throw new Win32Exception(errorCode); // ERROR_INVALID_PARAMETER means that process doesn't exist
         }
 
-        return Kernel32.GetExitCodeProcess(handle, out var exitCode)
-          ? exitCode == ProcessExitCode.STILL_ALIVE
-          : throw new Win32Exception();
+        var isTerminated = Kernel32.WaitForSingleObject(handle, 0u) == 0u;
+        return !isTerminated;
       }
       finally
       {

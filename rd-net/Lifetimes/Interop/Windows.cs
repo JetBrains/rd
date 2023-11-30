@@ -12,13 +12,10 @@ namespace JetBrains.Interop
             [In] ProcessAccessRights dwDesiredAccess,
             [In] bool bInheritHandle,
             [In] int dwProcessId);
-    
+
         [DllImport(DllName, SetLastError = true)]
-        public static extern bool GetExitCodeProcess(
-            [In] IntPtr hProcess,
-            [Out] out ProcessExitCode lpExitCode
-        );
-        
+        public static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
         [DllImport(DllName, SetLastError = true)]
         public static extern bool CloseHandle(
             [In] IntPtr handle
