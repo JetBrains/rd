@@ -11,21 +11,21 @@ namespace JetBrains.Diagnostics
     [PublicAPI] public static readonly RName Empty = new RName(null, "", "");
     
     [PublicAPI] 
-    public readonly object? Parent;
+    public readonly RName? Parent;
     [PublicAPI]
     public readonly string Separator;
     [PublicAPI] 
-    public readonly object LocalName;
+     public readonly string LocalName;
     
 
-    public RName(object? parent, object localName, string separator)
+    public RName(RName? parent, string localName, string separator)
     {
       Parent = parent;
       Separator = separator ?? throw new ArgumentNullException(nameof(separator));
       LocalName = localName ?? throw new ArgumentNullException(nameof(localName));
     }
     
-    public RName(object localName) : this(Empty, localName, "") {}
+    public RName(string localName) : this(Empty, localName, "") {}
 
     /// <summary>
     /// Separator doesn't count if localName is empty or parent is empty.
@@ -34,7 +34,7 @@ namespace JetBrains.Diagnostics
     /// <param name="separator"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public RName Sub(object localName, string separator=".")
+    public RName Sub(string localName, string separator=".")
     {
       if (localName == null) throw new ArgumentNullException(nameof(localName));
       if (localName is string s && s.Length == 0) 

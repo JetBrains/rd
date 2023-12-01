@@ -66,7 +66,30 @@ namespace JetBrains.Collections.Viewable
 
       handler(local.Value);
     }
-      
+
+    public void AdviseOn(Lifetime lifetime, IScheduler scheduler, Action<T> handler)
+    {
+      Advise(lifetime, value => scheduler.InvokeOrQueue(() => handler(value)));
+    }
+
+    public void WithValue<TContext>(Lifetime lifetime, IScheduler scheduler, TContext context, Action<TContext, T> handler)
+    {
+      var maybe = Maybe;
+      if (maybe.HasValue && scheduler.IsActive)
+      {
+        handler(context, maybe.Value);
+      }
+      else
+      {
+        Dispatch(lifetime, scheduler, context, handler);
+      }
+    }
+
+    private void Dispatch<TContext>(Lifetime lifetime, IScheduler scheduler, TContext context, Action<TContext, T> handler)
+    {
+      AdviseOn(lifetime, scheduler, value => handler(context, value));
+    }
+
     // for test
     internal void fireInternal(T value) => mySignal.Fire(value);
     

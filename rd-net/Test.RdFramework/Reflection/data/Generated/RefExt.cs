@@ -50,6 +50,11 @@ namespace Test.RdFramework.Reflection.Generated
     [NotNull] private readonly RdProperty<OpenClass> _OpenModel;
     
     //primary constructor
+    internal static RefExt CreateInternal()
+    {
+      return new RefExt();
+    }
+    
     private RefExt(
       [NotNull] RdProperty<Base> @struct,
       [NotNull] RdProperty<OpenClass> openModel
@@ -77,6 +82,8 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static  CtxWriteDelegate<OpenClass> WriteOpenClass = Polymorphic<OpenClass>.Write;
     
+    public static Type PointcutType => typeof(RefRoot);
+    
     protected override long SerializationHash => 7552167435222878147L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
@@ -96,8 +103,9 @@ namespace Test.RdFramework.Reflection.Generated
     
     public RefExt(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, RdId.Root.Mix("RefExt"));
-      this.BindTopLevel(lifetime, protocol, "RefExt");
+      var ext = protocol.GetOrCreateExtension(() => this);
+      if (!ReferenceEquals(ext, this))
+        throw new InvalidOperationException($"Returned ext: {ext} is not equal to {this}");
     }
     
     //constants
@@ -123,6 +131,15 @@ namespace Test.RdFramework.Reflection.Generated
       Print(printer);
       return printer.ToString();
     }
+  }
+  
+  public static class RefRootRefExtEx
+  {
+    public static RefExt GetRefExt(this IProtocol protocol)
+    {
+      return protocol.GetOrCreateExtension(() => RefExt.CreateInternal());
+    }
+    
   }
   
   

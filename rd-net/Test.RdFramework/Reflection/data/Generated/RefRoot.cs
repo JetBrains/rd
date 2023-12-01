@@ -45,6 +45,11 @@ namespace Test.RdFramework.Reflection.Generated
     
     //private fields
     //primary constructor
+    internal static RefRoot CreateInternal()
+    {
+      return new RefRoot();
+    }
+    
     private RefRoot(
     )
     {
@@ -67,8 +72,9 @@ namespace Test.RdFramework.Reflection.Generated
     
     public RefRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, RdId.Root.Mix("RefRoot"));
-      this.BindTopLevel(lifetime, protocol, "RefRoot");
+      var ext = protocol.GetOrCreateExtension(() => this);
+      if (!ReferenceEquals(ext, this))
+        throw new InvalidOperationException($"Returned ext: {ext} is not equal to {this}");
     }
     
     //constants
@@ -90,5 +96,14 @@ namespace Test.RdFramework.Reflection.Generated
       Print(printer);
       return printer.ToString();
     }
+  }
+  
+  public static class ProtocolRefRootEx
+  {
+    public static RefRoot GetRefRoot(this IProtocol protocol)
+    {
+      return protocol.GetOrCreateExtension(() => RefRoot.CreateInternal());
+    }
+    
   }
 }

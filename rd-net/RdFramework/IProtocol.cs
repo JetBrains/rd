@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿using System;
 using JetBrains.Collections.Viewable;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Base;
@@ -17,6 +17,9 @@ namespace JetBrains.Rd
     IScheduler Scheduler { get; }
     IWire Wire { get; }    
     ProtocolContexts Contexts { get; }
-    ISignal<ExtCreationInfo> ExtCreated { get; }
+    ISignal<ExtCreationInfoEx> ExtCreated { get; }
+    
+    public T? GetExtension<T>() where T : RdExtBase;
+    public T GetOrCreateExtension<T>(Func<T> create) where T : RdExtBase;
   }
 }
