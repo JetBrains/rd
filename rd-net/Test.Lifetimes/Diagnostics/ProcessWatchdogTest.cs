@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
@@ -11,7 +12,7 @@ using NUnit.Framework;
 
 namespace Test.Lifetimes.Diagnostics;
 
-public class ProcessWatchdogTest
+public class ProcessWatchdogTest : LifetimesTestBase
 {
   [Test]
   public Task TestWithSleepingProcess() => DoTest(StartSleepingProcess, true);
@@ -52,6 +53,11 @@ public class ProcessWatchdogTest
     {
       Assert.Fail($"Termination of process {process.Id} wasn't detected during the timeout.");
     }
+
+    var exs = Assert.Throws<AggregateException>(TestLogger.ExceptionLogger.ThrowLoggedExceptions).InnerExceptions;
+    Assert.IsTrue(
+      exs.All(e => e.Message.Contains($"Parent process PID:{process.Id} has quit, killing ourselves via Process.Kill")),
+      $"No expected data in some of the exceptions: {string.Join("\n", exs.Select(e => e.Message))}");
   });
 
   private Process StartSleepingProcess()
