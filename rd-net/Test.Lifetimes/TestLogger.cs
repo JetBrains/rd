@@ -56,7 +56,7 @@ namespace Test.Lifetimes
         }
       }
       
-      LogLog.StoredRecords.Clear();
+      LogLog.ClearStoredRecords();
     }
 
     [CanBeNull]

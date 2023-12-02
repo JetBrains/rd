@@ -178,6 +178,14 @@ namespace JetBrains.Diagnostics
       }
     }
 
+    internal static void ClearStoredRecords()
+    {
+      lock (ourLock)
+      {
+        ourRecords.Clear();
+      }
+    }
+
     #endregion
 
 
