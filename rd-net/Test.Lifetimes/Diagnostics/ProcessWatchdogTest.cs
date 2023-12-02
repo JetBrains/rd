@@ -44,7 +44,8 @@ public class ProcessWatchdogTest : LifetimesTestBase
     if (assertAlive)
     {
       await Task.Delay(timeForReliableDetection, lt);
-      Assert.IsFalse(task.IsCompleted);
+      Assert.IsFalse(process.HasExited, "Process should not be exited.");
+      Assert.IsFalse(task.IsCompleted, "Watchdog should not be triggered.");
     }
 
     if (!process.HasExited) process.Kill();
@@ -62,15 +63,21 @@ public class ProcessWatchdogTest : LifetimesTestBase
 
   private Process StartSleepingProcess()
   {
-    if (RuntimeInfo.IsRunningUnderWindows)
-    {
-      return Process.Start(new ProcessStartInfo("cmd.exe", "/c timeout 30")
-      {
-        WindowStyle = ProcessWindowStyle.Hidden
-      });
-    }
+    var startInfo = RuntimeInfo.IsRunningUnderWindows
+      ? new ProcessStartInfo("cmd.exe", "/c ping 127.0.0.1 -n 30")
+      : new ProcessStartInfo("sleep", "30");
+    startInfo.UseShellExecute = false;
+    startInfo.CreateNoWindow = true;
+    startInfo.RedirectStandardOutput = true;
+    startInfo.RedirectStandardError = true;
 
-    return Process.Start("sleep", "30");
+    var logger = Log.GetLog<ProcessWatchdogTest>();
+    var process = Process.Start(startInfo)!;
+    process.ErrorDataReceived += (_, args) => logger.Warn($"[{process.Id}] {args.Data}");
+    process.OutputDataReceived += (_, args) => logger.Info($"[{process.Id}] {args.Data}");
+    process.Exited += (_, _) => logger.Info($"[{process.Id}] Exited with code: {process.ExitCode}");
+
+    return process;
   }
 
   private Process GetTerminatedProcess(int exitCode)
