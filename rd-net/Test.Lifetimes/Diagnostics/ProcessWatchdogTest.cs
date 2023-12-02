@@ -18,7 +18,11 @@ public class ProcessWatchdogTest : LifetimesTestBase
   public Task TestWithSleepingProcess() => DoTest(StartSleepingProcess, true);
 
   [Test]
-  public Task TestWithProcessReturning259() => DoTest(() => GetTerminatedProcess(259), false);
+  public async Task TestWithProcessReturning259()
+  {
+    if (!RuntimeInfo.IsRunningUnderWindows) return;
+    await DoTest(() => GetTerminatedProcess(259), false);
+  }
 
   private static Task DoTest(Func<Process> processCreator, bool assertAlive) => Lifetime.UsingAsync(async lt =>
   {
