@@ -137,7 +137,7 @@ namespace JetBrains.Rd.Impl
     public RName Location { get; }
     IProtocol IRdDynamic.TryGetProto() => this;
 
-    public T? GetExtension<T>() where T : RdExtBase
+    public virtual T? GetExtension<T>() where T : RdExtBase
     {
       var parentProtocol = myParentProtocol;
       if (parentProtocol != null)
@@ -149,7 +149,7 @@ namespace JetBrains.Rd.Impl
       }
     }
     
-    public T GetOrCreateExtension<T>(Func<T> create) where T : RdExtBase
+    public virtual T GetOrCreateExtension<T>(Func<T> create) where T : RdExtBase
     {
       if (create == null) throw new ArgumentNullException(nameof(create));
       
