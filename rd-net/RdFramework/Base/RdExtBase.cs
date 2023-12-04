@@ -61,16 +61,23 @@ namespace JetBrains.Rd.Base
       lifetime.TryBracket(
         () =>
         {
-          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, (Protocol)parentProto, this.CreateExtSignal());
+          var parentProtocolImpl = (Protocol)parentProto;
+          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal());
           myExtProtocol = proto;
           
           //protocol must be set first to allow bindable bind to it
-          base.PreInit(lifetime, proto);
-          base.Init(lifetime, proto, ctx);
+          using (AllowBindCookie.Create())
+          {
+            base.PreInit(lifetime, proto);
+            base.Init(lifetime, proto, ctx);
+          }
           
           var bindableParent = Parent as RdBindableBase;
           var info = new ExtCreationInfo(Location, bindableParent?.RdId, SerializationHash, this);
-          ((Protocol)parentProto).SubmitExtCreated(info);
+          using (Signal.NonPriorityAdviseCookie.Create())
+          {
+            parentProtocolImpl.SubmitExtCreated(info);
+          }
 
           parentWire.Advise(lifetime, this);
           SendState(parentWire, ExtState.Ready);
@@ -84,6 +91,8 @@ namespace JetBrains.Rd.Base
         }
       );
     }
+
+    protected override void AssertBindingThread() { }
 
 
     public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)

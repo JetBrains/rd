@@ -12,7 +12,7 @@ namespace JetBrains.Collections.Viewable
 
         internal static bool IsPriorityAdvise => ourPriorityCookie > 0;
 
-        public struct PriorityAdviseCookie : IDisposable
+        public ref struct PriorityAdviseCookie
         {
             public static PriorityAdviseCookie Create()
             {
@@ -24,6 +24,29 @@ namespace JetBrains.Collections.Viewable
             {
                 ourPriorityCookie--;
             }
+        }
+
+        public ref struct NonPriorityAdviseCookie
+        {
+          private readonly int myOldValue;
+
+          private NonPriorityAdviseCookie(int oldValue)
+          {
+            myOldValue = oldValue;
+          }
+
+          public static NonPriorityAdviseCookie Create()
+          {
+            var oldValue = ourPriorityCookie;
+            ourPriorityCookie = 0;
+            return new NonPriorityAdviseCookie(oldValue);
+          }
+
+          public void Dispose()
+          {
+            Assertion.Assert(ourPriorityCookie == 0);
+            ourPriorityCookie = myOldValue;
+          }
         }
     }
 
