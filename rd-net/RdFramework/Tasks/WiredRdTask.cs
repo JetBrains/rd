@@ -26,7 +26,7 @@ namespace JetBrains.Rd.Tasks
       RdId = rdId;
       Wire = call.TryGetProto()?.Wire;
       WireScheduler = wireScheduler;
-      Location = call.Location.Sub(rdId);
+      Location = call.Location.Sub(rdId.ToString());
     }
 
     public IProtocol? TryGetProto() => myCall.TryGetProto();

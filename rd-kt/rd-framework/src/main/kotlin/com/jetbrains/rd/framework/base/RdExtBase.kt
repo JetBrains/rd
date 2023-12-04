@@ -91,7 +91,7 @@ abstract class RdExtBase : RdReactiveBase() {
                     super.init(lifetime, proto, ctx)
                 }
 
-                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.containingExt?.rdid, serializationHash, this)
+                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.rdid, serializationHash, this)
 
                 if (scheduler is CustomExtScheduler) {
                     assert(customSchedulerWrapper == null)

@@ -3,12 +3,12 @@ using JetBrains.Rd.Base;
 
 namespace JetBrains.Rd
 {
-  public struct ExtCreationInfo
+  public readonly struct ExtCreationInfo
   {
-    public RName Name;
-    public RdId? Id;
-    public long Hash;
-    public RdExtBase? Ext;
+    public readonly RName Name;
+    public readonly RdId? Id;
+    public readonly long Hash;
+    public readonly RdExtBase? Ext;
 
     public ExtCreationInfo(RName name, RdId? id, long hash, RdExtBase? ext)
     {
@@ -16,6 +16,18 @@ namespace JetBrains.Rd
       Id = id;
       Hash = hash;
       Ext = ext;
+    }
+  }
+
+  public readonly struct ExtCreationInfoEx
+  {
+    public readonly ExtCreationInfo Info;
+    public readonly bool IsLocal;
+
+    public ExtCreationInfoEx(ExtCreationInfo info, bool isLocal)
+    {
+      Info = info;
+      IsLocal = isLocal;
     }
   }
 }

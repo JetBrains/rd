@@ -2,7 +2,6 @@ package com.jetbrains.rd.framework
 
 import com.jetbrains.rd.framework.base.AllowBindingCookie
 import com.jetbrains.rd.framework.base.RdExtBase
-import com.jetbrains.rd.framework.base.bind
 import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.impl.InternRoot
 import com.jetbrains.rd.framework.impl.ProtocolContexts
@@ -47,6 +46,8 @@ class Protocol internal constructor(
     override val outOfSyncModels: ViewableSet<RdExtBase> = ViewableSet(SynchronizedSet())
 
     override val isMaster: Boolean = identity.dynamicKind == IdKind.Client
+
+    val rdEntitiesRegistrar: RdEntitiesRegistrar = parentProtocol?.rdEntitiesRegistrar ?: RdEntitiesRegistrar()
 
     companion object {
         val logCategory = "protocol"
