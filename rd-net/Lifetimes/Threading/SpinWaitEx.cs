@@ -81,12 +81,15 @@ namespace JetBrains.Threading
 
       while (true)
       {
-        if (!lifetime.IsAlive || Environment.TickCount - start > timeoutMs)
+        if (!lifetime.IsAlive)
           return false;
 
         if (condition())
           return true;
         
+        if (Environment.TickCount - start > timeoutMs)
+          return false;
+
 #if !NET35
         s.SpinOnce();
 #else
