@@ -534,8 +534,9 @@ open class CSharp50Generator(
         }
         +"}"
 
-        if (decl.isExtension) {
-            extensionTrait(decl as Ext)
+        if (decl is Toplevel) {
+            println()
+            extensionTrait(decl)
         }
     }
 
@@ -567,6 +568,10 @@ open class CSharp50Generator(
         println()
         writerAndDelegatesTrait(decl)
 
+        if (decl is Ext) {
+            println()
+            +"public static Type PointcutType => typeof(${decl.pointcut!!.sanitizedName(decl)});"
+        }
 
         if (decl is Toplevel) {
             println()
@@ -679,12 +684,15 @@ open class CSharp50Generator(
     protected fun PrettyPrinter.createMethodTrait(decl: Toplevel) {
         if (decl.isExtension) return
 
+        // todo get rid of this constructor
         +"public ${decl.name}(Lifetime lifetime, IProtocol protocol) : this()"
         +"{"
-
         indent {
-            +"Identify(protocol.Identities, RdId.Root.Mix(\"${decl.name}\"));"
-            +"this.BindTopLevel(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
+            +"var ext = protocol.GetOrCreateExtension(() => this);"
+            +"if (!ReferenceEquals(ext, this))"
+            indent {
+                +"throw new InvalidOperationException($\"Returned ext: {ext} is not equal to {this}\");"
+            }
         }
         +"}"
     }
@@ -1216,6 +1224,16 @@ open class CSharp50Generator(
             else -> false
         }
 
+        if (decl.isToplevelExtension || decl is Root) {
+            +"internal static ${decl.name} CreateInternal()"
+            +"{"
+            indent {
+                +"return new ${decl.name}();"
+            }
+            +"}"
+            println()
+        }
+
         val accessModifier = when {
             decl.hasSetting(PublicCtors) -> "public"
             decl.isAbstract -> "protected"
@@ -1389,21 +1407,33 @@ open class CSharp50Generator(
 
     private fun isUnknown(decl: Declaration) = decl is Class.Concrete && decl.isUnknown || decl is Struct.Concrete && decl.isUnknown
 
-    private fun PrettyPrinter.extensionTrait(decl: Ext) {
-        val pointcut = decl.pointcut ?: return
-        val ownerLowerName = pointcut.name.decapitalizeInvariant()
+    private fun PrettyPrinter.extensionTrait(decl: Toplevel) {
+        val pointcut = decl.pointcut
+        if (pointcut == null) {
+            assert(decl is Root)
+        }
 
-        +"public static class ${pointcut.name}${decl.name}Ex"
-        +" {"
+        +"public static class ${pointcut?.name ?: "Protocol"}${decl.name}Ex"
+        +"{"
         indent {
             val lowerName = decl.name.decapitalizeInvariant()
-            val extName = decl.extName?.capitalizeInvariant() ?: decl.name
-            +"public static ${decl.name} Get$extName(this ${pointcut.sanitizedName(decl)} $ownerLowerName)"
-            +"{"
-            indent {
-                +"""return $ownerLowerName.GetOrCreateExtension("$lowerName", () => new ${decl.name}());"""
+            val extName = (decl as? Ext)?.extName?.capitalizeInvariant() ?: decl.name
+            if (pointcut == null || pointcut is Root) {
+                +"public static ${decl.name} Get$extName(this IProtocol protocol)"
+                +"{"
+                indent {
+                    +"return protocol.GetOrCreateExtension(() => ${decl.name}.CreateInternal());"
+                }
+                +"}"
+            } else {
+                val ownerLowerName = pointcut.name.decapitalizeInvariant()
+                +"public static ${decl.name} Get$extName(this ${pointcut.sanitizedName(decl)} $ownerLowerName)"
+                +"{"
+                indent {
+                    +"""return $ownerLowerName.GetOrCreateExtension("$lowerName", () => new ${decl.name}());"""
+                }
+                +"}"
             }
-            +"}"
         }
         +"}"
     }
