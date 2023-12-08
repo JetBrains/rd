@@ -38,7 +38,7 @@ namespace org.example
   /// <summary>
   /// <p>Generated from: AsyncPrimitives.kt:8</p>
   /// </summary>
-  public class AsyncPrimitivesRoot : RdExtBase
+  public class AsyncPrimitivesRoot : DefaultExtBase
   {
     //fields
     //public fields

@@ -6,6 +6,7 @@ using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Collections;
 using JetBrains.Collections.Viewable;
+using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
@@ -18,6 +19,117 @@ namespace JetBrains.Rd.Base
 {
   public abstract class RdExtBase : RdReactiveBase
   {
+    [CanBeNull] private IProtocol myExtProtocol;
+    
+    public sealed override IProtocol TryGetProto() => myExtProtocol ?? TryParentGetProto();
+    public IProtocol TryParentGetProto() => base.TryGetProto();
+    
+    public abstract IReadonlyProperty<bool> Connected { get; }
+
+    protected abstract Action<ISerializers> Register { get; }
+    protected virtual long SerializationHash => 0L;
+    
+    public Lifetime? BindLifetime { get; private set; }
+
+    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
+    {
+      BindLifetime = lifetime;
+    }
+
+    protected override void Unbind()
+    {
+      BindLifetime = null;
+    }
+
+    protected override void Init(Lifetime lifetime, IProtocol parentIProto, SerializationCtx ctx)
+    {
+      var parentProto = (Protocol)parentIProto;
+      Protocol.InitTrace?.Log($"{this} :: binding");
+
+      parentProto.Serializers.RegisterToplevelOnce(GetType(), Register);
+      
+      if (!TryGetSerializationContext(out _))
+        return;
+
+      var extWire = InitAndGetExtWire(parentProto);
+      var parentWire = parentProto.Wire;
+      var extScheduler = parentProto.Scheduler;
+      lifetime.TryBracket(() =>
+        {
+          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, extWire, lifetime, parentProto, this.CreateExtSignal());
+          myExtProtocol = proto;
+
+          //protocol must be set first to allow bindable bind to it
+          using (AllowBindCookie.Create())
+          {
+            base.PreInit(lifetime, proto);
+            base.Init(lifetime, proto, ctx);
+          }
+
+          BeforeAdvise(parentProto);
+
+          parentWire.Advise(lifetime, this);
+          Ready(parentWire);
+
+          Protocol.InitTrace?.Log($"{this} :: bound");
+        },
+        () =>
+        {
+          myExtProtocol = null;
+          Disconnected(parentWire);
+        }
+      );
+    }
+
+    protected abstract void BeforeAdvise(Protocol parentProto);
+
+    protected void NotifyExtCreated(Protocol parentProto)
+    {
+      var bindableParent = Parent as RdBindableBase;
+      var info = new ExtCreationInfo(Location, bindableParent?.RdId, SerializationHash, this);
+      using (Signal.NonPriorityAdviseCookie.Create())
+      {
+        parentProto.SubmitExtCreated(info);
+      }
+    }
+
+    protected abstract void Ready(IWire parentWire);
+    protected abstract void Disconnected(IWire parentWire);
+
+    protected abstract IWire InitAndGetExtWire(Protocol parentProtocol);
+
+    protected override void AssertBindingThread() { }
+
+    public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)
+    {
+      Assertion.Fail("Must not be called");
+    }
+        
+    protected override void InitBindableFields(Lifetime lifetime)
+    {
+      foreach (var pair in BindableChildren)
+      {
+        if (pair.Value is RdPropertyBase reactive)
+        {
+          using (reactive.UsingLocalChange())
+          {
+            reactive.BindPolymorphic();
+          } 
+        }
+        else
+        {
+          pair.Value?.BindPolymorphic();
+        }
+      }
+    }
+
+    protected override string ShortName => "ext";
+  }
+
+  public abstract class DefaultExtBase : RdExtBase
+  {
+    private readonly ExtWire myExtWire = new();
+    
     public enum ExtState
     {
       Ready,
@@ -25,76 +137,44 @@ namespace JetBrains.Rd.Base
       Disconnected
     }
 
+    public override IReadonlyProperty<bool> Connected => myExtWire.Connected;
     
-    
-    private readonly ExtWire myExtWire = new ExtWire();
-    [CanBeNull] private IProtocol myExtProtocol;
-    
-    public sealed override IProtocol TryGetProto() => myExtProtocol ?? base.TryGetProto();
-    
-    public readonly IReadonlyProperty<bool> Connected;
-    protected RdExtBase()
+    protected override IWire InitAndGetExtWire(Protocol parentProtocol)
     {
-      Connected = myExtWire.Connected;
+      myExtWire.RealWire = parentProtocol.Wire;
+      return myExtWire;
     }
 
-    protected abstract Action<ISerializers> Register { get; }
-    protected virtual long SerializationHash => 0L;
-
-    protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
+    protected override void Ready(IWire parentWire)
     {
+      SendState(parentWire, ExtState.Ready);
     }
 
-    protected override void Init(Lifetime lifetime, IProtocol parentProto, SerializationCtx ctx)
+    protected override void Disconnected(IWire parentWire)
     {
-      Protocol.InitTrace?.Log($"{this} :: binding");
+      SendState(parentWire, ExtState.Disconnected);
+    }
 
-      var parentWire = parentProto.Wire;
-      
-      parentProto.Serializers.RegisterToplevelOnce(GetType(), Register);
-      
-      if (!TryGetSerializationContext(out var serializationContext))
+    protected override void BeforeAdvise(Protocol parentProto)
+    {
+      NotifyExtCreated(parentProto);
+    }
+
+    private void SendState(IWire parentWire, ExtState state)
+    {
+      var parentProto = TryParentGetProto();
+      if (parentProto == null)
         return;
-
-      var extScheduler = parentProto.Scheduler;
-      myExtWire.RealWire = parentWire;
-      lifetime.TryBracket(
-        () =>
+      
+      using(parentProto.Contexts.CreateSendWithoutContextsCookie())
+        parentWire.Send(RdId, writer =>
         {
-          var parentProtocolImpl = (Protocol)parentProto;
-          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal());
-          myExtProtocol = proto;
-          
-          //protocol must be set first to allow bindable bind to it
-          using (AllowBindCookie.Create())
-          {
-            base.PreInit(lifetime, proto);
-            base.Init(lifetime, proto, ctx);
-          }
-          
-          var bindableParent = Parent as RdBindableBase;
-          var info = new ExtCreationInfo(Location, bindableParent?.RdId, SerializationHash, this);
-          using (Signal.NonPriorityAdviseCookie.Create())
-          {
-            parentProtocolImpl.SubmitExtCreated(info);
-          }
-
-          parentWire.Advise(lifetime, this);
-          SendState(parentWire, ExtState.Ready);
-          
-          Protocol.InitTrace?.Log($"{this} :: bound");
-        },
-        () =>
-        {
-          myExtProtocol = null;
-          SendState(parentWire, ExtState.Disconnected);
-        }
-      );
+          SendTrace?.Log($"{this} : {state}");
+          writer.Write((int)state);
+          writer.Write(SerializationHash);
+        });
     }
-
-    protected override void AssertBindingThread() { }
-
-
+    
     public override void OnWireReceived(IProtocol proto, SerializationCtx ctx, UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)
     {
       var remoteState = (ExtState)reader.ReadInt();
@@ -120,7 +200,7 @@ namespace JetBrains.Rd.Base
       }
       
       var counterpartSerializationHash = reader.ReadLong();
-      if (counterpartSerializationHash != SerializationHash && base.TryGetProto() is {} parentProto)
+      if (counterpartSerializationHash != SerializationHash && TryParentGetProto() is {} parentProto)
       {
         parentProto.Scheduler.Queue(() => parentProto.OutOfSyncModels.Add(this));
         
@@ -136,41 +216,67 @@ namespace JetBrains.Rd.Base
       }
     }
 
-    private void SendState(IWire parentWire, ExtState state)
+  }
+
+  public abstract class InstantExtBase : RdExtBase
+  {
+    private readonly ViewableProperty<bool> myConnected = new();
+    public override IReadonlyProperty<bool> Connected => myConnected;
+
+    protected override void Ready(IWire parentWire)
     {
-      var parentProto = base.TryGetProto();
-      if (parentProto == null)
-        return;
-      
-      using(parentProto.Contexts.CreateSendWithoutContextsCookie())
-        parentWire.Send(RdId, writer =>
-        {
-          SendTrace?.Log($"{this} : {state}");
-          writer.Write((int)state);
-          writer.Write(SerializationHash);
-        });
+      myConnected.Value = true;
     }
 
-        
-    protected override void InitBindableFields(Lifetime lifetime)
+    protected override void Disconnected(IWire parentWire)
     {
-      foreach (var pair in BindableChildren)
+      myConnected.Value = false;
+    }
+
+    protected override void BeforeAdvise(Protocol parentProto)
+    {
+    }
+
+    protected override IWire InitAndGetExtWire(Protocol parentProtocol)
+    {
+      return new InstantExtWire(parentProtocol.Wire, new Lazy<Unit>(() =>
       {
-        if (pair.Value is RdPropertyBase reactive)
-        {
-          using (reactive.UsingLocalChange())
-          {
-            reactive.BindPolymorphic();
-          } 
-        }
-        else
-        {
-          pair.Value?.BindPolymorphic();
-        }
+        NotifyExtCreated(parentProtocol);
+        return Unit.Instance;
+      }, LazyThreadSafetyMode.ExecutionAndPublication));
+    }
+    
+    private class InstantExtWire : IWire
+    {
+      private readonly IWire myRealWire;
+      private readonly Lazy<Unit> myBeforeSend;
+
+      public InstantExtWire(IWire realWire, Lazy<Unit> beforeSend)
+      {
+        myRealWire = realWire;
+        myBeforeSend = beforeSend;
+      }
+
+      public bool IsStub => myRealWire.IsStub;
+      public ProtocolContexts Contexts { get => myRealWire.Contexts; set => myRealWire.Contexts = value; }
+      
+      public void Send<TParam>(RdId id, TParam param, Action<TParam, UnsafeWriter> writer)
+      {
+        _ = myBeforeSend.Value;
+        
+        myRealWire.Send(id, param, writer);
+      }
+
+      public void Advise(Lifetime lifetime, IRdWireable entity)
+      {
+        myRealWire.Advise(lifetime, entity);
+      }
+      
+      public IRdWireable TryGetById(RdId rdId)
+      {
+        return myRealWire.TryGetById(rdId);
       }
     }
-
-    protected override string ShortName => "ext";
   }
   
   

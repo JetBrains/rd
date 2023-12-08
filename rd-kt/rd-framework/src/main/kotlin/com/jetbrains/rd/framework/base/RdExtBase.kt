@@ -12,18 +12,11 @@ import com.jetbrains.rd.util.threading.asSequentialScheduler
 import javax.management.openmbean.InvalidOpenTypeException
 
 abstract class RdExtBase : RdReactiveBase() {
-    enum class ExtState {
-        Ready,
-        ReceivedCounterpart,
-        Disconnected
-    }
-
-
-    private val extWire = ExtWire()
     private var extProtocol: IProtocol? = null
-    val connected = extWire.connected
+    abstract val connected: IPropertyView<Boolean>
 
-    override val protocol: IProtocol? get() = extProtocol ?: super.protocol
+    val parentProtocol: IProtocol? get() = super.protocol
+    override val protocol: IProtocol? get() = extProtocol ?: parentProtocol
 
     abstract val serializersOwner: ISerializersOwner
     open val serializationHash: Long = 0L
@@ -46,7 +39,6 @@ abstract class RdExtBase : RdReactiveBase() {
     protected open val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 
     private val hasCustomScheduler: Boolean get() = extThreading == ExtThreadingKind.CustomScheduler
-    private val allowCreationOnBackgroundThread: Boolean get() = extThreading != ExtThreadingKind.Default
 
     protected fun setCustomScheduler(scheduler: IScheduler) {
         require(hasCustomScheduler) { "Ext: ${this::javaClass.name} doesn't support custom schedulers" }
@@ -68,7 +60,6 @@ abstract class RdExtBase : RdReactiveBase() {
 
         serializersOwner.register(parentProtocol.serializers)
 
-        extWire.realWire = parentWire
         lifetime.bracketIfAlive({
             val scheduler = when (extThreading) {
                 ExtThreadingKind.Default -> parentProtocol.scheduler
@@ -76,84 +67,61 @@ abstract class RdExtBase : RdReactiveBase() {
                 ExtThreadingKind.AllowBackgroundCreation -> parentProtocol.scheduler
             }
 
-            val signal = createExtSignal()
-            val proto = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, scheduler, extWire, lifetime, parentProtocol, signal).also {
+            val extWire = initAndGetExtWire(parentProtocol, scheduler)
+            val proto = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, scheduler, extWire, lifetime, parentProtocol, createExtSignal()).also {
                 it.outOfSyncModels.flowInto(lifetime, parentProtocol.outOfSyncModels) { model -> model }
             }
 
             extProtocol = proto
-            Lifetime.using { activeLifetime ->
-                if (scheduler is ExtSchedulerBase && extThreading != ExtThreadingKind.Default)
-                    scheduler.setActiveCurrentThread(activeLifetime)
 
-                AllowBindingCookie.allowBind {
-                    super.preInit(lifetime, proto)
-                    super.init(lifetime, proto, ctx)
-                }
-
-                val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.rdid, serializationHash, this)
-
-                if (scheduler is CustomExtScheduler) {
-                    assert(customSchedulerWrapper == null)
-                    customSchedulerWrapper = scheduler
-                }
-
-                Signal.nonPriorityAdviseSection {
-                    parentProtocol.submitExtCreated(info)
-                }
+            AllowBindingCookie.allowBind {
+                super.preInit(lifetime, proto)
+                super.init(lifetime, proto, ctx)
             }
+
+            beforeAdvise(scheduler, parentProtocol)
 
             parentWire.advise(lifetime, this)
 
-            parentWire.sendState(ExtState.Ready)
+            ready(parentWire)
             Protocol.initializationLogger.traceMe { "created and bound :: ${printToString()}" }
         }, {
             extProtocol = null
-            parentWire.sendState(ExtState.Disconnected)
+            disconnected(parentWire)
         })
     }
 
-    override fun assertBindingThread() = Unit
+    protected fun notifyExtCreated(scheduler: IScheduler, parentProtocol: Protocol) {
+        Lifetime.using { activeLifetime ->
+            if (scheduler is ExtSchedulerBase && extThreading != ExtThreadingKind.Default)
+                scheduler.setActiveCurrentThread(activeLifetime)
+
+            if (scheduler is CustomExtScheduler) {
+                assert(customSchedulerWrapper == null)
+                customSchedulerWrapper = scheduler
+            }
+
+            val info = ExtCreationInfo(location, (parent as? RdBindableBase)?.rdid, serializationHash, this)
+            Signal.nonPriorityAdviseSection {
+                parentProtocol.submitExtCreated(info)
+            }
+        }
+    }
+
+    protected abstract fun ready(parentWire: IWire)
+    protected abstract fun beforeAdvise(scheduler: IScheduler, parentProtocol: Protocol)
+
+    protected abstract fun disconnected(parentWire: IWire)
 
     override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
-        val remoteState = buffer.readEnum<ExtState>()
-        logReceived.traceMe { "remote: $remoteState " }
-
-        @Suppress("REDUNDANT_ELSE_IN_WHEN")
-        when (remoteState) {
-            ExtState.Ready -> {
-                extWire.realWire.sendState(ExtState.ReceivedCounterpart)
-                extWire.connected.value = true
-            }
-
-            ExtState.ReceivedCounterpart -> extWire.connected.set(true) //don't set anything if already set
-            ExtState.Disconnected -> extWire.connected.set(false)
-
-            else -> error("Unknown remote state: $remoteState")
-        }
-
-        val counterpartSerializationHash = buffer.readLong()
-        val parentProtocol = super.protocol
-        if (serializationHash != counterpartSerializationHash && parentProtocol != null) {
-            //need to queue since outOfSyncModels is not synchronized
-            parentProtocol.scheduler.queue { parentProtocol.outOfSyncModels.add(this) }
-            error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
-        }
+        error("Must not be called")
     }
 
-    private fun IWire.sendState(state: ExtState) {
-        val proto = protocol ?: return
+    protected abstract fun initAndGetExtWire(parentProtocol: Protocol, scheduler: IScheduler): IWire
 
-        proto.contexts.sendWithoutContexts {
-            send(rdid) {
-                logSend.traceMe { state }
-                it.writeEnum(state)
-                it.writeLong(serializationHash)
-            }
-        }
-    }
+    override fun assertBindingThread() = Unit
 
-    private inline fun Logger.traceMe(message: () -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
+    protected inline fun Logger.traceMe(message: () -> Any) = this.trace { "ext `$location` ($rdid) :: ${message()}" }
 
     override fun initBindableFields(lifetime: Lifetime) {
         for ((_, child) in bindableChildren) {
@@ -173,6 +141,106 @@ abstract class RdExtBase : RdReactiveBase() {
 
         @Deprecated("Creating on the background is allowed by default")
         AllowBackgroundCreation
+    }
+}
+
+abstract class DefaultExtBase : RdExtBase() {
+    enum class ExtState {
+        Ready,
+        ReceivedCounterpart,
+        Disconnected
+    }
+
+    private val extWire: ExtWire = ExtWire()
+
+    override val connected: IPropertyView<Boolean> get() = extWire.connected
+
+    override fun initAndGetExtWire(parentProtocol: Protocol, scheduler: IScheduler): IWire {
+        extWire.realWire = parentProtocol.wire
+        return extWire
+    }
+
+    override fun onWireReceived(proto: IProtocol, buffer: AbstractBuffer, ctx: SerializationCtx, dispatchHelper: IRdWireableDispatchHelper) {
+        val remoteState = buffer.readEnum<ExtState>()
+        logReceived.traceMe { "remote: $remoteState " }
+
+        @Suppress("REDUNDANT_ELSE_IN_WHEN")
+        when (remoteState) {
+            ExtState.Ready -> {
+                extWire.realWire.sendState(ExtState.ReceivedCounterpart)
+                extWire.connected.value = true
+            }
+
+            ExtState.ReceivedCounterpart -> extWire.connected.set(true) //don't set anything if already set
+            ExtState.Disconnected -> extWire.connected.set(false)
+
+            else -> error("Unknown remote state: $remoteState")
+        }
+
+        val counterpartSerializationHash = buffer.readLong()
+        val parentProtocol = parentProtocol
+        if (serializationHash != counterpartSerializationHash && parentProtocol != null) {
+            //need to queue since outOfSyncModels is not synchronized
+            parentProtocol.scheduler.queue { parentProtocol.outOfSyncModels.add(this) }
+            error("serializationHash of ext '$location' doesn't match to counterpart: maybe you forgot to generate models?")
+        }
+    }
+
+    private fun IWire.sendState(state: ExtState) {
+        val proto = parentProtocol ?: return
+
+        proto.contexts.sendWithoutContexts {
+            send(rdid) {
+                logSend.traceMe { state }
+                it.writeEnum(state)
+                it.writeLong(serializationHash)
+            }
+        }
+    }
+
+    override fun beforeAdvise(scheduler: IScheduler, parentProtocol: Protocol) {
+        notifyExtCreated(scheduler, parentProtocol)
+    }
+
+    override fun ready(parentWire: IWire) {
+        parentWire.sendState(ExtState.Ready)
+    }
+
+    override fun disconnected(parentWire: IWire) {
+        parentWire.sendState(ExtState.Disconnected)
+    }
+}
+
+abstract class InstantExtBase : RdExtBase() {
+    private val connectedInternal = Property(true)
+    override val connected: IPropertyView<Boolean> = Property(true)
+
+    override fun ready(parentWire: IWire) {
+        connectedInternal.set(true)
+    }
+
+    override fun disconnected(parentWire: IWire) {
+        connectedInternal.set(false)
+    }
+
+    override fun beforeAdvise(scheduler: IScheduler, parentProtocol: Protocol) {
+    }
+
+    override fun initAndGetExtWire(parentProtocol: Protocol, scheduler: IScheduler): IWire {
+        val lazySubmitExtCreated = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            // yes, we execute it under lock, that's bad, but we only expect subscriptions in protocol listeners. Moreover, ext was also created under lock, so that it's ok
+            notifyExtCreated(scheduler, parentProtocol)
+        }
+
+        return object : IWire by parentProtocol.wire {
+            override val connected: IPropertyView<Boolean> get() = connectedInternal
+
+            override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
+                lazySubmitExtCreated.value
+
+                parentProtocol.wire.send(id, writer)
+            }
+        }
     }
 }
 

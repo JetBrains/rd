@@ -38,7 +38,7 @@ namespace org.example
   /// <summary>
   /// <p>Generated from: Example.kt:13</p>
   /// </summary>
-  public class ExampleRootNova : RdExtBase
+  public class ExampleRootNova : DefaultExtBase
   {
     //fields
     //public fields

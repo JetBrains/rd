@@ -6,7 +6,7 @@ using JetBrains.Rd.Util;
 
 namespace JetBrains.Rd.Reflection
 {
-  public class RdExtReflectionBindableBase : RdExtBase, IReflectionBindable
+  public class RdExtReflectionBindableBase : DefaultExtBase, IReflectionBindable
   {
     List<KeyValuePair<string, object>> IReflectionBindable.BindableChildren => BindableChildren;
 

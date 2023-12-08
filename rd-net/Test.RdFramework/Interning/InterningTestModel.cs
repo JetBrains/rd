@@ -17,7 +17,7 @@ namespace Test.RdFramework.Interning
 {
   
   
-  public class InterningRoot1 : RdExtBase
+  public class InterningRoot1 : DefaultExtBase
   {
     //fields
     //public fields

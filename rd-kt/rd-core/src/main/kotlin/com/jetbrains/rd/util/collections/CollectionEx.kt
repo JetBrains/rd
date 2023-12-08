@@ -13,7 +13,7 @@ fun <T> MutableCollection<T>.addUnique(lifetime : Lifetime, value : T) {
 
 fun <K,V> MutableMap<K, V>.addUnique(lifetime : Lifetime, key: K, value : V) : V {
     lifetime.executeIfAlive {
-        put(key, value)?.let { throw IllegalArgumentException("Value already exists: $value") }
+        put(key, value)?.let { throw IllegalArgumentException("Value already exists: $value for key: $key") }
         lifetime += { this.remove(key) }
     }
     return value

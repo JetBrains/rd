@@ -38,7 +38,7 @@ namespace JetBrains.Platform.Tests.Cases.RdFramework.PerClientId
   /// <summary>
   /// <p>Generated from: PerClientId.kt:9</p>
   /// </summary>
-  public class PerClientIdRoot : RdExtBase
+  public class PerClientIdRoot : DefaultExtBase
   {
     //fields
     //public fields

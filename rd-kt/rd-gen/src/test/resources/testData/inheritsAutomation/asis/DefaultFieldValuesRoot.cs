@@ -38,7 +38,7 @@ namespace DefaultFieldValuesRoot
   /// <summary>
   /// <p>Generated from: DefaultFieldValuesTest.kt:17</p>
   /// </summary>
-  public class DefaultFieldValuesRoot : RdExtBase
+  public class DefaultFieldValuesRoot : DefaultExtBase
   {
     //fields
     //public fields

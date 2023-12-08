@@ -23,7 +23,7 @@ class Protocol internal constructor(
     override val wire: IWire, //to initialize field with circular dependencies
     override val lifetime: Lifetime,
     private val parentProtocol: Protocol?,
-    parentExtConfirmation: RdSignal<ExtCreationInfo>? = null,
+    parentExtCreated: RdSignal<ExtCreationInfo>? = null,
     vararg initialContexts: RdContext<*>
 ) : IRdDynamic, IProtocol {
 
@@ -90,10 +90,7 @@ class Protocol internal constructor(
         }
 
         extCreated = parentProtocol?.extCreated ?: Signal()
-        extConfirmation = parentExtConfirmation ?: createExtSignal().also { signal ->
-            val protocolScheduler = scheduler
-            signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
-        }
+        extConfirmation = parentExtCreated ?: createExtSignal()
         extIsLocal = ThreadLocal.withInitial { false }
         AllowBindingCookie.allowBind {
             extConfirmation.bindTopLevel(lifetime, this, "ProtocolExtCreated")

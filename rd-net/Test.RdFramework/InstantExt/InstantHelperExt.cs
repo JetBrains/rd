@@ -31,48 +31,66 @@ using JetBrains.Rd.Text;
 // ReSharper disable RedundantOverflowCheckingContext
 
 
-namespace InheritsAutomationRoot
+namespace demo
 {
   
   
   /// <summary>
-  /// <p>Generated from: InheritsAutomationTest.kt:18</p>
+  /// <p>Generated from: DemoModel.kt:204</p>
   /// </summary>
-  public class InheritsAutomationExtension : DefaultExtBase
+  public class InstantHelperExt : DefaultExtBase
   {
     //fields
     //public fields
+    [NotNull] public ISignal<int> Checker => _Checker;
+    [NotNull] public IViewableProperty<ExtensibleModel> Value => _Value;
     
     //private fields
+    [NotNull] private readonly RdSignal<int> _Checker;
+    [NotNull] private readonly RdProperty<ExtensibleModel> _Value;
+    
     //primary constructor
-    internal static InheritsAutomationExtension CreateInternal()
+    internal static InstantHelperExt CreateInternal()
     {
-      return new InheritsAutomationExtension();
+      return new InstantHelperExt();
     }
     
-    private InheritsAutomationExtension(
+    private InstantHelperExt(
+      [NotNull] RdSignal<int> checker,
+      [NotNull] RdProperty<ExtensibleModel> value
     )
     {
+      if (checker == null) throw new ArgumentNullException("checker");
+      if (value == null) throw new ArgumentNullException("value");
+      
+      _Checker = checker;
+      _Value = value;
+      BindableChildren.Add(new KeyValuePair<string, object>("checker", _Checker));
+      BindableChildren.Add(new KeyValuePair<string, object>("value", _Value));
     }
     //secondary constructor
+    private InstantHelperExt (
+    ) : this (
+      new RdSignal<int>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt),
+      new RdProperty<ExtensibleModel>(ExtensibleModel.Read, ExtensibleModel.Write)
+    ) {}
     //deconstruct trait
     //statics
     
     
     
-    public static Type PointcutType => typeof(InheritsAutomationRoot);
+    public static Type PointcutType => typeof(InstantExtRoot);
     
-    protected override long SerializationHash => -7010073710305884329L;
+    protected override long SerializationHash => 5068647221194057724L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
     {
-      serializers.Register(TestModel_Unknown.Read, TestModel_Unknown.Write);
       
-      serializers.RegisterToplevelOnce(typeof(InheritsAutomationRoot), InheritsAutomationRoot.RegisterDeclaredTypesSerializers);
+      serializers.RegisterToplevelOnce(typeof(InstantExtRoot), InstantExtRoot.RegisterDeclaredTypesSerializers);
     }
     
-    public InheritsAutomationExtension(Lifetime lifetime, IProtocol protocol) : this()
+    public InstantHelperExt(Lifetime lifetime, IProtocol protocol) : this()
     {
       var ext = protocol.GetOrCreateExtension(() => this);
       if (!ReferenceEquals(ext, this))
@@ -88,7 +106,11 @@ namespace InheritsAutomationRoot
     //pretty print
     public override void Print(PrettyPrinter printer)
     {
-      printer.Println("InheritsAutomationExtension (");
+      printer.Println("InstantHelperExt (");
+      using (printer.IndentCookie()) {
+        printer.Print("checker = "); _Checker.PrintEx(printer); printer.Println();
+        printer.Print("value = "); _Value.PrintEx(printer); printer.Println();
+      }
       printer.Print(")");
     }
     //toString
@@ -100,19 +122,19 @@ namespace InheritsAutomationRoot
     }
   }
   
-  public static class InheritsAutomationRootInheritsAutomationExtensionEx
+  public static class InstantExtRootInstantHelperExtEx
   {
-    public static InheritsAutomationExtension GetInheritsAutomationExtension(this IProtocol protocol)
+    public static InstantHelperExt GetInstantHelperExt(this IProtocol protocol)
     {
-      return protocol.GetOrCreateExtension(() => InheritsAutomationExtension.CreateInternal());
+      return protocol.GetOrCreateExtension(() => InstantHelperExt.CreateInternal());
     }
   }
   
   
   /// <summary>
-  /// <p>Generated from: InheritsAutomationTest.kt:19</p>
+  /// <p>Generated from: DemoModel.kt:205</p>
   /// </summary>
-  public abstract class TestModel : RdBindableBase, JetBrains.Application.UI.UIAutomation.IAutomation
+  public sealed class ExtensibleModel : RdBindableBase
   {
     //fields
     //public fields
@@ -123,41 +145,14 @@ namespace InheritsAutomationRoot
     //deconstruct trait
     //statics
     
-    public static CtxReadDelegate<TestModel> Read = Polymorphic<TestModel>.ReadAbstract(TestModel_Unknown.Read);
-    
-    public static CtxWriteDelegate<TestModel> Write = Polymorphic<TestModel>.Write;
-    
-    //constants
-    
-    //custom body
-    public override event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-    //methods
-    //equals trait
-    //hash code trait
-    //pretty print
-    //toString
-  }
-  
-  
-  public sealed class TestModel_Unknown : TestModel
-  {
-    //fields
-    //public fields
-    
-    //private fields
-    //primary constructor
-    //secondary constructor
-    //deconstruct trait
-    //statics
-    
-    public static new CtxReadDelegate<TestModel_Unknown> Read = (ctx, reader) => 
+    public static CtxReadDelegate<ExtensibleModel> Read = (ctx, reader) => 
     {
       var _id = RdId.Read(reader);
-      var _result = new TestModel_Unknown().WithId(_id);
+      var _result = new ExtensibleModel().WithId(_id);
       return _result;
     };
     
-    public static new CtxWriteDelegate<TestModel_Unknown> Write = (ctx, writer, value) => 
+    public static CtxWriteDelegate<ExtensibleModel> Write = (ctx, writer, value) => 
     {
       value.RdId.Write(writer);
     };
@@ -171,7 +166,7 @@ namespace InheritsAutomationRoot
     //pretty print
     public override void Print(PrettyPrinter printer)
     {
-      printer.Println("TestModel_Unknown (");
+      printer.Println("ExtensibleModel (");
       printer.Print(")");
     }
     //toString

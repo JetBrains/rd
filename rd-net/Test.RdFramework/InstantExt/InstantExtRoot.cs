@@ -31,26 +31,26 @@ using JetBrains.Rd.Text;
 // ReSharper disable RedundantOverflowCheckingContext
 
 
-namespace Org.TestRoot1
+namespace demo
 {
   
   
   /// <summary>
-  /// <p>Generated from: FactoryFqnTestDataModel.kt:16</p>
+  /// <p>Generated from: DemoModel.kt:198</p>
   /// </summary>
-  public class TestRoot1 : DefaultExtBase
+  public class InstantExtRoot : DefaultExtBase
   {
     //fields
     //public fields
     
     //private fields
     //primary constructor
-    internal static TestRoot1 CreateInternal()
+    internal static InstantExtRoot CreateInternal()
     {
-      return new TestRoot1();
+      return new InstantExtRoot();
     }
     
-    private TestRoot1(
+    private InstantExtRoot(
     )
     {
     }
@@ -60,17 +60,18 @@ namespace Org.TestRoot1
     
     
     
-    protected override long SerializationHash => 474298181957578587L;
+    protected override long SerializationHash => -7972064396670934268L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
     {
       
-      serializers.RegisterToplevelOnce(typeof(TestRoot1), TestRoot1.RegisterDeclaredTypesSerializers);
-      serializers.RegisterToplevelOnce(typeof(Solution2), Solution2.RegisterDeclaredTypesSerializers);
+      serializers.RegisterToplevelOnce(typeof(InstantExtRoot), InstantExtRoot.RegisterDeclaredTypesSerializers);
+      serializers.RegisterToplevelOnce(typeof(InstantHelperExt), InstantHelperExt.RegisterDeclaredTypesSerializers);
+      serializers.RegisterToplevelOnce(typeof(InstantExtModel), InstantExtModel.RegisterDeclaredTypesSerializers);
     }
     
-    public TestRoot1(Lifetime lifetime, IProtocol protocol) : this()
+    public InstantExtRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
       var ext = protocol.GetOrCreateExtension(() => this);
       if (!ReferenceEquals(ext, this))
@@ -86,7 +87,7 @@ namespace Org.TestRoot1
     //pretty print
     public override void Print(PrettyPrinter printer)
     {
-      printer.Println("TestRoot1 (");
+      printer.Println("InstantExtRoot (");
       printer.Print(")");
     }
     //toString
@@ -98,11 +99,11 @@ namespace Org.TestRoot1
     }
   }
   
-  public static class ProtocolTestRoot1Ex
+  public static class ProtocolInstantExtRootEx
   {
-    public static TestRoot1 GetTestRoot1(this IProtocol protocol)
+    public static InstantExtRoot GetInstantExtRoot(this IProtocol protocol)
     {
-      return protocol.GetOrCreateExtension(() => TestRoot1.CreateInternal());
+      return protocol.GetOrCreateExtension(() => InstantExtRoot.CreateInternal());
     }
   }
 }
