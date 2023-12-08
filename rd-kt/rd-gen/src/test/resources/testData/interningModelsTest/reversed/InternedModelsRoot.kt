@@ -20,7 +20,7 @@ import kotlin.jvm.JvmStatic
  */
 class InternedModelsRoot private constructor(
     private val _editors: RdMap<Int, Editor>
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

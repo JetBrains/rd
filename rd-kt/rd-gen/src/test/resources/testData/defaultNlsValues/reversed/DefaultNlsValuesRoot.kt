@@ -19,7 +19,7 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [DefaultNlsValuesTest.kt:14]
  */
 class DefaultNlsValuesRoot private constructor(
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

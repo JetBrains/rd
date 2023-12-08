@@ -19,7 +19,7 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [CustomThreadingTest.kt:15]
  */
 class CustomThreadingRoot private constructor(
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {
