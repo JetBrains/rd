@@ -19,7 +19,7 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [AsyncPrimitives.kt:8]
  */
 class AsyncPrimitivesRoot private constructor(
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

@@ -21,7 +21,7 @@ import kotlin.jvm.JvmStatic
 class RecursivePolymorphicModel private constructor(
     private val _line: RdOptionalProperty<BeTreeGridLine>,
     private val _list: RdOptionalProperty<List<BeTreeGridLine>>
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

@@ -23,7 +23,7 @@ class ExampleModelNova private constructor(
     private val _version: RdOptionalProperty<Int>,
     private val _documents: RdMap<Int, Document>,
     private val _editors: RdMap<ScalarExample, TextControl>
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

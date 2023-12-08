@@ -19,7 +19,7 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [Extension.kt:11]
  */
 class ExtensionRoot private constructor(
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

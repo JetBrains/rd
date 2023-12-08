@@ -19,7 +19,7 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [RecursivePolymorphicModel.kt:9]
  */
 class RecursivePolymorphicModelRoot private constructor(
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

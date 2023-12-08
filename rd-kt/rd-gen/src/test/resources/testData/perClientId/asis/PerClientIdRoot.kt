@@ -24,7 +24,7 @@ class PerClientIdRoot private constructor(
     private val _aPropDefault2: RdProperty<Boolean>,
     private val _aMap: RdPerContextMap<String, RdMap<String, String>>,
     private val _innerProp: RdOptionalProperty<InnerClass>
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

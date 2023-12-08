@@ -23,7 +23,7 @@ class AsyncPrimitivesExt private constructor(
     private val _asyncPropertyNullable: AsyncRdProperty<String?>,
     private val _asyncMap: AsyncRdMap<Int, String>,
     private val _asyncSet: AsyncRdSet<Int>
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {

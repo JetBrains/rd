@@ -19,7 +19,7 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [CallGeneratedCodeTest.kt:17]
  */
 class CallGeneratedCodeRoot private constructor(
-) : RdExtBase() {
+) : DefaultExtBase() {
     //companion
     
     companion object : ISerializersOwner {
