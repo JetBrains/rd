@@ -31,51 +31,53 @@ using JetBrains.Rd.Text;
 // ReSharper disable RedundantOverflowCheckingContext
 
 
-namespace Org.TestRoot1
+namespace demo
 {
   
   
   /// <summary>
-  /// <p>Generated from: FactoryFqnTestDataModel.kt:16</p>
+  /// <p>Generated from: DemoModel.kt:216</p>
   /// </summary>
-  public class TestRoot1 : DefaultExtBase
+  public class InstantExtModel : InstantExtBase
   {
     //fields
     //public fields
+    [NotNull] public ISignal<int> Checker => _Checker;
     
     //private fields
-    //primary constructor
-    internal static TestRoot1 CreateInternal()
-    {
-      return new TestRoot1();
-    }
+    [NotNull] private readonly RdSignal<int> _Checker;
     
-    private TestRoot1(
+    //primary constructor
+    private InstantExtModel(
+      [NotNull] RdSignal<int> checker
     )
     {
+      if (checker == null) throw new ArgumentNullException("checker");
+      
+      _Checker = checker;
+      BindableChildren.Add(new KeyValuePair<string, object>("checker", _Checker));
     }
     //secondary constructor
+    internal InstantExtModel (
+    ) : this (
+      new RdSignal<int>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt)
+    ) {}
     //deconstruct trait
     //statics
     
     
     
-    protected override long SerializationHash => 474298181957578587L;
+    public static Type PointcutType => typeof(ExtensibleModel);
+    
+    protected override long SerializationHash => 5073319630268375416L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
     {
       
-      serializers.RegisterToplevelOnce(typeof(TestRoot1), TestRoot1.RegisterDeclaredTypesSerializers);
-      serializers.RegisterToplevelOnce(typeof(Solution2), Solution2.RegisterDeclaredTypesSerializers);
+      serializers.RegisterToplevelOnce(typeof(InstantExtRoot), InstantExtRoot.RegisterDeclaredTypesSerializers);
     }
     
-    public TestRoot1(Lifetime lifetime, IProtocol protocol) : this()
-    {
-      var ext = protocol.GetOrCreateExtension(() => this);
-      if (!ReferenceEquals(ext, this))
-        throw new InvalidOperationException($"Returned ext: {ext} is not equal to {this}");
-    }
     
     //constants
     
@@ -86,7 +88,10 @@ namespace Org.TestRoot1
     //pretty print
     public override void Print(PrettyPrinter printer)
     {
-      printer.Println("TestRoot1 (");
+      printer.Println("InstantExtModel (");
+      using (printer.IndentCookie()) {
+        printer.Print("checker = "); _Checker.PrintEx(printer); printer.Println();
+      }
       printer.Print(")");
     }
     //toString
@@ -98,11 +103,11 @@ namespace Org.TestRoot1
     }
   }
   
-  public static class ProtocolTestRoot1Ex
+  public static class ExtensibleModelInstantExtModelEx
   {
-    public static TestRoot1 GetTestRoot1(this IProtocol protocol)
+    public static InstantExtModel GetInstantExtModel(this ExtensibleModel extensibleModel)
     {
-      return protocol.GetOrCreateExtension(() => TestRoot1.CreateInternal());
+      return extensibleModel.GetOrCreateExtension("instantExtModel", () => new InstantExtModel());
     }
   }
 }

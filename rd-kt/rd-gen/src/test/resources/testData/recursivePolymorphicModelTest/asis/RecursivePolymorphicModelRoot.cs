@@ -38,7 +38,7 @@ namespace org.example
   /// <summary>
   /// <p>Generated from: RecursivePolymorphicModel.kt:9</p>
   /// </summary>
-  public class RecursivePolymorphicModelRoot : RdExtBase
+  public class RecursivePolymorphicModelRoot : DefaultExtBase
   {
     //fields
     //public fields

@@ -38,7 +38,7 @@ namespace Test.RdFramework.Reflection.Generated
   /// <summary>
   /// <p>Generated from: RefRoot.kt:21</p>
   /// </summary>
-  public class RefExt : RdExtBase
+  public class RefExt : DefaultExtBase
   {
     //fields
     //public fields

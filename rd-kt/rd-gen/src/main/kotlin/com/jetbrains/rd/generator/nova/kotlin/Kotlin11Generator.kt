@@ -1066,7 +1066,17 @@ open class Kotlin11Generator(
     protected open fun PrettyPrinter.baseClassTrait(decl: Declaration) {
         val base = decl.base ?: let {
             when (decl) {
-                is Toplevel -> p( " : RdExtBase()")
+                is Toplevel -> {
+                    val baseClass = if (decl is Ext) {
+                        when (decl.kind) {
+                            ExtKind.Default -> "DefaultExtBase"
+                            ExtKind.Instant -> "InstantExtBase"
+                        }
+                    }
+                    else "DefaultExtBase"
+
+                    p( " : $baseClass()")
+                }
                 is Class, is Aggregate -> p(" : RdBindableBase()")
                 is Struct -> p(" : IPrintable")
             }

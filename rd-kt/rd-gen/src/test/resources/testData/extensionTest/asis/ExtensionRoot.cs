@@ -38,7 +38,7 @@ namespace ExtensionRoot
   /// <summary>
   /// <p>Generated from: Extension.kt:11</p>
   /// </summary>
-  public class ExtensionRoot : RdExtBase
+  public class ExtensionRoot : DefaultExtBase
   {
     //fields
     //public fields

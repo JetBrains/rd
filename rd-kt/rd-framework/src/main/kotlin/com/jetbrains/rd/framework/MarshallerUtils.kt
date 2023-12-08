@@ -4,6 +4,7 @@ import com.jetbrains.rd.framework.FrameworkMarshallers.create
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.util.string.RName
+import com.jetbrains.rd.util.threading.SynchronousScheduler
 
 object RNameMarshaller {
     fun read(buffer: AbstractBuffer): RName {
@@ -56,6 +57,7 @@ internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
     )
     return RdSignal(marshaller).also {
         it.async = true
+        it.scheduler = SynchronousScheduler
 
         val baseId = (this as? IRdWireable)?.rdid ?: RdId.Null
         it.rdid = baseId.mix("ProtocolExtCreated")

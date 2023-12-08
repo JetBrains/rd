@@ -552,7 +552,12 @@ interface Extensible {
     val extensions: MutableList<Ext>
 }
 
-abstract class Ext(pointcut : BindableDeclaration, val extName: String? = null) : Toplevel(pointcut), Extensible {
+enum class ExtKind {
+    Default,
+    Instant
+}
+
+abstract class Ext(pointcut : BindableDeclaration, val kind: ExtKind, val extName: String? = null) : Toplevel(pointcut), Extensible {
     override val extensions: MutableList<Ext> = mutableListOf()
 
     override val cl_name = "singleton"
@@ -566,7 +571,12 @@ abstract class Ext(pointcut : BindableDeclaration, val extName: String? = null) 
             }
         }
     }
+
+    @Deprecated("Use and overload with ToplevelKind or InstantExt")
+    constructor(pointcut : BindableDeclaration, extName: String? = null) : this(pointcut, ExtKind.Default, extName)
 }
+
+abstract class InstantExt(pointcut : BindableDeclaration, extName: String? = null) : Ext(pointcut, ExtKind.Instant, extName)
 
 val Declaration.isExtension get() = this is Ext && pointcut !is Root
 val Declaration.isToplevelExtension get() = this is Ext && pointcut is Root

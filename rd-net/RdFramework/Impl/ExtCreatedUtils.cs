@@ -28,6 +28,8 @@ namespace JetBrains.Rd.Impl
       );
       var baseId = @this is IRdWireable wireable ? wireable.RdId : RdId.Nil;
       signal.RdId = baseId.Mix(Protocol.ProtocolExtCreatedRdId);
+      signal.Async = true;
+      signal.Scheduler = SynchronousScheduler.Instance;
       return signal;
     }
     

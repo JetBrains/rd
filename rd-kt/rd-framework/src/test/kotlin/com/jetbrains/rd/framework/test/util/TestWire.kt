@@ -5,11 +5,10 @@ import com.jetbrains.rd.framework.AbstractBuffer
 import com.jetbrains.rd.framework.RdMessage
 import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.framework.createAbstractBuffer
-import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.reactive.IScheduler
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class TestWire(val scheduler : IScheduler) : WireBase() {
+class TestWire(private val scheduler : IScheduler) : WireBase() {
     lateinit var counterpart : TestWire
 
     val msgQ = ConcurrentLinkedQueue<RdMessage>()
@@ -52,7 +51,7 @@ class TestWire(val scheduler : IScheduler) : WireBase() {
 
     fun processAllMessages() {
         scheduler.invokeOrQueue { // emulate normal wire behavior in that all messages are processed in a single thread
-            while (!msgQ.isEmpty()) processOneMessage()
+                while (!msgQ.isEmpty()) processOneMessage()
         }
     }
 

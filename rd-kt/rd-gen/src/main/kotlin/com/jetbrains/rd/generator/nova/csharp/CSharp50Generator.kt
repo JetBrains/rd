@@ -1303,7 +1303,13 @@ open class CSharp50Generator(
         val baseClassesStr =
                 if (base == null) {
                     when (decl) {
-                        is Toplevel -> "RdExtBase"
+                        is Toplevel -> if (decl is Ext) {
+                            when (decl.kind) {
+                                ExtKind.Default -> "DefaultExtBase"
+                                ExtKind.Instant -> "InstantExtBase"
+                            }
+                        }
+                        else "DefaultExtBase"
                         is BindableDeclaration -> "RdBindableBase"
                         is Struct.Concrete -> "IPrintable, IEquatable<${decl.name}>"
                         else -> "" //abstract struct doesn't implement these methods, enum must not reach this place

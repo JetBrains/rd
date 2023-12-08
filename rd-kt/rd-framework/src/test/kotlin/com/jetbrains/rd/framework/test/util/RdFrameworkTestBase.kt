@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
+import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
@@ -90,7 +91,18 @@ open class RdFrameworkTestBase {
 
         clientLifetimeDef.terminate()
         serverLifetimeDef.terminate()
+
+        flushAllSchedulers()
+
         ErrorAccumulatorLoggerFactory.throwAndClear()
+    }
+
+    protected fun flushAllSchedulers() {
+        clientScheduler.flush()
+        serverScheduler.flush()
+
+        clientWireScheduler?.flush()
+        clientWireScheduler?.flush()
     }
 
     internal fun <T : IRdBindable> IProtocol.bindStatic(x: T, name: String): T {

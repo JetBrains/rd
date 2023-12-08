@@ -8,6 +8,7 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
+using JetBrains.Util.Internal;
 using NUnit.Framework;
 using Test.Lifetimes;
 using Test.RdFramework.Components;
@@ -86,13 +87,21 @@ namespace Test.RdFramework
       if (ClientWire.HasMessages)
         throw new InvalidOperationException("There is messages in ClientWire");
 
-      int barrier = 0;
-      ServerProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
-      ClientProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
-      if (!SpinWait.SpinUntil(() => barrier == 2, 100))
-        Log.Root.Error("Either Server or Client scheduler is not empty in 100ms!");
+      FlushAllSchedulers();
       WireTapping?.Dispose();
       base.TearDown();
+    }
+
+    protected void FlushAllSchedulers() => FlushAllSchedulers(TimeSpan.FromSeconds(30));
+    
+    protected void FlushAllSchedulers(TimeSpan timeout)
+    {
+      var barrier = 0;
+      ServerProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
+      ClientProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
+      
+      if (!SpinWait.SpinUntil(() => Memory.VolatileRead(ref barrier) == 2, timeout))
+        Log.Root.Error($"Either Server or Client scheduler is not empty in {(long)timeout.TotalMilliseconds} ms!");
     }
 
     protected T BindToClient<T>(Lifetime lf, T x, int staticId) where T : IRdReactive

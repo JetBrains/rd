@@ -194,3 +194,27 @@ object ClassExtModel : Ext(DemoModel.classWithExt) {
         signal("values", PredefinedType.int)
     }
 }
+
+object InstantExtRoot : Root(
+    Kotlin11Generator(FlowTransform.AsIs, "demo", outputDirectory(ktDirectorySystemPropertyKey, folder)),
+    CSharp50Generator(FlowTransform.Reversed, "demo", outputDirectory(csDirectorySystemPropertyKey, folder))
+)
+
+@ExperimentalUnsignedTypes
+object InstantHelperExt : Ext(InstantExtRoot, ExtKind.Default) {
+    val extensibleModel = classdef {
+
+    }
+    init {
+        signal("checker", PredefinedType.int)
+        property("value", extensibleModel)
+    }
+}
+
+
+@ExperimentalUnsignedTypes
+object InstantExtModel : InstantExt(InstantHelperExt.extensibleModel) {
+    init {
+        signal("checker", PredefinedType.int)
+    }
+}

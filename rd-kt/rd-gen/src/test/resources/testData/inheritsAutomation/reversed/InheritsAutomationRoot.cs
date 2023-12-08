@@ -38,7 +38,7 @@ namespace InheritsAutomationRoot
   /// <summary>
   /// <p>Generated from: InheritsAutomationTest.kt:17</p>
   /// </summary>
-  public class InheritsAutomationRoot : RdExtBase
+  public class InheritsAutomationRoot : DefaultExtBase
   {
     //fields
     //public fields
