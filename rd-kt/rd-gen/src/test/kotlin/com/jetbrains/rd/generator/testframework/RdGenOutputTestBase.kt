@@ -19,6 +19,8 @@ abstract class RdGenOutputTestBase {
     protected abstract val fileExtensionNoDot: String
     protected abstract val generatedSourcesDir: String
 
+    protected open val verifyComments = false
+
     protected open fun expectedFileCount(model: Class<*>): Int = 1
 
     protected inline fun <reified TModel> doTest(
@@ -97,9 +99,11 @@ abstract class RdGenOutputTestBase {
         testFolder.deleteRecursively()
     }
 
-    private fun processLines(lines: List<String>) = lines
-        .map { it.trimEnd() }
-        .filter { !it.trim().startsWith("//") }
+    private fun processLines(lines: List<String>): Sequence<String> {
+        val result = lines.asSequence().map { it.trimEnd() }
+        return if (verifyComments) result
+        else result.filter { !it.trim().startsWith("//") }
+    }
     protected fun processText(lines: List<String>) = processLines(lines).joinToString("\n")
 
     protected fun getGoldFile(resourceRelativePath: String): File {
