@@ -28,11 +28,11 @@ int main()
 	Protocol clientProtocol{Identities::CLIENT, &testScheduler, std::move(wire), lifetime};
 
 	RdProperty<optional<int32_t>> property_main{0};
-	property_main.rdid = RdId(1);
+	property_main.set_id(RdId(1));
 	property_main.bind(lifetime, &clientProtocol, "top");
 
 	RdProperty<optional<int32_t>> property_rx{0};
-	property_rx.rdid = RdId(2);
+	property_rx.set_id(RdId(2));
 	property_rx.bind(lifetime, &clientProtocol, "rx");
 
 	property_rx.advise(lifetime, [](optional<int32_t> const& x) { std::cout << "rx value changed to " << *x << "\n"; });
