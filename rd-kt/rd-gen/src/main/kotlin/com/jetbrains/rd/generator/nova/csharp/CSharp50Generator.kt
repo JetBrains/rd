@@ -542,7 +542,7 @@ open class CSharp50Generator(
     protected open fun PrettyPrinter.doc(decl: Declaration) {
         if (decl.documentation != null || decl.sourceFileAndLine != null) {
             + "/// <summary>"
-            decl.documentation?.let {
+            decl.documentation?.lines()?.forEach {
                 + "/// $it"
             }
             decl.sourceFileAndLine?.let {

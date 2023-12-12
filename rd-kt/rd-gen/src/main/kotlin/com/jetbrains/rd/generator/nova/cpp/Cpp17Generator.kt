@@ -1084,7 +1084,7 @@ open class Cpp17Generator(
     private fun PrettyPrinter.docDecl(decl: Declaration) {
         if (decl.documentation != null || decl.sourceFileAndLine != null) {
             +"/// <summary>"
-            decl.documentation?.let {
+            decl.documentation?.lines()?.forEach {
                 +"/// $it"
             }
             decl.sourceFileAndLine?.let {

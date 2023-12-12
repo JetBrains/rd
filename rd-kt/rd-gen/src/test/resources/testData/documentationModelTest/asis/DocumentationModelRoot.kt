@@ -17,8 +17,8 @@ import kotlin.jvm.JvmStatic
 
 /**
  * This is a documentation test,
-and it is also multiline.
- * #### Generated from [ModelWithDocumentation.kt:14]
+ * and it is also multiline.
+ * #### Generated from [ModelWithDocumentation.kt:11]
  */
 class DocumentationModelRoot private constructor(
 ) : RdExtBase() {

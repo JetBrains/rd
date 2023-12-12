@@ -57,8 +57,8 @@
 
 /// <summary>
 /// This is a documentation test,
-and it is also multiline.
-/// <p>Generated from: ModelWithDocumentation.kt:14</p>
+/// and it is also multiline.
+/// <p>Generated from: ModelWithDocumentation.kt:11</p>
 /// </summary>
 namespace org.example {
 
