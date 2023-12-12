@@ -459,8 +459,8 @@ open class Kotlin11Generator(
     protected fun PrettyPrinter.docTrait(decl: Declaration) {
         if (decl.sourceFileAndLine != null || decl.documentation != null || decl.ownMembers.any { !it.isEncapsulated && it.documentation != null }) {
             + "/**"
-            if (decl.documentation != null) {
-                + " * ${decl.documentation}"
+            decl.documentation?.lines()?.forEach {
+                + " * $it"
             }
             for (member in decl.ownMembers.filter { !it.isEncapsulated && it.documentation != null }) {
                 + " * @property ${member.name} ${member.documentation}"
