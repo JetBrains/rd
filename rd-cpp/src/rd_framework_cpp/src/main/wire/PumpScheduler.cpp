@@ -14,9 +14,13 @@ PumpScheduler::PumpScheduler() : created_thread_id(std::this_thread::get_id())
 
 void PumpScheduler::flush()
 {
+	std::function<void()> action;
 	assert_thread();
-	auto action = std::move(messages.front());
-	messages.pop();
+	{
+		std::lock_guard<decltype(lock)> guard(lock);
+		action = std::move(messages.front());
+		messages.pop();
+	}
 	action();
 }
 
