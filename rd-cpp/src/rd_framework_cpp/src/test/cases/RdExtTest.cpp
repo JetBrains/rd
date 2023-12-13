@@ -107,10 +107,10 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/ testSlowpokeExtension)
 {
 	//	int64_t const serialization_hash = 1ll << 40u;
 
-	Protocol serverProtocol = server(socketLifetime);
-	Protocol clientProtocol = client(socketLifetime, serverProtocol);
+	const Protocol serverProtocol = server(socketLifetime);
+	const Protocol clientProtocol = client(socketLifetime, serverProtocol);
 
-	RdProperty<int> serverProperty{0}, clientProperty{0};
+	const RdProperty<int> serverProperty{0}, clientProperty{0};
 	init(serverProtocol, clientProtocol, &serverProperty, &clientProperty);
 
 	auto const& serverExt = serverProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"SERVER");
@@ -119,16 +119,17 @@ TEST_F(SocketWireTestBase, /*DISABLED_*/ testSlowpokeExtension)
 	serverExt.property.set(L"UPDATE");
 	serverExt.property.set(L"UPGRADE");
 
+	// wait for attempt to bind extension property in background dispatch thread
+	rd::util::sleep_this_thread(200);
+
 	auto const& clientExt = clientProperty.getOrCreateExtension<ExtProperty<std::wstring>>("data", L"CLIENT");
 	//	clientExt.serializationHash = serialization_hash;
 
 	EXPECT_EQ(clientExt.property.get(), L"CLIENT");
 
-	//	clientScheduler.pump_one_message(); //send Ready
-	//	serverScheduler.pump_one_message(); //send Ready
-	//	serverScheduler.pump_one_message(); //send ReceivedCounterpart
-	//	clientScheduler.pump_one_message(); //send ReceivedCounterpart
-	// no need in pumping due to synchronous scheduler
+	// proceed on client-server ext property connection after client ext property creation
+	clientScheduler.pump_one_message();
+
 	clientScheduler.pump_one_message();	   // send "UPDATE"
 
 	EXPECT_EQ(serverExt.property.get(), L"UPGRADE");
