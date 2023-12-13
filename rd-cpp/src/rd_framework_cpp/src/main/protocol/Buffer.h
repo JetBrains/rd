@@ -155,9 +155,8 @@ public:
 		}
 	}
 
-	template <template <class, class> class C, typename T, typename A = allocator<T>,
-		typename = typename std::enable_if_t<!rd::util::in_heap_v<T>>>
-	void write_array(C<T, A> const& container, std::function<void(T const&)> writer)
+	template <template <class, class> class C, typename T, typename A = allocator<T>>
+	std::enable_if_t<!rd::util::in_heap_v<T>, void> write_array(C<T, A> const& container, std::function<void(T const&)> writer)
 	{
 		using rd::size;
 		write_integral<int32_t>(size(container));
@@ -167,8 +166,8 @@ public:
 		}
 	}
 
-	template <template <class, class> class C, typename T, typename A = allocator<Wrapper<T>>>
-	void write_array(C<Wrapper<T>, A> const& container, std::function<void(T const&)> writer)
+	template <template <class, class> class C, typename T, typename A = allocator<value_or_wrapper<T>>>
+	std::enable_if_t<is_wrapper_v<value_or_wrapper<T>>, void> write_array(C<value_or_wrapper<T>, A> const& container, std::function<void(T const&)> writer)
 	{
 		using rd::size;
 		write_integral<int32_t>(size(container));
