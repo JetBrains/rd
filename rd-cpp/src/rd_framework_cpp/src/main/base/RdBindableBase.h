@@ -45,7 +45,7 @@ public:
 	// endregion
 
 	// need to implement in subclasses
-	virtual void init(Lifetime lifetime) const;
+	virtual void init(Lifetime inLifetime) const;
 
 	const RName& get_location() const override;
 
@@ -53,7 +53,7 @@ public:
 
 	void set_id(RdId id) const override;
 
-	void bind(Lifetime lf, IRdDynamic const* parent, string_view name) const override;
+	void bind(Lifetime lf, IRdDynamic const* inParent, string_view name) const override;
 
 	void identify(const Identities& identities, RdId const& id) const override;
 

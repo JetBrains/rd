@@ -198,7 +198,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16_t nPort, int32_t nConnecti
 //
 //------------------------------------------------------------------------------
 CActiveSocket *CPassiveSocket::Accept() {
-    uint32_t nSockLen;
+    uint32_t nClientSockLen;
     CActiveSocket *pClientSocket = NULL;
     SOCKET socket = static_cast<SOCKET>(CSimpleSocket::SocketError);
 
@@ -218,11 +218,11 @@ CActiveSocket *CPassiveSocket::Accept() {
         m_timer.Initialize();
         m_timer.SetStartTime();
 
-        nSockLen = sizeof(m_stClientSockaddr);
+        nClientSockLen = sizeof(m_stClientSockaddr);
 
         do {
             errno = 0;
-            socket = accept(m_socket, (struct sockaddr *) &m_stClientSockaddr, (socklen_t *) &nSockLen);
+            socket = accept(m_socket, (struct sockaddr *) &m_stClientSockaddr, (socklen_t *) &nClientSockLen);
 
             if (socket != static_cast<SOCKET>(-1)) {
                 pClientSocket->SetSocketHandle(socket);
@@ -274,9 +274,8 @@ int32_t CPassiveSocket::Send(const uint8_t *pBuf, size_t bytesToSend) {
                     m_timer.Initialize();
                     m_timer.SetStartTime();
 
-                    m_nBytesSent = SENDTO(m_socket, pBuf, bytesToSend, 0,
-                                          (const sockaddr *) &m_stClientSockaddr,
-                                          sizeof(m_stClientSockaddr));
+					m_nBytesSent = static_cast<int32_t>(SENDTO(m_socket, pBuf, bytesToSend, 0,
+						reinterpret_cast<const sockaddr*>(&m_stClientSockaddr), sizeof(m_stClientSockaddr)));
 
                     m_timer.SetEndTime();
 

@@ -19,7 +19,7 @@ private:
 
 	std::function<int32_t()> request_data;
 
-	size_t memory = 0;
+	int32_t memory = 0;
 
 public:
 	template <typename F>

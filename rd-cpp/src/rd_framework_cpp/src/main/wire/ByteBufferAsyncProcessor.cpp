@@ -93,7 +93,7 @@ bool ByteBufferAsyncProcessor::reprocess()
 			pending_queue.pop_front();
 			++current_seqn;
 		}
-		for (int i = 0; i < pending_queue.size(); ++i)
+		for (size_t i = 0; i < pending_queue.size(); ++i)
 		{
 			auto const& item = pending_queue[i];
 			if (!processor(item, current_seqn + i))

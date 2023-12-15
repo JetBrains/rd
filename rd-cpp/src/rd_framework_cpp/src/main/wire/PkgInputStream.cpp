@@ -33,7 +33,7 @@ Buffer& PkgInputStream::get_buffer()
 
 int32_t PkgInputStream::try_read(Buffer::word_t* res, size_t size)
 {
-	if (memory == -1 || buffer.get_position() == memory)
+	if (memory == -1 || static_cast<int32_t>(buffer.get_position()) == memory)
 	{
 		memory = request_data();
 		if (memory == -1)
@@ -52,7 +52,7 @@ bool PkgInputStream::read(Buffer::word_t* res, size_t size)
 {
 	//		spdlog::trace("PkgInputStream call: size={}, pos={}, memory={}", size, buffer.get_position(), memory);
 
-	int32_t summary_size = 0;
+	size_t summary_size = 0;
 	while (summary_size < size)
 	{
 		const int32_t bytes_read = try_read(res + summary_size, size - summary_size);
