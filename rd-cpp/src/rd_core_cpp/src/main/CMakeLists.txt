@@ -1,6 +1,5 @@
 #lib
-
-add_library(rd_core_cpp SHARED
+set(RD_CORE_CPP_SOURCES
         #lifetime
         lifetime/LifetimeImpl.cpp lifetime/LifetimeImpl.h
         lifetime/Lifetime.cpp lifetime/Lifetime.h
@@ -37,7 +36,9 @@ add_library(rd_core_cpp SHARED
         util/gen_util.h util/overloaded.h
         #pch
         ${PCH_CPP_OPT}
-        )
+)
+
+add_library(rd_core_cpp STATIC ${RD_CORE_CPP_SOURCES})
 
 include(GenerateExportHeader)
 generate_export_header(rd_core_cpp

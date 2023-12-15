@@ -1,5 +1,5 @@
 #lib
-add_library(rd_framework_cpp SHARED
+set(RD_FRAMEWORK_CPP_SOURCES
         #base
         base/IRdBindable.h
         base/IRdReactive.h
@@ -63,7 +63,16 @@ add_library(rd_framework_cpp SHARED
         protocol/Protocol.cpp protocol/Protocol.h
         protocol/MessageBroker.cpp protocol/MessageBroker.h
         #pch
-        ${PCH_CPP_OPT})
+        ${PCH_CPP_OPT}
+)
+
+option(RD_FRAMEWORK_CPP_SHARED "Add rd_framework_cpp as a shader library (static otherwise)" ON)
+
+if (RD_FRAMEWORK_CPP_SHARED)
+    add_library(rd_framework_cpp SHARED ${RD_FRAMEWORK_CPP_SOURCES})
+else ()
+    add_library(rd_framework_cpp STATIC ${RD_FRAMEWORK_CPP_SOURCES})
+endif ()
 
 include(GenerateExportHeader)
 generate_export_header(rd_framework_cpp
@@ -85,9 +94,7 @@ target_include_directories(rd_framework_cpp
         ${CMAKE_CURRENT_BINARY_DIR}
         )
 
-target_link_libraries(rd_framework_cpp
-        PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp
-        )
+target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp rd_framework_cpp_util)
 
 find_package(Threads REQUIRED)
 target_link_libraries(rd_framework_cpp PRIVATE Threads::Threads clsocket)
