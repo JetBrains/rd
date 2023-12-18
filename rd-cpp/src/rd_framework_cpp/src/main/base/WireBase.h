@@ -25,7 +25,7 @@ public:
 	virtual ~WireBase() = default;
 	// endregion
 
-	void advise(Lifetime lifetime, IRdReactive const* entity) const override;
+	virtual void advise(Lifetime lifetime, RdReactiveBase const* entity) const override;
 };
 }	 // namespace rd
 

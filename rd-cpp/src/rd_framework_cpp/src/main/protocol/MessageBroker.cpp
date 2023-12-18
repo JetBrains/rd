@@ -1,5 +1,6 @@
 #include "protocol/MessageBroker.h"
 
+#include "base/RdReactiveBase.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
 namespace rd
@@ -13,7 +14,7 @@ static void execute(const IRdReactive* that, Buffer msg)
 	that->on_wire_received(std::move(msg));
 }
 
-void MessageBroker::invoke(const IRdReactive* that, Buffer msg, bool sync) const
+void MessageBroker::invoke(const RdReactiveBase* that, Buffer msg, bool sync) const
 {
 	if (sync)
 	{
@@ -51,7 +52,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 
 	{	 // synchronized recursively
 		std::lock_guard<decltype(lock)> guard(lock);
-		IRdReactive const* s = subscriptions[id];
+		RdReactiveBase const* s = subscriptions[id];
 		if (s == nullptr)
 		{
 			auto it = broker.find(id);
@@ -64,7 +65,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 
 			auto action = [this, it, id]() mutable {
 				auto& current = it->second;
-				IRdReactive const* subscription = subscriptions[id];
+				RdReactiveBase const* subscription = subscriptions[id];
 
 				optional<Buffer> message;
 				{
@@ -127,7 +128,7 @@ void MessageBroker::dispatch(RdId id, Buffer message) const
 	//        }
 }
 
-void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const* entity) const
+void MessageBroker::advise_on(Lifetime lifetime, RdReactiveBase const* entity) const
 {
 	RD_ASSERT_MSG(!entity->get_id().isNull(), ("id is null for entities: " + std::string(typeid(*entity).name())))
 
@@ -138,8 +139,7 @@ void MessageBroker::advise_on(Lifetime lifetime, IRdReactive const* entity) cons
 	if (!lifetime->is_terminated())
 	{
 		auto key = entity->get_id();
-		IRdReactive const* value = entity;
-		subscriptions[key] = value;
+		subscriptions[key] = entity;
 		lifetime->add_action([this, key]() { subscriptions.erase(key); });
 	}
 }

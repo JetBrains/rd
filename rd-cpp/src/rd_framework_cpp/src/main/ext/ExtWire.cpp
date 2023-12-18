@@ -28,7 +28,7 @@ ExtWire::ExtWire()
 	});
 }
 
-void ExtWire::advise(Lifetime lifetime, IRdReactive const* entity) const
+void ExtWire::advise(Lifetime lifetime, RdReactiveBase const* entity) const
 {
 	realWire->advise(lifetime, entity);
 }
