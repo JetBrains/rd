@@ -29,7 +29,7 @@ public:
 
 	mutable IWire const* realWire = nullptr;
 
-	void advise(Lifetime lifetime, IRdReactive const* entity) const override;
+	void advise(Lifetime lifetime, RdReactiveBase const* entity) const override;
 
 	void send(RdId const& id, std::function<void(Buffer& buffer)> writer) const override;
 };

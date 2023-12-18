@@ -18,6 +18,8 @@
 
 namespace rd
 {
+class RdReactiveBase;
+
 class RD_FRAMEWORK_API Mq
 {
 public:
@@ -42,14 +44,14 @@ class RD_FRAMEWORK_API MessageBroker final
 {
 private:
 	IScheduler* default_scheduler = nullptr;
-	mutable rd::unordered_map<RdId, IRdReactive const*> subscriptions;
+	mutable rd::unordered_map<RdId, RdReactiveBase const*> subscriptions;
 	mutable rd::unordered_map<RdId, Mq> broker;
 
 	mutable std::recursive_mutex lock;
 
 	static std::shared_ptr<spdlog::logger> logger;
 
-	void invoke(const IRdReactive* that, Buffer msg, bool sync = false) const;
+	void invoke(const RdReactiveBase* that, Buffer msg, bool sync = false) const;
 
 public:
 	// region ctor/dtor
@@ -59,7 +61,7 @@ public:
 
 	void dispatch(RdId id, Buffer message) const;
 
-	void advise_on(Lifetime lifetime, IRdReactive const* entity) const;
+	void advise_on(Lifetime lifetime, RdReactiveBase const* entity) const;
 };
 }	 // namespace rd
 #if defined(_MSC_VER)

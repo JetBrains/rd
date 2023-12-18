@@ -14,6 +14,7 @@
 
 namespace rd
 {
+class RdReactiveBase;
 /**
  * \brief Sends and receives serialized object data over a network or a similar connection.
  */
@@ -45,7 +46,7 @@ public:
 	 * \param lifetime lifetime of subscription.
 	 * \param entity to be subscripted
 	 */
-	virtual void advise(Lifetime lifetime, IRdReactive const* entity) const = 0;
+	virtual void advise(Lifetime lifetime, RdReactiveBase const* entity) const = 0;
 };
 }	 // namespace rd
 #if defined(_MSC_VER)

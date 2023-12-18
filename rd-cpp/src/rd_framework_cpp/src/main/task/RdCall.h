@@ -69,7 +69,7 @@ public:
 	 * \param request value to deliver
 	 * \return result of remote invoking
 	 */
-	WiredRdTask<TRes, ResSer> sync(TReq const& request, std::chrono::milliseconds timeout = 200ms) const
+	WiredRdTask<TRes, ResSer> sync(TReq const& request, std::chrono::milliseconds timeout = std::chrono::milliseconds(200)) const
 	{
 		auto task = start_internal(request, true, &SynchronousScheduler::Instance());
 		auto time_at_start = std::chrono::system_clock::now();

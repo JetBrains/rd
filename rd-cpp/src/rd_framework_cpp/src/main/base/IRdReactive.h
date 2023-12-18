@@ -13,7 +13,7 @@ namespace rd
  * \brief A non-root node in an object graph which can be synchronized with its remote copy over a network or
  * a similar connection, and which allows to subscribe to its changes.
  */
-class RD_FRAMEWORK_API IRdReactive : public virtual IRdBindable
+class RD_FRAMEWORK_API IRdReactive
 {
 public:
 	/**
