@@ -9,6 +9,9 @@ add_subdirectory(CTPL)
 set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build shared library" FORCE)
 add_subdirectory(spdlog)
 
+add_library(utf-cpp INTERFACE)
+target_include_directories(utf-cpp INTERFACE utf-cpp/include)
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/spdlog/include/
         DESTINATION "${CMAKE_INSTALL_PUBLIC_HEADER_THIRDPARTY}"
         CONFIGURATIONS Release
@@ -33,6 +36,7 @@ target_link_libraries(thirdparty PUBLIC
         ctpl
         countdownlatch
         spdlog::spdlog
+        utf-cpp
         )
 
 install(FILES thirdparty.hpp

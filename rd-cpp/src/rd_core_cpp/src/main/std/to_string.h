@@ -1,15 +1,15 @@
+// ReSharper disable CppUE4CodingStandardNamingViolationWarning
 #ifndef RD_CPP_TO_STRING_H
 #define RD_CPP_TO_STRING_H
 
 #include <string>
-#include <type_traits>
 #include <thread>
 #include <sstream>
-#include <vector>
 #include <atomic>
 #include <future>
 #include <locale>
-#include <codecvt>
+
+#include "ww898/utf_converters.hpp"
 
 #include <thirdparty.hpp>
 
@@ -31,9 +31,7 @@ inline std::string to_string(const char* val)
 
 inline std::string to_string(std::wstring const& val)
 {
-	using convert_type = std::codecvt_utf8<wchar_t>;
-	std::wstring_convert<convert_type> converter;
-	return converter.to_bytes(val);
+	return ww898::utf::conv<std::string::value_type>(val);
 }
 
 inline std::string to_string(std::thread::id const& id)
@@ -123,8 +121,7 @@ using std::to_wstring;
 
 inline std::wstring to_wstring(std::string const& s)
 {
-	// TO-DO: fix this wrong implementation
-	return std::wstring(s.begin(), s.end());
+	return ww898::utf::conv<std::wstring::value_type>(s);
 }
 
 template <class T>
