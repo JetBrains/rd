@@ -66,13 +66,11 @@ set(RD_FRAMEWORK_CPP_SOURCES
         ${PCH_CPP_OPT}
 )
 
-option(RD_FRAMEWORK_CPP_SHARED "Add rd_framework_cpp as a shader library (static otherwise)" ON)
-
-if (RD_FRAMEWORK_CPP_SHARED)
-    add_library(rd_framework_cpp SHARED ${RD_FRAMEWORK_CPP_SOURCES})
-else ()
+if (RD_STATIC)
     add_library(rd_framework_cpp STATIC ${RD_FRAMEWORK_CPP_SOURCES})
-    set_target_properties(rd_framework_cpp PROPERTIES COMPILE_FLAGS -DRD_FRAMEWORK_STATIC_DEFINE)
+    target_compile_definitions(rd_core_cpp PUBLIC RD_FRAMEWORK_STATIC_DEFINE)
+else ()
+    add_library(rd_framework_cpp SHARED ${RD_FRAMEWORK_CPP_SOURCES})
 endif ()
 
 include(GenerateExportHeader)

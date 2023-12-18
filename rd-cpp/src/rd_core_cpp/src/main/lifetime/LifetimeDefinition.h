@@ -44,7 +44,7 @@ public:
 
 	bool is_eternal() const;
 
-	void terminate();
+	void terminate() const;
 
 	template <typename F>
 	static auto use(F&& block) -> typename util::result_of_t<F(Lifetime)>

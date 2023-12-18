@@ -38,13 +38,17 @@ set(RD_CORE_CPP_SOURCES
         ${PCH_CPP_OPT}
 )
 
-add_library(rd_core_cpp STATIC ${RD_CORE_CPP_SOURCES})
+if (RD_STATIC)
+    add_library(rd_core_cpp STATIC ${RD_CORE_CPP_SOURCES})
+    target_compile_definitions(rd_core_cpp PUBLIC RD_CORE_STATIC_DEFINE)
+else ()
+    add_library(rd_core_cpp SHARED ${RD_CORE_CPP_SOURCES})
+endif ()
 
 include(GenerateExportHeader)
 generate_export_header(rd_core_cpp
         BASE_NAME rd_core
         EXPORT_MACRO_NAME RD_CORE_API)
-set_target_properties(rd_core_cpp PROPERTIES COMPILE_FLAGS -DRD_CORE_STATIC_DEFINE)
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 
