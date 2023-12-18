@@ -1,11 +1,6 @@
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "scheduler/base/IScheduler.h"
 #include "base/WireBase.h"
 #include "ByteBufferAsyncProcessor.h"
@@ -175,9 +170,5 @@ public:
 	};
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 
 #endif	  // RD_CPP_SOCKETWIRE_H

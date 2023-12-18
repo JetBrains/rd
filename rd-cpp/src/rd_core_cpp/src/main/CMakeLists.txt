@@ -44,6 +44,7 @@ include(GenerateExportHeader)
 generate_export_header(rd_core_cpp
         BASE_NAME rd_core
         EXPORT_MACRO_NAME RD_CORE_API)
+set_target_properties(rd_core_cpp PROPERTIES COMPILE_FLAGS -DRD_CORE_STATIC_DEFINE)
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 

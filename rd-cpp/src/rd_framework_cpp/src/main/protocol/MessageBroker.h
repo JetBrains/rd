@@ -1,11 +1,6 @@
 #ifndef RD_CPP_MESSAGEBROKER_H
 #define RD_CPP_MESSAGEBROKER_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "base/IRdReactive.h"
 
 #include "std/unordered_map.h"
@@ -62,9 +57,5 @@ public:
 	void advise_on(Lifetime lifetime, IRdReactive const* entity) const;
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 
 #endif	  // RD_CPP_MESSAGEBROKER_H

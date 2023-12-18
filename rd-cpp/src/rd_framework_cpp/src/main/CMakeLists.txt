@@ -72,6 +72,7 @@ if (RD_FRAMEWORK_CPP_SHARED)
     add_library(rd_framework_cpp SHARED ${RD_FRAMEWORK_CPP_SOURCES})
 else ()
     add_library(rd_framework_cpp STATIC ${RD_FRAMEWORK_CPP_SOURCES})
+    set_target_properties(rd_framework_cpp PROPERTIES COMPILE_FLAGS -DRD_FRAMEWORK_STATIC_DEFINE)
 endif ()
 
 include(GenerateExportHeader)

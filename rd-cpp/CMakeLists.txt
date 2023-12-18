@@ -41,9 +41,6 @@ elseif (MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_compile_options(
             /wd4996     # POSIX name is deprecated
-            /wd4250     # method inheritance via dominance
-            /wd4251
-            /wd4275
     )
 endif ()
 

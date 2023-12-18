@@ -1,11 +1,6 @@
 #ifndef RD_CPP_FRAMEWORK_RNAME_H
 #define RD_CPP_FRAMEWORK_RNAME_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "thirdparty.hpp"
 
 #include <string>
@@ -51,9 +46,5 @@ private:
 	std::shared_ptr<RNameImpl> impl;
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 
 #endif	  // RD_CPP_FRAMEWORK_RNAME_H

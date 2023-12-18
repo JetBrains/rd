@@ -6,11 +6,6 @@
 #include "serialization/Polymorphic.h"
 #include "std/allocator.h"
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#endif
-
 namespace rd
 {
 /**
@@ -255,10 +250,6 @@ public:
 	// endregion
 };
 }	 // namespace rd
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 static_assert(std::is_move_constructible<rd::RdList<int>>::value, "Is move constructible RdList<int>");
 
