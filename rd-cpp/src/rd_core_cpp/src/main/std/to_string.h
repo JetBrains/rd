@@ -1,20 +1,15 @@
+// ReSharper disable CppUE4CodingStandardNamingViolationWarning
 #ifndef RD_CPP_TO_STRING_H
 #define RD_CPP_TO_STRING_H
 
 #include <string>
-#include <type_traits>
 #include <thread>
 #include <sstream>
-#include <vector>
 #include <atomic>
 #include <future>
 #include <locale>
-#if defined(_MSC_VER) || defined(__APPLE__)
-#include <codecvt>
-#else
-#include <limits>
-#include <iconv.h>
-#endif
+
+#include "ww898/utf_converters.hpp"
 
 #include <thirdparty.hpp>
 
@@ -34,63 +29,10 @@ inline std::string to_string(const char* val)
 	return val;
 }
 
-#if defined(_MSC_VER) || defined(__APPLE__)
-template<class I, class E, class S>
-struct codecvt : std::codecvt<I, E, S>
-{
-	~codecvt()
-	{ }
-};
-
 inline std::string to_string(std::wstring const& val)
 {
-#if defined(__APPLE__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
-	using convert_type = codecvt<wchar_t, char, std::mbstate_t>;
-	std::wstring_convert<convert_type> converter;
-	return converter.to_bytes(val);
-#if defined(__APPLE__)
-#pragma clang diagnostic pop
-#endif
+	return ww898::utf::conv<std::string::value_type>(val);
 }
-#else
-const std::string conv_error("Conversion Error");
-inline std::string to_string(const std::wstring& wstr) {
-	std::string result;
-	if (wstr.empty()) {
-		return result;
-	}
-	// Order of arguments is to, from
-	auto icvt = iconv_open("UTF-8", "WCHAR_T");
-	// CentOS is not happy with -1
-	if (std::numeric_limits<iconv_t>::max() == icvt) {
-		return conv_error;
-	}
-
-	// I hope this does not modify the incoming buffer
-	wchar_t* non_const_in = const_cast<wchar_t*>(wstr.c_str());
-	char* iconv_in = reinterpret_cast<char*>(non_const_in);
-	size_t iconv_in_bytes = wstr.length() * sizeof(wchar_t);
-	// Temp buffer, assume every code point converts into 3 bytes, this should be enough
-	// We do not convert terminating zeros
-	const size_t buffer_len = wstr.length() * 3;
-	auto buffer = std::make_unique<char[]>(buffer_len);
-
-	char* iconv_out = buffer.get();
-	size_t iconv_out_bytes = buffer_len;
-	auto ret = iconv(icvt, &iconv_in, &iconv_in_bytes, &iconv_out, &iconv_out_bytes);
-	if (static_cast<size_t>(-1) == ret) {
-		result = conv_error;
-	} else {
-		size_t converted_len = buffer_len - iconv_out_bytes;
-		result.assign(buffer.get(), converted_len);
-	}
-	iconv_close(icvt);
-	return result;
-}
-#endif
 
 inline std::string to_string(std::thread::id const& id)
 {
@@ -179,8 +121,7 @@ using std::to_wstring;
 
 inline std::wstring to_wstring(std::string const& s)
 {
-	// TO-DO: fix this wrong implementation
-	return std::wstring(s.begin(), s.end());
+	return ww898::utf::conv<std::wstring::value_type>(s);
 }
 
 template <class T>
