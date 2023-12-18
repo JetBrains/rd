@@ -502,7 +502,6 @@ TEST_P(DisconnectTestBase, SimpleDisconnect)
 	{
 		try_close_socket(clientProtocol);
 	}
-	rd::util::sleep_this_thread(200);
 
 	cp.fire(3);
 	cp.fire(4);
