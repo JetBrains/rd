@@ -217,7 +217,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [CallerArgumentExpression("value")] string? message = null)
+    public static T NotNull<T>([CodeAnalysis.NotNull] this T? value, [CallerArgumentExpression("value")] string? message = null)
       where T : class
     {
       if (value == null)
@@ -231,7 +231,7 @@ namespace JetBrains.Diagnostics
 #if !NET35
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
+    public static T NotNull<T>([CodeAnalysis.NotNull] this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
       where T : class
     {
       if (value == null)
@@ -246,7 +246,7 @@ namespace JetBrains.Diagnostics
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [StringFormatMethod("args")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, string message, params object?[] args)
+    public static T NotNull<T>([CodeAnalysis.NotNull] this T? value, string message, params object?[] args)
       where T : class
     {
       if (value == null)
@@ -259,7 +259,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [CallerArgumentExpression("value")] string? message = null)
+    public static T NotNull<T>([CodeAnalysis.NotNull] this T? value, [CallerArgumentExpression("value")] string? message = null)
       where T : struct
     {
       if (value == null)
@@ -273,7 +273,7 @@ namespace JetBrains.Diagnostics
 #if !NET35
     [ContractAnnotation("value:null => void; => value:notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
+    public static T NotNull<T>([CodeAnalysis.NotNull] this T? value, [InterpolatedStringHandlerArgument("value")] ref JetNotNullConditionalInterpolatedStringHandler messageHandler)
       where T : struct
     {
       if (value == null)
@@ -287,7 +287,7 @@ namespace JetBrains.Diagnostics
 
     [ContractAnnotation("value:null => void; => value:notnull, notnull")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public static T NotNull<T>(this T? value, object debugMessage) where T : class
+    public static T NotNull<T>([CodeAnalysis.NotNull] this T? value, object debugMessage) where T : class
     {
       if (value == null)
       {
