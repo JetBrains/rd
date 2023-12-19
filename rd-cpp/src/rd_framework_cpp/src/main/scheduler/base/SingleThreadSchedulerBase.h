@@ -9,6 +9,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace ctpl
 {
 class thread_pool;
@@ -51,5 +53,7 @@ public:
 	bool is_active() const override;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_SINGLETHREADSCHEDULERBASE_H

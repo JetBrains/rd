@@ -10,6 +10,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 namespace test
@@ -49,5 +51,7 @@ public:
 }	 // namespace util
 }	 // namespace test
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_PUMPSCHEDULER_H

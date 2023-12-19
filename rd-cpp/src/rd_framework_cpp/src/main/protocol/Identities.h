@@ -7,6 +7,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 /**
@@ -46,5 +48,7 @@ public:
 	RdId next(const RdId& parent) const;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_FRAMEWORK_IDENTITIES_H

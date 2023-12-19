@@ -8,6 +8,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RD_FRAMEWORK_API RdBindableBase : public virtual IRdBindable /*, IPrintable*/
@@ -112,5 +114,7 @@ T& withIdFromName(T& that, std::string const& name)
 	return withId(that, RdId::Null().mix(name));
 }
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_RDBINDABLEBASE_H

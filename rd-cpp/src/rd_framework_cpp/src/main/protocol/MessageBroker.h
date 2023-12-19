@@ -11,6 +11,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RD_FRAMEWORK_API Mq
@@ -57,5 +59,7 @@ public:
 	void advise_on(Lifetime lifetime, IRdReactive const* entity) const;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_MESSAGEBROKER_H

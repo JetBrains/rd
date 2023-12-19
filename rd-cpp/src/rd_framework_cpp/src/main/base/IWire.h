@@ -7,6 +7,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 /**
@@ -43,5 +45,7 @@ public:
 	virtual void advise(Lifetime lifetime, IRdReactive const* entity) const = 0;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_IWIRE_H

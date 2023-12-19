@@ -13,6 +13,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 // region predeclared
@@ -100,5 +102,7 @@ void SerializationCtx::writeInterned(Buffer& buffer, const Wrapper<T>& value, F&
 	}
 }
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_FRAMEWORK_SERIALIZATIONCTX_H

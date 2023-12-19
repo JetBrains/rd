@@ -11,6 +11,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RD_FRAMEWORK_API ExtWire final : public IWire
@@ -29,5 +31,7 @@ public:
 	void send(RdId const& id, std::function<void(Buffer& buffer)> writer) const override;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_EXTWIRE_H

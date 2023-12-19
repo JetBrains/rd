@@ -16,6 +16,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 // region predeclared
@@ -125,5 +127,7 @@ int32_t InternRoot::intern_value(Wrapper<T> value) const
 	return index;
 }
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_INTERNROOT_H

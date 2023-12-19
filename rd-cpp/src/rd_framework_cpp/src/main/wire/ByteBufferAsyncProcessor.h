@@ -13,6 +13,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 using sequence_number_t = int64_t;
@@ -98,5 +100,7 @@ public:
 
 std::string to_string(ByteBufferAsyncProcessor::StateKind state);
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_BYTEBUFFERASYNCPROCESSOR_H

@@ -65,6 +65,8 @@ else ()
     set(PCH_CPP_OPT "")
 endif ()
 
+option(RD_STATIC "Compile RD as static library" OFF)
+
 add_subdirectory(thirdparty)
 add_subdirectory(src)
 

@@ -73,10 +73,14 @@ else ()
     add_library(rd_framework_cpp SHARED ${RD_FRAMEWORK_CPP_SOURCES})
 endif ()
 
+set(RD_FRAMEWORK_EXPORT_HEADER_CUSTOM_CONTENT "#include \"util/export_api_helper.h\"")
+
 include(GenerateExportHeader)
 generate_export_header(rd_framework_cpp
         BASE_NAME rd_framework
-        EXPORT_MACRO_NAME RD_FRAMEWORK_API)
+        EXPORT_MACRO_NAME RD_FRAMEWORK_API
+        CUSTOM_CONTENT_FROM_VARIABLE RD_FRAMEWORK_EXPORT_HEADER_CUSTOM_CONTENT
+)
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 

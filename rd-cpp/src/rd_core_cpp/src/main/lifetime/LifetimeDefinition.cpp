@@ -18,7 +18,7 @@ bool LifetimeDefinition::is_terminated() const
 	return lifetime->is_terminated();
 }
 
-void LifetimeDefinition::terminate() const
+void LifetimeDefinition::terminate()
 {
 	lifetime->terminate();
 }

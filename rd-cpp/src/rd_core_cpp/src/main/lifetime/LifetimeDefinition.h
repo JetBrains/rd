@@ -11,6 +11,8 @@
 
 #include <rd_core_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RD_CORE_API LifetimeDefinition
@@ -44,7 +46,7 @@ public:
 
 	bool is_eternal() const;
 
-	void terminate() const;
+	void terminate();
 
 	template <typename F>
 	static auto use(F&& block) -> typename util::result_of_t<F(Lifetime)>
@@ -55,5 +57,7 @@ public:
 	}
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_CORE_LIFETIME_DEFINITION_H

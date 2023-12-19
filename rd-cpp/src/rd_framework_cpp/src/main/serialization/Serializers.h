@@ -17,6 +17,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 // region predeclared
@@ -145,5 +147,7 @@ void Serializers::writePolymorphic(SerializationCtx& ctx, Buffer& stream, T cons
 	writePolymorphicNullable(ctx, stream, value);
 }
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_SERIALIZERS_H

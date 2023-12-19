@@ -5,6 +5,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RD_FRAMEWORK_API PkgInputStream
@@ -48,5 +50,7 @@ public:
 	}
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_PKGINPUTSTREAM_H

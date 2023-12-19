@@ -9,6 +9,8 @@
 
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 // region predeclared
@@ -54,5 +56,7 @@ public:
 	static std::shared_ptr<spdlog::logger> initializationLogger;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_PROTOCOL_H

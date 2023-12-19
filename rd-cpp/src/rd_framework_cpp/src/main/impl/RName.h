@@ -6,6 +6,8 @@
 #include <string>
 #include <rd_framework_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RNameImpl;
@@ -46,5 +48,7 @@ private:
 	std::shared_ptr<RNameImpl> impl;
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_FRAMEWORK_RNAME_H
