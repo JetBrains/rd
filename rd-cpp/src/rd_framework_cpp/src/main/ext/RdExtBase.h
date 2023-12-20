@@ -8,11 +8,7 @@
 
 #include <rd_framework_export.h>
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#pragma warning(disable : 4251)
-#endif
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -61,9 +57,6 @@ public:
 std::string to_string(RdExtBase::ExtState state);
 }	 // namespace rd
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_RDEXTBASE_H

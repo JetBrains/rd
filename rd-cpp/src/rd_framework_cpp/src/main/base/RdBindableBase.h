@@ -1,17 +1,14 @@
 #ifndef RD_CPP_RDBINDABLEBASE_H
 #define RD_CPP_RDBINDABLEBASE_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "IRdBindable.h"
 #include "base/IProtocol.h"
 
 #include "thirdparty.hpp"
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -45,7 +42,7 @@ public:
 	// endregion
 
 	// need to implement in subclasses
-	virtual void init(Lifetime lifetime) const;
+	virtual void init(Lifetime inLifetime) const;
 
 	const RName& get_location() const override;
 
@@ -53,7 +50,7 @@ public:
 
 	void set_id(RdId id) const override;
 
-	void bind(Lifetime lf, IRdDynamic const* parent, string_view name) const override;
+	void bind(Lifetime lf, IRdDynamic const* inParent, string_view name) const override;
 
 	void identify(const Identities& identities, RdId const& id) const override;
 
@@ -117,8 +114,7 @@ T& withIdFromName(T& that, std::string const& name)
 	return withId(that, RdId::Null().mix(name));
 }
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_RDBINDABLEBASE_H

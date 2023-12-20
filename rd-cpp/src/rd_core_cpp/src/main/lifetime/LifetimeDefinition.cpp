@@ -28,14 +28,11 @@ bool LifetimeDefinition::is_eternal() const
 	return lifetime->is_eternal();
 }
 
-namespace
-{
-LifetimeDefinition ETERNAL(true);
-}
-
 std::shared_ptr<LifetimeDefinition> LifetimeDefinition::get_shared_eternal()
 {
-	return std::shared_ptr<LifetimeDefinition>(&ETERNAL, [](LifetimeDefinition* /*ld*/) {});
+	static LifetimeDefinition ETERNAL(true);
+
+	return {&ETERNAL, [](LifetimeDefinition* /*ld*/) {}};
 }
 
 LifetimeDefinition::~LifetimeDefinition()

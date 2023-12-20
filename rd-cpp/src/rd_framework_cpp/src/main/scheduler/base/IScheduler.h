@@ -1,15 +1,12 @@
 #ifndef RD_CPP_ISCHEDULER_H
 #define RD_CPP_ISCHEDULER_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include <functional>
 #include <thread>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -57,9 +54,7 @@ public:
 	}
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_ISCHEDULER_H

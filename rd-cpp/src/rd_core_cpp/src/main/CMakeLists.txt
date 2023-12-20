@@ -1,6 +1,5 @@
 #lib
-
-add_library(rd_core_cpp SHARED
+set(RD_CORE_CPP_SOURCES
         #lifetime
         lifetime/LifetimeImpl.cpp lifetime/LifetimeImpl.h
         lifetime/Lifetime.cpp lifetime/Lifetime.h
@@ -37,12 +36,24 @@ add_library(rd_core_cpp SHARED
         util/gen_util.h util/overloaded.h
         #pch
         ${PCH_CPP_OPT}
-        )
+        util/export_api_helper.h
+)
+
+if (RD_STATIC)
+    add_library(rd_core_cpp STATIC ${RD_CORE_CPP_SOURCES})
+    target_compile_definitions(rd_core_cpp PUBLIC RD_CORE_STATIC_DEFINE)
+else ()
+    add_library(rd_core_cpp SHARED ${RD_CORE_CPP_SOURCES})
+endif ()
+
+set(RD_CORE_EXPORT_HEADER_CUSTOM_CONTENT "#include \"util/export_api_helper.h\"")
 
 include(GenerateExportHeader)
 generate_export_header(rd_core_cpp
         BASE_NAME rd_core
-        EXPORT_MACRO_NAME RD_CORE_API)
+        EXPORT_MACRO_NAME RD_CORE_API
+        CUSTOM_CONTENT_FROM_VARIABLE RD_CORE_EXPORT_HEADER_CUSTOM_CONTENT
+)
 
 message(STATUS "Using pch by rd_core: '${ENABLE_PCH_HEADERS}'")
 

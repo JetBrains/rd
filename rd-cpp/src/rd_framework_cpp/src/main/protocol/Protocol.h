@@ -1,11 +1,6 @@
 #ifndef RD_CPP_PROTOCOL_H
 #define RD_CPP_PROTOCOL_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "base/IProtocol.h"
 #include "protocol/Identities.h"
 #include "serialization/SerializationCtx.h"
@@ -13,6 +8,8 @@
 #include <memory>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -59,9 +56,7 @@ public:
 	static std::shared_ptr<spdlog::logger> initializationLogger;
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_PROTOCOL_H

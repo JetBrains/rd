@@ -1,5 +1,5 @@
 #lib
-add_library(rd_framework_cpp SHARED
+set(RD_FRAMEWORK_CPP_SOURCES
         #base
         base/IRdBindable.h
         base/IRdReactive.h
@@ -63,12 +63,24 @@ add_library(rd_framework_cpp SHARED
         protocol/Protocol.cpp protocol/Protocol.h
         protocol/MessageBroker.cpp protocol/MessageBroker.h
         #pch
-        ${PCH_CPP_OPT})
+        ${PCH_CPP_OPT}
+)
+
+if (RD_STATIC)
+    add_library(rd_framework_cpp STATIC ${RD_FRAMEWORK_CPP_SOURCES})
+    target_compile_definitions(rd_core_cpp PUBLIC RD_FRAMEWORK_STATIC_DEFINE)
+else ()
+    add_library(rd_framework_cpp SHARED ${RD_FRAMEWORK_CPP_SOURCES})
+endif ()
+
+set(RD_FRAMEWORK_EXPORT_HEADER_CUSTOM_CONTENT "#include \"util/export_api_helper.h\"")
 
 include(GenerateExportHeader)
 generate_export_header(rd_framework_cpp
         BASE_NAME rd_framework
-        EXPORT_MACRO_NAME RD_FRAMEWORK_API)
+        EXPORT_MACRO_NAME RD_FRAMEWORK_API
+        CUSTOM_CONTENT_FROM_VARIABLE RD_FRAMEWORK_EXPORT_HEADER_CUSTOM_CONTENT
+)
 
 message(STATUS "Using pch by rd_framework: '${ENABLE_PCH_HEADERS}'")
 
@@ -85,9 +97,7 @@ target_include_directories(rd_framework_cpp
         ${CMAKE_CURRENT_BINARY_DIR}
         )
 
-target_link_libraries(rd_framework_cpp
-        PUBLIC rd_core_cpp rd_framework_cpp_util rd_gen_cpp
-        )
+target_link_libraries(rd_framework_cpp PUBLIC rd_core_cpp rd_framework_cpp_util)
 
 find_package(Threads REQUIRED)
 target_link_libraries(rd_framework_cpp PRIVATE Threads::Threads clsocket)

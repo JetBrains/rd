@@ -1,0 +1,30 @@
+#!/bin/bash
+os="$(uname -s)"
+if ! which act
+then
+  if [[ "$os" -eq "Darwin" ]];
+  then
+    brew install act
+  else
+    echo "act auto-installation for $os not yet supported, you may install it manually using instructions from https://github.com/nektos/act" 1>&2
+    exit 1
+  fi
+fi
+
+if ! which docker
+then
+  echo "Docker installation required" 1>&2
+  exit 1
+fi
+
+if ! docker build -t rd/ubuntu:act-latest -f - . <<DOCKER
+FROM --platform=linux/amd64 catthehacker/ubuntu:act-latest
+RUN apt-get update && \
+    apt-get -y install cmake clang
+DOCKER
+then
+  echo "Failed to build custom Docker image" 1>&2
+  exit 1
+fi
+
+act -P ubuntu-latest=rd/ubuntu:act-latest --pull=false "$@"

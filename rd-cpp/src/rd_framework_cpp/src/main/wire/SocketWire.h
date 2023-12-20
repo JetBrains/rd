@@ -1,11 +1,6 @@
 #ifndef RD_CPP_SOCKETWIRE_H
 #define RD_CPP_SOCKETWIRE_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "scheduler/base/IScheduler.h"
 #include "base/WireBase.h"
 #include "ByteBufferAsyncProcessor.h"
@@ -16,6 +11,8 @@
 #include <condition_variable>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 class CSimpleSocket;
 class CActiveSocket;
@@ -175,9 +172,7 @@ public:
 	};
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_SOCKETWIRE_H

@@ -14,13 +14,13 @@ bool RdBindableBase::is_bound() const
 	return parent != nullptr;
 }
 
-void RdBindableBase::bind(Lifetime lf, IRdDynamic const* parent, string_view name) const
+void RdBindableBase::bind(Lifetime lf, IRdDynamic const* inParent, string_view name) const
 {
-	RD_ASSERT_MSG(!is_bound(), ("Trying to bind already bound this to " + to_string(parent->get_location())));
+	RD_ASSERT_MSG(!is_bound(), ("Trying to bind already bound this to " + to_string(inParent->get_location())));
 	lf->bracket(
-		[this, lf, parent, &name] {
-			this->parent = parent;
-			location = parent->get_location().sub(name, ".");
+		[this, lf, inParent, &name] {
+			this->parent = inParent;
+			location = inParent->get_location().sub(name, ".");
 			this->bind_lifetime = lf;
 		},
 		[this, lf]() {
@@ -88,13 +88,13 @@ SerializationCtx& RdBindableBase::get_serialization_context() const
 	}
 }
 
-void RdBindableBase::init(Lifetime lifetime) const
+void RdBindableBase::init(Lifetime inLifetime) const
 {
 	for (const auto& it : bindable_extensions)
 	{
 		if (it.second != nullptr)
 		{
-			bindPolymorphic(*(it.second), lifetime, this, it.first);
+			bindPolymorphic(*(it.second), inLifetime, this, it.first);
 		}
 	}
 }

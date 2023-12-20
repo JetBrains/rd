@@ -9,11 +9,6 @@
 
 #include <thread>
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#endif
-
 namespace rd
 {
 /**
@@ -156,9 +151,5 @@ public:
 	}
 };
 }	 // namespace rd
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 #endif	  // RD_CPP_RDCALL_H

@@ -1,11 +1,6 @@
 #ifndef RD_CPP_CORE_LIFETIME_H
 #define RD_CPP_CORE_LIFETIME_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include <std/hash.h>
 
 #include <functional>
@@ -18,6 +13,8 @@
 #include <thirdparty.hpp>
 
 #include <rd_core_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -100,9 +97,7 @@ public:
 	void attach_nested(std::shared_ptr<LifetimeImpl> nested);
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_CORE_LIFETIME_H

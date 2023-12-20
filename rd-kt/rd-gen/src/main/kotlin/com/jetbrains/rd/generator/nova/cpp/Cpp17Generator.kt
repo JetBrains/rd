@@ -773,22 +773,6 @@ open class Cpp17Generator(
         file.copyTo(this.resolve(Files.PrecompiledHeaderCmake), overwrite = true)
     }
 
-
-    private fun PrettyPrinter.predeclare(decl: Declaration) {
-        surroundWithNamespaces(decl.namespace) {
-            when (decl) {
-                is Enum -> {
-                    val predecl = decl.getSetting(IsNonScoped)?.let {
-                        "enum ${decl.platformTypeName} : $it"
-                    } ?: "enum class ${decl.platformTypeName}"
-                    +("$predecl;")
-                }
-                else -> {
-                }
-            }
-        }
-    }
-
     object EnumConstantValue : ISetting<Int, Member.EnumConst>
     object IsNonScoped : ISetting<String, Enum>
 
@@ -823,10 +807,6 @@ open class Cpp17Generator(
                         .flatten()
                         .map { it.includeQuotes() }
                         .forEach { +it }
-                    println()
-                    initializedEnums.forEach { enum ->
-                        predeclare(enum)
-                    }
                     println()
                     withNamespace("rd") {
                         initializedEnums.forEach { enum ->
@@ -997,7 +977,10 @@ open class Cpp17Generator(
         withIncludeGuard(decl.includeGuardName()) {
             println()
 
-            includesDecl(instantiationsFileName)
+            includesDecl()
+            if (decl !is Enum) {
+                +instantiationsFileName.includeWithExtension("h")
+            }
             println()
 
             dependenciesDecl(decl)
@@ -1312,7 +1295,7 @@ open class Cpp17Generator(
 //endregion
 
     //region TraitDecl
-    protected fun PrettyPrinter.includesDecl(instantiationsFileName: String) {
+    private fun PrettyPrinter.includesDecl() {
 //        +"class ${decl.name};"
 
         val standardHeaders = listOf(
@@ -1366,8 +1349,6 @@ open class Cpp17Generator(
         println()
         //third-party
         +"thirdparty".includeWithExtension("hpp")
-
-        +instantiationsFileName.includeWithExtension("h")
     }
 
     private fun Declaration.parseType(type: IType, allowPredefined: Boolean): IType? {

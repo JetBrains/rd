@@ -1,11 +1,6 @@
 #ifndef RD_CPP_SINGLETHREADSCHEDULERBASE_H
 #define RD_CPP_SINGLETHREADSCHEDULERBASE_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "scheduler/base/IScheduler.h"
 #include "lifetime/Lifetime.h"
 #include "spdlog/spdlog.h"
@@ -13,6 +8,8 @@
 #include <utility>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace ctpl
 {
@@ -56,9 +53,7 @@ public:
 	bool is_active() const override;
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_SINGLETHREADSCHEDULERBASE_H

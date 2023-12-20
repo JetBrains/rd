@@ -1,11 +1,6 @@
 #ifndef RD_CPP_SERIALIZERS_H
 #define RD_CPP_SERIALIZERS_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "protocol/RdId.h"
 #include "serialization/ISerializable.h"
 #include "protocol/Identities.h"
@@ -21,6 +16,8 @@
 #include <unordered_set>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -150,9 +147,7 @@ void Serializers::writePolymorphic(SerializationCtx& ctx, Buffer& stream, T cons
 	writePolymorphicNullable(ctx, stream, value);
 }
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_SERIALIZERS_H

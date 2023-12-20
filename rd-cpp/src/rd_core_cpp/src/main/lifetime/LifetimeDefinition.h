@@ -11,6 +11,8 @@
 
 #include <rd_core_export.h>
 
+RD_PUSH_STL_EXPORTS_WARNINGS
+
 namespace rd
 {
 class RD_CORE_API LifetimeDefinition
@@ -55,5 +57,7 @@ public:
 	}
 };
 }	 // namespace rd
+
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_CORE_LIFETIME_DEFINITION_H

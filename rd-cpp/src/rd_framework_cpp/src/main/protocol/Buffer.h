@@ -1,11 +1,6 @@
 #ifndef RD_CPP_UNSAFEBUFFER_H
 #define RD_CPP_UNSAFEBUFFER_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "types/DateTime.h"
 #include "types/TimeSpan.h"
 #include "util/core_util.h"
@@ -19,6 +14,8 @@
 #include <memory>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -155,9 +152,8 @@ public:
 		}
 	}
 
-	template <template <class, class> class C, typename T, typename A = allocator<T>,
-		typename = typename std::enable_if_t<!rd::util::in_heap_v<T>>>
-	void write_array(C<T, A> const& container, std::function<void(T const&)> writer)
+	template <template <class, class> class C, typename T, typename A = allocator<T>>
+	std::enable_if_t<!rd::util::in_heap_v<T>, void> write_array(C<T, A> const& container, std::function<void(T const&)> writer)
 	{
 		using rd::size;
 		write_integral<int32_t>(size(container));
@@ -167,8 +163,8 @@ public:
 		}
 	}
 
-	template <template <class, class> class C, typename T, typename A = allocator<Wrapper<T>>>
-	void write_array(C<Wrapper<T>, A> const& container, std::function<void(T const&)> writer)
+	template <template <class, class> class C, typename T, typename A = allocator<value_or_wrapper<T>>>
+	std::enable_if_t<is_wrapper_v<value_or_wrapper<T>>, void> write_array(C<value_or_wrapper<T>, A> const& container, std::function<void(T const&)> writer)
 	{
 		using rd::size;
 		write_integral<int32_t>(size(container));
@@ -327,9 +323,7 @@ public:
 	ByteArray& get_data();
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_UNSAFEBUFFER_H

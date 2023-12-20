@@ -16,11 +16,7 @@
 
 #include <rd_framework_export.h>
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#pragma warning(disable : 4251)
-#endif
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -131,9 +127,7 @@ int32_t InternRoot::intern_value(Wrapper<T> value) const
 	return index;
 }
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_INTERNROOT_H

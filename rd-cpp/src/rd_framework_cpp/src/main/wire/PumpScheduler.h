@@ -1,11 +1,6 @@
 #ifndef RD_CPP_PUMPSCHEDULER_H
 #define RD_CPP_PUMPSCHEDULER_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "scheduler/base/IScheduler.h"
 
 #include <condition_variable>
@@ -14,6 +9,8 @@
 #include <queue>
 
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -54,9 +51,7 @@ public:
 }	 // namespace util
 }	 // namespace test
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_PUMPSCHEDULER_H

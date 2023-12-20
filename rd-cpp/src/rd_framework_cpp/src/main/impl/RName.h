@@ -1,15 +1,12 @@
 #ifndef RD_CPP_FRAMEWORK_RNAME_H
 #define RD_CPP_FRAMEWORK_RNAME_H
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4251)
-#endif
-
 #include "thirdparty.hpp"
 
 #include <string>
 #include <rd_framework_export.h>
+
+RD_PUSH_STL_EXPORTS_WARNINGS
 
 namespace rd
 {
@@ -51,9 +48,7 @@ private:
 	std::shared_ptr<RNameImpl> impl;
 };
 }	 // namespace rd
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+RD_POP_STL_EXPORTS_WARNINGS
 
 #endif	  // RD_CPP_FRAMEWORK_RNAME_H

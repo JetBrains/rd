@@ -9,11 +9,6 @@
 
 #include <rd_framework_export.h>
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#endif
-
 namespace rd
 {
 // region predeclared
@@ -45,6 +40,20 @@ public:
 
 	// delegated
 
+	const RName& get_location() const override { return RdBindableBase::get_location(); }
+
+	const IProtocol* get_protocol() const override { return RdBindableBase::get_protocol(); }
+
+	SerializationCtx& get_serialization_context() const override { return RdBindableBase::get_serialization_context(); }
+
+	void set_id(RdId id) const override { RdBindableBase::set_id(id); }
+
+	RdId get_id() const override { return RdBindableBase::get_id(); }
+
+	void bind(Lifetime lf, IRdDynamic const* parent, string_view name) const override { RdBindableBase::bind(lf, parent, name); }
+
+	void identify(Identities const& identities, RdId const& id) const override { RdBindableBase::identify(identities, id); }
+
 	const Serializers& get_serializers() const;
 
 	IScheduler* get_default_scheduler() const;
@@ -70,9 +79,5 @@ public:
 	}
 };
 }	 // namespace rd
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 #endif	  // RD_CPP_RDREACTIVEBASE_H

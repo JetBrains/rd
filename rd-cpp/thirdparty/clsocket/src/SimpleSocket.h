@@ -324,14 +324,14 @@ public:
     /// call to CSimpleSocket::Open waits until it completes.
     /// @return the length of time in seconds
     int32_t GetConnectTimeoutSec(void) {
-        return  m_stConnectTimeout.tv_sec;
+        return static_cast<int32_t>(m_stConnectTimeout.tv_sec);
     };
 
     /// Gets the timeout value that specifies the maximum number of microseconds
     /// a call to CSimpleSocket::Open waits until it completes.
     /// @return the length of time in microseconds
     int32_t GetConnectTimeoutUSec(void) {
-        return  m_stConnectTimeout.tv_usec;
+        return  static_cast<int32_t>(m_stConnectTimeout.tv_usec);
     };
 
     /// Sets the timeout value that specifies the maximum amount of time a call
@@ -354,7 +354,7 @@ public:
     /// a call to CSimpleSocket::Receive waits until it completes.
     /// @return the length of time in seconds
     int32_t GetReceiveTimeoutSec(void) {
-        return  m_stRecvTimeout.tv_sec;
+        return  static_cast<int32_t>(m_stRecvTimeout.tv_sec);
     };
 
     /// Gets the timeout value that specifies the maximum number of microseconds
@@ -397,7 +397,7 @@ public:
     /// a call to CSimpleSocket::Send waits until it completes.
     /// @return the length of time in seconds
     int32_t GetSendTimeoutSec(void) {
-        return  m_stSendTimeout.tv_sec;
+        return static_cast<int32_t>(m_stSendTimeout.tv_sec);
     };
 
     /// Gets the timeout value that specifies the maximum number of microseconds
@@ -586,4 +586,3 @@ protected:
 
 
 #endif /*  __SOCKET_H__  */
-

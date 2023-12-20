@@ -336,15 +336,15 @@ TEST(BufferTest, duration)
 {
 	Buffer buffer;
 
-	Duration duration{5};
+	TimeSpan duration{5};
 
-	buffer.write_duration(duration);
+	buffer.write_time_span(duration);
 
-	EXPECT_EQ(2 * sizeof(int64_t), buffer.get_position());
+	EXPECT_EQ(sizeof(int64_t), buffer.get_position());
 
 	buffer.rewind();
 
-	auto nt1 = buffer.read_duration();
+	auto nt1 = buffer.read_time_span();
 
 	EXPECT_EQ(duration, nt1);
 

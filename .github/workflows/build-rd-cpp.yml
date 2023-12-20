@@ -15,6 +15,7 @@ jobs:
     env:
       working-dir: ${{ github.workspace}}${{ matrix.config.SEP }}rd-cpp
       artifact: ${{ matrix.config.artifact }}${{ github.run_number }}.zip
+      GRADLE_USER_HOME: ${{ github.workspace }}/.github/gradle
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -46,14 +47,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      
+
     - name: Cache submodules
       uses: actions/cache@v3
       id: cache-submodules
       with:
         path: |
           rd-cpp/thirdparty/spdlog
-          rd-cpp/thirdparty/googletest
+          rd-cpp/googletest
         key: ${{ matrix.config.os }}-submodules-${{ hashFiles('.gitmodules') }}
       
     - name: Get submodules
@@ -65,7 +66,29 @@ jobs:
       uses: nuget/setup-nuget@v1
       with:
         nuget-version: '5.x'
-      
+
+    - name: Gradle JVM Cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.local/share/gradle-jvm
+        key: ${{ runner.os }}.gradle-jvm-cache.${{ hashFiles('gradle/**') }}
+
+    - name: Gradle Wrapper Cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.GRADLE_USER_HOME }}/wrapper
+        key: ${{ runner.os }}.gradle-wrapper.${{ hashFiles('gradle/**') }}
+
+    - name: Gradle Cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.GRADLE_USER_HOME }}/caches/modules-2
+        key: ${{ runner.os }}.gradle.${{ hashFiles('**/*.gradle.kts') }}
+
+    - name: Generate everything
+      working-directory: ${{ env.working-dir }}/..
+      run: ./gradlew generateEverything
+
     - name: Cache Ninja
       uses: actions/cache@v3
       id: cache-ninja
@@ -74,7 +97,7 @@ jobs:
           rd-cpp/ninja
           rd-cpp/ninja.exe
         key: ${{ matrix.config.os }}-Ninja-${{ env.NINJA_VERSION }}
-      
+
     - name: Download Ninja
       if: steps.cache-ninja.outputs.cache-hit != 'true'
       id: download_ninja
@@ -104,7 +127,7 @@ jobs:
 
         if (NOT "${{ runner.os }}" STREQUAL "Windows")
           execute_process(COMMAND chmod +x ninja)
-        endif()
+        endif()  
 
     - name: Configure
       working-directory: ${{ env.working-dir }}
@@ -143,7 +166,7 @@ jobs:
           COMMAND ${CMAKE_COMMAND}
             -S .
             -B build
-            -DENABLE_TESTS_OPTION:BOOL=OFF
+            -DENABLE_TESTS_OPTION:BOOL=ON
             -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
             -G Ninja
             -DCMAKE_MAKE_PROGRAM=${CMAKE_CURRENT_SOURCE_DIR}/ninja
@@ -191,10 +214,18 @@ jobs:
           message(FATAL_ERROR "Bad exit status")
         endif()
 
+    - name: Run core tests
+      working-directory: ${{ env.working-dir }}
+      run: build/src/rd_core_cpp/src/test/rd_core_cpp_test
+
+    - name: Run framework tests
+      working-directory: ${{ env.working-dir }}
+      run: build/src/rd_framework_cpp/src/test/rd_framework_cpp_test
+
     - name: Install Strip
       working-directory: ${{ env.working-dir }}
       run: cd build && cmake --config ${{ env.BUILD_TYPE }} -P cmake_install.cmake
-    
+
     - name: Pack
       working-directory: ${{ env.working-dir }}
       run: cd export && cmake -E tar "cfv" ../${{ env.artifact }} --format=zip include libs

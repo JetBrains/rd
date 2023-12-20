@@ -41,9 +41,6 @@ elseif (MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_compile_options(
             /wd4996     # POSIX name is deprecated
-            /wd4250     # method inheritance via dominance
-            /wd4251
-            /wd4275
     )
 endif ()
 
@@ -67,6 +64,8 @@ if (ENABLE_PCH_HEADERS)
 else ()
     set(PCH_CPP_OPT "")
 endif ()
+
+option(RD_STATIC "Compile RD as static library" OFF)
 
 add_subdirectory(thirdparty)
 add_subdirectory(src)
