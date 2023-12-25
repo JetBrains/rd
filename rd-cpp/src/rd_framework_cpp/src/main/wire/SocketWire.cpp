@@ -7,6 +7,7 @@
 #include <SimpleSocket.h>
 #include <ActiveSocket.h>
 #include <PassiveSocket.h>
+#include <SimpleSocketSender.h>
 
 #include <utility>
 #include <thread>
@@ -81,16 +82,16 @@ bool SocketWire::Base::send0(Buffer::ByteArray const& msg, sequence_number_t seq
 		send_package_header.write_integral(seqn);
 
 		RD_ASSERT_THROW_MSG(
-			socket_provider->Send(send_package_header.data(), send_package_header.get_position()) == PACKAGE_HEADER_LENGTH,
+			socket_sender->Send(send_package_header.data(), send_package_header.get_position()) == PACKAGE_HEADER_LENGTH,
 			this->id +
 				": failed to send header over the network"
 				", reason: " +
-				socket_provider->DescribeError())
+				socket_sender->DescribeError())
 
-		RD_ASSERT_THROW_MSG(socket_provider->Send(msg.data(), msglen) == msglen, this->id +
+		RD_ASSERT_THROW_MSG(socket_sender->Send(msg.data(), msglen) == msglen, this->id +
 																					 ": failed to send package over the network"
 																					 ", reason: " +
-																					 socket_provider->DescribeError());
+																					 socket_sender->DescribeError());
 		logger->info("{}: were sent {} bytes", this->id, msglen);
 		//        RD_ASSERT_MSG(socketProvider->Flush(), "{}: failed to flush");
 		return true;
@@ -126,6 +127,7 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 	{
 		std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
 		socket_provider = std::move(new_socket);
+		socket_sender = std::make_unique<CSimpleSocketSender>(socket_provider);
 		socket_send_var.notify_all();
 	}
 	{
@@ -136,8 +138,8 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 		}
 	}
 
-	auto heartbeat = LifetimeDefinition::use([this](Lifetime heartbeatLifetime) {
-		const auto heartbeat = start_heartbeat(heartbeatLifetime).share();
+	const auto heartbeat = LifetimeDefinition::use([this](Lifetime heartbeatLifetime) {
+		const auto heartbeat = start_heartbeat(std::move(heartbeatLifetime)).share();
 
 		async_send_buffer.resume();
 
@@ -158,6 +160,11 @@ void SocketWire::Base::set_socket_provider(std::shared_ptr<CActiveSocket> new_so
 	if (!socket_provider->IsSocketValid())
 	{
 		logger->debug("{}: socket was already shut down", this->id);
+	}
+	else if (socket_provider->GetSocketError() == CSimpleSocket::SocketNotconnected)
+	{
+		logger->debug("{}: socket not connected (shutdown likely was initiated by client)");
+		socket_provider->Close();
 	}
 	else if (!socket_provider->Shutdown(CSimpleSocket::Both))
 	{
@@ -393,14 +400,14 @@ void SocketWire::Base::ping() const
 		ping_pkg_header.write_integral(counterpart_timestamp);
 		{
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
-			int32_t sent = socket_provider->Send(ping_pkg_header.data(), ping_pkg_header.get_position());
-			if (sent == 0 && !socket_provider->IsSocketValid())
+			int32_t sent = socket_sender->Send(ping_pkg_header.data(), ping_pkg_header.get_position());
+			if (sent == 0 && !socket_sender->IsSocketValid())
 			{
 				logger->debug("{}: failed to send ping over the network, reason: socket was shut down for sending", this->id);
 				return;
 			}
 			RD_ASSERT_THROW_MSG(sent == PACKAGE_HEADER_LENGTH,
-				fmt::format("{}: failed to send ping over the network, reason: {}", this->id, socket_provider->DescribeError()))
+				fmt::format("{}: failed to send ping over the network, reason: {}", this->id, socket_sender->DescribeError()))
 		}
 
 		++current_timestamp;
@@ -421,11 +428,11 @@ bool SocketWire::Base::send_ack(sequence_number_t seqn) const
 		ack_buffer.write_integral(seqn);
 		{
 			std::lock_guard<decltype(socket_send_lock)> guard(socket_send_lock);
-			RD_ASSERT_THROW_MSG(socket_provider->Send(ack_buffer.data(), ack_buffer.get_position()) == PACKAGE_HEADER_LENGTH,
+			RD_ASSERT_THROW_MSG(socket_sender->Send(ack_buffer.data(), ack_buffer.get_position()) == PACKAGE_HEADER_LENGTH,
 				this->id +
 					": failed to send ack over the network"
 					", reason: " +
-					socket_provider->DescribeError())
+					socket_sender->DescribeError())
 		}
 		return true;
 	}

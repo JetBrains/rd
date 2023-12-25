@@ -76,9 +76,9 @@
 #ifdef _WIN32
 #pragma warning( push )
 #pragma warning( disable:4668 )
-	#include <io.h>
-	#include <winsock2.h>
-	#include <Ws2tcpip.h>
+    #include <io.h>
+    #include <winsock2.h>
+    #include <Ws2tcpip.h>
 #pragma warning( pop )
 
 #define IPTOS_LOWDELAY  0x10
@@ -205,12 +205,14 @@ public:
     ///  @return true if the socket object contains a valid socket descriptor.
     virtual bool IsSocketValid(void) {
         return (m_socket != static_cast<SOCKET>(SocketError));
-    };
+    }
 
     /// Provides a standard error code for cross platform development by
     /// mapping the operating system error to an error defined by the CSocket
     /// class.
-    void TranslateSocketError(void);
+    void TranslateSocketError();
+
+    static CSocketError TranslateLastSocketError();
 
     /// Returns a human-readable description of the given error code
     /// or the last error code of a socket
@@ -423,13 +425,13 @@ public:
     /// Get the total time the of the last operation in milliseconds.
     ///  @return number of milliseconds of last operation.
     uint32_t GetTotalTimeMs() {
-        return m_timer.GetMilliSeconds();
+        return timer.GetMilliSeconds();
     };
 
     /// Get the total time the of the last operation in microseconds.
     ///  @return number of microseconds or last operation.
     uint32_t GetTotalTimeUsec() {
-        return m_timer.GetMicroSeconds();
+        return timer.GetMicroSeconds();
     };
 
     /// Return Differentiated Services Code Point (DSCP) value currently set on the socket object.
@@ -533,6 +535,7 @@ protected:
         m_socket = socket;
     };
 
+    friend class CSimpleSocketSender;
 private:
     /// Generic function used to get the send/receive window size
     ///  @return zero on failure else the number of bytes of the TCP window size if successful.
@@ -575,7 +578,7 @@ protected:
     struct sockaddr_in   m_stClientSockaddr;  /// client address
     struct sockaddr_in   m_stMulticastGroup;  /// multicast group to bind to
     struct linger        m_stLinger;          /// linger flag
-    CStatTimer           m_timer;             /// internal statistics.
+    thread_local static CStatTimer timer;     /// internal statistics.
 #ifdef _WIN32
     WSADATA              m_hWSAData;          /// Windows
 #endif

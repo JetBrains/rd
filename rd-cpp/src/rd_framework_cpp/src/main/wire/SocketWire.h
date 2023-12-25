@@ -15,6 +15,7 @@
 class CSimpleSocket;
 class CActiveSocket;
 class CPassiveSocket;
+class CSimpleSocketSender;
 
 namespace rd
 {
@@ -37,6 +38,8 @@ public:
 		std::string id;
 		IScheduler* scheduler = nullptr;
 		std::shared_ptr<CSimpleSocket> socket_provider;
+		// we do use separate sender for socket_provider to avoid concurrent state modifications during contesting receive and send operations
+		std::unique_ptr<CSimpleSocketSender> socket_sender;
 
 		std::shared_ptr<CActiveSocket> socket;
 

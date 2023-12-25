@@ -62,6 +62,8 @@
 
 #include "Host.h"
 
+#include <algorithm>
+
 #if defined(_WIN32)
   #define GET_CLOCK_COUNT(x) QueryPerformanceCounter((LARGE_INTEGER *)x)
 #else
@@ -109,13 +111,31 @@ public:
 private:
     uint32_t CalcTotalUSec() const
     {
-	    return static_cast<uint32_t>((m_endTime.tv_sec - m_startTime.tv_sec) * MICROSECONDS_CONVERSION + (m_endTime.tv_usec - m_startTime.tv_usec));
+        return static_cast<uint32_t>((m_endTime.tv_sec - m_startTime.tv_sec) * MICROSECONDS_CONVERSION + (m_endTime.tv_usec - m_startTime.tv_usec));
     };
 
 
 private:
     struct timeval  m_startTime;
     struct timeval  m_endTime;
+};
+
+struct CStatTimerCookie
+{
+    CStatTimer& targetTimer;
+    CStatTimer timer;
+
+    explicit CStatTimerCookie(CStatTimer& timer) : targetTimer(timer)
+    {
+        timer.Initialize();
+        timer.SetStartTime();
+    }
+
+    ~CStatTimerCookie()
+    {
+        timer.SetEndTime();
+        targetTimer = timer;
+    }
 };
 
 #endif // __CSTATTIMER_H__

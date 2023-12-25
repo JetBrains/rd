@@ -90,8 +90,7 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16_t nPort)
     // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
     //
     //------------------------------------------------------------------
-    m_timer.Initialize();
-    m_timer.SetStartTime();
+    CStatTimerCookie timer_cookie(timer);
 
     if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) ==
             CSimpleSocket::SocketError)
@@ -120,8 +119,6 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16_t nPort)
         TranslateSocketError();
         bRetVal = true;
     }
-
-    m_timer.SetEndTime();
 
     return bRetVal;
 }
@@ -170,8 +167,7 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16_t nPort)
     // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
     //
     //------------------------------------------------------------------
-    m_timer.Initialize();
-    m_timer.SetStartTime();
+    CStatTimerCookie timer_cookie(timer);
 
     if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
     {
@@ -179,8 +175,6 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16_t nPort)
     }
 
     TranslateSocketError();
-
-    m_timer.SetEndTime();
 
     return bRetVal;
 }
@@ -228,8 +222,7 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16_t nPort)
     // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
     //
     //------------------------------------------------------------------
-    m_timer.Initialize();
-    m_timer.SetStartTime();
+    CStatTimerCookie timer_cookie(timer);
 
     if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
     {
@@ -237,8 +230,6 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16_t nPort)
     }
 
     TranslateSocketError();
-
-    m_timer.SetEndTime();
 
     return bRetVal;
 }

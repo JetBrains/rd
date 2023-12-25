@@ -19,12 +19,14 @@ SET(CLSOCKET_HEADERS
     src/PassiveSocket.h
     src/SimpleSocket.h
     src/StatTimer.h
+    src/SimpleSocketSender.h
 )
 
 SET(CLSOCKET_SOURCES
     src/SimpleSocket.cpp
     src/ActiveSocket.cpp
     src/PassiveSocket.cpp
+    src/SimpleSocketSender.cpp
 )
 
 # mark headers as headers...
