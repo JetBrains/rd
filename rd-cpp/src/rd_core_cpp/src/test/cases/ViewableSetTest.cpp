@@ -6,11 +6,10 @@ using namespace rd;
 
 TEST(viewable_set, advise)
 {
-	std::unique_ptr<IViewableSet<int>> set = std::make_unique<ViewableSet<int>>();
-
 	std::vector<int> logAdvise;
 	std::vector<int> logView1;
 	std::vector<int> logView2;
+	std::unique_ptr<IViewableSet<int>> set = std::make_unique<ViewableSet<int>>();
 	LifetimeDefinition::use([&](Lifetime lt) {
 		set->advise(lt, [&](AddRemove kind, int const& v) { logAdvise.push_back(kind == AddRemove::ADD ? v : -v); });
 		set->view(lt, [&](Lifetime inner, int const& v) {
@@ -66,8 +65,8 @@ TEST(viewable_set, view)
 
 	std::unique_ptr<IViewableSet<int>> set = std::make_unique<ViewableSet<int>>();
 	std::vector<std::string> log;
-	auto x = LifetimeDefinition::use([&](Lifetime lifetime) {
-		set->view(lifetime, [&](Lifetime lt, int const& value) {
+	auto x = LifetimeDefinition::use([&](const Lifetime& lifetime) {
+		set->view(lifetime, [&](const Lifetime& lt, int const& value) {
 			log.push_back("View " + std::to_string(value));
 			lt->add_action([&]() { log.push_back("UnView " + std::to_string(value)); });
 		});

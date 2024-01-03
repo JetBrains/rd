@@ -78,25 +78,22 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
     //--------------------------------------------------------------------------
     // Bind to the specified port
     //--------------------------------------------------------------------------
-    if (bind(m_socket, (struct sockaddr *) &m_stMulticastGroup, sizeof(m_stMulticastGroup)) == 0) {
-        //----------------------------------------------------------------------
-        // Join the multicast group
-        //----------------------------------------------------------------------
-        m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
-        m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
+    {
+        CStatTimerCookie timer_cookie(timer);
+        if (bind(m_socket, (struct sockaddr *) &m_stMulticastGroup, sizeof(m_stMulticastGroup)) == 0) {
+            //----------------------------------------------------------------------
+            // Join the multicast group
+            //----------------------------------------------------------------------
+            m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
+            m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
 
-        if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                       (void *) &m_stMulticastRequest,
-                       sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess) {
-            bRetVal = true;
+            if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                           (void *) &m_stMulticastRequest,
+                           sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess) {
+                bRetVal = true;
+                           }
         }
-
-        m_timer.SetEndTime();
     }
-
-    m_timer.Initialize();
-    m_timer.SetStartTime();
-
 
     //--------------------------------------------------------------------------
     // If there was a new_socket error then close the new_socket to clean out the
@@ -152,29 +149,28 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16_t nPort, int32_t nConnecti
         }
     }
 
-    m_timer.Initialize();
-    m_timer.SetStartTime();
+    {
+        CStatTimerCookie timer_cookie(timer);
 
-    //--------------------------------------------------------------------------
-    // Bind to the specified port
-    //--------------------------------------------------------------------------
-    if (bind(m_socket, (struct sockaddr *) &m_stServerSockaddr, sizeof(m_stServerSockaddr)) !=
-        CSimpleSocket::SocketError) {
-        socklen_t namelen = sizeof(m_stServerSockaddr);
-        if (getsockname(m_socket, (struct sockaddr *) &m_stServerSockaddr, &namelen) != CSimpleSocket::SocketError) {
-            if (m_nSocketType == CSimpleSocket::SocketTypeTcp) {
-                if (listen(m_socket, nConnectionBacklog) != CSimpleSocket::SocketError) {
+        //--------------------------------------------------------------------------
+        // Bind to the specified port
+        //--------------------------------------------------------------------------
+        if (bind(m_socket, (struct sockaddr *) &m_stServerSockaddr, sizeof(m_stServerSockaddr)) !=
+            CSimpleSocket::SocketError) {
+            socklen_t namelen = sizeof(m_stServerSockaddr);
+            if (getsockname(m_socket, (struct sockaddr *) &m_stServerSockaddr, &namelen) != CSimpleSocket::SocketError) {
+                if (m_nSocketType == CSimpleSocket::SocketTypeTcp) {
+                    if (listen(m_socket, nConnectionBacklog) != CSimpleSocket::SocketError) {
+                        bRetVal = true;
+                    }
+                } else {
                     bRetVal = true;
                 }
             } else {
-                bRetVal = true;
+                bRetVal = false;
             }
-        } else {
-            bRetVal = false;
         }
     }
-
-    m_timer.SetEndTime();
 
     //--------------------------------------------------------------------------
     // If there was a new_socket error then close the new_socket to clean out the
@@ -213,10 +209,9 @@ CActiveSocket *CPassiveSocket::Accept() {
     // Wait for incoming connection.
     //--------------------------------------------------------------------------
     if (pClientSocket != NULL) {
-        CSocketError socketErrno = SocketSuccess;
+        CSocketError socketErrno;
 
-        m_timer.Initialize();
-        m_timer.SetStartTime();
+        CStatTimerCookie timer_cookie(timer);
 
         nClientSockLen = sizeof(m_stClientSockaddr);
 
@@ -246,8 +241,6 @@ CActiveSocket *CPassiveSocket::Accept() {
 
         } while (socketErrno == CSimpleSocket::SocketInterrupted);
 
-        m_timer.SetEndTime();
-
         if (socketErrno != CSimpleSocket::SocketSuccess) {
             delete pClientSocket;
             pClientSocket = NULL;
@@ -271,13 +264,10 @@ int32_t CPassiveSocket::Send(const uint8_t *pBuf, size_t bytesToSend) {
         case CSimpleSocket::SocketTypeUdp: {
             if (IsSocketValid()) {
                 if ((bytesToSend > 0) && (pBuf != NULL)) {
-                    m_timer.Initialize();
-                    m_timer.SetStartTime();
+                    CStatTimerCookie timer_cookie(timer);
 
-					m_nBytesSent = static_cast<int32_t>(SENDTO(m_socket, pBuf, bytesToSend, 0,
-						reinterpret_cast<const sockaddr*>(&m_stClientSockaddr), sizeof(m_stClientSockaddr)));
-
-                    m_timer.SetEndTime();
+                    m_nBytesSent = static_cast<int32_t>(SENDTO(m_socket, pBuf, bytesToSend, 0,
+                        reinterpret_cast<const sockaddr*>(&m_stClientSockaddr), sizeof(m_stClientSockaddr)));
 
                     if (m_nBytesSent == CSimpleSocket::SocketError) {
                         TranslateSocketError();

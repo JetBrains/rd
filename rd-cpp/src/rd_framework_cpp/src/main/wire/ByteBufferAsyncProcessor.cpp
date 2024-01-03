@@ -141,7 +141,7 @@ void ByteBufferAsyncProcessor::ThreadProc()
 				return;
 			}
 
-			while (data.empty() && queue.empty() || interrupt_balance != 0)
+			while ((data.empty() && queue.empty()) || interrupt_balance != 0)
 			{
 				if (state >= StateKind::Stopping)
 				{
