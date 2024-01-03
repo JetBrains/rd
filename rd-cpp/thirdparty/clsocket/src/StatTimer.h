@@ -62,8 +62,6 @@
 
 #include "Host.h"
 
-#include <algorithm>
-
 #if defined(_WIN32)
   #define GET_CLOCK_COUNT(x) QueryPerformanceCounter((LARGE_INTEGER *)x)
 #else

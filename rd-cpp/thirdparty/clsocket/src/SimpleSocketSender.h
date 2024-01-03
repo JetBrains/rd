@@ -2,6 +2,7 @@
 #define SIMPLESOCKETSENDER_H
 
 #include <memory>
+#include <stdexcept>
 
 #include "SimpleSocket.h"
 
@@ -13,10 +14,9 @@ class CSimpleSocketSender
 public:
     explicit CSimpleSocketSender(const std::shared_ptr<CSimpleSocket>& socket) : m_error(CSimpleSocket::SocketSuccess)
     {
-        if (socket->m_nSocketType == CSimpleSocket::CSocketType::SocketTypeTcp)
-            m_socket = socket;
-        else
-            m_socket = std::make_shared<CSimpleSocket>();
+        if (socket->m_nSocketType != CSimpleSocket::CSocketType::SocketTypeTcp)
+            throw std::runtime_error("Only TCP sockets are supported");
+        m_socket = socket;
     }
 
     int32_t Send(const uint8_t* pBuf, size_t bytesToSend) const;
