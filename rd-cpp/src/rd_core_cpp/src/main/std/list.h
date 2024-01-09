@@ -21,7 +21,7 @@ int32_t size(std::vector<T, A> const& value)
 template <typename T, typename A>
 int32_t size(std::vector<T, A> const& value)
 {
-	return std::size(value);
+	return static_cast<int32_t>(std::size(value));
 }
 #endif
 

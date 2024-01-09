@@ -40,7 +40,7 @@ Selection Selection::read(rd::SerializationCtx& ctx, rd::Buffer & buffer)
 {
     auto start_ = buffer.read_integral<int32_t>();
     auto end_ = buffer.read_integral<int32_t>();
-    auto lst_ = buffer.read_array<std::vector, int32_t, rd::allocator<Int>>(
+    auto lst_ = buffer.read_array<std::vector, int32_t, rd::allocator<int32_t>>(
     [&ctx, &buffer]() mutable  
     { return buffer.read_integral<int32_t>(); }
     );
@@ -54,7 +54,7 @@ void Selection::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
 {
     buffer.write_integral(start_);
     buffer.write_integral(end_);
-    buffer.write_array<std::vector, int32_t, rd::allocator<Int>>(lst_, 
+    buffer.write_array<std::vector, int32_t, rd::allocator<int32_t>>(lst_,
     [&ctx, &buffer](int32_t const & it) mutable  -> void 
     { buffer.write_integral(it); }
     );

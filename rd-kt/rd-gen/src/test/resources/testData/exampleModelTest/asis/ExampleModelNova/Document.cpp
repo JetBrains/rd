@@ -51,13 +51,13 @@ Document Document::read(rd::SerializationCtx& ctx, rd::Buffer & buffer)
     );
     auto andBackAgain_ = rd::RdEndpoint<std::wstring, int32_t, rd::Polymorphic<std::wstring>, rd::Polymorphic<int32_t>>::read(ctx, buffer);
     auto completion_ = Completion::read(ctx, buffer);
-    auto arr1_ = buffer.read_array<std::vector, uint8_t, rd::allocator<Byte>>(
+    auto arr1_ = buffer.read_array<std::vector, uint8_t, rd::allocator<uint8_t>>(
     [&ctx, &buffer]() mutable  
     { return buffer.read_integral<uint8_t>(); }
     );
-    auto arr2_ = buffer.read_array<std::vector, std::vector<bool>, rd::allocator<BoolArray>>(
+    auto arr2_ = buffer.read_array<std::vector, std::vector<bool>, rd::allocator<std::vector<bool>>>(
     [&ctx, &buffer]() mutable  
-    { return buffer.read_array<std::vector, bool, rd::allocator<Bool>>(
+    { return buffer.read_array<std::vector, bool, rd::allocator<bool>>(
     [&ctx, &buffer]() mutable  
     { return buffer.read_bool(); }
     ); }
@@ -77,13 +77,13 @@ void Document::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     );
     andBackAgain_.write(ctx, buffer);
     rd::Polymorphic<std::decay_t<decltype(completion_)>>::write(ctx, buffer, completion_);
-    buffer.write_array<std::vector, uint8_t, rd::allocator<Byte>>(arr1_, 
+    buffer.write_array<std::vector, uint8_t, rd::allocator<uint8_t>>(arr1_,
     [&ctx, &buffer](uint8_t const & it) mutable  -> void 
     { buffer.write_integral(it); }
     );
-    buffer.write_array<std::vector, std::vector<bool>, rd::allocator<BoolArray>>(arr2_, 
+    buffer.write_array<std::vector, std::vector<bool>, rd::allocator<std::vector<bool>>>(arr2_,
     [&ctx, &buffer](std::vector<bool> const & it) mutable  -> void 
-    { buffer.write_array<std::vector, bool, rd::allocator<Bool>>(it, 
+    { buffer.write_array<std::vector, bool, rd::allocator<bool>>(it,
     [&ctx, &buffer](bool const & it) mutable  -> void 
     { buffer.write_bool(it); }
     ); }
