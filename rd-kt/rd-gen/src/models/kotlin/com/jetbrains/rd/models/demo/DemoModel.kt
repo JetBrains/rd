@@ -130,6 +130,10 @@ object DemoModel : Ext(DemoRoot) {
         field("key", PredefinedType.int)
     }
 
+    private var ClassWithStructArrayField = classdef {
+        field("arrayField", array(MyScalar))
+    }
+
     init {
         property("boolean_property", PredefinedType.bool)
 

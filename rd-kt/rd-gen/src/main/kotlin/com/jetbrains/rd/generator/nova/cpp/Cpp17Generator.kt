@@ -10,6 +10,7 @@ import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.Logger
+import com.jetbrains.rd.util.PublicApi
 import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
@@ -72,6 +73,13 @@ open class Cpp17Generator(
 
     //region language specific properties
     object Namespace : ISetting<String, Declaration>
+
+    class SubstitutedType(@PublicApi val originalType: IType, override val name: String) : IType
+
+    private fun IType.substituted(scope: Declaration, rawType: Boolean = false, omitNullability: Boolean = false): IType {
+        val newName = substitutedName(scope, rawType, omitNullability)
+        return if (newName != name) SubstitutedType(this, newName) else this
+    }
 
     private val Declaration.namespace: String
         get() {
@@ -497,7 +505,6 @@ open class Cpp17Generator(
             }
         }
 
-    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     protected open fun Member.Reactive.implSimpleName(scope: Declaration): String = "rd::" + when (this) {
             is Member.Reactive.Task -> when (actualFlow) {
                 Sink -> "RdEndpoint"
@@ -1872,7 +1879,7 @@ open class Cpp17Generator(
             is IAttributedType -> itemType.reader()
             is IArray, is IImmutableList -> { //awaiting superinterfaces' support in Kotlin
                 this as IHasItemType
-                val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
+                val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType.substituted(decl))}"
                 if (isPrimitivesArray) {
                     "buffer.read_array<$templateTypes>()"
                 } else {
@@ -2060,7 +2067,7 @@ open class Cpp17Generator(
                     if (isPrimitivesArray) {
                         "buffer.write_array($field)"
                     } else {
-                        val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType)}"
+                        val templateTypes = "${decl.listType.withNamespace()}, ${itemType.templateName(decl)}, ${decl.allocatorType(itemType.substituted(decl))}"
                         val lambda = lambda("${itemType.templateName(decl)} const & it", itemType.writer("it"), "void")
                         "buffer.write_array<$templateTypes>($field, $lambda)"
                     }

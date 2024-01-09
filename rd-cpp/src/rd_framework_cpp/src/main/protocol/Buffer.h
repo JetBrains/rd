@@ -126,9 +126,9 @@ public:
 	}
 
 	template <template <class, class> class C, typename T, typename A = allocator<value_or_wrapper<T>>>
-	C<value_or_wrapper<T>, A> read_array(std::function<value_or_wrapper<T>()> reader)
+	C<value_or_wrapper<T>, A> read_array(std::function<T()> reader)
 	{
-		int32_t len = read_integral<int32_t>();
+		auto len = read_integral<int32_t>();
 		C<value_or_wrapper<T>, A> result;
 		using rd::resize;
 		resize(result, len);
@@ -145,15 +145,15 @@ public:
 	{
 		using rd::size;
 		const int32_t& len = rd::size(container);
-		write_integral<int32_t>(static_cast<int32_t>(len));
+		write_integral<int32_t>(len);
 		if (len > 0)
 		{
 			write(reinterpret_cast<word_t const*>(&container[0]), sizeof(T) * len);
 		}
 	}
 
-	template <template <class, class> class C, typename T, typename A = allocator<T>>
-	std::enable_if_t<!rd::util::in_heap_v<T>, void> write_array(C<T, A> const& container, std::function<void(T const&)> writer)
+	template <template <class, class> class C, typename T, typename A = allocator<value_or_wrapper<T>>>
+	std::enable_if_t<util::disjunction<util::negation<is_wrapper<value_or_wrapper<T>>>, is_wrapper<T>>::value, void> write_array(C<value_or_wrapper<T>, A> const& container, std::function<void(T const&)> writer)
 	{
 		using rd::size;
 		write_integral<int32_t>(size(container));
@@ -164,7 +164,7 @@ public:
 	}
 
 	template <template <class, class> class C, typename T, typename A = allocator<value_or_wrapper<T>>>
-	std::enable_if_t<is_wrapper_v<value_or_wrapper<T>>, void> write_array(C<value_or_wrapper<T>, A> const& container, std::function<void(T const&)> writer)
+	std::enable_if_t<util::conjunction<is_wrapper<value_or_wrapper<T>>, util::negation<is_wrapper<T>>>::value, void> write_array(C<value_or_wrapper<T>, A> const& container, std::function<void(T const&)> writer)
 	{
 		using rd::size;
 		write_integral<int32_t>(size(container));
