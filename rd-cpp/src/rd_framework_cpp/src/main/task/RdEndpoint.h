@@ -94,24 +94,29 @@ public:
 		{
 			throw std::invalid_argument("handler is empty for RdEndPoint");
 		}
-		auto task = awaiting_tasks[task_id] = {};
+
+		using TaskResult = RdTaskResult<TRes, ResSer>;
+
+		auto lifetime = *bind_lifetime;
+		auto send_result = [this, task_id](TaskResult const& task_result)
+		{
+			auto logger = spdlog::get("logSend");
+			if (logger->should_log(spdlog::level::trace))
+				logger->trace("endpoint {}::{} response = {}", to_string(location), to_string(rdid), to_string(task_result));
+			get_wire()->send(task_id, [&](Buffer& inner_buffer) { task_result.write(get_serialization_context(), inner_buffer); });
+		};
+
 		try
 		{
-			task = local_handler(*bind_lifetime, wrapper::get<TReq>(value));
+			auto task = local_handler(lifetime, wrapper::get<TReq>(value));
+			awaiting_tasks[task_id] = task;
+			lifetime->add_action([this, task_id] { awaiting_tasks.erase(task_id); });
+			task.advise(lifetime, send_result);
 		}
 		catch (std::exception const& e)
 		{
-			task.fault(e);
+			send_result(typename TaskResult::Fault(e));
 		}
-		task.advise(*bind_lifetime,
-			[this, task_id, &task](RdTaskResult<TRes, ResSer> const& task_result)
-			{
-				spdlog::get("logSend")->trace(
-					"endpoint {}::{} response = {}", to_string(location), to_string(rdid), to_string(*task.result));
-				get_wire()->send(
-					task_id, [&](Buffer& inner_buffer) { task_result.write(get_serialization_context(), inner_buffer); });
-				// TO-DO remove from awaiting_tasks
-			});
 	}
 
 	friend bool operator==(const RdEndpoint& lhs, const RdEndpoint& rhs)
