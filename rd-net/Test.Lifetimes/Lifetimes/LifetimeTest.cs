@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
@@ -9,7 +11,9 @@ using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
 #if !NET35
+using System.Diagnostics;
 using JetBrains.Threading;
+using Microsoft.Diagnostics.Runtime;
 #endif
 
 // ReSharper disable MethodSupportsCancellation
@@ -217,8 +221,13 @@ namespace Test.Lifetimes.Lifetimes
     {
       const string expectedWarningText = "can't wait for `ExecuteIfAlive` completed on other thread";
       const string expectedExceptionText = "ExecuteIfAlive after termination of";
-      bool warningReceived = false, exceptionReceived = false;
+      var warningReceived = false;
+      Exception? receivedException = null;
+
+#if !NET35
+      const string stackTraceHeader = "CurrentProcessThreadDumps:";
       var executionWasNotCancelledByTimeoutReceived = false;
+#endif
 
       Lifetime.Using(lifetime =>
       {
@@ -237,22 +246,27 @@ namespace Test.Lifetimes.Lifetimes
         var lifetimeDefinition = lifetime.CreateNested();
 
         var def2 = lifetime.CreateNested();
-
-        LifetimeDefinition.ExecutionWasNotCancelledByTimeout.Advise(lifetime, lf =>
+#if !NET35
+        LifetimeDefinition.AdditionalDiagnostics = new LifetimeDefinition.AdditionalDiagnosticsInfo(false, async (lf) => 
         {
+          var stacks = GetCurrentProcessThreadDumps();
           Assert.AreEqual(lifetimeDefinition.Lifetime, lf);
           executionWasNotCancelledByTimeoutReceived = true;
+          return $"{stackTraceHeader}\n{stacks}";
         });
+#endif
         
         def2.Terminate();
+#if !NET35
         Assert.IsFalse(executionWasNotCancelledByTimeoutReceived);
+#endif
         
         var lifetimeTerminatedEvent = new ManualResetEvent(false);
         var backgroundThreadIsInTryExecuteEvent = new ManualResetEvent(false);
         var thread = new Thread(() => lifetimeDefinition.Lifetime.TryExecute(() =>
         {
           backgroundThreadIsInTryExecuteEvent.Set();
-          lifetimeTerminatedEvent.WaitOne();
+          WaitForLifetimeTerminatedEvent(lifetimeTerminatedEvent);
         }));
         thread.Start();
         backgroundThreadIsInTryExecuteEvent.WaitOne();
@@ -268,15 +282,48 @@ namespace Test.Lifetimes.Lifetimes
           if (!e.Message.Contains(expectedExceptionText))
             throw;
 
-          exceptionReceived = true;
+          receivedException = e;
         }
       });
 
       Assert.IsTrue(warningReceived, "Warning `{0}` must have been logged", expectedWarningText);
-      Assert.IsTrue(exceptionReceived, "Exception `{0}` must have been logged", expectedExceptionText);
+      Assert.IsNotNull(receivedException, "Exception `{0}` must have been logged", expectedExceptionText);
+      
+#if !NET35
       Assert.IsTrue(executionWasNotCancelledByTimeoutReceived);
+      Assert.IsTrue(receivedException.Message.Contains(stackTraceHeader), $"Exception `{expectedExceptionText}` doesn't contain {stackTraceHeader}");
+      Assert.IsTrue(receivedException.Message.Contains(nameof(WaitForLifetimeTerminatedEvent)), $"Exception `{expectedExceptionText}` doesn't contain {nameof(WaitForLifetimeTerminatedEvent)} method");
+#endif
     }
-    
+
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+    private static void WaitForLifetimeTerminatedEvent(ManualResetEvent lifetimeTerminatedEvent)
+    {
+      lifetimeTerminatedEvent.WaitOne();
+    }
+
+#if !NET35
+     private static string GetCurrentProcessThreadDumps()
+    {
+      using var dataTarget = DataTarget.AttachToProcess(Process.GetCurrentProcess().Id, suspend:false);
+      var clrVersion = dataTarget.ClrVersions.SingleOrDefault() ?? throw new Exception("Failed to get single clr from current process");
+
+      using var runtime = clrVersion.CreateRuntime();
+      var output = new StringBuilder();
+      foreach (var clrThread in runtime.Threads)
+      {
+        if (!clrThread.IsAlive)
+          continue;
+        output.AppendLine($"Thread #{clrThread.ManagedThreadId}:");
+
+        foreach (var frame in clrThread.EnumerateStackTrace())
+          output.AppendLine($"\tat {frame}");
+      }
+
+      return output.ToString();
+    }
+#endif
+
     [Test]
     public void TestBracketGood()
     {

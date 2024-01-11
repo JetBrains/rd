@@ -4,12 +4,11 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using JetBrains.Collections.Viewable;
+using JetBrains.Collections;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
 using JetBrains.Util;
-using JetBrains.Util.Internal;
 using JetBrains.Util.Util;
 
 namespace JetBrains.Lifetimes
@@ -22,12 +21,11 @@ namespace JetBrains.Lifetimes
   {    
 #pragma warning disable 420
     #region Statics
-
-    private static readonly Signal<Lifetime> ourExecutionWasNotCancelledByTimeout = new();
-    /// <summary>
-    /// Use this signal to improve diagnostics (e.g., to collect thread dumps etc.)) 
-    /// </summary>
-    public static ISource<Lifetime> ExecutionWasNotCancelledByTimeout => ourExecutionWasNotCancelledByTimeout;
+    
+#if !NET35
+    public static AdditionalDiagnosticsInfo? AdditionalDiagnostics { get; set; }
+    private static readonly AdditionalDiagnosticsInfoStorage ourAdditionalDiagnosticsStorage = new();
+#endif
 
     internal static readonly ILog Log = JetBrains.Diagnostics.Log.GetLog<Lifetime>();
     
@@ -463,7 +461,15 @@ namespace JetBrains.Lifetimes
                         + "This is also possible if the thread waiting for the termination wasn't able to receive execution time during the wait in SpinWait.spinUntil, so it has missed the fact that the lifetime was terminated in time.");
 
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
-        ourExecutionWasNotCancelledByTimeout.Fire(Lifetime);
+#if !NET35
+        if (AdditionalDiagnostics is { } additionalDiagnostics)
+        {
+          Log.Catch(() =>
+          {
+            ourAdditionalDiagnosticsStorage.AddData(this, additionalDiagnostics.GetAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeoutAsync(Lifetime));
+          });
+        }
+#endif
       }
 
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Canceling))
@@ -791,6 +797,9 @@ namespace JetBrains.Lifetimes
       {
         if (!Succeed)
           return;
+
+        // must be called before the execution counter becomes 0 to ensure that additional diagnostic data is not cleared from AdditionalDiagnosticsInfoStorage
+        LogErrorIfCookieWasNotReleasedForTooLong(); 
         
         Interlocked.Decrement(ref myDef.myState);
         
@@ -799,12 +808,36 @@ namespace JetBrains.Lifetimes
         
         if (myAllowTerminationUnderExecuting)
           ourAllowTerminationUnderExecutionThreadStatic--;
+      }
 
+      private void LogErrorIfCookieWasNotReleasedForTooLong()
+      {
         if (ourLogErrorAfterExecution[myDef.myState])
         {
+          string? additionalInfo = null;
+#if !NET35
+          if (AdditionalDiagnostics is { } additionalDiagnostics)
+          {
+            var diagnostics = ourAdditionalDiagnosticsStorage.TryGetDiagnostics(myDef);
+            if (diagnostics is not { IsCompleted: true })
+            {
+              if (additionalDiagnostics.SuppressExecuteIfAliveTookTooMuchTimeErrorIfDiagnosticIsNotReadyWhenCookieIsReleased)
+                return;
+            }
+            else if (diagnostics is { Status: TaskStatus.RanToCompletion })
+            {
+              additionalInfo = diagnostics.Result;
+            }
+          }
+#endif
+
           var terminationTimeoutMs = GetTerminationTimeoutMs(myDef.TerminationTimeoutKind);
-          Log.Error($"ExecuteIfAlive after termination of {myDef} took too much time (>{terminationTimeoutMs}ms)");
-        } 
+          var message = $"ExecuteIfAlive after termination of {myDef} took too much time (>{terminationTimeoutMs}ms)";
+          if (additionalInfo != null)
+            message += $"\nAdditionalInfo:\n{additionalInfo}";
+          
+          Log.Error(message);
+        }
       }
     }
 
@@ -1077,6 +1110,89 @@ namespace JetBrains.Lifetimes
     
 
     #endregion
+
+
+#if !NET35
+
+    public class AdditionalDiagnosticsInfo
+    {
+      /// <summary>
+      /// Set this property to provide additional diagnostic for exception: `ExecuteIfAlive after termination of {myDef} took too much time (>{terminationTimeoutMs}ms)`
+      /// </summary>
+      public Func<Lifetime, Task<string>> GetAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeoutAsync { get; }
+
+      public bool SuppressExecuteIfAliveTookTooMuchTimeErrorIfDiagnosticIsNotReadyWhenCookieIsReleased { get; }
+
+      public AdditionalDiagnosticsInfo(
+        bool suppressExecuteIfAliveTookTooMuchTimeErrorIfDiagnosticIsNotReadyWhenCookieIsReleased,
+        Func<Lifetime, Task<string>> getAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeout)
+      {
+        GetAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeoutAsync = getAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeout ?? throw new ArgumentNullException(nameof(getAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeout));
+        SuppressExecuteIfAliveTookTooMuchTimeErrorIfDiagnosticIsNotReadyWhenCookieIsReleased = suppressExecuteIfAliveTookTooMuchTimeErrorIfDiagnosticIsNotReadyWhenCookieIsReleased;
+      }
+    }
+
+    // Naive key-value collection implementation with fixed capacity 
+    private class AdditionalDiagnosticsInfoStorage
+    {
+      // we don't expect many simultaneously blocked lifetimes on termination, so 4 should be enough for many cases. If it won't be enough we introduce mo complicated collection
+      private const int MaxStorageSize = 4;
+      private int myCount;
+      // we don't need week reference because we have limited storage and terminated lifetime doesn't keep any references and we won't have any memory leaks  
+      private readonly KeyValuePair<LifetimeDefinition, Task<string>>[] myList =new KeyValuePair<LifetimeDefinition, Task<string>>[MaxStorageSize];
+
+      public void AddData(LifetimeDefinition lifetime, Task<string> task)
+      {
+        lock (myList)
+        {
+          if (TryEnsureCapacity())
+          {
+            myList[myCount++] = new(lifetime, task);  
+          }
+        }
+      }
+
+      public Task<string>? TryGetDiagnostics(LifetimeDefinition definition)
+      {
+        lock (myList)
+        {
+          foreach (var (key, value) in myList)
+          {
+            if (ReferenceEquals(key, definition))
+              return value;
+          }
+
+          return null;
+        }
+      }
+
+      private bool TryEnsureCapacity()
+      {
+        lock (myList)
+        {
+          if (myCount < myList.Length)
+            return true;
+          
+          var index = 0;
+          for (var i = 0; i < myList.Length; i++)
+          {
+            var value = myList[i];
+            if (value.Key is { } def && def.ExecutingCount != 0)
+            {
+              myList[index++] = value;
+            }
+            else
+            {
+              myList[i] = default;
+            }
+          }
+
+          myCount = index;
+          return index < myList.Length;
+        }
+      }
+    }
+#endif
     
     
     
