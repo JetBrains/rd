@@ -119,12 +119,44 @@ public:
 			v);
 	}
 
+	/// \brief Attaches lifetime to result value. Lifetime terminates when result value destructed.
+	/// \param parent Parent lifetime.
+	/// \throw mpark::bad_variant_access if result isn't available or not Success
+	template <class Wrapped = WT, std::enable_if_t<is_wrapper_v<Wrapped>, bool> = true>
+	Lifetime attach_nested_lifetime_to_value(const Lifetime& parent)
+	{
+		auto&& wrapper = get<Success>(v).value;
+
+		struct Deleter
+		{
+			std::shared_ptr<T> ptr;
+			LifetimeDefinition lifetime_definition;
+
+			explicit Deleter(LifetimeDefinition&& lifetime_definition, std::shared_ptr<T> ptr) : ptr(std::move(ptr)), lifetime_definition(std::move(lifetime_definition)) { }
+
+			void operator()(T*) const
+			{
+			}
+		};
+
+		auto deleter = Deleter(LifetimeDefinition(parent), std::move(wrapper));
+		auto ptr = deleter.ptr.get();
+		auto lifetime = deleter.lifetime_definition.lifetime;
+		wrapper = std::shared_ptr<T>(ptr, std::move(deleter));
+		return lifetime;
+	}
+
+	WT const& get_value() const
+	{
+		return visit(util::make_visitor([](Success const& value) -> WT const& { return value.value; },
+						 [](Cancelled const&) -> WT const& { throw std::invalid_argument("Task finished in Cancelled state"); },
+						 [](Fault const& value) -> WT const& { throw std::runtime_error(to_string(value.reason_message)); }),
+			v);
+	}
+
 	T const& unwrap() const
 	{
-		return visit(util::make_visitor([](Success const& value) -> T const& { return wrapper::get<T>(value.value); },
-						 [](Cancelled const&) -> T const& { throw std::invalid_argument("Task finished in Cancelled state"); },
-						 [](Fault const& value) -> T const& { throw std::runtime_error(to_string(value.reason_message)); }),
-			v);
+		return wrapper::get<T>(get_value());
 	}
 
 	bool is_succeeded() const

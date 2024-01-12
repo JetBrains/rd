@@ -143,4 +143,9 @@ void MessageBroker::advise_on(Lifetime lifetime, RdReactiveBase const* entity) c
 		lifetime->add_action([this, key]() { subscriptions.erase(key); });
 	}
 }
+
+bool MessageBroker::is_subscribed(const RdId id) const
+{
+	return subscriptions.find(id) != subscriptions.end();
+}
 }	 // namespace rd

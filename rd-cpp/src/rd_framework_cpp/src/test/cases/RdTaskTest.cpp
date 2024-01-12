@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "RdFrameworkTestBase.h"
+#include "DynamicExt/ConcreteEntity.Generated.h"
+#include "DynamicExt/DynamicEntity.Generated.h"
 #include "task/RdCall.h"
 #include "task/RdEndpoint.h"
 #include "task/RdSymmetricCall.h"
@@ -94,6 +96,113 @@ TEST_F(RdFrameworkTestBase, testSymmetricCall)
 
 	EXPECT_EQ(+2, client_entity.sync(L"ab").value_or_throw().unwrap());
 	EXPECT_EQ(-2, server_entity.sync(L"xy").value_or_throw().unwrap());
+
+	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, testBindableCall)
+{
+	RdEndpoint<std::wstring, test::util::DynamicEntity> server_entity;
+	RdCall<std::wstring, test::util::DynamicEntity> client_entity;
+
+	statics(server_entity, static_entity_id);
+	statics(client_entity, static_entity_id);
+
+	Wrapper<test::util::DynamicEntity> server_result;
+	bool server_result_lifetime_terminated = false;
+
+	server_entity.set([&](const Lifetime& lifetime, std::wstring const& s)
+	{
+		server_result = wrapper::make_wrapper<test::util::DynamicEntity>();
+		server_result->get_foo().set(static_cast<int32_t>(s.length()));
+		lifetime->add_action([&] { server_result_lifetime_terminated = true; });
+		return server_result;
+	});
+
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
+
+	RdId property_id;
+	{
+		auto client_result = client_entity.start(L"xy").value_or_throw().get_value();
+		property_id = dynamic_cast<const RdProperty<int32_t>*>(&client_result->get_foo())->get_id();
+		EXPECT_EQ(2, client_result->get_foo().get()) << "Expected client result to recieve value from server.";
+
+		EXPECT_TRUE(serverWire->is_subscribed(property_id)) << "Expected to auto-bind server result";
+		EXPECT_TRUE(clientWire->is_subscribed(property_id)) << "Expected to auto-bind client result";
+
+		server_result->get_foo().set(42);
+		EXPECT_EQ(42, client_result->get_foo().get()) << "Expected client result to be auto-binded to server result.";
+		// client_result leaves scopes here and should release all resources
+	}
+
+	EXPECT_FALSE(serverWire->is_subscribed(property_id)) << "Expected to auto-unbind server result";
+	EXPECT_FALSE(clientWire->is_subscribed(property_id)) << "Expected to auto-unbind client result";
+
+	EXPECT_TRUE(server_result_lifetime_terminated) << "Expected server lifetime for result to be terminated.";
+	EXPECT_TRUE(server_result.unique()) << "Expected server_result to be released. Test should hold only reference to server result.";
+
+	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, testAsyncBindableCall)
+{
+	RdEndpoint<std::wstring, test::util::DynamicEntity> server_entity;
+	RdCall<std::wstring, test::util::DynamicEntity> client_entity;
+
+	statics(server_entity, static_entity_id);
+	statics(client_entity, static_entity_id);
+
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
+
+	Wrapper<test::util::DynamicEntity> server_result;
+	bool server_result_lifetime_terminated = false;
+	RdId property_id;
+
+	{
+		Wrapper<test::util::DynamicEntity> client_result;
+
+		{
+			RdTask<test::util::DynamicEntity> server_result_task{};
+			std::wstring req;
+
+			server_entity.set(
+				[&](const Lifetime& lifetime, std::wstring const& s)
+				{
+					req = s;
+					lifetime->add_action([&] { server_result_lifetime_terminated = true; });
+					return server_result_task;
+				});
+
+			auto client_result_task = client_entity.start(L"xy");
+			EXPECT_THROW(client_result_task.value_or_throw(), std::exception);
+			EXPECT_EQ(req, L"xy");
+
+			server_result = wrapper::make_wrapper<test::util::DynamicEntity>();
+			server_result->get_foo().set(static_cast<int32_t>(req.length()));
+			server_result_task.set(server_result);
+
+			client_result = client_result_task.value_or_throw().get_value();
+			// release tasks, but preserve results
+		}
+
+		property_id = dynamic_cast<const RdProperty<int32_t>*>(&client_result->get_foo())->get_id();
+		EXPECT_EQ(2, client_result->get_foo().get()) << "Expected client result to recieve value from server.";
+
+		EXPECT_TRUE(serverWire->is_subscribed(property_id)) << "Expected to auto-bind server result";
+		EXPECT_TRUE(clientWire->is_subscribed(property_id)) << "Expected to auto-bind client result";
+
+		server_result->get_foo().set(42);
+		EXPECT_EQ(42, client_result->get_foo().get()) << "Expected client result to be auto-binded to server result.";
+		// client_result leaves scopes here and should release all resources
+	}
+
+	EXPECT_FALSE(serverWire->is_subscribed(property_id)) << "Expected to auto-unbind server result";
+	EXPECT_FALSE(clientWire->is_subscribed(property_id)) << "Expected to auto-unbind client result";
+
+	EXPECT_TRUE(server_result_lifetime_terminated) << "Expected server lifetime for result to be terminated.";
+	EXPECT_TRUE(server_result.unique()) << "Expected server_result to be released. Test should hold only reference to server result.";
 
 	AfterTest();
 }
