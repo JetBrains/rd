@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -293,6 +294,32 @@ namespace Test.Lifetimes.Lifetimes
       Assert.IsTrue(executionWasNotCancelledByTimeoutReceived);
       Assert.IsTrue(receivedException.Message.Contains(stackTraceHeader), $"Exception `{expectedExceptionText}` doesn't contain {stackTraceHeader}");
       Assert.IsTrue(receivedException.Message.Contains(nameof(WaitForLifetimeTerminatedEvent)), $"Exception `{expectedExceptionText}` doesn't contain {nameof(WaitForLifetimeTerminatedEvent)} method");
+
+      static string GetCurrentProcessThreadDumps()
+      {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+          // clrmd crashes the process if os is not Windows, so just return the name of the method
+          return nameof(WaitForLifetimeTerminatedEvent);
+        }
+
+        using var dataTarget = DataTarget.AttachToProcess(Process.GetCurrentProcess().Id, suspend: false);
+        var clrVersion = dataTarget.ClrVersions.SingleOrDefault() ?? throw new Exception("Failed to get single clr from current process");
+
+        using var runtime = clrVersion.CreateRuntime();
+        var output = new StringBuilder();
+        foreach (var clrThread in runtime.Threads)
+        {
+          if (!clrThread.IsAlive)
+            continue;
+          output.AppendLine($"Thread #{clrThread.ManagedThreadId}:");
+
+          foreach (var frame in clrThread.EnumerateStackTrace())
+            output.AppendLine($"\tat {frame}");
+        }
+
+        return output.ToString();
+      }
 #endif
     }
 
@@ -301,29 +328,7 @@ namespace Test.Lifetimes.Lifetimes
     {
       lifetimeTerminatedEvent.WaitOne();
     }
-
-#if !NET35
-     private static string GetCurrentProcessThreadDumps()
-    {
-      using var dataTarget = DataTarget.AttachToProcess(Process.GetCurrentProcess().Id, suspend:false);
-      var clrVersion = dataTarget.ClrVersions.SingleOrDefault() ?? throw new Exception("Failed to get single clr from current process");
-
-      using var runtime = clrVersion.CreateRuntime();
-      var output = new StringBuilder();
-      foreach (var clrThread in runtime.Threads)
-      {
-        if (!clrThread.IsAlive)
-          continue;
-        output.AppendLine($"Thread #{clrThread.ManagedThreadId}:");
-
-        foreach (var frame in clrThread.EnumerateStackTrace())
-          output.AppendLine($"\tat {frame}");
-      }
-
-      return output.ToString();
-    }
-#endif
-
+    
     [Test]
     public void TestBracketGood()
     {
