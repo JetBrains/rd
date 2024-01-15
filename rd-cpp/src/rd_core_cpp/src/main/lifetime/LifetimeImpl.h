@@ -22,7 +22,7 @@ class RD_CORE_API LifetimeImpl final
 {
 public:
 	friend class LifetimeDefinition;
-
+	friend class SequentialLifetimes;
 	friend class Lifetime;
 
 	using counter_t = int32_t;

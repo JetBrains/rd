@@ -12,9 +12,9 @@ namespace rd
 {
 class RD_CORE_API SequentialLifetimes
 {
-private:
-	std::shared_ptr<LifetimeDefinition> current_def = LifetimeDefinition::get_shared_eternal();
 	Lifetime parent_lifetime;
+	Lifetime current_lifetime = Lifetime::Terminated();
+	void set_current_lifetime(const Lifetime& lifetime);
 
 public:
 	// region ctor/dtor
@@ -28,7 +28,7 @@ public:
 
 	SequentialLifetimes& operator=(SequentialLifetimes&&) = delete;
 
-	explicit SequentialLifetimes(Lifetime parent_lifetime);
+	explicit SequentialLifetimes(const Lifetime& parent_lifetime);
 	// endregion
 
 	Lifetime next();
@@ -36,8 +36,6 @@ public:
 	void terminate_current();
 
 	bool is_terminated() const;
-
-	void set_current_lifetime(std::shared_ptr<LifetimeDefinition> new_def);
 };
 }	 // namespace rd
 

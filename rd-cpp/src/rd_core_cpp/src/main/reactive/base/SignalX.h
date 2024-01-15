@@ -3,6 +3,7 @@
 
 #include "interfaces.h"
 #include "SignalCookie.h"
+#include "lifetime/LifetimeDefinition.h"
 
 #include <lifetime/Lifetime.h>
 #include <util/core_util.h>
@@ -10,6 +11,7 @@
 #include <utility>
 #include <functional>
 #include <atomic>
+#include <list>
 
 namespace rd
 {
@@ -22,57 +24,83 @@ class Signal final : public ISignal<T>
 private:
 	using WT = typename ISignal<T>::WT;
 
-	class Event
+	struct Event
 	{
+		using F = std::function<void(T const&)>;
 	private:
-		std::function<void(T const&)> action;
 		Lifetime lifetime;
+		F action;
+		std::atomic_int8_t state;
 
+		constexpr static int8_t ACTIVE = 0;
+		constexpr static int8_t FIRING = 1;
+		constexpr static int8_t TERMINATED = 2;
 	public:
 		// region ctor/dtor
 		Event() = delete;
-
-		template <typename F>
-		Event(F&& action, Lifetime lifetime) : action(std::forward<F>(action)), lifetime(lifetime)
+		explicit Event(const Lifetime& lifetime, F&& action) : lifetime(lifetime), action(std::forward<F>(action)), state(ACTIVE)
 		{
 		}
 
 		Event(Event&&) = default;
-		// endregion
+		Event& operator=(Event&& other) = default;
 
-		bool is_alive() const
+		bool operator()(T const& arg)
 		{
-			return !lifetime->is_terminated();
+			if (lifetime->is_terminated())
+				return false;
+
+			auto expected_state = ACTIVE;
+			// set firing flag to prevent action destruction during action firing
+			// skip action if it isn't active (lifetime was terminated)
+			if (!state.compare_exchange_strong(expected_state, FIRING))
+				return false;
+
+			expected_state = FIRING;
+			try
+			{
+				action(arg);
+				return state.compare_exchange_strong(expected_state, ACTIVE);
+			}
+			catch (...)
+			{
+				if (!state.compare_exchange_strong(expected_state, ACTIVE))
+					action = nullptr;
+				throw;
+			}
 		}
 
-		void execute_if_alive(T const& value) const
+		void terminate()
 		{
-			if (is_alive())
-			{
-				action(value);
-			}
+			const auto old_state = state.exchange(TERMINATED);
+			// release action immediatelly if it isn't firing right now
+			if (old_state == ACTIVE)
+				action = nullptr;
+			lifetime = Lifetime::Terminated();
 		}
 	};
 
-	using counter_t = int32_t;
-	using listeners_t = std::map<counter_t, Event>;
+	using listeners_t = std::vector<std::shared_ptr<Event>>;
 
-	mutable counter_t advise_id = 0;
 	mutable listeners_t listeners, priority_listeners;
-
-	static void cleanup(listeners_t& queue)
-	{
-		util::erase_if(queue, [](Event const& e) -> bool { return !e.is_alive(); });
-	}
 
 	void fire_impl(T const& value, listeners_t& queue) const
 	{
-		for (auto const& p : queue)
+		auto it = queue.begin();
+		auto end = queue.end();
+		auto alive_it = it;
+		while (it != end)
 		{
-			auto const& event = p.second;
-			event.execute_if_alive(value);
+			if (it->get()->operator()(value))
+			{
+				if (alive_it != it)
+					*alive_it = std::move(*it);
+				++alive_it;
+			}
+			++it;
 		}
-		cleanup(queue);
+		if (alive_it != end)
+			queue.erase(alive_it, end);
 	}
 
 	template <typename F>
@@ -80,9 +108,9 @@ private:
 	{
 		if (lifetime->is_terminated())
 			return;
-		counter_t id = advise_id /*.load()*/;
-		queue.emplace(id, Event(std::forward<F>(handler), lifetime));
-		++advise_id;
+		auto event_ptr = std::make_shared<Event>(lifetime, std::forward<F>(handler));
+		lifetime->add_action([event_ptr] { event_ptr->terminate(); });
+		queue.push_back(std::move(event_ptr));
 	}
 
 public:
