@@ -37,6 +37,7 @@ set(RD_CORE_CPP_SOURCES
         #pch
         ${PCH_CPP_OPT}
         util/export_api_helper.h
+        util/lifetime_util.h
 )
 
 if (RD_STATIC)

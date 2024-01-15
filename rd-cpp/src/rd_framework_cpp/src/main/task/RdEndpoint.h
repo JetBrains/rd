@@ -119,9 +119,9 @@ class RdEndpoint : public virtual RdReactiveBase, public ISerializable
 	template <class Bindable = TRes, std::enable_if_t<util::is_bindable_v<Bindable>, bool> = true>
 	void handle_result(LifetimeDefinition result_lifetime_def, const RdId task_id, const TaskResult& result) const
 	{
-		try
+		if (result.is_succeeded())
 		{
-			if (result.is_succeeded())
+			try
 			{
 				auto result_lifetime = result_lifetime_def.lifetime;
 				auto wired_result = result_lifetime->make_attached<detail::RdEndpointWiredResult<WTRes>>(std::move(result_lifetime_def), result.get_value());
@@ -129,31 +129,30 @@ class RdEndpoint : public virtual RdReactiveBase, public ISerializable
 				wired_result->bind(result_lifetime, this, "EndpointWiredResult");
 				send_result(task_id, result);
 			}
-			else
+			catch (const std::exception& ex)
 			{
-				send_result(task_id, result);
-				result_lifetime_def.terminate();
+				spdlog::get("logSend")->error(ex.what());
+				send_result(task_id, typename TaskResult::Fault(ex));
 			}
 		}
-		catch (std::exception ex)
+		else
 		{
-			spdlog::get("logSend")->error(ex.what());
-			result_lifetime_def.terminate();
+			send_result(task_id, result);
 		}
 	}
 
 	template <class NonBindable = TRes, std::enable_if_t<!util::is_bindable_v<NonBindable>, bool> = true>
-	void handle_result(LifetimeDefinition result_lifetime_def, const RdId task_id, TaskResult result) const
+	void handle_result(LifetimeDefinition /*should_be_destroyed_on_complete*/, const RdId task_id, TaskResult result) const
 	{
 		try
 		{
 			send_result(task_id, result);
-			result_lifetime_def.terminate();
 		}
-		catch (std::exception ex)
+		catch (const std::exception& ex)
 		{
 			spdlog::get("logSend")->error(ex.what());
-			result_lifetime_def.terminate();
+			if (result.is_succeeded())
+				send_result(task_id, typename TaskResult::Fault(ex));
 		}
 	}
 

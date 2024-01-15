@@ -4,6 +4,7 @@
 #include "serialization/Polymorphic.h"
 #include "RdTaskResult.h"
 #include "util/framework_traits.h"
+#include "util/lifetime_util.h"
 
 namespace rd
 {
@@ -26,9 +27,14 @@ class WiredRdTaskImpl : public RdReactiveBase
 	LifetimeImpl::counter_t termination_lifetime_id{};
 
 	template <class Bindable = T, std::enable_if_t<util::is_bindable_v<Bindable>, bool> = true>
-	void bind_result(TaskResult& task_result) const
+	TaskResult bind_result(TaskResult task_result) const
 	{
-		auto result_lifetime = task_result.attach_nested_lifetime_to_value(lifetime);
+		if (!task_result.is_succeeded())
+			return task_result;
+
+		auto lifetime_defintion = LifetimeDefinition(lifetime);
+		auto result_lifetime = lifetime_defintion.lifetime;
+		auto value = util::attach_lifetime(task_result.get_value(), std::move(lifetime_defintion));
 		result_lifetime->add_action([task_id = get_id(), cutpoint = cutpoint]
 		{
 			cutpoint->get_wire()->send(task_id, [](auto&)
@@ -36,13 +42,14 @@ class WiredRdTaskImpl : public RdReactiveBase
 				 // write nothing, just signal server to release result lifetime
 			});
 		});
-		task_result.get_value()->bind(result_lifetime, cutpoint, "CallResult");
+		value->bind(result_lifetime, cutpoint, "CallResult");
+		return typename TaskResult::Success(value);
 	}
 
 	template <class NonBindable = T, std::enable_if_t<!util::is_bindable_v<NonBindable>, bool> = true>
-	void bind_result(TaskResult&) const
+	TaskResult bind_result(TaskResult result) const
 	{
-		// do nothing for non-bindable value
+		return result;
 	}
 
 public:
@@ -78,7 +85,7 @@ public:
 			}
 			else
 			{
-				bind_result(result);
+				result = bind_result(std::move(result));
 				this->result->set_if_empty(std::move(result));
 			}
 		});
