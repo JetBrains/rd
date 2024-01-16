@@ -45,6 +45,8 @@ public:
 	void process_one_message() const;
 
 	void set_auto_flush(bool value);
+
+	bool is_subscribed(const RdId id) { return message_broker.is_subscribed(id); }
 };
 }	 // namespace test
 }	 // namespace rd

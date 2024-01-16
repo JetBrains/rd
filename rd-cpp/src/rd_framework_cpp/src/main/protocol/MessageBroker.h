@@ -59,6 +59,8 @@ public:
 	void dispatch(RdId id, Buffer message) const;
 
 	void advise_on(Lifetime lifetime, RdReactiveBase const* entity) const;
+
+	bool is_subscribed(const RdId id) const;
 };
 }	 // namespace rd
 

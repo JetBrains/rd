@@ -4,7 +4,7 @@
 
 namespace rd
 {
-LifetimeDefinition::LifetimeDefinition(bool eternaled) : eternaled(eternaled), lifetime(eternaled)
+LifetimeDefinition::LifetimeDefinition(bool eternaled) : lifetime(eternaled)
 {
 }
 
@@ -18,7 +18,7 @@ bool LifetimeDefinition::is_terminated() const
 	return lifetime->is_terminated();
 }
 
-void LifetimeDefinition::terminate()
+void LifetimeDefinition::terminate() const
 {
 	lifetime->terminate();
 }

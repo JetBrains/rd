@@ -119,12 +119,17 @@ public:
 			v);
 	}
 
+	WT const& get_value() const
+	{
+		return visit(util::make_visitor([](Success const& value) -> WT const& { return value.value; },
+						 [](Cancelled const&) -> WT const& { throw std::invalid_argument("Task finished in Cancelled state"); },
+						 [](Fault const& value) -> WT const& { throw std::runtime_error(to_string(value.reason_message)); }),
+			v);
+	}
+
 	T const& unwrap() const
 	{
-		return visit(util::make_visitor([](Success const& value) -> T const& { return wrapper::get<T>(value.value); },
-						 [](Cancelled const&) -> T const& { throw std::invalid_argument("Task finished in Cancelled state"); },
-						 [](Fault const& value) -> T const& { throw std::runtime_error(to_string(value.reason_message)); }),
-			v);
+		return wrapper::get<T>(get_value());
 	}
 
 	bool is_succeeded() const

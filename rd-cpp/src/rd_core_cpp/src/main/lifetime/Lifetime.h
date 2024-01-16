@@ -35,7 +35,10 @@ private:
 	std::shared_ptr<LifetimeImpl> ptr;
 
 public:
+	typedef LifetimeImpl::counter_t counter_t;
+
 	static Lifetime const& Eternal();
+	static Lifetime const& Terminated();
 
 	// region ctor/dtor
 

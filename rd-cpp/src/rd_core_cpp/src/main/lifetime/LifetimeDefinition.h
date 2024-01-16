@@ -19,9 +19,6 @@ class RD_CORE_API LifetimeDefinition
 {
 private:
 	friend class SequentialLifetimes;
-
-	bool eternaled = false;
-
 public:
 	Lifetime lifetime;
 
@@ -39,14 +36,13 @@ public:
 
 	virtual ~LifetimeDefinition();
 
-	//    static std::shared_ptr<LifetimeDefinition> eternal;
 	static std::shared_ptr<LifetimeDefinition> get_shared_eternal();
 
 	bool is_terminated() const;
 
 	bool is_eternal() const;
 
-	void terminate();
+	void terminate() const;
 
 	template <typename F>
 	static auto use(F&& block) -> typename util::result_of_t<F(Lifetime)>

@@ -22,7 +22,7 @@ class RD_CORE_API LifetimeImpl final
 {
 public:
 	friend class LifetimeDefinition;
-
+	friend class SequentialLifetimes;
 	friend class Lifetime;
 
 	using counter_t = int32_t;
@@ -73,6 +73,37 @@ public:
 		std::lock_guard<decltype(actions_lock)> guard(actions_lock);
 
 		actions.erase(i);
+	}
+
+
+	// Attach pointer to lifetime. It guarantee that pointer will survive at least lifetime duration.
+	template <typename T, typename ...Args>
+	std::shared_ptr<T> make_attached(Args... args)
+	{
+		auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
+		attach(ptr);
+		return ptr;
+	}
+
+	/// \brief Attach pointer to lifetime. Guarantees that pointer will survive at least lifetime duration.
+	template <typename T>
+	counter_t attach(std::shared_ptr<T> pointer)
+	{
+		// No-op structure wich acts as an action, but preserves pointer until lifetime terminated
+		struct holder
+		{
+			std::shared_ptr<T> pointer;
+
+			explicit holder(const std::shared_ptr<T>& pointer) : pointer(pointer)
+			{
+			}
+
+			void operator()() const
+			{
+			}
+		};
+
+		return add_action(holder(pointer));
 	}
 
 #if __cplusplus >= 201703L

@@ -251,3 +251,56 @@ TEST_F(RdFrameworkTestBase, signal_move)
 
 	AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, signal_release_resources)
+{
+	RdSignal<int> signal;
+	statics(signal, 1);
+
+	bindStatic(serverProtocol.get(), signal, static_name);
+
+	EXPECT_NO_THROW(
+	auto ptr = std::make_shared<int>(0);
+	{
+		const LifetimeDefinition def;
+		signal.advise(def.lifetime, [ptr](auto const& value) { *ptr = value; });
+	}
+	EXPECT_TRUE(ptr.unique()) << "Signal should release reference to ptr from lambda.";
+	signal.fire(42);
+	EXPECT_EQ(*ptr, 0) << "Signal shouldn't impact ptr value after lifetime termination.";
+	);
+
+	AfterTest();
+}
+
+TEST_F(RdFrameworkTestBase, signal_release_resources_from_handler)
+{
+	RdSignal<int> signal;
+	statics(signal, 1);
+	bindStatic(serverProtocol.get(), signal, static_name);
+
+	auto ptr = std::make_shared<int>(0);
+	{
+		struct Payload
+		{
+			LifetimeDefinition def;
+			std::shared_ptr<int> ptr;
+		};
+		auto payload = std::make_shared<Payload>(Payload{LifetimeDefinition(), ptr});
+		signal.advise(payload->def.lifetime, [payload](auto const& value)
+		{
+			payload->def.terminate();
+			*(payload->ptr) = value;
+		});
+		// only lambda keeps payload now, it also keeps def reference preventing it from auto-terminating on out-of-scope.
+		// instead from callback we terminate payload which then should successfully complete callback and release all resources
+		// effectively destructing Payload and releasing ptr reference.
+	}
+	signal.fire(42);
+	EXPECT_EQ(*ptr, 42);
+	EXPECT_TRUE(ptr.unique()) << "Signal should release reference to ptr from lambda.";
+	signal.fire(24);
+	EXPECT_EQ(*ptr, 42) << "Signal shouldn't impact ptr value after lifetime termination.";
+
+	AfterTest();
+}
