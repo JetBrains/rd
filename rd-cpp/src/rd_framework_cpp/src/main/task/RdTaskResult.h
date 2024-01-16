@@ -137,6 +137,11 @@ public:
 		return v.index() == 0;
 	}
 
+	Success& as_successful()
+	{
+		return rd::get<Success>(v);
+	}
+
 	bool is_canceled() const
 	{
 		return v.index() == 1;
