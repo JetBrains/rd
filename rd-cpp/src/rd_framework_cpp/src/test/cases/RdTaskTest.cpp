@@ -206,3 +206,33 @@ TEST_F(RdFrameworkTestBase, testAsyncBindableCall)
 
 	AfterTest();
 }
+
+TEST_F(RdFrameworkTestBase, testUninitializedPropertyInResult)
+{
+	RdEndpoint<std::wstring, test::util::DynamicEntity> server_entity;
+	RdCall<std::wstring, test::util::DynamicEntity> client_entity;
+
+	statics(server_entity, static_entity_id);
+	statics(client_entity, static_entity_id);
+
+	Wrapper<test::util::DynamicEntity> server_result;
+
+	server_entity.set([&](std::wstring const&)
+	{
+		server_result = wrapper::make_wrapper<test::util::DynamicEntity>();
+		return server_result;
+	});
+
+	bindStatic(serverProtocol.get(), server_entity, static_name);
+	bindStatic(clientProtocol.get(), client_entity, static_name);
+
+	auto task_result = client_entity.start(L"xy").value_or_throw();
+	auto client_result = task_result.get_value();
+	auto& foo_property = client_result->get_foo();
+	EXPECT_THROW(foo_property.get(), std::exception) << "Expected to throw when access unitialized property";
+
+	server_result->get_foo().set(2);
+	EXPECT_EQ(2, foo_property.get()) << "Expected to sync property value when it set on server.";
+
+	AfterTest();
+}
