@@ -17,7 +17,7 @@ fun Any?.print(printer: PrettyPrinter) {
         is String -> printer.print("\"$this\"")
         is Throwable -> printer.print(getThrowableText())
         is List<*> -> {
-            val maxPrint = 3
+            val maxPrint = Int.MAX_VALUE
             printer.print("[")
             val cnt = this@print.size
             printer.indent {
