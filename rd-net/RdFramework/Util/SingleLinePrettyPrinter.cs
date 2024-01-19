@@ -6,7 +6,7 @@ namespace JetBrains.Rd.Util
   {
     public SingleLinePrettyPrinter()
     {
-      BufferCapacity = 1000;
+      BufferCapacity = InfiniteCapacity;
     }
     public override string ToString()
     {

@@ -39,7 +39,7 @@ namespace JetBrains.Rd.Util
     [PublicAPI] public int Step { get; set; } = 2;
 
     [PublicAPI]
-    public int CollectionMaxLength { get; set; } = 3;
+    public int CollectionMaxLength { get; set; } = int.MaxValue;
     #endregion
     
     #region Settings for PrettyPriter clients
