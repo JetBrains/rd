@@ -9,6 +9,7 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using JetBrains.Serialization;
 using JetBrains.Annotations;
+using JetBrains.Util.Internal;
 
 namespace JetBrains.Rd.Impl
 {
@@ -144,6 +145,9 @@ namespace JetBrains.Rd.Impl
         
         if (!OptimizeNested && shouldIdentify)
         {
+          // We need to terminate the current lifetime to unbind the existing value before assigning a new value, especially in cases where we are reassigning it.  
+          Memory.VolatileRead(ref myBindDefinition)?.Terminate();
+          
           v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
 
           var prevDefinition = Interlocked.Exchange(ref myBindDefinition, TryPreBindValue(lifetime, v, false));
