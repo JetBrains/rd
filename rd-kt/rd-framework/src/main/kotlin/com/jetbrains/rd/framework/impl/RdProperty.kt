@@ -77,6 +77,9 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
                 return@advise
 
             if (!optimizeNested && shouldIdentify) {
+                // We need to terminate the current lifetime to unbind the existing value before assigning a new value, especially in cases where we are reassigning it.
+                bindDefinition.get()?.terminate()
+
                 v.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
 
                 val prevDefinition = bindDefinition.getAndSet(tryPreBindValue(lifetime, v, false))

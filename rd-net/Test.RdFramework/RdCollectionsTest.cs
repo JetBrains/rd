@@ -441,6 +441,36 @@ public class RdCollectionsTest : RdFrameworkTestBase
   }
 
   [Test]
+  public void ReassignBindableValue()
+  {
+    ClientWire.AutoTransmitMode = false;
+    ServerWire.AutoTransmitMode = false;
+
+    var serverTopLevelProperty = BindToServer(LifetimeDefinition.Lifetime,
+      NewRdProperty<RdProperty<RdSet<int>>>(), ourKey);
+    serverTopLevelProperty.ValueCanBeNull = true;
+    var clientTopLevelProperty = BindToClient(LifetimeDefinition.Lifetime,
+      NewRdProperty<RdProperty<RdSet<int>>>(), ourKey);
+    clientTopLevelProperty.ValueCanBeNull = true;
+
+    var clientNested1 = NewRdProperty<RdSet<int>>();
+    var clientNested2 = NewRdProperty<RdSet<int>>();
+    var clientSet = NewRdSet<int>();
+    clientNested1.Value = clientSet;
+    
+    clientNested2.Value = clientSet;
+
+    SetSchedulerActive(SchedulerKind.Client, () =>
+    {
+      clientTopLevelProperty.Value = clientNested1;
+      PumpAllProtocols(true);
+      clientTopLevelProperty.Value = clientNested2;
+      PumpAllProtocols(true);
+    });
+    
+  }
+
+  [Test]
   public void PropertyTest()
   {
     ClientWire.AutoTransmitMode = true;

@@ -532,6 +532,31 @@ class RdCollectionsTest : RdFrameworkTestBase() {
         assertTrue(serverAsyncSet!!.contains(123))
     }
 
+    @Test
+    fun reassignBindableValue() {
+        serverWire.autoFlush = false
+        clientWire.autoFlush = false
+
+        val serverTopLevelProperty = RdProperty<RdProperty<RdSet<Int>?>?>(null)
+        val clientTopLevelProperty = RdProperty<RdProperty<RdSet<Int>?>?>(null)
+
+        serverProtocol.bindStatic(serverTopLevelProperty, 1)
+        clientProtocol.bindStatic(clientTopLevelProperty, 1)
+
+        val clientNested1 = RdProperty<RdSet<Int>?>(null)
+        val clientNested2 = RdProperty<RdSet<Int>?>(null)
+        val clientSet = RdSet<Int>()
+        clientNested1.value = clientSet
+        clientNested2.value = clientSet
+
+        setSchedulerActive(SchedulerKind.Client) {
+            clientTopLevelProperty.value = clientNested1
+            pumpAllProtocols(true)
+            clientTopLevelProperty.value = clientNested2
+            pumpAllProtocols(true)
+        }
+    }
+
 
     enum class SchedulerKind {
         Client,
