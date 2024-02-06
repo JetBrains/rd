@@ -12,34 +12,34 @@ The framework contains several libraries for single process usage and cross-proc
 JetBrains Core library for graceful disposal, concurrency and reactive programming. For single-process usage.
 
 * Kotlin
-  * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core
+  * Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-kt/rd-core
   * Artifacts: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-core
 
 * .NET
-  * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/Lifetimes
+  * Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-net/Lifetimes
   * Artifacts: https://www.nuget.org/packages/JetBrains.Lifetimes
 
 ### RdFramework
 JetBrains Networking library for reactive distributed communication
 
 * Kotlin
-  * Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-framework
+  * Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-kt/rd-framework
   * Maven artifacts: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-framework
 
 * .NET
-  * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework
+  * Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-net/RdFramework
   * NuGet artifacts: https://www.nuget.org/packages/JetBrains.RdFramework
 
 #### RdFramework.Reflection
 Plugin for RdFramework used for defining models using regular C#
 
 * .NET
-  * Sources: https://github.com/JetBrains/rd/tree/master/rd-net/RdFramework.Reflection
+  * Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-net/RdFramework.Reflection
   * NuGet artifacts: https://www.nuget.org/packages/JetBrains.RdFramework.Reflection
 
 ### RdGen
 Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
-* Sources: https://github.com/JetBrains/rd/tree/master/rd-kt/rd-gen
+* Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-kt/rd-gen
 * Gradle: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-gen
   
 # How to build
@@ -51,7 +51,7 @@ Or **C++** only, who knows. After that prepare the environment and build needed 
 
 ### .NET
 
-Open solution in JetBrains Rider: https://github.com/JetBrains/rd/tree/master/rd-net/Rd.sln
+Open solution in JetBrains Rider: https://github.com/JetBrains/rd/tree/HEAD/rd-net/Rd.sln
 
 #### Requirements
 
@@ -63,7 +63,7 @@ Open solution in JetBrains Rider: https://github.com/JetBrains/rd/tree/master/rd
 
 ### Kotlin
 
-Open solution in IntellijIDEA:  https://github.com/JetBrains/rd
+Open the project in IntelliJ IDEA: https://github.com/JetBrains/rd
 
 #### Requirements
 
@@ -72,11 +72,11 @@ Open solution in IntellijIDEA:  https://github.com/JetBrains/rd
 
 #### Console build instructions
 
-* `gradle :build -x test`
+* `./gradlew :build -x test`
 
 ### C++ (experimental)
 
-Open solution in JetBrains CLion: https://github.com/JetBrains/rd/rd-cpp
+Open the project in CLion: https://github.com/JetBrains/rd/tree/HEAD/rd-cpp
 
 #### Requirements
 
@@ -97,7 +97,7 @@ or
 
 ## Build everything
 
-* `gradle build`
+* `./gradlew build`
 
 ### Build NuGet packages instructions
 
