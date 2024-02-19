@@ -81,13 +81,11 @@ namespace Test.Lifetimes.Serialization
     }
 
     [Test]
-    [TestCase("")]
-    [TestCase("x")]
-    [TestCase("hello")]
-    [TestCase("привет")]
-    [TestCase("one два three")]
-    public void TestUtf8Encoding([NotNull] string value)
+    [TestCaseSource(nameof(GenerateSamplesForUtf8Tests))]
+    public void TestUtf8Encoding([CanBeNull] string value)
     {
+      if (value == null) return;
+
       var encoding = Encoding.UTF8;
 
       byte[] bytes;
@@ -134,6 +132,55 @@ namespace Test.Lifetimes.Serialization
         Assert.AreEqual(marker, 0xDEADBEEF);
         Assert.AreEqual(value, value2);
       }
+    }
+
+    [Test]
+    [TestCaseSource(nameof(GenerateSamplesForUtf8Tests))]
+    public void TestUtf8Encoding2([CanBeNull] string value)
+    {
+      var encoding = Encoding.UTF8;
+
+      byte[] bytes;
+      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+      {
+        cookie.Writer.WriteStringUTF8(value);
+        cookie.Writer.WriteUInt32(0xDEADBEEF);
+        bytes = cookie.CloneData();
+      }
+
+      fixed (byte* ptr = bytes)
+      {
+        var reader = UnsafeReader.CreateReader(ptr, bytes.Length);
+        var value2 = reader.ReadStringUTF8();
+
+        var marker = reader.ReadUInt32();
+        Assert.AreEqual(marker, 0xDEADBEEF);
+        Assert.AreEqual(value, value2);
+      }
+    }
+
+    [ItemCanBeNull]
+    private static string[] GenerateSamplesForUtf8Tests()
+    {
+      return new[]
+      {
+        null,
+        "",
+        " ",
+        "x",
+        "xx",
+        "abc",
+        "abc_def",
+        "привет",
+        "one два three",
+        "abra_кадабра",
+        new string('a', 100),
+        new string('щ', 100),
+        new string('b', 200),
+        new string('г', 200),
+        new string('c', 10000),
+        new string('ю', 10000),
+      };
     }
 
 #if NET472

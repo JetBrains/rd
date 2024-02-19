@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
@@ -672,6 +673,44 @@ namespace JetBrains.Serialization
       }
     }
 
+    public void WriteStringUTF8(string? value)
+    {
+      if (value == null)
+      {
+        WriteByte(0); // mean null
+      }
+      else if (value.Length == 0)
+      {
+        WriteByte(1); // means empty string
+      }
+      else // non-empty string
+      {
+        var maxBytesForString = Encoding.UTF8.GetMaxByteCount(value.Length);
+        var bytesForLength = maxBytesForString < 254 ? 1 : 5; // [byte <254 bytes_count] or [0xFF marker]+[int32 bytes_count]
+        var bookmark = Alloc(maxBytesForString + bytesForLength);
+
+        fixed (char* sourcePtr = value)
+        {
+          var bytesWritten = Encoding.UTF8.GetBytes(
+            sourcePtr, charCount: value.Length, bytes: bookmark.Data + bytesForLength, maxBytesForString);
+
+          if (bytesForLength == 1) // [byte bytes_count]+[utf8 bytes]
+          {
+            if (Mode.IsAssertion) Assertion.Assert(bytesWritten < 254);
+            *bookmark.Data = (byte)(bytesWritten + 1);
+          }
+          else // [0xFF byte]+[int32 bytes_count]+[utf8 bytes]
+          {
+            *bookmark.Data = 0xFF;
+            *(int*)(bookmark.Data + 1) = bytesWritten;
+          }
+
+          bytesWritten += bytesForLength;
+          bookmark.FinishRawWrite(bytesWritten);
+        }
+      }
+    }
+
     /// <summary>
     /// Doesn't write length prefix, only string contents. If <paramref name="value"/> is <c>value</c>, does nothing.
     /// </summary>
@@ -705,33 +744,33 @@ namespace JetBrains.Serialization
       of bugzilla: https://bugzilla.xamarin.com/show_bug.cgi?id=60625
       It is shouldn't dropped while we support client mono version before 5.0
      */
-    private static void WriteStringContentInternal(UnsafeWriter wrt, string value, int offset, int count)
+    private static void WriteStringContentInternal(UnsafeWriter writer, string value, int offset, int count)
     {
       if (ourOldMonoFlag)
       {
-        WriteStringContentInternalBeforeMono5(wrt, value, offset, count);
+        WriteStringContentInternalBeforeMono5(writer, value, offset, count);
       }
       else
       {
-        WriteStringContentInternalAfterMono5(wrt, value, offset, count);
+        WriteStringContentInternalAfterMono5(writer, value, offset, count);
       }
     }
 
-    // Mono 5.4 try to inline this method and crash.
-    //[MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private static void WriteStringContentInternalAfterMono5(UnsafeWriter wrt, string value, int offset, int count)
+    // Mono 5.4 tries to inline this method and crashes.
+    // [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static void WriteStringContentInternalAfterMono5(UnsafeWriter writer, string value, int offset, int count)
     {
       fixed (char* c = value)
       {
-        wrt.Write((byte*) (c + offset), count * sizeof(char));
+        writer.Write((byte*) (c + offset), count * sizeof(char));
       }
     }
 
-    private static void WriteStringContentInternalBeforeMono5(UnsafeWriter wrt, string value, int offset, int count)
+    private static void WriteStringContentInternalBeforeMono5(UnsafeWriter writer, string value, int offset, int count)
     {
-      for (var i = offset; i < offset + count; i++)
+      for (var index = offset; index < offset + count; index++)
       {
-        wrt.WriteChar(value[i]);
+        writer.WriteChar(value[index]);
       }
     }
 
