@@ -115,7 +115,8 @@ namespace JetBrains.Serialization
       }
 
       /// <summary>
-      /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer. Cookie must be prepared by invoking `<see cref="UnsafeWriter.Write(int)"/><c>(0)</c>` as first cookie call.
+      /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer.
+      /// Cookie must be prepared by invoking `<see cref="UnsafeWriter.Write(int)"/><c>(0)</c>` as first cookie call.
       /// </summary>
       public void WriteIntLength()
       {
@@ -497,7 +498,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteGuid(Guid value)
     {
-      Write<byte, byte[]>((writer, b) => writer.Write(b), value.ToByteArray());
+      Write<byte, byte[]>((writer, b) => writer.WriteByte(b), value.ToByteArray());
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -733,7 +734,7 @@ namespace JetBrains.Serialization
     {
       for (var i = offset; i < offset + count; i++)
       {
-        wrt.Write(value[i]);
+        wrt.WriteChar(value[i]);
       }
     }
 
@@ -750,25 +751,25 @@ namespace JetBrains.Serialization
 
     public delegate void WriteDelegate<in T>(UnsafeWriter writer, T value);
 
-    public static readonly WriteDelegate<bool> BooleanDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<byte> ByteDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Guid> GuidDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<char> CharDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<decimal> DecimalDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<double> DoubleDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<float> FloatDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int16> Int16Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int32> Int32Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int64> Int64Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<UInt16> UInt16Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<UInt32> UInt32Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<UInt64> UInt64Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<DateTime> DateTimeDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Uri> UriDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<string> StringDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<byte[]> ByteArrayDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<int[]> IntArrayDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<string[]> StringArrayDelegate = (writer, x) => writer.Write(StringDelegate, x);
+    public static readonly WriteDelegate<bool> BooleanDelegate = (writer, x) => writer.WriteBoolean(x);
+    public static readonly WriteDelegate<byte> ByteDelegate = (writer, x) => writer.WriteByte(x);
+    public static readonly WriteDelegate<Guid> GuidDelegate = (writer, x) => writer.WriteGuid(x);
+    public static readonly WriteDelegate<char> CharDelegate = (writer, x) => writer.WriteChar(x);
+    public static readonly WriteDelegate<decimal> DecimalDelegate = (writer, x) => writer.WriteDecimal(x);
+    public static readonly WriteDelegate<double> DoubleDelegate = (writer, x) => writer.WriteDouble(x);
+    public static readonly WriteDelegate<float> FloatDelegate = (writer, x) => writer.WriteFloat(x);
+    public static readonly WriteDelegate<Int16> Int16Delegate = (writer, x) => writer.WriteInt16(x);
+    public static readonly WriteDelegate<Int32> Int32Delegate = (writer, x) => writer.WriteInt32(x);
+    public static readonly WriteDelegate<Int64> Int64Delegate = (writer, x) => writer.WriteInt64(x);
+    public static readonly WriteDelegate<UInt16> UInt16Delegate = (writer, x) => writer.WriteUInt16(x);
+    public static readonly WriteDelegate<UInt32> UInt32Delegate = (writer, x) => writer.WriteUInt32(x);
+    public static readonly WriteDelegate<UInt64> UInt64Delegate = (writer, x) => writer.WriteUInt64(x);
+    public static readonly WriteDelegate<DateTime> DateTimeDelegate = (writer, x) => writer.WriteDateTime(x);
+    public static readonly WriteDelegate<Uri> UriDelegate = (writer, x) => writer.WriteUri(x);
+    public static readonly WriteDelegate<string> StringDelegate = (writer, x) => writer.WriteString(x);
+    public static readonly WriteDelegate<byte[]> ByteArrayDelegate = (writer, x) => writer.WriteByteArray(x);
+    public static readonly WriteDelegate<int[]> IntArrayDelegate = (writer, x) => writer.WriteArray(x);
+    public static readonly WriteDelegate<string[]> StringArrayDelegate = (writer, x) => writer.WriteCollection(StringDelegate, x);
 
     #endregion
     #region Collection writers
