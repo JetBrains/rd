@@ -423,7 +423,7 @@ namespace JetBrains.Serialization
       ReplaceTemplate = "$qualifier$.WriteUInt16($arg$)",
       SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt16 value) => WriteUint16(value);
+    public void Write(UInt16 value) => WriteUInt16(value);
 
     [CodeTemplate(
       searchTemplate: "$member$($arg$)",
@@ -439,7 +439,7 @@ namespace JetBrains.Serialization
       ReplaceTemplate = "$qualifier$.WriteUInt64($arg$)",
       SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt64 value) => WriteUint64(value);
+    public void Write(UInt64 value) => WriteUInt64(value);
 
     [CodeTemplate(
       searchTemplate: "$member$($arg$)",
@@ -606,8 +606,11 @@ namespace JetBrains.Serialization
       *x = value;
     }
 
+    [Obsolete("Use 'WriteUInt16' instead (correct casing)")]
+    public void WriteUint16(UInt16 value) => WriteUInt16(value);
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteUint16(UInt16 value)
+    public void WriteUInt16(UInt16 value)
     {
       Prepare(sizeof(UInt16));
       var x = (UInt16*)myPtr;
@@ -624,8 +627,11 @@ namespace JetBrains.Serialization
       *x = value;
     }
 
+    [Obsolete("Use 'WriteUInt64' instead (correct casing)")]
+    public void WriteUint64(UInt64 value) => WriteUInt64(value);
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteUint64(UInt64 value)
+    public void WriteUInt64(UInt64 value)
     {
       Prepare(sizeof(UInt64));
       var x = (UInt64*)myPtr;
