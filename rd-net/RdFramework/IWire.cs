@@ -98,7 +98,7 @@ namespace JetBrains.Rd
       using (var cookie = UnsafeWriter.NewThreadLocalWriter())
       {
         var bookmark = new UnsafeWriter.Bookmark(cookie.Writer);
-        cookie.Writer.Write(0); //placeholder for length
+        cookie.Writer.WriteInt32(0); //placeholder for length
 
         id.Write(cookie.Writer);
         if (!myBackwardsCompatibleWireFormat)

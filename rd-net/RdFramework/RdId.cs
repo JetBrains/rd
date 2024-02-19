@@ -101,10 +101,9 @@ namespace JetBrains.Rd
       return $"{(ulong)myValue}";
     }
 
-    [Pure]
     public void Write(UnsafeWriter writer)
     {
-      writer.Write(myValue);
+      writer.WriteInt64(myValue);
     }
 
     public static RdId Read(UnsafeReader reader)

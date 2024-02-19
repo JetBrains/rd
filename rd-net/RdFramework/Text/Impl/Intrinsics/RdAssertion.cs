@@ -12,7 +12,7 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     public int MasterVersion {get; private set;}
     public int SlaveVersion {get; private set;}
     public string Text {get; private set;}
-    
+
     //private fields
     //primary constructor
     public RdAssertion(
@@ -22,28 +22,29 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     )
     {
       if (text == null) throw new ArgumentNullException("text");
-      
+
       MasterVersion = masterVersion;
       SlaveVersion = slaveVersion;
       Text = text;
     }
     //secondary constructor
     //statics
-    
-    public static CtxReadDelegate<RdAssertion> Read = (ctx, reader) => 
+
+    public static CtxReadDelegate<RdAssertion> Read = (ctx, reader) =>
     {
       var masterVersion = reader.ReadInt();
       var slaveVersion = reader.ReadInt();
       var text = reader.ReadString().NotNull("text");
       return new RdAssertion(masterVersion, slaveVersion, text);
     };
-    
-    public static CtxWriteDelegate<RdAssertion> Write = (ctx, writer, value) => 
+
+    public static CtxWriteDelegate<RdAssertion> Write = (ctx, writer, value) =>
     {
-      writer.Write(value.MasterVersion);
-      writer.Write(value.SlaveVersion);
-      writer.Write(value.Text);
+      writer.WriteInt32(value.MasterVersion);
+      writer.WriteInt32(value.SlaveVersion);
+      writer.WriteString(value.Text);
     };
+
     //custom body
     //equals trait
     public override bool Equals(object? obj)

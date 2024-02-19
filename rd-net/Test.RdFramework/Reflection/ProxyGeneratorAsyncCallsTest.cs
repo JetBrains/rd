@@ -115,7 +115,7 @@ namespace Test.RdFramework.Reflection
 
         public static void Write(SerializationCtx ctx, UnsafeWriter writer, FileSystemPath value)
         {
-          writer.Write(value.myPath.ToLowerInvariant());
+          writer.WriteString(value.myPath.ToLowerInvariant());
         }
       }
     }

@@ -30,10 +30,10 @@ namespace JetBrains.Rd.Text.Impl.Intrinsics
     public static CtxWriteDelegate<RdTextBufferChange> WriteDelegate = (ctx, writer, value) =>
     {
       var version = value.Version;
-      writer.Write(version.Master);
-      writer.Write(version.Slave);
+      writer.WriteInt32(version.Master);
+      writer.WriteInt32(version.Slave);
       var side = value.Origin;
-      writer.Write((int)side);
+      writer.WriteInt32((int)side);
       var change = value.Change;
       RdTextChangeSerializer.WriteDelegate(ctx, writer, change);
     };

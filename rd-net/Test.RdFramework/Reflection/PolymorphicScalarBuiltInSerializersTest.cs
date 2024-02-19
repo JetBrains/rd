@@ -91,7 +91,7 @@ namespace Test.RdFramework.Reflection
         return new Base { Mark = Guid.NewGuid() };
       }
 
-      public void Write(UnsafeWriter writer) => writer.Write("base");
+      public void Write(UnsafeWriter writer) => writer.WriteString("base");
     }
 
     [AssertBuiltInType(BuiltInSerializers.BuiltInType.Methods)]
@@ -103,7 +103,7 @@ namespace Test.RdFramework.Reflection
         return new Type1 { Mark = Guid.NewGuid() };
       }
 
-      public new void Write(UnsafeWriter writer) => writer.Write("type1");
+      public new void Write(UnsafeWriter writer) => writer.WriteString("type1");
     }
 
     [AssertBuiltInType(BuiltInSerializers.BuiltInType.None)]

@@ -253,7 +253,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     {
       if (allowNullable)
       {
-        unsafeWriter.Write(value != null);
+        unsafeWriter.WriteBoolean(value != null);
         if (value == null)
           return;
       }

@@ -111,24 +111,24 @@ namespace JetBrains.Rd.Impl
 
 
     //writers
-    public static readonly CtxWriteDelegate<byte> WriteByte = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<short> WriteShort = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<int> WriteInt = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<long> WriteLong = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<float> WriteFloat = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<double> WriteDouble = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<char> WriteChar = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<bool> WriteBool = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<byte> WriteByte = (ctx, writer, value) => writer.WriteByte(value);
+    public static readonly CtxWriteDelegate<short> WriteShort = (ctx, writer, value) => writer.WriteInt16(value);
+    public static readonly CtxWriteDelegate<int> WriteInt = (ctx, writer, value) => writer.WriteInt32(value);
+    public static readonly CtxWriteDelegate<long> WriteLong = (ctx, writer, value) => writer.WriteInt64(value);
+    public static readonly CtxWriteDelegate<float> WriteFloat = (ctx, writer, value) => writer.WriteFloat(value);
+    public static readonly CtxWriteDelegate<double> WriteDouble = (ctx, writer, value) => writer.WriteDouble(value);
+    public static readonly CtxWriteDelegate<char> WriteChar = (ctx, writer, value) => writer.WriteChar(value);
+    public static readonly CtxWriteDelegate<bool> WriteBool = (ctx, writer, value) => writer.WriteBoolean(value);
     public static readonly CtxWriteDelegate<Unit> WriteVoid = (ctx, writer, value) => writer.Write(value);
 
-    public static readonly CtxWriteDelegate<string?> WriteString = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<Guid> WriteGuid = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<DateTime> WriteDateTime = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<TimeSpan> WriteTimeSpan = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<Uri> WriteUri = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<string?> WriteString = (ctx, writer, value) => writer.WriteString(value);
+    public static readonly CtxWriteDelegate<Guid> WriteGuid = (ctx, writer, value) => writer.WriteGuid(value);
+    public static readonly CtxWriteDelegate<DateTime> WriteDateTime = (ctx, writer, value) => writer.WriteDateTime(value);
+    public static readonly CtxWriteDelegate<TimeSpan> WriteTimeSpan = (ctx, writer, value) => writer.WriteTimeSpan(value);
+    public static readonly CtxWriteDelegate<Uri> WriteUri = (ctx, writer, value) => writer.WriteUri(value);
     public static readonly CtxWriteDelegate<RdId> WriteRdId = (ctx, writer, value) => writer.Write(value);
     
-    public static readonly CtxWriteDelegate<RdSecureString> WriteSecureString = (ctx, writer, value) => writer.Write(value.Contents);
+    public static readonly CtxWriteDelegate<RdSecureString> WriteSecureString = (ctx, writer, value) => writer.WriteString(value.Contents);
 
     public static readonly CtxWriteDelegate<byte[]?> WriteByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
     public static readonly CtxWriteDelegate<short[]?> WriteShortArray = (ctx, writer, value) => writer.WriteArray(WriteShort, ctx, value);
@@ -140,10 +140,10 @@ namespace JetBrains.Rd.Impl
     public static readonly CtxWriteDelegate<bool[]?> WriteBoolArray = (ctx, writer, value) => writer.WriteArray(WriteBool, ctx, value);
 
 
-    public static readonly CtxWriteDelegate<byte> WriteUByte = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<ushort> WriteUShort = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<uint> WriteUInt = (ctx, writer, value) => writer.Write(value);
-    public static readonly CtxWriteDelegate<ulong> WriteULong = (ctx, writer, value) => writer.Write(value);
+    public static readonly CtxWriteDelegate<byte> WriteUByte = (ctx, writer, value) => writer.WriteByte(value);
+    public static readonly CtxWriteDelegate<ushort> WriteUShort = (ctx, writer, value) => writer.WriteUInt16(value);
+    public static readonly CtxWriteDelegate<uint> WriteUInt = (ctx, writer, value) => writer.WriteUInt32(value);
+    public static readonly CtxWriteDelegate<ulong> WriteULong = (ctx, writer, value) => writer.WriteUInt64(value);
     
     public static readonly CtxWriteDelegate<byte[]?> WriteUByteArray = (ctx, writer, value) => writer.WriteArray(WriteByte, ctx, value);
     public static readonly CtxWriteDelegate<ushort[]?> WriteUShortArray = (ctx, writer, value) => writer.WriteArray(WriteUShort, ctx, value);
@@ -212,7 +212,7 @@ namespace JetBrains.Rd.Impl
 #endif
      Enum
     {
-      writer.Write(Cast32BitEnum<T>.ToInt(value));
+      writer.WriteInt32(Cast32BitEnum<T>.ToInt(value));
     }
 
     public void RegisterEnum<T>() where T :
@@ -326,7 +326,7 @@ namespace JetBrains.Rd.Impl
       typeId.Write(writer);
 
       var bookmark = new UnsafeWriter.Bookmark(writer);
-      writer.Write(0);
+      writer.WriteInt32(0);
       CtxWriteDelegate<object> writerDelegate;
       lock (myLock)
         writerDelegate = myWriters[typeId];

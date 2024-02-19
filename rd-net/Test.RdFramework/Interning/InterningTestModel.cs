@@ -169,7 +169,7 @@ namespace Test.RdFramework.Interning
     public static CtxWriteDelegate<InterningMtModel> Write = (ctx, writer, value) => 
     {
       value.RdId.Write(writer);
-      writer.Write(value.SearchLabel);
+      writer.WriteString(value.SearchLabel);
       RdSignal<string>.Write(ctx, writer, value._Signaller);
       value.mySerializationContext = ctx.WithInternRootsHere(value, "Test");
     };
@@ -230,7 +230,7 @@ namespace Test.RdFramework.Interning
     
     public static CtxWriteDelegate<InterningNestedTestModel> Write = (ctx, writer, value) => 
     {
-      writer.Write(value.Value);
+      writer.WriteString(value.Value);
       WriteInterningNestedTestModelInternedNullable(ctx, writer, value.Inner);
     };
     public static CtxWriteDelegate<InterningNestedTestModel> WriteInterningNestedTestModelInternedNullable = InterningNestedTestModel.Write.Interned("Test").NullableClass();
@@ -408,7 +408,7 @@ namespace Test.RdFramework.Interning
     public static CtxWriteDelegate<InterningProtocolLevelModel> Write = (ctx, writer, value) => 
     {
       value.RdId.Write(writer);
-      writer.Write(value.SearchLabel);
+      writer.WriteString(value.SearchLabel);
       RdMap<int, ProtocolWrappedStringModel>.Write(ctx, writer, value._Issues);
     };
     //custom body
@@ -482,7 +482,7 @@ namespace Test.RdFramework.Interning
     public static CtxWriteDelegate<InterningTestModel> Write = (ctx, writer, value) => 
     {
       value.RdId.Write(writer);
-      writer.Write(value.SearchLabel);
+      writer.WriteString(value.SearchLabel);
       RdMap<int, WrappedStringModel>.Write(ctx, writer, value._Issues);
       value.mySerializationContext = ctx.WithInternRootsHere(value, "Test");
     };

@@ -25,7 +25,7 @@ namespace Test.Lifetimes.Serialization
       {
         using (var cookie = UnsafeWriter.NewThreadLocalWriter())
         {
-          cookie.Writer.Write(false);
+          cookie.Writer.WriteBoolean(false);
           Assert.AreEqual(1, NativeMemoryPool.SampleUsed());
         }
         Assert.AreEqual(1, NativeMemoryPool.SampleCount());
@@ -75,11 +75,11 @@ namespace Test.Lifetimes.Serialization
         MaxDegreeOfParallelism = -1
       }, x =>
       {
-        for (int a = 0; a < 100_000_000; a++)
+        for (var a = 0; a < 100_000_000; a++)
         {
           using (var y = UnsafeWriter.NewThreadLocalWriter())
           {
-            y.Writer.Write("hhhhdd");
+            y.Writer.WriteString("hhhhdd");
           }
         }
       });
@@ -106,7 +106,7 @@ namespace Test.Lifetimes.Serialization
     {
       using (var y = UnsafeWriter.NewThreadLocalWriter())
       {
-        y.Writer.Write("hhhhdd");
+        y.Writer.WriteString("hhhhdd");
       }
     }
 #endif

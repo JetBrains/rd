@@ -113,8 +113,8 @@ namespace Test.RdFramework.Reflection
           (ctx, reader) => new ScalarTests.ColorFields(0, reader.ReadByte(), reader.ReadByte()),
           (ctx, writer, value) =>
           {
-            writer.Write((byte) value.Green);
-            writer.Write((byte) value.Blue);
+            writer.WriteByte((byte) value.Green);
+            writer.WriteByte((byte) value.Blue);
           });
       }
 
@@ -188,8 +188,8 @@ namespace Test.RdFramework.Reflection
       public static CtxWriteDelegate<NoRedBuiltIn1> Write = (ctx, writer, value) =>
       {
         // writer.Write((byte) value.Red);
-        writer.Write((byte) value.Green);
-        writer.Write((byte) value.Blue);
+        writer.WriteByte((byte) value.Green);
+        writer.WriteByte((byte) value.Blue);
       };
     }
 
@@ -218,8 +218,8 @@ namespace Test.RdFramework.Reflection
       public static void Write(SerializationCtx ctx, UnsafeWriter writer, NoRedBuiltIn2 value)
       {
         // writer.Write((byte) value.Red);
-        writer.Write((byte) value.Green);
-        writer.Write((byte) value.Blue);
+        writer.WriteByte((byte) value.Green);
+        writer.WriteByte((byte) value.Blue);
       }
     }
 
@@ -266,8 +266,8 @@ namespace Test.RdFramework.Reflection
       public void Write(UnsafeWriter writer)
       {
         // writer.Write((byte) value.Red);
-        writer.Write((byte) Green);
-        writer.Write((byte) Blue);
+        writer.WriteByte((byte) Green);
+        writer.WriteByte((byte) Blue);
       }
 
       // Overloads with same name are allowed
@@ -291,8 +291,8 @@ namespace Test.RdFramework.Reflection
         public static void Write(UnsafeWriter writer, NoRedBuiltIn5 value)
         {
           // writer.Write((byte) value.Red);
-          writer.Write((byte)value.Green);
-          writer.Write((byte)value.Blue);
+          writer.WriteByte((byte)value.Green);
+          writer.WriteByte((byte)value.Blue);
         }
 
         public virtual bool Equals(NoRedBuiltIn5 other)
@@ -325,8 +325,8 @@ namespace Test.RdFramework.Reflection
       public void Write(SerializationCtx ctx, UnsafeWriter writer, NoRedBuiltIn3 value)
       {
         // writer.Write((byte) value.Red);
-        writer.Write((byte) value.Green);
-        writer.Write((byte) value.Blue);
+        writer.WriteByte((byte) value.Green);
+        writer.WriteByte((byte) value.Blue);
       }
     }
   }

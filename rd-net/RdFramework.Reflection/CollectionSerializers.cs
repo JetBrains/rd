@@ -12,83 +12,104 @@ namespace JetBrains.Rd.Reflection
   {
     public static SerializerPair CreateListSerializerPair<T>(SerializerPair itemSerializer)
     {
-      CtxReadDelegate<List<T>?> readListSerializer = (ctx, reader) => reader.ReadList(itemSerializer.GetReader<T>(), ctx);
-      CtxWriteDelegate<IEnumerable<T>> writeListSerializer =(ctx, writer, value) => writer.WriteEnumerable(itemSerializer.GetWriter<T>(), ctx, value);
+      CtxReadDelegate<List<T>?> readListSerializer =
+        (ctx, reader) => reader.ReadList(itemSerializer.GetReader<T>(), ctx);
+
+      CtxWriteDelegate<IEnumerable<T>> writeListSerializer =
+        (ctx, writer, value) => writer.WriteEnumerable(itemSerializer.GetWriter<T>(), ctx, value);
+
       return new SerializerPair(readListSerializer, writeListSerializer);
     }
 
-    public static SerializerPair CreateDictionarySerializerPair<TKey, TValue>(SerializerPair keySerializer, SerializerPair valueSerializer)
+    public static SerializerPair CreateDictionarySerializerPair<TKey, TValue>(
+      SerializerPair keySerializer, SerializerPair valueSerializer)
     {
       var read = CreateReadDictionary<TKey, TValue>(keySerializer, valueSerializer);
+
       CtxWriteDelegate<IDictionary<TKey, TValue>?> write = (ctx, writer, value) =>
       {
         if (value is Dictionary<TKey, TValue> val && !Equals(val.Comparer, EqualityComparer<TKey>.Default))
           throw new Exception($"Unable to serialize {value.GetType().ToString(true)}. Custom equality comparers are not supported");
+
         if (value == null)
         {
-          writer.Write(-1);
+          writer.WriteInt32(-1);
           return;
         }
-        writer.Write(value.Count);
-        var keyw = keySerializer.GetWriter<TKey>();
-        var valuew = valueSerializer.GetWriter<TValue>();
+
+        writer.WriteInt32(value.Count);
+
+        var keyWriter = keySerializer.GetWriter<TKey>();
+        var valueWriter = valueSerializer.GetWriter<TValue>();
+
         foreach (var kvp in value)
         {
-          keyw(ctx, writer, kvp.Key);
-          valuew(ctx, writer, kvp.Value);
+          keyWriter(ctx, writer, kvp.Key);
+          valueWriter(ctx, writer, kvp.Value);
         }
       };
+
       return new SerializerPair(read, write);
     }
 
-    public static SerializerPair CreateReadOnlyDictionarySerializerPair<TKey, TValue>(SerializerPair keySerializer, SerializerPair valueSerializer)
+    public static SerializerPair CreateReadOnlyDictionarySerializerPair<TKey, TValue>(
+      SerializerPair keySerializer, SerializerPair valueSerializer)
     {
 #if NET35
       throw new NotSupportedException();
 #else
       var read = CreateReadDictionary<TKey, TValue>(keySerializer, valueSerializer);
-      CtxWriteDelegate<IReadOnlyDictionary<TKey, TValue>?> write = (ctx, writer, value) =>
+
+      CtxWriteDelegate<IReadOnlyDictionary<TKey, TValue>?> write = (context, writer, value) =>
       {
         if (value is Dictionary<TKey, TValue> val && !Equals(val.Comparer, EqualityComparer<TKey>.Default))
           throw new Exception($"Unable to serialize {value.GetType().ToString(true)}. Custom equality comparers are not supported");
+
         if (value == null)
         {
-          writer.Write(-1);
+          writer.WriteInt32(-1);
           return;
         }
-        writer.Write(value.Count);
-        var keyw = keySerializer.GetWriter<TKey>();
-        var valuew = valueSerializer.GetWriter<TValue>();
+
+        writer.WriteInt32(value.Count);
+
+        var keyWriter = keySerializer.GetWriter<TKey>();
+        var valueWriter = valueSerializer.GetWriter<TValue>();
+
         foreach (var kvp in value)
         {
-          keyw(ctx, writer, kvp.Key);
-          valuew(ctx, writer, kvp.Value);
+          keyWriter(context, writer, kvp.Key);
+          valueWriter(context, writer, kvp.Value);
         }
       };
+
       return new SerializerPair(read, write);
 #endif
     }
 
-
-    private static CtxReadDelegate<Dictionary<TKey, TValue>?> CreateReadDictionary<TKey, TValue>(SerializerPair keySerializer, SerializerPair valueSerializer)
+    private static CtxReadDelegate<Dictionary<TKey, TValue>?> CreateReadDictionary<TKey, TValue>(
+      SerializerPair keySerializer, SerializerPair valueSerializer)
     {
-      CtxReadDelegate<Dictionary<TKey, TValue>?> read = (ctx, reader) =>
+      CtxReadDelegate<Dictionary<TKey, TValue>?> read = (context, reader) =>
       {
         int count = reader.ReadInt();
         if (count == -1)
           return null;
+
         var result = new Dictionary<TKey, TValue>(count);
-        var keyr = keySerializer.GetReader<TKey>();
-        var valuer = valueSerializer.GetReader<TValue>();
-        for (int i = 0; i < count; i++)
+        var keyReader = keySerializer.GetReader<TKey>();
+        var valueReader = valueSerializer.GetReader<TValue>();
+
+        for (var index = 0; index < count; index++)
         {
-          var key = keyr(ctx, reader);
-          var value = valuer(ctx, reader);
+          var key = keyReader(context, reader);
+          var value = valueReader(context, reader);
           result.Add(key, value);
         }
 
         return result;
       };
+
       return read;
     }
   }

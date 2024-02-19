@@ -52,7 +52,7 @@ namespace JetBrains.Rd.Impl
     {
       base.Init(lifetime, proto, ctx);
       Assertion.Assert(myHandler.IsSendWithoutContexts,"Must bind context handler without sending contexts to prevent reentrancy");
-      
+
       myInternRoot.Bind();
       myProtocolValueSet.Bind();
 
@@ -81,7 +81,7 @@ namespace JetBrains.Rd.Impl
       if (value == null)
       {
         InternId.Write(writer, InternId.Invalid);
-        writer.Write(false);
+        writer.WriteBoolean(false);
       }
       else
       {
@@ -93,7 +93,7 @@ namespace JetBrains.Rd.Impl
           InternId.Write(writer, internedId);
           if (!internedId.IsValid)
           {
-            writer.Write(true);
+            writer.WriteBoolean(true);
             Context.WriteDelegate(context, writer, value);
           }
         }
@@ -109,8 +109,11 @@ namespace JetBrains.Rd.Impl
     {
       var value = Context.Value;
       if (value == null) return;
+
       using (myHandler.CreateSendWithoutContextsCookie())
+      {
         AddValueToProtocolValueSetImpl(value);
+      }
     }
 
     public T ReadValue(SerializationCtx context, UnsafeReader reader)
@@ -133,15 +136,15 @@ namespace JetBrains.Rd.Impl
       Assertion.Fail(message);
     }
   }
-  
+
   internal class ConcurrentRdSet<T> : RdReactiveBase, IAppendOnlyViewableConcurrentSet<T>, IRdWireable
   {
     private readonly ProtocolContexts myProtocolContexts;
     private readonly ViewableConcurrentSet<T> mySet;
     private readonly ThreadLocal<bool> myIsThreadLocal = new();
-    
+
     public int Count => mySet.Count;
-    
+
     public CtxReadDelegate<T> ReadValueDelegate { get; }
     public CtxWriteDelegate<T> WriteValueDelegate { get; }
 
@@ -165,7 +168,7 @@ namespace JetBrains.Rd.Impl
       View(bindLifetime, (_, value) =>
       {
         if (!myIsThreadLocal.Value) return;
-      
+
         SendAdd(proto.Wire, SendContext.Of(ctx, value, this));
       });
     }
@@ -181,7 +184,7 @@ namespace JetBrains.Rd.Impl
 
         ourLogSend.Trace($"{sendContext.This} :: {kind} :: {value.PrintToString()}");
       });
-    } 
+    }
 
     public override void Print(PrettyPrinter printer)
     {
@@ -205,7 +208,7 @@ namespace JetBrains.Rd.Impl
     public bool Add(T value)
     {
       Assertion.Assert(!myIsThreadLocal.Value);
-      
+
       myIsThreadLocal.Value = true;
       try
       {

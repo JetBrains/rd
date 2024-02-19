@@ -47,20 +47,24 @@ namespace Test.RdFramework
       bool run = true;
       var thread = new Thread(() =>
       {
-        while (run) NativeMemoryPool.TryFreeMemory();
+        while (run)
+        {
+          NativeMemoryPool.TryFreeMemory();
+        }
       });
+
       thread.Start();
       var sw = Stopwatch.StartNew();
       while (sw.ElapsedMilliseconds < 500)
       {
         using (var cookie = UnsafeWriter.NewThreadLocalWriter())
         {
-          cookie.Writer.Write(1);
+          cookie.Writer.WriteInt32(1);
         }
 
         using (var cookie = UnsafeWriter.NewThreadLocalWriter())
         {
-          cookie.Writer.Write(1);
+          cookie.Writer.WriteInt32(1);
         }
       }
 

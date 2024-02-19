@@ -20,38 +20,36 @@ namespace Test.Lifetimes.Serialization
       UnsafeReader reader;
       using (var cookie = UnsafeWriter.NewThreadLocalWriter())
       {
-        cookie.Writer.Write(false);
-        cookie.Writer.Write(true);
-        cookie.Writer.Write((byte) 0);
-        cookie.Writer.Write((byte) 10);
-        cookie.Writer.Write('y');
-        cookie.Writer.Write('й');
-        cookie.Writer.Write(1234.5678m);
-        cookie.Writer.Write(1234.5678d);
-        cookie.Writer.Write((short) 1000);
-        cookie.Writer.Write((int) 1001);
-        cookie.Writer.Write((long) -1002);
+        cookie.Writer.WriteBoolean(false);
+        cookie.Writer.WriteBoolean(true);
+        cookie.Writer.WriteByte(0);
+        cookie.Writer.WriteByte(10);
+        cookie.Writer.WriteChar('y');
+        cookie.Writer.WriteChar('й');
+        cookie.Writer.WriteDecimal(1234.5678m);
+        cookie.Writer.WriteDouble(1234.5678d);
+        cookie.Writer.WriteInt16(1000);
+        cookie.Writer.WriteInt32(1001);
+        cookie.Writer.WriteInt64(-1002);
 
+        cookie.Writer.WriteString(null);
+        cookie.Writer.WriteString("");
+        cookie.Writer.WriteString("abcd = yй");
 
-        cookie.Writer.Write((string) null);
-        cookie.Writer.Write("");
-        cookie.Writer.Write("abcd = yй");
+        cookie.Writer.WriteArray((int[]) (null));
+        cookie.Writer.WriteArray(new int[0]);
+        cookie.Writer.WriteArray(new[] {1, 2, 3});
 
-        cookie.Writer.Write((int[]) (null));
-        cookie.Writer.Write(new int[0]);
-        cookie.Writer.Write(new[] {1, 2, 3});
+        cookie.Writer.WriteCollection(UnsafeWriter.StringDelegate, (string[])null);
+        cookie.Writer.WriteCollection(UnsafeWriter.StringDelegate, new string[0]);
+        cookie.Writer.WriteCollection(UnsafeWriter.StringDelegate, new[] { "a", "b", "c" });
 
-        cookie.Writer.Write(UnsafeWriter.StringDelegate, (string[]) null);
-        cookie.Writer.Write(UnsafeWriter.StringDelegate, new string[0]);
-        cookie.Writer.Write(UnsafeWriter.StringDelegate, new[] {"a", "b", "c"});
-
-        cookie.Writer.Write(UnsafeWriter.StringDelegate, (List<string>) null);
-        cookie.Writer.Write(UnsafeWriter.StringDelegate, new List<string>());
-        cookie.Writer.Write(UnsafeWriter.StringDelegate, new List<string> {"d", "e"});
+        cookie.Writer.WriteCollection(UnsafeWriter.StringDelegate, (List<string>)null);
+        cookie.Writer.WriteCollection(UnsafeWriter.StringDelegate, new List<string>());
+        cookie.Writer.WriteCollection(UnsafeWriter.StringDelegate, new List<string> { "d", "e" });
 
         reader = UnsafeReader.CreateReader(cookie.Data, cookie.Count);
       }
-
 
       Assert.False(reader.ReadBoolean());
       Assert.True(reader.ReadBoolean());
@@ -199,18 +197,18 @@ namespace Test.Lifetimes.Serialization
         throw new Exception($"Assertion mode cannot be initialized. (default value was used: {ModeInitializer.GetIsAssertionUndefined()})");
 
       myCookie = UnsafeWriter.NewThreadLocalWriter();
-      myCookie.Writer.Write(false);
-      myCookie.Writer.Write(true);
-      myCookie.Writer.Write((byte)0);
-      myCookie.Writer.Write((byte)10);
-      myCookie.Writer.Write('y');
-      myCookie.Writer.Write('й');
-      myCookie.Writer.Write(1234.5678m);
-      myCookie.Writer.Write(1234.5678d);
-      myCookie.Writer.Write((short)1000);
-      myCookie.Writer.Write((int)1001);
-      myCookie.Writer.Write((long)-1002);
-      myCookie.Writer.Write("(long)-1002");
+      myCookie.Writer.WriteBoolean(false);
+      myCookie.Writer.WriteBoolean(true);
+      myCookie.Writer.WriteByte((byte)0);
+      myCookie.Writer.WriteByte((byte)10);
+      myCookie.Writer.WriteChar('y');
+      myCookie.Writer.WriteChar('й');
+      myCookie.Writer.WriteDecimal(1234.5678m);
+      myCookie.Writer.WriteDouble(1234.5678d);
+      myCookie.Writer.WriteInt16((short)1000);
+      myCookie.Writer.WriteInt32((int)1001);
+      myCookie.Writer.WriteInt64((long)-1002);
+      myCookie.Writer.WriteString("(long)-1002");
       myReader = UnsafeReader.CreateReader(myCookie.Data, myCookie.Count);
     }
 

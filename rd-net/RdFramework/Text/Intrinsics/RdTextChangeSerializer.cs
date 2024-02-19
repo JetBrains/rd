@@ -16,11 +16,11 @@ namespace JetBrains.Rd.Text.Intrinsics
 
     public static CtxWriteDelegate<RdTextChange> WriteDelegate = (ctx, writer, value) =>
     {
-      writer.Write((int)value.Kind);
-      writer.Write(value.StartOffset);
-      writer.Write(value.Old);
-      writer.Write(value.New);
-      writer.Write(value.FullTextLength);
+      writer.WriteInt32((int)value.Kind);
+      writer.WriteInt32(value.StartOffset);
+      writer.WriteString(value.Old);
+      writer.WriteString(value.New);
+      writer.WriteInt32(value.FullTextLength);
     };
 
   }

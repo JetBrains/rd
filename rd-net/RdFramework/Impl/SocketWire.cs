@@ -311,8 +311,8 @@ namespace JetBrains.Rd.Impl
         {
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
-            cookie.Writer.Write(ACK_MSG_LEN);
-            cookie.Writer.Write(seqN);
+            cookie.Writer.WriteInt32(ACK_MSG_LEN);
+            cookie.Writer.WriteInt64(seqN);
             cookie.CopyTo(myAckPkgHeader);
           }
 
@@ -354,9 +354,9 @@ namespace JetBrains.Rd.Impl
 
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
-            cookie.Writer.Write(PING_LEN);
-            cookie.Writer.Write(myCurrentTimeStamp);
-            cookie.Writer.Write(myCounterpartTimestamp);
+            cookie.Writer.WriteInt32(PING_LEN);
+            cookie.Writer.WriteInt32(myCurrentTimeStamp);
+            cookie.Writer.WriteInt32(myCounterpartTimestamp);
             cookie.CopyTo(myPingPkgHeader);
           }
 
@@ -422,8 +422,8 @@ namespace JetBrains.Rd.Impl
 
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
-            cookie.Writer.Write(len);
-            cookie.Writer.Write(seqN);
+            cookie.Writer.WriteInt32(len);
+            cookie.Writer.WriteInt64(seqN);
             cookie.CopyTo(mySendPkgHeader);
           }
 

@@ -11,8 +11,8 @@ namespace JetBrains.Rd.Text.Intrinsics
 
     public static CtxWriteDelegate<TextBufferVersion> WriteDelegate = (ctx, writer, value) =>
     {
-      writer.Write(value.Master);
-      writer.Write(value.Slave);
+      writer.WriteInt32(value.Master);
+      writer.WriteInt32(value.Slave);
     };
   }
 }

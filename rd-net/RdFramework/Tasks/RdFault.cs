@@ -7,8 +7,8 @@ using JetBrains.Serialization;
 
 namespace JetBrains.Rd.Tasks
 {
-  [PublicAPI] 
-  [Serializable] 
+  [PublicAPI]
+  [Serializable]
   public class RdFault : Exception
   {
     public string ReasonTypeFqn { get; private set; }
@@ -29,7 +29,7 @@ namespace JetBrains.Rd.Tasks
       ReasonText = info.GetString(nameof(ReasonText));
       ReasonMessage = info.GetString(nameof(ReasonMessage));
     }
-    
+
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
     {
@@ -40,28 +40,28 @@ namespace JetBrains.Rd.Tasks
       base.GetObjectData(info, context);
     }
 
-    public RdFault(string reasonTypeFqn, string reasonMessage, string reasonText, Exception? reason = null) 
+    public RdFault(string reasonTypeFqn, string reasonMessage, string reasonText, Exception? reason = null)
       : base(reasonMessage + (reason == null ? ", reason: " + reasonText : ""), reason)
     {
       ReasonTypeFqn = reasonTypeFqn;
       ReasonMessage = reasonMessage;
       ReasonText = reasonText;
     }
-    
+
     public static RdFault Read(SerializationCtx ctx, UnsafeReader reader)
     {
       var typeFqn = reader.ReadString().NotNull("typeFqn");
       var message = reader.ReadString().NotNull("message");
       var body = reader.ReadString().NotNull("body");
-      
+
       return new RdFault(typeFqn, message, body);
     }
 
     public static void Write(SerializationCtx ctx, UnsafeWriter writer, RdFault value)
     {
-      writer.Write(value.ReasonTypeFqn);
-      writer.Write(value.ReasonMessage);
-      writer.Write(value.ReasonText);
+      writer.WriteString(value.ReasonTypeFqn);
+      writer.WriteString(value.ReasonMessage);
+      writer.WriteString(value.ReasonText);
     }
   }
 }

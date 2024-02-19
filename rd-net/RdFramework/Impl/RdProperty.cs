@@ -30,7 +30,7 @@ namespace JetBrains.Rd.Impl
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Value"));
       });
     }
-    
+
     [PublicAPI]
     public RdProperty(CtxReadDelegate<T> readValue, CtxWriteDelegate<T> writeValue, T defaultValue) : this(readValue, writeValue)
     {
@@ -67,27 +67,22 @@ namespace JetBrains.Rd.Impl
       writer.Write(value.RdId);
       if (value.HasValue())
       {
-        writer.Write(true);
+        writer.WriteBoolean(true);
         value.WriteValueDelegate(ctx, writer, value.Value);
       }
       else
       {
-        writer.Write(false);
+        writer.WriteBoolean(false);
       }
     }
+
     #endregion
-
-
-
     #region Mastering
 
     public bool IsMaster = false;
     private int myMasterVersion;
-    
+
     #endregion
-
-
-
     #region Init
 
     public bool OptimizeNested = false;
@@ -117,7 +112,7 @@ namespace JetBrains.Rd.Impl
           {
             var prevDefinition = Interlocked.Exchange(ref myBindDefinition , definition);
             Assertion.Assert(prevDefinition?.Lifetime.IsNotAlive ?? true);
-            
+
           }
           else return;
         }
@@ -132,7 +127,7 @@ namespace JetBrains.Rd.Impl
 
       var maybe = Maybe;
       var hasInitValue = maybe.HasValue;
-      if (hasInitValue && !OptimizeNested) 
+      if (hasInitValue && !OptimizeNested)
         maybe.Value.BindPolymorphic();
 
       Advise(lifetime, v =>
@@ -142,12 +137,12 @@ namespace JetBrains.Rd.Impl
 
         if (!IsLocalChange)
           return;
-        
+
         if (!OptimizeNested && shouldIdentify)
         {
-          // We need to terminate the current lifetime to unbind the existing value before assigning a new value, especially in cases where we are reassigning it.  
+          // We need to terminate the current lifetime to unbind the existing value before assigning a new value, especially in cases where we are reassigning it.
           Memory.VolatileRead(ref myBindDefinition)?.Terminate();
-          
+
           v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
 
           var prevDefinition = Interlocked.Exchange(ref myBindDefinition, TryPreBindValue(lifetime, v, false));
@@ -161,11 +156,11 @@ namespace JetBrains.Rd.Impl
           var sContext = sendContext.SzrCtx;
           var evt = sendContext.Event;
           var me = sendContext.This;
-          writer.Write(me.myMasterVersion);
+          writer.WriteInt32(me.myMasterVersion);
           me.WriteValueDelegate(sContext, writer, evt);
           SendTrace?.Log($"{me} :: ver = {me.myMasterVersion}, value = {me.Value.PrintToString()}");
         });
-        
+
         if (!OptimizeNested && shouldIdentify)
           v.BindPolymorphic();
       });
@@ -184,13 +179,13 @@ namespace JetBrains.Rd.Impl
 
       var lifetime = dispatchHelper.Lifetime;
       var definition = TryPreBindValue(lifetime, value, true);
-      
+
       ReceiveTrace?.Log($"OnWireReceived:: {GetMessage(version, value)}");
-      
+
       dispatchHelper.Dispatch(() =>
       {
         var rejected = IsMaster && version < myMasterVersion;
-        
+
         ReceiveTrace?.Log($"Dispatch:: {GetMessage(version, value)}{(rejected ? " REJECTED" : "")}");
 
         if (rejected)
@@ -198,7 +193,7 @@ namespace JetBrains.Rd.Impl
           definition?.Terminate();
           return;
         }
-        
+
         myMasterVersion = version;
 
         using (UsingDebugInfo())
@@ -225,7 +220,7 @@ namespace JetBrains.Rd.Impl
         value.PreBindPolymorphic(definition.Lifetime, this, "$");
         if (bindAlso)
           value.BindPolymorphic();
-        
+
         lifetime.Definition.Attach(definition, true);
         return definition;
       }
@@ -263,7 +258,7 @@ namespace JetBrains.Rd.Impl
     public void Advise(Lifetime lifetime, Action<T> handler)
     {
       if (IsBound) AssertThreading();
-      
+
       using (UsingDebugInfo())
         myProperty.Advise(lifetime, handler);
     }
@@ -296,10 +291,10 @@ namespace JetBrains.Rd.Impl
     public override void Print(PrettyPrinter printer)
     {
       base.Print(printer);
-      
+
       if (!printer.PrintContent)
         return;
-      
+
       printer.Print("(ver=" + myMasterVersion + ") [");
       if (Maybe.HasValue)
       {

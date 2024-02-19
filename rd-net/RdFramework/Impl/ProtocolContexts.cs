@@ -24,8 +24,8 @@ namespace JetBrains.Rd.Impl
     private readonly ConcurrentDictionary<RdContextBase, ISingleContextHandler> myHandlersMap = new();
     private readonly object myOrderingLock = new();
     private readonly ThreadLocal<bool> mySendWithoutContexts = new(() => false);
-    
-    
+
+
     internal readonly struct SendWithoutContextsCookie : IDisposable
     {
       private readonly ProtocolContexts myContexts;
@@ -47,14 +47,14 @@ namespace JetBrains.Rd.Impl
     private readonly SerializationCtx mySerializationCtx;
 
     internal SendWithoutContextsCookie CreateSendWithoutContextsCookie() => new SendWithoutContextsCookie(this);
-    public bool IsSendWithoutContexts => mySendWithoutContexts.Value; 
+    public bool IsSendWithoutContexts => mySendWithoutContexts.Value;
 
     public ProtocolContexts(SerializationCtx serializationCtx)
     {
       Async = true;
       mySerializationCtx = serializationCtx;
     }
-    
+
     public ICollection<RdContextBase> RegisteredContexts => myHandlersMap.Keys;
 
     internal ISingleContextHandler<T> GetHandlerForContext<T>(RdContext<T> context)
@@ -67,7 +67,7 @@ namespace JetBrains.Rd.Impl
       var contextBase = RdContextBase.Read(mySerializationCtx, reader);
 
       contextBase.RegisterOn(this);
-      
+
       myCounterpartHandlers.Add(myHandlersMap[contextBase]);
     }
 
@@ -76,7 +76,7 @@ namespace JetBrains.Rd.Impl
       if (myHandlersMap.TryAdd(context, handler))
       {
         context.RegisterOn(mySerializationCtx.Serializers);
-        lock (myOrderingLock) 
+        lock (myOrderingLock)
           myHandlerOrder.Add(handler);
       }
     }
@@ -89,12 +89,12 @@ namespace JetBrains.Rd.Impl
         bindableHandler.PreBind(lifetime, this, key);
       }
     }
-    
+
     private void BindHandler(ISingleContextHandler handler)
     {
       if (handler is RdBindableBase bindableHandler)
       {
-        using (CreateSendWithoutContextsCookie()) 
+        using (CreateSendWithoutContextsCookie())
           bindableHandler.Bind();
       }
     }
@@ -105,25 +105,25 @@ namespace JetBrains.Rd.Impl
       var wire = TryGetProto()?.Wire;
       if (wire == null)
         return;
-      
+
       using(CreateSendWithoutContextsCookie())
         wire.Send(RdId, writer =>
         {
           RdContextBase.Write(mySerializationCtx, writer, context);
         });
     }
-    
+
     private void EnsureHeavyHandlerExists<T>(RdContext<T> context)
     {
       if (Mode.IsAssertion) Assertion.Assert(context.IsHeavy, "key.IsHeavy");
-      if (!myHandlersMap.ContainsKey(context)) 
+      if (!myHandlersMap.ContainsKey(context))
         DoAddHandler(context, new HeavySingleContextHandler<T>(context, this));
     }
-    
+
     private void EnsureLightHandlerExists<T>(RdContext<T> context)
     {
       if (Mode.IsAssertion) Assertion.Assert(!context.IsHeavy, "!key.IsHeavy");
-      if (!myHandlersMap.ContainsKey(context)) 
+      if (!myHandlersMap.ContainsKey(context))
         DoAddHandler(context, new LightSingleContextHandler<T>(context));
     }
 
@@ -147,12 +147,12 @@ namespace JetBrains.Rd.Impl
       else
         EnsureLightHandlerExists(context);
     }
-    
+
 
     protected override void PreInit(Lifetime lifetime, IProtocol proto)
     {
       base.PreInit(lifetime, proto);
-      
+
       lock (myOrderingLock)
       {
         myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
@@ -160,7 +160,7 @@ namespace JetBrains.Rd.Impl
           PreBindHandler(handlerLt, handler.ContextBase.Key, handler);
         });
       }
-      
+
       proto.Wire.Advise(lifetime, this);
     }
 
@@ -174,7 +174,7 @@ namespace JetBrains.Rd.Impl
           BindAndSendHandler(handler);
         });
       }
-      
+
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ namespace JetBrains.Rd.Impl
       var numContextValues = reader.ReadShort();
       if (numContextValues == 0)
         return default;
-      
+
       var handlers = myCounterpartHandlers;
       if (Mode.IsAssertion) Assertion.Assert(numContextValues <= handlers.Count, "We know of {0} other side keys, received {1} instead", handlers.Count, numContextValues);
 
@@ -195,11 +195,11 @@ namespace JetBrains.Rd.Impl
 
       return new MessageContext(values, handlers.GetStorageUnsafe());
     }
-    
+
     internal readonly ref struct MessageContextCookie
     {
       private readonly IDisposable[] myDisposables;
-      
+
       public MessageContextCookie(IDisposable[] disposables)
       {
         myDisposables = disposables;
@@ -209,7 +209,7 @@ namespace JetBrains.Rd.Impl
       {
         if (myDisposables is { } disposables)
         {
-          foreach (var disposable in disposables) 
+          foreach (var disposable in disposables)
             disposable.Dispose();
         }
       }
@@ -250,10 +250,9 @@ namespace JetBrains.Rd.Impl
         WriteEmptyContexts(writer);
         return;
       }
-
-      // all handlers in myHandlersToWrite have been sent to the remote side
+// all handlers in myHandlersToWrite have been sent to the remote side
       var count = myHandlersToWrite.Count;
-      writer.Write((short)count);
+      writer.WriteInt16((short) count);
       for (var i = 0; i < count; i++)
         myHandlersToWrite[i].WriteValue(mySerializationCtx, writer);
     }
@@ -265,7 +264,7 @@ namespace JetBrains.Rd.Impl
     public void RegisterCurrentValuesInValueSets()
     {
       var count = myHandlerOrder.Count;
-      for (var i = 0; i < count; i++) 
+      for (var i = 0; i < count; i++)
         myHandlerOrder[i].RegisterValueInValueSet();
     }
 
@@ -274,14 +273,14 @@ namespace JetBrains.Rd.Impl
     /// </summary>
     public static void WriteEmptyContexts(UnsafeWriter writer)
     {
-      writer.Write((short) 0);
-    } 
+      writer.WriteInt16((short) 0);
+    }
 
     private void BindAndSendHandler(ISingleContextHandler handler)
     {
       SendContextToRemote(handler.ContextBase);
       BindHandler(handler);
-      // add the handler to myHandlersToWrite only after sending the context to remote 
+      // add the handler to myHandlersToWrite only after sending the context to remote
       myHandlersToWrite.Add(handler);
     }
   }

@@ -18,8 +18,6 @@ namespace JetBrains.Serialization
   /// It is <see cref="IDisposable"/> so must be used only with (possibly nested) <c>using</c> in stack-like way.
   /// <see cref="Cookie"/> contains start position and length of currently serialized data (start + len = position), so when disposed it reverts writer
   /// position to the cookie's start position.
-  ///
-  ///
   /// <seealso cref="UnsafeReader"/>
   /// </summary>
   [PublicAPI]
@@ -116,7 +114,7 @@ namespace JetBrains.Serialization
 
       /// <summary>
       /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer.
-      /// Cookie must be prepared by invoking `<see cref="UnsafeWriter.Write(int)"/><c>(0)</c>` as first cookie call.
+      /// Cookie must be prepared by invoking `<see cref="UnsafeWriter.WriteInt32(int)"/><c>(0)</c>` as first cookie call.
       /// </summary>
       public void WriteIntLength()
       {
@@ -645,36 +643,38 @@ namespace JetBrains.Serialization
     {
       if (Mode.IsAssertion) Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
 
-      Write(value.Ticks);
+      WriteInt64(value.Ticks);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteTimeSpan(TimeSpan value)
     {
-      Write(value.Ticks);
+      WriteInt64(value.Ticks);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteUri(Uri value)
     {
-      Write(Uri.EscapeUriString(value.OriginalString));
+      WriteString(Uri.EscapeUriString(value.OriginalString));
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteString(string? value)
     {
-      if (value == null) Write(-1);
+      if (value == null)
+      {
+        WriteInt32(-1);
+      }
       else
       {
-        Write(value.Length);
+        WriteInt32(value.Length);
         WriteStringContentInternal(this, value, 0, value.Length);
       }
     }
 
     /// <summary>
-    /// Doesn't write length prefix, only string contents. If value == null, does nothing.
+    /// Doesn't write length prefix, only string contents. If <paramref name="value"/> is <c>value</c>, does nothing.
     /// </summary>
-    /// <param name="value"></param>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteStringContent(string? value)
     {
@@ -683,11 +683,8 @@ namespace JetBrains.Serialization
     }
 
     /// <summary>
-    /// Doesn't write length prefix, only string contents. If value == null, does nothing.
+    /// Doesn't write length prefix, only string contents. If <paramref name="value"/> is <c>value</c>, does nothing.
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="offset"></param>
-    /// <param name="count"></param>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteStringContent(string? value, int offset, int count)
     {
@@ -792,11 +789,11 @@ namespace JetBrains.Serialization
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
-        Write(value.Length);
+        WriteInt32(value.Length);
         fixed (int* c = value)
         {
           Write((byte*)c, value.Length * sizeof(int));
@@ -808,12 +805,12 @@ namespace JetBrains.Serialization
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
         var size = value.Length;
-        Write(size);
+        WriteInt32(size);
         Prepare(size);
         Marshal.Copy(value, 0, (IntPtr)myPtr, size); // Unlike MemoryUtil::CopyMemory, this is a CLR intrinsic call
         myPtr += size;
@@ -884,11 +881,11 @@ namespace JetBrains.Serialization
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
-        Write(value.Count);
+        WriteInt32(value.Count);
         foreach (var x in value)
         {
           writeDelegate(this, x);
@@ -896,16 +893,18 @@ namespace JetBrains.Serialization
       }
     }
 
-    public void Write<TK, TV, TDictionary>(WriteDelegate<TK> writeKeyDelegate, WriteDelegate<TV> writeValueDelegate, TDictionary? value)
+    public void Write<TK, TV, TDictionary>(
+      WriteDelegate<TK> writeKeyDelegate, WriteDelegate<TV> writeValueDelegate, TDictionary? value)
       where TDictionary : IDictionary<TK, TV>
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
-        Write(value.Count);
+        WriteInt32(value.Count);
+
         foreach (var kv in value)
         {
           writeKeyDelegate(this, kv.Key);
@@ -920,7 +919,7 @@ namespace JetBrains.Serialization
     public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : struct
     {
       var res = value != null;
-      Write(res);
+      WriteBoolean(res);
       return res;
     }
 
@@ -928,7 +927,7 @@ namespace JetBrains.Serialization
     public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : class
     {
       var res = value != null;
-      Write(res);
+      WriteBoolean(res);
       return res;
     }
   }

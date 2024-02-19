@@ -25,11 +25,11 @@ namespace JetBrains.Rd.Impl
     {
       if (value == null)
       {
-        writer.Write(-1);
+        writer.WriteInt32(-1);
         return;
       }
 
-      writer.Write(value.Count);
+      writer.WriteInt32(value.Count);
       // ReSharper disable once ForCanBeConvertedToForeach
       for (var i = 0; i < value.Count; i++)
       {
@@ -42,12 +42,12 @@ namespace JetBrains.Rd.Impl
     {
       if (value == null)
       {
-        writer.Write(-1);
+        writer.WriteInt32(-1);
         return;
       }
 
       var cookie = new UnsafeWriter.Bookmark(writer);
-      writer.Write(-1); // length
+      writer.WriteInt32(-1); // length
       int i = 0;
       foreach (var item in value)
       {
@@ -75,11 +75,11 @@ namespace JetBrains.Rd.Impl
     {
       if (value == null)
       {
-        writer.Write(-1);
+        writer.WriteInt32(-1);
         return;
       }
 
-      writer.Write(value.Length);
+      writer.WriteInt32(value.Length);
       // ReSharper disable once ForCanBeConvertedToForeach
       for (var i = 0; i < value.Length; i++)
       {
@@ -123,9 +123,9 @@ namespace JetBrains.Rd.Impl
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void Write(this UnsafeWriter writer, RdSecureString @string)
     {
-      writer.Write(@string.Contents);
+      writer.WriteString(@string.Contents);
     }
-    
+
     public static RdId ReadRdId(this UnsafeReader reader)
     {
       return RdId.Read(reader);
@@ -193,7 +193,7 @@ namespace JetBrains.Rd.Impl
     {
       return (ctx, reader, value) => reader.WriteNullableStruct(inner, ctx, value);
     }
-    
+
     public static CtxWriteDelegate<T> Interned<T>(this CtxWriteDelegate<T> inner, string internKey)
     {
       return (ctx, reader, value) => ctx.WriteInterned(reader, value, internKey, inner);
