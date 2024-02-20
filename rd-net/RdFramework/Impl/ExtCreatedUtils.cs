@@ -23,7 +23,7 @@ namespace JetBrains.Rd.Impl
         {
           WriteRName(writer, value.Name);
           writer.WriteNullableStruct((_, w, v) => w.Write(v), ctx, value.Id);
-          writer.Write(value.Hash);
+          writer.WriteInt64(value.Hash);
         }
       );
       var baseId = @this is IRdWireable wireable ? wireable.RdId : RdId.Nil;
@@ -31,13 +31,13 @@ namespace JetBrains.Rd.Impl
       signal.Async = true;
       return signal;
     }
-    
+
     internal static RName ReadRName(UnsafeReader reader)
     {
       var isEmpty = reader.ReadBool();
       if (isEmpty)
         return RName.Empty;
-      
+
       var rootName = reader.ReadString() ?? throw new InvalidOperationException();
       var last = reader.ReadBoolean();
       var rName = new RName(rootName);
@@ -53,16 +53,18 @@ namespace JetBrains.Rd.Impl
 
     internal static void WriteRName(UnsafeWriter writer, RName value)
     {
-      writer.Write(value == RName.Empty);
+      writer.WriteBoolean(value == RName.Empty);
       TraverseRName(value, true, (rName, last) =>
       {
         if (rName == RName.Empty) return;
+
         if (rName.Parent != RName.Empty)
         {
-          writer.Write(rName.Separator);
+          writer.WriteString(rName.Separator);
         }
-        writer.Write(rName.LocalName.ToString());
-        writer.Write(last);
+
+        writer.WriteString(rName.LocalName.ToString());
+        writer.WriteBoolean(last);
       });
     }
 
@@ -72,6 +74,7 @@ namespace JetBrains.Rd.Impl
       {
         TraverseRName(rParent, false, handler);
       }
+
       handler(rName, last);
     }
   }

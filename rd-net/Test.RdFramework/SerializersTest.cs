@@ -41,7 +41,7 @@ namespace Test.RdFramework
         return new MyTestObject(data);
       };
 
-      public static CtxWriteDelegate<MyTestObject> Write = (ctx, writer, value) => { writer.Write(value.Data); };
+      public static CtxWriteDelegate<MyTestObject> Write = (ctx, writer, value) => { writer.WriteString(value.Data); };
     }
   }
 }

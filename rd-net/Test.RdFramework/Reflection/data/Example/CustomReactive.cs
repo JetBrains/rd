@@ -65,10 +65,10 @@ namespace Test.RdFramework.Reflection
 
     public static void Write(SerializationCtx ctx, UnsafeWriter writer, CustomReactive<T1, T2> value)
     {
-      writer.Write(true);
+      writer.WriteBoolean(true);
       ctx.Serializers.Write(ctx, writer, value.t1);
       ctx.Serializers.Write(ctx, writer, value.t2);
-      writer.Write(true);
+      writer.WriteBoolean(true);
     }
 
     #endregion

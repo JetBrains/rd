@@ -26,7 +26,8 @@ namespace JetBrains.Rd.Impl
     public void WriteValue(SerializationCtx context, UnsafeWriter writer)
     {
       var value = Context.Value;
-      writer.Write(value != null);
+      writer.WriteBoolean(value != null);
+
       if (value != null)
         Context.WriteDelegate(context, writer, value);
     }

@@ -71,7 +71,7 @@ public unsafe class GenericBuiltInSerializersTest : RdReflectionTestBase
       AlwaysLost = alwaysLost;
     }
 
-    public void Write(SerializationCtx ctx, UnsafeWriter writer) => writer.Write(Mark);
+    public void Write(SerializationCtx ctx, UnsafeWriter writer) => writer.WriteGuid(Mark);
     public static TypeWithCtx<T1, T2> Read(SerializationCtx ctx, UnsafeReader reader) => new(reader.ReadGuid(), null);
   }
 
@@ -86,7 +86,7 @@ public unsafe class GenericBuiltInSerializersTest : RdReflectionTestBase
       AlwaysLost = alwaysLost;
     }
 
-    public void Write(UnsafeWriter writer) => writer.Write(Mark);
+    public void Write(UnsafeWriter writer) => writer.WriteGuid(Mark);
     public static TypeWithoutCtx<T1, T2> Read(UnsafeReader reader) => new(reader.ReadGuid(), null);
   }
 
@@ -103,7 +103,7 @@ public unsafe class GenericBuiltInSerializersTest : RdReflectionTestBase
       AlwaysLost = alwaysLost;
     }
 
-    public void Write(SerializationCtx ctx, UnsafeWriter writer) => writer.Write(Mark);
+    public void Write(SerializationCtx ctx, UnsafeWriter writer) => writer.WriteGuid(Mark);
     public static TypeWithCtx3<T1, T2, T3> Read(SerializationCtx ctx, UnsafeReader reader) => new(reader.ReadGuid(), null);
   }
 
@@ -118,7 +118,7 @@ public unsafe class GenericBuiltInSerializersTest : RdReflectionTestBase
       AlwaysLost = alwaysLost;
     }
 
-    public void Write(UnsafeWriter writer) => writer.Write(Mark);
+    public void Write(UnsafeWriter writer) => writer.WriteGuid(Mark);
     public static TypeWithoutCtx3<T1, T2, T3> Read(UnsafeReader reader) => new(reader.ReadGuid(), null);
   }
 

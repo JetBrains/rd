@@ -58,7 +58,7 @@ namespace JetBrains.Rd.Impl
 
 
     #region Init
-    
+
     public bool OptimizeNested { [PublicAPI] get; set; }
 
     protected override void PreInit(Lifetime lifetime, IProtocol proto)
@@ -71,7 +71,7 @@ namespace JetBrains.Rd.Impl
     protected override void Init(Lifetime lifetime, IProtocol proto, SerializationCtx ctx)
     {
       base.Init(lifetime, proto, ctx);
-      
+
       using (UsingLocalChange())
       {
         Advise(lifetime, it =>
@@ -80,7 +80,7 @@ namespace JetBrains.Rd.Impl
 
           proto.Wire.Send(RdId, (stream) =>
           {
-            stream.Write((int)it.Kind);
+            stream.WriteInt32((int)it.Kind);
             WriteValueDelegate(ctx, stream, it.Value);
 
 
@@ -112,6 +112,7 @@ namespace JetBrains.Rd.Impl
           default:
             throw new ArgumentOutOfRangeException();
         }
+
       });
     }
 
@@ -159,7 +160,7 @@ namespace JetBrains.Rd.Impl
       using (UsingLocalChange())
         return mySet.Remove(item);
     }
-    
+
     // ReSharper disable once AssignNullToNotNullAttribute
     #if NET35
     public
@@ -194,7 +195,7 @@ namespace JetBrains.Rd.Impl
       using (UsingLocalChange())
         mySet.IntersectWith(other);
     }
-    
+
     public void SymmetricExceptWith(IEnumerable<T> other)
     {
       using (UsingLocalChange())
@@ -203,17 +204,17 @@ namespace JetBrains.Rd.Impl
 
     public void UnionWith(IEnumerable<T> other)
     {
-      using (UsingLocalChange())        
+      using (UsingLocalChange())
         mySet.UnionWith(other);
     }
     #endif
 
     public void Clear()
     {
-      using (UsingLocalChange()) 
+      using (UsingLocalChange())
         mySet.Clear();
     }
-    
+
     #endregion
 
 
@@ -236,7 +237,7 @@ namespace JetBrains.Rd.Impl
 
     #endregion
 
-    
+
 
     public void Advise(Lifetime lifetime, Action<SetEvent<T>> handler)
     {

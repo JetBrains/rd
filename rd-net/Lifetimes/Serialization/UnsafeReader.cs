@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
@@ -294,6 +295,30 @@ namespace JetBrains.Serialization
 
       var res = new string(raw, 0, len);
       return res;
+    }
+
+    public string? ReadStringUTF8()
+    {
+      switch (ReadByte())
+      {
+        case 0: return null;
+        case 1: return "";
+
+        case var byteData:
+        {
+          var bytesCount = byteData == 0xFF ? ReadInt32() : byteData - 1;
+          var startPtr = ReadRaw(bytesCount);
+
+#if NET35
+          var buffer = new byte[bytesCount]; // very unfortunate, .NET 3.5 only
+          Marshal.Copy((IntPtr) startPtr, buffer, 0, length: bytesCount);
+          var value = Encoding.UTF8.GetString(buffer);
+#else
+          var value = Encoding.UTF8.GetString(startPtr, bytesCount);
+#endif
+          return value;
+        }
+      }
     }
 
     #endregion

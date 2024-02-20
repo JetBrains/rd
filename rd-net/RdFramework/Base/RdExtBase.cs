@@ -25,13 +25,12 @@ namespace JetBrains.Rd.Base
       Disconnected
     }
 
-    
-    
+
     private readonly ExtWire myExtWire = new ExtWire();
     [CanBeNull] private IProtocol myExtProtocol;
-    
+
     public sealed override IProtocol TryGetProto() => myExtProtocol ?? base.TryGetProto();
-    
+
     public readonly IReadonlyProperty<bool> Connected;
     protected RdExtBase()
     {
@@ -50,10 +49,9 @@ namespace JetBrains.Rd.Base
       Protocol.InitTrace?.Log($"{this} :: binding");
 
       var parentWire = parentProto.Wire;
-      
+
       parentProto.Serializers.RegisterToplevelOnce(GetType(), Register);
-      
-      if (!TryGetSerializationContext(out var serializationContext))
+if (!TryGetSerializationContext(out var serializationContext))
         return;
 
       var extScheduler = parentProto.Scheduler;
@@ -64,26 +62,27 @@ namespace JetBrains.Rd.Base
           var parentProtocolImpl = (Protocol)parentProto;
           var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal());
           myExtProtocol = proto;
-          
+
           //protocol must be set first to allow bindable bind to it
           using (AllowBindCookie.Create())
           {
             base.PreInit(lifetime, proto);
             base.Init(lifetime, proto, ctx);
           }
-          
+
           var bindableParent = Parent as RdBindableBase;
           var info = new ExtCreationInfo(Location, bindableParent?.RdId, SerializationHash, this);
           using (Signal.NonPriorityAdviseCookie.Create())
-          {
-            parentProtocolImpl.SubmitExtCreated(info);
+
+
+      {
+
+      parentProtocolImpl.SubmitExtCreated(info);
           }
 
-          parentWire.Advise(lifetime, this);
-          SendState(parentWire, ExtState.Ready);
-          
-          Protocol.InitTrace?.Log($"{this} :: bound");
-        },
+          parentWire.Advise(lifetime, this);SendState(parentWire, ExtState.Ready);
+
+      Protocol.InitTrace?.Log($"{this} :: bound");},
         () =>
         {
           myExtProtocol = null;
@@ -106,24 +105,24 @@ namespace JetBrains.Rd.Base
           SendState(myExtWire.RealWire, ExtState.ReceivedCounterPart);
           myExtWire.Connected.Set(true);
           break;
-          
+
         case ExtState.ReceivedCounterPart:
           myExtWire.Connected.Set(true); //don't set anything if already set
           break;
-          
+
         case ExtState.Disconnected:
           myExtWire.Connected.Set(false);
           break;
-          
+
         default:
           throw new ArgumentOutOfRangeException("Unsupported state: "+remoteState);
       }
-      
+
       var counterpartSerializationHash = reader.ReadLong();
       if (counterpartSerializationHash != SerializationHash && base.TryGetProto() is {} parentProto)
       {
         parentProto.Scheduler.Queue(() => parentProto.OutOfSyncModels.Add(this));
-        
+
         var message = $"{this} : SerializationHash doesn't match to counterpart: maybe you forgot to generate models?Our: `${SerializationHash}` counterpart: {counterpartSerializationHash}";
         if (parentProto is Protocol { ThrowErrorOnOutOfSyncModels: true })
         {
@@ -141,17 +140,17 @@ namespace JetBrains.Rd.Base
       var parentProto = base.TryGetProto();
       if (parentProto == null)
         return;
-      
+
       using(parentProto.Contexts.CreateSendWithoutContextsCookie())
+      {
         parentWire.Send(RdId, writer =>
         {
           SendTrace?.Log($"{this} : {state}");
-          writer.Write((int)state);
-          writer.Write(SerializationHash);
+          writer.WriteInt32((int)state);
+          writer.WriteInt64(SerializationHash);
         });
+      }
     }
-
-        
     protected override void InitBindableFields(Lifetime lifetime)
     {
       foreach (var pair in BindableChildren)
@@ -161,26 +160,26 @@ namespace JetBrains.Rd.Base
           using (reactive.UsingLocalChange())
           {
             reactive.BindPolymorphic();
-          } 
+          }
         }
         else
         {
           pair.Value?.BindPolymorphic();
         }
       }
+
     }
 
     protected override string ShortName => "ext";
   }
-  
-  
+
+
   class ExtWire : IWire
   {
 
 
     internal readonly ViewableProperty<bool> Connected = new ViewableProperty<bool>(false);
     public IWire RealWire;
-    
     private struct QueueItem
     {
       public readonly RdId Id;
@@ -195,7 +194,7 @@ namespace JetBrains.Rd.Base
       }
     }
 
-    
+
     private readonly Queue<QueueItem> mySendQ = new Queue<QueueItem>();
 
     public bool IsStub => RealWire.IsStub;
@@ -230,7 +229,7 @@ namespace JetBrains.Rd.Base
             {
               contextValueRestorers.Add(context.UpdateValueBoxed(value));
             }
-            
+
             try
             {
               RealWire.Send(p.Id, writer => writer.WriteRaw(p.Bytes, 0, p.Bytes.Length));
@@ -243,11 +242,11 @@ namespace JetBrains.Rd.Base
               contextValueRestorers.Clear();
             }
           }
-        }               
+        }
       });
     }
 
-    
+
     public void Send<TContext>(RdId id, TContext param, Action<TContext, UnsafeWriter> writer)
     {
       if (RealWire.IsStub)
@@ -260,8 +259,8 @@ namespace JetBrains.Rd.Base
           using (var cookie = UnsafeWriter.NewThreadLocalWriter())
           {
             writer(param, cookie.Writer);
-            var storedContext = Contexts.IsSendWithoutContexts 
-              ? EmptyArray<KeyValuePair<RdContextBase, object>>.Instance 
+            var storedContext = Contexts.IsSendWithoutContexts
+              ? EmptyArray<KeyValuePair<RdContextBase, object>>.Instance
               : Contexts.RegisteredContexts.Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
             mySendQ.Enqueue(new QueueItem(id, cookie.CloneData(), storedContext));
             if (!RealWire.Contexts.IsSendWithoutContexts)

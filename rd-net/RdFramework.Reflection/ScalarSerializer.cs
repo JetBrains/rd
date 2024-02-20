@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -154,7 +152,7 @@ namespace JetBrains.Rd.Reflection
 
         if (allowNullable)
         {
-          unsafeWriter.Write(value != null);
+          unsafeWriter.WriteBoolean(value != null);
           if (value == null)
             return;
         }
@@ -207,9 +205,10 @@ namespace JetBrains.Rd.Reflection
       var writerCaster = Expression.Lambda<Func<T, int>>(writerConvert, writerParameter).Compile();
 
       if (Mode.IsAssertion) Assertion.Require(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
+
       var result = new SerializerPair(
-        (CtxReadDelegate<T>) ((ctx, reader) => readerCaster(reader.ReadInt())),
-        (CtxWriteDelegate<T>) ((ctx, w, o) => w.Write(writerCaster(o))));
+        (CtxReadDelegate<T>) ((_, reader) => readerCaster(reader.ReadInt())),
+        (CtxWriteDelegate<T>) ((_, writer, o) => writer.WriteInt32(writerCaster(o))));
 
       return result;
     }

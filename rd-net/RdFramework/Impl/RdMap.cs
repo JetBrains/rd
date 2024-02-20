@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Collections;
 using JetBrains.Collections.Synchronized;
@@ -27,7 +26,7 @@ namespace JetBrains.Rd.Impl
 
       ReadKeyDelegate = readKey;
       WriteKeyDelegate = writeKey;
-      
+
       ReadValueDelegate = readValue;
       WriteValueDelegate = writeValue;
     }
@@ -70,7 +69,7 @@ namespace JetBrains.Rd.Impl
 
     private const int versionedFlagShift = 8;
     private const int Ack = (int)AddUpdateRemove.Remove + 1;
-    
+
     public bool IsMaster = false;
     private long myNextVersion;
     private readonly Dictionary<K, long> myPendingForAck = new Dictionary<K, long>();
@@ -79,7 +78,7 @@ namespace JetBrains.Rd.Impl
 
 
     #region Init
-    
+
     public bool OptimizeNested { [PublicAPI] get; set; }
     private volatile SynchronizedDictionary<K, LifetimeDefinition?>? myBindDefinitions;
     
@@ -87,10 +86,10 @@ namespace JetBrains.Rd.Impl
     {
       base.PreInit(lifetime, proto);
 
-      if (!OptimizeNested)
+if (!OptimizeNested)
       {
-        var definitions  = new SynchronizedDictionary<K, LifetimeDefinition?>(myMap.Count); 
-        
+        var definitions  = new SynchronizedDictionary<K, LifetimeDefinition?>(myMap.Count);
+
         foreach (var (key, value) in this)
         {
           if (value != null)
@@ -161,21 +160,21 @@ namespace JetBrains.Rd.Impl
             var evt = sendContext.Event;
             var me = sendContext.This;
             var versionedFlag = me.IsMaster ? 1 << versionedFlagShift : 0;
-            stream.Write(versionedFlag | (int)evt.Kind);
+            stream.WriteInt32(versionedFlag | (int)evt.Kind);
 
             var version = ++me.myNextVersion;
             if (me.IsMaster)
             {
               lock(me.myPendingForAck)
                 me.myPendingForAck[evt.Key] = version;
-              
-              stream.Write(version);
-            }
 
+              stream.WriteInt64(version);
+            }
             me.WriteKeyDelegate(sContext, stream, evt.Key);
             if (evt.IsUpdate || evt.IsAdd)
+            {
               me.WriteValueDelegate(sContext, stream, evt.NewValue);
-
+            }
 
             SendTrace?.Log($"{me} :: {evt.Kind} :: key = {evt.Key.PrintToString()}"
                            + (me.IsMaster ? " :: version = " + version : "")
@@ -244,15 +243,15 @@ namespace JetBrains.Rd.Impl
         var isPut = kind is AddUpdateRemove.Add or AddUpdateRemove.Update;
         var value = isPut ? ReadValueDelegate(ctx, stream) : default;
         var definition = TryPreBindValue(lifetime, key, value, true);
-        
-        ReceiveTrace?.Log($"OnWireReceived:: {getMessage(msgVersioned, version, isPut, value)}");
 
-        dispatchHelper.Dispatch(() =>
+              ReceiveTrace?.Log($"OnWireReceived:: {getMessage(msgVersioned, version, isPut, value)}");
+
+dispatchHelper.Dispatch(() =>
         {
           if (msgVersioned || !IsMaster || !IsPendingForAck(key))
           {
             ReceiveTrace?.Log($"Dispatched:: {getMessage(msgVersioned, version, isPut, value)}");
-            
+
             if (isPut)
             {
               if (TryGetBindDefinitions(lifetime) is { } definitions)
@@ -264,14 +263,14 @@ namespace JetBrains.Rd.Impl
               }
 
               myMap[key] = value!;
-            }
+}
             else
             {
               if (TryGetBindDefinitions(lifetime) is { } definitions && definitions.TryGetValue(key, out var prevDefinition))
               {
                 prevDefinition?.Terminate();
                 definitions.Remove(key);
-              }
+}
 
               myMap.Remove(key);
             }
@@ -285,8 +284,8 @@ namespace JetBrains.Rd.Impl
           {
             proto.Wire.Send(RdId, innerWriter =>
             {
-              innerWriter.Write((1 << versionedFlagShift) | Ack);
-              innerWriter.Write(version);
+              innerWriter.WriteInt32((1 << versionedFlagShift) | Ack);
+              innerWriter.WriteInt64(version);
               WriteKeyDelegate.Invoke(ctx, innerWriter, key);
 
               SendTrace?.Log($"{this} :: ACK :: key = {key.PrintToString()} :: version = {version}");
@@ -491,7 +490,7 @@ namespace JetBrains.Rd.Impl
     {
       base.Print(printer);
       if (!printer.PrintContent) return;
-      
+
       printer.Print(" [");
       if (Count > 0) printer.Println();
 

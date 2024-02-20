@@ -57,7 +57,7 @@ namespace JetBrains.Rd.Tasks
 
     public static void Write(CtxWriteDelegate<T> writeDelegate, SerializationCtx ctx, UnsafeWriter writer, RdTaskResult<T> value)
     {
-      writer.Write((int) value.Status);
+      writer.WriteInt32((int) value.Status);
 
       switch (value.Status)
       {

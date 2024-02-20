@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Util;
@@ -18,8 +19,6 @@ namespace JetBrains.Serialization
   /// It is <see cref="IDisposable"/> so must be used only with (possibly nested) <c>using</c> in stack-like way.
   /// <see cref="Cookie"/> contains start position and length of currently serialized data (start + len = position), so when disposed it reverts writer
   /// position to the cookie's start position.
-  ///
-  ///
   /// <seealso cref="UnsafeReader"/>
   /// </summary>
   [PublicAPI]
@@ -115,7 +114,8 @@ namespace JetBrains.Serialization
       }
 
       /// <summary>
-      /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer. Cookie must be prepared by invoking `<see cref="UnsafeWriter.Write(int)"/><c>(0)</c>` as first cookie call.
+      /// Writes `<see cref="Count"/><c> - sizeof(int)</c>` into the <see cref="Data"/> pointer.
+      /// Cookie must be prepared by invoking `<see cref="UnsafeWriter.WriteInt32(int)"/><c>(0)</c>` as first cookie call.
       /// </summary>
       public void WriteIntLength()
       {
@@ -423,7 +423,7 @@ namespace JetBrains.Serialization
       ReplaceTemplate = "$qualifier$.WriteUInt16($arg$)",
       SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt16 value) => WriteUint16(value);
+    public void Write(UInt16 value) => WriteUInt16(value);
 
     [CodeTemplate(
       searchTemplate: "$member$($arg$)",
@@ -439,7 +439,7 @@ namespace JetBrains.Serialization
       ReplaceTemplate = "$qualifier$.WriteUInt64($arg$)",
       SuppressionKey = "UnsafeWriter_ExplicitApi")]
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void Write(UInt64 value) => WriteUint64(value);
+    public void Write(UInt64 value) => WriteUInt64(value);
 
     [CodeTemplate(
       searchTemplate: "$member$($arg$)",
@@ -497,7 +497,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteGuid(Guid value)
     {
-      Write<byte, byte[]>((writer, b) => writer.Write(b), value.ToByteArray());
+      Write<byte, byte[]>((writer, b) => writer.WriteByte(b), value.ToByteArray());
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
@@ -606,8 +606,11 @@ namespace JetBrains.Serialization
       *x = value;
     }
 
+    [Obsolete("Use 'WriteUInt16' instead (correct casing)")]
+    public void WriteUint16(UInt16 value) => WriteUInt16(value);
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteUint16(UInt16 value)
+    public void WriteUInt16(UInt16 value)
     {
       Prepare(sizeof(UInt16));
       var x = (UInt16*)myPtr;
@@ -624,8 +627,11 @@ namespace JetBrains.Serialization
       *x = value;
     }
 
+    [Obsolete("Use 'WriteUInt64' instead (correct casing)")]
+    public void WriteUint64(UInt64 value) => WriteUInt64(value);
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    public void WriteUint64(UInt64 value)
+    public void WriteUInt64(UInt64 value)
     {
       Prepare(sizeof(UInt64));
       var x = (UInt64*)myPtr;
@@ -638,36 +644,76 @@ namespace JetBrains.Serialization
     {
       if (Mode.IsAssertion) Assertion.Assert(value.Kind != DateTimeKind.Local, "Use UTC time");
 
-      Write(value.Ticks);
+      WriteInt64(value.Ticks);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteTimeSpan(TimeSpan value)
     {
-      Write(value.Ticks);
+      WriteInt64(value.Ticks);
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteUri(Uri value)
     {
-      Write(Uri.EscapeUriString(value.OriginalString));
+      WriteString(Uri.EscapeUriString(value.OriginalString));
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteString(string? value)
     {
-      if (value == null) Write(-1);
+      if (value == null)
+      {
+        WriteInt32(-1);
+      }
       else
       {
-        Write(value.Length);
+        WriteInt32(value.Length);
         WriteStringContentInternal(this, value, 0, value.Length);
       }
     }
 
+    public void WriteStringUTF8(string? value)
+    {
+      if (value == null)
+      {
+        WriteByte(0); // mean null
+      }
+      else if (value.Length == 0)
+      {
+        WriteByte(1); // means empty string
+      }
+      else // non-empty string
+      {
+        var maxBytesForString = Encoding.UTF8.GetMaxByteCount(value.Length);
+        var bytesForLength = maxBytesForString < 254 ? 1 : 5; // [byte <254 bytes_count] or [0xFF marker]+[int32 bytes_count]
+        var bookmark = Alloc(maxBytesForString + bytesForLength);
+
+        fixed (char* sourcePtr = value)
+        {
+          var bytesWritten = Encoding.UTF8.GetBytes(
+            sourcePtr, charCount: value.Length, bytes: bookmark.Data + bytesForLength, maxBytesForString);
+
+          if (bytesForLength == 1) // [byte bytes_count]+[utf8 bytes]
+          {
+            if (Mode.IsAssertion) Assertion.Assert(bytesWritten < 254);
+            *bookmark.Data = (byte)(bytesWritten + 1);
+          }
+          else // [0xFF byte]+[int32 bytes_count]+[utf8 bytes]
+          {
+            *bookmark.Data = 0xFF;
+            *(int*)(bookmark.Data + 1) = bytesWritten;
+          }
+
+          bytesWritten += bytesForLength;
+          bookmark.FinishRawWrite(bytesWritten);
+        }
+      }
+    }
+
     /// <summary>
-    /// Doesn't write length prefix, only string contents. If value == null, does nothing.
+    /// Doesn't write length prefix, only string contents. If <paramref name="value"/> is <c>value</c>, does nothing.
     /// </summary>
-    /// <param name="value"></param>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteStringContent(string? value)
     {
@@ -676,11 +722,8 @@ namespace JetBrains.Serialization
     }
 
     /// <summary>
-    /// Doesn't write length prefix, only string contents. If value == null, does nothing.
+    /// Doesn't write length prefix, only string contents. If <paramref name="value"/> is <c>value</c>, does nothing.
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="offset"></param>
-    /// <param name="count"></param>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteStringContent(string? value, int offset, int count)
     {
@@ -701,33 +744,33 @@ namespace JetBrains.Serialization
       of bugzilla: https://bugzilla.xamarin.com/show_bug.cgi?id=60625
       It is shouldn't dropped while we support client mono version before 5.0
      */
-    private static void WriteStringContentInternal(UnsafeWriter wrt, string value, int offset, int count)
+    private static void WriteStringContentInternal(UnsafeWriter writer, string value, int offset, int count)
     {
       if (ourOldMonoFlag)
       {
-        WriteStringContentInternalBeforeMono5(wrt, value, offset, count);
+        WriteStringContentInternalBeforeMono5(writer, value, offset, count);
       }
       else
       {
-        WriteStringContentInternalAfterMono5(wrt, value, offset, count);
+        WriteStringContentInternalAfterMono5(writer, value, offset, count);
       }
     }
 
-    // Mono 5.4 try to inline this method and crash.
-    //[MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private static void WriteStringContentInternalAfterMono5(UnsafeWriter wrt, string value, int offset, int count)
+    // Mono 5.4 tries to inline this method and crashes.
+    // [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static void WriteStringContentInternalAfterMono5(UnsafeWriter writer, string value, int offset, int count)
     {
       fixed (char* c = value)
       {
-        wrt.Write((byte*) (c + offset), count * sizeof(char));
+        writer.Write((byte*) (c + offset), count * sizeof(char));
       }
     }
 
-    private static void WriteStringContentInternalBeforeMono5(UnsafeWriter wrt, string value, int offset, int count)
+    private static void WriteStringContentInternalBeforeMono5(UnsafeWriter writer, string value, int offset, int count)
     {
-      for (var i = offset; i < offset + count; i++)
+      for (var index = offset; index < offset + count; index++)
       {
-        wrt.Write(value[i]);
+        writer.WriteChar(value[index]);
       }
     }
 
@@ -744,25 +787,25 @@ namespace JetBrains.Serialization
 
     public delegate void WriteDelegate<in T>(UnsafeWriter writer, T value);
 
-    public static readonly WriteDelegate<bool> BooleanDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<byte> ByteDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Guid> GuidDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<char> CharDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<decimal> DecimalDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<double> DoubleDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<float> FloatDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int16> Int16Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int32> Int32Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Int64> Int64Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<UInt16> UInt16Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<UInt32> UInt32Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<UInt64> UInt64Delegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<DateTime> DateTimeDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<Uri> UriDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<string> StringDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<byte[]> ByteArrayDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<int[]> IntArrayDelegate = (writer, x) => writer.Write(x);
-    public static readonly WriteDelegate<string[]> StringArrayDelegate = (writer, x) => writer.Write(StringDelegate, x);
+    public static readonly WriteDelegate<bool> BooleanDelegate = (writer, x) => writer.WriteBoolean(x);
+    public static readonly WriteDelegate<byte> ByteDelegate = (writer, x) => writer.WriteByte(x);
+    public static readonly WriteDelegate<Guid> GuidDelegate = (writer, x) => writer.WriteGuid(x);
+    public static readonly WriteDelegate<char> CharDelegate = (writer, x) => writer.WriteChar(x);
+    public static readonly WriteDelegate<decimal> DecimalDelegate = (writer, x) => writer.WriteDecimal(x);
+    public static readonly WriteDelegate<double> DoubleDelegate = (writer, x) => writer.WriteDouble(x);
+    public static readonly WriteDelegate<float> FloatDelegate = (writer, x) => writer.WriteFloat(x);
+    public static readonly WriteDelegate<Int16> Int16Delegate = (writer, x) => writer.WriteInt16(x);
+    public static readonly WriteDelegate<Int32> Int32Delegate = (writer, x) => writer.WriteInt32(x);
+    public static readonly WriteDelegate<Int64> Int64Delegate = (writer, x) => writer.WriteInt64(x);
+    public static readonly WriteDelegate<UInt16> UInt16Delegate = (writer, x) => writer.WriteUInt16(x);
+    public static readonly WriteDelegate<UInt32> UInt32Delegate = (writer, x) => writer.WriteUInt32(x);
+    public static readonly WriteDelegate<UInt64> UInt64Delegate = (writer, x) => writer.WriteUInt64(x);
+    public static readonly WriteDelegate<DateTime> DateTimeDelegate = (writer, x) => writer.WriteDateTime(x);
+    public static readonly WriteDelegate<Uri> UriDelegate = (writer, x) => writer.WriteUri(x);
+    public static readonly WriteDelegate<string> StringDelegate = (writer, x) => writer.WriteString(x);
+    public static readonly WriteDelegate<byte[]> ByteArrayDelegate = (writer, x) => writer.WriteByteArray(x);
+    public static readonly WriteDelegate<int[]> IntArrayDelegate = (writer, x) => writer.WriteArray(x);
+    public static readonly WriteDelegate<string[]> StringArrayDelegate = (writer, x) => writer.WriteCollection(StringDelegate, x);
 
     #endregion
     #region Collection writers
@@ -785,11 +828,11 @@ namespace JetBrains.Serialization
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
-        Write(value.Length);
+        WriteInt32(value.Length);
         fixed (int* c = value)
         {
           Write((byte*)c, value.Length * sizeof(int));
@@ -801,12 +844,12 @@ namespace JetBrains.Serialization
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
         var size = value.Length;
-        Write(size);
+        WriteInt32(size);
         Prepare(size);
         Marshal.Copy(value, 0, (IntPtr)myPtr, size); // Unlike MemoryUtil::CopyMemory, this is a CLR intrinsic call
         myPtr += size;
@@ -877,11 +920,11 @@ namespace JetBrains.Serialization
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
-        Write(value.Count);
+        WriteInt32(value.Count);
         foreach (var x in value)
         {
           writeDelegate(this, x);
@@ -889,16 +932,18 @@ namespace JetBrains.Serialization
       }
     }
 
-    public void Write<TK, TV, TDictionary>(WriteDelegate<TK> writeKeyDelegate, WriteDelegate<TV> writeValueDelegate, TDictionary? value)
+    public void Write<TK, TV, TDictionary>(
+      WriteDelegate<TK> writeKeyDelegate, WriteDelegate<TV> writeValueDelegate, TDictionary? value)
       where TDictionary : IDictionary<TK, TV>
     {
       if (value == null)
       {
-        Write(-1);
+        WriteInt32(-1);
       }
       else
       {
-        Write(value.Count);
+        WriteInt32(value.Count);
+
         foreach (var kv in value)
         {
           writeKeyDelegate(this, kv.Key);
@@ -913,7 +958,7 @@ namespace JetBrains.Serialization
     public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : struct
     {
       var res = value != null;
-      Write(res);
+      WriteBoolean(res);
       return res;
     }
 
@@ -921,7 +966,7 @@ namespace JetBrains.Serialization
     public bool WriteNullness<T>([NotNullWhen(true)] T? value) where T : class
     {
       var res = value != null;
-      Write(res);
+      WriteBoolean(res);
       return res;
     }
   }

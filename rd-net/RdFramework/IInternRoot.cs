@@ -64,7 +64,10 @@ namespace JetBrains.Rd
 
     public static InternId Read(UnsafeReader reader) => new InternId(reader.ReadInt());
 
-    public static void Write(UnsafeWriter writer, InternId value) => writer.Write(value.myValue == InvalidId ? value.myValue : value.myValue ^ 1);
+    public static void Write(UnsafeWriter writer, InternId value)
+    {
+      writer.WriteInt32(value.myValue == InvalidId ? value.myValue : value.myValue ^ 1);
+    }
 
     public bool Equals(InternId other) => myValue == other.myValue;
 
