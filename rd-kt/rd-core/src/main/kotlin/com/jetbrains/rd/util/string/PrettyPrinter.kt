@@ -8,7 +8,7 @@ enum class Eol(val value: String) {
     linux ("\n"),
     windows ("\r\n"),
     osSpecified (eol),
-    none("")
+    none(" ")
 }
 
 inline fun printer(content: PrettyPrinter.() -> Unit) = PrettyPrinter().apply(content)
