@@ -20,7 +20,24 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
   }
 
   [Test]
-  public void BindableRdCallListTest()
+  public void BindableRdCallListUseSystemTaskTest()
+  {
+    BindableRdCallListTest(TaskKind.System);
+  }
+
+  [Test]
+  public void BindableRdCallListUseRdTaskTest()
+  {
+    BindableRdCallListTest(TaskKind.Rd);
+  }
+
+  private enum TaskKind
+  {
+    System,
+    Rd,
+  }
+
+  private void BindableRdCallListTest(TaskKind taskKind)
   {  
     ClientWire.AutoTransmitMode = true;
     ServerWire.AutoTransmitMode = true;
@@ -52,7 +69,12 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
       {
         BindToClient(lifetime, callsite, entity_id);
 
-        var list = await callsite.Start(lifetime, Unit.Instance).AsTask();
+        var list = taskKind switch
+        {
+          TaskKind.System => await callsite.Start(lifetime, Unit.Instance).AsTask(),
+          TaskKind.Rd     => await callsite.Start(lifetime, Unit.Instance),
+          _ => throw new ArgumentOutOfRangeException(nameof(taskKind), taskKind, null)
+        };
         var count = 0;
 
         list.View(lifetime, (lt, index, value) =>
