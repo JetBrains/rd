@@ -122,27 +122,8 @@ namespace JetBrains.Rd.Tasks
       });
       return tcs.Task;
     }
-    
+
     [PublicAPI]
-    public static RdTaskAwaiter<T> GetAwaiter<T>(this IRdTask<T> task) => new(task.Result);
-    
-    public readonly struct RdTaskAwaiter<T> : INotifyCompletion
-    {
-      private readonly IReadonlyProperty<RdTaskResult<T>> myResult;
-
-      internal RdTaskAwaiter(IReadonlyProperty<RdTaskResult<T>> result)
-      {
-        myResult = result;
-      }
-
-      public bool IsCompleted => myResult.Maybe.HasValue;
-
-      public T GetResult() => myResult.Value.Unwrap();
-
-      public void OnCompleted(Action continuation)
-      {
-        myResult.Change.AdviseOnce(Lifetime.Eternal, _ => continuation());
-      }
-    }
+    public static TaskAwaiter<T> GetAwaiter<T>(this IRdTask<T> task) => task.AsTask().GetAwaiter();
   }
 }

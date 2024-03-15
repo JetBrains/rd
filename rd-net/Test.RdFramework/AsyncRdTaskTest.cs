@@ -3,8 +3,10 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Core;
+using JetBrains.Rd.Base;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Tasks;
+using JetBrains.Threading;
 using JetBrains.Util;
 using NUnit.Framework;
 
@@ -31,7 +33,7 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
     BindableRdCallListTest(TaskKind.Rd);
   }
 
-  private enum TaskKind
+  public enum TaskKind
   {
     System,
     Rd,
@@ -96,6 +98,41 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
       Assert.IsTrue(bindClientTask.Wait(Timeout(TimeSpan.FromSeconds(10))));
     }
   }
+  
+  [Test]
+  [TestCase(TaskKind.Rd)]
+  [TestCase(TaskKind.System)]
+  public void TestRdTaskAwaiter(TaskKind kind)
+  {
+    var rdTask = new RdTask<Unit>();
+    var scheduler = new TaskSchedulerWrapper(new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default).ExclusiveScheduler, false);
+
+    var task = TestLifetime.StartAsync(scheduler.AsTaskScheduler(), async () =>
+    {
+      scheduler.AssertThread();
+
+      TestLifetime.Start(scheduler.AsTaskScheduler(), () =>
+      {
+        scheduler.AssertThread();
+        TestLifetime.Start(TaskScheduler.Default, () =>
+        {
+          rdTask.ResultInternal.Set(RdTaskResult<Unit>.Success(Unit.Instance));
+        }).NoAwait();
+      }).NoAwait();
+      
+      _ = kind switch
+      {
+        TaskKind.System => await rdTask.AsTask(),
+        TaskKind.Rd     => await rdTask,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+      };
+      
+      scheduler.AssertThread();
+    });
+
+    task.Wait(TimeSpan.FromSeconds(10));
+    Assert.IsTrue(task.IsCompleted);
+  } 
 
   private static TimeSpan Timeout(TimeSpan timeout)
   {
