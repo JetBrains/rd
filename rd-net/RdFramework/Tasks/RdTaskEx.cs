@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -120,6 +121,28 @@ namespace JetBrains.Rd.Tasks
         }
       });
       return tcs.Task;
+    }
+    
+    [PublicAPI]
+    public static RdTaskAwaiter<T> GetAwaiter<T>(this IRdTask<T> task) => new(task.Result);
+    
+    public readonly struct RdTaskAwaiter<T> : INotifyCompletion
+    {
+      private readonly IReadonlyProperty<RdTaskResult<T>> myResult;
+
+      internal RdTaskAwaiter(IReadonlyProperty<RdTaskResult<T>> result)
+      {
+        myResult = result;
+      }
+
+      public bool IsCompleted => myResult.Maybe.HasValue;
+
+      public T GetResult() => myResult.Value.Unwrap();
+
+      public void OnCompleted(Action continuation)
+      {
+        myResult.Change.AdviseOnce(Lifetime.Eternal, _ => continuation());
+      }
     }
   }
 }
