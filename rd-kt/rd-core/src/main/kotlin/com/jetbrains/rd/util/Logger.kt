@@ -117,7 +117,7 @@ inline fun Logger.catch(comment: String?, action:() -> Unit) {
     try {
         action()
     } catch (e : Throwable) {
-        val sfx = if (comment.isNullOrBlank()) e.message else ": $comment `Exception message: ${e.message}`"
+        val sfx = "${e.javaClass.name} ${e.message}" + if (comment.isNullOrBlank()) "" else " ($comment)"
         error("Catch $sfx", e)
     }
 }
