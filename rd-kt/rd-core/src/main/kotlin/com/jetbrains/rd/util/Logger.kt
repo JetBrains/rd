@@ -109,12 +109,16 @@ inline fun Logger.error(msg: () -> Any?) = log(LogLevel.Error, msg)
 fun Logger.error(msg: String?, throwable: Throwable) = log(LogLevel.Error, msg, throwable)
 fun Logger.error(throwable: Throwable) = this.error(null, throwable)
 
+object RdDefaultErrorLoggerHolder {
+    val defaultErrorLogger = getLogger("Default-Error-Logger")
+}
+
 inline fun Logger.catch(comment: String?, action:() -> Unit) {
     try {
         action()
     } catch (e : Throwable) {
-        val sfx = if (comment.isNullOrBlank()) "" else ": $comment"
-        error("Catch$sfx", e)
+        val sfx = "${e.javaClass.name} ${e.message}" + if (comment.isNullOrBlank()) "" else " ($comment)"
+        error("Catch $sfx", e)
     }
 }
 inline fun Logger.catch(action:() -> Unit) = catch (null, action)
@@ -128,11 +132,6 @@ inline fun catchAndDrop(action:() -> Unit) {
 }
 
 inline fun catch(comment: String?, action:() -> Unit) {
-    try {
-        action()
-    } catch (e : Throwable) {
-        val sfx = if (comment.isNullOrBlank()) "" else ": $comment"
-        getLogger("Default-Error-Logger").log(LogLevel.Error, "Catch$sfx", e)
-    }
+    RdDefaultErrorLoggerHolder.defaultErrorLogger.catch(comment, action)
 }
 inline fun catch(action:() -> Unit) = catch (null, action)
