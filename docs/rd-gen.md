@@ -218,7 +218,9 @@ Model types may contain a variety of members:
   - sets: `set("name", itemType)`
   - async sets (the ones that use the new threading model, see below): `asyncSet("name", itemType)`
   - maps: `map("name", keyType, valueType)`
-  - async maps (the ones that use the new threading model, see below): `asyncSet("name", itemType)`
+  - async maps (the ones that use the new threading model, see below): `asyncMap("name", keyType, valueType)`
+
+    Note that the value type may only be scalar for async map.
   - TODO: `array` and below
 - methods (for interfaces): `method("name", returnType, vararg argumentTypes)`
 
