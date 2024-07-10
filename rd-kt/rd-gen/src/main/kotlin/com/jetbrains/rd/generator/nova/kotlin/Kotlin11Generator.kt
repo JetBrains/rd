@@ -26,8 +26,9 @@ open class Kotlin11Generator(
     flowTransform: FlowTransform,
     private val defaultNamespace: String,
     override val folder: File,
-    generatedFileSuffix: String = ".Generated"
-) : GeneratorBase(flowTransform, generatedFileSuffix) {
+    generatedFileSuffix: String = ".Generated",
+    marhsallersFile: File? = null,
+) : GeneratorBase(flowTransform, generatedFileSuffix, marhsallersFile) {
 
     //language specific properties
     object Namespace : ISetting<String, Declaration>
@@ -292,11 +293,8 @@ open class Kotlin11Generator(
         else -> "__${name}Serializer"
     }
 
-
-
-
     //generation
-    override fun realGenerate(toplevels: List<Toplevel>) {
+    override fun realGenerate(toplevels: List<Toplevel>, collector: MarshallersCollector) {
         toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
@@ -304,7 +302,7 @@ open class Kotlin11Generator(
                     step = 4
 
                     //actual generation
-                    file(tl)
+                    file(tl, collector)
 
                     writer.write(toString())
                 }
@@ -316,7 +314,7 @@ open class Kotlin11Generator(
 
 
 
-    protected open fun PrettyPrinter.file(tl : Toplevel) {
+    protected open fun PrettyPrinter.file(tl: Toplevel, collector: MarshallersCollector) {
         namespace(tl)
 
         println()
@@ -327,12 +325,12 @@ open class Kotlin11Generator(
         val types = tl.declaredTypes + unknowns(tl.declaredTypes)
 
         if (tl.isLibrary)
-            libdef(tl, types)
+            libdef(tl, types, collector)
         else
-            typedef(tl)
+            typedef(tl, collector)
 
         types.sortedBy { it.name }.forEach { type ->
-            typedef(type)
+            typedef(type, collector)
         }
     }
 
@@ -369,14 +367,14 @@ open class Kotlin11Generator(
     }
 
 
-    protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>) {
+    protected open fun PrettyPrinter.libdef(decl: Toplevel, types: List<Declaration>, collector: MarshallersCollector) {
         if (decl.getSetting(Intrinsic) != null) return
         block("object ${decl.name} : ISerializersOwner ") {
-            registerSerializersTrait(decl, types)
+            registerSerializersTrait(decl, types, collector)
         }
     }
 
-    protected open fun PrettyPrinter.typedef(decl: Declaration) {
+    protected open fun PrettyPrinter.typedef(decl: Declaration, collector: MarshallersCollector) {
         if (decl.getSetting(Intrinsic) != null || decl is Context) return
 
         println()
@@ -415,7 +413,7 @@ open class Kotlin11Generator(
 
         block("") {
             + "//companion"
-            companionTrait(decl)
+            companionTrait(decl, collector)
             + "//fields"
             fieldsTrait(decl)
             + "//methods"
@@ -515,9 +513,10 @@ open class Kotlin11Generator(
         }
     }
 
-    protected fun PrettyPrinter.companionTrait(decl: Declaration) {
+    protected fun PrettyPrinter.companionTrait(decl: Declaration, collector: MarshallersCollector) {
         if (decl.isConcrete) {
             println()
+            collector.addMarshaller(decl.namespace, decl.name)
             block("companion object : IMarshaller<${decl.name}>") {
                 + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
                 + "override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
@@ -543,6 +542,7 @@ open class Kotlin11Generator(
         }
         else if (decl.isOpen) {
             println()
+            collector.addMarshaller(decl.namespace, decl.name)
             block("companion object : IMarshaller<${decl.name}>, IAbstractDeclaration<${decl.name}>") {
                 +"override val _type: KClass<${decl.name}> = ${decl.name}::class"
                 +"override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
@@ -563,7 +563,7 @@ open class Kotlin11Generator(
             println()
             block("companion object : ISerializersOwner") {
                 println()
-                registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
+                registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes), collector)
                 println()
                 println()
                 createModelMethodTrait(decl)
@@ -610,23 +610,32 @@ open class Kotlin11Generator(
         }
     }
 
-    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>) {
+    protected fun PrettyPrinter.registerSerializersTrait(decl: Toplevel, types: List<Declaration>, collector: MarshallersCollector) {
         block("override fun registerSerializersCore(serializers: ISerializers) ") {
             var first = true
-            types.filter { !it.isAbstract }.filterIsInstance<IType>().println {
+            types.filter { !it.isAbstract }.filterIsInstance<IType>().forEach {
                 if (it is Declaration && it.getSetting(Intrinsic) == null) {
-                    if (first) {
+                    if (first && collector.shouldGenerateRegistrations) {
                         +"val classLoader = javaClass.classLoader"
                         first = false
                     }
-                    "serializers.register(LazyCompanionMarshaller(RdId(${it.name.getPlatformIndependentHash()}), classLoader, \"${it.namespace}.${it.name}\"))"
+
+                    collector.addMarshaller(it.namespace, it.name)
+                    if (collector.shouldGenerateRegistrations) {
+                        println("serializers.register(LazyCompanionMarshaller(RdId(${it.name.getPlatformIndependentHash()}), classLoader, \"${it.namespace}.${it.name}\"))")
+                    }
                 } else {
-                    "serializers.register(${it.serializerRef(decl, true)})"
+                    println("serializers.register(${it.serializerRef(decl, true)})")
                 }
             }
 
             if (decl is Root) {
-                decl.toplevels.println { it.sanitizedName(decl) + ".register(serializers)" }
+                decl.toplevels.forEach {
+                    collector.addMarshaller(decl.namespace, decl.name)
+                    if (collector.shouldGenerateRegistrations) {
+                        println(it.sanitizedName(decl) + ".register(serializers)")
+                    }
+                }
             }
         }
     }

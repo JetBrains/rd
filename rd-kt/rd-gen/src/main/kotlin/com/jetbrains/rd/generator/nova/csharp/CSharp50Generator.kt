@@ -360,7 +360,7 @@ open class CSharp50Generator(
 
     //generation
 
-    override fun realGenerate(toplevels: List<Toplevel>) {
+    override fun realGenerate(toplevels: List<Toplevel>, collector: MarshallersCollector) {
         toplevels.forEach { tl ->
             tl.fsPath.bufferedWriter().use { writer ->
                 PrettyPrinter().apply {
