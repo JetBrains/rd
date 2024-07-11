@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-11, windows-2019]
+        os: [macos-14, windows-2019]
       fail-fast: false
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.github/gradle
