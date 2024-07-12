@@ -11,7 +11,8 @@ data class GenerationSpec(
     var root: String = "",
     var namespace: String = "",
     var directory: String = "",
-    var generatedFileSuffix: String = ".Generated"
+    var generatedFileSuffix: String = ".Generated",
+    var marshallersFile: String? = null,
 ) {
     companion object {
         fun loadFrom(file: File): List<GenerationSpec> {
@@ -19,10 +20,12 @@ data class GenerationSpec(
             val lines = file.readLines(Charsets.UTF_8)
             for (line in lines) {
                 val parts = line.split("||")
-                result.add(GenerationSpec(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]))
+                result.add(GenerationSpec(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6].nullIfEmpty()))
             }
             return result
         }
+
+        fun String.nullIfEmpty(): String? = if (this.isBlank()) null else this
     }
 
     fun toGeneratorAndRoot(availableRoots: List<Root>): IGeneratorAndRoot {
@@ -34,8 +37,8 @@ data class GenerationSpec(
             else -> throw GeneratorException("Unknown flow transform type ${transform}, use 'asis', 'reversed' or 'symmetric'")
         }
         val generator = when (language) {
-            "kotlin" -> Kotlin11Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
-            "csharp" -> CSharp50Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
+            "kotlin" -> Kotlin11Generator(flowTransform, namespace, File(directory), generatedFileSuffix, marhsallersFile = marshallersFile?.let { File(it) })
+            "csharp" -> CSharp50Generator(flowTransform, namespace, File(directory), generatedFileSuffix) // todo support for C#
             "cpp" -> Cpp17Generator(flowTransform, namespace, File(directory), generatedFileSuffix)
             else -> throw GeneratorException("Unknown language $language, use 'kotlin' or 'csharp' or 'cpp'")
         }

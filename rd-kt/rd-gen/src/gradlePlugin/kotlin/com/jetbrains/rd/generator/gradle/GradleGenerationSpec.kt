@@ -7,8 +7,9 @@ class GradleGenerationSpec {
     var namespace = ""
     var directory = ""
     var generatedFileSuffix = ".Generated"
+    var marshallersFile: String? = ""
 
     override fun toString(): String {
-        return "$language||$transform||$root||$namespace||$directory||$generatedFileSuffix"
+        return "$language||$transform||$root||$namespace||$directory||$generatedFileSuffix||${marshallersFile}"
     }
 }

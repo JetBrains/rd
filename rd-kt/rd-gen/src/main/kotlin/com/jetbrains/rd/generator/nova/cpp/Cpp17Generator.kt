@@ -902,7 +902,7 @@ open class Cpp17Generator(
         +"//------------------------------------------------------------------------------"
     }
 
-    override fun realGenerate(toplevels: List<Toplevel>) {
+    override fun realGenerate(toplevels: List<Toplevel>, collector: MarshallersCollector) {
         if (toplevels.isEmpty()) return
 
         val root = toplevels.first().root

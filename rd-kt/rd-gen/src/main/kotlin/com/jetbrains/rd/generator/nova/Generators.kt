@@ -44,7 +44,7 @@ fun fail(msg: String) : Nothing { throw GeneratorException(msg) }
 /**
  * Base class for generators to deduplicate common logic
  */
-abstract class GeneratorBase(protected open val flowTransform: FlowTransform, protected val generatedFileSuffix: String) : IGenerator {
+abstract class GeneratorBase(protected open val flowTransform: FlowTransform, protected val generatedFileSuffix: String, val marhsallersFile: File? = null,) : IGenerator {
     object AllowDeconstruct: ISetting<Unit, Declaration>
 
     /**
@@ -53,15 +53,32 @@ abstract class GeneratorBase(protected open val flowTransform: FlowTransform, pr
     object AcceptsGenerator: ISetting<(IGenerator) -> Boolean, Toplevel>
 
 
-    protected abstract fun realGenerate(toplevels: List<Toplevel>)
+    protected abstract fun realGenerate(toplevels: List<Toplevel>, collector: MarshallersCollector)
 
     override fun generate(toplevels: List<Toplevel>) {
         val preparedToplevels = toplevels
             .filter { it.getSetting(AcceptsGenerator)?.invoke(this) ?: true }
             .sortedBy { it.name }
 
-        realGenerate(preparedToplevels)
+        withContext {
+            realGenerate(preparedToplevels, it)
+        }
     }
+
+    private fun withContext(action: (MarshallersCollector) -> Unit) {
+        val file = marhsallersFile
+        if (file != null) {
+            val context = RealMarshallersCollector(file)
+            try {
+                action(context)
+            }finally {
+                context.close()
+            }
+        } else {
+            action(DisabledMarshallersCollector)
+        }
+    }
+
 
     protected open fun unknowns(declaredTypes: Iterable<Declaration>): Collection<Declaration> {
         return declaredTypes.mapNotNull {

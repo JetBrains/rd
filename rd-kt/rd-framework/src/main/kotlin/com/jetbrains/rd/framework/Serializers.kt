@@ -5,9 +5,7 @@ import com.jetbrains.rd.framework.impl.RdSecureString
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.hash.getPlatformIndependentHash
 import com.jetbrains.rd.util.lifetime.Lifetime
-import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
-import kotlin.reflect.jvm.jvmName
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -16,12 +14,14 @@ private const val notRegisteredErrorMessage = "Maybe you forgot to invoke 'regis
         "Usually it should be done automatically during 'bind()' invocation but in complex cases you should do it manually."
 
 
-@Suppress("UNCHECKED_CAST")
-class Serializers : ISerializers {
-
+class Serializers(private val provider: MarshallersProvider) : ISerializers {
     companion object {
         private val backgroundRegistrar =  createBackgroundScheduler(Lifetime.Eternal, "SerializersBackgroundRegistrar")
     }
+
+    @Deprecated("Use an overload with MarshallersProvider")
+    constructor() : this(MarshallersProvider.Dummy)
+
     override fun registerSerializersOwnerOnce(serializersOwner: ISerializersOwner) {
         backgroundRegistrar.invokeOrQueue {
             val key = serializersOwner::class
@@ -54,13 +54,17 @@ class Serializers : ISerializers {
         val id = serializer.id
         val existing = marshallers[id]
         if (existing != null) {
-            require(existing.fqn == serializer.fqn) { "Can't register ${serializer.fqn} with id: $id, already registered: ${serializer.fqn}" }
+            assertSerializersAreTheSame(existing, serializer, id)
         }  else {
             Protocol.initializationLogger.trace { "Registering type ${serializer.fqn}, id = $id" }
             marshallers[id] = serializer
             if (serializer !is LazyCompanionMarshaller)
                 writers[serializer._type] = serializer
         }
+    }
+
+    private fun assertSerializersAreTheSame(existing: IMarshaller<*>, new: IMarshaller<*>, id: RdId) {
+        require(existing.fqn == new.fqn) { "Can't register ${new.fqn} with id: $id, already registered: ${new.fqn}" }
     }
 
     override fun get(id: RdId): IMarshaller<*>? {
@@ -75,7 +79,14 @@ class Serializers : ISerializers {
         val size = stream.readInt()
         stream.checkAvailable(size)
 
-        val reader = marshallers[id]
+        val reader = marshallers[id] ?: run {
+            provider.getMarshaller(id)?.let { newMarshaller ->
+                marshallers.putIfAbsent(id, newMarshaller)?.also { existing ->
+                    assertSerializersAreTheSame(existing, newMarshaller, id)
+                } ?: newMarshaller
+            }
+        }
+
         if (reader == null) {
             if (abstractDeclaration == null) {
                 throw IllegalStateException("Can't find reader by id: $id. $notRegisteredErrorMessage")
@@ -103,7 +114,7 @@ class Serializers : ISerializers {
     private fun <T : Any> getWriter(clazz: KClass<out T>): IMarshaller<T> {
         val marshaller = writers.getOrPut(clazz) {
             val id = RdId(clazz.simpleName.getPlatformIndependentHash())
-            marshallers[id] ?: cantFindWriter(clazz)
+            marshallers[id] ?: provider.getMarshaller(id) ?: cantFindWriter(clazz)
         }
 
         return marshaller as? IMarshaller<T> ?: cantFindWriter(clazz)
