@@ -107,8 +107,16 @@ class LazyCompanionMarshaller<T : Any>(
     val classLoader: ClassLoader,
     val fqn: String
 ) : IMarshaller<T> {
+    companion object {
+        private val possibleFields = listOf<String>("Companion", "INSTANCE")
+    }
     private val lazy = lazy(LazyThreadSafetyMode.PUBLICATION) {
-        Class.forName(fqn, true, classLoader).getDeclaredField("Companion").get(null) as IMarshaller<T>
+        val clazz = Class.forName(fqn, true, classLoader)
+        val declaredFields = clazz.declaredFields
+
+        declaredFields.firstOrNull { possibleFields.contains(it.name) }?.get(null) as? IMarshaller<T> ?: run {
+            error("There are none of the fields ${possibleFields.joinToString()} in $clazz")
+        }
     }
 
     override val _type: KClass<*>

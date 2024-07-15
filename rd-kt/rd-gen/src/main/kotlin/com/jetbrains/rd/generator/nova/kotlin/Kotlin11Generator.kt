@@ -3,6 +3,7 @@ package com.jetbrains.rd.generator.nova.kotlin
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.Enum
 import com.jetbrains.rd.generator.nova.FlowKind.*
+import com.jetbrains.rd.generator.nova.getSetting
 import com.jetbrains.rd.generator.nova.kotlin.KotlinSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
@@ -35,6 +36,9 @@ open class Kotlin11Generator(
     val IDeclaration.namespace: String get() = getSetting(Namespace) ?: defaultNamespace
 
     object Intrinsic : SettingWithDefault<KotlinIntrinsicMarshaller, Declaration>(KotlinIntrinsicMarshaller.default)
+
+    val IDeclaration.marshallerRdid: Long get() = getSetting(Intrinsic)?.rdid ?: name.getPlatformIndependentHash()
+    val IDeclaration.marshallerFqn: String get() = getSetting(Intrinsic)?.marshallerObjectFqn ?: "${namespace}.${name}"
 
     object Attributes : ISetting<Array<String>, SettingsHolder>
     object PublicCtors: ISetting<Unit, Declaration>
@@ -514,12 +518,13 @@ open class Kotlin11Generator(
     }
 
     protected fun PrettyPrinter.companionTrait(decl: Declaration, collector: MarshallersCollector) {
+        val rdid = decl.marshallerRdid
         if (decl.isConcrete) {
             println()
-            collector.addMarshaller(decl.namespace, decl.name)
+            collector.addMarshaller(decl.marshallerFqn, rdid)
             block("companion object : IMarshaller<${decl.name}>") {
                 + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
-                + "override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
+                + "override val id: RdId get() = RdId(${rdid})"
                 println()
                 readerTrait(decl)
                 println()
@@ -542,10 +547,10 @@ open class Kotlin11Generator(
         }
         else if (decl.isOpen) {
             println()
-            collector.addMarshaller(decl.namespace, decl.name)
+            collector.addMarshaller(decl.marshallerFqn, rdid)
             block("companion object : IMarshaller<${decl.name}>, IAbstractDeclaration<${decl.name}>") {
                 +"override val _type: KClass<${decl.name}> = ${decl.name}::class"
-                +"override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
+                +"override val id: RdId get() = RdId($rdid)"
                 println()
                 readerTrait(decl)
                 println()
@@ -614,15 +619,17 @@ open class Kotlin11Generator(
         block("override fun registerSerializersCore(serializers: ISerializers) ") {
             var first = true
             types.filter { !it.isAbstract }.filterIsInstance<IType>().forEach {
-                if (it is Declaration && it.getSetting(Intrinsic) == null) {
+                if (it is Declaration) {
                     if (first && collector.shouldGenerateRegistrations) {
                         +"val classLoader = javaClass.classLoader"
                         first = false
                     }
+                    val rdid = it.marshallerRdid
+                    val fqn = it.marshallerFqn
 
-                    collector.addMarshaller(it.namespace, it.name)
+                    collector.addMarshaller(fqn, rdid)
                     if (collector.shouldGenerateRegistrations) {
-                        println("serializers.register(LazyCompanionMarshaller(RdId(${it.name.getPlatformIndependentHash()}), classLoader, \"${it.namespace}.${it.name}\"))")
+                        println("serializers.register(LazyCompanionMarshaller(RdId(${rdid}), classLoader, \"${fqn}\"))")
                     }
                 } else {
                     println("serializers.register(${it.serializerRef(decl, true)})")
@@ -631,7 +638,7 @@ open class Kotlin11Generator(
 
             if (decl is Root) {
                 decl.toplevels.forEach {
-                    collector.addMarshaller(decl.namespace, decl.name)
+                    collector.addMarshaller(decl.marshallerFqn, it.marshallerRdid)
                     if (collector.shouldGenerateRegistrations) {
                         println(it.sanitizedName(decl) + ".register(serializers)")
                     }
@@ -1114,7 +1121,7 @@ open class Kotlin11Generator(
                 constantTrait(decl)
                 println()
                 + "override val _type: KClass<${decl.name}> = ${decl.name}::class"
-                + "override val id: RdId get() = RdId(${decl.name.getPlatformIndependentHash()})"
+                + "override val id: RdId get() = RdId(${decl.marshallerRdid})"
                 println()
                 block("override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ${decl.substitutedName(decl)}") {
                     +"return marshaller.read(ctx, buffer)"
