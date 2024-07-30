@@ -69,6 +69,27 @@ namespace JetBrains.Collections
       myMultipleValues = null;
     }
 
+    public bool Contains(T item, IEqualityComparer<T?> comparer)
+    {
+      return IndexOf(item, comparer) >= 0;
+    }
+
+    public int IndexOf(T item, IEqualityComparer<T?> comparer)
+    {
+      switch (Count)
+      {
+        case 0: return -1;
+        case 1: return comparer.Equals(mySingleValue, item) ? 0 : -1;
+        default:
+          Assertion.AssertNotNull(myMultipleValues);
+          for (var i = 0; i < myMultipleValues.Count; i++)
+          {
+            if (comparer.Equals(myMultipleValues[i], item)) return i;
+          }
+          return -1;
+      }
+    }
+
     public int LastIndexOf(T item, IEqualityComparer<T?> comparer)
     {
       switch (Count)      
