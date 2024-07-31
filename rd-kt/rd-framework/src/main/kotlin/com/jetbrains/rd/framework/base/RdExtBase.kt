@@ -3,12 +3,17 @@ package com.jetbrains.rd.framework.base
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.framework.impl.RdPropertyBase
-import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.Logger
+import com.jetbrains.rd.util.Sync
+import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.printToString
 import com.jetbrains.rd.util.threading.asSequentialScheduler
+import com.jetbrains.rd.util.trace
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicReference
 import javax.management.openmbean.InvalidOpenTypeException
 
 abstract class RdExtBase : RdReactiveBase() {
@@ -285,7 +290,7 @@ class ExtWire : IWire {
         }
 
 
-    private val sendQ = Queue<QueueItem>()
+    private val sendQ = LinkedBlockingQueue<QueueItem>()
 
     init {
         connected.whenTrue(Lifetime.Eternal) { _ ->
