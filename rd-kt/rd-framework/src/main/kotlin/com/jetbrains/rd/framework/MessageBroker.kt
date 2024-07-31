@@ -4,17 +4,16 @@ import com.jetbrains.rd.framework.base.AllowBindingCookie
 import com.jetbrains.rd.framework.base.IRdWireable
 import com.jetbrains.rd.framework.base.IRdWireableDispatchHelper
 import com.jetbrains.rd.framework.impl.ProtocolContexts
-import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.blockingPutUnique
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.intersect
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.trace
+import java.util.concurrent.LinkedBlockingQueue
 
 class RdMessage (val id : RdId, val istream : AbstractBuffer)
 class MessageBroker(queueMessages: Boolean = false) : IPrintable {
@@ -23,7 +22,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
         val log = Protocol.sublogger("MQ")
     }
 
-    private var unprocessedMessages: Queue<RdMessage>? = if (queueMessages) Queue() else null
+    private var unprocessedMessages: LinkedBlockingQueue<RdMessage>? = if (queueMessages) LinkedBlockingQueue() else null
 
     private val lock = Any()
 
@@ -31,7 +30,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
 
     fun startDeliveringMessages() {
         while (true) {
-            val queue: Queue<RdMessage>
+            val queue: LinkedBlockingQueue<RdMessage>
             Sync.lock (lock) {
                 queue = requireNotNull(unprocessedMessages) { "Already started delivering messages" }
 
@@ -41,7 +40,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
                     return
                 }
 
-                unprocessedMessages = Queue()
+                unprocessedMessages = LinkedBlockingQueue()
             }
 
             for (rdMessage in queue) {

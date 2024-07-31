@@ -1,13 +1,16 @@
 package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.util.*
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.string.RName
-import com.jetbrains.rd.framework.IInternRoot
 import com.jetbrains.rd.framework.base.IRdBindable
 import com.jetbrains.rd.framework.base.IRdWireableDispatchHelper
 import com.jetbrains.rd.framework.base.RdReactiveBase
+import com.jetbrains.rd.util.assert
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.string.RName
+import com.jetbrains.rd.util.trace
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.set
 
 class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic()): IInternRoot<TBase> {
     override fun deepClone(): IRdBindable {

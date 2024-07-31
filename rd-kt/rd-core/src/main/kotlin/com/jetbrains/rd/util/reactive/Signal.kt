@@ -1,11 +1,11 @@
 package com.jetbrains.rd.util.reactive
 
-import com.jetbrains.rd.util.TlsBoxed
 import com.jetbrains.rd.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.incrementCookie
 import com.jetbrains.rd.util.reflection.usingValue
+import java.util.concurrent.atomic.AtomicReference
 
 open class Signal<T> : ISignal<T> {
     companion object {

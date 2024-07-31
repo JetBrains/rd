@@ -2,15 +2,13 @@ package com.jetbrains.rd.framework.impl
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.framework.base.bindPolymorphic
-import com.jetbrains.rd.framework.base.identifyPolymorphic
-import com.jetbrains.rd.util.AtomicReference
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.trace
+import java.util.concurrent.atomic.AtomicReference
 
 abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReactiveBase(), IMutablePropertyBase<T> {
     companion object {

@@ -1,8 +1,8 @@
 package com.jetbrains.rd.framework
 
-import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.addUnique
 import com.jetbrains.rd.util.lifetime.Lifetime
+import java.util.concurrent.ConcurrentHashMap
 
 class RdEntitiesRegistrar {
     private val map = ConcurrentHashMap<RdId, IRdDynamic>()

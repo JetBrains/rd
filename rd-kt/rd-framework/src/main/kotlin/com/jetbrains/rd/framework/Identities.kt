@@ -1,9 +1,9 @@
 package com.jetbrains.rd.framework
 
 
-import com.jetbrains.rd.util.AtomicInteger
 import com.jetbrains.rd.util.hash.getPlatformIndependentHash
 import com.jetbrains.rd.util.string.condstr
+import java.util.concurrent.atomic.AtomicInteger
 
 enum class IdKind {
     Client,
