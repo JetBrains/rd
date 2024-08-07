@@ -3,11 +3,11 @@ package com.jetbrains.rd.util.test.cases
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.plusAssign
 import com.jetbrains.rd.util.reactive.IMutableViewableList
+import com.jetbrains.rd.util.reactive.IViewableList
 import com.jetbrains.rd.util.reactive.ViewableList
+import com.jetbrains.rd.util.reactive.viewableTail
 import com.jetbrains.rd.util.test.framework.RdTestBase
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class ViewableListTest : RdTestBase()  {
     @Test
@@ -43,7 +43,7 @@ class ViewableListTest : RdTestBase()  {
         Lifetime.using { lifetime ->
             list.view(lifetime) { lt, value -> log.add("View $value"); lt += { log.add("UnView $value") } }
             list.add(0)
-            list.set(0, 1);
+            list[0] = 1
             list.remove(0)
         }
 
@@ -149,6 +149,66 @@ class ViewableListTest : RdTestBase()  {
 
             assertTrue(list.add(0))
             assertTrue(list.add(0))
+        }
+    }
+
+    @Test
+    fun testSync() {
+        val items = ViewableList(mutableListOf(1, 2, 3))
+        items.assertSync(listOf(1, 2, 3), emptyList(), emptyList())
+        items.assertSync(listOf(3, 2, 1), listOf(2 to 1, 1 to 2), listOf(2 to 1, 1 to 0))
+        items.assertSync(listOf(4, 3, 2, 1, 0), listOf(4 to 0, 0 to 4), emptyList())
+        items.assertSync(listOf(3, 2, 1), emptyList(), listOf(4 to 0, 0 to 3))
+        items.assertSync(listOf(4, 2, 0), listOf(4 to 0, 0 to 2), listOf(1 to 2, 3 to 0))
+        items.assertSync(emptyList(), emptyList(), listOf(0 to 2, 2 to 1, 4 to 0))
+        items.assertSync(listOf(1, 2, 3, 4, 5), listOf(1 to 0, 2 to 1, 3 to 2, 4 to 3, 5 to 4), emptyList())
+        items.assertSync(listOf(2, 1, 3, 5, 4), listOf(1 to 1, 4 to 4), listOf(4 to 3, 1 to 0))
+        items.assertSync(listOf(2, 1, 4), emptyList(), listOf(5 to 3, 3 to 2))
+        items.assertSync(listOf(2, 3, 1, 5, 4), listOf(3 to 1, 5 to 3), emptyList())
+        items.assertSync(listOf(2, 2, 3, 3, 1, 1, 5, 5, 4, 4), listOf(2 to 1, 3 to 3, 1 to 5, 5 to 7, 4 to 9), emptyList())
+        items.assertSync(listOf(2, 2, 3, 1, 1, 5, 4, 4), emptyList(), listOf(5 to 7, 3 to 3))
+        items.assertSync(listOf(2, 2, 2, 5, 5, 5), listOf(2 to 2, 5 to 4, 5 to 5), listOf(4 to 7, 4 to 6, 1 to 4, 1 to 3, 3 to 2))
+        items.assertSync(listOf(2, 5), emptyList(), listOf(2 to 2, 2 to 1, 5 to 3, 5 to 2))
+    }
+
+    @Test
+    fun testViewableTail() {
+        val items = ViewableList(mutableListOf(1, 2, 3))
+        Lifetime.using { lifetime ->
+            val tail = mutableListOf<Int?>()
+            items.viewableTail().advise(lifetime) { tail.add(it) }
+            items.add(4)
+            items.addAll(listOf(5, 6, 7))
+            items.remove(6)
+            items.remove(7)
+            items.removeAll(listOf(2, 3, 4, 5, 6, 7))
+            items.sync(listOf(2, 3))
+            items.sync(listOf(1, 2))
+            assertContentEquals(listOf(3, 4, 7, 5, 1, 3, 2), tail)
+        }
+    }
+
+    private fun <T : Any> ViewableList<T>.assertSync(expectedItems: List<T>, expectedAdded: List<Pair<T, Int>>, expectedRemoved: List<Pair<T, Int>>) {
+        assertItemsAndChanges(expectedItems, expectedAdded, expectedRemoved) {
+            sync(expectedItems)
+        }
+    }
+
+    private fun <T : Any> ViewableList<T>.assertItemsAndChanges(expectedItems: List<T>, expectedAdded: List<Pair<T, Int>>, expectedRemoved: List<Pair<T, Int>>, action: ViewableList<T>.() -> Unit) {
+        Lifetime.using { lifetime ->
+            val added = mutableListOf<Pair<T, Int>>()
+            val removed = mutableListOf<Pair<T, Int>>()
+            change.advise(lifetime) {
+                when (it) {
+                    is IViewableList.Event.Add -> added.add(it.newValue to it.index)
+                    is IViewableList.Event.Remove -> removed.add(it.oldValue to it.index)
+                    is IViewableList.Event.Update -> {}
+                }
+            }
+            action()
+            assertContentEquals(expectedItems, this)
+            assertContentEquals(expectedAdded, added)
+            assertContentEquals(expectedRemoved, removed)
         }
     }
 }
