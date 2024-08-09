@@ -3,6 +3,7 @@ package com.jetbrains.rd.util.reactive
 import com.jetbrains.rd.util.catch
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
+import java.util.Objects
 
 class ViewableList<T : Any>(private val storage: MutableList<T> = mutableListOf()) : IMutableViewableList<T> {
     override val change = Signal<IViewableList.Event<T>>()
@@ -56,15 +57,17 @@ class ViewableList<T : Any>(private val storage: MutableList<T> = mutableListOf(
         return changes.isNotEmpty()
     }
 
-    override fun addAll(elements: Collection<T>): Boolean {
+    private fun addAll(iterator: Iterator<T>): Boolean {
         val changes = arrayListOf<IViewableList.Event<T>>()
-        for (element in elements) {
+        for (element in iterator) {
             storage.add(element)
             changes.add(IViewableList.Event.Add(size - 1, element))
         }
         changes.forEach { change.fire(it) }
         return changes.isNotEmpty()
     }
+
+    override fun addAll(elements: Collection<T>) = addAll(elements.iterator())
 
     override fun clear() {
         val changes = arrayListOf<IViewableList.Event<T>>()
@@ -77,6 +80,24 @@ class ViewableList<T : Any>(private val storage: MutableList<T> = mutableListOf(
 
     override fun removeAll(elements: Collection<T>): Boolean {
         return filterElementsInplace(elements) { index, elementsSet -> storage[index] in elementsSet }
+    }
+
+    fun removeRange(fromIndex: Int, toIndex: Int) {
+        when (toIndex - fromIndex) {
+            0 -> Unit
+            1 -> removeAt(fromIndex)
+            else -> removeRangeSlow(fromIndex, toIndex)
+        }
+    }
+
+    private fun removeRangeSlow(fromIndex: Int, toIndex: Int) {
+        val changes = buildList<IViewableList.Event<T>>(toIndex - fromIndex) {
+            for (i in (toIndex - 1) downTo fromIndex) {
+                add(IViewableList.Event.Remove(i, storage[i]))
+            }
+        }
+        storage.subList(fromIndex, toIndex).clear()
+        changes.forEach { change.fire(it) }
     }
 
     private inline fun filterElementsInplace(elements: Collection<T>, predicate: (Int, Set<T>) -> Boolean): Boolean {
@@ -107,7 +128,172 @@ class ViewableList<T : Any>(private val storage: MutableList<T> = mutableListOf(
     override fun listIterator(): MutableListIterator<T> = MyIterator(storage.listIterator())
     override fun listIterator(index: Int): MutableListIterator<T> = MyIterator(storage.listIterator(index))
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> = throw UnsupportedOperationException()
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
+        Objects.checkFromToIndex(fromIndex, toIndex, size)
+        return MySubList(fromIndex, toIndex - fromIndex)
+    }
+
+    /**
+     * Synchronizes the viewable list by adding missing elements and removing unmatched elements.
+     * If the order of equal values is not changed, then they won't be modified.
+     * However, even if equal elements exist in both lists,
+     * but order is swapped, then they will be removed and re-added to satisfy the new values order.
+     * It helps drastically reduce the number of change events if the collection is unmodified at all
+     * or just a few elements are changed compared to the classical approach with 'clear' and 'addAll'.
+     *
+     * @param newValues the new values to be synced with
+    </T> */
+    fun sync(newValues: Collection<T>): Boolean {
+        if (isEmpty()) {
+            return addAll(newValues)
+        }
+
+        if (newValues.isEmpty()) {
+            clear()
+            return true
+        }
+
+        val iterator = iterator()
+        val newIterator = newValues.iterator()
+
+        var index = 0
+        var newValue: T
+        while (true) {
+            newValue = newIterator.next()
+            if (newValue != iterator.next())
+            {
+                replaceTailSlow(index, newValue, newIterator)
+                return true
+            }
+            ++index
+            if (!newIterator.hasNext()) {
+                removeRange(index, size)
+                return true
+            }
+            if (!iterator.hasNext()) {
+                return addAll(newIterator)
+            }
+        }
+    }
+
+    private fun replaceTailSlow(firstUnmatchedIndex: Int, firstUnmatchedValue: T, newIterator: Iterator<T>) {
+        fun matchIndex(items: MutableMap<T, Any>, value: T, fromIndex: Int): Int? {
+            val matchedIndex = items.remove(value)
+            if (matchedIndex is Int) {
+                return if (matchedIndex >= fromIndex) matchedIndex else null
+            }
+            @Suppress("UNCHECKED_CAST")
+            (matchedIndex as? ArrayDeque<Int>)?.let {
+                while (matchedIndex.size > 0) {
+                    val endIndex = matchedIndex.removeFirst()
+                    if (endIndex >= fromIndex) {
+                        if (matchedIndex.size > 0) {
+                            items[value] = matchedIndex
+                        }
+                        return endIndex
+                    }
+                }
+            }
+            return null
+        }
+
+        val items = mutableMapOf<T, Any>()
+        var newValue = firstUnmatchedValue
+        for (index in firstUnmatchedIndex until size) {
+            val item = this[index]
+            val itemIndex = items[item]
+            @Suppress("UNCHECKED_CAST")
+            when (itemIndex) {
+                is Int -> items[item] = ArrayDeque<Int>().apply {
+                    add(itemIndex)
+                    add(index)
+                }
+                is ArrayDeque<*> -> (itemIndex as ArrayDeque<Int>).add(index)
+                null -> items[item] = index
+            }
+        }
+
+        val changes = ArrayDeque<IViewableList.Event<T>>()
+        val originalSize = size
+        var insertIndex = firstUnmatchedIndex
+        var processedIndex = firstUnmatchedIndex
+        var matchedIndex: Any?
+        while (true) {
+            matchedIndex = matchIndex(items, newValue, processedIndex)
+            if (matchedIndex != null) {
+                val removeCount = matchedIndex - processedIndex
+                if (removeCount > 0) {
+                    for (removeIndex in processedIndex until matchedIndex) {
+                        changes.addFirst(IViewableList.Event.Remove(removeIndex, storage[removeIndex]))
+                    }
+                }
+                processedIndex = matchedIndex + 1
+                storage.add(storage[matchedIndex])
+                ++insertIndex
+            }
+            else {
+                changes.add(IViewableList.Event.Add(insertIndex++, newValue))
+                storage.add(newValue)
+            }
+            if (!newIterator.hasNext())
+                break
+            newValue = newIterator.next()
+        }
+
+        // If last new value was matched then we generate remove events after all "add"
+        // events so last "remove" event will match the tail for "viewTail" extension property.
+        // Otherwise, we keep an "add" event for the last element and generate all "remove" events at the beginning
+        if (matchedIndex != null) {
+            val addedElementsAdjustment = insertIndex - processedIndex
+            for (removeIndex in originalSize - 1 downTo processedIndex) {
+                changes.add(IViewableList.Event.Remove(removeIndex + addedElementsAdjustment, storage[removeIndex]))
+            }
+        }
+        else {
+            for (removeIndex in processedIndex until originalSize) {
+                changes.addFirst(IViewableList.Event.Remove(removeIndex, storage[removeIndex]))
+            }
+        }
+
+        storage.subList(firstUnmatchedIndex, originalSize).clear()
+
+        changes.forEach { change.fire(it) }
+    }
+
+    private inner class MySubList(private val fromIndex: Int, size: Int) : AbstractMutableList<T>() {
+        var mySize = size
+
+        override val size get() = mySize
+
+        override fun add(index: Int, element: T) {
+            Objects.checkIndex(index, mySize + 1)
+            this@ViewableList.add(fromIndex + index, element).also { ++mySize }
+        }
+
+        override fun get(index: Int): T {
+            Objects.checkIndex(index, mySize)
+            return this@ViewableList[index]
+        }
+
+        override fun removeAt(index: Int): T {
+            Objects.checkIndex(index, mySize)
+            return this@ViewableList.removeAt(index).also { --mySize }
+        }
+
+        override fun set(index: Int, element: T): T {
+            Objects.checkIndex(index, mySize)
+            return this@ViewableList.set(index, element)
+        }
+
+        override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
+            Objects.checkFromToIndex(fromIndex, toIndex, mySize)
+            return MySubList(this.fromIndex + fromIndex, toIndex - fromIndex)
+        }
+
+        override fun clear() {
+            this@ViewableList.removeRange(fromIndex, fromIndex + size).also { mySize = 0 }
+        }
+    }
 
     private inner class MyIterator(val baseIterator: MutableListIterator<T>): MutableListIterator<T> by baseIterator {
         override fun add(element: T) {
