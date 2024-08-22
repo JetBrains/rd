@@ -170,6 +170,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                             }
                         }
                         javadocJarTask.set(packageJavadoc)
+                        sourcesJarTask.set(sourceJar)
                     }
                 }
             }
