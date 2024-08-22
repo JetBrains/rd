@@ -3,6 +3,8 @@ package com.jetbrains.rd.gradle.plugins
 import com.jetbrains.rd.gradle.dependencies.junitVersion
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import jetbrains.sign.GpgSignSignatoryProvider
+import net.thebugmc.gradle.sonatypepublisher.CentralPortalExtension
+import net.thebugmc.gradle.sonatypepublisher.PublishingType
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
@@ -23,6 +25,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "signing")
+        apply(plugin = "net.thebugmc.gradle.sonatype-central-portal-publisher")
 
         configure<KotlinJvmProjectExtension> {
             val sourceJar by tasks.creating(Jar::class) {
@@ -50,9 +53,10 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 enabled = false
             }
 
-            configure<PublishingExtension> {
-                publications {
-                    if (project.name != "rd-cross") {
+            if (project.name != "rd-cross") {
+                val deployToCentral = rootProject.extra["deployMavenToMavenCentral"].toString().toBoolean()
+                configure<PublishingExtension> {
+                    publications {
                         register("pluginMaven", MavenPublication::class.java) {
                             groupId = "com.jetbrains.rd"
                             artifactId = project.name
@@ -91,45 +95,56 @@ open class KotlinJVMPlugin : Plugin<Project> {
                             artifact(packageJavadoc)
                         }
                     }
+
+                    val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
+                    project.configure<SigningExtension> {
+                        if (isUnderTeamCity) {
+                            sign(publications)
+                            signatories = GpgSignSignatoryProvider()
+                        }
+                    }
+                    val deployToIntelliJ = rootProject.extra["deployMavenToIntelliJDependencies"].toString().toBoolean()
+//                val deployToSonatype = rootProject.extra["deployMavenToSonatype"].toString().toBoolean()
+                    repositories {
+                        maven {
+                            name = "artifacts"
+                            url = uri(rootProject.projectDir.resolve("build").resolve("artifacts").resolve("maven"))
+                        }
+                        if (deployToIntelliJ) {
+                            maven {
+                                name = "intellij-dependencies"
+                                url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/")
+                                credentials {
+                                    username = "Bearer"
+                                    password = rootProject.extra["internalDeployKey"].toString()
+                                }
+                            }
+                        }
+
+//                    if (deployToSonatype) {
+//                        maven {
+//                            name = "maven-central"
+//                            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+//                            credentials {
+//                                username = rootProject.extra["sonatypeUser"].toString()
+//                                password = rootProject.extra["sonatypePassword"].toString()
+//                            }
+//                        }
+//                    }
+                    }
                 }
 
-                val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
-                project.configure<SigningExtension> {
-                    if (isUnderTeamCity) {
-                        sign(publications)
-                        signatories = GpgSignSignatoryProvider()
-                    }
-                }
-                val deployToIntelliJ = rootProject.extra["deployMavenToIntelliJDependencies"].toString().toBoolean()
-                val deployToSonatype = rootProject.extra["deployMavenToSonatype"].toString().toBoolean()
-                repositories {
-                    maven {
-                        name = "artifacts"
-                        url = uri(rootProject.projectDir.resolve("build").resolve("artifacts").resolve("maven"))
-                    }
-                    if (deployToIntelliJ) {
-                        maven {
-                            name = "intellij-dependencies"
-                            url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/")
-                            credentials {
-                                username = "Bearer"
-                                password = rootProject.extra["internalDeployKey"].toString()
-                            }
-                        }
-                    }
-                    if (deployToSonatype) {
-                        maven {
-                            name = "maven-central"
-                            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-                            credentials {
-                                username = rootProject.extra["sonatypeUser"].toString()
-                                password = rootProject.extra["sonatypePassword"].toString()
-                            }
-                        }
+                if (deployToCentral) {
+                    val user = rootProject.extra["sonatypePortalUser"] as String
+                    val token = rootProject.extra["sonatypePortalToken"] as String
+                    project.configure<CentralPortalExtension> {
+                        username.set(user)
+                        password.set(token)
+
+                        publishingType.set(PublishingType.USER_MANAGED)
                     }
                 }
             }
-
 
             val test by tasks.getting(Test::class) {
                 maxHeapSize = "512m"

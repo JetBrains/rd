@@ -16,4 +16,5 @@ dependencies {
     implementation("com.moowork.gradle:gradle-node-plugin:1.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("com.jetbrains:jet-sign:45.47")
+    implementation("net.thebugmc.gradle:sonatype-central-portal-publisher:1.2.4")
 }
