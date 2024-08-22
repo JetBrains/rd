@@ -139,10 +139,36 @@ open class KotlinJVMPlugin : Plugin<Project> {
                     val user = rootProject.extra["sonatypePortalUser"] as String
                     val token = rootProject.extra["sonatypePortalToken"] as String
                     project.configure<CentralPortalExtension> {
+                        publishingType.set(PublishingType.USER_MANAGED)
                         username.set(user)
                         password.set(token)
-
-                        publishingType.set(PublishingType.USER_MANAGED)
+                        name.set(project.name)
+                        pom {
+                            url.set("https://github.com/JetBrains/rd")
+                            licenses {
+                                license {
+                                    name.set("The Apache License, Version 2.0")
+                                    url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                                }
+                            }
+                            developers {
+                                // According to the reference, this should be the person(s) to be contacted about the project.
+                                developer {
+                                    id.set("ivan.migalev")
+                                    name.set("Ivan Migalev")
+                                    email.set("ivan.migalev@jetbrains.com")
+                                }
+                                developer {
+                                    id.set("mikhail.filippov")
+                                    name.set("Mikhail Filippov")
+                                    email.set("Mikhail.Filippov@jetbrains.com")
+                                }
+                            }
+                            scm {
+                                connection.set("scm:git:https://github.com/JetBrains/rd.git")
+                                url.set("https://github.com/JetBrains/rd")
+                            }
+                        }
                     }
                 }
             }
