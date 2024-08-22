@@ -169,6 +169,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                                 url.set("https://github.com/JetBrains/rd")
                             }
                         }
+                        javadocJarTask.set(packageJavadoc)
                     }
                 }
             }
