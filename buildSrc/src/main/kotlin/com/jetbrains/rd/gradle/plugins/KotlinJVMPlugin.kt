@@ -27,6 +27,8 @@ open class KotlinJVMPlugin : Plugin<Project> {
         apply(plugin = "signing")
         apply(plugin = "net.thebugmc.gradle.sonatype-central-portal-publisher")
 
+        group = "com.jetbrains.rd"
+
         configure<KotlinJvmProjectExtension> {
             val sourceJar by tasks.creating(Jar::class) {
                 from(sourceSets["main"].kotlin.sourceDirectories)
@@ -58,7 +60,6 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 configure<PublishingExtension> {
                     publications {
                         register("pluginMaven", MavenPublication::class.java) {
-                            groupId = "com.jetbrains.rd"
                             artifactId = project.name
                             version = rootProject.version as String
 
