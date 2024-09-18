@@ -185,10 +185,6 @@ tasks {
         }
     }
 
-    named("publish") {
-        dependsOn(publishNuGet)
-    }
-
     val packSonatypeCentralBundle by registering(Zip::class) {
         group = publishingGroup
 
@@ -248,6 +244,15 @@ tasks {
             if (statusCode != 201) {
                 error("Upload error to Central repository. Status code $statusCode.")
             }
+        }
+    }
+
+    named("publish") {
+        dependsOn(publishNuGet)
+
+        val deployToCentral = rootProject.extra["deployMavenToCentralPortal"].toString().toBoolean()
+        if (deployToCentral) {
+            dependsOn(publishMavenToCentralPortal)
         }
     }
 }
