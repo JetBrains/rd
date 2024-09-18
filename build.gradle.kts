@@ -1,9 +1,17 @@
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 
 buildscript {
+    dependencies {
+        classpath("com.squareup.okhttp3:okhttp:4.12.0")
+    }
     project.extra.apply {
         val repoRoot = rootProject.projectDir
         set("repoRoot", repoRoot)
@@ -179,5 +187,67 @@ tasks {
 
     named("publish") {
         dependsOn(publishNuGet)
+    }
+
+    val packSonatypeCentralBundle by registering(Zip::class) {
+        group = publishingGroup
+
+        dependsOn(
+            ":rd-core:publishAllPublicationsToArtifactsRepository",
+            ":rd-framework:publishAllPublicationsToArtifactsRepository",
+            ":rd-gen:publishAllPublicationsToArtifactsRepository",
+            ":rd-swing:publishAllPublicationsToArtifactsRepository",
+            ":rd-text:publishAllPublicationsToArtifactsRepository"
+        )
+
+        from(layout.buildDirectory.dir("artifacts/maven"))
+        archiveFileName.set("bundle.zip")
+        destinationDirectory.set(layout.buildDirectory)
+    }
+
+    val publishMavenToCentralPortal by registering {
+        group = publishingGroup
+
+        dependsOn(packSonatypeCentralBundle)
+
+        doLast {
+            val uriBase = rootProject.extra["centralPortalApiUrl"] as String
+            val publicationType = "USER_MANAGED"
+            val deploymentName = "rd-$version"
+            val uri = "$uriBase?name=$deploymentName&publicationType=$publicationType"
+
+            val userName = rootProject.extra["centralPortalUserName"] as String
+            val token = rootProject.extra["centralPortalToken"] as String
+            val base64Auth = Base64.getEncoder().encode("$userName:$token".toByteArray()).toString(Charsets.UTF_8)
+            val bundleFile = packSonatypeCentralBundle.get().archiveFile.get().asFile
+
+            println("Sending request to $uri...")
+
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url(uri)
+                .header("Authorization", "Bearer $base64Auth")
+                .post(
+                    MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("bundle", bundleFile.name, bundleFile.asRequestBody())
+                        .build()
+                )
+                .build()
+            val response = client.newCall(request).execute()
+//            val client = HttpClient.newHttpClient()
+//            val request = HttpRequest.newBuilder(uri)
+//                .header("Authorization", "Bearer $base64Auth")
+//                .header("Content-Type", "multipart/form-data; boundary=---WD9146A")
+//                .POST(HttpRequest.BodyPublishers.ofFile(bundleFile.asFile.toPath()))
+//                .build()
+
+            val statusCode = response.code
+            println("Upload status code: $statusCode")
+            println("Upload result: ${response.body!!.string()}")
+            if (statusCode != 201) {
+                error("Upload error to Central repository. Status code $statusCode.")
+            }
+        }
     }
 }

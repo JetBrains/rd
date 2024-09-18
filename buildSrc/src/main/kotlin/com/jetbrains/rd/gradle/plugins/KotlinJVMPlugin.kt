@@ -3,8 +3,6 @@ package com.jetbrains.rd.gradle.plugins
 import com.jetbrains.rd.gradle.dependencies.junitVersion
 import com.jetbrains.rd.gradle.dependencies.kotlinVersion
 import jetbrains.sign.GpgSignSignatoryProvider
-import net.thebugmc.gradle.sonatypepublisher.CentralPortalExtension
-import net.thebugmc.gradle.sonatypepublisher.PublishingType
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
@@ -25,7 +23,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "signing")
-        apply(plugin = "net.thebugmc.gradle.sonatype-central-portal-publisher")
+//        apply(plugin = "net.thebugmc.gradle.sonatype-central-portal-publisher")
 
         group = "com.jetbrains.rd"
 
@@ -56,7 +54,6 @@ open class KotlinJVMPlugin : Plugin<Project> {
             }
 
             if (project.name != "rd-cross") {
-                val deployToCentral = rootProject.extra["deployMavenToMavenCentral"].toString().toBoolean()
                 configure<PublishingExtension> {
                     publications {
                         register("pluginMaven", MavenPublication::class.java) {
@@ -135,44 +132,44 @@ open class KotlinJVMPlugin : Plugin<Project> {
                     }
                 }
 
-                if (deployToCentral) {
-                    val user = rootProject.extra["sonatypePortalUser"] as String
-                    val token = rootProject.extra["sonatypePortalToken"] as String
-                    project.configure<CentralPortalExtension> {
-                        publishingType.set(PublishingType.USER_MANAGED)
-                        username.set(user)
-                        password.set(token)
-                        name.set(project.name)
-                        pom {
-                            url.set("https://github.com/JetBrains/rd")
-                            licenses {
-                                license {
-                                    name.set("The Apache License, Version 2.0")
-                                    url.set("https://www.apache.org/licenses/LICENSE-2.0")
-                                }
-                            }
-                            developers {
-                                // According to the reference, this should be the person(s) to be contacted about the project.
-                                developer {
-                                    id.set("ivan.migalev")
-                                    name.set("Ivan Migalev")
-                                    email.set("ivan.migalev@jetbrains.com")
-                                }
-                                developer {
-                                    id.set("mikhail.filippov")
-                                    name.set("Mikhail Filippov")
-                                    email.set("Mikhail.Filippov@jetbrains.com")
-                                }
-                            }
-                            scm {
-                                connection.set("scm:git:https://github.com/JetBrains/rd.git")
-                                url.set("https://github.com/JetBrains/rd")
-                            }
-                        }
-                        javadocJarTask.set(packageJavadoc)
-                        sourcesJarTask.set(sourceJar)
-                    }
-                }
+//                if (deployToCentral) {
+//                    val user = rootProject.extra["sonatypePortalUser"] as String
+//                    val token = rootProject.extra["sonatypePortalToken"] as String
+//                    project.configure<CentralPortalExtension> {
+//                        publishingType.set(PublishingType.USER_MANAGED)
+//                        username.set(user)
+//                        password.set(token)
+//                        name.set(project.name)
+//                        pom {
+//                            url.set("https://github.com/JetBrains/rd")
+//                            licenses {
+//                                license {
+//                                    name.set("The Apache License, Version 2.0")
+//                                    url.set("https://www.apache.org/licenses/LICENSE-2.0")
+//                                }
+//                            }
+//                            developers {
+//                                // According to the reference, this should be the person(s) to be contacted about the project.
+//                                developer {
+//                                    id.set("ivan.migalev")
+//                                    name.set("Ivan Migalev")
+//                                    email.set("ivan.migalev@jetbrains.com")
+//                                }
+//                                developer {
+//                                    id.set("mikhail.filippov")
+//                                    name.set("Mikhail Filippov")
+//                                    email.set("Mikhail.Filippov@jetbrains.com")
+//                                }
+//                            }
+//                            scm {
+//                                connection.set("scm:git:https://github.com/JetBrains/rd.git")
+//                                url.set("https://github.com/JetBrains/rd")
+//                            }
+//                        }
+//                        javadocJarTask.set(packageJavadoc)
+//                        sourcesJarTask.set(sourceJar)
+//                    }
+//                }
             }
 
             val test by tasks.getting(Test::class) {
