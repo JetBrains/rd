@@ -23,7 +23,6 @@ open class KotlinJVMPlugin : Plugin<Project> {
         apply(plugin = "maven-publish")
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "signing")
-//        apply(plugin = "net.thebugmc.gradle.sonatype-central-portal-publisher")
 
         group = "com.jetbrains.rd"
 
@@ -102,7 +101,6 @@ open class KotlinJVMPlugin : Plugin<Project> {
                         }
                     }
                     val deployToIntelliJ = rootProject.extra["deployMavenToIntelliJDependencies"].toString().toBoolean()
-//                val deployToSonatype = rootProject.extra["deployMavenToSonatype"].toString().toBoolean()
                     repositories {
                         maven {
                             name = "artifacts"
@@ -118,58 +116,8 @@ open class KotlinJVMPlugin : Plugin<Project> {
                                 }
                             }
                         }
-
-//                    if (deployToSonatype) {
-//                        maven {
-//                            name = "maven-central"
-//                            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-//                            credentials {
-//                                username = rootProject.extra["sonatypeUser"].toString()
-//                                password = rootProject.extra["sonatypePassword"].toString()
-//                            }
-//                        }
-//                    }
                     }
                 }
-
-//                if (deployToCentral) {
-//                    val user = rootProject.extra["sonatypePortalUser"] as String
-//                    val token = rootProject.extra["sonatypePortalToken"] as String
-//                    project.configure<CentralPortalExtension> {
-//                        publishingType.set(PublishingType.USER_MANAGED)
-//                        username.set(user)
-//                        password.set(token)
-//                        name.set(project.name)
-//                        pom {
-//                            url.set("https://github.com/JetBrains/rd")
-//                            licenses {
-//                                license {
-//                                    name.set("The Apache License, Version 2.0")
-//                                    url.set("https://www.apache.org/licenses/LICENSE-2.0")
-//                                }
-//                            }
-//                            developers {
-//                                // According to the reference, this should be the person(s) to be contacted about the project.
-//                                developer {
-//                                    id.set("ivan.migalev")
-//                                    name.set("Ivan Migalev")
-//                                    email.set("ivan.migalev@jetbrains.com")
-//                                }
-//                                developer {
-//                                    id.set("mikhail.filippov")
-//                                    name.set("Mikhail Filippov")
-//                                    email.set("Mikhail.Filippov@jetbrains.com")
-//                                }
-//                            }
-//                            scm {
-//                                connection.set("scm:git:https://github.com/JetBrains/rd.git")
-//                                url.set("https://github.com/JetBrains/rd")
-//                            }
-//                        }
-//                        javadocJarTask.set(packageJavadoc)
-//                        sourcesJarTask.set(sourceJar)
-//                    }
-//                }
             }
 
             val test by tasks.getting(Test::class) {

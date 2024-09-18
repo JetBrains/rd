@@ -231,12 +231,6 @@ tasks {
                 )
                 .build()
             val response = client.newCall(request).execute()
-//            val client = HttpClient.newHttpClient()
-//            val request = HttpRequest.newBuilder(uri)
-//                .header("Authorization", "Bearer $base64Auth")
-//                .header("Content-Type", "multipart/form-data; boundary=---WD9146A")
-//                .POST(HttpRequest.BodyPublishers.ofFile(bundleFile.asFile.toPath()))
-//                .build()
 
             val statusCode = response.code
             println("Upload status code: $statusCode")
