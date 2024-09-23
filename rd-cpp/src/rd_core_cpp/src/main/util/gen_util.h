@@ -21,7 +21,7 @@ size_t contentHashCode(C<T, A> const& list) noexcept
 	// TO-DO faster for integrals
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 size_t contentDeepHashCode(T const& value) noexcept
 {
 	return rd::hash<T>()(value);
@@ -31,22 +31,22 @@ template<class T>
 using remove_all_t = std::remove_reference_t<std::remove_cv_t<T>>;
 
 // optional and rd::Wrapper
-template <class T, typename = std::enable_if_t<!std::is_integral<T>::value>>
+template <class T, typename = std::enable_if_t<!std::is_arithmetic<T>::value>>
 typename std::enable_if_t<std::is_same<decltype(T{}.has_value()), bool>::value, size_t> contentDeepHashCode(T const& value) noexcept
 {
 	return rd::hash<remove_all_t<T>>()(value);
 }
 
 // containers
-template <class T, typename = std::enable_if_t<!std::is_integral<T>::value>>
-typename std::enable_if_t<std::is_integral<remove_all_t<decltype(*begin(T{}))>>::value, size_t> contentDeepHashCode(T const& value) noexcept
+template <class T, typename = std::enable_if_t<!std::is_arithmetic<T>::value>>
+typename std::enable_if_t<std::is_arithmetic<remove_all_t<decltype(*begin(T{}))>>::value, size_t> contentDeepHashCode(T const& value) noexcept
 {
 	return contentHashCode(value);
 }
 
-// containers of non-integral types
-template <class T, typename = std::enable_if_t<!std::is_integral<T>::value>>
-typename std::enable_if_t<!std::is_integral<remove_all_t<decltype(*begin(T{}))>>::value, size_t> contentDeepHashCode(T const& value) noexcept
+// containers of non-arithmetic types
+template <class T, typename = std::enable_if_t<!std::is_arithmetic<T>::value>>
+typename std::enable_if_t<!std::is_arithmetic<remove_all_t<decltype(*begin(T{}))>>::value, size_t> contentDeepHashCode(T const& value) noexcept
 {
 	size_t result = 1;
 	for (auto const& x : value)
