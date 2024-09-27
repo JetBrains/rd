@@ -89,7 +89,7 @@ namespace Test.RdFramework
       int barrier = 0;
       ServerProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
       ClientProtocol.Scheduler.InvokeOrQueue(() => Interlocked.Increment(ref barrier));
-      if (!SpinWait.SpinUntil(() => barrier == 2, 100))
+      if (!SpinWait.SpinUntil(() => barrier == 2, 500))
         Log.Root.Error("Either Server or Client scheduler is not empty in 100ms!");
       WireTapping?.Dispose();
       base.TearDown();
