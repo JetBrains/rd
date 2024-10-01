@@ -7,6 +7,7 @@ import com.jetbrains.rd.framework.impl.ProtocolContexts
 import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.blockingPutUnique
+import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -87,11 +88,14 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
             return
         }
 
-
-        AllowBindingCookie.allowBind {
-            val messageContext = protocol.contexts.readContext(buffer)
-            val helper = RdWireableDispatchHelper(entry.lifetime, id, protocol, messageContext)
-            entry.subscription.onWireReceived(buffer, helper)
+        try {
+            AllowBindingCookie.allowBind {
+                val messageContext = protocol.contexts.readContext(buffer)
+                val helper = RdWireableDispatchHelper(entry.lifetime, id, protocol, messageContext)
+                entry.subscription.onWireReceived(buffer, helper)
+            }
+        } catch (e: Throwable) {
+            log.error("Unexpected exception happened during processing a protocol event", e)
         }
     }
 
