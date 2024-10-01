@@ -1,11 +1,10 @@
 package com.jetbrains.rd.framework.test.util
 
-import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.AbstractBuffer
+import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.framework.RdMessage
 import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.framework.createAbstractBuffer
-import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.reactive.IScheduler
 import java.util.concurrent.ConcurrentLinkedQueue
 
