@@ -15,7 +15,7 @@ namespace JetBrains.Rd.Reflection
     private sealed class TokenComparer : IComparer<MethodInfo>
     {
       public static IComparer<MethodInfo> Instance { get; } = new TokenComparer();
-      public int Compare(MethodInfo x, MethodInfo y) => (x?.MetadataToken ?? -1).CompareTo(y?.MetadataToken ?? -1);
+      public int Compare(MethodInfo? x, MethodInfo? y) => (x?.MetadataToken ?? -1).CompareTo(y?.MetadataToken ?? -1);
     }
 
     public ProxyGeneratorCache(ProxyGenerator generator)
