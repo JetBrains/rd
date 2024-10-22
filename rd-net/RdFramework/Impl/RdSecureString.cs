@@ -26,7 +26,7 @@ namespace JetBrains.Rd.Impl
       return string.Equals(Contents, other.Contents);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       if (ReferenceEquals(null, obj)) return false;
       return obj is RdSecureString && Equals((RdSecureString) obj);
