@@ -148,7 +148,8 @@ namespace JetBrains.Rd.Reflection
       object instance;
       try
       {
-        instance = Activator.CreateInstance(implementingType);
+        instance = Activator.CreateInstance(implementingType) 
+                   ?? throw new InvalidOperationException($"Unable to create instance of: {implementingType.ToString(true)}");
       }
       catch (MissingMethodException e)
       {
@@ -454,7 +455,7 @@ namespace JetBrains.Rd.Reflection
           return rpcInterface.AssemblyQualifiedName;
       }
 
-      return typename;
+      return typename!;
     }
   }
 }
