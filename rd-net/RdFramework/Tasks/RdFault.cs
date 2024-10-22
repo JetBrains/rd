@@ -11,9 +11,9 @@ namespace JetBrains.Rd.Tasks
   [Serializable]
   public class RdFault : Exception
   {
-    public string ReasonTypeFqn { get; private set; }
-    public string ReasonText { get; private set; }
-    public string ReasonMessage { get; private set; }
+    public string? ReasonTypeFqn { get; private set; }
+    public string? ReasonText { get; private set; }
+    public string? ReasonMessage { get; private set; }
 
     public RdFault(Exception inner) : base(inner.Message, inner)
     {
@@ -22,7 +22,8 @@ namespace JetBrains.Rd.Tasks
       ReasonText = inner.ToString(); //todo Use system capabilities, stack traces, etc
     }
 
-    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    // [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    [Obsolete("Obsolete")]
     protected RdFault(SerializationInfo info, StreamingContext context) : base(info, context)
     {
       ReasonTypeFqn = info.GetString(nameof(ReasonTypeFqn));
@@ -30,7 +31,8 @@ namespace JetBrains.Rd.Tasks
       ReasonMessage = info.GetString(nameof(ReasonMessage));
     }
 
-    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    // [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    [Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
     {
       info.AddValue(nameof(ReasonTypeFqn), ReasonTypeFqn);

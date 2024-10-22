@@ -17,7 +17,7 @@ public class RdEntitiesRegistrar
     myMap.BlockingAddUnique(lifetime, myMap, rdId, dynamic);
   }
 
-  public bool TryGetEntity(RdId rdId, out IRdDynamic entity)
+  public bool TryGetEntity(RdId rdId, out IRdDynamic? entity)
   {
     lock (myMap)
     {
