@@ -36,7 +36,7 @@ namespace Test.Reflection.App
 
     public static event Action<char> OnChar;
 
-    private static readonly IPEndPoint ourIpEndPoint = new IPEndPoint(IPAddress.Loopback, ourPort);
+    private static readonly EndPointWrapper ourWrapper = EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, ourPort);
 
     public static void StartClient() => Main(new [] {"client"});
     public static void StartServer() => Main(new [] {"server"});
@@ -63,13 +63,13 @@ namespace Test.Reflection.App
       if (isServer)
       {
         Console.Title = "Server";
-        wire = new SocketWire.Server(lifetime, scheduler, ourIpEndPoint);
+        wire = new SocketWire.Server(lifetime, scheduler, ourWrapper);
         protocol = new Protocol("Server", reflectionSerializers.Serializers, new Identities(IdKind.Server), scheduler, wire, lifetime);
       }
       else
       {
         Console.Title = "Client";
-        wire = new SocketWire.Client(lifetime, scheduler, ourIpEndPoint);
+        wire = new SocketWire.Client(lifetime, scheduler, ourWrapper);
         protocol = new Protocol("Client", reflectionSerializers.Serializers, new Identities(IdKind.Client), scheduler, wire, lifetime);
       }
 
