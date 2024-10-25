@@ -4,6 +4,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlin.coroutines.CoroutineContext
 
@@ -52,7 +53,14 @@ suspend fun <T : Any> ISource<T?>.nextNotNullValue(): T =
     }
 
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, scheduler: IScheduler, handler: suspend (T) -> Unit) {
-    adviseSuspend(lifetime, scheduler.asCoroutineDispatcher(allowInlining = true), handler)
+    val context = scheduler.asCoroutineDispatcher
+    advise(lifetime) {
+        val start = if (scheduler.isActive) CoroutineStart.UNDISPATCHED else CoroutineStart.DEFAULT
+        lifetime.launch(context, start) {
+            handler(it)
+        }
+    }
+
 }
 
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, context: CoroutineContext, handler: suspend (T) -> Unit) {
