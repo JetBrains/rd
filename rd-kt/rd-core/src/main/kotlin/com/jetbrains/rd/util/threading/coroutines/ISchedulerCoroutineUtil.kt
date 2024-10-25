@@ -10,4 +10,6 @@ private class SchedulerCoroutineDispatcher(private val scheduler: IScheduler, pr
 }
 
 val IScheduler.asCoroutineDispatcher get() = (this as? CoroutineDispatcher) ?: asCoroutineDispatcher(false)
+
+@Deprecated("Use asCoroutineDispatcher that doesn't allow inlining because isDispatchNeeded()=false can lead to deadlocks")
 fun IScheduler.asCoroutineDispatcher(allowInlining: Boolean): CoroutineDispatcher = SchedulerCoroutineDispatcher(this, allowInlining)
