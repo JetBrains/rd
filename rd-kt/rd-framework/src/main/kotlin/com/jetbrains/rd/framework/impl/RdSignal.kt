@@ -48,15 +48,15 @@ class RdSignal<T>(val valueSerializer: ISerializer<T> = Polymorphic<T>()) : RdRe
         val proto = protocol
         val ctx = serializationContext
 
-        if (proto == null || ctx == null)
-            return
+        if (proto != null && ctx != null) {
+            val wire = proto.wire
 
-        val wire = proto.wire
-
-        wire.send(rdid) { buffer ->
-            logSend.trace { "signal `$location` ($rdid):: value = ${value.printToString()}" }
-            valueSerializer.write(ctx, buffer, value)
+            wire.send(rdid) { buffer ->
+                logSend.trace { "signal `$location` ($rdid):: value = ${value.printToString()}" }
+                valueSerializer.write(ctx, buffer, value)
+            }
         }
+
         signal.fire(value)
     }
 
