@@ -10,6 +10,9 @@ import com.jetbrains.rd.util.reactive.viewNotNull
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import java.io.Closeable
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
 
 
