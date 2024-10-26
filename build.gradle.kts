@@ -207,8 +207,9 @@ tasks {
         dependsOn(packSonatypeCentralBundle)
 
         doLast {
+            // https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
             val uriBase = rootProject.extra["centralPortalApiUrl"] as String
-            val publicationType = "USER_MANAGED"
+            val publicationType = "AUTOMATIC"
             val deploymentName = "rd-$version"
             val uri = "$uriBase?name=$deploymentName&publicationType=$publicationType"
 
