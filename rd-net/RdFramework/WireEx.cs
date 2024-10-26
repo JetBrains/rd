@@ -11,7 +11,10 @@ namespace JetBrains.Rd
       var serverSocketWire = wire as SocketWire.Server;
       if (serverSocketWire == null)
         throw new ArgumentException("You must use SocketWire.Server to get server port");
-      return serverSocketWire.Port;
+      var port = serverSocketWire.Port;
+      if (!port.HasValue)
+        throw new ArgumentException("You must use SocketWire.Server with connection over TCP to get server port");
+      return port.Value;
     }
 
     public static void Send(this IWire wire, RdId id, Action<UnsafeWriter> writer)

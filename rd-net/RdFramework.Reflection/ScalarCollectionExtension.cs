@@ -44,7 +44,7 @@ public static class ScalarCollectionExtension
       }
       else if (type.IsArray)
       {
-        var result = (SerializerPair)ReflectionUtil.InvokeStaticGeneric(typeof(ScalarCollectionExtension), nameof(CreateArraySerializer), type.GetElementType(), new object[] { self })!;
+        var result = (SerializerPair)ReflectionUtil.InvokeStaticGeneric(typeof(ScalarCollectionExtension), nameof(CreateArraySerializer), type.GetElementType()!, self)!;
         self.Register(type, result);
       }
     });
