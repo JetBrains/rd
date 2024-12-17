@@ -446,12 +446,12 @@ namespace JetBrains.Rd.Reflection
 
     public static string GetTypeName(Type type)
     {
-      var typename = type.FullName;
+      var typename = type.AssemblyQualifiedName;
       if (typeof(RdExtReflectionBindableBase).IsAssignableFrom(type))
       {
         var rpcInterface = ReflectionSerializerVerifier.GetRpcInterface(type.GetTypeInfo());
         if (rpcInterface != null)
-          return rpcInterface.FullName;
+          return rpcInterface.AssemblyQualifiedName;
       }
 
       return typename;
