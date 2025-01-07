@@ -451,7 +451,7 @@ namespace JetBrains.Rd.Reflection
       {
         var rpcInterface = ReflectionSerializerVerifier.GetRpcInterface(type.GetTypeInfo());
         if (rpcInterface != null)
-          return rpcInterface.AssemblyQualifiedName;
+          return rpcInterface.AssemblyQualifiedName!;
       }
 
       return typename!;
