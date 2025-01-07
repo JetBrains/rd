@@ -34,9 +34,10 @@ public class EndPointWrapper
     };
   }
 
-  public static EndPointWrapper CreateUnixEndPoint(string? path = null)
+#if NET8_0_OR_GREATER
+  public static EndPointWrapper CreateUnixEndPoint(UnixSocketConnectionParams connectionParams)
   {
-    var path1 = path ?? Path.GetTempFileName();
+    var path1 = connectionParams.Path ?? Path.GetTempFileName();
     return new EndPointWrapper(new UnixDomainSocketEndPoint(path1)) {
       AddressFamily = AddressFamily.Unix,
       SocketType = SocketType.Stream,
@@ -46,4 +47,10 @@ public class EndPointWrapper
       LocalPath = path1,
     };
   }
+  
+  public struct UnixSocketConnectionParams
+  {
+    public string? Path { get; set; }
+  }
+#endif
 }

@@ -148,10 +148,7 @@ namespace JetBrains.Rd.Reflection
         if (!typeInfo.IsArray) return false;
         if (typeInfo.GetArrayRank() != 1) return false;
 
-        var elementType = typeInfo.GetElementType();
-        if (elementType == null) return false;
-        
-        var arrayType = elementType.GetTypeInfo();
+        var arrayType = typeInfo.GetElementType()!.GetTypeInfo();
         return IsFieldType(arrayType, false);
       }
 
