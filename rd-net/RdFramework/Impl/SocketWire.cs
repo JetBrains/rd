@@ -673,14 +673,14 @@ namespace JetBrains.Rd.Impl
 
         var thread = new Thread(() =>
         {
-          Log.Catch(() =>
+          Log.Catch(async () =>
           {
             while (lifetime.IsAlive)
             {
               try
               {
                 Log.Verbose("{0} : accepting, port: {1}", Id, Port);
-                var s = serverSocket.Accept();
+                var s = await serverSocket.AcceptAsync(lifetime);
                 lock (Lock)
                 {
                   if (!lifetime.IsAlive)
@@ -711,6 +711,10 @@ namespace JetBrains.Rd.Impl
               catch (ObjectDisposedException e)
               {
                 Log.Verbose("{0}: ObjectDisposedException with message {1}", Id, e.Message);
+              }
+              catch (OperationCanceledException e)
+              {
+                Log.Verbose("{0} : OperationCanceledException with message {1}", Id, e.Message);
               }
               catch (Exception e)
               {
