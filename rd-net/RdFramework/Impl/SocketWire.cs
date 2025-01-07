@@ -525,8 +525,10 @@ namespace JetBrains.Rd.Impl
       public Client(Lifetime lifetime, IScheduler scheduler, int port, string? optId = null) :
         this(lifetime, scheduler, EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, port), optId) {}
       
-      public Client(Lifetime lifetime, IScheduler scheduler, string path, string? optId = null) :
-        this(lifetime, scheduler, EndPointWrapper.CreateUnixEndPoint(path), optId) {}
+#if NET8_0_OR_GREATER
+      public Client(Lifetime lifetime, IScheduler scheduler, EndPointWrapper.UnixSocketConnectionParams connectionParams, string? optId = null) :
+        this(lifetime, scheduler, EndPointWrapper.CreateUnixEndPoint(connectionParams), optId) {}
+#endif
 
       public Client(Lifetime lifetime, IScheduler scheduler, EndPointWrapper endPointWrapper, string? optId = null) :
         base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
@@ -646,7 +648,7 @@ namespace JetBrains.Rd.Impl
       public static Socket CreateServerSocket(EndPointWrapper? endPointWrapper)
       {
         Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPointWrapper?.EndPointImpl);
-        // by default we will use IPEndpoint?
+        // by default we will use IPEndpoint
         endPointWrapper ??= EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, 0);
 
         var serverSocket = new Socket(endPointWrapper.AddressFamily, endPointWrapper.SocketType, endPointWrapper.ProtocolType);
@@ -673,14 +675,22 @@ namespace JetBrains.Rd.Impl
 
         var thread = new Thread(() =>
         {
+#if NET8_0_OR_GREATER
           Log.Catch(async () =>
+#else
+          Log.Catch(() =>
+#endif
           {
             while (lifetime.IsAlive)
             {
               try
               {
                 Log.Verbose("{0} : accepting, port: {1}", Id, Port);
+#if NET8_0_OR_GREATER
                 var s = await serverSocket.AcceptAsync(lifetime);
+#else
+                var s = serverSocket.Accept();
+#endif
                 lock (Lock)
                 {
                   if (!lifetime.IsAlive)
@@ -751,13 +761,12 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-
-
-
     public class ServerFactory
     {
       [PublicAPI] public readonly int? LocalPort;
+#if NET8_0_OR_GREATER
       [PublicAPI] public readonly string? LocalPath;
+#endif
       [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
 
 
@@ -779,7 +788,9 @@ namespace JetBrains.Rd.Impl
           Base.CloseSocket(serverSocket);
         });
         LocalPort = (serverSocket.LocalEndPoint as IPEndPoint)?.Port;
+#if NET8_0_OR_GREATER
         LocalPath = endpointWrapper?.EndPointImpl is UnixDomainSocketEndPoint ? endpointWrapper.LocalPath : null;
+#endif
 
         void Rec()
         {

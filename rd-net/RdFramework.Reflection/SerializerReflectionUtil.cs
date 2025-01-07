@@ -68,14 +68,15 @@ namespace JetBrains.Rd.Reflection
       return list.ToArray();
     }
 
-    private static IEnumerable<FieldInfo> GetFields(Type? type, Type baseType)
+    private static IEnumerable<FieldInfo> GetFields(Type type, Type baseType)
     {
-      foreach (var field in type?.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) ?? Array.Empty<FieldInfo>())
+      foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
         yield return field;
 
       // private fields only being returned for the current type
-      while ((type = type?.BaseType) != baseType && type != null)
+      while (type.BaseType != baseType && type.BaseType != null)
       {
+        type = type.BaseType;
         // but protected fields are returned in first step
         foreach (var baseField in type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
           if (baseField.IsPrivate)

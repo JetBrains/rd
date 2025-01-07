@@ -1,3 +1,4 @@
+#if NET8_0_OR_GREATER
 using System.IO;
 using JetBrains.Collections.Viewable;
 using JetBrains.Lifetimes;
@@ -15,7 +16,8 @@ public class SocketWireUnixEndpointTest : SocketWireTestBase<string>
   internal override (IProtocol ServerProtocol, string portOrPath) Server(Lifetime lifetime, string path = null)
   {
     var id = "TestServer";
-    var endPointWrapper = EndPointWrapper.CreateUnixEndPoint(path);
+    var connectionsParams = new EndPointWrapper.UnixSocketConnectionParams { Path = path };
+    var endPointWrapper = EndPointWrapper.CreateUnixEndPoint(connectionsParams);
     var server = new SocketWire.Server(lifetime, SynchronousScheduler.Instance, endPointWrapper, id);
     var protocol = new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance, server, lifetime);
     return (protocol, endPointWrapper.LocalPath);
@@ -24,11 +26,16 @@ public class SocketWireUnixEndpointTest : SocketWireTestBase<string>
   internal override IProtocol Client(Lifetime lifetime, string path)
   {
     var id = "TestClient";
-    var client = new SocketWire.Client(lifetime, SynchronousScheduler.Instance, path, id);
+    var connectionsParams = new EndPointWrapper.UnixSocketConnectionParams { Path = path };
+    var client = new SocketWire.Client(lifetime, SynchronousScheduler.Instance, connectionsParams, id);
     return new Protocol(id, new Serializers(), new Identities(IdKind.Server), SynchronousScheduler.Instance, client, lifetime);
   }
 
-  internal override EndPointWrapper CreateEndpointWrapper() => EndPointWrapper.CreateUnixEndPoint();
+  internal override EndPointWrapper CreateEndpointWrapper()
+  {
+    var connectionsParams = new EndPointWrapper.UnixSocketConnectionParams { Path = null };
+    return EndPointWrapper.CreateUnixEndPoint(connectionsParams);
+  }
 
   // internal IProtocol Client(Lifetime lifetime, IProtocol serverProtocol)
   // {
@@ -45,3 +52,4 @@ public class SocketWireUnixEndpointTest : SocketWireTestBase<string>
     return (serverProtocol, clientProtocol);
   }
 }
+#endif

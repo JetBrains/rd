@@ -362,12 +362,15 @@ public abstract class SocketWireTestBase<T> : LifetimesTestBase
     }
     else
     {
-      new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, factory.LocalPath!);
+#if NET8_0_OR_GREATER
+      var connectionParams = new EndPointWrapper.UnixSocketConnectionParams { Path = factory.LocalPath };
+      new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, connectionParams);
       SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);
         
       var lf2 = new LifetimeDefinition();
-      new SocketWire.Client(lf2.Lifetime, SynchronousScheduler.Instance, factory.LocalPath);
+      new SocketWire.Client(lf2.Lifetime, SynchronousScheduler.Instance, connectionParams);
       SpinWaitEx.SpinUntil(() => factory.Connected.Count == 2);
+#endif
     }
       
     lf1.Terminate();

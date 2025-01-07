@@ -24,7 +24,9 @@ public class SocketWireIpEndpointTest : SocketWireTestBase<int>
     return port;
   }
   
-  internal override (IProtocol ServerProtocol, int portOrPath) Server(Lifetime lifetime, int port = 0)
+  internal override (IProtocol ServerProtocol, int portOrPath) Server(Lifetime lifetime, int port = 0) => CreateServer(lifetime, port);
+
+  internal static (IProtocol ServerProtocol, int portOrPath) CreateServer(Lifetime lifetime, int port = 0)
   {
     var id = "TestServer";
     var endPointWrapper = EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, port);
@@ -33,7 +35,9 @@ public class SocketWireIpEndpointTest : SocketWireTestBase<int>
     return (protocol, server.Port!.Value);
   }
   
-  internal override IProtocol Client(Lifetime lifetime, int port)
+  internal override IProtocol Client(Lifetime lifetime, int port) => CreateClient(lifetime, port);
+
+  internal static IProtocol CreateClient(Lifetime lifetime, int port)
   {
     var id = "TestClient";
     var client = new SocketWire.Client(lifetime, SynchronousScheduler.Instance, port, id);
