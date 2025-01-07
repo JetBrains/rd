@@ -148,8 +148,7 @@ namespace JetBrains.Rd.Reflection
       object instance;
       try
       {
-        instance = Activator.CreateInstance(implementingType) 
-                   ?? throw new InvalidOperationException($"Unable to create instance of: {implementingType.ToString(true)}");
+        instance = Activator.CreateInstance(implementingType)!;
       }
       catch (MissingMethodException e)
       {
