@@ -1,3 +1,4 @@
+#if !NET35
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -143,3 +144,4 @@ public class SocketWireIpEndpointTest : SocketWireTestBase<int>
   //   });
   // }
 }
+#endif
