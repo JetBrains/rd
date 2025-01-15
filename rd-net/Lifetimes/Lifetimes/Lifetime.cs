@@ -117,15 +117,23 @@ namespace JetBrains.Lifetimes
         var def = myDefinition;
         if (def != null) return def;
 
-        if (LogErrorIfLifetimeIsNotInitialized)
-        {
-          Log.Root.Error("Lifetime is not initialized. " +
-                         "This may cause a memory leak as default(Lifetime) is treated as Eternal. " +
-                         "Please provide a properly initialized Lifetime or use `Lifetime?` if you need to handle both cases. " +
-                         "Use Lifetime.Eternal explicitly if that behavior is intended.");
-        }
-
+        Assertion.Assert(IsUninitialized);
+        
+        AssertInitialized();
         return LifetimeDefinition.Eternal;
+      }
+    }
+
+    internal void AssertInitialized()
+    {
+      if (!Mode.IsAssertion) return;
+      
+      if (LogErrorIfLifetimeIsNotInitialized && IsUninitialized)
+      {
+        Log.Root.Error("Lifetime is not initialized. " +
+                       "This may cause a memory leak as default(Lifetime) is treated as Eternal. " +
+                       "Please provide a properly initialized Lifetime or use `Lifetime?` if you need to handle both cases. " +
+                       "Use Lifetime.Eternal explicitly if that behavior is intended.");
       }
     }
 
@@ -167,6 +175,17 @@ namespace JetBrains.Lifetimes
     /// Whether current lifetime is equal to <see cref="Eternal"/> and never be terminated
     /// </summary>
     [PublicAPI] public bool IsEternal               => Definition.IsEternal;
+
+    
+    /// <summary>
+    /// Whether current lifetime is not properly initialized (created by default(Lifetime))
+    /// </summary>
+    [PublicAPI] public bool IsUninitialized         => !IsInitialized;
+    
+    /// <summary>
+    /// Whether current lifetime is properly initialized
+    /// </summary>
+    [PublicAPI] public bool IsInitialized           => myDefinition != null;
     
     /// <summary>
     /// Is <see cref="Status"/> of this lifetime equal to <see cref="LifetimeStatus.Alive"/>
