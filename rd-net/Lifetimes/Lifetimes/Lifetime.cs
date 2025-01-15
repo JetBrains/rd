@@ -110,13 +110,33 @@ namespace JetBrains.Lifetimes
   {        
     
     private readonly LifetimeDefinition? myDefinition;   
-    internal LifetimeDefinition Definition => myDefinition ?? LifetimeDefinition.Eternal;   
-    
+    internal LifetimeDefinition Definition
+    {
+      get
+      {
+        var def = myDefinition;
+        if (def != null) return def;
+
+        if (LogErrorIfLifetimeIsNotInitialized)
+        {
+          Log.Root.Error("Lifetime is not initialized. " +
+                         "This may cause a memory leak as default(Lifetime) is treated as Eternal. " +
+                         "Please provide a properly initialized Lifetime or use `Lifetime?` if you need to handle both cases. " +
+                         "Use Lifetime.Eternal explicitly if that behavior is intended.");
+        }
+
+        return LifetimeDefinition.Eternal;
+      }
+    }
+
     //ctor
     internal Lifetime(LifetimeDefinition definition)
     {
       myDefinition = definition;
     }
+
+    [PublicAPI]
+    public static bool LogErrorIfLifetimeIsNotInitialized = true;
 
 
     #if !NET35
