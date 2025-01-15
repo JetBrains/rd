@@ -152,16 +152,25 @@ namespace Test.Lifetimes.Lifetimes
     [Test]
     public void TestEquals()
     {
-      Lifetime eternal = default;
-      Assert.AreEqual(Lifetime.Eternal, eternal);
-      Assert.AreEqual(Lifetime.Eternal, Lifetime.Eternal);
-      Assert.AreEqual(eternal, eternal);
+      var old = Lifetime.LogErrorIfLifetimeIsNotInitialized;
+      Lifetime.LogErrorIfLifetimeIsNotInitialized = false;
+      try
+      {
+        Lifetime eternal = default;
+        Assert.AreEqual(Lifetime.Eternal, eternal);
+        Assert.AreEqual(Lifetime.Eternal, Lifetime.Eternal);
+        Assert.AreEqual(eternal, eternal);
       
-      Assert.True(Lifetime.Eternal == eternal);
+        Assert.True(Lifetime.Eternal == eternal);
 
-      Assert.AreNotEqual(Lifetime.Eternal, Lifetime.Terminated);
-      Assert.False(Lifetime.Eternal == Lifetime.Terminated);
-      Assert.False(eternal == Lifetime.Terminated);
+        Assert.AreNotEqual(Lifetime.Eternal, Lifetime.Terminated);
+        Assert.False(Lifetime.Eternal == Lifetime.Terminated);
+        Assert.False(eternal == Lifetime.Terminated);
+      }
+      finally
+      {
+        Lifetime.LogErrorIfLifetimeIsNotInitialized = old;
+      }
     }
 
     [Test]

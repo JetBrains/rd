@@ -20,13 +20,15 @@ namespace JetBrains.Lifetimes
 
     public ValueLifetimed(Lifetime lifetime, T value)
     {
+      lifetime.AssertInitialized();
+      
       Lifetime = lifetime;
       Value = value;
     }
 
     public void ClearValueIfNotAlive()
     {
-      if (!Lifetime.IsAlive)
+      if (Lifetime is { IsInitialized: true, IsAlive: false })
         Value = default(T);
     }
   }
