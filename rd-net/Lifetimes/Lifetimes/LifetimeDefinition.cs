@@ -460,16 +460,21 @@ namespace JetBrains.Lifetimes
                         + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
                         + "This is also possible if the thread waiting for the termination wasn't able to receive execution time during the wait in SpinWait.spinUntil, so it has missed the fact that the lifetime was terminated in time.");
 
-        ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
 #if !NET35
         if (AdditionalDiagnostics is { } additionalDiagnostics)
         {
-          Log.Catch(() =>
+          try
           {
             ourAdditionalDiagnosticsStorage.AddData(this, additionalDiagnostics.GetAdditionalDiagnosticsIfExecutionWasNotCancelledByTimeoutAsync(Lifetime));
-          });
+          }
+          catch (Exception e)
+          {
+            Log.Error(e);
+          }
         }
 #endif
+
+        ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
       }
 
       if (!IncrementStatusIfEqualsTo(LifetimeStatus.Canceling))
