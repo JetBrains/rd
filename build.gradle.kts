@@ -221,8 +221,8 @@ tasks {
         accessToken: String
     ): String {
         // https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
-        val publicationType = if (isUserManaged) "USER_MANAGED" else "AUTOMATIC"
-        val uri = uriBase.trimEnd('/') + "/api/v1/publisher/upload?name=$deploymentName&publicationType=$publicationType"
+        val publishingType = if (isUserManaged) "USER_MANAGED" else "AUTOMATIC"
+        val uri = uriBase.trimEnd('/') + "/api/v1/publisher/upload?name=$deploymentName&publishingType=$publishingType"
         val base64Auth = base64Auth(userName, accessToken)
 
         println("Sending request to $uri...")
