@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
@@ -12,6 +11,8 @@ using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
 #if !NET35
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Diagnostics;
 using JetBrains.Threading;
 using Microsoft.Diagnostics.Runtime;
@@ -152,31 +153,76 @@ namespace Test.Lifetimes.Lifetimes
     [Test]
     public void TestEquals()
     {
-      var old = Lifetime.LogErrorIfLifetimeIsNotInitialized;
-      Lifetime.LogErrorIfLifetimeIsNotInitialized = false;
+      var oldValue = Lifetime.LogErrorIfLifetimeIsNotInitialized;
       try
       {
-        Lifetime eternal = default;
-        Assert.AreEqual(Lifetime.Eternal, eternal);
-        Assert.AreEqual(Lifetime.Eternal, Lifetime.Eternal);
-        Assert.AreEqual(eternal, eternal);
-      
-        Assert.True(Lifetime.Eternal == eternal);
+        Lifetime.LogErrorIfLifetimeIsNotInitialized = false;
+        DoChecks(false);
 
-        Assert.AreNotEqual(Lifetime.Eternal, Lifetime.Terminated);
-        Assert.False(Lifetime.Eternal == Lifetime.Terminated);
-        Assert.False(eternal == Lifetime.Terminated);
+        Lifetime.LogErrorIfLifetimeIsNotInitialized = true;
+        DoChecks(true);
       }
       finally
       {
-        Lifetime.LogErrorIfLifetimeIsNotInitialized = old;
+        Lifetime.LogErrorIfLifetimeIsNotInitialized = oldValue;
       }
+
+      [SuppressMessage("ReSharper", "EqualExpressionComparison")]
+      #pragma warning disable 1718
+      void DoChecks(bool newDefaultBehaviorFlag)
+      {
+        Assert.AreEqual(Lifetime.LogErrorIfLifetimeIsNotInitialized, newDefaultBehaviorFlag);
+
+        Lifetime defaultLifetime = default;
+
+        // Checks that are always correct:
+        Assert.AreEqual(defaultLifetime, defaultLifetime);
+        Assert.AreEqual(Lifetime.Eternal, Lifetime.Eternal);
+        Assert.AreEqual(Lifetime.Terminated, Lifetime.Terminated);
+        Assert.AreNotEqual(Lifetime.Eternal, Lifetime.Terminated);
+        Assert.AreNotEqual(defaultLifetime, Lifetime.Terminated);
+
+        Assert.True(defaultLifetime == defaultLifetime);
+        Assert.True(Lifetime.Eternal == Lifetime.Eternal);
+        Assert.True(Lifetime.Terminated == Lifetime.Terminated);
+        Assert.False(Lifetime.Eternal == Lifetime.Terminated);
+        Assert.False(defaultLifetime == Lifetime.Terminated);
+
+        Assert.False(defaultLifetime != defaultLifetime);
+        Assert.False(Lifetime.Eternal != Lifetime.Eternal);
+        Assert.False(Lifetime.Terminated != Lifetime.Terminated);
+        Assert.True(Lifetime.Eternal != Lifetime.Terminated);
+        Assert.True(defaultLifetime != Lifetime.Terminated);
+
+        // Checks depending on the state of the flag:
+        if (newDefaultBehaviorFlag)
+        {
+          Assert.AreNotEqual(defaultLifetime, Lifetime.Eternal);
+          Assert.False(defaultLifetime == Lifetime.Eternal);
+          Assert.True(defaultLifetime != Lifetime.Eternal);
+        }
+        else
+        {
+          Assert.AreEqual(defaultLifetime, Lifetime.Eternal);
+          Assert.True(defaultLifetime == Lifetime.Eternal);
+          Assert.False(defaultLifetime != Lifetime.Eternal);
+        }
+      }
+      #pragma warning restore 1718
     }
 
     [Test]
     public void TestTerminated()
     {
       Assert.True(Lifetime.Terminated.Status == LifetimeStatus.Terminated);
+    }
+
+    [Test]
+    public void TestGetHashCode()
+    {
+      _ = Lifetime.Eternal.GetHashCode();
+      _ = Lifetime.Terminated.GetHashCode();
+      _ = ((Lifetime)default).GetHashCode();
     }
 
 
@@ -1147,7 +1193,7 @@ namespace Test.Lifetimes.Lifetimes
 
       Assert.IsFalse(flag, "Nested closed twice.");
 
-      CollectionAssert.AreEqual(System.Linq.Enumerable.Range(0, entries.Count).Reverse().ToArray(), entries, "Order FAIL.");
+      CollectionAssert.AreEqual(Enumerable.Range(0, entries.Count).Reverse().ToArray(), entries, "Order FAIL.");
       
     }
 

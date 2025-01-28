@@ -1165,7 +1165,7 @@ namespace JetBrains.Lifetimes
     
     public static bool operator ==(Lifetime left, Lifetime right) 
     {
-      return ReferenceEquals(left.Definition, right.Definition); 
+      return left.Equals(right);
     }
 
     public static bool operator !=(Lifetime left, Lifetime right)
@@ -1175,6 +1175,11 @@ namespace JetBrains.Lifetimes
     
     public bool Equals(Lifetime other)
     {
+      if (LogErrorIfLifetimeIsNotInitialized)
+      {
+        return ReferenceEquals(myDefinition, other.myDefinition);
+      }
+
       return ReferenceEquals(Definition, other.Definition);
     }
 
@@ -1186,7 +1191,7 @@ namespace JetBrains.Lifetimes
 
     public override int GetHashCode()
     {
-      return Definition.GetHashCode();
+      return myDefinition?.GetHashCode() ?? 0;
     }
 
     #endregion
